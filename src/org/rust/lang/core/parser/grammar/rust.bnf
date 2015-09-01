@@ -1,0 +1,433 @@
+{
+    parserClass='org.rust.lang.core.parser.gen.RustParser'
+    parserUtilClass="org.rust.lang.core.parser.gen.RustParserUtil"
+
+    implements='org.rust.lang.core.psi.RustCompositeElement'
+    extends='org.rust.lang.core.psi.impl.RustCompositeElementImpl'
+
+    elementTypeHolderClass='org.rust.lang.core.psi.gen.RustElementTypes'
+    elementTypeClass='org.rust.lang.core.psi.RustCompositeElementType'
+    tokenTypeClass='org.rust.lang.core.lexer.RustTokenType'
+
+    psiClassPrefix='Rust'
+    psiImplClassSuffix='Impl'
+    psiPackage='org.rust.lang.core.psi.gen'
+    psiImplPackage='org.rust.lang.core.psi.gen.impl'
+
+    parserImports='static org.rust.lang.core.lexer.RustTokenElementTypes.*'
+
+    tokens = [
+        LBRACE               =  '{'
+        RBRACE               =  '}'
+        LBRACK               =  '['
+        RBRACK               =  ']'
+        LPAREN               =  '('
+        RPAREN               =  ')'
+        COLON                =  ':'
+        COLONCOLON           =  '::'
+        SEMICOLON            =  ';'
+        COMMA                =  ','
+        EQ                   =  '='
+        EXCLEQ               =  '!='
+        EQEQ                 =  '=='
+        SHARP                =  '#'
+        EXCL                 =  '!'
+        PLUSPLUS             =  '++'
+        PLUSEQ               =  '+='
+        PLUS                 =  '+'
+        MINUSMINUS           =  '--'
+        MINUSEQ              =  '-='
+        MINUS                =  '-'
+        OROR                 =  '||'
+        OREQ                 =  '|='
+        ANDAND               =  '&&'
+        ANDEQ                =  '&='
+        AND                  =  '&'
+        OR                   =  '|'
+        LTLTEQ               =  '<<='
+        LTLT                 =  '<<'
+        LTEQ                 =  '<='
+        LT                   =  '<'
+        XOREQ                =  '^='
+        XOR                  =  '^'
+        MULEQ                =  '*='
+        MUL                  =  '*'
+        DIVEQ                =  '/='
+        DIV                  =  '/'
+        REMEQ                =  '%='
+        REM                  =  '%'
+        GTGTEQ               =  '>>='
+        GTGT                 =  '>>'
+        GTEQ                 =  '>='
+        GT                   =  '>'
+        ELLIPSIS             =  '...'
+        DOT                  =  '.'
+        DOTDOT               =  '..'
+        FAT_ARROW            =  '=>'
+        ARROW                =  '->'
+
+        // DEBUG
+
+        ABSTRACT  = 'abstract'
+        ALIGNOF   = 'alignof'
+        AS        = 'as'
+        BECOME    = 'become'
+        BOX       = 'box'
+        BREAK     = 'break'
+        CONST     = 'const'
+        CONTINUE  = 'continue'
+        CRATE     = 'crate'
+        DO        = 'do'
+        ELSE      = 'else'
+        ENUM      = 'enum'
+        EXTERN    = 'extern'
+        FALSE     = 'false'
+        FINAL     = 'final'
+        FN        = 'fn'
+        FOR       = 'for'
+        IF        = 'if'
+        IMPL      = 'impl'
+        IN        = 'in'
+        LET       = 'let'
+        LOOP      = 'loop'
+        MACRO     = 'macro'
+        MATCH     = 'match'
+        MOD       = 'mod'
+        MOVE      = 'move'
+        MUT       = 'mut'
+        OFFSETOF  = 'offsetof'
+        OVERRIDE  = 'override'
+        PRIV      = 'priv'
+        PROC      = 'proc'
+        PUB       = 'pub'
+        PURE      = 'pure'
+        REF       = 'ref'
+        RETURN    = 'return'
+        CSELF     = 'Self'
+        SELF      = 'self'
+        SIZEOF    = 'sizeof'
+        STATIC    = 'static'
+        STRUCT    = 'struct'
+        SUPER     = 'super'
+        TRAIT     = 'trait'
+        TRUE      = 'true'
+        TYPE      = 'type'
+        TYPEOF    = 'typeof'
+        UNSAFE    = 'unsafe'
+        UNSIZED   = 'unsized'
+        USE       = 'use'
+        VIRTUAL   = 'virtual'
+        WHERE     = 'where'
+        WHILE     = 'while'
+        YIELD     = 'yield'
+
+        identifier  = 'regexp:\p{Alpha}\w*'
+        space       = 'regexp:\s+'
+    ]
+
+    extends(".*_bin_expr")=binary_expr
+    extends("(expr_path|.*_expr)")=expr
+}
+
+//
+// Root
+//
+
+file ::= item *
+
+
+//
+// Items
+//
+
+private vis ::= PUB | PRIV
+
+item ::= vis? mod_item
+       |      fn_item
+       |      type_item
+       |      struct_item
+       |      enum_item
+       |      const_item
+       |      static_item
+       |      trait_item
+       |      impl_item
+       |      extern_block
+
+// TODO(kudinkin): Fix
+type_item ::= 'abc0'
+struct_item ::= 'abc2'
+enum_item ::= 'abc1'
+trait_item ::= 'abc4'
+impl_item ::= 'abc6'
+foreign_fn_item ::= 'abc3'
+
+extern_block ::= EXTERN LBRACE foreign_fn_item* RBRACE
+
+decl_item ::= identifier COLON type
+
+const_item ::= CONST decl_item EQ expr SEMICOLON
+
+static_item ::= STATIC decl_item EQ expr SEMICOLON
+
+fn_item ::= FN identifier fn_sig fn_block
+
+private fn_sig ::= LPAREN (decl_item (COMMA decl_item)*)? RPAREN ARROW type
+private fn_block ::= LBRACE stmt* expr? RBRACE
+
+mod_item ::= MOD identifier (SEMICOLON | LBRACE mod_content RBRACE)
+
+private mod_content ::= (view_item | item)*
+
+
+private view_item ::= extern_crate_decl | use_decl SEMICOLON
+
+extern_crate_decl ::= EXTERN CRATE create_name
+
+private create_name ::= identifier | identifier AS identifier
+
+use_decl ::= vis? USE (path AS identifier | path_glob)
+
+path_glob ::= identifier (COLONCOLON (path_glob | MUL))?
+            | LBRACE path (COMMA path)* RBRACE
+
+path ::= identifier | SELF;
+
+
+//
+// Expressions
+//
+
+expr ::= assign_bin_expr_group
+       | bool_or_bin_expr
+       | bool_and_bin_expr
+       | bit_or_bin_expr
+       | bit_xor_bin_expr
+       | bit_and_bin_expr
+       | comp_bin_expr_group
+       | rel_comp_bin_expr_group
+       | bit_shift_bin_expr_group
+       | add_bin_expr_group
+       | mul_bin_expr_group
+       | unary_expr
+       | block_expr
+       | lambda_expr
+       | struct_expr
+       | while_expr
+       | loop_expr
+       | cont_expr
+       | break_expr
+       | for_expr
+       | if_expr
+       | match_expr
+       | if_let_expr
+       | while_let_expr
+       | ret_expr
+       | expr_path
+       | paren_expr
+       | tuple_expr
+       | unit_expr
+       | array_expr
+       | range_expr_group
+       | index_expr
+       | call_expr
+       | method_call_expr
+       | field_expr
+       | literal_expr
+
+
+fake binary_expr ::= expr + {
+    methods=[
+        left="/expr[0]"
+        right="/expr[1]"
+    ]
+}
+
+private assign_bin_expr_group ::= eq_bin_expr
+                                | eq_bit_or_bin_expr
+                                | eq_bit_xor_bin_expr
+                                | eq_bit_and_bin_expr
+                                | eq_bit_gtgt_bin_expr
+                                | eq_bit_ltlt_bin_expr
+                                | eq_plus_bin_expr
+                                | eq_minus_bin_expr
+                                | eq_mul_bin_expr
+                                | eq_div_bin_expr
+                                | eq_rem_bin_expr
+
+eq_bit_gtgt_bin_expr ::= expr GTGTEQ expr   { rightAssociative=true }
+eq_bit_ltlt_bin_expr ::= expr LTLTEQ expr   { rightAssociative=true }
+
+eq_bit_or_bin_expr  ::= expr OREQ expr      { rightAssociative=true }
+eq_bit_xor_bin_expr ::= expr XOREQ expr     { rightAssociative=true }
+eq_bit_and_bin_expr ::= expr ANDEQ expr     { rightAssociative=true }
+
+eq_bin_expr         ::= expr EQ expr        { rightAssociative=true }
+
+eq_plus_bin_expr    ::= expr PLUSEQ expr    { rightAssociative=true }
+eq_minus_bin_expr   ::= expr MINUSEQ expr   { rightAssociative=true }
+
+eq_mul_bin_expr     ::= expr MULEQ expr     { rightAssociative=true }
+eq_div_bin_expr     ::= expr DIVEQ expr     { rightAssociative=true }
+eq_rem_bin_expr     ::= expr REMEQ expr     { rightAssociative=true }
+
+
+private comp_bin_expr_group         ::= eq_comp_bin_expr | ineq_comp_bin_expr
+private rel_comp_bin_expr_group     ::= lt_comp_bin_expr | gt_comp_bin_expr | lteq_comp_bin_expr | gteq_comp_bin_expr
+private bit_shift_bin_expr_group    ::= bit_left_shift_bin_expr | bit_right_shift_bin_expr
+private add_bin_expr_group          ::= plus_bin_expr | minus_bin_expr
+private mul_bin_expr_group          ::= mul_bin_expr | div_bin_expr | rem_bin_expr
+
+bool_or_bin_expr ::= expr OROR expr
+bool_and_bin_expr ::= expr ANDAND expr
+bit_or_bin_expr ::= expr OR expr
+bit_xor_bin_expr ::= expr XOR expr
+bit_and_bin_expr ::= expr AND expr
+ineq_comp_bin_expr ::= expr EXCLEQ expr
+eq_comp_bin_expr ::= expr EQ expr
+gteq_comp_bin_expr ::= expr GTEQ expr
+gt_comp_bin_expr ::= expr GT expr
+lteq_comp_bin_expr ::= expr LTEQ expr
+lt_comp_bin_expr ::= expr LT expr
+bit_right_shift_bin_expr ::=expr GTGT expr
+bit_left_shift_bin_expr ::=expr LTLT expr
+plus_bin_expr ::= expr PLUS expr
+minus_bin_expr ::= expr MINUS expr
+rem_bin_expr ::= expr REM expr
+div_bin_expr ::= expr DIV expr
+mul_bin_expr ::= expr MUL expr
+
+unary_expr ::= (MINUS | MUL | EXCL) expr
+
+block_expr ::= LBRACE (stmt SEMICOLON | item)* (expr) RBRACE
+
+lambda_expr ::= OR ident_list OR expr
+private ident_list ::= (identifier (COMMA identifier)*)?
+
+struct_expr ::= expr_path LBRACE  identifier COLON expr
+                         (COMMA   identifier COLON expr)*
+                         (DOTDOT  expr)? RBRACE
+              | expr_path LPAREN expr
+                         (COMMA  expr)* RPAREN
+              | expr_path
+
+while_expr ::= lifetime COLON WHILE no_struct_lit_expr LBRACE block RBRACE
+
+loop_expr ::= lifetime COLON LOOP LBRACE block RBRACE
+
+cont_expr ::= CONTINUE lifetime
+
+break_expr ::= BREAK lifetime
+
+for_expr ::= lifetime COLON FOR pat IN no_struct_lit_expr LBRACE block RBRACE
+
+// TODO(kudinkin): Fix
+private pat ::= 'xyz1'
+
+match_expr ::= MATCH no_struct_lit_expr LBRACE match_arm* RBRACE
+
+private match_arm ::= attr* MatchPattern ARROW (expr COMMA | LBRACE block RBRACE)
+private MatchPattern ::= pat (OR pat)* (IF expr)?
+
+if_expr ::= IF no_struct_lit_expr LBRACE block RBRACE else_tail?
+
+private else_tail ::= ELSE (if_expr | if_let_expr | LBRACE block RBRACE)
+
+if_let_expr ::= IF LET pat EQ expr LBRACE block RBRACE else_tail?
+
+while_let_expr ::= WHILE LET pat EQ expr LBRACE block RBRACE
+
+ret_expr ::= RETURN expr?
+
+paren_expr ::= LPAREN expr RPAREN
+
+unit_expr ::= LPAREN RPAREN
+
+tuple_expr ::= LPAREN expr ((COMMA expr)* | COMMA) RPAREN
+
+expr_path ::= COLONCOLON? identifier (COLONCOLON expr_path_tail)*
+
+private expr_path_tail ::= LT type_expr (COMMA type_expr)* GT | expr_path
+
+// TODO(kudinkin): Fix
+private no_struct_lit_expr ::= 'abc7'
+private lifetime ::= 'abc8'
+private type_expr ::= 'abc'
+
+array_expr ::= LBRACK MUT? array_elems? RBRACK
+private array_elems ::= (expr (COMMA expr)*) | (expr SEMICOLON expr)
+
+
+private range_expr_group ::= full_range_expr
+                           | right_open_expr
+                           | left_open_expr
+                           | full_open_expr
+
+full_range_expr ::= expr DOTDOT expr
+right_open_expr ::= expr DOTDOT
+left_open_expr  ::= DOTDOT expr
+full_open_expr  ::= DOTDOT
+
+index_expr ::= expr LBRACK expr RBRACK
+
+call_expr ::= expr par_expr_list
+
+method_call_expr ::= expr DOT identifier par_expr_list
+
+private par_expr_list ::= LPAREN expr_list RPAREN
+private expr_list ::= (expr (COMMA expr)*)?
+
+field_expr ::= expr DOT identifier
+
+literal_expr ::= literal
+
+
+//
+// Types
+//
+
+// TODO(kudinkin): fix
+private type ::= identifier
+
+
+//
+// Literals
+//
+
+private literal ::= ( STRING_LITERAL
+                    | CHAR_LITERAL
+                    | INTEGER_LITERAL
+                    | FLOAT_LITERAL
+                    | bool_literal ) literal_suffix?
+
+private bool_literal ::= FALSE | TRUE
+
+private literal_suffix ::= identifier
+
+
+//
+// Attributes
+//
+
+attr ::= SHARP EXCL? LBRACK meta_item RBRACK
+
+private meta_item ::= identifier (EQ literal | LPAREN meta_item_seq RPAREN)?
+private meta_item_seq ::= meta_item [ COMMA meta_item_seq ]
+
+
+//
+// Declarations
+//
+
+let_decl ::= LET pat [ COLON type ] [ EQ expr ] SEMICOLON
+
+
+//
+// Statements
+//
+
+block ::= LBRACE (stmt SEMICOLON)* expr? RBRACE
+
+expr_stmt ::= expr
+decl_stmt ::= (item | let_decl)
+
+private stmt ::= (expr_stmt | decl_stmt)
