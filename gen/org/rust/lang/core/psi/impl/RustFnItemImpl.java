@@ -46,9 +46,9 @@ public class RustFnItemImpl extends RustCompositeElementImpl implements RustFnIt
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getLparen() {
-    return findNotNullChildByType(LPAREN);
+    return findChildByType(LPAREN);
   }
 
   @Override

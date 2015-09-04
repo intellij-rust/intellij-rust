@@ -4,7 +4,7 @@ package org.rust.lang.core.parser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
-import static com.intellij.lang.parser.GeneratedParserUtilBase.*;
+import static org.rust.lang.core.parser.RustParserUtil.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
@@ -747,15 +747,30 @@ public class RustParser implements PsiParser, LightPsiParser {
   // FN identifier fn_sig block
   public static boolean fn_item(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "fn_item")) return false;
-    if (!nextTokenIs(b, FN)) return false;
     boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, null);
-    r = consumeTokens(b, 0, FN, IDENTIFIER);
-    r = r && fn_sig(b, l + 1);
-    p = r; // pin = 3
-    r = r && block(b, l + 1);
-    exit_section_(b, l, m, FN_ITEM, r, p, null);
+    Marker m = enter_section_(b, l, _NONE_, "<fn item>");
+    r = consumeTokens(b, 1, FN, IDENTIFIER);
+    p = r; // pin = 1
+    r = r && report_error_(b, fn_sig(b, l + 1));
+    r = p && block(b, l + 1) && r;
+    exit_section_(b, l, m, FN_ITEM, r, p, fn_item_recover_parser_);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // !(<< skipUntilEOL >>)
+  static boolean fn_item_recover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "fn_item_recover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_, null);
+    r = !fn_item_recover_0(b, l + 1);
+    exit_section_(b, l, m, null, r, false, null);
+    return r;
+  }
+
+  // << skipUntilEOL >>
+  private static boolean fn_item_recover_0(PsiBuilder b, int l) {
+    return skipUntilEOL(b, l + 1);
   }
 
   /* ********************************************************** */
@@ -766,9 +781,9 @@ public class RustParser implements PsiParser, LightPsiParser {
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, null);
     r = consumeToken(b, LPAREN);
-    r = r && fn_sig_1(b, l + 1);
-    p = r; // pin = 2
-    r = r && report_error_(b, consumeTokens(b, -1, RPAREN, ARROW));
+    p = r; // pin = 1
+    r = r && report_error_(b, fn_sig_1(b, l + 1));
+    r = p && report_error_(b, consumeTokens(b, -1, RPAREN, ARROW)) && r;
     r = p && type(b, l + 1) && r;
     exit_section_(b, l, m, null, r, p, null);
     return r || p;
@@ -784,12 +799,13 @@ public class RustParser implements PsiParser, LightPsiParser {
   // decl_item (COMMA decl_item)*
   private static boolean fn_sig_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "fn_sig_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
     r = decl_item(b, l + 1);
+    p = r; // pin = 1
     r = r && fn_sig_1_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
+    exit_section_(b, l, m, null, r, p, null);
+    return r || p;
   }
 
   // (COMMA decl_item)*
@@ -807,12 +823,13 @@ public class RustParser implements PsiParser, LightPsiParser {
   // COMMA decl_item
   private static boolean fn_sig_1_0_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "fn_sig_1_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
     r = consumeToken(b, COMMA);
+    p = r; // pin = 1
     r = r && decl_item(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
+    exit_section_(b, l, m, null, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -2339,4 +2356,9 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
+  final static Parser fn_item_recover_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return fn_item_recover(b, l + 1);
+    }
+  };
 }

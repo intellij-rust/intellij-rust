@@ -19,7 +19,7 @@ public interface RustFnItem extends RustCompositeElement {
   @NotNull
   PsiElement getFn();
 
-  @NotNull
+  @Nullable
   PsiElement getLparen();
 
   @Nullable

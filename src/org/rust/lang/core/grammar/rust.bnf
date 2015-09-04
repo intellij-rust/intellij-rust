@@ -1,6 +1,6 @@
 {
     parserClass='org.rust.lang.core.parser.RustParser'
-    //parserUtilClass="org.rust.lang.core.parser.RustParserUtil"
+    parserUtilClass="org.rust.lang.core.parser.RustParserUtil"
 
     implements='org.rust.lang.core.psi.RustCompositeElement'
     extends='org.rust.lang.core.psi.impl.RustCompositeElementImpl'
@@ -175,9 +175,11 @@ const_item ::= CONST decl_item EQ expr SEMICOLON
 
 static_item ::= STATIC decl_item EQ expr SEMICOLON
 
-fn_item ::= FN identifier fn_sig block {pin=3}
+fn_item ::= FN identifier fn_sig block {pin=1 recoverWhile="fn_item_recover"}
 
-private fn_sig ::= LPAREN (decl_item (COMMA decl_item)*)? RPAREN ARROW type {pin=2} // or pin=3?
+private fn_item_recover ::= !(<< skipUntilEOL >>)
+
+private fn_sig ::= LPAREN (decl_item (COMMA decl_item)*)? RPAREN ARROW type {pin(".*")=1} // or pin=3?
 
 mod_item ::= MOD identifier (SEMICOLON | LBRACE mod_content RBRACE)
 
@@ -430,7 +432,7 @@ let_decl ::= LET pat [ COLON type ] [ EQ expr ] SEMICOLON
 // Statements
 //
 
-block ::= LBRACE stmt* expr? RBRACE {pin=1}
+block ::= LBRACE stmt* expr? RBRACE {pin(".*")=1}
 
 expr_stmt ::= expr SEMICOLON
 decl_stmt ::= (item | let_decl)
