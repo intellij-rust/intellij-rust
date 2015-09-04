@@ -1,5 +1,6 @@
 package org.rust.lang.core.psi
 
 import com.intellij.psi.tree.IElementType
+import org.rust.lang.RustLanguage
 
-public class RustCompositeElementType(_: String) : IElementType(_, null) {}
+public class RustCompositeElementType(_: String) : IElementType(_, RustLanguage.INSTANCE) {}
