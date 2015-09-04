@@ -129,6 +129,10 @@
 
     extends(".*_bin_expr")=binary_expr
     extends("(expr_path|.*_expr)")=expr
+    extends(".*_stmt")=stmt
+
+    generateTokens=false
+    generateTokenAccessors=true
 }
 
 //
@@ -171,10 +175,9 @@ const_item ::= CONST decl_item EQ expr SEMICOLON
 
 static_item ::= STATIC decl_item EQ expr SEMICOLON
 
-fn_item ::= FN identifier fn_sig fn_block
+fn_item ::= FN identifier fn_sig block {pin=3}
 
-private fn_sig ::= LPAREN (decl_item (COMMA decl_item)*)? RPAREN ARROW type
-private fn_block ::= LBRACE stmt* expr? RBRACE
+private fn_sig ::= LPAREN (decl_item (COMMA decl_item)*)? RPAREN ARROW type {pin=2} // or pin=3?
 
 mod_item ::= MOD identifier (SEMICOLON | LBRACE mod_content RBRACE)
 
@@ -300,7 +303,7 @@ mul_bin_expr ::= expr MUL expr
 
 unary_expr ::= (MINUS | MUL | EXCL) expr
 
-block_expr ::= LBRACE (stmt SEMICOLON | item)* (expr) RBRACE
+block_expr ::= LBRACE (stmt SEMICOLON | item)* (expr) RBRACE {pin=".*"}
 
 lambda_expr ::= OR ident_list OR expr
 private ident_list ::= (identifier (COMMA identifier)*)?
@@ -427,9 +430,9 @@ let_decl ::= LET pat [ COLON type ] [ EQ expr ] SEMICOLON
 // Statements
 //
 
-block ::= LBRACE (stmt SEMICOLON)* expr? RBRACE
+block ::= LBRACE stmt* expr? RBRACE {pin=1}
 
-expr_stmt ::= expr
+expr_stmt ::= expr SEMICOLON
 decl_stmt ::= (item | let_decl)
 
-private stmt ::= (expr_stmt | decl_stmt)
+stmt ::= (expr_stmt | decl_stmt)
