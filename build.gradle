@@ -1,0 +1,14 @@
+apply plugin 'java'
+apply plugin 'kotlin'
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 1.5
+
+version = 0.1
+
+dependencies {
+    compile group: 'junit', name: 'junit', version: '4.+'
+}
