@@ -8,7 +8,7 @@ import javax.swing.Icon
 
 public open class RustFileType : LanguageFileType(RustLanguage.INSTANCE) {
 
-    object INSTANCE : RustFileType() {}
+    public object INSTANCE : RustFileType() {}
 
     private val DEFAULT_EXTENSION = "rst";
 

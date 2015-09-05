@@ -11,13 +11,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.lexer.RustKeywordTokenType
 import org.rust.lang.core.lexer.RustTokenType
-import org.rust.lang.core.psi.RustCompositeElementTypes
 import org.rust.lang.core.lexer.RustLexer
 import org.rust.lang.core.lexer.RustTokenElementTypes.*
 
-class RustHighlighter : SyntaxHighlighterBase() {
-    public class Factory : SyntaxHighlighterFactory() {
+public class RustHighlighter : SyntaxHighlighterBase() {
 
+    public class Factory : SyntaxHighlighterFactory() {
         override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?) = RustHighlighter();
     }
 
