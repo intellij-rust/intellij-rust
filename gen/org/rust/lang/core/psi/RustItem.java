@@ -7,8 +7,14 @@ import com.intellij.psi.PsiElement;
 
 public interface RustItem extends RustCompositeElement {
 
+  @NotNull
+  List<RustAttr> getAttrList();
+
   @Nullable
   RustConstItem getConstItem();
+
+  @NotNull
+  List<RustDoc> getDocList();
 
   @Nullable
   RustEnumItem getEnumItem();

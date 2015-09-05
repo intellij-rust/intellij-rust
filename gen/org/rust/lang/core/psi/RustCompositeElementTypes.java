@@ -27,6 +27,7 @@ public interface RustCompositeElementTypes {
   IElementType DECL_ITEM = new RustCompositeElementType("DECL_ITEM");
   IElementType DECL_STMT = new RustCompositeElementType("DECL_STMT");
   IElementType DIV_BIN_EXPR = new RustCompositeElementType("DIV_BIN_EXPR");
+  IElementType DOC = new RustCompositeElementType("DOC");
   IElementType ENUM_ITEM = new RustCompositeElementType("ENUM_ITEM");
   IElementType EQ_BIN_EXPR = new RustCompositeElementType("EQ_BIN_EXPR");
   IElementType EQ_BIT_AND_BIN_EXPR = new RustCompositeElementType("EQ_BIT_AND_BIN_EXPR");
@@ -147,6 +148,9 @@ public interface RustCompositeElementTypes {
       }
       else if (type == DIV_BIN_EXPR) {
         return new RustDivBinExprImpl(node);
+      }
+      else if (type == DOC) {
+        return new RustDocImpl(node);
       }
       else if (type == ENUM_ITEM) {
         return new RustEnumItemImpl(node);

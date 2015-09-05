@@ -78,6 +78,9 @@ public class RustParser implements PsiParser, LightPsiParser {
     else if (t == DIV_BIN_EXPR) {
       r = expr(b, 0, 9);
     }
+    else if (t == DOC) {
+      r = doc(b, 0);
+    }
     else if (t == ENUM_ITEM) {
       r = enum_item(b, 0);
     }
@@ -542,6 +545,19 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // BLOCK_DOC_COMMENT | EOL_DOC_COMMENT
+  public static boolean doc(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "doc")) return false;
+    if (!nextTokenIs(b, "<doc>", BLOCK_DOC_COMMENT, EOL_DOC_COMMENT)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, "<doc>");
+    r = consumeToken(b, BLOCK_DOC_COMMENT);
+    if (!r) r = consumeToken(b, EOL_DOC_COMMENT);
+    exit_section_(b, l, m, DOC, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
   // ELSE (if_expr | if_let_expr | LBRACE block RBRACE)
   static boolean else_tail(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "else_tail")) return false;
@@ -896,7 +912,9 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // vis? mod_item
+  // doc*
+  //          attr*
+  //          vis? mod_item
   //        |      fn_item
   //        |      type_item
   //        |      struct_item
@@ -924,20 +942,48 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // vis? mod_item
+  // doc*
+  //          attr*
+  //          vis? mod_item
   private static boolean item_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "item_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = item_0_0(b, l + 1);
+    r = r && item_0_1(b, l + 1);
+    r = r && item_0_2(b, l + 1);
     r = r && mod_item(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // vis?
+  // doc*
   private static boolean item_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "item_0_0")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!doc(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "item_0_0", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  // attr*
+  private static boolean item_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "item_0_1")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!attr(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "item_0_1", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  // vis?
+  private static boolean item_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "item_0_2")) return false;
     vis(b, l + 1);
     return true;
   }

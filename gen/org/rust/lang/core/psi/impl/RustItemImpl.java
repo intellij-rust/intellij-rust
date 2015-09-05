@@ -22,9 +22,21 @@ public class RustItemImpl extends RustCompositeElementImpl implements RustItem {
   }
 
   @Override
+  @NotNull
+  public List<RustAttr> getAttrList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAttr.class);
+  }
+
+  @Override
   @Nullable
   public RustConstItem getConstItem() {
     return findChildByClass(RustConstItem.class);
+  }
+
+  @Override
+  @NotNull
+  public List<RustDoc> getDocList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustDoc.class);
   }
 
   @Override

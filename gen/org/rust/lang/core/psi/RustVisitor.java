@@ -83,6 +83,10 @@ public class RustVisitor extends PsiElementVisitor {
     visitBinaryExpr(o);
   }
 
+  public void visitDoc(@NotNull RustDoc o) {
+    visitCompositeElement(o);
+  }
+
   public void visitEnumItem(@NotNull RustEnumItem o) {
     visitCompositeElement(o);
   }

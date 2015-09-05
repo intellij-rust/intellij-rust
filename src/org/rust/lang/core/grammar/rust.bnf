@@ -34,10 +34,8 @@
         EQEQ                 =  '=='
         SHARP                =  '#'
         EXCL                 =  '!'
-        PLUSPLUS             =  '++'
         PLUSEQ               =  '+='
         PLUS                 =  '+'
-        MINUSMINUS           =  '--'
         MINUSEQ              =  '-='
         MINUS                =  '-'
         OROR                 =  '||'
@@ -155,7 +153,9 @@ file ::= item *
 
 private vis ::= PUB | PRIV
 
-item ::= vis? mod_item
+item ::= doc*
+         attr*
+         vis? mod_item
        |      fn_item
        |      type_item
        |      struct_item
@@ -165,6 +165,8 @@ item ::= vis? mod_item
        |      trait_item
        |      impl_item
        |      extern_block
+
+doc ::= BLOCK_DOC_COMMENT | EOL_DOC_COMMENT
 
 // TODO(kudinkin): Fix
 type_item ::= 'abc0'
