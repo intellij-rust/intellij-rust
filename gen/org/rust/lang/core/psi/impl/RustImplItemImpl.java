@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustImplItemImpl extends RustCompositeElementImpl implements RustImplItem {
+public class RustImplItemImpl extends RustNamedElementImpl implements RustImplItem {
 
   public RustImplItemImpl(ASTNode node) {
     super(node);

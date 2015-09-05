@@ -8,9 +8,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
+import org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin;
 import org.rust.lang.core.psi.*;
 
-public class RustFnItemImpl extends RustCompositeElementImpl implements RustFnItem {
+public class RustFnItemImpl extends RustFnItemImplMixin implements RustFnItem {
 
   public RustFnItemImpl(ASTNode node) {
     super(node);

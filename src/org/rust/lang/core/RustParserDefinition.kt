@@ -17,14 +17,14 @@ import org.rust.lang.core.lexer.RustLexer
 import org.rust.lang.core.parser.RustParser
 import org.rust.lang.core.lexer.RustTokenElementTypes.*
 import org.rust.lang.core.psi.RustCompositeElementTypes
-import org.rust.lang.core.psi.impl.RustPsiFileImpl
+import org.rust.lang.core.psi.impl.RustFileImpl
 
 public class RustParserDefinition : ParserDefinition {
 
     val RUST_FILE_TYPE: IFileElementType = IFileElementType(RustLanguage.INSTANCE)
 
     override fun createFile(viewProvider: FileViewProvider): PsiFile? =
-        RustPsiFileImpl(viewProvider)
+        RustFileImpl(viewProvider)
 
     override fun spaceExistanceTypeBetweenTokens(left: ASTNode?, right: ASTNode?): ParserDefinition.SpaceRequirements? {
         // TODO(kudinkin): Fix

@@ -8,9 +8,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
+import org.rust.lang.core.psi.impl.mixin.RustExprPathImplMixin;
 import org.rust.lang.core.psi.*;
 
-public class RustExprPathImpl extends RustExprImpl implements RustExprPath {
+public class RustExprPathImpl extends RustExprPathImplMixin implements RustExprPath {
 
   public RustExprPathImpl(ASTNode node) {
     super(node);
@@ -22,9 +23,21 @@ public class RustExprPathImpl extends RustExprImpl implements RustExprPath {
   }
 
   @Override
-  @NotNull
-  public List<RustExprPath> getExprPathList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExprPath.class);
+  @Nullable
+  public RustExprPath getExprPath() {
+    return findChildByClass(RustExprPath.class);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getGt() {
+    return findChildByType(GT);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getLt() {
+    return findChildByType(LT);
   }
 
   @Override

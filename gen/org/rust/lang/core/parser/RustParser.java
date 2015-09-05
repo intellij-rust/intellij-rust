@@ -2169,7 +2169,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // COLONCOLON? identifier (COLONCOLON expr_path_tail)*
+  // COLONCOLON? identifier [ COLONCOLON expr_path_tail ]
   public static boolean expr_path(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "expr_path")) return false;
     if (!nextTokenIsFast(b, COLONCOLON, IDENTIFIER)) return false;
@@ -2189,15 +2189,10 @@ public class RustParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // (COLONCOLON expr_path_tail)*
+  // [ COLONCOLON expr_path_tail ]
   private static boolean expr_path_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "expr_path_2")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!expr_path_2_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "expr_path_2", c)) break;
-      c = current_position_(b);
-    }
+    expr_path_2_0(b, l + 1);
     return true;
   }
 

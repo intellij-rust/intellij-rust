@@ -7,8 +7,14 @@ import com.intellij.psi.PsiElement;
 
 public interface RustExprPath extends RustExpr {
 
-  @NotNull
-  List<RustExprPath> getExprPathList();
+  @Nullable
+  RustExprPath getExprPath();
+
+  @Nullable
+  PsiElement getGt();
+
+  @Nullable
+  PsiElement getLt();
 
   @NotNull
   PsiElement getIdentifier();

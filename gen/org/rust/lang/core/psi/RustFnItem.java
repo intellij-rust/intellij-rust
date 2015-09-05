@@ -4,8 +4,9 @@ package org.rust.lang.core.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
+import org.rust.lang.core.resolve.scope.RustResolveScope;
 
-public interface RustFnItem extends RustCompositeElement {
+public interface RustFnItem extends RustResolveScope {
 
   @Nullable
   RustBlock getBlock();

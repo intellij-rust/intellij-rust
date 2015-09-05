@@ -3,6 +3,7 @@ package org.rust.lang.core.psi;
 
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
+import org.rust.lang.core.resolve.scope.RustResolveScope;
 
 public class RustVisitor extends PsiElementVisitor {
 
@@ -159,7 +160,7 @@ public class RustVisitor extends PsiElementVisitor {
   }
 
   public void visitFnItem(@NotNull RustFnItem o) {
-    visitCompositeElement(o);
+    visitResolveScope(o);
   }
 
   public void visitForExpr(@NotNull RustForExpr o) {
@@ -332,6 +333,10 @@ public class RustVisitor extends PsiElementVisitor {
 
   public void visitWhileLetExpr(@NotNull RustWhileLetExpr o) {
     visitExpr(o);
+  }
+
+  public void visitResolveScope(@NotNull RustResolveScope o) {
+    visitCompositeElement(o);
   }
 
   public void visitCompositeElement(@NotNull RustCompositeElement o) {

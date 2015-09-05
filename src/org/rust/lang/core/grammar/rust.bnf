@@ -127,6 +127,13 @@
         space       = 'regexp:\s+'
     ]
 
+    mixin       ("expr_path")="org.rust.lang.core.psi.impl.mixin.RustExprPathImplMixin"
+
+    implements  ("fn_item")="org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("fn_item")="org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
+
+    extends(".*_item")="org.rust.lang.core.psi.impl.RustNamedElementImpl"
+
     extends(".*_bin_expr")=binary_expr
     extends("(expr_path|.*_expr)")=expr
     extends(".*_stmt")=stmt
@@ -175,7 +182,10 @@ const_item ::= CONST decl_item EQ expr SEMICOLON
 
 static_item ::= STATIC decl_item EQ expr SEMICOLON
 
-fn_item ::= FN identifier fn_sig block {pin=1 recoverWhile="fn_item_recover"}
+fn_item ::= FN identifier fn_sig block {
+    pin=1
+    recoverWhile="fn_item_recover"
+}
 
 private fn_item_recover ::= !(<< skipUntilEOL >>)
 
@@ -351,7 +361,7 @@ unit_expr ::= LPAREN RPAREN
 
 tuple_expr ::= LPAREN expr ((COMMA expr)* | COMMA) RPAREN
 
-expr_path ::= COLONCOLON? identifier (COLONCOLON expr_path_tail)*
+expr_path ::= COLONCOLON? identifier [ COLONCOLON expr_path_tail ]
 
 private expr_path_tail ::= LT type_expr (COMMA type_expr)* GT | expr_path
 
