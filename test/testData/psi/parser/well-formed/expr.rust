@@ -6,7 +6,7 @@ fn test() -> u32 {
 
     x = y = z;      /* assignment + ; */
 
-    *x;             /* unary (+ ;) *
+    *x;             /* unary (+ ;) */
     &x;
 
     (x + y) * z;    /* parenthesized */
