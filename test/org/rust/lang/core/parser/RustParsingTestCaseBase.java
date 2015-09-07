@@ -5,6 +5,12 @@ import org.jetbrains.annotations.NonNls;
 import org.rust.lang.core.RustParserDefinition;
 
 public abstract class RustParsingTestCaseBase extends ParsingTestCase {
+
+    @Override
+    protected String getTestDataPath() {
+        return "test/testData";
+    }
+
     @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
     public RustParsingTestCaseBase(@NonNls final String dataPath) {
         super("psi/" + dataPath, "rust", true /*lowerCaseFirstLetter*/, new RustParserDefinition());
