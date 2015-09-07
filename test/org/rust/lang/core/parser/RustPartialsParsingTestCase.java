@@ -6,6 +6,7 @@ public class RustPartialsParsingTestCase extends RustParsingTestCaseBase {
         super("parser/ill-formed");
     }
 
-    public void testFn() { doTest(true); }
+    public void testFn()        { doTest(true); }
+    public void testUseItem()   { doTest(true); }
 
 }

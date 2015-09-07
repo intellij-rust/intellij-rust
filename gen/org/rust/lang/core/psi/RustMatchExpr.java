@@ -8,13 +8,13 @@ import com.intellij.psi.PsiElement;
 public interface RustMatchExpr extends RustExpr {
 
   @NotNull
-  List<RustAttr> getAttrList();
-
-  @NotNull
   List<RustBlock> getBlockList();
 
   @NotNull
   List<RustExpr> getExprList();
+
+  @NotNull
+  List<RustOuterAttr> getOuterAttrList();
 
   @NotNull
   PsiElement getMatch();

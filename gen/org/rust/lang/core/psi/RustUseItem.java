@@ -5,18 +5,15 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustAttr extends RustCompositeElement {
+public interface RustUseItem extends RustCompositeElement {
+
+  @NotNull
+  RustViewPath getViewPath();
 
   @Nullable
-  PsiElement getExcl();
+  PsiElement getSemicolon();
 
   @NotNull
-  PsiElement getLbrack();
-
-  @NotNull
-  PsiElement getRbrack();
-
-  @NotNull
-  PsiElement getSharp();
+  PsiElement getUse();
 
 }

@@ -29,14 +29,20 @@ public class RustModItemImpl extends RustNamedElementImpl implements RustModItem
 
   @Override
   @NotNull
+  public List<RustExternFnItem> getExternFnItemList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExternFnItem.class);
+  }
+
+  @Override
+  @NotNull
   public List<RustItem> getItemList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustItem.class);
   }
 
   @Override
   @NotNull
-  public List<RustUseDecl> getUseDeclList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustUseDecl.class);
+  public List<RustUseItem> getUseItemList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustUseItem.class);
   }
 
   @Override
@@ -55,6 +61,12 @@ public class RustModItemImpl extends RustNamedElementImpl implements RustModItem
   @Nullable
   public PsiElement getRbrace() {
     return findChildByType(RBRACE);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getSemicolon() {
+    return findChildByType(SEMICOLON);
   }
 
   @Override

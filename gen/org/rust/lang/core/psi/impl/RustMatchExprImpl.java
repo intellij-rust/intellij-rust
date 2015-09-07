@@ -23,12 +23,6 @@ public class RustMatchExprImpl extends RustExprImpl implements RustMatchExpr {
 
   @Override
   @NotNull
-  public List<RustAttr> getAttrList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAttr.class);
-  }
-
-  @Override
-  @NotNull
   public List<RustBlock> getBlockList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustBlock.class);
   }
@@ -37,6 +31,12 @@ public class RustMatchExprImpl extends RustExprImpl implements RustMatchExpr {
   @NotNull
   public List<RustExpr> getExprList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
+  }
+
+  @Override
+  @NotNull
+  public List<RustOuterAttr> getOuterAttrList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustOuterAttr.class);
   }
 
   @Override

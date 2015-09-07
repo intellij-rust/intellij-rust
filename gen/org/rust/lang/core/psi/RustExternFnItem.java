@@ -5,18 +5,15 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustExternCrateDecl extends RustCompositeElement {
+public interface RustExternFnItem extends RustCompositeElement {
 
   @Nullable
-  PsiElement getAs();
+  RustAbi getAbi();
 
   @NotNull
-  PsiElement getCrate();
+  RustFnItem getFnItem();
 
   @NotNull
   PsiElement getExtern();
-
-  @NotNull
-  PsiElement getSemicolon();
 
 }

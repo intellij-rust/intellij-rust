@@ -10,39 +10,45 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustAttrImpl extends RustCompositeElementImpl implements RustAttr {
+public class RustInnerAttrImpl extends RustCompositeElementImpl implements RustInnerAttr {
 
-  public RustAttrImpl(ASTNode node) {
+  public RustInnerAttrImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitAttr(this);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitInnerAttr(this);
     else super.accept(visitor);
   }
 
   @Override
   @Nullable
-  public PsiElement getExcl() {
-    return findChildByType(EXCL);
+  public RustMetaItem getMetaItem() {
+    return findChildByClass(RustMetaItem.class);
   }
 
   @Override
-  @NotNull
+  @Nullable
+  public PsiElement getInnerDocComment() {
+    return findChildByType(INNER_DOC_COMMENT);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getLbrack() {
-    return findNotNullChildByType(LBRACK);
+    return findChildByType(LBRACK);
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getRbrack() {
-    return findNotNullChildByType(RBRACK);
+    return findChildByType(RBRACK);
   }
 
   @Override
-  @NotNull
-  public PsiElement getSharp() {
-    return findNotNullChildByType(SHARP);
+  @Nullable
+  public PsiElement getShebang() {
+    return findChildByType(SHEBANG);
   }
 
 }

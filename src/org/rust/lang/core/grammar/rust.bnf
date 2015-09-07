@@ -32,7 +32,8 @@
         EQ                   =  '='
         EXCLEQ               =  '!='
         EQEQ                 =  '=='
-        SHARP                =  '#'
+        SHA                  =  '#'
+        SHEBANG              =  '#!'
         EXCL                 =  '!'
         PLUSEQ               =  '+='
         PLUS                 =  '+'
@@ -121,6 +122,8 @@
         WHILE     = 'while'
         YIELD     = 'yield'
 
+        SHEBANG_LINE = '#!'
+
         identifier  = 'regexp:\p{Alpha}\w*'
         space       = 'regexp:\s+'
     ]
@@ -141,33 +144,51 @@
     generateTokenAccessors=true
 }
 
-//
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // Root
-//
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
-file ::= item *
+crate ::= [ SHEBANG_LINE ] [ inner_attrs ] item *
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Attributes
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+private inner_attrs ::= inner_attr +
+inner_attr ::= SHEBANG LBRACK meta_item RBRACK | INNER_DOC_COMMENT
+
+meta_item ::= identifier [ EQ literal | LPAREN meta_seq RPAREN ]
+private meta_seq ::= meta_item [ COMMA meta_seq? ]
+
+private outer_attrs ::= outer_attr +
+outer_attr ::= SHA LBRACK meta_item RBRACK | OUTER_DOC_COMMENT
 
 
-//
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // Items
-//
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private vis ::= PUB | PRIV
+private vis ::= PUB
 
-item ::= doc*
-         attr*
-         vis? mod_item
-       |      fn_item
-       |      type_item
-       |      struct_item
-       |      enum_item
-       |      const_item
-       |      static_item
-       |      trait_item
-       |      impl_item
-       |      extern_block
+item ::= outer_attrs? vis?
+       ( stmt_item
+       | mod_item
+       | fn_item
+       | struct_item
+       | enum_item
+       | trait_item
+       | impl_item
+       | extern_block
+    /* | item_macro */)
 
-doc ::= BLOCK_DOC_COMMENT | EOL_DOC_COMMENT
+stmt_item ::= static_item
+            | const_item
+            | type_item
+            | block_item
+            | view_item
+
+
+block_item ::=
 
 // TODO(kudinkin): Fix
 type_item ::= 'abc0'
@@ -177,13 +198,44 @@ trait_item ::= 'abc4'
 impl_item ::= 'abc6'
 foreign_fn_item ::= 'abc3'
 
-extern_block ::= EXTERN LBRACE foreign_fn_item* RBRACE
-
 decl_item ::= identifier COLON type
+
+static_item ::= STATIC MUT? decl_item EQ expr SEMICOLON
 
 const_item ::= CONST decl_item EQ expr SEMICOLON
 
-static_item ::= STATIC decl_item EQ expr SEMICOLON
+private view_item ::= use_item
+                    | extern_fn_item
+                    | extern_crate_decl
+
+//use_item ::= vis? USE (path AS identifier | path_glob) SEMICOLON
+use_item ::= USE view_path SEMICOLON {pin=2}
+
+view_path ::= view_path_part? COLONCOLON LBRACE [ idents_or_self COMMA? ] RBRACE
+            | view_path_part  COLONCOLON MUL
+            |                            LBRACE [ idents_or_self COMMA? ] RBRACE
+            | view_path_part AS IDENTIFIER
+            | view_path_part
+
+private idents_or_self ::= (IDENTIFIER | SELF) [ AS IDENTIFIER ] (COMMA idents_or_self)*
+
+view_path_part ::= IDENTIFIER               view_path_part_right
+                 | COLONCOLON IDENTIFIER    view_path_part_right
+                 | SELF                     view_path_part_right
+                 | COLONCOLON SELF          view_path_part_right
+
+private view_path_part_right ::= [ COLONCOLON IDENTIFIER view_path_part_right ]
+
+abi ::= STRING_LITERAL
+
+extern_fn_item ::= EXTERN abi? fn_item
+
+extern_crate_decl ::= EXTERN CRATE create_name SEMICOLON
+
+private create_name ::= identifier | identifier AS identifier
+
+
+extern_block ::= EXTERN LBRACE foreign_fn_item* RBRACE
 
 fn_item ::= FN identifier fn_sig block {
     pin=1
@@ -199,13 +251,7 @@ mod_item ::= MOD identifier (SEMICOLON | LBRACE mod_content RBRACE)
 private mod_content ::= (view_item | item)*
 
 
-private view_item ::= extern_crate_decl | use_decl SEMICOLON
 
-extern_crate_decl ::= EXTERN CRATE create_name
-
-private create_name ::= identifier | identifier AS identifier
-
-use_decl ::= vis? USE (path AS identifier | path_glob)
 
 path_glob ::= identifier (COLONCOLON (path_glob | MUL))?
             | LBRACE path (COMMA path)* RBRACE
@@ -347,7 +393,7 @@ private pat ::= 'xyz1'
 
 match_expr ::= MATCH no_struct_lit_expr LBRACE match_arm* RBRACE
 
-private match_arm ::= attr* match_pat ARROW (expr COMMA | LBRACE block RBRACE)
+private match_arm ::= outer_attrs* match_pat ARROW (expr COMMA | LBRACE block RBRACE)
 private match_pat ::= pat (OR pat)* (IF expr)?
 
 if_expr ::= IF no_struct_lit_expr LBRACE block RBRACE else_tail?
@@ -431,14 +477,7 @@ private bool_literal ::= FALSE | TRUE
 private literal_suffix ::= identifier
 
 
-//
-// Attributes
-//
 
-attr ::= SHARP EXCL? LBRACK meta_item RBRACK
-
-private meta_item ::= identifier (EQ literal | LPAREN meta_item_seq RPAREN)?
-private meta_item_seq ::= meta_item [ COMMA meta_item_seq ]
 
 
 //

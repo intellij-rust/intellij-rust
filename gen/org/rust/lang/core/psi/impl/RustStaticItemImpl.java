@@ -40,6 +40,12 @@ public class RustStaticItemImpl extends RustNamedElementImpl implements RustStat
   }
 
   @Override
+  @Nullable
+  public PsiElement getMut() {
+    return findChildByType(MUT);
+  }
+
+  @Override
   @NotNull
   public PsiElement getSemicolon() {
     return findNotNullChildByType(SEMICOLON);

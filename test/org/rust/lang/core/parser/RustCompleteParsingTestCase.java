@@ -6,8 +6,8 @@ public class RustCompleteParsingTestCase extends RustParsingTestCaseBase {
         super("parser/well-formed");
     }
 
-    public void testFn()    { doTest(true); }
-    public void testExpr()  { doTest(true); }
-    public void testMod()   { doTest(true); }
-
+    public void testFn()        { doTest(true); }
+    public void testExpr()      { doTest(true); }
+    public void testMod()       { doTest(true); }
+    public void testUseItem()   { doTest(true); }
 }

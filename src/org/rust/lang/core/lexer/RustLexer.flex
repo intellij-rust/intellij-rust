@@ -87,6 +87,7 @@ SHEBANG_LINE=\#\!.*
   "]"                             { return RustTokenElementTypes.RBRACK; }
   "("                             { return RustTokenElementTypes.LPAREN; }
   ")"                             { return RustTokenElementTypes.RPAREN; }
+  "::"                            { return RustTokenElementTypes.COLONCOLON; }
   ":"                             { return RustTokenElementTypes.COLON; }
   ";"                             { return RustTokenElementTypes.SEMICOLON; }
   ","                             { return RustTokenElementTypes.COMMA; }

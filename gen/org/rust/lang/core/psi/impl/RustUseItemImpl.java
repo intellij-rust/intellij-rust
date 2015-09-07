@@ -10,27 +10,33 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustDocImpl extends RustCompositeElementImpl implements RustDoc {
+public class RustUseItemImpl extends RustNamedElementImpl implements RustUseItem {
 
-  public RustDocImpl(ASTNode node) {
+  public RustUseItemImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitDoc(this);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitUseItem(this);
     else super.accept(visitor);
   }
 
   @Override
-  @Nullable
-  public PsiElement getBlockDocComment() {
-    return findChildByType(BLOCK_DOC_COMMENT);
+  @NotNull
+  public RustViewPath getViewPath() {
+    return findNotNullChildByClass(RustViewPath.class);
   }
 
   @Override
   @Nullable
-  public PsiElement getEolDocComment() {
-    return findChildByType(EOL_DOC_COMMENT);
+  public PsiElement getSemicolon() {
+    return findChildByType(SEMICOLON);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getUse() {
+    return findNotNullChildByType(USE);
   }
 
 }

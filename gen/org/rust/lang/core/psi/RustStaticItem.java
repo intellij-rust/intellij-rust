@@ -16,6 +16,9 @@ public interface RustStaticItem extends RustCompositeElement {
   @NotNull
   PsiElement getEq();
 
+  @Nullable
+  PsiElement getMut();
+
   @NotNull
   PsiElement getSemicolon();
 

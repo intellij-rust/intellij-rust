@@ -5,12 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustDoc extends RustCompositeElement {
+public interface RustViewPathPart extends RustCompositeElement {
 
   @Nullable
-  PsiElement getBlockDocComment();
-
-  @Nullable
-  PsiElement getEolDocComment();
+  PsiElement getSelf();
 
 }

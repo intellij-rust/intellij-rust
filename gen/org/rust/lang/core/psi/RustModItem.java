@@ -11,10 +11,13 @@ public interface RustModItem extends RustCompositeElement {
   List<RustExternCrateDecl> getExternCrateDeclList();
 
   @NotNull
+  List<RustExternFnItem> getExternFnItemList();
+
+  @NotNull
   List<RustItem> getItemList();
 
   @NotNull
-  List<RustUseDecl> getUseDeclList();
+  List<RustUseItem> getUseItemList();
 
   @Nullable
   PsiElement getLbrace();
@@ -24,6 +27,9 @@ public interface RustModItem extends RustCompositeElement {
 
   @Nullable
   PsiElement getRbrace();
+
+  @Nullable
+  PsiElement getSemicolon();
 
   @NotNull
   PsiElement getIdentifier();

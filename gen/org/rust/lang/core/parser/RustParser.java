@@ -24,14 +24,14 @@ public class RustParser implements PsiParser, LightPsiParser {
     boolean r;
     b = adapt_builder_(t, b, this, EXTENDS_SETS_);
     Marker m = enter_section_(b, 0, _COLLAPSE_, null);
-    if (t == ARG_LIST) {
+    if (t == ABI) {
+      r = abi(b, 0);
+    }
+    else if (t == ARG_LIST) {
       r = arg_list(b, 0);
     }
     else if (t == ARRAY_EXPR) {
       r = array_expr(b, 0);
-    }
-    else if (t == ATTR) {
-      r = attr(b, 0);
     }
     else if (t == BIT_AND_BIN_EXPR) {
       r = expr(b, 0, 18);
@@ -53,6 +53,9 @@ public class RustParser implements PsiParser, LightPsiParser {
     }
     else if (t == BLOCK_EXPR) {
       r = block_expr(b, 0);
+    }
+    else if (t == BLOCK_ITEM) {
+      r = block_item(b, 0);
     }
     else if (t == BOOL_AND_BIN_EXPR) {
       r = expr(b, 0, 15);
@@ -80,9 +83,6 @@ public class RustParser implements PsiParser, LightPsiParser {
     }
     else if (t == DIV_BIN_EXPR) {
       r = expr(b, 0, 23);
-    }
-    else if (t == DOC) {
-      r = doc(b, 0);
     }
     else if (t == ENUM_ITEM) {
       r = enum_item(b, 0);
@@ -138,6 +138,9 @@ public class RustParser implements PsiParser, LightPsiParser {
     else if (t == EXTERN_CRATE_DECL) {
       r = extern_crate_decl(b, 0);
     }
+    else if (t == EXTERN_FN_ITEM) {
+      r = extern_fn_item(b, 0);
+    }
     else if (t == FIELD_EXPR) {
       r = expr(b, 0, 24);
     }
@@ -174,6 +177,9 @@ public class RustParser implements PsiParser, LightPsiParser {
     else if (t == INEQ_COMP_BIN_EXPR) {
       r = expr(b, 0, 19);
     }
+    else if (t == INNER_ATTR) {
+      r = inner_attr(b, 0);
+    }
     else if (t == ITEM) {
       r = item(b, 0);
     }
@@ -198,6 +204,9 @@ public class RustParser implements PsiParser, LightPsiParser {
     else if (t == MATCH_EXPR) {
       r = match_expr(b, 0);
     }
+    else if (t == META_ITEM) {
+      r = meta_item(b, 0);
+    }
     else if (t == METHOD_CALL_EXPR) {
       r = expr(b, 0, 24);
     }
@@ -212,6 +221,9 @@ public class RustParser implements PsiParser, LightPsiParser {
     }
     else if (t == OPEN_RANGE_EXPR) {
       r = open_range_expr(b, 0);
+    }
+    else if (t == OUTER_ATTR) {
+      r = outer_attr(b, 0);
     }
     else if (t == PAREN_EXPR) {
       r = paren_expr(b, 0);
@@ -237,6 +249,9 @@ public class RustParser implements PsiParser, LightPsiParser {
     else if (t == STMT) {
       r = stmt(b, 0);
     }
+    else if (t == STMT_ITEM) {
+      r = stmt_item(b, 0);
+    }
     else if (t == STRUCT_EXPR) {
       r = struct_expr(b, 0);
     }
@@ -258,8 +273,14 @@ public class RustParser implements PsiParser, LightPsiParser {
     else if (t == UNIT_EXPR) {
       r = unit_expr(b, 0);
     }
-    else if (t == USE_DECL) {
-      r = use_decl(b, 0);
+    else if (t == USE_ITEM) {
+      r = use_item(b, 0);
+    }
+    else if (t == VIEW_PATH) {
+      r = view_path(b, 0);
+    }
+    else if (t == VIEW_PATH_PART) {
+      r = view_path_part(b, 0);
     }
     else if (t == WHILE_EXPR) {
       r = while_expr(b, 0);
@@ -274,7 +295,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   protected boolean parse_root_(IElementType t, PsiBuilder b, int l) {
-    return file(b, l + 1);
+    return crate(b, l + 1);
   }
 
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
@@ -303,6 +324,18 @@ public class RustParser implements PsiParser, LightPsiParser {
       REM_BIN_EXPR, RET_EXPR, STRUCT_EXPR, TUPLE_EXPR,
       UNARY_EXPR, UNIT_EXPR, WHILE_EXPR, WHILE_LET_EXPR),
   };
+
+  /* ********************************************************** */
+  // STRING_LITERAL
+  public static boolean abi(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "abi")) return false;
+    if (!nextTokenIs(b, STRING_LITERAL)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, STRING_LITERAL);
+    exit_section_(b, m, ABI, r);
+    return r;
+  }
 
   /* ********************************************************** */
   // LPAREN expr_list RPAREN
@@ -388,29 +421,6 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // SHARP EXCL? LBRACK meta_item RBRACK
-  public static boolean attr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "attr")) return false;
-    if (!nextTokenIs(b, SHARP)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, SHARP);
-    r = r && attr_1(b, l + 1);
-    r = r && consumeToken(b, LBRACK);
-    r = r && meta_item(b, l + 1);
-    r = r && consumeToken(b, RBRACK);
-    exit_section_(b, m, ATTR, r);
-    return r;
-  }
-
-  // EXCL?
-  private static boolean attr_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "attr_1")) return false;
-    consumeToken(b, EXCL);
-    return true;
-  }
-
-  /* ********************************************************** */
   // LBRACE stmt* expr? RBRACE
   public static boolean block(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block")) return false;
@@ -446,6 +456,13 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  public static boolean block_item(PsiBuilder b, int l) {
+    Marker m = enter_section_(b);
+    exit_section_(b, m, BLOCK_ITEM, true);
+    return true;
+  }
+
+  /* ********************************************************** */
   // FALSE | TRUE
   static boolean bool_literal(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "bool_literal")) return false;
@@ -472,6 +489,45 @@ public class RustParser implements PsiParser, LightPsiParser {
     r = r && consumeToken(b, SEMICOLON);
     exit_section_(b, m, CONST_ITEM, r);
     return r;
+  }
+
+  /* ********************************************************** */
+  // [ SHEBANG_LINE ] [ inner_attrs ] item *
+  static boolean crate(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "crate")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = crate_0(b, l + 1);
+    r = r && crate_1(b, l + 1);
+    r = r && crate_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // [ SHEBANG_LINE ]
+  private static boolean crate_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "crate_0")) return false;
+    consumeToken(b, SHEBANG_LINE);
+    return true;
+  }
+
+  // [ inner_attrs ]
+  private static boolean crate_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "crate_1")) return false;
+    inner_attrs(b, l + 1);
+    return true;
+  }
+
+  // item *
+  private static boolean crate_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "crate_2")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!item(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "crate_2", c)) break;
+      c = current_position_(b);
+    }
+    return true;
   }
 
   /* ********************************************************** */
@@ -509,19 +565,6 @@ public class RustParser implements PsiParser, LightPsiParser {
     r = item(b, l + 1);
     if (!r) r = let_decl(b, l + 1);
     exit_section_(b, l, m, DECL_STMT, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // BLOCK_DOC_COMMENT | EOL_DOC_COMMENT
-  public static boolean doc(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "doc")) return false;
-    if (!nextTokenIs(b, "<doc>", BLOCK_DOC_COMMENT, EOL_DOC_COMMENT)) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, "<doc>");
-    r = consumeToken(b, BLOCK_DOC_COMMENT);
-    if (!r) r = consumeToken(b, EOL_DOC_COMMENT);
-    exit_section_(b, l, m, DOC, r, false, null);
     return r;
   }
 
@@ -702,7 +745,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // EXTERN CRATE create_name
+  // EXTERN CRATE create_name SEMICOLON
   public static boolean extern_crate_decl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "extern_crate_decl")) return false;
     if (!nextTokenIs(b, EXTERN)) return false;
@@ -710,20 +753,29 @@ public class RustParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeTokens(b, 0, EXTERN, CRATE);
     r = r && create_name(b, l + 1);
+    r = r && consumeToken(b, SEMICOLON);
     exit_section_(b, m, EXTERN_CRATE_DECL, r);
     return r;
   }
 
   /* ********************************************************** */
-  // item *
-  static boolean file(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "file")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!item(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "file", c)) break;
-      c = current_position_(b);
-    }
+  // EXTERN abi? fn_item
+  public static boolean extern_fn_item(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "extern_fn_item")) return false;
+    if (!nextTokenIs(b, EXTERN)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, EXTERN);
+    r = r && extern_fn_item_1(b, l + 1);
+    r = r && fn_item(b, l + 1);
+    exit_section_(b, m, EXTERN_FN_ITEM, r);
+    return r;
+  }
+
+  // abi?
+  private static boolean extern_fn_item_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "extern_fn_item_1")) return false;
+    abi(b, l + 1);
     return true;
   }
 
@@ -869,6 +921,61 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // (IDENTIFIER | SELF) [ AS IDENTIFIER ] (COMMA idents_or_self)*
+  static boolean idents_or_self(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "idents_or_self")) return false;
+    if (!nextTokenIs(b, "", IDENTIFIER, SELF)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = idents_or_self_0(b, l + 1);
+    r = r && idents_or_self_1(b, l + 1);
+    r = r && idents_or_self_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // IDENTIFIER | SELF
+  private static boolean idents_or_self_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "idents_or_self_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, IDENTIFIER);
+    if (!r) r = consumeToken(b, SELF);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // [ AS IDENTIFIER ]
+  private static boolean idents_or_self_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "idents_or_self_1")) return false;
+    parseTokens(b, 0, AS, IDENTIFIER);
+    return true;
+  }
+
+  // (COMMA idents_or_self)*
+  private static boolean idents_or_self_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "idents_or_self_2")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!idents_or_self_2_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "idents_or_self_2", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  // COMMA idents_or_self
+  private static boolean idents_or_self_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "idents_or_self_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    r = r && idents_or_self(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // 'abc6'
   public static boolean impl_item(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "impl_item")) return false;
@@ -880,80 +987,106 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // doc*
-  //          attr*
-  //          vis? mod_item
-  //        |      fn_item
-  //        |      type_item
-  //        |      struct_item
-  //        |      enum_item
-  //        |      const_item
-  //        |      static_item
-  //        |      trait_item
-  //        |      impl_item
-  //        |      extern_block
+  // SHEBANG LBRACK meta_item RBRACK | INNER_DOC_COMMENT
+  public static boolean inner_attr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "inner_attr")) return false;
+    if (!nextTokenIs(b, "<inner attr>", INNER_DOC_COMMENT, SHEBANG)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, "<inner attr>");
+    r = inner_attr_0(b, l + 1);
+    if (!r) r = consumeToken(b, INNER_DOC_COMMENT);
+    exit_section_(b, l, m, INNER_ATTR, r, false, null);
+    return r;
+  }
+
+  // SHEBANG LBRACK meta_item RBRACK
+  private static boolean inner_attr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "inner_attr_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, SHEBANG, LBRACK);
+    r = r && meta_item(b, l + 1);
+    r = r && consumeToken(b, RBRACK);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // inner_attr +
+  static boolean inner_attrs(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "inner_attrs")) return false;
+    if (!nextTokenIs(b, "", INNER_DOC_COMMENT, SHEBANG)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = inner_attr(b, l + 1);
+    int c = current_position_(b);
+    while (r) {
+      if (!inner_attr(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "inner_attrs", c)) break;
+      c = current_position_(b);
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // outer_attrs? vis?
+  //        ( stmt_item
+  //        | mod_item
+  //        | fn_item
+  //        | struct_item
+  //        | enum_item
+  //        | trait_item
+  //        | impl_item
+  //        | extern_block
+  //     /* | item_macro */)
   public static boolean item(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "item")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, "<item>");
     r = item_0(b, l + 1);
-    if (!r) r = fn_item(b, l + 1);
-    if (!r) r = type_item(b, l + 1);
-    if (!r) r = struct_item(b, l + 1);
-    if (!r) r = enum_item(b, l + 1);
-    if (!r) r = const_item(b, l + 1);
-    if (!r) r = static_item(b, l + 1);
-    if (!r) r = trait_item(b, l + 1);
-    if (!r) r = impl_item(b, l + 1);
-    if (!r) r = extern_block(b, l + 1);
+    r = r && item_1(b, l + 1);
+    r = r && item_2(b, l + 1);
     exit_section_(b, l, m, ITEM, r, false, null);
     return r;
   }
 
-  // doc*
-  //          attr*
-  //          vis? mod_item
+  // outer_attrs?
   private static boolean item_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "item_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = item_0_0(b, l + 1);
-    r = r && item_0_1(b, l + 1);
-    r = r && item_0_2(b, l + 1);
-    r = r && mod_item(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // doc*
-  private static boolean item_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "item_0_0")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!doc(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "item_0_0", c)) break;
-      c = current_position_(b);
-    }
-    return true;
-  }
-
-  // attr*
-  private static boolean item_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "item_0_1")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!attr(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "item_0_1", c)) break;
-      c = current_position_(b);
-    }
+    outer_attrs(b, l + 1);
     return true;
   }
 
   // vis?
-  private static boolean item_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "item_0_2")) return false;
+  private static boolean item_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "item_1")) return false;
     vis(b, l + 1);
     return true;
+  }
+
+  // stmt_item
+  //        | mod_item
+  //        | fn_item
+  //        | struct_item
+  //        | enum_item
+  //        | trait_item
+  //        | impl_item
+  //        | extern_block
+  private static boolean item_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "item_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = stmt_item(b, l + 1);
+    if (!r) r = mod_item(b, l + 1);
+    if (!r) r = fn_item(b, l + 1);
+    if (!r) r = struct_item(b, l + 1);
+    if (!r) r = enum_item(b, l + 1);
+    if (!r) r = trait_item(b, l + 1);
+    if (!r) r = impl_item(b, l + 1);
+    if (!r) r = extern_block(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -1062,7 +1195,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // attr* match_pat ARROW (expr COMMA | LBRACE block RBRACE)
+  // outer_attrs* match_pat ARROW (expr COMMA | LBRACE block RBRACE)
   static boolean match_arm(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "match_arm")) return false;
     boolean r;
@@ -1075,12 +1208,12 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // attr*
+  // outer_attrs*
   private static boolean match_arm_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "match_arm_0")) return false;
     int c = current_position_(b);
     while (true) {
-      if (!attr(b, l + 1)) break;
+      if (!outer_attrs(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "match_arm_0", c)) break;
       c = current_position_(b);
     }
@@ -1176,26 +1309,26 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // identifier (EQ literal | LPAREN meta_item_seq RPAREN)?
-  static boolean meta_item(PsiBuilder b, int l) {
+  // identifier [ EQ literal | LPAREN meta_seq RPAREN ]
+  public static boolean meta_item(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "meta_item")) return false;
     if (!nextTokenIs(b, IDENTIFIER)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, IDENTIFIER);
     r = r && meta_item_1(b, l + 1);
-    exit_section_(b, m, null, r);
+    exit_section_(b, m, META_ITEM, r);
     return r;
   }
 
-  // (EQ literal | LPAREN meta_item_seq RPAREN)?
+  // [ EQ literal | LPAREN meta_seq RPAREN ]
   private static boolean meta_item_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "meta_item_1")) return false;
     meta_item_1_0(b, l + 1);
     return true;
   }
 
-  // EQ literal | LPAREN meta_item_seq RPAREN
+  // EQ literal | LPAREN meta_seq RPAREN
   private static boolean meta_item_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "meta_item_1_0")) return false;
     boolean r;
@@ -1217,47 +1350,54 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // LPAREN meta_item_seq RPAREN
+  // LPAREN meta_seq RPAREN
   private static boolean meta_item_1_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "meta_item_1_0_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, LPAREN);
-    r = r && meta_item_seq(b, l + 1);
+    r = r && meta_seq(b, l + 1);
     r = r && consumeToken(b, RPAREN);
     exit_section_(b, m, null, r);
     return r;
   }
 
   /* ********************************************************** */
-  // meta_item [ COMMA meta_item_seq ]
-  static boolean meta_item_seq(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "meta_item_seq")) return false;
+  // meta_item [ COMMA meta_seq? ]
+  static boolean meta_seq(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "meta_seq")) return false;
     if (!nextTokenIs(b, IDENTIFIER)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = meta_item(b, l + 1);
-    r = r && meta_item_seq_1(b, l + 1);
+    r = r && meta_seq_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // [ COMMA meta_item_seq ]
-  private static boolean meta_item_seq_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "meta_item_seq_1")) return false;
-    meta_item_seq_1_0(b, l + 1);
+  // [ COMMA meta_seq? ]
+  private static boolean meta_seq_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "meta_seq_1")) return false;
+    meta_seq_1_0(b, l + 1);
     return true;
   }
 
-  // COMMA meta_item_seq
-  private static boolean meta_item_seq_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "meta_item_seq_1_0")) return false;
+  // COMMA meta_seq?
+  private static boolean meta_seq_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "meta_seq_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, COMMA);
-    r = r && meta_item_seq(b, l + 1);
+    r = r && meta_seq_1_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // meta_seq?
+  private static boolean meta_seq_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "meta_seq_1_0_1")) return false;
+    meta_seq(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */
@@ -1324,6 +1464,49 @@ public class RustParser implements PsiParser, LightPsiParser {
   // 'abc7'
   static boolean no_struct_lit_expr(PsiBuilder b, int l) {
     return consumeToken(b, "abc7");
+  }
+
+  /* ********************************************************** */
+  // SHA LBRACK meta_item RBRACK | OUTER_DOC_COMMENT
+  public static boolean outer_attr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "outer_attr")) return false;
+    if (!nextTokenIs(b, "<outer attr>", OUTER_DOC_COMMENT, SHA)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, "<outer attr>");
+    r = outer_attr_0(b, l + 1);
+    if (!r) r = consumeToken(b, OUTER_DOC_COMMENT);
+    exit_section_(b, l, m, OUTER_ATTR, r, false, null);
+    return r;
+  }
+
+  // SHA LBRACK meta_item RBRACK
+  private static boolean outer_attr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "outer_attr_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, SHA, LBRACK);
+    r = r && meta_item(b, l + 1);
+    r = r && consumeToken(b, RBRACK);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // outer_attr +
+  static boolean outer_attrs(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "outer_attrs")) return false;
+    if (!nextTokenIs(b, "", OUTER_DOC_COMMENT, SHA)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = outer_attr(b, l + 1);
+    int c = current_position_(b);
+    while (r) {
+      if (!outer_attr(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "outer_attrs", c)) break;
+      c = current_position_(b);
+    }
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -1436,19 +1619,27 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // STATIC decl_item EQ expr SEMICOLON
+  // STATIC MUT? decl_item EQ expr SEMICOLON
   public static boolean static_item(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "static_item")) return false;
     if (!nextTokenIs(b, STATIC)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, STATIC);
+    r = r && static_item_1(b, l + 1);
     r = r && decl_item(b, l + 1);
     r = r && consumeToken(b, EQ);
     r = r && expr(b, l + 1, -1);
     r = r && consumeToken(b, SEMICOLON);
     exit_section_(b, m, STATIC_ITEM, r);
     return r;
+  }
+
+  // MUT?
+  private static boolean static_item_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "static_item_1")) return false;
+    consumeToken(b, MUT);
+    return true;
   }
 
   /* ********************************************************** */
@@ -1460,6 +1651,25 @@ public class RustParser implements PsiParser, LightPsiParser {
     r = expr_stmt(b, l + 1);
     if (!r) r = decl_stmt(b, l + 1);
     exit_section_(b, l, m, STMT, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // static_item
+  //             | const_item
+  //             | type_item
+  //             | block_item
+  //             | view_item
+  public static boolean stmt_item(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "stmt_item")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, "<stmt item>");
+    r = static_item(b, l + 1);
+    if (!r) r = const_item(b, l + 1);
+    if (!r) r = type_item(b, l + 1);
+    if (!r) r = block_item(b, l + 1);
+    if (!r) r = view_item(b, l + 1);
+    exit_section_(b, l, m, STMT_ITEM, r, false, null);
     return r;
   }
 
@@ -1509,81 +1719,243 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // vis? USE (path AS identifier | path_glob)
-  public static boolean use_decl(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "use_decl")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, "<use decl>");
-    r = use_decl_0(b, l + 1);
-    r = r && consumeToken(b, USE);
-    r = r && use_decl_2(b, l + 1);
-    exit_section_(b, l, m, USE_DECL, r, false, null);
-    return r;
+  // USE view_path SEMICOLON
+  public static boolean use_item(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "use_item")) return false;
+    if (!nextTokenIs(b, USE)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = consumeToken(b, USE);
+    r = r && view_path(b, l + 1);
+    p = r; // pin = 2
+    r = r && consumeToken(b, SEMICOLON);
+    exit_section_(b, l, m, USE_ITEM, r, p, null);
+    return r || p;
   }
 
-  // vis?
-  private static boolean use_decl_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "use_decl_0")) return false;
-    vis(b, l + 1);
-    return true;
-  }
-
-  // path AS identifier | path_glob
-  private static boolean use_decl_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "use_decl_2")) return false;
+  /* ********************************************************** */
+  // use_item
+  //                     | extern_fn_item
+  //                     | extern_crate_decl
+  static boolean view_item(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_item")) return false;
+    if (!nextTokenIs(b, "", EXTERN, USE)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = use_decl_2_0(b, l + 1);
-    if (!r) r = path_glob(b, l + 1);
+    r = use_item(b, l + 1);
+    if (!r) r = extern_fn_item(b, l + 1);
+    if (!r) r = extern_crate_decl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // path AS identifier
-  private static boolean use_decl_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "use_decl_2_0")) return false;
+  /* ********************************************************** */
+  // view_path_part? COLONCOLON LBRACE [ idents_or_self COMMA? ] RBRACE
+  //             | view_path_part  COLONCOLON MUL
+  //             |                            LBRACE [ idents_or_self COMMA? ] RBRACE
+  //             | view_path_part AS IDENTIFIER
+  //             | view_path_part
+  public static boolean view_path(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, "<view path>");
+    r = view_path_0(b, l + 1);
+    if (!r) r = view_path_1(b, l + 1);
+    if (!r) r = view_path_2(b, l + 1);
+    if (!r) r = view_path_3(b, l + 1);
+    if (!r) r = view_path_part(b, l + 1);
+    exit_section_(b, l, m, VIEW_PATH, r, false, null);
+    return r;
+  }
+
+  // view_path_part? COLONCOLON LBRACE [ idents_or_self COMMA? ] RBRACE
+  private static boolean view_path_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = path(b, l + 1);
+    r = view_path_0_0(b, l + 1);
+    r = r && consumeTokens(b, 0, COLONCOLON, LBRACE);
+    r = r && view_path_0_3(b, l + 1);
+    r = r && consumeToken(b, RBRACE);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // view_path_part?
+  private static boolean view_path_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_0_0")) return false;
+    view_path_part(b, l + 1);
+    return true;
+  }
+
+  // [ idents_or_self COMMA? ]
+  private static boolean view_path_0_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_0_3")) return false;
+    view_path_0_3_0(b, l + 1);
+    return true;
+  }
+
+  // idents_or_self COMMA?
+  private static boolean view_path_0_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_0_3_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = idents_or_self(b, l + 1);
+    r = r && view_path_0_3_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // COMMA?
+  private static boolean view_path_0_3_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_0_3_0_1")) return false;
+    consumeToken(b, COMMA);
+    return true;
+  }
+
+  // view_path_part  COLONCOLON MUL
+  private static boolean view_path_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = view_path_part(b, l + 1);
+    r = r && consumeTokens(b, 0, COLONCOLON, MUL);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // LBRACE [ idents_or_self COMMA? ] RBRACE
+  private static boolean view_path_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LBRACE);
+    r = r && view_path_2_1(b, l + 1);
+    r = r && consumeToken(b, RBRACE);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // [ idents_or_self COMMA? ]
+  private static boolean view_path_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_2_1")) return false;
+    view_path_2_1_0(b, l + 1);
+    return true;
+  }
+
+  // idents_or_self COMMA?
+  private static boolean view_path_2_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_2_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = idents_or_self(b, l + 1);
+    r = r && view_path_2_1_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // COMMA?
+  private static boolean view_path_2_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_2_1_0_1")) return false;
+    consumeToken(b, COMMA);
+    return true;
+  }
+
+  // view_path_part AS IDENTIFIER
+  private static boolean view_path_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_3")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = view_path_part(b, l + 1);
     r = r && consumeTokens(b, 0, AS, IDENTIFIER);
     exit_section_(b, m, null, r);
     return r;
   }
 
   /* ********************************************************** */
-  // extern_crate_decl | use_decl SEMICOLON
-  static boolean view_item(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "view_item")) return false;
+  // IDENTIFIER               view_path_part_right
+  //                  | COLONCOLON IDENTIFIER    view_path_part_right
+  //                  | SELF                     view_path_part_right
+  //                  | COLONCOLON SELF          view_path_part_right
+  public static boolean view_path_part(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_part")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, "<view path part>");
+    r = view_path_part_0(b, l + 1);
+    if (!r) r = view_path_part_1(b, l + 1);
+    if (!r) r = view_path_part_2(b, l + 1);
+    if (!r) r = view_path_part_3(b, l + 1);
+    exit_section_(b, l, m, VIEW_PATH_PART, r, false, null);
+    return r;
+  }
+
+  // IDENTIFIER               view_path_part_right
+  private static boolean view_path_part_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_part_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = extern_crate_decl(b, l + 1);
-    if (!r) r = view_item_1(b, l + 1);
+    r = consumeToken(b, IDENTIFIER);
+    r = r && view_path_part_right(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // use_decl SEMICOLON
-  private static boolean view_item_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "view_item_1")) return false;
+  // COLONCOLON IDENTIFIER    view_path_part_right
+  private static boolean view_path_part_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_part_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = use_decl(b, l + 1);
-    r = r && consumeToken(b, SEMICOLON);
+    r = consumeTokens(b, 0, COLONCOLON, IDENTIFIER);
+    r = r && view_path_part_right(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // SELF                     view_path_part_right
+  private static boolean view_path_part_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_part_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, SELF);
+    r = r && view_path_part_right(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // COLONCOLON SELF          view_path_part_right
+  private static boolean view_path_part_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_part_3")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, COLONCOLON, SELF);
+    r = r && view_path_part_right(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   /* ********************************************************** */
-  // PUB | PRIV
-  static boolean vis(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "vis")) return false;
-    if (!nextTokenIs(b, "", PRIV, PUB)) return false;
+  // [ COLONCOLON IDENTIFIER view_path_part_right ]
+  static boolean view_path_part_right(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_part_right")) return false;
+    view_path_part_right_0(b, l + 1);
+    return true;
+  }
+
+  // COLONCOLON IDENTIFIER view_path_part_right
+  private static boolean view_path_part_right_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "view_path_part_right_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, PUB);
-    if (!r) r = consumeToken(b, PRIV);
+    r = consumeTokens(b, 0, COLONCOLON, IDENTIFIER);
+    r = r && view_path_part_right(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  /* ********************************************************** */
+  // PUB
+  static boolean vis(PsiBuilder b, int l) {
+    return consumeToken(b, PUB);
   }
 
   /* ********************************************************** */

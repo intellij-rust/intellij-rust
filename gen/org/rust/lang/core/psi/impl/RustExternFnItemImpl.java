@@ -10,39 +10,33 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustExternCrateDeclImpl extends RustCompositeElementImpl implements RustExternCrateDecl {
+public class RustExternFnItemImpl extends RustNamedElementImpl implements RustExternFnItem {
 
-  public RustExternCrateDeclImpl(ASTNode node) {
+  public RustExternFnItemImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitExternCrateDecl(this);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitExternFnItem(this);
     else super.accept(visitor);
   }
 
   @Override
   @Nullable
-  public PsiElement getAs() {
-    return findChildByType(AS);
+  public RustAbi getAbi() {
+    return findChildByClass(RustAbi.class);
   }
 
   @Override
   @NotNull
-  public PsiElement getCrate() {
-    return findNotNullChildByType(CRATE);
+  public RustFnItem getFnItem() {
+    return findNotNullChildByClass(RustFnItem.class);
   }
 
   @Override
   @NotNull
   public PsiElement getExtern() {
     return findNotNullChildByType(EXTERN);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getSemicolon() {
-    return findNotNullChildByType(SEMICOLON);
   }
 
 }

@@ -5,27 +5,21 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustUseDecl extends RustCompositeElement {
+public interface RustOuterAttr extends RustCompositeElement {
 
   @Nullable
-  RustPath getPath();
+  RustMetaItem getMetaItem();
 
   @Nullable
-  RustPathGlob getPathGlob();
+  PsiElement getLbrack();
 
   @Nullable
-  PsiElement getAs();
+  PsiElement getOuterDocComment();
 
   @Nullable
-  PsiElement getPriv();
+  PsiElement getRbrack();
 
   @Nullable
-  PsiElement getPub();
-
-  @NotNull
-  PsiElement getUse();
-
-  @Nullable
-  PsiElement getIdentifier();
+  PsiElement getSha();
 
 }

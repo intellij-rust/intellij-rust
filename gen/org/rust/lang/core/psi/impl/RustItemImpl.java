@@ -22,24 +22,6 @@ public class RustItemImpl extends RustCompositeElementImpl implements RustItem {
   }
 
   @Override
-  @NotNull
-  public List<RustAttr> getAttrList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAttr.class);
-  }
-
-  @Override
-  @Nullable
-  public RustConstItem getConstItem() {
-    return findChildByClass(RustConstItem.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustDoc> getDocList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustDoc.class);
-  }
-
-  @Override
   @Nullable
   public RustEnumItem getEnumItem() {
     return findChildByClass(RustEnumItem.class);
@@ -70,9 +52,15 @@ public class RustItemImpl extends RustCompositeElementImpl implements RustItem {
   }
 
   @Override
+  @NotNull
+  public List<RustOuterAttr> getOuterAttrList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustOuterAttr.class);
+  }
+
+  @Override
   @Nullable
-  public RustStaticItem getStaticItem() {
-    return findChildByClass(RustStaticItem.class);
+  public RustStmtItem getStmtItem() {
+    return findChildByClass(RustStmtItem.class);
   }
 
   @Override
@@ -85,18 +73,6 @@ public class RustItemImpl extends RustCompositeElementImpl implements RustItem {
   @Nullable
   public RustTraitItem getTraitItem() {
     return findChildByClass(RustTraitItem.class);
-  }
-
-  @Override
-  @Nullable
-  public RustTypeItem getTypeItem() {
-    return findChildByClass(RustTypeItem.class);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getPriv() {
-    return findChildByType(PRIV);
   }
 
   @Override
