@@ -40,7 +40,7 @@ public class RustParserDefinition : ParserDefinition {
         TokenSet.create(TokenType.WHITE_SPACE)
 
     override fun getCommentTokens() =
-        TokenSet.create(BLOCK_COMMENT, EOL_COMMENT, BLOCK_DOC_COMMENT, EOL_DOC_COMMENT)
+        TokenSet.create(BLOCK_COMMENT, EOL_COMMENT, INNER_DOC_COMMENT, OUTER_DOC_COMMENT)
 
     override fun createElement(node: ASTNode?): PsiElement =
         RustCompositeElementTypes.Factory.createElement(node)

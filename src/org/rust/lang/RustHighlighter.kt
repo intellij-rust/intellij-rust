@@ -71,8 +71,8 @@ public class RustHighlighter : SyntaxHighlighterBase() {
                     BLOCK_COMMENT       -> Colors.BLOCK_COMMENT
                     EOL_COMMENT         -> Colors.EOL_COMMENT
 
-                    BLOCK_DOC_COMMENT   -> Colors.DOC_COMMENT
-                    EOL_DOC_COMMENT     -> Colors.DOC_COMMENT
+                    INNER_DOC_COMMENT   -> Colors.DOC_COMMENT
+                    OUTER_DOC_COMMENT   -> Colors.DOC_COMMENT
 
                     LPAREN, RPAREN      -> Colors.PARENTHESIS
                     LBRACE, RBRACE      -> Colors.BRACES

@@ -10,13 +10,15 @@ public open class RustFileType : LanguageFileType(RustLanguage.INSTANCE) {
 
     public object INSTANCE : RustFileType() {}
 
-    private val DEFAULT_EXTENSION = "rst";
+    public object DEFAULTS {
+        public val EXTENSION: String = "rust";
+    }
 
     override fun getName(): String = "Rust"
 
     override fun getIcon(): Icon? = AllIcons.FileTypes.Java;
 
-    override fun getDefaultExtension(): String = DEFAULT_EXTENSION
+    override fun getDefaultExtension(): String = DEFAULTS.EXTENSION
 
     override fun getDescription(): String {
         return "Rust Files"
