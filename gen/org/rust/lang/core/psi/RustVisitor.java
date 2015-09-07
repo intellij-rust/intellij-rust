@@ -7,6 +7,10 @@ import org.rust.lang.core.resolve.scope.RustResolveScope;
 
 public class RustVisitor extends PsiElementVisitor {
 
+  public void visitArgList(@NotNull RustArgList o) {
+    visitCompositeElement(o);
+  }
+
   public void visitArrayExpr(@NotNull RustArrayExpr o) {
     visitExpr(o);
   }
@@ -175,12 +179,8 @@ public class RustVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitFullOpenExpr(@NotNull RustFullOpenExpr o) {
-    visitExpr(o);
-  }
-
   public void visitFullRangeExpr(@NotNull RustFullRangeExpr o) {
-    visitExpr(o);
+    visitRangeExpr(o);
   }
 
   public void visitGtCompBinExpr(@NotNull RustGtCompBinExpr o) {
@@ -216,10 +216,6 @@ public class RustVisitor extends PsiElementVisitor {
   }
 
   public void visitLambdaExpr(@NotNull RustLambdaExpr o) {
-    visitExpr(o);
-  }
-
-  public void visitLeftOpenExpr(@NotNull RustLeftOpenExpr o) {
     visitExpr(o);
   }
 
@@ -263,6 +259,10 @@ public class RustVisitor extends PsiElementVisitor {
     visitBinaryExpr(o);
   }
 
+  public void visitOpenRangeExpr(@NotNull RustOpenRangeExpr o) {
+    visitRangeExpr(o);
+  }
+
   public void visitParenExpr(@NotNull RustParenExpr o) {
     visitExpr(o);
   }
@@ -279,15 +279,15 @@ public class RustVisitor extends PsiElementVisitor {
     visitBinaryExpr(o);
   }
 
+  public void visitRangeExpr(@NotNull RustRangeExpr o) {
+    visitExpr(o);
+  }
+
   public void visitRemBinExpr(@NotNull RustRemBinExpr o) {
     visitBinaryExpr(o);
   }
 
   public void visitRetExpr(@NotNull RustRetExpr o) {
-    visitExpr(o);
-  }
-
-  public void visitRightOpenExpr(@NotNull RustRightOpenExpr o) {
     visitExpr(o);
   }
 

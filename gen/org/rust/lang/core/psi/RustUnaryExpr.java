@@ -11,6 +11,9 @@ public interface RustUnaryExpr extends RustExpr {
   RustExpr getExpr();
 
   @Nullable
+  PsiElement getAnd();
+
+  @Nullable
   PsiElement getExcl();
 
   @Nullable

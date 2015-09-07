@@ -7,19 +7,16 @@ import com.intellij.psi.PsiElement;
 
 public interface RustMethodCallExpr extends RustExpr {
 
+  @Nullable
+  RustArgList getArgList();
+
   @NotNull
-  List<RustExpr> getExprList();
+  RustExpr getExpr();
 
   @NotNull
   PsiElement getDot();
 
-  @NotNull
-  PsiElement getLparen();
-
-  @NotNull
-  PsiElement getRparen();
-
-  @NotNull
+  @Nullable
   PsiElement getIdentifier();
 
 }

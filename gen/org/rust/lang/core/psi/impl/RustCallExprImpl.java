@@ -23,20 +23,14 @@ public class RustCallExprImpl extends RustExprImpl implements RustCallExpr {
 
   @Override
   @NotNull
-  public List<RustExpr> getExprList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
+  public RustArgList getArgList() {
+    return findNotNullChildByClass(RustArgList.class);
   }
 
   @Override
   @NotNull
-  public PsiElement getLparen() {
-    return findNotNullChildByType(LPAREN);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getRparen() {
-    return findNotNullChildByType(RPAREN);
+  public RustExpr getExpr() {
+    return findNotNullChildByClass(RustExpr.class);
   }
 
 }

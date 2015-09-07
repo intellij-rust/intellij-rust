@@ -13,7 +13,7 @@ public interface RustFieldExpr extends RustExpr {
   @NotNull
   PsiElement getDot();
 
-  @NotNull
+  @Nullable
   PsiElement getIdentifier();
 
 }

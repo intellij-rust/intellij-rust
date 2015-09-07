@@ -24,26 +24,29 @@ public class RustParser implements PsiParser, LightPsiParser {
     boolean r;
     b = adapt_builder_(t, b, this, EXTENDS_SETS_);
     Marker m = enter_section_(b, 0, _COLLAPSE_, null);
-    if (t == ARRAY_EXPR) {
+    if (t == ARG_LIST) {
+      r = arg_list(b, 0);
+    }
+    else if (t == ARRAY_EXPR) {
       r = array_expr(b, 0);
     }
     else if (t == ATTR) {
       r = attr(b, 0);
     }
     else if (t == BIT_AND_BIN_EXPR) {
-      r = expr(b, 0, 4);
+      r = expr(b, 0, 18);
     }
     else if (t == BIT_LEFT_SHIFT_BIN_EXPR) {
-      r = expr(b, 0, 7);
+      r = expr(b, 0, 21);
     }
     else if (t == BIT_OR_BIN_EXPR) {
-      r = expr(b, 0, 2);
+      r = expr(b, 0, 16);
     }
     else if (t == BIT_RIGHT_SHIFT_BIN_EXPR) {
-      r = expr(b, 0, 7);
+      r = expr(b, 0, 21);
     }
     else if (t == BIT_XOR_BIN_EXPR) {
-      r = expr(b, 0, 3);
+      r = expr(b, 0, 17);
     }
     else if (t == BLOCK) {
       r = block(b, 0);
@@ -52,16 +55,16 @@ public class RustParser implements PsiParser, LightPsiParser {
       r = block_expr(b, 0);
     }
     else if (t == BOOL_AND_BIN_EXPR) {
-      r = expr(b, 0, 1);
+      r = expr(b, 0, 15);
     }
     else if (t == BOOL_OR_BIN_EXPR) {
-      r = expr(b, 0, 0);
+      r = expr(b, 0, 14);
     }
     else if (t == BREAK_EXPR) {
       r = break_expr(b, 0);
     }
     else if (t == CALL_EXPR) {
-      r = expr(b, 0, 31);
+      r = expr(b, 0, 24);
     }
     else if (t == CONST_ITEM) {
       r = const_item(b, 0);
@@ -76,7 +79,7 @@ public class RustParser implements PsiParser, LightPsiParser {
       r = decl_stmt(b, 0);
     }
     else if (t == DIV_BIN_EXPR) {
-      r = expr(b, 0, 9);
+      r = expr(b, 0, 23);
     }
     else if (t == DOC) {
       r = doc(b, 0);
@@ -85,40 +88,40 @@ public class RustParser implements PsiParser, LightPsiParser {
       r = enum_item(b, 0);
     }
     else if (t == EQ_BIN_EXPR) {
-      r = expr(b, 0, -1);
+      r = expr(b, 0, 0);
     }
     else if (t == EQ_BIT_AND_BIN_EXPR) {
-      r = expr(b, 0, -1);
+      r = expr(b, 0, 0);
     }
     else if (t == EQ_BIT_GTGT_BIN_EXPR) {
-      r = expr(b, 0, -1);
+      r = expr(b, 0, 0);
     }
     else if (t == EQ_BIT_LTLT_BIN_EXPR) {
-      r = expr(b, 0, -1);
+      r = expr(b, 0, 0);
     }
     else if (t == EQ_BIT_OR_BIN_EXPR) {
-      r = expr(b, 0, -1);
+      r = expr(b, 0, 0);
     }
     else if (t == EQ_BIT_XOR_BIN_EXPR) {
-      r = expr(b, 0, -1);
+      r = expr(b, 0, 0);
     }
     else if (t == EQ_COMP_BIN_EXPR) {
-      r = expr(b, 0, 5);
+      r = expr(b, 0, 19);
     }
     else if (t == EQ_DIV_BIN_EXPR) {
-      r = expr(b, 0, -1);
+      r = expr(b, 0, 0);
     }
     else if (t == EQ_MINUS_BIN_EXPR) {
-      r = expr(b, 0, -1);
+      r = expr(b, 0, 0);
     }
     else if (t == EQ_MUL_BIN_EXPR) {
-      r = expr(b, 0, -1);
+      r = expr(b, 0, 0);
     }
     else if (t == EQ_PLUS_BIN_EXPR) {
-      r = expr(b, 0, -1);
+      r = expr(b, 0, 0);
     }
     else if (t == EQ_REM_BIN_EXPR) {
-      r = expr(b, 0, -1);
+      r = expr(b, 0, 0);
     }
     else if (t == EXPR) {
       r = expr(b, 0, -1);
@@ -136,7 +139,7 @@ public class RustParser implements PsiParser, LightPsiParser {
       r = extern_crate_decl(b, 0);
     }
     else if (t == FIELD_EXPR) {
-      r = expr(b, 0, 33);
+      r = expr(b, 0, 24);
     }
     else if (t == FN_ITEM) {
       r = fn_item(b, 0);
@@ -147,17 +150,14 @@ public class RustParser implements PsiParser, LightPsiParser {
     else if (t == FOREIGN_FN_ITEM) {
       r = foreign_fn_item(b, 0);
     }
-    else if (t == FULL_OPEN_EXPR) {
-      r = full_open_expr(b, 0);
-    }
     else if (t == FULL_RANGE_EXPR) {
-      r = expr(b, 0, 29);
+      r = expr(b, 0, 13);
     }
     else if (t == GT_COMP_BIN_EXPR) {
-      r = expr(b, 0, 6);
+      r = expr(b, 0, 20);
     }
     else if (t == GTEQ_COMP_BIN_EXPR) {
-      r = expr(b, 0, 6);
+      r = expr(b, 0, 20);
     }
     else if (t == IF_EXPR) {
       r = if_expr(b, 0);
@@ -169,19 +169,16 @@ public class RustParser implements PsiParser, LightPsiParser {
       r = impl_item(b, 0);
     }
     else if (t == INDEX_EXPR) {
-      r = expr(b, 0, 30);
+      r = expr(b, 0, 24);
     }
     else if (t == INEQ_COMP_BIN_EXPR) {
-      r = expr(b, 0, 5);
+      r = expr(b, 0, 19);
     }
     else if (t == ITEM) {
       r = item(b, 0);
     }
     else if (t == LAMBDA_EXPR) {
       r = lambda_expr(b, 0);
-    }
-    else if (t == LEFT_OPEN_EXPR) {
-      r = left_open_expr(b, 0);
     }
     else if (t == LET_DECL) {
       r = let_decl(b, 0);
@@ -193,25 +190,28 @@ public class RustParser implements PsiParser, LightPsiParser {
       r = loop_expr(b, 0);
     }
     else if (t == LT_COMP_BIN_EXPR) {
-      r = expr(b, 0, 6);
+      r = expr(b, 0, 20);
     }
     else if (t == LTEQ_COMP_BIN_EXPR) {
-      r = expr(b, 0, 6);
+      r = expr(b, 0, 20);
     }
     else if (t == MATCH_EXPR) {
       r = match_expr(b, 0);
     }
     else if (t == METHOD_CALL_EXPR) {
-      r = expr(b, 0, 32);
+      r = expr(b, 0, 24);
     }
     else if (t == MINUS_BIN_EXPR) {
-      r = expr(b, 0, 8);
+      r = expr(b, 0, 22);
     }
     else if (t == MOD_ITEM) {
       r = mod_item(b, 0);
     }
     else if (t == MUL_BIN_EXPR) {
-      r = expr(b, 0, 9);
+      r = expr(b, 0, 23);
+    }
+    else if (t == OPEN_RANGE_EXPR) {
+      r = open_range_expr(b, 0);
     }
     else if (t == PAREN_EXPR) {
       r = paren_expr(b, 0);
@@ -223,16 +223,13 @@ public class RustParser implements PsiParser, LightPsiParser {
       r = path_glob(b, 0);
     }
     else if (t == PLUS_BIN_EXPR) {
-      r = expr(b, 0, 8);
+      r = expr(b, 0, 22);
     }
     else if (t == REM_BIN_EXPR) {
-      r = expr(b, 0, 9);
+      r = expr(b, 0, 23);
     }
     else if (t == RET_EXPR) {
       r = ret_expr(b, 0);
-    }
-    else if (t == RIGHT_OPEN_EXPR) {
-      r = expr(b, 0, 29);
     }
     else if (t == STATIC_ITEM) {
       r = static_item(b, 0);
@@ -281,6 +278,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
+    create_token_set_(FULL_RANGE_EXPR, OPEN_RANGE_EXPR),
     create_token_set_(DECL_STMT, EXPR_STMT, STMT),
     create_token_set_(BIT_AND_BIN_EXPR, BIT_LEFT_SHIFT_BIN_EXPR, BIT_OR_BIN_EXPR, BIT_RIGHT_SHIFT_BIN_EXPR,
       BIT_XOR_BIN_EXPR, BOOL_AND_BIN_EXPR, BOOL_OR_BIN_EXPR, DIV_BIN_EXPR,
@@ -297,108 +295,79 @@ public class RustParser implements PsiParser, LightPsiParser {
       EQ_BIT_LTLT_BIN_EXPR, EQ_BIT_OR_BIN_EXPR, EQ_BIT_XOR_BIN_EXPR, EQ_COMP_BIN_EXPR,
       EQ_DIV_BIN_EXPR, EQ_MINUS_BIN_EXPR, EQ_MUL_BIN_EXPR, EQ_PLUS_BIN_EXPR,
       EQ_REM_BIN_EXPR, EXPR, EXPR_PATH, FIELD_EXPR,
-      FOR_EXPR, FULL_OPEN_EXPR, FULL_RANGE_EXPR, GTEQ_COMP_BIN_EXPR,
-      GT_COMP_BIN_EXPR, IF_EXPR, IF_LET_EXPR, INDEX_EXPR,
-      INEQ_COMP_BIN_EXPR, LAMBDA_EXPR, LEFT_OPEN_EXPR, LITERAL_EXPR,
-      LOOP_EXPR, LTEQ_COMP_BIN_EXPR, LT_COMP_BIN_EXPR, MATCH_EXPR,
-      METHOD_CALL_EXPR, MINUS_BIN_EXPR, MUL_BIN_EXPR, PAREN_EXPR,
-      PLUS_BIN_EXPR, REM_BIN_EXPR, RET_EXPR, RIGHT_OPEN_EXPR,
-      STRUCT_EXPR, TUPLE_EXPR, UNARY_EXPR, UNIT_EXPR,
-      WHILE_EXPR, WHILE_LET_EXPR),
+      FOR_EXPR, FULL_RANGE_EXPR, GTEQ_COMP_BIN_EXPR, GT_COMP_BIN_EXPR,
+      IF_EXPR, IF_LET_EXPR, INDEX_EXPR, INEQ_COMP_BIN_EXPR,
+      LAMBDA_EXPR, LITERAL_EXPR, LOOP_EXPR, LTEQ_COMP_BIN_EXPR,
+      LT_COMP_BIN_EXPR, MATCH_EXPR, METHOD_CALL_EXPR, MINUS_BIN_EXPR,
+      MUL_BIN_EXPR, OPEN_RANGE_EXPR, PAREN_EXPR, PLUS_BIN_EXPR,
+      REM_BIN_EXPR, RET_EXPR, STRUCT_EXPR, TUPLE_EXPR,
+      UNARY_EXPR, UNIT_EXPR, WHILE_EXPR, WHILE_LET_EXPR),
   };
 
   /* ********************************************************** */
-  // pat (OR pat)* (IF expr)?
-  static boolean MatchPattern(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "MatchPattern")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = pat(b, l + 1);
-    r = r && MatchPattern_1(b, l + 1);
-    r = r && MatchPattern_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (OR pat)*
-  private static boolean MatchPattern_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "MatchPattern_1")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!MatchPattern_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "MatchPattern_1", c)) break;
-      c = current_position_(b);
-    }
-    return true;
-  }
-
-  // OR pat
-  private static boolean MatchPattern_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "MatchPattern_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, OR);
-    r = r && pat(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (IF expr)?
-  private static boolean MatchPattern_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "MatchPattern_2")) return false;
-    MatchPattern_2_0(b, l + 1);
-    return true;
-  }
-
-  // IF expr
-  private static boolean MatchPattern_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "MatchPattern_2_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, IF);
-    r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, null, r);
-    return r;
+  // LPAREN expr_list RPAREN
+  public static boolean arg_list(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arg_list")) return false;
+    if (!nextTokenIs(b, LPAREN)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = consumeToken(b, LPAREN);
+    p = r; // pin = 1
+    r = r && report_error_(b, expr_list(b, l + 1));
+    r = p && consumeToken(b, RPAREN) && r;
+    exit_section_(b, l, m, ARG_LIST, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
-  // (expr (COMMA expr)*) | (expr SEMICOLON expr)
+  // expr [ (COMMA expr)+ | SEMICOLON expr ]
   static boolean array_elems(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "array_elems")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = array_elems_0(b, l + 1);
-    if (!r) r = array_elems_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // expr (COMMA expr)*
-  private static boolean array_elems_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "array_elems_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
     r = expr(b, l + 1, -1);
-    r = r && array_elems_0_1(b, l + 1);
+    r = r && array_elems_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // (COMMA expr)*
-  private static boolean array_elems_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "array_elems_0_1")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!array_elems_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "array_elems_0_1", c)) break;
-      c = current_position_(b);
-    }
+  // [ (COMMA expr)+ | SEMICOLON expr ]
+  private static boolean array_elems_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "array_elems_1")) return false;
+    array_elems_1_0(b, l + 1);
     return true;
   }
 
+  // (COMMA expr)+ | SEMICOLON expr
+  private static boolean array_elems_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "array_elems_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = array_elems_1_0_0(b, l + 1);
+    if (!r) r = array_elems_1_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (COMMA expr)+
+  private static boolean array_elems_1_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "array_elems_1_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = array_elems_1_0_0_0(b, l + 1);
+    int c = current_position_(b);
+    while (r) {
+      if (!array_elems_1_0_0_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "array_elems_1_0_0", c)) break;
+      c = current_position_(b);
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
   // COMMA expr
-  private static boolean array_elems_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "array_elems_0_1_0")) return false;
+  private static boolean array_elems_1_0_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "array_elems_1_0_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, COMMA);
@@ -407,13 +376,12 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // expr SEMICOLON expr
-  private static boolean array_elems_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "array_elems_1")) return false;
+  // SEMICOLON expr
+  private static boolean array_elems_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "array_elems_1_0_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = expr(b, l + 1, -1);
-    r = r && consumeToken(b, SEMICOLON);
+    r = consumeToken(b, SEMICOLON);
     r = r && expr(b, l + 1, -1);
     exit_section_(b, m, null, r);
     return r;
@@ -606,7 +574,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (expr (COMMA expr)*)?
+  // [ expr (COMMA expr)* ]
   static boolean expr_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "expr_list")) return false;
     expr_list_0(b, l + 1);
@@ -1094,13 +1062,13 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // attr* MatchPattern ARROW (expr COMMA | LBRACE block RBRACE)
+  // attr* match_pat ARROW (expr COMMA | LBRACE block RBRACE)
   static boolean match_arm(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "match_arm")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = match_arm_0(b, l + 1);
-    r = r && MatchPattern(b, l + 1);
+    r = r && match_pat(b, l + 1);
     r = r && consumeToken(b, ARROW);
     r = r && match_arm_3(b, l + 1);
     exit_section_(b, m, null, r);
@@ -1149,6 +1117,60 @@ public class RustParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, LBRACE);
     r = r && block(b, l + 1);
     r = r && consumeToken(b, RBRACE);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // pat (OR pat)* (IF expr)?
+  static boolean match_pat(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "match_pat")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = pat(b, l + 1);
+    r = r && match_pat_1(b, l + 1);
+    r = r && match_pat_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (OR pat)*
+  private static boolean match_pat_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "match_pat_1")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!match_pat_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "match_pat_1", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  // OR pat
+  private static boolean match_pat_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "match_pat_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, OR);
+    r = r && pat(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (IF expr)?
+  private static boolean match_pat_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "match_pat_2")) return false;
+    match_pat_2_0(b, l + 1);
+    return true;
+  }
+
+  // IF expr
+  private static boolean match_pat_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "match_pat_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, IF);
+    r = r && expr(b, l + 1, -1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -1302,20 +1324,6 @@ public class RustParser implements PsiParser, LightPsiParser {
   // 'abc7'
   static boolean no_struct_lit_expr(PsiBuilder b, int l) {
     return consumeToken(b, "abc7");
-  }
-
-  /* ********************************************************** */
-  // LPAREN expr_list RPAREN
-  static boolean par_expr_list(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "par_expr_list")) return false;
-    if (!nextTokenIs(b, LPAREN)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LPAREN);
-    r = r && expr_list(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */
@@ -1581,51 +1589,38 @@ public class RustParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // Expression root: expr
   // Operator priority table:
-  // 0: BINARY(eq_bin_expr) BINARY(eq_bit_or_bin_expr) BINARY(eq_bit_xor_bin_expr) BINARY(eq_bit_and_bin_expr) BINARY(eq_bit_gtgt_bin_expr) BINARY(eq_bit_ltlt_bin_expr) BINARY(eq_plus_bin_expr) BINARY(eq_minus_bin_expr) BINARY(eq_mul_bin_expr) BINARY(eq_div_bin_expr) BINARY(eq_rem_bin_expr)
-  // 1: BINARY(bool_or_bin_expr)
-  // 2: BINARY(bool_and_bin_expr)
-  // 3: BINARY(bit_or_bin_expr)
-  // 4: BINARY(bit_xor_bin_expr)
-  // 5: BINARY(bit_and_bin_expr)
-  // 6: BINARY(eq_comp_bin_expr) BINARY(ineq_comp_bin_expr)
-  // 7: BINARY(lt_comp_bin_expr) BINARY(gt_comp_bin_expr) BINARY(lteq_comp_bin_expr) BINARY(gteq_comp_bin_expr)
-  // 8: BINARY(bit_left_shift_bin_expr) BINARY(bit_right_shift_bin_expr)
-  // 9: BINARY(plus_bin_expr) BINARY(minus_bin_expr)
-  // 10: BINARY(mul_bin_expr) BINARY(div_bin_expr) BINARY(rem_bin_expr)
-  // 11: PREFIX(unary_expr)
-  // 12: ATOM(block_expr)
+  // 0: ATOM(ret_expr)
+  // 1: BINARY(eq_bin_expr) BINARY(eq_bit_or_bin_expr) BINARY(eq_bit_xor_bin_expr) BINARY(eq_bit_and_bin_expr) BINARY(eq_bit_gtgt_bin_expr) BINARY(eq_bit_ltlt_bin_expr) BINARY(eq_plus_bin_expr) BINARY(eq_minus_bin_expr) BINARY(eq_mul_bin_expr) BINARY(eq_div_bin_expr) BINARY(eq_rem_bin_expr)
+  // 2: ATOM(while_expr)
+  // 3: ATOM(loop_expr)
+  // 4: ATOM(cont_expr)
+  // 5: ATOM(break_expr)
+  // 6: ATOM(for_expr)
+  // 7: ATOM(if_expr)
+  // 8: ATOM(match_expr)
+  // 9: ATOM(if_let_expr)
+  // 10: PREFIX(while_let_expr)
+  // 11: ATOM(block_expr)
+  // 12: ATOM(struct_expr)
   // 13: PREFIX(lambda_expr)
-  // 14: ATOM(struct_expr)
-  // 15: ATOM(while_expr)
-  // 16: ATOM(loop_expr)
-  // 17: ATOM(cont_expr)
-  // 18: ATOM(break_expr)
-  // 19: ATOM(for_expr)
-  // 20: ATOM(if_expr)
-  // 21: ATOM(match_expr)
-  // 22: ATOM(if_let_expr)
-  // 23: PREFIX(while_let_expr)
-  // 24: ATOM(ret_expr)
-  // 25: ATOM(expr_path)
-  // 26: PREFIX(paren_expr)
-  // 27: ATOM(tuple_expr)
-  // 28: ATOM(unit_expr)
-  // 29: ATOM(array_expr)
-  // 30: BINARY(full_range_expr) POSTFIX(right_open_expr) PREFIX(left_open_expr) ATOM(full_open_expr)
-  // 31: BINARY(index_expr)
-  // 32: POSTFIX(call_expr)
-  // 33: POSTFIX(method_call_expr)
-  // 34: POSTFIX(field_expr)
-  // 35: ATOM(literal_expr)
+  // 14: ATOM(open_range_expr) POSTFIX(full_range_expr)
+  // 15: BINARY(bool_or_bin_expr)
+  // 16: BINARY(bool_and_bin_expr)
+  // 17: BINARY(bit_or_bin_expr)
+  // 18: BINARY(bit_xor_bin_expr)
+  // 19: BINARY(bit_and_bin_expr)
+  // 20: BINARY(eq_comp_bin_expr) BINARY(ineq_comp_bin_expr)
+  // 21: BINARY(lt_comp_bin_expr) BINARY(gt_comp_bin_expr) BINARY(lteq_comp_bin_expr) BINARY(gteq_comp_bin_expr)
+  // 22: BINARY(bit_left_shift_bin_expr) BINARY(bit_right_shift_bin_expr)
+  // 23: BINARY(plus_bin_expr) BINARY(minus_bin_expr)
+  // 24: BINARY(mul_bin_expr) BINARY(div_bin_expr) BINARY(rem_bin_expr)
+  // 25: ATOM(literal_expr) ATOM(expr_path) POSTFIX(field_expr) POSTFIX(method_call_expr) BINARY(index_expr) POSTFIX(call_expr) ATOM(array_expr) ATOM(tuple_expr) ATOM(unit_expr) PREFIX(paren_expr) PREFIX(unary_expr)
   public static boolean expr(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expr")) return false;
     addVariant(b, "<expr>");
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, "<expr>");
-    r = unary_expr(b, l + 1);
-    if (!r) r = block_expr(b, l + 1);
-    if (!r) r = lambda_expr(b, l + 1);
-    if (!r) r = struct_expr(b, l + 1);
+    r = ret_expr(b, l + 1);
     if (!r) r = while_expr(b, l + 1);
     if (!r) r = loop_expr(b, l + 1);
     if (!r) r = cont_expr(b, l + 1);
@@ -1635,14 +1630,17 @@ public class RustParser implements PsiParser, LightPsiParser {
     if (!r) r = match_expr(b, l + 1);
     if (!r) r = if_let_expr(b, l + 1);
     if (!r) r = while_let_expr(b, l + 1);
-    if (!r) r = ret_expr(b, l + 1);
+    if (!r) r = block_expr(b, l + 1);
+    if (!r) r = struct_expr(b, l + 1);
+    if (!r) r = lambda_expr(b, l + 1);
+    if (!r) r = open_range_expr(b, l + 1);
+    if (!r) r = literal_expr(b, l + 1);
     if (!r) r = expr_path(b, l + 1);
-    if (!r) r = paren_expr(b, l + 1);
+    if (!r) r = array_expr(b, l + 1);
     if (!r) r = tuple_expr(b, l + 1);
     if (!r) r = unit_expr(b, l + 1);
-    if (!r) r = array_expr(b, l + 1);
-    if (!r) r = left_open_expr(b, l + 1);
-    if (!r) r = literal_expr(b, l + 1);
+    if (!r) r = paren_expr(b, l + 1);
+    if (!r) r = unary_expr(b, l + 1);
     p = r;
     r = r && expr_0(b, l + 1, g);
     exit_section_(b, l, m, null, r, p, null);
@@ -1654,138 +1652,138 @@ public class RustParser implements PsiParser, LightPsiParser {
     boolean r = true;
     while (true) {
       Marker m = enter_section_(b, l, _LEFT_, null);
-      if (g < 0 && consumeTokenSmart(b, EQ)) {
-        r = expr(b, l, -1);
+      if (g < 1 && consumeTokenSmart(b, EQ)) {
+        r = expr(b, l, 0);
         exit_section_(b, l, m, EQ_BIN_EXPR, r, true, null);
       }
-      else if (g < 0 && consumeTokenSmart(b, OREQ)) {
-        r = expr(b, l, -1);
+      else if (g < 1 && consumeTokenSmart(b, OREQ)) {
+        r = expr(b, l, 0);
         exit_section_(b, l, m, EQ_BIT_OR_BIN_EXPR, r, true, null);
       }
-      else if (g < 0 && consumeTokenSmart(b, XOREQ)) {
-        r = expr(b, l, -1);
+      else if (g < 1 && consumeTokenSmart(b, XOREQ)) {
+        r = expr(b, l, 0);
         exit_section_(b, l, m, EQ_BIT_XOR_BIN_EXPR, r, true, null);
       }
-      else if (g < 0 && consumeTokenSmart(b, ANDEQ)) {
-        r = expr(b, l, -1);
+      else if (g < 1 && consumeTokenSmart(b, ANDEQ)) {
+        r = expr(b, l, 0);
         exit_section_(b, l, m, EQ_BIT_AND_BIN_EXPR, r, true, null);
       }
-      else if (g < 0 && consumeTokenSmart(b, GTGTEQ)) {
-        r = expr(b, l, -1);
+      else if (g < 1 && consumeTokenSmart(b, GTGTEQ)) {
+        r = expr(b, l, 0);
         exit_section_(b, l, m, EQ_BIT_GTGT_BIN_EXPR, r, true, null);
       }
-      else if (g < 0 && consumeTokenSmart(b, LTLTEQ)) {
-        r = expr(b, l, -1);
+      else if (g < 1 && consumeTokenSmart(b, LTLTEQ)) {
+        r = expr(b, l, 0);
         exit_section_(b, l, m, EQ_BIT_LTLT_BIN_EXPR, r, true, null);
       }
-      else if (g < 0 && consumeTokenSmart(b, PLUSEQ)) {
-        r = expr(b, l, -1);
+      else if (g < 1 && consumeTokenSmart(b, PLUSEQ)) {
+        r = expr(b, l, 0);
         exit_section_(b, l, m, EQ_PLUS_BIN_EXPR, r, true, null);
       }
-      else if (g < 0 && consumeTokenSmart(b, MINUSEQ)) {
-        r = expr(b, l, -1);
+      else if (g < 1 && consumeTokenSmart(b, MINUSEQ)) {
+        r = expr(b, l, 0);
         exit_section_(b, l, m, EQ_MINUS_BIN_EXPR, r, true, null);
       }
-      else if (g < 0 && consumeTokenSmart(b, MULEQ)) {
-        r = expr(b, l, -1);
+      else if (g < 1 && consumeTokenSmart(b, MULEQ)) {
+        r = expr(b, l, 0);
         exit_section_(b, l, m, EQ_MUL_BIN_EXPR, r, true, null);
       }
-      else if (g < 0 && consumeTokenSmart(b, DIVEQ)) {
-        r = expr(b, l, -1);
+      else if (g < 1 && consumeTokenSmart(b, DIVEQ)) {
+        r = expr(b, l, 0);
         exit_section_(b, l, m, EQ_DIV_BIN_EXPR, r, true, null);
       }
-      else if (g < 0 && consumeTokenSmart(b, REMEQ)) {
-        r = expr(b, l, -1);
+      else if (g < 1 && consumeTokenSmart(b, REMEQ)) {
+        r = expr(b, l, 0);
         exit_section_(b, l, m, EQ_REM_BIN_EXPR, r, true, null);
       }
-      else if (g < 1 && consumeTokenSmart(b, OROR)) {
-        r = expr(b, l, 1);
-        exit_section_(b, l, m, BOOL_OR_BIN_EXPR, r, true, null);
-      }
-      else if (g < 2 && consumeTokenSmart(b, ANDAND)) {
-        r = expr(b, l, 2);
-        exit_section_(b, l, m, BOOL_AND_BIN_EXPR, r, true, null);
-      }
-      else if (g < 3 && consumeTokenSmart(b, OR)) {
-        r = expr(b, l, 3);
-        exit_section_(b, l, m, BIT_OR_BIN_EXPR, r, true, null);
-      }
-      else if (g < 4 && consumeTokenSmart(b, XOR)) {
-        r = expr(b, l, 4);
-        exit_section_(b, l, m, BIT_XOR_BIN_EXPR, r, true, null);
-      }
-      else if (g < 5 && consumeTokenSmart(b, AND)) {
-        r = expr(b, l, 5);
-        exit_section_(b, l, m, BIT_AND_BIN_EXPR, r, true, null);
-      }
-      else if (g < 6 && consumeTokenSmart(b, EXCLEQ)) {
-        r = expr(b, l, 6);
-        exit_section_(b, l, m, INEQ_COMP_BIN_EXPR, r, true, null);
-      }
-      else if (g < 7 && consumeTokenSmart(b, LT)) {
-        r = expr(b, l, 7);
-        exit_section_(b, l, m, LT_COMP_BIN_EXPR, r, true, null);
-      }
-      else if (g < 7 && consumeTokenSmart(b, GT)) {
-        r = expr(b, l, 7);
-        exit_section_(b, l, m, GT_COMP_BIN_EXPR, r, true, null);
-      }
-      else if (g < 7 && consumeTokenSmart(b, LTEQ)) {
-        r = expr(b, l, 7);
-        exit_section_(b, l, m, LTEQ_COMP_BIN_EXPR, r, true, null);
-      }
-      else if (g < 7 && consumeTokenSmart(b, GTEQ)) {
-        r = expr(b, l, 7);
-        exit_section_(b, l, m, GTEQ_COMP_BIN_EXPR, r, true, null);
-      }
-      else if (g < 8 && consumeTokenSmart(b, LTLT)) {
-        r = expr(b, l, 8);
-        exit_section_(b, l, m, BIT_LEFT_SHIFT_BIN_EXPR, r, true, null);
-      }
-      else if (g < 8 && consumeTokenSmart(b, GTGT)) {
-        r = expr(b, l, 8);
-        exit_section_(b, l, m, BIT_RIGHT_SHIFT_BIN_EXPR, r, true, null);
-      }
-      else if (g < 9 && consumeTokenSmart(b, PLUS)) {
-        r = expr(b, l, 9);
-        exit_section_(b, l, m, PLUS_BIN_EXPR, r, true, null);
-      }
-      else if (g < 9 && consumeTokenSmart(b, MINUS)) {
-        r = expr(b, l, 9);
-        exit_section_(b, l, m, MINUS_BIN_EXPR, r, true, null);
-      }
-      else if (g < 10 && consumeTokenSmart(b, MUL)) {
-        r = expr(b, l, 10);
-        exit_section_(b, l, m, MUL_BIN_EXPR, r, true, null);
-      }
-      else if (g < 10 && consumeTokenSmart(b, DIV)) {
-        r = expr(b, l, 10);
-        exit_section_(b, l, m, DIV_BIN_EXPR, r, true, null);
-      }
-      else if (g < 10 && consumeTokenSmart(b, REM)) {
-        r = expr(b, l, 10);
-        exit_section_(b, l, m, REM_BIN_EXPR, r, true, null);
-      }
-      else if (g < 30 && consumeTokenSmart(b, DOTDOT)) {
-        r = expr(b, l, 30);
+      else if (g < 14 && full_range_expr_0(b, l + 1)) {
+        r = true;
         exit_section_(b, l, m, FULL_RANGE_EXPR, r, true, null);
       }
-      else if (g < 31 && consumeTokenSmart(b, LBRACK)) {
-        r = report_error_(b, expr(b, l, 31));
-        r = consumeToken(b, RBRACK) && r;
-        exit_section_(b, l, m, INDEX_EXPR, r, true, null);
+      else if (g < 15 && consumeTokenSmart(b, OROR)) {
+        r = expr(b, l, 15);
+        exit_section_(b, l, m, BOOL_OR_BIN_EXPR, r, true, null);
       }
-      else if (g < 32 && par_expr_list(b, l + 1)) {
+      else if (g < 16 && consumeTokenSmart(b, ANDAND)) {
+        r = expr(b, l, 16);
+        exit_section_(b, l, m, BOOL_AND_BIN_EXPR, r, true, null);
+      }
+      else if (g < 17 && consumeTokenSmart(b, OR)) {
+        r = expr(b, l, 17);
+        exit_section_(b, l, m, BIT_OR_BIN_EXPR, r, true, null);
+      }
+      else if (g < 18 && consumeTokenSmart(b, XOR)) {
+        r = expr(b, l, 18);
+        exit_section_(b, l, m, BIT_XOR_BIN_EXPR, r, true, null);
+      }
+      else if (g < 19 && consumeTokenSmart(b, AND)) {
+        r = expr(b, l, 19);
+        exit_section_(b, l, m, BIT_AND_BIN_EXPR, r, true, null);
+      }
+      else if (g < 20 && consumeTokenSmart(b, EXCLEQ)) {
+        r = expr(b, l, 20);
+        exit_section_(b, l, m, INEQ_COMP_BIN_EXPR, r, true, null);
+      }
+      else if (g < 21 && consumeTokenSmart(b, LT)) {
+        r = expr(b, l, 21);
+        exit_section_(b, l, m, LT_COMP_BIN_EXPR, r, true, null);
+      }
+      else if (g < 21 && consumeTokenSmart(b, GT)) {
+        r = expr(b, l, 21);
+        exit_section_(b, l, m, GT_COMP_BIN_EXPR, r, true, null);
+      }
+      else if (g < 21 && consumeTokenSmart(b, LTEQ)) {
+        r = expr(b, l, 21);
+        exit_section_(b, l, m, LTEQ_COMP_BIN_EXPR, r, true, null);
+      }
+      else if (g < 21 && consumeTokenSmart(b, GTEQ)) {
+        r = expr(b, l, 21);
+        exit_section_(b, l, m, GTEQ_COMP_BIN_EXPR, r, true, null);
+      }
+      else if (g < 22 && consumeTokenSmart(b, LTLT)) {
+        r = expr(b, l, 22);
+        exit_section_(b, l, m, BIT_LEFT_SHIFT_BIN_EXPR, r, true, null);
+      }
+      else if (g < 22 && consumeTokenSmart(b, GTGT)) {
+        r = expr(b, l, 22);
+        exit_section_(b, l, m, BIT_RIGHT_SHIFT_BIN_EXPR, r, true, null);
+      }
+      else if (g < 23 && consumeTokenSmart(b, PLUS)) {
+        r = expr(b, l, 23);
+        exit_section_(b, l, m, PLUS_BIN_EXPR, r, true, null);
+      }
+      else if (g < 23 && consumeTokenSmart(b, MINUS)) {
+        r = expr(b, l, 23);
+        exit_section_(b, l, m, MINUS_BIN_EXPR, r, true, null);
+      }
+      else if (g < 24 && consumeTokenSmart(b, MUL)) {
+        r = expr(b, l, 24);
+        exit_section_(b, l, m, MUL_BIN_EXPR, r, true, null);
+      }
+      else if (g < 24 && consumeTokenSmart(b, DIV)) {
+        r = expr(b, l, 24);
+        exit_section_(b, l, m, DIV_BIN_EXPR, r, true, null);
+      }
+      else if (g < 24 && consumeTokenSmart(b, REM)) {
+        r = expr(b, l, 24);
+        exit_section_(b, l, m, REM_BIN_EXPR, r, true, null);
+      }
+      else if (g < 25 && parseTokensSmart(b, 0, DOT, IDENTIFIER)) {
         r = true;
-        exit_section_(b, l, m, CALL_EXPR, r, true, null);
+        exit_section_(b, l, m, FIELD_EXPR, r, true, null);
       }
-      else if (g < 33 && method_call_expr_0(b, l + 1)) {
+      else if (g < 25 && method_call_expr_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, METHOD_CALL_EXPR, r, true, null);
       }
-      else if (g < 34 && parseTokensSmart(b, 0, DOT, IDENTIFIER)) {
+      else if (g < 25 && consumeTokenSmart(b, LBRACK)) {
+        r = report_error_(b, expr(b, l, 25));
+        r = consumeToken(b, RBRACK) && r;
+        exit_section_(b, l, m, INDEX_EXPR, r, true, null);
+      }
+      else if (g < 25 && arg_list(b, l + 1)) {
         r = true;
-        exit_section_(b, l, m, FIELD_EXPR, r, true, null);
+        exit_section_(b, l, m, CALL_EXPR, r, true, null);
       }
       else {
         exit_section_(b, l, m, null, false, false, null);
@@ -1795,224 +1793,23 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  public static boolean unary_expr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unary_expr")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, null);
-    r = unary_expr_0(b, l + 1);
-    p = r;
-    r = p && expr(b, l, 11);
-    exit_section_(b, l, m, UNARY_EXPR, r, p, null);
-    return r || p;
-  }
-
-  // MINUS | MUL | EXCL
-  private static boolean unary_expr_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unary_expr_0")) return false;
+  // RETURN expr?
+  public static boolean ret_expr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ret_expr")) return false;
+    if (!nextTokenIsFast(b, RETURN)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, MINUS);
-    if (!r) r = consumeTokenSmart(b, MUL);
-    if (!r) r = consumeTokenSmart(b, EXCL);
-    exit_section_(b, m, null, r);
+    r = consumeTokenSmart(b, RETURN);
+    r = r && ret_expr_1(b, l + 1);
+    exit_section_(b, m, RET_EXPR, r);
     return r;
   }
 
-  // LBRACE (stmt SEMICOLON | item)* (expr) RBRACE
-  public static boolean block_expr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "block_expr")) return false;
-    if (!nextTokenIsFast(b, LBRACE)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, null);
-    r = consumeTokenSmart(b, LBRACE);
-    p = r; // pin = .*
-    r = r && report_error_(b, block_expr_1(b, l + 1));
-    r = p && report_error_(b, block_expr_2(b, l + 1)) && r;
-    r = p && consumeToken(b, RBRACE) && r;
-    exit_section_(b, l, m, BLOCK_EXPR, r, p, null);
-    return r || p;
-  }
-
-  // (stmt SEMICOLON | item)*
-  private static boolean block_expr_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "block_expr_1")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!block_expr_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "block_expr_1", c)) break;
-      c = current_position_(b);
-    }
+  // expr?
+  private static boolean ret_expr_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ret_expr_1")) return false;
+    expr(b, l + 1, -1);
     return true;
-  }
-
-  // stmt SEMICOLON | item
-  private static boolean block_expr_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "block_expr_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = block_expr_1_0_0(b, l + 1);
-    if (!r) r = item(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // stmt SEMICOLON
-  private static boolean block_expr_1_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "block_expr_1_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = stmt(b, l + 1);
-    r = r && consumeToken(b, SEMICOLON);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (expr)
-  private static boolean block_expr_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "block_expr_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = expr(b, l + 1, -1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  public static boolean lambda_expr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambda_expr")) return false;
-    if (!nextTokenIsFast(b, OR)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, null);
-    r = lambda_expr_0(b, l + 1);
-    p = r;
-    r = p && expr(b, l, 13);
-    exit_section_(b, l, m, LAMBDA_EXPR, r, p, null);
-    return r || p;
-  }
-
-  // OR ident_list OR
-  private static boolean lambda_expr_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambda_expr_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, OR);
-    r = r && ident_list(b, l + 1);
-    r = r && consumeToken(b, OR);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // expr_path LBRACE  identifier COLON expr
-  //                          (COMMA   identifier COLON expr)*
-  //                          (DOTDOT  expr)? RBRACE
-  //               | expr_path LPAREN expr
-  //                          (COMMA  expr)* RPAREN
-  //               | expr_path
-  public static boolean struct_expr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "struct_expr")) return false;
-    if (!nextTokenIsFast(b, COLONCOLON, IDENTIFIER)) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, "<struct expr>");
-    r = struct_expr_0(b, l + 1);
-    if (!r) r = struct_expr_1(b, l + 1);
-    if (!r) r = expr_path(b, l + 1);
-    exit_section_(b, l, m, STRUCT_EXPR, r, false, null);
-    return r;
-  }
-
-  // expr_path LBRACE  identifier COLON expr
-  //                          (COMMA   identifier COLON expr)*
-  //                          (DOTDOT  expr)? RBRACE
-  private static boolean struct_expr_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "struct_expr_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = expr_path(b, l + 1);
-    r = r && consumeTokens(b, 0, LBRACE, IDENTIFIER, COLON);
-    r = r && expr(b, l + 1, -1);
-    r = r && struct_expr_0_5(b, l + 1);
-    r = r && struct_expr_0_6(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA   identifier COLON expr)*
-  private static boolean struct_expr_0_5(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "struct_expr_0_5")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!struct_expr_0_5_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "struct_expr_0_5", c)) break;
-      c = current_position_(b);
-    }
-    return true;
-  }
-
-  // COMMA   identifier COLON expr
-  private static boolean struct_expr_0_5_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "struct_expr_0_5_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, COMMA, IDENTIFIER, COLON);
-    r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (DOTDOT  expr)?
-  private static boolean struct_expr_0_6(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "struct_expr_0_6")) return false;
-    struct_expr_0_6_0(b, l + 1);
-    return true;
-  }
-
-  // DOTDOT  expr
-  private static boolean struct_expr_0_6_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "struct_expr_0_6_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, DOTDOT);
-    r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // expr_path LPAREN expr
-  //                          (COMMA  expr)* RPAREN
-  private static boolean struct_expr_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "struct_expr_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = expr_path(b, l + 1);
-    r = r && consumeToken(b, LPAREN);
-    r = r && expr(b, l + 1, -1);
-    r = r && struct_expr_1_3(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA  expr)*
-  private static boolean struct_expr_1_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "struct_expr_1_3")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!struct_expr_1_3_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "struct_expr_1_3", c)) break;
-      c = current_position_(b);
-    }
-    return true;
-  }
-
-  // COMMA  expr
-  private static boolean struct_expr_1_3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "struct_expr_1_3_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, COMMA);
-    r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   // lifetime COLON WHILE no_struct_lit_expr LBRACE block RBRACE
@@ -2166,7 +1963,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, null);
     r = while_let_expr_0(b, l + 1);
     p = r;
-    r = p && expr(b, l, 23);
+    r = p && expr(b, l, 10);
     r = p && report_error_(b, while_let_expr_1(b, l + 1)) && r;
     exit_section_(b, l, m, WHILE_LET_EXPR, r, p, null);
     return r || p;
@@ -2196,23 +1993,248 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // RETURN expr?
-  public static boolean ret_expr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ret_expr")) return false;
-    if (!nextTokenIsFast(b, RETURN)) return false;
+  // LBRACE (stmt SEMICOLON | item)* (expr) RBRACE
+  public static boolean block_expr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_expr")) return false;
+    if (!nextTokenIsFast(b, LBRACE)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = consumeTokenSmart(b, LBRACE);
+    p = r; // pin = .*
+    r = r && report_error_(b, block_expr_1(b, l + 1));
+    r = p && report_error_(b, block_expr_2(b, l + 1)) && r;
+    r = p && consumeToken(b, RBRACE) && r;
+    exit_section_(b, l, m, BLOCK_EXPR, r, p, null);
+    return r || p;
+  }
+
+  // (stmt SEMICOLON | item)*
+  private static boolean block_expr_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_expr_1")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!block_expr_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "block_expr_1", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  // stmt SEMICOLON | item
+  private static boolean block_expr_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_expr_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, RETURN);
-    r = r && ret_expr_1(b, l + 1);
-    exit_section_(b, m, RET_EXPR, r);
+    r = block_expr_1_0_0(b, l + 1);
+    if (!r) r = item(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // stmt SEMICOLON
+  private static boolean block_expr_1_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_expr_1_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = stmt(b, l + 1);
+    r = r && consumeToken(b, SEMICOLON);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (expr)
+  private static boolean block_expr_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_expr_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = expr(b, l + 1, -1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // expr_path LBRACE  identifier COLON expr
+  //                          (COMMA   identifier COLON expr)*
+  //                          (DOTDOT  expr)? RBRACE
+  //               | expr_path LPAREN expr
+  //                          (COMMA  expr)* RPAREN
+  //               | expr_path
+  public static boolean struct_expr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "struct_expr")) return false;
+    if (!nextTokenIsFast(b, COLONCOLON, IDENTIFIER)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _COLLAPSE_, "<struct expr>");
+    r = struct_expr_0(b, l + 1);
+    if (!r) r = struct_expr_1(b, l + 1);
+    if (!r) r = expr_path(b, l + 1);
+    exit_section_(b, l, m, STRUCT_EXPR, r, false, null);
+    return r;
+  }
+
+  // expr_path LBRACE  identifier COLON expr
+  //                          (COMMA   identifier COLON expr)*
+  //                          (DOTDOT  expr)? RBRACE
+  private static boolean struct_expr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "struct_expr_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = expr_path(b, l + 1);
+    r = r && consumeTokens(b, 0, LBRACE, IDENTIFIER, COLON);
+    r = r && expr(b, l + 1, -1);
+    r = r && struct_expr_0_5(b, l + 1);
+    r = r && struct_expr_0_6(b, l + 1);
+    r = r && consumeToken(b, RBRACE);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (COMMA   identifier COLON expr)*
+  private static boolean struct_expr_0_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "struct_expr_0_5")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!struct_expr_0_5_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "struct_expr_0_5", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  // COMMA   identifier COLON expr
+  private static boolean struct_expr_0_5_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "struct_expr_0_5_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, COMMA, IDENTIFIER, COLON);
+    r = r && expr(b, l + 1, -1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (DOTDOT  expr)?
+  private static boolean struct_expr_0_6(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "struct_expr_0_6")) return false;
+    struct_expr_0_6_0(b, l + 1);
+    return true;
+  }
+
+  // DOTDOT  expr
+  private static boolean struct_expr_0_6_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "struct_expr_0_6_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, DOTDOT);
+    r = r && expr(b, l + 1, -1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // expr_path LPAREN expr
+  //                          (COMMA  expr)* RPAREN
+  private static boolean struct_expr_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "struct_expr_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = expr_path(b, l + 1);
+    r = r && consumeToken(b, LPAREN);
+    r = r && expr(b, l + 1, -1);
+    r = r && struct_expr_1_3(b, l + 1);
+    r = r && consumeToken(b, RPAREN);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (COMMA  expr)*
+  private static boolean struct_expr_1_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "struct_expr_1_3")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!struct_expr_1_3_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "struct_expr_1_3", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  // COMMA  expr
+  private static boolean struct_expr_1_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "struct_expr_1_3_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, COMMA);
+    r = r && expr(b, l + 1, -1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  public static boolean lambda_expr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambda_expr")) return false;
+    if (!nextTokenIsFast(b, OR)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = lambda_expr_0(b, l + 1);
+    p = r;
+    r = p && expr(b, l, 13);
+    exit_section_(b, l, m, LAMBDA_EXPR, r, p, null);
+    return r || p;
+  }
+
+  // OR ident_list OR
+  private static boolean lambda_expr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambda_expr_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, OR);
+    r = r && ident_list(b, l + 1);
+    r = r && consumeToken(b, OR);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DOTDOT expr?
+  public static boolean open_range_expr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "open_range_expr")) return false;
+    if (!nextTokenIsFast(b, DOTDOT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, DOTDOT);
+    r = r && open_range_expr_1(b, l + 1);
+    exit_section_(b, m, OPEN_RANGE_EXPR, r);
     return r;
   }
 
   // expr?
-  private static boolean ret_expr_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ret_expr_1")) return false;
+  private static boolean open_range_expr_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "open_range_expr_1")) return false;
     expr(b, l + 1, -1);
     return true;
+  }
+
+  // DOTDOT expr?
+  private static boolean full_range_expr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "full_range_expr_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, DOTDOT);
+    r = r && full_range_expr_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // expr?
+  private static boolean full_range_expr_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "full_range_expr_0_1")) return false;
+    expr(b, l + 1, -1);
+    return true;
+  }
+
+  // literal
+  public static boolean literal_expr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "literal_expr")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, "<literal expr>");
+    r = literal(b, l + 1);
+    exit_section_(b, l, m, LITERAL_EXPR, r, false, null);
+    return r;
   }
 
   // COLONCOLON? identifier [ COLONCOLON expr_path_tail ]
@@ -2253,20 +2275,47 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  public static boolean paren_expr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "paren_expr")) return false;
-    if (!nextTokenIsFast(b, LPAREN)) return false;
+  // DOT identifier arg_list
+  private static boolean method_call_expr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "method_call_expr_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, DOT, IDENTIFIER);
+    r = r && arg_list(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // LBRACK MUT? array_elems? RBRACK
+  public static boolean array_expr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "array_expr")) return false;
+    if (!nextTokenIsFast(b, LBRACK)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, null);
-    r = consumeTokenSmart(b, LPAREN);
-    p = r;
-    r = p && expr(b, l, 26);
-    r = p && report_error_(b, consumeToken(b, RPAREN)) && r;
-    exit_section_(b, l, m, PAREN_EXPR, r, p, null);
+    r = consumeTokenSmart(b, LBRACK);
+    p = r; // pin = 1
+    r = r && report_error_(b, array_expr_1(b, l + 1));
+    r = p && report_error_(b, array_expr_2(b, l + 1)) && r;
+    r = p && consumeToken(b, RBRACK) && r;
+    exit_section_(b, l, m, ARRAY_EXPR, r, p, null);
     return r || p;
   }
 
-  // LPAREN expr ((COMMA expr)* | COMMA) RPAREN
+  // MUT?
+  private static boolean array_expr_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "array_expr_1")) return false;
+    consumeTokenSmart(b, MUT);
+    return true;
+  }
+
+  // array_elems?
+  private static boolean array_expr_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "array_expr_2")) return false;
+    array_elems(b, l + 1);
+    return true;
+  }
+
+  // LPAREN expr ((COMMA expr)+ | COMMA) RPAREN
   public static boolean tuple_expr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tuple_expr")) return false;
     if (!nextTokenIsFast(b, LPAREN)) return false;
@@ -2280,7 +2329,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (COMMA expr)* | COMMA
+  // (COMMA expr)+ | COMMA
   private static boolean tuple_expr_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tuple_expr_2")) return false;
     boolean r;
@@ -2291,16 +2340,20 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (COMMA expr)*
+  // (COMMA expr)+
   private static boolean tuple_expr_2_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tuple_expr_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = tuple_expr_2_0_0(b, l + 1);
     int c = current_position_(b);
-    while (true) {
+    while (r) {
       if (!tuple_expr_2_0_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "tuple_expr_2_0", c)) break;
       c = current_position_(b);
     }
-    return true;
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   // COMMA expr
@@ -2325,75 +2378,40 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // LBRACK MUT? array_elems? RBRACK
-  public static boolean array_expr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "array_expr")) return false;
-    if (!nextTokenIsFast(b, LBRACK)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, LBRACK);
-    r = r && array_expr_1(b, l + 1);
-    r = r && array_expr_2(b, l + 1);
-    r = r && consumeToken(b, RBRACK);
-    exit_section_(b, m, ARRAY_EXPR, r);
-    return r;
-  }
-
-  // MUT?
-  private static boolean array_expr_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "array_expr_1")) return false;
-    consumeTokenSmart(b, MUT);
-    return true;
-  }
-
-  // array_elems?
-  private static boolean array_expr_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "array_expr_2")) return false;
-    array_elems(b, l + 1);
-    return true;
-  }
-
-  public static boolean left_open_expr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "left_open_expr")) return false;
-    if (!nextTokenIsFast(b, DOTDOT)) return false;
+  public static boolean paren_expr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "paren_expr")) return false;
+    if (!nextTokenIsFast(b, LPAREN)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, null);
-    r = consumeTokenSmart(b, DOTDOT);
+    r = consumeTokenSmart(b, LPAREN);
     p = r;
-    r = p && expr(b, l, 30);
-    exit_section_(b, l, m, LEFT_OPEN_EXPR, r, p, null);
+    r = p && expr(b, l, -1);
+    r = p && report_error_(b, consumeToken(b, RPAREN)) && r;
+    exit_section_(b, l, m, PAREN_EXPR, r, p, null);
     return r || p;
   }
 
-  // DOTDOT
-  public static boolean full_open_expr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "full_open_expr")) return false;
-    if (!nextTokenIsFast(b, DOTDOT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, DOTDOT);
-    exit_section_(b, m, FULL_OPEN_EXPR, r);
-    return r;
+  public static boolean unary_expr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unary_expr")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = unary_expr_0(b, l + 1);
+    p = r;
+    r = p && expr(b, l, -1);
+    exit_section_(b, l, m, UNARY_EXPR, r, p, null);
+    return r || p;
   }
 
-  // DOT identifier par_expr_list
-  private static boolean method_call_expr_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "method_call_expr_0")) return false;
+  // MINUS | MUL | EXCL | AND
+  private static boolean unary_expr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unary_expr_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, DOT, IDENTIFIER);
-    r = r && par_expr_list(b, l + 1);
+    r = consumeTokenSmart(b, MINUS);
+    if (!r) r = consumeTokenSmart(b, MUL);
+    if (!r) r = consumeTokenSmart(b, EXCL);
+    if (!r) r = consumeTokenSmart(b, AND);
     exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // literal
-  public static boolean literal_expr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "literal_expr")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, "<literal expr>");
-    r = literal(b, l + 1);
-    exit_section_(b, l, m, LITERAL_EXPR, r, false, null);
     return r;
   }
 

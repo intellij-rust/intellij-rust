@@ -8,12 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface RustCallExpr extends RustExpr {
 
   @NotNull
-  List<RustExpr> getExprList();
+  RustArgList getArgList();
 
   @NotNull
-  PsiElement getLparen();
-
-  @NotNull
-  PsiElement getRparen();
+  RustExpr getExpr();
 
 }

@@ -10,21 +10,27 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustFullOpenExprImpl extends RustExprImpl implements RustFullOpenExpr {
+public class RustDocImpl extends RustCompositeElementImpl implements RustDoc {
 
-  public RustFullOpenExprImpl(ASTNode node) {
+  public RustDocImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitFullOpenExpr(this);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitDoc(this);
     else super.accept(visitor);
   }
 
   @Override
-  @NotNull
-  public PsiElement getDotdot() {
-    return findNotNullChildByType(DOTDOT);
+  @Nullable
+  public PsiElement getBlockDocComment() {
+    return findChildByType(BLOCK_DOC_COMMENT);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getEolDocComment() {
+    return findChildByType(EOL_DOC_COMMENT);
   }
 
 }

@@ -12,6 +12,7 @@ public class RustCompleteParsingTestCase extends RustParsingTestCaseBase {
     }
 
     public void testFn()    { doTest(true); }
+    public void testExpr()  { doTest(true); }
     public void testMod()   { doTest(true); }
 
 }

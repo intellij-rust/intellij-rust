@@ -1,0 +1,38 @@
+fn f() -> i32 {}
+
+fn test() -> u32 {
+
+    x + y - z * 0;  /* binary */
+
+    x = y = z;      /* assignment + ; */
+
+    *x;             /* unary (+ ;) *
+    &x;
+
+    (x + y) * z;    /* parenthesized */
+
+    t = (0, 1, 2);  /* tuple */
+
+    t.a;            /* field */
+
+    f._();          /* method-invokation */
+
+    f();            /* call */
+
+    t = ();         /* unit */
+
+    [   0,          /* array */
+        1,
+        2,
+        [ 0 ; 1 ] ];
+
+    r = 1..2;       /* range */
+    r =  ..2;
+    r = 1.. ;
+    r =  .. ;
+
+    // TBA(kudinkin)
+
+    return (x = y)  /* return */
+            + 1
+}

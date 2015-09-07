@@ -22,9 +22,15 @@ public class RustMethodCallExprImpl extends RustExprImpl implements RustMethodCa
   }
 
   @Override
+  @Nullable
+  public RustArgList getArgList() {
+    return findChildByClass(RustArgList.class);
+  }
+
+  @Override
   @NotNull
-  public List<RustExpr> getExprList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
+  public RustExpr getExpr() {
+    return findNotNullChildByClass(RustExpr.class);
   }
 
   @Override
@@ -34,21 +40,9 @@ public class RustMethodCallExprImpl extends RustExprImpl implements RustMethodCa
   }
 
   @Override
-  @NotNull
-  public PsiElement getLparen() {
-    return findNotNullChildByType(LPAREN);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getRparen() {
-    return findNotNullChildByType(RPAREN);
-  }
-
-  @Override
-  @NotNull
+  @Nullable
   public PsiElement getIdentifier() {
-    return findNotNullChildByType(IDENTIFIER);
+    return findChildByType(IDENTIFIER);
   }
 
 }

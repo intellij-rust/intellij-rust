@@ -40,9 +40,9 @@ public class RustArrayExprImpl extends RustExprImpl implements RustArrayExpr {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getRbrack() {
-    return findNotNullChildByType(RBRACK);
+    return findChildByType(RBRACK);
   }
 
   @Override

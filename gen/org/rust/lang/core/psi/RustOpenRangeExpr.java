@@ -5,9 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustRightOpenExpr extends RustExpr {
+public interface RustOpenRangeExpr extends RustRangeExpr {
 
-  @NotNull
+  @Nullable
   RustExpr getExpr();
 
   @NotNull

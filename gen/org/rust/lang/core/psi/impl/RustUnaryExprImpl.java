@@ -29,6 +29,12 @@ public class RustUnaryExprImpl extends RustExprImpl implements RustUnaryExpr {
 
   @Override
   @Nullable
+  public PsiElement getAnd() {
+    return findChildByType(AND);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getExcl() {
     return findChildByType(EXCL);
   }

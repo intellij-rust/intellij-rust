@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustFullRangeExprImpl extends RustExprImpl implements RustFullRangeExpr {
+public class RustFullRangeExprImpl extends RustRangeExprImpl implements RustFullRangeExpr {
 
   public RustFullRangeExprImpl(ASTNode node) {
     super(node);

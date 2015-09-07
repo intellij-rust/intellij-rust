@@ -5,12 +5,12 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustLeftOpenExpr extends RustExpr {
+public interface RustDoc extends RustCompositeElement {
 
   @Nullable
-  RustExpr getExpr();
+  PsiElement getBlockDocComment();
 
-  @NotNull
-  PsiElement getDotdot();
+  @Nullable
+  PsiElement getEolDocComment();
 
 }

@@ -5,12 +5,15 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustFullRangeExpr extends RustRangeExpr {
+public interface RustRangeExpr extends RustExpr {
 
   @NotNull
   List<RustExpr> getExprList();
 
   @NotNull
-  PsiElement getDotdot();
+  RustExpr getFrom();
+
+  @Nullable
+  RustExpr getTo();
 
 }

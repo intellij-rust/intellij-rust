@@ -10,33 +10,35 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustFieldExprImpl extends RustExprImpl implements RustFieldExpr {
+public class RustRangeExprImpl extends RustExprImpl implements RustRangeExpr {
 
-  public RustFieldExprImpl(ASTNode node) {
+  public RustRangeExprImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitFieldExpr(this);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitRangeExpr(this);
     else super.accept(visitor);
   }
 
   @Override
   @NotNull
-  public RustExpr getExpr() {
-    return findNotNullChildByClass(RustExpr.class);
+  public List<RustExpr> getExprList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
   }
 
   @Override
   @NotNull
-  public PsiElement getDot() {
-    return findNotNullChildByType(DOT);
+  public RustExpr getFrom() {
+    List<RustExpr> p1 = getExprList();
+    return p1.get(0);
   }
 
   @Override
   @Nullable
-  public PsiElement getIdentifier() {
-    return findChildByType(IDENTIFIER);
+  public RustExpr getTo() {
+    List<RustExpr> p1 = getExprList();
+    return p1.size() < 2 ? null : p1.get(1);
   }
 
 }

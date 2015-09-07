@@ -16,7 +16,7 @@ public interface RustArrayExpr extends RustExpr {
   @Nullable
   PsiElement getMut();
 
-  @NotNull
+  @Nullable
   PsiElement getRbrack();
 
   @Nullable

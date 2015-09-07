@@ -133,6 +133,7 @@
     extends(".*_item")="org.rust.lang.core.psi.impl.RustNamedElementImpl"
 
     extends(".*_bin_expr")=binary_expr
+    extends(".*_range_expr")=range_expr
     extends("(expr_path|.*_expr)")=expr
     extends(".*_stmt")=stmt
 
@@ -216,7 +217,21 @@ path ::= identifier | SELF;
 // Expressions
 //
 
-expr ::= assign_bin_expr_group
+expr ::= ret_expr
+       | assign_bin_expr_group
+       | while_expr
+       | loop_expr
+       | cont_expr
+       | break_expr
+       | for_expr
+       | if_expr
+       | match_expr
+       | if_let_expr
+       | while_let_expr
+       | block_expr
+       | struct_expr
+       | lambda_expr
+       | range_expr_group
        | bool_or_bin_expr
        | bool_and_bin_expr
        | bit_or_bin_expr
@@ -227,31 +242,19 @@ expr ::= assign_bin_expr_group
        | bit_shift_bin_expr_group
        | add_bin_expr_group
        | mul_bin_expr_group
-       | unary_expr
-       | block_expr
-       | lambda_expr
-       | struct_expr
-       | while_expr
-       | loop_expr
-       | cont_expr
-       | break_expr
-       | for_expr
-       | if_expr
-       | match_expr
-       | if_let_expr
-       | while_let_expr
-       | ret_expr
-       | expr_path
-       | paren_expr
-       | tuple_expr
-       | unit_expr
-       | array_expr
-       | range_expr_group
-       | index_expr
-       | call_expr
-       | method_call_expr
-       | field_expr
-       | literal_expr
+       | unary_expr_group
+
+private unary_expr_group ::= literal_expr
+                           | expr_path
+                           | field_expr
+                           | method_call_expr
+                           | index_expr
+                           | call_expr
+                           | array_expr
+                           | tuple_expr
+                           | unit_expr
+                           | paren_expr
+                           | unary_expr
 
 
 fake binary_expr ::= expr + {
@@ -315,7 +318,7 @@ rem_bin_expr ::= expr REM expr
 div_bin_expr ::= expr DIV expr
 mul_bin_expr ::= expr MUL expr
 
-unary_expr ::= (MINUS | MUL | EXCL) expr
+unary_expr ::= (MINUS | MUL | EXCL | AND) expr
 
 block_expr ::= LBRACE (stmt SEMICOLON | item)* (expr) RBRACE {pin=".*"}
 
@@ -344,8 +347,8 @@ private pat ::= 'xyz1'
 
 match_expr ::= MATCH no_struct_lit_expr LBRACE match_arm* RBRACE
 
-private match_arm ::= attr* MatchPattern ARROW (expr COMMA | LBRACE block RBRACE)
-private MatchPattern ::= pat (OR pat)* (IF expr)?
+private match_arm ::= attr* match_pat ARROW (expr COMMA | LBRACE block RBRACE)
+private match_pat ::= pat (OR pat)* (IF expr)?
 
 if_expr ::= IF no_struct_lit_expr LBRACE block RBRACE else_tail?
 
@@ -361,7 +364,7 @@ paren_expr ::= LPAREN expr RPAREN
 
 unit_expr ::= LPAREN RPAREN
 
-tuple_expr ::= LPAREN expr ((COMMA expr)* | COMMA) RPAREN
+tuple_expr ::= LPAREN expr ((COMMA expr)+ | COMMA) RPAREN
 
 expr_path ::= COLONCOLON? identifier [ COLONCOLON expr_path_tail ]
 
@@ -372,30 +375,35 @@ private no_struct_lit_expr ::= 'abc7'
 private lifetime ::= 'abc8'
 private type_expr ::= 'abc'
 
-array_expr ::= LBRACK MUT? array_elems? RBRACK
-private array_elems ::= (expr (COMMA expr)*) | (expr SEMICOLON expr)
+array_expr ::= LBRACK MUT? array_elems? RBRACK {pin=1}
+
+private array_elems ::= expr [ (COMMA expr)+ | SEMICOLON expr ]
 
 
-private range_expr_group ::= full_range_expr
-                           | right_open_expr
-                           | left_open_expr
-                           | full_open_expr
+fake range_expr ::= expr + {
+    methods=[
+        from="/expr[0]"
+        to="/expr[1]"
+    ]
+}
 
-full_range_expr ::= expr DOTDOT expr
-right_open_expr ::= expr DOTDOT
-left_open_expr  ::= DOTDOT expr
-full_open_expr  ::= DOTDOT
+private range_expr_group ::= open_range_expr
+                           | full_range_expr
+
+full_range_expr ::= expr DOTDOT expr?
+open_range_expr  ::= DOTDOT expr?
 
 index_expr ::= expr LBRACK expr RBRACK
 
-call_expr ::= expr par_expr_list
+call_expr ::= expr arg_list
 
-method_call_expr ::= expr DOT identifier par_expr_list
+method_call_expr ::= expr DOT identifier arg_list {pin=2}
 
-private par_expr_list ::= LPAREN expr_list RPAREN
-private expr_list ::= (expr (COMMA expr)*)?
+arg_list ::= LPAREN expr_list RPAREN {pin=1}
 
-field_expr ::= expr DOT identifier
+private expr_list ::= [ expr (COMMA expr)* ]
+
+field_expr ::= expr DOT identifier {pin=2}
 
 literal_expr ::= literal
 

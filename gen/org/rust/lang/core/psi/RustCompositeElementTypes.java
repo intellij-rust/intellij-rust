@@ -9,6 +9,7 @@ import org.rust.lang.core.psi.impl.*;
 
 public interface RustCompositeElementTypes {
 
+  IElementType ARG_LIST = new RustCompositeElementType("ARG_LIST");
   IElementType ARRAY_EXPR = new RustCompositeElementType("ARRAY_EXPR");
   IElementType ATTR = new RustCompositeElementType("ATTR");
   IElementType BIT_AND_BIN_EXPR = new RustCompositeElementType("BIT_AND_BIN_EXPR");
@@ -50,7 +51,6 @@ public interface RustCompositeElementTypes {
   IElementType FN_ITEM = new RustCompositeElementType("FN_ITEM");
   IElementType FOREIGN_FN_ITEM = new RustCompositeElementType("FOREIGN_FN_ITEM");
   IElementType FOR_EXPR = new RustCompositeElementType("FOR_EXPR");
-  IElementType FULL_OPEN_EXPR = new RustCompositeElementType("FULL_OPEN_EXPR");
   IElementType FULL_RANGE_EXPR = new RustCompositeElementType("FULL_RANGE_EXPR");
   IElementType GTEQ_COMP_BIN_EXPR = new RustCompositeElementType("GTEQ_COMP_BIN_EXPR");
   IElementType GT_COMP_BIN_EXPR = new RustCompositeElementType("GT_COMP_BIN_EXPR");
@@ -61,7 +61,6 @@ public interface RustCompositeElementTypes {
   IElementType INEQ_COMP_BIN_EXPR = new RustCompositeElementType("INEQ_COMP_BIN_EXPR");
   IElementType ITEM = new RustCompositeElementType("ITEM");
   IElementType LAMBDA_EXPR = new RustCompositeElementType("LAMBDA_EXPR");
-  IElementType LEFT_OPEN_EXPR = new RustCompositeElementType("LEFT_OPEN_EXPR");
   IElementType LET_DECL = new RustCompositeElementType("LET_DECL");
   IElementType LITERAL_EXPR = new RustCompositeElementType("LITERAL_EXPR");
   IElementType LOOP_EXPR = new RustCompositeElementType("LOOP_EXPR");
@@ -72,13 +71,13 @@ public interface RustCompositeElementTypes {
   IElementType MINUS_BIN_EXPR = new RustCompositeElementType("MINUS_BIN_EXPR");
   IElementType MOD_ITEM = new RustCompositeElementType("MOD_ITEM");
   IElementType MUL_BIN_EXPR = new RustCompositeElementType("MUL_BIN_EXPR");
+  IElementType OPEN_RANGE_EXPR = new RustCompositeElementType("OPEN_RANGE_EXPR");
   IElementType PAREN_EXPR = new RustCompositeElementType("PAREN_EXPR");
   IElementType PATH = new RustCompositeElementType("PATH");
   IElementType PATH_GLOB = new RustCompositeElementType("PATH_GLOB");
   IElementType PLUS_BIN_EXPR = new RustCompositeElementType("PLUS_BIN_EXPR");
   IElementType REM_BIN_EXPR = new RustCompositeElementType("REM_BIN_EXPR");
   IElementType RET_EXPR = new RustCompositeElementType("RET_EXPR");
-  IElementType RIGHT_OPEN_EXPR = new RustCompositeElementType("RIGHT_OPEN_EXPR");
   IElementType STATIC_ITEM = new RustCompositeElementType("STATIC_ITEM");
   IElementType STMT = new RustCompositeElementType("STMT");
   IElementType STRUCT_EXPR = new RustCompositeElementType("STRUCT_EXPR");
@@ -95,7 +94,10 @@ public interface RustCompositeElementTypes {
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
-       if (type == ARRAY_EXPR) {
+       if (type == ARG_LIST) {
+        return new RustArgListImpl(node);
+      }
+      else if (type == ARRAY_EXPR) {
         return new RustArrayExprImpl(node);
       }
       else if (type == ATTR) {
@@ -218,9 +220,6 @@ public interface RustCompositeElementTypes {
       else if (type == FOR_EXPR) {
         return new RustForExprImpl(node);
       }
-      else if (type == FULL_OPEN_EXPR) {
-        return new RustFullOpenExprImpl(node);
-      }
       else if (type == FULL_RANGE_EXPR) {
         return new RustFullRangeExprImpl(node);
       }
@@ -250,9 +249,6 @@ public interface RustCompositeElementTypes {
       }
       else if (type == LAMBDA_EXPR) {
         return new RustLambdaExprImpl(node);
-      }
-      else if (type == LEFT_OPEN_EXPR) {
-        return new RustLeftOpenExprImpl(node);
       }
       else if (type == LET_DECL) {
         return new RustLetDeclImpl(node);
@@ -284,6 +280,9 @@ public interface RustCompositeElementTypes {
       else if (type == MUL_BIN_EXPR) {
         return new RustMulBinExprImpl(node);
       }
+      else if (type == OPEN_RANGE_EXPR) {
+        return new RustOpenRangeExprImpl(node);
+      }
       else if (type == PAREN_EXPR) {
         return new RustParenExprImpl(node);
       }
@@ -301,9 +300,6 @@ public interface RustCompositeElementTypes {
       }
       else if (type == RET_EXPR) {
         return new RustRetExprImpl(node);
-      }
-      else if (type == RIGHT_OPEN_EXPR) {
-        return new RustRightOpenExprImpl(node);
       }
       else if (type == STATIC_ITEM) {
         return new RustStaticItemImpl(node);

@@ -10,27 +10,33 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustLeftOpenExprImpl extends RustExprImpl implements RustLeftOpenExpr {
+public class RustArgListImpl extends RustCompositeElementImpl implements RustArgList {
 
-  public RustLeftOpenExprImpl(ASTNode node) {
+  public RustArgListImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitLeftOpenExpr(this);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitArgList(this);
     else super.accept(visitor);
   }
 
   @Override
-  @Nullable
-  public RustExpr getExpr() {
-    return findChildByClass(RustExpr.class);
+  @NotNull
+  public List<RustExpr> getExprList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
   }
 
   @Override
   @NotNull
-  public PsiElement getDotdot() {
-    return findNotNullChildByType(DOTDOT);
+  public PsiElement getLparen() {
+    return findNotNullChildByType(LPAREN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getRparen() {
+    return findChildByType(RPAREN);
   }
 
 }

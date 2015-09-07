@@ -83,7 +83,7 @@ public interface RustTokenElementTypes {
     IElementType AND = new RustTokenType("&");
     IElementType ANDAND = new RustTokenType("&&");
     IElementType ANDEQ = new RustTokenType("&=");
-    IElementType ARROW = new RustTokenType("=>");
+    IElementType ARROW = new RustTokenType("->");
     IElementType SHARP = new RustTokenType("#");
     IElementType COLON = new RustTokenType(":");
     IElementType COLONCOLON = new RustTokenType("::");

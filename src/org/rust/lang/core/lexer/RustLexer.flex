@@ -24,7 +24,8 @@ WHITE_SPACE = ({LINE_WS}|{EOL_WS})+
 
 // Identifiers
 
-IDENTIFIER=[:letter:][a-zA-Z_0-9]*
+// TODO(kudinkin): extend
+IDENTIFIER=([_]|[:letter:])[a-zA-Z_0-9]*
 
 // Literals
 
@@ -82,6 +83,8 @@ EOL_DOC_COMMENT=\/\/(\/|\!)[^\r\n]*
   ":"                             { return RustTokenElementTypes.COLON; }
   ";"                             { return RustTokenElementTypes.SEMICOLON; }
   ","                             { return RustTokenElementTypes.COMMA; }
+  "."                             { return RustTokenElementTypes.DOT; }
+  ".."                            { return RustTokenElementTypes.DOTDOT; }
   "="                             { return RustTokenElementTypes.EQ; }
   "!="                            { return RustTokenElementTypes.EXCLEQ; }
   "=="                            { return RustTokenElementTypes.EQEQ; }
