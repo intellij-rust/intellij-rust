@@ -75,8 +75,11 @@ public interface RustTokenElementTypes {
 
     IElementType BLOCK_COMMENT = new RustTokenType("<BLOCK_COMMENT>");
     IElementType EOL_COMMENT = new RustTokenType("<EOL_COMMENT>");
-    IElementType BLOCK_DOC_COMMENT = new RustTokenType("<BLOCK_DOC_COMMENT>");
-    IElementType EOL_DOC_COMMENT = new RustTokenType("<EOL_DOC_COMMENT>");
+
+    IElementType INNER_DOC_COMMENT = new RustTokenType("<INNER_DOC_COMMENT>");
+    IElementType OUTER_DOC_COMMENT = new RustTokenType("<OUTER_DOC_COMMENT>");
+
+    IElementType SHEBANG_LINE = new RustTokenType("<SHEBANG_LINE>");
 
     // Operators
 
@@ -84,7 +87,8 @@ public interface RustTokenElementTypes {
     IElementType ANDAND = new RustTokenType("&&");
     IElementType ANDEQ = new RustTokenType("&=");
     IElementType ARROW = new RustTokenType("->");
-    IElementType SHARP = new RustTokenType("#");
+    IElementType SHA = new RustTokenType("#");
+    IElementType SHEBANG = new RustTokenType("#!");
     IElementType COLON = new RustTokenType(":");
     IElementType COLONCOLON = new RustTokenType("::");
     IElementType COMMA = new RustTokenType(",");

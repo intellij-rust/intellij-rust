@@ -15,19 +15,31 @@ import com.intellij.psi.tree.IElementType;
 %implements FlexLexer
 %function advance
 %type IElementType
+
+%x BLOCK_COMMENT
+%x EOL_COMMENT
+
 %unicode
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Whitespaces
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 EOL_WS  = \r|\n|\r\n
 LINE_WS = [\ \t]
 
 WHITE_SPACE = ({LINE_WS}|{EOL_WS})+
 
-// Identifiers
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Identifier
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // TODO(kudinkin): extend
 IDENTIFIER=([_]|[:letter:])[a-zA-Z_0-9]*
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // Literals
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 FLT_LITERAL = {DEC_LITERAL} (\. {DEC_LITERAL}? {FLT_EXP}? {FLT_SUFFIX} | {FLT_EXP} {FLT_SUFFIX}?)
 
@@ -60,16 +72,11 @@ UNICODE_ESCAPE = \\u\{{HEX_DIGIT}{1,6}\}
 //  Byte literals
 //  Raw byte literals
 
-// Comments
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Other
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
-EOL_COMMENT=\/\/[^\/\r\n]*
-BLOCK_COMMENT=(\/\*[^*]{BLOCK_COMMENT_TAIL})|\/\*
-//BLOCK_COMMENT_TAIL=([^*]*(\*+[^*/])?)*(\*+\/)?
-BLOCK_COMMENT_TAIL=.*(\*\/)?
-
-//BLOCK_DOC_COMMENT=\/\*\*+(\/|([^/*]{BLOCK_COMMENT_TAIL}))?
-BLOCK_DOC_COMMENT=\/\*(\*|\!){BLOCK_COMMENT_TAIL}
-EOL_DOC_COMMENT=\/\/(\/|\!)[^\r\n]*
+SHEBANG_LINE=\#\!.*
 
 %%
 <YYINITIAL> {
@@ -95,6 +102,8 @@ EOL_DOC_COMMENT=\/\/(\/|\!)[^\r\n]*
   "--"                            { return RustTokenElementTypes.MINUSMINUS; }
   "-="                            { return RustTokenElementTypes.MINUSEQ; }
   "-"                             { return RustTokenElementTypes.MINUS; }
+  "#"                             { return RustTokenElementTypes.SHA; }
+  "#!"                            { return RustTokenElementTypes.SHEBANG; }
   "||"                            { return RustTokenElementTypes.OROR; }
   "|="                            { return RustTokenElementTypes.OREQ; }
   "&&"                            { return RustTokenElementTypes.ANDAND; }
@@ -172,6 +181,9 @@ EOL_DOC_COMMENT=\/\/(\/|\!)[^\r\n]*
   "while"                         { return RustTokenElementTypes.WHILE; }
   "yield"                         { return RustTokenElementTypes.YIELD; }
 
+  "/*"                            { yybegin(BLOCK_COMMENT); yypushback(2); }
+  "//"                            { yybegin(EOL_COMMENT);   yypushback(2); }
+
   {IDENTIFIER}                    { return RustTokenElementTypes.IDENTIFIER; }
 
   {INT_LITERAL}                   { return RustTokenElementTypes.INTEGER_LITERAL; }
@@ -179,11 +191,32 @@ EOL_DOC_COMMENT=\/\/(\/|\!)[^\r\n]*
   {CHAR_LITERAL}                  { return RustTokenElementTypes.CHAR_LITERAL; }
   {STRING_LITERAL}                { return RustTokenElementTypes.STRING_LITERAL; }
 
-  {BLOCK_COMMENT}                 { return RustTokenElementTypes.BLOCK_COMMENT; }
-  {EOL_COMMENT}                   { return RustTokenElementTypes.EOL_COMMENT; }
-  {BLOCK_DOC_COMMENT}             { return RustTokenElementTypes.BLOCK_DOC_COMMENT; }
-  {EOL_DOC_COMMENT}               { return RustTokenElementTypes.EOL_DOC_COMMENT; }
+  {SHEBANG_LINE}                  { return RustTokenElementTypes.SHEBANG_LINE; }
 
   {WHITE_SPACE}                   { return com.intellij.psi.TokenType.WHITE_SPACE; }
   [^]                             { return com.intellij.psi.TokenType.BAD_CHARACTER; }
+}
+
+<BLOCK_COMMENT>([^*]*(\*+[^*/])?)+(\*+\/)?
+{
+    yybegin(YYINITIAL);
+
+    if (yycharat(2) == '!')
+        return RustTokenElementTypes.INNER_DOC_COMMENT;
+    else if (yycharat(2) == '*')
+        return RustTokenElementTypes.OUTER_DOC_COMMENT;
+    else
+        return RustTokenElementTypes.BLOCK_COMMENT;
+}
+
+<EOL_COMMENT>.*
+{
+    yybegin(YYINITIAL);
+
+    if (yycharat(2) == '!')
+        return RustTokenElementTypes.INNER_DOC_COMMENT;
+    else if (yycharat(2) == '/')
+        return RustTokenElementTypes.OUTER_DOC_COMMENT;
+    else
+        return RustTokenElementTypes.EOL_COMMENT;
 }
