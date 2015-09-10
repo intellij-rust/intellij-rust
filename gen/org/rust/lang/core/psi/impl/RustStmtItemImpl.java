@@ -23,14 +23,14 @@ public class RustStmtItemImpl extends RustNamedElementImpl implements RustStmtIt
 
   @Override
   @Nullable
-  public RustBlockItem getBlockItem() {
-    return findChildByClass(RustBlockItem.class);
+  public RustConstItem getConstItem() {
+    return findChildByClass(RustConstItem.class);
   }
 
   @Override
   @Nullable
-  public RustConstItem getConstItem() {
-    return findChildByClass(RustConstItem.class);
+  public RustEnumItem getEnumItem() {
+    return findChildByClass(RustEnumItem.class);
   }
 
   @Override
@@ -47,8 +47,44 @@ public class RustStmtItemImpl extends RustNamedElementImpl implements RustStmtIt
 
   @Override
   @Nullable
+  public RustFnItem getFnItem() {
+    return findChildByClass(RustFnItem.class);
+  }
+
+  @Override
+  @Nullable
+  public RustForeignModItem getForeignModItem() {
+    return findChildByClass(RustForeignModItem.class);
+  }
+
+  @Override
+  @Nullable
+  public RustImplItem getImplItem() {
+    return findChildByClass(RustImplItem.class);
+  }
+
+  @Override
+  @Nullable
+  public RustModItem getModItem() {
+    return findChildByClass(RustModItem.class);
+  }
+
+  @Override
+  @Nullable
   public RustStaticItem getStaticItem() {
     return findChildByClass(RustStaticItem.class);
+  }
+
+  @Override
+  @Nullable
+  public RustStructItem getStructItem() {
+    return findChildByClass(RustStructItem.class);
+  }
+
+  @Override
+  @Nullable
+  public RustTraitItem getTraitItem() {
+    return findChildByClass(RustTraitItem.class);
   }
 
   @Override
@@ -61,6 +97,12 @@ public class RustStmtItemImpl extends RustNamedElementImpl implements RustStmtIt
   @Nullable
   public RustUseItem getUseItem() {
     return findChildByClass(RustUseItem.class);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getUnsafe() {
+    return findChildByType(UNSAFE);
   }
 
 }

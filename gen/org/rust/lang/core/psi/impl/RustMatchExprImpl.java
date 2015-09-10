@@ -41,6 +41,12 @@ public class RustMatchExprImpl extends RustExprImpl implements RustMatchExpr {
 
   @Override
   @NotNull
+  public List<RustPat> getPatList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustPat.class);
+  }
+
+  @Override
+  @NotNull
   public PsiElement getMatch() {
     return findNotNullChildByType(MATCH);
   }

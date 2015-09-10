@@ -21,4 +21,76 @@ public class RustTraitItemImpl extends RustNamedElementImpl implements RustTrait
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public RustGenericParams getGenericParams() {
+    return findNotNullChildByClass(RustGenericParams.class);
+  }
+
+  @Override
+  @Nullable
+  public RustTraitConst getTraitConst() {
+    return findChildByClass(RustTraitConst.class);
+  }
+
+  @Override
+  @Nullable
+  public RustTraitMethod getTraitMethod() {
+    return findChildByClass(RustTraitMethod.class);
+  }
+
+  @Override
+  @Nullable
+  public RustTraitType getTraitType() {
+    return findChildByClass(RustTraitType.class);
+  }
+
+  @Override
+  @Nullable
+  public RustTypeParamBounds getTypeParamBounds() {
+    return findChildByClass(RustTypeParamBounds.class);
+  }
+
+  @Override
+  @Nullable
+  public RustWhereClause getWhereClause() {
+    return findChildByClass(RustWhereClause.class);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getFor() {
+    return findChildByType(FOR);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getLbrace() {
+    return findNotNullChildByType(LBRACE);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getQ() {
+    return findChildByType(Q);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getRbrace() {
+    return findNotNullChildByType(RBRACE);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getTrait() {
+    return findNotNullChildByType(TRAIT);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getUnsafe() {
+    return findChildByType(UNSAFE);
+  }
+
 }

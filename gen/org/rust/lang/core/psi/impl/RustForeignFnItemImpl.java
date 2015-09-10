@@ -21,4 +21,64 @@ public class RustForeignFnItemImpl extends RustNamedElementImpl implements RustF
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public RustGenericParams getGenericParams() {
+    return findNotNullChildByClass(RustGenericParams.class);
+  }
+
+  @Override
+  @Nullable
+  public RustParam getParam() {
+    return findChildByClass(RustParam.class);
+  }
+
+  @Override
+  @NotNull
+  public RustRetType getRetType() {
+    return findNotNullChildByClass(RustRetType.class);
+  }
+
+  @Override
+  @Nullable
+  public RustWhereClause getWhereClause() {
+    return findChildByClass(RustWhereClause.class);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getDotdotdot() {
+    return findChildByType(DOTDOTDOT);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getFn() {
+    return findNotNullChildByType(FN);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getIdentifier() {
+    return findNotNullChildByType(IDENTIFIER);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getLparen() {
+    return findNotNullChildByType(LPAREN);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getRparen() {
+    return findNotNullChildByType(RPAREN);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getSemicolon() {
+    return findNotNullChildByType(SEMICOLON);
+  }
+
 }

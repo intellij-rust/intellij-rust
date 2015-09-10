@@ -62,7 +62,9 @@ public interface RustTokenElementTypes {
 
     // Identifiers
 
-    IElementType IDENTIFIER = new RustTokenType("identifier");
+    IElementType IDENTIFIER = new RustTokenType("<IDENTIFIER>");
+    IElementType LIFETIME = new RustTokenType("<LIFETIME>");
+    IElementType STATIC_LIFETIME = new RustTokenType("<STATIC_LIFETIME>");
 
     // Literals
 
@@ -96,6 +98,7 @@ public interface RustTokenElementTypes {
     IElementType DIVEQ = new RustTokenType("/=");
     IElementType DOT = new RustTokenType(".");
     IElementType DOTDOT = new RustTokenType("..");
+    IElementType DOTDOTDOT = new RustTokenType("...");
     IElementType ELLIPSIS = new RustTokenType("...");
     IElementType EQ = new RustTokenType("=");
     IElementType EQEQ = new RustTokenType("==");
@@ -131,5 +134,8 @@ public interface RustTokenElementTypes {
     IElementType SEMICOLON = new RustTokenType(";");
     IElementType XOR = new RustTokenType("^");
     IElementType XOREQ = new RustTokenType("^=");
+    IElementType Q = new RustTokenType("?");
+    IElementType AT = new RustTokenType("@");
+    IElementType UNDERSCORE = new RustTokenType("_");
 
 }

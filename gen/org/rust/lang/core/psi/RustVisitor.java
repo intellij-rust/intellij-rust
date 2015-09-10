@@ -11,6 +11,14 @@ public class RustVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitAnonParam(@NotNull RustAnonParam o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitAnonParams(@NotNull RustAnonParams o) {
+    visitCompositeElement(o);
+  }
+
   public void visitArgList(@NotNull RustArgList o) {
     visitCompositeElement(o);
   }
@@ -21,6 +29,18 @@ public class RustVisitor extends PsiElementVisitor {
 
   public void visitBinaryExpr(@NotNull RustBinaryExpr o) {
     visitExpr(o);
+  }
+
+  public void visitBinding(@NotNull RustBinding o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitBindingMode(@NotNull RustBindingMode o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitBindings(@NotNull RustBindings o) {
+    visitCompositeElement(o);
   }
 
   public void visitBitAndBinExpr(@NotNull RustBitAndBinExpr o) {
@@ -51,16 +71,20 @@ public class RustVisitor extends PsiElementVisitor {
     visitExpr(o);
   }
 
-  public void visitBlockItem(@NotNull RustBlockItem o) {
-    visitCompositeElement(o);
-  }
-
   public void visitBoolAndBinExpr(@NotNull RustBoolAndBinExpr o) {
     visitBinaryExpr(o);
   }
 
   public void visitBoolOrBinExpr(@NotNull RustBoolOrBinExpr o) {
     visitBinaryExpr(o);
+  }
+
+  public void visitBound(@NotNull RustBound o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitBounds(@NotNull RustBounds o) {
+    visitCompositeElement(o);
   }
 
   public void visitBreakExpr(@NotNull RustBreakExpr o) {
@@ -89,6 +113,14 @@ public class RustVisitor extends PsiElementVisitor {
 
   public void visitDivBinExpr(@NotNull RustDivBinExpr o) {
     visitBinaryExpr(o);
+  }
+
+  public void visitEnumArgs(@NotNull RustEnumArgs o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitEnumDef(@NotNull RustEnumDef o) {
+    visitCompositeElement(o);
   }
 
   public void visitEnumItem(@NotNull RustEnumItem o) {
@@ -175,16 +207,36 @@ public class RustVisitor extends PsiElementVisitor {
     visitResolveScope(o);
   }
 
+  public void visitFnParams(@NotNull RustFnParams o) {
+    visitCompositeElement(o);
+  }
+
   public void visitForExpr(@NotNull RustForExpr o) {
     visitExpr(o);
+  }
+
+  public void visitForLifetimes(@NotNull RustForLifetimes o) {
+    visitCompositeElement(o);
   }
 
   public void visitForeignFnItem(@NotNull RustForeignFnItem o) {
     visitCompositeElement(o);
   }
 
+  public void visitForeignItem(@NotNull RustForeignItem o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitForeignModItem(@NotNull RustForeignModItem o) {
+    visitCompositeElement(o);
+  }
+
   public void visitFullRangeExpr(@NotNull RustFullRangeExpr o) {
     visitRangeExpr(o);
+  }
+
+  public void visitGenericParams(@NotNull RustGenericParams o) {
+    visitCompositeElement(o);
   }
 
   public void visitGtCompBinExpr(@NotNull RustGtCompBinExpr o) {
@@ -204,6 +256,10 @@ public class RustVisitor extends PsiElementVisitor {
   }
 
   public void visitImplItem(@NotNull RustImplItem o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitImplMethod(@NotNull RustImplMethod o) {
     visitCompositeElement(o);
   }
 
@@ -231,7 +287,11 @@ public class RustVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitLiteralExpr(@NotNull RustLiteralExpr o) {
+  public void visitLifetimes(@NotNull RustLifetimes o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitLitExpr(@NotNull RustLitExpr o) {
     visitExpr(o);
   }
 
@@ -252,6 +312,10 @@ public class RustVisitor extends PsiElementVisitor {
   }
 
   public void visitMetaItem(@NotNull RustMetaItem o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitMethod(@NotNull RustMethod o) {
     visitCompositeElement(o);
   }
 
@@ -279,12 +343,36 @@ public class RustVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitParam(@NotNull RustParam o) {
+    visitCompositeElement(o);
+  }
+
   public void visitParenExpr(@NotNull RustParenExpr o) {
     visitExpr(o);
   }
 
+  public void visitPat(@NotNull RustPat o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitPatStruct(@NotNull RustPatStruct o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitPatTup(@NotNull RustPatTup o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitPatVec(@NotNull RustPatVec o) {
+    visitCompositeElement(o);
+  }
+
   public void visitPath(@NotNull RustPath o) {
     visitCompositeElement(o);
+  }
+
+  public void visitPathExpr(@NotNull RustPathExpr o) {
+    visitExpr(o);
   }
 
   public void visitPathGlob(@NotNull RustPathGlob o) {
@@ -293,6 +381,10 @@ public class RustVisitor extends PsiElementVisitor {
 
   public void visitPlusBinExpr(@NotNull RustPlusBinExpr o) {
     visitBinaryExpr(o);
+  }
+
+  public void visitPolybound(@NotNull RustPolybound o) {
+    visitCompositeElement(o);
   }
 
   public void visitRangeExpr(@NotNull RustRangeExpr o) {
@@ -307,6 +399,10 @@ public class RustVisitor extends PsiElementVisitor {
     visitExpr(o);
   }
 
+  public void visitRetType(@NotNull RustRetType o) {
+    visitCompositeElement(o);
+  }
+
   public void visitStaticItem(@NotNull RustStaticItem o) {
     visitCompositeElement(o);
   }
@@ -319,6 +415,14 @@ public class RustVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitStructDeclArgs(@NotNull RustStructDeclArgs o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitStructDeclField(@NotNull RustStructDeclField o) {
+    visitCompositeElement(o);
+  }
+
   public void visitStructExpr(@NotNull RustStructExpr o) {
     visitExpr(o);
   }
@@ -327,7 +431,31 @@ public class RustVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitStructTupleArgs(@NotNull RustStructTupleArgs o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitStructTupleField(@NotNull RustStructTupleField o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitTraitConst(@NotNull RustTraitConst o) {
+    visitCompositeElement(o);
+  }
+
   public void visitTraitItem(@NotNull RustTraitItem o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitTraitMethod(@NotNull RustTraitMethod o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitTraitRef(@NotNull RustTraitRef o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitTraitType(@NotNull RustTraitType o) {
     visitCompositeElement(o);
   }
 
@@ -335,7 +463,31 @@ public class RustVisitor extends PsiElementVisitor {
     visitExpr(o);
   }
 
+  public void visitTypeAscription(@NotNull RustTypeAscription o) {
+    visitCompositeElement(o);
+  }
+
   public void visitTypeItem(@NotNull RustTypeItem o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitTypeMethod(@NotNull RustTypeMethod o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitTypeParam(@NotNull RustTypeParam o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitTypeParamBounds(@NotNull RustTypeParamBounds o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitTypeParamDefault(@NotNull RustTypeParamDefault o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitTypePrimSum(@NotNull RustTypePrimSum o) {
     visitCompositeElement(o);
   }
 
@@ -356,6 +508,14 @@ public class RustVisitor extends PsiElementVisitor {
   }
 
   public void visitViewPathPart(@NotNull RustViewPathPart o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitWhereClause(@NotNull RustWhereClause o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitWherePred(@NotNull RustWherePred o) {
     visitCompositeElement(o);
   }
 

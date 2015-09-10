@@ -17,6 +17,9 @@ public interface RustMatchExpr extends RustExpr {
   List<RustOuterAttr> getOuterAttrList();
 
   @NotNull
+  List<RustPat> getPatList();
+
+  @NotNull
   PsiElement getMatch();
 
 }

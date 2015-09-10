@@ -11,6 +11,9 @@ public interface RustForExpr extends RustExpr {
   RustBlock getBlock();
 
   @NotNull
+  RustPat getPat();
+
+  @NotNull
   PsiElement getColon();
 
   @NotNull
@@ -22,7 +25,13 @@ public interface RustForExpr extends RustExpr {
   @NotNull
   PsiElement getLbrace();
 
+  @Nullable
+  PsiElement getLifetime();
+
   @NotNull
   PsiElement getRbrace();
+
+  @Nullable
+  PsiElement getStaticLifetime();
 
 }

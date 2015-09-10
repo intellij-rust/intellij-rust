@@ -5,6 +5,12 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustBlockItem extends RustCompositeElement {
+public interface RustBindingMode extends RustCompositeElement {
+
+  @Nullable
+  PsiElement getMut();
+
+  @Nullable
+  PsiElement getRef();
 
 }

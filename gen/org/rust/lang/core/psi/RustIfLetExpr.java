@@ -13,6 +13,9 @@ public interface RustIfLetExpr extends RustExpr {
   @NotNull
   List<RustExpr> getExprList();
 
+  @NotNull
+  RustPat getPat();
+
   @Nullable
   PsiElement getElse();
 

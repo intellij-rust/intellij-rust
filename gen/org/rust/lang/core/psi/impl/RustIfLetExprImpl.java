@@ -34,6 +34,12 @@ public class RustIfLetExprImpl extends RustExprImpl implements RustIfLetExpr {
   }
 
   @Override
+  @NotNull
+  public RustPat getPat() {
+    return findNotNullChildByClass(RustPat.class);
+  }
+
+  @Override
   @Nullable
   public PsiElement getElse() {
     return findChildByType(ELSE);

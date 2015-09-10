@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustLiteralExprImpl extends RustExprImpl implements RustLiteralExpr {
+public class RustLitExprImpl extends RustExprImpl implements RustLitExpr {
 
-  public RustLiteralExprImpl(ASTNode node) {
+  public RustLitExprImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitLiteralExpr(this);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitLitExpr(this);
     else super.accept(visitor);
   }
 

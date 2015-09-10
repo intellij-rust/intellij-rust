@@ -29,15 +29,27 @@ public class RustFnItemImpl extends RustFnItemImplMixin implements RustFnItem {
   }
 
   @Override
-  @NotNull
-  public List<RustDeclItem> getDeclItemList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustDeclItem.class);
+  @Nullable
+  public RustFnParams getFnParams() {
+    return findChildByClass(RustFnParams.class);
   }
 
   @Override
   @Nullable
-  public PsiElement getArrow() {
-    return findChildByType(ARROW);
+  public RustGenericParams getGenericParams() {
+    return findChildByClass(RustGenericParams.class);
+  }
+
+  @Override
+  @Nullable
+  public RustRetType getRetType() {
+    return findChildByClass(RustRetType.class);
+  }
+
+  @Override
+  @Nullable
+  public RustWhereClause getWhereClause() {
+    return findChildByClass(RustWhereClause.class);
   }
 
   @Override
@@ -47,15 +59,9 @@ public class RustFnItemImpl extends RustFnItemImplMixin implements RustFnItem {
   }
 
   @Override
-  @Nullable
-  public PsiElement getLparen() {
-    return findChildByType(LPAREN);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getRparen() {
-    return findChildByType(RPAREN);
+  @NotNull
+  public PsiElement getIdentifier() {
+    return findNotNullChildByType(IDENTIFIER);
   }
 
 }

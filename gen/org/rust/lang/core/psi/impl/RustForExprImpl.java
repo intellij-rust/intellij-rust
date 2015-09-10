@@ -29,6 +29,12 @@ public class RustForExprImpl extends RustExprImpl implements RustForExpr {
 
   @Override
   @NotNull
+  public RustPat getPat() {
+    return findNotNullChildByClass(RustPat.class);
+  }
+
+  @Override
+  @NotNull
   public PsiElement getColon() {
     return findNotNullChildByType(COLON);
   }
@@ -52,9 +58,21 @@ public class RustForExprImpl extends RustExprImpl implements RustForExpr {
   }
 
   @Override
+  @Nullable
+  public PsiElement getLifetime() {
+    return findChildByType(LIFETIME);
+  }
+
+  @Override
   @NotNull
   public PsiElement getRbrace() {
     return findNotNullChildByType(RBRACE);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getStaticLifetime() {
+    return findChildByType(STATIC_LIFETIME);
   }
 
 }

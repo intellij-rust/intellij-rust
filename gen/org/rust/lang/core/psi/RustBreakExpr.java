@@ -10,4 +10,10 @@ public interface RustBreakExpr extends RustExpr {
   @NotNull
   PsiElement getBreak();
 
+  @Nullable
+  PsiElement getLifetime();
+
+  @Nullable
+  PsiElement getStaticLifetime();
+
 }

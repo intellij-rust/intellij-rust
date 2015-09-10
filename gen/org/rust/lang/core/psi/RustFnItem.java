@@ -11,19 +11,22 @@ public interface RustFnItem extends RustResolveScope {
   @Nullable
   RustBlock getBlock();
 
-  @NotNull
-  List<RustDeclItem> getDeclItemList();
+  @Nullable
+  RustFnParams getFnParams();
 
   @Nullable
-  PsiElement getArrow();
+  RustGenericParams getGenericParams();
+
+  @Nullable
+  RustRetType getRetType();
+
+  @Nullable
+  RustWhereClause getWhereClause();
 
   @NotNull
   PsiElement getFn();
 
-  @Nullable
-  PsiElement getLparen();
-
-  @Nullable
-  PsiElement getRparen();
+  @NotNull
+  PsiElement getIdentifier();
 
 }

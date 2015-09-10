@@ -16,10 +16,16 @@ public interface RustLoopExpr extends RustExpr {
   @NotNull
   PsiElement getLbrace();
 
+  @Nullable
+  PsiElement getLifetime();
+
   @NotNull
   PsiElement getLoop();
 
   @NotNull
   PsiElement getRbrace();
+
+  @Nullable
+  PsiElement getStaticLifetime();
 
 }

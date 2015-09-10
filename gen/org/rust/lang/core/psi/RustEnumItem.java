@@ -7,4 +7,25 @@ import com.intellij.psi.PsiElement;
 
 public interface RustEnumItem extends RustCompositeElement {
 
+  @NotNull
+  List<RustEnumDef> getEnumDefList();
+
+  @NotNull
+  RustGenericParams getGenericParams();
+
+  @Nullable
+  RustWhereClause getWhereClause();
+
+  @NotNull
+  PsiElement getEnum();
+
+  @NotNull
+  PsiElement getIdentifier();
+
+  @NotNull
+  PsiElement getLbrace();
+
+  @NotNull
+  PsiElement getRbrace();
+
 }

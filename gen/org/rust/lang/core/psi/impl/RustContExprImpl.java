@@ -27,4 +27,16 @@ public class RustContExprImpl extends RustExprImpl implements RustContExpr {
     return findNotNullChildByType(CONTINUE);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getLifetime() {
+    return findChildByType(LIFETIME);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getStaticLifetime() {
+    return findChildByType(STATIC_LIFETIME);
+  }
+
 }

@@ -35,6 +35,12 @@ public class RustWhileLetExprImpl extends RustExprImpl implements RustWhileLetEx
 
   @Override
   @NotNull
+  public RustPat getPat() {
+    return findNotNullChildByClass(RustPat.class);
+  }
+
+  @Override
+  @NotNull
   public PsiElement getEq() {
     return findNotNullChildByType(EQ);
   }

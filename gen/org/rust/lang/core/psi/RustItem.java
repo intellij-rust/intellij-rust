@@ -8,18 +8,6 @@ import com.intellij.psi.PsiElement;
 public interface RustItem extends RustCompositeElement {
 
   @Nullable
-  RustEnumItem getEnumItem();
-
-  @Nullable
-  RustExternBlock getExternBlock();
-
-  @Nullable
-  RustFnItem getFnItem();
-
-  @Nullable
-  RustImplItem getImplItem();
-
-  @Nullable
   RustModItem getModItem();
 
   @NotNull
@@ -27,12 +15,6 @@ public interface RustItem extends RustCompositeElement {
 
   @Nullable
   RustStmtItem getStmtItem();
-
-  @Nullable
-  RustStructItem getStructItem();
-
-  @Nullable
-  RustTraitItem getTraitItem();
 
   @Nullable
   PsiElement getPub();

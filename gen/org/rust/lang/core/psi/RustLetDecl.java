@@ -7,8 +7,44 @@ import com.intellij.psi.PsiElement;
 
 public interface RustLetDecl extends RustCompositeElement {
 
-  @Nullable
-  RustExpr getExpr();
+  @NotNull
+  List<RustAbi> getAbiList();
+
+  @NotNull
+  List<RustAnonParam> getAnonParamList();
+
+  @NotNull
+  List<RustAnonParams> getAnonParamsList();
+
+  @NotNull
+  List<RustBindings> getBindingsList();
+
+  @NotNull
+  List<RustBounds> getBoundsList();
+
+  @NotNull
+  List<RustExpr> getExprList();
+
+  @NotNull
+  List<RustFnParams> getFnParamsList();
+
+  @NotNull
+  List<RustGenericParams> getGenericParamsList();
+
+  @NotNull
+  List<RustLifetimes> getLifetimesList();
+
+  @NotNull
+  RustPat getPat();
+
+  @NotNull
+  List<RustRetType> getRetTypeList();
+
+  @NotNull
+  List<RustTraitRef> getTraitRefList();
+
+  @NotNull
+  List<RustTypeParamBounds> getTypeParamBoundsList();
 
   @Nullable
   PsiElement getColon();
@@ -18,11 +54,5 @@ public interface RustLetDecl extends RustCompositeElement {
 
   @NotNull
   PsiElement getLet();
-
-  @NotNull
-  PsiElement getSemicolon();
-
-  @Nullable
-  PsiElement getIdentifier();
 
 }

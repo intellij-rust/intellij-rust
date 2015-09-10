@@ -66,6 +66,8 @@
         DOTDOT               =  '..'
         FAT_ARROW            =  '=>'
         ARROW                =  '->'
+        Q                    =  '?'
+        AT                   =  '@'
 
         // DEBUG
 
@@ -157,7 +159,7 @@ crate ::= [ SHEBANG_LINE ] [ inner_attrs ] item *
 private inner_attrs ::= inner_attr +
 inner_attr ::= SHEBANG LBRACK meta_item RBRACK | INNER_DOC_COMMENT
 
-meta_item ::= identifier [ EQ literal | LPAREN meta_seq RPAREN ]
+meta_item ::= identifier [ EQ lit | LPAREN meta_seq RPAREN ]
 private meta_seq ::= meta_item [ COMMA meta_seq? ]
 
 private outer_attrs ::= outer_attr +
@@ -168,35 +170,157 @@ outer_attr ::= SHA LBRACK meta_item RBRACK | OUTER_DOC_COMMENT
 // Items
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private vis ::= PUB
+private vis ::= PUB?
 
 item ::= outer_attrs? vis?
        ( stmt_item
        | mod_item
-       | fn_item
-       | struct_item
-       | enum_item
-       | trait_item
-       | impl_item
-       | extern_block
     /* | item_macro */)
 
 stmt_item ::= static_item
             | const_item
             | type_item
-            | block_item
+            | block_item_group
             | view_item
 
 
-block_item ::=
+private block_item_group ::= fn_item
+                           | unsafe_fn_item
+                           | mod_item
+                           | foreign_mod_item
+                           | struct_item
+                           | enum_item
+                           | trait_item
+                           | impl_item
 
-// TODO(kudinkin): Fix
-type_item ::= 'abc0'
-struct_item ::= 'abc2'
-enum_item ::= 'abc1'
-trait_item ::= 'abc4'
-impl_item ::= 'abc6'
-foreign_fn_item ::= 'abc3'
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Functions
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+fn_item ::= FN identifier generic_params fn_params ret_type where_clause? block /* inner_attrs_and_block */ {
+   pin(".*")=2
+   recoverWhile="fn_item_recover"
+}
+
+foreign_fn_item ::= FN IDENTIFIER generic_params fn_decl_allow_variadic where_clause? SEMICOLON
+
+private fn_decl_allow_variadic   ::= fn_params_allow_variadic ret_type
+private fn_params_allow_variadic ::= LPAREN params COMMA DOTDOTDOT RPAREN
+                                   | LPAREN params COMMA RPAREN
+                                   | LPAREN params RPAREN
+                                   | LPAREN RPAREN
+
+
+generic_params ::= [ generic_params_inner ]
+
+private generic_params_inner ::= LT lifetimes [ COMMA [ type_params COMMA? ] ] GT
+                               | LT                     type_params COMMA?     GT
+                            /* | LT lifetimes                         GTGT
+                               | LT lifetimes COMMA                   GTGT */
+                            /* | LT lifetimes COMMA type_params       GTGT
+                               | LT lifetimes COMMA type_params COMMA GTGT */
+                            /* | LT                 type_params SHR
+                               | LT                 type_params COMMA SHR */
+
+lifetimes ::= lifetime_and_bounds (COMMA lifetime_and_bounds)*
+
+private lifetime_and_bounds ::= LIFETIME lifetime_bounds? | STATIC_LIFETIME
+private lifetime_bounds     ::= COLON lifetime (PLUS lifetime)*
+
+private type_params ::= type_param (COMMA type_params)*
+
+type_param ::= [ IDENTIFIER Q ] IDENTIFIER type_param_bounds? type_param_default?
+
+type_param_bounds   ::= COLON [ type_param_bound_seq ]
+type_param_default  ::= EQ type_sum
+
+private type_sum    ::= type [ PLUS type_param_bounds ]
+private type_sums   ::= type_sum (COMMA type_sum)*
+
+private type_param_bound_seq        ::= polybound type_param_bound_seq_right
+private type_param_bound_seq_right  ::= [ PLUS polybound type_param_bound_seq_right ]
+
+polybound ::= [ FOR LT lifetimes? GT | Q ] bound
+
+bound   ::= lifetime | trait_ref
+bounds  ::= bound (PLUS bound)*
+
+
+where_clause ::= WHERE where_preds COMMA?
+
+private where_preds ::= where_pred (COMMA where_pred)*
+
+where_pred ::= for_lifetimes? (lifetime COLON bounds | type COLON type_param_bounds)
+
+for_lifetimes ::= FOR LT lifetimes GT
+
+private fn_item_recover ::= !(<< skipUntilEOL >>)
+
+fn_params ::= LPAREN params RPAREN    {pin(".*")=1}
+ret_type  ::= ARROW (type | EXCL)     {pin=1}
+
+private params ::= [ param [ COMMA params ] ]
+
+param ::= pat COLON type_sum
+
+pat ::= UNDERSCORE
+      | AND MUT? pat
+      | ANDAND pat
+      | LPAREN [ pat_tup COMMA? ] RPAREN
+      | LBRACK pat_vec RBRACK
+      | lit_or_path [ DOTDOTDOT lit_or_path ]
+      | path_expr (LPAREN (DOTDOT | pat_tup) RPAREN | LBRACE pat_struct RBRACE)
+   /* | path_expr EXCL maybe_ident delimited_token_trees */
+      | binding_mode? IDENTIFIER AT pat
+      | BOX pat
+      | LT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER
+   /* | SHL ty_sum maybe_as_trait_ref '>' MOD_SEP ident maybe_as_trait_ref '>' MOD_SEP ident */
+
+
+pat_tup ::= pat (COMMA pat)*
+pat_vec ::= [ pat_vec_elts COMMA? ] [ DOTDOT [ COMMA pat_vec_elts COMMA? ] ]
+
+private pat_vec_elts ::= pat (COMMA pat)*
+
+private lit_or_path ::= path_expr | lit | MINUS lit
+
+path_expr ::= path_generic_args_with_colons
+            | COLONCOLON path_generic_args_with_colons
+            | SELF COLONCOLON path_generic_args_with_colons
+
+private path_generic_args_with_colons       ::= IDENTIFIER path_generic_args_with_colons_right
+private path_generic_args_with_colons_right ::= [ COLONCOLON (IDENTIFIER | generic_args) path_generic_args_with_colons_right ]
+
+private generic_args ::= LT generic_values GT
+                    /* | LT generic_values GTGT */
+                    /* | LT generic_values GTEQ */
+                    /* | LT generic_values GTGTEQ */
+                    /* | LTLT ty_qualified_path_and_generic_values GT
+                       | LTLT ty_qualified_path_and_generic_values GTGT
+                       | LTLT ty_qualified_path_and_generic_values GTEQ
+                       | LTLT ty_qualified_path_and_generic_values GTGTEQ */
+
+private generic_values ::= lifetimes? type_sums_and_or_bindings?
+private type_sums_and_or_bindings ::= type_sums [ COMMA bindings ]
+                                    |                   bindings COMMA?
+
+bindings ::= binding (COMMA binding)*
+binding  ::= IDENTIFIER EQ type
+
+pat_struct ::= pat_fields [ COMMA DOTDOT ]
+             |                    DOTDOT
+
+private pat_fields  ::= pat_field (COMMA pat_field)
+private pat_field   ::=     binding_mode?  IDENTIFIER [ COLON pat ]
+                      | BOX binding_mode?  IDENTIFIER
+
+binding_mode ::= REF | REF MUT | MUT
+
+
+private unsafe_fn_item ::= UNSAFE fn_item
+
+extern_fn_item ::= EXTERN abi? fn_item
 
 decl_item ::= identifier COLON type
 
@@ -215,7 +339,7 @@ view_path ::= view_path_part? COLONCOLON LBRACE [ idents_or_self COMMA? ] RBRACE
             | view_path_part  COLONCOLON MUL
             |                            LBRACE [ idents_or_self COMMA? ] RBRACE
             | view_path_part AS IDENTIFIER
-            | view_path_part
+            | view_path_part                                                        {pin(".*")=2}
 
 private idents_or_self ::= (IDENTIFIER | SELF) [ AS IDENTIFIER ] (COMMA idents_or_self)*
 
@@ -228,30 +352,205 @@ private view_path_part_right ::= [ COLONCOLON IDENTIFIER view_path_part_right ]
 
 abi ::= STRING_LITERAL
 
-extern_fn_item ::= EXTERN abi? fn_item
-
-extern_crate_decl ::= EXTERN CRATE create_name SEMICOLON
-
-private create_name ::= identifier | identifier AS identifier
 
 
-extern_block ::= EXTERN LBRACE foreign_fn_item* RBRACE
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Crate
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn_item ::= FN identifier fn_sig block {
-    pin=1
-    recoverWhile="fn_item_recover"
-}
+extern_crate_decl ::= EXTERN CRATE crate_name SEMICOLON
 
-private fn_item_recover ::= !(<< skipUntilEOL >>)
-
-private fn_sig ::= LPAREN (decl_item (COMMA decl_item)*)? RPAREN ARROW type {pin(".*")=1} // or pin=3?
-
-mod_item ::= MOD identifier (SEMICOLON | LBRACE mod_content RBRACE)
-
-private mod_content ::= (view_item | item)*
+private crate_name ::= identifier | identifier AS identifier
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Struct & Enum
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
+mod_item ::= MOD identifier (SEMICOLON | LBRACE inner_attrs? mod_contents? RBRACE)
+
+private mod_contents ::= (attrs_and_vis item)+
+
+foreign_mod_item ::= EXTERN abi? LBRACE inner_attrs? foreign_items? RBRACE
+
+private foreign_items ::= foreign_item +
+
+private attrs_and_vis ::= outer_attrs? vis
+
+foreign_item  ::= attrs_and_vis STATIC  foreign_static_item
+                | attrs_and_vis UNSAFE? foreign_fn_item
+
+private foreign_static_item ::= MUT? IDENTIFIER COLON type SEMICOLON
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Struct
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct_item ::= STRUCT IDENTIFIER generic_params (struct_tuple_args? where_clause? SEMICOLON | where_clause? struct_decl_args)
+
+struct_tuple_args ::= LPAREN struct_tuple_fields COMMA? RPAREN
+
+private struct_tuple_fields ::= struct_tuple_field (COMMA struct_tuple_field)*
+
+struct_tuple_field ::= attrs_and_vis type_sum
+
+struct_decl_args ::= LBRACE struct_decl_fields COMMA? RBRACE
+
+private struct_decl_fields ::= [ struct_decl_field (COMMA struct_decl_field)* ]
+
+struct_decl_field ::= attrs_and_vis IDENTIFIER COLON type_sum
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Enum
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+enum_item ::= ENUM IDENTIFIER generic_params where_clause? LBRACE enum_defs? COMMA? RBRACE
+
+private enum_defs ::= enum_def (COMMA enum_def)*
+
+enum_def ::= attrs_and_vis IDENTIFIER enum_args?
+
+enum_args ::= LBRACE struct_decl_fields COMMA? RBRACE
+            | LPAREN type_sums? RPAREN
+            | EQ expr
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Trait
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params for_sized? type_param_bounds? where_clause? LBRACE trait_contents? RBRACE
+
+private for_sized ::= FOR Q IDENTIFIER
+                    | FOR IDENTIFIER Q
+
+private trait_contents ::= trait_const | trait_type | trait_method
+
+trait_const ::= outer_attrs? CONST IDENTIFIER type_ascription? const_default? SEMICOLON
+
+type_ascription ::= COLON type_sum
+
+private const_default ::= EQ expr
+
+trait_type ::= outer_attrs? TYPE type_param SEMICOLON
+
+trait_method ::= type_method | method
+
+type_method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause? SEMICOLON
+
+private fn_decl_with_self_allow_anon_params ::= fn_anon_params_with_self ret_type
+private fn_anon_params_with_self ::= LPAREN [ AND lifetime? ] MUT? SELF type_ascription? comma_anon_params? RPAREN
+                                   | LPAREN anon_params RPAREN
+
+private comma_anon_params ::= COMMA [ anon_params COMMA? ]
+
+anon_params ::= anon_param (COMMA anon_param)*
+
+anon_param ::= [ named_arg COLON ] type
+
+private named_arg ::= IDENTIFIER
+                    | UNDERSCORE
+                    | AND (IDENTIFIER | UNDERSCORE)
+                    | ANDAND (IDENTIFIER | UNDERSCORE)
+                    | MUT IDENTIFIER
+
+method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause? block /* inner_attrs_and_block */
+
+
+trait_ref ::= IDENTIFIER COLONCOLON? path_generic_args_without_colons
+
+private as_trait_ref ::= AS trait_ref
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Impl
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl_item ::= UNSAFE? IMPL generic_params type_prim_sum                 where_clause? LBRACE inner_attrs? impl_contents RBRACE
+            | UNSAFE? IMPL generic_params LPAREN type RPAREN            where_clause? LBRACE inner_attrs? impl_contents RBRACE
+            | UNSAFE? IMPL generic_params EXCL? trait_ref FOR (type_sum where_clause? LBRACE inner_attrs? impl_contents RBRACE | DOTDOT LBRACE RBRACE)
+
+private impl_contents ::= impl_method
+                        | impl_const
+                     /* | attrs_and_vis impl_macro */
+                        | impl_type
+
+impl_method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self where_clause? block /* inner_attrs_and_block */
+
+private fn_decl_with_self ::= fn_params_with_self ret_type
+
+private fn_params_with_self ::= LPAREN [ [ AND lifetime ] MUT ] SELF type_ascription? comma_params? RPAREN
+                              | LPAREN params? RPAREN
+
+private comma_params ::= COMMA [ params COMMA? ]
+
+private impl_const ::= attrs_and_vis const_item
+
+private impl_type ::= attrs_and_vis TYPE IDENTIFIER generic_params EQ type_sum SEMICOLON
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Types
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+private type ::= type_prim
+               | type_closure
+               | LT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER
+               | LPAREN [ type_sums COMMA? ] RPAREN
+            /* | LTLT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER as_trait_ref? GT COLONCOLON IDENTIFIER */
+
+type_item ::= TYPE IDENTIFIER generic_params where_clause? EQ type_sum SEMICOLON
+
+type_prim_sum ::= type_prim [ PLUS type_param_bounds ]
+
+private type_prim ::= [ SELF? COLONCOLON ] path_generic_args_without_colons
+                    | BOX type
+                    | MUL    [ MUT | CONST ] type
+                    | AND    [ lifetime? MUT ] type
+                    | ANDAND [ lifetime? MUT ] type
+                    | LBRACK type [ (COMMA DOTDOT | SEMICOLON) expr ] RBRACK
+                    | TYPEOF LPAREN expr RPAREN
+                    | UNDERSCORE
+                    | type_bare_fn
+                    | type_proc
+                    | for_in_type
+
+private type_bare_fn ::= [ UNSAFE? [ EXTERN abi? ] ] FN type_fn_decl
+
+private type_fn_decl ::= generic_params fn_anon_params ret_type
+
+private fn_anon_params ::= LPAREN anon_param anon_params_allow_variadic_tail RPAREN
+                         | LPAREN RPAREN
+
+private anon_params_allow_variadic_tail ::= [ COMMA (DOTDOTDOT | anon_param anon_params_allow_variadic_tail) ]
+
+private type_proc ::= PROC generic_params fn_params bounds? ret_type
+
+private for_in_type ::= FOR LT lifetimes? GT for_in_type_suffix
+private for_in_type_suffix ::= type_proc
+                             | type_bare_fn
+                             | trait_ref
+                             | type_closure
+
+private type_closure ::= UNSAFE OR anon_params OR bounds? ret_type
+                       |        OR anon_params OR bounds? ret_type
+                       | UNSAFE OROR              bounds? ret_type
+                       |        OROR              bounds? ret_type
+
+private path_generic_args_without_colons ::= IDENTIFIER                                     path_generic_args_without_colons_right
+                                           | IDENTIFIER generic_args                        path_generic_args_without_colons_right
+                                           | IDENTIFIER LPAREN type_sums? RPAREN ret_type   path_generic_args_without_colons_right
+
+private path_generic_args_without_colons_right ::= [ COLONCOLON IDENTIFIER                                    path_generic_args_without_colons_right
+                                                   | COLONCOLON IDENTIFIER generic_args                       path_generic_args_without_colons_right
+                                                   | COLONCOLON IDENTIFIER LPAREN type_sums? RPAREN ret_type  path_generic_args_without_colons_right ]
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Paths
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 path_glob ::= identifier (COLONCOLON (path_glob | MUL))?
             | LBRACE path (COMMA path)* RBRACE
@@ -290,7 +589,7 @@ expr ::= ret_expr
        | mul_bin_expr_group
        | unary_expr_group
 
-private unary_expr_group ::= literal_expr
+private unary_expr_group ::= lit_expr
                            | expr_path
                            | field_expr
                            | method_call_expr
@@ -366,7 +665,7 @@ mul_bin_expr ::= expr MUL expr
 
 unary_expr ::= (MINUS | MUL | EXCL | AND) expr
 
-block_expr ::= LBRACE (stmt SEMICOLON | item)* (expr) RBRACE {pin=".*"}
+block_expr ::= LBRACE (stmt SEMICOLON | item)* (expr) RBRACE {pin(".*")=1}
 
 lambda_expr ::= OR ident_list OR expr
 private ident_list ::= (identifier (COMMA identifier)*)?
@@ -388,8 +687,7 @@ break_expr ::= BREAK lifetime
 
 for_expr ::= lifetime COLON FOR pat IN no_struct_lit_expr LBRACE block RBRACE
 
-// TODO(kudinkin): Fix
-private pat ::= 'xyz1'
+
 
 match_expr ::= MATCH no_struct_lit_expr LBRACE match_arm* RBRACE
 
@@ -418,7 +716,6 @@ private expr_path_tail ::= LT type_expr (COMMA type_expr)* GT | expr_path
 
 // TODO(kudinkin): Fix
 private no_struct_lit_expr ::= 'abc7'
-private lifetime ::= 'abc8'
 private type_expr ::= 'abc'
 
 array_expr ::= LBRACK MUT? array_elems? RBRACK {pin=1}
@@ -448,36 +745,32 @@ method_call_expr ::= expr DOT identifier arg_list {pin=2}
 arg_list ::= LPAREN expr_list RPAREN {pin=1}
 
 private expr_list ::= [ expr (COMMA expr)* ]
-
+                                 Comp
 field_expr ::= expr DOT identifier {pin=2}
 
-literal_expr ::= literal
+lit_expr ::= lit
 
 
-//
-// Types
-//
-
-// TODO(kudinkin): fix
-private type ::= identifier
-
-
-//
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // Literals
-//
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private literal ::= ( STRING_LITERAL
-                    | CHAR_LITERAL
-                    | INTEGER_LITERAL
-                    | FLOAT_LITERAL
-                    | bool_literal ) literal_suffix?
+private lit ::= ( STRING_LITERAL
+                | CHAR_LITERAL
+                | INTEGER_LITERAL
+                | FLOAT_LITERAL
+                | bool_lit ) lit_suffix?
 
-private bool_literal ::= FALSE | TRUE
+private bool_lit ::= FALSE | TRUE
 
-private literal_suffix ::= identifier
+private lit_suffix ::= identifier
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Lifetimes
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
+private lifetime ::= LIFETIME | STATIC_LIFETIME
 
 
 //
@@ -490,6 +783,8 @@ let_decl ::= LET pat [ COLON type ] [ EQ expr ] SEMICOLON
 //
 // Statements
 //
+
+extern_block ::= EXTERN LBRACE foreign_fn_item* RBRACE
 
 block ::= LBRACE stmt* expr? RBRACE {pin(".*")=1}
 

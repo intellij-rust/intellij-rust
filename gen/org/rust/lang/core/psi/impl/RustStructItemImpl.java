@@ -21,4 +21,46 @@ public class RustStructItemImpl extends RustNamedElementImpl implements RustStru
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public RustGenericParams getGenericParams() {
+    return findNotNullChildByClass(RustGenericParams.class);
+  }
+
+  @Override
+  @Nullable
+  public RustStructDeclArgs getStructDeclArgs() {
+    return findChildByClass(RustStructDeclArgs.class);
+  }
+
+  @Override
+  @Nullable
+  public RustStructTupleArgs getStructTupleArgs() {
+    return findChildByClass(RustStructTupleArgs.class);
+  }
+
+  @Override
+  @Nullable
+  public RustWhereClause getWhereClause() {
+    return findChildByClass(RustWhereClause.class);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getIdentifier() {
+    return findNotNullChildByType(IDENTIFIER);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getSemicolon() {
+    return findChildByType(SEMICOLON);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getStruct() {
+    return findNotNullChildByType(STRUCT);
+  }
+
 }

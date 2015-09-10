@@ -23,30 +23,6 @@ public class RustItemImpl extends RustCompositeElementImpl implements RustItem {
 
   @Override
   @Nullable
-  public RustEnumItem getEnumItem() {
-    return findChildByClass(RustEnumItem.class);
-  }
-
-  @Override
-  @Nullable
-  public RustExternBlock getExternBlock() {
-    return findChildByClass(RustExternBlock.class);
-  }
-
-  @Override
-  @Nullable
-  public RustFnItem getFnItem() {
-    return findChildByClass(RustFnItem.class);
-  }
-
-  @Override
-  @Nullable
-  public RustImplItem getImplItem() {
-    return findChildByClass(RustImplItem.class);
-  }
-
-  @Override
-  @Nullable
   public RustModItem getModItem() {
     return findChildByClass(RustModItem.class);
   }
@@ -61,18 +37,6 @@ public class RustItemImpl extends RustCompositeElementImpl implements RustItem {
   @Nullable
   public RustStmtItem getStmtItem() {
     return findChildByClass(RustStmtItem.class);
-  }
-
-  @Override
-  @Nullable
-  public RustStructItem getStructItem() {
-    return findChildByClass(RustStructItem.class);
-  }
-
-  @Override
-  @Nullable
-  public RustTraitItem getTraitItem() {
-    return findChildByClass(RustTraitItem.class);
   }
 
   @Override

@@ -10,15 +10,21 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustBlockItemImpl extends RustNamedElementImpl implements RustBlockItem {
+public class RustAnonParamsImpl extends RustCompositeElementImpl implements RustAnonParams {
 
-  public RustBlockItemImpl(ASTNode node) {
+  public RustAnonParamsImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitBlockItem(this);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitAnonParams(this);
     else super.accept(visitor);
+  }
+
+  @Override
+  @NotNull
+  public List<RustAnonParam> getAnonParamList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAnonParam.class);
   }
 
 }

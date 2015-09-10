@@ -10,4 +10,10 @@ public interface RustContExpr extends RustExpr {
   @NotNull
   PsiElement getContinue();
 
+  @Nullable
+  PsiElement getLifetime();
+
+  @Nullable
+  PsiElement getStaticLifetime();
+
 }

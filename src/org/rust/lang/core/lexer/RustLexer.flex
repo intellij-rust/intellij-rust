@@ -19,6 +19,10 @@ import com.intellij.psi.tree.IElementType;
 %x BLOCK_COMMENT
 %x EOL_COMMENT
 
+%x LIFETIME_OR_CHAR
+
+%x SUFFIX
+
 %unicode
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -34,8 +38,7 @@ WHITE_SPACE = ({LINE_WS}|{EOL_WS})+
 // Identifier
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-// TODO(kudinkin): extend
-IDENTIFIER=([_]|[:letter:])[a-zA-Z_0-9]*
+IDENTIFIER=[a-zA-Z\x80-\xff_][a-zA-Z0-9\x80-\xff_]*
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Literals
@@ -60,7 +63,8 @@ HEX_DIGIT = [A-F0-9]
 OCT_DIGIT = [0-7]
 BIN_DIGIT = [0-1]
 
-CHAR_LITERAL = \x27 ([^'] | {ESCAPE_SEQUENCE})* \x27?
+//CHAR_LITERAL = \x27 ([^'] | {ESCAPE_SEQUENCE})* \x27?
+
 STRING_LITERAL = \x22 ([^\"] | {ESCAPE_SEQUENCE})* (\x22|\\)?
 
 ESCAPE_SEQUENCE = \\[^\r\n\t\\] | {BYTE_ESCAPE} | {UNICODE_ESCAPE}
@@ -79,7 +83,9 @@ UNICODE_ESCAPE = \\u\{{HEX_DIGIT}{1,6}\}
 SHEBANG_LINE=\#\!.*
 
 %%
-<YYINITIAL> {
+<YYINITIAL> \x27                  { yybegin(LIFETIME_OR_CHAR); }
+
+<YYINITIAL>                       {
 
   "{"                             { return RustTokenElementTypes.LBRACE; }
   "}"                             { return RustTokenElementTypes.RBRACE; }
@@ -93,6 +99,7 @@ SHEBANG_LINE=\#\!.*
   ","                             { return RustTokenElementTypes.COMMA; }
   "."                             { return RustTokenElementTypes.DOT; }
   ".."                            { return RustTokenElementTypes.DOTDOT; }
+  "..."                           { return RustTokenElementTypes.DOTDOTDOT; }
   "="                             { return RustTokenElementTypes.EQ; }
   "!="                            { return RustTokenElementTypes.EXCLEQ; }
   "=="                            { return RustTokenElementTypes.EQEQ; }
@@ -128,8 +135,10 @@ SHEBANG_LINE=\#\!.*
   ">="                            { return RustTokenElementTypes.GTEQ; }
   ">"                             { return RustTokenElementTypes.GT; }
   "->"                            { return RustTokenElementTypes.ARROW; }
+  "?"                             { return RustTokenElementTypes.Q; }
+  "@"                             { return RustTokenElementTypes.AT; }
+  "_"                             { return RustTokenElementTypes.UNDERSCORE; }
 
-  "type"                          { return RustTokenElementTypes.TYPE; }
   "abstract"                      { return RustTokenElementTypes.ABSTRACT; }
   "alignof"                       { return RustTokenElementTypes.ALIGNOF; }
   "as"                            { return RustTokenElementTypes.AS; }
@@ -173,6 +182,7 @@ SHEBANG_LINE=\#\!.*
   "super"                         { return RustTokenElementTypes.SUPER; }
   "trait"                         { return RustTokenElementTypes.TRAIT; }
   "true"                          { return RustTokenElementTypes.TRUE; }
+  "type"                          { return RustTokenElementTypes.TYPE; }
   "typeof"                        { return RustTokenElementTypes.TYPEOF; }
   "unsafe"                        { return RustTokenElementTypes.UNSAFE; }
   "unsized"                       { return RustTokenElementTypes.UNSIZED; }
@@ -189,7 +199,7 @@ SHEBANG_LINE=\#\!.*
 
   {INT_LITERAL}                   { return RustTokenElementTypes.INTEGER_LITERAL; }
   {FLT_LITERAL}                   { return RustTokenElementTypes.FLOAT_LITERAL; }
-  {CHAR_LITERAL}                  { return RustTokenElementTypes.CHAR_LITERAL; }
+
   {STRING_LITERAL}                { return RustTokenElementTypes.STRING_LITERAL; }
 
   {SHEBANG_LINE}                  { return RustTokenElementTypes.SHEBANG_LINE; }
@@ -197,6 +207,19 @@ SHEBANG_LINE=\#\!.*
   {WHITE_SPACE}                   { return com.intellij.psi.TokenType.WHITE_SPACE; }
   [^]                             { return com.intellij.psi.TokenType.BAD_CHARACTER; }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Suffix
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+<SUFFIX>{IDENTIFIER}    { yybegin(YYINITIAL); }
+<SUFFIX>(.|\n)          { yypushback(1); yybegin(YYINITIAL); }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Comments
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 <BLOCK_COMMENT>([^*]*(\*+[^*/])?)+(\*+\/)?
 {
@@ -221,3 +244,17 @@ SHEBANG_LINE=\#\!.*
     else
         return RustTokenElementTypes.EOL_COMMENT;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Lifetimes & Literals
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+<LIFETIME_OR_CHAR>static                        { yybegin(YYINITIAL); return RustTokenElementTypes.STATIC_LIFETIME; }
+<LIFETIME_OR_CHAR>{IDENTIFIER}                  { yybegin(YYINITIAL); return RustTokenElementTypes.LIFETIME; }
+<LIFETIME_OR_CHAR>\\[nrt\\\x27\x220]\x27        { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
+<LIFETIME_OR_CHAR>\\x[0-9a-fA-F]{2}\x27         { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
+<LIFETIME_OR_CHAR>\\u\{[0-9a-fA-F]?{6}\}\x27    { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
+<LIFETIME_OR_CHAR>.\x27                         { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
+<LIFETIME_OR_CHAR>[\x80-\xff]{2,4}\x27          { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
+<LIFETIME_OR_CHAR><<EOF>>                       { yybegin(YYINITIAL); return com.intellij.psi.TokenType.BAD_CHARACTER; }

@@ -27,4 +27,16 @@ public class RustBreakExprImpl extends RustExprImpl implements RustBreakExpr {
     return findNotNullChildByType(BREAK);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getLifetime() {
+    return findChildByType(LIFETIME);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getStaticLifetime() {
+    return findChildByType(STATIC_LIFETIME);
+  }
+
 }

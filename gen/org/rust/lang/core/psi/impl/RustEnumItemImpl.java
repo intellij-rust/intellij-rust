@@ -21,4 +21,46 @@ public class RustEnumItemImpl extends RustNamedElementImpl implements RustEnumIt
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public List<RustEnumDef> getEnumDefList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustEnumDef.class);
+  }
+
+  @Override
+  @NotNull
+  public RustGenericParams getGenericParams() {
+    return findNotNullChildByClass(RustGenericParams.class);
+  }
+
+  @Override
+  @Nullable
+  public RustWhereClause getWhereClause() {
+    return findChildByClass(RustWhereClause.class);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getEnum() {
+    return findNotNullChildByType(ENUM);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getIdentifier() {
+    return findNotNullChildByType(IDENTIFIER);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getLbrace() {
+    return findNotNullChildByType(LBRACE);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getRbrace() {
+    return findNotNullChildByType(RBRACE);
+  }
+
 }

@@ -7,4 +7,34 @@ import com.intellij.psi.PsiElement;
 
 public interface RustForeignFnItem extends RustCompositeElement {
 
+  @NotNull
+  RustGenericParams getGenericParams();
+
+  @Nullable
+  RustParam getParam();
+
+  @NotNull
+  RustRetType getRetType();
+
+  @Nullable
+  RustWhereClause getWhereClause();
+
+  @Nullable
+  PsiElement getDotdotdot();
+
+  @NotNull
+  PsiElement getFn();
+
+  @NotNull
+  PsiElement getIdentifier();
+
+  @NotNull
+  PsiElement getLparen();
+
+  @NotNull
+  PsiElement getRparen();
+
+  @NotNull
+  PsiElement getSemicolon();
+
 }

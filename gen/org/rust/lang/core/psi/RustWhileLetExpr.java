@@ -14,6 +14,9 @@ public interface RustWhileLetExpr extends RustExpr {
   RustExpr getExpr();
 
   @NotNull
+  RustPat getPat();
+
+  @NotNull
   PsiElement getEq();
 
   @Nullable

@@ -8,16 +8,13 @@ import com.intellij.psi.PsiElement;
 public interface RustModItem extends RustCompositeElement {
 
   @NotNull
-  List<RustExternCrateDecl> getExternCrateDeclList();
-
-  @NotNull
-  List<RustExternFnItem> getExternFnItemList();
+  List<RustInnerAttr> getInnerAttrList();
 
   @NotNull
   List<RustItem> getItemList();
 
   @NotNull
-  List<RustUseItem> getUseItemList();
+  List<RustOuterAttr> getOuterAttrList();
 
   @Nullable
   PsiElement getLbrace();

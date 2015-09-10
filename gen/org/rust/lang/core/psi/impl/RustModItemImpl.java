@@ -23,14 +23,8 @@ public class RustModItemImpl extends RustNamedElementImpl implements RustModItem
 
   @Override
   @NotNull
-  public List<RustExternCrateDecl> getExternCrateDeclList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExternCrateDecl.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustExternFnItem> getExternFnItemList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExternFnItem.class);
+  public List<RustInnerAttr> getInnerAttrList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttr.class);
   }
 
   @Override
@@ -41,8 +35,8 @@ public class RustModItemImpl extends RustNamedElementImpl implements RustModItem
 
   @Override
   @NotNull
-  public List<RustUseItem> getUseItemList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustUseItem.class);
+  public List<RustOuterAttr> getOuterAttrList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustOuterAttr.class);
   }
 
   @Override
