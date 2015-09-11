@@ -16,8 +16,12 @@ public class RustTraitRefImpl extends RustCompositeElementImpl implements RustTr
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitTraitRef(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitTraitRef(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

@@ -5,12 +5,15 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustEqBinExpr extends RustBinaryExpr {
+public interface RustQualRefExprPart extends RustQualRefExpr {
+
+  @Nullable
+  RustQualRefExprPart getQualRefExprPart();
+
+  @Nullable
+  PsiElement getDot();
 
   @NotNull
-  List<RustExpr> getExprList();
-
-  @NotNull
-  PsiElement getEq();
+  PsiElement getIdentifier();
 
 }

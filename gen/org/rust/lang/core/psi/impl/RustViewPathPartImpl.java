@@ -10,21 +10,25 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustViewPathPartImpl extends RustCompositeElementImpl implements RustViewPathPart {
+public class RustViewPathPartImpl extends RustViewPathImpl implements RustViewPathPart {
 
   public RustViewPathPartImpl(ASTNode node) {
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitViewPathPart(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitViewPathPart(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 
   @Override
   @Nullable
-  public PsiElement getSelf() {
-    return findChildByType(SELF);
+  public RustViewPathPart getViewPathPart() {
+    return findChildByClass(RustViewPathPart.class);
   }
 
 }

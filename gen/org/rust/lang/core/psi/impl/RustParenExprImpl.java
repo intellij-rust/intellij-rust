@@ -16,15 +16,19 @@ public class RustParenExprImpl extends RustExprImpl implements RustParenExpr {
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitParenExpr(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitParenExpr(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 
   @Override
-  @Nullable
+  @NotNull
   public RustExpr getExpr() {
-    return findChildByClass(RustExpr.class);
+    return findNotNullChildByClass(RustExpr.class);
   }
 
   @Override
@@ -34,9 +38,9 @@ public class RustParenExprImpl extends RustExprImpl implements RustParenExpr {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public PsiElement getRparen() {
-    return findChildByType(RPAREN);
+    return findNotNullChildByType(RPAREN);
   }
 
 }

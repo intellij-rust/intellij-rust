@@ -16,8 +16,12 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitImplItem(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitImplItem(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

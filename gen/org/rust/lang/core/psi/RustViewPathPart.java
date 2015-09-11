@@ -5,9 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustViewPathPart extends RustCompositeElement {
+public interface RustViewPathPart extends RustViewPath {
 
   @Nullable
-  PsiElement getSelf();
+  RustViewPathPart getViewPathPart();
 
 }

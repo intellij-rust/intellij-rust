@@ -16,8 +16,12 @@ public class RustPatVecImpl extends RustCompositeElementImpl implements RustPatV
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitPatVec(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitPatVec(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

@@ -16,8 +16,12 @@ public class RustStmtItemImpl extends RustNamedElementImpl implements RustStmtIt
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitStmtItem(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitStmtItem(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

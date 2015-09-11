@@ -16,8 +16,12 @@ public class RustUnitExprImpl extends RustExprImpl implements RustUnitExpr {
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitUnitExpr(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitUnitExpr(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

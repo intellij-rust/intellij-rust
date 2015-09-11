@@ -10,19 +10,25 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustLifetimesImpl extends RustCompositeElementImpl implements RustLifetimes {
+public class RustSelfExprImpl extends RustExprImpl implements RustSelfExpr {
 
-  public RustLifetimesImpl(ASTNode node) {
+  public RustSelfExprImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitLifetimes(this);
+    visitor.visitSelfExpr(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getSelf() {
+    return findNotNullChildByType(SELF);
   }
 
 }

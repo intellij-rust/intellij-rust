@@ -16,8 +16,12 @@ public class RustTypeAscriptionImpl extends RustCompositeElementImpl implements 
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitTypeAscription(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitTypeAscription(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

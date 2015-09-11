@@ -5,12 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustEqMulBinExpr extends RustBinaryExpr {
+public interface RustPathExprPart extends RustPathExpr {
 
-  @NotNull
-  List<RustExpr> getExprList();
-
-  @NotNull
-  PsiElement getMuleq();
+  @Nullable
+  RustExpr getExpr();
 
 }

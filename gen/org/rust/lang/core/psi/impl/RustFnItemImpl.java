@@ -17,8 +17,12 @@ public class RustFnItemImpl extends RustFnItemImplMixin implements RustFnItem {
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitFnItem(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitFnItem(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

@@ -16,8 +16,12 @@ public class RustPolyboundImpl extends RustCompositeElementImpl implements RustP
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitPolybound(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitPolybound(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

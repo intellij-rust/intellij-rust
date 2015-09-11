@@ -16,8 +16,12 @@ public class RustAbiImpl extends RustCompositeElementImpl implements RustAbi {
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitAbi(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitAbi(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

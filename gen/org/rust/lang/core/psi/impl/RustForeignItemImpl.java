@@ -16,8 +16,12 @@ public class RustForeignItemImpl extends RustNamedElementImpl implements RustFor
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitForeignItem(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitForeignItem(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

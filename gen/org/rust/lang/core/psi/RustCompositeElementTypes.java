@@ -14,18 +14,12 @@ public interface RustCompositeElementTypes {
   IElementType ANON_PARAMS = new RustCompositeElementType("ANON_PARAMS");
   IElementType ARG_LIST = new RustCompositeElementType("ARG_LIST");
   IElementType ARRAY_EXPR = new RustCompositeElementType("ARRAY_EXPR");
+  IElementType BINARY_EXPR = new RustCompositeElementType("BINARY_EXPR");
   IElementType BINDING = new RustCompositeElementType("BINDING");
   IElementType BINDINGS = new RustCompositeElementType("BINDINGS");
   IElementType BINDING_MODE = new RustCompositeElementType("BINDING_MODE");
-  IElementType BIT_AND_BIN_EXPR = new RustCompositeElementType("BIT_AND_BIN_EXPR");
-  IElementType BIT_LEFT_SHIFT_BIN_EXPR = new RustCompositeElementType("BIT_LEFT_SHIFT_BIN_EXPR");
-  IElementType BIT_OR_BIN_EXPR = new RustCompositeElementType("BIT_OR_BIN_EXPR");
-  IElementType BIT_RIGHT_SHIFT_BIN_EXPR = new RustCompositeElementType("BIT_RIGHT_SHIFT_BIN_EXPR");
-  IElementType BIT_XOR_BIN_EXPR = new RustCompositeElementType("BIT_XOR_BIN_EXPR");
   IElementType BLOCK = new RustCompositeElementType("BLOCK");
   IElementType BLOCK_EXPR = new RustCompositeElementType("BLOCK_EXPR");
-  IElementType BOOL_AND_BIN_EXPR = new RustCompositeElementType("BOOL_AND_BIN_EXPR");
-  IElementType BOOL_OR_BIN_EXPR = new RustCompositeElementType("BOOL_OR_BIN_EXPR");
   IElementType BOUND = new RustCompositeElementType("BOUND");
   IElementType BOUNDS = new RustCompositeElementType("BOUNDS");
   IElementType BREAK_EXPR = new RustCompositeElementType("BREAK_EXPR");
@@ -34,24 +28,10 @@ public interface RustCompositeElementTypes {
   IElementType CONT_EXPR = new RustCompositeElementType("CONT_EXPR");
   IElementType DECL_ITEM = new RustCompositeElementType("DECL_ITEM");
   IElementType DECL_STMT = new RustCompositeElementType("DECL_STMT");
-  IElementType DIV_BIN_EXPR = new RustCompositeElementType("DIV_BIN_EXPR");
   IElementType ENUM_ARGS = new RustCompositeElementType("ENUM_ARGS");
   IElementType ENUM_DEF = new RustCompositeElementType("ENUM_DEF");
   IElementType ENUM_ITEM = new RustCompositeElementType("ENUM_ITEM");
-  IElementType EQ_BIN_EXPR = new RustCompositeElementType("EQ_BIN_EXPR");
-  IElementType EQ_BIT_AND_BIN_EXPR = new RustCompositeElementType("EQ_BIT_AND_BIN_EXPR");
-  IElementType EQ_BIT_GTGT_BIN_EXPR = new RustCompositeElementType("EQ_BIT_GTGT_BIN_EXPR");
-  IElementType EQ_BIT_LTLT_BIN_EXPR = new RustCompositeElementType("EQ_BIT_LTLT_BIN_EXPR");
-  IElementType EQ_BIT_OR_BIN_EXPR = new RustCompositeElementType("EQ_BIT_OR_BIN_EXPR");
-  IElementType EQ_BIT_XOR_BIN_EXPR = new RustCompositeElementType("EQ_BIT_XOR_BIN_EXPR");
-  IElementType EQ_COMP_BIN_EXPR = new RustCompositeElementType("EQ_COMP_BIN_EXPR");
-  IElementType EQ_DIV_BIN_EXPR = new RustCompositeElementType("EQ_DIV_BIN_EXPR");
-  IElementType EQ_MINUS_BIN_EXPR = new RustCompositeElementType("EQ_MINUS_BIN_EXPR");
-  IElementType EQ_MUL_BIN_EXPR = new RustCompositeElementType("EQ_MUL_BIN_EXPR");
-  IElementType EQ_PLUS_BIN_EXPR = new RustCompositeElementType("EQ_PLUS_BIN_EXPR");
-  IElementType EQ_REM_BIN_EXPR = new RustCompositeElementType("EQ_REM_BIN_EXPR");
   IElementType EXPR = new RustCompositeElementType("EXPR");
-  IElementType EXPR_PATH = new RustCompositeElementType("EXPR_PATH");
   IElementType EXPR_STMT = new RustCompositeElementType("EXPR_STMT");
   IElementType EXTERN_BLOCK = new RustCompositeElementType("EXTERN_BLOCK");
   IElementType EXTERN_CRATE_DECL = new RustCompositeElementType("EXTERN_CRATE_DECL");
@@ -64,16 +44,12 @@ public interface RustCompositeElementTypes {
   IElementType FOREIGN_MOD_ITEM = new RustCompositeElementType("FOREIGN_MOD_ITEM");
   IElementType FOR_EXPR = new RustCompositeElementType("FOR_EXPR");
   IElementType FOR_LIFETIMES = new RustCompositeElementType("FOR_LIFETIMES");
-  IElementType FULL_RANGE_EXPR = new RustCompositeElementType("FULL_RANGE_EXPR");
   IElementType GENERIC_PARAMS = new RustCompositeElementType("GENERIC_PARAMS");
-  IElementType GTEQ_COMP_BIN_EXPR = new RustCompositeElementType("GTEQ_COMP_BIN_EXPR");
-  IElementType GT_COMP_BIN_EXPR = new RustCompositeElementType("GT_COMP_BIN_EXPR");
   IElementType IF_EXPR = new RustCompositeElementType("IF_EXPR");
   IElementType IF_LET_EXPR = new RustCompositeElementType("IF_LET_EXPR");
   IElementType IMPL_ITEM = new RustCompositeElementType("IMPL_ITEM");
   IElementType IMPL_METHOD = new RustCompositeElementType("IMPL_METHOD");
   IElementType INDEX_EXPR = new RustCompositeElementType("INDEX_EXPR");
-  IElementType INEQ_COMP_BIN_EXPR = new RustCompositeElementType("INEQ_COMP_BIN_EXPR");
   IElementType INNER_ATTR = new RustCompositeElementType("INNER_ATTR");
   IElementType ITEM = new RustCompositeElementType("ITEM");
   IElementType LAMBDA_EXPR = new RustCompositeElementType("LAMBDA_EXPR");
@@ -81,31 +57,29 @@ public interface RustCompositeElementTypes {
   IElementType LIFETIMES = new RustCompositeElementType("LIFETIMES");
   IElementType LIT_EXPR = new RustCompositeElementType("LIT_EXPR");
   IElementType LOOP_EXPR = new RustCompositeElementType("LOOP_EXPR");
-  IElementType LTEQ_COMP_BIN_EXPR = new RustCompositeElementType("LTEQ_COMP_BIN_EXPR");
-  IElementType LT_COMP_BIN_EXPR = new RustCompositeElementType("LT_COMP_BIN_EXPR");
   IElementType MATCH_EXPR = new RustCompositeElementType("MATCH_EXPR");
   IElementType META_ITEM = new RustCompositeElementType("META_ITEM");
   IElementType METHOD = new RustCompositeElementType("METHOD");
   IElementType METHOD_CALL_EXPR = new RustCompositeElementType("METHOD_CALL_EXPR");
-  IElementType MINUS_BIN_EXPR = new RustCompositeElementType("MINUS_BIN_EXPR");
   IElementType MOD_ITEM = new RustCompositeElementType("MOD_ITEM");
-  IElementType MUL_BIN_EXPR = new RustCompositeElementType("MUL_BIN_EXPR");
-  IElementType OPEN_RANGE_EXPR = new RustCompositeElementType("OPEN_RANGE_EXPR");
   IElementType OUTER_ATTR = new RustCompositeElementType("OUTER_ATTR");
   IElementType PARAM = new RustCompositeElementType("PARAM");
   IElementType PAREN_EXPR = new RustCompositeElementType("PAREN_EXPR");
   IElementType PAT = new RustCompositeElementType("PAT");
   IElementType PATH = new RustCompositeElementType("PATH");
   IElementType PATH_EXPR = new RustCompositeElementType("PATH_EXPR");
+  IElementType PATH_EXPR_PART = new RustCompositeElementType("PATH_EXPR_PART");
   IElementType PATH_GLOB = new RustCompositeElementType("PATH_GLOB");
   IElementType PAT_STRUCT = new RustCompositeElementType("PAT_STRUCT");
   IElementType PAT_TUP = new RustCompositeElementType("PAT_TUP");
   IElementType PAT_VEC = new RustCompositeElementType("PAT_VEC");
-  IElementType PLUS_BIN_EXPR = new RustCompositeElementType("PLUS_BIN_EXPR");
   IElementType POLYBOUND = new RustCompositeElementType("POLYBOUND");
-  IElementType REM_BIN_EXPR = new RustCompositeElementType("REM_BIN_EXPR");
+  IElementType QUAL_REF_EXPR = new RustCompositeElementType("QUAL_REF_EXPR");
+  IElementType QUAL_REF_EXPR_PART = new RustCompositeElementType("QUAL_REF_EXPR_PART");
+  IElementType RANGE_EXPR = new RustCompositeElementType("RANGE_EXPR");
   IElementType RET_EXPR = new RustCompositeElementType("RET_EXPR");
   IElementType RET_TYPE = new RustCompositeElementType("RET_TYPE");
+  IElementType SELF_EXPR = new RustCompositeElementType("SELF_EXPR");
   IElementType STATIC_ITEM = new RustCompositeElementType("STATIC_ITEM");
   IElementType STMT = new RustCompositeElementType("STMT");
   IElementType STMT_ITEM = new RustCompositeElementType("STMT_ITEM");
@@ -156,6 +130,9 @@ public interface RustCompositeElementTypes {
       else if (type == ARRAY_EXPR) {
         return new RustArrayExprImpl(node);
       }
+      else if (type == BINARY_EXPR) {
+        return new RustBinaryExprImpl(node);
+      }
       else if (type == BINDING) {
         return new RustBindingImpl(node);
       }
@@ -165,32 +142,11 @@ public interface RustCompositeElementTypes {
       else if (type == BINDING_MODE) {
         return new RustBindingModeImpl(node);
       }
-      else if (type == BIT_AND_BIN_EXPR) {
-        return new RustBitAndBinExprImpl(node);
-      }
-      else if (type == BIT_LEFT_SHIFT_BIN_EXPR) {
-        return new RustBitLeftShiftBinExprImpl(node);
-      }
-      else if (type == BIT_OR_BIN_EXPR) {
-        return new RustBitOrBinExprImpl(node);
-      }
-      else if (type == BIT_RIGHT_SHIFT_BIN_EXPR) {
-        return new RustBitRightShiftBinExprImpl(node);
-      }
-      else if (type == BIT_XOR_BIN_EXPR) {
-        return new RustBitXorBinExprImpl(node);
-      }
       else if (type == BLOCK) {
         return new RustBlockImpl(node);
       }
       else if (type == BLOCK_EXPR) {
         return new RustBlockExprImpl(node);
-      }
-      else if (type == BOOL_AND_BIN_EXPR) {
-        return new RustBoolAndBinExprImpl(node);
-      }
-      else if (type == BOOL_OR_BIN_EXPR) {
-        return new RustBoolOrBinExprImpl(node);
       }
       else if (type == BOUND) {
         return new RustBoundImpl(node);
@@ -216,9 +172,6 @@ public interface RustCompositeElementTypes {
       else if (type == DECL_STMT) {
         return new RustDeclStmtImpl(node);
       }
-      else if (type == DIV_BIN_EXPR) {
-        return new RustDivBinExprImpl(node);
-      }
       else if (type == ENUM_ARGS) {
         return new RustEnumArgsImpl(node);
       }
@@ -228,47 +181,8 @@ public interface RustCompositeElementTypes {
       else if (type == ENUM_ITEM) {
         return new RustEnumItemImpl(node);
       }
-      else if (type == EQ_BIN_EXPR) {
-        return new RustEqBinExprImpl(node);
-      }
-      else if (type == EQ_BIT_AND_BIN_EXPR) {
-        return new RustEqBitAndBinExprImpl(node);
-      }
-      else if (type == EQ_BIT_GTGT_BIN_EXPR) {
-        return new RustEqBitGtgtBinExprImpl(node);
-      }
-      else if (type == EQ_BIT_LTLT_BIN_EXPR) {
-        return new RustEqBitLtltBinExprImpl(node);
-      }
-      else if (type == EQ_BIT_OR_BIN_EXPR) {
-        return new RustEqBitOrBinExprImpl(node);
-      }
-      else if (type == EQ_BIT_XOR_BIN_EXPR) {
-        return new RustEqBitXorBinExprImpl(node);
-      }
-      else if (type == EQ_COMP_BIN_EXPR) {
-        return new RustEqCompBinExprImpl(node);
-      }
-      else if (type == EQ_DIV_BIN_EXPR) {
-        return new RustEqDivBinExprImpl(node);
-      }
-      else if (type == EQ_MINUS_BIN_EXPR) {
-        return new RustEqMinusBinExprImpl(node);
-      }
-      else if (type == EQ_MUL_BIN_EXPR) {
-        return new RustEqMulBinExprImpl(node);
-      }
-      else if (type == EQ_PLUS_BIN_EXPR) {
-        return new RustEqPlusBinExprImpl(node);
-      }
-      else if (type == EQ_REM_BIN_EXPR) {
-        return new RustEqRemBinExprImpl(node);
-      }
       else if (type == EXPR) {
         return new RustExprImpl(node);
-      }
-      else if (type == EXPR_PATH) {
-        return new RustExprPathImpl(node);
       }
       else if (type == EXPR_STMT) {
         return new RustExprStmtImpl(node);
@@ -306,17 +220,8 @@ public interface RustCompositeElementTypes {
       else if (type == FOR_LIFETIMES) {
         return new RustForLifetimesImpl(node);
       }
-      else if (type == FULL_RANGE_EXPR) {
-        return new RustFullRangeExprImpl(node);
-      }
       else if (type == GENERIC_PARAMS) {
         return new RustGenericParamsImpl(node);
-      }
-      else if (type == GTEQ_COMP_BIN_EXPR) {
-        return new RustGteqCompBinExprImpl(node);
-      }
-      else if (type == GT_COMP_BIN_EXPR) {
-        return new RustGtCompBinExprImpl(node);
       }
       else if (type == IF_EXPR) {
         return new RustIfExprImpl(node);
@@ -332,9 +237,6 @@ public interface RustCompositeElementTypes {
       }
       else if (type == INDEX_EXPR) {
         return new RustIndexExprImpl(node);
-      }
-      else if (type == INEQ_COMP_BIN_EXPR) {
-        return new RustIneqCompBinExprImpl(node);
       }
       else if (type == INNER_ATTR) {
         return new RustInnerAttrImpl(node);
@@ -357,12 +259,6 @@ public interface RustCompositeElementTypes {
       else if (type == LOOP_EXPR) {
         return new RustLoopExprImpl(node);
       }
-      else if (type == LTEQ_COMP_BIN_EXPR) {
-        return new RustLteqCompBinExprImpl(node);
-      }
-      else if (type == LT_COMP_BIN_EXPR) {
-        return new RustLtCompBinExprImpl(node);
-      }
       else if (type == MATCH_EXPR) {
         return new RustMatchExprImpl(node);
       }
@@ -375,17 +271,8 @@ public interface RustCompositeElementTypes {
       else if (type == METHOD_CALL_EXPR) {
         return new RustMethodCallExprImpl(node);
       }
-      else if (type == MINUS_BIN_EXPR) {
-        return new RustMinusBinExprImpl(node);
-      }
       else if (type == MOD_ITEM) {
         return new RustModItemImpl(node);
-      }
-      else if (type == MUL_BIN_EXPR) {
-        return new RustMulBinExprImpl(node);
-      }
-      else if (type == OPEN_RANGE_EXPR) {
-        return new RustOpenRangeExprImpl(node);
       }
       else if (type == OUTER_ATTR) {
         return new RustOuterAttrImpl(node);
@@ -405,6 +292,9 @@ public interface RustCompositeElementTypes {
       else if (type == PATH_EXPR) {
         return new RustPathExprImpl(node);
       }
+      else if (type == PATH_EXPR_PART) {
+        return new RustPathExprPartImpl(node);
+      }
       else if (type == PATH_GLOB) {
         return new RustPathGlobImpl(node);
       }
@@ -417,20 +307,26 @@ public interface RustCompositeElementTypes {
       else if (type == PAT_VEC) {
         return new RustPatVecImpl(node);
       }
-      else if (type == PLUS_BIN_EXPR) {
-        return new RustPlusBinExprImpl(node);
-      }
       else if (type == POLYBOUND) {
         return new RustPolyboundImpl(node);
       }
-      else if (type == REM_BIN_EXPR) {
-        return new RustRemBinExprImpl(node);
+      else if (type == QUAL_REF_EXPR) {
+        return new RustQualRefExprImpl(node);
+      }
+      else if (type == QUAL_REF_EXPR_PART) {
+        return new RustQualRefExprPartImpl(node);
+      }
+      else if (type == RANGE_EXPR) {
+        return new RustRangeExprImpl(node);
       }
       else if (type == RET_EXPR) {
         return new RustRetExprImpl(node);
       }
       else if (type == RET_TYPE) {
         return new RustRetTypeImpl(node);
+      }
+      else if (type == SELF_EXPR) {
+        return new RustSelfExprImpl(node);
       }
       else if (type == STATIC_ITEM) {
         return new RustStaticItemImpl(node);

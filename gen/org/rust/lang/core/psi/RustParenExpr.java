@@ -7,13 +7,13 @@ import com.intellij.psi.PsiElement;
 
 public interface RustParenExpr extends RustExpr {
 
-  @Nullable
+  @NotNull
   RustExpr getExpr();
 
   @NotNull
   PsiElement getLparen();
 
-  @Nullable
+  @NotNull
   PsiElement getRparen();
 
 }

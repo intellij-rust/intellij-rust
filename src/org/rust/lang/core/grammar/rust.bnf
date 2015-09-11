@@ -126,20 +126,23 @@
 
         SHEBANG_LINE = '#!'
 
+        // _DBG
         identifier  = 'regexp:\p{Alpha}\w*'
         space       = 'regexp:\s+'
     ]
 
-    mixin       ("expr_path")="org.rust.lang.core.psi.impl.mixin.RustExprPathImplMixin"
+    mixin       ("path_expr")="org.rust.lang.core.psi.impl.mixin.RustExprPathImplMixin"
+    //extends     ("path_expr_part")=path_expr
 
     implements  ("fn_item")="org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("fn_item")="org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
 
     extends(".*_item")="org.rust.lang.core.psi.impl.RustNamedElementImpl"
 
-    extends(".*_bin_expr")=binary_expr
-    extends(".*_range_expr")=range_expr
-    extends("(expr_path|.*_expr)")=expr
+    elementType(".*_bin_expr")=binary_expr
+    elementType(".*_range_expr")=range_expr
+
+    extends(".*_expr")=expr
     extends(".*_stmt")=stmt
 
     generateTokens=false
@@ -285,18 +288,29 @@ private pat_vec_elts ::= pat (COMMA pat)*
 
 private lit_or_path ::= path_expr | lit | MINUS lit
 
-path_expr ::= path_generic_args_with_colons
-            | COLONCOLON path_generic_args_with_colons
-            | SELF COLONCOLON path_generic_args_with_colons
+path_expr ::= path_expr_part_left
+            | COLONCOLON path_expr_part_left
+            | SELF COLONCOLON path_expr_part_left
 
-private path_generic_args_with_colons       ::= IDENTIFIER path_generic_args_with_colons_right
-private path_generic_args_with_colons_right ::= [ COLONCOLON (IDENTIFIER | generic_args) path_generic_args_with_colons_right ]
+private /*path_generic_args_with_colons*/ path_expr_part_left ::= IDENTIFIER path_expr_part
+
+left path_expr_part ::= [ COLONCOLON (IDENTIFIER | generic_args) path_expr_part ] {
+    extends("path_expr_part")=path_expr
+}
+
+//path ::= path_expr path_expr_part*
+//
+//path_expr ::= IDENTIFIER
+//path_expr_part ::= expr COLONCOLON IDENTIFIER {
+//    elementType=path_expr
+//}
+
 
 private generic_args ::= LT generic_values GT
                     /* | LT generic_values GTGT */
                     /* | LT generic_values GTEQ */
                     /* | LT generic_values GTGTEQ */
-                    /* | LTLT ty_qualified_path_and_generic_values GT
+                    /* | LTLT ty_qualifie   d_path_and_generic_values GT
                        | LTLT ty_qualified_path_and_generic_values GTGT
                        | LTLT ty_qualified_path_and_generic_values GTEQ
                        | LTLT ty_qualified_path_and_generic_values GTGTEQ */
@@ -317,7 +331,6 @@ private pat_field   ::=     binding_mode?  IDENTIFIER [ COLON pat ]
 
 binding_mode ::= REF | REF MUT | MUT
 
-
 private unsafe_fn_item ::= UNSAFE fn_item
 
 extern_fn_item ::= EXTERN abi? fn_item
@@ -335,20 +348,22 @@ private view_item ::= use_item
 //use_item ::= vis? USE (path AS identifier | path_glob) SEMICOLON
 use_item ::= USE view_path SEMICOLON {pin=2}
 
-view_path ::= view_path_part? COLONCOLON LBRACE [ idents_or_self COMMA? ] RBRACE
-            | view_path_part  COLONCOLON MUL
+view_path ::= view_path_part_left? COLONCOLON LBRACE [ idents_or_self COMMA? ] RBRACE
+            | view_path_part_left  COLONCOLON MUL
             |                            LBRACE [ idents_or_self COMMA? ] RBRACE
-            | view_path_part AS IDENTIFIER
-            | view_path_part                                                        {pin(".*")=2}
+            | view_path_part_left AS IDENTIFIER
+            | view_path_part_left                                                        {pin(".*")=2}
 
 private idents_or_self ::= (IDENTIFIER | SELF) [ AS IDENTIFIER ] (COMMA idents_or_self)*
 
-view_path_part ::= IDENTIFIER               view_path_part_right
-                 | COLONCOLON IDENTIFIER    view_path_part_right
-                 | SELF                     view_path_part_right
-                 | COLONCOLON SELF          view_path_part_right
+private view_path_part_left ::= IDENTIFIER               view_path_part
+                              | COLONCOLON IDENTIFIER    view_path_part
+                              | SELF                     view_path_part
+                              | COLONCOLON SELF          view_path_part
 
-private view_path_part_right ::= [ COLONCOLON IDENTIFIER view_path_part_right ]
+left view_path_part ::= [ COLONCOLON IDENTIFIER view_path_part ]  {
+    extends("view_path_part")=view_path
+}
 
 abi ::= STRING_LITERAL
 
@@ -563,7 +578,7 @@ path ::= identifier | SELF;
 //
 
 expr ::= ret_expr
-       | assign_bin_expr_group
+       | assign_bin_expr
        | while_expr
        | loop_expr
        | cont_expr
@@ -576,92 +591,71 @@ expr ::= ret_expr
        | block_expr
        | struct_expr
        | lambda_expr
-       | range_expr_group
+       | full_range_expr
+       | open_range_expr
        | bool_or_bin_expr
        | bool_and_bin_expr
        | bit_or_bin_expr
        | bit_xor_bin_expr
        | bit_and_bin_expr
-       | comp_bin_expr_group
-       | rel_comp_bin_expr_group
-       | bit_shift_bin_expr_group
-       | add_bin_expr_group
-       | mul_bin_expr_group
-       | unary_expr_group
+       | comp_bin_expr
+       | rel_comp_bin_expr
+       | bit_shift_bin_expr
+       | add_bin_expr
+       | mul_bin_expr
+       | atom_expr
 
-private unary_expr_group ::= lit_expr
-                           | expr_path
-                           | field_expr
-                           | method_call_expr
-                           | index_expr
-                           | call_expr
-                           | array_expr
-                           | tuple_expr
-                           | unit_expr
-                           | paren_expr
-                           | unary_expr
+private atom_expr ::= lit_expr
+                    | self_expr
+                    | struct_expr
+                    | field_expr
+                    | method_call_expr
+                    | index_expr
+                    | call_expr
+                    | array_expr
+                    | tuple_expr
+                    | unit_expr
+                    | paren_expr
+                    | unary_expr
+
+//struct_expr ::= path_expr [ LBRACE struct_expr_fields RBRACE ]
+
+self_expr ::= SELF
 
 
-fake binary_expr ::= expr + {
+binary_expr ::= expr + {
     methods=[
         left="/expr[0]"
         right="/expr[1]"
     ]
 }
 
-private assign_bin_expr_group ::= eq_bin_expr
-                                | eq_bit_or_bin_expr
-                                | eq_bit_xor_bin_expr
-                                | eq_bit_and_bin_expr
-                                | eq_bit_gtgt_bin_expr
-                                | eq_bit_ltlt_bin_expr
-                                | eq_plus_bin_expr
-                                | eq_minus_bin_expr
-                                | eq_mul_bin_expr
-                                | eq_div_bin_expr
-                                | eq_rem_bin_expr
+assign_bin_expr ::= expr
+                  ( GTGTEQ
+                  | LTLTEQ
+                  | OREQ
+                  | XOREQ
+                  | ANDEQ
+                  | EQ
+                  | PLUSEQ
+                  | MINUSEQ
+                  | MULEQ
+                  | DIVEQ
+                  | REMEQ
+                  ) expr
 
-eq_bit_gtgt_bin_expr ::= expr GTGTEQ expr   { rightAssociative=true }
-eq_bit_ltlt_bin_expr ::= expr LTLTEQ expr   { rightAssociative=true }
+comp_bin_expr       ::= expr (EQEQ | EXCLEQ) expr
+rel_comp_bin_expr   ::= expr (LT | GT | LTEQ | GTEQ) expr
+bit_shift_bin_expr  ::= expr (LTLT | GTGT) expr
+add_bin_expr        ::= expr (PLUS | MINUS) expr
+mul_bin_expr        ::= expr (MUL | DIV | REM) expr
 
-eq_bit_or_bin_expr  ::= expr OREQ expr      { rightAssociative=true }
-eq_bit_xor_bin_expr ::= expr XOREQ expr     { rightAssociative=true }
-eq_bit_and_bin_expr ::= expr ANDEQ expr     { rightAssociative=true }
+bool_or_bin_expr    ::= expr OROR expr
+bool_and_bin_expr   ::= expr ANDAND expr
+bit_or_bin_expr     ::= expr OR expr
+bit_xor_bin_expr    ::= expr XOR expr
+bit_and_bin_expr    ::= expr AND expr
 
-eq_bin_expr         ::= expr EQ expr        { rightAssociative=true }
-
-eq_plus_bin_expr    ::= expr PLUSEQ expr    { rightAssociative=true }
-eq_minus_bin_expr   ::= expr MINUSEQ expr   { rightAssociative=true }
-
-eq_mul_bin_expr     ::= expr MULEQ expr     { rightAssociative=true }
-eq_div_bin_expr     ::= expr DIVEQ expr     { rightAssociative=true }
-eq_rem_bin_expr     ::= expr REMEQ expr     { rightAssociative=true }
-
-
-private comp_bin_expr_group         ::= eq_comp_bin_expr | ineq_comp_bin_expr
-private rel_comp_bin_expr_group     ::= lt_comp_bin_expr | gt_comp_bin_expr | lteq_comp_bin_expr | gteq_comp_bin_expr
-private bit_shift_bin_expr_group    ::= bit_left_shift_bin_expr | bit_right_shift_bin_expr
-private add_bin_expr_group          ::= plus_bin_expr | minus_bin_expr
-private mul_bin_expr_group          ::= mul_bin_expr | div_bin_expr | rem_bin_expr
-
-bool_or_bin_expr ::= expr OROR expr
-bool_and_bin_expr ::= expr ANDAND expr
-bit_or_bin_expr ::= expr OR expr
-bit_xor_bin_expr ::= expr XOR expr
-bit_and_bin_expr ::= expr AND expr
-ineq_comp_bin_expr ::= expr EXCLEQ expr
-eq_comp_bin_expr ::= expr EQ expr
-gteq_comp_bin_expr ::= expr GTEQ expr
-gt_comp_bin_expr ::= expr GT expr
-lteq_comp_bin_expr ::= expr LTEQ expr
-lt_comp_bin_expr ::= expr LT expr
-bit_right_shift_bin_expr ::=expr GTGT expr
-bit_left_shift_bin_expr ::=expr LTLT expr
-plus_bin_expr ::= expr PLUS expr
-minus_bin_expr ::= expr MINUS expr
-rem_bin_expr ::= expr REM expr
-div_bin_expr ::= expr DIV expr
-mul_bin_expr ::= expr MUL expr
 
 unary_expr ::= (MINUS | MUL | EXCL | AND) expr
 
@@ -670,12 +664,12 @@ block_expr ::= LBRACE (stmt SEMICOLON | item)* (expr) RBRACE {pin(".*")=1}
 lambda_expr ::= OR ident_list OR expr
 private ident_list ::= (identifier (COMMA identifier)*)?
 
-struct_expr ::= expr_path LBRACE  identifier COLON expr
+struct_expr ::= path_expr LBRACE  identifier COLON expr
                          (COMMA   identifier COLON expr)*
                          (DOTDOT  expr)? RBRACE
-              | expr_path LPAREN expr
+              | path_expr LPAREN expr
                          (COMMA  expr)* RPAREN
-              | expr_path
+              | path_expr
 
 while_expr ::= lifetime COLON WHILE no_struct_lit_expr LBRACE block RBRACE
 
@@ -704,37 +698,34 @@ while_let_expr ::= WHILE LET pat EQ expr LBRACE block RBRACE
 
 ret_expr ::= RETURN expr?
 
-paren_expr ::= LPAREN expr RPAREN
+paren_expr ::= (LPAREN expr RPAREN)
 
 unit_expr ::= LPAREN RPAREN
 
 tuple_expr ::= LPAREN expr ((COMMA expr)+ | COMMA) RPAREN
 
-expr_path ::= COLONCOLON? identifier [ COLONCOLON expr_path_tail ]
-
-private expr_path_tail ::= LT type_expr (COMMA type_expr)* GT | expr_path
 
 // TODO(kudinkin): Fix
 private no_struct_lit_expr ::= 'abc7'
-private type_expr ::= 'abc'
 
 array_expr ::= LBRACK MUT? array_elems? RBRACK {pin=1}
 
 private array_elems ::= expr [ (COMMA expr)+ | SEMICOLON expr ]
 
 
-fake range_expr ::= expr + {
+//private range_expr_group ::= open_range_expr
+//                           | full_range_expr
+
+full_range_expr ::= expr DOTDOT expr?
+open_range_expr ::=      DOTDOT expr?
+
+range_expr ::= expr + {
     methods=[
         from="/expr[0]"
         to="/expr[1]"
     ]
 }
 
-private range_expr_group ::= open_range_expr
-                           | full_range_expr
-
-full_range_expr ::= expr DOTDOT expr?
-open_range_expr  ::= DOTDOT expr?
 
 index_expr ::= expr LBRACK expr RBRACK
 
@@ -745,7 +736,7 @@ method_call_expr ::= expr DOT identifier arg_list {pin=2}
 arg_list ::= LPAREN expr_list RPAREN {pin=1}
 
 private expr_list ::= [ expr (COMMA expr)* ]
-                                 Comp
+
 field_expr ::= expr DOT identifier {pin=2}
 
 lit_expr ::= lit

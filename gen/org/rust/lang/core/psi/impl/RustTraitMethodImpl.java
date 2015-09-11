@@ -16,8 +16,12 @@ public class RustTraitMethodImpl extends RustCompositeElementImpl implements Rus
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitTraitMethod(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitTraitMethod(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

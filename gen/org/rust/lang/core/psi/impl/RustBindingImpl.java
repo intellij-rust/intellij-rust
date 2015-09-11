@@ -16,8 +16,12 @@ public class RustBindingImpl extends RustCompositeElementImpl implements RustBin
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitBinding(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitBinding(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

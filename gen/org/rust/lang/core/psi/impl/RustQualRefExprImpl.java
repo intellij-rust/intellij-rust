@@ -10,27 +10,37 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustBoolAndBinExprImpl extends RustBinaryExprImpl implements RustBoolAndBinExpr {
+public class RustQualRefExprImpl extends RustExprImpl implements RustQualRefExpr {
 
-  public RustBoolAndBinExprImpl(ASTNode node) {
+  public RustQualRefExprImpl(ASTNode node) {
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitQualRefExpr(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitBoolAndBinExpr(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 
   @Override
   @NotNull
-  public List<RustExpr> getExprList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
+  public RustQualRefExprPart getQualRefExprPart() {
+    return findNotNullChildByClass(RustQualRefExprPart.class);
   }
 
   @Override
   @NotNull
-  public PsiElement getAndand() {
-    return findNotNullChildByType(ANDAND);
+  public PsiElement getDot() {
+    return findNotNullChildByType(DOT);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getIdentifier() {
+    return findNotNullChildByType(IDENTIFIER);
   }
 
 }

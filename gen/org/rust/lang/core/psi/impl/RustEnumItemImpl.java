@@ -16,8 +16,12 @@ public class RustEnumItemImpl extends RustNamedElementImpl implements RustEnumIt
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitEnumItem(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitEnumItem(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

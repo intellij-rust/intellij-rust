@@ -16,8 +16,12 @@ public class RustBindingsImpl extends RustCompositeElementImpl implements RustBi
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitBindings(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitBindings(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

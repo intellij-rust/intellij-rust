@@ -5,12 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustBitLeftShiftBinExpr extends RustBinaryExpr {
+public interface RustSelfExpr extends RustExpr {
 
   @NotNull
-  List<RustExpr> getExprList();
-
-  @NotNull
-  PsiElement getLtlt();
+  PsiElement getSelf();
 
 }

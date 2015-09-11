@@ -16,8 +16,12 @@ public class RustExternBlockImpl extends RustCompositeElementImpl implements Rus
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitExternBlock(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitExternBlock(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

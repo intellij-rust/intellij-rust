@@ -16,8 +16,12 @@ public class RustPathGlobImpl extends RustCompositeElementImpl implements RustPa
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitPathGlob(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitPathGlob(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

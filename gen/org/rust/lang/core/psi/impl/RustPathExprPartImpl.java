@@ -10,14 +10,18 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustOpenRangeExprImpl extends RustRangeExprImpl implements RustOpenRangeExpr {
+public class RustPathExprPartImpl extends RustPathExprImpl implements RustPathExprPart {
 
-  public RustOpenRangeExprImpl(ASTNode node) {
+  public RustPathExprPartImpl(ASTNode node) {
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitPathExprPart(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitOpenRangeExpr(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 
@@ -25,12 +29,6 @@ public class RustOpenRangeExprImpl extends RustRangeExprImpl implements RustOpen
   @Nullable
   public RustExpr getExpr() {
     return findChildByClass(RustExpr.class);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getDotdot() {
-    return findNotNullChildByType(DOTDOT);
   }
 
 }
