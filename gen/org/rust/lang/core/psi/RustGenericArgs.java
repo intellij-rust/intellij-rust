@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustEnumArgs extends RustCompositeElement {
+public interface RustGenericArgs extends RustCompositeElement {
 
   @NotNull
   List<RustAbi> getAbiList();
@@ -15,6 +15,9 @@ public interface RustEnumArgs extends RustCompositeElement {
 
   @NotNull
   List<RustAnonParams> getAnonParamsList();
+
+  @Nullable
+  RustBindings getBindings();
 
   @NotNull
   List<RustBounds> getBoundsList();
@@ -38,21 +41,9 @@ public interface RustEnumArgs extends RustCompositeElement {
   List<RustRetType> getRetTypeList();
 
   @NotNull
-  List<RustStructDeclField> getStructDeclFieldList();
-
-  @NotNull
   List<RustTraitRef> getTraitRefList();
 
   @NotNull
   List<RustTypeParamBounds> getTypeParamBoundsList();
-
-  @Nullable
-  PsiElement getEq();
-
-  @Nullable
-  PsiElement getLbrace();
-
-  @Nullable
-  PsiElement getRbrace();
 
 }

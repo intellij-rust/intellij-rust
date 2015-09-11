@@ -5,14 +5,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceBase
 import org.rust.lang.core.psi.RustCompositeElement
-import org.rust.lang.core.psi.RustExprPath
 import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustPathExpr
 import org.rust.lang.core.psi.util.parenRelativeRange
 import org.rust.lang.core.resolve.RustResolveEngine
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
 
-public class RustReference<T : RustExprPath>(element: T, range: TextRange, soft: Boolean)
+public class RustReference<T : RustPathExpr>(element: T, range: TextRange, soft: Boolean)
     : PsiReferenceBase<T>(element, range, soft) {
 
     constructor(element: T) : this(element, element.parenRelativeRange, false)

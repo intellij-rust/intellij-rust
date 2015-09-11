@@ -16,9 +16,6 @@ public interface RustBinding extends RustCompositeElement {
   @Nullable
   RustAnonParams getAnonParams();
 
-  @NotNull
-  List<RustBindings> getBindingsList();
-
   @Nullable
   RustBounds getBounds();
 
@@ -28,11 +25,14 @@ public interface RustBinding extends RustCompositeElement {
   @Nullable
   RustFnParams getFnParams();
 
+  @NotNull
+  List<RustGenericArgs> getGenericArgsList();
+
   @Nullable
   RustGenericParams getGenericParams();
 
-  @NotNull
-  List<RustLifetimes> getLifetimesList();
+  @Nullable
+  RustLifetimes getLifetimes();
 
   @NotNull
   List<RustRetType> getRetTypeList();
@@ -74,10 +74,16 @@ public interface RustBinding extends RustCompositeElement {
   PsiElement getFor();
 
   @Nullable
+  PsiElement getGt();
+
+  @Nullable
   PsiElement getLbrack();
 
   @Nullable
   PsiElement getLifetime();
+
+  @Nullable
+  PsiElement getLt();
 
   @Nullable
   PsiElement getMul();

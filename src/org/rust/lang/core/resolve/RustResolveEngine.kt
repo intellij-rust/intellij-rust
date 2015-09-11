@@ -6,11 +6,11 @@ import com.intellij.psi.ResolveResult
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.BaseScopeProcessor
 import com.intellij.psi.scope.PsiScopeProcessor
-import org.rust.lang.core.psi.RustExprPath
 import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustPathExpr
 import org.rust.lang.core.resolve.scope.RustResolveScope
 
-public class RustResolveEngine(targetName: RustExprPath) {
+public class RustResolveEngine(targetName: RustPathExpr) {
 
     private val target = targetName;
 

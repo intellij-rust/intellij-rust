@@ -5,9 +5,18 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustPathExprPart extends RustPathExpr {
+public interface RustPathExprPart extends RustCompositeElement {
 
   @Nullable
-  RustExpr getExpr();
+  RustGenericArgs getGenericArgs();
+
+  @NotNull
+  RustPathExprPart getPathExprPart();
+
+  @NotNull
+  PsiElement getColoncolon();
+
+  @Nullable
+  PsiElement getIdentifier();
 
 }

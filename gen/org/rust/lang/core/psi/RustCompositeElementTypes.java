@@ -44,6 +44,7 @@ public interface RustCompositeElementTypes {
   IElementType FOREIGN_MOD_ITEM = new RustCompositeElementType("FOREIGN_MOD_ITEM");
   IElementType FOR_EXPR = new RustCompositeElementType("FOR_EXPR");
   IElementType FOR_LIFETIMES = new RustCompositeElementType("FOR_LIFETIMES");
+  IElementType GENERIC_ARGS = new RustCompositeElementType("GENERIC_ARGS");
   IElementType GENERIC_PARAMS = new RustCompositeElementType("GENERIC_PARAMS");
   IElementType IF_EXPR = new RustCompositeElementType("IF_EXPR");
   IElementType IF_LET_EXPR = new RustCompositeElementType("IF_LET_EXPR");
@@ -74,8 +75,6 @@ public interface RustCompositeElementTypes {
   IElementType PAT_TUP = new RustCompositeElementType("PAT_TUP");
   IElementType PAT_VEC = new RustCompositeElementType("PAT_VEC");
   IElementType POLYBOUND = new RustCompositeElementType("POLYBOUND");
-  IElementType QUAL_REF_EXPR = new RustCompositeElementType("QUAL_REF_EXPR");
-  IElementType QUAL_REF_EXPR_PART = new RustCompositeElementType("QUAL_REF_EXPR_PART");
   IElementType RANGE_EXPR = new RustCompositeElementType("RANGE_EXPR");
   IElementType RET_EXPR = new RustCompositeElementType("RET_EXPR");
   IElementType RET_TYPE = new RustCompositeElementType("RET_TYPE");
@@ -220,6 +219,9 @@ public interface RustCompositeElementTypes {
       else if (type == FOR_LIFETIMES) {
         return new RustForLifetimesImpl(node);
       }
+      else if (type == GENERIC_ARGS) {
+        return new RustGenericArgsImpl(node);
+      }
       else if (type == GENERIC_PARAMS) {
         return new RustGenericParamsImpl(node);
       }
@@ -309,12 +311,6 @@ public interface RustCompositeElementTypes {
       }
       else if (type == POLYBOUND) {
         return new RustPolyboundImpl(node);
-      }
-      else if (type == QUAL_REF_EXPR) {
-        return new RustQualRefExprImpl(node);
-      }
-      else if (type == QUAL_REF_EXPR_PART) {
-        return new RustQualRefExprPartImpl(node);
       }
       else if (type == RANGE_EXPR) {
         return new RustRangeExprImpl(node);

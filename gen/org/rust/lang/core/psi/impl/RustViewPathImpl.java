@@ -39,12 +39,6 @@ public class RustViewPathImpl extends RustCompositeElementImpl implements RustVi
 
   @Override
   @Nullable
-  public PsiElement getColoncolon() {
-    return findChildByType(COLONCOLON);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getLbrace() {
     return findChildByType(LBRACE);
   }
@@ -59,12 +53,6 @@ public class RustViewPathImpl extends RustCompositeElementImpl implements RustVi
   @Nullable
   public PsiElement getRbrace() {
     return findChildByType(RBRACE);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getSelf() {
-    return findChildByType(SELF);
   }
 
 }

@@ -147,6 +147,10 @@ public class RustVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitGenericArgs(@NotNull RustGenericArgs o) {
+    visitCompositeElement(o);
+  }
+
   public void visitGenericParams(@NotNull RustGenericParams o) {
     visitCompositeElement(o);
   }
@@ -256,7 +260,7 @@ public class RustVisitor extends PsiElementVisitor {
   }
 
   public void visitPathExprPart(@NotNull RustPathExprPart o) {
-    visitPathExpr(o);
+    visitCompositeElement(o);
   }
 
   public void visitPathGlob(@NotNull RustPathGlob o) {
@@ -265,14 +269,6 @@ public class RustVisitor extends PsiElementVisitor {
 
   public void visitPolybound(@NotNull RustPolybound o) {
     visitCompositeElement(o);
-  }
-
-  public void visitQualRefExpr(@NotNull RustQualRefExpr o) {
-    visitExpr(o);
-  }
-
-  public void visitQualRefExprPart(@NotNull RustQualRefExprPart o) {
-    visitQualRefExpr(o);
   }
 
   public void visitRangeExpr(@NotNull RustRangeExpr o) {
@@ -396,7 +392,7 @@ public class RustVisitor extends PsiElementVisitor {
   }
 
   public void visitViewPathPart(@NotNull RustViewPathPart o) {
-    visitViewPath(o);
+    visitCompositeElement(o);
   }
 
   public void visitWhereClause(@NotNull RustWhereClause o) {

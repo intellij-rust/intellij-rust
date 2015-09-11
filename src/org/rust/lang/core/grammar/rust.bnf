@@ -288,15 +288,11 @@ private pat_vec_elts ::= pat (COMMA pat)*
 
 private lit_or_path ::= path_expr | lit | MINUS lit
 
-path_expr ::= path_expr_part_left
-            | COLONCOLON path_expr_part_left
-            | SELF COLONCOLON path_expr_part_left
+path_expr ::= SELF? COLONCOLON? path_generic_args_with_colons
 
-private /*path_generic_args_with_colons*/ path_expr_part_left ::= IDENTIFIER path_expr_part
+private path_generic_args_with_colons ::= IDENTIFIER path_expr_part*
 
-left path_expr_part ::= [ COLONCOLON (IDENTIFIER | generic_args) path_expr_part ] {
-    extends("path_expr_part")=path_expr
-}
+left path_expr_part ::= COLONCOLON (IDENTIFIER | generic_args)
 
 //path ::= path_expr path_expr_part*
 //
@@ -305,15 +301,14 @@ left path_expr_part ::= [ COLONCOLON (IDENTIFIER | generic_args) path_expr_part 
 //    elementType=path_expr
 //}
 
-
-private generic_args ::= LT generic_values GT
-                    /* | LT generic_values GTGT */
-                    /* | LT generic_values GTEQ */
-                    /* | LT generic_values GTGTEQ */
-                    /* | LTLT ty_qualifie   d_path_and_generic_values GT
-                       | LTLT ty_qualified_path_and_generic_values GTGT
-                       | LTLT ty_qualified_path_and_generic_values GTEQ
-                       | LTLT ty_qualified_path_and_generic_values GTGTEQ */
+generic_args ::= LT generic_values GT
+            /* | LT generic_values GTGT */
+            /* | LT generic_values GTEQ */
+            /* | LT generic_values GTGTEQ */
+            /* | LTLT ty_qualifie   d_path_and_generic_values GT
+               | LTLT ty_qualified_path_and_generic_values GTGT
+               | LTLT ty_qualified_path_and_generic_values GTEQ
+               | LTLT ty_qualified_path_and_generic_values GTGTEQ */
 
 private generic_values ::= lifetimes? type_sums_and_or_bindings?
 private type_sums_and_or_bindings ::= type_sums [ COMMA bindings ]
@@ -348,22 +343,18 @@ private view_item ::= use_item
 //use_item ::= vis? USE (path AS identifier | path_glob) SEMICOLON
 use_item ::= USE view_path SEMICOLON {pin=2}
 
-view_path ::= view_path_part_left? COLONCOLON LBRACE [ idents_or_self COMMA? ] RBRACE
-            | view_path_part_left  COLONCOLON MUL
-            |                            LBRACE [ idents_or_self COMMA? ] RBRACE
-            | view_path_part_left AS IDENTIFIER
-            | view_path_part_left                                                        {pin(".*")=2}
+view_path ::= path_no_types_allowed? COLONCOLON LBRACE [ idents_or_self COMMA? ] RBRACE
+            | path_no_types_allowed  COLONCOLON MUL
+            |                                   LBRACE [ idents_or_self COMMA? ] RBRACE
+            | path_no_types_allowed AS IDENTIFIER
+            | path_no_types_allowed                                                        { pin(".*")=2 }
 
 private idents_or_self ::= (IDENTIFIER | SELF) [ AS IDENTIFIER ] (COMMA idents_or_self)*
 
-private view_path_part_left ::= IDENTIFIER               view_path_part
-                              | COLONCOLON IDENTIFIER    view_path_part
-                              | SELF                     view_path_part
-                              | COLONCOLON SELF          view_path_part
+private path_no_types_allowed ::= COLONCOLON? IDENTIFIER   view_path_part*
+                                | COLONCOLON? SELF         view_path_part*
 
-left view_path_part ::= [ COLONCOLON IDENTIFIER view_path_part ]  {
-    extends("view_path_part")=view_path
-}
+left view_path_part ::= COLONCOLON IDENTIFIER
 
 abi ::= STRING_LITERAL
 
@@ -642,7 +633,7 @@ assign_bin_expr ::= expr
                   | MULEQ
                   | DIVEQ
                   | REMEQ
-                  ) expr
+                  ) expr    { rightAssociative = true }
 
 comp_bin_expr       ::= expr (EQEQ | EXCLEQ) expr
 rel_comp_bin_expr   ::= expr (LT | GT | LTEQ | GTEQ) expr

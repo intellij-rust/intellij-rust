@@ -20,9 +20,6 @@ public interface RustPat extends RustCompositeElement {
   RustBindingMode getBindingMode();
 
   @NotNull
-  List<RustBindings> getBindingsList();
-
-  @NotNull
   List<RustBounds> getBoundsList();
 
   @NotNull
@@ -30,6 +27,9 @@ public interface RustPat extends RustCompositeElement {
 
   @NotNull
   List<RustFnParams> getFnParamsList();
+
+  @NotNull
+  List<RustGenericArgs> getGenericArgsList();
 
   @NotNull
   List<RustGenericParams> getGenericParamsList();

@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustViewPathPartImpl extends RustViewPathImpl implements RustViewPathPart {
+public class RustViewPathPartImpl extends RustCompositeElementImpl implements RustViewPathPart {
 
   public RustViewPathPartImpl(ASTNode node) {
     super(node);
@@ -26,9 +26,21 @@ public class RustViewPathPartImpl extends RustViewPathImpl implements RustViewPa
   }
 
   @Override
-  @Nullable
+  @NotNull
   public RustViewPathPart getViewPathPart() {
-    return findChildByClass(RustViewPathPart.class);
+    return findNotNullChildByClass(RustViewPathPart.class);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getColoncolon() {
+    return findNotNullChildByType(COLONCOLON);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getIdentifier() {
+    return findNotNullChildByType(IDENTIFIER);
   }
 
 }

@@ -7,32 +7,32 @@ import com.intellij.psi.PsiElement;
 
 public interface RustLetDecl extends RustCompositeElement {
 
-  @NotNull
-  List<RustAbi> getAbiList();
+  @Nullable
+  RustAbi getAbi();
 
   @NotNull
   List<RustAnonParam> getAnonParamList();
 
-  @NotNull
-  List<RustAnonParams> getAnonParamsList();
+  @Nullable
+  RustAnonParams getAnonParams();
 
-  @NotNull
-  List<RustBindings> getBindingsList();
-
-  @NotNull
-  List<RustBounds> getBoundsList();
+  @Nullable
+  RustBounds getBounds();
 
   @NotNull
   List<RustExpr> getExprList();
 
-  @NotNull
-  List<RustFnParams> getFnParamsList();
+  @Nullable
+  RustFnParams getFnParams();
 
   @NotNull
-  List<RustGenericParams> getGenericParamsList();
+  List<RustGenericArgs> getGenericArgsList();
 
-  @NotNull
-  List<RustLifetimes> getLifetimesList();
+  @Nullable
+  RustGenericParams getGenericParams();
+
+  @Nullable
+  RustLifetimes getLifetimes();
 
   @NotNull
   RustPat getPat();
@@ -40,19 +40,88 @@ public interface RustLetDecl extends RustCompositeElement {
   @NotNull
   List<RustRetType> getRetTypeList();
 
-  @NotNull
-  List<RustTraitRef> getTraitRefList();
+  @Nullable
+  RustTraitRef getTraitRef();
 
   @NotNull
   List<RustTypeParamBounds> getTypeParamBoundsList();
 
   @Nullable
+  PsiElement getAnd();
+
+  @Nullable
+  PsiElement getAndand();
+
+  @Nullable
+  PsiElement getBox();
+
+  @Nullable
   PsiElement getColon();
+
+  @Nullable
+  PsiElement getConst();
+
+  @Nullable
+  PsiElement getDotdot();
+
+  @Nullable
+  PsiElement getDotdotdot();
 
   @Nullable
   PsiElement getEq();
 
+  @Nullable
+  PsiElement getExtern();
+
+  @Nullable
+  PsiElement getFn();
+
+  @Nullable
+  PsiElement getFor();
+
+  @Nullable
+  PsiElement getGt();
+
+  @Nullable
+  PsiElement getLbrack();
+
   @NotNull
   PsiElement getLet();
+
+  @Nullable
+  PsiElement getLifetime();
+
+  @Nullable
+  PsiElement getLt();
+
+  @Nullable
+  PsiElement getMul();
+
+  @Nullable
+  PsiElement getMut();
+
+  @Nullable
+  PsiElement getOror();
+
+  @Nullable
+  PsiElement getProc();
+
+  @Nullable
+  PsiElement getRbrack();
+
+  @Nullable
+  PsiElement getSelf();
+
+  @Nullable
+  PsiElement getStaticLifetime();
+
+  @Nullable
+  PsiElement getTypeof();
+
+  @Nullable
+  PsiElement getUnderscore();
+
+  @Nullable
+  PsiElement getUnsafe();
 
 }

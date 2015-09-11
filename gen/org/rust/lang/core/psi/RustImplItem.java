@@ -17,9 +17,6 @@ public interface RustImplItem extends RustCompositeElement {
   List<RustAnonParams> getAnonParamsList();
 
   @NotNull
-  List<RustBindings> getBindingsList();
-
-  @NotNull
   List<RustBounds> getBoundsList();
 
   @Nullable
@@ -30,6 +27,9 @@ public interface RustImplItem extends RustCompositeElement {
 
   @NotNull
   List<RustFnParams> getFnParamsList();
+
+  @NotNull
+  List<RustGenericArgs> getGenericArgsList();
 
   @NotNull
   List<RustGenericParams> getGenericParamsList();

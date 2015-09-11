@@ -26,9 +26,9 @@ public class RustTypeItemImpl extends RustNamedElementImpl implements RustTypeIt
   }
 
   @Override
-  @NotNull
-  public List<RustAbi> getAbiList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAbi.class);
+  @Nullable
+  public RustAbi getAbi() {
+    return findChildByClass(RustAbi.class);
   }
 
   @Override
@@ -45,12 +45,6 @@ public class RustTypeItemImpl extends RustNamedElementImpl implements RustTypeIt
 
   @Override
   @NotNull
-  public List<RustBindings> getBindingsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustBindings.class);
-  }
-
-  @Override
-  @NotNull
   public List<RustBounds> getBoundsList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustBounds.class);
   }
@@ -62,9 +56,15 @@ public class RustTypeItemImpl extends RustNamedElementImpl implements RustTypeIt
   }
 
   @Override
+  @Nullable
+  public RustFnParams getFnParams() {
+    return findChildByClass(RustFnParams.class);
+  }
+
+  @Override
   @NotNull
-  public List<RustFnParams> getFnParamsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustFnParams.class);
+  public List<RustGenericArgs> getGenericArgsList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericArgs.class);
   }
 
   @Override
@@ -74,9 +74,9 @@ public class RustTypeItemImpl extends RustNamedElementImpl implements RustTypeIt
   }
 
   @Override
-  @NotNull
-  public List<RustLifetimes> getLifetimesList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustLifetimes.class);
+  @Nullable
+  public RustLifetimes getLifetimes() {
+    return findChildByClass(RustLifetimes.class);
   }
 
   @Override
@@ -104,15 +104,57 @@ public class RustTypeItemImpl extends RustNamedElementImpl implements RustTypeIt
   }
 
   @Override
+  @Nullable
+  public PsiElement getDotdotdot() {
+    return findChildByType(DOTDOTDOT);
+  }
+
+  @Override
   @NotNull
   public PsiElement getEq() {
     return findNotNullChildByType(EQ);
   }
 
   @Override
+  @Nullable
+  public PsiElement getExtern() {
+    return findChildByType(EXTERN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getFn() {
+    return findChildByType(FN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getFor() {
+    return findChildByType(FOR);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getProc() {
+    return findChildByType(PROC);
+  }
+
+  @Override
   @NotNull
   public PsiElement getType() {
     return findNotNullChildByType(TYPE);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getTypeof() {
+    return findChildByType(TYPEOF);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getUnderscore() {
+    return findChildByType(UNDERSCORE);
   }
 
 }

@@ -7,8 +7,8 @@ import com.intellij.psi.PsiElement;
 
 public interface RustTypeItem extends RustCompositeElement {
 
-  @NotNull
-  List<RustAbi> getAbiList();
+  @Nullable
+  RustAbi getAbi();
 
   @NotNull
   List<RustAnonParam> getAnonParamList();
@@ -17,22 +17,22 @@ public interface RustTypeItem extends RustCompositeElement {
   List<RustAnonParams> getAnonParamsList();
 
   @NotNull
-  List<RustBindings> getBindingsList();
-
-  @NotNull
   List<RustBounds> getBoundsList();
 
   @NotNull
   List<RustExpr> getExprList();
 
+  @Nullable
+  RustFnParams getFnParams();
+
   @NotNull
-  List<RustFnParams> getFnParamsList();
+  List<RustGenericArgs> getGenericArgsList();
 
   @NotNull
   List<RustGenericParams> getGenericParamsList();
 
-  @NotNull
-  List<RustLifetimes> getLifetimesList();
+  @Nullable
+  RustLifetimes getLifetimes();
 
   @NotNull
   List<RustRetType> getRetTypeList();
@@ -46,10 +46,31 @@ public interface RustTypeItem extends RustCompositeElement {
   @Nullable
   RustWhereClause getWhereClause();
 
+  @Nullable
+  PsiElement getDotdotdot();
+
   @NotNull
   PsiElement getEq();
 
+  @Nullable
+  PsiElement getExtern();
+
+  @Nullable
+  PsiElement getFn();
+
+  @Nullable
+  PsiElement getFor();
+
+  @Nullable
+  PsiElement getProc();
+
   @NotNull
   PsiElement getType();
+
+  @Nullable
+  PsiElement getTypeof();
+
+  @Nullable
+  PsiElement getUnderscore();
 
 }

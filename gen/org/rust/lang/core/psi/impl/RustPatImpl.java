@@ -51,12 +51,6 @@ public class RustPatImpl extends RustCompositeElementImpl implements RustPat {
 
   @Override
   @NotNull
-  public List<RustBindings> getBindingsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustBindings.class);
-  }
-
-  @Override
-  @NotNull
   public List<RustBounds> getBoundsList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustBounds.class);
   }
@@ -71,6 +65,12 @@ public class RustPatImpl extends RustCompositeElementImpl implements RustPat {
   @NotNull
   public List<RustFnParams> getFnParamsList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustFnParams.class);
+  }
+
+  @Override
+  @NotNull
+  public List<RustGenericArgs> getGenericArgsList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericArgs.class);
   }
 
   @Override

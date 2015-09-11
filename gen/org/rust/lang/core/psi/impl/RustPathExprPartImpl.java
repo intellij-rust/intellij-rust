@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustPathExprPartImpl extends RustPathExprImpl implements RustPathExprPart {
+public class RustPathExprPartImpl extends RustCompositeElementImpl implements RustPathExprPart {
 
   public RustPathExprPartImpl(ASTNode node) {
     super(node);
@@ -27,8 +27,26 @@ public class RustPathExprPartImpl extends RustPathExprImpl implements RustPathEx
 
   @Override
   @Nullable
-  public RustExpr getExpr() {
-    return findChildByClass(RustExpr.class);
+  public RustGenericArgs getGenericArgs() {
+    return findChildByClass(RustGenericArgs.class);
+  }
+
+  @Override
+  @NotNull
+  public RustPathExprPart getPathExprPart() {
+    return findNotNullChildByClass(RustPathExprPart.class);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getColoncolon() {
+    return findNotNullChildByType(COLONCOLON);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getIdentifier() {
+    return findChildByType(IDENTIFIER);
   }
 
 }

@@ -26,9 +26,9 @@ public class RustLetDeclImpl extends RustCompositeElementImpl implements RustLet
   }
 
   @Override
-  @NotNull
-  public List<RustAbi> getAbiList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAbi.class);
+  @Nullable
+  public RustAbi getAbi() {
+    return findChildByClass(RustAbi.class);
   }
 
   @Override
@@ -38,21 +38,15 @@ public class RustLetDeclImpl extends RustCompositeElementImpl implements RustLet
   }
 
   @Override
-  @NotNull
-  public List<RustAnonParams> getAnonParamsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAnonParams.class);
+  @Nullable
+  public RustAnonParams getAnonParams() {
+    return findChildByClass(RustAnonParams.class);
   }
 
   @Override
-  @NotNull
-  public List<RustBindings> getBindingsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustBindings.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustBounds> getBoundsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustBounds.class);
+  @Nullable
+  public RustBounds getBounds() {
+    return findChildByClass(RustBounds.class);
   }
 
   @Override
@@ -62,21 +56,27 @@ public class RustLetDeclImpl extends RustCompositeElementImpl implements RustLet
   }
 
   @Override
-  @NotNull
-  public List<RustFnParams> getFnParamsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustFnParams.class);
+  @Nullable
+  public RustFnParams getFnParams() {
+    return findChildByClass(RustFnParams.class);
   }
 
   @Override
   @NotNull
-  public List<RustGenericParams> getGenericParamsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericParams.class);
+  public List<RustGenericArgs> getGenericArgsList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericArgs.class);
   }
 
   @Override
-  @NotNull
-  public List<RustLifetimes> getLifetimesList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustLifetimes.class);
+  @Nullable
+  public RustGenericParams getGenericParams() {
+    return findChildByClass(RustGenericParams.class);
+  }
+
+  @Override
+  @Nullable
+  public RustLifetimes getLifetimes() {
+    return findChildByClass(RustLifetimes.class);
   }
 
   @Override
@@ -92,9 +92,9 @@ public class RustLetDeclImpl extends RustCompositeElementImpl implements RustLet
   }
 
   @Override
-  @NotNull
-  public List<RustTraitRef> getTraitRefList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTraitRef.class);
+  @Nullable
+  public RustTraitRef getTraitRef() {
+    return findChildByClass(RustTraitRef.class);
   }
 
   @Override
@@ -105,8 +105,44 @@ public class RustLetDeclImpl extends RustCompositeElementImpl implements RustLet
 
   @Override
   @Nullable
+  public PsiElement getAnd() {
+    return findChildByType(AND);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getAndand() {
+    return findChildByType(ANDAND);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getBox() {
+    return findChildByType(BOX);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getColon() {
     return findChildByType(COLON);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getConst() {
+    return findChildByType(CONST);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getDotdot() {
+    return findChildByType(DOTDOT);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getDotdotdot() {
+    return findChildByType(DOTDOTDOT);
   }
 
   @Override
@@ -116,9 +152,111 @@ public class RustLetDeclImpl extends RustCompositeElementImpl implements RustLet
   }
 
   @Override
+  @Nullable
+  public PsiElement getExtern() {
+    return findChildByType(EXTERN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getFn() {
+    return findChildByType(FN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getFor() {
+    return findChildByType(FOR);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getGt() {
+    return findChildByType(GT);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getLbrack() {
+    return findChildByType(LBRACK);
+  }
+
+  @Override
   @NotNull
   public PsiElement getLet() {
     return findNotNullChildByType(LET);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getLifetime() {
+    return findChildByType(LIFETIME);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getLt() {
+    return findChildByType(LT);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getMul() {
+    return findChildByType(MUL);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getMut() {
+    return findChildByType(MUT);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getOror() {
+    return findChildByType(OROR);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getProc() {
+    return findChildByType(PROC);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getRbrack() {
+    return findChildByType(RBRACK);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getSelf() {
+    return findChildByType(SELF);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getStaticLifetime() {
+    return findChildByType(STATIC_LIFETIME);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getTypeof() {
+    return findChildByType(TYPEOF);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getUnderscore() {
+    return findChildByType(UNDERSCORE);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getUnsafe() {
+    return findChildByType(UNSAFE);
   }
 
 }

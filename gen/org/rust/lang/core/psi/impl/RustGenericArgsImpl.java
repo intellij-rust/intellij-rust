@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustWherePredImpl extends RustCompositeElementImpl implements RustWherePred {
+public class RustGenericArgsImpl extends RustCompositeElementImpl implements RustGenericArgs {
 
-  public RustWherePredImpl(ASTNode node) {
+  public RustGenericArgsImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitWherePred(this);
+    visitor.visitGenericArgs(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -26,9 +26,9 @@ public class RustWherePredImpl extends RustCompositeElementImpl implements RustW
   }
 
   @Override
-  @Nullable
-  public RustAbi getAbi() {
-    return findChildByClass(RustAbi.class);
+  @NotNull
+  public List<RustAbi> getAbiList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAbi.class);
   }
 
   @Override
@@ -44,6 +44,12 @@ public class RustWherePredImpl extends RustCompositeElementImpl implements RustW
   }
 
   @Override
+  @Nullable
+  public RustBindings getBindings() {
+    return findChildByClass(RustBindings.class);
+  }
+
+  @Override
   @NotNull
   public List<RustBounds> getBoundsList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustBounds.class);
@@ -56,15 +62,9 @@ public class RustWherePredImpl extends RustCompositeElementImpl implements RustW
   }
 
   @Override
-  @Nullable
-  public RustFnParams getFnParams() {
-    return findChildByClass(RustFnParams.class);
-  }
-
-  @Override
-  @Nullable
-  public RustForLifetimes getForLifetimes() {
-    return findChildByClass(RustForLifetimes.class);
+  @NotNull
+  public List<RustFnParams> getFnParamsList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustFnParams.class);
   }
 
   @Override
@@ -74,15 +74,15 @@ public class RustWherePredImpl extends RustCompositeElementImpl implements RustW
   }
 
   @Override
-  @Nullable
-  public RustGenericParams getGenericParams() {
-    return findChildByClass(RustGenericParams.class);
+  @NotNull
+  public List<RustGenericParams> getGenericParamsList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericParams.class);
   }
 
   @Override
-  @Nullable
-  public RustLifetimes getLifetimes() {
-    return findChildByClass(RustLifetimes.class);
+  @NotNull
+  public List<RustLifetimes> getLifetimesList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustLifetimes.class);
   }
 
   @Override
@@ -101,54 +101,6 @@ public class RustWherePredImpl extends RustCompositeElementImpl implements RustW
   @NotNull
   public List<RustTypeParamBounds> getTypeParamBoundsList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeParamBounds.class);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getColon() {
-    return findNotNullChildByType(COLON);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getDotdotdot() {
-    return findChildByType(DOTDOTDOT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getExtern() {
-    return findChildByType(EXTERN);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getFn() {
-    return findChildByType(FN);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getFor() {
-    return findChildByType(FOR);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getProc() {
-    return findChildByType(PROC);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getTypeof() {
-    return findChildByType(TYPEOF);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getUnderscore() {
-    return findChildByType(UNDERSCORE);
   }
 
 }

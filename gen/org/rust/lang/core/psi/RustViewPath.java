@@ -14,9 +14,6 @@ public interface RustViewPath extends RustCompositeElement {
   PsiElement getAs();
 
   @Nullable
-  PsiElement getColoncolon();
-
-  @Nullable
   PsiElement getLbrace();
 
   @Nullable
@@ -24,8 +21,5 @@ public interface RustViewPath extends RustCompositeElement {
 
   @Nullable
   PsiElement getRbrace();
-
-  @Nullable
-  PsiElement getSelf();
 
 }

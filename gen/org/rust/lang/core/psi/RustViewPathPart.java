@@ -5,9 +5,15 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustViewPathPart extends RustViewPath {
+public interface RustViewPathPart extends RustCompositeElement {
 
-  @Nullable
+  @NotNull
   RustViewPathPart getViewPathPart();
+
+  @NotNull
+  PsiElement getColoncolon();
+
+  @NotNull
+  PsiElement getIdentifier();
 
 }

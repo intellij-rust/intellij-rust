@@ -44,12 +44,6 @@ public class RustRetTypeImpl extends RustCompositeElementImpl implements RustRet
   }
 
   @Override
-  @NotNull
-  public List<RustBindings> getBindingsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustBindings.class);
-  }
-
-  @Override
   @Nullable
   public RustBounds getBounds() {
     return findChildByClass(RustBounds.class);
@@ -68,15 +62,21 @@ public class RustRetTypeImpl extends RustCompositeElementImpl implements RustRet
   }
 
   @Override
+  @NotNull
+  public List<RustGenericArgs> getGenericArgsList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericArgs.class);
+  }
+
+  @Override
   @Nullable
   public RustGenericParams getGenericParams() {
     return findChildByClass(RustGenericParams.class);
   }
 
   @Override
-  @NotNull
-  public List<RustLifetimes> getLifetimesList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustLifetimes.class);
+  @Nullable
+  public RustLifetimes getLifetimes() {
+    return findChildByClass(RustLifetimes.class);
   }
 
   @Override
@@ -165,6 +165,12 @@ public class RustRetTypeImpl extends RustCompositeElementImpl implements RustRet
 
   @Override
   @Nullable
+  public PsiElement getGt() {
+    return findChildByType(GT);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getLbrack() {
     return findChildByType(LBRACK);
   }
@@ -173,6 +179,12 @@ public class RustRetTypeImpl extends RustCompositeElementImpl implements RustRet
   @Nullable
   public PsiElement getLifetime() {
     return findChildByType(LIFETIME);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getLt() {
+    return findChildByType(LT);
   }
 
   @Override

@@ -17,9 +17,6 @@ public interface RustTypeParamDefault extends RustCompositeElement {
   List<RustAnonParams> getAnonParamsList();
 
   @NotNull
-  List<RustBindings> getBindingsList();
-
-  @NotNull
   List<RustBounds> getBoundsList();
 
   @NotNull
@@ -27,6 +24,9 @@ public interface RustTypeParamDefault extends RustCompositeElement {
 
   @NotNull
   List<RustFnParams> getFnParamsList();
+
+  @NotNull
+  List<RustGenericArgs> getGenericArgsList();
 
   @NotNull
   List<RustGenericParams> getGenericParamsList();
