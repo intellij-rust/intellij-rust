@@ -145,10 +145,4 @@ public class RustDeclItemImpl extends RustNamedElementImpl implements RustDeclIt
     return findChildByType(UNDERSCORE);
   }
 
-  @Override
-  @NotNull
-  public PsiElement getIdentifier() {
-    return findNotNullChildByType(IDENTIFIER);
-  }
-
 }

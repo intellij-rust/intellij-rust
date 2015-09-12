@@ -17,6 +17,9 @@ public interface RustPathGlob extends RustCompositeElement {
   PsiElement getColoncolon();
 
   @Nullable
+  PsiElement getIdentifier();
+
+  @Nullable
   PsiElement getLbrace();
 
   @Nullable
@@ -24,8 +27,5 @@ public interface RustPathGlob extends RustCompositeElement {
 
   @Nullable
   PsiElement getRbrace();
-
-  @Nullable
-  PsiElement getIdentifier();
 
 }

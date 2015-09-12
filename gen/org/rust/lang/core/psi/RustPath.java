@@ -8,9 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface RustPath extends RustCompositeElement {
 
   @Nullable
-  PsiElement getSelf();
+  PsiElement getIdentifier();
 
   @Nullable
-  PsiElement getIdentifier();
+  PsiElement getSelf();
 
 }

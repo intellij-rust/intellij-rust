@@ -132,18 +132,17 @@
     ]
 
     mixin       ("path_expr")="org.rust.lang.core.psi.impl.mixin.RustExprPathImplMixin"
-    //extends     ("path_expr_part")=path_expr
 
-    implements  ("fn_item")="org.rust.lang.core.resolve.scope.RustResolveScope"
-    mixin       ("fn_item")="org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
+    implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
 
-    extends(".*_item")="org.rust.lang.core.psi.impl.RustNamedElementImpl"
+    extends(".*_item") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
 
-    elementType(".*_bin_expr")=binary_expr
-    elementType(".*_range_expr")=range_expr
+    elementType(".*_bin_expr")   = binary_expr
+    elementType(".*_range_expr") = range_expr
 
-    extends(".*_expr")=expr
-    extends(".*_stmt")=stmt
+    extends(".*_expr") = expr
+    extends(".*_stmt") = stmt
 
     generateTokens=false
     generateTokenAccessors=true
@@ -162,7 +161,7 @@ crate ::= [ SHEBANG_LINE ] [ inner_attrs ] item *
 private inner_attrs ::= inner_attr +
 inner_attr ::= SHEBANG LBRACK meta_item RBRACK | INNER_DOC_COMMENT
 
-meta_item ::= identifier [ EQ lit | LPAREN meta_seq RPAREN ]
+meta_item ::= IDENTIFIER [ EQ lit | LPAREN meta_seq RPAREN ]
 private meta_seq ::= meta_item [ COMMA meta_seq? ]
 
 private outer_attrs ::= outer_attr +
@@ -201,7 +200,7 @@ private block_item_group ::= fn_item
 // Functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn_item ::= FN identifier generic_params fn_params ret_type where_clause? block /* inner_attrs_and_block */ {
+fn_item ::= FN IDENTIFIER generic_params fn_params ret_type where_clause? block /* inner_attrs_and_block */ {
    pin(".*")=2
    recoverWhile="fn_item_recover"
 }
@@ -288,18 +287,15 @@ private pat_vec_elts ::= pat (COMMA pat)*
 
 private lit_or_path ::= path_expr | lit | MINUS lit
 
-path_expr ::= SELF? COLONCOLON? path_generic_args_with_colons
+path_expr ::= [ SELF? COLONCOLON ] path_generic_args_with_colons
 
-private path_generic_args_with_colons ::= IDENTIFIER path_expr_part*
+private path_generic_args_with_colons ::= path_expr_part_leftish path_expr_part*
+
+path_expr_part_leftish  ::= IDENTIFIER {
+    elementType = path_expr_part
+}
 
 left path_expr_part ::= COLONCOLON (IDENTIFIER | generic_args)
-
-//path ::= path_expr path_expr_part*
-//
-//path_expr ::= IDENTIFIER
-//path_expr_part ::= expr COLONCOLON IDENTIFIER {
-//    elementType=path_expr
-//}
 
 generic_args ::= LT generic_values GT
             /* | LT generic_values GTGT */
@@ -330,7 +326,7 @@ private unsafe_fn_item ::= UNSAFE fn_item
 
 extern_fn_item ::= EXTERN abi? fn_item
 
-decl_item ::= identifier COLON type
+decl_item ::= IDENTIFIER COLON type
 
 static_item ::= STATIC MUT? decl_item EQ expr SEMICOLON
 
@@ -340,19 +336,21 @@ private view_item ::= use_item
                     | extern_fn_item
                     | extern_crate_decl
 
-//use_item ::= vis? USE (path AS identifier | path_glob) SEMICOLON
-use_item ::= USE view_path SEMICOLON {pin=2}
+use_item ::= USE view_path SEMICOLON { pin = 2 }
 
 view_path ::= path_no_types_allowed? COLONCOLON LBRACE [ idents_or_self COMMA? ] RBRACE
             | path_no_types_allowed  COLONCOLON MUL
             |                                   LBRACE [ idents_or_self COMMA? ] RBRACE
             | path_no_types_allowed AS IDENTIFIER
-            | path_no_types_allowed                                                        { pin(".*")=2 }
+            | path_no_types_allowed                                                        /*{ pin(".*")=2 }*/
 
 private idents_or_self ::= (IDENTIFIER | SELF) [ AS IDENTIFIER ] (COMMA idents_or_self)*
 
-private path_no_types_allowed ::= COLONCOLON? IDENTIFIER   view_path_part*
-                                | COLONCOLON? SELF         view_path_part*
+private path_no_types_allowed ::= view_path_part_leftish view_path_part*
+
+view_path_part_leftish ::= COLONCOLON? (SELF | IDENTIFIER) {
+    extends = view_path_part
+}
 
 left view_path_part ::= COLONCOLON IDENTIFIER
 
@@ -366,14 +364,14 @@ abi ::= STRING_LITERAL
 
 extern_crate_decl ::= EXTERN CRATE crate_name SEMICOLON
 
-private crate_name ::= identifier | identifier AS identifier
+private crate_name ::= IDENTIFIER | IDENTIFIER AS IDENTIFIER
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Struct & Enum
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-mod_item ::= MOD identifier (SEMICOLON | LBRACE inner_attrs? mod_contents? RBRACE)
+mod_item ::= MOD IDENTIFIER (SEMICOLON | LBRACE inner_attrs? mod_contents? RBRACE)
 
 private mod_contents ::= (attrs_and_vis item)+
 
@@ -558,10 +556,10 @@ private path_generic_args_without_colons_right ::= [ COLONCOLON IDENTIFIER      
 // Paths
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-path_glob ::= identifier (COLONCOLON (path_glob | MUL))?
+path_glob ::= IDENTIFIER (COLONCOLON (path_glob | MUL))?
             | LBRACE path (COMMA path)* RBRACE
 
-path ::= identifier | SELF;
+path ::= IDENTIFIER | SELF;
 
 
 //
@@ -597,6 +595,7 @@ expr ::= ret_expr
        | atom_expr
 
 private atom_expr ::= lit_expr
+                    | path_expr
                     | self_expr
                     | struct_expr
                     | field_expr
@@ -653,10 +652,10 @@ unary_expr ::= (MINUS | MUL | EXCL | AND) expr
 block_expr ::= LBRACE (stmt SEMICOLON | item)* (expr) RBRACE {pin(".*")=1}
 
 lambda_expr ::= OR ident_list OR expr
-private ident_list ::= (identifier (COMMA identifier)*)?
+private ident_list ::= (IDENTIFIER (COMMA IDENTIFIER)*)?
 
-struct_expr ::= path_expr LBRACE  identifier COLON expr
-                         (COMMA   identifier COLON expr)*
+struct_expr ::= path_expr LBRACE  IDENTIFIER COLON expr
+                         (COMMA   IDENTIFIER COLON expr)*
                          (DOTDOT  expr)? RBRACE
               | path_expr LPAREN expr
                          (COMMA  expr)* RPAREN
@@ -722,13 +721,13 @@ index_expr ::= expr LBRACK expr RBRACK
 
 call_expr ::= expr arg_list
 
-method_call_expr ::= expr DOT identifier arg_list {pin=2}
+method_call_expr ::= expr DOT IDENTIFIER arg_list {pin=2}
 
 arg_list ::= LPAREN expr_list RPAREN {pin=1}
 
 private expr_list ::= [ expr (COMMA expr)* ]
 
-field_expr ::= expr DOT identifier {pin=2}
+field_expr ::= expr DOT (IDENTIFIER | INTEGER_LITERAL) { pin = 2 }
 
 lit_expr ::= lit
 
@@ -745,7 +744,7 @@ private lit ::= ( STRING_LITERAL
 
 private bool_lit ::= FALSE | TRUE
 
-private lit_suffix ::= identifier
+private lit_suffix ::= IDENTIFIER
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

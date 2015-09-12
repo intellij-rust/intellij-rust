@@ -67,7 +67,4 @@ public interface RustDeclItem extends RustCompositeElement {
   @Nullable
   PsiElement getUnderscore();
 
-  @NotNull
-  PsiElement getIdentifier();
-
 }

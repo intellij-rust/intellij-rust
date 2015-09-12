@@ -45,6 +45,12 @@ public class RustLitExprImpl extends RustExprImpl implements RustLitExpr {
 
   @Override
   @Nullable
+  public PsiElement getIdentifier() {
+    return findChildByType(IDENTIFIER);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getIntegerLiteral() {
     return findChildByType(INTEGER_LITERAL);
   }
@@ -59,12 +65,6 @@ public class RustLitExprImpl extends RustExprImpl implements RustLitExpr {
   @Nullable
   public PsiElement getTrue() {
     return findChildByType(TRUE);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getIdentifier() {
-    return findChildByType(IDENTIFIER);
   }
 
 }

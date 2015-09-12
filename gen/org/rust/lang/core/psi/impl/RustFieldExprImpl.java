@@ -43,4 +43,10 @@ public class RustFieldExprImpl extends RustExprImpl implements RustFieldExpr {
     return findChildByType(IDENTIFIER);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getIntegerLiteral() {
+    return findChildByType(INTEGER_LITERAL);
+  }
+
 }

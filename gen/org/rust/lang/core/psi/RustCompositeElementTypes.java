@@ -106,6 +106,7 @@ public interface RustCompositeElementTypes {
   IElementType USE_ITEM = new RustCompositeElementType("USE_ITEM");
   IElementType VIEW_PATH = new RustCompositeElementType("VIEW_PATH");
   IElementType VIEW_PATH_PART = new RustCompositeElementType("VIEW_PATH_PART");
+  IElementType VIEW_PATH_PART_LEFTISH = new RustCompositeElementType("VIEW_PATH_PART_LEFTISH");
   IElementType WHERE_CLAUSE = new RustCompositeElementType("WHERE_CLAUSE");
   IElementType WHERE_PRED = new RustCompositeElementType("WHERE_PRED");
   IElementType WHILE_EXPR = new RustCompositeElementType("WHILE_EXPR");
@@ -404,6 +405,9 @@ public interface RustCompositeElementTypes {
       }
       else if (type == VIEW_PATH_PART) {
         return new RustViewPathPartImpl(node);
+      }
+      else if (type == VIEW_PATH_PART_LEFTISH) {
+        return new RustViewPathPartLeftishImpl(node);
       }
       else if (type == WHERE_CLAUSE) {
         return new RustWhereClauseImpl(node);

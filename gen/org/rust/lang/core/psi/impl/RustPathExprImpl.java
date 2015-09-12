@@ -27,21 +27,15 @@ public class RustPathExprImpl extends RustExprPathImplMixin implements RustPathE
   }
 
   @Override
-  @Nullable
+  @NotNull
   public RustPathExprPart getPathExprPart() {
-    return findChildByClass(RustPathExprPart.class);
+    return findNotNullChildByClass(RustPathExprPart.class);
   }
 
   @Override
   @Nullable
   public PsiElement getColoncolon() {
     return findChildByType(COLONCOLON);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getIdentifier() {
-    return findChildByType(IDENTIFIER);
   }
 
   @Override

@@ -171,12 +171,6 @@ public class RustPatImpl extends RustCompositeElementImpl implements RustPat {
 
   @Override
   @Nullable
-  public PsiElement getIdentifier() {
-    return findChildByType(IDENTIFIER);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getLbrace() {
     return findChildByType(LBRACE);
   }

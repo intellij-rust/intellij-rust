@@ -395,6 +395,10 @@ public class RustVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitViewPathPartLeftish(@NotNull RustViewPathPartLeftish o) {
+    visitViewPathPart(o);
+  }
+
   public void visitWhereClause(@NotNull RustWhereClause o) {
     visitCompositeElement(o);
   }

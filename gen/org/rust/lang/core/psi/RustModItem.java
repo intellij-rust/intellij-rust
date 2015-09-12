@@ -16,6 +16,9 @@ public interface RustModItem extends RustCompositeElement {
   @NotNull
   List<RustOuterAttr> getOuterAttrList();
 
+  @NotNull
+  PsiElement getIdentifier();
+
   @Nullable
   PsiElement getLbrace();
 
@@ -27,8 +30,5 @@ public interface RustModItem extends RustCompositeElement {
 
   @Nullable
   PsiElement getSemicolon();
-
-  @NotNull
-  PsiElement getIdentifier();
 
 }

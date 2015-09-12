@@ -7,14 +7,11 @@ import com.intellij.psi.PsiElement;
 
 public interface RustPathExpr extends RustExpr {
 
-  @Nullable
+  @NotNull
   RustPathExprPart getPathExprPart();
 
   @Nullable
   PsiElement getColoncolon();
-
-  @Nullable
-  PsiElement getIdentifier();
 
   @Nullable
   PsiElement getSelf();

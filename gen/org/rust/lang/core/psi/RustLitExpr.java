@@ -17,6 +17,9 @@ public interface RustLitExpr extends RustExpr {
   PsiElement getFloatLiteral();
 
   @Nullable
+  PsiElement getIdentifier();
+
+  @Nullable
   PsiElement getIntegerLiteral();
 
   @Nullable
@@ -24,8 +27,5 @@ public interface RustLitExpr extends RustExpr {
 
   @Nullable
   PsiElement getTrue();
-
-  @Nullable
-  PsiElement getIdentifier();
 
 }

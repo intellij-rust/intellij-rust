@@ -44,6 +44,12 @@ public class RustModItemImpl extends RustNamedElementImpl implements RustModItem
   }
 
   @Override
+  @NotNull
+  public PsiElement getIdentifier() {
+    return findNotNullChildByType(IDENTIFIER);
+  }
+
+  @Override
   @Nullable
   public PsiElement getLbrace() {
     return findChildByType(LBRACE);
@@ -65,12 +71,6 @@ public class RustModItemImpl extends RustNamedElementImpl implements RustModItem
   @Nullable
   public PsiElement getSemicolon() {
     return findChildByType(SEMICOLON);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getIdentifier() {
-    return findNotNullChildByType(IDENTIFIER);
   }
 
 }

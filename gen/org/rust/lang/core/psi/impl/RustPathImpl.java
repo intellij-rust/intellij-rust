@@ -27,14 +27,14 @@ public class RustPathImpl extends RustCompositeElementImpl implements RustPath {
 
   @Override
   @Nullable
-  public PsiElement getSelf() {
-    return findChildByType(SELF);
+  public PsiElement getIdentifier() {
+    return findChildByType(IDENTIFIER);
   }
 
   @Override
   @Nullable
-  public PsiElement getIdentifier() {
-    return findChildByType(IDENTIFIER);
+  public PsiElement getSelf() {
+    return findChildByType(SELF);
   }
 
 }

@@ -2,6 +2,8 @@ fn f() -> i32 {}
 
 fn test() -> u32 {
 
+    x :: y;         /* path-expr */
+
     x + y - z * 0;  /* binary */
 
     x = y = z;      /* assignment + ; */
@@ -14,8 +16,9 @@ fn test() -> u32 {
     t = (0, 1, 2);  /* tuple */
 
     t.a;            /* field */
+    t.0;
 
-    f._();          /* method-invokation */
+    f.m();          /* method-invokation */
 
     f();            /* call */
 

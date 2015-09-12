@@ -80,9 +80,6 @@ public interface RustPat extends RustCompositeElement {
   PsiElement getDotdotdot();
 
   @Nullable
-  PsiElement getIdentifier();
-
-  @Nullable
   PsiElement getLbrace();
 
   @Nullable

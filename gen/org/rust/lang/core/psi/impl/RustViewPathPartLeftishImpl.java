@@ -10,31 +10,19 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustPathGlobImpl extends RustCompositeElementImpl implements RustPathGlob {
+public class RustViewPathPartLeftishImpl extends RustViewPathPartImpl implements RustViewPathPartLeftish {
 
-  public RustPathGlobImpl(ASTNode node) {
+  public RustViewPathPartLeftishImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitPathGlob(this);
+    visitor.visitViewPathPartLeftish(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
-  }
-
-  @Override
-  @NotNull
-  public List<RustPath> getPathList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustPath.class);
-  }
-
-  @Override
-  @Nullable
-  public RustPathGlob getPathGlob() {
-    return findChildByClass(RustPathGlob.class);
   }
 
   @Override
@@ -51,20 +39,8 @@ public class RustPathGlobImpl extends RustCompositeElementImpl implements RustPa
 
   @Override
   @Nullable
-  public PsiElement getLbrace() {
-    return findChildByType(LBRACE);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getMul() {
-    return findChildByType(MUL);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getRbrace() {
-    return findChildByType(RBRACE);
+  public PsiElement getSelf() {
+    return findChildByType(SELF);
   }
 
 }
