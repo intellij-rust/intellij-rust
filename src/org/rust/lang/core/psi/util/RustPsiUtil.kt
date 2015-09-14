@@ -13,5 +13,7 @@ fun PsiElement.match(s: String): Boolean {
     return getText().equals(s);
 }
 
-val PsiElement.parenRelativeRange: TextRange
-    get() = TextRange(getStartOffsetInParent(), getStartOffsetInParent() + getTextLength())
+val PsiElement.parenRelativeRange: TextRange?
+    get() = this.getParent()?.let {
+        TextRange(getStartOffsetInParent(), getStartOffsetInParent() + getTextLength())
+    }
