@@ -16,12 +16,8 @@ public class RustBlockImpl extends RustCompositeElementImpl implements RustBlock
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitBlock(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitBlock(this);
     else super.accept(visitor);
   }
 

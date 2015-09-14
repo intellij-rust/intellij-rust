@@ -10,8 +10,8 @@ public interface RustForeignFnItem extends RustCompositeElement {
   @NotNull
   RustGenericParams getGenericParams();
 
-  @Nullable
-  RustParam getParam();
+  @NotNull
+  List<RustParam> getParamList();
 
   @NotNull
   RustRetType getRetType();

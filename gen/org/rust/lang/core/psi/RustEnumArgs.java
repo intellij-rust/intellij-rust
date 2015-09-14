@@ -7,44 +7,14 @@ import com.intellij.psi.PsiElement;
 
 public interface RustEnumArgs extends RustCompositeElement {
 
-  @NotNull
-  List<RustAbi> getAbiList();
-
-  @NotNull
-  List<RustAnonParam> getAnonParamList();
-
-  @NotNull
-  List<RustAnonParams> getAnonParamsList();
-
-  @NotNull
-  List<RustBounds> getBoundsList();
-
-  @NotNull
-  List<RustExpr> getExprList();
-
-  @NotNull
-  List<RustFnParams> getFnParamsList();
-
-  @NotNull
-  List<RustGenericArgs> getGenericArgsList();
-
-  @NotNull
-  List<RustGenericParams> getGenericParamsList();
-
-  @NotNull
-  List<RustLifetimes> getLifetimesList();
-
-  @NotNull
-  List<RustRetType> getRetTypeList();
+  @Nullable
+  RustExpr getExpr();
 
   @NotNull
   List<RustStructDeclField> getStructDeclFieldList();
 
-  @NotNull
-  List<RustTraitRef> getTraitRefList();
-
-  @NotNull
-  List<RustTypeParamBounds> getTypeParamBoundsList();
+  @Nullable
+  RustTypeSums getTypeSums();
 
   @Nullable
   PsiElement getEq();
@@ -53,6 +23,12 @@ public interface RustEnumArgs extends RustCompositeElement {
   PsiElement getLbrace();
 
   @Nullable
+  PsiElement getLparen();
+
+  @Nullable
   PsiElement getRbrace();
+
+  @Nullable
+  PsiElement getRparen();
 
 }

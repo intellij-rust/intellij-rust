@@ -16,12 +16,8 @@ public class RustStaticItemImpl extends RustNamedElementImpl implements RustStat
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitStaticItem(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitStaticItem(this);
     else super.accept(visitor);
   }
 

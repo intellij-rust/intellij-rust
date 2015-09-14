@@ -131,18 +131,22 @@
         space       = 'regexp:\s+'
     ]
 
-    mixin       ("path_expr")="org.rust.lang.core.psi.impl.mixin.RustExprPathImplMixin"
+    mixin       ("pat_ident") = "org.rust.lang.core.psi.impl.mixin.RustPatIdentImplMixin"
+    implements  ("pat_ident") = "org.rust.lang.core.psi.RustNamedElement"
+
+    mixin       ("path_expr") = "org.rust.lang.core.psi.impl.mixin.RustExprPathImplMixin"
 
     implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
 
-    extends(".*_item") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
-
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
 
+    extends(".*_item") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
+
     extends(".*_expr") = expr
     extends(".*_stmt") = stmt
+    extends("pat_.*")  = pat
 
     generateTokens=false
     generateTokenAccessors=true
@@ -237,8 +241,8 @@ type_param ::= [ IDENTIFIER Q ] IDENTIFIER type_param_bounds? type_param_default
 type_param_bounds   ::= COLON [ type_param_bound_seq ]
 type_param_default  ::= EQ type_sum
 
-private type_sum    ::= type [ PLUS type_param_bounds ]
-private type_sums   ::= type_sum (COMMA type_sum)*
+type_sum    ::= type [ PLUS type_param_bounds ]
+type_sums   ::= type_sum (COMMA type_sum)*
 
 private type_param_bound_seq        ::= polybound type_param_bound_seq_right
 private type_param_bound_seq_right  ::= [ PLUS polybound type_param_bound_seq_right ]
@@ -259,31 +263,44 @@ for_lifetimes ::= FOR LT lifetimes GT
 
 private fn_item_recover ::= !(<< skipUntilEOL >>)
 
-fn_params ::= LPAREN params RPAREN    {pin(".*")=1}
-ret_type  ::= ARROW (type | EXCL)     {pin=1}
+fn_params ::= LPAREN params RPAREN    { pin(".*")=1 }
+ret_type  ::= ARROW (type | EXCL)     { pin=1 }
 
-private params ::= [ param [ COMMA params ] ]
+private params ::= [ param (COMMA param)* ]
 
 param ::= pat COLON type_sum
 
-pat ::= UNDERSCORE
-      | AND MUT? pat
-      | ANDAND pat
-      | LPAREN [ pat_tup COMMA? ] RPAREN
-      | LBRACK pat_vec RBRACK
-      | lit_or_path [ DOTDOTDOT lit_or_path ]
-      | path_expr (LPAREN (DOTDOT | pat_tup) RPAREN | LBRACE pat_struct RBRACE)
+pat ::= pat_wild
+      | pat_reg
+      | pat_tup
+      | pat_vec
+      | pat_range
+      | pat_struct
+      | pat_enum
    /* | path_expr EXCL maybe_ident delimited_token_trees */
-      | binding_mode? IDENTIFIER AT pat
-      | BOX pat
-      | LT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER
+      | pat_ident
+      | pat_uniq
+      | pat_qual_path
    /* | SHL ty_sum maybe_as_trait_ref '>' MOD_SEP ident maybe_as_trait_ref '>' MOD_SEP ident */
 
+pat_qual_path   ::= LT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER
+pat_uniq        ::= BOX pat
+pat_ident       ::= binding_mode? IDENTIFIER [ AT pat ]
+pat_struct      ::= path_expr LBRACE pat_struct_fields RBRACE
+pat_enum        ::= path_expr LPAREN (DOTDOT | pat_tup_elts) RPAREN
 
-pat_tup ::= pat (COMMA pat)*
-pat_vec ::= [ pat_vec_elts COMMA? ] [ DOTDOT [ COMMA pat_vec_elts COMMA? ] ]
+pat_range ::= lit_or_path [ DOTDOTDOT lit_or_path ]
 
-private pat_vec_elts ::= pat (COMMA pat)*
+pat_tup ::= LPAREN [ pat_tup_elts COMMA? ] RPAREN
+pat_vec ::= LBRACK pat_vec_elts RBRACK
+
+private pat_tup_elts ::= pat (COMMA pat)*
+private pat_vec_elts ::= [ pat_tup_elts COMMA? ] [ DOTDOT [ COMMA pat_tup_elts COMMA? ] ]
+
+pat_reg ::= AND MUT? pat
+          | ANDAND pat
+
+pat_wild ::= UNDERSCORE
 
 private lit_or_path ::= path_expr | lit | MINUS lit
 
@@ -313,8 +330,8 @@ private type_sums_and_or_bindings ::= type_sums [ COMMA bindings ]
 bindings ::= binding (COMMA binding)*
 binding  ::= IDENTIFIER EQ type
 
-pat_struct ::= pat_fields [ COMMA DOTDOT ]
-             |                    DOTDOT
+pat_struct_fields ::= pat_fields [ COMMA DOTDOT ]
+                    |                    DOTDOT
 
 private pat_fields  ::= pat_field (COMMA pat_field)
 private pat_field   ::=     binding_mode?  IDENTIFIER [ COLON pat ]
@@ -721,13 +738,13 @@ index_expr ::= expr LBRACK expr RBRACK
 
 call_expr ::= expr arg_list
 
-method_call_expr ::= expr DOT IDENTIFIER arg_list {pin=2}
+method_call_expr ::= expr DOT IDENTIFIER arg_list { pin=2 }
 
 arg_list ::= LPAREN expr_list RPAREN {pin=1}
 
 private expr_list ::= [ expr (COMMA expr)* ]
 
-field_expr ::= expr DOT (IDENTIFIER | INTEGER_LITERAL) { pin = 2 }
+field_expr ::= expr DOT (IDENTIFIER | INTEGER_LITERAL) { pin(".*")=2 }
 
 lit_expr ::= lit
 

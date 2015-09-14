@@ -16,12 +16,8 @@ public class RustOuterAttrImpl extends RustCompositeElementImpl implements RustO
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitOuterAttr(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitOuterAttr(this);
     else super.accept(visitor);
   }
 

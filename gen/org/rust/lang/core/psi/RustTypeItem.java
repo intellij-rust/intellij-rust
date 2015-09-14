@@ -7,70 +7,25 @@ import com.intellij.psi.PsiElement;
 
 public interface RustTypeItem extends RustCompositeElement {
 
-  @Nullable
-  RustAbi getAbi();
+  @NotNull
+  RustGenericParams getGenericParams();
 
   @NotNull
-  List<RustAnonParam> getAnonParamList();
-
-  @NotNull
-  List<RustAnonParams> getAnonParamsList();
-
-  @NotNull
-  List<RustBounds> getBoundsList();
-
-  @NotNull
-  List<RustExpr> getExprList();
-
-  @Nullable
-  RustFnParams getFnParams();
-
-  @NotNull
-  List<RustGenericArgs> getGenericArgsList();
-
-  @NotNull
-  List<RustGenericParams> getGenericParamsList();
-
-  @Nullable
-  RustLifetimes getLifetimes();
-
-  @NotNull
-  List<RustRetType> getRetTypeList();
-
-  @NotNull
-  List<RustTraitRef> getTraitRefList();
-
-  @NotNull
-  List<RustTypeParamBounds> getTypeParamBoundsList();
+  RustTypeSum getTypeSum();
 
   @Nullable
   RustWhereClause getWhereClause();
 
-  @Nullable
-  PsiElement getDotdotdot();
-
   @NotNull
   PsiElement getEq();
 
-  @Nullable
-  PsiElement getExtern();
+  @NotNull
+  PsiElement getIdentifier();
 
-  @Nullable
-  PsiElement getFn();
-
-  @Nullable
-  PsiElement getFor();
-
-  @Nullable
-  PsiElement getProc();
+  @NotNull
+  PsiElement getSemicolon();
 
   @NotNull
   PsiElement getType();
-
-  @Nullable
-  PsiElement getTypeof();
-
-  @Nullable
-  PsiElement getUnderscore();
 
 }

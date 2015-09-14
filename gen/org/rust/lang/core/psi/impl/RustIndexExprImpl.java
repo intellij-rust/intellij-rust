@@ -16,12 +16,8 @@ public class RustIndexExprImpl extends RustExprImpl implements RustIndexExpr {
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitIndexExpr(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitIndexExpr(this);
     else super.accept(visitor);
   }
 

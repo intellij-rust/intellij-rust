@@ -16,12 +16,8 @@ public class RustPathImpl extends RustCompositeElementImpl implements RustPath {
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitPath(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitPath(this);
     else super.accept(visitor);
   }
 

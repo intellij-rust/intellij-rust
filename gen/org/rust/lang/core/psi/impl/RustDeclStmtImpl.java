@@ -16,12 +16,8 @@ public class RustDeclStmtImpl extends RustStmtImpl implements RustDeclStmt {
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitDeclStmt(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitDeclStmt(this);
     else super.accept(visitor);
   }
 

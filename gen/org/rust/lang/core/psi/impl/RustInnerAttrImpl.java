@@ -16,12 +16,8 @@ public class RustInnerAttrImpl extends RustCompositeElementImpl implements RustI
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitInnerAttr(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitInnerAttr(this);
     else super.accept(visitor);
   }
 

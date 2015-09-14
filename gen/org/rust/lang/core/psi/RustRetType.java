@@ -40,8 +40,11 @@ public interface RustRetType extends RustCompositeElement {
   @Nullable
   RustTraitRef getTraitRef();
 
+  @Nullable
+  RustTypeSum getTypeSum();
+
   @NotNull
-  List<RustTypeParamBounds> getTypeParamBoundsList();
+  List<RustTypeSums> getTypeSumsList();
 
   @Nullable
   PsiElement getAnd();
@@ -53,7 +56,13 @@ public interface RustRetType extends RustCompositeElement {
   PsiElement getArrow();
 
   @Nullable
+  PsiElement getAs();
+
+  @Nullable
   PsiElement getBox();
+
+  @Nullable
+  PsiElement getComma();
 
   @Nullable
   PsiElement getConst();

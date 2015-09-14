@@ -43,8 +43,11 @@ public interface RustLetDecl extends RustCompositeElement {
   @Nullable
   RustTraitRef getTraitRef();
 
+  @Nullable
+  RustTypeSum getTypeSum();
+
   @NotNull
-  List<RustTypeParamBounds> getTypeParamBoundsList();
+  List<RustTypeSums> getTypeSumsList();
 
   @Nullable
   PsiElement getAnd();
@@ -53,10 +56,16 @@ public interface RustLetDecl extends RustCompositeElement {
   PsiElement getAndand();
 
   @Nullable
+  PsiElement getAs();
+
+  @Nullable
   PsiElement getBox();
 
   @Nullable
   PsiElement getColon();
+
+  @Nullable
+  PsiElement getComma();
 
   @Nullable
   PsiElement getConst();

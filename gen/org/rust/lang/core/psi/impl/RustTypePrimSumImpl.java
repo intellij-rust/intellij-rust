@@ -16,12 +16,8 @@ public class RustTypePrimSumImpl extends RustCompositeElementImpl implements Rus
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitTypePrimSum(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitTypePrimSum(this);
     else super.accept(visitor);
   }
 
@@ -92,9 +88,21 @@ public class RustTypePrimSumImpl extends RustCompositeElementImpl implements Rus
   }
 
   @Override
+  @Nullable
+  public RustTypeParamBounds getTypeParamBounds() {
+    return findChildByClass(RustTypeParamBounds.class);
+  }
+
+  @Override
   @NotNull
-  public List<RustTypeParamBounds> getTypeParamBoundsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeParamBounds.class);
+  public List<RustTypeSum> getTypeSumList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeSum.class);
+  }
+
+  @Override
+  @NotNull
+  public List<RustTypeSums> getTypeSumsList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeSums.class);
   }
 
   @Override
@@ -123,8 +131,20 @@ public class RustTypePrimSumImpl extends RustCompositeElementImpl implements Rus
 
   @Override
   @Nullable
+  public PsiElement getPlus() {
+    return findChildByType(PLUS);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getProc() {
     return findChildByType(PROC);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getSelf() {
+    return findChildByType(SELF);
   }
 
   @Override

@@ -16,12 +16,8 @@ public class RustArgListImpl extends RustCompositeElementImpl implements RustArg
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitArgList(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitArgList(this);
     else super.accept(visitor);
   }
 

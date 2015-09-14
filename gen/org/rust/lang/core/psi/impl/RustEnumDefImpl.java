@@ -16,12 +16,8 @@ public class RustEnumDefImpl extends RustCompositeElementImpl implements RustEnu
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitEnumDef(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitEnumDef(this);
     else super.accept(visitor);
   }
 

@@ -19,8 +19,8 @@ public interface RustImplMethod extends RustCompositeElement {
   @NotNull
   List<RustOuterAttr> getOuterAttrList();
 
-  @Nullable
-  RustParam getParam();
+  @NotNull
+  List<RustParam> getParamList();
 
   @NotNull
   RustRetType getRetType();

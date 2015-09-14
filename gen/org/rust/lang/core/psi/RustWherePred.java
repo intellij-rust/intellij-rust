@@ -43,8 +43,14 @@ public interface RustWherePred extends RustCompositeElement {
   @NotNull
   List<RustTraitRef> getTraitRefList();
 
+  @Nullable
+  RustTypeParamBounds getTypeParamBounds();
+
   @NotNull
-  List<RustTypeParamBounds> getTypeParamBoundsList();
+  List<RustTypeSum> getTypeSumList();
+
+  @NotNull
+  List<RustTypeSums> getTypeSumsList();
 
   @NotNull
   PsiElement getColon();
@@ -63,6 +69,9 @@ public interface RustWherePred extends RustCompositeElement {
 
   @Nullable
   PsiElement getProc();
+
+  @Nullable
+  PsiElement getSelf();
 
   @Nullable
   PsiElement getTypeof();

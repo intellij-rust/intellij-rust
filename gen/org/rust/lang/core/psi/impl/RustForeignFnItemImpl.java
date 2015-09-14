@@ -16,12 +16,8 @@ public class RustForeignFnItemImpl extends RustNamedElementImpl implements RustF
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitForeignFnItem(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitForeignFnItem(this);
     else super.accept(visitor);
   }
 
@@ -32,9 +28,9 @@ public class RustForeignFnItemImpl extends RustNamedElementImpl implements RustF
   }
 
   @Override
-  @Nullable
-  public RustParam getParam() {
-    return findChildByClass(RustParam.class);
+  @NotNull
+  public List<RustParam> getParamList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustParam.class);
   }
 
   @Override

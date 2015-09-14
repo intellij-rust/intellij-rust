@@ -40,8 +40,11 @@ public interface RustBinding extends RustCompositeElement {
   @Nullable
   RustTraitRef getTraitRef();
 
+  @Nullable
+  RustTypeSum getTypeSum();
+
   @NotNull
-  List<RustTypeParamBounds> getTypeParamBoundsList();
+  List<RustTypeSums> getTypeSumsList();
 
   @Nullable
   PsiElement getAnd();
@@ -50,7 +53,13 @@ public interface RustBinding extends RustCompositeElement {
   PsiElement getAndand();
 
   @Nullable
+  PsiElement getAs();
+
+  @Nullable
   PsiElement getBox();
+
+  @Nullable
+  PsiElement getComma();
 
   @Nullable
   PsiElement getConst();

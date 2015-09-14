@@ -16,12 +16,8 @@ public class RustLoopExprImpl extends RustExprImpl implements RustLoopExpr {
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitLoopExpr(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitLoopExpr(this);
     else super.accept(visitor);
   }
 

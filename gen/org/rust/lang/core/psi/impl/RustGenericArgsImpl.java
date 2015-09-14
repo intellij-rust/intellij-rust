@@ -16,31 +16,9 @@ public class RustGenericArgsImpl extends RustCompositeElementImpl implements Rus
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitGenericArgs(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitGenericArgs(this);
     else super.accept(visitor);
-  }
-
-  @Override
-  @NotNull
-  public List<RustAbi> getAbiList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAbi.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustAnonParam> getAnonParamList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAnonParam.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustAnonParams> getAnonParamsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAnonParams.class);
   }
 
   @Override
@@ -50,57 +28,33 @@ public class RustGenericArgsImpl extends RustCompositeElementImpl implements Rus
   }
 
   @Override
-  @NotNull
-  public List<RustBounds> getBoundsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustBounds.class);
+  @Nullable
+  public RustLifetimes getLifetimes() {
+    return findChildByClass(RustLifetimes.class);
+  }
+
+  @Override
+  @Nullable
+  public RustTypeSums getTypeSums() {
+    return findChildByClass(RustTypeSums.class);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getComma() {
+    return findChildByType(COMMA);
   }
 
   @Override
   @NotNull
-  public List<RustExpr> getExprList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
+  public PsiElement getGt() {
+    return findNotNullChildByType(GT);
   }
 
   @Override
   @NotNull
-  public List<RustFnParams> getFnParamsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustFnParams.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustGenericArgs> getGenericArgsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericArgs.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustGenericParams> getGenericParamsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericParams.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustLifetimes> getLifetimesList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustLifetimes.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustRetType> getRetTypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustRetType.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustTraitRef> getTraitRefList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTraitRef.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustTypeParamBounds> getTypeParamBoundsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeParamBounds.class);
+  public PsiElement getLt() {
+    return findNotNullChildByType(LT);
   }
 
 }

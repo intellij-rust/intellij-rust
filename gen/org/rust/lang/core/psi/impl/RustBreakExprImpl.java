@@ -16,12 +16,8 @@ public class RustBreakExprImpl extends RustExprImpl implements RustBreakExpr {
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitBreakExpr(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitBreakExpr(this);
     else super.accept(visitor);
   }
 

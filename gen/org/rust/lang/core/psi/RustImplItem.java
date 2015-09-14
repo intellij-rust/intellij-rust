@@ -7,8 +7,8 @@ import com.intellij.psi.PsiElement;
 
 public interface RustImplItem extends RustCompositeElement {
 
-  @NotNull
-  List<RustAbi> getAbiList();
+  @Nullable
+  RustAbi getAbi();
 
   @NotNull
   List<RustAnonParam> getAnonParamList();
@@ -25,8 +25,8 @@ public interface RustImplItem extends RustCompositeElement {
   @NotNull
   List<RustExpr> getExprList();
 
-  @NotNull
-  List<RustFnParams> getFnParamsList();
+  @Nullable
+  RustFnParams getFnParams();
 
   @NotNull
   List<RustGenericArgs> getGenericArgsList();
@@ -40,8 +40,8 @@ public interface RustImplItem extends RustCompositeElement {
   @NotNull
   List<RustInnerAttr> getInnerAttrList();
 
-  @NotNull
-  List<RustLifetimes> getLifetimesList();
+  @Nullable
+  RustLifetimes getLifetimes();
 
   @NotNull
   List<RustOuterAttr> getOuterAttrList();
@@ -52,20 +52,35 @@ public interface RustImplItem extends RustCompositeElement {
   @NotNull
   List<RustTraitRef> getTraitRefList();
 
-  @NotNull
-  List<RustTypeParamBounds> getTypeParamBoundsList();
-
   @Nullable
   RustTypePrimSum getTypePrimSum();
 
+  @NotNull
+  List<RustTypeSum> getTypeSumList();
+
+  @NotNull
+  List<RustTypeSums> getTypeSumsList();
+
   @Nullable
   RustWhereClause getWhereClause();
+
+  @Nullable
+  PsiElement getDotdotdot();
 
   @Nullable
   PsiElement getEq();
 
   @Nullable
   PsiElement getExcl();
+
+  @Nullable
+  PsiElement getExtern();
+
+  @Nullable
+  PsiElement getFn();
+
+  @Nullable
+  PsiElement getFor();
 
   @NotNull
   PsiElement getImpl();
@@ -74,12 +89,24 @@ public interface RustImplItem extends RustCompositeElement {
   PsiElement getLbrace();
 
   @Nullable
+  PsiElement getProc();
+
+  @Nullable
   PsiElement getPub();
 
   @NotNull
   PsiElement getRbrace();
 
   @Nullable
+  PsiElement getSelf();
+
+  @Nullable
   PsiElement getType();
+
+  @Nullable
+  PsiElement getTypeof();
+
+  @Nullable
+  PsiElement getUnderscore();
 
 }

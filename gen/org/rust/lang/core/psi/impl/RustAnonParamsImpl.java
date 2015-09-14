@@ -16,12 +16,8 @@ public class RustAnonParamsImpl extends RustCompositeElementImpl implements Rust
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitAnonParams(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitAnonParams(this);
     else super.accept(visitor);
   }
 

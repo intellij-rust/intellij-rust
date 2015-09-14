@@ -16,12 +16,8 @@ public class RustLifetimesImpl extends RustCompositeElementImpl implements RustL
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitLifetimes(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitLifetimes(this);
     else super.accept(visitor);
   }
 

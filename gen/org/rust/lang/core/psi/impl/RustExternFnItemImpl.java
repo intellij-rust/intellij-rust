@@ -16,12 +16,8 @@ public class RustExternFnItemImpl extends RustNamedElementImpl implements RustEx
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitExternFnItem(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitExternFnItem(this);
     else super.accept(visitor);
   }
 

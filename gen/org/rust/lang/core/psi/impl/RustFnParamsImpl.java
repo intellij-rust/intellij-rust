@@ -16,19 +16,15 @@ public class RustFnParamsImpl extends RustCompositeElementImpl implements RustFn
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitFnParams(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitFnParams(this);
     else super.accept(visitor);
   }
 
   @Override
-  @Nullable
-  public RustParam getParam() {
-    return findChildByClass(RustParam.class);
+  @NotNull
+  public List<RustParam> getParamList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustParam.class);
   }
 
   @Override

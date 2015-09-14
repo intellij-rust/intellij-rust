@@ -16,12 +16,8 @@ public class RustTraitItemImpl extends RustNamedElementImpl implements RustTrait
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitTraitItem(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitTraitItem(this);
     else super.accept(visitor);
   }
 

@@ -16,12 +16,8 @@ public class RustRangeExprImpl extends RustExprImpl implements RustRangeExpr {
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitRangeExpr(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitRangeExpr(this);
     else super.accept(visitor);
   }
 

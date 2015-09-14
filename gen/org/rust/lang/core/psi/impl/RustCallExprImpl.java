@@ -16,12 +16,8 @@ public class RustCallExprImpl extends RustExprImpl implements RustCallExpr {
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitCallExpr(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitCallExpr(this);
     else super.accept(visitor);
   }
 

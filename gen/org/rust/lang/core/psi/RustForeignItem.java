@@ -47,7 +47,10 @@ public interface RustForeignItem extends RustCompositeElement {
   List<RustTraitRef> getTraitRefList();
 
   @NotNull
-  List<RustTypeParamBounds> getTypeParamBoundsList();
+  List<RustTypeSum> getTypeSumList();
+
+  @NotNull
+  List<RustTypeSums> getTypeSumsList();
 
   @Nullable
   PsiElement getColon();
@@ -69,6 +72,9 @@ public interface RustForeignItem extends RustCompositeElement {
 
   @Nullable
   PsiElement getPub();
+
+  @Nullable
+  PsiElement getSelf();
 
   @Nullable
   PsiElement getStatic();

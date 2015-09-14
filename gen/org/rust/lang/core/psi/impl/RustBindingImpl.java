@@ -16,12 +16,8 @@ public class RustBindingImpl extends RustCompositeElementImpl implements RustBin
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitBinding(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitBinding(this);
     else super.accept(visitor);
   }
 
@@ -92,9 +88,15 @@ public class RustBindingImpl extends RustCompositeElementImpl implements RustBin
   }
 
   @Override
+  @Nullable
+  public RustTypeSum getTypeSum() {
+    return findChildByClass(RustTypeSum.class);
+  }
+
+  @Override
   @NotNull
-  public List<RustTypeParamBounds> getTypeParamBoundsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeParamBounds.class);
+  public List<RustTypeSums> getTypeSumsList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeSums.class);
   }
 
   @Override
@@ -111,8 +113,20 @@ public class RustBindingImpl extends RustCompositeElementImpl implements RustBin
 
   @Override
   @Nullable
+  public PsiElement getAs() {
+    return findChildByType(AS);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getBox() {
     return findChildByType(BOX);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getComma() {
+    return findChildByType(COMMA);
   }
 
   @Override

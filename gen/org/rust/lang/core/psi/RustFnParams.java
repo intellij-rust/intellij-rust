@@ -7,8 +7,8 @@ import com.intellij.psi.PsiElement;
 
 public interface RustFnParams extends RustCompositeElement {
 
-  @Nullable
-  RustParam getParam();
+  @NotNull
+  List<RustParam> getParamList();
 
   @NotNull
   PsiElement getLparen();

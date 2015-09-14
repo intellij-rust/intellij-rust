@@ -16,12 +16,8 @@ public class RustWherePredImpl extends RustCompositeElementImpl implements RustW
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitWherePred(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitWherePred(this);
     else super.accept(visitor);
   }
 
@@ -98,9 +94,21 @@ public class RustWherePredImpl extends RustCompositeElementImpl implements RustW
   }
 
   @Override
+  @Nullable
+  public RustTypeParamBounds getTypeParamBounds() {
+    return findChildByClass(RustTypeParamBounds.class);
+  }
+
+  @Override
   @NotNull
-  public List<RustTypeParamBounds> getTypeParamBoundsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeParamBounds.class);
+  public List<RustTypeSum> getTypeSumList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeSum.class);
+  }
+
+  @Override
+  @NotNull
+  public List<RustTypeSums> getTypeSumsList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeSums.class);
   }
 
   @Override
@@ -137,6 +145,12 @@ public class RustWherePredImpl extends RustCompositeElementImpl implements RustW
   @Nullable
   public PsiElement getProc() {
     return findChildByType(PROC);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getSelf() {
+    return findChildByType(SELF);
   }
 
   @Override

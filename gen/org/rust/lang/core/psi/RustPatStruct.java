@@ -5,15 +5,18 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustPatStruct extends RustCompositeElement {
+public interface RustPatStruct extends RustPat {
 
   @NotNull
-  List<RustBindingMode> getBindingModeList();
+  RustPatStructFields getPatStructFields();
 
   @NotNull
-  List<RustPat> getPatList();
+  RustPathExpr getPathExpr();
 
-  @Nullable
-  PsiElement getDotdot();
+  @NotNull
+  PsiElement getLbrace();
+
+  @NotNull
+  PsiElement getRbrace();
 
 }

@@ -41,7 +41,10 @@ public interface RustDeclItem extends RustCompositeElement {
   List<RustTraitRef> getTraitRefList();
 
   @NotNull
-  List<RustTypeParamBounds> getTypeParamBoundsList();
+  List<RustTypeSum> getTypeSumList();
+
+  @NotNull
+  List<RustTypeSums> getTypeSumsList();
 
   @NotNull
   PsiElement getColon();
@@ -60,6 +63,9 @@ public interface RustDeclItem extends RustCompositeElement {
 
   @Nullable
   PsiElement getProc();
+
+  @Nullable
+  PsiElement getSelf();
 
   @Nullable
   PsiElement getTypeof();

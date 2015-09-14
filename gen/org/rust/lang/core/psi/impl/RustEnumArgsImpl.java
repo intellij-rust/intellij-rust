@@ -16,73 +16,15 @@ public class RustEnumArgsImpl extends RustCompositeElementImpl implements RustEn
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitEnumArgs(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitEnumArgs(this);
     else super.accept(visitor);
   }
 
   @Override
-  @NotNull
-  public List<RustAbi> getAbiList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAbi.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustAnonParam> getAnonParamList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAnonParam.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustAnonParams> getAnonParamsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAnonParams.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustBounds> getBoundsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustBounds.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustExpr> getExprList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustFnParams> getFnParamsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustFnParams.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustGenericArgs> getGenericArgsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericArgs.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustGenericParams> getGenericParamsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericParams.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustLifetimes> getLifetimesList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustLifetimes.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustRetType> getRetTypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustRetType.class);
+  @Nullable
+  public RustExpr getExpr() {
+    return findChildByClass(RustExpr.class);
   }
 
   @Override
@@ -92,15 +34,9 @@ public class RustEnumArgsImpl extends RustCompositeElementImpl implements RustEn
   }
 
   @Override
-  @NotNull
-  public List<RustTraitRef> getTraitRefList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTraitRef.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustTypeParamBounds> getTypeParamBoundsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeParamBounds.class);
+  @Nullable
+  public RustTypeSums getTypeSums() {
+    return findChildByClass(RustTypeSums.class);
   }
 
   @Override
@@ -117,8 +53,20 @@ public class RustEnumArgsImpl extends RustCompositeElementImpl implements RustEn
 
   @Override
   @Nullable
+  public PsiElement getLparen() {
+    return findChildByType(LPAREN);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getRbrace() {
     return findChildByType(RBRACE);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getRparen() {
+    return findChildByType(RPAREN);
   }
 
 }

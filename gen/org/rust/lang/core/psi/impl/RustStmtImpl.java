@@ -16,12 +16,8 @@ public class RustStmtImpl extends RustCompositeElementImpl implements RustStmt {
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitStmt(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitStmt(this);
     else super.accept(visitor);
   }
 

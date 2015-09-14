@@ -16,12 +16,8 @@ public class RustExprStmtImpl extends RustStmtImpl implements RustExprStmt {
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitExprStmt(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitExprStmt(this);
     else super.accept(visitor);
   }
 

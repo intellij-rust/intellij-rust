@@ -16,12 +16,8 @@ public class RustAnonParamImpl extends RustCompositeElementImpl implements RustA
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitAnonParam(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitAnonParam(this);
     else super.accept(visitor);
   }
 
@@ -92,9 +88,21 @@ public class RustAnonParamImpl extends RustCompositeElementImpl implements RustA
   }
 
   @Override
+  @Nullable
+  public RustTypeSum getTypeSum() {
+    return findChildByClass(RustTypeSum.class);
+  }
+
+  @Override
   @NotNull
-  public List<RustTypeParamBounds> getTypeParamBoundsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeParamBounds.class);
+  public List<RustTypeSums> getTypeSumsList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeSums.class);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getAs() {
+    return findChildByType(AS);
   }
 
   @Override
@@ -107,6 +115,12 @@ public class RustAnonParamImpl extends RustCompositeElementImpl implements RustA
   @Nullable
   public PsiElement getColon() {
     return findChildByType(COLON);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getComma() {
+    return findChildByType(COMMA);
   }
 
   @Override

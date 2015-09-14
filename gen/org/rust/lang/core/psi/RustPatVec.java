@@ -5,12 +5,18 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustPatVec extends RustCompositeElement {
+public interface RustPatVec extends RustPat {
 
   @NotNull
   List<RustPat> getPatList();
 
   @Nullable
   PsiElement getDotdot();
+
+  @NotNull
+  PsiElement getLbrack();
+
+  @NotNull
+  PsiElement getRbrack();
 
 }

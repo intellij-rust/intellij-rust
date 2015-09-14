@@ -16,12 +16,8 @@ public class RustContExprImpl extends RustExprImpl implements RustContExpr {
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitContExpr(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitContExpr(this);
     else super.accept(visitor);
   }
 

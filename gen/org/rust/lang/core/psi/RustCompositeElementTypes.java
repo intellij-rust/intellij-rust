@@ -71,9 +71,17 @@ public interface RustCompositeElementTypes {
   IElementType PATH_EXPR = new RustCompositeElementType("PATH_EXPR");
   IElementType PATH_EXPR_PART = new RustCompositeElementType("PATH_EXPR_PART");
   IElementType PATH_GLOB = new RustCompositeElementType("PATH_GLOB");
+  IElementType PAT_ENUM = new RustCompositeElementType("PAT_ENUM");
+  IElementType PAT_IDENT = new RustCompositeElementType("PAT_IDENT");
+  IElementType PAT_QUAL_PATH = new RustCompositeElementType("PAT_QUAL_PATH");
+  IElementType PAT_RANGE = new RustCompositeElementType("PAT_RANGE");
+  IElementType PAT_REG = new RustCompositeElementType("PAT_REG");
   IElementType PAT_STRUCT = new RustCompositeElementType("PAT_STRUCT");
+  IElementType PAT_STRUCT_FIELDS = new RustCompositeElementType("PAT_STRUCT_FIELDS");
   IElementType PAT_TUP = new RustCompositeElementType("PAT_TUP");
+  IElementType PAT_UNIQ = new RustCompositeElementType("PAT_UNIQ");
   IElementType PAT_VEC = new RustCompositeElementType("PAT_VEC");
+  IElementType PAT_WILD = new RustCompositeElementType("PAT_WILD");
   IElementType POLYBOUND = new RustCompositeElementType("POLYBOUND");
   IElementType RANGE_EXPR = new RustCompositeElementType("RANGE_EXPR");
   IElementType RET_EXPR = new RustCompositeElementType("RET_EXPR");
@@ -101,6 +109,8 @@ public interface RustCompositeElementTypes {
   IElementType TYPE_PARAM_BOUNDS = new RustCompositeElementType("TYPE_PARAM_BOUNDS");
   IElementType TYPE_PARAM_DEFAULT = new RustCompositeElementType("TYPE_PARAM_DEFAULT");
   IElementType TYPE_PRIM_SUM = new RustCompositeElementType("TYPE_PRIM_SUM");
+  IElementType TYPE_SUM = new RustCompositeElementType("TYPE_SUM");
+  IElementType TYPE_SUMS = new RustCompositeElementType("TYPE_SUMS");
   IElementType UNARY_EXPR = new RustCompositeElementType("UNARY_EXPR");
   IElementType UNIT_EXPR = new RustCompositeElementType("UNIT_EXPR");
   IElementType USE_ITEM = new RustCompositeElementType("USE_ITEM");
@@ -301,14 +311,38 @@ public interface RustCompositeElementTypes {
       else if (type == PATH_GLOB) {
         return new RustPathGlobImpl(node);
       }
+      else if (type == PAT_ENUM) {
+        return new RustPatEnumImpl(node);
+      }
+      else if (type == PAT_IDENT) {
+        return new RustPatIdentImpl(node);
+      }
+      else if (type == PAT_QUAL_PATH) {
+        return new RustPatQualPathImpl(node);
+      }
+      else if (type == PAT_RANGE) {
+        return new RustPatRangeImpl(node);
+      }
+      else if (type == PAT_REG) {
+        return new RustPatRegImpl(node);
+      }
       else if (type == PAT_STRUCT) {
         return new RustPatStructImpl(node);
+      }
+      else if (type == PAT_STRUCT_FIELDS) {
+        return new RustPatStructFieldsImpl(node);
       }
       else if (type == PAT_TUP) {
         return new RustPatTupImpl(node);
       }
+      else if (type == PAT_UNIQ) {
+        return new RustPatUniqImpl(node);
+      }
       else if (type == PAT_VEC) {
         return new RustPatVecImpl(node);
+      }
+      else if (type == PAT_WILD) {
+        return new RustPatWildImpl(node);
       }
       else if (type == POLYBOUND) {
         return new RustPolyboundImpl(node);
@@ -390,6 +424,12 @@ public interface RustCompositeElementTypes {
       }
       else if (type == TYPE_PRIM_SUM) {
         return new RustTypePrimSumImpl(node);
+      }
+      else if (type == TYPE_SUM) {
+        return new RustTypeSumImpl(node);
+      }
+      else if (type == TYPE_SUMS) {
+        return new RustTypeSumsImpl(node);
       }
       else if (type == UNARY_EXPR) {
         return new RustUnaryExprImpl(node);

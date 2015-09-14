@@ -16,12 +16,8 @@ public class RustMetaItemImpl extends RustNamedElementImpl implements RustMetaIt
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitMetaItem(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitMetaItem(this);
     else super.accept(visitor);
   }
 

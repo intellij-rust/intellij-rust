@@ -16,12 +16,8 @@ public class RustTypeParamImpl extends RustCompositeElementImpl implements RustT
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitTypeParam(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitTypeParam(this);
     else super.accept(visitor);
   }
 

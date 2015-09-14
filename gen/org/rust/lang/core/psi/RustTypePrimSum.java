@@ -40,8 +40,14 @@ public interface RustTypePrimSum extends RustCompositeElement {
   @NotNull
   List<RustTraitRef> getTraitRefList();
 
+  @Nullable
+  RustTypeParamBounds getTypeParamBounds();
+
   @NotNull
-  List<RustTypeParamBounds> getTypeParamBoundsList();
+  List<RustTypeSum> getTypeSumList();
+
+  @NotNull
+  List<RustTypeSums> getTypeSumsList();
 
   @Nullable
   PsiElement getDotdotdot();
@@ -56,7 +62,13 @@ public interface RustTypePrimSum extends RustCompositeElement {
   PsiElement getFor();
 
   @Nullable
+  PsiElement getPlus();
+
+  @Nullable
   PsiElement getProc();
+
+  @Nullable
+  PsiElement getSelf();
 
   @Nullable
   PsiElement getTypeof();

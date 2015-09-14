@@ -7,70 +7,19 @@ import com.intellij.psi.PsiElement;
 
 public interface RustStructDeclField extends RustCompositeElement {
 
-  @Nullable
-  RustAbi getAbi();
-
-  @NotNull
-  List<RustAnonParam> getAnonParamList();
-
-  @NotNull
-  List<RustAnonParams> getAnonParamsList();
-
-  @NotNull
-  List<RustBounds> getBoundsList();
-
-  @NotNull
-  List<RustExpr> getExprList();
-
-  @Nullable
-  RustFnParams getFnParams();
-
-  @NotNull
-  List<RustGenericArgs> getGenericArgsList();
-
-  @Nullable
-  RustGenericParams getGenericParams();
-
-  @Nullable
-  RustLifetimes getLifetimes();
-
   @NotNull
   List<RustOuterAttr> getOuterAttrList();
 
   @NotNull
-  List<RustRetType> getRetTypeList();
-
-  @NotNull
-  List<RustTraitRef> getTraitRefList();
-
-  @NotNull
-  List<RustTypeParamBounds> getTypeParamBoundsList();
+  RustTypeSum getTypeSum();
 
   @NotNull
   PsiElement getColon();
 
-  @Nullable
-  PsiElement getDotdotdot();
-
-  @Nullable
-  PsiElement getExtern();
-
-  @Nullable
-  PsiElement getFn();
-
-  @Nullable
-  PsiElement getFor();
-
-  @Nullable
-  PsiElement getProc();
+  @NotNull
+  PsiElement getIdentifier();
 
   @Nullable
   PsiElement getPub();
-
-  @Nullable
-  PsiElement getTypeof();
-
-  @Nullable
-  PsiElement getUnderscore();
 
 }

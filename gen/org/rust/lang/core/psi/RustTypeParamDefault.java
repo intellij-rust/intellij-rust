@@ -8,40 +8,7 @@ import com.intellij.psi.PsiElement;
 public interface RustTypeParamDefault extends RustCompositeElement {
 
   @NotNull
-  List<RustAbi> getAbiList();
-
-  @NotNull
-  List<RustAnonParam> getAnonParamList();
-
-  @NotNull
-  List<RustAnonParams> getAnonParamsList();
-
-  @NotNull
-  List<RustBounds> getBoundsList();
-
-  @NotNull
-  List<RustExpr> getExprList();
-
-  @NotNull
-  List<RustFnParams> getFnParamsList();
-
-  @NotNull
-  List<RustGenericArgs> getGenericArgsList();
-
-  @NotNull
-  List<RustGenericParams> getGenericParamsList();
-
-  @NotNull
-  List<RustLifetimes> getLifetimesList();
-
-  @NotNull
-  List<RustRetType> getRetTypeList();
-
-  @NotNull
-  List<RustTraitRef> getTraitRefList();
-
-  @NotNull
-  List<RustTypeParamBounds> getTypeParamBoundsList();
+  RustTypeSum getTypeSum();
 
   @NotNull
   PsiElement getEq();

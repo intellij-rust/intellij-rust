@@ -16,12 +16,8 @@ public class RustStructDeclArgsImpl extends RustCompositeElementImpl implements 
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitStructDeclArgs(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitStructDeclArgs(this);
     else super.accept(visitor);
   }
 

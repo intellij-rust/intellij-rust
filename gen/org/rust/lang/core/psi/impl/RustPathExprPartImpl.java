@@ -16,12 +16,8 @@ public class RustPathExprPartImpl extends RustCompositeElementImpl implements Ru
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitPathExprPart(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitPathExprPart(this);
     else super.accept(visitor);
   }
 

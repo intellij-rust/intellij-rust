@@ -239,16 +239,49 @@ public class RustVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitPatEnum(@NotNull RustPatEnum o) {
+    visitPat(o);
+  }
+
+  public void visitPatIdent(@NotNull RustPatIdent o) {
+    visitPat(o);
+    // visitNamedElement(o);
+  }
+
+  public void visitPatQualPath(@NotNull RustPatQualPath o) {
+    visitPat(o);
+  }
+
+  public void visitPatRange(@NotNull RustPatRange o) {
+    visitPat(o);
+  }
+
+  public void visitPatReg(@NotNull RustPatReg o) {
+    visitPat(o);
+  }
+
   public void visitPatStruct(@NotNull RustPatStruct o) {
-    visitCompositeElement(o);
+    visitPat(o);
+  }
+
+  public void visitPatStructFields(@NotNull RustPatStructFields o) {
+    visitPat(o);
   }
 
   public void visitPatTup(@NotNull RustPatTup o) {
-    visitCompositeElement(o);
+    visitPat(o);
+  }
+
+  public void visitPatUniq(@NotNull RustPatUniq o) {
+    visitPat(o);
   }
 
   public void visitPatVec(@NotNull RustPatVec o) {
-    visitCompositeElement(o);
+    visitPat(o);
+  }
+
+  public void visitPatWild(@NotNull RustPatWild o) {
+    visitPat(o);
   }
 
   public void visitPath(@NotNull RustPath o) {
@@ -372,6 +405,14 @@ public class RustVisitor extends PsiElementVisitor {
   }
 
   public void visitTypePrimSum(@NotNull RustTypePrimSum o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitTypeSum(@NotNull RustTypeSum o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitTypeSums(@NotNull RustTypeSums o) {
     visitCompositeElement(o);
   }
 

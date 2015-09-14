@@ -16,19 +16,15 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitImplItem(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitImplItem(this);
     else super.accept(visitor);
   }
 
   @Override
-  @NotNull
-  public List<RustAbi> getAbiList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAbi.class);
+  @Nullable
+  public RustAbi getAbi() {
+    return findChildByClass(RustAbi.class);
   }
 
   @Override
@@ -62,9 +58,9 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
   }
 
   @Override
-  @NotNull
-  public List<RustFnParams> getFnParamsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustFnParams.class);
+  @Nullable
+  public RustFnParams getFnParams() {
+    return findChildByClass(RustFnParams.class);
   }
 
   @Override
@@ -92,9 +88,9 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
   }
 
   @Override
-  @NotNull
-  public List<RustLifetimes> getLifetimesList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustLifetimes.class);
+  @Nullable
+  public RustLifetimes getLifetimes() {
+    return findChildByClass(RustLifetimes.class);
   }
 
   @Override
@@ -116,21 +112,33 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
   }
 
   @Override
-  @NotNull
-  public List<RustTypeParamBounds> getTypeParamBoundsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeParamBounds.class);
-  }
-
-  @Override
   @Nullable
   public RustTypePrimSum getTypePrimSum() {
     return findChildByClass(RustTypePrimSum.class);
   }
 
   @Override
+  @NotNull
+  public List<RustTypeSum> getTypeSumList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeSum.class);
+  }
+
+  @Override
+  @NotNull
+  public List<RustTypeSums> getTypeSumsList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeSums.class);
+  }
+
+  @Override
   @Nullable
   public RustWhereClause getWhereClause() {
     return findChildByClass(RustWhereClause.class);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getDotdotdot() {
+    return findChildByType(DOTDOTDOT);
   }
 
   @Override
@@ -143,6 +151,24 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
   @Nullable
   public PsiElement getExcl() {
     return findChildByType(EXCL);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getExtern() {
+    return findChildByType(EXTERN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getFn() {
+    return findChildByType(FN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getFor() {
+    return findChildByType(FOR);
   }
 
   @Override
@@ -159,6 +185,12 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
 
   @Override
   @Nullable
+  public PsiElement getProc() {
+    return findChildByType(PROC);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getPub() {
     return findChildByType(PUB);
   }
@@ -171,8 +203,26 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
 
   @Override
   @Nullable
+  public PsiElement getSelf() {
+    return findChildByType(SELF);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getType() {
     return findChildByType(TYPE);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getTypeof() {
+    return findChildByType(TYPEOF);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getUnderscore() {
+    return findChildByType(UNDERSCORE);
   }
 
 }

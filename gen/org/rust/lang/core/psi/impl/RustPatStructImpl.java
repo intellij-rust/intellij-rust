@@ -10,37 +10,39 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustPatStructImpl extends RustCompositeElementImpl implements RustPatStruct {
+public class RustPatStructImpl extends RustPatImpl implements RustPatStruct {
 
   public RustPatStructImpl(ASTNode node) {
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitPatStruct(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitPatStruct(this);
     else super.accept(visitor);
   }
 
   @Override
   @NotNull
-  public List<RustBindingMode> getBindingModeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustBindingMode.class);
+  public RustPatStructFields getPatStructFields() {
+    return findNotNullChildByClass(RustPatStructFields.class);
   }
 
   @Override
   @NotNull
-  public List<RustPat> getPatList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustPat.class);
+  public RustPathExpr getPathExpr() {
+    return findNotNullChildByClass(RustPathExpr.class);
   }
 
   @Override
-  @Nullable
-  public PsiElement getDotdot() {
-    return findChildByType(DOTDOT);
+  @NotNull
+  public PsiElement getLbrace() {
+    return findNotNullChildByType(LBRACE);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getRbrace() {
+    return findNotNullChildByType(RBRACE);
   }
 
 }

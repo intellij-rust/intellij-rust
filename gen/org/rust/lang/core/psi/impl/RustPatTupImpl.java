@@ -10,18 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustPatTupImpl extends RustCompositeElementImpl implements RustPatTup {
+public class RustPatTupImpl extends RustPatImpl implements RustPatTup {
 
   public RustPatTupImpl(ASTNode node) {
     super(node);
   }
 
-  public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitPatTup(this);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
+    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitPatTup(this);
     else super.accept(visitor);
   }
 
@@ -29,6 +25,18 @@ public class RustPatTupImpl extends RustCompositeElementImpl implements RustPatT
   @NotNull
   public List<RustPat> getPatList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustPat.class);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getLparen() {
+    return findNotNullChildByType(LPAREN);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getRparen() {
+    return findNotNullChildByType(RPAREN);
   }
 
 }
