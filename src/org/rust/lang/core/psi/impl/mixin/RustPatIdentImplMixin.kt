@@ -15,4 +15,6 @@ public abstract class RustPatIdentImplMixin(node: ASTNode) : RustPatImpl(node)
     }
 
     override fun getName(): String? = getIdentifier().getText()
+
+    override fun getNavigationElement(): PsiElement? = getIdentifier()
 }
