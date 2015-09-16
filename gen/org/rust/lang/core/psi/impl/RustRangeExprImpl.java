@@ -16,8 +16,12 @@ public class RustRangeExprImpl extends RustExprImpl implements RustRangeExpr {
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitRangeExpr(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitRangeExpr(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 
@@ -28,10 +32,16 @@ public class RustRangeExprImpl extends RustExprImpl implements RustRangeExpr {
   }
 
   @Override
-  @NotNull
+  @Nullable
+  public PsiElement getDotdot() {
+    return findChildByType(DOTDOT);
+  }
+
+  @Override
+  @Nullable
   public RustExpr getFrom() {
     List<RustExpr> p1 = getExprList();
-    return p1.get(0);
+    return p1.size() < 1 ? null : p1.get(0);
   }
 
   @Override

@@ -16,8 +16,12 @@ public class RustDeclItemImpl extends RustNamedElementImpl implements RustDeclIt
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitDeclItem(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitDeclItem(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

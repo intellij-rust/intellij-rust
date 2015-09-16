@@ -16,8 +16,12 @@ public class RustTypeSumImpl extends RustCompositeElementImpl implements RustTyp
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitTypeSum(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitTypeSum(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

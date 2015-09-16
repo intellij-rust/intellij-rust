@@ -16,8 +16,12 @@ public class RustViewPathPartLeftishImpl extends RustViewPathPartImpl implements
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitViewPathPartLeftish(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitViewPathPartLeftish(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

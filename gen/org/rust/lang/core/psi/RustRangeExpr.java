@@ -10,7 +10,10 @@ public interface RustRangeExpr extends RustExpr {
   @NotNull
   List<RustExpr> getExprList();
 
-  @NotNull
+  @Nullable
+  PsiElement getDotdot();
+
+  @Nullable
   RustExpr getFrom();
 
   @Nullable

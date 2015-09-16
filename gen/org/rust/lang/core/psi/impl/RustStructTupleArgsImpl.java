@@ -16,8 +16,12 @@ public class RustStructTupleArgsImpl extends RustCompositeElementImpl implements
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitStructTupleArgs(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitStructTupleArgs(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

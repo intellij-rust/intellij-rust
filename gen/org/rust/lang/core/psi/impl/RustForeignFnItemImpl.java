@@ -16,8 +16,12 @@ public class RustForeignFnItemImpl extends RustNamedElementImpl implements RustF
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitForeignFnItem(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitForeignFnItem(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

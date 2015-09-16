@@ -10,10 +10,10 @@ public interface RustPathExprPart extends RustCompositeElement {
   @Nullable
   RustGenericArgs getGenericArgs();
 
-  @NotNull
+  @Nullable
   RustPathExprPart getPathExprPart();
 
-  @NotNull
+  @Nullable
   PsiElement getColoncolon();
 
   @Nullable

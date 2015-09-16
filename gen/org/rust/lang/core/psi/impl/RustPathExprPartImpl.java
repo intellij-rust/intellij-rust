@@ -16,8 +16,12 @@ public class RustPathExprPartImpl extends RustCompositeElementImpl implements Ru
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitPathExprPart(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitPathExprPart(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 
@@ -28,15 +32,15 @@ public class RustPathExprPartImpl extends RustCompositeElementImpl implements Ru
   }
 
   @Override
-  @NotNull
+  @Nullable
   public RustPathExprPart getPathExprPart() {
-    return findNotNullChildByClass(RustPathExprPart.class);
+    return findChildByClass(RustPathExprPart.class);
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getColoncolon() {
-    return findNotNullChildByType(COLONCOLON);
+    return findChildByType(COLONCOLON);
   }
 
   @Override

@@ -16,8 +16,12 @@ public class RustLetDeclImpl extends RustCompositeElementImpl implements RustLet
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitLetDecl(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitLetDecl(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

@@ -16,8 +16,12 @@ public class RustWhileLetExprImpl extends RustExprImpl implements RustWhileLetEx
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitWhileLetExpr(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitWhileLetExpr(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

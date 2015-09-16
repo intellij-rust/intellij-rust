@@ -16,8 +16,12 @@ public class RustWherePredImpl extends RustCompositeElementImpl implements RustW
     super(node);
   }
 
+  public void accept(@NotNull RustVisitor visitor) {
+    visitor.visitWherePred(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof RustVisitor) ((RustVisitor)visitor).visitWherePred(this);
+    if (visitor instanceof RustVisitor) accept((RustVisitor)visitor);
     else super.accept(visitor);
   }
 

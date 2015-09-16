@@ -274,18 +274,22 @@ pat ::= pat_wild
       | pat_reg
       | pat_tup
       | pat_vec
+      | pat_ident
       | pat_range
       | pat_struct
       | pat_enum
    /* | path_expr EXCL maybe_ident delimited_token_trees */
-      | pat_ident
       | pat_uniq
       | pat_qual_path
    /* | SHL ty_sum maybe_as_trait_ref '>' MOD_SEP ident maybe_as_trait_ref '>' MOD_SEP ident */
 
 pat_qual_path   ::= LT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER
 pat_uniq        ::= BOX pat
-pat_ident       ::= binding_mode? IDENTIFIER [ AT pat ]
+
+pat_ident       ::= binding_mode IDENTIFIER
+                  |              IDENTIFIER AT pat
+                  | binding_mode IDENTIFIER AT pat
+
 pat_struct      ::= path_expr LBRACE pat_struct_fields RBRACE
 pat_enum        ::= path_expr LPAREN (DOTDOT | pat_tup_elts) RPAREN
 
@@ -337,7 +341,7 @@ private pat_fields  ::= pat_field (COMMA pat_field)
 private pat_field   ::=     binding_mode?  IDENTIFIER [ COLON pat ]
                       | BOX binding_mode?  IDENTIFIER
 
-binding_mode ::= REF | REF MUT | MUT
+binding_mode ::= REF | REF MUT | MUT 
 
 private unsafe_fn_item ::= UNSAFE fn_item
 
