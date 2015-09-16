@@ -13,8 +13,5 @@ public abstract class RustFnItemImplMixin(node: ASTNode)
     , RustFnItem
     , RustResolveScope {
 
-    override fun lookup(pathPart: RustPathExprPart): RustNamedElement? {
-        return super<RustResolveScope>.lookup(pathPart)
-    }
 }
 

@@ -9,11 +9,13 @@ public object RustPsiUtil {}
 // Extension points
 //
 
-fun PsiElement.match(s: String): Boolean {
-    return getText().equals(s);
+fun PsiElement?.match(s: String?): Boolean {
+    return this != null
+        && s    != null
+        && getText().equals(s);
 }
 
-val PsiElement.parenRelativeRange: TextRange?
+val PsiElement.parentRelativeRange: TextRange?
     get() = this.getParent()?.let {
         TextRange(getStartOffsetInParent(), getStartOffsetInParent() + getTextLength())
     }

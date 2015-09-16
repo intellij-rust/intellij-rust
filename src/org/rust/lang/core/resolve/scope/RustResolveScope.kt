@@ -6,24 +6,23 @@ import org.rust.lang.core.psi.RustPathExpr
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustPathExprPart
 import org.rust.lang.core.psi.util.match
+import org.rust.lang.core.resolve.RustResolveEngine
 
 public interface RustResolveScope : RustCompositeElement {
-
-    public fun lookup(path: RustPathExpr): RustNamedElement? {
-        // TODO(kudinkin): fix for global- & self-refs
-        return path.getPathExprPart().let { part -> lookup(part) }
-    }
 
     public fun lookup(pathPart: RustPathExprPart): RustNamedElement? {
         for (c in getChildren()) {
             if (c is RustNamedElement && pathPart.getIdentifier().match(c.getName())) {
                 return pathPart.getPathExprPart().let {
                     tail ->
-                    when (c) {
-                        is RustResolveScope -> c.lookup(tail)
-                        else -> null
-                    }
-                } ?: c
+                        when (tail) {
+                            null -> return c
+                            else -> when (c) {
+                                        is RustResolveScope -> c.lookup(tail)
+                                        else -> null
+                                    }
+                        }
+                }
             }
         }
 
@@ -32,4 +31,11 @@ public interface RustResolveScope : RustCompositeElement {
 
 }
 
+//
+// Extension points
+//
 
+fun RustResolveScope.resolveWith(v: RustResolveEngine.ResolveScopeVisitor): RustNamedElement? {
+    this.accept(v)
+    return v.matched
+}

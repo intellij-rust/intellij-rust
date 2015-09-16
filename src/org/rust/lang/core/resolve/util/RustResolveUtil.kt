@@ -5,14 +5,17 @@ import org.rust.lang.core.resolve.scope.RustResolveScope
 
 public object RustResolveUtil {
 
-    fun getResolveScopeFor(element: PsiElement): RustResolveScope {
-        var current = element
-        while (true) {
+    fun getResolveScope(elem: PsiElement, mayReturnItself: Boolean = false): RustResolveScope? {
+        var current = if (mayReturnItself) elem else elem.getParent()
+        while (current != null) {
             when (current) {
                 is RustResolveScope -> return current
                 else -> current = current.getParent()
             }
         }
+
+        return null
     }
 
 }
+
