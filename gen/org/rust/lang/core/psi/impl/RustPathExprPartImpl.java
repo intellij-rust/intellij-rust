@@ -8,9 +8,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
+import org.rust.lang.core.psi.impl.mixin.RustPathExprPartImplMixin;
 import org.rust.lang.core.psi.*;
 
-public class RustPathExprPartImpl extends RustCompositeElementImpl implements RustPathExprPart {
+public class RustPathExprPartImpl extends RustPathExprPartImplMixin implements RustPathExprPart {
 
   public RustPathExprPartImpl(ASTNode node) {
     super(node);

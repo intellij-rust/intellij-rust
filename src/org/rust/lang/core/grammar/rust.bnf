@@ -134,7 +134,7 @@
     mixin       ("pat_ident") = "org.rust.lang.core.psi.impl.mixin.RustPatIdentImplMixin"
     implements  ("pat_ident") = "org.rust.lang.core.psi.RustNamedElement"
 
-    mixin       ("path_expr") = "org.rust.lang.core.psi.impl.mixin.RustExprPathImplMixin"
+    mixin       ("path_expr_part") = "org.rust.lang.core.psi.impl.mixin.RustPathExprPartImplMixin"
 
     implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
