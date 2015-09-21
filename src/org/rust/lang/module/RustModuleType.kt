@@ -1,11 +1,12 @@
 package org.rust.lang.module
 
 import com.intellij.openapi.module.ModuleType
-import org.rust.lang.RustFileType
 import org.rust.lang.icons.RustIcons
-import org.rust.lang.module.RustModuleBuilder
 import javax.swing.Icon
 
+/**
+ * @author Evgeny.Kurbatsky
+ */
 public class RustModuleType() : ModuleType<RustModuleBuilder>(RustModuleType.RUST_MODULE) {
 
     override fun createModuleBuilder(): RustModuleBuilder {
@@ -21,11 +22,11 @@ public class RustModuleType() : ModuleType<RustModuleBuilder>(RustModuleType.RUS
     }
 
     override fun getBigIcon(): Icon {
-        return RustIcons.RUST_BIG
+        return RustIcons.BIG
     }
 
     override fun getNodeIcon(isOpened: Boolean): Icon {
-        return RustIcons.RUST
+        return RustIcons.NORMAL
     }
 
     companion object {

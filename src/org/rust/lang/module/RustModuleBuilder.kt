@@ -8,14 +8,12 @@ import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import org.rust.lang.icons.RustIcons
-import java.io.File
-import java.io.FileWriter
-import java.io.IOException
 import javax.swing.Icon
 
+/**
+ * @author Evgeny.Kurbatsky
+ */
 public class RustModuleBuilder() : ModuleBuilder() {
 
     override fun getBuilderId() = "rust.module.builder"
@@ -23,7 +21,7 @@ public class RustModuleBuilder() : ModuleBuilder() {
     override fun modifySettingsStep(settingsStep: SettingsStep): ModuleWizardStep? =
         StdModuleTypes.JAVA!!.modifySettingsStep(settingsStep, this)
 
-    override fun getBigIcon(): Icon = RustIcons.RUST_BIG
+    override fun getBigIcon(): Icon = RustIcons.BIG
 
     override fun getGroupName(): String? = "Rust"
 
