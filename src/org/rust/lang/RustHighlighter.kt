@@ -16,10 +16,6 @@ import org.rust.lang.core.lexer.RustTokenElementTypes.*
 
 public class RustHighlighter : SyntaxHighlighterBase() {
 
-    public class Factory : SyntaxHighlighterFactory() {
-        override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?) = RustHighlighter();
-    }
-
     object Colors {
 
         fun r(id: String, attrKey: TextAttributesKey) =
