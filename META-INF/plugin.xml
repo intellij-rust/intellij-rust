@@ -30,7 +30,7 @@
 
         <fileTypeFactory implementation="org.rust.lang.RustFileTypeFactory"/>
 
-        <lang.syntaxHighlighterFactory key="RUST" implementationClass="org.rust.lang.RustHighlighter.Factory"/>
+        <lang.syntaxHighlighterFactory key="RUST" implementationClass="org.rust.lang.RustHighlighterFactory"/>
 
         <lang.parserDefinition language="RUST" implementationClass="org.rust.lang.core.RustParserDefinition"/>
 
