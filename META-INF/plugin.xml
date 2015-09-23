@@ -34,6 +34,12 @@
 
         <lang.parserDefinition language="RUST" implementationClass="org.rust.lang.core.RustParserDefinition"/>
 
+
+        <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
+
+        <lang.syntaxHighlighterFactory key="TOML" implementationClass="org.toml.lang.TomlHighlighterFactory"/>
+
+        <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.core.parser.TomlParserDefinition"/>
     </extensions>
 
     <application-components>
