@@ -649,17 +649,34 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // REF | REF MUT | MUT
+  // REF MUT? | MUT
   public static boolean binding_mode(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "binding_mode")) return false;
     if (!nextTokenIs(b, "<binding mode>", MUT, REF)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, BINDING_MODE, "<binding mode>");
-    r = consumeToken(b, REF);
-    if (!r) r = parseTokens(b, 0, REF, MUT);
+    r = binding_mode_0(b, l + 1);
     if (!r) r = consumeToken(b, MUT);
     exit_section_(b, l, m, r, false, null);
     return r;
+  }
+
+  // REF MUT?
+  private static boolean binding_mode_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "binding_mode_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, REF);
+    r = r && binding_mode_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // MUT?
+  private static boolean binding_mode_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "binding_mode_0_1")) return false;
+    consumeToken(b, MUT);
+    return true;
   }
 
   /* ********************************************************** */
@@ -1466,7 +1483,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // FN IDENTIFIER generic_params fn_params ret_type where_clause? block
+  // FN IDENTIFIER generic_params fn_params ret_type? where_clause? block
   public static boolean fn_item(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "fn_item")) return false;
     boolean r, p;
@@ -1475,11 +1492,18 @@ public class RustParser implements PsiParser, LightPsiParser {
     p = r; // pin = 2
     r = r && report_error_(b, generic_params(b, l + 1));
     r = p && report_error_(b, fn_params(b, l + 1)) && r;
-    r = p && report_error_(b, ret_type(b, l + 1)) && r;
+    r = p && report_error_(b, fn_item_4(b, l + 1)) && r;
     r = p && report_error_(b, fn_item_5(b, l + 1)) && r;
     r = p && block(b, l + 1) && r;
     exit_section_(b, l, m, r, p, fn_item_recover_parser_);
     return r || p;
+  }
+
+  // ret_type?
+  private static boolean fn_item_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "fn_item_4")) return false;
+    ret_type(b, l + 1);
+    return true;
   }
 
   // where_clause?
@@ -5835,7 +5859,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   // 23: BINARY(bit_shift_bin_expr)
   // 24: BINARY(add_bin_expr)
   // 25: BINARY(mul_bin_expr)
-  // 26: ATOM(lit_expr) ATOM(path_expr) ATOM(self_expr) POSTFIX(field_expr) POSTFIX(method_call_expr) BINARY(index_expr) POSTFIX(call_expr) ATOM(array_expr) ATOM(tuple_expr) ATOM(unit_expr) ATOM(paren_expr) PREFIX(unary_expr)
+  // 26: ATOM(lit_expr) ATOM(path_expr) ATOM(self_expr) POSTFIX(method_call_expr) POSTFIX(field_expr) BINARY(index_expr) POSTFIX(call_expr) ATOM(array_expr) ATOM(tuple_expr) ATOM(unit_expr) ATOM(paren_expr) PREFIX(unary_expr)
   public static boolean expr(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expr")) return false;
     addVariant(b, "<expr>");
@@ -5922,13 +5946,13 @@ public class RustParser implements PsiParser, LightPsiParser {
         r = expr(b, l, 25);
         exit_section_(b, l, m, BINARY_EXPR, r, true, null);
       }
-      else if (g < 26 && field_expr_0(b, l + 1)) {
-        r = true;
-        exit_section_(b, l, m, FIELD_EXPR, r, true, null);
-      }
       else if (g < 26 && method_call_expr_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, METHOD_CALL_EXPR, r, true, null);
+      }
+      else if (g < 26 && field_expr_0(b, l + 1)) {
+        r = true;
+        exit_section_(b, l, m, FIELD_EXPR, r, true, null);
       }
       else if (g < 26 && consumeTokenSmart(b, LBRACK)) {
         r = report_error_(b, expr(b, l, 26));
@@ -6529,6 +6553,17 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
+  // DOT IDENTIFIER arg_list
+  private static boolean method_call_expr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "method_call_expr_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, DOT, IDENTIFIER);
+    r = r && arg_list(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
   // DOT (IDENTIFIER | INTEGER_LITERAL)
   private static boolean field_expr_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "field_expr_0")) return false;
@@ -6547,17 +6582,6 @@ public class RustParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, IDENTIFIER);
     if (!r) r = consumeTokenSmart(b, INTEGER_LITERAL);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // DOT IDENTIFIER arg_list
-  private static boolean method_call_expr_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "method_call_expr_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, DOT, IDENTIFIER);
-    r = r && arg_list(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -6678,7 +6702,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // MINUS | MUL | EXCL | AND
+  // MINUS | MUL | EXCL | AND MUT?
   private static boolean unary_expr_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unary_expr_0")) return false;
     boolean r;
@@ -6686,9 +6710,27 @@ public class RustParser implements PsiParser, LightPsiParser {
     r = consumeTokenSmart(b, MINUS);
     if (!r) r = consumeTokenSmart(b, MUL);
     if (!r) r = consumeTokenSmart(b, EXCL);
-    if (!r) r = consumeTokenSmart(b, AND);
+    if (!r) r = unary_expr_0_3(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // AND MUT?
+  private static boolean unary_expr_0_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unary_expr_0_3")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, AND);
+    r = r && unary_expr_0_3_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // MUT?
+  private static boolean unary_expr_0_3_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unary_expr_0_3_1")) return false;
+    consumeTokenSmart(b, MUT);
+    return true;
   }
 
   final static Parser fn_item_recover_parser_ = new Parser() {

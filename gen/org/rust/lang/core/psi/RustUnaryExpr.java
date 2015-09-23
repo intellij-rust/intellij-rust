@@ -22,4 +22,7 @@ public interface RustUnaryExpr extends RustExpr {
   @Nullable
   PsiElement getMul();
 
+  @Nullable
+  PsiElement getMut();
+
 }

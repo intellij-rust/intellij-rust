@@ -204,7 +204,7 @@ private block_item_group ::= fn_item
 // Functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn_item ::= FN IDENTIFIER generic_params fn_params ret_type where_clause? block /* inner_attrs_and_block */ {
+fn_item ::= FN IDENTIFIER generic_params fn_params ret_type? where_clause? block /* inner_attrs_and_block */ {
    pin(".*")=2
    recoverWhile="fn_item_recover"
 }
@@ -341,7 +341,7 @@ private pat_fields  ::= pat_field (COMMA pat_field)
 private pat_field   ::=     binding_mode?  IDENTIFIER [ COLON pat ]
                       | BOX binding_mode?  IDENTIFIER
 
-binding_mode ::= REF | REF MUT | MUT 
+binding_mode ::= REF MUT? | MUT
 
 private unsafe_fn_item ::= UNSAFE fn_item
 
@@ -618,10 +618,11 @@ expr ::= ret_expr
 private atom_expr ::= lit_expr
                     | path_expr
                     | self_expr
+                    | method_call_expr
                     | struct_expr
                     | field_expr
-                    | method_call_expr
                     | index_expr
+                    //XXX: call_expr and struct_expr are ambiguous: in `foo(92)` foo can be either a fn, or a tuple struct.
                     | call_expr
                     | array_expr
                     | tuple_expr
@@ -668,7 +669,7 @@ bit_xor_bin_expr    ::= expr XOR expr
 bit_and_bin_expr    ::= expr AND expr
 
 
-unary_expr ::= (MINUS | MUL | EXCL | AND) expr
+unary_expr ::= (MINUS | MUL | EXCL | AND MUT?) expr
 
 block_expr ::= LBRACE (stmt SEMICOLON | item)* (expr) RBRACE {pin(".*")=1}
 

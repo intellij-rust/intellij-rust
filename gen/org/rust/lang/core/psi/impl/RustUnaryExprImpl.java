@@ -55,4 +55,10 @@ public class RustUnaryExprImpl extends RustExprImpl implements RustUnaryExpr {
     return findChildByType(MUL);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getMut() {
+    return findChildByType(MUT);
+  }
+
 }
