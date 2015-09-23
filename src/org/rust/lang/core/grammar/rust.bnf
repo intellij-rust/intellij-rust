@@ -599,7 +599,6 @@ expr ::= ret_expr
        | if_let_expr
        | while_let_expr
        | block_expr
-       | struct_expr
        | lambda_expr
        | full_range_expr
        | open_range_expr
@@ -616,6 +615,7 @@ expr ::= ret_expr
        | atom_expr
 
 private atom_expr ::= lit_expr
+                    | macro_expr
                     | path_expr
                     | self_expr
                     | method_call_expr
@@ -671,9 +671,9 @@ bit_and_bin_expr    ::= expr AND expr
 
 unary_expr ::= (MINUS | MUL | EXCL | AND MUT?) expr
 
-block_expr ::= LBRACE (stmt SEMICOLON | item)* (expr) RBRACE {pin(".*")=1}
+block_expr ::= block
 
-lambda_expr ::= OR ident_list OR expr
+lambda_expr ::= (OROR | OR ident_list OR) expr
 private ident_list ::= (IDENTIFIER (COMMA IDENTIFIER)*)?
 
 struct_expr ::= path_expr LBRACE  IDENTIFIER COLON expr
@@ -744,6 +744,8 @@ index_expr ::= expr LBRACK expr RBRACK
 call_expr ::= expr arg_list
 
 method_call_expr ::= expr DOT IDENTIFIER arg_list { pin=2 }
+
+macro_expr ::= IDENTIFIER EXCL arg_list
 
 arg_list ::= LPAREN expr_list RPAREN {pin=1}
 

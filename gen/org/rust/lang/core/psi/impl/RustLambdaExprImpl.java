@@ -31,4 +31,10 @@ public class RustLambdaExprImpl extends RustExprImpl implements RustLambdaExpr {
     return findChildByClass(RustExpr.class);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getOror() {
+    return findChildByType(OROR);
+  }
+
 }

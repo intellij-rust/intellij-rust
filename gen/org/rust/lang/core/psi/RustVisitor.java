@@ -203,6 +203,10 @@ public class RustVisitor extends PsiElementVisitor {
     visitExpr(o);
   }
 
+  public void visitMacroExpr(@NotNull RustMacroExpr o) {
+    visitExpr(o);
+  }
+
   public void visitMatchExpr(@NotNull RustMatchExpr o) {
     visitExpr(o);
   }

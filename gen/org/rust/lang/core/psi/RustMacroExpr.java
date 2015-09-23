@@ -5,9 +5,15 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustBlockExpr extends RustExpr {
+public interface RustMacroExpr extends RustExpr {
 
   @NotNull
-  RustBlock getBlock();
+  RustArgList getArgList();
+
+  @NotNull
+  PsiElement getExcl();
+
+  @NotNull
+  PsiElement getIdentifier();
 
 }

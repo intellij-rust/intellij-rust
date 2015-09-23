@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustBlockExprImpl extends RustExprImpl implements RustBlockExpr {
+public class RustMacroExprImpl extends RustExprImpl implements RustMacroExpr {
 
-  public RustBlockExprImpl(ASTNode node) {
+  public RustMacroExprImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitBlockExpr(this);
+    visitor.visitMacroExpr(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -27,8 +27,20 @@ public class RustBlockExprImpl extends RustExprImpl implements RustBlockExpr {
 
   @Override
   @NotNull
-  public RustBlock getBlock() {
-    return findNotNullChildByClass(RustBlock.class);
+  public RustArgList getArgList() {
+    return findNotNullChildByClass(RustArgList.class);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getExcl() {
+    return findNotNullChildByType(EXCL);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getIdentifier() {
+    return findNotNullChildByType(IDENTIFIER);
   }
 
 }

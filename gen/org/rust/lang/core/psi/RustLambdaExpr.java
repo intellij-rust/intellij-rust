@@ -10,4 +10,7 @@ public interface RustLambdaExpr extends RustExpr {
   @Nullable
   RustExpr getExpr();
 
+  @Nullable
+  PsiElement getOror();
+
 }
