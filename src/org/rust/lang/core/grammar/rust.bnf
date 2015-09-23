@@ -588,16 +588,9 @@ path ::= IDENTIFIER | SELF;
 
 expr ::= ret_expr
        | assign_bin_expr
-       | while_expr
-       | loop_expr
+       | blockish_expr
        | cont_expr
        | break_expr
-       | for_expr
-       | if_expr
-       | match_expr
-       | if_let_expr
-       | while_let_expr
-       | block_expr
        | lambda_expr
        | full_range_expr
        | open_range_expr
@@ -612,6 +605,16 @@ expr ::= ret_expr
        | add_bin_expr
        | mul_bin_expr
        | atom_expr
+
+private blockish_expr ::= while_expr
+                        | loop_expr
+                        | if_expr
+                        | match_expr
+                        | if_let_expr
+                        | while_let_expr
+                        | block_expr
+                        | for_expr
+
 
 private atom_expr ::= lit_expr
                     | macro_expr
@@ -794,4 +797,7 @@ block ::= LBRACE stmt* expr? RBRACE {pin(".*")=1}
 expr_stmt ::= expr SEMICOLON
 decl_stmt ::= (item | let_decl)
 
-stmt ::= (expr_stmt | decl_stmt)
+stmt ::= blockish_expr
+       | expr_stmt
+       | decl_stmt
+       | SEMICOLON

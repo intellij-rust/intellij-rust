@@ -7,4 +7,10 @@ import com.intellij.psi.PsiElement;
 
 public interface RustStmt extends RustCompositeElement {
 
+  @Nullable
+  RustExpr getExpr();
+
+  @Nullable
+  PsiElement getSemicolon();
+
 }

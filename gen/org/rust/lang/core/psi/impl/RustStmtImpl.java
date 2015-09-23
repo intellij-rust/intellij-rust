@@ -25,4 +25,16 @@ public class RustStmtImpl extends RustCompositeElementImpl implements RustStmt {
     else super.accept(visitor);
   }
 
+  @Override
+  @Nullable
+  public RustExpr getExpr() {
+    return findChildByClass(RustExpr.class);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getSemicolon() {
+    return findChildByType(SEMICOLON);
+  }
+
 }
