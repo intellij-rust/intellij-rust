@@ -11,6 +11,9 @@ public interface RustWhileExpr extends RustExpr {
   RustBlock getBlock();
 
   @NotNull
+  RustExpr getExpr();
+
+  @NotNull
   PsiElement getColon();
 
   @NotNull

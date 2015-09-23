@@ -38,27 +38,15 @@ public class RustStructExprImpl extends RustExprImpl implements RustStructExpr {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public PsiElement getLbrace() {
-    return findChildByType(LBRACE);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getLparen() {
-    return findChildByType(LPAREN);
+    return findNotNullChildByType(LBRACE);
   }
 
   @Override
   @Nullable
   public PsiElement getRbrace() {
     return findChildByType(RBRACE);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getRparen() {
-    return findChildByType(RPAREN);
   }
 
 }

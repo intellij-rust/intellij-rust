@@ -32,9 +32,9 @@ public class RustIfExprImpl extends RustExprImpl implements RustIfExpr {
   }
 
   @Override
-  @Nullable
-  public RustExpr getExpr() {
-    return findChildByClass(RustExpr.class);
+  @NotNull
+  public List<RustExpr> getExprList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
   }
 
   @Override

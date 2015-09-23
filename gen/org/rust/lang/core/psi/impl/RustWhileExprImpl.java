@@ -33,6 +33,12 @@ public class RustWhileExprImpl extends RustExprImpl implements RustWhileExpr {
 
   @Override
   @NotNull
+  public RustExpr getExpr() {
+    return findNotNullChildByClass(RustExpr.class);
+  }
+
+  @Override
+  @NotNull
   public PsiElement getColon() {
     return findNotNullChildByType(COLON);
   }

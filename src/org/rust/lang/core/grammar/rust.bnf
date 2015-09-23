@@ -484,7 +484,7 @@ private named_arg ::= IDENTIFIER
 method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause? block /* inner_attrs_and_block */
 
 
-trait_ref ::= IDENTIFIER COLONCOLON? path_generic_args_without_colons
+trait_ref ::= COLONCOLON? path_generic_args_without_colons
 
 private as_trait_ref ::= AS trait_ref
 
@@ -493,9 +493,9 @@ private as_trait_ref ::= AS trait_ref
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl_item ::= UNSAFE? IMPL generic_params type_prim_sum                 where_clause? LBRACE inner_attrs? impl_contents RBRACE
-            | UNSAFE? IMPL generic_params LPAREN type RPAREN            where_clause? LBRACE inner_attrs? impl_contents RBRACE
-            | UNSAFE? IMPL generic_params EXCL? trait_ref FOR (type_sum where_clause? LBRACE inner_attrs? impl_contents RBRACE | DOTDOT LBRACE RBRACE)
+impl_item ::= UNSAFE? IMPL generic_params type_prim_sum                 where_clause? LBRACE inner_attrs? impl_contents* RBRACE
+            | UNSAFE? IMPL generic_params LPAREN type RPAREN            where_clause? LBRACE inner_attrs? impl_contents* RBRACE
+            | UNSAFE? IMPL generic_params EXCL? trait_ref FOR (type_sum where_clause? LBRACE inner_attrs? impl_contents* RBRACE | DOTDOT LBRACE RBRACE)
 
 private impl_contents ::= impl_method
                         | impl_const
@@ -504,9 +504,9 @@ private impl_contents ::= impl_method
 
 impl_method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self where_clause? block /* inner_attrs_and_block */
 
-private fn_decl_with_self ::= fn_params_with_self ret_type
+private fn_decl_with_self ::= fn_params_with_self ret_type?
 
-private fn_params_with_self ::= LPAREN [ [ AND lifetime ] MUT ] SELF type_ascription? comma_params? RPAREN
+private fn_params_with_self ::= LPAREN [ AND lifetime? ] MUT? SELF type_ascription? comma_params? RPAREN
                               | LPAREN params? RPAREN
 
 private comma_params ::= COMMA [ params COMMA? ]
@@ -564,8 +564,7 @@ private type_closure ::= UNSAFE OR anon_params OR bounds? ret_type
                        | UNSAFE OROR              bounds? ret_type
                        |        OROR              bounds? ret_type
 
-private path_generic_args_without_colons ::= IDENTIFIER                                     path_generic_args_without_colons_right
-                                           | IDENTIFIER generic_args                        path_generic_args_without_colons_right
+private path_generic_args_without_colons ::= IDENTIFIER generic_args?                       path_generic_args_without_colons_right
                                            | IDENTIFIER LPAREN type_sums? RPAREN ret_type   path_generic_args_without_colons_right
 
 private path_generic_args_without_colons_right ::= [ COLONCOLON IDENTIFIER                                    path_generic_args_without_colons_right
@@ -616,13 +615,12 @@ expr ::= ret_expr
 
 private atom_expr ::= lit_expr
                     | macro_expr
+                    | struct_expr
                     | path_expr
                     | self_expr
                     | method_call_expr
-                    | struct_expr
                     | field_expr
                     | index_expr
-                    //XXX: call_expr and struct_expr are ambiguous: in `foo(92)` foo can be either a fn, or a tuple struct.
                     | call_expr
                     | array_expr
                     | tuple_expr
@@ -679,9 +677,10 @@ private ident_list ::= (IDENTIFIER (COMMA IDENTIFIER)*)?
 struct_expr ::= path_expr LBRACE  IDENTIFIER COLON expr
                          (COMMA   IDENTIFIER COLON expr)*
                          (DOTDOT  expr)? RBRACE
-              | path_expr LPAREN expr
-                         (COMMA  expr)* RPAREN
-              | path_expr
+// matklad: this are ambiguous with path_expr and call_expr
+//              | path_expr LPAREN expr
+//                         (COMMA  expr)* RPAREN
+//              | path_expr
 
 while_expr ::= lifetime COLON WHILE no_struct_lit_expr LBRACE block RBRACE
 
@@ -700,13 +699,13 @@ match_expr ::= MATCH no_struct_lit_expr LBRACE match_arm* RBRACE
 private match_arm ::= outer_attrs* match_pat ARROW (expr COMMA | LBRACE block RBRACE)
 private match_pat ::= pat (OR pat)* (IF expr)?
 
-if_expr ::= IF no_struct_lit_expr LBRACE block RBRACE else_tail?
+if_expr ::= IF no_struct_lit_expr block else_tail?
 
-private else_tail ::= ELSE (if_expr | if_let_expr | LBRACE block RBRACE)
+private else_tail ::= ELSE (if_expr | if_let_expr | block )
 
-if_let_expr ::= IF LET pat EQ expr LBRACE block RBRACE else_tail?
+if_let_expr ::= IF LET pat EQ expr block  else_tail?
 
-while_let_expr ::= WHILE LET pat EQ expr LBRACE block RBRACE
+while_let_expr ::= WHILE LET pat EQ expr block
 
 ret_expr ::= RETURN expr?
 
@@ -717,8 +716,7 @@ unit_expr ::= LPAREN RPAREN
 tuple_expr ::= LPAREN expr ((COMMA expr)+ | COMMA) RPAREN
 
 
-// TODO(kudinkin): Fix
-private no_struct_lit_expr ::= 'abc7'
+private no_struct_lit_expr ::= expr
 
 array_expr ::= LBRACK MUT? array_elems? RBRACK {pin=1}
 

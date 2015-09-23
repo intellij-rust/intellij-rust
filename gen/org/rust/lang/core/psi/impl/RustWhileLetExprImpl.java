@@ -50,21 +50,9 @@ public class RustWhileLetExprImpl extends RustExprImpl implements RustWhileLetEx
   }
 
   @Override
-  @Nullable
-  public PsiElement getLbrace() {
-    return findChildByType(LBRACE);
-  }
-
-  @Override
   @NotNull
   public PsiElement getLet() {
     return findNotNullChildByType(LET);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getRbrace() {
-    return findChildByType(RBRACE);
   }
 
   @Override

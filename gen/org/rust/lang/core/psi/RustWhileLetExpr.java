@@ -19,14 +19,8 @@ public interface RustWhileLetExpr extends RustExpr {
   @NotNull
   PsiElement getEq();
 
-  @Nullable
-  PsiElement getLbrace();
-
   @NotNull
   PsiElement getLet();
-
-  @Nullable
-  PsiElement getRbrace();
 
   @NotNull
   PsiElement getWhile();

@@ -11,6 +11,9 @@ public interface RustForExpr extends RustExpr {
   RustBlock getBlock();
 
   @NotNull
+  RustExpr getExpr();
+
+  @NotNull
   RustPat getPat();
 
   @NotNull

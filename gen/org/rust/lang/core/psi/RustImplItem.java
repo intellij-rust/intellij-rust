@@ -19,8 +19,8 @@ public interface RustImplItem extends RustCompositeElement {
   @NotNull
   List<RustBounds> getBoundsList();
 
-  @Nullable
-  RustConstItem getConstItem();
+  @NotNull
+  List<RustConstItem> getConstItemList();
 
   @NotNull
   List<RustExpr> getExprList();
@@ -34,8 +34,8 @@ public interface RustImplItem extends RustCompositeElement {
   @NotNull
   List<RustGenericParams> getGenericParamsList();
 
-  @Nullable
-  RustImplMethod getImplMethod();
+  @NotNull
+  List<RustImplMethod> getImplMethodList();
 
   @NotNull
   List<RustInnerAttr> getInnerAttrList();
@@ -68,9 +68,6 @@ public interface RustImplItem extends RustCompositeElement {
   PsiElement getDotdotdot();
 
   @Nullable
-  PsiElement getEq();
-
-  @Nullable
   PsiElement getExcl();
 
   @Nullable
@@ -91,17 +88,11 @@ public interface RustImplItem extends RustCompositeElement {
   @Nullable
   PsiElement getProc();
 
-  @Nullable
-  PsiElement getPub();
-
   @NotNull
   PsiElement getRbrace();
 
   @Nullable
   PsiElement getSelf();
-
-  @Nullable
-  PsiElement getType();
 
   @Nullable
   PsiElement getTypeof();

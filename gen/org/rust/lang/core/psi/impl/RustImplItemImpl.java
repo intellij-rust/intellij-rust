@@ -50,9 +50,9 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
   }
 
   @Override
-  @Nullable
-  public RustConstItem getConstItem() {
-    return findChildByClass(RustConstItem.class);
+  @NotNull
+  public List<RustConstItem> getConstItemList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustConstItem.class);
   }
 
   @Override
@@ -80,9 +80,9 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
   }
 
   @Override
-  @Nullable
-  public RustImplMethod getImplMethod() {
-    return findChildByClass(RustImplMethod.class);
+  @NotNull
+  public List<RustImplMethod> getImplMethodList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustImplMethod.class);
   }
 
   @Override
@@ -147,12 +147,6 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
 
   @Override
   @Nullable
-  public PsiElement getEq() {
-    return findChildByType(EQ);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getExcl() {
     return findChildByType(EXCL);
   }
@@ -194,12 +188,6 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
   }
 
   @Override
-  @Nullable
-  public PsiElement getPub() {
-    return findChildByType(PUB);
-  }
-
-  @Override
   @NotNull
   public PsiElement getRbrace() {
     return findNotNullChildByType(RBRACE);
@@ -209,12 +197,6 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
   @Nullable
   public PsiElement getSelf() {
     return findChildByType(SELF);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getType() {
-    return findChildByType(TYPE);
   }
 
   @Override

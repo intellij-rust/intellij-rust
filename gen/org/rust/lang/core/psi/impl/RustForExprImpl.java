@@ -33,6 +33,12 @@ public class RustForExprImpl extends RustExprImpl implements RustForExpr {
 
   @Override
   @NotNull
+  public RustExpr getExpr() {
+    return findNotNullChildByClass(RustExpr.class);
+  }
+
+  @Override
+  @NotNull
   public RustPat getPat() {
     return findNotNullChildByClass(RustPat.class);
   }

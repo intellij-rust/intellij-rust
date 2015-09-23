@@ -22,7 +22,7 @@ public interface RustImplMethod extends RustCompositeElement {
   @NotNull
   List<RustParam> getParamList();
 
-  @NotNull
+  @Nullable
   RustRetType getRetType();
 
   @Nullable

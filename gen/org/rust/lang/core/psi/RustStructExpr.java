@@ -13,16 +13,10 @@ public interface RustStructExpr extends RustExpr {
   @Nullable
   PsiElement getDotdot();
 
-  @Nullable
+  @NotNull
   PsiElement getLbrace();
 
   @Nullable
-  PsiElement getLparen();
-
-  @Nullable
   PsiElement getRbrace();
-
-  @Nullable
-  PsiElement getRparen();
 
 }

@@ -10,8 +10,8 @@ public interface RustIfExpr extends RustExpr {
   @NotNull
   List<RustBlock> getBlockList();
 
-  @Nullable
-  RustExpr getExpr();
+  @NotNull
+  List<RustExpr> getExprList();
 
   @Nullable
   PsiElement getElse();
