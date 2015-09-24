@@ -448,7 +448,7 @@ trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params for_sized? type_param_bou
 private for_sized ::= FOR Q IDENTIFIER
                     | FOR IDENTIFIER Q
 
-private trait_contents ::= trait_const | trait_type | trait_method
+private trait_contents ::= (trait_const | trait_type | trait_method)*
 
 trait_const ::= outer_attrs? CONST IDENTIFIER type_ascription? const_default? SEMICOLON
 

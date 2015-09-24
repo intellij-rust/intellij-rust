@@ -4748,9 +4748,21 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // trait_const | trait_type | trait_method
+  // (trait_const | trait_type | trait_method)*
   static boolean trait_contents(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "trait_contents")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!trait_contents_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "trait_contents", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  // trait_const | trait_type | trait_method
+  private static boolean trait_contents_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "trait_contents_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = trait_const(b, l + 1);

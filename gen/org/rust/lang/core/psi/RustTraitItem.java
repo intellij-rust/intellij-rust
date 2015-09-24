@@ -10,14 +10,14 @@ public interface RustTraitItem extends RustCompositeElement {
   @NotNull
   RustGenericParams getGenericParams();
 
-  @Nullable
-  RustTraitConst getTraitConst();
+  @NotNull
+  List<RustTraitConst> getTraitConstList();
 
-  @Nullable
-  RustTraitMethod getTraitMethod();
+  @NotNull
+  List<RustTraitMethod> getTraitMethodList();
 
-  @Nullable
-  RustTraitType getTraitType();
+  @NotNull
+  List<RustTraitType> getTraitTypeList();
 
   @Nullable
   RustTypeParamBounds getTypeParamBounds();

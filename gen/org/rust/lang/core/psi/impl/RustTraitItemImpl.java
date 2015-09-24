@@ -32,21 +32,21 @@ public class RustTraitItemImpl extends RustNamedElementImpl implements RustTrait
   }
 
   @Override
-  @Nullable
-  public RustTraitConst getTraitConst() {
-    return findChildByClass(RustTraitConst.class);
+  @NotNull
+  public List<RustTraitConst> getTraitConstList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTraitConst.class);
   }
 
   @Override
-  @Nullable
-  public RustTraitMethod getTraitMethod() {
-    return findChildByClass(RustTraitMethod.class);
+  @NotNull
+  public List<RustTraitMethod> getTraitMethodList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTraitMethod.class);
   }
 
   @Override
-  @Nullable
-  public RustTraitType getTraitType() {
-    return findChildByClass(RustTraitType.class);
+  @NotNull
+  public List<RustTraitType> getTraitTypeList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTraitType.class);
   }
 
   @Override
