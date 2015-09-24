@@ -5270,8 +5270,8 @@ public class RustParser implements PsiParser, LightPsiParser {
   // [ SELF? COLONCOLON ] path_generic_args_without_colons
   //                     | BOX type
   //                     | MUL    [ MUT | CONST ] type
-  //                     | AND    [ lifetime? MUT ] type
-  //                     | ANDAND [ lifetime? MUT ] type
+  //                     | AND    [ lifetime? MUT? ] type
+  //                     | ANDAND [ lifetime? MUT? ] type
   //                     | LBRACK type [ (COMMA DOTDOT | SEMICOLON) expr ] RBRACK
   //                     | TYPEOF LPAREN expr RPAREN
   //                     | UNDERSCORE
@@ -5374,7 +5374,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // AND    [ lifetime? MUT ] type
+  // AND    [ lifetime? MUT? ] type
   private static boolean type_prim_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_prim_3")) return false;
     boolean r;
@@ -5386,20 +5386,20 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [ lifetime? MUT ]
+  // [ lifetime? MUT? ]
   private static boolean type_prim_3_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_prim_3_1")) return false;
     type_prim_3_1_0(b, l + 1);
     return true;
   }
 
-  // lifetime? MUT
+  // lifetime? MUT?
   private static boolean type_prim_3_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_prim_3_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = type_prim_3_1_0_0(b, l + 1);
-    r = r && consumeToken(b, MUT);
+    r = r && type_prim_3_1_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -5411,7 +5411,14 @@ public class RustParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // ANDAND [ lifetime? MUT ] type
+  // MUT?
+  private static boolean type_prim_3_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_prim_3_1_0_1")) return false;
+    consumeToken(b, MUT);
+    return true;
+  }
+
+  // ANDAND [ lifetime? MUT? ] type
   private static boolean type_prim_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_prim_4")) return false;
     boolean r;
@@ -5423,20 +5430,20 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [ lifetime? MUT ]
+  // [ lifetime? MUT? ]
   private static boolean type_prim_4_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_prim_4_1")) return false;
     type_prim_4_1_0(b, l + 1);
     return true;
   }
 
-  // lifetime? MUT
+  // lifetime? MUT?
   private static boolean type_prim_4_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_prim_4_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = type_prim_4_1_0_0(b, l + 1);
-    r = r && consumeToken(b, MUT);
+    r = r && type_prim_4_1_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -5445,6 +5452,13 @@ public class RustParser implements PsiParser, LightPsiParser {
   private static boolean type_prim_4_1_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_prim_4_1_0_0")) return false;
     lifetime(b, l + 1);
+    return true;
+  }
+
+  // MUT?
+  private static boolean type_prim_4_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_prim_4_1_0_1")) return false;
+    consumeToken(b, MUT);
     return true;
   }
 

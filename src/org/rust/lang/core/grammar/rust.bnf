@@ -533,8 +533,8 @@ type_prim_sum ::= type_prim [ PLUS type_param_bounds ]
 private type_prim ::= [ SELF? COLONCOLON ] path_generic_args_without_colons
                     | BOX type
                     | MUL    [ MUT | CONST ] type
-                    | AND    [ lifetime? MUT ] type
-                    | ANDAND [ lifetime? MUT ] type
+                    | AND    [ lifetime? MUT? ] type
+                    | ANDAND [ lifetime? MUT? ] type
                     | LBRACK type [ (COMMA DOTDOT | SEMICOLON) expr ] RBRACK
                     | TYPEOF LPAREN expr RPAREN
                     | UNDERSCORE
