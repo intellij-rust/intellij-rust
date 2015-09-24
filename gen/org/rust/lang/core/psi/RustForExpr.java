@@ -16,7 +16,7 @@ public interface RustForExpr extends RustExpr {
   @NotNull
   RustPat getPat();
 
-  @NotNull
+  @Nullable
   PsiElement getColon();
 
   @NotNull

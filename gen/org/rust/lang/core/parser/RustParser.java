@@ -1757,19 +1757,36 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // lifetime COLON FOR pat IN no_struct_lit_expr block
+  // [lifetime COLON] FOR pat IN no_struct_lit_expr block
   public static boolean for_expr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_expr")) return false;
-    if (!nextTokenIs(b, "<for expr>", LIFETIME, STATIC_LIFETIME)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, FOR_EXPR, "<for expr>");
-    r = lifetime(b, l + 1);
-    r = r && consumeTokens(b, 0, COLON, FOR);
+    r = for_expr_0(b, l + 1);
+    r = r && consumeToken(b, FOR);
     r = r && pat(b, l + 1);
     r = r && consumeToken(b, IN);
     r = r && no_struct_lit_expr(b, l + 1);
     r = r && block(b, l + 1);
     exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // [lifetime COLON]
+  private static boolean for_expr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_expr_0")) return false;
+    for_expr_0_0(b, l + 1);
+    return true;
+  }
+
+  // lifetime COLON
+  private static boolean for_expr_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_expr_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = lifetime(b, l + 1);
+    r = r && consumeToken(b, COLON);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2887,17 +2904,33 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // lifetime COLON LOOP LBRACE block RBRACE
+  // [lifetime COLON] LOOP block
   public static boolean loop_expr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "loop_expr")) return false;
-    if (!nextTokenIs(b, "<loop expr>", LIFETIME, STATIC_LIFETIME)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, LOOP_EXPR, "<loop expr>");
-    r = lifetime(b, l + 1);
-    r = r && consumeTokens(b, 0, COLON, LOOP, LBRACE);
+    r = loop_expr_0(b, l + 1);
+    r = r && consumeToken(b, LOOP);
     r = r && block(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
     exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // [lifetime COLON]
+  private static boolean loop_expr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "loop_expr_0")) return false;
+    loop_expr_0_0(b, l + 1);
+    return true;
+  }
+
+  // lifetime COLON
+  private static boolean loop_expr_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "loop_expr_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = lifetime(b, l + 1);
+    r = r && consumeToken(b, COLON);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -6029,19 +6062,34 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // lifetime COLON WHILE no_struct_lit_expr LBRACE block RBRACE
+  // [lifetime COLON] WHILE no_struct_lit_expr block
   public static boolean while_expr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "while_expr")) return false;
-    if (!nextTokenIs(b, "<while expr>", LIFETIME, STATIC_LIFETIME)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, WHILE_EXPR, "<while expr>");
-    r = lifetime(b, l + 1);
-    r = r && consumeTokens(b, 0, COLON, WHILE);
+    r = while_expr_0(b, l + 1);
+    r = r && consumeToken(b, WHILE);
     r = r && no_struct_lit_expr(b, l + 1);
-    r = r && consumeToken(b, LBRACE);
     r = r && block(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
     exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // [lifetime COLON]
+  private static boolean while_expr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "while_expr_0")) return false;
+    while_expr_0_0(b, l + 1);
+    return true;
+  }
+
+  // lifetime COLON
+  private static boolean while_expr_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "while_expr_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = lifetime(b, l + 1);
+    r = r && consumeToken(b, COLON);
+    exit_section_(b, m, null, r);
     return r;
   }
 

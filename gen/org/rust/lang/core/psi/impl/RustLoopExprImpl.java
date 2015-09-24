@@ -32,15 +32,9 @@ public class RustLoopExprImpl extends RustExprImpl implements RustLoopExpr {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getColon() {
-    return findNotNullChildByType(COLON);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getLbrace() {
-    return findNotNullChildByType(LBRACE);
+    return findChildByType(COLON);
   }
 
   @Override
@@ -53,12 +47,6 @@ public class RustLoopExprImpl extends RustExprImpl implements RustLoopExpr {
   @NotNull
   public PsiElement getLoop() {
     return findNotNullChildByType(LOOP);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getRbrace() {
-    return findNotNullChildByType(RBRACE);
   }
 
   @Override

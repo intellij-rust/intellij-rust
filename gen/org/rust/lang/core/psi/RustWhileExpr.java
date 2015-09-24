@@ -13,17 +13,11 @@ public interface RustWhileExpr extends RustExpr {
   @NotNull
   RustExpr getExpr();
 
-  @NotNull
+  @Nullable
   PsiElement getColon();
-
-  @NotNull
-  PsiElement getLbrace();
 
   @Nullable
   PsiElement getLifetime();
-
-  @NotNull
-  PsiElement getRbrace();
 
   @Nullable
   PsiElement getStaticLifetime();

@@ -44,9 +44,9 @@ public class RustForExprImpl extends RustExprImpl implements RustForExpr {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getColon() {
-    return findNotNullChildByType(COLON);
+    return findChildByType(COLON);
   }
 
   @Override
