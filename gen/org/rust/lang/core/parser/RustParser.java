@@ -4498,7 +4498,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // LBRACE
   //                        <<comma_separated_list (IDENTIFIER COLON expr)>>
-  //                        (DOTDOT  expr)? 
+  //                        (DOTDOT  expr)?
   //                      RBRACE
   public static boolean struct_expr_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "struct_expr_body")) return false;
@@ -5963,28 +5963,20 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // WHERE where_preds COMMA?
+  // WHERE  <<comma_separated_list where_pred>>
   public static boolean where_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "where_clause")) return false;
     if (!nextTokenIs(b, WHERE)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, WHERE);
-    r = r && where_preds(b, l + 1);
-    r = r && where_clause_2(b, l + 1);
+    r = r && comma_separated_list(b, l + 1, where_pred_parser_);
     exit_section_(b, m, WHERE_CLAUSE, r);
     return r;
   }
 
-  // COMMA?
-  private static boolean where_clause_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "where_clause_2")) return false;
-    consumeToken(b, COMMA);
-    return true;
-  }
-
   /* ********************************************************** */
-  // for_lifetimes? (lifetime COLON bounds | type COLON type_param_bounds)
+  // for_lifetimes? (lifetime COLON bounds | type type_param_bounds)
   public static boolean where_pred(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "where_pred")) return false;
     boolean r;
@@ -6002,7 +5994,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // lifetime COLON bounds | type COLON type_param_bounds
+  // lifetime COLON bounds | type type_param_bounds
   private static boolean where_pred_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "where_pred_1")) return false;
     boolean r;
@@ -6025,49 +6017,13 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // type COLON type_param_bounds
+  // type type_param_bounds
   private static boolean where_pred_1_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "where_pred_1_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = type(b, l + 1);
-    r = r && consumeToken(b, COLON);
     r = r && type_param_bounds(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // where_pred (COMMA where_pred)*
-  static boolean where_preds(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "where_preds")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = where_pred(b, l + 1);
-    r = r && where_preds_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA where_pred)*
-  private static boolean where_preds_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "where_preds_1")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!where_preds_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "where_preds_1", c)) break;
-      c = current_position_(b);
-    }
-    return true;
-  }
-
-  // COMMA where_pred
-  private static boolean where_preds_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "where_preds_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, COMMA);
-    r = r && where_pred(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -6765,6 +6721,11 @@ public class RustParser implements PsiParser, LightPsiParser {
   final static Parser struct_expr_body_1_0_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return struct_expr_body_1_0(b, l + 1);
+    }
+  };
+  final static Parser where_pred_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return where_pred(b, l + 1);
     }
   };
 }

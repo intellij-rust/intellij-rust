@@ -253,11 +253,9 @@ bound   ::= lifetime | trait_ref
 bounds  ::= bound (PLUS bound)*
 
 
-where_clause ::= WHERE where_preds COMMA?
+where_clause ::= WHERE  <<comma_separated_list where_pred>>
 
-private where_preds ::= where_pred (COMMA where_pred)*
-
-where_pred ::= for_lifetimes? (lifetime COLON bounds | type COLON type_param_bounds)
+where_pred ::= for_lifetimes? (lifetime COLON bounds | type type_param_bounds)
 
 for_lifetimes ::= FOR LT lifetimes GT
 

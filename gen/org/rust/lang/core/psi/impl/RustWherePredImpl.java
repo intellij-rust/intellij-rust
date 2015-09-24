@@ -116,9 +116,9 @@ public class RustWherePredImpl extends RustCompositeElementImpl implements RustW
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getColon() {
-    return findNotNullChildByType(COLON);
+    return findChildByType(COLON);
   }
 
   @Override

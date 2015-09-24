@@ -27,8 +27,8 @@ public class RustWhereClauseImpl extends RustCompositeElementImpl implements Rus
 
   @Override
   @NotNull
-  public List<RustWherePred> getWherePredList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustWherePred.class);
+  public RustCommaSeparatedList getCommaSeparatedList() {
+    return findNotNullChildByClass(RustCommaSeparatedList.class);
   }
 
   @Override

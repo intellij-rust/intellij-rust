@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 public interface RustWhereClause extends RustCompositeElement {
 
   @NotNull
-  List<RustWherePred> getWherePredList();
+  RustCommaSeparatedList getCommaSeparatedList();
 
   @NotNull
   PsiElement getWhere();

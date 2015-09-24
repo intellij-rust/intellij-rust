@@ -52,7 +52,7 @@ public interface RustWherePred extends RustCompositeElement {
   @NotNull
   List<RustTypeSums> getTypeSumsList();
 
-  @NotNull
+  @Nullable
   PsiElement getColon();
 
   @Nullable
