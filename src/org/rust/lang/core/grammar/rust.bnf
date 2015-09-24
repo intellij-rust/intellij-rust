@@ -241,7 +241,7 @@ type_param ::= [ IDENTIFIER Q ] IDENTIFIER type_param_bounds? type_param_default
 type_param_bounds   ::= COLON [ type_param_bound_seq ]
 type_param_default  ::= EQ type_sum
 
-type_sum    ::= type [ PLUS type_param_bounds ]
+type_sum    ::= type [ PLUS bounds ]
 type_sums   ::= type_sum (COMMA type_sum)*
 
 private type_param_bound_seq        ::= polybound type_param_bound_seq_right
@@ -551,8 +551,8 @@ private for_in_type ::= FOR LT lifetimes? GT for_in_type_suffix
 private for_in_type_suffix ::= type_bare_fn
                              | trait_ref
 
-private path_generic_args_without_colons ::= IDENTIFIER generic_args?                       path_generic_args_without_colons_right
-                                           | IDENTIFIER LPAREN type_sums? RPAREN ret_type   path_generic_args_without_colons_right
+private path_generic_args_without_colons ::= IDENTIFIER LPAREN type_sums? RPAREN ret_type   path_generic_args_without_colons_right
+                                           | IDENTIFIER generic_args?                       path_generic_args_without_colons_right
 
 private path_generic_args_without_colons_right ::= [ COLONCOLON IDENTIFIER                                    path_generic_args_without_colons_right
                                                    | COLONCOLON IDENTIFIER generic_args                       path_generic_args_without_colons_right

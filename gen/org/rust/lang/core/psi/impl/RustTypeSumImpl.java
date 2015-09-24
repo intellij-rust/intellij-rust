@@ -38,6 +38,12 @@ public class RustTypeSumImpl extends RustCompositeElementImpl implements RustTyp
   }
 
   @Override
+  @Nullable
+  public RustBounds getBounds() {
+    return findChildByClass(RustBounds.class);
+  }
+
+  @Override
   @NotNull
   public List<RustExpr> getExprList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
@@ -71,12 +77,6 @@ public class RustTypeSumImpl extends RustCompositeElementImpl implements RustTyp
   @NotNull
   public List<RustTraitRef> getTraitRefList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTraitRef.class);
-  }
-
-  @Override
-  @Nullable
-  public RustTypeParamBounds getTypeParamBounds() {
-    return findChildByClass(RustTypeParamBounds.class);
   }
 
   @Override

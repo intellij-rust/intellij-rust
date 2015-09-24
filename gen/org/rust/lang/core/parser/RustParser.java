@@ -4059,8 +4059,8 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER generic_args?                       path_generic_args_without_colons_right
-  //                                            | IDENTIFIER LPAREN type_sums? RPAREN ret_type   path_generic_args_without_colons_right
+  // IDENTIFIER LPAREN type_sums? RPAREN ret_type   path_generic_args_without_colons_right
+  //                                            | IDENTIFIER generic_args?                       path_generic_args_without_colons_right
   static boolean path_generic_args_without_colons(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_generic_args_without_colons")) return false;
     if (!nextTokenIs(b, IDENTIFIER)) return false;
@@ -4072,32 +4072,13 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // IDENTIFIER generic_args?                       path_generic_args_without_colons_right
+  // IDENTIFIER LPAREN type_sums? RPAREN ret_type   path_generic_args_without_colons_right
   private static boolean path_generic_args_without_colons_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_generic_args_without_colons_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, IDENTIFIER);
-    r = r && path_generic_args_without_colons_0_1(b, l + 1);
-    r = r && path_generic_args_without_colons_right(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // generic_args?
-  private static boolean path_generic_args_without_colons_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "path_generic_args_without_colons_0_1")) return false;
-    generic_args(b, l + 1);
-    return true;
-  }
-
-  // IDENTIFIER LPAREN type_sums? RPAREN ret_type   path_generic_args_without_colons_right
-  private static boolean path_generic_args_without_colons_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "path_generic_args_without_colons_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
     r = consumeTokens(b, 0, IDENTIFIER, LPAREN);
-    r = r && path_generic_args_without_colons_1_2(b, l + 1);
+    r = r && path_generic_args_without_colons_0_2(b, l + 1);
     r = r && consumeToken(b, RPAREN);
     r = r && ret_type(b, l + 1);
     r = r && path_generic_args_without_colons_right(b, l + 1);
@@ -4106,9 +4087,28 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   // type_sums?
-  private static boolean path_generic_args_without_colons_1_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "path_generic_args_without_colons_1_2")) return false;
+  private static boolean path_generic_args_without_colons_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "path_generic_args_without_colons_0_2")) return false;
     type_sums(b, l + 1);
+    return true;
+  }
+
+  // IDENTIFIER generic_args?                       path_generic_args_without_colons_right
+  private static boolean path_generic_args_without_colons_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "path_generic_args_without_colons_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, IDENTIFIER);
+    r = r && path_generic_args_without_colons_1_1(b, l + 1);
+    r = r && path_generic_args_without_colons_right(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // generic_args?
+  private static boolean path_generic_args_without_colons_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "path_generic_args_without_colons_1_1")) return false;
+    generic_args(b, l + 1);
     return true;
   }
 
@@ -5535,7 +5535,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // type [ PLUS type_param_bounds ]
+  // type [ PLUS bounds ]
   public static boolean type_sum(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_sum")) return false;
     boolean r;
@@ -5546,20 +5546,20 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [ PLUS type_param_bounds ]
+  // [ PLUS bounds ]
   private static boolean type_sum_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_sum_1")) return false;
     type_sum_1_0(b, l + 1);
     return true;
   }
 
-  // PLUS type_param_bounds
+  // PLUS bounds
   private static boolean type_sum_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_sum_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, PLUS);
-    r = r && type_param_bounds(b, l + 1);
+    r = r && bounds(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }

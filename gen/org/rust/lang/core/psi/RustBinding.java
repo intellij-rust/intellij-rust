@@ -13,8 +13,8 @@ public interface RustBinding extends RustCompositeElement {
   @NotNull
   List<RustAnonParam> getAnonParamList();
 
-  @Nullable
-  RustExpr getExpr();
+  @NotNull
+  List<RustExpr> getExprList();
 
   @NotNull
   List<RustGenericArgs> getGenericArgsList();
@@ -28,35 +28,14 @@ public interface RustBinding extends RustCompositeElement {
   @NotNull
   List<RustRetType> getRetTypeList();
 
-  @Nullable
-  RustTraitRef getTraitRef();
+  @NotNull
+  List<RustTraitRef> getTraitRefList();
 
-  @Nullable
-  RustTypeSum getTypeSum();
+  @NotNull
+  List<RustTypeSum> getTypeSumList();
 
   @NotNull
   List<RustTypeSums> getTypeSumsList();
-
-  @Nullable
-  PsiElement getAnd();
-
-  @Nullable
-  PsiElement getAndand();
-
-  @Nullable
-  PsiElement getAs();
-
-  @Nullable
-  PsiElement getBox();
-
-  @Nullable
-  PsiElement getComma();
-
-  @Nullable
-  PsiElement getConst();
-
-  @Nullable
-  PsiElement getDotdot();
 
   @Nullable
   PsiElement getDotdotdot();
@@ -74,34 +53,7 @@ public interface RustBinding extends RustCompositeElement {
   PsiElement getFor();
 
   @Nullable
-  PsiElement getGt();
-
-  @Nullable
-  PsiElement getLbrack();
-
-  @Nullable
-  PsiElement getLifetime();
-
-  @Nullable
-  PsiElement getLt();
-
-  @Nullable
-  PsiElement getMul();
-
-  @Nullable
-  PsiElement getMut();
-
-  @Nullable
-  PsiElement getRbrack();
-
-  @Nullable
   PsiElement getSelf();
-
-  @Nullable
-  PsiElement getSemicolon();
-
-  @Nullable
-  PsiElement getStaticLifetime();
 
   @Nullable
   PsiElement getTypeof();

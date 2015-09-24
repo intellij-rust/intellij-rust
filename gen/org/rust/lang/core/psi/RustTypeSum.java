@@ -13,6 +13,9 @@ public interface RustTypeSum extends RustCompositeElement {
   @NotNull
   List<RustAnonParam> getAnonParamList();
 
+  @Nullable
+  RustBounds getBounds();
+
   @NotNull
   List<RustExpr> getExprList();
 
@@ -30,9 +33,6 @@ public interface RustTypeSum extends RustCompositeElement {
 
   @NotNull
   List<RustTraitRef> getTraitRefList();
-
-  @Nullable
-  RustTypeParamBounds getTypeParamBounds();
 
   @NotNull
   List<RustTypeSum> getTypeSumList();
