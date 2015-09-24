@@ -13,7 +13,7 @@ public abstract class RustParsingTestCaseBase extends ParsingTestCase {
 
     @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
     public RustParsingTestCaseBase(@NonNls final String dataPath) {
-        super("psi/" + dataPath, "rust", true /*lowerCaseFirstLetter*/, new RustParserDefinition());
+        super("psi/" + dataPath, "rs", true /*lowerCaseFirstLetter*/, new RustParserDefinition());
     }
 
     @Override
