@@ -16,4 +16,7 @@ public interface RustViewPathPartLeftish extends RustViewPathPart {
   @Nullable
   PsiElement getSelf();
 
+  @Nullable
+  PsiElement getSuper();
+
 }

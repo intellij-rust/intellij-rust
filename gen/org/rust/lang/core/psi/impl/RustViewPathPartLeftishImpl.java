@@ -43,4 +43,10 @@ public class RustViewPathPartLeftishImpl extends RustViewPathPartImpl implements
     return findChildByType(SELF);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getSuper() {
+    return findChildByType(SUPER);
+  }
+
 }

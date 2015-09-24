@@ -5874,7 +5874,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // COLONCOLON? (SELF | IDENTIFIER)
+  // COLONCOLON? (SELF | SUPER | IDENTIFIER)
   public static boolean view_path_part_leftish(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "view_path_part_leftish")) return false;
     boolean r;
@@ -5892,12 +5892,13 @@ public class RustParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // SELF | IDENTIFIER
+  // SELF | SUPER | IDENTIFIER
   private static boolean view_path_part_leftish_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "view_path_part_leftish_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, SELF);
+    if (!r) r = consumeToken(b, SUPER);
     if (!r) r = consumeToken(b, IDENTIFIER);
     exit_section_(b, m, null, r);
     return r;

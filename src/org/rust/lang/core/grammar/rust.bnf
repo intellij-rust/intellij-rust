@@ -369,7 +369,7 @@ private idents_or_self ::= (IDENTIFIER | SELF) [ AS IDENTIFIER ] (COMMA idents_o
 
 private path_no_types_allowed ::= view_path_part_leftish view_path_part*
 
-view_path_part_leftish ::= COLONCOLON? (SELF | IDENTIFIER) {
+view_path_part_leftish ::= COLONCOLON? (SELF | SUPER | IDENTIFIER) {
     extends = view_path_part
 }
 

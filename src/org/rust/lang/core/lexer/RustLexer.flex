@@ -44,7 +44,7 @@ IDENTIFIER=[a-zA-Z\x80-\xff_][a-zA-Z0-9\x80-\xff_]*
 // Literals
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-FLT_LITERAL = {DEC_LITERAL} (\. {DEC_LITERAL}? {FLT_EXP}? {FLT_SUFFIX} | {FLT_EXP} {FLT_SUFFIX}?)
+FLT_LITERAL = {DEC_LITERAL} (\. {DEC_LITERAL}? {FLT_EXP}? | {FLT_EXP}) {FLT_SUFFIX}?
 
 FLT_EXP = [eE][+-]{DEC_LITERAL}
 FLT_SUFFIX = f32|f64
