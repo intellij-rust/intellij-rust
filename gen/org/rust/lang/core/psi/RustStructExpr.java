@@ -8,15 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface RustStructExpr extends RustExpr {
 
   @NotNull
-  List<RustExpr> getExprList();
-
-  @Nullable
-  PsiElement getDotdot();
+  RustPathExpr getPathExpr();
 
   @NotNull
-  PsiElement getLbrace();
-
-  @Nullable
-  PsiElement getRbrace();
+  RustStructExprBody getStructExprBody();
 
 }

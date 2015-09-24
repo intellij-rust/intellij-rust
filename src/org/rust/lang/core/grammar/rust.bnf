@@ -678,13 +678,16 @@ block_expr ::= block
 lambda_expr ::= (OROR | OR [<<comma_separated_list lambda_param>>] OR) expr
 private lambda_param ::= pat type_ascription?
 
-struct_expr ::= path_expr LBRACE  IDENTIFIER COLON expr
-                         (COMMA   IDENTIFIER COLON expr)*
-                         (DOTDOT  expr)? RBRACE
+struct_expr ::= path_expr struct_expr_body
+
+struct_expr_body ::= LBRACE
+                       <<comma_separated_list (IDENTIFIER COLON expr)>>
+                       (DOTDOT  expr)?
+                     RBRACE
 // matklad: this are ambiguous with path_expr and call_expr
-//              | path_expr LPAREN expr
+//                 | path_expr LPAREN expr
 //                         (COMMA  expr)* RPAREN
-//              | path_expr
+//                 | path_expr
 
 while_expr ::= lifetime COLON WHILE no_struct_lit_expr LBRACE block RBRACE
 

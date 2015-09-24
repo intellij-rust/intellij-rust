@@ -360,6 +360,10 @@ public class RustVisitor extends PsiElementVisitor {
     visitExpr(o);
   }
 
+  public void visitStructExprBody(@NotNull RustStructExprBody o) {
+    visitCompositeElement(o);
+  }
+
   public void visitStructItem(@NotNull RustStructItem o) {
     visitCompositeElement(o);
   }

@@ -97,6 +97,7 @@ public interface RustCompositeElementTypes {
   IElementType STRUCT_DECL_ARGS = new RustCompositeElementType("STRUCT_DECL_ARGS");
   IElementType STRUCT_DECL_FIELD = new RustCompositeElementType("STRUCT_DECL_FIELD");
   IElementType STRUCT_EXPR = new RustCompositeElementType("STRUCT_EXPR");
+  IElementType STRUCT_EXPR_BODY = new RustCompositeElementType("STRUCT_EXPR_BODY");
   IElementType STRUCT_ITEM = new RustCompositeElementType("STRUCT_ITEM");
   IElementType STRUCT_TUPLE_ARGS = new RustCompositeElementType("STRUCT_TUPLE_ARGS");
   IElementType STRUCT_TUPLE_FIELD = new RustCompositeElementType("STRUCT_TUPLE_FIELD");
@@ -392,6 +393,9 @@ public interface RustCompositeElementTypes {
       }
       else if (type == STRUCT_EXPR) {
         return new RustStructExprImpl(node);
+      }
+      else if (type == STRUCT_EXPR_BODY) {
+        return new RustStructExprBodyImpl(node);
       }
       else if (type == STRUCT_ITEM) {
         return new RustStructItemImpl(node);

@@ -285,6 +285,9 @@ public class RustParser implements PsiParser, LightPsiParser {
     else if (t == STRUCT_EXPR) {
       r = expr(b, 0, 18);
     }
+    else if (t == STRUCT_EXPR_BODY) {
+      r = struct_expr_body(b, 0);
+    }
     else if (t == STRUCT_ITEM) {
       r = struct_item(b, 0);
     }
@@ -4493,6 +4496,53 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // LBRACE
+  //                        <<comma_separated_list (IDENTIFIER COLON expr)>>
+  //                        (DOTDOT  expr)? 
+  //                      RBRACE
+  public static boolean struct_expr_body(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "struct_expr_body")) return false;
+    if (!nextTokenIs(b, LBRACE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LBRACE);
+    r = r && comma_separated_list(b, l + 1, struct_expr_body_1_0_parser_);
+    r = r && struct_expr_body_2(b, l + 1);
+    r = r && consumeToken(b, RBRACE);
+    exit_section_(b, m, STRUCT_EXPR_BODY, r);
+    return r;
+  }
+
+  // IDENTIFIER COLON expr
+  private static boolean struct_expr_body_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "struct_expr_body_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, IDENTIFIER, COLON);
+    r = r && expr(b, l + 1, -1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (DOTDOT  expr)?
+  private static boolean struct_expr_body_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "struct_expr_body_2")) return false;
+    struct_expr_body_2_0(b, l + 1);
+    return true;
+  }
+
+  // DOTDOT  expr
+  private static boolean struct_expr_body_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "struct_expr_body_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, DOTDOT);
+    r = r && expr(b, l + 1, -1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // STRUCT IDENTIFIER generic_params (struct_tuple_args? where_clause? SEMICOLON | where_clause? struct_decl_args)
   public static boolean struct_item(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "struct_item")) return false;
@@ -6077,7 +6127,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   // 16: BINARY(add_bin_expr)
   // 17: BINARY(mul_bin_expr)
   // 18: POSTFIX(cast_expr)
-  // 19: ATOM(lit_expr) ATOM(macro_expr) BINARY(struct_expr) ATOM(path_expr) ATOM(self_expr) POSTFIX(method_call_expr) POSTFIX(field_expr) POSTFIX(index_expr) POSTFIX(call_expr) ATOM(array_expr) ATOM(tuple_expr) ATOM(unit_expr) ATOM(paren_expr) PREFIX(unary_expr)
+  // 19: ATOM(lit_expr) ATOM(macro_expr) POSTFIX(struct_expr) ATOM(path_expr) ATOM(self_expr) POSTFIX(method_call_expr) POSTFIX(field_expr) POSTFIX(index_expr) POSTFIX(call_expr) ATOM(array_expr) ATOM(tuple_expr) ATOM(unit_expr) ATOM(paren_expr) PREFIX(unary_expr)
   public static boolean expr(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expr")) return false;
     addVariant(b, "<expr>");
@@ -6161,9 +6211,8 @@ public class RustParser implements PsiParser, LightPsiParser {
         r = true;
         exit_section_(b, l, m, CAST_EXPR, r, true, null);
       }
-      else if (g < 19 && leftMarkerIs(b, PATH_EXPR) && parseTokensSmart(b, 0, LBRACE, IDENTIFIER, COLON)) {
-        r = report_error_(b, expr(b, l, 19));
-        r = struct_expr_1(b, l + 1) && r;
+      else if (g < 19 && leftMarkerIs(b, PATH_EXPR) && struct_expr_body(b, l + 1)) {
+        r = true;
         exit_section_(b, l, m, STRUCT_EXPR, r, true, null);
       }
       else if (g < 19 && method_call_expr_0(b, l + 1)) {
@@ -6457,59 +6506,6 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (COMMA   IDENTIFIER COLON expr)* (DOTDOT  expr)? RBRACE
-  private static boolean struct_expr_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "struct_expr_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = struct_expr_1_0(b, l + 1);
-    r = r && struct_expr_1_1(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA   IDENTIFIER COLON expr)*
-  private static boolean struct_expr_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "struct_expr_1_0")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!struct_expr_1_0_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "struct_expr_1_0", c)) break;
-      c = current_position_(b);
-    }
-    return true;
-  }
-
-  // COMMA   IDENTIFIER COLON expr
-  private static boolean struct_expr_1_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "struct_expr_1_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, COMMA, IDENTIFIER, COLON);
-    r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (DOTDOT  expr)?
-  private static boolean struct_expr_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "struct_expr_1_1")) return false;
-    struct_expr_1_1_0(b, l + 1);
-    return true;
-  }
-
-  // DOTDOT  expr
-  private static boolean struct_expr_1_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "struct_expr_1_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, DOTDOT);
-    r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
   // [ SELF? COLONCOLON ] path_generic_args_with_colons
   public static boolean path_expr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_expr")) return false;
@@ -6764,6 +6760,11 @@ public class RustParser implements PsiParser, LightPsiParser {
   final static Parser lambda_param_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return lambda_param(b, l + 1);
+    }
+  };
+  final static Parser struct_expr_body_1_0_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return struct_expr_body_1_0(b, l + 1);
     }
   };
 }

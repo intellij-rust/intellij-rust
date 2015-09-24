@@ -27,26 +27,14 @@ public class RustStructExprImpl extends RustExprImpl implements RustStructExpr {
 
   @Override
   @NotNull
-  public List<RustExpr> getExprList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getDotdot() {
-    return findChildByType(DOTDOT);
+  public RustPathExpr getPathExpr() {
+    return findNotNullChildByClass(RustPathExpr.class);
   }
 
   @Override
   @NotNull
-  public PsiElement getLbrace() {
-    return findNotNullChildByType(LBRACE);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getRbrace() {
-    return findChildByType(RBRACE);
+  public RustStructExprBody getStructExprBody() {
+    return findNotNullChildByClass(RustStructExprBody.class);
   }
 
 }
