@@ -20,6 +20,12 @@ public interface RustMatchExpr extends RustExpr {
   List<RustPat> getPatList();
 
   @NotNull
+  PsiElement getLbrace();
+
+  @NotNull
   PsiElement getMatch();
+
+  @NotNull
+  PsiElement getRbrace();
 
 }

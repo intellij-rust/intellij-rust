@@ -135,6 +135,7 @@ SHEBANG_LINE=\#\!.*
   ">="                            { return RustTokenElementTypes.GTEQ; }
   ">"                             { return RustTokenElementTypes.GT; }
   "->"                            { return RustTokenElementTypes.ARROW; }
+  "=>"                            { return RustTokenElementTypes.FAT_ARROW; }
   "?"                             { return RustTokenElementTypes.Q; }
   "@"                             { return RustTokenElementTypes.AT; }
   "_"                             { return RustTokenElementTypes.UNDERSCORE; }

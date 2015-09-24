@@ -89,6 +89,7 @@ public interface RustTokenElementTypes {
     IElementType ANDAND = new RustTokenType("&&");
     IElementType ANDEQ = new RustTokenType("&=");
     IElementType ARROW = new RustTokenType("->");
+    IElementType FAT_ARROW = new RustTokenType("=>");
     IElementType SHA = new RustTokenType("#");
     IElementType SHEBANG = new RustTokenType("#!");
     IElementType COLON = new RustTokenType(":");

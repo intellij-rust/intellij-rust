@@ -51,8 +51,20 @@ public class RustMatchExprImpl extends RustExprImpl implements RustMatchExpr {
 
   @Override
   @NotNull
+  public PsiElement getLbrace() {
+    return findNotNullChildByType(LBRACE);
+  }
+
+  @Override
+  @NotNull
   public PsiElement getMatch() {
     return findNotNullChildByType(MATCH);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getRbrace() {
+    return findNotNullChildByType(RBRACE);
   }
 
 }

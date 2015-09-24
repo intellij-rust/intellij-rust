@@ -2803,14 +2803,14 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // outer_attrs* match_pat ARROW (expr COMMA | LBRACE block RBRACE)
+  // outer_attrs* match_pat FAT_ARROW (expr COMMA | block )
   static boolean match_arm(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "match_arm")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = match_arm_0(b, l + 1);
     r = r && match_pat(b, l + 1);
-    r = r && consumeToken(b, ARROW);
+    r = r && consumeToken(b, FAT_ARROW);
     r = r && match_arm_3(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -2828,13 +2828,13 @@ public class RustParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // expr COMMA | LBRACE block RBRACE
+  // expr COMMA | block
   private static boolean match_arm_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "match_arm_3")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = match_arm_3_0(b, l + 1);
-    if (!r) r = match_arm_3_1(b, l + 1);
+    if (!r) r = block(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -2846,18 +2846,6 @@ public class RustParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = expr(b, l + 1, -1);
     r = r && consumeToken(b, COMMA);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // LBRACE block RBRACE
-  private static boolean match_arm_3_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "match_arm_3_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACE);
-    r = r && block(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -3317,9 +3305,9 @@ public class RustParser implements PsiParser, LightPsiParser {
   //       | pat_tup
   //       | pat_vec
   //       | pat_ident
-  //       | pat_range
   //       | pat_struct
   //       | pat_enum
+  //       | pat_range
   //    /* | path_expr EXCL maybe_ident delimited_token_trees */
   //       | pat_uniq
   //       | pat_qual_path
@@ -3332,9 +3320,9 @@ public class RustParser implements PsiParser, LightPsiParser {
     if (!r) r = pat_tup(b, l + 1);
     if (!r) r = pat_vec(b, l + 1);
     if (!r) r = pat_ident(b, l + 1);
-    if (!r) r = pat_range(b, l + 1);
     if (!r) r = pat_struct(b, l + 1);
     if (!r) r = pat_enum(b, l + 1);
+    if (!r) r = pat_range(b, l + 1);
     if (!r) r = pat_uniq(b, l + 1);
     if (!r) r = pat_qual_path(b, l + 1);
     exit_section_(b, l, m, r, false, null);
@@ -6218,7 +6206,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // lifetime COLON FOR pat IN no_struct_lit_expr LBRACE block RBRACE
+  // lifetime COLON FOR pat IN no_struct_lit_expr block
   public static boolean for_expr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_expr")) return false;
     if (!nextTokenIsFast(b, LIFETIME, STATIC_LIFETIME)) return false;
@@ -6229,9 +6217,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     r = r && pat(b, l + 1);
     r = r && consumeToken(b, IN);
     r = r && no_struct_lit_expr(b, l + 1);
-    r = r && consumeToken(b, LBRACE);
     r = r && block(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

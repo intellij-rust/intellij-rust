@@ -62,21 +62,9 @@ public class RustForExprImpl extends RustExprImpl implements RustForExpr {
   }
 
   @Override
-  @NotNull
-  public PsiElement getLbrace() {
-    return findNotNullChildByType(LBRACE);
-  }
-
-  @Override
   @Nullable
   public PsiElement getLifetime() {
     return findChildByType(LIFETIME);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getRbrace() {
-    return findNotNullChildByType(RBRACE);
   }
 
   @Override

@@ -25,14 +25,8 @@ public interface RustForExpr extends RustExpr {
   @NotNull
   PsiElement getIn();
 
-  @NotNull
-  PsiElement getLbrace();
-
   @Nullable
   PsiElement getLifetime();
-
-  @NotNull
-  PsiElement getRbrace();
 
   @Nullable
   PsiElement getStaticLifetime();
