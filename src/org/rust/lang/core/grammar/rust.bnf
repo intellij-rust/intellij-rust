@@ -604,16 +604,17 @@ expr ::= ret_expr
        | bit_shift_bin_expr
        | add_bin_expr
        | mul_bin_expr
+       | cast_expr
        | atom_expr
 
-private blockish_expr ::= while_expr
-                        | loop_expr
-                        | if_expr
-                        | match_expr
-                        | if_let_expr
-                        | while_let_expr
-                        | block_expr
-                        | for_expr
+blockish_expr ::= while_expr
+                | loop_expr
+                | if_expr
+                | match_expr
+                | if_let_expr
+                | while_let_expr
+                | block_expr
+                | for_expr
 
 
 private atom_expr ::= lit_expr
@@ -667,6 +668,8 @@ bit_or_bin_expr     ::= expr OR expr
 bit_xor_bin_expr    ::= expr XOR expr
 bit_and_bin_expr    ::= expr AND expr
 
+
+cast_expr ::= expr AS type
 
 unary_expr ::= (MINUS | MUL | EXCL | AND MUT?) expr
 
@@ -744,7 +747,7 @@ private index_arg ::= LBRACK expr RBRACK
 
 call_expr ::= expr arg_list
 
-method_call_expr ::= expr DOT IDENTIFIER arg_list { pin=2 }
+method_call_expr ::= expr DOT IDENTIFIER [COLONCOLON generic_args] arg_list { pin=2 }
 
 macro_expr ::= IDENTIFIER EXCL arg_list
 

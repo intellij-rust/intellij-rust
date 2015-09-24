@@ -7,10 +7,10 @@ import com.intellij.psi.PsiElement;
 
 public interface RustWhileLetExpr extends RustExpr {
 
-  @Nullable
+  @NotNull
   RustBlock getBlock();
 
-  @Nullable
+  @NotNull
   RustExpr getExpr();
 
   @NotNull

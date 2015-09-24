@@ -13,6 +13,12 @@ public interface RustMethodCallExpr extends RustExpr {
   @NotNull
   RustExpr getExpr();
 
+  @Nullable
+  RustGenericArgs getGenericArgs();
+
+  @Nullable
+  PsiElement getColoncolon();
+
   @NotNull
   PsiElement getDot();
 

@@ -19,11 +19,13 @@ public interface RustCompositeElementTypes {
   IElementType BINDINGS = new RustCompositeElementType("BINDINGS");
   IElementType BINDING_MODE = new RustCompositeElementType("BINDING_MODE");
   IElementType BLOCK = new RustCompositeElementType("BLOCK");
+  IElementType BLOCKISH_EXPR = new RustCompositeElementType("BLOCKISH_EXPR");
   IElementType BLOCK_EXPR = new RustCompositeElementType("BLOCK_EXPR");
   IElementType BOUND = new RustCompositeElementType("BOUND");
   IElementType BOUNDS = new RustCompositeElementType("BOUNDS");
   IElementType BREAK_EXPR = new RustCompositeElementType("BREAK_EXPR");
   IElementType CALL_EXPR = new RustCompositeElementType("CALL_EXPR");
+  IElementType CAST_EXPR = new RustCompositeElementType("CAST_EXPR");
   IElementType COMMA_SEPARATED_LIST = new RustCompositeElementType("COMMA_SEPARATED_LIST");
   IElementType CONST_ITEM = new RustCompositeElementType("CONST_ITEM");
   IElementType CONT_EXPR = new RustCompositeElementType("CONT_EXPR");
@@ -157,6 +159,9 @@ public interface RustCompositeElementTypes {
       else if (type == BLOCK) {
         return new RustBlockImpl(node);
       }
+      else if (type == BLOCKISH_EXPR) {
+        return new RustBlockishExprImpl(node);
+      }
       else if (type == BLOCK_EXPR) {
         return new RustBlockExprImpl(node);
       }
@@ -171,6 +176,9 @@ public interface RustCompositeElementTypes {
       }
       else if (type == CALL_EXPR) {
         return new RustCallExprImpl(node);
+      }
+      else if (type == CAST_EXPR) {
+        return new RustCastExprImpl(node);
       }
       else if (type == COMMA_SEPARATED_LIST) {
         return new RustCommaSeparatedListImpl(node);

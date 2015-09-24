@@ -51,6 +51,10 @@ public class RustVisitor extends PsiElementVisitor {
     visitExpr(o);
   }
 
+  public void visitBlockishExpr(@NotNull RustBlockishExpr o) {
+    visitExpr(o);
+  }
+
   public void visitBound(@NotNull RustBound o) {
     visitCompositeElement(o);
   }
@@ -64,6 +68,10 @@ public class RustVisitor extends PsiElementVisitor {
   }
 
   public void visitCallExpr(@NotNull RustCallExpr o) {
+    visitExpr(o);
+  }
+
+  public void visitCastExpr(@NotNull RustCastExpr o) {
     visitExpr(o);
   }
 

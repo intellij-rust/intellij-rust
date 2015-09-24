@@ -26,15 +26,15 @@ public class RustWhileLetExprImpl extends RustExprImpl implements RustWhileLetEx
   }
 
   @Override
-  @Nullable
+  @NotNull
   public RustBlock getBlock() {
-    return findChildByClass(RustBlock.class);
+    return findNotNullChildByClass(RustBlock.class);
   }
 
   @Override
-  @Nullable
+  @NotNull
   public RustExpr getExpr() {
-    return findChildByClass(RustExpr.class);
+    return findNotNullChildByClass(RustExpr.class);
   }
 
   @Override

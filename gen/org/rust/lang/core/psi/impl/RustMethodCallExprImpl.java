@@ -38,6 +38,18 @@ public class RustMethodCallExprImpl extends RustExprImpl implements RustMethodCa
   }
 
   @Override
+  @Nullable
+  public RustGenericArgs getGenericArgs() {
+    return findChildByClass(RustGenericArgs.class);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getColoncolon() {
+    return findChildByType(COLONCOLON);
+  }
+
+  @Override
   @NotNull
   public PsiElement getDot() {
     return findNotNullChildByType(DOT);
