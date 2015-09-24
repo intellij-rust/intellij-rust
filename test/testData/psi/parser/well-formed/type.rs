@@ -1,5 +1,7 @@
-type T = Fn(f64) -> f64;
+type FunType = Fn(f64) -> f64;
 
-type S = Box<A + Copy>;
+type Sum = Box<A + Copy>;
 
-type U = Box<Fn(f64, f64) -> f64 + Send + Sync>
+type FunSum = Box<Fn(f64, f64) -> f64 + Send + Sync>
+
+type Shl = Vec<Vec<f64>>;
