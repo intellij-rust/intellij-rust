@@ -3605,29 +3605,6 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // pat_field (COMMA pat_field)
-  static boolean pat_fields(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pat_fields")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = pat_field(b, l + 1);
-    r = r && pat_fields_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // COMMA pat_field
-  private static boolean pat_fields_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pat_fields_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, COMMA);
-    r = r && pat_field(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
   // binding_mode IDENTIFIER
   //                   |              IDENTIFIER AT pat
   //                   | binding_mode IDENTIFIER AT pat
@@ -3787,7 +3764,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // pat_fields [ COMMA DOTDOT ]
+  // <<comma_separated_list pat_field>> [ COMMA DOTDOT ]
   //                     |                    DOTDOT
   public static boolean pat_struct_fields(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pat_struct_fields")) return false;
@@ -3799,12 +3776,12 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // pat_fields [ COMMA DOTDOT ]
+  // <<comma_separated_list pat_field>> [ COMMA DOTDOT ]
   private static boolean pat_struct_fields_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pat_struct_fields_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = pat_fields(b, l + 1);
+    r = comma_separated_list(b, l + 1, pat_field_parser_);
     r = r && pat_struct_fields_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -6785,6 +6762,11 @@ public class RustParser implements PsiParser, LightPsiParser {
   final static Parser lambda_param_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return lambda_param(b, l + 1);
+    }
+  };
+  final static Parser pat_field_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return pat_field(b, l + 1);
     }
   };
   final static Parser struct_expr_body_1_0_parser_ = new Parser() {

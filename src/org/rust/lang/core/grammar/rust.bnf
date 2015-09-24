@@ -332,10 +332,9 @@ private type_sums_and_or_bindings ::= type_sums [ COMMA bindings ]
 bindings ::= binding (COMMA binding)*
 binding  ::= IDENTIFIER EQ type
 
-pat_struct_fields ::= pat_fields [ COMMA DOTDOT ]
+pat_struct_fields ::= <<comma_separated_list pat_field>> [ COMMA DOTDOT ]
                     |                    DOTDOT
 
-private pat_fields  ::= pat_field (COMMA pat_field)
 private pat_field   ::=     binding_mode?  IDENTIFIER [ COLON pat ]
                       | BOX binding_mode?  IDENTIFIER
 
