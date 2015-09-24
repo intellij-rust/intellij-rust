@@ -39,26 +39,8 @@ public class RustBindingImpl extends RustCompositeElementImpl implements RustBin
 
   @Override
   @Nullable
-  public RustAnonParams getAnonParams() {
-    return findChildByClass(RustAnonParams.class);
-  }
-
-  @Override
-  @Nullable
-  public RustBounds getBounds() {
-    return findChildByClass(RustBounds.class);
-  }
-
-  @Override
-  @Nullable
   public RustExpr getExpr() {
     return findChildByClass(RustExpr.class);
-  }
-
-  @Override
-  @Nullable
-  public RustFnParams getFnParams() {
-    return findChildByClass(RustFnParams.class);
   }
 
   @Override
@@ -209,18 +191,6 @@ public class RustBindingImpl extends RustCompositeElementImpl implements RustBin
   @Nullable
   public PsiElement getMut() {
     return findChildByType(MUT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getOror() {
-    return findChildByType(OROR);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getProc() {
-    return findChildByType(PROC);
   }
 
   @Override

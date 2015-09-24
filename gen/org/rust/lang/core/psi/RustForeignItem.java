@@ -14,16 +14,7 @@ public interface RustForeignItem extends RustCompositeElement {
   List<RustAnonParam> getAnonParamList();
 
   @NotNull
-  List<RustAnonParams> getAnonParamsList();
-
-  @NotNull
-  List<RustBounds> getBoundsList();
-
-  @NotNull
   List<RustExpr> getExprList();
-
-  @Nullable
-  RustFnParams getFnParams();
 
   @Nullable
   RustForeignFnItem getForeignFnItem();
@@ -68,9 +59,6 @@ public interface RustForeignItem extends RustCompositeElement {
   PsiElement getFor();
 
   @Nullable
-  PsiElement getProc();
-
-  @Nullable
   PsiElement getPub();
 
   @Nullable
@@ -84,5 +72,8 @@ public interface RustForeignItem extends RustCompositeElement {
 
   @Nullable
   PsiElement getUnderscore();
+
+  @Nullable
+  PsiElement getUnsafe();
 
 }

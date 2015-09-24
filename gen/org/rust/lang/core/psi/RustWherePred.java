@@ -13,17 +13,11 @@ public interface RustWherePred extends RustCompositeElement {
   @NotNull
   List<RustAnonParam> getAnonParamList();
 
-  @NotNull
-  List<RustAnonParams> getAnonParamsList();
-
-  @NotNull
-  List<RustBounds> getBoundsList();
+  @Nullable
+  RustBounds getBounds();
 
   @NotNull
   List<RustExpr> getExprList();
-
-  @Nullable
-  RustFnParams getFnParams();
 
   @Nullable
   RustForLifetimes getForLifetimes();
@@ -68,9 +62,6 @@ public interface RustWherePred extends RustCompositeElement {
   PsiElement getFor();
 
   @Nullable
-  PsiElement getProc();
-
-  @Nullable
   PsiElement getSelf();
 
   @Nullable
@@ -78,5 +69,8 @@ public interface RustWherePred extends RustCompositeElement {
 
   @Nullable
   PsiElement getUnderscore();
+
+  @Nullable
+  PsiElement getUnsafe();
 
 }

@@ -14,19 +14,10 @@ public interface RustImplItem extends RustCompositeElement {
   List<RustAnonParam> getAnonParamList();
 
   @NotNull
-  List<RustAnonParams> getAnonParamsList();
-
-  @NotNull
-  List<RustBounds> getBoundsList();
-
-  @NotNull
   List<RustConstItem> getConstItemList();
 
   @NotNull
   List<RustExpr> getExprList();
-
-  @Nullable
-  RustFnParams getFnParams();
 
   @NotNull
   List<RustGenericArgs> getGenericArgsList();
@@ -84,9 +75,6 @@ public interface RustImplItem extends RustCompositeElement {
 
   @NotNull
   PsiElement getLbrace();
-
-  @Nullable
-  PsiElement getProc();
 
   @NotNull
   PsiElement getRbrace();

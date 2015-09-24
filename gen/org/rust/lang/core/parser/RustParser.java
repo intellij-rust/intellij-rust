@@ -1813,18 +1813,14 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // type_proc
-  //                              | type_bare_fn
+  // type_bare_fn
   //                              | trait_ref
-  //                              | type_closure
   static boolean for_in_type_suffix(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_in_type_suffix")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = type_proc(b, l + 1);
-    if (!r) r = type_bare_fn(b, l + 1);
+    r = type_bare_fn(b, l + 1);
     if (!r) r = trait_ref(b, l + 1);
-    if (!r) r = type_closure(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -4882,7 +4878,6 @@ public class RustParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // type_prim
-  //                | type_closure
   //                | LT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER
   //                | LPAREN [ type_sums COMMA? ] RPAREN
   static boolean type(PsiBuilder b, int l) {
@@ -4890,66 +4885,65 @@ public class RustParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = type_prim(b, l + 1);
-    if (!r) r = type_closure(b, l + 1);
+    if (!r) r = type_1(b, l + 1);
     if (!r) r = type_2(b, l + 1);
-    if (!r) r = type_3(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // LT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER
-  private static boolean type_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_2")) return false;
+  private static boolean type_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, LT);
     r = r && type_sum(b, l + 1);
-    r = r && type_2_2(b, l + 1);
+    r = r && type_1_2(b, l + 1);
     r = r && consumeTokens(b, 0, GT, COLONCOLON, IDENTIFIER);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // as_trait_ref?
-  private static boolean type_2_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_2_2")) return false;
+  private static boolean type_1_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_1_2")) return false;
     as_trait_ref(b, l + 1);
     return true;
   }
 
   // LPAREN [ type_sums COMMA? ] RPAREN
-  private static boolean type_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_3")) return false;
+  private static boolean type_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, LPAREN);
-    r = r && type_3_1(b, l + 1);
+    r = r && type_2_1(b, l + 1);
     r = r && consumeToken(b, RPAREN);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // [ type_sums COMMA? ]
-  private static boolean type_3_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_3_1")) return false;
-    type_3_1_0(b, l + 1);
+  private static boolean type_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_2_1")) return false;
+    type_2_1_0(b, l + 1);
     return true;
   }
 
   // type_sums COMMA?
-  private static boolean type_3_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_3_1_0")) return false;
+  private static boolean type_2_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_2_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = type_sums(b, l + 1);
-    r = r && type_3_1_0_1(b, l + 1);
+    r = r && type_2_1_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // COMMA?
-  private static boolean type_3_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_3_1_0_1")) return false;
+  private static boolean type_2_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_2_1_0_1")) return false;
     consumeToken(b, COMMA);
     return true;
   }
@@ -5027,103 +5021,6 @@ public class RustParser implements PsiParser, LightPsiParser {
   private static boolean type_bare_fn_0_0_1_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_bare_fn_0_0_1_0_1")) return false;
     abi(b, l + 1);
-    return true;
-  }
-
-  /* ********************************************************** */
-  // UNSAFE OR anon_params OR bounds? ret_type
-  //                        |        OR anon_params OR bounds? ret_type
-  //                        | UNSAFE OROR              bounds? ret_type
-  //                        |        OROR              bounds? ret_type
-  static boolean type_closure(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_closure")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = type_closure_0(b, l + 1);
-    if (!r) r = type_closure_1(b, l + 1);
-    if (!r) r = type_closure_2(b, l + 1);
-    if (!r) r = type_closure_3(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // UNSAFE OR anon_params OR bounds? ret_type
-  private static boolean type_closure_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_closure_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, UNSAFE, OR);
-    r = r && anon_params(b, l + 1);
-    r = r && consumeToken(b, OR);
-    r = r && type_closure_0_4(b, l + 1);
-    r = r && ret_type(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // bounds?
-  private static boolean type_closure_0_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_closure_0_4")) return false;
-    bounds(b, l + 1);
-    return true;
-  }
-
-  // OR anon_params OR bounds? ret_type
-  private static boolean type_closure_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_closure_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, OR);
-    r = r && anon_params(b, l + 1);
-    r = r && consumeToken(b, OR);
-    r = r && type_closure_1_3(b, l + 1);
-    r = r && ret_type(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // bounds?
-  private static boolean type_closure_1_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_closure_1_3")) return false;
-    bounds(b, l + 1);
-    return true;
-  }
-
-  // UNSAFE OROR              bounds? ret_type
-  private static boolean type_closure_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_closure_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, UNSAFE, OROR);
-    r = r && type_closure_2_2(b, l + 1);
-    r = r && ret_type(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // bounds?
-  private static boolean type_closure_2_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_closure_2_2")) return false;
-    bounds(b, l + 1);
-    return true;
-  }
-
-  // OROR              bounds? ret_type
-  private static boolean type_closure_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_closure_3")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, OROR);
-    r = r && type_closure_3_1(b, l + 1);
-    r = r && ret_type(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // bounds?
-  private static boolean type_closure_3_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_closure_3_1")) return false;
-    bounds(b, l + 1);
     return true;
   }
 
@@ -5369,7 +5266,6 @@ public class RustParser implements PsiParser, LightPsiParser {
   //                     | TYPEOF LPAREN expr RPAREN
   //                     | UNDERSCORE
   //                     | type_bare_fn
-  //                     | type_proc
   //                     | for_in_type
   static boolean type_prim(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_prim")) return false;
@@ -5384,7 +5280,6 @@ public class RustParser implements PsiParser, LightPsiParser {
     if (!r) r = type_prim_6(b, l + 1);
     if (!r) r = consumeToken(b, UNDERSCORE);
     if (!r) r = type_bare_fn(b, l + 1);
-    if (!r) r = type_proc(b, l + 1);
     if (!r) r = for_in_type(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -5637,29 +5532,6 @@ public class RustParser implements PsiParser, LightPsiParser {
     r = r && type_param_bounds(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  /* ********************************************************** */
-  // PROC generic_params fn_params bounds? ret_type
-  static boolean type_proc(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_proc")) return false;
-    if (!nextTokenIs(b, PROC)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, PROC);
-    r = r && generic_params(b, l + 1);
-    r = r && fn_params(b, l + 1);
-    r = r && type_proc_3(b, l + 1);
-    r = r && ret_type(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // bounds?
-  private static boolean type_proc_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_proc_3")) return false;
-    bounds(b, l + 1);
-    return true;
   }
 
   /* ********************************************************** */

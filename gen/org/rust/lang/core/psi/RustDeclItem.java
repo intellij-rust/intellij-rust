@@ -14,16 +14,7 @@ public interface RustDeclItem extends RustCompositeElement {
   List<RustAnonParam> getAnonParamList();
 
   @NotNull
-  List<RustAnonParams> getAnonParamsList();
-
-  @NotNull
-  List<RustBounds> getBoundsList();
-
-  @NotNull
   List<RustExpr> getExprList();
-
-  @Nullable
-  RustFnParams getFnParams();
 
   @NotNull
   List<RustGenericArgs> getGenericArgsList();
@@ -62,9 +53,6 @@ public interface RustDeclItem extends RustCompositeElement {
   PsiElement getFor();
 
   @Nullable
-  PsiElement getProc();
-
-  @Nullable
   PsiElement getSelf();
 
   @Nullable
@@ -72,5 +60,8 @@ public interface RustDeclItem extends RustCompositeElement {
 
   @Nullable
   PsiElement getUnderscore();
+
+  @Nullable
+  PsiElement getUnsafe();
 
 }

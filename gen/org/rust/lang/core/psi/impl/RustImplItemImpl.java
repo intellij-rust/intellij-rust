@@ -39,18 +39,6 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
 
   @Override
   @NotNull
-  public List<RustAnonParams> getAnonParamsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAnonParams.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustBounds> getBoundsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustBounds.class);
-  }
-
-  @Override
-  @NotNull
   public List<RustConstItem> getConstItemList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustConstItem.class);
   }
@@ -59,12 +47,6 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
   @NotNull
   public List<RustExpr> getExprList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
-  }
-
-  @Override
-  @Nullable
-  public RustFnParams getFnParams() {
-    return findChildByClass(RustFnParams.class);
   }
 
   @Override
@@ -179,12 +161,6 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
   @NotNull
   public PsiElement getLbrace() {
     return findNotNullChildByType(LBRACE);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getProc() {
-    return findChildByType(PROC);
   }
 
   @Override

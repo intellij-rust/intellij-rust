@@ -14,16 +14,7 @@ public interface RustBinding extends RustCompositeElement {
   List<RustAnonParam> getAnonParamList();
 
   @Nullable
-  RustAnonParams getAnonParams();
-
-  @Nullable
-  RustBounds getBounds();
-
-  @Nullable
   RustExpr getExpr();
-
-  @Nullable
-  RustFnParams getFnParams();
 
   @NotNull
   List<RustGenericArgs> getGenericArgsList();
@@ -99,12 +90,6 @@ public interface RustBinding extends RustCompositeElement {
 
   @Nullable
   PsiElement getMut();
-
-  @Nullable
-  PsiElement getOror();
-
-  @Nullable
-  PsiElement getProc();
 
   @Nullable
   PsiElement getRbrack();

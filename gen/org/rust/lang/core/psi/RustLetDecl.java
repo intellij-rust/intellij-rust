@@ -13,17 +13,8 @@ public interface RustLetDecl extends RustCompositeElement {
   @NotNull
   List<RustAnonParam> getAnonParamList();
 
-  @Nullable
-  RustAnonParams getAnonParams();
-
-  @Nullable
-  RustBounds getBounds();
-
   @NotNull
   List<RustExpr> getExprList();
-
-  @Nullable
-  RustFnParams getFnParams();
 
   @NotNull
   List<RustGenericArgs> getGenericArgsList();
@@ -108,12 +99,6 @@ public interface RustLetDecl extends RustCompositeElement {
 
   @Nullable
   PsiElement getMut();
-
-  @Nullable
-  PsiElement getOror();
-
-  @Nullable
-  PsiElement getProc();
 
   @Nullable
   PsiElement getRbrack();

@@ -14,16 +14,7 @@ public interface RustAnonParam extends RustCompositeElement {
   List<RustAnonParam> getAnonParamList();
 
   @Nullable
-  RustAnonParams getAnonParams();
-
-  @Nullable
-  RustBounds getBounds();
-
-  @Nullable
   RustExpr getExpr();
-
-  @Nullable
-  RustFnParams getFnParams();
 
   @NotNull
   List<RustGenericArgs> getGenericArgsList();
@@ -90,12 +81,6 @@ public interface RustAnonParam extends RustCompositeElement {
 
   @Nullable
   PsiElement getMul();
-
-  @Nullable
-  PsiElement getOror();
-
-  @Nullable
-  PsiElement getProc();
 
   @Nullable
   PsiElement getRbrack();

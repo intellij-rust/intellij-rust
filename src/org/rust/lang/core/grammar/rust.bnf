@@ -518,7 +518,6 @@ private impl_type ::= attrs_and_vis TYPE IDENTIFIER generic_params EQ type_sum S
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 private type ::= type_prim
-               | type_closure
                | LT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER
                | LPAREN [ type_sums COMMA? ] RPAREN
             /* | LTLT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER as_trait_ref? GT COLONCOLON IDENTIFIER */
@@ -536,7 +535,6 @@ private type_prim ::= [ SELF? COLONCOLON ] path_generic_args_without_colons
                     | TYPEOF LPAREN expr RPAREN
                     | UNDERSCORE
                     | type_bare_fn
-                    | type_proc
                     | for_in_type
 
 private type_bare_fn ::= [ UNSAFE? [ EXTERN abi? ] ] FN type_fn_decl
@@ -548,18 +546,10 @@ private fn_anon_params ::= LPAREN anon_param anon_params_allow_variadic_tail RPA
 
 private anon_params_allow_variadic_tail ::= [ COMMA (DOTDOTDOT | anon_param anon_params_allow_variadic_tail) ]
 
-private type_proc ::= PROC generic_params fn_params bounds? ret_type
 
 private for_in_type ::= FOR LT lifetimes? GT for_in_type_suffix
-private for_in_type_suffix ::= type_proc
-                             | type_bare_fn
+private for_in_type_suffix ::= type_bare_fn
                              | trait_ref
-                             | type_closure
-
-private type_closure ::= UNSAFE OR anon_params OR bounds? ret_type
-                       |        OR anon_params OR bounds? ret_type
-                       | UNSAFE OROR              bounds? ret_type
-                       |        OROR              bounds? ret_type
 
 private path_generic_args_without_colons ::= IDENTIFIER generic_args?                       path_generic_args_without_colons_right
                                            | IDENTIFIER LPAREN type_sums? RPAREN ret_type   path_generic_args_without_colons_right

@@ -38,27 +38,15 @@ public class RustWherePredImpl extends RustCompositeElementImpl implements RustW
   }
 
   @Override
-  @NotNull
-  public List<RustAnonParams> getAnonParamsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustAnonParams.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustBounds> getBoundsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustBounds.class);
+  @Nullable
+  public RustBounds getBounds() {
+    return findChildByClass(RustBounds.class);
   }
 
   @Override
   @NotNull
   public List<RustExpr> getExprList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
-  }
-
-  @Override
-  @Nullable
-  public RustFnParams getFnParams() {
-    return findChildByClass(RustFnParams.class);
   }
 
   @Override
@@ -147,12 +135,6 @@ public class RustWherePredImpl extends RustCompositeElementImpl implements RustW
 
   @Override
   @Nullable
-  public PsiElement getProc() {
-    return findChildByType(PROC);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getSelf() {
     return findChildByType(SELF);
   }
@@ -167,6 +149,12 @@ public class RustWherePredImpl extends RustCompositeElementImpl implements RustW
   @Nullable
   public PsiElement getUnderscore() {
     return findChildByType(UNDERSCORE);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getUnsafe() {
+    return findChildByType(UNSAFE);
   }
 
 }

@@ -14,16 +14,7 @@ public interface RustTypePrimSum extends RustCompositeElement {
   List<RustAnonParam> getAnonParamList();
 
   @NotNull
-  List<RustAnonParams> getAnonParamsList();
-
-  @NotNull
-  List<RustBounds> getBoundsList();
-
-  @NotNull
   List<RustExpr> getExprList();
-
-  @Nullable
-  RustFnParams getFnParams();
 
   @NotNull
   List<RustGenericArgs> getGenericArgsList();
@@ -65,9 +56,6 @@ public interface RustTypePrimSum extends RustCompositeElement {
   PsiElement getPlus();
 
   @Nullable
-  PsiElement getProc();
-
-  @Nullable
   PsiElement getSelf();
 
   @Nullable
@@ -75,5 +63,8 @@ public interface RustTypePrimSum extends RustCompositeElement {
 
   @Nullable
   PsiElement getUnderscore();
+
+  @Nullable
+  PsiElement getUnsafe();
 
 }
