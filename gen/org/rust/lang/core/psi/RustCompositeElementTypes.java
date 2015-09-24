@@ -24,6 +24,7 @@ public interface RustCompositeElementTypes {
   IElementType BOUNDS = new RustCompositeElementType("BOUNDS");
   IElementType BREAK_EXPR = new RustCompositeElementType("BREAK_EXPR");
   IElementType CALL_EXPR = new RustCompositeElementType("CALL_EXPR");
+  IElementType COMMA_SEPARATED_LIST = new RustCompositeElementType("COMMA_SEPARATED_LIST");
   IElementType CONST_ITEM = new RustCompositeElementType("CONST_ITEM");
   IElementType CONT_EXPR = new RustCompositeElementType("CONT_EXPR");
   IElementType DECL_ITEM = new RustCompositeElementType("DECL_ITEM");
@@ -170,6 +171,9 @@ public interface RustCompositeElementTypes {
       }
       else if (type == CALL_EXPR) {
         return new RustCallExprImpl(node);
+      }
+      else if (type == COMMA_SEPARATED_LIST) {
+        return new RustCommaSeparatedListImpl(node);
       }
       else if (type == CONST_ITEM) {
         return new RustConstItemImpl(node);

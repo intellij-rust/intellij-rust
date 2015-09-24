@@ -67,6 +67,10 @@ public class RustVisitor extends PsiElementVisitor {
     visitExpr(o);
   }
 
+  public void visitCommaSeparatedList(@NotNull RustCommaSeparatedList o) {
+    visitCompositeElement(o);
+  }
+
   public void visitConstItem(@NotNull RustConstItem o) {
     visitCompositeElement(o);
   }

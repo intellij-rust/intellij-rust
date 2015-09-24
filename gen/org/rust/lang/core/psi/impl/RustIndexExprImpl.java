@@ -38,9 +38,9 @@ public class RustIndexExprImpl extends RustExprImpl implements RustIndexExpr {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public PsiElement getRbrack() {
-    return findChildByType(RBRACK);
+    return findNotNullChildByType(RBRACK);
   }
 
 }

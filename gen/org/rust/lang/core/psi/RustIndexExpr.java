@@ -13,7 +13,7 @@ public interface RustIndexExpr extends RustExpr {
   @NotNull
   PsiElement getLbrack();
 
-  @Nullable
+  @NotNull
   PsiElement getRbrack();
 
 }

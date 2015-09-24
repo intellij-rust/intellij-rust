@@ -631,8 +631,6 @@ private atom_expr ::= lit_expr
                     | paren_expr
                     | unary_expr
 
-//struct_expr ::= path_expr [ LBRACE struct_expr_fields RBRACE ]
-
 self_expr ::= SELF
 
 
@@ -674,8 +672,8 @@ unary_expr ::= (MINUS | MUL | EXCL | AND MUT?) expr
 
 block_expr ::= block
 
-lambda_expr ::= (OROR | OR ident_list OR) expr
-private ident_list ::= (IDENTIFIER (COMMA IDENTIFIER)*)?
+lambda_expr ::= (OROR | OR [<<comma_separated_list lambda_param>>] OR) expr
+private lambda_param ::= pat type_ascription?
 
 struct_expr ::= path_expr LBRACE  IDENTIFIER COLON expr
                          (COMMA   IDENTIFIER COLON expr)*
@@ -740,7 +738,9 @@ range_expr ::= expr + {
 }
 
 
-index_expr ::= expr LBRACK expr RBRACK
+index_expr ::= expr index_arg
+
+private index_arg ::= LBRACK expr RBRACK
 
 call_expr ::= expr arg_list
 
@@ -801,3 +801,5 @@ stmt ::= blockish_expr
        | expr_stmt
        | decl_stmt
        | SEMICOLON
+
+meta comma_separated_list ::= <<param>> ( ',' <<param>> ) * [',']

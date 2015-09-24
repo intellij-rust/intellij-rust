@@ -8,6 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface RustLambdaExpr extends RustExpr {
 
   @Nullable
+  RustCommaSeparatedList getCommaSeparatedList();
+
+  @Nullable
   RustExpr getExpr();
 
   @Nullable
