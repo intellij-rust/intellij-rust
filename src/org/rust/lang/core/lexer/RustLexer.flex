@@ -38,15 +38,18 @@ WHITE_SPACE = ({LINE_WS}|{EOL_WS})+
 // Identifier
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-IDENTIFIER=[a-zA-Z\x80-\xff_][a-zA-Z0-9\x80-\xff_]*
+IDENT_START=[a-zA-Z\x80-\xff_]
+IDENTIFIER={IDENT_START}[a-zA-Z0-9\x80-\xff_]*
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Literals
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-FLT_LITERAL = {DEC_LITERAL} (\. {DEC_LITERAL}? {FLT_EXP}? | {FLT_EXP}) {FLT_SUFFIX}?
+FLT_NORMAL = ({DEC_LITERAL} (\. {DEC_LITERAL} {FLT_EXP}? | {FLT_EXP}) {FLT_SUFFIX}?)
+           | ({DEC_LITERAL} {FLT_SUFFIX})
+FLT_TRAILING_DOT = {DEC_LITERAL} \.
 
-FLT_EXP = [eE][+-]{DEC_LITERAL}
+FLT_EXP = [eE][+-]?{DEC_LITERAL}
 FLT_SUFFIX = f32|f64
 
 INT_LITERAL = ({DEC_LITERAL} | {HEX_LITERAL} | {OCT_LITERAL} | {BIN_LITERAL}){INT_SUFFIX}?
@@ -199,7 +202,9 @@ SHEBANG_LINE=\#\!.*
   {IDENTIFIER}                    { return RustTokenElementTypes.IDENTIFIER; }
 
   {INT_LITERAL}                   { return RustTokenElementTypes.INTEGER_LITERAL; }
-  {FLT_LITERAL}                   { return RustTokenElementTypes.FLOAT_LITERAL; }
+
+  {FLT_NORMAL}                    { return RustTokenElementTypes.FLOAT_LITERAL; }
+  {FLT_TRAILING_DOT}/[^.a-zA-Z_]  { return RustTokenElementTypes.FLOAT_LITERAL; }
 
   {STRING_LITERAL}                { return RustTokenElementTypes.STRING_LITERAL; }
 

@@ -20,7 +20,7 @@ public class RustLexingTestCase : LexerTestCase() {
 
     val ext = RustFileType.DEFAULTS.EXTENSION
 
-    fun testComments()  { doFileTest(ext) }
-    fun testShebang()   { doFileTest(ext) }
-
+    fun testComments()      { doFileTest(ext) }
+    fun testShebang()       { doFileTest(ext) }
+    fun testFloat() { doFileTest(ext) }
 }
