@@ -2935,7 +2935,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // outer_attrs* match_pat FAT_ARROW (expr COMMA | block )
+  // outer_attrs* match_pat FAT_ARROW (expr (COMMA | & RBRACE) | block )
   static boolean match_arm(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "match_arm")) return false;
     boolean r;
@@ -2960,7 +2960,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // expr COMMA | block
+  // expr (COMMA | & RBRACE) | block
   private static boolean match_arm_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "match_arm_3")) return false;
     boolean r;
@@ -2971,14 +2971,35 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // expr COMMA
+  // expr (COMMA | & RBRACE)
   private static boolean match_arm_3_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "match_arm_3_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = expr(b, l + 1, -1);
-    r = r && consumeToken(b, COMMA);
+    r = r && match_arm_3_0_1(b, l + 1);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // COMMA | & RBRACE
+  private static boolean match_arm_3_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "match_arm_3_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    if (!r) r = match_arm_3_0_1_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // & RBRACE
+  private static boolean match_arm_3_0_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "match_arm_3_0_1_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeToken(b, RBRACE);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 

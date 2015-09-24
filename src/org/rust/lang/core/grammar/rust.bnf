@@ -700,7 +700,7 @@ for_expr ::= [lifetime COLON] FOR pat IN no_struct_lit_expr block
 
 match_expr ::= MATCH no_struct_lit_expr LBRACE match_arm* RBRACE
 
-private match_arm ::= outer_attrs* match_pat FAT_ARROW (expr COMMA | block )
+private match_arm ::= outer_attrs* match_pat FAT_ARROW (expr (COMMA | & RBRACE) | block )
 private match_pat ::= pat (OR pat)* (IF expr)?
 
 if_expr ::= IF no_struct_lit_expr block else_tail?
