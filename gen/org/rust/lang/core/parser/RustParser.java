@@ -5620,8 +5620,8 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // type_sums [ COMMA bindings ]
-  //                                     |                   bindings COMMA?
+  // bindings COMMA?
+  //                                     | type_sums [ COMMA bindings ]
   static boolean type_sums_and_or_bindings(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_sums_and_or_bindings")) return false;
     boolean r;
@@ -5632,51 +5632,51 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // type_sums [ COMMA bindings ]
+  // bindings COMMA?
   private static boolean type_sums_and_or_bindings_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_sums_and_or_bindings_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = type_sums(b, l + 1);
+    r = bindings(b, l + 1);
     r = r && type_sums_and_or_bindings_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // [ COMMA bindings ]
+  // COMMA?
   private static boolean type_sums_and_or_bindings_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_sums_and_or_bindings_0_1")) return false;
-    type_sums_and_or_bindings_0_1_0(b, l + 1);
+    consumeToken(b, COMMA);
+    return true;
+  }
+
+  // type_sums [ COMMA bindings ]
+  private static boolean type_sums_and_or_bindings_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_sums_and_or_bindings_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = type_sums(b, l + 1);
+    r = r && type_sums_and_or_bindings_1_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // [ COMMA bindings ]
+  private static boolean type_sums_and_or_bindings_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_sums_and_or_bindings_1_1")) return false;
+    type_sums_and_or_bindings_1_1_0(b, l + 1);
     return true;
   }
 
   // COMMA bindings
-  private static boolean type_sums_and_or_bindings_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_sums_and_or_bindings_0_1_0")) return false;
+  private static boolean type_sums_and_or_bindings_1_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_sums_and_or_bindings_1_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, COMMA);
     r = r && bindings(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  // bindings COMMA?
-  private static boolean type_sums_and_or_bindings_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_sums_and_or_bindings_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = bindings(b, l + 1);
-    r = r && type_sums_and_or_bindings_1_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // COMMA?
-  private static boolean type_sums_and_or_bindings_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_sums_and_or_bindings_1_1")) return false;
-    consumeToken(b, COMMA);
-    return true;
   }
 
   /* ********************************************************** */

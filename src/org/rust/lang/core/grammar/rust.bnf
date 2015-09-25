@@ -323,8 +323,8 @@ generic_args ::= LT generic_values GT
                | LTLT ty_qualified_path_and_generic_values GTGTEQ */
 
 private generic_values ::= lifetimes? type_sums_and_or_bindings?
-private type_sums_and_or_bindings ::= type_sums [ COMMA bindings ]
-                                    |                   bindings COMMA?
+private type_sums_and_or_bindings ::=                   bindings COMMA?
+                                    | type_sums [ COMMA bindings ]
 
 bindings ::= binding (COMMA binding)*
 binding  ::= IDENTIFIER EQ type
