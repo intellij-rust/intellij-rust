@@ -551,8 +551,7 @@ private for_in_type_suffix ::= type_bare_fn
 private path_generic_args_without_colons ::= IDENTIFIER LPAREN type_sums? RPAREN ret_type   path_generic_args_without_colons_right
                                            | IDENTIFIER generic_args?                       path_generic_args_without_colons_right
 
-private path_generic_args_without_colons_right ::= [ COLONCOLON IDENTIFIER                                    path_generic_args_without_colons_right
-                                                   | COLONCOLON IDENTIFIER generic_args                       path_generic_args_without_colons_right
+private path_generic_args_without_colons_right ::= [ COLONCOLON IDENTIFIER generic_args?                      path_generic_args_without_colons_right
                                                    | COLONCOLON IDENTIFIER LPAREN type_sums? RPAREN ret_type  path_generic_args_without_colons_right ]
 
 
