@@ -3231,25 +3231,9 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (attrs_and_vis item)+
+  // attrs_and_vis item
   static boolean mod_contents(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "mod_contents")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = mod_contents_0(b, l + 1);
-    int c = current_position_(b);
-    while (r) {
-      if (!mod_contents_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "mod_contents", c)) break;
-      c = current_position_(b);
-    }
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // attrs_and_vis item
-  private static boolean mod_contents_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "mod_contents_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = attrs_and_vis(b, l + 1);
@@ -3259,7 +3243,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // MOD IDENTIFIER (SEMICOLON | LBRACE inner_attrs? mod_contents? RBRACE)
+  // MOD IDENTIFIER (SEMICOLON | LBRACE inner_attrs? mod_contents* RBRACE)
   public static boolean mod_item(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "mod_item")) return false;
     if (!nextTokenIs(b, MOD)) return false;
@@ -3271,7 +3255,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // SEMICOLON | LBRACE inner_attrs? mod_contents? RBRACE
+  // SEMICOLON | LBRACE inner_attrs? mod_contents* RBRACE
   private static boolean mod_item_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "mod_item_2")) return false;
     boolean r;
@@ -3282,7 +3266,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // LBRACE inner_attrs? mod_contents? RBRACE
+  // LBRACE inner_attrs? mod_contents* RBRACE
   private static boolean mod_item_2_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "mod_item_2_1")) return false;
     boolean r;
@@ -3302,10 +3286,15 @@ public class RustParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // mod_contents?
+  // mod_contents*
   private static boolean mod_item_2_1_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "mod_item_2_1_2")) return false;
-    mod_contents(b, l + 1);
+    int c = current_position_(b);
+    while (true) {
+      if (!mod_contents(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "mod_item_2_1_2", c)) break;
+      c = current_position_(b);
+    }
     return true;
   }
 
@@ -4744,21 +4733,9 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (trait_const | trait_type | trait_method)*
+  // trait_const | trait_type | trait_method
   static boolean trait_contents(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "trait_contents")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!trait_contents_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "trait_contents", c)) break;
-      c = current_position_(b);
-    }
-    return true;
-  }
-
-  // trait_const | trait_type | trait_method
-  private static boolean trait_contents_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "trait_contents_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = trait_const(b, l + 1);
@@ -4769,7 +4746,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // UNSAFE? TRAIT IDENTIFIER generic_params for_sized? type_param_bounds? where_clause? LBRACE trait_contents? RBRACE
+  // UNSAFE? TRAIT IDENTIFIER generic_params for_sized? type_param_bounds? where_clause? LBRACE trait_contents* RBRACE
   public static boolean trait_item(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "trait_item")) return false;
     if (!nextTokenIs(b, "<trait item>", TRAIT, UNSAFE)) return false;
@@ -4816,10 +4793,15 @@ public class RustParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // trait_contents?
+  // trait_contents*
   private static boolean trait_item_8(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "trait_item_8")) return false;
-    trait_contents(b, l + 1);
+    int c = current_position_(b);
+    while (true) {
+      if (!trait_contents(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "trait_item_8", c)) break;
+      c = current_position_(b);
+    }
     return true;
   }
 

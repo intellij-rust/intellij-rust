@@ -389,9 +389,9 @@ private crate_name ::= IDENTIFIER | IDENTIFIER AS IDENTIFIER
 // Struct & Enum
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-mod_item ::= MOD IDENTIFIER (SEMICOLON | LBRACE inner_attrs? mod_contents? RBRACE)
+mod_item ::= MOD IDENTIFIER (SEMICOLON | LBRACE inner_attrs? mod_contents* RBRACE)
 
-private mod_contents ::= (attrs_and_vis item)+
+private mod_contents ::= attrs_and_vis item
 
 foreign_mod_item ::= EXTERN abi? LBRACE inner_attrs? foreign_items? RBRACE
 
@@ -443,12 +443,12 @@ enum_args ::= LBRACE struct_decl_fields COMMA? RBRACE
 // Trait
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params for_sized? type_param_bounds? where_clause? LBRACE trait_contents? RBRACE
+trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params for_sized? type_param_bounds? where_clause? LBRACE trait_contents* RBRACE
 
 private for_sized ::= FOR Q IDENTIFIER
                     | FOR IDENTIFIER Q
 
-private trait_contents ::= (trait_const | trait_type | trait_method)*
+private trait_contents ::= trait_const | trait_type | trait_method
 
 trait_const ::= outer_attrs? CONST IDENTIFIER type_ascription? const_default? SEMICOLON
 
