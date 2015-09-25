@@ -6240,28 +6240,42 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // CONTINUE lifetime
+  // CONTINUE lifetime?
   public static boolean cont_expr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cont_expr")) return false;
     if (!nextTokenIsFast(b, CONTINUE)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, CONTINUE);
-    r = r && lifetime(b, l + 1);
+    r = r && cont_expr_1(b, l + 1);
     exit_section_(b, m, CONT_EXPR, r);
     return r;
   }
 
-  // BREAK lifetime
+  // lifetime?
+  private static boolean cont_expr_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cont_expr_1")) return false;
+    lifetime(b, l + 1);
+    return true;
+  }
+
+  // BREAK lifetime?
   public static boolean break_expr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "break_expr")) return false;
     if (!nextTokenIsFast(b, BREAK)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, BREAK);
-    r = r && lifetime(b, l + 1);
+    r = r && break_expr_1(b, l + 1);
     exit_section_(b, m, BREAK_EXPR, r);
     return r;
+  }
+
+  // lifetime?
+  private static boolean break_expr_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "break_expr_1")) return false;
+    lifetime(b, l + 1);
+    return true;
   }
 
   public static boolean lambda_expr(PsiBuilder b, int l) {

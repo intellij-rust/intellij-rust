@@ -676,9 +676,9 @@ struct_expr_body ::= LBRACE
 while_expr ::= [lifetime COLON] WHILE no_struct_lit_expr block
 
 loop_expr ::= [lifetime COLON] LOOP block
-cont_expr ::= CONTINUE lifetime
+cont_expr ::= CONTINUE lifetime?
 
-break_expr ::= BREAK lifetime
+break_expr ::= BREAK lifetime?
 
 for_expr ::= [lifetime COLON] FOR pat IN no_struct_lit_expr block
 
