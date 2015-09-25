@@ -6251,7 +6251,6 @@ public class RustParser implements PsiParser, LightPsiParser {
 
   public static boolean lambda_expr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambda_expr")) return false;
-    if (!nextTokenIsFast(b, OR, OROR)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, null);
     r = lambda_expr_0(b, l + 1);
@@ -6261,33 +6260,59 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // OROR | OR [<<comma_separated_list lambda_param>>] OR
+  // MOVE? (OROR | OR [<<comma_separated_list lambda_param>>] OR) ret_type?
   private static boolean lambda_expr_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambda_expr_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
+    r = lambda_expr_0_0(b, l + 1);
+    r = r && lambda_expr_0_1(b, l + 1);
+    r = r && lambda_expr_0_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // MOVE?
+  private static boolean lambda_expr_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambda_expr_0_0")) return false;
+    consumeTokenSmart(b, MOVE);
+    return true;
+  }
+
+  // OROR | OR [<<comma_separated_list lambda_param>>] OR
+  private static boolean lambda_expr_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambda_expr_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
     r = consumeTokenSmart(b, OROR);
-    if (!r) r = lambda_expr_0_1(b, l + 1);
+    if (!r) r = lambda_expr_0_1_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // OR [<<comma_separated_list lambda_param>>] OR
-  private static boolean lambda_expr_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambda_expr_0_1")) return false;
+  private static boolean lambda_expr_0_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambda_expr_0_1_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, OR);
-    r = r && lambda_expr_0_1_1(b, l + 1);
+    r = r && lambda_expr_0_1_1_1(b, l + 1);
     r = r && consumeToken(b, OR);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // [<<comma_separated_list lambda_param>>]
-  private static boolean lambda_expr_0_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambda_expr_0_1_1")) return false;
+  private static boolean lambda_expr_0_1_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambda_expr_0_1_1_1")) return false;
     comma_separated_list(b, l + 1, lambda_param_parser_);
+    return true;
+  }
+
+  // ret_type?
+  private static boolean lambda_expr_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambda_expr_0_2")) return false;
+    ret_type(b, l + 1);
     return true;
   }
 

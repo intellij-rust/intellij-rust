@@ -39,6 +39,18 @@ public class RustLambdaExprImpl extends RustExprImpl implements RustLambdaExpr {
 
   @Override
   @Nullable
+  public RustRetType getRetType() {
+    return findChildByClass(RustRetType.class);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getMove() {
+    return findChildByType(MOVE);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getOror() {
     return findChildByType(OROR);
   }

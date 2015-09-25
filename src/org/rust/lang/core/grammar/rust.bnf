@@ -659,7 +659,7 @@ unary_expr ::= (MINUS | MUL | EXCL | AND MUT?) expr
 
 block_expr ::= block
 
-lambda_expr ::= (OROR | OR [<<comma_separated_list lambda_param>>] OR) expr
+lambda_expr ::= MOVE? (OROR | OR [<<comma_separated_list lambda_param>>] OR) ret_type? expr
 private lambda_param ::= pat type_ascription?
 
 struct_expr ::= path_expr struct_expr_body

@@ -34,6 +34,12 @@ fn test() -> u32 {
     r = 1.. ;
     r =  .. ;
 
+    || {};
+    |x: i32| -> i32 92;
+    move |x: i32| {
+        x
+    };
+
     // TBA(kudinkin)
 
     return (x = y)  /* return */

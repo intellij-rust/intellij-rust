@@ -14,6 +14,12 @@ public interface RustLambdaExpr extends RustExpr {
   RustExpr getExpr();
 
   @Nullable
+  RustRetType getRetType();
+
+  @Nullable
+  PsiElement getMove();
+
+  @Nullable
   PsiElement getOror();
 
 }
