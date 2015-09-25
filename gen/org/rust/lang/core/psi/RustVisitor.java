@@ -7,6 +7,18 @@ import org.rust.lang.core.resolve.scope.RustResolveScope;
 
 public class RustVisitor extends PsiElementVisitor {
 
+  public void visitGteq(@NotNull RustGteq o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitGtgt(@NotNull RustGtgt o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitGtgteq(@NotNull RustGtgteq o) {
+    visitCompositeElement(o);
+  }
+
   public void visitAbi(@NotNull RustAbi o) {
     visitCompositeElement(o);
   }

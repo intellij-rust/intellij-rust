@@ -26,6 +26,24 @@ public class RustBinaryExprImpl extends RustExprImpl implements RustBinaryExpr {
   }
 
   @Override
+  @Nullable
+  public RustGteq getGteq() {
+    return findChildByClass(RustGteq.class);
+  }
+
+  @Override
+  @Nullable
+  public RustGtgt getGtgt() {
+    return findChildByClass(RustGtgt.class);
+  }
+
+  @Override
+  @Nullable
+  public RustGtgteq getGtgteq() {
+    return findChildByClass(RustGtgteq.class);
+  }
+
+  @Override
   @NotNull
   public List<RustExpr> getExprList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
@@ -83,24 +101,6 @@ public class RustBinaryExprImpl extends RustExprImpl implements RustBinaryExpr {
   @Nullable
   public PsiElement getGt() {
     return findChildByType(GT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getGteq() {
-    return findChildByType(GTEQ);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getGtgt() {
-    return findChildByType(GTGT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getGtgteq() {
-    return findChildByType(GTGTEQ);
   }
 
   @Override

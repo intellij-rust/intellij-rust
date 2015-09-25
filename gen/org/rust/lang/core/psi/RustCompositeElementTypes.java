@@ -49,6 +49,9 @@ public interface RustCompositeElementTypes {
   IElementType FOR_LIFETIMES = new RustCompositeElementType("FOR_LIFETIMES");
   IElementType GENERIC_ARGS = new RustCompositeElementType("GENERIC_ARGS");
   IElementType GENERIC_PARAMS = new RustCompositeElementType("GENERIC_PARAMS");
+  IElementType GTEQ = new RustCompositeElementType("GTEQ");
+  IElementType GTGT = new RustCompositeElementType("GTGT");
+  IElementType GTGTEQ = new RustCompositeElementType("GTGTEQ");
   IElementType IF_EXPR = new RustCompositeElementType("IF_EXPR");
   IElementType IF_LET_EXPR = new RustCompositeElementType("IF_LET_EXPR");
   IElementType IMPL_ITEM = new RustCompositeElementType("IMPL_ITEM");
@@ -249,6 +252,15 @@ public interface RustCompositeElementTypes {
       }
       else if (type == GENERIC_PARAMS) {
         return new RustGenericParamsImpl(node);
+      }
+      else if (type == GTEQ) {
+        return new RustGteqImpl(node);
+      }
+      else if (type == GTGT) {
+        return new RustGtgtImpl(node);
+      }
+      else if (type == GTGTEQ) {
+        return new RustGtgteqImpl(node);
       }
       else if (type == IF_EXPR) {
         return new RustIfExprImpl(node);

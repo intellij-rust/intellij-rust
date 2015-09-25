@@ -106,9 +106,6 @@ public interface RustTokenElementTypes {
     IElementType EXCL = new RustTokenType("!");
     IElementType EXCLEQ = new RustTokenType("!=");
     IElementType GT = new RustTokenType(">");
-    IElementType GTEQ = new RustTokenType(">=");
-    IElementType GTGT = new RustTokenType(">>");
-    IElementType GTGTEQ = new RustTokenType(">>=");
     IElementType LBRACE = new RustTokenType("{");
     IElementType LBRACK = new RustTokenType("[");
     IElementType LPAREN = new RustTokenType("(");

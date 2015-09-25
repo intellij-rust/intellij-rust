@@ -57,9 +57,6 @@
         DIV                  =  '/'
         REMEQ                =  '%='
         REM                  =  '%'
-        GTGTEQ               =  '>>='
-        GTGT                 =  '>>'
-        GTEQ                 =  '>='
         GT                   =  '>'
         ELLIPSIS             =  '...'
         DOT                  =  '.'
@@ -644,7 +641,7 @@ assign_bin_expr ::= expr
                   ) expr    { rightAssociative = true }
 
 comp_bin_expr       ::= expr (EQEQ | EXCLEQ) expr
-rel_comp_bin_expr   ::= expr (LT | GT | LTEQ | GTEQ) expr
+rel_comp_bin_expr   ::= expr (LT | GT !(GT | EQ) | LTEQ | GTEQ) expr
 bit_shift_bin_expr  ::= expr (LTLT | GTGT) expr
 add_bin_expr        ::= expr (PLUS | MINUS) expr
 mul_bin_expr        ::= expr (MUL | DIV | REM) expr
@@ -793,5 +790,13 @@ stmt ::= blockish_expr
        | expr_stmt
        | decl_stmt
        | SEMICOLON
+
+//
+// Utils
+//
+
+GTGTEQ ::= GT GT EQ
+GTGT   ::= GT GT
+GTEQ   ::= GT EQ
 
 meta comma_separated_list ::= <<param>> ( ',' <<param>> ) * [',']

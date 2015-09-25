@@ -133,9 +133,6 @@ SHEBANG_LINE=\#\!.*
   "/"                             { return RustTokenElementTypes.DIV; }
   "%="                            { return RustTokenElementTypes.REMEQ; }
   "%"                             { return RustTokenElementTypes.REM; }
-  ">>="                           { return RustTokenElementTypes.GTGTEQ; }
-  ">>"                            { return RustTokenElementTypes.GTGT; }
-  ">="                            { return RustTokenElementTypes.GTEQ; }
   ">"                             { return RustTokenElementTypes.GT; }
   "->"                            { return RustTokenElementTypes.ARROW; }
   "=>"                            { return RustTokenElementTypes.FAT_ARROW; }

@@ -24,7 +24,16 @@ public class RustParser implements PsiParser, LightPsiParser {
     boolean r;
     b = adapt_builder_(t, b, this, EXTENDS_SETS_);
     Marker m = enter_section_(b, 0, _COLLAPSE_, null);
-    if (t == ABI) {
+    if (t == GTEQ) {
+      r = GTEQ(b, 0);
+    }
+    else if (t == GTGT) {
+      r = GTGT(b, 0);
+    }
+    else if (t == GTGTEQ) {
+      r = GTGTEQ(b, 0);
+    }
+    else if (t == ABI) {
       r = abi(b, 0);
     }
     else if (t == ANON_PARAM) {
@@ -397,6 +406,42 @@ public class RustParser implements PsiParser, LightPsiParser {
       SELF_EXPR, STRUCT_EXPR, TUPLE_EXPR, UNARY_EXPR,
       UNIT_EXPR, WHILE_EXPR, WHILE_LET_EXPR),
   };
+
+  /* ********************************************************** */
+  // GT EQ
+  public static boolean GTEQ(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "GTEQ")) return false;
+    if (!nextTokenIs(b, GT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, GT, EQ);
+    exit_section_(b, m, GTEQ, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // GT GT
+  public static boolean GTGT(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "GTGT")) return false;
+    if (!nextTokenIs(b, GT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, GT, GT);
+    exit_section_(b, m, GTGT, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // GT GT EQ
+  public static boolean GTGTEQ(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "GTGTEQ")) return false;
+    if (!nextTokenIs(b, GT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, GT, GT, EQ);
+    exit_section_(b, m, GTGTEQ, r);
+    return r;
+  }
 
   /* ********************************************************** */
   // STRING_LITERAL
@@ -6141,7 +6186,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "assign_bin_expr_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, GTGTEQ);
+    r = GTGTEQ(b, l + 1);
     if (!r) r = consumeTokenSmart(b, LTLTEQ);
     if (!r) r = consumeTokenSmart(b, OREQ);
     if (!r) r = consumeTokenSmart(b, XOREQ);
@@ -6294,15 +6339,47 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // LT | GT | LTEQ | GTEQ
+  // LT | GT !(GT | EQ) | LTEQ | GTEQ
   private static boolean rel_comp_bin_expr_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "rel_comp_bin_expr_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, LT);
-    if (!r) r = consumeTokenSmart(b, GT);
+    if (!r) r = rel_comp_bin_expr_0_1(b, l + 1);
     if (!r) r = consumeTokenSmart(b, LTEQ);
-    if (!r) r = consumeTokenSmart(b, GTEQ);
+    if (!r) r = GTEQ(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // GT !(GT | EQ)
+  private static boolean rel_comp_bin_expr_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "rel_comp_bin_expr_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, GT);
+    r = r && rel_comp_bin_expr_0_1_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // !(GT | EQ)
+  private static boolean rel_comp_bin_expr_0_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "rel_comp_bin_expr_0_1_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !rel_comp_bin_expr_0_1_1_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // GT | EQ
+  private static boolean rel_comp_bin_expr_0_1_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "rel_comp_bin_expr_0_1_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, GT);
+    if (!r) r = consumeTokenSmart(b, EQ);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -6313,7 +6390,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, LTLT);
-    if (!r) r = consumeTokenSmart(b, GTGT);
+    if (!r) r = GTGT(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }

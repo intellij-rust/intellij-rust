@@ -7,6 +7,15 @@ import com.intellij.psi.PsiElement;
 
 public interface RustBinaryExpr extends RustExpr {
 
+  @Nullable
+  RustGteq getGteq();
+
+  @Nullable
+  RustGtgt getGtgt();
+
+  @Nullable
+  RustGtgteq getGtgteq();
+
   @NotNull
   List<RustExpr> getExprList();
 
@@ -36,15 +45,6 @@ public interface RustBinaryExpr extends RustExpr {
 
   @Nullable
   PsiElement getGt();
-
-  @Nullable
-  PsiElement getGteq();
-
-  @Nullable
-  PsiElement getGtgt();
-
-  @Nullable
-  PsiElement getGtgteq();
 
   @Nullable
   PsiElement getLt();
