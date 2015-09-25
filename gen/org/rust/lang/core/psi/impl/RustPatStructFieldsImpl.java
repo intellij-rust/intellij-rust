@@ -26,15 +26,21 @@ public class RustPatStructFieldsImpl extends RustPatImpl implements RustPatStruc
   }
 
   @Override
+  @NotNull
+  public List<RustBindingMode> getBindingModeList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustBindingMode.class);
+  }
+
+  @Override
   @Nullable
   public RustCommaSeparatedList getCommaSeparatedList() {
     return findChildByClass(RustCommaSeparatedList.class);
   }
 
   @Override
-  @Nullable
-  public PsiElement getComma() {
-    return findChildByType(COMMA);
+  @NotNull
+  public List<RustPat> getPatList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustPat.class);
   }
 
   @Override

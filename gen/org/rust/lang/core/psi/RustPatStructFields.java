@@ -7,11 +7,14 @@ import com.intellij.psi.PsiElement;
 
 public interface RustPatStructFields extends RustPat {
 
+  @NotNull
+  List<RustBindingMode> getBindingModeList();
+
   @Nullable
   RustCommaSeparatedList getCommaSeparatedList();
 
-  @Nullable
-  PsiElement getComma();
+  @NotNull
+  List<RustPat> getPatList();
 
   @Nullable
   PsiElement getDotdot();

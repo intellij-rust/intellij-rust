@@ -3794,34 +3794,56 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<comma_separated_list pat_field>> [ COMMA DOTDOT ]
-  //                     |                    DOTDOT
+  // (pat_field COMMA)+ DOTDOT
+  //                     | <<comma_separated_list pat_field>>
+  //                     | DOTDOT
   public static boolean pat_struct_fields(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pat_struct_fields")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, PAT_STRUCT_FIELDS, "<pat struct fields>");
     r = pat_struct_fields_0(b, l + 1);
+    if (!r) r = comma_separated_list(b, l + 1, pat_field_parser_);
     if (!r) r = consumeToken(b, DOTDOT);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // <<comma_separated_list pat_field>> [ COMMA DOTDOT ]
+  // (pat_field COMMA)+ DOTDOT
   private static boolean pat_struct_fields_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pat_struct_fields_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = comma_separated_list(b, l + 1, pat_field_parser_);
-    r = r && pat_struct_fields_0_1(b, l + 1);
+    r = pat_struct_fields_0_0(b, l + 1);
+    r = r && consumeToken(b, DOTDOT);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // [ COMMA DOTDOT ]
-  private static boolean pat_struct_fields_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pat_struct_fields_0_1")) return false;
-    parseTokens(b, 0, COMMA, DOTDOT);
-    return true;
+  // (pat_field COMMA)+
+  private static boolean pat_struct_fields_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pat_struct_fields_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = pat_struct_fields_0_0_0(b, l + 1);
+    int c = current_position_(b);
+    while (r) {
+      if (!pat_struct_fields_0_0_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "pat_struct_fields_0_0", c)) break;
+      c = current_position_(b);
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // pat_field COMMA
+  private static boolean pat_struct_fields_0_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pat_struct_fields_0_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = pat_field(b, l + 1);
+    r = r && consumeToken(b, COMMA);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
