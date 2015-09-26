@@ -208,7 +208,7 @@ fn_item ::= FN IDENTIFIER generic_params fn_params ret_type? where_clause? block
 
 foreign_fn_item ::= FN IDENTIFIER generic_params fn_decl_allow_variadic where_clause? SEMICOLON
 
-private fn_decl_allow_variadic   ::= fn_params_allow_variadic ret_type
+private fn_decl_allow_variadic   ::= fn_params_allow_variadic ret_type?
 private fn_params_allow_variadic ::= LPAREN params COMMA DOTDOTDOT RPAREN
                                    | LPAREN params COMMA RPAREN
                                    | LPAREN params RPAREN
@@ -460,7 +460,7 @@ trait_method ::= type_method | method
 
 type_method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause? SEMICOLON
 
-private fn_decl_with_self_allow_anon_params ::= fn_anon_params_with_self ret_type
+private fn_decl_with_self_allow_anon_params ::= fn_anon_params_with_self ret_type?
 private fn_anon_params_with_self ::= LPAREN [ AND lifetime? ] MUT? SELF type_ascription? comma_anon_params? RPAREN
                                    | LPAREN anon_params RPAREN
 
@@ -537,7 +537,7 @@ private type_prim ::= [ CSELF? COLONCOLON ] path_generic_args_without_colons
 
 private type_bare_fn ::= [ UNSAFE? [ EXTERN abi? ] ] FN type_fn_decl
 
-private type_fn_decl ::= generic_params fn_anon_params ret_type
+private type_fn_decl ::= generic_params fn_anon_params ret_type?
 
 private fn_anon_params ::= LPAREN anon_param anon_params_allow_variadic_tail RPAREN
                          | LPAREN RPAREN

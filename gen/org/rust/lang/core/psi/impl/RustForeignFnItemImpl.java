@@ -38,9 +38,9 @@ public class RustForeignFnItemImpl extends RustNamedElementImpl implements RustF
   }
 
   @Override
-  @NotNull
+  @Nullable
   public RustRetType getRetType() {
-    return findNotNullChildByClass(RustRetType.class);
+    return findChildByClass(RustRetType.class);
   }
 
   @Override

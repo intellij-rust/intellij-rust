@@ -1484,16 +1484,23 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // fn_params_allow_variadic ret_type
+  // fn_params_allow_variadic ret_type?
   static boolean fn_decl_allow_variadic(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "fn_decl_allow_variadic")) return false;
     if (!nextTokenIs(b, LPAREN)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = fn_params_allow_variadic(b, l + 1);
-    r = r && ret_type(b, l + 1);
+    r = r && fn_decl_allow_variadic_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // ret_type?
+  private static boolean fn_decl_allow_variadic_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "fn_decl_allow_variadic_1")) return false;
+    ret_type(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */
@@ -1517,16 +1524,23 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // fn_anon_params_with_self ret_type
+  // fn_anon_params_with_self ret_type?
   static boolean fn_decl_with_self_allow_anon_params(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "fn_decl_with_self_allow_anon_params")) return false;
     if (!nextTokenIs(b, LPAREN)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = fn_anon_params_with_self(b, l + 1);
-    r = r && ret_type(b, l + 1);
+    r = r && fn_decl_with_self_allow_anon_params_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // ret_type?
+  private static boolean fn_decl_with_self_allow_anon_params_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "fn_decl_with_self_allow_anon_params_1")) return false;
+    ret_type(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */
@@ -5092,7 +5106,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // generic_params fn_anon_params ret_type
+  // generic_params fn_anon_params ret_type?
   static boolean type_fn_decl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_fn_decl")) return false;
     if (!nextTokenIs(b, "", LPAREN, LT)) return false;
@@ -5100,9 +5114,16 @@ public class RustParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = generic_params(b, l + 1);
     r = r && fn_anon_params(b, l + 1);
-    r = r && ret_type(b, l + 1);
+    r = r && type_fn_decl_2(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // ret_type?
+  private static boolean type_fn_decl_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_fn_decl_2")) return false;
+    ret_type(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */

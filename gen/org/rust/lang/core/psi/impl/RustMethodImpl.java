@@ -56,9 +56,9 @@ public class RustMethodImpl extends RustCompositeElementImpl implements RustMeth
   }
 
   @Override
-  @NotNull
+  @Nullable
   public RustRetType getRetType() {
-    return findNotNullChildByClass(RustRetType.class);
+    return findChildByClass(RustRetType.class);
   }
 
   @Override

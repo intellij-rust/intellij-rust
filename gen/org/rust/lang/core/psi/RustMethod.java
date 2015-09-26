@@ -22,7 +22,7 @@ public interface RustMethod extends RustCompositeElement {
   @NotNull
   List<RustOuterAttr> getOuterAttrList();
 
-  @NotNull
+  @Nullable
   RustRetType getRetType();
 
   @Nullable
