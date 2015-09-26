@@ -260,4 +260,6 @@ SHEBANG_LINE=\#\![^\[].*
 <LIFETIME_OR_CHAR>\\u\{[0-9a-fA-F]?{6}\}\x27    { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
 <LIFETIME_OR_CHAR>.\x27                         { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
 <LIFETIME_OR_CHAR>[\x80-\xff]{2,4}\x27          { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
+<LIFETIME_OR_CHAR>[^]                           { yybegin(YYINITIAL); return com.intellij.psi.TokenType.BAD_CHARACTER; }
 <LIFETIME_OR_CHAR><<EOF>>                       { yybegin(YYINITIAL); return com.intellij.psi.TokenType.BAD_CHARACTER; }
+

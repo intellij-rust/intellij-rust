@@ -22,5 +22,6 @@ public class RustLexingTestCase : LexerTestCase() {
 
     fun testComments()      { doFileTest(ext) }
     fun testShebang()       { doFileTest(ext) }
-    fun testFloat() { doFileTest(ext) }
+    fun testFloat()         { doFileTest(ext) }
+    fun testUnicode()       { doFileTest(ext) }
 }
