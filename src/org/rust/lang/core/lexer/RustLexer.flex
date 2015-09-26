@@ -86,7 +86,7 @@ UNICODE_ESCAPE = \\u\{{HEX_DIGIT}{1,6}\}
 SHEBANG_LINE=\#\![^\[].*
 
 %%
-<YYINITIAL> \x27                  { yybegin(LIFETIME_OR_CHAR); }
+<YYINITIAL> \x27                  { yybegin(LIFETIME_OR_CHAR); yypushback(1); }
 
 <YYINITIAL>                       {
 
@@ -253,13 +253,13 @@ SHEBANG_LINE=\#\![^\[].*
 // Lifetimes & Literals
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-<LIFETIME_OR_CHAR>static                        { yybegin(YYINITIAL); return RustTokenElementTypes.STATIC_LIFETIME; }
-<LIFETIME_OR_CHAR>{IDENTIFIER}                  { yybegin(YYINITIAL); return RustTokenElementTypes.LIFETIME; }
-<LIFETIME_OR_CHAR>\\[nrt\\\x27\x220]\x27        { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
-<LIFETIME_OR_CHAR>\\x[0-9a-fA-F]{2}\x27         { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
-<LIFETIME_OR_CHAR>\\u\{[0-9a-fA-F]?{6}\}\x27    { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
-<LIFETIME_OR_CHAR>.\x27                         { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
-<LIFETIME_OR_CHAR>[\x80-\xff]{2,4}\x27          { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
-<LIFETIME_OR_CHAR>[^]                           { yybegin(YYINITIAL); return com.intellij.psi.TokenType.BAD_CHARACTER; }
-<LIFETIME_OR_CHAR><<EOF>>                       { yybegin(YYINITIAL); return com.intellij.psi.TokenType.BAD_CHARACTER; }
+<LIFETIME_OR_CHAR>\x27static                        { yybegin(YYINITIAL); return RustTokenElementTypes.STATIC_LIFETIME; }
+<LIFETIME_OR_CHAR>\x27{IDENTIFIER}                  { yybegin(YYINITIAL); return RustTokenElementTypes.LIFETIME; }
+<LIFETIME_OR_CHAR>\x27\\[nrt\\\x27\x220]\x27        { yybegin(SUFFIX); return RustTokenElementTypes.CHAR_LITERAL; }
+<LIFETIME_OR_CHAR>\x27\\x[0-9a-fA-F]{2}\x27         { yybegin(SUFFIX); return RustTokenElementTypes.CHAR_LITERAL; }
+<LIFETIME_OR_CHAR>\x27\\u\{[0-9a-fA-F]?{6}\}\x27    { yybegin(SUFFIX); return RustTokenElementTypes.CHAR_LITERAL; }
+<LIFETIME_OR_CHAR>\x27.\x27                         { yybegin(SUFFIX); return RustTokenElementTypes.CHAR_LITERAL; }
+<LIFETIME_OR_CHAR>\x27[\x80-\xff]{2,4}\x27          { yybegin(SUFFIX); return RustTokenElementTypes.CHAR_LITERAL; }
+<LIFETIME_OR_CHAR>[^]                               { yybegin(YYINITIAL); return com.intellij.psi.TokenType.BAD_CHARACTER; }
+<LIFETIME_OR_CHAR><<EOF>>                           { yybegin(YYINITIAL); return com.intellij.psi.TokenType.BAD_CHARACTER; }
 
