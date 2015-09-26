@@ -83,7 +83,7 @@ UNICODE_ESCAPE = \\u\{{HEX_DIGIT}{1,6}\}
 // Other
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-SHEBANG_LINE=\#\!.*
+SHEBANG_LINE=\#\![^\[].*
 
 %%
 <YYINITIAL> \x27                  { yybegin(LIFETIME_OR_CHAR); }
