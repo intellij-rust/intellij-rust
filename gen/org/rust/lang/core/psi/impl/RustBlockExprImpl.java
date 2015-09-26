@@ -31,4 +31,10 @@ public class RustBlockExprImpl extends RustExprImpl implements RustBlockExpr {
     return findNotNullChildByClass(RustBlock.class);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getUnsafe() {
+    return findChildByType(UNSAFE);
+  }
+
 }

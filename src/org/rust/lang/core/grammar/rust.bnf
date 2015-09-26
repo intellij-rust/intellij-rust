@@ -657,7 +657,7 @@ cast_expr ::= expr AS type
 
 unary_expr ::= (MINUS | MUL | EXCL | AND MUT?) expr
 
-block_expr ::= block
+block_expr ::= UNSAFE? block
 
 lambda_expr ::= MOVE? (OROR | OR [<<comma_separated_list lambda_param>>] OR) ret_type? expr
 private lambda_param ::= pat type_ascription?

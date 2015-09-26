@@ -10,4 +10,7 @@ public interface RustBlockExpr extends RustExpr {
   @NotNull
   RustBlock getBlock();
 
+  @Nullable
+  PsiElement getUnsafe();
+
 }

@@ -809,15 +809,23 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // block
+  // UNSAFE? block
   public static boolean block_expr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_expr")) return false;
-    if (!nextTokenIs(b, LBRACE)) return false;
+    if (!nextTokenIs(b, "<block expr>", LBRACE, UNSAFE)) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = block(b, l + 1);
-    exit_section_(b, m, BLOCK_EXPR, r);
+    Marker m = enter_section_(b, l, _NONE_, BLOCK_EXPR, "<block expr>");
+    r = block_expr_0(b, l + 1);
+    r = r && block(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
+  }
+
+  // UNSAFE?
+  private static boolean block_expr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_expr_0")) return false;
+    consumeToken(b, UNSAFE);
+    return true;
   }
 
   /* ********************************************************** */

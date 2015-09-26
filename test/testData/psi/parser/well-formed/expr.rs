@@ -34,11 +34,15 @@ fn test() -> u32 {
     r = 1.. ;
     r =  .. ;
 
-    || {};
+    || {};          /* lambda */
     |x: i32| -> i32 92;
     move |x: i32| {
         x
     };
+
+    { }             /* block */
+
+    unsafe { 92 }
 
     // TBA(kudinkin)
 
