@@ -15,4 +15,5 @@ public class RustCompleteParsingTestCase extends RustParsingTestCaseBase {
     public void testPatterns()       { doTest(true); }
     public void testAttributes()     { doTest(true); }
     public void testTraits()         { doTest(true); }
+    public void testMacros()         { doTest(true); }
 }

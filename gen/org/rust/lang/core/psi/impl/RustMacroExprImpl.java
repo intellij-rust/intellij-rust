@@ -27,8 +27,8 @@ public class RustMacroExprImpl extends RustExprImpl implements RustMacroExpr {
 
   @Override
   @NotNull
-  public RustArgList getArgList() {
-    return findNotNullChildByClass(RustArgList.class);
+  public RustMacroArg getMacroArg() {
+    return findNotNullChildByClass(RustMacroArg.class);
   }
 
   @Override

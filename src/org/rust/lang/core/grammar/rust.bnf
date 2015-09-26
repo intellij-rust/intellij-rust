@@ -735,11 +735,15 @@ call_expr ::= expr arg_list
 
 method_call_expr ::= expr DOT IDENTIFIER [COLONCOLON generic_args] arg_list { pin=2 }
 
-macro_expr ::= IDENTIFIER EXCL arg_list
-
 arg_list ::= LPAREN expr_list RPAREN {pin=1}
 
 private expr_list ::= [ expr (COMMA expr)* ]
+
+macro_expr ::= IDENTIFIER EXCL macro_arg
+
+macro_arg ::= LPAREN expr_list RPAREN
+            | LBRACE expr_list RBRACE
+            | LBRACK expr_list RBRACK {pin=1}
 
 field_expr ::= expr DOT (IDENTIFIER | INTEGER_LITERAL) { pin(".*")=2 }
 

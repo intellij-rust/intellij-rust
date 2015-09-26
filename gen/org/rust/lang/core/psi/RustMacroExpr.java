@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 public interface RustMacroExpr extends RustExpr {
 
   @NotNull
-  RustArgList getArgList();
+  RustMacroArg getMacroArg();
 
   @NotNull
   PsiElement getExcl();

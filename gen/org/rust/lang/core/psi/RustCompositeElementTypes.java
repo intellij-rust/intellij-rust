@@ -64,6 +64,7 @@ public interface RustCompositeElementTypes {
   IElementType LIFETIMES = new RustCompositeElementType("LIFETIMES");
   IElementType LIT_EXPR = new RustCompositeElementType("LIT_EXPR");
   IElementType LOOP_EXPR = new RustCompositeElementType("LOOP_EXPR");
+  IElementType MACRO_ARG = new RustCompositeElementType("MACRO_ARG");
   IElementType MACRO_EXPR = new RustCompositeElementType("MACRO_EXPR");
   IElementType MATCH_EXPR = new RustCompositeElementType("MATCH_EXPR");
   IElementType META_ITEM = new RustCompositeElementType("META_ITEM");
@@ -297,6 +298,9 @@ public interface RustCompositeElementTypes {
       }
       else if (type == LOOP_EXPR) {
         return new RustLoopExprImpl(node);
+      }
+      else if (type == MACRO_ARG) {
+        return new RustMacroArgImpl(node);
       }
       else if (type == MACRO_EXPR) {
         return new RustMacroExprImpl(node);

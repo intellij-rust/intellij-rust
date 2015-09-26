@@ -227,6 +227,10 @@ public class RustVisitor extends PsiElementVisitor {
     visitExpr(o);
   }
 
+  public void visitMacroArg(@NotNull RustMacroArg o) {
+    visitCompositeElement(o);
+  }
+
   public void visitMacroExpr(@NotNull RustMacroExpr o) {
     visitExpr(o);
   }

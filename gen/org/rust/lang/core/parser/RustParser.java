@@ -186,6 +186,9 @@ public class RustParser implements PsiParser, LightPsiParser {
     else if (t == LOOP_EXPR) {
       r = loop_expr(b, 0);
     }
+    else if (t == MACRO_ARG) {
+      r = macro_arg(b, 0);
+    }
     else if (t == MACRO_EXPR) {
       r = macro_expr(b, 0);
     }
@@ -2979,6 +2982,57 @@ public class RustParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = lifetime(b, l + 1);
     r = r && consumeToken(b, COLON);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // LPAREN expr_list RPAREN
+  //             | LBRACE expr_list RBRACE
+  //             | LBRACK expr_list RBRACK
+  public static boolean macro_arg(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "macro_arg")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, MACRO_ARG, "<macro arg>");
+    r = macro_arg_0(b, l + 1);
+    if (!r) r = macro_arg_1(b, l + 1);
+    if (!r) r = macro_arg_2(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // LPAREN expr_list RPAREN
+  private static boolean macro_arg_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "macro_arg_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LPAREN);
+    r = r && expr_list(b, l + 1);
+    r = r && consumeToken(b, RPAREN);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // LBRACE expr_list RBRACE
+  private static boolean macro_arg_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "macro_arg_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LBRACE);
+    r = r && expr_list(b, l + 1);
+    r = r && consumeToken(b, RBRACE);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // LBRACK expr_list RBRACK
+  private static boolean macro_arg_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "macro_arg_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LBRACK);
+    r = r && expr_list(b, l + 1);
+    r = r && consumeToken(b, RBRACK);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -6515,14 +6569,14 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // IDENTIFIER EXCL arg_list
+  // IDENTIFIER EXCL macro_arg
   public static boolean macro_expr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "macro_expr")) return false;
     if (!nextTokenIsFast(b, IDENTIFIER)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokens(b, 0, IDENTIFIER, EXCL);
-    r = r && arg_list(b, l + 1);
+    r = r && macro_arg(b, l + 1);
     exit_section_(b, m, MACRO_EXPR, r);
     return r;
   }
