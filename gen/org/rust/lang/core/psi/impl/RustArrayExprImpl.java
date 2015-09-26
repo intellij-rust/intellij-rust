@@ -26,6 +26,12 @@ public class RustArrayExprImpl extends RustExprImpl implements RustArrayExpr {
   }
 
   @Override
+  @Nullable
+  public RustCommaSeparatedList getCommaSeparatedList() {
+    return findChildByClass(RustCommaSeparatedList.class);
+  }
+
+  @Override
   @NotNull
   public List<RustExpr> getExprList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
@@ -35,12 +41,6 @@ public class RustArrayExprImpl extends RustExprImpl implements RustArrayExpr {
   @NotNull
   public PsiElement getLbrack() {
     return findNotNullChildByType(LBRACK);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getMut() {
-    return findChildByType(MUT);
   }
 
   @Override

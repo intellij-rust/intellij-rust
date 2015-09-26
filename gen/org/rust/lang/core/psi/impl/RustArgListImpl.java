@@ -26,9 +26,9 @@ public class RustArgListImpl extends RustCompositeElementImpl implements RustArg
   }
 
   @Override
-  @NotNull
-  public List<RustExpr> getExprList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
+  @Nullable
+  public RustCommaSeparatedList getCommaSeparatedList() {
+    return findChildByClass(RustCommaSeparatedList.class);
   }
 
   @Override

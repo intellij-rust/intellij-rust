@@ -7,8 +7,8 @@ import com.intellij.psi.PsiElement;
 
 public interface RustArgList extends RustCompositeElement {
 
-  @NotNull
-  List<RustExpr> getExprList();
+  @Nullable
+  RustCommaSeparatedList getCommaSeparatedList();
 
   @NotNull
   PsiElement getLparen();

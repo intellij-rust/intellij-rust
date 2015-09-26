@@ -708,9 +708,10 @@ tuple_expr ::= LPAREN expr ((COMMA expr)+ | COMMA) RPAREN
 
 private no_struct_lit_expr ::= expr
 
-array_expr ::= LBRACK MUT? array_elems? RBRACK {pin=1}
+array_expr ::= LBRACK array_elems? RBRACK {pin=1}
 
-private array_elems ::= expr [ (COMMA expr)+ | SEMICOLON expr ]
+private array_elems ::= expr SEMICOLON expr
+                      | expr_list
 
 
 //private range_expr_group ::= open_range_expr
@@ -735,15 +736,15 @@ call_expr ::= expr arg_list
 
 method_call_expr ::= expr DOT IDENTIFIER [COLONCOLON generic_args] arg_list { pin=2 }
 
-arg_list ::= LPAREN expr_list RPAREN {pin=1}
+arg_list ::= LPAREN expr_list? RPAREN {pin=1}
 
-private expr_list ::= [ expr (COMMA expr)* ]
+private expr_list ::= <<comma_separated_list expr>>
 
 macro_expr ::= IDENTIFIER EXCL macro_arg
 
-macro_arg ::= LPAREN expr_list RPAREN
-            | LBRACE expr_list RBRACE
-            | LBRACK expr_list RBRACK {pin=1}
+macro_arg ::= LPAREN expr_list? RPAREN
+            | LBRACE expr_list? RBRACE
+            | LBRACK expr_list? RBRACK {pin=1}
 
 field_expr ::= expr DOT (IDENTIFIER | INTEGER_LITERAL) { pin(".*")=2 }
 
