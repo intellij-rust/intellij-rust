@@ -1,5 +1,7 @@
 type FunType = Fn(f64) -> f64;
 
+type FunTypeVoid = Fn();
+
 type Sum = Box<A + Copy>;
 
 type FunSum = Box<Fn(f64, f64) -> f64 + Send + Sync>;

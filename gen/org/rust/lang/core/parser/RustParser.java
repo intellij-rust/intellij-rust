@@ -4115,8 +4115,8 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER LPAREN type_sums? RPAREN ret_type   path_generic_args_without_colons_right
-  //                                            | IDENTIFIER generic_args?                       path_generic_args_without_colons_right
+  // IDENTIFIER LPAREN type_sums? RPAREN ret_type?   path_generic_args_without_colons_right
+  //                                            | IDENTIFIER generic_args?                        path_generic_args_without_colons_right
   static boolean path_generic_args_without_colons(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_generic_args_without_colons")) return false;
     if (!nextTokenIs(b, IDENTIFIER)) return false;
@@ -4128,7 +4128,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // IDENTIFIER LPAREN type_sums? RPAREN ret_type   path_generic_args_without_colons_right
+  // IDENTIFIER LPAREN type_sums? RPAREN ret_type?   path_generic_args_without_colons_right
   private static boolean path_generic_args_without_colons_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_generic_args_without_colons_0")) return false;
     boolean r;
@@ -4136,7 +4136,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     r = consumeTokens(b, 0, IDENTIFIER, LPAREN);
     r = r && path_generic_args_without_colons_0_2(b, l + 1);
     r = r && consumeToken(b, RPAREN);
-    r = r && ret_type(b, l + 1);
+    r = r && path_generic_args_without_colons_0_4(b, l + 1);
     r = r && path_generic_args_without_colons_right(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -4149,7 +4149,14 @@ public class RustParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // IDENTIFIER generic_args?                       path_generic_args_without_colons_right
+  // ret_type?
+  private static boolean path_generic_args_without_colons_0_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "path_generic_args_without_colons_0_4")) return false;
+    ret_type(b, l + 1);
+    return true;
+  }
+
+  // IDENTIFIER generic_args?                        path_generic_args_without_colons_right
   private static boolean path_generic_args_without_colons_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_generic_args_without_colons_1")) return false;
     boolean r;
@@ -4169,16 +4176,16 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // [ COLONCOLON IDENTIFIER generic_args?                      path_generic_args_without_colons_right
-  //                                                    | COLONCOLON IDENTIFIER LPAREN type_sums? RPAREN ret_type  path_generic_args_without_colons_right ]
+  // [ COLONCOLON IDENTIFIER generic_args?                       path_generic_args_without_colons_right
+  //                                                    | COLONCOLON IDENTIFIER LPAREN type_sums? RPAREN ret_type?  path_generic_args_without_colons_right ]
   static boolean path_generic_args_without_colons_right(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_generic_args_without_colons_right")) return false;
     path_generic_args_without_colons_right_0(b, l + 1);
     return true;
   }
 
-  // COLONCOLON IDENTIFIER generic_args?                      path_generic_args_without_colons_right
-  //                                                    | COLONCOLON IDENTIFIER LPAREN type_sums? RPAREN ret_type  path_generic_args_without_colons_right
+  // COLONCOLON IDENTIFIER generic_args?                       path_generic_args_without_colons_right
+  //                                                    | COLONCOLON IDENTIFIER LPAREN type_sums? RPAREN ret_type?  path_generic_args_without_colons_right
   private static boolean path_generic_args_without_colons_right_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_generic_args_without_colons_right_0")) return false;
     boolean r;
@@ -4189,7 +4196,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // COLONCOLON IDENTIFIER generic_args?                      path_generic_args_without_colons_right
+  // COLONCOLON IDENTIFIER generic_args?                       path_generic_args_without_colons_right
   private static boolean path_generic_args_without_colons_right_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_generic_args_without_colons_right_0_0")) return false;
     boolean r;
@@ -4208,7 +4215,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // COLONCOLON IDENTIFIER LPAREN type_sums? RPAREN ret_type  path_generic_args_without_colons_right
+  // COLONCOLON IDENTIFIER LPAREN type_sums? RPAREN ret_type?  path_generic_args_without_colons_right
   private static boolean path_generic_args_without_colons_right_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_generic_args_without_colons_right_0_1")) return false;
     boolean r;
@@ -4216,7 +4223,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     r = consumeTokens(b, 0, COLONCOLON, IDENTIFIER, LPAREN);
     r = r && path_generic_args_without_colons_right_0_1_3(b, l + 1);
     r = r && consumeToken(b, RPAREN);
-    r = r && ret_type(b, l + 1);
+    r = r && path_generic_args_without_colons_right_0_1_5(b, l + 1);
     r = r && path_generic_args_without_colons_right(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -4226,6 +4233,13 @@ public class RustParser implements PsiParser, LightPsiParser {
   private static boolean path_generic_args_without_colons_right_0_1_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_generic_args_without_colons_right_0_1_3")) return false;
     type_sums(b, l + 1);
+    return true;
+  }
+
+  // ret_type?
+  private static boolean path_generic_args_without_colons_right_0_1_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "path_generic_args_without_colons_right_0_1_5")) return false;
+    ret_type(b, l + 1);
     return true;
   }
 
