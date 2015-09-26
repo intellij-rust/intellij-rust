@@ -16,7 +16,7 @@ public class RustReference<T : RustQualifiedReference>(element: T, range: TextRa
 
     constructor(element: T) : this(element, element.getRangeInElement(), false)
 
-    override fun getVariants(): Array<out Any>? {
+    override fun getVariants(): Array<out Any> {
         throw UnsupportedOperationException()
     }
 

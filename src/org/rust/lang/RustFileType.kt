@@ -19,7 +19,7 @@ public open class RustFileType : LanguageFileType(RustLanguage.INSTANCE) {
 
     override fun getDefaultExtension(): String = DEFAULTS.EXTENSION
 
-    override fun getCharset(file: VirtualFile, content: ByteArray?): String =
+    override fun getCharset(file: VirtualFile, content: ByteArray): String =
             "UTF-8"
 
     override fun getDescription(): String {
