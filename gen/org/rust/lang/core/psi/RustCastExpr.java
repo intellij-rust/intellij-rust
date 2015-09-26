@@ -53,6 +53,9 @@ public interface RustCastExpr extends RustExpr {
   PsiElement getConst();
 
   @Nullable
+  PsiElement getCself();
+
+  @Nullable
   PsiElement getDotdot();
 
   @Nullable
@@ -87,9 +90,6 @@ public interface RustCastExpr extends RustExpr {
 
   @Nullable
   PsiElement getRbrack();
-
-  @Nullable
-  PsiElement getSelf();
 
   @Nullable
   PsiElement getSemicolon();

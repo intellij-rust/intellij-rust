@@ -93,6 +93,12 @@ public class RustDeclItemImpl extends RustNamedElementImpl implements RustDeclIt
 
   @Override
   @Nullable
+  public PsiElement getCself() {
+    return findChildByType(CSELF);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getDotdotdot() {
     return findChildByType(DOTDOTDOT);
   }
@@ -113,12 +119,6 @@ public class RustDeclItemImpl extends RustNamedElementImpl implements RustDeclIt
   @Nullable
   public PsiElement getFor() {
     return findChildByType(FOR);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getSelf() {
-    return findChildByType(SELF);
   }
 
   @Override

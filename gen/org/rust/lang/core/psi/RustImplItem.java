@@ -56,6 +56,9 @@ public interface RustImplItem extends RustCompositeElement {
   RustWhereClause getWhereClause();
 
   @Nullable
+  PsiElement getCself();
+
+  @Nullable
   PsiElement getDotdotdot();
 
   @Nullable
@@ -78,9 +81,6 @@ public interface RustImplItem extends RustCompositeElement {
 
   @NotNull
   PsiElement getRbrace();
-
-  @Nullable
-  PsiElement getSelf();
 
   @Nullable
   PsiElement getTypeof();

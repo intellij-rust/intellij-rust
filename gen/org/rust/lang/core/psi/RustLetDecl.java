@@ -62,6 +62,9 @@ public interface RustLetDecl extends RustCompositeElement {
   PsiElement getConst();
 
   @Nullable
+  PsiElement getCself();
+
+  @Nullable
   PsiElement getDotdot();
 
   @Nullable
@@ -102,9 +105,6 @@ public interface RustLetDecl extends RustCompositeElement {
 
   @Nullable
   PsiElement getRbrack();
-
-  @Nullable
-  PsiElement getSelf();
 
   @Nullable
   PsiElement getStaticLifetime();

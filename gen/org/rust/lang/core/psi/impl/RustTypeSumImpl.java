@@ -93,6 +93,12 @@ public class RustTypeSumImpl extends RustCompositeElementImpl implements RustTyp
 
   @Override
   @Nullable
+  public PsiElement getCself() {
+    return findChildByType(CSELF);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getDotdotdot() {
     return findChildByType(DOTDOTDOT);
   }
@@ -119,12 +125,6 @@ public class RustTypeSumImpl extends RustCompositeElementImpl implements RustTyp
   @Nullable
   public PsiElement getPlus() {
     return findChildByType(PLUS);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getSelf() {
-    return findChildByType(SELF);
   }
 
   @Override

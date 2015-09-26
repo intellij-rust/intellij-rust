@@ -38,6 +38,9 @@ public interface RustBinding extends RustCompositeElement {
   List<RustTypeSums> getTypeSumsList();
 
   @Nullable
+  PsiElement getCself();
+
+  @Nullable
   PsiElement getDotdotdot();
 
   @NotNull
@@ -51,9 +54,6 @@ public interface RustBinding extends RustCompositeElement {
 
   @Nullable
   PsiElement getFor();
-
-  @Nullable
-  PsiElement getSelf();
 
   @Nullable
   PsiElement getTypeof();

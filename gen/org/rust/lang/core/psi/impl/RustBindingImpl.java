@@ -87,6 +87,12 @@ public class RustBindingImpl extends RustCompositeElementImpl implements RustBin
 
   @Override
   @Nullable
+  public PsiElement getCself() {
+    return findChildByType(CSELF);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getDotdotdot() {
     return findChildByType(DOTDOTDOT);
   }
@@ -113,12 +119,6 @@ public class RustBindingImpl extends RustCompositeElementImpl implements RustBin
   @Nullable
   public PsiElement getFor() {
     return findChildByType(FOR);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getSelf() {
-    return findChildByType(SELF);
   }
 
   @Override

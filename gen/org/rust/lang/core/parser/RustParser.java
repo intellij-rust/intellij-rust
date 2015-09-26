@@ -5313,7 +5313,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // [ SELF? COLONCOLON ] path_generic_args_without_colons
+  // [ CSELF? COLONCOLON ] path_generic_args_without_colons
   //                     | BOX type
   //                     | MUL    [ MUT | CONST ] type
   //                     | AND    [ lifetime? MUT? ] type
@@ -5341,7 +5341,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [ SELF? COLONCOLON ] path_generic_args_without_colons
+  // [ CSELF? COLONCOLON ] path_generic_args_without_colons
   private static boolean type_prim_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_prim_0")) return false;
     boolean r;
@@ -5352,14 +5352,14 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [ SELF? COLONCOLON ]
+  // [ CSELF? COLONCOLON ]
   private static boolean type_prim_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_prim_0_0")) return false;
     type_prim_0_0_0(b, l + 1);
     return true;
   }
 
-  // SELF? COLONCOLON
+  // CSELF? COLONCOLON
   private static boolean type_prim_0_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_prim_0_0_0")) return false;
     boolean r;
@@ -5370,10 +5370,10 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // SELF?
+  // CSELF?
   private static boolean type_prim_0_0_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_prim_0_0_0_0")) return false;
-    consumeToken(b, SELF);
+    consumeToken(b, CSELF);
     return true;
   }
 

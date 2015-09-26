@@ -117,6 +117,12 @@ public class RustAnonParamImpl extends RustCompositeElementImpl implements RustA
 
   @Override
   @Nullable
+  public PsiElement getCself() {
+    return findChildByType(CSELF);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getDotdot() {
     return findChildByType(DOTDOT);
   }
@@ -179,12 +185,6 @@ public class RustAnonParamImpl extends RustCompositeElementImpl implements RustA
   @Nullable
   public PsiElement getRbrack() {
     return findChildByType(RBRACK);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getSelf() {
-    return findChildByType(SELF);
   }
 
   @Override

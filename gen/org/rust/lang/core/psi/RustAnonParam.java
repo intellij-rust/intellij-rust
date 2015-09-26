@@ -53,6 +53,9 @@ public interface RustAnonParam extends RustCompositeElement {
   PsiElement getConst();
 
   @Nullable
+  PsiElement getCself();
+
+  @Nullable
   PsiElement getDotdot();
 
   @Nullable
@@ -84,9 +87,6 @@ public interface RustAnonParam extends RustCompositeElement {
 
   @Nullable
   PsiElement getRbrack();
-
-  @Nullable
-  PsiElement getSelf();
 
   @Nullable
   PsiElement getSemicolon();

@@ -47,6 +47,9 @@ public interface RustForeignItem extends RustCompositeElement {
   PsiElement getColon();
 
   @Nullable
+  PsiElement getCself();
+
+  @Nullable
   PsiElement getDotdotdot();
 
   @Nullable
@@ -60,9 +63,6 @@ public interface RustForeignItem extends RustCompositeElement {
 
   @Nullable
   PsiElement getPub();
-
-  @Nullable
-  PsiElement getSelf();
 
   @Nullable
   PsiElement getStatic();

@@ -59,6 +59,9 @@ public interface RustRetType extends RustCompositeElement {
   PsiElement getConst();
 
   @Nullable
+  PsiElement getCself();
+
+  @Nullable
   PsiElement getDotdot();
 
   @Nullable
@@ -96,9 +99,6 @@ public interface RustRetType extends RustCompositeElement {
 
   @Nullable
   PsiElement getRbrack();
-
-  @Nullable
-  PsiElement getSelf();
 
   @Nullable
   PsiElement getSemicolon();

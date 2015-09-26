@@ -41,6 +41,9 @@ public interface RustDeclItem extends RustCompositeElement {
   PsiElement getColon();
 
   @Nullable
+  PsiElement getCself();
+
+  @Nullable
   PsiElement getDotdotdot();
 
   @Nullable
@@ -51,9 +54,6 @@ public interface RustDeclItem extends RustCompositeElement {
 
   @Nullable
   PsiElement getFor();
-
-  @Nullable
-  PsiElement getSelf();
 
   @Nullable
   PsiElement getTypeof();

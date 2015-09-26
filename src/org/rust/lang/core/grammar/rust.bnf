@@ -524,7 +524,7 @@ type_item ::= TYPE IDENTIFIER generic_params where_clause? EQ type_sum SEMICOLON
 
 type_prim_sum ::= type_prim [ PLUS type_param_bounds ]
 
-private type_prim ::= [ SELF? COLONCOLON ] path_generic_args_without_colons
+private type_prim ::= [ CSELF? COLONCOLON ] path_generic_args_without_colons
                     | BOX type
                     | MUL    [ MUT | CONST ] type
                     | AND    [ lifetime? MUT? ] type
