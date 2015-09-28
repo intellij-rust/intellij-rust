@@ -85,7 +85,7 @@ UNICODE_ESCAPE = \\u\{{HEX_DIGIT}{1,6}\}
 SHEBANG_LINE=\#\![^\[].*
 
 %%
-<YYINITIAL> \x27                  { yybegin(LIFETIME_OR_CHAR); }
+<YYINITIAL> \x27                  { yybegin(LIFETIME_OR_CHAR); yypushback(1); }
 
 <YYINITIAL>                       {
 
@@ -254,14 +254,14 @@ SHEBANG_LINE=\#\![^\[].*
 
 <LIFETIME_OR_CHAR>                {
 
-  static                          { yybegin(YYINITIAL); return RustTokenElementTypes.STATIC_LIFETIME; }
-  {IDENTIFIER}                    { yybegin(YYINITIAL); return RustTokenElementTypes.LIFETIME; }
-  \\[nrt\\\x27\x220]\x27          { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
-  \\x[0-9a-fA-F]{2}\x27           { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
-  \\u\{[0-9a-fA-F]?{6}\}\x27      { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
-  .\x27                           { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
-  [\x80-\xff]{2,4}\x27            { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL; }
-  <<EOF>>                         { yybegin(YYINITIAL); return com.intellij.psi.TokenType.BAD_CHARACTER; }
+  \x27static                          { yybegin(YYINITIAL); return RustTokenElementTypes.STATIC_LIFETIME; }
+  \x27{IDENTIFIER}                    { yybegin(YYINITIAL); return RustTokenElementTypes.LIFETIME; }
+  \x27\\[nrt\\\x27\x220]\x27          { yybegin(SUFFIX);    return RustTokenElementTypes.CHAR_LITERAL; }
+  \x27\\x[0-9a-fA-F]{2}\x27           { yybegin(SUFFIX);    return RustTokenElementTypes.CHAR_LITERAL; }
+  \x27\\u\{[0-9a-fA-F]?{6}\}\x27      { yybegin(SUFFIX);    return RustTokenElementTypes.CHAR_LITERAL; }
+  \x27.\x27                           { yybegin(SUFFIX);    return RustTokenElementTypes.CHAR_LITERAL; }
+  \x27[\x80-\xff]{2,4}\x27            { yybegin(SUFFIX);    return RustTokenElementTypes.CHAR_LITERAL; }
+  <<EOF>>                             { yybegin(YYINITIAL); return com.intellij.psi.TokenType.BAD_CHARACTER; }
 
 }
 
