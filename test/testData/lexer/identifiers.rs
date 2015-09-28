@@ -1,3 +1,4 @@
+_ignored
 rust
 раст
 rūsa

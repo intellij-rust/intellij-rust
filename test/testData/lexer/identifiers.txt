@@ -1,3 +1,5 @@
+<IDENTIFIER> ('_ignored')
+WHITE_SPACE ('\n')
 <IDENTIFIER> ('rust')
 WHITE_SPACE ('\n')
 <IDENTIFIER> ('раст')
