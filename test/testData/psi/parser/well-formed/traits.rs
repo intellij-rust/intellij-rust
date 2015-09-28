@@ -1,6 +1,6 @@
-// Trait returns whatever is inside.
 trait Contains {
     type A;
-    // Return inner element.
     fn inner(&self) -> Self::A;
+    fn empty();
+    fn anon_param(i32);
 }

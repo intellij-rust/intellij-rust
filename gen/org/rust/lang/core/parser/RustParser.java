@@ -1397,7 +1397,7 @@ public class RustParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // LPAREN [ AND lifetime? ] MUT? SELF type_ascription? comma_anon_params? RPAREN
-  //                                    | LPAREN anon_params RPAREN
+  //                                    | LPAREN anon_params? RPAREN
   static boolean fn_anon_params_with_self(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "fn_anon_params_with_self")) return false;
     if (!nextTokenIs(b, LPAREN)) return false;
@@ -1471,16 +1471,23 @@ public class RustParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // LPAREN anon_params RPAREN
+  // LPAREN anon_params? RPAREN
   private static boolean fn_anon_params_with_self_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "fn_anon_params_with_self_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, LPAREN);
-    r = r && anon_params(b, l + 1);
+    r = r && fn_anon_params_with_self_1_1(b, l + 1);
     r = r && consumeToken(b, RPAREN);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // anon_params?
+  private static boolean fn_anon_params_with_self_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "fn_anon_params_with_self_1_1")) return false;
+    anon_params(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */
