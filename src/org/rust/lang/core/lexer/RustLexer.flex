@@ -200,7 +200,8 @@ SHEBANG_LINE=\#\![^\[].*
   {INT_LITERAL}                   { return RustTokenElementTypes.INTEGER_LITERAL; }
 
   {FLT_NORMAL}                    { return RustTokenElementTypes.FLOAT_LITERAL; }
-  {FLT_TRAILING_DOT}/[^.a-zA-Z_]  { return RustTokenElementTypes.FLOAT_LITERAL; }
+  {FLT_TRAILING_DOT}/[^._\p{xidstart}]
+                                  { return RustTokenElementTypes.FLOAT_LITERAL; }
 
   {STRING_LITERAL}                { return RustTokenElementTypes.STRING_LITERAL; }
 
