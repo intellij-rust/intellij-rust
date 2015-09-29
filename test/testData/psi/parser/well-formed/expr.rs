@@ -21,6 +21,7 @@ fn test() -> u32 {
     f.m();          /* method-invokation */
 
     f();            /* call */
+    <T as Foo>::U::generic_method::<f64>();
 
     t = ();         /* unit */
 

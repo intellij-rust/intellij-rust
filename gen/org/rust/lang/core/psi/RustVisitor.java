@@ -336,6 +336,10 @@ public class RustVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitQualPathExpr(@NotNull RustQualPathExpr o) {
+    visitExpr(o);
+  }
+
   public void visitRangeExpr(@NotNull RustRangeExpr o) {
     visitExpr(o);
   }

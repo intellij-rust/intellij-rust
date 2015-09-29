@@ -329,6 +329,8 @@ private type_sums_and_or_bindings ::=                   bindings COMMA?
 bindings ::= binding (COMMA binding)*
 binding  ::= IDENTIFIER EQ type
 
+qual_path_expr ::= LT type_sum as_trait_ref? GT COLONCOLON path_generic_args_with_colons
+
 pat_struct_fields ::= (pat_field COMMA)+ DOTDOT
                     | <<comma_separated_list pat_field>>
                     | DOTDOT
@@ -605,6 +607,7 @@ private atom_expr ::= lit_expr
                     | macro_expr
                     | struct_expr
                     | path_expr
+                    | qual_path_expr
                     | self_expr
                     | method_call_expr
                     | field_expr

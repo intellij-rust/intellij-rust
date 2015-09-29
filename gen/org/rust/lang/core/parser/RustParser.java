@@ -267,6 +267,9 @@ public class RustParser implements PsiParser, LightPsiParser {
     else if (t == POLYBOUND) {
       r = polybound(b, 0);
     }
+    else if (t == QUAL_PATH_EXPR) {
+      r = qual_path_expr(b, 0);
+    }
     else if (t == RANGE_EXPR) {
       r = range_expr(b, 0);
     }
@@ -405,9 +408,9 @@ public class RustParser implements PsiParser, LightPsiParser {
       EXPR, FIELD_EXPR, FOR_EXPR, IF_EXPR,
       IF_LET_EXPR, INDEX_EXPR, LAMBDA_EXPR, LIT_EXPR,
       LOOP_EXPR, MACRO_EXPR, MATCH_EXPR, METHOD_CALL_EXPR,
-      PAREN_EXPR, PATH_EXPR, RANGE_EXPR, RET_EXPR,
-      SELF_EXPR, STRUCT_EXPR, TUPLE_EXPR, UNARY_EXPR,
-      UNIT_EXPR, WHILE_EXPR, WHILE_LET_EXPR),
+      PAREN_EXPR, PATH_EXPR, QUAL_PATH_EXPR, RANGE_EXPR,
+      RET_EXPR, SELF_EXPR, STRUCT_EXPR, TUPLE_EXPR,
+      UNARY_EXPR, UNIT_EXPR, WHILE_EXPR, WHILE_LET_EXPR),
   };
 
   /* ********************************************************** */
@@ -6108,7 +6111,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   // 16: BINARY(add_bin_expr)
   // 17: BINARY(mul_bin_expr)
   // 18: POSTFIX(cast_expr)
-  // 19: ATOM(lit_expr) ATOM(macro_expr) POSTFIX(struct_expr) ATOM(path_expr) ATOM(self_expr) POSTFIX(method_call_expr) POSTFIX(field_expr) POSTFIX(index_expr) POSTFIX(call_expr) ATOM(array_expr) ATOM(tuple_expr) ATOM(unit_expr) ATOM(paren_expr) PREFIX(unary_expr)
+  // 19: ATOM(lit_expr) ATOM(macro_expr) POSTFIX(struct_expr) ATOM(path_expr) ATOM(qual_path_expr) ATOM(self_expr) POSTFIX(method_call_expr) POSTFIX(field_expr) POSTFIX(index_expr) POSTFIX(call_expr) ATOM(array_expr) ATOM(tuple_expr) ATOM(unit_expr) ATOM(paren_expr) PREFIX(unary_expr)
   public static boolean expr(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expr")) return false;
     addVariant(b, "<expr>");
@@ -6123,6 +6126,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     if (!r) r = lit_expr(b, l + 1);
     if (!r) r = macro_expr(b, l + 1);
     if (!r) r = path_expr(b, l + 1);
+    if (!r) r = qual_path_expr(b, l + 1);
     if (!r) r = self_expr(b, l + 1);
     if (!r) r = array_expr(b, l + 1);
     if (!r) r = tuple_expr(b, l + 1);
@@ -6591,6 +6595,28 @@ public class RustParser implements PsiParser, LightPsiParser {
   private static boolean path_expr_0_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_expr_0_0_0")) return false;
     consumeTokenSmart(b, SELF);
+    return true;
+  }
+
+  // LT type_sum as_trait_ref? GT COLONCOLON path_generic_args_with_colons
+  public static boolean qual_path_expr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "qual_path_expr")) return false;
+    if (!nextTokenIsFast(b, LT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, LT);
+    r = r && type_sum(b, l + 1);
+    r = r && qual_path_expr_2(b, l + 1);
+    r = r && consumeTokens(b, 0, GT, COLONCOLON);
+    r = r && path_generic_args_with_colons(b, l + 1);
+    exit_section_(b, m, QUAL_PATH_EXPR, r);
+    return r;
+  }
+
+  // as_trait_ref?
+  private static boolean qual_path_expr_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "qual_path_expr_2")) return false;
+    as_trait_ref(b, l + 1);
     return true;
   }
 

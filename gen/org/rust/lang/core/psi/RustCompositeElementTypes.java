@@ -91,6 +91,7 @@ public interface RustCompositeElementTypes {
   IElementType PAT_VEC = new RustCompositeElementType("PAT_VEC");
   IElementType PAT_WILD = new RustCompositeElementType("PAT_WILD");
   IElementType POLYBOUND = new RustCompositeElementType("POLYBOUND");
+  IElementType QUAL_PATH_EXPR = new RustCompositeElementType("QUAL_PATH_EXPR");
   IElementType RANGE_EXPR = new RustCompositeElementType("RANGE_EXPR");
   IElementType RET_EXPR = new RustCompositeElementType("RET_EXPR");
   IElementType RET_TYPE = new RustCompositeElementType("RET_TYPE");
@@ -379,6 +380,9 @@ public interface RustCompositeElementTypes {
       }
       else if (type == POLYBOUND) {
         return new RustPolyboundImpl(node);
+      }
+      else if (type == QUAL_PATH_EXPR) {
+        return new RustQualPathExprImpl(node);
       }
       else if (type == RANGE_EXPR) {
         return new RustRangeExprImpl(node);
