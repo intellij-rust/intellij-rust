@@ -203,6 +203,10 @@ public class RustVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitItemMacro(@NotNull RustItemMacro o) {
+    visitCompositeElement(o);
+  }
+
   public void visitLambdaExpr(@NotNull RustLambdaExpr o) {
     visitExpr(o);
   }
@@ -381,6 +385,10 @@ public class RustVisitor extends PsiElementVisitor {
   }
 
   public void visitStructTupleField(@NotNull RustStructTupleField o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitTokenTree(@NotNull RustTokenTree o) {
     visitCompositeElement(o);
   }
 

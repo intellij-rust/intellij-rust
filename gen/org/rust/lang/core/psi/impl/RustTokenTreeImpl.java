@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustItemImpl extends RustCompositeElementImpl implements RustItem {
+public class RustTokenTreeImpl extends RustCompositeElementImpl implements RustTokenTree {
 
-  public RustItemImpl(ASTNode node) {
+  public RustTokenTreeImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitItem(this);
+    visitor.visitTokenTree(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -26,33 +26,33 @@ public class RustItemImpl extends RustCompositeElementImpl implements RustItem {
   }
 
   @Override
-  @Nullable
-  public RustItemMacro getItemMacro() {
-    return findChildByClass(RustItemMacro.class);
-  }
-
-  @Override
-  @Nullable
-  public RustModItem getModItem() {
-    return findChildByClass(RustModItem.class);
-  }
-
-  @Override
   @NotNull
-  public List<RustOuterAttr> getOuterAttrList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustOuterAttr.class);
+  public List<RustTokenTree> getTokenTreeList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTokenTree.class);
   }
 
   @Override
   @Nullable
-  public RustStmtItem getStmtItem() {
-    return findChildByClass(RustStmtItem.class);
+  public PsiElement getLbrace() {
+    return findChildByType(LBRACE);
   }
 
   @Override
   @Nullable
-  public PsiElement getPub() {
-    return findChildByType(PUB);
+  public PsiElement getLparen() {
+    return findChildByType(LPAREN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getRbrace() {
+    return findChildByType(RBRACE);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getRparen() {
+    return findChildByType(RPAREN);
   }
 
 }

@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustMacroArgImpl extends RustCompositeElementImpl implements RustMacroArg {
+public class RustItemMacroImpl extends RustCompositeElementImpl implements RustItemMacro {
 
-  public RustMacroArgImpl(ASTNode node) {
+  public RustItemMacroImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitMacroArg(this);
+    visitor.visitItemMacro(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -26,15 +26,27 @@ public class RustMacroArgImpl extends RustCompositeElementImpl implements RustMa
   }
 
   @Override
-  @Nullable
-  public RustCommaSeparatedList getCommaSeparatedList() {
-    return findChildByClass(RustCommaSeparatedList.class);
+  @NotNull
+  public RustPathExpr getPathExpr() {
+    return findNotNullChildByClass(RustPathExpr.class);
   }
 
   @Override
   @Nullable
   public RustTokenTree getTokenTree() {
     return findChildByClass(RustTokenTree.class);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getExcl() {
+    return findNotNullChildByType(EXCL);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getIdentifier() {
+    return findChildByType(IDENTIFIER);
   }
 
   @Override
@@ -71,6 +83,12 @@ public class RustMacroArgImpl extends RustCompositeElementImpl implements RustMa
   @Nullable
   public PsiElement getRparen() {
     return findChildByType(RPAREN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getSemicolon() {
+    return findChildByType(SEMICOLON);
   }
 
 }

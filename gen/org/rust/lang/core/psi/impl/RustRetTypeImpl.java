@@ -38,9 +38,9 @@ public class RustRetTypeImpl extends RustCompositeElementImpl implements RustRet
   }
 
   @Override
-  @Nullable
-  public RustExpr getExpr() {
-    return findChildByClass(RustExpr.class);
+  @NotNull
+  public List<RustExpr> getExprList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
   }
 
   @Override
@@ -68,15 +68,15 @@ public class RustRetTypeImpl extends RustCompositeElementImpl implements RustRet
   }
 
   @Override
-  @Nullable
-  public RustTraitRef getTraitRef() {
-    return findChildByClass(RustTraitRef.class);
+  @NotNull
+  public List<RustTraitRef> getTraitRefList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTraitRef.class);
   }
 
   @Override
-  @Nullable
-  public RustTypeSum getTypeSum() {
-    return findChildByClass(RustTypeSum.class);
+  @NotNull
+  public List<RustTypeSum> getTypeSumList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeSum.class);
   }
 
   @Override
@@ -86,51 +86,9 @@ public class RustRetTypeImpl extends RustCompositeElementImpl implements RustRet
   }
 
   @Override
-  @Nullable
-  public PsiElement getAnd() {
-    return findChildByType(AND);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getAndand() {
-    return findChildByType(ANDAND);
-  }
-
-  @Override
   @NotNull
   public PsiElement getArrow() {
     return findNotNullChildByType(ARROW);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getAs() {
-    return findChildByType(AS);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getBox() {
-    return findChildByType(BOX);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getComma() {
-    return findChildByType(COMMA);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getConst() {
-    return findChildByType(CONST);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getDotdot() {
-    return findChildByType(DOTDOT);
   }
 
   @Override
@@ -161,60 +119,6 @@ public class RustRetTypeImpl extends RustCompositeElementImpl implements RustRet
   @Nullable
   public PsiElement getFor() {
     return findChildByType(FOR);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getGt() {
-    return findChildByType(GT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getLbrack() {
-    return findChildByType(LBRACK);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getLifetime() {
-    return findChildByType(LIFETIME);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getLt() {
-    return findChildByType(LT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getMul() {
-    return findChildByType(MUL);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getMut() {
-    return findChildByType(MUT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getRbrack() {
-    return findChildByType(RBRACK);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getSemicolon() {
-    return findChildByType(SEMICOLON);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getStaticLifetime() {
-    return findChildByType(STATIC_LIFETIME);
   }
 
   @Override
