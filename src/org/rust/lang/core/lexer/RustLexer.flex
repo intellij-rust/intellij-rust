@@ -8,6 +8,32 @@ import com.intellij.psi.tree.IElementType;
   public _RustLexer() {
     this((java.io.Reader)null);
   }
+
+  private int commentDepth;
+  private int commentStart;
+
+  private IElementType endComment() {
+      zzStartRead = commentStart;
+      int state = yystate();
+      yybegin(YYINITIAL);
+      switch (state) {
+          case BLOCK_COMMENT:
+              return RustTokenElementTypes.BLOCK_COMMENT;
+          case INNER_DOC_COMMENT:
+              return RustTokenElementTypes.INNER_DOC_COMMENT;
+          case OUTER_DOC_COMMENT:
+              return RustTokenElementTypes.OUTER_DOC_COMMENT;
+          default:
+              throw new IllegalArgumentException("Unexpected state: " + state);
+      }
+  }
+
+  private void beginComment(int state) {
+      yybegin(state);
+      commentDepth = 0;
+      commentStart = getTokenStart();
+  }
+
 %}
 
 %public
@@ -16,6 +42,8 @@ import com.intellij.psi.tree.IElementType;
 %function advance
 %type IElementType
 
+%x INNER_DOC_COMMENT
+%x OUTER_DOC_COMMENT
 %x BLOCK_COMMENT
 %x EOL_COMMENT
 
@@ -192,8 +220,11 @@ SHEBANG_LINE=\#\![^\[].*
   "while"                         { return RustTokenElementTypes.WHILE; }
   "yield"                         { return RustTokenElementTypes.YIELD; }
 
-  "/*"                            { yybegin(BLOCK_COMMENT); yypushback(2); }
-  "//"                            { yybegin(EOL_COMMENT);   yypushback(2); }
+  "/**/"                          { return RustTokenElementTypes.OUTER_DOC_COMMENT; }
+  "/*!"                           { beginComment(INNER_DOC_COMMENT); }
+  "/**"                           { beginComment(OUTER_DOC_COMMENT); }
+  "/*"                            { beginComment(BLOCK_COMMENT); }
+  "//"                            { yybegin(EOL_COMMENT); yypushback(2); }
 
   {IDENTIFIER}                    { return RustTokenElementTypes.IDENTIFIER; }
 
@@ -223,16 +254,24 @@ SHEBANG_LINE=\#\![^\[].*
 // Comments
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-<BLOCK_COMMENT>([^*]*(\*+[^*/])?)+(\*+\/)?
-{
-    yybegin(YYINITIAL);
+<INNER_DOC_COMMENT, OUTER_DOC_COMMENT, BLOCK_COMMENT> {
+  "/*" {
+      commentDepth++;
+  }
 
-    if (yycharat(2) == '!')
-        return RustTokenElementTypes.INNER_DOC_COMMENT;
-    else if (yycharat(2) == '*')
-        return RustTokenElementTypes.OUTER_DOC_COMMENT;
-    else
-        return RustTokenElementTypes.BLOCK_COMMENT;
+  <<EOF>> {
+      return endComment();
+  }
+
+  "*/" {
+      if (commentDepth > 0) {
+          commentDepth--;
+      } else {
+          return endComment();
+      }
+  }
+
+  [^] { /* do nothing */ }
 }
 
 <EOL_COMMENT>.*
