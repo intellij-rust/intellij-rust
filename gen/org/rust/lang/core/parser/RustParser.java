@@ -6190,7 +6190,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   //              | for_expr
   //              | loop_expr
   //              | match_expr
-  //              | UNSAFE? block
+  //              | (UNSAFE &LBRACE)? block
   public static boolean block_expr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_expr")) return false;
     boolean r;
@@ -6207,7 +6207,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // UNSAFE? block
+  // (UNSAFE &LBRACE)? block
   private static boolean block_expr_7(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_expr_7")) return false;
     boolean r;
@@ -6218,11 +6218,32 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // UNSAFE?
+  // (UNSAFE &LBRACE)?
   private static boolean block_expr_7_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_expr_7_0")) return false;
-    consumeTokenSmart(b, UNSAFE);
+    block_expr_7_0_0(b, l + 1);
     return true;
+  }
+
+  // UNSAFE &LBRACE
+  private static boolean block_expr_7_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_expr_7_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, UNSAFE);
+    r = r && block_expr_7_0_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // &LBRACE
+  private static boolean block_expr_7_0_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_expr_7_0_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeTokenSmart(b, LBRACE);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
   // CONTINUE lifetime?

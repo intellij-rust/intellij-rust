@@ -599,7 +599,7 @@ block_expr ::= while_expr
              | for_expr
              | loop_expr
              | match_expr
-             | UNSAFE? block
+             | (UNSAFE &LBRACE)? block
 
 
 private atom_expr ::= lit_expr

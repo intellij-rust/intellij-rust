@@ -5,3 +5,8 @@ trait Contains {
     fn anon_param(i32);
     fn self_type(x: Self, y: Vec<Self>) -> Self;
 }
+
+fn foo() {
+    trait Inner {};
+    unsafe trait UnsafeInner {};
+}
