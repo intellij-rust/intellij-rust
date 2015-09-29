@@ -11,6 +11,12 @@ public interface RustMetaItem extends RustCompositeElement {
   RustMetaItem getMetaItem();
 
   @Nullable
+  PsiElement getByteLiteral();
+
+  @Nullable
+  PsiElement getByteStringLiteral();
+
+  @Nullable
   PsiElement getCharLiteral();
 
   @Nullable

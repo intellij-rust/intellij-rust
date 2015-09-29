@@ -1,0 +1,5 @@
+<BYTE> ('b'x'')
+WHITE_SPACE ('\n')
+<BYTE_STRING> ('b"Hello, World!"')
+WHITE_SPACE ('\n')
+<BYTE_STRING> ('br"raw byte literal"')

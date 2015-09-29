@@ -72,6 +72,8 @@ public interface RustTokenElementTypes {
     IElementType FLOAT_LITERAL = new RustTokenType("<FLOAT>");
     IElementType STRING_LITERAL = new RustTokenType("<STRING>");
     IElementType CHAR_LITERAL = new RustTokenType("<CHAR>");
+    IElementType BYTE_STRING_LITERAL = new RustTokenType("<BYTE_STRING>");
+    IElementType BYTE_LITERAL = new RustTokenType("<BYTE>");
 
     // Comments
 

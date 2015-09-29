@@ -93,9 +93,10 @@ HEX_DIGIT = [A-F0-9]
 OCT_DIGIT = [0-7]
 BIN_DIGIT = [0-1]
 
-//CHAR_LITERAL = \x27 ([^'] | {ESCAPE_SEQUENCE})* \x27?
+BYTE_LITERAL = b\x27 ([^'] | {ESCAPE_SEQUENCE}) \x27
 
 STRING_LITERAL = r? \x22 ([^\"] | {ESCAPE_SEQUENCE})* (\x22|\\)?
+BYTE_STRING_LITERAL = br? \x22 ([^\"] | {ESCAPE_SEQUENCE})* \x22
 
 ESCAPE_SEQUENCE = \\[^\r\n\t\\] | {BYTE_ESCAPE} | {UNICODE_ESCAPE}
 BYTE_ESCAPE = \\n|\\r|\\t|\\\\|\\x{HEX_DIGIT}{2}
@@ -234,7 +235,10 @@ SHEBANG_LINE=\#\![^\[].*
   {FLT_TRAILING_DOT}/[^._\p{xidstart}]
                                   { return RustTokenElementTypes.FLOAT_LITERAL; }
 
+  {BYTE_LITERAL}                  { return RustTokenElementTypes.BYTE_LITERAL; }
+
   {STRING_LITERAL}                { return RustTokenElementTypes.STRING_LITERAL; }
+  {BYTE_STRING_LITERAL}           { return RustTokenElementTypes.BYTE_STRING_LITERAL; }
 
   {SHEBANG_LINE}                  { return RustTokenElementTypes.SHEBANG_LINE; }
 

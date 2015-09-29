@@ -60,7 +60,9 @@ public class RustHighlighter : SyntaxHighlighterBase() {
                     IDENTIFIER          -> Colors.IDENTIFIER
 
                     CHAR_LITERAL        -> Colors.CHAR
+                    BYTE_LITERAL        -> Colors.CHAR
                     STRING_LITERAL      -> Colors.STRING
+                    BYTE_STRING_LITERAL -> Colors.STRING
                     INTEGER_LITERAL     -> Colors.NUMBER
                     FLOAT_LITERAL       -> Colors.NUMBER
 

@@ -2846,6 +2846,8 @@ public class RustParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // ( STRING_LITERAL
   //                 | CHAR_LITERAL
+  //                 | BYTE_STRING_LITERAL
+  //                 | BYTE_LITERAL
   //                 | INTEGER_LITERAL
   //                 | FLOAT_LITERAL
   //                 | bool_lit ) lit_suffix?
@@ -2861,6 +2863,8 @@ public class RustParser implements PsiParser, LightPsiParser {
 
   // STRING_LITERAL
   //                 | CHAR_LITERAL
+  //                 | BYTE_STRING_LITERAL
+  //                 | BYTE_LITERAL
   //                 | INTEGER_LITERAL
   //                 | FLOAT_LITERAL
   //                 | bool_lit
@@ -2870,6 +2874,8 @@ public class RustParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeToken(b, STRING_LITERAL);
     if (!r) r = consumeToken(b, CHAR_LITERAL);
+    if (!r) r = consumeToken(b, BYTE_STRING_LITERAL);
+    if (!r) r = consumeToken(b, BYTE_LITERAL);
     if (!r) r = consumeToken(b, INTEGER_LITERAL);
     if (!r) r = consumeToken(b, FLOAT_LITERAL);
     if (!r) r = bool_lit(b, l + 1);

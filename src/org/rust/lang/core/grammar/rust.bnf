@@ -757,6 +757,8 @@ lit_expr ::= lit
 
 private lit ::= ( STRING_LITERAL
                 | CHAR_LITERAL
+                | BYTE_STRING_LITERAL
+                | BYTE_LITERAL
                 | INTEGER_LITERAL
                 | FLOAT_LITERAL
                 | bool_lit ) lit_suffix?

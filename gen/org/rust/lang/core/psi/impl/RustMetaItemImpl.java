@@ -33,6 +33,18 @@ public class RustMetaItemImpl extends RustNamedElementImpl implements RustMetaIt
 
   @Override
   @Nullable
+  public PsiElement getByteLiteral() {
+    return findChildByType(BYTE_LITERAL);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getByteStringLiteral() {
+    return findChildByType(BYTE_STRING_LITERAL);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getCharLiteral() {
     return findChildByType(CHAR_LITERAL);
   }

@@ -8,6 +8,12 @@ import com.intellij.psi.PsiElement;
 public interface RustLitExpr extends RustExpr {
 
   @Nullable
+  PsiElement getByteLiteral();
+
+  @Nullable
+  PsiElement getByteStringLiteral();
+
+  @Nullable
   PsiElement getCharLiteral();
 
   @Nullable
