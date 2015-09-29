@@ -16,9 +16,6 @@ public interface RustGenericArgs extends RustCompositeElement {
   @Nullable
   RustTypeSums getTypeSums();
 
-  @Nullable
-  PsiElement getComma();
-
   @NotNull
   PsiElement getGt();
 

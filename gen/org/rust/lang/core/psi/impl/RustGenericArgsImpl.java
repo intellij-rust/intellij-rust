@@ -44,12 +44,6 @@ public class RustGenericArgsImpl extends RustCompositeElementImpl implements Rus
   }
 
   @Override
-  @Nullable
-  public PsiElement getComma() {
-    return findChildByType(COMMA);
-  }
-
-  @Override
   @NotNull
   public PsiElement getGt() {
     return findNotNullChildByType(GT);

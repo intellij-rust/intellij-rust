@@ -2091,22 +2091,45 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // lifetimes? type_sums_and_or_bindings?
+  // lifetimes [COMMA type_sums_and_or_bindings]
+  //                          | type_sums_and_or_bindings?
   static boolean generic_values(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "generic_values")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = generic_values_0(b, l + 1);
-    r = r && generic_values_1(b, l + 1);
+    if (!r) r = generic_values_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // lifetimes?
+  // lifetimes [COMMA type_sums_and_or_bindings]
   private static boolean generic_values_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "generic_values_0")) return false;
-    lifetimes(b, l + 1);
+    boolean r;
+    Marker m = enter_section_(b);
+    r = lifetimes(b, l + 1);
+    r = r && generic_values_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // [COMMA type_sums_and_or_bindings]
+  private static boolean generic_values_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "generic_values_0_1")) return false;
+    generic_values_0_1_0(b, l + 1);
     return true;
+  }
+
+  // COMMA type_sums_and_or_bindings
+  private static boolean generic_values_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "generic_values_0_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    r = r && type_sums_and_or_bindings(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   // type_sums_and_or_bindings?
