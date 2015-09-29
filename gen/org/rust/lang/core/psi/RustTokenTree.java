@@ -14,10 +14,16 @@ public interface RustTokenTree extends RustCompositeElement {
   PsiElement getLbrace();
 
   @Nullable
+  PsiElement getLbrack();
+
+  @Nullable
   PsiElement getLparen();
 
   @Nullable
   PsiElement getRbrace();
+
+  @Nullable
+  PsiElement getRbrack();
 
   @Nullable
   PsiElement getRparen();

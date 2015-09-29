@@ -39,6 +39,12 @@ public class RustTokenTreeImpl extends RustCompositeElementImpl implements RustT
 
   @Override
   @Nullable
+  public PsiElement getLbrack() {
+    return findChildByType(LBRACK);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getLparen() {
     return findChildByType(LPAREN);
   }
@@ -47,6 +53,12 @@ public class RustTokenTreeImpl extends RustCompositeElementImpl implements RustT
   @Nullable
   public PsiElement getRbrace() {
     return findChildByType(RBRACE);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getRbrack() {
+    return findChildByType(RBRACK);
   }
 
   @Override

@@ -4863,9 +4863,9 @@ public class RustParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // LPAREN token_tree* RPAREN token_tree*
-  //             | LBRACE token_tree* RBRACE token_tree*
-  //             | LBRACK token_tree* LBRACK token_tree*
-  //             | << unpairedToken >> +
+  //              | LBRACE token_tree* RBRACE token_tree*
+  //              | LBRACK token_tree* RBRACK token_tree*
+  //              | << unpairedToken >> +
   public static boolean token_tree(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "token_tree")) return false;
     boolean r;
@@ -4952,14 +4952,14 @@ public class RustParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // LBRACK token_tree* LBRACK token_tree*
+  // LBRACK token_tree* RBRACK token_tree*
   private static boolean token_tree_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "token_tree_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, LBRACK);
     r = r && token_tree_2_1(b, l + 1);
-    r = r && consumeToken(b, LBRACK);
+    r = r && consumeToken(b, RBRACK);
     r = r && token_tree_2_3(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
