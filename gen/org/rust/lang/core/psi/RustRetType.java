@@ -59,9 +59,6 @@ public interface RustRetType extends RustCompositeElement {
   PsiElement getConst();
 
   @Nullable
-  PsiElement getCself();
-
-  @Nullable
   PsiElement getDotdot();
 
   @Nullable

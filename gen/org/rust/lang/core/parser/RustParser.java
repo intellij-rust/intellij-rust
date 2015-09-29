@@ -2123,6 +2123,19 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // IDENTIFIER | CSELF
+  static boolean ident_or_self_type(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ident_or_self_type")) return false;
+    if (!nextTokenIs(b, "", CSELF, IDENTIFIER)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, IDENTIFIER);
+    if (!r) r = consumeToken(b, CSELF);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // (IDENTIFIER | SELF) [ AS IDENTIFIER ] (COMMA idents_or_self)*
   static boolean idents_or_self(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "idents_or_self")) return false;
@@ -4090,14 +4103,14 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER
+  // ident_or_self_type
   public static boolean path_expr_part_leftish(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_expr_part_leftish")) return false;
-    if (!nextTokenIs(b, IDENTIFIER)) return false;
+    if (!nextTokenIs(b, "<path expr part leftish>", CSELF, IDENTIFIER)) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, IDENTIFIER);
-    exit_section_(b, m, PATH_EXPR_PART, r);
+    Marker m = enter_section_(b, l, _NONE_, PATH_EXPR_PART, "<path expr part leftish>");
+    r = ident_or_self_type(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -4105,7 +4118,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   // path_expr_part_leftish path_expr_part*
   static boolean path_generic_args_with_colons(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_generic_args_with_colons")) return false;
-    if (!nextTokenIs(b, IDENTIFIER)) return false;
+    if (!nextTokenIs(b, "", CSELF, IDENTIFIER)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = path_expr_part_leftish(b, l + 1);
@@ -4127,11 +4140,11 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER LPAREN type_sums? RPAREN ret_type?   path_generic_args_without_colons_right
-  //                                            | IDENTIFIER generic_args?                        path_generic_args_without_colons_right
+  // ident_or_self_type LPAREN type_sums? RPAREN ret_type?   path_generic_args_without_colons_right
+  //                                            | ident_or_self_type generic_args?                        path_generic_args_without_colons_right
   static boolean path_generic_args_without_colons(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_generic_args_without_colons")) return false;
-    if (!nextTokenIs(b, IDENTIFIER)) return false;
+    if (!nextTokenIs(b, "", CSELF, IDENTIFIER)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = path_generic_args_without_colons_0(b, l + 1);
@@ -4140,12 +4153,13 @@ public class RustParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // IDENTIFIER LPAREN type_sums? RPAREN ret_type?   path_generic_args_without_colons_right
+  // ident_or_self_type LPAREN type_sums? RPAREN ret_type?   path_generic_args_without_colons_right
   private static boolean path_generic_args_without_colons_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_generic_args_without_colons_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, IDENTIFIER, LPAREN);
+    r = ident_or_self_type(b, l + 1);
+    r = r && consumeToken(b, LPAREN);
     r = r && path_generic_args_without_colons_0_2(b, l + 1);
     r = r && consumeToken(b, RPAREN);
     r = r && path_generic_args_without_colons_0_4(b, l + 1);
@@ -4168,12 +4182,12 @@ public class RustParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // IDENTIFIER generic_args?                        path_generic_args_without_colons_right
+  // ident_or_self_type generic_args?                        path_generic_args_without_colons_right
   private static boolean path_generic_args_without_colons_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_generic_args_without_colons_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, IDENTIFIER);
+    r = ident_or_self_type(b, l + 1);
     r = r && path_generic_args_without_colons_1_1(b, l + 1);
     r = r && path_generic_args_without_colons_right(b, l + 1);
     exit_section_(b, m, null, r);
@@ -4907,7 +4921,6 @@ public class RustParser implements PsiParser, LightPsiParser {
   // COLONCOLON? path_generic_args_without_colons
   public static boolean trait_ref(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "trait_ref")) return false;
-    if (!nextTokenIs(b, "<trait ref>", COLONCOLON, IDENTIFIER)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, TRAIT_REF, "<trait ref>");
     r = trait_ref_0(b, l + 1);

@@ -17,6 +17,9 @@ public interface RustPathExprPart extends RustCompositeElement {
   PsiElement getColoncolon();
 
   @Nullable
+  PsiElement getCself();
+
+  @Nullable
   PsiElement getIdentifier();
 
 }

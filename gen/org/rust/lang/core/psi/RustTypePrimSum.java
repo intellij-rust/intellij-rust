@@ -41,9 +41,6 @@ public interface RustTypePrimSum extends RustCompositeElement {
   List<RustTypeSums> getTypeSumsList();
 
   @Nullable
-  PsiElement getCself();
-
-  @Nullable
   PsiElement getDotdotdot();
 
   @Nullable

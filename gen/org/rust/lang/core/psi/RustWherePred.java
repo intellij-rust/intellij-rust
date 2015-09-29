@@ -50,9 +50,6 @@ public interface RustWherePred extends RustCompositeElement {
   PsiElement getColon();
 
   @Nullable
-  PsiElement getCself();
-
-  @Nullable
   PsiElement getDotdotdot();
 
   @Nullable

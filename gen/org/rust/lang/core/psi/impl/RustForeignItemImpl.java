@@ -105,12 +105,6 @@ public class RustForeignItemImpl extends RustNamedElementImpl implements RustFor
 
   @Override
   @Nullable
-  public PsiElement getCself() {
-    return findChildByType(CSELF);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getDotdotdot() {
     return findChildByType(DOTDOTDOT);
   }

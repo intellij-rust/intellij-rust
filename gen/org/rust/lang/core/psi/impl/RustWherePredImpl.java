@@ -111,12 +111,6 @@ public class RustWherePredImpl extends RustCompositeElementImpl implements RustW
 
   @Override
   @Nullable
-  public PsiElement getCself() {
-    return findChildByType(CSELF);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getDotdotdot() {
     return findChildByType(DOTDOTDOT);
   }

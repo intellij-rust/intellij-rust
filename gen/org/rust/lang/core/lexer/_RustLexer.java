@@ -1348,7 +1348,7 @@ public class _RustLexer implements FlexLexer {
           }
         case 197: break;
         case 79: 
-          { yybegin(SUFFIX);  return RustTokenElementTypes.CHAR_LITERAL;
+          { yybegin(SUFFIX);    return RustTokenElementTypes.CHAR_LITERAL;
           }
         case 198: break;
         case 80: 

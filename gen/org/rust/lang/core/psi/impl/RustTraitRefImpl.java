@@ -43,4 +43,10 @@ public class RustTraitRefImpl extends RustCompositeElementImpl implements RustTr
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeSums.class);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getCself() {
+    return findChildByType(CSELF);
+  }
+
 }

@@ -129,12 +129,6 @@ public class RustRetTypeImpl extends RustCompositeElementImpl implements RustRet
 
   @Override
   @Nullable
-  public PsiElement getCself() {
-    return findChildByType(CSELF);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getDotdot() {
     return findChildByType(DOTDOT);
   }

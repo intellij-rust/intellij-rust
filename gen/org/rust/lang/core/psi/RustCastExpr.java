@@ -53,9 +53,6 @@ public interface RustCastExpr extends RustExpr {
   PsiElement getConst();
 
   @Nullable
-  PsiElement getCself();
-
-  @Nullable
   PsiElement getDotdot();
 
   @Nullable

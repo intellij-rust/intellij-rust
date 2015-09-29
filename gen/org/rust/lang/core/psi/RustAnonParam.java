@@ -53,9 +53,6 @@ public interface RustAnonParam extends RustCompositeElement {
   PsiElement getConst();
 
   @Nullable
-  PsiElement getCself();
-
-  @Nullable
   PsiElement getDotdot();
 
   @Nullable

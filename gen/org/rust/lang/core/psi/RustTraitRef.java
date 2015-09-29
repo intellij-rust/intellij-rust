@@ -16,4 +16,7 @@ public interface RustTraitRef extends RustCompositeElement {
   @NotNull
   List<RustTypeSums> getTypeSumsList();
 
+  @Nullable
+  PsiElement getCself();
+
 }

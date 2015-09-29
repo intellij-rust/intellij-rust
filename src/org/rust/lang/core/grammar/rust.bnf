@@ -307,9 +307,11 @@ path_expr ::= [ SELF? COLONCOLON ] path_generic_args_with_colons
 
 private path_generic_args_with_colons ::= path_expr_part_leftish path_expr_part*
 
-path_expr_part_leftish  ::= IDENTIFIER {
+path_expr_part_leftish  ::= ident_or_self_type {
     elementType = path_expr_part
 }
+
+private ident_or_self_type ::= IDENTIFIER | CSELF
 
 left path_expr_part ::= COLONCOLON (IDENTIFIER | generic_args)
 
@@ -551,8 +553,8 @@ private for_in_type ::= FOR LT lifetimes? GT for_in_type_suffix
 private for_in_type_suffix ::= type_bare_fn
                              | trait_ref
 
-private path_generic_args_without_colons ::= IDENTIFIER LPAREN type_sums? RPAREN ret_type?   path_generic_args_without_colons_right
-                                           | IDENTIFIER generic_args?                        path_generic_args_without_colons_right
+private path_generic_args_without_colons ::= ident_or_self_type LPAREN type_sums? RPAREN ret_type?   path_generic_args_without_colons_right
+                                           | ident_or_self_type generic_args?                        path_generic_args_without_colons_right
 
 private path_generic_args_without_colons_right ::= [ COLONCOLON IDENTIFIER generic_args?                       path_generic_args_without_colons_right
                                                    | COLONCOLON IDENTIFIER LPAREN type_sums? RPAREN ret_type?  path_generic_args_without_colons_right ]

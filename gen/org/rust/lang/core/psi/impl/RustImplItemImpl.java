@@ -123,12 +123,6 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
 
   @Override
   @Nullable
-  public PsiElement getCself() {
-    return findChildByType(CSELF);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getDotdotdot() {
     return findChildByType(DOTDOTDOT);
   }
