@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface RustBlockExpr extends RustExpr {
 
-  @NotNull
+  @Nullable
   RustBlock getBlock();
 
   @Nullable

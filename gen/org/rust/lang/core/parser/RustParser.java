@@ -66,9 +66,6 @@ public class RustParser implements PsiParser, LightPsiParser {
     else if (t == BLOCK_EXPR) {
       r = block_expr(b, 0);
     }
-    else if (t == BLOCKISH_EXPR) {
-      r = blockish_expr(b, 0);
-    }
     else if (t == BOUND) {
       r = bound(b, 0);
     }
@@ -403,14 +400,14 @@ public class RustParser implements PsiParser, LightPsiParser {
     create_token_set_(PAT, PAT_ENUM, PAT_IDENT, PAT_QUAL_PATH,
       PAT_RANGE, PAT_REG, PAT_STRUCT, PAT_STRUCT_FIELDS,
       PAT_TUP, PAT_UNIQ, PAT_VEC, PAT_WILD),
-    create_token_set_(ARRAY_EXPR, BINARY_EXPR, BLOCKISH_EXPR, BLOCK_EXPR,
-      BREAK_EXPR, CALL_EXPR, CAST_EXPR, CONT_EXPR,
-      EXPR, FIELD_EXPR, FOR_EXPR, IF_EXPR,
-      IF_LET_EXPR, INDEX_EXPR, LAMBDA_EXPR, LIT_EXPR,
-      LOOP_EXPR, MACRO_EXPR, MATCH_EXPR, METHOD_CALL_EXPR,
-      PAREN_EXPR, PATH_EXPR, QUAL_PATH_EXPR, RANGE_EXPR,
-      RET_EXPR, SELF_EXPR, STRUCT_EXPR, TUPLE_EXPR,
-      UNARY_EXPR, UNIT_EXPR, WHILE_EXPR, WHILE_LET_EXPR),
+    create_token_set_(ARRAY_EXPR, BINARY_EXPR, BLOCK_EXPR, BREAK_EXPR,
+      CALL_EXPR, CAST_EXPR, CONT_EXPR, EXPR,
+      FIELD_EXPR, FOR_EXPR, IF_EXPR, IF_LET_EXPR,
+      INDEX_EXPR, LAMBDA_EXPR, LIT_EXPR, LOOP_EXPR,
+      MACRO_EXPR, MATCH_EXPR, METHOD_CALL_EXPR, PAREN_EXPR,
+      PATH_EXPR, QUAL_PATH_EXPR, RANGE_EXPR, RET_EXPR,
+      SELF_EXPR, STRUCT_EXPR, TUPLE_EXPR, UNARY_EXPR,
+      UNIT_EXPR, WHILE_EXPR, WHILE_LET_EXPR),
   };
 
   /* ********************************************************** */
@@ -775,26 +772,6 @@ public class RustParser implements PsiParser, LightPsiParser {
   private static boolean block_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_2")) return false;
     expr(b, l + 1, -1);
-    return true;
-  }
-
-  /* ********************************************************** */
-  // UNSAFE? block
-  public static boolean block_expr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "block_expr")) return false;
-    if (!nextTokenIs(b, "<block expr>", LBRACE, UNSAFE)) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, BLOCK_EXPR, "<block expr>");
-    r = block_expr_0(b, l + 1);
-    r = r && block(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // UNSAFE?
-  private static boolean block_expr_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "block_expr_0")) return false;
-    consumeToken(b, UNSAFE);
     return true;
   }
 
@@ -4508,7 +4485,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // blockish_expr
+  // block_expr
   //        | expr_stmt
   //        | decl_stmt
   //        | SEMICOLON
@@ -4516,7 +4493,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "stmt")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, STMT, "<stmt>");
-    r = blockish_expr(b, l + 1);
+    r = block_expr(b, l + 1);
     if (!r) r = expr_stmt(b, l + 1);
     if (!r) r = decl_stmt(b, l + 1);
     if (!r) r = consumeToken(b, SEMICOLON);
@@ -6094,7 +6071,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   // Operator priority table:
   // 0: ATOM(ret_expr)
   // 1: BINARY(assign_bin_expr)
-  // 2: ATOM(blockish_expr)
+  // 2: ATOM(block_expr)
   // 3: ATOM(cont_expr)
   // 4: ATOM(break_expr)
   // 5: PREFIX(lambda_expr)
@@ -6118,7 +6095,7 @@ public class RustParser implements PsiParser, LightPsiParser {
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, "<expr>");
     r = ret_expr(b, l + 1);
-    if (!r) r = blockish_expr(b, l + 1);
+    if (!r) r = block_expr(b, l + 1);
     if (!r) r = cont_expr(b, l + 1);
     if (!r) r = break_expr(b, l + 1);
     if (!r) r = lambda_expr(b, l + 1);
@@ -6274,27 +6251,45 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   // while_expr
-  //                 | loop_expr
-  //                 | if_expr
-  //                 | match_expr
-  //                 | if_let_expr
-  //                 | while_let_expr
-  //                 | block_expr
-  //                 | for_expr
-  public static boolean blockish_expr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "blockish_expr")) return false;
+  //              | while_let_expr
+  //              | if_expr
+  //              | if_let_expr
+  //              | for_expr
+  //              | loop_expr
+  //              | match_expr
+  //              | UNSAFE? block
+  public static boolean block_expr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_expr")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, BLOCKISH_EXPR, "<blockish expr>");
+    Marker m = enter_section_(b, l, _COLLAPSE_, BLOCK_EXPR, "<block expr>");
     r = while_expr(b, l + 1);
-    if (!r) r = loop_expr(b, l + 1);
-    if (!r) r = if_expr(b, l + 1);
-    if (!r) r = match_expr(b, l + 1);
-    if (!r) r = if_let_expr(b, l + 1);
     if (!r) r = while_let_expr(b, l + 1);
-    if (!r) r = block_expr(b, l + 1);
+    if (!r) r = if_expr(b, l + 1);
+    if (!r) r = if_let_expr(b, l + 1);
     if (!r) r = for_expr(b, l + 1);
+    if (!r) r = loop_expr(b, l + 1);
+    if (!r) r = match_expr(b, l + 1);
+    if (!r) r = block_expr_7(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
+  }
+
+  // UNSAFE? block
+  private static boolean block_expr_7(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_expr_7")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = block_expr_7_0(b, l + 1);
+    r = r && block(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // UNSAFE?
+  private static boolean block_expr_7_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_expr_7_0")) return false;
+    consumeTokenSmart(b, UNSAFE);
+    return true;
   }
 
   // CONTINUE lifetime?

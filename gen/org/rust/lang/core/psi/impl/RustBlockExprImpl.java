@@ -26,9 +26,9 @@ public class RustBlockExprImpl extends RustExprImpl implements RustBlockExpr {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public RustBlock getBlock() {
-    return findNotNullChildByClass(RustBlock.class);
+    return findChildByClass(RustBlock.class);
   }
 
   @Override

@@ -19,7 +19,6 @@ public interface RustCompositeElementTypes {
   IElementType BINDINGS = new RustCompositeElementType("BINDINGS");
   IElementType BINDING_MODE = new RustCompositeElementType("BINDING_MODE");
   IElementType BLOCK = new RustCompositeElementType("BLOCK");
-  IElementType BLOCKISH_EXPR = new RustCompositeElementType("BLOCKISH_EXPR");
   IElementType BLOCK_EXPR = new RustCompositeElementType("BLOCK_EXPR");
   IElementType BOUND = new RustCompositeElementType("BOUND");
   IElementType BOUNDS = new RustCompositeElementType("BOUNDS");
@@ -164,9 +163,6 @@ public interface RustCompositeElementTypes {
       }
       else if (type == BLOCK) {
         return new RustBlockImpl(node);
-      }
-      else if (type == BLOCKISH_EXPR) {
-        return new RustBlockishExprImpl(node);
       }
       else if (type == BLOCK_EXPR) {
         return new RustBlockExprImpl(node);

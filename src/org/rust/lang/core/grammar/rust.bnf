@@ -574,7 +574,7 @@ path ::= IDENTIFIER | SELF;
 
 expr ::= ret_expr
        | assign_bin_expr
-       | blockish_expr
+       | block_expr
        | cont_expr
        | break_expr
        | lambda_expr
@@ -593,14 +593,14 @@ expr ::= ret_expr
        | cast_expr
        | atom_expr
 
-blockish_expr ::= while_expr
-                | loop_expr
-                | if_expr
-                | match_expr
-                | if_let_expr
-                | while_let_expr
-                | block_expr
-                | for_expr
+block_expr ::= while_expr
+             | while_let_expr
+             | if_expr
+             | if_let_expr
+             | for_expr
+             | loop_expr
+             | match_expr
+             | UNSAFE? block
 
 
 private atom_expr ::= lit_expr
@@ -659,8 +659,6 @@ bit_and_bin_expr    ::= expr AND expr
 cast_expr ::= expr AS type
 
 unary_expr ::= (MINUS | MUL | EXCL | AND MUT?) expr
-
-block_expr ::= UNSAFE? block
 
 lambda_expr ::= MOVE? (OROR | OR [<<comma_separated_list lambda_param>>] OR) ret_type? expr
 private lambda_param ::= pat type_ascription?
@@ -794,7 +792,7 @@ block ::= LBRACE stmt* expr? RBRACE {pin(".*")=1}
 expr_stmt ::= expr SEMICOLON
 decl_stmt ::= (item | let_decl)
 
-stmt ::= blockish_expr
+stmt ::= block_expr
        | expr_stmt
        | decl_stmt
        | SEMICOLON
