@@ -74,10 +74,8 @@ public interface RustCompositeElementTypes {
   IElementType PARAM = new RustCompositeElementType("PARAM");
   IElementType PAREN_EXPR = new RustCompositeElementType("PAREN_EXPR");
   IElementType PAT = new RustCompositeElementType("PAT");
-  IElementType PATH = new RustCompositeElementType("PATH");
   IElementType PATH_EXPR = new RustCompositeElementType("PATH_EXPR");
   IElementType PATH_EXPR_PART = new RustCompositeElementType("PATH_EXPR_PART");
-  IElementType PATH_GLOB = new RustCompositeElementType("PATH_GLOB");
   IElementType PAT_ENUM = new RustCompositeElementType("PAT_ENUM");
   IElementType PAT_IDENT = new RustCompositeElementType("PAT_IDENT");
   IElementType PAT_QUAL_PATH = new RustCompositeElementType("PAT_QUAL_PATH");
@@ -329,17 +327,11 @@ public interface RustCompositeElementTypes {
       else if (type == PAT) {
         return new RustPatImpl(node);
       }
-      else if (type == PATH) {
-        return new RustPathImpl(node);
-      }
       else if (type == PATH_EXPR) {
         return new RustPathExprImpl(node);
       }
       else if (type == PATH_EXPR_PART) {
         return new RustPathExprPartImpl(node);
-      }
-      else if (type == PATH_GLOB) {
-        return new RustPathGlobImpl(node);
       }
       else if (type == PAT_ENUM) {
         return new RustPatEnumImpl(node);

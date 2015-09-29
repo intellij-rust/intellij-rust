@@ -249,17 +249,11 @@ public class RustParser implements PsiParser, LightPsiParser {
     else if (t == PAT_WILD) {
       r = pat_wild(b, 0);
     }
-    else if (t == PATH) {
-      r = path(b, 0);
-    }
     else if (t == PATH_EXPR) {
       r = path_expr(b, 0);
     }
     else if (t == PATH_EXPR_PART) {
       r = path_expr_part(b, 0);
-    }
-    else if (t == PATH_GLOB) {
-      r = path_glob(b, 0);
     }
     else if (t == POLYBOUND) {
       r = polybound(b, 0);
@@ -4066,19 +4060,6 @@ public class RustParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER | SELF
-  public static boolean path(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "path")) return false;
-    if (!nextTokenIs(b, "<path>", IDENTIFIER, SELF)) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, PATH, "<path>");
-    r = consumeToken(b, IDENTIFIER);
-    if (!r) r = consumeToken(b, SELF);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
   // COLONCOLON (IDENTIFIER | generic_args)
   public static boolean path_expr_part(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "path_expr_part")) return false;
@@ -4267,96 +4248,6 @@ public class RustParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "path_generic_args_without_colons_right_0_1_5")) return false;
     ret_type(b, l + 1);
     return true;
-  }
-
-  /* ********************************************************** */
-  // IDENTIFIER (COLONCOLON (path_glob | MUL))?
-  //             | LBRACE path (COMMA path)* RBRACE
-  public static boolean path_glob(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "path_glob")) return false;
-    if (!nextTokenIs(b, "<path glob>", IDENTIFIER, LBRACE)) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, PATH_GLOB, "<path glob>");
-    r = path_glob_0(b, l + 1);
-    if (!r) r = path_glob_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // IDENTIFIER (COLONCOLON (path_glob | MUL))?
-  private static boolean path_glob_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "path_glob_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, IDENTIFIER);
-    r = r && path_glob_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COLONCOLON (path_glob | MUL))?
-  private static boolean path_glob_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "path_glob_0_1")) return false;
-    path_glob_0_1_0(b, l + 1);
-    return true;
-  }
-
-  // COLONCOLON (path_glob | MUL)
-  private static boolean path_glob_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "path_glob_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, COLONCOLON);
-    r = r && path_glob_0_1_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // path_glob | MUL
-  private static boolean path_glob_0_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "path_glob_0_1_0_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = path_glob(b, l + 1);
-    if (!r) r = consumeToken(b, MUL);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // LBRACE path (COMMA path)* RBRACE
-  private static boolean path_glob_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "path_glob_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LBRACE);
-    r = r && path(b, l + 1);
-    r = r && path_glob_1_2(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA path)*
-  private static boolean path_glob_1_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "path_glob_1_2")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!path_glob_1_2_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "path_glob_1_2", c)) break;
-      c = current_position_(b);
-    }
-    return true;
-  }
-
-  // COMMA path
-  private static boolean path_glob_1_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "path_glob_1_2_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, COMMA);
-    r = r && path(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */

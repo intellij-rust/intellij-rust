@@ -312,19 +312,11 @@ public class RustVisitor extends PsiElementVisitor {
     visitPat(o);
   }
 
-  public void visitPath(@NotNull RustPath o) {
-    visitCompositeElement(o);
-  }
-
   public void visitPathExpr(@NotNull RustPathExpr o) {
     visitExpr(o);
   }
 
   public void visitPathExprPart(@NotNull RustPathExprPart o) {
-    visitCompositeElement(o);
-  }
-
-  public void visitPathGlob(@NotNull RustPathGlob o) {
     visitCompositeElement(o);
   }
 

@@ -564,11 +564,7 @@ private path_generic_args_without_colons_right ::= [ COLONCOLON IDENTIFIER gener
 // Paths
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-path_glob ::= IDENTIFIER (COLONCOLON (path_glob | MUL))?
-            | LBRACE path (COMMA path)* RBRACE
-
-path ::= IDENTIFIER | SELF;
-
+// TODO: move all five different kinds of paths here
 
 //
 // Expressions
