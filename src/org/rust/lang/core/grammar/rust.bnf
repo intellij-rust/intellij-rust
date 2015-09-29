@@ -178,7 +178,7 @@ private vis ::= PUB?
 item ::= outer_attrs? vis?
        ( stmt_item
        | mod_item
-    /* | item_macro */)
+       | item_macro)
 
 stmt_item ::= static_item
             | const_item
@@ -740,15 +740,34 @@ arg_list ::= LPAREN expr_list? RPAREN {pin=1}
 
 private expr_list ::= <<comma_separated_list expr>>
 
+field_expr ::= expr DOT (IDENTIFIER | INTEGER_LITERAL) { pin(".*")=2 }
+
+lit_expr ::= lit
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Macros
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 macro_expr ::= IDENTIFIER EXCL macro_arg
 
 macro_arg ::= LPAREN expr_list? RPAREN
             | LBRACE expr_list? RBRACE
-            | LBRACK expr_list? RBRACK {pin=1}
+            | LBRACK expr_list? RBRACK
+            | LPAREN token_tree RPAREN
+            | LBRACE token_tree RBRACE
+            | LBRACK token_tree RBRACK {pin=1}
 
-field_expr ::= expr DOT (IDENTIFIER | INTEGER_LITERAL) { pin(".*")=2 }
+token_tree ::= LPAREN token_tree* RPAREN token_tree*
+            | LBRACE token_tree* RBRACE token_tree*
+            | LBRACK token_tree* LBRACK token_tree*
+            | << unpairedToken >> +
 
-lit_expr ::= lit
+// This "parses" both macro definitons and macro usage
+item_macro ::= path_expr EXCL IDENTIFIER?
+             ( LPAREN token_tree? RPAREN SEMICOLON
+             | LBRACE token_tree? RBRACE
+             | LBRACK token_tree? RBRACK SEMICOLON )
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -137,5 +137,5 @@ public interface RustTokenElementTypes {
     IElementType Q = new RustTokenType("?");
     IElementType AT = new RustTokenType("@");
     IElementType UNDERSCORE = new RustTokenType("_");
-
+    IElementType DOLLAR = new RustTokenType("$");
 }

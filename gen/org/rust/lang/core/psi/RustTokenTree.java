@@ -5,28 +5,19 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustMacroArg extends RustCompositeElement {
+public interface RustTokenTree extends RustCompositeElement {
 
-  @Nullable
-  RustCommaSeparatedList getCommaSeparatedList();
-
-  @Nullable
-  RustTokenTree getTokenTree();
+  @NotNull
+  List<RustTokenTree> getTokenTreeList();
 
   @Nullable
   PsiElement getLbrace();
-
-  @Nullable
-  PsiElement getLbrack();
 
   @Nullable
   PsiElement getLparen();
 
   @Nullable
   PsiElement getRbrace();
-
-  @Nullable
-  PsiElement getRbrack();
 
   @Nullable
   PsiElement getRparen();

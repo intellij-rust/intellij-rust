@@ -58,6 +58,7 @@ public interface RustCompositeElementTypes {
   IElementType INDEX_EXPR = new RustCompositeElementType("INDEX_EXPR");
   IElementType INNER_ATTR = new RustCompositeElementType("INNER_ATTR");
   IElementType ITEM = new RustCompositeElementType("ITEM");
+  IElementType ITEM_MACRO = new RustCompositeElementType("ITEM_MACRO");
   IElementType LAMBDA_EXPR = new RustCompositeElementType("LAMBDA_EXPR");
   IElementType LET_DECL = new RustCompositeElementType("LET_DECL");
   IElementType LIFETIMES = new RustCompositeElementType("LIFETIMES");
@@ -103,6 +104,7 @@ public interface RustCompositeElementTypes {
   IElementType STRUCT_ITEM = new RustCompositeElementType("STRUCT_ITEM");
   IElementType STRUCT_TUPLE_ARGS = new RustCompositeElementType("STRUCT_TUPLE_ARGS");
   IElementType STRUCT_TUPLE_FIELD = new RustCompositeElementType("STRUCT_TUPLE_FIELD");
+  IElementType TOKEN_TREE = new RustCompositeElementType("TOKEN_TREE");
   IElementType TRAIT_CONST = new RustCompositeElementType("TRAIT_CONST");
   IElementType TRAIT_ITEM = new RustCompositeElementType("TRAIT_ITEM");
   IElementType TRAIT_METHOD = new RustCompositeElementType("TRAIT_METHOD");
@@ -279,6 +281,9 @@ public interface RustCompositeElementTypes {
       else if (type == ITEM) {
         return new RustItemImpl(node);
       }
+      else if (type == ITEM_MACRO) {
+        return new RustItemMacroImpl(node);
+      }
       else if (type == LAMBDA_EXPR) {
         return new RustLambdaExprImpl(node);
       }
@@ -413,6 +418,9 @@ public interface RustCompositeElementTypes {
       }
       else if (type == STRUCT_TUPLE_FIELD) {
         return new RustStructTupleFieldImpl(node);
+      }
+      else if (type == TOKEN_TREE) {
+        return new RustTokenTreeImpl(node);
       }
       else if (type == TRAIT_CONST) {
         return new RustTraitConstImpl(node);

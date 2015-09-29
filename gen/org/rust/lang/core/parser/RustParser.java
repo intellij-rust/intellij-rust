@@ -168,6 +168,9 @@ public class RustParser implements PsiParser, LightPsiParser {
     else if (t == ITEM) {
       r = item(b, 0);
     }
+    else if (t == ITEM_MACRO) {
+      r = item_macro(b, 0);
+    }
     else if (t == LAMBDA_EXPR) {
       r = lambda_expr(b, 0);
     }
@@ -302,6 +305,9 @@ public class RustParser implements PsiParser, LightPsiParser {
     }
     else if (t == STRUCT_TUPLE_FIELD) {
       r = struct_tuple_field(b, 0);
+    }
+    else if (t == TOKEN_TREE) {
+      r = token_tree(b, 0);
     }
     else if (t == TRAIT_CONST) {
       r = trait_const(b, 0);
@@ -2617,7 +2623,7 @@ public class RustParser implements PsiParser, LightPsiParser {
   // outer_attrs? vis?
   //        ( stmt_item
   //        | mod_item
-  //     /* | item_macro */)
+  //        | item_macro)
   public static boolean item(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "item")) return false;
     boolean r;
@@ -2645,14 +2651,111 @@ public class RustParser implements PsiParser, LightPsiParser {
 
   // stmt_item
   //        | mod_item
+  //        | item_macro
   private static boolean item_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "item_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = stmt_item(b, l + 1);
     if (!r) r = mod_item(b, l + 1);
+    if (!r) r = item_macro(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  /* ********************************************************** */
+  // path_expr EXCL IDENTIFIER?
+  //              ( LPAREN token_tree? RPAREN SEMICOLON
+  //              | LBRACE token_tree? RBRACE
+  //              | LBRACK token_tree? RBRACK SEMICOLON )
+  public static boolean item_macro(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "item_macro")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, ITEM_MACRO, "<item macro>");
+    r = path_expr(b, l + 1);
+    r = r && consumeToken(b, EXCL);
+    r = r && item_macro_2(b, l + 1);
+    r = r && item_macro_3(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // IDENTIFIER?
+  private static boolean item_macro_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "item_macro_2")) return false;
+    consumeToken(b, IDENTIFIER);
+    return true;
+  }
+
+  // LPAREN token_tree? RPAREN SEMICOLON
+  //              | LBRACE token_tree? RBRACE
+  //              | LBRACK token_tree? RBRACK SEMICOLON
+  private static boolean item_macro_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "item_macro_3")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = item_macro_3_0(b, l + 1);
+    if (!r) r = item_macro_3_1(b, l + 1);
+    if (!r) r = item_macro_3_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // LPAREN token_tree? RPAREN SEMICOLON
+  private static boolean item_macro_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "item_macro_3_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LPAREN);
+    r = r && item_macro_3_0_1(b, l + 1);
+    r = r && consumeTokens(b, 0, RPAREN, SEMICOLON);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // token_tree?
+  private static boolean item_macro_3_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "item_macro_3_0_1")) return false;
+    token_tree(b, l + 1);
+    return true;
+  }
+
+  // LBRACE token_tree? RBRACE
+  private static boolean item_macro_3_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "item_macro_3_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LBRACE);
+    r = r && item_macro_3_1_1(b, l + 1);
+    r = r && consumeToken(b, RBRACE);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // token_tree?
+  private static boolean item_macro_3_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "item_macro_3_1_1")) return false;
+    token_tree(b, l + 1);
+    return true;
+  }
+
+  // LBRACK token_tree? RBRACK SEMICOLON
+  private static boolean item_macro_3_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "item_macro_3_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LBRACK);
+    r = r && item_macro_3_2_1(b, l + 1);
+    r = r && consumeTokens(b, 0, RBRACK, SEMICOLON);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // token_tree?
+  private static boolean item_macro_3_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "item_macro_3_2_1")) return false;
+    token_tree(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */
@@ -2955,6 +3058,9 @@ public class RustParser implements PsiParser, LightPsiParser {
   // LPAREN expr_list? RPAREN
   //             | LBRACE expr_list? RBRACE
   //             | LBRACK expr_list? RBRACK
+  //             | LPAREN token_tree RPAREN
+  //             | LBRACE token_tree RBRACE
+  //             | LBRACK token_tree RBRACK
   public static boolean macro_arg(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "macro_arg")) return false;
     boolean r;
@@ -2962,6 +3068,9 @@ public class RustParser implements PsiParser, LightPsiParser {
     r = macro_arg_0(b, l + 1);
     if (!r) r = macro_arg_1(b, l + 1);
     if (!r) r = macro_arg_2(b, l + 1);
+    if (!r) r = macro_arg_3(b, l + 1);
+    if (!r) r = macro_arg_4(b, l + 1);
+    if (!r) r = macro_arg_5(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -3021,6 +3130,42 @@ public class RustParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "macro_arg_2_1")) return false;
     expr_list(b, l + 1);
     return true;
+  }
+
+  // LPAREN token_tree RPAREN
+  private static boolean macro_arg_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "macro_arg_3")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LPAREN);
+    r = r && token_tree(b, l + 1);
+    r = r && consumeToken(b, RPAREN);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // LBRACE token_tree RBRACE
+  private static boolean macro_arg_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "macro_arg_4")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LBRACE);
+    r = r && token_tree(b, l + 1);
+    r = r && consumeToken(b, RBRACE);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // LBRACK token_tree RBRACK
+  private static boolean macro_arg_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "macro_arg_5")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LBRACK);
+    r = r && token_tree(b, l + 1);
+    r = r && consumeToken(b, RBRACK);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -4712,6 +4857,150 @@ public class RustParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeToken(b, COMMA);
     r = r && struct_tuple_field(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // LPAREN token_tree* RPAREN token_tree*
+  //             | LBRACE token_tree* RBRACE token_tree*
+  //             | LBRACK token_tree* LBRACK token_tree*
+  //             | << unpairedToken >> +
+  public static boolean token_tree(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "token_tree")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, TOKEN_TREE, "<token tree>");
+    r = token_tree_0(b, l + 1);
+    if (!r) r = token_tree_1(b, l + 1);
+    if (!r) r = token_tree_2(b, l + 1);
+    if (!r) r = token_tree_3(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // LPAREN token_tree* RPAREN token_tree*
+  private static boolean token_tree_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "token_tree_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LPAREN);
+    r = r && token_tree_0_1(b, l + 1);
+    r = r && consumeToken(b, RPAREN);
+    r = r && token_tree_0_3(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // token_tree*
+  private static boolean token_tree_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "token_tree_0_1")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!token_tree(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "token_tree_0_1", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  // token_tree*
+  private static boolean token_tree_0_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "token_tree_0_3")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!token_tree(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "token_tree_0_3", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  // LBRACE token_tree* RBRACE token_tree*
+  private static boolean token_tree_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "token_tree_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LBRACE);
+    r = r && token_tree_1_1(b, l + 1);
+    r = r && consumeToken(b, RBRACE);
+    r = r && token_tree_1_3(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // token_tree*
+  private static boolean token_tree_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "token_tree_1_1")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!token_tree(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "token_tree_1_1", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  // token_tree*
+  private static boolean token_tree_1_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "token_tree_1_3")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!token_tree(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "token_tree_1_3", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  // LBRACK token_tree* LBRACK token_tree*
+  private static boolean token_tree_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "token_tree_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LBRACK);
+    r = r && token_tree_2_1(b, l + 1);
+    r = r && consumeToken(b, LBRACK);
+    r = r && token_tree_2_3(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // token_tree*
+  private static boolean token_tree_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "token_tree_2_1")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!token_tree(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "token_tree_2_1", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  // token_tree*
+  private static boolean token_tree_2_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "token_tree_2_3")) return false;
+    int c = current_position_(b);
+    while (true) {
+      if (!token_tree(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "token_tree_2_3", c)) break;
+      c = current_position_(b);
+    }
+    return true;
+  }
+
+  // << unpairedToken >> +
+  private static boolean token_tree_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "token_tree_3")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = unpairedToken(b, l + 1);
+    int c = current_position_(b);
+    while (r) {
+      if (!unpairedToken(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "token_tree_3", c)) break;
+      c = current_position_(b);
+    }
     exit_section_(b, m, null, r);
     return r;
   }

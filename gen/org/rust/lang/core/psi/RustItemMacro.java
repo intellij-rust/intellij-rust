@@ -5,13 +5,19 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustMacroArg extends RustCompositeElement {
+public interface RustItemMacro extends RustCompositeElement {
 
-  @Nullable
-  RustCommaSeparatedList getCommaSeparatedList();
+  @NotNull
+  RustPathExpr getPathExpr();
 
   @Nullable
   RustTokenTree getTokenTree();
+
+  @NotNull
+  PsiElement getExcl();
+
+  @Nullable
+  PsiElement getIdentifier();
 
   @Nullable
   PsiElement getLbrace();
@@ -30,5 +36,8 @@ public interface RustMacroArg extends RustCompositeElement {
 
   @Nullable
   PsiElement getRparen();
+
+  @Nullable
+  PsiElement getSemicolon();
 
 }

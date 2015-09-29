@@ -21,5 +21,17 @@ public object RustParserUtil : GeneratedParserUtilBase() {
         return false;
     }
 
+    @JvmStatic
+    public fun unpairedToken(b: PsiBuilder, level: Int): Boolean {
+        when (b.tokenType) {
+            RustTokenElementTypes.LBRACE, RustTokenElementTypes.RBRACE -> return false
+            RustTokenElementTypes.LPAREN, RustTokenElementTypes.RPAREN -> return false
+            RustTokenElementTypes.LBRACK, RustTokenElementTypes.RBRACK -> return false
+            else -> {
+                b.advanceLexer();
+                return true
+            }
+        }
+    }
 }
 

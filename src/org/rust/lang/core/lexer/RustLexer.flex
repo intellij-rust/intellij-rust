@@ -167,6 +167,7 @@ SHEBANG_LINE=\#\![^\[].*
   "?"                             { return RustTokenElementTypes.Q; }
   "@"                             { return RustTokenElementTypes.AT; }
   "_"                             { return RustTokenElementTypes.UNDERSCORE; }
+  "$"                             { return RustTokenElementTypes.DOLLAR; }
 
   "abstract"                      { return RustTokenElementTypes.ABSTRACT; }
   "alignof"                       { return RustTokenElementTypes.ALIGNOF; }

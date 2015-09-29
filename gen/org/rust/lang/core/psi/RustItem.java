@@ -8,6 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface RustItem extends RustCompositeElement {
 
   @Nullable
+  RustItemMacro getItemMacro();
+
+  @Nullable
   RustModItem getModItem();
 
   @NotNull
