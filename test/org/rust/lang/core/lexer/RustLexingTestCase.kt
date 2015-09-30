@@ -20,10 +20,11 @@ public class RustLexingTestCase : LexerTestCase() {
 
     val ext = RustFileType.DEFAULTS.EXTENSION
 
-    fun testComments()      { doFileTest(ext) }
-    fun testShebang()       { doFileTest(ext) }
-    fun testFloat()         { doFileTest(ext) }
-    fun testIdentifiers()   { doFileTest(ext) }
-    fun testChars()         { doFileTest(ext) }
-    fun testBytes()         { doFileTest(ext) }
+    fun testComments()          { doFileTest(ext) }
+    fun testShebang()           { doFileTest(ext) }
+    fun testFloat()             { doFileTest(ext) }
+    fun testIdentifiers()       { doFileTest(ext) }
+    fun testCharLiterals()      { doFileTest(ext) }
+    fun testStringLiterals()    { doFileTest(ext) }
+    fun testByteLiterals()      { doFileTest(ext) }
 }

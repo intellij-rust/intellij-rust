@@ -9,6 +9,21 @@ import com.intellij.psi.tree.IElementType;
     this((java.io.Reader)null);
   }
 
+  /**
+    * '#+' stride demarking start/end of raw string/byte literal
+    */
+  private int zzShaStride = -1;
+
+  /**
+    * Starting position of raw string/byte literal
+    */
+  private int zzRawLiteralStart = -1;
+
+  /**
+    * Raw literal type (byte/string)
+    */
+  private IElementType zzRawLiteralType = null;
+
   private int commentDepth;
   private int commentStart;
 
@@ -42,12 +57,12 @@ import com.intellij.psi.tree.IElementType;
 %function advance
 %type IElementType
 
-%x INNER_DOC_COMMENT
-%x OUTER_DOC_COMMENT
 %x BLOCK_COMMENT
 %x EOL_COMMENT
 
 %x LIFETIME_OR_CHAR
+
+%x RAW_LITERAL
 
 %x SUFFIX
 
@@ -102,10 +117,6 @@ ESCAPE_SEQUENCE = \\[^\r\n\t\\] | {BYTE_ESCAPE} | {UNICODE_ESCAPE}
 BYTE_ESCAPE = \\n|\\r|\\t|\\\\|\\x{HEX_DIGIT}{2}
 UNICODE_ESCAPE = \\u\{{HEX_DIGIT}{1,6}\}
 
-// TODO(kudinkin):
-//  Raw string literals
-//  Byte literals
-//  Raw byte literals
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Other
@@ -222,13 +233,12 @@ SHEBANG_LINE=\#\![^\[].*
   "while"                         { return RustTokenElementTypes.WHILE; }
   "yield"                         { return RustTokenElementTypes.YIELD; }
 
-  "/**/"                          { return RustTokenElementTypes.OUTER_DOC_COMMENT; }
-  "/*!"                           { beginComment(INNER_DOC_COMMENT); }
-  "/**"                           { beginComment(OUTER_DOC_COMMENT); }
-  "/*"                            { beginComment(BLOCK_COMMENT); }
-  "//"                            { yybegin(EOL_COMMENT); yypushback(2); }
+  "/*"                            { yybegin(BLOCK_COMMENT); yypushback(2); }
+  "//"                            { yybegin(EOL_COMMENT);   yypushback(2); }
 
   {IDENTIFIER}                    { return RustTokenElementTypes.IDENTIFIER; }
+
+  /* LITERALS */
 
   {INT_LITERAL}                   { return RustTokenElementTypes.INTEGER_LITERAL; }
 
@@ -236,10 +246,22 @@ SHEBANG_LINE=\#\![^\[].*
   {FLT_TRAILING_DOT}/[^._\p{xidstart}]
                                   { return RustTokenElementTypes.FLOAT_LITERAL; }
 
-  {BYTE_LITERAL}                  { return RustTokenElementTypes.BYTE_LITERAL; }
+  "b"{STRING_LITERAL}             { yybegin(SUFFIX); return RustTokenElementTypes.BYTE_LITERAL; }
+  "br"{STRING_LITERAL}            { yybegin(SUFFIX); return RustTokenElementTypes.RAW_BYTE_LITERAL; }
 
-  {STRING_LITERAL}                { return RustTokenElementTypes.STRING_LITERAL; }
-  {BYTE_STRING_LITERAL}           { return RustTokenElementTypes.BYTE_STRING_LITERAL; }
+  "br" #+                         { yybegin(RAW_LITERAL);
+                                    zzRawLiteralStart = zzStartRead;
+                                    zzRawLiteralType  = RustTokenElementTypes.RAW_BYTE_LITERAL;
+                                    zzShaStride       = yylength() - 2; }
+
+  {STRING_LITERAL}                { yybegin(SUFFIX); return RustTokenElementTypes.STRING_LITERAL; }
+  "r"{STRING_LITERAL}             { yybegin(SUFFIX); return RustTokenElementTypes.RAW_STRING_LITERAL; }
+
+  "r" #+                          { yybegin(RAW_LITERAL);
+
+                                    zzRawLiteralStart = zzStartRead;
+                                    zzRawLiteralType  = RustTokenElementTypes.RAW_STRING_LITERAL;
+                                    zzShaStride       = yylength() - 1; }
 
   {SHEBANG_LINE}                  { return RustTokenElementTypes.SHEBANG_LINE; }
 
@@ -254,6 +276,30 @@ SHEBANG_LINE=\#\![^\[].*
 <SUFFIX>{IDENTIFIER}    { yybegin(YYINITIAL); }
 <SUFFIX>[^]             { yypushback(1); yybegin(YYINITIAL); }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Literals
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+<RAW_LITERAL> {
+
+  #+  {
+    if (zzShaStride == yylength()) {
+      yybegin(SUFFIX);
+
+      zzStartRead = zzRawLiteralStart;
+
+      zzShaStride       = -1;
+      zzRawLiteralStart = -1;
+
+      return zzRawLiteralType;
+    }
+  }
+
+  [^]       { }
+  <<EOF>>   { zzShaStride       = -1;
+              zzRawLiteralStart = -1; }
+
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Comments
@@ -296,7 +342,7 @@ SHEBANG_LINE=\#\![^\[].*
 // Lifetimes & Literals
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-<LIFETIME_OR_CHAR>                {
+<LIFETIME_OR_CHAR> {
 
   \x27static                          { yybegin(YYINITIAL); return RustTokenElementTypes.STATIC_LIFETIME; }
   \x27{IDENTIFIER}                    { yybegin(YYINITIAL); return RustTokenElementTypes.LIFETIME; }
@@ -314,4 +360,4 @@ SHEBANG_LINE=\#\![^\[].*
 // Catch All
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-[^]                             { return com.intellij.psi.TokenType.BAD_CHARACTER; }
+[^] { return com.intellij.psi.TokenType.BAD_CHARACTER; }
