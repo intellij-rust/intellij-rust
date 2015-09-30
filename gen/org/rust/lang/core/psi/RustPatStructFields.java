@@ -10,9 +10,6 @@ public interface RustPatStructFields extends RustPat {
   @NotNull
   List<RustBindingMode> getBindingModeList();
 
-  @Nullable
-  RustCommaSeparatedList getCommaSeparatedList();
-
   @NotNull
   List<RustPat> getPatList();
 

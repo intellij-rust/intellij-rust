@@ -27,14 +27,8 @@ public class RustStructExprBodyImpl extends RustCompositeElementImpl implements 
 
   @Override
   @NotNull
-  public RustCommaSeparatedList getCommaSeparatedList() {
-    return findNotNullChildByClass(RustCommaSeparatedList.class);
-  }
-
-  @Override
-  @Nullable
-  public RustExpr getExpr() {
-    return findChildByClass(RustExpr.class);
+  public List<RustExpr> getExprList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
   }
 
   @Override

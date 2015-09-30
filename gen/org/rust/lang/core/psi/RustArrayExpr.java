@@ -7,9 +7,6 @@ import com.intellij.psi.PsiElement;
 
 public interface RustArrayExpr extends RustExpr {
 
-  @Nullable
-  RustCommaSeparatedList getCommaSeparatedList();
-
   @NotNull
   List<RustExpr> getExprList();
 

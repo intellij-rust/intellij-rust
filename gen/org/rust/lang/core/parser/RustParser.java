@@ -938,14 +938,14 @@ public class RustParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // <<param>> ( ',' <<param>> ) * [',']
-  public static boolean comma_separated_list(PsiBuilder b, int l, final Parser _param) {
+  static boolean comma_separated_list(PsiBuilder b, int l, final Parser _param) {
     if (!recursion_guard_(b, l, "comma_separated_list")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = _param.parse(b, l);
     r = r && comma_separated_list_1(b, l + 1, _param);
     r = r && comma_separated_list_2(b, l + 1);
-    exit_section_(b, m, COMMA_SEPARATED_LIST, r);
+    exit_section_(b, m, null, r);
     return r;
   }
 

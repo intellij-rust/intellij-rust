@@ -8,10 +8,7 @@ import com.intellij.psi.PsiElement;
 public interface RustStructExprBody extends RustCompositeElement {
 
   @NotNull
-  RustCommaSeparatedList getCommaSeparatedList();
-
-  @Nullable
-  RustExpr getExpr();
+  List<RustExpr> getExprList();
 
   @Nullable
   PsiElement getDotdot();

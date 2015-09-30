@@ -7,8 +7,8 @@ import com.intellij.psi.PsiElement;
 
 public interface RustMacroArg extends RustCompositeElement {
 
-  @Nullable
-  RustCommaSeparatedList getCommaSeparatedList();
+  @NotNull
+  List<RustExpr> getExprList();
 
   @Nullable
   RustTokenTree getTokenTree();

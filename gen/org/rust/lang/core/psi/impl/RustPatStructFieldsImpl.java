@@ -32,12 +32,6 @@ public class RustPatStructFieldsImpl extends RustPatImpl implements RustPatStruc
   }
 
   @Override
-  @Nullable
-  public RustCommaSeparatedList getCommaSeparatedList() {
-    return findChildByClass(RustCommaSeparatedList.class);
-  }
-
-  @Override
   @NotNull
   public List<RustPat> getPatList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustPat.class);

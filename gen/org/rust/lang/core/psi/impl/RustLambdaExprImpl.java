@@ -27,20 +27,26 @@ public class RustLambdaExprImpl extends RustExprImpl implements RustLambdaExpr {
 
   @Override
   @Nullable
-  public RustCommaSeparatedList getCommaSeparatedList() {
-    return findChildByClass(RustCommaSeparatedList.class);
+  public RustExpr getExpr() {
+    return findChildByClass(RustExpr.class);
   }
 
   @Override
-  @Nullable
-  public RustExpr getExpr() {
-    return findChildByClass(RustExpr.class);
+  @NotNull
+  public List<RustPat> getPatList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustPat.class);
   }
 
   @Override
   @Nullable
   public RustRetType getRetType() {
     return findChildByClass(RustRetType.class);
+  }
+
+  @Override
+  @NotNull
+  public List<RustTypeAscription> getTypeAscriptionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeAscription.class);
   }
 
   @Override

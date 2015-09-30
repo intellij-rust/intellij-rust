@@ -26,9 +26,9 @@ public class RustMacroArgImpl extends RustCompositeElementImpl implements RustMa
   }
 
   @Override
-  @Nullable
-  public RustCommaSeparatedList getCommaSeparatedList() {
-    return findChildByClass(RustCommaSeparatedList.class);
+  @NotNull
+  public List<RustExpr> getExprList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustExpr.class);
   }
 
   @Override
