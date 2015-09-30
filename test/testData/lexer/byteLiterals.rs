@@ -9,14 +9,14 @@ b"Quick brown fox \
   jumps over \
   the lazy dog"
 
-br####
+br####"
 Quick \u{1f43a} jumps over the lazy \u{1f436}
-####
+"####
 
-br###
+br###"
 Quick \u{1f43a} jumps over the lazy \u{1f436}
-###x
+"###x
 
-br##
+br##"
 Quick \u{1f43a} jumps #### the lazy \u{1f436}
-##
+"##

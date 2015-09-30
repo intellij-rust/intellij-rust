@@ -267,19 +267,19 @@ SHEBANG_LINE=\#\![^\[].*
   "b"{STRING_LITERAL}             { yybegin(SUFFIX); return RustTokenElementTypes.BYTE_LITERAL; }
   "br"{STRING_LITERAL}            { yybegin(SUFFIX); return RustTokenElementTypes.RAW_BYTE_LITERAL; }
 
-  "br" #+                         { yybegin(RAW_LITERAL);
+  "br" #+ \x22                    { yybegin(RAW_LITERAL);
                                     zzRawLiteralStart = zzStartRead;
                                     zzRawLiteralType  = RustTokenElementTypes.RAW_BYTE_LITERAL;
-                                    zzShaStride       = yylength() - 2; }
+                                    zzShaStride       = yylength() - 3; }
 
   {STRING_LITERAL}                { yybegin(SUFFIX); return RustTokenElementTypes.STRING_LITERAL; }
   "r"{STRING_LITERAL}             { yybegin(SUFFIX); return RustTokenElementTypes.RAW_STRING_LITERAL; }
 
-  "r" #+                          { yybegin(RAW_LITERAL);
+  "r" #+ \x22                     { yybegin(RAW_LITERAL);
 
                                     zzRawLiteralStart = zzStartRead;
                                     zzRawLiteralType  = RustTokenElementTypes.RAW_STRING_LITERAL;
-                                    zzShaStride       = yylength() - 1; }
+                                    zzShaStride       = yylength() - 2; }
 
   {SHEBANG_LINE}                  { return RustTokenElementTypes.SHEBANG_LINE; }
 
@@ -300,8 +300,8 @@ SHEBANG_LINE=\#\![^\[].*
 
 <RAW_LITERAL> {
 
-  #+  {
-    if (zzShaStride == yylength()) {
+  \x22 #+ {
+    if (zzShaStride == yylength() - 1) {
       yybegin(SUFFIX);
 
       zzStartRead = zzRawLiteralStart;
