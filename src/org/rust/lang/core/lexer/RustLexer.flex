@@ -49,6 +49,21 @@ import com.intellij.psi.tree.IElementType;
       commentStart = getTokenStart();
   }
 
+
+  /**
+    * '#+' stride demarking start/end of raw string/byte literal
+    */
+  private int zzShaStride = -1;
+
+  /**
+    * Starting position of raw string/byte literal
+    */
+  private int zzRawLiteralStart = -1;
+
+  /**
+    * Raw literal type (byte/string)
+    */
+  private IElementType zzRawLiteralType = null;
 %}
 
 %public
@@ -58,6 +73,9 @@ import com.intellij.psi.tree.IElementType;
 %type IElementType
 
 %x BLOCK_COMMENT
+%x INNER_DOC_COMMENT
+%x OUTER_DOC_COMMENT
+
 %x EOL_COMMENT
 
 %x LIFETIME_OR_CHAR
