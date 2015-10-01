@@ -27,6 +27,9 @@
 
         <!-- Rust -->
 
+        <!-- JPS -->
+        <compileServer.plugin classpath="rust-jps-plugin.jar"/>
+
         <!-- Modules -->
 
         <moduleType id="RUST_EXECUTABLE_MODULE" classpathProvider="false"
