@@ -301,8 +301,10 @@ SHEBANG_LINE=\#\![^\[].*
 <RAW_LITERAL> {
 
   \x22 #+ {
-    if (zzShaStride == yylength() - 1) {
+    int shaExcess = yylength() - 1 - zzShaStride;
+    if (shaExcess >= 0) {
       yybegin(SUFFIX);
+      yypushback(shaExcess);
 
       zzStartRead = zzRawLiteralStart;
 
