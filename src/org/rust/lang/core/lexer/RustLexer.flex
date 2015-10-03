@@ -8,62 +8,43 @@ import com.intellij.psi.tree.IElementType;
   public _RustLexer() {
     this((java.io.Reader)null);
   }
+%}
 
+%{}
   /**
     * '#+' stride demarking start/end of raw string/byte literal
     */
   private int zzShaStride = -1;
 
   /**
-    * Starting position of raw string/byte literal
+    * Dedicated storage for starting position of some previously successful
+    * match
     */
-  private int zzRawLiteralStart = -1;
+  private int zzPostponedMarkedPos = -1;
 
   /**
-    * Raw literal type (byte/string)
+    * Dedicated nested-comment level counter
     */
-  private IElementType zzRawLiteralType = null;
+  private int zzNestedCommentLevel = 0;
+%}
 
-  private int commentDepth;
-  private int commentStart;
+%{
+  IElementType imbueBlockComment() {
+    yybegin(YYINITIAL);
 
-  private IElementType endComment() {
-      zzStartRead = commentStart;
-      int state = yystate();
-      yybegin(YYINITIAL);
-      switch (state) {
-          case BLOCK_COMMENT:
-              return RustTokenElementTypes.BLOCK_COMMENT;
-          case INNER_DOC_COMMENT:
-              return RustTokenElementTypes.INNER_DOC_COMMENT;
-          case OUTER_DOC_COMMENT:
-              return RustTokenElementTypes.OUTER_DOC_COMMENT;
-          default:
-              throw new IllegalArgumentException("Unexpected state: " + state);
-      }
+    zzStartRead           = zzPostponedMarkedPos;
+    zzPostponedMarkedPos  = -1;
+
+    if (yylength() > 2)
+    {
+      if (yycharat(2) == '!')
+        return RustTokenElementTypes.INNER_DOC_COMMENT;
+      else if (yycharat(2) == '*')
+        return RustTokenElementTypes.OUTER_DOC_COMMENT;
+    }
+
+    return RustTokenElementTypes.BLOCK_COMMENT;
   }
-
-  private void beginComment(int state) {
-      yybegin(state);
-      commentDepth = 0;
-      commentStart = getTokenStart();
-  }
-
-
-  /**
-    * '#+' stride demarking start/end of raw string/byte literal
-    */
-  private int zzShaStride = -1;
-
-  /**
-    * Starting position of raw string/byte literal
-    */
-  private int zzRawLiteralStart = -1;
-
-  /**
-    * Raw literal type (byte/string)
-    */
-  private IElementType zzRawLiteralType = null;
 %}
 
 %public
@@ -73,9 +54,6 @@ import com.intellij.psi.tree.IElementType;
 %type IElementType
 
 %x BLOCK_COMMENT
-%x INNER_DOC_COMMENT
-%x OUTER_DOC_COMMENT
-
 %x EOL_COMMENT
 
 %x LIFETIME_OR_CHAR
@@ -129,7 +107,6 @@ BIN_DIGIT = [0-1]
 BYTE_LITERAL = b\x27 ([^'] | {ESCAPE_SEQUENCE}) \x27
 
 STRING_LITERAL = r? \x22 ([^\"] | {ESCAPE_SEQUENCE})* (\x22|\\)?
-BYTE_STRING_LITERAL = br? \x22 ([^\"] | {ESCAPE_SEQUENCE})* \x22
 
 ESCAPE_SEQUENCE = \\[^\r\n\t\\] | {BYTE_ESCAPE} | {UNICODE_ESCAPE}
 BYTE_ESCAPE = \\n|\\r|\\t|\\\\|\\x{HEX_DIGIT}{2}
@@ -264,22 +241,23 @@ SHEBANG_LINE=\#\![^\[].*
   {FLT_TRAILING_DOT}/[^._\p{xidstart}]
                                   { return RustTokenElementTypes.FLOAT_LITERAL; }
 
-  "b"{STRING_LITERAL}             { yybegin(SUFFIX); return RustTokenElementTypes.BYTE_LITERAL; }
-  "br"{STRING_LITERAL}            { yybegin(SUFFIX); return RustTokenElementTypes.RAW_BYTE_LITERAL; }
+  {BYTE_LITERAL}                  { return RustTokenElementTypes.BYTE_LITERAL; }
+
+  "b"{STRING_LITERAL}             { yybegin(SUFFIX); return RustTokenElementTypes.BYTE_STRING_LITERAL; }
+  "br"{STRING_LITERAL}            { yybegin(SUFFIX); return RustTokenElementTypes.RAW_BYTE_STRING_LITERAL; }
 
   "br" #+ \x22                    { yybegin(RAW_LITERAL);
-                                    zzRawLiteralStart = zzStartRead;
-                                    zzRawLiteralType  = RustTokenElementTypes.RAW_BYTE_LITERAL;
-                                    zzShaStride       = yylength() - 3; }
+
+                                    zzPostponedMarkedPos = zzStartRead;
+                                    zzShaStride          = yylength() - 3; }
 
   {STRING_LITERAL}                { yybegin(SUFFIX); return RustTokenElementTypes.STRING_LITERAL; }
   "r"{STRING_LITERAL}             { yybegin(SUFFIX); return RustTokenElementTypes.RAW_STRING_LITERAL; }
 
   "r" #+ \x22                     { yybegin(RAW_LITERAL);
 
-                                    zzRawLiteralStart = zzStartRead;
-                                    zzRawLiteralType  = RustTokenElementTypes.RAW_STRING_LITERAL;
-                                    zzShaStride       = yylength() - 2; }
+                                    zzPostponedMarkedPos = zzStartRead;
+                                    zzShaStride          = yylength() - 2; }
 
   {SHEBANG_LINE}                  { return RustTokenElementTypes.SHEBANG_LINE; }
 
@@ -306,18 +284,21 @@ SHEBANG_LINE=\#\![^\[].*
       yybegin(SUFFIX);
       yypushback(shaExcess);
 
-      zzStartRead = zzRawLiteralStart;
+      zzStartRead = zzPostponedMarkedPos;
 
-      zzShaStride       = -1;
-      zzRawLiteralStart = -1;
+      zzShaStride           = -1;
+      zzPostponedMarkedPos  = -1;
 
-      return zzRawLiteralType;
+      if (yycharat(0) == 'b')
+        return RustTokenElementTypes.RAW_BYTE_STRING_LITERAL;
+      else
+        return RustTokenElementTypes.RAW_STRING_LITERAL;
     }
   }
 
   [^]       { }
-  <<EOF>>   { zzShaStride       = -1;
-              zzRawLiteralStart = -1; }
+  <<EOF>>   { zzShaStride          = -1;
+              zzPostponedMarkedPos = -1; }
 
 }
 
@@ -325,24 +306,18 @@ SHEBANG_LINE=\#\![^\[].*
 // Comments
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-<INNER_DOC_COMMENT, OUTER_DOC_COMMENT, BLOCK_COMMENT> {
-  "/*" {
-      commentDepth++;
-  }
+<BLOCK_COMMENT> {
+  "/*"    { if (zzNestedCommentLevel++ == 0)
+              zzPostponedMarkedPos = zzStartRead;
+          }
 
-  <<EOF>> {
-      return endComment();
-  }
+  "*/"    { if (--zzNestedCommentLevel == 0)
+              return imbueBlockComment();
+          }
 
-  "*/" {
-      if (commentDepth > 0) {
-          commentDepth--;
-      } else {
-          return endComment();
-      }
-  }
+  <<EOF>> { return imbueBlockComment(); }
 
-  [^] { /* do nothing */ }
+  [^]     { }
 }
 
 <EOL_COMMENT>.*
