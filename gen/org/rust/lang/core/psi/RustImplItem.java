@@ -80,6 +80,9 @@ public interface RustImplItem extends RustCompositeElement {
   PsiElement getRbrace();
 
   @Nullable
+  PsiElement getSuper();
+
+  @Nullable
   PsiElement getTypeof();
 
   @Nullable

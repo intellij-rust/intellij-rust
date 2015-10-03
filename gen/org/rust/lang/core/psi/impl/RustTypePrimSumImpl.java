@@ -123,6 +123,12 @@ public class RustTypePrimSumImpl extends RustCompositeElementImpl implements Rus
 
   @Override
   @Nullable
+  public PsiElement getSuper() {
+    return findChildByType(SUPER);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getTypeof() {
     return findChildByType(TYPEOF);
   }

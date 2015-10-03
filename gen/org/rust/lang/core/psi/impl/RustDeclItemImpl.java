@@ -117,6 +117,12 @@ public class RustDeclItemImpl extends RustNamedElementImpl implements RustDeclIt
 
   @Override
   @Nullable
+  public PsiElement getSuper() {
+    return findChildByType(SUPER);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getTypeof() {
     return findChildByType(TYPEOF);
   }

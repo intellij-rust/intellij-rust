@@ -107,6 +107,9 @@ public interface RustLetDecl extends RustCompositeElement {
   PsiElement getStaticLifetime();
 
   @Nullable
+  PsiElement getSuper();
+
+  @Nullable
   PsiElement getTypeof();
 
   @Nullable

@@ -19,4 +19,7 @@ public interface RustTraitRef extends RustCompositeElement {
   @Nullable
   PsiElement getCself();
 
+  @Nullable
+  PsiElement getSuper();
+
 }

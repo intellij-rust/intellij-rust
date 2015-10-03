@@ -135,6 +135,12 @@ public class RustWherePredImpl extends RustCompositeElementImpl implements RustW
 
   @Override
   @Nullable
+  public PsiElement getSuper() {
+    return findChildByType(SUPER);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getTypeof() {
     return findChildByType(TYPEOF);
   }

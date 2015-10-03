@@ -117,6 +117,12 @@ public class RustBindingImpl extends RustCompositeElementImpl implements RustBin
 
   @Override
   @Nullable
+  public PsiElement getSuper() {
+    return findChildByType(SUPER);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getTypeof() {
     return findChildByType(TYPEOF);
   }

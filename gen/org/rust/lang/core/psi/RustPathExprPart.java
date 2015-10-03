@@ -22,4 +22,7 @@ public interface RustPathExprPart extends RustCompositeElement {
   @Nullable
   PsiElement getIdentifier();
 
+  @Nullable
+  PsiElement getSuper();
+
 }

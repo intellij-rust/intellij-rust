@@ -95,6 +95,9 @@ public interface RustCastExpr extends RustExpr {
   PsiElement getStaticLifetime();
 
   @Nullable
+  PsiElement getSuper();
+
+  @Nullable
   PsiElement getTypeof();
 
   @Nullable

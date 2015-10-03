@@ -171,6 +171,12 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
 
   @Override
   @Nullable
+  public PsiElement getSuper() {
+    return findChildByType(SUPER);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getTypeof() {
     return findChildByType(TYPEOF);
   }

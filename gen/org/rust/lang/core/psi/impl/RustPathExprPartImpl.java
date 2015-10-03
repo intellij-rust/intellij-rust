@@ -56,4 +56,10 @@ public class RustPathExprPartImpl extends RustPathExprPartImplMixin implements R
     return findChildByType(IDENTIFIER);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getSuper() {
+    return findChildByType(SUPER);
+  }
+
 }

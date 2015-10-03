@@ -92,6 +92,9 @@ public interface RustAnonParam extends RustCompositeElement {
   PsiElement getStaticLifetime();
 
   @Nullable
+  PsiElement getSuper();
+
+  @Nullable
   PsiElement getTypeof();
 
   @Nullable

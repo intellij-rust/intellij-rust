@@ -123,6 +123,12 @@ public class RustRetTypeImpl extends RustCompositeElementImpl implements RustRet
 
   @Override
   @Nullable
+  public PsiElement getSuper() {
+    return findChildByType(SUPER);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getTypeof() {
     return findChildByType(TYPEOF);
   }

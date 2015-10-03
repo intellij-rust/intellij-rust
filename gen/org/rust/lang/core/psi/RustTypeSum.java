@@ -56,6 +56,9 @@ public interface RustTypeSum extends RustCompositeElement {
   PsiElement getPlus();
 
   @Nullable
+  PsiElement getSuper();
+
+  @Nullable
   PsiElement getTypeof();
 
   @Nullable

@@ -53,6 +53,9 @@ public interface RustDeclItem extends RustCompositeElement {
   PsiElement getFor();
 
   @Nullable
+  PsiElement getSuper();
+
+  @Nullable
   PsiElement getTypeof();
 
   @Nullable

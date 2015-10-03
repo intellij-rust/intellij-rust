@@ -195,6 +195,12 @@ public class RustAnonParamImpl extends RustCompositeElementImpl implements RustA
 
   @Override
   @Nullable
+  public PsiElement getSuper() {
+    return findChildByType(SUPER);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getTypeof() {
     return findChildByType(TYPEOF);
   }

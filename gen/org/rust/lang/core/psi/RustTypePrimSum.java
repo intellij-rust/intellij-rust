@@ -56,6 +56,9 @@ public interface RustTypePrimSum extends RustCompositeElement {
   PsiElement getPlus();
 
   @Nullable
+  PsiElement getSuper();
+
+  @Nullable
   PsiElement getTypeof();
 
   @Nullable

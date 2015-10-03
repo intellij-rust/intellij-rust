@@ -311,9 +311,9 @@ path_expr_part_leftish  ::= ident_or_self_type {
     elementType = path_expr_part
 }
 
-private ident_or_self_type ::= IDENTIFIER | CSELF
+private ident_or_self_type ::= IDENTIFIER | SUPER | CSELF
 
-left path_expr_part ::= COLONCOLON (IDENTIFIER | generic_args)
+left path_expr_part ::= COLONCOLON (IDENTIFIER | SUPER | generic_args)
 
 generic_args ::= LT generic_values GT
             /* | LT generic_values GTGT */

@@ -201,6 +201,12 @@ public class RustCastExprImpl extends RustExprImpl implements RustCastExpr {
 
   @Override
   @Nullable
+  public PsiElement getSuper() {
+    return findChildByType(SUPER);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getTypeof() {
     return findChildByType(TYPEOF);
   }

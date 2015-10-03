@@ -49,4 +49,10 @@ public class RustTraitRefImpl extends RustCompositeElementImpl implements RustTr
     return findChildByType(CSELF);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getSuper() {
+    return findChildByType(SUPER);
+  }
+
 }

@@ -141,6 +141,12 @@ public class RustForeignItemImpl extends RustNamedElementImpl implements RustFor
 
   @Override
   @Nullable
+  public PsiElement getSuper() {
+    return findChildByType(SUPER);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getTypeof() {
     return findChildByType(TYPEOF);
   }

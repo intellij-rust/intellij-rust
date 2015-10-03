@@ -65,6 +65,9 @@ public interface RustForeignItem extends RustCompositeElement {
   PsiElement getStatic();
 
   @Nullable
+  PsiElement getSuper();
+
+  @Nullable
   PsiElement getTypeof();
 
   @Nullable

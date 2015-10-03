@@ -123,6 +123,12 @@ public class RustTypeSumImpl extends RustCompositeElementImpl implements RustTyp
 
   @Override
   @Nullable
+  public PsiElement getSuper() {
+    return findChildByType(SUPER);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getTypeof() {
     return findChildByType(TYPEOF);
   }
