@@ -8,17 +8,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
-import org.rust.lang.core.psi.impl.mixin.RustPathExprPartImplMixin;
 import org.rust.lang.core.psi.*;
 
-public class RustPathExprPartImpl extends RustPathExprPartImplMixin implements RustPathExprPart {
+public class RustPathWithColonsSegmentImpl extends RustCompositeElementImpl implements RustPathWithColonsSegment {
 
-  public RustPathExprPartImpl(ASTNode node) {
+  public RustPathWithColonsSegmentImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitPathExprPart(this);
+    visitor.visitPathWithColonsSegment(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -28,14 +27,20 @@ public class RustPathExprPartImpl extends RustPathExprPartImplMixin implements R
 
   @Override
   @Nullable
-  public RustGenericArgs getGenericArgs() {
-    return findChildByClass(RustGenericArgs.class);
+  public RustBindings getBindings() {
+    return findChildByClass(RustBindings.class);
   }
 
   @Override
   @Nullable
-  public RustPathExprPart getPathExprPart() {
-    return findChildByClass(RustPathExprPart.class);
+  public RustLifetimes getLifetimes() {
+    return findChildByClass(RustLifetimes.class);
+  }
+
+  @Override
+  @Nullable
+  public RustTypeSums getTypeSums() {
+    return findChildByClass(RustTypeSums.class);
   }
 
   @Override
@@ -52,8 +57,20 @@ public class RustPathExprPartImpl extends RustPathExprPartImplMixin implements R
 
   @Override
   @Nullable
+  public PsiElement getGt() {
+    return findChildByType(GT);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getIdentifier() {
     return findChildByType(IDENTIFIER);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getLt() {
+    return findChildByType(LT);
   }
 
   @Override

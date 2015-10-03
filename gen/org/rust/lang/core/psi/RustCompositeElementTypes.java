@@ -76,7 +76,9 @@ public interface RustCompositeElementTypes {
   IElementType PAREN_EXPR = new RustCompositeElementType("PAREN_EXPR");
   IElementType PAT = new RustCompositeElementType("PAT");
   IElementType PATH_EXPR = new RustCompositeElementType("PATH_EXPR");
-  IElementType PATH_EXPR_PART = new RustCompositeElementType("PATH_EXPR_PART");
+  IElementType PATH_WITHOUT_COLONS = new RustCompositeElementType("PATH_WITHOUT_COLONS");
+  IElementType PATH_WITH_COLONS = new RustCompositeElementType("PATH_WITH_COLONS");
+  IElementType PATH_WITH_COLONS_SEGMENT = new RustCompositeElementType("PATH_WITH_COLONS_SEGMENT");
   IElementType PAT_ENUM = new RustCompositeElementType("PAT_ENUM");
   IElementType PAT_IDENT = new RustCompositeElementType("PAT_IDENT");
   IElementType PAT_QUAL_PATH = new RustCompositeElementType("PAT_QUAL_PATH");
@@ -90,6 +92,8 @@ public interface RustCompositeElementTypes {
   IElementType PAT_WILD = new RustCompositeElementType("PAT_WILD");
   IElementType POLYBOUND = new RustCompositeElementType("POLYBOUND");
   IElementType QUAL_PATH_EXPR = new RustCompositeElementType("QUAL_PATH_EXPR");
+  IElementType QUAL_PATH_NO_TYPES = new RustCompositeElementType("QUAL_PATH_NO_TYPES");
+  IElementType QUAL_PATH_WITH_COLONS = new RustCompositeElementType("QUAL_PATH_WITH_COLONS");
   IElementType RANGE_EXPR = new RustCompositeElementType("RANGE_EXPR");
   IElementType RET_EXPR = new RustCompositeElementType("RET_EXPR");
   IElementType RET_TYPE = new RustCompositeElementType("RET_TYPE");
@@ -335,8 +339,14 @@ public interface RustCompositeElementTypes {
       else if (type == PATH_EXPR) {
         return new RustPathExprImpl(node);
       }
-      else if (type == PATH_EXPR_PART) {
-        return new RustPathExprPartImpl(node);
+      else if (type == PATH_WITHOUT_COLONS) {
+        return new RustPathWithoutColonsImpl(node);
+      }
+      else if (type == PATH_WITH_COLONS) {
+        return new RustPathWithColonsImpl(node);
+      }
+      else if (type == PATH_WITH_COLONS_SEGMENT) {
+        return new RustPathWithColonsSegmentImpl(node);
       }
       else if (type == PAT_ENUM) {
         return new RustPatEnumImpl(node);
@@ -376,6 +386,12 @@ public interface RustCompositeElementTypes {
       }
       else if (type == QUAL_PATH_EXPR) {
         return new RustQualPathExprImpl(node);
+      }
+      else if (type == QUAL_PATH_NO_TYPES) {
+        return new RustQualPathNoTypesImpl(node);
+      }
+      else if (type == QUAL_PATH_WITH_COLONS) {
+        return new RustQualPathWithColonsImpl(node);
       }
       else if (type == RANGE_EXPR) {
         return new RustRangeExprImpl(node);

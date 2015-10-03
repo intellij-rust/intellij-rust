@@ -26,12 +26,6 @@ public class RustItemMacroImpl extends RustCompositeElementImpl implements RustI
   }
 
   @Override
-  @NotNull
-  public RustPathExpr getPathExpr() {
-    return findNotNullChildByClass(RustPathExpr.class);
-  }
-
-  @Override
   @Nullable
   public RustTokenTree getTokenTree() {
     return findChildByClass(RustTokenTree.class);
@@ -41,12 +35,6 @@ public class RustItemMacroImpl extends RustCompositeElementImpl implements RustI
   @NotNull
   public PsiElement getExcl() {
     return findNotNullChildByType(EXCL);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getIdentifier() {
-    return findChildByType(IDENTIFIER);
   }
 
   @Override

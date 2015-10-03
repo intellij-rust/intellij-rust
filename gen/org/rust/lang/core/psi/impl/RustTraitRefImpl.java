@@ -27,32 +27,8 @@ public class RustTraitRefImpl extends RustCompositeElementImpl implements RustTr
 
   @Override
   @NotNull
-  public List<RustGenericArgs> getGenericArgsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericArgs.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustRetType> getRetTypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustRetType.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustTypeSums> getTypeSumsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeSums.class);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getCself() {
-    return findChildByType(CSELF);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getSuper() {
-    return findChildByType(SUPER);
+  public RustPathWithoutColons getPathWithoutColons() {
+    return findNotNullChildByClass(RustPathWithoutColons.class);
   }
 
 }

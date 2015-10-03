@@ -51,12 +51,6 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
 
   @Override
   @NotNull
-  public List<RustGenericArgs> getGenericArgsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericArgs.class);
-  }
-
-  @Override
-  @NotNull
   public List<RustGenericParams> getGenericParamsList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericParams.class);
   }
@@ -86,15 +80,27 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
   }
 
   @Override
-  @NotNull
-  public List<RustRetType> getRetTypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustRetType.class);
+  @Nullable
+  public RustPathWithoutColons getPathWithoutColons() {
+    return findChildByClass(RustPathWithoutColons.class);
   }
 
   @Override
-  @NotNull
-  public List<RustTraitRef> getTraitRefList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTraitRef.class);
+  @Nullable
+  public RustQualPathNoTypes getQualPathNoTypes() {
+    return findChildByClass(RustQualPathNoTypes.class);
+  }
+
+  @Override
+  @Nullable
+  public RustRetType getRetType() {
+    return findChildByClass(RustRetType.class);
+  }
+
+  @Override
+  @Nullable
+  public RustTraitRef getTraitRef() {
+    return findChildByClass(RustTraitRef.class);
   }
 
   @Override
@@ -152,6 +158,12 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
   }
 
   @Override
+  @Nullable
+  public PsiElement getGt() {
+    return findChildByType(GT);
+  }
+
+  @Override
   @NotNull
   public PsiElement getImpl() {
     return findNotNullChildByType(IMPL);
@@ -164,15 +176,15 @@ public class RustImplItemImpl extends RustNamedElementImpl implements RustImplIt
   }
 
   @Override
-  @NotNull
-  public PsiElement getRbrace() {
-    return findNotNullChildByType(RBRACE);
+  @Nullable
+  public PsiElement getLt() {
+    return findChildByType(LT);
   }
 
   @Override
-  @Nullable
-  public PsiElement getSuper() {
-    return findChildByType(SUPER);
+  @NotNull
+  public PsiElement getRbrace() {
+    return findNotNullChildByType(RBRACE);
   }
 
   @Override

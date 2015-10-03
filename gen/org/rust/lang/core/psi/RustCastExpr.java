@@ -16,32 +16,35 @@ public interface RustCastExpr extends RustExpr {
   @NotNull
   List<RustExpr> getExprList();
 
-  @NotNull
-  List<RustGenericArgs> getGenericArgsList();
-
   @Nullable
   RustGenericParams getGenericParams();
 
   @Nullable
   RustLifetimes getLifetimes();
 
-  @NotNull
-  List<RustRetType> getRetTypeList();
+  @Nullable
+  RustPathWithoutColons getPathWithoutColons();
+
+  @Nullable
+  RustQualPathNoTypes getQualPathNoTypes();
+
+  @Nullable
+  RustRetType getRetType();
 
   @Nullable
   RustTraitRef getTraitRef();
 
   @Nullable
-  RustTypeSum getTypeSum();
-
-  @NotNull
-  List<RustTypeSums> getTypeSumsList();
+  RustTypeSums getTypeSums();
 
   @Nullable
   PsiElement getAnd();
 
   @Nullable
   PsiElement getAndand();
+
+  @NotNull
+  PsiElement getAs();
 
   @Nullable
   PsiElement getBox();
@@ -77,6 +80,9 @@ public interface RustCastExpr extends RustExpr {
   PsiElement getLifetime();
 
   @Nullable
+  PsiElement getLparen();
+
+  @Nullable
   PsiElement getLt();
 
   @Nullable
@@ -89,13 +95,13 @@ public interface RustCastExpr extends RustExpr {
   PsiElement getRbrack();
 
   @Nullable
+  PsiElement getRparen();
+
+  @Nullable
   PsiElement getSemicolon();
 
   @Nullable
   PsiElement getStaticLifetime();
-
-  @Nullable
-  PsiElement getSuper();
 
   @Nullable
   PsiElement getTypeof();

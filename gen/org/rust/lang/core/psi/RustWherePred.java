@@ -22,26 +22,26 @@ public interface RustWherePred extends RustCompositeElement {
   @Nullable
   RustForLifetimes getForLifetimes();
 
-  @NotNull
-  List<RustGenericArgs> getGenericArgsList();
-
   @Nullable
   RustGenericParams getGenericParams();
 
   @Nullable
   RustLifetimes getLifetimes();
 
-  @NotNull
-  List<RustRetType> getRetTypeList();
+  @Nullable
+  RustPathWithoutColons getPathWithoutColons();
 
-  @NotNull
-  List<RustTraitRef> getTraitRefList();
+  @Nullable
+  RustQualPathNoTypes getQualPathNoTypes();
+
+  @Nullable
+  RustRetType getRetType();
+
+  @Nullable
+  RustTraitRef getTraitRef();
 
   @Nullable
   RustTypeParamBounds getTypeParamBounds();
-
-  @NotNull
-  List<RustTypeSum> getTypeSumList();
 
   @NotNull
   List<RustTypeSums> getTypeSumsList();
@@ -62,7 +62,10 @@ public interface RustWherePred extends RustCompositeElement {
   PsiElement getFor();
 
   @Nullable
-  PsiElement getSuper();
+  PsiElement getGt();
+
+  @Nullable
+  PsiElement getLt();
 
   @Nullable
   PsiElement getTypeof();

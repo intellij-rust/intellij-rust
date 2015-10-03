@@ -320,7 +320,15 @@ public class RustVisitor extends PsiElementVisitor {
     visitExpr(o);
   }
 
-  public void visitPathExprPart(@NotNull RustPathExprPart o) {
+  public void visitPathWithColons(@NotNull RustPathWithColons o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitPathWithColonsSegment(@NotNull RustPathWithColonsSegment o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitPathWithoutColons(@NotNull RustPathWithoutColons o) {
     visitCompositeElement(o);
   }
 
@@ -330,6 +338,14 @@ public class RustVisitor extends PsiElementVisitor {
 
   public void visitQualPathExpr(@NotNull RustQualPathExpr o) {
     visitExpr(o);
+  }
+
+  public void visitQualPathNoTypes(@NotNull RustQualPathNoTypes o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitQualPathWithColons(@NotNull RustQualPathWithColons o) {
+    visitCompositeElement(o);
   }
 
   public void visitRangeExpr(@NotNull RustRangeExpr o) {

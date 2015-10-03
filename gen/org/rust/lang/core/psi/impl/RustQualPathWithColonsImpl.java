@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustPatEnumImpl extends RustPatImpl implements RustPatEnum {
+public class RustQualPathWithColonsImpl extends RustCompositeElementImpl implements RustQualPathWithColons {
 
-  public RustPatEnumImpl(ASTNode node) {
+  public RustQualPathWithColonsImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitPatEnum(this);
+    visitor.visitQualPathWithColons(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -27,32 +27,38 @@ public class RustPatEnumImpl extends RustPatImpl implements RustPatEnum {
 
   @Override
   @NotNull
-  public List<RustPat> getPatList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustPat.class);
-  }
-
-  @Override
-  @NotNull
-  public RustPathWithColons getPathWithColons() {
-    return findNotNullChildByClass(RustPathWithColons.class);
+  public List<RustPathWithColonsSegment> getPathWithColonsSegmentList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustPathWithColonsSegment.class);
   }
 
   @Override
   @Nullable
-  public PsiElement getDotdot() {
-    return findChildByType(DOTDOT);
+  public RustPathWithoutColons getPathWithoutColons() {
+    return findChildByClass(RustPathWithoutColons.class);
   }
 
   @Override
   @NotNull
-  public PsiElement getLparen() {
-    return findNotNullChildByType(LPAREN);
+  public RustTypeSum getTypeSum() {
+    return findNotNullChildByClass(RustTypeSum.class);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getAs() {
+    return findChildByType(AS);
   }
 
   @Override
   @NotNull
-  public PsiElement getRparen() {
-    return findNotNullChildByType(RPAREN);
+  public PsiElement getGt() {
+    return findNotNullChildByType(GT);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getLt() {
+    return findNotNullChildByType(LT);
   }
 
 }

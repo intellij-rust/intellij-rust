@@ -5,12 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustPath extends RustCompositeElement {
+public interface RustPathWithColons extends RustCompositeElement {
 
-  @Nullable
-  PsiElement getIdentifier();
-
-  @Nullable
-  PsiElement getSelf();
+  @NotNull
+  List<RustPathWithColonsSegment> getPathWithColonsSegmentList();
 
 }

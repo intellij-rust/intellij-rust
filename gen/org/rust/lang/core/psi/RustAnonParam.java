@@ -16,29 +16,26 @@ public interface RustAnonParam extends RustCompositeElement {
   @Nullable
   RustExpr getExpr();
 
-  @NotNull
-  List<RustGenericArgs> getGenericArgsList();
-
   @Nullable
   RustGenericParams getGenericParams();
 
   @Nullable
   RustLifetimes getLifetimes();
 
-  @NotNull
-  List<RustRetType> getRetTypeList();
+  @Nullable
+  RustPathWithoutColons getPathWithoutColons();
+
+  @Nullable
+  RustQualPathNoTypes getQualPathNoTypes();
+
+  @Nullable
+  RustRetType getRetType();
 
   @Nullable
   RustTraitRef getTraitRef();
 
   @Nullable
-  RustTypeSum getTypeSum();
-
-  @NotNull
-  List<RustTypeSums> getTypeSumsList();
-
-  @Nullable
-  PsiElement getAs();
+  RustTypeSums getTypeSums();
 
   @Nullable
   PsiElement getBox();
@@ -71,10 +68,16 @@ public interface RustAnonParam extends RustCompositeElement {
   PsiElement getGt();
 
   @Nullable
+  PsiElement getIdentifier();
+
+  @Nullable
   PsiElement getLbrack();
 
   @Nullable
   PsiElement getLifetime();
+
+  @Nullable
+  PsiElement getLparen();
 
   @Nullable
   PsiElement getLt();
@@ -86,13 +89,13 @@ public interface RustAnonParam extends RustCompositeElement {
   PsiElement getRbrack();
 
   @Nullable
+  PsiElement getRparen();
+
+  @Nullable
   PsiElement getSemicolon();
 
   @Nullable
   PsiElement getStaticLifetime();
-
-  @Nullable
-  PsiElement getSuper();
 
   @Nullable
   PsiElement getTypeof();

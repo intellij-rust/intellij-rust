@@ -44,12 +44,6 @@ public class RustLetDeclImpl extends RustCompositeElementImpl implements RustLet
   }
 
   @Override
-  @NotNull
-  public List<RustGenericArgs> getGenericArgsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericArgs.class);
-  }
-
-  @Override
   @Nullable
   public RustGenericParams getGenericParams() {
     return findChildByClass(RustGenericParams.class);
@@ -68,9 +62,21 @@ public class RustLetDeclImpl extends RustCompositeElementImpl implements RustLet
   }
 
   @Override
-  @NotNull
-  public List<RustRetType> getRetTypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustRetType.class);
+  @Nullable
+  public RustPathWithoutColons getPathWithoutColons() {
+    return findChildByClass(RustPathWithoutColons.class);
+  }
+
+  @Override
+  @Nullable
+  public RustQualPathNoTypes getQualPathNoTypes() {
+    return findChildByClass(RustQualPathNoTypes.class);
+  }
+
+  @Override
+  @Nullable
+  public RustRetType getRetType() {
+    return findChildByClass(RustRetType.class);
   }
 
   @Override
@@ -81,14 +87,8 @@ public class RustLetDeclImpl extends RustCompositeElementImpl implements RustLet
 
   @Override
   @Nullable
-  public RustTypeSum getTypeSum() {
-    return findChildByClass(RustTypeSum.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustTypeSums> getTypeSumsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeSums.class);
+  public RustTypeSums getTypeSums() {
+    return findChildByClass(RustTypeSums.class);
   }
 
   @Override
@@ -101,12 +101,6 @@ public class RustLetDeclImpl extends RustCompositeElementImpl implements RustLet
   @Nullable
   public PsiElement getAndand() {
     return findChildByType(ANDAND);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getAs() {
-    return findChildByType(AS);
   }
 
   @Override
@@ -195,6 +189,12 @@ public class RustLetDeclImpl extends RustCompositeElementImpl implements RustLet
 
   @Override
   @Nullable
+  public PsiElement getLparen() {
+    return findChildByType(LPAREN);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getLt() {
     return findChildByType(LT);
   }
@@ -219,14 +219,14 @@ public class RustLetDeclImpl extends RustCompositeElementImpl implements RustLet
 
   @Override
   @Nullable
-  public PsiElement getStaticLifetime() {
-    return findChildByType(STATIC_LIFETIME);
+  public PsiElement getRparen() {
+    return findChildByType(RPAREN);
   }
 
   @Override
   @Nullable
-  public PsiElement getSuper() {
-    return findChildByType(SUPER);
+  public PsiElement getStaticLifetime() {
+    return findChildByType(STATIC_LIFETIME);
   }
 
   @Override

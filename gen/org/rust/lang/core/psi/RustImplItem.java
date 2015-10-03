@@ -20,9 +20,6 @@ public interface RustImplItem extends RustCompositeElement {
   List<RustExpr> getExprList();
 
   @NotNull
-  List<RustGenericArgs> getGenericArgsList();
-
-  @NotNull
   List<RustGenericParams> getGenericParamsList();
 
   @NotNull
@@ -37,11 +34,17 @@ public interface RustImplItem extends RustCompositeElement {
   @NotNull
   List<RustOuterAttr> getOuterAttrList();
 
-  @NotNull
-  List<RustRetType> getRetTypeList();
+  @Nullable
+  RustPathWithoutColons getPathWithoutColons();
 
-  @NotNull
-  List<RustTraitRef> getTraitRefList();
+  @Nullable
+  RustQualPathNoTypes getQualPathNoTypes();
+
+  @Nullable
+  RustRetType getRetType();
+
+  @Nullable
+  RustTraitRef getTraitRef();
 
   @Nullable
   RustTypePrimSum getTypePrimSum();
@@ -70,17 +73,20 @@ public interface RustImplItem extends RustCompositeElement {
   @Nullable
   PsiElement getFor();
 
+  @Nullable
+  PsiElement getGt();
+
   @NotNull
   PsiElement getImpl();
 
   @NotNull
   PsiElement getLbrace();
 
+  @Nullable
+  PsiElement getLt();
+
   @NotNull
   PsiElement getRbrace();
-
-  @Nullable
-  PsiElement getSuper();
 
   @Nullable
   PsiElement getTypeof();

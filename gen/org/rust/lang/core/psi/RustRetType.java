@@ -13,11 +13,8 @@ public interface RustRetType extends RustCompositeElement {
   @NotNull
   List<RustAnonParam> getAnonParamList();
 
-  @NotNull
-  List<RustExpr> getExprList();
-
-  @NotNull
-  List<RustGenericArgs> getGenericArgsList();
+  @Nullable
+  RustExpr getExpr();
 
   @Nullable
   RustGenericParams getGenericParams();
@@ -25,20 +22,41 @@ public interface RustRetType extends RustCompositeElement {
   @Nullable
   RustLifetimes getLifetimes();
 
-  @NotNull
-  List<RustRetType> getRetTypeList();
+  @Nullable
+  RustPathWithoutColons getPathWithoutColons();
 
-  @NotNull
-  List<RustTraitRef> getTraitRefList();
+  @Nullable
+  RustQualPathNoTypes getQualPathNoTypes();
 
-  @NotNull
-  List<RustTypeSum> getTypeSumList();
+  @Nullable
+  RustRetType getRetType();
 
-  @NotNull
-  List<RustTypeSums> getTypeSumsList();
+  @Nullable
+  RustTraitRef getTraitRef();
+
+  @Nullable
+  RustTypeSums getTypeSums();
+
+  @Nullable
+  PsiElement getAnd();
+
+  @Nullable
+  PsiElement getAndand();
 
   @NotNull
   PsiElement getArrow();
+
+  @Nullable
+  PsiElement getBox();
+
+  @Nullable
+  PsiElement getComma();
+
+  @Nullable
+  PsiElement getConst();
+
+  @Nullable
+  PsiElement getDotdot();
 
   @Nullable
   PsiElement getDotdotdot();
@@ -56,7 +74,37 @@ public interface RustRetType extends RustCompositeElement {
   PsiElement getFor();
 
   @Nullable
-  PsiElement getSuper();
+  PsiElement getGt();
+
+  @Nullable
+  PsiElement getLbrack();
+
+  @Nullable
+  PsiElement getLifetime();
+
+  @Nullable
+  PsiElement getLparen();
+
+  @Nullable
+  PsiElement getLt();
+
+  @Nullable
+  PsiElement getMul();
+
+  @Nullable
+  PsiElement getMut();
+
+  @Nullable
+  PsiElement getRbrack();
+
+  @Nullable
+  PsiElement getRparen();
+
+  @Nullable
+  PsiElement getSemicolon();
+
+  @Nullable
+  PsiElement getStaticLifetime();
 
   @Nullable
   PsiElement getTypeof();

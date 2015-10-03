@@ -16,23 +16,23 @@ public interface RustDeclItem extends RustCompositeElement {
   @NotNull
   List<RustExpr> getExprList();
 
-  @NotNull
-  List<RustGenericArgs> getGenericArgsList();
-
   @Nullable
   RustGenericParams getGenericParams();
 
   @Nullable
   RustLifetimes getLifetimes();
 
-  @NotNull
-  List<RustRetType> getRetTypeList();
+  @Nullable
+  RustPathWithoutColons getPathWithoutColons();
 
-  @NotNull
-  List<RustTraitRef> getTraitRefList();
+  @Nullable
+  RustQualPathNoTypes getQualPathNoTypes();
 
-  @NotNull
-  List<RustTypeSum> getTypeSumList();
+  @Nullable
+  RustRetType getRetType();
+
+  @Nullable
+  RustTraitRef getTraitRef();
 
   @NotNull
   List<RustTypeSums> getTypeSumsList();
@@ -53,7 +53,13 @@ public interface RustDeclItem extends RustCompositeElement {
   PsiElement getFor();
 
   @Nullable
-  PsiElement getSuper();
+  PsiElement getGt();
+
+  @NotNull
+  PsiElement getIdentifier();
+
+  @Nullable
+  PsiElement getLt();
 
   @Nullable
   PsiElement getTypeof();
