@@ -16,9 +16,6 @@ public interface RustLetDecl extends RustCompositeElement {
   @NotNull
   List<RustExpr> getExprList();
 
-  @NotNull
-  List<RustGenericArgs> getGenericArgsList();
-
   @Nullable
   RustGenericParams getGenericParams();
 
@@ -28,26 +25,26 @@ public interface RustLetDecl extends RustCompositeElement {
   @NotNull
   RustPat getPat();
 
-  @NotNull
-  List<RustRetType> getRetTypeList();
+  @Nullable
+  RustPathWithoutColons getPathWithoutColons();
+
+  @Nullable
+  RustQualPathNoTypes getQualPathNoTypes();
+
+  @Nullable
+  RustRetType getRetType();
 
   @Nullable
   RustTraitRef getTraitRef();
 
   @Nullable
-  RustTypeSum getTypeSum();
-
-  @NotNull
-  List<RustTypeSums> getTypeSumsList();
+  RustTypeSums getTypeSums();
 
   @Nullable
   PsiElement getAnd();
 
   @Nullable
   PsiElement getAndand();
-
-  @Nullable
-  PsiElement getAs();
 
   @Nullable
   PsiElement getBox();
@@ -92,6 +89,9 @@ public interface RustLetDecl extends RustCompositeElement {
   PsiElement getLifetime();
 
   @Nullable
+  PsiElement getLparen();
+
+  @Nullable
   PsiElement getLt();
 
   @Nullable
@@ -104,10 +104,10 @@ public interface RustLetDecl extends RustCompositeElement {
   PsiElement getRbrack();
 
   @Nullable
-  PsiElement getStaticLifetime();
+  PsiElement getRparen();
 
   @Nullable
-  PsiElement getSuper();
+  PsiElement getStaticLifetime();
 
   @Nullable
   PsiElement getTypeof();

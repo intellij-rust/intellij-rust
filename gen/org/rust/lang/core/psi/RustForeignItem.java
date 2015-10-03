@@ -19,9 +19,6 @@ public interface RustForeignItem extends RustCompositeElement {
   @Nullable
   RustForeignFnItem getForeignFnItem();
 
-  @NotNull
-  List<RustGenericArgs> getGenericArgsList();
-
   @Nullable
   RustGenericParams getGenericParams();
 
@@ -31,14 +28,17 @@ public interface RustForeignItem extends RustCompositeElement {
   @NotNull
   List<RustOuterAttr> getOuterAttrList();
 
-  @NotNull
-  List<RustRetType> getRetTypeList();
+  @Nullable
+  RustPathWithoutColons getPathWithoutColons();
 
-  @NotNull
-  List<RustTraitRef> getTraitRefList();
+  @Nullable
+  RustQualPathNoTypes getQualPathNoTypes();
 
-  @NotNull
-  List<RustTypeSum> getTypeSumList();
+  @Nullable
+  RustRetType getRetType();
+
+  @Nullable
+  RustTraitRef getTraitRef();
 
   @NotNull
   List<RustTypeSums> getTypeSumsList();
@@ -59,13 +59,19 @@ public interface RustForeignItem extends RustCompositeElement {
   PsiElement getFor();
 
   @Nullable
+  PsiElement getGt();
+
+  @Nullable
+  PsiElement getIdentifier();
+
+  @Nullable
+  PsiElement getLt();
+
+  @Nullable
   PsiElement getPub();
 
   @Nullable
   PsiElement getStatic();
-
-  @Nullable
-  PsiElement getSuper();
 
   @Nullable
   PsiElement getTypeof();

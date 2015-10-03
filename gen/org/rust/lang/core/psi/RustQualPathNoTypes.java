@@ -5,9 +5,21 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustTraitRef extends RustCompositeElement {
+public interface RustQualPathNoTypes extends RustCompositeElement {
+
+  @Nullable
+  RustPathWithoutColons getPathWithoutColons();
 
   @NotNull
-  RustPathWithoutColons getPathWithoutColons();
+  RustTypeSum getTypeSum();
+
+  @Nullable
+  PsiElement getAs();
+
+  @NotNull
+  PsiElement getGt();
+
+  @NotNull
+  PsiElement getLt();
 
 }

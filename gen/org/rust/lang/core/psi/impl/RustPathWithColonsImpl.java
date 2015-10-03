@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.rust.lang.core.psi.RustCompositeElementTypes.*;
 import org.rust.lang.core.psi.*;
 
-public class RustPatQualPathImpl extends RustPatImpl implements RustPatQualPath {
+public class RustPathWithColonsImpl extends RustCompositeElementImpl implements RustPathWithColons {
 
-  public RustPatQualPathImpl(ASTNode node) {
+  public RustPathWithColonsImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull RustVisitor visitor) {
-    visitor.visitPatQualPath(this);
+    visitor.visitPathWithColons(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -27,8 +27,8 @@ public class RustPatQualPathImpl extends RustPatImpl implements RustPatQualPath 
 
   @Override
   @NotNull
-  public RustQualPathNoTypes getQualPathNoTypes() {
-    return findNotNullChildByClass(RustQualPathNoTypes.class);
+  public List<RustPathWithColonsSegment> getPathWithColonsSegmentList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustPathWithColonsSegment.class);
   }
 
 }

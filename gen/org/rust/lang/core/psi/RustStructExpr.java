@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 public interface RustStructExpr extends RustExpr {
 
   @NotNull
-  RustPathExpr getPathExpr();
+  RustPathWithColons getPathWithColons();
 
   @NotNull
   RustStructExprBody getStructExprBody();

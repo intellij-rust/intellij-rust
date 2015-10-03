@@ -50,12 +50,6 @@ public class RustForeignItemImpl extends RustNamedElementImpl implements RustFor
   }
 
   @Override
-  @NotNull
-  public List<RustGenericArgs> getGenericArgsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericArgs.class);
-  }
-
-  @Override
   @Nullable
   public RustGenericParams getGenericParams() {
     return findChildByClass(RustGenericParams.class);
@@ -74,21 +68,27 @@ public class RustForeignItemImpl extends RustNamedElementImpl implements RustFor
   }
 
   @Override
-  @NotNull
-  public List<RustRetType> getRetTypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustRetType.class);
+  @Nullable
+  public RustPathWithoutColons getPathWithoutColons() {
+    return findChildByClass(RustPathWithoutColons.class);
   }
 
   @Override
-  @NotNull
-  public List<RustTraitRef> getTraitRefList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTraitRef.class);
+  @Nullable
+  public RustQualPathNoTypes getQualPathNoTypes() {
+    return findChildByClass(RustQualPathNoTypes.class);
   }
 
   @Override
-  @NotNull
-  public List<RustTypeSum> getTypeSumList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeSum.class);
+  @Nullable
+  public RustRetType getRetType() {
+    return findChildByClass(RustRetType.class);
+  }
+
+  @Override
+  @Nullable
+  public RustTraitRef getTraitRef() {
+    return findChildByClass(RustTraitRef.class);
   }
 
   @Override
@@ -129,6 +129,24 @@ public class RustForeignItemImpl extends RustNamedElementImpl implements RustFor
 
   @Override
   @Nullable
+  public PsiElement getGt() {
+    return findChildByType(GT);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getIdentifier() {
+    return findChildByType(IDENTIFIER);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getLt() {
+    return findChildByType(LT);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getPub() {
     return findChildByType(PUB);
   }
@@ -137,12 +155,6 @@ public class RustForeignItemImpl extends RustNamedElementImpl implements RustFor
   @Nullable
   public PsiElement getStatic() {
     return findChildByType(STATIC);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getSuper() {
-    return findChildByType(SUPER);
   }
 
   @Override

@@ -27,8 +27,8 @@ public class RustPatRangeImpl extends RustPatImpl implements RustPatRange {
 
   @Override
   @NotNull
-  public List<RustPathExpr> getPathExprList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustPathExpr.class);
+  public List<RustPathWithColons> getPathWithColonsList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustPathWithColons.class);
   }
 
   @Override

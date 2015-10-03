@@ -7,25 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface RustPatQualPath extends RustPat {
 
-  @Nullable
-  RustTraitRef getTraitRef();
-
   @NotNull
-  RustTypeSum getTypeSum();
-
-  @Nullable
-  PsiElement getAs();
-
-  @NotNull
-  PsiElement getColoncolon();
-
-  @NotNull
-  PsiElement getGt();
-
-  @NotNull
-  PsiElement getIdentifier();
-
-  @NotNull
-  PsiElement getLt();
+  RustQualPathNoTypes getQualPathNoTypes();
 
 }

@@ -5,21 +5,18 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustPatEnum extends RustPat {
+public interface RustPathWithoutColons extends RustCompositeElement {
 
   @NotNull
-  List<RustPat> getPatList();
+  List<RustBindings> getBindingsList();
 
   @NotNull
-  RustPathWithColons getPathWithColons();
-
-  @Nullable
-  PsiElement getDotdot();
+  List<RustLifetimes> getLifetimesList();
 
   @NotNull
-  PsiElement getLparen();
+  List<RustRetType> getRetTypeList();
 
   @NotNull
-  PsiElement getRparen();
+  List<RustTypeSums> getTypeSumsList();
 
 }

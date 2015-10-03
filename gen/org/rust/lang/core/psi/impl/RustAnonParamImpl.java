@@ -44,12 +44,6 @@ public class RustAnonParamImpl extends RustCompositeElementImpl implements RustA
   }
 
   @Override
-  @NotNull
-  public List<RustGenericArgs> getGenericArgsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericArgs.class);
-  }
-
-  @Override
   @Nullable
   public RustGenericParams getGenericParams() {
     return findChildByClass(RustGenericParams.class);
@@ -62,9 +56,21 @@ public class RustAnonParamImpl extends RustCompositeElementImpl implements RustA
   }
 
   @Override
-  @NotNull
-  public List<RustRetType> getRetTypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustRetType.class);
+  @Nullable
+  public RustPathWithoutColons getPathWithoutColons() {
+    return findChildByClass(RustPathWithoutColons.class);
+  }
+
+  @Override
+  @Nullable
+  public RustQualPathNoTypes getQualPathNoTypes() {
+    return findChildByClass(RustQualPathNoTypes.class);
+  }
+
+  @Override
+  @Nullable
+  public RustRetType getRetType() {
+    return findChildByClass(RustRetType.class);
   }
 
   @Override
@@ -75,20 +81,8 @@ public class RustAnonParamImpl extends RustCompositeElementImpl implements RustA
 
   @Override
   @Nullable
-  public RustTypeSum getTypeSum() {
-    return findChildByClass(RustTypeSum.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustTypeSums> getTypeSumsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeSums.class);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getAs() {
-    return findChildByType(AS);
+  public RustTypeSums getTypeSums() {
+    return findChildByClass(RustTypeSums.class);
   }
 
   @Override
@@ -153,6 +147,12 @@ public class RustAnonParamImpl extends RustCompositeElementImpl implements RustA
 
   @Override
   @Nullable
+  public PsiElement getIdentifier() {
+    return findChildByType(IDENTIFIER);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getLbrack() {
     return findChildByType(LBRACK);
   }
@@ -161,6 +161,12 @@ public class RustAnonParamImpl extends RustCompositeElementImpl implements RustA
   @Nullable
   public PsiElement getLifetime() {
     return findChildByType(LIFETIME);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getLparen() {
+    return findChildByType(LPAREN);
   }
 
   @Override
@@ -183,6 +189,12 @@ public class RustAnonParamImpl extends RustCompositeElementImpl implements RustA
 
   @Override
   @Nullable
+  public PsiElement getRparen() {
+    return findChildByType(RPAREN);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getSemicolon() {
     return findChildByType(SEMICOLON);
   }
@@ -191,12 +203,6 @@ public class RustAnonParamImpl extends RustCompositeElementImpl implements RustA
   @Nullable
   public PsiElement getStaticLifetime() {
     return findChildByType(STATIC_LIFETIME);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getSuper() {
-    return findChildByType(SUPER);
   }
 
   @Override

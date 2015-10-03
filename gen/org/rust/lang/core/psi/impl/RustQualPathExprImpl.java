@@ -27,44 +27,8 @@ public class RustQualPathExprImpl extends RustExprImpl implements RustQualPathEx
 
   @Override
   @NotNull
-  public RustPathExprPart getPathExprPart() {
-    return findNotNullChildByClass(RustPathExprPart.class);
-  }
-
-  @Override
-  @Nullable
-  public RustTraitRef getTraitRef() {
-    return findChildByClass(RustTraitRef.class);
-  }
-
-  @Override
-  @NotNull
-  public RustTypeSum getTypeSum() {
-    return findNotNullChildByClass(RustTypeSum.class);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getAs() {
-    return findChildByType(AS);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getColoncolon() {
-    return findNotNullChildByType(COLONCOLON);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getGt() {
-    return findNotNullChildByType(GT);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getLt() {
-    return findNotNullChildByType(LT);
+  public RustQualPathWithColons getQualPathWithColons() {
+    return findNotNullChildByClass(RustQualPathWithColons.class);
   }
 
 }

@@ -5,13 +5,16 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface RustPathExprPart extends RustCompositeElement {
+public interface RustPathWithColonsSegment extends RustCompositeElement {
 
   @Nullable
-  RustGenericArgs getGenericArgs();
+  RustBindings getBindings();
 
   @Nullable
-  RustPathExprPart getPathExprPart();
+  RustLifetimes getLifetimes();
+
+  @Nullable
+  RustTypeSums getTypeSums();
 
   @Nullable
   PsiElement getColoncolon();
@@ -20,7 +23,13 @@ public interface RustPathExprPart extends RustCompositeElement {
   PsiElement getCself();
 
   @Nullable
+  PsiElement getGt();
+
+  @Nullable
   PsiElement getIdentifier();
+
+  @Nullable
+  PsiElement getLt();
 
   @Nullable
   PsiElement getSuper();

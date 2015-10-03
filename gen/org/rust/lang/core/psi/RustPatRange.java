@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 public interface RustPatRange extends RustPat {
 
   @NotNull
-  List<RustPathExpr> getPathExprList();
+  List<RustPathWithColons> getPathWithColonsList();
 
   @Nullable
   PsiElement getDotdotdot();

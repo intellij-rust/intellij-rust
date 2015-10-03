@@ -11,7 +11,7 @@ public interface RustPatStruct extends RustPat {
   RustPatStructFields getPatStructFields();
 
   @NotNull
-  RustPathExpr getPathExpr();
+  RustPathWithColons getPathWithColons();
 
   @NotNull
   PsiElement getLbrace();

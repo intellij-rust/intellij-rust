@@ -44,12 +44,6 @@ public class RustTypePrimSumImpl extends RustCompositeElementImpl implements Rus
   }
 
   @Override
-  @NotNull
-  public List<RustGenericArgs> getGenericArgsList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustGenericArgs.class);
-  }
-
-  @Override
   @Nullable
   public RustGenericParams getGenericParams() {
     return findChildByClass(RustGenericParams.class);
@@ -62,27 +56,33 @@ public class RustTypePrimSumImpl extends RustCompositeElementImpl implements Rus
   }
 
   @Override
-  @NotNull
-  public List<RustRetType> getRetTypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustRetType.class);
+  @Nullable
+  public RustPathWithoutColons getPathWithoutColons() {
+    return findChildByClass(RustPathWithoutColons.class);
   }
 
   @Override
-  @NotNull
-  public List<RustTraitRef> getTraitRefList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTraitRef.class);
+  @Nullable
+  public RustQualPathNoTypes getQualPathNoTypes() {
+    return findChildByClass(RustQualPathNoTypes.class);
+  }
+
+  @Override
+  @Nullable
+  public RustRetType getRetType() {
+    return findChildByClass(RustRetType.class);
+  }
+
+  @Override
+  @Nullable
+  public RustTraitRef getTraitRef() {
+    return findChildByClass(RustTraitRef.class);
   }
 
   @Override
   @Nullable
   public RustTypeParamBounds getTypeParamBounds() {
     return findChildByClass(RustTypeParamBounds.class);
-  }
-
-  @Override
-  @NotNull
-  public List<RustTypeSum> getTypeSumList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, RustTypeSum.class);
   }
 
   @Override
@@ -117,14 +117,20 @@ public class RustTypePrimSumImpl extends RustCompositeElementImpl implements Rus
 
   @Override
   @Nullable
-  public PsiElement getPlus() {
-    return findChildByType(PLUS);
+  public PsiElement getGt() {
+    return findChildByType(GT);
   }
 
   @Override
   @Nullable
-  public PsiElement getSuper() {
-    return findChildByType(SUPER);
+  public PsiElement getLt() {
+    return findChildByType(LT);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getPlus() {
+    return findChildByType(PLUS);
   }
 
   @Override

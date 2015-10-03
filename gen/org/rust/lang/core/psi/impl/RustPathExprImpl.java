@@ -27,20 +27,8 @@ public class RustPathExprImpl extends RustExprImpl implements RustPathExpr {
 
   @Override
   @NotNull
-  public RustPathExprPart getPathExprPart() {
-    return findNotNullChildByClass(RustPathExprPart.class);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getColoncolon() {
-    return findChildByType(COLONCOLON);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getSelf() {
-    return findChildByType(SELF);
+  public RustPathWithColons getPathWithColons() {
+    return findNotNullChildByClass(RustPathWithColons.class);
   }
 
 }

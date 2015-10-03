@@ -27,8 +27,8 @@ public class RustStructExprImpl extends RustExprImpl implements RustStructExpr {
 
   @Override
   @NotNull
-  public RustPathExpr getPathExpr() {
-    return findNotNullChildByClass(RustPathExpr.class);
+  public RustPathWithColons getPathWithColons() {
+    return findNotNullChildByClass(RustPathWithColons.class);
   }
 
   @Override
