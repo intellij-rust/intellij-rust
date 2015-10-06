@@ -11,3 +11,5 @@ type Shl = Vec<Vec<f64>>;
 type Path = io::Result<()>;
 
 type AssocType = Box<Iterator<Item=(Idx, T)> + 'a>;
+
+type GenericAssoc = Foo<T, U=i32>;

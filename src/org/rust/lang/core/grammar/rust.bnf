@@ -239,7 +239,7 @@ type_param_bounds   ::= COLON [ type_param_bound_seq ]
 type_param_default  ::= EQ type_sum
 
 type_sum    ::= type [ PLUS bounds ]
-type_sums   ::= type_sum (COMMA type_sum)*
+type_sums   ::= type_sum !EQ (COMMA type_sum !EQ)*
 
 private type_param_bound_seq        ::= polybound type_param_bound_seq_right
 private type_param_bound_seq_right  ::= [ PLUS polybound type_param_bound_seq_right ]
