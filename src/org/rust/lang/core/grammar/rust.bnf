@@ -45,9 +45,6 @@
         ANDEQ                =  '&='
         AND                  =  '&'
         OR                   =  '|'
-        LTLTEQ               =  '<<='
-        LTLT                 =  '<<'
-        LTEQ                 =  '<='
         LT                   =  '<'
         XOREQ                =  '^='
         XOR                  =  '^'
@@ -824,5 +821,9 @@ stmt ::= block_expr
 GTGTEQ ::= GT GT EQ
 GTGT   ::= GT GT
 GTEQ   ::= GT EQ
+
+LTLTEQ ::= LT LT EQ
+LTLT   ::= LT LT
+LTEQ   ::= LT EQ
 
 private meta comma_separated_list ::= <<param>> ( ',' <<param>> ) * [',']

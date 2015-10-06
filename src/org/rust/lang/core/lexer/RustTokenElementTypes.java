@@ -115,9 +115,6 @@ public interface RustTokenElementTypes {
     IElementType LBRACK = new RustTokenType("[");
     IElementType LPAREN = new RustTokenType("(");
     IElementType LT = new RustTokenType("<");
-    IElementType LTEQ = new RustTokenType("<=");
-    IElementType LTLT = new RustTokenType("<<");
-    IElementType LTLTEQ = new RustTokenType("<<=");
     IElementType MINUS = new RustTokenType("-");
     IElementType MINUSEQ = new RustTokenType("-=");
     IElementType MINUSMINUS = new RustTokenType("--");

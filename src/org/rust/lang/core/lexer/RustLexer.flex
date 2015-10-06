@@ -155,9 +155,6 @@ SHEBANG_LINE=\#\![^\[].*
   "&="                            { return RustTokenElementTypes.ANDEQ; }
   "&"                             { return RustTokenElementTypes.AND; }
   "|"                             { return RustTokenElementTypes.OR; }
-  "<<="                           { return RustTokenElementTypes.LTLTEQ; }
-  "<<"                            { return RustTokenElementTypes.LTLT; }
-  "<="                            { return RustTokenElementTypes.LTEQ; }
   "<"                             { return RustTokenElementTypes.LT; }
   "^="                            { return RustTokenElementTypes.XOREQ; }
   "^"                             { return RustTokenElementTypes.XOR; }
