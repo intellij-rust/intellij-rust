@@ -11,7 +11,7 @@ public class RustCompleteParsingTestCase extends RustParsingTestCaseBase {
     public void testMod()            { doTest(true); }
     public void testUseItem()        { doTest(true); }
     public void testType()           { doTest(true); }
-    public void testGtgt()           { doTest(true); }
+    public void testShifts()         { doTest(true); }
     public void testPatterns()       { doTest(true); }
     public void testAttributes()     { doTest(true); }
     public void testTraits()         { doTest(true); }
