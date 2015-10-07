@@ -1,4 +1,6 @@
 .idea
+.gradle
 out
+classes
 lib
 gen
