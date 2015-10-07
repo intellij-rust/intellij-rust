@@ -7,7 +7,7 @@ public object RustTestUtils {
 
     @platformStatic
     public fun setTestDataPath() {
-        System.setProperty(PathManager.PROPERTY_HOME_PATH, "test/testData")
+        System.setProperty(PathManager.PROPERTY_HOME_PATH, "testData")
     }
 
 }

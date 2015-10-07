@@ -8,7 +8,7 @@ public abstract class RustParsingTestCaseBase extends ParsingTestCase {
 
     @Override
     protected String getTestDataPath() {
-        return "test/testData";
+        return "testData";
     }
 
     @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
