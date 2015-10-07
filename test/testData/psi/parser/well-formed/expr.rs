@@ -10,6 +10,8 @@ fn test() -> u32 {
 
     *x;             /* unary (+ ;) */
     &x;
+    &mut x;
+    &&& x;
 
     (x + y) * z;    /* parenthesized */
 
