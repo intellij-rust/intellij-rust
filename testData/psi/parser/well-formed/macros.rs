@@ -10,6 +10,8 @@ macro_rules! vec {
     };
 }
 
+thread_local!(static HANDLE: Handle = Handle(0));
+
 fn foo() {
     println!("{}", 92);
     let v1 = vec![1, 2, 3];

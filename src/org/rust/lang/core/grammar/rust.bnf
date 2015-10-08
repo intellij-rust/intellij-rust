@@ -758,7 +758,7 @@ macro_arg ::= LPAREN expr_list? RPAREN
 token_tree ::= LPAREN token_tree* RPAREN token_tree*
              | LBRACE token_tree* RBRACE token_tree*
              | LBRACK token_tree* RBRACK token_tree*
-             | << unpairedToken >> +
+             | << unpairedToken >> + token_tree*
 
 // This "parses" both macro definitons and macro usage
 item_macro ::= path_expr EXCL IDENTIFIER?
