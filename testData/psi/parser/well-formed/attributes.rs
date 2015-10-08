@@ -7,3 +7,7 @@
 mod empty {
 
 }
+
+fn main() {
+    #![crate_type = "lib"]
+}

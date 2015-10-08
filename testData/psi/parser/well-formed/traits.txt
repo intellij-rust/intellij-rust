@@ -111,7 +111,7 @@ FILE
           PsiElement(()('(')
           PsiElement())(')')
         PsiWhiteSpace(' ')
-        RustBlockImpl(BLOCK)
+        RustInnerAttrsAndBlockImpl(INNER_ATTRS_AND_BLOCK)
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')
           RustDeclStmtImpl(DECL_STMT)

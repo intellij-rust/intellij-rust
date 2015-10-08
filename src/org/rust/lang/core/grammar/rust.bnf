@@ -198,7 +198,7 @@ private block_item_group ::= fn_item
 // Functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn_item ::= FN IDENTIFIER generic_params fn_params ret_type? where_clause? block /* inner_attrs_and_block */ {
+fn_item ::= FN IDENTIFIER generic_params fn_params ret_type? where_clause? inner_attrs_and_block {
    pin(".*")=2
    recoverWhile="fn_item_recover"
 }
@@ -478,7 +478,7 @@ private named_arg ::= IDENTIFIER
                     | ANDAND (IDENTIFIER | UNDERSCORE)
                     | MUT IDENTIFIER
 
-method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause? block /* inner_attrs_and_block */
+method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause? inner_attrs_and_block
 
 
 trait_ref ::= COLONCOLON? path_generic_args_without_colons
@@ -499,7 +499,7 @@ private impl_contents ::= impl_method
                      /* | attrs_and_vis impl_macro */
                         | impl_type
 
-impl_method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self where_clause? block /* inner_attrs_and_block */
+impl_method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self where_clause? inner_attrs_and_block
 
 private fn_decl_with_self ::= fn_params_with_self ret_type?
 
@@ -805,6 +805,8 @@ let_decl ::= LET pat [ COLON type ] [ EQ expr ] SEMICOLON
 extern_block ::= EXTERN LBRACE foreign_fn_item* RBRACE
 
 block ::= LBRACE stmt* expr? RBRACE {pin(".*")=1}
+inner_attrs_and_block ::= LBRACE inner_attrs? stmt* expr? RBRACE {pin(".*")=1}
+
 
 expr_stmt ::= expr SEMICOLON
 decl_stmt ::= (item | let_decl)
