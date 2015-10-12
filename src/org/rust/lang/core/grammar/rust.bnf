@@ -128,8 +128,6 @@
     mixin       ("pat_ident") = "org.rust.lang.core.psi.impl.mixin.RustPatIdentImplMixin"
     implements  ("pat_ident") = "org.rust.lang.core.psi.RustNamedElement"
 
-    mixin       ("path_expr_part") = "org.rust.lang.core.psi.impl.mixin.RustPathExprPartImplMixin"
-
     implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
 
@@ -275,15 +273,15 @@ pat ::= pat_wild
       | pat_qual_path
    /* | SHL ty_sum maybe_as_trait_ref '>' MOD_SEP ident maybe_as_trait_ref '>' MOD_SEP ident */
 
-pat_qual_path   ::= LT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER
+pat_qual_path   ::= qual_path_no_types
 pat_uniq        ::= BOX pat
 
 pat_ident       ::= binding_mode IDENTIFIER
                   |              IDENTIFIER AT pat
                   | binding_mode IDENTIFIER AT pat
 
-pat_struct      ::= path_expr LBRACE pat_struct_fields RBRACE
-pat_enum        ::= path_expr LPAREN (DOTDOT | pat_tup_elts) RPAREN
+pat_struct      ::= path_with_colons LBRACE pat_struct_fields RBRACE
+pat_enum        ::= path_with_colons LPAREN (DOTDOT | pat_tup_elts) RPAREN
 
 pat_range ::= lit_or_path [ DOTDOTDOT lit_or_path ]
 
@@ -298,19 +296,7 @@ pat_reg ::= AND MUT? pat
 
 pat_wild ::= UNDERSCORE
 
-private lit_or_path ::= path_expr | lit | MINUS lit
-
-path_expr ::= [ SELF? COLONCOLON ] path_generic_args_with_colons
-
-private path_generic_args_with_colons ::= path_expr_part_leftish path_expr_part*
-
-path_expr_part_leftish  ::= ident_or_self_type {
-    elementType = path_expr_part
-}
-
-private ident_or_self_type ::= IDENTIFIER | SUPER | CSELF
-
-left path_expr_part ::= COLONCOLON (IDENTIFIER | SUPER | generic_args)
+private lit_or_path ::= path_with_colons | lit | MINUS lit
 
 generic_args ::= LT generic_values GT
             /* | LT generic_values GTGT */
@@ -328,8 +314,6 @@ private type_sums_and_or_bindings ::=                   bindings COMMA?
 
 bindings ::= binding (COMMA binding)*
 binding  ::= IDENTIFIER EQ type
-
-qual_path_expr ::= LT type_sum as_trait_ref? GT COLONCOLON path_generic_args_with_colons
 
 pat_struct_fields ::= (pat_field COMMA)+ DOTDOT
                     | <<comma_separated_list pat_field>>
@@ -355,22 +339,6 @@ private view_item ::= use_item
                     | extern_crate_decl
 
 use_item ::= USE view_path SEMICOLON { pin = 2 }
-
-view_path ::= path_no_types_allowed? COLONCOLON LBRACE [ idents_or_self COMMA? ] RBRACE
-            | path_no_types_allowed  COLONCOLON MUL
-            |                                   LBRACE [ idents_or_self COMMA? ] RBRACE
-            | path_no_types_allowed AS IDENTIFIER
-            | path_no_types_allowed                                                        /*{ pin(".*")=2 }*/
-
-private idents_or_self ::= (IDENTIFIER | SELF) [ AS IDENTIFIER ] (COMMA idents_or_self)*
-
-private path_no_types_allowed ::= view_path_part_leftish view_path_part*
-
-view_path_part_leftish ::= COLONCOLON? (SELF | SUPER | IDENTIFIER) {
-    extends = view_path_part
-}
-
-left view_path_part ::= COLONCOLON IDENTIFIER
 
 abi ::= STRING_LITERAL
 
@@ -481,9 +449,7 @@ private named_arg ::= IDENTIFIER
 method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause? inner_attrs_and_block
 
 
-trait_ref ::= COLONCOLON? path_generic_args_without_colons
-
-private as_trait_ref ::= AS trait_ref
+trait_ref ::= path_without_colons
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -518,7 +484,6 @@ private impl_type ::= attrs_and_vis TYPE IDENTIFIER generic_params EQ type_sum S
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 private type ::= type_prim
-               | LT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER
                | LPAREN [ type_sums COMMA? ] RPAREN
             /* | LTLT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER as_trait_ref? GT COLONCOLON IDENTIFIER */
 
@@ -526,7 +491,8 @@ type_item ::= TYPE IDENTIFIER generic_params where_clause? EQ type_sum SEMICOLON
 
 type_prim_sum ::= type_prim [ PLUS type_param_bounds ]
 
-private type_prim ::= [ CSELF? COLONCOLON ] path_generic_args_without_colons
+private type_prim ::= path_without_colons
+                    | qual_path_no_types
                     | BOX type
                     | MUL    [ MUT | CONST ] type
                     | AND    [ lifetime? MUT? ] type
@@ -551,18 +517,71 @@ private for_in_type ::= FOR LT lifetimes? GT for_in_type_suffix
 private for_in_type_suffix ::= type_bare_fn
                              | trait_ref
 
-private path_generic_args_without_colons ::= ident_or_self_type LPAREN type_sums? RPAREN ret_type?   path_generic_args_without_colons_right
-                                           | ident_or_self_type generic_args?                        path_generic_args_without_colons_right
-
-private path_generic_args_without_colons_right ::= [ COLONCOLON IDENTIFIER generic_args?                       path_generic_args_without_colons_right
-                                                   | COLONCOLON IDENTIFIER LPAREN type_sums? RPAREN ret_type?  path_generic_args_without_colons_right ]
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Paths
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-// TODO: move all five different kinds of paths here
+// Paths used in expression contexts.
+// Examples;
+// - a::b::<T,U>::c
+path_with_colons ::= COLONCOLON? <<coloncolon_separated_list path_with_colons_segment>>
+
+path_with_colons_segment ::= ident_or_self_type COLONCOLON LT generic_values GT
+                           | ident_or_self_type
+
+
+// In rustc parser, self/super are treated as identifiers only if immediately followed by `::`
+// Thus, these are valid paths,
+//  - foo :: bar ::baz
+//  - self:: super::foo ::baz
+// and these are invalid
+//  - self ::foo::bar
+//  - self::super ::foo
+//
+// We parse all the above paths as valid.
+private ident_or_self_type ::= IDENTIFIER | SELF | SUPER | CSELF
+
+
+// Paths used in type contexts.
+// Examples:
+// - `a::b<T,U>::c<V,W>`
+// - `a::b<T,U>::c(V) -> W`
+// - `a::b<T,U>::c(V)`
+path_without_colons ::= COLONCOLON? <<coloncolon_separated_list path_without_colons_segment>>
+private path_without_colons_segment ::= ident_or_self_type [LT generic_values GT
+                                                   | LPAREN type_sums? RPAREN ret_type?]
+
+
+private qual_path_start ::= LT type_sum [AS path_without_colons] GT COLONCOLON
+
+qual_path_with_colons ::= qual_path_start <<coloncolon_separated_list path_with_colons_segment>>
+qual_path_no_types ::= qual_path_start <<coloncolon_separated_list path_no_types_segment>>
+
+private path_no_types_segment ::= ident_or_self_type
+
+
+// Paths used in use items.
+// Examples:
+// - foo::bar::{self, foo}
+// - {foo, bar}
+// - ::foo::*
+// - foo::bar as baz
+view_path ::= path_no_types_allowed? COLONCOLON LBRACE [ idents_or_self COMMA? ] RBRACE
+            | path_no_types_allowed  COLONCOLON MUL
+            |                                   LBRACE [ idents_or_self COMMA? ] RBRACE
+            | path_no_types_allowed [AS IDENTIFIER]
+
+private idents_or_self ::= (IDENTIFIER | SELF) [ AS IDENTIFIER ] (COMMA idents_or_self)*
+
+private path_no_types_allowed ::= view_path_part_leftish view_path_part*
+
+view_path_part_leftish ::= COLONCOLON? (SELF | SUPER | IDENTIFIER) {
+    extends = view_path_part
+}
+
+left view_path_part ::= COLONCOLON IDENTIFIER
+
 
 //
 // Expressions
@@ -659,7 +678,7 @@ unary_expr ::= (MINUS | MUL | EXCL | (AND | ANDAND) MUT?) expr
 lambda_expr ::= MOVE? (OROR | OR [<<comma_separated_list lambda_param>>] OR) ret_type? expr
 private lambda_param ::= pat type_ascription?
 
-struct_expr ::= path_expr struct_expr_body
+struct_expr ::= path_with_colons struct_expr_body
 
 struct_expr_body ::= LBRACE
                        <<comma_separated_list (IDENTIFIER COLON expr)>>
@@ -669,6 +688,10 @@ struct_expr_body ::= LBRACE
 //                 | path_expr LPAREN expr
 //                         (COMMA  expr)* RPAREN
 //                 | path_expr
+
+path_expr ::= path_with_colons
+
+qual_path_expr ::= qual_path_with_colons
 
 while_expr ::= [lifetime COLON] WHILE no_struct_lit_expr block
 
@@ -761,7 +784,7 @@ token_tree ::= LPAREN token_tree* RPAREN token_tree*
              | << unpairedToken >> + token_tree*
 
 // This "parses" both macro definitons and macro usage
-item_macro ::= path_expr EXCL IDENTIFIER?
+item_macro ::= IDENTIFIER EXCL IDENTIFIER?
              ( LPAREN token_tree? RPAREN SEMICOLON
              | LBRACE token_tree? RBRACE
              | LBRACK token_tree? RBRACK SEMICOLON )
@@ -828,4 +851,8 @@ LTLTEQ ::= LT LT EQ
 LTLT   ::= LT LT
 LTEQ   ::= LT EQ
 
+// trailing commas are allowed
 private meta comma_separated_list ::= <<param>> ( ',' <<param>> ) * [',']
+
+// trailing `::` is not allowed
+private meta coloncolon_separated_list ::= <<param>> (COLONCOLON <<param>>)*
