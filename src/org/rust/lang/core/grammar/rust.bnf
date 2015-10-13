@@ -724,7 +724,7 @@ unit_expr ::= LPAREN RPAREN
 
 tuple_expr ::= LPAREN expr ((COMMA expr)+ | COMMA) RPAREN
 
-
+// https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
 private no_struct_lit_expr ::= expr
 
 array_expr ::= LBRACK array_elems? RBRACK {pin=1}
