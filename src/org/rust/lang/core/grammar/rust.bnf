@@ -484,14 +484,16 @@ private impl_type ::= attrs_and_vis TYPE IDENTIFIER generic_params EQ type_sum S
 
 private type ::= type_prim
                | LPAREN [ type_sums COMMA? ] RPAREN
+               | qual_path_no_types
             /* | LTLT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER as_trait_ref? GT COLONCOLON IDENTIFIER */
 
 type_item ::= TYPE IDENTIFIER generic_params where_clause? EQ type_sum SEMICOLON
 
-type_prim_sum ::= type_prim [ PLUS type_param_bounds ]
+// matklad: not sure if we need this production, it is an artifact of
+// shift-reduce conflict resolution for impl_item in parser-lalr.y
+type_prim_sum ::= type_prim [ PLUS type_param_bound_seq ]
 
 private type_prim ::= path_without_colons
-                    | qual_path_no_types
                     | BOX type
                     | MUL    [ MUT | CONST ] type
                     | AND    [ lifetime? MUT? ] type

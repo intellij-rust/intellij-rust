@@ -51,7 +51,6 @@ public class RustParserCtrsTestCase : ParsingTestCase("ctrs", ".rs", RustParserD
     private val expectedErrors = setOf(
             "testData/ctrs/test/1.1.0/run-pass/utf8-bom.rs",
             "testData/ctrs/test/1.1.0/run-pass/macro-interpolation.rs",
-            "testData/ctrs/test/1.1.0/run-pass/trait-impl-2.rs",
             "testData/ctrs/test/1.1.0/run-pass/ranges-precedence.rs",
             "testData/ctrs/test/1.1.0/run-pass/small-enums-with-fields.rs",
             "testData/ctrs/test/1.1.0/run-pass/struct-lit-functional-no-fields.rs",
