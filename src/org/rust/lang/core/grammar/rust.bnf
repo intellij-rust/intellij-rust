@@ -253,8 +253,8 @@ for_lifetimes ::= FOR LT lifetimes GT
 
 private fn_item_recover ::= !(<< skipUntilEOL >>)
 
-fn_params ::= LPAREN params RPAREN    { pin(".*")=1 }
-ret_type  ::= ARROW (type | EXCL)     { pin=1 }
+fn_params ::= LPAREN !COMMA params COMMA? RPAREN    { pin(".*")=1 }
+ret_type  ::= ARROW (type | EXCL)                   { pin=1 }
 
 private params ::= [ param (COMMA param)* ]
 
