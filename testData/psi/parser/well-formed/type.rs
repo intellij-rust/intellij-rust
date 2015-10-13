@@ -14,3 +14,7 @@ type Path = io::Result<()>;
 type AssocType = Box<Iterator<Item=(Idx, T)> + 'a>;
 
 type GenericAssoc = Foo<T, U=i32>;
+
+type Trailing1 = Box<TypeA<'static,>>;
+
+type Trailing2<'a> = MyType<'a, (),>;
