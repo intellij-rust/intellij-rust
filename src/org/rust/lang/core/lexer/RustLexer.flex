@@ -106,9 +106,9 @@ BIN_DIGIT = [0-1]
 
 BYTE_LITERAL = b\x27 ([^'] | {ESCAPE_SEQUENCE}) \x27
 
-STRING_LITERAL = r? \x22 ([^\"] | {ESCAPE_SEQUENCE})* (\x22|\\)?
+STRING_LITERAL = r? \x22 ([^\"\\] | {ESCAPE_SEQUENCE})* (\x22|\\)?
 
-ESCAPE_SEQUENCE = \\[^\r\n\t\\] | {BYTE_ESCAPE} | {UNICODE_ESCAPE}
+ESCAPE_SEQUENCE = \\[^\r\n\t\\] | \\\R | {BYTE_ESCAPE} | {UNICODE_ESCAPE}
 BYTE_ESCAPE = \\n|\\r|\\t|\\\\|\\x{HEX_DIGIT}{2}
 UNICODE_ESCAPE = \\u\{{HEX_DIGIT}{1,6}\}
 

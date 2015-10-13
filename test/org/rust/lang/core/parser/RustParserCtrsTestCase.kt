@@ -61,11 +61,8 @@ public class RustParserCtrsTestCase : ParsingTestCase("ctrs", ".rs", RustParserD
             "testData/ctrs/test/1.1.0/run-pass/struct-lit-functional-no-fields.rs",
             "testData/ctrs/test/1.1.0/run-pass/issue-20616.rs",
             "testData/ctrs/test/1.1.0/run-pass/macro-pat.rs",
-            "testData/ctrs/test/1.1.0/run-pass/string-escapes.rs",
-            "testData/ctrs/test/1.1.0/doc-std/libstd_path_rs_0001.rs",
             "testData/ctrs/test/1.1.0/doc-core/libcore_macros_rs_0006.rs",
-            "testData/ctrs/test/1.2.0/run-pass/ranges-precedence.rs",
-            "testData/ctrs/test/1.2.0/run-pass/string-escapes.rs"
+            "testData/ctrs/test/1.2.0/run-pass/ranges-precedence.rs"
     )
 }
 
