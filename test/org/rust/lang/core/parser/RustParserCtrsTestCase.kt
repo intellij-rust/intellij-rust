@@ -49,7 +49,6 @@ public class RustParserCtrsTestCase : ParsingTestCase("ctrs", ".rs", RustParserD
     }
 
     private val expectedErrors = setOf(
-            "testData/ctrs/test/1.1.0/doc/doc_trpl_patterns_md_0005.rs",
             "testData/ctrs/test/1.1.0/run-pass/issue-22463.rs",
             "testData/ctrs/test/1.1.0/run-pass/utf8-bom.rs",
             "testData/ctrs/test/1.1.0/run-pass/macro-interpolation.rs",
@@ -59,13 +58,10 @@ public class RustParserCtrsTestCase : ParsingTestCase("ctrs", ".rs", RustParserD
             "testData/ctrs/test/1.1.0/run-pass/issue-20055-box-trait.rs",
             "testData/ctrs/test/1.1.0/run-pass/issue-20055-box-unsized-array.rs",
             "testData/ctrs/test/1.1.0/run-pass/ranges-precedence.rs",
-            "testData/ctrs/test/1.1.0/run-pass/mut-in-ident-patterns.rs",
             "testData/ctrs/test/1.1.0/run-pass/small-enums-with-fields.rs",
             "testData/ctrs/test/1.1.0/run-pass/issue-15221.rs",
             "testData/ctrs/test/1.1.0/run-pass/struct-lit-functional-no-fields.rs",
             "testData/ctrs/test/1.1.0/run-pass/issue-20616.rs",
-            "testData/ctrs/test/1.1.0/run-pass/issue-8391.rs",
-            "testData/ctrs/test/1.1.0/run-pass/match-pattern-bindings.rs",
             "testData/ctrs/test/1.1.0/run-pass/macro-pat.rs",
             "testData/ctrs/test/1.1.0/run-pass/string-escapes.rs",
             "testData/ctrs/test/1.1.0/doc-std/libstd_path_rs_0001.rs",

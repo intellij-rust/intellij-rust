@@ -276,9 +276,8 @@ pat ::= pat_wild
 pat_qual_path   ::= qual_path_no_types
 pat_uniq        ::= BOX pat
 
-pat_ident       ::= binding_mode IDENTIFIER
+pat_ident       ::= binding_mode IDENTIFIER [AT pat]
                   |              IDENTIFIER AT pat
-                  | binding_mode IDENTIFIER AT pat
 
 pat_struct      ::= path_with_colons LBRACE pat_struct_fields RBRACE
 pat_enum        ::= path_with_colons LPAREN (DOTDOT | pat_tup_elts) RPAREN

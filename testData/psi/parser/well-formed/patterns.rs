@@ -3,4 +3,6 @@ fn patterns() {
     let S {field} = x;
     let S {field,} = x;
     let S {field, ..} = x;
+
+    let ref a @ _ = value;
 }
