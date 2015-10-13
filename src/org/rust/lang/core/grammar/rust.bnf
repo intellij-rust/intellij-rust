@@ -264,11 +264,11 @@ pat ::= pat_wild
       | pat_reg
       | pat_tup
       | pat_vec
+      | pat_macro
       | pat_ident
       | pat_struct
       | pat_enum
       | pat_range
-   /* | path_expr EXCL maybe_ident delimited_token_trees */
       | pat_uniq
       | pat_qual_path
    /* | SHL ty_sum maybe_as_trait_ref '>' MOD_SEP ident maybe_as_trait_ref '>' MOD_SEP ident */
@@ -769,6 +769,8 @@ lit_expr ::= lit
 
 
 macro_expr ::= IDENTIFIER EXCL macro_arg
+
+pat_macro  ::= IDENTIFIER EXCL macro_arg
 
 macro_arg ::= LPAREN expr_list? RPAREN
             | LBRACE expr_list? RBRACE
