@@ -53,14 +53,14 @@ import com.intellij.psi.tree.IElementType;
 %function advance
 %type IElementType
 
-%x BLOCK_COMMENT
-%x EOL_COMMENT
+%s BLOCK_COMMENT
+%s EOL_COMMENT
 
-%x LIFETIME_OR_CHAR
+%s LIFETIME_OR_CHAR
 
-%x RAW_LITERAL
+%s RAW_LITERAL
 
-%x SUFFIX
+%s SUFFIX
 
 %unicode
 
