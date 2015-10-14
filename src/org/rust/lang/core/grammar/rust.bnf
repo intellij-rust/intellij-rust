@@ -129,12 +129,13 @@
     implements  ("pat_ident") = "org.rust.lang.core.psi.RustNamedElement"
 
     implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
+//    mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
 
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
 
-    extends(".*_item") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
+    extends("impl_method") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
+    extends(".*_item")     = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
 
     extends(".*_expr") = expr
     extends(".*_stmt") = stmt
