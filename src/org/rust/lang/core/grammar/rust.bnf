@@ -139,6 +139,7 @@
     extends(".*_expr") = expr
     extends(".*_stmt") = stmt
     extends("pat_.*")  = pat
+    extends(".*_attr") = attr
 
     generateTokens=false
     generateTokenAccessors=true
@@ -163,6 +164,7 @@ private meta_seq ::= meta_item [ COMMA meta_seq? ]
 private outer_attrs ::= outer_attr +
 outer_attr ::= SHA LBRACK meta_item RBRACK | OUTER_DOC_COMMENT
 
+fake attr ::=
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Items
