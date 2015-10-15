@@ -34,8 +34,7 @@ class RustStructureViewElement(val element: RustNamedElementImpl) : StructureVie
     }
 
     override fun getValue(): Any? {
-        return this
-
+        return element
     }
 
 }

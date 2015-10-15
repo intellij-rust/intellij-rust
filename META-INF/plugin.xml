@@ -39,8 +39,10 @@
 
         <annotator language="RUST" implementationClass="org.rust.lang.annotator.RustAnnotator"/>
 
-        <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
+        <iconProvider implementation="org.rust.lang.icons.RustIconProvider"/>
 
+
+        <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
 
         <lang.syntaxHighlighterFactory key="TOML" implementationClass="org.toml.lang.TomlHighlighterFactory"/>
 
