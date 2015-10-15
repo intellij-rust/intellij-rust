@@ -1,49 +1,15 @@
 package org.rust.lang
 
 import com.intellij.lexer.Lexer
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
-import com.intellij.openapi.editor.SyntaxHighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.tree.IElementType
+import org.rust.lang.colorscheme.RustColors
 import org.rust.lang.core.lexer.RustKeywordTokenType
-import org.rust.lang.core.lexer.RustTokenType
 import org.rust.lang.core.lexer.RustLexer
 import org.rust.lang.core.lexer.RustTokenElementTypes.*
 
 public class RustHighlighter : SyntaxHighlighterBase() {
-
-    object Colors {
-
-        fun r(id: String, attrKey: TextAttributesKey) =
-                TextAttributesKey.createTextAttributesKey(id, attrKey)
-
-        val IDENTIFIER      = r("org.rust.IDENTIFIER",      DefaultLanguageHighlighterColors.IDENTIFIER)
-
-        val CHAR            = r("org.rust.CHAR",            DefaultLanguageHighlighterColors.STRING)
-        val STRING          = r("org.rust.STRING",          DefaultLanguageHighlighterColors.STRING)
-        val NUMBER          = r("org.rust.NUMBER",          DefaultLanguageHighlighterColors.NUMBER)
-
-        val KEYWORD         = r("org.rust.KEYWORD",         DefaultLanguageHighlighterColors.KEYWORD)
-
-        val BLOCK_COMMENT   = r("org.rust.BLOCK_COMMENT",   DefaultLanguageHighlighterColors.BLOCK_COMMENT)
-        val EOL_COMMENT     = r("org.rust.EOL_COMMENT",     DefaultLanguageHighlighterColors.LINE_COMMENT)
-        val DOC_COMMENT     = r("org.rust.DOC_COMMENT",     DefaultLanguageHighlighterColors.DOC_COMMENT)
-
-        val PARENTHESIS     = r("org.rust.PARENTHESIS",     DefaultLanguageHighlighterColors.PARENTHESES)
-        val BRACKETS        = r("org.rust.BRACKETS",        DefaultLanguageHighlighterColors.BRACKETS)
-        val BRACES          = r("org.rust.BRACES",          DefaultLanguageHighlighterColors.BRACES)
-
-        val OPERATORS       = r("org.rust.OPERATORS",       DefaultLanguageHighlighterColors.OPERATION_SIGN)
-
-        val SEMICOLON       = r("org.rust.SEMICOLON",       DefaultLanguageHighlighterColors.SEMICOLON)
-        val DOT             = r("org.rust.DOT",             DefaultLanguageHighlighterColors.DOT)
-        val COMMA           = r("org.rust.COMMA",           DefaultLanguageHighlighterColors.COMMA)
-    }
-
     override fun getHighlightingLexer(): Lexer {
         return RustLexer();
     }
@@ -53,35 +19,35 @@ public class RustHighlighter : SyntaxHighlighterBase() {
     }
 
     private fun map(tokenType: IElementType?): TextAttributesKey? {
-        return  if (tokenType is RustKeywordTokenType)
-                    Colors.KEYWORD
-                else when (tokenType) {
+        return if (tokenType is RustKeywordTokenType)
+            RustColors.KEYWORD
+        else when (tokenType) {
 
-                    IDENTIFIER          -> Colors.IDENTIFIER
+            IDENTIFIER -> RustColors.IDENTIFIER
 
-                    CHAR_LITERAL        -> Colors.CHAR
-                    BYTE_LITERAL        -> Colors.CHAR
-                    STRING_LITERAL      -> Colors.STRING
-                    BYTE_STRING_LITERAL -> Colors.STRING
-                    INTEGER_LITERAL     -> Colors.NUMBER
-                    FLOAT_LITERAL       -> Colors.NUMBER
+            CHAR_LITERAL -> RustColors.CHAR
+            BYTE_LITERAL -> RustColors.CHAR
+            STRING_LITERAL -> RustColors.STRING
+            BYTE_STRING_LITERAL -> RustColors.STRING
+            INTEGER_LITERAL -> RustColors.NUMBER
+            FLOAT_LITERAL -> RustColors.NUMBER
 
-                    BLOCK_COMMENT       -> Colors.BLOCK_COMMENT
-                    EOL_COMMENT         -> Colors.EOL_COMMENT
+            BLOCK_COMMENT -> RustColors.BLOCK_COMMENT
+            EOL_COMMENT -> RustColors.EOL_COMMENT
 
-                    INNER_DOC_COMMENT   -> Colors.DOC_COMMENT
-                    OUTER_DOC_COMMENT   -> Colors.DOC_COMMENT
+            INNER_DOC_COMMENT -> RustColors.DOC_COMMENT
+            OUTER_DOC_COMMENT -> RustColors.DOC_COMMENT
 
-                    LPAREN, RPAREN      -> Colors.PARENTHESIS
-                    LBRACE, RBRACE      -> Colors.BRACES
-                    LBRACK, RBRACK      -> Colors.BRACKETS
+            LPAREN, RPAREN -> RustColors.PARENTHESIS
+            LBRACE, RBRACE -> RustColors.BRACES
+            LBRACK, RBRACK -> RustColors.BRACKETS
 
-                    SEMICOLON           -> Colors.SEMICOLON
-                    DOT                 -> Colors.DOT
-                    COMMA               -> Colors.COMMA
+            SEMICOLON -> RustColors.SEMICOLON
+            DOT -> RustColors.DOT
+            COMMA -> RustColors.COMMA
 
-                    else -> null
-                }
+            else -> null
+        }
     }
 
 }

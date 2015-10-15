@@ -34,6 +34,7 @@
 
         <lang.parserDefinition language="RUST" implementationClass="org.rust.lang.core.RustParserDefinition"/>
 
+        <annotator language="RUST" implementationClass="org.rust.lang.annotator.RustAnnotator"/>
 
         <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
 
