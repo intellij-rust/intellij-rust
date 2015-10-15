@@ -30,7 +30,8 @@
 
         <fileTypeFactory implementation="org.rust.lang.RustFileTypeFactory"/>
 
-        <lang.syntaxHighlighterFactory key="RUST" implementationClass="org.rust.lang.RustHighlighterFactory"/>
+        <lang.syntaxHighlighterFactory language="RUST" implementationClass="org.rust.lang.highlight.RustHighlighterFactory"/>
+        <lang.braceMatcher language="RUST" implementationClass="org.rust.lang.highlight.RustBraceMatcher"/>
 
         <lang.parserDefinition language="RUST" implementationClass="org.rust.lang.core.RustParserDefinition"/>
 
@@ -44,7 +45,7 @@
 
         <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
 
-        <lang.syntaxHighlighterFactory key="TOML" implementationClass="org.toml.lang.TomlHighlighterFactory"/>
+        <lang.syntaxHighlighterFactory language="TOML" implementationClass="org.toml.lang.TomlHighlighterFactory"/>
 
         <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.core.parser.TomlParserDefinition"/>
     </extensions>

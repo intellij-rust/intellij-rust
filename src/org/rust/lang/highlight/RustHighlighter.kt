@@ -1,4 +1,4 @@
-package org.rust.lang
+package org.rust.lang.highlight
 
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.colors.TextAttributesKey
