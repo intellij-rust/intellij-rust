@@ -34,7 +34,13 @@
 
         <lang.parserDefinition language="RUST" implementationClass="org.rust.lang.core.RustParserDefinition"/>
 
+        <lang.psiStructureViewFactory language="RUST"
+                                      implementationClass="org.rust.lang.structure.RustPsiStructureViewFactory"/>
+
         <annotator language="RUST" implementationClass="org.rust.lang.annotator.RustAnnotator"/>
+
+        <iconProvider implementation="org.rust.lang.icons.RustIconProvider"/>
+
 
         <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
 
