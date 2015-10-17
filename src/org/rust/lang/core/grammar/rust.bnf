@@ -836,8 +836,6 @@ let_decl ::= LET pat [ COLON type ] [ EQ expr ] SEMICOLON
 // Statements
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern_block ::= EXTERN LBRACE foreign_fn_item* RBRACE
-
 block ::= LBRACE stmt* expr? RBRACE {pin(".*")=1}
 inner_attrs_and_block ::= LBRACE inner_attrs? stmt* expr? RBRACE {pin(".*")=1}
 
