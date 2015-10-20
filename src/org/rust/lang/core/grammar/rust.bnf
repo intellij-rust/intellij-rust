@@ -359,7 +359,7 @@ private crate_name ::= IDENTIFIER | IDENTIFIER AS IDENTIFIER
 // Struct & Enum
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-mod_item ::= MOD IDENTIFIER (SEMICOLON | LBRACE inner_attrs? mod_contents* RBRACE)
+mod_item ::= MOD IDENTIFIER (SEMICOLON | LBRACE inner_attrs? mod_contents* RBRACE) { pin(".*")=1 }
 
 private mod_contents ::= attrs_and_vis item
 
@@ -460,7 +460,9 @@ trait_ref ::= path_without_colons
 
 impl_item ::= UNSAFE? IMPL generic_params type_prim_sum                 where_clause? LBRACE inner_attrs? impl_contents* RBRACE
             | UNSAFE? IMPL generic_params LPAREN type RPAREN            where_clause? LBRACE inner_attrs? impl_contents* RBRACE
-            | UNSAFE? IMPL generic_params EXCL? trait_ref FOR (type_sum where_clause? LBRACE inner_attrs? impl_contents* RBRACE | DOTDOT LBRACE RBRACE)
+            | UNSAFE? IMPL generic_params EXCL? trait_ref FOR (type_sum where_clause? LBRACE inner_attrs? impl_contents* RBRACE | DOTDOT LBRACE RBRACE) {
+  pin = "LBRACE"
+}
 
 private impl_contents ::= impl_method
                         | impl_const
@@ -739,7 +741,7 @@ cont_expr ::= CONTINUE lifetime?
 
 break_expr ::= BREAK lifetime?
 
-for_expr ::= [lifetime COLON] FOR pat IN no_struct_lit_expr block
+for_expr ::= [lifetime COLON] FOR pat IN no_struct_lit_expr block { pin = "IN" }
 
 
 
