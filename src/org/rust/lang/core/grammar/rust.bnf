@@ -247,8 +247,7 @@ polybound ::= [ FOR LT lifetimes? GT | Q ] bound
 bound   ::= lifetime | trait_ref
 bounds  ::= bound (PLUS bound)*
 
-
-where_clause ::= WHERE  <<comma_separated_list where_pred>>
+where_clause ::= WHERE <<comma_separated_list where_pred>>
 
 where_pred ::= for_lifetimes? (lifetime COLON bounds | type type_param_bounds)
 
@@ -309,8 +308,9 @@ generic_args ::= LT generic_values GT
                | LTLT ty_qualified_path_and_generic_values GTEQ
                | LTLT ty_qualified_path_and_generic_values GTGTEQ */
 
-private generic_values ::= lifetimes [COMMA type_sums_and_or_bindings] COMMA?
-                         | type_sums_and_or_bindings?
+private generic_values ::= lifetimes [ COMMA type_sums_and_or_bindings ] COMMA?
+                         |                   type_sums_and_or_bindings?
+
 private type_sums_and_or_bindings ::=                   bindings   COMMA?
                                     | type_sums [ COMMA bindings ] COMMA?
 
@@ -492,8 +492,8 @@ private type ::= type_prim
 
 type_item ::= TYPE IDENTIFIER generic_params where_clause? EQ type_sum SEMICOLON
 
-// matklad: not sure if we need this production, it is an artifact of
-// shift-reduce conflict resolution for impl_item in parser-lalr.y
+// TODO(matklad): not sure if we need this production, it is an artifact of
+//                shift-reduce conflict resolution for impl_item in parser-lalr.y
 type_prim_sum ::= type_prim [ PLUS type_param_bound_seq ]
 
 private type_prim ::= path_without_colons
@@ -733,7 +733,6 @@ unit_expr ::= LPAREN RPAREN
 
 tuple_expr ::= LPAREN expr ((COMMA expr)+ | COMMA) RPAREN
 
-
 array_expr ::= LBRACK array_elems? RBRACK {pin=1}
 
 private array_elems ::= expr SEMICOLON expr
@@ -770,6 +769,7 @@ field_expr ::= restricted_expr DOT (IDENTIFIER | INTEGER_LITERAL) { pin(".*")=2 
 
 lit_expr ::= lit
 
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Macros
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -786,7 +786,7 @@ macro_arg ::= LPAREN expr_list? RPAREN
             | LBRACE token_tree RBRACE
             | LBRACK token_tree RBRACK {pin=1}
 
-// This "parses" both macro definitons and macro usage
+// This "parses" both macro definitions and macro usage
 item_macro ::= IDENTIFIER EXCL IDENTIFIER?
              ( LPAREN token_tree? RPAREN SEMICOLON
              | LBRACE token_tree? RBRACE
@@ -838,8 +838,8 @@ let_decl ::= LET pat [ COLON type ] [ EQ restricted_expr ] SEMICOLON
 // Statements
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-block ::= LBRACE stmt* restricted_expr? RBRACE {pin(".*")=1}
-inner_attrs_and_block ::= LBRACE inner_attrs? stmt* restricted_expr? RBRACE {pin(".*")=1}
+block                 ::= LBRACE              stmt* restricted_expr? RBRACE { pin(".*")=1 }
+inner_attrs_and_block ::= LBRACE inner_attrs? stmt* restricted_expr? RBRACE { pin(".*")=1 }
 
 
 expr_stmt ::= restricted_expr SEMICOLON
