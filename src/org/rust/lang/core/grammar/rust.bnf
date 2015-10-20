@@ -137,7 +137,7 @@
     extends("impl_method") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
     extends(".*_item")     = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
 
-    extends(".*_expr") = expr
+    extends(".*_expr") = restricted_expr
     extends(".*_stmt") = stmt
     extends("pat_.*")  = pat
     extends(".*_attr") = attr
@@ -502,7 +502,7 @@ private type_prim ::= path_without_colons
                     | AND    [ lifetime? MUT? ] type
                     | ANDAND [ lifetime? MUT? ] type
                     | LBRACK type [ (COMMA DOTDOT | SEMICOLON) expr ] RBRACK
-                    | TYPEOF LPAREN expr RPAREN
+                    | TYPEOF LPAREN restricted_expr RPAREN
                     | UNDERSCORE
                     | type_bare_fn
                     | for_in_type
@@ -591,7 +591,7 @@ left view_path_part ::= COLONCOLON IDENTIFIER
 // Expressions
 //
 
-expr ::= ret_expr
+restricted_expr ::= ret_expr
        | assign_bin_expr
        | block_expr
        | cont_expr
@@ -611,6 +611,11 @@ expr ::= ret_expr
        | mul_bin_expr
        | cast_expr
        | atom_expr
+
+// https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
+private no_struct_lit_expr ::= <<withoutStructLiterals restricted_expr>>
+private expr ::= <<withStructLiterals restricted_expr>>
+
 
 block_expr ::= while_expr
              | while_let_expr
@@ -641,14 +646,14 @@ private atom_expr ::= lit_expr
 self_expr ::= SELF
 
 
-binary_expr ::= expr + {
+binary_expr ::= restricted_expr + {
     methods=[
         left="/expr[0]"
         right="/expr[1]"
     ]
 }
 
-assign_bin_expr ::= expr
+assign_bin_expr ::= restricted_expr
                   ( GTGTEQ
                   | LTLTEQ
                   | OREQ
@@ -660,32 +665,32 @@ assign_bin_expr ::= expr
                   | MULEQ
                   | DIVEQ
                   | REMEQ
-                  ) expr    { rightAssociative = true }
+                  ) restricted_expr    { rightAssociative = true }
 
-comp_bin_expr       ::= expr (EQEQ | EXCLEQ) expr
-rel_comp_bin_expr   ::= expr (LT !(LT | EQ) | GT !(GT | EQ) | LTEQ | GTEQ) expr
-bit_shift_bin_expr  ::= expr (LTLT | GTGT) expr
-add_bin_expr        ::= expr (PLUS | MINUS) expr
-mul_bin_expr        ::= expr (MUL | DIV | REM) expr
+comp_bin_expr       ::= restricted_expr (EQEQ | EXCLEQ) restricted_expr
+rel_comp_bin_expr   ::= restricted_expr (LT !(LT | EQ) | GT !(GT | EQ) | LTEQ | GTEQ) restricted_expr
+bit_shift_bin_expr  ::= restricted_expr (LTLT | GTGT) restricted_expr
+add_bin_expr        ::= restricted_expr (PLUS | MINUS) restricted_expr
+mul_bin_expr        ::= restricted_expr (MUL | DIV | REM) restricted_expr
 
-bool_or_bin_expr    ::= expr OROR expr
-bool_and_bin_expr   ::= expr ANDAND expr
-bit_or_bin_expr     ::= expr OR expr
-bit_xor_bin_expr    ::= expr XOR expr
-bit_and_bin_expr    ::= expr AND expr
+bool_or_bin_expr    ::= restricted_expr OROR restricted_expr
+bool_and_bin_expr   ::= restricted_expr ANDAND restricted_expr
+bit_or_bin_expr     ::= restricted_expr OR restricted_expr
+bit_xor_bin_expr    ::= restricted_expr XOR restricted_expr
+bit_and_bin_expr    ::= restricted_expr AND restricted_expr
 
 
-cast_expr ::= expr AS type
+cast_expr ::= restricted_expr AS type
 
-unary_expr ::= (MINUS | MUL | EXCL | (AND | ANDAND) MUT?) expr
+unary_expr ::= (MINUS | MUL | EXCL | (AND | ANDAND) MUT?) restricted_expr
 
 lambda_expr ::= MOVE? (OROR | OR [<<comma_separated_list lambda_param>>] OR) ret_type? expr
 private lambda_param ::= pat type_ascription?
 
-struct_expr ::= path_with_colons struct_expr_body
+struct_expr ::= <<checkStructAllowed>> path_with_colons struct_expr_body
 
 struct_expr_body ::= LBRACE
-                       <<comma_separated_list (IDENTIFIER COLON expr)>>
+                       [<<comma_separated_list (IDENTIFIER COLON expr)>>]
                        (DOTDOT  expr)?
                      RBRACE
 // matklad: this are ambiguous with path_expr and call_expr
@@ -717,11 +722,11 @@ if_expr ::= IF no_struct_lit_expr block else_tail?
 
 private else_tail ::= ELSE (if_expr | if_let_expr | block )
 
-if_let_expr ::= IF LET pat EQ expr block  else_tail?
+if_let_expr ::= IF LET pat EQ no_struct_lit_expr block  else_tail?
 
-while_let_expr ::= WHILE LET pat EQ expr block
+while_let_expr ::= WHILE LET pat EQ no_struct_lit_expr block
 
-ret_expr ::= RETURN expr?
+ret_expr ::= RETURN restricted_expr?
 
 paren_expr ::= (LPAREN expr RPAREN)
 
@@ -729,8 +734,6 @@ unit_expr ::= LPAREN RPAREN
 
 tuple_expr ::= LPAREN expr ((COMMA expr)+ | COMMA) RPAREN
 
-// https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
-private no_struct_lit_expr ::= expr
 
 array_expr ::= LBRACK array_elems? RBRACK {pin=1}
 
@@ -741,10 +744,10 @@ private array_elems ::= expr SEMICOLON expr
 //private range_expr_group ::= open_range_expr
 //                           | full_range_expr
 
-full_range_expr ::= expr DOTDOT expr?
-open_range_expr ::=      DOTDOT expr?
+full_range_expr ::= restricted_expr DOTDOT (<<checkBraceAllowed>> restricted_expr)?
+open_range_expr ::=      DOTDOT (<<checkBraceAllowed>> restricted_expr)?
 
-range_expr ::= expr + {
+range_expr ::= restricted_expr + {
     methods=[
         from="/expr[0]"
         to="/expr[1]"
@@ -752,19 +755,19 @@ range_expr ::= expr + {
 }
 
 
-index_expr ::= expr index_arg
+index_expr ::= restricted_expr index_arg
 
-private index_arg ::= LBRACK expr RBRACK
+private index_arg ::= LBRACK restricted_expr RBRACK
 
-call_expr ::= expr arg_list
+call_expr ::= restricted_expr arg_list
 
-method_call_expr ::= expr DOT IDENTIFIER [COLONCOLON generic_args] arg_list { pin=2 }
+method_call_expr ::= restricted_expr DOT IDENTIFIER [COLONCOLON generic_args] arg_list { pin=2 }
 
 arg_list ::= LPAREN expr_list? RPAREN {pin=1}
 
 private expr_list ::= <<comma_separated_list expr>>
 
-field_expr ::= expr DOT (IDENTIFIER | INTEGER_LITERAL) { pin(".*")=2 }
+field_expr ::= restricted_expr DOT (IDENTIFIER | INTEGER_LITERAL) { pin(".*")=2 }
 
 lit_expr ::= lit
 
@@ -829,18 +832,18 @@ private lifetime ::= LIFETIME | STATIC_LIFETIME
 // Declarations
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-let_decl ::= LET pat [ COLON type ] [ EQ expr ] SEMICOLON
+let_decl ::= LET pat [ COLON type ] [ EQ restricted_expr ] SEMICOLON
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Statements
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-block ::= LBRACE stmt* expr? RBRACE {pin(".*")=1}
-inner_attrs_and_block ::= LBRACE inner_attrs? stmt* expr? RBRACE {pin(".*")=1}
+block ::= LBRACE stmt* restricted_expr? RBRACE {pin(".*")=1}
+inner_attrs_and_block ::= LBRACE inner_attrs? stmt* restricted_expr? RBRACE {pin(".*")=1}
 
 
-expr_stmt ::= expr SEMICOLON
+expr_stmt ::= restricted_expr SEMICOLON
 decl_stmt ::= (item | let_decl)
 
 stmt ::= block_expr
