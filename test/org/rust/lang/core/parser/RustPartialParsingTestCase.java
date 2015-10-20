@@ -1,8 +1,8 @@
 package org.rust.lang.core.parser;
 
-public class RustPartialsParsingTestCase extends RustParsingTestCaseBase {
+public class RustPartialParsingTestCase extends RustParsingTestCaseBase {
 
-    public RustPartialsParsingTestCase() {
+    public RustPartialParsingTestCase() {
         super("parser/ill-formed");
     }
 

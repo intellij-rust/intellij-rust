@@ -11,7 +11,7 @@ import org.junit.Assert
 import org.rust.lang.core.RustParserDefinition
 import java.io.File
 
-public class RustParserCtrsTestCase : ParsingTestCase("ctrs", ".rs", RustParserDefinition()) {
+public class RustCTRSTestCase : ParsingTestCase("ctrs", ".rs", RustParserDefinition()) {
 
     override fun getTestDataPath() = "testData"
 
