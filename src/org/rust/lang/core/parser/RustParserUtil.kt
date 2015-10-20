@@ -6,51 +6,55 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.TokenType
 import org.rust.lang.core.lexer.RustTokenElementTypes
 import org.rust.lang.core.lexer.containsEOL
+import org.rust.lang.utils.Cookie
+import org.rust.lang.utils.using
 
 public object RustParserUtil : GeneratedParserUtilBase() {
 
     private val STRUCT_ALLOWED: Key<Boolean> = Key("org.rust.STRUCT_ALLOWED")
 
-    private fun PsiBuilder.isStructAllowed(): Boolean {
+    private fun PsiBuilder.getStructAllowed(): Boolean {
         return getUserData(STRUCT_ALLOWED) ?: true
     }
 
-    private fun PsiBuilder.setStructAllowed(value: Boolean) {
-        return putUserData(STRUCT_ALLOWED, value)
+    private fun PsiBuilder.setStructAllowed(value: Boolean): Boolean {
+        val r = getStructAllowed()
+        putUserData(STRUCT_ALLOWED, value)
+        return r
     }
 
+
+    //
+    // Helpers
+    //
+
     @JvmStatic
-    public fun checkStructAllowed(b: PsiBuilder, level: Int) : Boolean = b.isStructAllowed()
+    public fun checkStructAllowed(b: PsiBuilder, level: Int) : Boolean = b.getStructAllowed()
 
     @JvmStatic
     public fun checkBraceAllowed(b: PsiBuilder, level: Int) : Boolean {
-        return b.isStructAllowed() || b.tokenType != RustTokenElementTypes.LBRACE
+        return b.getStructAllowed() || b.tokenType != RustTokenElementTypes.LBRACE
     }
 
     @JvmStatic
     public fun withoutStructLiterals(b: PsiBuilder, level: Int, parser: GeneratedParserUtilBase.Parser): Boolean {
-        val old = b.isStructAllowed()
-        b.setStructAllowed(false)
-        val result = parser.parse(b, level)
-        b.setStructAllowed(old)
-        return result
+        return using (Cookie(b, { this.setStructAllowed(it) }, false)) {
+            parser.parse(b, level)
+        }
     }
 
     @JvmStatic
     public fun withStructLiterals(b: PsiBuilder, level: Int, parser: GeneratedParserUtilBase.Parser): Boolean {
-        val old = b.isStructAllowed()
-        b.setStructAllowed(true)
-        val result = parser.parse(b, level)
-        b.setStructAllowed(old)
-        return result
+        return using (Cookie(b, { this.setStructAllowed(it) }, true)) {
+            parser.parse(b, level)
+        }
     }
-
 
     @JvmStatic
     public fun skipUntilEOL(b: PsiBuilder, level: Int): Boolean {
         while (!b.eof()) {
             if (b.tokenType == TokenType.WHITE_SPACE
-                    || b.tokenText?.containsEOL() != null) return true;
+            ||  b.tokenText?.containsEOL() != null) return true;
 
             b.advanceLexer();
         }
