@@ -486,8 +486,9 @@ private impl_type ::= attrs_and_vis TYPE IDENTIFIER generic_params EQ type_sum S
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 private type ::= type_prim
+            /* | type_closure */
                | LPAREN [ type_sums COMMA? ] RPAREN
-               | qual_path_no_types
+               | type_qual_path
             /* | LTLT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER as_trait_ref? GT COLONCOLON IDENTIFIER */
 
 type_item ::= TYPE IDENTIFIER generic_params where_clause? EQ type_sum SEMICOLON
@@ -496,7 +497,7 @@ type_item ::= TYPE IDENTIFIER generic_params where_clause? EQ type_sum SEMICOLON
 //                shift-reduce conflict resolution for impl_item in parser-lalr.y
 type_prim_sum ::= type_prim [ PLUS type_param_bound_seq ]
 
-private type_prim ::= path_without_colons
+private type_prim ::= [ SELF? COLONCOLON ] path_generic_args_without_colons
                     | BOX type
                     | MUL    [ MUT | CONST ] type
                     | AND    [ lifetime? MUT? ] type
@@ -525,65 +526,94 @@ private for_in_type_suffix ::= type_bare_fn
 // Paths
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Paths used in expression contexts.
-// Examples;
-// - a::b::<T,U>::c
-path_with_colons ::= COLONCOLON? <<coloncolon_separated_list path_with_colons_segment>>
+path_part ::=
 
-path_with_colons_segment ::= ident_or_self_type COLONCOLON LT generic_values GT
-                           | ident_or_self_type
+//
+// Paths used in expression contexts:
+//
+//    a::b::<T,U>::c
+//
+
+private path_generic_args_with_colons ::= path_generic_args_with_colons_part_leftish path_generic_args_with_colons_part*
+
+left path_generic_args_with_colons_part ::= COLONCOLON path_generic_args_with_colons_part_inner {
+  elementType = path_part
+}
+
+path_generic_args_with_colons_part_leftish ::= path_generic_args_with_colons_part_inner {
+  elementType = path_part
+}
+
+private path_generic_args_with_colons_part_inner ::= ident_or_self_or_super [ COLONCOLON generic_args ]
 
 
-// In rustc parser, self/super are treated as identifiers only if immediately followed by `::`
-// Thus, these are valid paths,
-//  - foo :: bar ::baz
-//  - self:: super::foo ::baz
-// and these are invalid
-//  - self ::foo::bar
-//  - self::super ::foo
+//
+// TODO(kudinkin, matklad):
+//
+//    In rustc parser, self/super are treated as identifiers only if immediately followed by `::`
+//    Thus, these are valid paths:
+//
+//      `foo :: bar ::baz`
+//      `self:: super::foo ::baz`
+//
+//  and these are invalid ones
+//
+//      `self ::foo::bar`
+//      `self::super ::foo`
 //
 // We parse all the above paths as valid.
-private ident_or_self_type ::= IDENTIFIER | SELF | SUPER | CSELF
+//
+
+//
+// Paths used in type contexts:
+//
+//    a::b<T,U>::c<V,W>
+//    a::b<T,U>::c(V) -> W
+//    a::b<T,U>::c(V)
+//
+
+private ident_or_self_or_super ::= IDENTIFIER | SUPER | SELF | CSELF
+
+private path_generic_args_without_colons ::= path_generic_args_without_colons_part_leftish path_generic_args_without_colons_part*
+
+left path_generic_args_without_colons_part ::= COLONCOLON path_generic_args_without_colons_part_inner {
+  elementType = path_part
+}
+
+path_generic_args_without_colons_part_leftish ::= path_generic_args_without_colons_part_inner {
+  elementType = path_part
+}
+
+private path_generic_args_without_colons_part_inner ::= ident_or_self_or_super [ generic_args | LPAREN type_sums? RPAREN ret_type? ]
 
 
-// Paths used in type contexts.
-// Examples:
-// - `a::b<T,U>::c<V,W>`
-// - `a::b<T,U>::c(V) -> W`
-// - `a::b<T,U>::c(V)`
-path_without_colons ::= COLONCOLON? <<coloncolon_separated_list path_without_colons_segment>>
-private path_without_colons_segment ::= ident_or_self_type [LT generic_values GT
-                                                   | LPAREN type_sums? RPAREN ret_type?]
+type_qual_path ::= LT type_sum [ AS trait_ref ] GT COLONCOLON path_generic_args_without_colons
 
 
-private qual_path_start ::= LT type_sum [AS path_without_colons] GT COLONCOLON
-
-qual_path_with_colons ::= qual_path_start <<coloncolon_separated_list path_with_colons_segment>>
-qual_path_no_types ::= qual_path_start <<coloncolon_separated_list path_no_types_segment>>
-
-private path_no_types_segment ::= ident_or_self_type
-
-
-// Paths used in use items.
-// Examples:
-// - foo::bar::{self, foo}
-// - {foo, bar}
-// - ::foo::*
-// - foo::bar as baz
+//
+// Paths used in use items:
+//
+//    foo::bar::{self, foo}
+//    {foo, bar}
+//    ::foo::*
+//    foo::bar as baz
+//
 view_path ::= path_no_types_allowed? COLONCOLON LBRACE [ idents_or_self COMMA? ] RBRACE
             | path_no_types_allowed  COLONCOLON MUL
             |                                   LBRACE [ idents_or_self COMMA? ] RBRACE
-            | path_no_types_allowed [AS IDENTIFIER]
+            | path_no_types_allowed [ AS IDENTIFIER ]
 
 private idents_or_self ::= (IDENTIFIER | SELF) [ AS IDENTIFIER ] (COMMA idents_or_self)*
 
 private path_no_types_allowed ::= view_path_part_leftish view_path_part*
 
 view_path_part_leftish ::= COLONCOLON? (SELF | SUPER | IDENTIFIER) {
-    extends = view_path_part
+  elementType = path_part
 }
 
-left view_path_part ::= COLONCOLON IDENTIFIER
+left view_path_part ::= COLONCOLON IDENTIFIER {
+  elementType = path_part
+}
 
 
 //
@@ -591,25 +621,25 @@ left view_path_part ::= COLONCOLON IDENTIFIER
 //
 
 restricted_expr ::= ret_expr
-       | assign_bin_expr
-       | block_expr
-       | cont_expr
-       | break_expr
-       | lambda_expr
-       | full_range_expr
-       | open_range_expr
-       | bool_or_bin_expr
-       | bool_and_bin_expr
-       | bit_or_bin_expr
-       | bit_xor_bin_expr
-       | bit_and_bin_expr
-       | comp_bin_expr
-       | rel_comp_bin_expr
-       | bit_shift_bin_expr
-       | add_bin_expr
-       | mul_bin_expr
-       | cast_expr
-       | atom_expr
+                  | assign_bin_expr
+                  | block_expr
+                  | cont_expr
+                  | break_expr
+                  | lambda_expr
+                  | full_range_expr
+                  | open_range_expr
+                  | bool_or_bin_expr
+                  | bool_and_bin_expr
+                  | bit_or_bin_expr
+                  | bit_xor_bin_expr
+                  | bit_and_bin_expr
+                  | comp_bin_expr
+                  | rel_comp_bin_expr
+                  | bit_shift_bin_expr
+                  | add_bin_expr
+                  | mul_bin_expr
+                  | cast_expr
+                  | atom_expr
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
 private no_struct_lit_expr ::= <<withoutStructLiterals restricted_expr>>
@@ -686,10 +716,10 @@ unary_expr ::= (MINUS | MUL | EXCL | (AND | ANDAND) MUT?) restricted_expr
 lambda_expr ::= MOVE? (OROR | OR [<<comma_separated_list lambda_param>>] OR) ret_type? expr
 private lambda_param ::= pat type_ascription?
 
-struct_expr ::= <<checkStructAllowed>> path_with_colons struct_expr_body
+struct_expr ::= <<checkStructAllowed>> path_generic_args_with_colons struct_expr_body
 
 struct_expr_body ::= LBRACE
-                       [<<comma_separated_list (IDENTIFIER COLON expr)>>]
+                       [ <<comma_separated_list (IDENTIFIER COLON expr)>> ]
                        (DOTDOT  expr)?
                      RBRACE
 // matklad: this are ambiguous with path_expr and call_expr
@@ -697,9 +727,10 @@ struct_expr_body ::= LBRACE
 //                         (COMMA  expr)* RPAREN
 //                 | path_expr
 
-path_expr ::= path_with_colons
+path_expr ::= [ SELF? COLONCOLON ] path_generic_args_with_colons
 
-qual_path_expr ::= qual_path_with_colons
+qual_path_expr ::= LT  type_sum [ AS trait_ref ] GT COLONCOLON path_generic_args_with_colons
+              /* | LTLT type_sum [ AS trait_ref ] GT COLONCOLON IDENTIFIER generic_args? [ AS trait_ref ] GT COLONCOLON IDENTIFIER generic_args? */
 
 while_expr ::= [lifetime COLON] WHILE no_struct_lit_expr block
 
@@ -743,7 +774,7 @@ private array_elems ::= expr SEMICOLON expr
 //                           | full_range_expr
 
 full_range_expr ::= restricted_expr DOTDOT (<<checkBraceAllowed>> restricted_expr)?
-open_range_expr ::=      DOTDOT (<<checkBraceAllowed>> restricted_expr)?
+open_range_expr ::=                 DOTDOT (<<checkBraceAllowed>> restricted_expr)?
 
 range_expr ::= restricted_expr + {
     methods=[
@@ -862,8 +893,5 @@ LTLTEQ ::= LT LT EQ
 LTLT   ::= LT LT
 LTEQ   ::= LT EQ
 
-// trailing commas are allowed
-private meta comma_separated_list ::= <<param>> ( ',' <<param>> ) * [',']
-
-// trailing `::` is not allowed
-private meta coloncolon_separated_list ::= <<param>> (COLONCOLON <<param>>)*
+// Trailing commas are allowed
+private meta comma_separated_list ::= <<param>> ( COMMA <<param>> ) * COMMA?
