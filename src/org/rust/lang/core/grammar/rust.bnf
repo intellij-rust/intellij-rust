@@ -502,7 +502,6 @@ private type_prim ::= path_without_colons
                     | AND    [ lifetime? MUT? ] type
                     | ANDAND [ lifetime? MUT? ] type
                     | LBRACK type [ (COMMA DOTDOT | SEMICOLON) expr ] RBRACK
-                    | TYPEOF LPAREN restricted_expr RPAREN
                     | UNDERSCORE
                     | type_bare_fn
                     | for_in_type
