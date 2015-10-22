@@ -4,6 +4,6 @@ import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.RustLanguage
 
-public open class RustTokenType(_: String) : IElementType(_, RustLanguage.INSTANCE) {
+public open class RustTokenType(s: String) : IElementType(s, RustLanguage.INSTANCE) {
 
 }
