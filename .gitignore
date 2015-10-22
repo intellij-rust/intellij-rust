@@ -1,5 +1,6 @@
 .idea
 .gradle
+gradle*
 build/
 out
 classes
