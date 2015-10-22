@@ -275,7 +275,7 @@ pat ::= pat_wild
       | pat_qual_path
    /* | SHL ty_sum maybe_as_trait_ref '>' MOD_SEP ident maybe_as_trait_ref '>' MOD_SEP ident */
 
-pat_qual_path   ::= type_qual_path
+pat_qual_path   ::= << qualified_path path_without_types >>
 pat_uniq        ::= BOX pat
 
 pat_ident       ::= binding_mode IDENTIFIER [AT pat]
@@ -490,17 +490,22 @@ private impl_type ::= attrs_and_vis TYPE IDENTIFIER generic_params EQ type_sum S
 private type ::= type_prim
             /* | type_closure */
                | LPAREN [ type_sums COMMA? ] RPAREN
-               | type_qual_path
+
+               /* Paths */
+
+               | !LT [ SELF? COLONCOLON ] path_generic_args_without_colons
+               | &LT type_qual_path
             /* | LTLT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER as_trait_ref? GT COLONCOLON IDENTIFIER */
 
 type_item ::= TYPE IDENTIFIER generic_params where_clause? EQ type_sum SEMICOLON
+
+type_qual_path ::= << qualified_path view_path_prefix >>
 
 // TODO(matklad): not sure if we need this production, it is an artifact of
 //                shift-reduce conflict resolution for impl_item in parser-lalr.y
 type_prim_sum ::= type_prim [ PLUS type_param_bound_seq ]
 
-private type_prim ::= [ SELF? COLONCOLON ] path_generic_args_without_colons
-                    | BOX type
+private type_prim ::= BOX type
                     | MUL    [ MUT | CONST ] type
                     | AND    [ lifetime? MUT? ] type
                     | ANDAND [ lifetime? MUT? ] type
@@ -531,7 +536,7 @@ private for_in_type_suffix ::= type_bare_fn
 path_part ::=
 
 //
-// Paths used in expression contexts:
+// Paths (with `::` separating `generic_args` from actual name) used in expression contexts:
 //
 //    a::b::<T,U>::c
 //
@@ -566,15 +571,36 @@ private path_generic_args_with_colons_part_inner ::= ident_or_self_or_super [ CO
 // We parse all the above paths as valid.
 //
 
+
+
+private ident_or_self_or_super ::= IDENTIFIER | SUPER | SELF | CSELF
+
+
 //
-// Paths used in type contexts:
+// Paths (w/o types and therefore `generic_args`, containing only identifiers, `self`, etc.):
+//
+//    a::b::c
+//
+
+private path_without_types ::= path_without_types_part_leftish path_without_types_part*
+
+path_without_types_part_leftish ::= path_without_types_part_inner {
+  elementType = path_part
+}
+
+left path_without_types_part ::= COLONCOLON path_without_types_part_inner {
+  elementType = path_part
+}
+
+private path_without_types_part_inner ::= ident_or_self_or_super
+
+//
+// Paths (w/o `::` separating `generic_args` from actual name) used in type contexts:
 //
 //    a::b<T,U>::c<V,W>
 //    a::b<T,U>::c(V) -> W
 //    a::b<T,U>::c(V)
 //
-
-private ident_or_self_or_super ::= IDENTIFIER | SUPER | SELF | CSELF
 
 private path_generic_args_without_colons ::= path_generic_args_without_colons_part_leftish path_generic_args_without_colons_part*
 
@@ -589,8 +615,21 @@ path_generic_args_without_colons_part_leftish ::= path_generic_args_without_colo
 private path_generic_args_without_colons_part_inner ::= ident_or_self_or_super [ generic_args | LPAREN type_sums? RPAREN ret_type? ]
 
 
-type_qual_path ::= LT type_sum [ AS trait_ref ] GT COLONCOLON path_generic_args_without_colons
+//
+// Qualified paths
+//
+//    <TYPE [as TRAIT_REF]> :: (path_without_types | path_generic_args_without_colons | path_generic_args_with_colons)
+//
+//    <T>::c<V,W>
+//    <T as Foo>::c(V) -> W
+//
 
+private meta qualified_path ::= LT type [ AS trait_ref ] GT COLONCOLON << param >>
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Views
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 //
 // Paths used in use items:
@@ -600,14 +639,14 @@ type_qual_path ::= LT type_sum [ AS trait_ref ] GT COLONCOLON path_generic_args_
 //    ::foo::*
 //    foo::bar as baz
 //
-view_path ::= path_no_types_allowed? COLONCOLON LBRACE [ idents_or_self COMMA? ] RBRACE
-            | path_no_types_allowed  COLONCOLON MUL
+view_path ::= view_path_prefix? COLONCOLON LBRACE [ idents_or_self COMMA? ] RBRACE
+            | view_path_prefix  COLONCOLON MUL
             |                                   LBRACE [ idents_or_self COMMA? ] RBRACE
-            | path_no_types_allowed [ AS IDENTIFIER ]
+            | view_path_prefix [ AS IDENTIFIER ]
 
 private idents_or_self ::= (IDENTIFIER | SELF) [ AS IDENTIFIER ] (COMMA idents_or_self)*
 
-private path_no_types_allowed ::= view_path_part_leftish view_path_part*
+private view_path_prefix ::= view_path_part_leftish view_path_part*
 
 view_path_part_leftish ::= COLONCOLON? (SELF | SUPER | IDENTIFIER) {
   elementType = path_part
@@ -618,9 +657,9 @@ left view_path_part ::= COLONCOLON IDENTIFIER {
 }
 
 
-//
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // Expressions
-//
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 restricted_expr ::= ret_expr
                   | assign_bin_expr
@@ -731,7 +770,7 @@ struct_expr_body ::= LBRACE
 
 path_expr ::= [ SELF? COLONCOLON ] path_generic_args_with_colons
 
-qual_path_expr ::= LT  type_sum [ AS trait_ref ] GT COLONCOLON path_generic_args_with_colons
+qual_path_expr ::= << qualified_path path_generic_args_with_colons >>
               /* | LTLT type_sum [ AS trait_ref ] GT COLONCOLON IDENTIFIER generic_args? [ AS trait_ref ] GT COLONCOLON IDENTIFIER generic_args? */
 
 while_expr ::= [lifetime COLON] WHILE no_struct_lit_expr block
