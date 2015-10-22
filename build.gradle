@@ -1,7 +1,7 @@
 
 buildscript {
     dependencies {
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:0.14.451'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
     }
 }
 
@@ -22,8 +22,8 @@ configurations {
 allprojects {
 
     dependencies {
-        compile 'junit:junit:4.+'
-        compile 'org.jetbrains.kotlin:kotlin-stdlib:0.14.451'
+        compile "junit:junit:4.+"
+        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
         compile files('gen') {
             builtBy 'generate'
@@ -94,7 +94,7 @@ test {
 dependencies {
     //jflex   'de.jflex:jflex:1.6.0'
     gen files('lib/jflex.jar')
-    gen files('lib/grammar-kit-patched.jar')
+    gen files('lib/gk/grammar-kit-patched.jar')
 }
 
 
