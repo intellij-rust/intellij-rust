@@ -275,14 +275,14 @@ pat ::= pat_wild
       | pat_qual_path
    /* | SHL ty_sum maybe_as_trait_ref '>' MOD_SEP ident maybe_as_trait_ref '>' MOD_SEP ident */
 
-pat_qual_path   ::= qual_path_no_types
+pat_qual_path   ::= type_qual_path
 pat_uniq        ::= BOX pat
 
 pat_ident       ::= binding_mode IDENTIFIER [AT pat]
                   |              IDENTIFIER AT pat
 
-pat_struct      ::= path_with_colons LBRACE pat_struct_fields RBRACE
-pat_enum        ::= path_with_colons LPAREN (DOTDOT | pat_tup_elts) RPAREN
+pat_struct      ::= path_expr LBRACE pat_struct_fields RBRACE
+pat_enum        ::= path_expr LPAREN (DOTDOT | pat_tup_elts) RPAREN
 
 pat_range ::= lit_or_path [ DOTDOTDOT lit_or_path ]
 
@@ -297,13 +297,13 @@ pat_reg ::= AND MUT? pat
 
 pat_wild ::= UNDERSCORE
 
-private lit_or_path ::= path_with_colons | lit | MINUS lit
+private lit_or_path ::= path_expr | lit | MINUS lit
 
 generic_args ::= LT generic_values GT
             /* | LT generic_values GTGT */
             /* | LT generic_values GTEQ */
             /* | LT generic_values GTGTEQ */
-            /* | LTLT ty_qualifie   d_path_and_generic_values GT
+            /* | LTLT ty_qualified_path_and_generic_values GT
                | LTLT ty_qualified_path_and_generic_values GTGT
                | LTLT ty_qualified_path_and_generic_values GTEQ
                | LTLT ty_qualified_path_and_generic_values GTGTEQ */
@@ -451,7 +451,7 @@ private named_arg ::= IDENTIFIER
 method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause? inner_attrs_and_block
 
 
-trait_ref ::= path_without_colons
+trait_ref ::= COLONCOLON? path_generic_args_without_colons
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
