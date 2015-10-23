@@ -1,6 +1,5 @@
 package org.rust.lang.core.lexer
 
-import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.RustLanguage
 

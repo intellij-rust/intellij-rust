@@ -43,6 +43,9 @@ private fun makeTokenMap(): Map<IElementType, TextAttributesKey> {
     result[TomlTypes.BOOLEAN] =
             TextAttributesKey.createTextAttributesKey("TOML_BOOLEAN", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL)
 
+    result[TomlTypes.DATE] =
+            TextAttributesKey.createTextAttributesKey("TOML_DATE", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL)
+
     return result;
 }
 

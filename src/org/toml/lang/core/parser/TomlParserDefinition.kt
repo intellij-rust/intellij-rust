@@ -52,7 +52,7 @@ public class TomlParserDefinition : ParserDefinition {
     companion object {
         val FILE: IFileElementType = IFileElementType(TomlLanguage.Companion.INSTANCE)
         val WHITE_SPACES: TokenSet = TokenSet.create(TokenType.WHITE_SPACE);
-        val COMMENTS: TokenSet = TokenSet.EMPTY;
+        val COMMENTS: TokenSet = TokenSet.create(TomlTypes.COMMENT);
     }
 
 }
