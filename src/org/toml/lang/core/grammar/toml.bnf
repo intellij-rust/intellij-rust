@@ -20,21 +20,29 @@
       number='regexp:(\d|_)+'
       boolean='regexp:true|false'
       key='regexp:[0-9_\-a-zA-Z]+'
+      space='regexp:\s+'
+      date='date'
     ]
 }
 
 tomlFile ::= expression *
 
-expression ::= key_value | table
+expression ::= key_value | table | table_array
 
 table ::= table_header table_entries
 table_header ::= '[' path ']'
-path ::= key ('.' key) *
+
+table_array ::= table_array_header table_entries
+table_array_header ::= '[' '[' path ']' ']'
+
+key_or_str ::= key | string
+path ::= key_or_str ('.' key_or_str) *
 table_entries ::= key_value *
 
-key_value ::= key '=' value
+key_value ::= key_or_str '=' value
 
-value ::= string | number | boolean | array
-array ::= '[' (value (',' value) *)? ']'
+//TODO inline_table should be on the single line
+inline_table ::= '{' (key_value (',' key_value)* ','?)? '}'
 
-
+value ::= string | number | boolean | date | array | inline_table
+array ::= '[' (value (',' value)* ','?)? ']'

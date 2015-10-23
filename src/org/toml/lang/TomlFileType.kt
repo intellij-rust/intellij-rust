@@ -9,9 +9,6 @@ import javax.swing.Icon
  * @author Aleksey.Kladov
  */
 public class TomlFileType : LanguageFileType(TomlLanguage.INSTANCE) {
-    object DEFAULTS {
-        val EXTENSION: String = "toml"
-    }
 
     private var myIcon: Icon = TomlIcons.NORMAL
 
@@ -22,7 +19,7 @@ public class TomlFileType : LanguageFileType(TomlLanguage.INSTANCE) {
             "TOML file"
 
     override fun getDefaultExtension(): String =
-            DEFAULT_EXTENSION
+            "toml"
 
     override fun getIcon(): Icon =
             myIcon
@@ -32,7 +29,6 @@ public class TomlFileType : LanguageFileType(TomlLanguage.INSTANCE) {
 
     companion object {
         public val INSTANCE: TomlFileType = TomlFileType()
-        public val DEFAULT_EXTENSION: String = "toml"
     }
 
 }
