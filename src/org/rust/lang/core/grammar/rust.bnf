@@ -458,7 +458,7 @@ trait_ref ::= COLONCOLON? path_generic_args_without_colons
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl_item ::= UNSAFE? IMPL generic_params type_prim_sum                 where_clause? LBRACE inner_attrs? impl_contents* RBRACE
+impl_item ::= UNSAFE? IMPL generic_params type_sum                      where_clause? LBRACE inner_attrs? impl_contents* RBRACE
             | UNSAFE? IMPL generic_params LPAREN type RPAREN            where_clause? LBRACE inner_attrs? impl_contents* RBRACE
             | UNSAFE? IMPL generic_params EXCL? trait_ref FOR (type_sum where_clause? LBRACE inner_attrs? impl_contents* RBRACE | DOTDOT LBRACE RBRACE) {
   pin = "LBRACE"
@@ -487,32 +487,23 @@ private impl_type ::= attrs_and_vis TYPE IDENTIFIER generic_params EQ type_sum S
 // Types
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private type ::= type_prim
-            /* | type_closure */
+private type ::= BOX type
+               | MUL    [ MUT | CONST ] type
+               | AND    [ lifetime? MUT? ] type
+               | ANDAND [ lifetime? MUT? ] type
+               | LBRACK type [ (COMMA DOTDOT | SEMICOLON) expr ] RBRACK
+               | UNDERSCORE
+               | type_bare_fn
+               | for_in_type
                | LPAREN [ type_sums COMMA? ] RPAREN
 
                /* Paths */
-
                | !LT [ SELF? COLONCOLON ] path_generic_args_without_colons
                | &LT type_qual_path
-            /* | LTLT type_sum as_trait_ref? GT COLONCOLON IDENTIFIER as_trait_ref? GT COLONCOLON IDENTIFIER */
 
 type_item ::= TYPE IDENTIFIER generic_params where_clause? EQ type_sum SEMICOLON
 
 type_qual_path ::= << qualified_path view_path_prefix >>
-
-// TODO(matklad): not sure if we need this production, it is an artifact of
-//                shift-reduce conflict resolution for impl_item in parser-lalr.y
-type_prim_sum ::= type_prim [ PLUS type_param_bound_seq ]
-
-private type_prim ::= BOX type
-                    | MUL    [ MUT | CONST ] type
-                    | AND    [ lifetime? MUT? ] type
-                    | ANDAND [ lifetime? MUT? ] type
-                    | LBRACK type [ (COMMA DOTDOT | SEMICOLON) expr ] RBRACK
-                    | UNDERSCORE
-                    | type_bare_fn
-                    | for_in_type
 
 private type_bare_fn ::= [ UNSAFE? [ EXTERN abi? ] ] FN type_fn_decl
 
