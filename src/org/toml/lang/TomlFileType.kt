@@ -12,6 +12,10 @@ public class TomlFileType : LanguageFileType(TomlLanguage.INSTANCE) {
 
     private var myIcon: Icon = TomlIcons.NORMAL
 
+    public object DEFAULTS {
+        public val EXTENSION: String = "toml";
+    }
+
     override fun getName(): String =
             "TOML file"
 
@@ -19,7 +23,7 @@ public class TomlFileType : LanguageFileType(TomlLanguage.INSTANCE) {
             "TOML file"
 
     override fun getDefaultExtension(): String =
-            "toml"
+            DEFAULTS.EXTENSION
 
     override fun getIcon(): Icon =
             myIcon
