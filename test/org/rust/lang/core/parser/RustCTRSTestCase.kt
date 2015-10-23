@@ -6,9 +6,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.DebugUtil
-import com.intellij.testFramework.ParsingTestCase
 import org.junit.Assert
-import org.rust.lang.core.RustParserDefinition
 import java.io.File
 
 public class RustCTRSTestCase : RustParsingTestCaseBase("parser/ctrs") {
@@ -50,9 +48,7 @@ public class RustCTRSTestCase : RustParsingTestCaseBase("parser/ctrs") {
     }
 
     private val expectedErrors = setOf(
-            "testData/psi/parser/ctrs/test/1.1.0/run-pass/utf8-bom.rs",
-            "testData/psi/parser/ctrs/test/1.1.0/run-pass/macro-interpolation.rs",
-            "testData/psi/parser/ctrs/test/1.1.0/run-pass/small-enums-with-fields.rs"
+            "testData/psi/parser/ctrs/test/1.1.0/run-pass/utf8-bom.rs"
     )
 }
 

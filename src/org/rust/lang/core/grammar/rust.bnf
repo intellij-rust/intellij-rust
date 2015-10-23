@@ -842,12 +842,9 @@ macro_expr ::= IDENTIFIER EXCL macro_arg
 
 pat_macro  ::= IDENTIFIER EXCL macro_arg
 
-macro_arg ::= LPAREN expr_list? RPAREN
-            | LBRACE expr_list? RBRACE
-            | LBRACK expr_list? RBRACK
-            | LPAREN token_tree RPAREN
-            | LBRACE token_tree RBRACE
-            | LBRACK token_tree RBRACK {pin=1}
+macro_arg ::= LPAREN token_tree? RPAREN
+            | LBRACE token_tree? RBRACE
+            | LBRACK token_tree?  RBRACK {pin=1}
 
 // This "parses" both macro definitions and macro usage
 item_macro ::= IDENTIFIER EXCL IDENTIFIER?
