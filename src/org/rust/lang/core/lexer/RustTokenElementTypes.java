@@ -108,14 +108,15 @@ public interface RustTokenElementTypes {
     IElementType EQEQ = new RustTokenType("==");
     IElementType EXCL = new RustTokenType("!");
     IElementType EXCLEQ = new RustTokenType("!=");
+    IElementType GE = new RustTokenType(">");
     IElementType GT = new RustTokenType(">");
     IElementType LBRACE = new RustTokenType("{");
     IElementType LBRACK = new RustTokenType("[");
     IElementType LPAREN = new RustTokenType("(");
+    IElementType LE = new RustTokenType("<=");
     IElementType LT = new RustTokenType("<");
     IElementType MINUS = new RustTokenType("-");
     IElementType MINUSEQ = new RustTokenType("-=");
-    IElementType MINUSMINUS = new RustTokenType("--");
     IElementType MUL = new RustTokenType("*");
     IElementType MULEQ = new RustTokenType("*=");
     IElementType OR = new RustTokenType("|");
@@ -123,7 +124,6 @@ public interface RustTokenElementTypes {
     IElementType OROR = new RustTokenType("||");
     IElementType PLUS = new RustTokenType("+");
     IElementType PLUSEQ = new RustTokenType("+=");
-    IElementType PLUSPLUS = new RustTokenType("++");
     IElementType RBRACE = new RustTokenType("}");
     IElementType RBRACK = new RustTokenType("]");
     IElementType REM = new RustTokenType("%");
@@ -136,4 +136,8 @@ public interface RustTokenElementTypes {
     IElementType AT = new RustTokenType("@");
     IElementType UNDERSCORE = new RustTokenType("_");
     IElementType DOLLAR = new RustTokenType("$");
+    IElementType SHLEQ = new RustTokenType("<<=");
+    IElementType SHL = new RustTokenType("<<");
+    IElementType SHREQ = new RustTokenType(">>=");
+    IElementType SHR = new RustTokenType(">>");
 }
