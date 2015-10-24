@@ -41,13 +41,13 @@ public class RustResolveEngine(ref: RustQualifiedReference) {
 
         val qualifiersStack = stackUp(ref)
 
-        var matched : RustNamedElement? = null
+        var matched: RustNamedElement? = null
 
         companion object {
             fun stackUp(ref: RustQualifiedReference): Stack<RustQualifiedReference> {
                 val s = Stack<RustQualifiedReference>()
 
-                var q : RustQualifiedReference? = ref
+                var q: RustQualifiedReference? = ref
                 while (q != null) {
                     s.add(q)
                     q = q.qualifier
@@ -58,33 +58,20 @@ public class RustResolveEngine(ref: RustQualifiedReference) {
         }
 
         override fun visitBlock(block: RustBlock) {
-            block.children
-                    .filterIsInstance<RustDeclStmt>()
-                    .map { it.letDecl?.pat }
-                    .filterNotNull()
-                    .forEach { pat ->
-                        if (pat is RustPatIdent && match(pat)) {
-                            return found(pat)
-                        }
-                    }
+            visitDeclarationSet(block)
         }
 
         override fun visitFnItem(fn: RustFnItem) {
-            // Lookup only after parameter-names, since
-            // block-level scope should be visited already
-            fn.fnParams?.let {
-                params -> params.paramList
-                    .map        { p -> p.pat }
-                    .forEach    {
-                        pat -> run {
-                            // NB: It's purposefully incomplete
-                            if (pat is RustPatIdent)
-                            {
-                                if (match(pat)) return found(pat)
-                            }
+            visitDeclarationSet(fn)
+        }
+
+        private fun visitDeclarationSet(elem: RustDeclarationSet) {
+            elem.listDeclarations()
+                    .forEach { ident ->
+                        if (match(ident)) {
+                            return found(ident)
                         }
                     }
-                }
         }
 
         private fun found(elem: RustNamedElement) {
