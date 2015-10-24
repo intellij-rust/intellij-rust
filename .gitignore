@@ -6,3 +6,4 @@ out
 classes
 lib
 gen
+rustc_lexer/target
