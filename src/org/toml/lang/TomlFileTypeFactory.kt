@@ -10,7 +10,7 @@ import com.intellij.openapi.fileTypes.FileTypeFactory
 public class TomlFileTypeFactory : FileTypeFactory() {
 
     override fun createFileTypes(consumer: FileTypeConsumer) {
-        consumer.consume(TomlFileType.INSTANCE, TomlFileType.DEFAULTS.EXTENSION);
+        consumer.consume(TomlFileType.INSTANCE, TomlFileType.INSTANCE.defaultExtension);
     }
 
 }
