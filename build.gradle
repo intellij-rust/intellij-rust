@@ -166,7 +166,7 @@ task generateRustPsiAndParser(type: JavaExec) {
     args = [ dstRoot, src ]
 
     inputs  .file   file(src)
-    outputs .dir    fileTree(dstRoot + "/org/rust/lang/core/**/*.java")
+    outputs .dir    fileTree(dir: dstRoot + '/org/rust/lang/core/', include: '**/*.java')
 
     classpath configurations.gen
 }
@@ -197,6 +197,11 @@ task generate {
     dependsOn generateLexers, generateParsers
 }
 
+compileJava     .dependsOn generate
+compileKotlin   .dependsOn generate
+
+compileTestJava     .dependsOn generate
+compileTestKotlin   .dependsOn generate
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Misc
