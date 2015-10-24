@@ -1,10 +1,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustFnItem
-import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustPatIdent
-import org.rust.lang.core.psi.RustVisitor
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.match
 import org.rust.lang.core.resolve.ref.RustQualifiedReference
 import org.rust.lang.core.resolve.scope.RustResolveScope
@@ -58,6 +55,18 @@ public class RustResolveEngine(ref: RustQualifiedReference) {
 
                 return s
             }
+        }
+
+        override fun visitBlock(block: RustBlock) {
+            block.children
+                    .filterIsInstance<RustDeclStmt>()
+                    .map { it.letDecl?.pat }
+                    .filterNotNull()
+                    .forEach { pat ->
+                        if (pat is RustPatIdent && match(pat)) {
+                            return found(pat)
+                        }
+                    }
         }
 
         override fun visitFnItem(fn: RustFnItem) {
