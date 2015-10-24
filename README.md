@@ -2,6 +2,8 @@
 
 [![Join the chat at https://gitter.im/alexeykudinkin/intellij-rust](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/alexeykudinkin/intellij-rust?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+[![Build Status](https://travis-ci.org/alexeykudinkin/intellij-rust.svg?branch=travis)](https://travis-ci.org/alexeykudinkin/intellij-rust)
+
 **BEWARE**
 
 This is experimental implementation targeting bleeding-edge version of Rust language and (as may be assumed reasonably enough) 
