@@ -71,7 +71,7 @@ public class RustResolveEngine(ref: RustQualifiedReference) {
                             // NB: It's purposefully incomplete
                             if (pat is RustPatIdent)
                             {
-                                if (match(pat)) found(pat)
+                                if (match(pat)) return found(pat)
                             }
                         }
                     }
