@@ -5,16 +5,14 @@ import com.intellij.ide.util.FileStructurePopup
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.hamcrest.CoreMatchers
 import org.junit.Assert
 import javax.swing.tree.TreePath
 
-class RustStructureViewTest : LightCodeInsightFixtureTestCase() {
+class RustStructureViewTest : RustTestCase() {
     override fun getTestDataPath() = "testData/structure"
 
     private fun structureContainsElements(vararg expected: String) {
-        val fileName = getTestName(true) + ".rs"
         myFixture.configureByFile(fileName)
         val editor = TextEditorProvider.getInstance()!!.getTextEditor(myFixture.editor)
         val popup = ViewStructureAction.createPopup(myFixture.project, editor)
