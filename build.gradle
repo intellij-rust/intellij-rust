@@ -57,7 +57,7 @@ allprojects {
 
         pluginName 'Rust'
 
-        downloadSources Boolean.valueOf('downloadSources')
+        downloadSources downloadSources
 
         // publish { /* ... */ }
     }
