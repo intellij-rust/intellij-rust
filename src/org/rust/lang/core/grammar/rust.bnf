@@ -267,9 +267,9 @@ pat ::= pat_wild
       | pat_tup
       | pat_vec
       | pat_macro
-      | pat_ident
       | pat_struct
       | pat_enum
+      | pat_ident
       | pat_range
       | pat_uniq
       | pat_qual_path
@@ -278,8 +278,16 @@ pat ::= pat_wild
 pat_qual_path   ::= << qualified_path path_without_types >>
 pat_uniq        ::= BOX pat
 
+// XXX(matklad): it is impossible to distinguish between nullary enum variants
+// and identifiers during parsing.
+//
+//   match x {
+//       None => { } // match enum variant
+//       Name => { } // bind Name to x
+//   }
 pat_ident       ::= binding_mode IDENTIFIER [AT pat]
                   |              IDENTIFIER AT pat
+                  |              IDENTIFIER !DOTDOTDOT !COLONCOLON
 
 pat_struct      ::= path_expr LBRACE pat_struct_fields RBRACE
 pat_enum        ::= path_expr LPAREN (DOTDOT | pat_tup_elts) RPAREN
