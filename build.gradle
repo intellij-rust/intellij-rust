@@ -1,42 +1,210 @@
-apply plugin: 'java'
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Buildscript
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+buildscript {
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+    }
+}
+
+plugins {
+    id 'org.jetbrains.intellij' version "0.0.25"
+}
 
 repositories {
     mavenCentral()
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Configurations
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 configurations {
-    jflex
+    gen
 }
 
-sourceCompatibility = 1.5
 
-version = 0.1
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Projects
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
+allprojects {
+    dependencies {
+        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
-dependencies {
-    compile group: 'junit', name: 'junit', version: '4.+'
-    jflex 'de.jflex:jflex:1.6.0'
+        //jflex   'de.jflex:jflex:1.6.0'
+        gen files('lib/jflex.jar')
+        gen files('lib/gk/grammar-kit-patched.jar')
+    }
+
+    apply plugin: 'java'
+    apply plugin: 'kotlin'
+
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+
+    tasks.withType(JavaCompile)     { options.encoding = 'UTF-8' }
+//    tasks.withType(KotlinCompile)   { options.encoding = 'UTF-8' }
+
+    apply plugin: 'org.jetbrains.intellij'
+
+    intellij {
+        version ideaVersion
+
+        pluginName 'Rust'
+
+        downloadSources Boolean.valueOf('downloadSources')
+
+        // publish { /* ... */ }
+    }
+
+    sourceSets {
+        main {
+            java {
+                srcDirs = [ 'src', 'gen' ]
+                include '**/*.java'
+            }
+
+            kotlin {
+                srcDirs = [ 'src' ]
+                include '**/*.kt'
+            }
+
+            resources.srcDirs = [ 'resources' ]
+        }
+
+        test {
+            java {
+                srcDirs = [ 'test' ]
+                include '**/*.java'
+            }
+
+            kotlin {
+                srcDirs = [ 'test' ]
+                include '**/*.kt'
+            }
+
+            resources.srcDirs = [ 'testData' ]
+        }
+    }
 }
+
+apply plugin: 'idea'
+
+idea {
+    project {
+        jdkName         = javaVersion
+        languageLevel   = javaVersion
+    }
+
+    module {
+        generatedSourceDirs += file('gen')
+    }
+}
+
+test {
+    dependencies {
+        compile "junit:junit:4.+"
+    }
+
+    useJUnit { }
+    testLogging {
+        exceptionFormat = 'full'
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Tasks
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 def jflexArgs(srcFlex, targetDir) {
-    return ["--skel", "src/org/rust/lang/core/lexer/RustLexer.skeleton",
-            "-d", targetDir,
-            srcFlex
+    return [    "--skel",   "src/org/rust/lang/core/lexer/RustLexer.skeleton",
+                "-d",       targetDir,
+                srcFlex
     ]
 }
 
-task rustLexer(type: JavaExec) {
+task generateRustLexer(type: JavaExec) {
+    ext.src = "src/org/rust/lang/core/lexer/RustLexer.flex"
+    ext.dst = "gen/org/rust/lang/core/lexer/"
+
     main = "jflex.Main"
-    args = jflexArgs("src/org/rust/lang/core/lexer/RustLexer.flex", "gen/org/rust/lang/core/lexer/")
-    classpath configurations.jflex
+
+    args = jflexArgs(src, dst)
+
+    inputs  .file   file(src)
+    outputs .dir    file(dst + "_RustLexer.java")
+
+    classpath configurations.gen
 }
 
-task tomlLexer(type: JavaExec) {
+task generateTomlLexer(type: JavaExec) {
+    ext.src = "src/org/toml/lang/core/lexer/TomlLexer.flex"
+    ext.dst = "gen/org/toml/lang/core/lexer/"
+
     main = "jflex.Main"
-    args = jflexArgs("src/org/toml/lang/core/lexer/TomlLexer.flex", "gen/org/toml/lang/core/lexer/")
-    classpath configurations.jflex
+
+    args = jflexArgs(src, dst)
+
+    inputs  .file   file(src)
+    outputs .dir    file(dst + "_TomlLexer.java")
+
+    classpath configurations.gen
 }
 
-task lexers() {
-    dependsOn rustLexer, tomlLexer
+task generateRustPsiAndParser(type: JavaExec) {
+    ext.src     = "src/org/rust/lang/core/grammar/rust.bnf"
+    ext.dstRoot = "gen"
+
+    main = "org.intellij.grammar.Main"
+
+    args = [ dstRoot, src ]
+
+    inputs  .file   file(src)
+    outputs .dir    fileTree(dir: dstRoot + '/org/rust/lang/core/', include: '**/*.java')
+
+    classpath configurations.gen
 }
+
+task generateTomlPsiAndParser(type: JavaExec) {
+    ext.src     = "src/org/toml/lang/core/grammar/toml.bnf"
+    ext.dstRoot = "gen"
+
+    main = "org.intellij.grammar.Main"
+
+    args = [ dstRoot, src ]
+
+    inputs  .file   file(src)
+    outputs .dir    fileTree(dir: dstRoot + '/org/toml/lang/core/', include: '**/*.java')
+
+    classpath configurations.gen
+}
+
+task generateLexers {
+    dependsOn generateRustLexer, generateTomlLexer
+}
+
+task generateParsers {
+    dependsOn generateRustPsiAndParser, generateTomlPsiAndParser
+}
+
+task generate {
+    dependsOn generateLexers, generateParsers
+}
+
+compileJava     .dependsOn generate
+compileKotlin   .dependsOn generate
+
+compileTestJava     .dependsOn generate
+compileTestKotlin   .dependsOn generate
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Misc
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+version = "${version}.$buildNumber"
