@@ -3,8 +3,6 @@ package org.rust.lang.core.psi.util
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 
-public object RustPsiUtil {}
-
 //
 // Extension points
 //

@@ -1,7 +1,5 @@
 package org.rust.lang.core.lexer
 
-public object RustLexerUtil {}
-
 //
 // String extensions
 //
