@@ -65,30 +65,30 @@ allprojects {
     sourceSets {
         main {
             java {
-                srcDirs 'src', 'gen'
+                srcDirs = [ 'src', 'gen' ]
                 include '**/*.java'
             }
 
             kotlin {
-                srcDirs 'src'
+                srcDirs = [ 'src' ]
                 include '**/*.kt'
             }
 
-            resources.srcDirs 'resources'
+            resources.srcDirs = [ 'resources' ]
         }
 
         test {
             java {
-                srcDirs 'test'
+                srcDirs = [ 'test' ]
                 include '**/*.java'
             }
 
             kotlin {
-                srcDirs 'test'
+                srcDirs = [ 'test' ]
                 include '**/*.kt'
             }
 
-            resources.srcDirs 'testData'
+            resources.srcDirs = [ 'testData' ]
         }
     }
 }
