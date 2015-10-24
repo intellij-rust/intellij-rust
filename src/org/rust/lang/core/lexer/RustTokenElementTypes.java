@@ -16,9 +16,9 @@ public interface RustTokenElementTypes {
     IElementType CONTINUE   = new RustKeywordTokenType("continue");
     IElementType CRATE      = new RustKeywordTokenType("crate");
     IElementType CSELF      = new RustKeywordTokenType("Self");
+    IElementType DO         = new RustKeywordTokenType("do");
     IElementType ELSE       = new RustKeywordTokenType("else");
     IElementType ENUM       = new RustKeywordTokenType("enum");
-    IElementType DO         = new RustKeywordTokenType("do");
     IElementType EXTERN     = new RustKeywordTokenType("extern");
     IElementType FALSE      = new RustKeywordTokenType("false");
     IElementType FINAL      = new RustKeywordTokenType("final");
@@ -34,7 +34,6 @@ public interface RustTokenElementTypes {
     IElementType MOD        = new RustKeywordTokenType("mod");
     IElementType MOVE       = new RustKeywordTokenType("move");
     IElementType MUT        = new RustKeywordTokenType("mut");
-    IElementType NUMBER     = new RustKeywordTokenType("number");
     IElementType OFFSETOF   = new RustKeywordTokenType("offsetof");
     IElementType OVERRIDE   = new RustKeywordTokenType("override");
     IElementType PRIV       = new RustKeywordTokenType("priv");
@@ -105,7 +104,6 @@ public interface RustTokenElementTypes {
     IElementType DOT = new RustTokenType(".");
     IElementType DOTDOT = new RustTokenType("..");
     IElementType DOTDOTDOT = new RustTokenType("...");
-    IElementType ELLIPSIS = new RustTokenType("...");
     IElementType EQ = new RustTokenType("=");
     IElementType EQEQ = new RustTokenType("==");
     IElementType EXCL = new RustTokenType("!");
