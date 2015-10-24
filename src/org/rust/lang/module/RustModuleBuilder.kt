@@ -28,7 +28,7 @@ public class RustModuleBuilder() : ModuleBuilder() {
     override fun getPresentableName(): String? = "Rust"
 
     override fun createWizardSteps(wizardContext: WizardContext, modulesProvider: ModulesProvider): Array<ModuleWizardStep> =
-        getModuleType().createWizardSteps(wizardContext, this, modulesProvider)
+        moduleType.createWizardSteps(wizardContext, this, modulesProvider)
 
     override fun getModuleType(): RustModuleType {
         return RustModuleType.INSTANCE
@@ -36,7 +36,7 @@ public class RustModuleBuilder() : ModuleBuilder() {
 
     override fun setupRootModel(rootModel: ModifiableRootModel?) {
         if (myJdk != null) {
-            rootModel!!.setSdk(myJdk)
+            rootModel!!.sdk = myJdk
         } else {
             rootModel!!.inheritSdk()
         }

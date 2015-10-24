@@ -1,10 +1,7 @@
 package org.rust.lang.core.resolve.scope
 
-import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustCompositeElement
-import org.rust.lang.core.psi.RustPathExpr
 import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.util.match
 import org.rust.lang.core.resolve.RustResolveEngine
 
 public interface RustResolveScope : RustCompositeElement {
@@ -34,7 +31,7 @@ public interface RustResolveScope : RustCompositeElement {
 // Extension points
 //
 
-fun RustResolveScope.resolveWith(v: RustResolveEngine.ResolveScopeVisitor): RustNamedElement? {
+internal fun RustResolveScope.resolveWith(v: RustResolveEngine.ResolveScopeVisitor): RustNamedElement? {
     this.accept(v)
     return v.matched
 }

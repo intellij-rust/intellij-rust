@@ -24,7 +24,7 @@ internal class Cookie<T, V>(val t: T, val set: T.(V) -> V, new: V) : Disposable 
  * @d       Target `Disposable` to be disposed upon completion of the @block
  * @block   Target block to be run prior to disposal of @d
  */
-public fun using<T>(d: Disposable, block: () -> T): T {
+public fun <T> using(d: Disposable, block: () -> T): T {
     try {
         return block()
     } finally {

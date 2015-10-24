@@ -14,7 +14,7 @@ public abstract class RustPatIdentImplMixin(node: ASTNode) : RustPatImpl(node)
         throw UnsupportedOperationException()
     }
 
-    override fun getName(): String? = getIdentifier().getText()
+    override fun getName(): String? = identifier.text
 
-    override fun getNavigationElement(): PsiElement? = getIdentifier()
+    override fun getNavigationElement(): PsiElement? = identifier
 }

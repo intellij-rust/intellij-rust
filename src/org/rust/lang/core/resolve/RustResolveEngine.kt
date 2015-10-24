@@ -1,12 +1,10 @@
 package org.rust.lang.core.resolve
 
-import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
-import com.intellij.psi.ResolveResult
-import com.intellij.psi.ResolveState
-import com.intellij.psi.scope.BaseScopeProcessor
-import com.intellij.psi.scope.PsiScopeProcessor
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RustFnItem
+import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustPatIdent
+import org.rust.lang.core.psi.RustVisitor
 import org.rust.lang.core.psi.util.match
 import org.rust.lang.core.resolve.ref.RustQualifiedReference
 import org.rust.lang.core.resolve.scope.RustResolveScope
@@ -55,7 +53,7 @@ public class RustResolveEngine(ref: RustQualifiedReference) {
                 var q : RustQualifiedReference? = ref
                 while (q != null) {
                     s.add(q)
-                    q = q.getQualifier()
+                    q = q.qualifier
                 }
 
                 return s
@@ -65,9 +63,9 @@ public class RustResolveEngine(ref: RustQualifiedReference) {
         override fun visitFnItem(fn: RustFnItem) {
             // Lookup only after parameter-names, since
             // block-level scope should be visited already
-            fn.getFnParams()?.let {
-                params -> params.getParamList()
-                    .map        { p -> p.getPat() }
+            fn.fnParams?.let {
+                params -> params.paramList
+                    .map        { p -> p.pat }
                     .forEach    {
                         pat -> run {
                             // NB: It's purposefully incomplete
@@ -83,7 +81,7 @@ public class RustResolveEngine(ref: RustQualifiedReference) {
         private fun found(elem: RustNamedElement) {
             qualifiersStack.pop();
 
-            if (qualifiersStack.size() == 0)
+            if (qualifiersStack.size == 0)
                 matched = elem
             else when (elem) {
                 is RustResolveScope -> { elem.resolveWith(this) }
@@ -92,7 +90,7 @@ public class RustResolveEngine(ref: RustQualifiedReference) {
         }
 
         private fun match(e: RustNamedElement): Boolean =
-            e.getName().let { n -> qualifiersStack.peek().getReferenceNameElement().match(n) }
+            e.name.let { n -> qualifiersStack.peek().getReferenceNameElement().match(n) }
     }
 
 }

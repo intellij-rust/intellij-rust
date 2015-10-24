@@ -12,10 +12,10 @@ public object RustPsiUtil {}
 fun PsiElement?.match(s: String?): Boolean {
     return this != null
         && s    != null
-        && getText().equals(s);
+        && text.equals(s);
 }
 
 val PsiElement.parentRelativeRange: TextRange?
-    get() = this.getParent()?.let {
-        TextRange(getStartOffsetInParent(), getStartOffsetInParent() + getTextLength())
+    get() = this.parent?.let {
+        TextRange(startOffsetInParent, startOffsetInParent + textLength)
     }

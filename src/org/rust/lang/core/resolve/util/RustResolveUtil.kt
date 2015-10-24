@@ -6,11 +6,11 @@ import org.rust.lang.core.resolve.scope.RustResolveScope
 public object RustResolveUtil {
 
     fun getResolveScope(elem: PsiElement, mayReturnItself: Boolean = false): RustResolveScope? {
-        var current = if (mayReturnItself) elem else elem.getParent()
+        var current = if (mayReturnItself) elem else elem.parent
         while (current != null) {
             when (current) {
                 is RustResolveScope -> return current
-                else -> current = current.getParent()
+                else -> current = current.parent
             }
         }
 

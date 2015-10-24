@@ -3,8 +3,8 @@ package org.toml.lang.core.psi
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.FileViewProvider
-import org.toml.lang.TomlLanguage
 import org.toml.lang.TomlFileType
+import org.toml.lang.TomlLanguage
 
 /**
  * @author Aleksey.Kladov
