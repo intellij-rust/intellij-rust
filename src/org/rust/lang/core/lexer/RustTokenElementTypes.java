@@ -108,12 +108,10 @@ public interface RustTokenElementTypes {
     IElementType EQEQ = new RustTokenType("==");
     IElementType EXCL = new RustTokenType("!");
     IElementType EXCLEQ = new RustTokenType("!=");
-    IElementType GE = new RustTokenType(">");
     IElementType GT = new RustTokenType(">");
     IElementType LBRACE = new RustTokenType("{");
     IElementType LBRACK = new RustTokenType("[");
     IElementType LPAREN = new RustTokenType("(");
-    IElementType LE = new RustTokenType("<=");
     IElementType LT = new RustTokenType("<");
     IElementType MINUS = new RustTokenType("-");
     IElementType MINUSEQ = new RustTokenType("-=");
@@ -136,8 +134,4 @@ public interface RustTokenElementTypes {
     IElementType AT = new RustTokenType("@");
     IElementType UNDERSCORE = new RustTokenType("_");
     IElementType DOLLAR = new RustTokenType("$");
-    IElementType SHLEQ = new RustTokenType("<<=");
-    IElementType SHL = new RustTokenType("<<");
-    IElementType SHREQ = new RustTokenType(">>=");
-    IElementType SHR = new RustTokenType(">>");
 }

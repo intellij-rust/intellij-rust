@@ -146,16 +146,13 @@ SHEBANG_LINE=\#\![^\[].*
   "-="                            { return RustTokenElementTypes.MINUSEQ; }
   "-"                             { return RustTokenElementTypes.MINUS; }
   "#"                             { return RustTokenElementTypes.SHA; }
-  //"#!"                            { return RustTokenElementTypes.SHEBANG; }
+  "#!"                            { return RustTokenElementTypes.SHEBANG; }
   "||"                            { return RustTokenElementTypes.OROR; }
   "|="                            { return RustTokenElementTypes.OREQ; }
   "&&"                            { return RustTokenElementTypes.ANDAND; }
   "&="                            { return RustTokenElementTypes.ANDEQ; }
   "&"                             { return RustTokenElementTypes.AND; }
   "|"                             { return RustTokenElementTypes.OR; }
-  "<="                            { return RustTokenElementTypes.LE; }
-  "<<="                           { return RustTokenElementTypes.SHLEQ; }
-  "<<"                            { return RustTokenElementTypes.SHL; }
   "<"                             { return RustTokenElementTypes.LT; }
   "^="                            { return RustTokenElementTypes.XOREQ; }
   "^"                             { return RustTokenElementTypes.XOR; }
@@ -165,9 +162,6 @@ SHEBANG_LINE=\#\![^\[].*
   "/"                             { return RustTokenElementTypes.DIV; }
   "%="                            { return RustTokenElementTypes.REMEQ; }
   "%"                             { return RustTokenElementTypes.REM; }
-  ">="                            { return RustTokenElementTypes.GE; }
-  ">>="                           { return RustTokenElementTypes.SHREQ; }
-  ">>"                            { return RustTokenElementTypes.SHR; }
   ">"                             { return RustTokenElementTypes.GT; }
   "->"                            { return RustTokenElementTypes.ARROW; }
   "=>"                            { return RustTokenElementTypes.FAT_ARROW; }

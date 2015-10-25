@@ -42,6 +42,7 @@ fun processFile(file: String) {
         prevToBytes = toBytes
         prevTo = to
         val tok = obj.get("tok")
+        // TODO transform <<, >>, <=, >=, <<=, >>= into multiple tokens, group #! into a single one
         val token: IElementType = if (tok.isJsonPrimitive) {
             when (tok.asString) {
                 "AndAnd" -> RustTokenElementTypes.ANDAND
@@ -65,9 +66,7 @@ fun processFile(file: String) {
                 "Eq" -> RustTokenElementTypes.EQ
                 "EqEq" -> RustTokenElementTypes.EQEQ
                 "FatArrow" -> RustTokenElementTypes.FAT_ARROW
-                "Ge" -> RustTokenElementTypes.GE
                 "Gt" ->RustTokenElementTypes.GT
-                "Le" -> RustTokenElementTypes.LE
                 "Lt" -> RustTokenElementTypes.LT
                 "ModSep" -> RustTokenElementTypes.COLONCOLON
                 "Ne" -> RustTokenElementTypes.EXCLEQ
@@ -148,8 +147,6 @@ fun processFile(file: String) {
                     "Or" -> RustTokenElementTypes.OR
                     "Percent" -> RustTokenElementTypes.REM
                     "Plus" -> RustTokenElementTypes.PLUS
-                    "Shl" -> RustTokenElementTypes.SHL
-                    "Shr" -> RustTokenElementTypes.SHR
                     "Slash" -> RustTokenElementTypes.DIV
                     "Star" -> RustTokenElementTypes.MUL
                     else -> {
@@ -164,8 +161,6 @@ fun processFile(file: String) {
                     "Or" -> RustTokenElementTypes.OREQ
                     "Percent" -> RustTokenElementTypes.REMEQ
                     "Plus" -> RustTokenElementTypes.PLUSEQ
-                    "Shl" -> RustTokenElementTypes.SHLEQ
-                    "Shr" -> RustTokenElementTypes.SHREQ
                     "Slash" -> RustTokenElementTypes.DIVEQ
                     "Star" -> RustTokenElementTypes.MULEQ
                     else -> {

@@ -22,6 +22,7 @@
       key='regexp:[0-9_\-a-zA-Z]+'
       space='regexp:\s+'
       date='date'
+      dot='.'
       comma=','
       eq='='
       lbracket='['
