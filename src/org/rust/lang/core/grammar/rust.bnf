@@ -131,6 +131,11 @@
     implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
 
+    mixin       ("path_part") = "org.rust.lang.core.psi.impl.mixin.RustPathPartImplMixin"
+
+    implements  ("block") =  "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("block") =  "org.rust.lang.core.psi.impl.mixin.RustBlockImplMixin"
+
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
 
@@ -141,6 +146,7 @@
     extends(".*_stmt") = stmt
     extends("pat_.*")  = pat
     extends(".*_attr") = attr
+    extends("inner_attrs_and_block") = block
 
     generateTokens=false
     generateTokenAccessors=true

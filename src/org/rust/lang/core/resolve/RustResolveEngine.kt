@@ -1,10 +1,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustFnItem
-import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustPatIdent
-import org.rust.lang.core.psi.RustVisitor
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.match
 import org.rust.lang.core.resolve.ref.RustQualifiedReference
 import org.rust.lang.core.resolve.scope.RustResolveScope
@@ -40,17 +37,17 @@ public class RustResolveEngine(ref: RustQualifiedReference) {
         return ResolveResult.UNRESOLVED;
     }
 
-    internal class ResolveScopeVisitor(ref: RustQualifiedReference) : RustVisitor() {
+    internal class ResolveScopeVisitor(val ref: RustQualifiedReference) : RustVisitor() {
 
         val qualifiersStack = stackUp(ref)
 
-        var matched : RustNamedElement? = null
+        var matched: RustNamedElement? = null
 
         companion object {
             fun stackUp(ref: RustQualifiedReference): Stack<RustQualifiedReference> {
                 val s = Stack<RustQualifiedReference>()
 
-                var q : RustQualifiedReference? = ref
+                var q: RustQualifiedReference? = ref
                 while (q != null) {
                     s.add(q)
                     q = q.qualifier
@@ -60,22 +57,21 @@ public class RustResolveEngine(ref: RustQualifiedReference) {
             }
         }
 
+        override fun visitBlock(block: RustBlock) {
+            visitDeclarationSet(block)
+        }
+
         override fun visitFnItem(fn: RustFnItem) {
-            // Lookup only after parameter-names, since
-            // block-level scope should be visited already
-            fn.fnParams?.let {
-                params -> params.paramList
-                    .map        { p -> p.pat }
-                    .forEach    {
-                        pat -> run {
-                            // NB: It's purposefully incomplete
-                            if (pat is RustPatIdent)
-                            {
-                                if (match(pat)) found(pat)
-                            }
+            visitDeclarationSet(fn)
+        }
+
+        private fun visitDeclarationSet(elem: RustResolveScope) {
+            elem.listDeclarations(ref)
+                    .forEach { ident ->
+                        if (match(ident)) {
+                            return found(ident)
                         }
                     }
-                }
         }
 
         private fun found(elem: RustNamedElement) {

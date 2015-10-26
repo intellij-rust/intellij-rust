@@ -56,4 +56,3 @@ public abstract class RustAbstractQualifiedReference(node: ASTNode) : ASTWrapper
         throw UnsupportedOperationException()
     }
 }
-
