@@ -3,10 +3,11 @@ package org.rust.lang.structure
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.navigation.ItemPresentation
+import com.intellij.psi.NavigatablePsiElement
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
 import javax.swing.Icon
 
-class RustStructureViewElement(val element: RustNamedElementImpl) : StructureViewTreeElement {
+class RustStructureViewElement(val element: NavigatablePsiElement) : StructureViewTreeElement {
     override fun getPresentation(): ItemPresentation {
         return object : ItemPresentation {
             override fun getLocationString(): String? = null

@@ -128,7 +128,8 @@
     implements  ("pat_var") = "org.rust.lang.core.psi.RustNamedElement"
     mixin       ("pat_var") = "org.rust.lang.core.psi.impl.mixin.RustPatVarImplMixin"
 
-    implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    implements  ("fn_item") = ["com.intellij.psi.NavigatablePsiElement"
+                               "org.rust.lang.core.resolve.scope.RustResolveScope"]
     mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
 
     implements  ("method") = "org.rust.lang.core.resolve.scope.RustResolveScope"
@@ -151,6 +152,7 @@
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
 
+    implements("impl_method") = "com.intellij.psi.NavigatablePsiElement"
     extends("impl_method") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
     extends(".*_item")     = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
 
