@@ -128,14 +128,12 @@
     mixin       ("pat_ident") = "org.rust.lang.core.psi.impl.mixin.RustPatIdentImplMixin"
     implements  ("pat_ident") = "org.rust.lang.core.psi.RustNamedElement"
 
-    implements  ("fn_item") = ["org.rust.lang.core.resolve.scope.RustResolveScope"
-                               "org.rust.lang.core.psi.RustDeclarationSet"]
+    implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
 
     mixin       ("path_part") = "org.rust.lang.core.psi.impl.mixin.RustPathPartImplMixin"
 
-    implements  ("block") =  ["org.rust.lang.core.resolve.scope.RustResolveScope"
-                              "org.rust.lang.core.psi.RustDeclarationSet"]
+    implements  ("block") =  "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("block") =  "org.rust.lang.core.psi.impl.mixin.RustBlockImplMixin"
 
     elementType(".*_bin_expr")   = binary_expr

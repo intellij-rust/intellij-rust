@@ -65,7 +65,7 @@ public class RustResolveEngine(ref: RustQualifiedReference) {
             visitDeclarationSet(fn)
         }
 
-        private fun visitDeclarationSet(elem: RustDeclarationSet) {
+        private fun visitDeclarationSet(elem: RustResolveScope) {
             elem.listDeclarations()
                     .forEach { ident ->
                         if (match(ident)) {
