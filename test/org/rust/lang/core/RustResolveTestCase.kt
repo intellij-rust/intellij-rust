@@ -12,21 +12,28 @@ class RustResolveTestCase : RustTestCase() {
     //@formatter:off
     fun testArgument()             { doTestBound()   }
     fun testLocals()               { doTestBound()   }
+    fun testShadowing()            { doTestBound(35) }
     fun testUnbound()              { doTestUnbound() }
+    fun testOrdering()             { doTestUnbound() }
     //@formatter:on
 
-    private fun assertIsValidDeclaration(declaration: PsiElement, usage: PsiReference) {
+    private fun assertIsValidDeclaration(declaration: PsiElement, usage: PsiReference,
+                                         expectedOffset: Int?) {
+
         assertInstanceOf(declaration, RustPatIdent::class.java)
-        assertEquals(declaration.text, usage.canonicalText)
+        assertEquals(usage.canonicalText, declaration.text)
+        if (expectedOffset != null) {
+            assertEquals(expectedOffset, declaration.textRange.startOffset)
+        }
     }
 
-    private fun doTestBound() {
+    private fun doTestBound(expectedOffset: Int? = null) {
         myFixture.configureByFile(fileName)
 
         val usage = referenceAtCaret()
         val declaration = usage.resolve()!!
 
-        assertIsValidDeclaration(declaration, usage)
+        assertIsValidDeclaration(declaration, usage, expectedOffset)
     }
 
     private fun doTestUnbound() {

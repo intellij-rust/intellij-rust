@@ -37,7 +37,7 @@ public class RustResolveEngine(ref: RustQualifiedReference) {
         return ResolveResult.UNRESOLVED;
     }
 
-    internal class ResolveScopeVisitor(ref: RustQualifiedReference) : RustVisitor() {
+    internal class ResolveScopeVisitor(val ref: RustQualifiedReference) : RustVisitor() {
 
         val qualifiersStack = stackUp(ref)
 
@@ -66,7 +66,7 @@ public class RustResolveEngine(ref: RustQualifiedReference) {
         }
 
         private fun visitDeclarationSet(elem: RustResolveScope) {
-            elem.listDeclarations()
+            elem.listDeclarations(ref)
                     .forEach { ident ->
                         if (match(ident)) {
                             return found(ident)
