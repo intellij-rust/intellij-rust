@@ -6,16 +6,18 @@ import org.rust.lang.core.psi.RustBlock
 import org.rust.lang.core.psi.RustDeclStmt
 import org.rust.lang.core.psi.RustPatIdent
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
+import org.rust.lang.core.psi.util.boundIdentifiers
 import org.rust.lang.core.resolve.scope.RustResolveScope
 
 abstract class RustBlockImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
         , RustBlock
-        , RustResolveScope{
+        , RustResolveScope {
 
     override fun listDeclarations(before: PsiElement): List<RustPatIdent> = children
             .filterIsInstance<RustDeclStmt>()
-            .map { it.letDecl?.pat as? RustPatIdent }
+            .map { it.letDecl }
             .filterNotNull()
+            .flatMap { it.pat.boundIdentifiers }
             .filter {it.textRange.endOffset < before.textRange.startOffset}
             .reversed()
 }

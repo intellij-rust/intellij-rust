@@ -13,6 +13,7 @@ class RustResolveTestCase : RustTestCase() {
     fun testArgument()             { checkIsBound()   }
     fun testLocals()               { checkIsBound()   }
     fun testShadowing()            { checkIsBound(atOffset = 35) }
+    fun testNested()               { checkIsBound()   }
     fun testUnbound()              { checkIsUnbound() }
     fun testOrdering()             { checkIsUnbound() }
     //@formatter:on
