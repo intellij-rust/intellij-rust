@@ -10,11 +10,11 @@ class RustResolveTestCase : RustTestCase() {
     private fun referenceAtCaret() = file.findReferenceAt(myFixture.caretOffset)!!
 
     //@formatter:off
-    fun testArgument()             { doTestBound()   }
-    fun testLocals()               { doTestBound()   }
-    fun testShadowing()            { doTestBound(35) }
-    fun testUnbound()              { doTestUnbound() }
-    fun testOrdering()             { doTestUnbound() }
+    fun testArgument()             { checkIsBound()   }
+    fun testLocals()               { checkIsBound()   }
+    fun testShadowing()            { checkIsBound(atOffset = 35) }
+    fun testUnbound()              { checkIsUnbound() }
+    fun testOrdering()             { checkIsUnbound() }
     //@formatter:on
 
     private fun assertIsValidDeclaration(declaration: PsiElement, usage: PsiReference,
@@ -27,16 +27,16 @@ class RustResolveTestCase : RustTestCase() {
         }
     }
 
-    private fun doTestBound(expectedOffset: Int? = null) {
+    private fun checkIsBound(atOffset: Int? = null) {
         myFixture.configureByFile(fileName)
 
         val usage = referenceAtCaret()
         val declaration = usage.resolve()!!
 
-        assertIsValidDeclaration(declaration, usage, expectedOffset)
+        assertIsValidDeclaration(declaration, usage, atOffset)
     }
 
-    private fun doTestUnbound() {
+    private fun checkIsUnbound() {
         myFixture.configureByFile(fileName)
 
         val usage = referenceAtCaret()
