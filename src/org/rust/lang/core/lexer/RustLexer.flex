@@ -30,20 +30,20 @@ import com.intellij.psi.tree.IElementType;
 
 %{
   IElementType imbueBlockComment() {
-    yybegin(YYINITIAL);
+      yybegin(YYINITIAL);
 
-    zzStartRead           = zzPostponedMarkedPos;
-    zzPostponedMarkedPos  = -1;
+      zzStartRead           = zzPostponedMarkedPos;
+      zzPostponedMarkedPos  = -1;
 
-    if (yylength() > 2)
-    {
-      if (yycharat(2) == '!')
-        return RustTokenElementTypes.INNER_DOC_COMMENT;
-      else if (yycharat(2) == '*')
-        return RustTokenElementTypes.OUTER_DOC_COMMENT;
-    }
+      if (yylength() >= 3) {
+          if (yycharat(2) == '!') {
+              return RustTokenElementTypes.INNER_DOC_COMMENT;
+          } else if (yycharat(2) == '*' && (yylength() == 3 || yycharat(3) != '*' && yycharat(3) != '/')) {
+              return RustTokenElementTypes.OUTER_DOC_COMMENT;
+          }
+      }
 
-    return RustTokenElementTypes.BLOCK_COMMENT;
+      return RustTokenElementTypes.BLOCK_COMMENT;
   }
 %}
 
@@ -100,13 +100,13 @@ BIN_LITERAL = 0b({BIN_DIGIT}|_)*
 INT_SUFFIX = u8|u16|u32|u64|usize|i8|i16|i32|i64|isize
 
 DEC_DIGIT = [0-9]
-HEX_DIGIT = [A-F0-9]
+HEX_DIGIT = [a-fA-F0-9]
 OCT_DIGIT = [0-7]
 BIN_DIGIT = [0-1]
 
 BYTE_LITERAL = b\x27 ([^'] | {ESCAPE_SEQUENCE}) \x27
 
-STRING_LITERAL = r? \x22 ([^\"\\] | {ESCAPE_SEQUENCE})* (\x22|\\)?
+STRING_LITERAL = \x22 ([^\"\\] | {ESCAPE_SEQUENCE})* (\x22|\\)?
 
 ESCAPE_SEQUENCE = \\[^\r\n\t\\] | \\\R | {BYTE_ESCAPE} | {UNICODE_ESCAPE}
 BYTE_ESCAPE = \\n|\\r|\\t|\\\\|\\x{HEX_DIGIT}{2}
@@ -141,10 +141,8 @@ SHEBANG_LINE=\#\![^\[].*
   "!="                            { return RustTokenElementTypes.EXCLEQ; }
   "=="                            { return RustTokenElementTypes.EQEQ; }
   "!"                             { return RustTokenElementTypes.EXCL; }
-  "++"                            { return RustTokenElementTypes.PLUSPLUS; }
   "+="                            { return RustTokenElementTypes.PLUSEQ; }
   "+"                             { return RustTokenElementTypes.PLUS; }
-  "--"                            { return RustTokenElementTypes.MINUSMINUS; }
   "-="                            { return RustTokenElementTypes.MINUSEQ; }
   "-"                             { return RustTokenElementTypes.MINUS; }
   "#"                             { return RustTokenElementTypes.SHA; }
@@ -241,17 +239,15 @@ SHEBANG_LINE=\#\![^\[].*
   {BYTE_LITERAL}                  { return RustTokenElementTypes.BYTE_LITERAL; }
 
   "b"{STRING_LITERAL}             { yybegin(SUFFIX); return RustTokenElementTypes.BYTE_STRING_LITERAL; }
-  "br"{STRING_LITERAL}            { yybegin(SUFFIX); return RustTokenElementTypes.RAW_BYTE_STRING_LITERAL; }
 
-  "br" #+ \x22                    { yybegin(RAW_LITERAL);
+  "br" #* \x22                    { yybegin(RAW_LITERAL);
 
                                     zzPostponedMarkedPos = zzStartRead;
                                     zzShaStride          = yylength() - 3; }
 
   {STRING_LITERAL}                { yybegin(SUFFIX); return RustTokenElementTypes.STRING_LITERAL; }
-  "r"{STRING_LITERAL}             { yybegin(SUFFIX); return RustTokenElementTypes.RAW_STRING_LITERAL; }
 
-  "r" #+ \x22                     { yybegin(RAW_LITERAL);
+  "r" #* \x22                     { yybegin(RAW_LITERAL);
 
                                     zzPostponedMarkedPos = zzStartRead;
                                     zzShaStride          = yylength() - 2; }
@@ -275,7 +271,7 @@ SHEBANG_LINE=\#\![^\[].*
 
 <RAW_LITERAL> {
 
-  \x22 #+ {
+  \x22 #* {
     int shaExcess = yylength() - 1 - zzShaStride;
     if (shaExcess >= 0) {
       yybegin(SUFFIX);
@@ -294,8 +290,16 @@ SHEBANG_LINE=\#\![^\[].*
   }
 
   [^]       { }
-  <<EOF>>   { zzShaStride          = -1;
-              zzPostponedMarkedPos = -1; }
+  <<EOF>>   {
+    zzStartRead = zzPostponedMarkedPos;
+    zzShaStride          = -1;
+    zzPostponedMarkedPos = -1;
+    if (yycharat(0) == 'b') {
+        return RustTokenElementTypes.RAW_BYTE_STRING_LITERAL;
+    } else {
+        return RustTokenElementTypes.RAW_STRING_LITERAL;
+    }
+  }
 
 }
 
@@ -317,16 +321,17 @@ SHEBANG_LINE=\#\![^\[].*
   [^]     { }
 }
 
-<EOL_COMMENT>.*
-{
+<EOL_COMMENT>.* {
     yybegin(YYINITIAL);
 
-    if (yycharat(2) == '!')
-        return RustTokenElementTypes.INNER_DOC_COMMENT;
-    else if (yycharat(2) == '/')
-        return RustTokenElementTypes.OUTER_DOC_COMMENT;
-    else
-        return RustTokenElementTypes.EOL_COMMENT;
+    if (yylength() >= 3) {
+        if (yycharat(2) == '!') {
+            return RustTokenElementTypes.INNER_DOC_COMMENT;
+        } else if (yycharat(2) == '/' && (yylength() == 3 || yycharat(3) != '/')) {
+            return RustTokenElementTypes.OUTER_DOC_COMMENT;
+        }
+    }
+    return RustTokenElementTypes.EOL_COMMENT;
 }
 
 

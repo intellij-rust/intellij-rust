@@ -115,7 +115,6 @@ public interface RustTokenElementTypes {
     IElementType LT = new RustTokenType("<");
     IElementType MINUS = new RustTokenType("-");
     IElementType MINUSEQ = new RustTokenType("-=");
-    IElementType MINUSMINUS = new RustTokenType("--");
     IElementType MUL = new RustTokenType("*");
     IElementType MULEQ = new RustTokenType("*=");
     IElementType OR = new RustTokenType("|");
@@ -123,7 +122,6 @@ public interface RustTokenElementTypes {
     IElementType OROR = new RustTokenType("||");
     IElementType PLUS = new RustTokenType("+");
     IElementType PLUSEQ = new RustTokenType("+=");
-    IElementType PLUSPLUS = new RustTokenType("++");
     IElementType RBRACE = new RustTokenType("}");
     IElementType RBRACK = new RustTokenType("]");
     IElementType REM = new RustTokenType("%");

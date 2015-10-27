@@ -1,0 +1,8 @@
+[package]
+name = "rustc_lexer"
+version = "0.0.1"
+authors = ["winger <isenbaev@gmail.com>"]
+
+[dependencies]
+syntex_syntax = "0.18.0"
+rustc-serialize = "0.3"
