@@ -1,6 +1,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.RustCondLetExpr
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustVisitor
 import org.rust.lang.core.psi.util.match
@@ -56,6 +57,10 @@ public class RustResolveEngine(ref: RustQualifiedReference) {
 
                 return s
             }
+        }
+
+        override fun visitCondLetExpr(o: RustCondLetExpr) {
+            visitResolveScope(o)
         }
 
         override fun visitResolveScope(elem: RustResolveScope) {
