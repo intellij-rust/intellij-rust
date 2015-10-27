@@ -452,6 +452,7 @@ trait_type ::= outer_attrs? TYPE type_param SEMICOLON
 trait_method ::= type_method | method
 
 type_method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause? SEMICOLON
+method      ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause? inner_attrs_and_block
 
 private fn_decl_with_self_allow_anon_params ::= fn_anon_params_with_self ret_type?
 private fn_anon_params_with_self ::= LPAREN [ AND lifetime? ] MUT? SELF type_ascription? comma_anon_params? RPAREN
@@ -468,8 +469,6 @@ private named_arg ::= IDENTIFIER
                     | AND (IDENTIFIER | UNDERSCORE)
                     | ANDAND (IDENTIFIER | UNDERSCORE)
                     | MUT IDENTIFIER
-
-method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause? inner_attrs_and_block
 
 
 trait_ref ::= COLONCOLON? path_generic_args_without_colons
