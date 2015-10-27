@@ -13,7 +13,7 @@ abstract class RustBlockImplMixin(node: ASTNode) : RustCompositeElementImpl(node
         , RustBlock
         , RustResolveScope {
 
-    override fun listDeclarations(before: PsiElement): List<RustPatIdent> = children
+    override fun listDeclarations(before: PsiElement): List<RustPatIdent> = stmtList
             .filterIsInstance<RustDeclStmt>()
             .map { it.letDecl }
             .filterNotNull()
