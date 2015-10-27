@@ -53,5 +53,13 @@ KEY=[0-9_\-a-zA-Z]+
   {BOOLEAN}             { return BOOLEAN; }
   {KEY}                 { return KEY; }
 
+  "."                   { return DOT; }
+  ","                   { return COMMA; }
+  "="                   { return EQ; }
+  "["                   { return LBRACKET; }
+  "]"                   { return RBRACKET; }
+  "{"                   { return LBRACE; }
+  "}"                   { return RBRACE; }
+
   [^] { return com.intellij.psi.TokenType.BAD_CHARACTER; }
 }
