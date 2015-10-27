@@ -1,7 +1,9 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RustCondLetExpr
+import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustVisitor
 import org.rust.lang.core.psi.util.match
 import org.rust.lang.core.resolve.ref.RustQualifiedReference
 import org.rust.lang.core.resolve.scope.RustResolveScope
@@ -57,15 +59,11 @@ public class RustResolveEngine(ref: RustQualifiedReference) {
             }
         }
 
-        override fun visitBlock(block: RustBlock) {
-            visitDeclarationSet(block)
+        override fun visitCondLetExpr(o: RustCondLetExpr) {
+            visitResolveScope(o)
         }
 
-        override fun visitFnItem(fn: RustFnItem) {
-            visitDeclarationSet(fn)
-        }
-
-        private fun visitDeclarationSet(elem: RustResolveScope) {
+        override fun visitResolveScope(elem: RustResolveScope) {
             elem.listDeclarations(ref)
                     .forEach { ident ->
                         if (match(ident)) {
