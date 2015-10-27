@@ -136,6 +136,9 @@
     implements  ("block") =  "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("block") =  "org.rust.lang.core.psi.impl.mixin.RustBlockImplMixin"
 
+    implements  ("match_arm") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("match_arm") = "org.rust.lang.core.psi.impl.mixin.RustMatchArmImplMixin"
+
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
 
@@ -791,7 +794,7 @@ for_expr ::= [lifetime COLON] FOR pat IN no_struct_lit_expr block { pin = "IN" }
 
 match_expr ::= MATCH no_struct_lit_expr LBRACE match_arm* RBRACE
 
-private match_arm ::= outer_attrs* match_pat FAT_ARROW (expr (COMMA | & RBRACE) | block )
+match_arm ::= outer_attrs* match_pat FAT_ARROW (expr (COMMA | & RBRACE) | block )
 private match_pat ::= pat (OR pat)* (IF expr)?
 
 if_expr ::= IF no_struct_lit_expr block else_tail?
