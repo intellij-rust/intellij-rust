@@ -10,13 +10,13 @@ class RustResolveTestCase : RustTestCase() {
     private fun referenceAtCaret() = file.findReferenceAt(myFixture.caretOffset)!!
 
     //@formatter:off
-    fun testArgument()             { checkIsBound()   }
+    fun testFunctionArgument()     { checkIsBound()   }
     fun testLocals()               { checkIsBound()   }
     fun testShadowing()            { checkIsBound(atOffset = 35) }
-    fun testNested()               { checkIsBound()   }
+    fun testNestedPatterns()       { checkIsBound()   }
     fun testMatch()                { checkIsBound()   }
-    fun testIflet()                { checkIsBound()   }
-    fun testWhilelet()             { checkIsBound()   }
+    fun testIfLet()                { checkIsBound()   }
+    fun testWhileLet()             { checkIsBound()   }
     fun testUnbound()              { checkIsUnbound() }
     fun testOrdering()             { checkIsUnbound() }
     //@formatter:on
