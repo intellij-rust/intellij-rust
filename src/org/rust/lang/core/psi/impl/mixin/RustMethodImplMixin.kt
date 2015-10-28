@@ -7,13 +7,13 @@ import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustPatIdent
 import org.rust.lang.core.psi.RustPatVar
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
-import org.rust.lang.core.psi.util.boundIdentifiers
+import org.rust.lang.core.psi.util.boundVariables
 
 abstract class RustMethodImplMixin(node: ASTNode) : RustNamedElementImpl(node)
         , RustMethod {
 
     override fun listDeclarations(before: PsiElement): List<RustPatVar> = anonParams?.
             anonParamList.orEmpty()
-            .flatMap { it.pat?.boundIdentifiers.orEmpty() }
+            .flatMap { it.pat?.boundVariables.orEmpty() }
 
 }

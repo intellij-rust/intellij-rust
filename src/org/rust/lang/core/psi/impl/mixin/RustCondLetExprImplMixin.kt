@@ -7,10 +7,10 @@ import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustPatIdent
 import org.rust.lang.core.psi.RustPatVar
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
-import org.rust.lang.core.psi.util.boundIdentifiers
+import org.rust.lang.core.psi.util.boundVariables
 
 abstract class RustCondLetExprImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
         , RustCondLetExpr {
 
-    override fun listDeclarations(before: PsiElement): List<RustPatVar> = pat.boundIdentifiers
+    override fun listDeclarations(before: PsiElement): List<RustPatVar> = pat.boundVariables
 }
