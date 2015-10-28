@@ -17,6 +17,8 @@ class RustResolveTestCase : RustTestCase() {
     fun testMatch()                { checkIsBound()   }
     fun testIfLet()                { checkIsBound()   }
     fun testWhileLet()             { checkIsBound()   }
+    fun testTraitMethodArgument()  { checkIsBound()   }
+    fun testImplMethodArgument()   { checkIsBound()   }
     fun testUnbound()              { checkIsUnbound() }
     fun testOrdering()             { checkIsUnbound() }
     //@formatter:on

@@ -131,6 +131,12 @@
     implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
 
+    implements  ("method") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("method") = "org.rust.lang.core.psi.impl.mixin.RustMethodImplMixin"
+
+    implements  ("impl_method") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("impl_method") = "org.rust.lang.core.psi.impl.mixin.RustImplMethodImplMixin"
+
     mixin       ("path_part") = "org.rust.lang.core.psi.impl.mixin.RustPathPartImplMixin"
 
     implements  ("block") =  "org.rust.lang.core.resolve.scope.RustResolveScope"
