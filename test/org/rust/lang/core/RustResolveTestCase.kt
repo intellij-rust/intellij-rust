@@ -3,8 +3,6 @@ package org.rust.lang.core
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.rust.lang.RustTestCase
-import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustPatIdent
 import org.rust.lang.core.psi.RustPatVar
 
 class RustResolveTestCase : RustTestCase() {
@@ -21,6 +19,8 @@ class RustResolveTestCase : RustTestCase() {
     fun testWhileLet()             { checkIsBound()   }
     fun testTraitMethodArgument()  { checkIsBound()   }
     fun testImplMethodArgument()   { checkIsBound()   }
+    fun testStructPatterns1()      { checkIsBound(atOffset = 69) }
+    fun testStructPatterns2()      { checkIsBound() }
     fun testUnbound()              { checkIsUnbound() }
     fun testOrdering()             { checkIsUnbound() }
     //@formatter:on

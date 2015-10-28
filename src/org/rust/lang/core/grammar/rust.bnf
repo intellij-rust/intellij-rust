@@ -348,7 +348,8 @@ pat_struct_fields ::= (pat_field COMMA)+ DOTDOT
                     | <<comma_separated_list pat_field>>
                     | DOTDOT
 
-private pat_field   ::=     binding_mode?  IDENTIFIER [ COLON pat ]
+private pat_field   ::=     binding_mode?  IDENTIFIER COLON pat
+                      |     binding_mode?  pat_var
                       | BOX binding_mode?  pat_var
 
 binding_mode ::= REF MUT? | MUT
