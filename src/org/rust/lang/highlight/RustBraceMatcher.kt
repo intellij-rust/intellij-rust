@@ -22,7 +22,7 @@ public class RustBraceMatcher() : PairedBraceMatcher {
         val PAIRS: Array<BracePair> = arrayOf(
                 BracePair(RustTokenElementTypes.LBRACE, RustTokenElementTypes.RBRACE, true /* structural */),
                 BracePair(RustTokenElementTypes.LPAREN, RustTokenElementTypes.RPAREN, false),
-                BracePair(RustTokenElementTypes.RBRACK, RustTokenElementTypes.RBRACK, false)
+                BracePair(RustTokenElementTypes.LBRACK, RustTokenElementTypes.RBRACK, false)
         )
     }
 }
