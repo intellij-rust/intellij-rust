@@ -5,13 +5,13 @@ import org.rust.lang.core.psi.RustCondLetExpr
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustVisitor
 import org.rust.lang.core.psi.util.match
-import org.rust.lang.core.resolve.ref.RustQualifiedReference
+import org.rust.lang.core.resolve.ref.RustQualifiedValue
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.scope.resolveWith
 import org.rust.lang.core.resolve.util.RustResolveUtil
 import java.util.*
 
-public class RustResolveEngine(ref: RustQualifiedReference) {
+public class RustResolveEngine(ref: RustQualifiedValue) {
 
     private val ref = ref;
 
@@ -39,20 +39,20 @@ public class RustResolveEngine(ref: RustQualifiedReference) {
         return ResolveResult.UNRESOLVED;
     }
 
-    internal class ResolveScopeVisitor(val ref: RustQualifiedReference) : RustVisitor() {
+    internal class ResolveScopeVisitor(val ref: RustQualifiedValue) : RustVisitor() {
 
         val qualifiersStack = stackUp(ref)
 
         var matched: RustNamedElement? = null
 
         companion object {
-            fun stackUp(ref: RustQualifiedReference): Stack<RustQualifiedReference> {
-                val s = Stack<RustQualifiedReference>()
+            fun stackUp(ref: RustQualifiedValue): Stack<RustQualifiedValue> {
+                val s = Stack<RustQualifiedValue>()
 
-                var q: RustQualifiedReference? = ref
+                var q: RustQualifiedValue? = ref
                 while (q != null) {
                     s.add(q)
-                    q = q.qualifier
+                    q = q.getQualifier()
                 }
 
                 return s
