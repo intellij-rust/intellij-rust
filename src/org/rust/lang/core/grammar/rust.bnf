@@ -464,11 +464,12 @@ anon_params ::= anon_param (COMMA anon_param)*
 
 anon_param ::= [ named_arg COLON ] type
 
-private named_arg ::= IDENTIFIER
-                    | UNDERSCORE
-                    | AND (IDENTIFIER | UNDERSCORE)
-                    | ANDAND (IDENTIFIER | UNDERSCORE)
-                    | MUT IDENTIFIER
+private named_arg ::= &( IDENTIFIER
+                       | UNDERSCORE
+                       | AND (IDENTIFIER | UNDERSCORE)
+                       | ANDAND (IDENTIFIER | UNDERSCORE)
+                       | MUT IDENTIFIER
+                       ) pat
 
 
 trait_ref ::= COLONCOLON? path_generic_args_without_colons
