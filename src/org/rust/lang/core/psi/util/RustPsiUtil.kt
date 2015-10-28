@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import org.rust.lang.core.psi.RustPat
 import org.rust.lang.core.psi.RustPatIdent
+import org.rust.lang.core.psi.RustPatVar
 
 //
 // Extension points
@@ -21,13 +22,13 @@ val PsiElement.parentRelativeRange: TextRange?
         TextRange(startOffsetInParent, startOffsetInParent + textLength)
     }
 
-val RustPat.boundIdentifiers: List<RustPatIdent>
+val RustPat.boundIdentifiers: List<RustPatVar>
     get() {
-        val result = arrayListOf<RustPatIdent>()
+        val result = arrayListOf<RustPatVar>()
         accept(object : PsiRecursiveElementWalkingVisitor() {
             override fun elementFinished(element: PsiElement?) {
                 when (element) {
-                    is RustPatIdent ->
+                    is RustPatVar ->
                         result.add(element)
                 }
             }

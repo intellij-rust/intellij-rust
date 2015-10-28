@@ -125,8 +125,8 @@
         space       = 'regexp:\s+'
     ]
 
-    mixin       ("pat_ident") = "org.rust.lang.core.psi.impl.mixin.RustPatIdentImplMixin"
-    implements  ("pat_ident") = "org.rust.lang.core.psi.RustNamedElement"
+    implements  ("pat_var") = "org.rust.lang.core.psi.RustNamedElement"
+    mixin       ("pat_var") = "org.rust.lang.core.psi.impl.mixin.RustPatVarImplMixin"
 
     implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
@@ -304,9 +304,9 @@ pat_uniq        ::= BOX pat
 //       None => { } // match enum variant
 //       Name => { } // bind Name to x
 //   }
-pat_ident       ::= binding_mode IDENTIFIER [AT pat]
-                  |              IDENTIFIER AT pat
-                  |              IDENTIFIER !DOTDOTDOT !COLONCOLON
+pat_ident       ::= binding_mode pat_var [AT pat]
+                  |              pat_var AT pat
+                  |              pat_var !DOTDOTDOT !COLONCOLON
 
 pat_struct      ::= path_expr LBRACE pat_struct_fields RBRACE
 pat_enum        ::= path_expr LPAREN (DOTDOT | pat_tup_elts) RPAREN
@@ -349,9 +349,11 @@ pat_struct_fields ::= (pat_field COMMA)+ DOTDOT
                     | DOTDOT
 
 private pat_field   ::=     binding_mode?  IDENTIFIER [ COLON pat ]
-                      | BOX binding_mode?  IDENTIFIER
+                      | BOX binding_mode?  pat_var
 
 binding_mode ::= REF MUT? | MUT
+
+pat_var ::= IDENTIFIER
 
 private unsafe_fn_item ::= UNSAFE fn_item
 

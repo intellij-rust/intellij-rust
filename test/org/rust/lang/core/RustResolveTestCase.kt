@@ -3,7 +3,9 @@ package org.rust.lang.core
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.rust.lang.RustTestCase
+import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustPatIdent
+import org.rust.lang.core.psi.RustPatVar
 
 class RustResolveTestCase : RustTestCase() {
     override fun getTestDataPath() = "testData/resolve"
@@ -26,7 +28,7 @@ class RustResolveTestCase : RustTestCase() {
     private fun assertIsValidDeclaration(declaration: PsiElement, usage: PsiReference,
                                          expectedOffset: Int?) {
 
-        assertInstanceOf(declaration, RustPatIdent::class.java)
+        assertInstanceOf(declaration, RustPatVar::class.java)
         assertEquals(usage.canonicalText, declaration.text)
         if (expectedOffset != null) {
             assertEquals(expectedOffset, declaration.textRange.startOffset)
