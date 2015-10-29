@@ -166,7 +166,7 @@ task generateRustPsiAndParser(type: JavaExec) {
 
     main = "org.intellij.grammar.Main"
 
-    args = [ dstRoot, src ]
+    args = [ dstRoot, file(src) ]
 
     inputs  .file   file(src)
     outputs .dir    fileTree(dir: dstRoot + '/org/rust/lang/core/', include: '**/*.java')
@@ -180,7 +180,7 @@ task generateTomlPsiAndParser(type: JavaExec) {
 
     main = "org.intellij.grammar.Main"
 
-    args = [ dstRoot, src ]
+    args = [ dstRoot, file(src) ]
 
     inputs  .file   file(src)
     outputs .dir    fileTree(dir: dstRoot + '/org/toml/lang/core/', include: '**/*.java')
