@@ -17,6 +17,7 @@ class RustResolveTestCase : RustTestCase() {
     fun testMatch()                { checkIsBound()   }
     fun testIfLet()                { checkIsBound()   }
     fun testWhileLet()             { checkIsBound()   }
+    fun testFor()                  { checkIsBound()   }
     fun testTraitMethodArgument()  { checkIsBound()   }
     fun testImplMethodArgument()   { checkIsBound()   }
     fun testStructPatterns1()      { checkIsBound(atOffset = 69) }
