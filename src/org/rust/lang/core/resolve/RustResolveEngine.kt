@@ -21,8 +21,8 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
 
         object UNRESOLVED : ResolveResult(null)
 
-        override fun getElement():      PsiElement? = resolved
-        override fun isValidResult():   Boolean     = resolved != null
+        override fun getElement(): PsiElement? = resolved
+        override fun isValidResult(): Boolean = resolved != null
 
     }
 
@@ -30,7 +30,7 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
         var current = scope
         while (current != null) {
             current.resolveWith(ResolveScopeVisitor(ref))?.let {
-                t -> return ResolveResult(t)
+                return ResolveResult(it)
             }
 
             current = RustResolveUtil.getResolveScope(current)
@@ -77,14 +77,13 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
 
             if (qualifiersStack.size == 0)
                 matched = elem
-            else when (elem) {
-                is RustResolveScope -> { elem.resolveWith(this) }
-                else -> { /* NOP */ }
+            else if (elem is RustResolveScope) {
+                elem.resolveWith(this)
             }
         }
 
         private fun match(e: RustNamedElement): Boolean =
-            e.name.let { n -> qualifiersStack.peek().getReferenceNameElement().match(n) }
+                qualifiersStack.peek().getReferenceNameElement().match(e.name)
     }
 
 }

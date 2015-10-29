@@ -8,15 +8,15 @@ import org.rust.lang.core.resolve.util.RustResolveUtil
 
 public open class RustReference<T : RustQualifiedValue>(element: T,
                                                         range: TextRange = element.textRange,
-                                                        soft: Boolean = false)
-    : PsiReferenceBase<T>(element, range, soft) {
+                                                        soft: Boolean = false) :
+        PsiReferenceBase<T>(element, range, soft) {
 
     override fun getVariants(): Array<out Any> {
         throw UnsupportedOperationException()
     }
 
     protected override fun calculateDefaultRangeInElement(): TextRange? =
-        TextRange.from(0, myElement.textLength)
+            TextRange.from(0, myElement.textLength)
 
 
     override fun resolve(): PsiElement? {

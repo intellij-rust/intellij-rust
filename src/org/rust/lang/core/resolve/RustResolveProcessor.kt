@@ -10,7 +10,8 @@ public class RustResolveProcessor(targetName: String) : PsiScopeProcessor {
 
     val TargetName = targetName;
 
-    override fun handleEvent(event: PsiScopeProcessor.Event, associated: Any?) {}
+    override fun handleEvent(event: PsiScopeProcessor.Event, associated: Any?) {
+    }
 
     override fun <T> getHint(hintKey: Key<T>): T {
         throw UnsupportedOperationException()

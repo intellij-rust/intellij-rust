@@ -11,8 +11,8 @@ import org.rust.lang.core.psi.RustPatVar
 
 fun PsiElement?.match(s: String?): Boolean {
     return this != null
-        && s    != null
-        && text.equals(s);
+            && s != null
+            && text.equals(s);
 }
 
 val PsiElement.parentRelativeRange: TextRange?

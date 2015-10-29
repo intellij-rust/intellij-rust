@@ -6,8 +6,8 @@ import com.intellij.psi.FileViewProvider
 import org.rust.lang.RustFileType
 import org.rust.lang.RustLanguage
 
-public class RustFileImpl(fileViewProvider: FileViewProvider)
-: PsiFileBase(fileViewProvider, RustLanguage.INSTANCE) {
+public class RustFileImpl(fileViewProvider: FileViewProvider) :
+        PsiFileBase(fileViewProvider, RustLanguage.INSTANCE) {
 
     override fun getFileType(): FileType = RustFileType.INSTANCE;
 

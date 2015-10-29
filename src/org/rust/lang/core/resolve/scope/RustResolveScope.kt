@@ -3,7 +3,6 @@ package org.rust.lang.core.resolve.scope
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustPatIdent
 import org.rust.lang.core.psi.RustPatVar
 import org.rust.lang.core.resolve.RustResolveEngine
 
