@@ -1,6 +1,6 @@
 # Getting started
 
-## Clone the repository with submodules
+## Clone
 
 ```
 git clone https://github.com/alexeykudinkin/intellij-rust.git
@@ -8,23 +8,61 @@ cd intellij-rust
 git submodule update --init
 ```
 
-## Get IDEA
+## Building
 
-Download the latest Intellij IDEA Community Edition EAP
-[here](https://confluence.jetbrains.com/display/IDEADEV/EAP). If you are using
-Arch Linux, there is `intellij-idea-ce-eap` package in the AUR.
-
-## Import project
-
-`Ctrl + Shift + A, Import project` or `File > New > Project from existing
-sources`, select `build.gradle` from the root directory of the plugin and press
-`OK`.
+To build the plugin just navigate to the directory you've previously checked it out and type `gradle build`. That's it.  
 
 
 ## Running
 
-From Gradle Tool Window or from `Ctrl + Shift + A, Execute Gradle Task` run
-`test` task. Run `runIdea` task to launch the plugin.
+To launch the plugin from console just type `gradle runIdea`.
+
+
+## Development
+
+For development you could use any editor/IDE of your choice. There is no peculiar dependency on IDEA, though we're particularly sticked to it, therefore providing instructions how to nail it from that side. 
+
+If you're using any other particular stack feel free to contribute to that list.
+
+* [IDEA](#IDEA)
+
+
+### IDEA
+
+For development you'd need IDEA with Kotlin plugin (which is shipped by default starting from 14.1)
+
+You can get the latest Intellij IDEA Community Edition [here](https://www.jetbrains.com/idea/download/).
+You can also get the version from EAP channel [here](https://confluence.jetbrains.com/display/IDEADEV/EAP).
+
+To import the project just: `Ctrl + Shift + A`, `Import project` or `File`, `New`, `Project from existing
+sources`, and select `build.gradle` from the root directory of the plugin.
+
+
+# Contributing
+
+To contribute to the code of the project check out the the latest version and follow instructions on how to build & run it.
+
+If you feel yourself new to the field or don't know what you should start coping with check out issue-tracker for the 
+[up-for-grab](https://github.com/alexeykudinkin/intellij-rust/labels/up%20for%20grab) tasks as these may be greatest entry points to the project source code.
+
+If you want to contribute to the project in any of the numerous other ways, first of all consider joining our [Gitter](https://gitter.im/alexeykudinkin/intellij-rust?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) therefore
+being on par with the current development efforts.
+
+**NOTA BENE**
+
+Please, make sure that all tests pass and Travis reports build as green prior to making P/R. 
+
+
+## Code style
+
+There're no formal code-style for the code in Kotlin just yet, so, please, be responsible, and make sure that your code aligns 
+just fine with the rest of the code base.
+
+For the Java sources we're sticked to the Google's [one](https://google.github.io/styleguide/javaguide.html).
+
+**NOTA BENE**
+
+Please *don't* use class comments with information about author or date and time of creation.
 
 
 # Plugin overview
@@ -43,6 +81,7 @@ Of a particular interest are the following sections:
 It's also very inspirational to browse existing plugins. Check out
 [Erlang](https://github.com/ignatov/intellij-erlang) and
 [Go](https://github.com/go-lang-plugin-org/go-lang-idea-plugin) plugins.
+
 
 # Testing
 
