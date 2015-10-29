@@ -100,7 +100,7 @@ FILE
             RustForExprImpl(FOR_EXPR)
               PsiElement(for)('for')
               PsiWhiteSpace(' ')
-              RustPatIdentImpl(PAT_IDENT)
+              RustPatVarImpl(PAT_VAR)
                 PsiElement(<IDENTIFIER>)('i')
               PsiWhiteSpace(' ')
               PsiElement(in)('in')
