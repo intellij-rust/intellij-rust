@@ -111,6 +111,8 @@ test {
         compile "junit:junit:4.+"
     }
 
+    systemProperties "idea.classpath.index.enabled": false
+
     useJUnit { }
     testLogging {
         events "passed", "skipped", "failed"
