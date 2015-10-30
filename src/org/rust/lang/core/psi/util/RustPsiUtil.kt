@@ -3,7 +3,7 @@ package org.rust.lang.core.psi.util
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustPat
-import org.rust.lang.core.psi.RustPatVar
+import org.rust.lang.core.psi.RustPatIdent
 
 //
 // Extension points
@@ -20,11 +20,11 @@ val PsiElement.parentRelativeRange: TextRange?
         TextRange(startOffsetInParent, startOffsetInParent + textLength)
     }
 
-val RustPat.boundVariables: List<RustPatVar>
+val RustPat.boundIdentifiers: List<RustPatIdent>
     get() {
-        val result = arrayListOf<RustPatVar>()
+        val result = arrayListOf<RustPatIdent>()
         accept(object : RecursiveRustVisitor() {
-            override fun visitPatVar(o: RustPatVar) {
+            override fun visitPatIdent(o: RustPatIdent) {
                 result.add(o)
             }
         })
