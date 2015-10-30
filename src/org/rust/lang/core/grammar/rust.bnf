@@ -183,6 +183,9 @@
     implements  ("anon_param")  = "org.rust.lang.core.psi.RustDeclaringElement"
     mixin       ("anon_param")  = "org.rust.lang.core.psi.impl.mixin.RustAnonParamImplMixin"
 
+    implements  ("lambda_param")  = "org.rust.lang.core.psi.RustDeclaringElement"
+    mixin       ("lambda_param")  = "org.rust.lang.core.psi.impl.mixin.RustLambdaParamImplMixin"
+
     implements  ("match_pat")   = "org.rust.lang.core.psi.RustDeclaringElement"
     mixin       ("match_pat")   = "org.rust.lang.core.psi.impl.mixin.RustMatchPatImplMixin"
 
@@ -823,7 +826,7 @@ cast_expr ::= restricted_expr AS type
 unary_expr ::= (MINUS | MUL | EXCL | (AND | ANDAND) MUT?) restricted_expr
 
 lambda_expr ::= MOVE? (OROR | OR [<<comma_separated_list lambda_param>>] OR) ret_type? any_expr
-private lambda_param ::= pat type_ascription?
+lambda_param ::= pat type_ascription?
 
 struct_expr ::= <<checkStructAllowed>> path_generic_args_with_colons struct_expr_body
 
