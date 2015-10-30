@@ -189,6 +189,9 @@
     implements  ("match_pat")   = "org.rust.lang.core.psi.RustDeclaringElement"
     mixin       ("match_pat")   = "org.rust.lang.core.psi.impl.mixin.RustMatchPatImplMixin"
 
+    implements  ("pat_field")   = [ "org.rust.lang.core.psi.RustDeclaringElement" "org.rust.lang.core.psi.RustNamedElement" ]
+    mixin       ("pat_field")   = "org.rust.lang.core.psi.impl.mixin.RustPatFieldImplMixin"
+
 
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
@@ -390,8 +393,8 @@ pat_struct_fields ::= (pat_field COMMA)+ DOTDOT
                     | <<comma_separated_list pat_field>>
                     | DOTDOT
 
-private pat_field   ::=     binding_mode?  IDENTIFIER [ COLON pat ]
-                      | BOX binding_mode?  IDENTIFIER
+pat_field ::=     binding_mode? IDENTIFIER [ COLON pat ]
+            | BOX binding_mode? IDENTIFIER
 
 binding_mode ::= REF MUT? | MUT
 
