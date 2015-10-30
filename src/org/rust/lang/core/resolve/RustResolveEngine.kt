@@ -1,7 +1,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustCondLetExpr
+import org.rust.lang.core.psi.RustScopedLetExpr
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustVisitor
 import org.rust.lang.core.psi.util.match
@@ -59,7 +59,7 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
             }
         }
 
-        override fun visitCondLetExpr(o: RustCondLetExpr) {
+        override fun visitScopedLetExpr(o: RustScopedLetExpr) {
             visitResolveScope(o)
         }
 

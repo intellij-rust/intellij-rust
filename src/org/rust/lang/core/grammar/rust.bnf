@@ -145,8 +145,8 @@
     implements  ("match_arm") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("match_arm") = "org.rust.lang.core.psi.impl.mixin.RustMatchArmImplMixin"
 
-    implements  ("cond_let_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    mixin       ("cond_let_expr") = "org.rust.lang.core.psi.impl.mixin.RustCondLetExprImplMixin"
+    implements  ("scoped_let_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("scoped_let_expr") = "org.rust.lang.core.psi.impl.mixin.RustScopedLetExprImplMixin"
 
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
@@ -154,7 +154,7 @@
     extends("impl_method") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
     extends(".*_item")     = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
 
-    extends("(if|while)_let_expr") = cond_let_expr
+    extends("((if|while)_let|for)_expr") = scoped_let_expr
     extends(".*_expr") = restricted_expr
     extends(".*_stmt") = stmt
     extends("pat_.*")  = pat
@@ -814,7 +814,7 @@ if_expr ::= IF no_struct_lit_expr block else_tail?
 
 private else_tail ::= ELSE (if_expr | if_let_expr | block )
 
-fake cond_let_expr ::= pat
+fake scoped_let_expr ::= pat
 
 if_let_expr ::= IF LET pat EQ no_struct_lit_expr block  else_tail?
 
