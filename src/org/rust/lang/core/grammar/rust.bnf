@@ -851,8 +851,8 @@ private array_elems ::= any_expr SEMICOLON any_expr
 //private range_expr_group ::= open_range_expr
 //                           | full_range_expr
 
-full_range_expr ::= restricted_expr DOTDOT (<<checkBraceAllowed>> restricted_expr)?
-open_range_expr ::=                 DOTDOT (<<checkBraceAllowed>> restricted_expr)?
+full_range_expr ::= restricted_expr DOTDOT (&<<checkBraceAllowed>> restricted_expr)?
+open_range_expr ::=                 DOTDOT (&<<checkBraceAllowed>> restricted_expr)?
 
 range_expr ::= restricted_expr + {
     methods=[
