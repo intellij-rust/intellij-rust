@@ -60,7 +60,6 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
 
         override fun visitForExpr(o: RustForExpr) {
             seek(o.scopedForDecl)
-            o.block.let { visitResolveScope(it) }
         }
 
         override fun visitScopedLetExpr(o: RustScopedLetExpr) {
