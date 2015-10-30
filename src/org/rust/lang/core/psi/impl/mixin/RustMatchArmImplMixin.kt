@@ -12,6 +12,6 @@ abstract class RustMatchArmImplMixin(node: ASTNode) : RustCompositeElementImpl(n
         , RustMatchArm
         , RustResolveScope {
 
-    override fun listDeclarations(before: PsiElement): List<RustPatVar> = patList
-            .flatMap { it.boundVariables }
+    override fun listDeclarations(before: PsiElement): List<RustPatVar> =
+        matchPat.patList.flatMap { it.boundVariables }
 }
