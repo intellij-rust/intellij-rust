@@ -157,8 +157,11 @@
     implements  ("scoped_let_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("scoped_let_expr") = "org.rust.lang.core.psi.impl.mixin.RustScopedLetExprImplMixin"
 
-    implements  ("match_arm")   = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    mixin       ("match_arm")   = "org.rust.lang.core.psi.impl.mixin.RustMatchArmImplMixin"
+    implements  ("for_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("for_expr") = "org.rust.lang.core.psi.impl.mixin.RustForExprImplMixin"
+
+    implements  ("match_arm") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("match_arm") = "org.rust.lang.core.psi.impl.mixin.RustMatchArmImplMixin"
 
 
     //
@@ -170,6 +173,9 @@
 
     implements  ("scoped_let_decl") = "org.rust.lang.core.psi.RustDeclaringElement"
     mixin       ("scoped_let_decl") = "org.rust.lang.core.psi.impl.mixin.RustScopedLetDeclImplMixin"
+
+    implements  ("scoped_for_decl") = "org.rust.lang.core.psi.RustDeclaringElement"
+    mixin       ("scoped_for_decl") = "org.rust.lang.core.psi.impl.mixin.RustScopedForDeclImplMixin"
 
     implements  ("param")       = "org.rust.lang.core.psi.RustDeclaringElement"
     mixin       ("param")       = "org.rust.lang.core.psi.impl.mixin.RustParamImplMixin"
@@ -842,9 +848,9 @@ cont_expr ::= CONTINUE lifetime?
 
 break_expr ::= BREAK lifetime?
 
-for_expr ::= [lifetime COLON] FOR pat IN no_struct_lit_expr block { pin = "IN" }
+scoped_for_decl ::= pat IN no_struct_lit_expr
 
-
+for_expr ::= [lifetime COLON] FOR scoped_for_decl block { pin = "IN" }
 
 match_expr ::= MATCH no_struct_lit_expr LBRACE match_arm* RBRACE
 
