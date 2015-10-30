@@ -125,8 +125,19 @@
         space       = 'regexp:\s+'
     ]
 
+    //
+    // Mixins
+    //
+
     mixin       ("pat_ident") = "org.rust.lang.core.psi.impl.mixin.RustPatIdentImplMixin"
     implements  ("pat_ident") = "org.rust.lang.core.psi.RustNamedElement"
+
+    mixin       ("path_part") = "org.rust.lang.core.psi.impl.mixin.RustPathPartImplMixin"
+
+
+    //
+    // Resolve scopes
+    //
 
     implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
@@ -140,16 +151,35 @@
     implements  ("impl_method") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("impl_method") = "org.rust.lang.core.psi.impl.mixin.RustImplMethodImplMixin"
 
-    mixin       ("path_part") = "org.rust.lang.core.psi.impl.mixin.RustPathPartImplMixin"
-
     implements  ("block") =  "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("block") =  "org.rust.lang.core.psi.impl.mixin.RustBlockImplMixin"
 
-    implements  ("match_arm") = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    mixin       ("match_arm") = "org.rust.lang.core.psi.impl.mixin.RustMatchArmImplMixin"
-
     implements  ("scoped_let_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("scoped_let_expr") = "org.rust.lang.core.psi.impl.mixin.RustScopedLetExprImplMixin"
+
+    implements  ("match_arm")   = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("match_arm")   = "org.rust.lang.core.psi.impl.mixin.RustMatchArmImplMixin"
+
+
+    //
+    // Declaring elements
+    //
+
+    implements  ("let_decl")    = "org.rust.lang.core.psi.RustDeclaringElement"
+    mixin       ("let_decl")    = "org.rust.lang.core.psi.impl.mixin.RustLetDeclImplMixin"
+
+    implements  ("scoped_let_decl") = "org.rust.lang.core.psi.RustDeclaringElement"
+    mixin       ("scoped_let_decl") = "org.rust.lang.core.psi.impl.mixin.RustScopedLetDeclImplMixin"
+
+    implements  ("param")       = "org.rust.lang.core.psi.RustDeclaringElement"
+    mixin       ("param")       = "org.rust.lang.core.psi.impl.mixin.RustParamImplMixin"
+
+    implements  ("anon_param")  = "org.rust.lang.core.psi.RustDeclaringElement"
+    mixin       ("anon_param")  = "org.rust.lang.core.psi.impl.mixin.RustAnonParamImplMixin"
+
+    implements  ("match_pat")   = "org.rust.lang.core.psi.RustDeclaringElement"
+    mixin       ("match_pat")   = "org.rust.lang.core.psi.impl.mixin.RustMatchPatImplMixin"
+
 
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
@@ -157,7 +187,7 @@
     extends("impl_method") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
     extends(".*_item")     = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
 
-    extends("((if|while)_let|for)_expr") = scoped_let_expr
+    extends("(if|while)_let_expr") = scoped_let_expr
     extends(".*_expr") = restricted_expr
     extends(".*_stmt") = stmt
     extends("pat_.*")  = pat
@@ -825,11 +855,14 @@ if_expr ::= IF no_struct_lit_expr block else_tail?
 
 private else_tail ::= ELSE (if_expr | if_let_expr | block )
 
-fake scoped_let_expr ::= pat
+fake scoped_let_expr ::= scoped_let_decl EQ no_struct_lit_expr block
 
-if_let_expr ::= IF LET pat EQ no_struct_lit_expr block  else_tail?
+scoped_let_decl ::= LET pat EQ no_struct_lit_expr
 
-while_let_expr ::= WHILE LET pat EQ no_struct_lit_expr block
+if_let_expr ::= IF scoped_let_decl block else_tail?
+
+while_let_expr ::= WHILE scoped_let_decl block
+
 
 ret_expr ::= RETURN restricted_expr?
 
