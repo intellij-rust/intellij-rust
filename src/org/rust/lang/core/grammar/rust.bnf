@@ -365,9 +365,9 @@ extern_fn_item ::= EXTERN abi? fn_item
 
 decl_item ::= IDENTIFIER COLON type
 
-static_item ::= STATIC MUT? decl_item EQ expr SEMICOLON
+static_item ::= STATIC MUT? decl_item EQ any_expr SEMICOLON
 
-const_item ::= CONST decl_item EQ expr SEMICOLON
+const_item ::= CONST decl_item EQ any_expr SEMICOLON
 
 private view_item ::= use_item
                     | extern_fn_item
@@ -439,7 +439,7 @@ enum_def ::= attrs_and_vis IDENTIFIER enum_args?
 
 enum_args ::= LBRACE struct_decl_fields COMMA? RBRACE
             | LPAREN type_sums? RPAREN
-            | EQ expr
+            | EQ any_expr
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -457,7 +457,7 @@ trait_const ::= outer_attrs? CONST IDENTIFIER type_ascription? const_default? SE
 
 type_ascription ::= COLON type_sum
 
-private const_default ::= EQ expr
+private const_default ::= EQ any_expr
 
 trait_type ::= outer_attrs? TYPE type_param SEMICOLON
 
@@ -524,7 +524,7 @@ private type ::= BOX type
                | MUL    [ MUT | CONST ] type
                | AND    [ lifetime? MUT? ] type
                | ANDAND [ lifetime? MUT? ] type
-               | LBRACK type [ (COMMA DOTDOT | SEMICOLON) expr ] RBRACK
+               | LBRACK type [ (COMMA DOTDOT | SEMICOLON) any_expr ] RBRACK
                | UNDERSCORE
                | type_bare_fn
                | for_in_type
@@ -685,6 +685,15 @@ left view_path_part ::= COLONCOLON IDENTIFIER {
 // Expressions
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+//
+// NOTA BENE
+//
+//  That's a synthetic production solely designated to produce
+//  valid PSI hierarchy, to use the unrestricted version of expression check `unrestricted_expr`
+//
+expr ::=
+
 restricted_expr ::= ret_expr
                   | assign_bin_expr
                   | block_expr
@@ -704,11 +713,13 @@ restricted_expr ::= ret_expr
                   | add_bin_expr
                   | mul_bin_expr
                   | cast_expr
-                  | atom_expr
+                  | atom_expr {
+  elementType = expr
+}
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
-private no_struct_lit_expr ::= <<withoutStructLiterals restricted_expr>>
-private expr ::= <<withStructLiterals restricted_expr>>
+private no_struct_lit_expr  ::= << withoutStructLiterals restricted_expr >>
+private any_expr            ::= << withStructLiterals restricted_expr >>
 
 
 block_expr ::= while_expr
@@ -778,14 +789,14 @@ cast_expr ::= restricted_expr AS type
 
 unary_expr ::= (MINUS | MUL | EXCL | (AND | ANDAND) MUT?) restricted_expr
 
-lambda_expr ::= MOVE? (OROR | OR [<<comma_separated_list lambda_param>>] OR) ret_type? expr
+lambda_expr ::= MOVE? (OROR | OR [<<comma_separated_list lambda_param>>] OR) ret_type? any_expr
 private lambda_param ::= pat type_ascription?
 
 struct_expr ::= <<checkStructAllowed>> path_generic_args_with_colons struct_expr_body
 
 struct_expr_body ::= LBRACE
-                       [ <<comma_separated_list (IDENTIFIER COLON expr)>> ]
-                       (DOTDOT  expr)?
+                       [ <<comma_separated_list (IDENTIFIER COLON any_expr)>> ]
+                       (DOTDOT  any_expr)?
                      RBRACE
 // matklad: this are ambiguous with path_expr and call_expr
 //                 | path_expr LPAREN expr
@@ -810,8 +821,8 @@ for_expr ::= [lifetime COLON] FOR pat IN no_struct_lit_expr block { pin = "IN" }
 
 match_expr ::= MATCH no_struct_lit_expr LBRACE match_arm* RBRACE
 
-match_arm ::= outer_attrs* match_pat FAT_ARROW (expr (COMMA | & RBRACE) | block )
-private match_pat ::= pat (OR pat)* (IF expr)?
+match_arm ::= outer_attrs* match_pat FAT_ARROW (any_expr (COMMA | & RBRACE) | block )
+match_pat ::= pat (OR pat)* (IF any_expr)?
 
 if_expr ::= IF no_struct_lit_expr block else_tail?
 
@@ -825,15 +836,15 @@ while_let_expr ::= WHILE LET pat EQ no_struct_lit_expr block
 
 ret_expr ::= RETURN restricted_expr?
 
-paren_expr ::= (LPAREN expr RPAREN)
+paren_expr ::= (LPAREN any_expr RPAREN)
 
 unit_expr ::= LPAREN RPAREN
 
-tuple_expr ::= LPAREN expr ((COMMA expr)+ | COMMA) RPAREN
+tuple_expr ::= LPAREN any_expr ((COMMA any_expr)+ | COMMA) RPAREN
 
 array_expr ::= LBRACK array_elems? RBRACK {pin=1}
 
-private array_elems ::= expr SEMICOLON expr
+private array_elems ::= any_expr SEMICOLON any_expr
                       | expr_list
 
 
@@ -861,7 +872,7 @@ method_call_expr ::= restricted_expr DOT IDENTIFIER [COLONCOLON generic_args] ar
 
 arg_list ::= LPAREN expr_list? RPAREN {pin=1}
 
-private expr_list ::= <<comma_separated_list expr>>
+private expr_list ::= <<comma_separated_list any_expr>>
 
 field_expr ::= restricted_expr DOT (IDENTIFIER | INTEGER_LITERAL) { pin(".*")=2 }
 
