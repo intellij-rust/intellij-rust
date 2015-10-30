@@ -134,6 +134,9 @@
     implements  ("method") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("method") = "org.rust.lang.core.psi.impl.mixin.RustMethodImplMixin"
 
+    implements  ("lambda_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("lambda_expr") = "org.rust.lang.core.psi.impl.mixin.RustLambdaExprImplMixin"
+
     implements  ("impl_method") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("impl_method") = "org.rust.lang.core.psi.impl.mixin.RustImplMethodImplMixin"
 
