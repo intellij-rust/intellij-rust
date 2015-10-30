@@ -3,7 +3,7 @@
     <name>Rust</name>
     <version>0.0.1</version>
 
-    <!--<vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>-->
+    <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
 
     <description><![CDATA[
       Rust support
