@@ -11,9 +11,7 @@ public open class RustReference<T : RustQualifiedValue>(element: T,
                                                         soft: Boolean = false) :
         PsiReferenceBase<T>(element, range, soft) {
 
-    override fun getVariants(): Array<out Any> {
-        throw UnsupportedOperationException()
-    }
+    override fun getVariants(): Array<out Any> = EMPTY_ARRAY
 
     protected override fun calculateDefaultRangeInElement(): TextRange? =
             TextRange.from(0, myElement.textLength)
