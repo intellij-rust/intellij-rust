@@ -944,17 +944,22 @@ let_decl ::= LET pat [ COLON type ] [ EQ restricted_expr ] SEMICOLON
 // Statements
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-block                 ::= LBRACE              stmt* restricted_expr? RBRACE { pin(".*")=1 }
-inner_attrs_and_block ::= LBRACE inner_attrs? stmt* restricted_expr? RBRACE { pin(".*")=1 }
+block                 ::= LBRACE              stmt_* restricted_expr? RBRACE { pin(".*")=1 }
+inner_attrs_and_block ::= LBRACE inner_attrs? stmt_* restricted_expr? RBRACE { pin(".*")=1 }
 
 
-expr_stmt ::= restricted_expr SEMICOLON
-decl_stmt ::= (item | let_decl)
+expr_stmt   ::= restricted_expr SEMICOLON | block_expr
+decl_stmt   ::= item | let_decl
+empty_stmt  ::= SEMICOLON
 
-stmt ::= block_expr
-       | expr_stmt
-       | decl_stmt
-       | SEMICOLON
+// TODO(kudinkin):  That's a hack to overcome GK's bug
+//                  producing parsing rules for `fake` productions
+
+stmt ::=
+
+private stmt_ ::= expr_stmt
+                | decl_stmt
+                | empty_stmt
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Utils

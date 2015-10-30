@@ -135,7 +135,7 @@ FILE
                     <empty list>
                   PsiElement({)('{')
                   PsiElement(})('}')
-          RustStmtImpl(STMT)
+          RustEmptyStmtImpl(EMPTY_STMT)
             PsiElement(;)(';')
           PsiWhiteSpace('\n    ')
           RustDeclStmtImpl(DECL_STMT)
@@ -152,7 +152,7 @@ FILE
                     <empty list>
                   PsiElement({)('{')
                   PsiElement(})('}')
-          RustStmtImpl(STMT)
+          RustEmptyStmtImpl(EMPTY_STMT)
             PsiElement(;)(';')
           PsiWhiteSpace('\n')
           PsiElement(})('}')

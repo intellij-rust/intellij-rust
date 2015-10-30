@@ -96,7 +96,7 @@ FILE
                     PsiElement(})('}')
             PsiElement(;)(';')
           PsiWhiteSpace('\n\n    ')
-          RustStmtImpl(STMT)
+          RustExprStmtImpl(EXPR_STMT)
             RustForExprImpl(FOR_EXPR)
               PsiElement(for)('for')
               PsiWhiteSpace(' ')
