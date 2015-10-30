@@ -4,12 +4,12 @@ import com.intellij.lang.ASTNode
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustParam
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
-import org.rust.lang.core.psi.util.boundIdentifiers
+import org.rust.lang.core.psi.util.boundElements
 
 public abstract class RustParamImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
                                                         , RustParam {
 
     override fun getBoundElements() : Collection<RustNamedElement> =
-        pat.boundIdentifiers
+        pat.boundElements
 }
 

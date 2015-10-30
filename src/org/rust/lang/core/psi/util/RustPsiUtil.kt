@@ -21,7 +21,7 @@ val PsiElement.parentRelativeRange: TextRange?
         TextRange(startOffsetInParent, startOffsetInParent + textLength)
     }
 
-val RustPat.boundIdentifiers: List<RustNamedElement>
+val RustPat.boundElements: List<RustNamedElement>
     get() {
         val result = arrayListOf<RustNamedElement>()
 

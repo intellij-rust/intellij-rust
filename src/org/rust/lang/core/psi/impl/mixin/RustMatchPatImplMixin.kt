@@ -4,13 +4,13 @@ import com.intellij.lang.ASTNode
 import org.rust.lang.core.psi.RustMatchPat
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
-import org.rust.lang.core.psi.util.boundIdentifiers
+import org.rust.lang.core.psi.util.boundElements
 
 public abstract class RustMatchPatImplMixin(node: ASTNode)  : RustCompositeElementImpl(node)
                                                             , RustMatchPat {
 
     override fun getBoundElements(): Collection<RustNamedElement> =
-        patList .flatMap { it.boundIdentifiers }
+        patList .flatMap { it.boundElements }
                 .filterNotNull()
 }
 
