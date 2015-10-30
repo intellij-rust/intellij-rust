@@ -14,6 +14,7 @@ class RustResolveTestCase : RustTestCase() {
     fun testLocals()               { checkIsBound()   }
     fun testShadowing()            { checkIsBound(atOffset = 35) }
     fun testNestedPatterns()       { checkIsBound()   }
+    fun testClosure()              { checkIsBound()   }
     fun testMatch()                { checkIsBound()   }
     fun testIfLet()                { checkIsBound()   }
     fun testWhileLet()             { checkIsBound()   }

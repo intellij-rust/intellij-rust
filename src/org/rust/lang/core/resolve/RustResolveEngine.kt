@@ -1,6 +1,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.RustLambdaExpr
 import org.rust.lang.core.psi.RustScopedLetExpr
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustVisitor
@@ -60,6 +61,10 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
         }
 
         override fun visitScopedLetExpr(o: RustScopedLetExpr) {
+            visitResolveScope(o)
+        }
+
+        override fun visitLambdaExpr(o: RustLambdaExpr) {
             visitResolveScope(o)
         }
 
