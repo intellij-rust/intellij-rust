@@ -9,9 +9,12 @@ abstract class RustTestCase : LightCodeInsightFixtureTestCase() {
     final protected val goldFileName: String
         get() = "${camelToSnake(getTestName(true))}_gold.rs"
 
-    private fun camelToSnake(camelCaseName: String): String =
-            camelCaseName.split("(?=[A-Z])".toRegex())
-                    .map { it.toLowerCase() }
-                    .joinToString("_")
 
+    companion object {
+        @JvmStatic
+        fun camelToSnake(camelCaseName: String): String =
+                camelCaseName.split("(?=[A-Z])".toRegex())
+                        .map { it.toLowerCase() }
+                        .joinToString("_")
+    }
 }
