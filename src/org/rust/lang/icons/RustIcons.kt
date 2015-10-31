@@ -13,6 +13,7 @@ public object RustIcons {
     public val BIG:     Icon = IconLoader.getIcon("/org/rust/icons/rust32.png")
 
     public val CLASS = AllIcons.Nodes.Class
+    public val IMPL = AllIcons.Nodes.AbstractClass
     public val ENUM   = AllIcons.Nodes.Enum
     public val FIELD   = AllIcons.Nodes.Field
     public val FUNCTION = AllIcons.Nodes.Function

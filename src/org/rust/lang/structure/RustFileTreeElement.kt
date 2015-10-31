@@ -24,11 +24,11 @@ class RustFileTreeElement(file: RustFileImpl) : PsiTreeElementBase<RustFileImpl>
                 result += (RustStructTreeElement(o))
             }
 
-            override fun visitFnItem(o: RustFnItem) {
-                result += (RustStructureViewElement(o))
+            override fun visitImplItem(o: RustImplItem) {
+                result += (RustImplTreeElement(o))
             }
 
-            override fun visitImplMethod(o: RustImplMethod) {
+            override fun visitFnItem(o: RustFnItem) {
                 result += (RustStructureViewElement(o))
             }
         })

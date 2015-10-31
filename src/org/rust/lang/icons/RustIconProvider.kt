@@ -14,6 +14,7 @@ import javax.swing.Icon
 class RustIconProvider: IconProvider() {
     override fun getIcon(element: PsiElement, flags: Int): Icon? {
         return when (element) {
+            is RustImplItem -> RustIcons.IMPL
             is RustEnumItem -> getEnumIcon(element, flags)
             is RustEnumDef -> RustIcons.FIELD
             is RustStructItem -> getStructIcon(element, flags)
