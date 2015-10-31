@@ -21,7 +21,7 @@ class RustImplTreeElement(element: RustImplItem) : PsiTreeElementBase<RustImplIt
         val result = arrayListOf<StructureViewTreeElement>()
         element?.accept(object : RecursiveRustVisitor() {
             override fun visitImplMethod(o: RustImplMethod) {
-                result += (RustStructureViewElement(o))
+                result += RustImplMethodTreeElement(o)
             }
         })
         return result;
