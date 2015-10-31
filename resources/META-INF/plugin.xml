@@ -47,6 +47,7 @@
         <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
 
         <lang.syntaxHighlighterFactory language="TOML" implementationClass="org.toml.lang.TomlHighlighterFactory"/>
+        <lang.braceMatcher language="TOML" implementationClass="org.toml.lang.TomlBraceMatcher"/>
 
         <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.core.parser.TomlParserDefinition"/>
     </extensions>
