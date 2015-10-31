@@ -20,5 +20,6 @@ class RustFormatterTestCase : RustTestCase() {
 
     //@formatter:off
     fun testBlocks()                { doTest() }
+    fun testItems()                 { doTest() }
     //@formatter:on
 }
