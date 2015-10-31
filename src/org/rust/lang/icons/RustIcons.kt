@@ -12,6 +12,8 @@ public object RustIcons {
     public val NORMAL:  Icon = IconLoader.getIcon("/org/rust/icons/rust16.png")
     public val BIG:     Icon = IconLoader.getIcon("/org/rust/icons/rust32.png")
 
+    public val CLASS = AllIcons.Nodes.Class
+    public val ENUM   = AllIcons.Nodes.Enum
     public val FUNCTION = AllIcons.Nodes.Function
     public val METHOD   = AllIcons.Nodes.Method
 }
