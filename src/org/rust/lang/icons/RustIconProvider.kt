@@ -32,7 +32,7 @@ class RustIconProvider: IconProvider() {
             return RustIcons.ENUM;
 
         val parent = element.parent?.parent as RustItem?
-        return addVisibilityIcon(RustIcons.ENUM, parent?.pub)
+        return RustIcons.ENUM.addVisibilityIcon(parent?.pub)
     }
 
     private fun getStructIcon(element: RustStructItem, flags: Int): Icon? {
@@ -40,24 +40,24 @@ class RustIconProvider: IconProvider() {
             return RustIcons.CLASS;
 
         val parent = element.parent?.parent as RustItem?
-        return addVisibilityIcon(RustIcons.CLASS, parent?.pub)
+        return RustIcons.CLASS.addVisibilityIcon(parent?.pub)
     }
 
     private fun getStructDeclFieldIcon(element: RustStructDeclField, flags: Int): Icon? {
         if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
             return RustIcons.FIELD;
 
-        return addVisibilityIcon(RustIcons.FIELD, element.pub)
+        return RustIcons.FIELD.addVisibilityIcon(element.pub)
     }
+}
 
-    private fun addVisibilityIcon(baseIcon: Icon, pub: PsiElement?): RowIcon {
-        return addVisibilityIcon(baseIcon, pub != null)
-    }
+fun Icon.addVisibilityIcon(pub: PsiElement?): RowIcon {
+    return addVisibilityIcon(pub != null)
+}
 
-    private fun addVisibilityIcon(baseIcon: Icon, pub: Boolean): RowIcon {
-        val visibility = if (pub) PsiUtil.ACCESS_LEVEL_PUBLIC else PsiUtil.ACCESS_LEVEL_PRIVATE
-        val icon = RowIcon(baseIcon, EmptyIcon.create(PlatformIcons.PUBLIC_ICON))
-        VisibilityIcons.setVisibilityIcon(visibility, icon);
-        return icon;
-    }
+fun Icon.addVisibilityIcon(pub: Boolean): RowIcon {
+    val visibility = if (pub) PsiUtil.ACCESS_LEVEL_PUBLIC else PsiUtil.ACCESS_LEVEL_PRIVATE
+    val icon = RowIcon(this, EmptyIcon.create(PlatformIcons.PUBLIC_ICON))
+    VisibilityIcons.setVisibilityIcon(visibility, icon);
+    return icon;
 }
