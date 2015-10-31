@@ -1,5 +1,6 @@
 package org.rust.lang.structure
 
+import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
@@ -9,8 +10,8 @@ class RustFileTreeElement(file: RustFileImpl) : PsiTreeElementBase<RustFileImpl>
     override fun getPresentableText(): String? = element?.name
 
 
-    override fun getChildrenBase(): Collection<RustStructureViewElement> {
-        val result = arrayListOf<RustStructureViewElement>()
+    override fun getChildrenBase(): Collection<StructureViewTreeElement> {
+        val result = arrayListOf<StructureViewTreeElement>()
         element?.accept(object : RustVisitor() {
             override fun visitElement(o: PsiElement) {
                 o.acceptChildren(this)
