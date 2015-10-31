@@ -9,7 +9,7 @@ class RustStructureViewModel(editor: Editor?, file: RustFileImpl) :
         TextEditorBasedStructureViewModel(editor, file) {
 
     override fun getRoot(): StructureViewTreeElement {
-        return RustStructureViewTreeElement(psiFile)
+        return RustFileTreeElement(psiFile)
     }
 
     override fun getPsiFile(): RustFileImpl {

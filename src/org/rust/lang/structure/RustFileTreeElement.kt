@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFileImpl
 
-class RustStructureViewTreeElement(file: RustFileImpl) : PsiTreeElementBase<RustFileImpl>(file) {
+class RustFileTreeElement(file: RustFileImpl) : PsiTreeElementBase<RustFileImpl>(file) {
     override fun getPresentableText(): String? = element?.name
 
 
