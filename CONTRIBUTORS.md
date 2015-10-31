@@ -1,6 +1,6 @@
 # Contributors
 
-IntelliJ would never see support for a Rust without these great people: 
+IntelliJ would never see support for Rust without these great people: 
 
   * [Aleksey Kladov](https://github.com/matklad)
   * [Alexey Kudinkin](https://github.com/alexeykudinkin)
