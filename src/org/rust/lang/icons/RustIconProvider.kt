@@ -8,10 +8,7 @@ import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
 import com.intellij.util.VisibilityIcons
 import com.intellij.util.ui.EmptyIcon
-import org.rust.lang.core.psi.RustEnumItem
-import org.rust.lang.core.psi.RustItem
-import org.rust.lang.core.psi.RustStructDeclField
-import org.rust.lang.core.psi.RustStructItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.*
 import javax.swing.Icon
 
@@ -19,6 +16,7 @@ class RustIconProvider: IconProvider() {
     override fun getIcon(element: PsiElement, flags: Int): Icon? {
         return when (element) {
             is RustEnumItemImpl -> getEnumIcon(element, flags)
+            is RustEnumDef -> RustIcons.FIELD
             is RustStructItemImpl -> getStructIcon(element, flags)
             is RustStructDeclField -> getStructDeclFieldIcon(element, flags)
             is RustFnItemImpl -> RustIcons.FUNCTION

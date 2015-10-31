@@ -17,7 +17,7 @@ class RustFileTreeElement(file: RustFileImpl) : PsiTreeElementBase<RustFileImpl>
             }
 
             override fun visitEnumItem(o: RustEnumItem) {
-                result += (RustStructureViewElement(o))
+                result += (RustEnumTreeElement(o))
             }
 
             override fun visitStructItem(o: RustStructItem) {
