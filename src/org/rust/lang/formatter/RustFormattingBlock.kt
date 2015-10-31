@@ -11,8 +11,15 @@ import org.rust.lang.core.psi.RustCompositeElementTypes.INNER_ATTRS_AND_BLOCK
 
 class RustFormattingBlock(private val node: ASTNode, private val indent: Indent?) : ASTBlock {
 
-    override fun getChildAttributes(newChildIndex: Int): ChildAttributes =
-            ChildAttributes(Indent.getNormalIndent(), null)
+    override fun getChildAttributes(newChildIndex: Int): ChildAttributes {
+        val childIndent = if (BLOCKS_TOKEN_SET.contains(node.elementType)) {
+            Indent.getNormalIndent()
+        } else {
+            Indent.getNoneIndent()
+        }
+
+        return ChildAttributes(childIndent, null)
+    }
 
     override fun getNode() = node
     override fun getAlignment() = null
