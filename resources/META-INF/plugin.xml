@@ -48,6 +48,7 @@
         <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
 
         <lang.syntaxHighlighterFactory language="TOML" implementationClass="org.toml.lang.TomlHighlighterFactory"/>
+        <lang.commenter language="TOML" implementationClass="org.toml.lang.TomlCommenter"/>
 
         <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.core.parser.TomlParserDefinition"/>
     </extensions>
