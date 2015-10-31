@@ -4,6 +4,7 @@ import com.intellij.ide.IconProvider
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtil
+import com.intellij.ui.LayeredIcon
 import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
 import com.intellij.util.VisibilityIcons
@@ -20,7 +21,7 @@ class RustIconProvider: IconProvider() {
             is RustStructItem -> getStructIcon(element, flags)
             is RustStructDeclField -> getStructDeclFieldIcon(element, flags)
             is RustFnItem -> RustIcons.FUNCTION
-            is RustImplMethod -> RustIcons.METHOD
+            is RustImplMethod -> if (element.isStatic()) RustIcons.METHOD.addStaticMark() else RustIcons.METHOD
             else -> null
         }
     }
@@ -59,9 +60,17 @@ fun RustStructDeclField.isPublic(): Boolean {
     return pub != null;
 }
 
+fun RustImplMethod.isStatic(): Boolean {
+    return self == null;
+}
+
 fun Icon.addVisibilityIcon(pub: Boolean): RowIcon {
     val visibility = if (pub) PsiUtil.ACCESS_LEVEL_PUBLIC else PsiUtil.ACCESS_LEVEL_PRIVATE
     val icon = RowIcon(this, EmptyIcon.create(PlatformIcons.PUBLIC_ICON))
     VisibilityIcons.setVisibilityIcon(visibility, icon);
     return icon;
+}
+
+fun Icon.addStaticMark(): Icon {
+    return LayeredIcon(this, RustIcons.STATIC_MARK);
 }
