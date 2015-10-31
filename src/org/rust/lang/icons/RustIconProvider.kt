@@ -29,28 +29,34 @@ class RustIconProvider: IconProvider() {
         if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
             return RustIcons.ENUM;
 
-        val parent = element.parent?.parent as RustItem?
-        return RustIcons.ENUM.addVisibilityIcon(parent?.pub)
+        return RustIcons.ENUM.addVisibilityIcon(element.isPublic())
     }
 
     private fun getStructIcon(element: RustStructItem, flags: Int): Icon? {
         if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
             return RustIcons.CLASS;
 
-        val parent = element.parent?.parent as RustItem?
-        return RustIcons.CLASS.addVisibilityIcon(parent?.pub)
+        return RustIcons.CLASS.addVisibilityIcon(element.isPublic())
     }
 
     private fun getStructDeclFieldIcon(element: RustStructDeclField, flags: Int): Icon? {
         if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
             return RustIcons.FIELD;
 
-        return RustIcons.FIELD.addVisibilityIcon(element.pub)
+        return RustIcons.FIELD.addVisibilityIcon(element.isPublic())
     }
 }
 
-fun Icon.addVisibilityIcon(pub: PsiElement?): RowIcon {
-    return addVisibilityIcon(pub != null)
+fun RustEnumItem.isPublic(): Boolean {
+    return (parent?.parent as RustItem?)?.pub != null;
+}
+
+fun RustStructItem.isPublic(): Boolean {
+    return (parent?.parent as RustItem?)?.pub != null;
+}
+
+fun RustStructDeclField.isPublic(): Boolean {
+    return pub != null;
 }
 
 fun Icon.addVisibilityIcon(pub: Boolean): RowIcon {
