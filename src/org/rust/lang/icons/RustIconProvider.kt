@@ -32,11 +32,7 @@ class RustIconProvider: IconProvider() {
             return RustIcons.ENUM;
 
         val parent = element.parent?.parent as RustItem?
-
-        val icon = RowIcon(RustIcons.ENUM, EmptyIcon.create(PlatformIcons.PUBLIC_ICON))
-        val visibility = if (parent?.pub == null) PsiUtil.ACCESS_LEVEL_PRIVATE else PsiUtil.ACCESS_LEVEL_PUBLIC
-        VisibilityIcons.setVisibilityIcon(visibility, icon);
-        return icon;
+        return addVisibilityIcon(RustIcons.ENUM, parent?.pub)
     }
 
     private fun getStructIcon(element: RustStructItem, flags: Int): Icon? {
@@ -44,19 +40,23 @@ class RustIconProvider: IconProvider() {
             return RustIcons.CLASS;
 
         val parent = element.parent?.parent as RustItem?
-
-        val icon = RowIcon(RustIcons.CLASS, EmptyIcon.create(PlatformIcons.PUBLIC_ICON))
-        val visibility = if (parent?.pub == null) PsiUtil.ACCESS_LEVEL_PRIVATE else PsiUtil.ACCESS_LEVEL_PUBLIC
-        VisibilityIcons.setVisibilityIcon(visibility, icon);
-        return icon;
+        return addVisibilityIcon(RustIcons.CLASS, parent?.pub)
     }
 
     private fun getStructDeclFieldIcon(element: RustStructDeclField, flags: Int): Icon? {
         if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
             return RustIcons.FIELD;
 
-        val icon = RowIcon(RustIcons.FIELD, EmptyIcon.create(PlatformIcons.PUBLIC_ICON))
-        val visibility = if (element.pub == null) PsiUtil.ACCESS_LEVEL_PRIVATE else PsiUtil.ACCESS_LEVEL_PUBLIC
+        return addVisibilityIcon(RustIcons.FIELD, element.pub)
+    }
+
+    private fun addVisibilityIcon(baseIcon: Icon, pub: PsiElement?): RowIcon {
+        return addVisibilityIcon(baseIcon, pub != null)
+    }
+
+    private fun addVisibilityIcon(baseIcon: Icon, pub: Boolean): RowIcon {
+        val visibility = if (pub) PsiUtil.ACCESS_LEVEL_PUBLIC else PsiUtil.ACCESS_LEVEL_PRIVATE
+        val icon = RowIcon(baseIcon, EmptyIcon.create(PlatformIcons.PUBLIC_ICON))
         VisibilityIcons.setVisibilityIcon(visibility, icon);
         return icon;
     }
