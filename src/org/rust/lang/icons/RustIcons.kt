@@ -14,6 +14,7 @@ public object RustIcons {
 
     public val CLASS = AllIcons.Nodes.Class
     public val ENUM   = AllIcons.Nodes.Enum
+    public val FIELD   = AllIcons.Nodes.Field
     public val FUNCTION = AllIcons.Nodes.Function
     public val METHOD   = AllIcons.Nodes.Method
 }
