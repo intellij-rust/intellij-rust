@@ -385,7 +385,7 @@ abi ::= STRING_LITERAL
 
 extern_crate_decl ::= EXTERN CRATE crate_name SEMICOLON
 
-private crate_name ::= IDENTIFIER | IDENTIFIER AS IDENTIFIER
+private crate_name ::= IDENTIFIER [ AS IDENTIFIER ]
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
