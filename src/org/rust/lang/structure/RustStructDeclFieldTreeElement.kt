@@ -7,11 +7,7 @@ import org.rust.lang.core.psi.RustStructDeclField
 
 class RustStructDeclFieldTreeElement(element: RustStructDeclField) : PsiTreeElementBase<RustStructDeclField>(element) {
 
-    override fun getPresentableText(): String? {
-        return "${element?.identifier?.text}: ${element?.typeSum?.text}"
-    }
+    override fun getPresentableText() = "${element?.identifier?.text}: ${element?.typeSum?.text}"
 
-    override fun getChildrenBase(): Collection<StructureViewTreeElement> {
-        return arrayListOf<StructureViewTreeElement>()
-    }
+    override fun getChildrenBase() = arrayListOf<StructureViewTreeElement>()
 }

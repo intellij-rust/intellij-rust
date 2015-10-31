@@ -6,9 +6,7 @@ import com.intellij.psi.NavigatablePsiElement
 
 class RustStructureViewElement(element: NavigatablePsiElement) : PsiTreeElementBase<NavigatablePsiElement>(element) {
 
-    override fun getPresentableText(): String? = element?.name
+    override fun getPresentableText() = element?.name
 
-    override fun getChildrenBase(): Collection<StructureViewTreeElement> {
-        return arrayListOf<StructureViewTreeElement>()
-    }
+    override fun getChildrenBase() = arrayListOf<StructureViewTreeElement>()
 }

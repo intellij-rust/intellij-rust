@@ -7,8 +7,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFileImpl
 
 class RustFileTreeElement(file: RustFileImpl) : PsiTreeElementBase<RustFileImpl>(file) {
-    override fun getPresentableText(): String? = element?.name
-
+    override fun getPresentableText() = element?.name
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {
         val result = arrayListOf<StructureViewTreeElement>()
