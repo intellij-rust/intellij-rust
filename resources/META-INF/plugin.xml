@@ -32,6 +32,7 @@
 
         <lang.syntaxHighlighterFactory language="RUST" implementationClass="org.rust.lang.highlight.RustHighlighterFactory"/>
         <lang.braceMatcher language="RUST" implementationClass="org.rust.lang.highlight.RustBraceMatcher"/>
+        <lang.formatter language="RUST" implementationClass="org.rust.lang.formatter.RustFormattingModelBuilder"/>
         <lang.commenter language="RUST" implementationClass="org.rust.lang.RustCommenter"/>
 
         <lang.parserDefinition language="RUST" implementationClass="org.rust.lang.core.RustParserDefinition"/>
