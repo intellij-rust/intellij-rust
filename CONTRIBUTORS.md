@@ -3,8 +3,10 @@
 IntelliJ would never see support for a Rust without these great people: 
 
   * [Aleksey Kladov](https://github.com/matklad)
-  * [Evgeny Kurbatsky](https://github.com/atsky)
   * [Alexey Kudinkin](https://github.com/alexeykudinkin)
+  * [Evgeny Kurbatsky](https://github.com/atsky)
+  * [Nikita Ofitserov](https://github.com/himikof)
+  * [Tobias Bieniek](https://github.com/Turbo87)
   * [Vladislav Isenbaev](https://github.com/winger)
 
 *We're keenly sorry if we've missed your name on this list, please email us to get it fixed.*
