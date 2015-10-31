@@ -21,9 +21,17 @@ class RustIconProvider: IconProvider() {
             is RustStructItem -> getStructIcon(element, flags)
             is RustStructDeclField -> getStructDeclFieldIcon(element, flags)
             is RustFnItem -> RustIcons.FUNCTION
-            is RustImplMethod -> if (element.isStatic()) RustIcons.METHOD.addStaticMark() else RustIcons.METHOD
+            is RustImplMethod -> getImplMethodIcon(element, flags)
             else -> null
         }
+    }
+
+    private fun getImplMethodIcon(element: RustImplMethod, flags: Int): Icon? {
+        val icon = if (element.isStatic()) RustIcons.METHOD.addStaticMark() else RustIcons.METHOD
+        if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
+            return icon;
+
+        return icon.addVisibilityIcon(element.isPublic())
     }
 
     private fun getEnumIcon(element: RustEnumItem, flags: Int): Icon? {
@@ -57,6 +65,10 @@ fun RustStructItem.isPublic(): Boolean {
 }
 
 fun RustStructDeclField.isPublic(): Boolean {
+    return pub != null;
+}
+
+fun RustImplMethod.isPublic(): Boolean {
     return pub != null;
 }
 
