@@ -38,6 +38,9 @@ allprojects {
 
         gen 'de.jflex:jflex:1.6.0'
         gen files('lib/gk/grammar-kit-patched.jar')
+
+        testCompile "junit:junit:4.+"
+        testCompile 'org.assertj:assertj-core:3.2.0'
     }
 
     apply plugin: 'java'
@@ -106,10 +109,6 @@ idea {
 }
 
 test {
-    dependencies {
-        compile "junit:junit:4.+"
-    }
-
     systemProperties "idea.classpath.index.enabled": false
 
     useJUnit { }

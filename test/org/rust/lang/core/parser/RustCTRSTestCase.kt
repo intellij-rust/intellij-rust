@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.DebugUtil
-import org.junit.Assert
+import org.assertj.core.api.Assertions.assertThat
 import java.io.File
 
 public class RustCTRSTestCase : RustParsingTestCaseBase("parser/ctrs") {
@@ -37,14 +37,14 @@ public class RustCTRSTestCase : RustParsingTestCaseBase("parser/ctrs") {
                         "$text\n\n" +
                         "${DebugUtil.psiToString(psi, true)}"
                 if (hasError(psi) ) {
-                    Assert.assertTrue("New error " + messageTail, expectedError);
+                    assertThat(expectedError).isTrue().overridingErrorMessage("New error " + messageTail)
                 } else {
-                    Assert.assertFalse("No error " + messageTail, expectedError);
+                    assertThat(expectedError).isFalse().overridingErrorMessage("No error " + messageTail)
                 }
             }
             true
         })
-        Assert.assertTrue("CTRS tests were not run.", nFilesVisited > 3000)
+        assertThat(nFilesVisited).isGreaterThan(3000).overridingErrorMessage("CTRS tests were not run.")
     }
 
     private val expectedErrors = setOf(

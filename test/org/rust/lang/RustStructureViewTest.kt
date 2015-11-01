@@ -5,8 +5,7 @@ import com.intellij.ide.util.FileStructurePopup
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
-import org.hamcrest.CoreMatchers
-import org.junit.Assert
+import org.assertj.core.api.Assertions.assertThat
 import javax.swing.tree.TreePath
 
 class RustStructureViewTest : RustTestCase() {
@@ -23,9 +22,7 @@ class RustStructureViewTest : RustTestCase() {
             popup.shallowExpand()
             val text = PlatformTestUtil.print(popup.tree)
 
-            expected.forEach {
-                Assert.assertThat(text, CoreMatchers.containsString(it))
-            }
+            assertThat(text).contains(*expected)
         } finally {
             Disposer.dispose(popup)
         }
