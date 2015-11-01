@@ -22,4 +22,5 @@ public object RustIcons {
     public val ABSTRACT_METHOD   = AllIcons.Nodes.AbstractMethod
 
     public val STATIC_MARK   = AllIcons.Nodes.StaticMark
+    public val TEST_MARK   = AllIcons.Nodes.JunitTestMark
 }

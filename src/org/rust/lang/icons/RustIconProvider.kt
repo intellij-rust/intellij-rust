@@ -22,7 +22,7 @@ class RustIconProvider: IconProvider() {
             is RustEnumDef -> RustIcons.FIELD
             is RustStructItem -> getStructIcon(element, flags)
             is RustStructDeclField -> getStructDeclFieldIcon(element, flags)
-            is RustFnItem -> RustIcons.FUNCTION
+            is RustFnItem -> if (element.isTest()) RustIcons.FUNCTION.addTestMark() else RustIcons.FUNCTION
             is RustImplMethod -> getImplMethodIcon(element, flags)
             else -> null
         }
@@ -104,6 +104,10 @@ fun RustTraitMethod.isStatic(): Boolean {
     return self == null;
 }
 
+fun RustFnItem.isTest(): Boolean {
+    return attrs?.map { it.metaItem?.identifier?.text }?.find { "test".equals(it) } != null
+}
+
 fun Icon.addVisibilityIcon(pub: Boolean): RowIcon {
     val visibility = if (pub) PsiUtil.ACCESS_LEVEL_PUBLIC else PsiUtil.ACCESS_LEVEL_PRIVATE
     val icon = RowIcon(this, EmptyIcon.create(PlatformIcons.PUBLIC_ICON))
@@ -113,4 +117,8 @@ fun Icon.addVisibilityIcon(pub: Boolean): RowIcon {
 
 fun Icon.addStaticMark(): Icon {
     return LayeredIcon(this, RustIcons.STATIC_MARK);
+}
+
+fun Icon.addTestMark(): Icon {
+    return LayeredIcon(this, RustIcons.TEST_MARK);
 }
