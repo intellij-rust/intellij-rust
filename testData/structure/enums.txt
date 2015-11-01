@@ -1,0 +1,9 @@
+-enums.rs
+ -CompileMode
+  Test
+  Build
+  Bench
+  Doc
+ -CompileFilter
+  Everything
+  Only
