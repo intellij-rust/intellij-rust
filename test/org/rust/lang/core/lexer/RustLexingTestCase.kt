@@ -2,13 +2,16 @@ package org.rust.lang.core.lexer
 
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.testFramework.LexerTestCase
-import org.rust.lang.RustFileType
+import java.io.File
+import java.io.IOException
 import java.nio.file.Paths
 
 
 public class RustLexingTestCase : LexerTestCase() {
-
     override fun getDirPath(): String {
         val home = Paths.get(PathManager.getHomePath()).toAbsolutePath()
         val testData = Paths.get("testData", "lexer").toAbsolutePath()
@@ -20,15 +23,25 @@ public class RustLexingTestCase : LexerTestCase() {
 
     override fun createLexer(): Lexer? = RustLexer()
 
-    val ext = RustFileType.DEFAULTS.EXTENSION
+    // NOTE(matkad): this is basically a copy-paste of doFileTest.
+    // The only difference is that encoding is set to utf-8
+    fun doTest() {
+        val fileName = PathManager.getHomePath() + "/" + dirPath + "/" + getTestName(true) + ".rs"
+        var text = ""
+        try {
+            val fileText = FileUtil.loadFile(File(fileName), CharsetToolkit.UTF8);
+            text = StringUtil.convertLineSeparators(if (shouldTrim()) fileText.trim() else fileText);
+        } catch (e: IOException) {
+            fail("can't load file " + fileName + ": " + e.message);
+        }
+        doTest(text);
+    }
 
-    // @formatter:off
-    fun testComments()          { doFileTest(ext) }
-    fun testShebang()           { doFileTest(ext) }
-    fun testFloat()             { doFileTest(ext) }
-    fun testIdentifiers()       { doFileTest(ext) }
-    fun testCharLiterals()      { doFileTest(ext) }
-    fun testStringLiterals()    { doFileTest(ext) }
-    fun testByteLiterals()      { doFileTest(ext) }
-    // @formatter:on
+    fun testComments() = doTest()
+    fun testShebang() = doTest()
+    fun testFloat() = doTest()
+    fun testIdentifiers() = doTest()
+    fun testCharLiterals() = doTest()
+    fun testStringLiterals() = doTest()
+    fun testByteLiterals() = doTest()
 }
