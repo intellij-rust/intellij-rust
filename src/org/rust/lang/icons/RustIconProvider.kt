@@ -73,16 +73,8 @@ class RustIconProvider: IconProvider() {
     }
 }
 
-fun RustTraitItem.isPublic(): Boolean {
-    return (parent?.parent as RustItem?)?.vis != null;
-}
-
-fun RustEnumItem.isPublic(): Boolean {
-    return (parent?.parent as RustItem?)?.vis != null;
-}
-
-fun RustStructItem.isPublic(): Boolean {
-    return (parent?.parent as RustItem?)?.vis != null;
+fun RustItem.isPublic(): Boolean {
+    return vis != null;
 }
 
 fun RustStructDeclField.isPublic(): Boolean {
