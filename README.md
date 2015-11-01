@@ -7,7 +7,26 @@
 This is experimental implementation targeting bleeding-edge version of Rust language and (as may be assumed reasonably enough) 
 is highly *unstable* just yet.
 
-If you are brave enough, see the [usage docs](doc/Usage.md).
+## Installation
+
+We intentionally do not provide a download for the plugin just yet. If you are
+brave enough and want to use the plugin, you have to build it from source.
+
+Building:
+
+```
+$ git clone https://github.com/alexeykudinkin/intellij-rust
+$ cd intellij-rust
+$ ./gradlew buildPlugin
+```
+
+This creates a zip archive in `build/distributions` which you can install with
+`install plugin from disk` action.
+
+
+## Usage
+
+See the [usage docs](doc/Usage.md).
 
 ## FAQ
 

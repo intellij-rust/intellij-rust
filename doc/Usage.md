@@ -1,19 +1,3 @@
-# Installation
-
-We intentionally do not provide a download for the plugin just yet. If
-you want to use the plugin, you have to build it from source.
-
-Building:
-
-```
-$ git clone https://github.com/alexeykudinkin/intellij-rust
-$ cd intellij-rust
-$ ./gradlew buildPlugin
-```
-
-This creates a zip archive in `build/distributions` which you can install with
-`install plugin from disk` action.
-
 # Usage
 
 Please note that most of the features are missing at the moment.
