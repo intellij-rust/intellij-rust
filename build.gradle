@@ -79,19 +79,6 @@ sourceSets {
     }
 }
 
-apply plugin: 'idea'
-
-idea {
-    project {
-        jdkName         = javaVersion
-        languageLevel   = javaVersion
-    }
-
-    module {
-        generatedSourceDirs += file('gen')
-    }
-}
-
 test {
     systemProperties "idea.classpath.index.enabled": false
 
@@ -211,6 +198,25 @@ compileTestKotlin   .dependsOn generate
 clean {
     delete "gen"
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// IDE support
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+apply plugin: 'idea'
+
+idea {
+    project {
+        jdkName         = javaVersion
+        languageLevel   = javaVersion
+    }
+
+    module {
+        generatedSourceDirs += file('gen')
+    }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Misc
