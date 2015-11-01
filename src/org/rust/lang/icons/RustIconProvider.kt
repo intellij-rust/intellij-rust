@@ -22,10 +22,18 @@ class RustIconProvider: IconProvider() {
             is RustEnumDef -> RustIcons.FIELD
             is RustStructItem -> getStructIcon(element, flags)
             is RustStructDeclField -> getStructDeclFieldIcon(element, flags)
-            is RustFnItem -> if (element.isTest()) RustIcons.FUNCTION.addTestMark() else RustIcons.FUNCTION
+            is RustFnItem -> getFnIcon(element, flags)
             is RustImplMethod -> getImplMethodIcon(element, flags)
             else -> null
         }
+    }
+
+    private fun getFnIcon(element: RustFnItem, flags: Int): Icon? {
+        val icon = if (element.isTest()) RustIcons.FUNCTION.addTestMark() else RustIcons.FUNCTION
+        if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
+            return icon;
+
+        return icon.addVisibilityIcon(element.isPublic())
     }
 
     private fun getTraitIcon(element: RustTraitItem, flags: Int): Icon? {
