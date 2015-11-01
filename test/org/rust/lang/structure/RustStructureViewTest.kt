@@ -20,5 +20,6 @@ class RustStructureViewTest : RustTestCase() {
 
     //@formatter:off
     fun testFunctions() { doFileTest() }
+    fun testStructs() { doFileTest() }
     //@formatter:on
 }
