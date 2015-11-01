@@ -884,7 +884,8 @@ lit_expr ::= lit
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-macro_expr ::= IDENTIFIER EXCL macro_arg
+macro_expr ::= ( "try" EXCL LPAREN any_expr RPAREN
+               | IDENTIFIER EXCL macro_arg )
 
 pat_macro  ::= IDENTIFIER EXCL macro_arg
 
