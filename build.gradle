@@ -11,7 +11,7 @@ buildscript {
 }
 
 plugins {
-    id 'org.jetbrains.intellij' version "0.0.25"
+    id 'org.jetbrains.intellij' version "0.0.27"
 }
 
 
@@ -68,8 +68,6 @@ sourceSets {
 }
 
 test {
-    systemProperties "idea.classpath.index.enabled": false
-
     testLogging {
         events "passed", "skipped", "failed"
         exceptionFormat = 'full'
