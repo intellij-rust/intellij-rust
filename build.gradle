@@ -32,66 +32,64 @@ configurations {
 // Projects
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-allprojects {
-    dependencies {
-        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
-        gen 'de.jflex:jflex:1.6.0'
-        gen files('lib/gk/grammar-kit-patched.jar')
+    gen 'de.jflex:jflex:1.6.0'
+    gen files('lib/gk/grammar-kit-patched.jar')
 
-        testCompile "junit:junit:4.+"
-        testCompile 'org.assertj:assertj-core:3.2.0'
-    }
+    testCompile "junit:junit:4.+"
+    testCompile 'org.assertj:assertj-core:3.2.0'
+}
 
-    apply plugin: 'java'
-    apply plugin: 'kotlin'
+apply plugin: 'java'
+apply plugin: 'kotlin'
 
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
+sourceCompatibility = javaVersion
+targetCompatibility = javaVersion
 
-    tasks.withType(JavaCompile)     { options.encoding = 'UTF-8' }
+tasks.withType(JavaCompile)     { options.encoding = 'UTF-8' }
 //    tasks.withType(KotlinCompile)   { options.encoding = 'UTF-8' }
 
-    apply plugin: 'org.jetbrains.intellij'
+apply plugin: 'org.jetbrains.intellij'
 
-    intellij {
-        version ideaVersion
+intellij {
+    version ideaVersion
 
-        pluginName 'Rust'
+    pluginName 'Rust'
 
-        downloadSources downloadSources
+    downloadSources downloadSources
 
-        // publish { /* ... */ }
+    // publish { /* ... */ }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = [ 'src', 'gen' ]
+            include '**/*.java'
+        }
+
+        kotlin {
+            srcDirs = [ 'src' ]
+            include '**/*.kt'
+        }
+
+        resources.srcDirs = [ 'resources' ]
     }
 
-    sourceSets {
-        main {
-            java {
-                srcDirs = [ 'src', 'gen' ]
-                include '**/*.java'
-            }
-
-            kotlin {
-                srcDirs = [ 'src' ]
-                include '**/*.kt'
-            }
-
-            resources.srcDirs = [ 'resources' ]
+    test {
+        java {
+            srcDirs = [ 'test' ]
+            include '**/*.java'
         }
 
-        test {
-            java {
-                srcDirs = [ 'test' ]
-                include '**/*.java'
-            }
-
-            kotlin {
-                srcDirs = [ 'test' ]
-                include '**/*.kt'
-            }
-
-            resources.srcDirs = [ 'testData' ]
+        kotlin {
+            srcDirs = [ 'test' ]
+            include '**/*.kt'
         }
+
+        resources.srcDirs = [ 'testData' ]
     }
 }
 
