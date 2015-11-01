@@ -1,7 +1,8 @@
-package org.rust.lang
+package org.rust.lang.formatter
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.rust.lang.RustTestCase
 
 class RustFormatterTestCase : RustTestCase() {
     override fun getTestDataPath() = "testData/formatter"

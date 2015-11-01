@@ -1,4 +1,6 @@
-package org.rust.lang
+package org.rust.lang.annotator
+
+import org.rust.lang.RustTestCase
 
 class RustAnnotatorTest : RustTestCase() {
     override fun getTestDataPath() = "testData/annotator/"
