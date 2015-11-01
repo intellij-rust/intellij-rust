@@ -82,7 +82,6 @@ sourceSets {
 test {
     systemProperties "idea.classpath.index.enabled": false
 
-    useJUnit { }
     testLogging {
         events "passed", "skipped", "failed"
         exceptionFormat = 'full'
