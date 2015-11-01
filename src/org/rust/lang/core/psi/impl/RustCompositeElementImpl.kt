@@ -5,6 +5,6 @@ import com.intellij.lang.ASTNode
 import org.rust.lang.core.psi.RustCompositeElement
 
 public open class RustCompositeElementImpl(node: ASTNode) : ASTWrapperPsiElement(node)
-        , RustCompositeElement {
+                                                            , RustCompositeElement {
 
 }

@@ -70,6 +70,10 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
             visitResolveScope(o)
         }
 
+        override fun visitMethod(o: RustMethod) {
+            visitResolveScope(o)
+        }
+
         override fun visitResolveScope(scope: RustResolveScope) {
             seek(*scope.getDeclarations().toTypedArray())
         }

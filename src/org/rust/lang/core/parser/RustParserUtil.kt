@@ -4,6 +4,7 @@ import com.intellij.lang.PsiBuilder
 import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.openapi.util.Key
 import com.intellij.psi.TokenType
+import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.lexer.RustTokenElementTypes
 import org.rust.lang.core.lexer.containsEOL
 import org.rust.lang.utils.Cookie
@@ -27,6 +28,38 @@ public object RustParserUtil : GeneratedParserUtilBase() {
     //
     // Helpers
     //
+
+    @JvmStatic
+    public fun injectInto(b: PsiBuilder, level: Int, s: Parser, t: Parser) : Boolean {
+        fun done(m: PsiBuilder.Marker, tt: IElementType)    { m.done(tt) }
+        fun drop(m: PsiBuilder.Marker)                      { m.drop() }
+
+        val m = b.mark()
+        var r = false
+
+        try {
+
+            r = s.parse(b, level)
+            r = r && t.parse(b, level)
+
+        } catch (t: Throwable) {
+            drop(m)
+            throw t
+        }
+
+        if (r) {
+            // This is the one that should be done
+            // by `t`
+            b.latestDoneMarker?.let { p ->
+                done(m, p.tokenType)
+                drop(p as PsiBuilder.Marker)
+            }
+            return true
+        }
+
+        drop(m)
+        return false;
+    }
 
     @JvmStatic
     public fun checkStructAllowed(b: PsiBuilder, level: Int) : Boolean = b.getStructAllowed()
