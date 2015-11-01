@@ -414,7 +414,7 @@ const_item ::= CONST decl_item EQ any_expr SEMICOLON
 
 private view_item ::= use_item
                     | extern_fn_item
-                    | extern_crate_decl
+                    | extern_decl_item
 
 use_item ::= USE view_path SEMICOLON { pin = 2 }
 
@@ -426,7 +426,7 @@ abi ::= STRING_LITERAL
 // Crate
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern_crate_decl ::= EXTERN CRATE crate_name SEMICOLON
+extern_decl_item ::= EXTERN CRATE crate_name SEMICOLON
 
 private crate_name ::= IDENTIFIER [ AS IDENTIFIER ]
 
