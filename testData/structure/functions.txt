@@ -1,0 +1,5 @@
+-functions.rs
+ fn_foo()
+ S
+ -S
+  method_bar()
