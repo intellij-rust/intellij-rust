@@ -14,10 +14,6 @@ plugins {
     id 'org.jetbrains.intellij' version "0.0.25"
 }
 
-repositories {
-    mavenCentral()
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Configurations
@@ -32,90 +28,84 @@ configurations {
 // Projects
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-allprojects {
-    dependencies {
-        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+apply plugin: 'java'
+apply plugin: 'kotlin'
 
-        gen 'de.jflex:jflex:1.6.0'
-        gen files('lib/gk/grammar-kit-patched.jar')
+sourceCompatibility = javaVersion
+targetCompatibility = javaVersion
 
-        testCompile "junit:junit:4.+"
-        testCompile 'org.assertj:assertj-core:3.2.0'
-    }
-
-    apply plugin: 'java'
-    apply plugin: 'kotlin'
-
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
-
-    tasks.withType(JavaCompile)     { options.encoding = 'UTF-8' }
+tasks.withType(JavaCompile)     { options.encoding = 'UTF-8' }
 //    tasks.withType(KotlinCompile)   { options.encoding = 'UTF-8' }
 
-    apply plugin: 'org.jetbrains.intellij'
-
-    intellij {
-        version ideaVersion
-
-        pluginName 'Rust'
-
-        downloadSources downloadSources
-
-        // publish { /* ... */ }
-    }
-
-    sourceSets {
-        main {
-            java {
-                srcDirs = [ 'src', 'gen' ]
-                include '**/*.java'
-            }
-
-            kotlin {
-                srcDirs = [ 'src' ]
-                include '**/*.kt'
-            }
-
-            resources.srcDirs = [ 'resources' ]
+sourceSets {
+    main {
+        java {
+            srcDirs = [ 'src', 'gen' ]
+            include '**/*.java'
         }
 
-        test {
-            java {
-                srcDirs = [ 'test' ]
-                include '**/*.java'
-            }
-
-            kotlin {
-                srcDirs = [ 'test' ]
-                include '**/*.kt'
-            }
-
-            resources.srcDirs = [ 'testData' ]
+        kotlin {
+            srcDirs = [ 'src' ]
+            include '**/*.kt'
         }
-    }
-}
 
-apply plugin: 'idea'
-
-idea {
-    project {
-        jdkName         = javaVersion
-        languageLevel   = javaVersion
+        resources.srcDirs = [ 'resources' ]
     }
 
-    module {
-        generatedSourceDirs += file('gen')
+    test {
+        java {
+            srcDirs = [ 'test' ]
+            include '**/*.java'
+        }
+
+        kotlin {
+            srcDirs = [ 'test' ]
+            include '**/*.kt'
+        }
+
+        resources.srcDirs = [ 'testData' ]
     }
 }
 
 test {
     systemProperties "idea.classpath.index.enabled": false
 
-    useJUnit { }
     testLogging {
         events "passed", "skipped", "failed"
         exceptionFormat = 'full'
     }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// IntelliJ plugin
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+apply plugin: 'org.jetbrains.intellij'
+
+intellij {
+    version ideaVersion
+    pluginName 'Rust'
+    downloadSources downloadSources
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Dependencies
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+
+    gen 'de.jflex:jflex:1.6.0'
+    gen files('lib/gk/grammar-kit-patched.jar')
+
+    testCompile "junit:junit:4.+"
+    testCompile 'org.assertj:assertj-core:3.2.0'
 }
 
 
@@ -208,6 +198,25 @@ compileTestKotlin   .dependsOn generate
 clean {
     delete "gen"
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// IDE support
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+apply plugin: 'idea'
+
+idea {
+    project {
+        jdkName         = javaVersion
+        languageLevel   = javaVersion
+    }
+
+    module {
+        generatedSourceDirs += file('gen')
+    }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Misc
