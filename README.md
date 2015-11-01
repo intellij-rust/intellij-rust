@@ -1,6 +1,6 @@
 # Rust IDE built using the IntelliJ Platform
 
-[![Build Status](https://travis-ci.org/alexeykudinkin/intellij-rust.svg?branch=travis)](https://travis-ci.org/alexeykudinkin/intellij-rust) [![Join the chat at https://gitter.im/alexeykudinkin/intellij-rust](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/alexeykudinkin/intellij-rust?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) 
+[![Build Status](https://img.shields.io/travis/alexeykudinkin/intellij-rust/master.svg)](https://travis-ci.org/alexeykudinkin/intellij-rust) [![Join the chat at https://gitter.im/alexeykudinkin/intellij-rust](https://img.shields.io/badge/Gitter-Join%20Chat-blue.svg)](https://gitter.im/alexeykudinkin/intellij-rust?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) 
 
 **BEWARE**
 
