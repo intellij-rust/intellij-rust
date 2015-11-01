@@ -14,10 +14,6 @@ plugins {
     id 'org.jetbrains.intellij' version "0.0.25"
 }
 
-repositories {
-    mavenCentral()
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Configurations
@@ -31,16 +27,6 @@ configurations {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Projects
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
-
-    gen 'de.jflex:jflex:1.6.0'
-    gen files('lib/gk/grammar-kit-patched.jar')
-
-    testCompile "junit:junit:4.+"
-    testCompile 'org.assertj:assertj-core:3.2.0'
-}
 
 apply plugin: 'java'
 apply plugin: 'kotlin'
@@ -114,6 +100,25 @@ test {
         events "passed", "skipped", "failed"
         exceptionFormat = 'full'
     }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Dependencies
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+
+    gen 'de.jflex:jflex:1.6.0'
+    gen files('lib/gk/grammar-kit-patched.jar')
+
+    testCompile "junit:junit:4.+"
+    testCompile 'org.assertj:assertj-core:3.2.0'
 }
 
 
