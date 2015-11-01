@@ -20,6 +20,10 @@ class RustFileTreeElement(file: RustFileImpl) : PsiTreeElementBase<RustFileImpl>
                 result += (RustEnumTreeElement(o))
             }
 
+            override fun visitTraitItem(o: RustTraitItem) {
+                result += (RustTraitTreeElement(o))
+            }
+
             override fun visitStructItem(o: RustStructItem) {
                 result += (RustStructTreeElement(o))
             }

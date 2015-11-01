@@ -15,6 +15,8 @@ import javax.swing.Icon
 class RustIconProvider: IconProvider() {
     override fun getIcon(element: PsiElement, flags: Int): Icon? {
         return when (element) {
+            is RustTraitItem -> getTraitIcon(element, flags)
+            is RustTraitMethod -> getTraitMethodIcon(element, flags)
             is RustImplItem -> RustIcons.IMPL
             is RustEnumItem -> getEnumIcon(element, flags)
             is RustEnumDef -> RustIcons.FIELD
@@ -24,6 +26,21 @@ class RustIconProvider: IconProvider() {
             is RustImplMethod -> getImplMethodIcon(element, flags)
             else -> null
         }
+    }
+
+    private fun getTraitIcon(element: RustTraitItem, flags: Int): Icon? {
+        if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
+            return RustIcons.TRAIT;
+
+        return RustIcons.TRAIT.addVisibilityIcon(element.isPublic())
+    }
+
+    private fun getTraitMethodIcon(element: RustTraitMethod, flags: Int): Icon? {
+        val icon = if (element.isStatic()) RustIcons.METHOD.addStaticMark() else RustIcons.METHOD
+        if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
+            return icon;
+
+        return icon.addVisibilityIcon(element.isPublic())
     }
 
     private fun getImplMethodIcon(element: RustImplMethod, flags: Int): Icon? {
@@ -56,6 +73,10 @@ class RustIconProvider: IconProvider() {
     }
 }
 
+fun RustTraitItem.isPublic(): Boolean {
+    return (parent?.parent as RustItem?)?.pub != null;
+}
+
 fun RustEnumItem.isPublic(): Boolean {
     return (parent?.parent as RustItem?)?.pub != null;
 }
@@ -74,6 +95,14 @@ fun RustImplMethod.isPublic(): Boolean {
 
 fun RustImplMethod.isStatic(): Boolean {
     return self == null;
+}
+
+fun RustTraitMethod.isPublic(): Boolean {
+    return (method?.pub ?: typeMethod?.pub) != null;
+}
+
+fun RustTraitMethod.isStatic(): Boolean {
+    return (method?.self ?: typeMethod?.self) == null;
 }
 
 fun Icon.addVisibilityIcon(pub: Boolean): RowIcon {
