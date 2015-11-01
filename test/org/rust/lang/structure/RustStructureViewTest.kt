@@ -1,4 +1,4 @@
-package org.rust.lang
+package org.rust.lang.structure
 
 import com.intellij.ide.actions.ViewStructureAction
 import com.intellij.ide.util.FileStructurePopup
@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
 import org.assertj.core.api.Assertions.assertThat
+import org.rust.lang.RustTestCase
 import javax.swing.tree.TreePath
 
 class RustStructureViewTest : RustTestCase() {
