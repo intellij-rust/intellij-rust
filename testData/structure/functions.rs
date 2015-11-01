@@ -2,8 +2,11 @@ fn fn_foo () {
 
 }
 
-struct S;
+#[test]
+fn test_something() {
+    assert!(true);
+}
 
-impl S {
-    fn method_bar(&self) { }
+fn double(x: i32) -> i32 {
+    x * 2
 }
