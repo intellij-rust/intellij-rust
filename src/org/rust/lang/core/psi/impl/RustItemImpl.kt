@@ -9,10 +9,10 @@ import org.rust.lang.core.psi.RustVis
 public abstract class RustItemImpl(node: ASTNode)   : RustNamedElementImpl(node)
                                                     , RustItem {
 
-    override fun getAttrs(): List<RustOuterAttr>? =
-        findChildrenByType(RustCompositeElementTypes.OUTER_ATTR)
+    override val attrs: List<RustOuterAttr>?
+        get() = findChildrenByType(RustCompositeElementTypes.OUTER_ATTR)
 
-    override fun getVis(): RustVis? =
-        findChildByType(RustCompositeElementTypes.VIS)
+    override val vis: RustVis?
+        get() = findChildByType(RustCompositeElementTypes.VIS)
 }
 

@@ -2,9 +2,11 @@ package org.rust.lang.core.psi
 
 public interface RustItem : RustNamedElement {
 
-    fun getAttrs() : List<RustOuterAttr>?
+    val attrs : List<RustOuterAttr>?
+        get
 
-    fun getVis() : RustVis?
+    val vis: RustVis?
+        get
 
 }
 
