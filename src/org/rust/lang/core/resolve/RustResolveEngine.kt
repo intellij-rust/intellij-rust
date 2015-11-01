@@ -1,10 +1,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustLambdaExpr
-import org.rust.lang.core.psi.RustScopedLetExpr
-import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustVisitor
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.match
 import org.rust.lang.core.resolve.ref.RustQualifiedValue
 import org.rust.lang.core.resolve.scope.RustResolveScope
@@ -22,15 +19,16 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
 
         object UNRESOLVED : ResolveResult(null)
 
-        override fun getElement(): PsiElement? = resolved
-        override fun isValidResult(): Boolean = resolved != null
+        override fun getElement():      PsiElement? = resolved
+        override fun isValidResult():   Boolean     = resolved != null
 
     }
 
     fun runFrom(scope: RustResolveScope?): ResolveResult {
         var current = scope
+        val visitor = ResolveScopeVisitor(ref)
         while (current != null) {
-            current.resolveWith(ResolveScopeVisitor(ref))?.let {
+            current.resolveWith(visitor)?.let {
                 return ResolveResult(it)
             }
 
@@ -60,6 +58,10 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
             }
         }
 
+        override fun visitForExpr(o: RustForExpr) {
+            seek(o.scopedForDecl)
+        }
+
         override fun visitScopedLetExpr(o: RustScopedLetExpr) {
             visitResolveScope(o)
         }
@@ -68,11 +70,19 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
             visitResolveScope(o)
         }
 
-        override fun visitResolveScope(elem: RustResolveScope) {
-            elem.listDeclarations(ref)
-                    .forEach { ident ->
-                        if (match(ident)) {
-                            return found(ident)
+        override fun visitResolveScope(scope: RustResolveScope) {
+            seek(*scope.getDeclarations().toTypedArray())
+        }
+
+        private fun seek(vararg decls: RustDeclaringElement) {
+            decls   .flatMap { it.getBoundElements() }
+
+                    /* TODO(kudinkin): We'd actually cut by the real text-offset instead of this */
+
+                    .asReversed()
+                    .forEach { e ->
+                        if (match(e)) {
+                            return found(e)
                         }
                     }
         }
@@ -88,7 +98,11 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
         }
 
         private fun match(e: RustNamedElement): Boolean =
-                qualifiersStack.peek().getReferenceNameElement().match(e.name)
+            e.name.let { n ->
+                qualifiersStack.peek().let { qual ->
+                    qual.getReferenceNameElement().match(n) && qual.textOffset >= e.textOffset
+                }
+            }
     }
 
 }

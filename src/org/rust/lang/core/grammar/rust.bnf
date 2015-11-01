@@ -125,8 +125,19 @@
         space       = 'regexp:\s+'
     ]
 
-    implements  ("pat_var") = "org.rust.lang.core.psi.RustNamedElement"
-    mixin       ("pat_var") = "org.rust.lang.core.psi.impl.mixin.RustPatVarImplMixin"
+    //
+    // Mixins
+    //
+
+    mixin       ("pat_ident") = "org.rust.lang.core.psi.impl.mixin.RustPatIdentImplMixin"
+    implements  ("pat_ident") = "org.rust.lang.core.psi.RustNamedElement"
+
+    mixin       ("path_part") = "org.rust.lang.core.psi.impl.mixin.RustPathPartImplMixin"
+
+
+    //
+    // Resolve scopes
+    //
 
     implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
@@ -140,16 +151,47 @@
     implements  ("impl_method") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("impl_method") = "org.rust.lang.core.psi.impl.mixin.RustImplMethodImplMixin"
 
-    mixin       ("path_part") = "org.rust.lang.core.psi.impl.mixin.RustPathPartImplMixin"
-
     implements  ("block") =  "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("block") =  "org.rust.lang.core.psi.impl.mixin.RustBlockImplMixin"
+
+    implements  ("scoped_let_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("scoped_let_expr") = "org.rust.lang.core.psi.impl.mixin.RustScopedLetExprImplMixin"
+
+    implements  ("for_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("for_expr") = "org.rust.lang.core.psi.impl.mixin.RustForExprImplMixin"
 
     implements  ("match_arm") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("match_arm") = "org.rust.lang.core.psi.impl.mixin.RustMatchArmImplMixin"
 
-    implements  ("scoped_let_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    mixin       ("scoped_let_expr") = "org.rust.lang.core.psi.impl.mixin.RustScopedLetExprImplMixin"
+
+    //
+    // Declaring elements
+    //
+
+    implements  ("let_decl")    = "org.rust.lang.core.psi.RustDeclaringElement"
+    mixin       ("let_decl")    = "org.rust.lang.core.psi.impl.mixin.RustLetDeclImplMixin"
+
+    implements  ("scoped_let_decl") = "org.rust.lang.core.psi.RustDeclaringElement"
+    mixin       ("scoped_let_decl") = "org.rust.lang.core.psi.impl.mixin.RustScopedLetDeclImplMixin"
+
+    implements  ("scoped_for_decl") = "org.rust.lang.core.psi.RustDeclaringElement"
+    mixin       ("scoped_for_decl") = "org.rust.lang.core.psi.impl.mixin.RustScopedForDeclImplMixin"
+
+    implements  ("param")       = "org.rust.lang.core.psi.RustDeclaringElement"
+    mixin       ("param")       = "org.rust.lang.core.psi.impl.mixin.RustParamImplMixin"
+
+    implements  ("anon_param")  = "org.rust.lang.core.psi.RustDeclaringElement"
+    mixin       ("anon_param")  = "org.rust.lang.core.psi.impl.mixin.RustAnonParamImplMixin"
+
+    implements  ("lambda_param")  = "org.rust.lang.core.psi.RustDeclaringElement"
+    mixin       ("lambda_param")  = "org.rust.lang.core.psi.impl.mixin.RustLambdaParamImplMixin"
+
+    implements  ("match_pat")   = "org.rust.lang.core.psi.RustDeclaringElement"
+    mixin       ("match_pat")   = "org.rust.lang.core.psi.impl.mixin.RustMatchPatImplMixin"
+
+    implements  ("pat_field")   = [ "org.rust.lang.core.psi.RustDeclaringElement" "org.rust.lang.core.psi.RustNamedElement" ]
+    mixin       ("pat_field")   = "org.rust.lang.core.psi.impl.mixin.RustPatFieldImplMixin"
+
 
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
@@ -157,7 +199,7 @@
     extends("impl_method") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
     extends(".*_item")     = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
 
-    extends("((if|while)_let|for)_expr") = scoped_let_expr
+    extends("(if|while)_let_expr") = scoped_let_expr
     extends(".*_expr") = restricted_expr
     extends(".*_stmt") = stmt
     extends("pat_.*")  = pat
@@ -307,9 +349,9 @@ pat_uniq        ::= BOX pat
 //       None => { } // match enum variant
 //       Name => { } // bind Name to x
 //   }
-pat_ident       ::= binding_mode pat_var [AT pat]
-                  |              pat_var AT pat
-                  |              pat_var !DOTDOTDOT !COLONCOLON
+pat_ident       ::= binding_mode IDENTIFIER [AT pat]
+                  |              IDENTIFIER AT pat
+                  |              IDENTIFIER !DOTDOTDOT !COLONCOLON
 
 pat_struct      ::= path_expr LBRACE pat_struct_fields RBRACE
 pat_enum        ::= path_expr LPAREN (DOTDOT | pat_tup_elts) RPAREN
@@ -351,13 +393,10 @@ pat_struct_fields ::= (pat_field COMMA)+ DOTDOT
                     | <<comma_separated_list pat_field>>
                     | DOTDOT
 
-private pat_field   ::=     binding_mode?  IDENTIFIER COLON pat
-                      |     binding_mode?  pat_var
-                      | BOX binding_mode?  pat_var
+pat_field ::=     binding_mode? IDENTIFIER [ COLON pat ]
+            | BOX binding_mode? IDENTIFIER
 
 binding_mode ::= REF MUT? | MUT
-
-pat_var ::= IDENTIFIER
 
 private unsafe_fn_item ::= UNSAFE fn_item
 
@@ -790,7 +829,7 @@ cast_expr ::= restricted_expr AS type
 unary_expr ::= (MINUS | MUL | EXCL | (AND | ANDAND) MUT?) restricted_expr
 
 lambda_expr ::= MOVE? (OROR | OR [<<comma_separated_list lambda_param>>] OR) ret_type? any_expr
-private lambda_param ::= pat type_ascription?
+lambda_param ::= pat type_ascription?
 
 struct_expr ::= <<checkStructAllowed>> path_generic_args_with_colons struct_expr_body
 
@@ -815,9 +854,9 @@ cont_expr ::= CONTINUE lifetime?
 
 break_expr ::= BREAK lifetime?
 
-for_expr ::= [lifetime COLON] FOR pat IN no_struct_lit_expr block { pin = "IN" }
+scoped_for_decl ::= pat IN no_struct_lit_expr
 
-
+for_expr ::= [lifetime COLON] FOR scoped_for_decl block { pin = "IN" }
 
 match_expr ::= MATCH no_struct_lit_expr LBRACE match_arm* RBRACE
 
@@ -828,11 +867,14 @@ if_expr ::= IF no_struct_lit_expr block else_tail?
 
 private else_tail ::= ELSE (if_expr | if_let_expr | block )
 
-fake scoped_let_expr ::= pat
+fake scoped_let_expr ::= scoped_let_decl EQ no_struct_lit_expr block
 
-if_let_expr ::= IF LET pat EQ no_struct_lit_expr block  else_tail?
+scoped_let_decl ::= LET pat EQ no_struct_lit_expr
 
-while_let_expr ::= WHILE LET pat EQ no_struct_lit_expr block
+if_let_expr ::= IF scoped_let_decl block else_tail?
+
+while_let_expr ::= WHILE scoped_let_decl block
+
 
 ret_expr ::= RETURN restricted_expr?
 
