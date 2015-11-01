@@ -1,6 +1,7 @@
 package org.rust.lang.core.parser
 
 import com.intellij.lang.PsiBuilder
+import com.intellij.lang.impl.PsiBuilderImpl
 import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.openapi.util.Key
 import com.intellij.psi.TokenType
@@ -27,6 +28,22 @@ public object RustParserUtil : GeneratedParserUtilBase() {
     //
     // Helpers
     //
+
+    @JvmStatic
+    public fun injectInto(b: PsiBuilder, level: Int, s: Parser, t: Parser) : Boolean {
+        val m = b.mark()
+        var r = s.parse(b, level)
+        r = r && t.parse(b, level)
+        if (r) {
+            b.latestDoneMarker?.let { p ->
+                m.done(p.tokenType)
+                (p as PsiBuilder.Marker).drop()
+            }
+            return true
+        }
+        m.drop()
+        return false;
+    }
 
     @JvmStatic
     public fun checkStructAllowed(b: PsiBuilder, level: Int) : Boolean = b.getStructAllowed()

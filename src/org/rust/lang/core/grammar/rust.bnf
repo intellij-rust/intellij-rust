@@ -197,7 +197,9 @@
     elementType(".*_range_expr") = range_expr
 
     extends("impl_method") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
-    extends(".*_item")     = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
+
+    implements(".*_item") = "org.rust.lang.core.psi.RustItem"
+    extends   (".*_item") = "org.rust.lang.core.psi.impl.RustItemImpl"
 
     extends("(if|while)_let_expr") = scoped_let_expr
     extends(".*_expr") = restricted_expr
@@ -237,16 +239,18 @@ fake attr ::=
 
 vis ::= PUB
 
-item ::= outer_attrs? vis?
-       ( stmt_item
-       | mod_item
-       | item_macro)
+private attrs_and_vis ::= outer_attrs? vis?
+private item_inner ::= mod_item
+                     | stmt_item_group
+                     | item_macro
 
-stmt_item ::= static_item
-            | const_item
-            | type_item
-            | block_item_group
-            | view_item
+private item ::= << injectInto attrs_and_vis item_inner >>
+
+private stmt_item_group ::= static_item
+                          | const_item
+                          | type_item
+                          | block_item_group
+                          | view_item
 
 
 private block_item_group ::= fn_item
@@ -438,8 +442,6 @@ private mod_contents ::= attrs_and_vis item
 foreign_mod_item ::= EXTERN abi? LBRACE inner_attrs? foreign_items? RBRACE
 
 private foreign_items ::= foreign_item +
-
-private attrs_and_vis ::= outer_attrs? vis?
 
 foreign_item  ::= attrs_and_vis STATIC  foreign_static_item
                 | attrs_and_vis UNSAFE? foreign_fn_item
