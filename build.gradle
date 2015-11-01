@@ -37,18 +37,6 @@ targetCompatibility = javaVersion
 tasks.withType(JavaCompile)     { options.encoding = 'UTF-8' }
 //    tasks.withType(KotlinCompile)   { options.encoding = 'UTF-8' }
 
-apply plugin: 'org.jetbrains.intellij'
-
-intellij {
-    version ideaVersion
-
-    pluginName 'Rust'
-
-    downloadSources downloadSources
-
-    // publish { /* ... */ }
-}
-
 sourceSets {
     main {
         java {
@@ -86,6 +74,19 @@ test {
         events "passed", "skipped", "failed"
         exceptionFormat = 'full'
     }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// IntelliJ plugin
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+apply plugin: 'org.jetbrains.intellij'
+
+intellij {
+    version ideaVersion
+    pluginName 'Rust'
+    downloadSources downloadSources
 }
 
 
