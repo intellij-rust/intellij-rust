@@ -22,5 +22,6 @@ class RustStructureViewTest : RustTestCase() {
     fun testFunctions() { doFileTest() }
     fun testStructs() { doFileTest() }
     fun testEnums() { doFileTest() }
+    fun testTraits() { doFileTest() }
     //@formatter:on
 }
