@@ -446,7 +446,7 @@ enum_args ::= LBRACE struct_decl_fields COMMA? RBRACE
 // Trait
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params for_sized? type_param_bounds? where_clause? LBRACE trait_contents* RBRACE
+trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params? for_sized? type_param_bounds? where_clause? LBRACE trait_contents* RBRACE
 
 for_sized ::= FOR Q IDENTIFIER
             | FOR IDENTIFIER Q
