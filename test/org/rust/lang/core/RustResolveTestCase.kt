@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.rust.lang.RustTestCase
 import org.rust.lang.core.psi.RustNamedElement
+import org.assertj.core.api.Assertions.assertThat
 
 class RustResolveTestCase : RustTestCase() {
     override fun getTestDataPath() = "testData/resolve"
@@ -32,10 +33,11 @@ class RustResolveTestCase : RustTestCase() {
     private fun assertIsValidDeclaration(declaration: PsiElement, usage: PsiReference,
                                          expectedOffset: Int?) {
 
-        assertInstanceOf(declaration, RustNamedElement::class.java)
-        assertEquals(usage.canonicalText, declaration.text)
+        assertThat(declaration).isInstanceOf(RustNamedElement::class.java)
+        assertThat(declaration.text).isEqualTo(usage.canonicalText)
+
         if (expectedOffset != null) {
-            assertEquals(expectedOffset, declaration.textRange.startOffset)
+            assertThat(declaration.textRange.startOffset).isEqualTo(expectedOffset)
         }
     }
 
@@ -54,6 +56,6 @@ class RustResolveTestCase : RustTestCase() {
         val usage = referenceAtCaret()
         val declaration = usage.resolve()
 
-        assertNull(declaration)
+        assertThat(declaration).isNull()
     }
 }
