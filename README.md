@@ -7,6 +7,8 @@
 This is experimental implementation targeting bleeding-edge version of Rust language and (as may be assumed reasonably enough) 
 is highly *unstable* just yet.
 
+If you are brave enough, see the [usage docs](doc/Usage.md).
+
 ## FAQ
 
 Here would be a list of the most frequent asked questions: [FAQ](https://github.com/alexeykudinkin/intellij-rust/wiki/FAQ)
