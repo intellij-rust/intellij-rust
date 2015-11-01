@@ -74,23 +74,23 @@ class RustIconProvider: IconProvider() {
 }
 
 fun RustTraitItem.isPublic(): Boolean {
-    return (parent?.parent as RustItem?)?.pub != null;
+    return (parent?.parent as RustItem?)?.vis != null;
 }
 
 fun RustEnumItem.isPublic(): Boolean {
-    return (parent?.parent as RustItem?)?.pub != null;
+    return (parent?.parent as RustItem?)?.vis != null;
 }
 
 fun RustStructItem.isPublic(): Boolean {
-    return (parent?.parent as RustItem?)?.pub != null;
+    return (parent?.parent as RustItem?)?.vis != null;
 }
 
 fun RustStructDeclField.isPublic(): Boolean {
-    return pub != null;
+    return vis != null;
 }
 
 fun RustImplMethod.isPublic(): Boolean {
-    return pub != null;
+    return vis != null;
 }
 
 fun RustImplMethod.isStatic(): Boolean {
@@ -98,11 +98,11 @@ fun RustImplMethod.isStatic(): Boolean {
 }
 
 fun RustTraitMethod.isPublic(): Boolean {
-    return (method?.pub ?: typeMethod?.pub) != null;
+    return vis != null;
 }
 
 fun RustTraitMethod.isStatic(): Boolean {
-    return (method?.self ?: typeMethod?.self) == null;
+    return self == null;
 }
 
 fun Icon.addVisibilityIcon(pub: Boolean): RowIcon {

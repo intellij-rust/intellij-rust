@@ -7,19 +7,15 @@ import org.rust.lang.core.psi.RustTraitMethod
 class RustTraitMethodTreeElement(element: RustTraitMethod) : PsiTreeElementBase<RustTraitMethod>(element) {
 
     override fun getPresentableText(): String? {
-        val method = element?.method
-        val typeMethod = element?.typeMethod
+        var text = element?.identifier?.text ?: return "<unknown>"
 
-        val identifier = method?.identifier ?: typeMethod?.identifier
-        var text = identifier?.text ?: return "<unknown>"
+        element?.anonParams?.anonParamList?.let { params ->
+            text += "(${params.map { it.text }.joinToString()})"
+        }
 
-        val params = (method?.anonParams ?: typeMethod?.anonParams)?.anonParamList?.map { it.text }?.joinToString()
-        if (params != null)
-            text += "($params)"
-
-        val retType = method?.retType ?: typeMethod?.retType;
-        if (retType != null)
+        element?.retType?.let { retType ->
             text += " ${retType.text}"
+        }
 
         return text;
     }

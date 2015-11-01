@@ -2,9 +2,7 @@ package org.rust.lang.structure
 
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
-import org.rust.lang.core.psi.RustImplMethod
 import org.rust.lang.core.psi.RustTraitItem
-import org.rust.lang.core.psi.util.RecursiveRustVisitor
 
 class RustTraitTreeElement(element: RustTraitItem) : PsiTreeElementBase<RustTraitItem>(element) {
 
@@ -24,8 +22,9 @@ class RustTraitTreeElement(element: RustTraitItem) : PsiTreeElementBase<RustTrai
 
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {
-        val result = arrayListOf<StructureViewTreeElement>()
-        result.addAll(element?.traitMethodList?.map { RustTraitMethodTreeElement(it) }.orEmpty())
-        return result;
+        return element?.traitMethodList?.let { methods ->
+            methods .filterNotNull()
+                    .map { RustTraitMethodTreeElement(it) }
+        }.orEmpty();
     }
 }
