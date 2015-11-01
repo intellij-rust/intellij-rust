@@ -36,7 +36,10 @@ class RustIconProvider: IconProvider() {
     }
 
     private fun getTraitMethodIcon(element: RustTraitMethod, flags: Int): Icon? {
-        val icon = if (element.isStatic()) RustIcons.METHOD.addStaticMark() else RustIcons.METHOD
+        var icon = if (element.isAbstract()) RustIcons.ABSTRACT_METHOD else RustIcons.METHOD
+        if (element.isStatic())
+            icon = icon.addStaticMark()
+
         if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
             return icon;
 
@@ -91,6 +94,10 @@ fun RustImplMethod.isStatic(): Boolean {
 
 fun RustTraitMethod.isPublic(): Boolean {
     return vis != null;
+}
+
+fun RustTraitMethod.isAbstract(): Boolean {
+    return this is RustTypeMethod;
 }
 
 fun RustTraitMethod.isStatic(): Boolean {

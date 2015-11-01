@@ -19,6 +19,7 @@ public object RustIcons {
     public val FIELD   = AllIcons.Nodes.Field
     public val FUNCTION = AllIcons.Nodes.Function
     public val METHOD   = AllIcons.Nodes.Method
+    public val ABSTRACT_METHOD   = AllIcons.Nodes.AbstractMethod
 
     public val STATIC_MARK   = AllIcons.Nodes.StaticMark
 }
