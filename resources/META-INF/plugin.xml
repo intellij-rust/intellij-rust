@@ -35,6 +35,7 @@
         <lang.commenter language="RUST" implementationClass="org.rust.lang.RustCommenter"/>
         <lang.braceMatcher language="RUST" implementationClass="org.rust.lang.highlight.RustBraceMatcher"/>
         <lang.quoteHandler language="RUST" implementationClass="org.rust.lang.RustQuoteHandler"/>
+        <lang.documentationProvider language="RUST" implementationClass="org.rust.lang.RustDocumentationProvider"/>
 
         <lang.parserDefinition language="RUST" implementationClass="org.rust.lang.core.RustParserDefinition"/>
 
