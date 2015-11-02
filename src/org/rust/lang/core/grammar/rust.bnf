@@ -199,8 +199,8 @@
 
     extends("impl_method") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
 
-    implements(".*_item") = "org.rust.lang.core.psi.RustItem"
-    extends   (".*_item") = "org.rust.lang.core.psi.impl.RustItemImpl"
+    implements("(?!meta_item).*_item") = "org.rust.lang.core.psi.RustItem"
+    extends   ("(?!meta_item).*_item") = "org.rust.lang.core.psi.impl.RustItemImpl"
 
     extends("(if|while)_let_expr") = scoped_let_expr
     extends(".*_expr") = restricted_expr
@@ -226,7 +226,8 @@ crate ::= [ SHEBANG_LINE ] [ inner_attrs ] item *
 private inner_attrs ::= inner_attr +
 inner_attr ::= SHEBANG LBRACK meta_item RBRACK | INNER_DOC_COMMENT
 
-meta_item ::= IDENTIFIER [ EQ lit | LPAREN meta_seq RPAREN ]
+meta_item ::= IDENTIFIER [ EQ lit_expr | LPAREN meta_seq RPAREN ]
+
 private meta_seq ::= meta_item [ COMMA meta_seq? ]
 
 private outer_attrs ::= outer_attr +
