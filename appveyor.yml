@@ -1,0 +1,17 @@
+version: "{branch} {build}"
+
+install:
+  - git submodule update --init --recursive
+
+build:
+  verbosity: detailed
+
+build_script:
+  - gradlew.bat assemble --no-daemon
+
+test_script:
+  - gradlew.bat test check --no-daemon
+
+# Disable, because cache size exceeds 500 mb
+# cache:
+#  - C:\Users\appveyor\.gradle
