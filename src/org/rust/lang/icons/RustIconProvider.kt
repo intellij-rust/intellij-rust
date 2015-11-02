@@ -22,10 +22,18 @@ class RustIconProvider: IconProvider() {
             is RustEnumDef -> RustIcons.FIELD
             is RustStructItem -> getStructIcon(element, flags)
             is RustStructDeclField -> getStructDeclFieldIcon(element, flags)
-            is RustFnItem -> RustIcons.FUNCTION
+            is RustFnItem -> getFnIcon(element, flags)
             is RustImplMethod -> getImplMethodIcon(element, flags)
             else -> null
         }
+    }
+
+    private fun getFnIcon(element: RustFnItem, flags: Int): Icon? {
+        val icon = if (element.isTest()) RustIcons.FUNCTION.addTestMark() else RustIcons.FUNCTION
+        if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
+            return icon;
+
+        return icon.addVisibilityIcon(element.isPublic())
     }
 
     private fun getTraitIcon(element: RustTraitItem, flags: Int): Icon? {
@@ -36,7 +44,10 @@ class RustIconProvider: IconProvider() {
     }
 
     private fun getTraitMethodIcon(element: RustTraitMethod, flags: Int): Icon? {
-        val icon = if (element.isStatic()) RustIcons.METHOD.addStaticMark() else RustIcons.METHOD
+        var icon = if (element.isAbstract()) RustIcons.ABSTRACT_METHOD else RustIcons.METHOD
+        if (element.isStatic())
+            icon = icon.addStaticMark()
+
         if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
             return icon;
 
@@ -93,8 +104,16 @@ fun RustTraitMethod.isPublic(): Boolean {
     return vis != null;
 }
 
+fun RustTraitMethod.isAbstract(): Boolean {
+    return this is RustTypeMethod;
+}
+
 fun RustTraitMethod.isStatic(): Boolean {
     return self == null;
+}
+
+fun RustFnItem.isTest(): Boolean {
+    return attrs?.map { it.metaItem?.identifier?.text }?.find { "test".equals(it) } != null
 }
 
 fun Icon.addVisibilityIcon(pub: Boolean): RowIcon {
@@ -106,4 +125,8 @@ fun Icon.addVisibilityIcon(pub: Boolean): RowIcon {
 
 fun Icon.addStaticMark(): Icon {
     return LayeredIcon(this, RustIcons.STATIC_MARK);
+}
+
+fun Icon.addTestMark(): Icon {
+    return LayeredIcon(this, RustIcons.TEST_MARK);
 }
