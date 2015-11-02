@@ -139,7 +139,8 @@
     // Resolve scopes
     //
 
-    implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    implements  ("fn_item") = ["org.rust.lang.core.psi.RustItem"
+                               "org.rust.lang.core.resolve.scope.RustResolveScope"]
     mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
 
     implements  ("method") = "org.rust.lang.core.resolve.scope.RustResolveScope"

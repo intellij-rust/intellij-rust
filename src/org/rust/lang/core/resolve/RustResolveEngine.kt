@@ -74,6 +74,10 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
             visitResolveScope(o)
         }
 
+        override fun visitFnItem(o: RustFnItem) {
+            visitResolveScope(o)
+        }
+
         override fun visitResolveScope(scope: RustResolveScope) {
             seek(*scope.getDeclarations().toTypedArray())
         }
