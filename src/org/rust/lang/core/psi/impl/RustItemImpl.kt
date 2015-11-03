@@ -1,10 +1,7 @@
 package org.rust.lang.core.psi.impl
 
 import com.intellij.lang.ASTNode
-import org.rust.lang.core.psi.RustCompositeElementTypes
-import org.rust.lang.core.psi.RustItem
-import org.rust.lang.core.psi.RustOuterAttr
-import org.rust.lang.core.psi.RustVis
+import org.rust.lang.core.psi.*
 
 public abstract class RustItemImpl(node: ASTNode)   : RustNamedElementImpl(node)
                                                     , RustItem {
@@ -14,5 +11,7 @@ public abstract class RustItemImpl(node: ASTNode)   : RustNamedElementImpl(node)
 
     override val vis: RustVis?
         get() = findChildByType(RustCompositeElementTypes.VIS)
+
+    override fun getBoundElements(): Collection<RustNamedElement> = listOf(this)
 }
 

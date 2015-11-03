@@ -34,3 +34,5 @@ val RustPat.boundElements: List<RustNamedElement>
         })
         return result
     }
+
+fun PsiElement.isBefore(other: PsiElement): Boolean = textOffset < other.textOffset

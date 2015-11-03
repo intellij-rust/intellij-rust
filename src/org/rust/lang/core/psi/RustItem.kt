@@ -1,6 +1,6 @@
 package org.rust.lang.core.psi
 
-public interface RustItem : RustNamedElement {
+public interface RustItem : RustNamedElement, RustDeclaringElement {
 
     val attrs : List<RustOuterAttr>?
         get
