@@ -10,9 +10,6 @@ import com.intellij.util.VisibilityIcons
 import com.intellij.util.ui.EmptyIcon
 import javax.swing.Icon
 
-/**
- * @author Evgeny.Kurbatsky
- */
 public object RustIcons {
 
     public val NORMAL:  Icon = IconLoader.getIcon("/org/rust/icons/rust16.png")

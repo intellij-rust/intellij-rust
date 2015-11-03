@@ -5,9 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 
-/**
- * @author Aleksey.Kladov
- */
 public class RustHighlighterFactory : SyntaxHighlighterFactory() {
     override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?) = RustHighlighter()
 }

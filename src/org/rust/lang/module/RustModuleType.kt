@@ -4,9 +4,7 @@ import com.intellij.openapi.module.ModuleType
 import org.rust.lang.icons.RustIcons
 import javax.swing.Icon
 
-/**
- * @author Evgeny.Kurbatsky
- */
+
 public class RustModuleType() : ModuleType<RustModuleBuilder>(RustModuleType.RUST_MODULE) {
 
     override fun createModuleBuilder(): RustModuleBuilder {

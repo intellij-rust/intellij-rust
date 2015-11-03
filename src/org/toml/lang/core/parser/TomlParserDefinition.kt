@@ -16,9 +16,6 @@ import org.toml.lang.core.lexer.TomlLexer
 import org.toml.lang.core.psi.TomlFile
 import org.toml.lang.core.psi.TomlTypes
 
-/**
- * @author Aleksey.Kladov
- */
 public class TomlParserDefinition : ParserDefinition {
     override fun createParser(project: Project?): PsiParser =
             TomlParser()

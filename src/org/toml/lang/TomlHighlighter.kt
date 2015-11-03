@@ -10,9 +10,6 @@ import org.toml.lang.core.lexer.TomlLexer
 import org.toml.lang.core.psi.TomlTypes
 
 
-/**
- * @author Aleksey.Kladov
- */
 class TomlHighlighter : SyntaxHighlighterBase() {
     override fun getHighlightingLexer(): Lexer =
             TomlLexer()

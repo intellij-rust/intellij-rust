@@ -5,9 +5,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.toml.lang.icons.TomlIcons
 import javax.swing.Icon
 
-/**
- * @author Aleksey.Kladov
- */
 public class TomlFileType : LanguageFileType(TomlLanguage.INSTANCE) {
 
     private var myIcon: Icon = TomlIcons.NORMAL

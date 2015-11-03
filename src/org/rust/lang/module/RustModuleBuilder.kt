@@ -11,9 +11,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import org.rust.lang.icons.RustIcons
 import javax.swing.Icon
 
-/**
- * @author Evgeny.Kurbatsky
- */
+
 public class RustModuleBuilder() : ModuleBuilder() {
 
     override fun getBuilderId() = "rust.module.builder"
