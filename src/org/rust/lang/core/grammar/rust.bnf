@@ -449,9 +449,7 @@ private crate_name ::= IDENTIFIER [ AS IDENTIFIER ]
 // Struct & Enum
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-mod_item ::= MOD IDENTIFIER (SEMICOLON | LBRACE inner_attrs? mod_contents* RBRACE) { pin(".*")=1 }
-
-private mod_contents ::= attrs_and_vis item
+mod_item ::= MOD IDENTIFIER (SEMICOLON | LBRACE inner_attrs? item* RBRACE) { pin(".*")=1 }
 
 foreign_mod_item ::= EXTERN abi? LBRACE inner_attrs? foreign_items? RBRACE
 
