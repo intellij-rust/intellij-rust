@@ -25,7 +25,8 @@ class RustResolveTestCase : RustTestCase() {
     fun testTraitMethodArgument()  { checkIsBound()   }
     fun testImplMethodArgument()   { checkIsBound()   }
     fun testStructPatterns1()      { checkIsBound(atOffset = 69) }
-    fun testStructPatterns2()      { checkIsBound() }
+    fun testStructPatterns2()      { checkIsBound()   }
+    fun testModItem()              { checkIsBound()   }
     fun testUnbound()              { checkIsUnbound() }
     fun testOrdering()             { checkIsUnbound() }
     //@formatter:on
