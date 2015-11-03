@@ -134,6 +134,19 @@
 
     mixin       ("path_part") = "org.rust.lang.core.psi.impl.mixin.RustPathPartImplMixin"
 
+    mixin      ("trait_item") = "org.rust.lang.core.psi.impl.mixin.RustTraitItemImplMixin"
+
+    mixin      ("impl_item")  = "org.rust.lang.core.psi.impl.mixin.RustImplItemImplMixin"
+
+    mixin      ("trait_method") = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodImplMixin"
+
+    mixin      ("enum_item") = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
+
+    mixin      ("enum_def") = "org.rust.lang.core.psi.impl.mixin.RustEnumDefImplMixin"
+
+    mixin      ("struct_item") = "org.rust.lang.core.psi.impl.mixin.RustStructItemImplMixin"
+
+    mixin      ("struct_decl_field") = "org.rust.lang.core.psi.impl.mixin.RustStructDeclFieldImplMixin"
 
     //
     // Resolve scopes

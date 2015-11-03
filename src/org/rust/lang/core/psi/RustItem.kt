@@ -8,5 +8,8 @@ public interface RustItem : RustNamedElement {
     val vis: RustVis?
         get
 
+    fun isPublic(): Boolean {
+        return vis != null;
+    }
 }
 
