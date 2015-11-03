@@ -242,8 +242,7 @@ fake attr ::=
 vis ::= PUB
 
 private attrs_and_vis ::= outer_attrs? vis?
-private item_inner ::= mod_item
-                     | stmt_item_group
+private item_inner ::= stmt_item_group
                      | item_macro
 
 private item ::= << injectInto attrs_and_vis item_inner >>
