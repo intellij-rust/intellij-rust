@@ -4,7 +4,7 @@ import com.intellij.lang.ASTNode
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustScopedForDecl
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
-import org.rust.lang.core.psi.util.boundElements
+import org.rust.lang.core.psi.boundElements
 
 public abstract class RustScopedForDeclImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
                                                                 , RustScopedForDecl {
