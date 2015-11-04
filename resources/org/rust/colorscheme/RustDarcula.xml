@@ -1,0 +1,9 @@
+<?xml version='1.0'?>
+<list>
+    <option name="org.rust.LIFETIME">
+        <value>
+            <option name="FOREGROUND" value="c57633"/>
+            <option name="FONT_TYPE" value="2"/>
+        </value>
+    </option>
+</list>
