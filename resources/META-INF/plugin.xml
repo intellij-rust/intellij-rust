@@ -10,8 +10,8 @@
     ]]></description>
 
     <!--<change-notes><![CDATA[-->
-      <!--Add change notes here.<br>-->
-      <!--<em>most HTML tags may be used</em>-->
+    <!--Add change notes here.<br>-->
+    <!--<em>most HTML tags may be used</em>-->
     <!--]]>-->
     <!--</change-notes>-->
 
@@ -52,6 +52,11 @@
         <lang.quoteHandler language="TOML" implementationClass="org.toml.lang.TomlQuoteHandler"/>
 
         <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.core.parser.TomlParserDefinition"/>
+
+        <colorSettingsPage implementation="org.rust.lang.colorscheme.RustColorSettingsPage"/>
+
+        <additionalTextAttributes scheme="Default" file="org/rust/colorscheme/RustDefault.xml"/>
+        <additionalTextAttributes scheme="Darcula" file="org/rust/colorscheme/RustDarcula.xml"/>
     </extensions>
 
     <application-components>

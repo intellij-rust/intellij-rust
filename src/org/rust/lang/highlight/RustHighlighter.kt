@@ -25,6 +25,9 @@ public class RustHighlighter : SyntaxHighlighterBase() {
 
             IDENTIFIER -> RustColors.IDENTIFIER
 
+            LIFETIME -> RustColors.LIFETIME
+            STATIC_LIFETIME -> RustColors.LIFETIME
+
             CHAR_LITERAL -> RustColors.CHAR
             BYTE_LITERAL -> RustColors.CHAR
             STRING_LITERAL -> RustColors.STRING

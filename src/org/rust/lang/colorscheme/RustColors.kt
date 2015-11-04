@@ -9,6 +9,8 @@ object RustColors {
 
     val IDENTIFIER      = r("org.rust.IDENTIFIER",      DefaultLanguageHighlighterColors.IDENTIFIER)
 
+    val LIFETIME        = r("org.rust.LIFETIME",        DefaultLanguageHighlighterColors.IDENTIFIER)
+
     val CHAR            = r("org.rust.CHAR",            DefaultLanguageHighlighterColors.STRING)
     val STRING          = r("org.rust.STRING",          DefaultLanguageHighlighterColors.STRING)
     val NUMBER          = r("org.rust.NUMBER",          DefaultLanguageHighlighterColors.NUMBER)
