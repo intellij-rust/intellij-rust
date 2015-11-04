@@ -2,6 +2,7 @@ package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.util.isBefore
 import org.rust.lang.core.psi.util.match
 import org.rust.lang.core.resolve.ref.RustQualifiedValue
 import org.rust.lang.core.resolve.scope.RustResolveScope
@@ -58,6 +59,10 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
             }
         }
 
+        override fun visitModItem(o: RustModItem) {
+            seek(o.items)
+        }
+
         override fun visitForExpr(o: RustForExpr) {
             seek(o.scopedForDecl)
         }
@@ -78,21 +83,31 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
             visitResolveScope(o)
         }
 
-        override fun visitResolveScope(scope: RustResolveScope) {
-            seek(*scope.getDeclarations().toTypedArray())
+        override fun visitBlock(o: RustBlock) {
+            seek(o.getDeclarations(), orderDependent = true)
         }
 
-        private fun seek(vararg decls: RustDeclaringElement) {
-            decls   .flatMap { it.getBoundElements() }
+        override fun visitResolveScope(scope: RustResolveScope) {
+            seek(scope.getDeclarations())
+        }
 
-                    /* TODO(kudinkin): We'd actually cut by the real text-offset instead of this */
+        private fun seek(elem: RustDeclaringElement, orderDependent: Boolean = false) {
+            seek(listOf(elem), orderDependent)
+        }
 
-                    .asReversed()
-                    .forEach { e ->
-                        if (match(e)) {
-                            return found(e)
-                        }
-                    }
+        private fun seek(decls: Collection<RustDeclaringElement>, orderDependent: Boolean = false) {
+            val boundElements = decls.flatMap { it.getBoundElements() }
+            val candidates = if (orderDependent) {
+                boundElements.asReversed().filter { it.isBefore(ref) }
+            } else {
+                boundElements
+            }
+
+            candidates.forEach { e ->
+                if (match(e)) {
+                    return found(e)
+                }
+            }
         }
 
         private fun found(elem: RustNamedElement) {
@@ -108,7 +123,7 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
         private fun match(e: RustNamedElement): Boolean =
             e.name.let { n ->
                 qualifiersStack.peek().let { qual ->
-                    qual.getReferenceNameElement().match(n) && qual.textOffset >= e.textOffset
+                    qual.getReferenceNameElement().match(n)
                 }
             }
     }

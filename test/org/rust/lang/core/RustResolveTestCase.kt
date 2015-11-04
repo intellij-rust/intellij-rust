@@ -25,7 +25,8 @@ class RustResolveTestCase : RustTestCase() {
     fun testTraitMethodArgument()  { checkIsBound()   }
     fun testImplMethodArgument()   { checkIsBound()   }
     fun testStructPatterns1()      { checkIsBound(atOffset = 69) }
-    fun testStructPatterns2()      { checkIsBound() }
+    fun testStructPatterns2()      { checkIsBound()   }
+    fun testModItems()             { checkIsBound()   }
     fun testUnbound()              { checkIsUnbound() }
     fun testOrdering()             { checkIsUnbound() }
     //@formatter:on
@@ -34,7 +35,8 @@ class RustResolveTestCase : RustTestCase() {
                                          expectedOffset: Int?) {
 
         assertThat(declaration).isInstanceOf(RustNamedElement::class.java)
-        assertThat(declaration.text).isEqualTo(usage.canonicalText)
+        declaration as RustNamedElement
+        assertThat(declaration.name).isEqualTo(usage.canonicalText)
 
         if (expectedOffset != null) {
             assertThat(declaration.textRange.startOffset).isEqualTo(expectedOffset)
