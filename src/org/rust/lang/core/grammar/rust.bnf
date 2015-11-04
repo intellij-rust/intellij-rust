@@ -270,22 +270,21 @@ private stmt_item_group ::= static_item
                           | view_item
 
 
-private block_item_group ::= fn_item
-                           | unsafe_fn_item
+private block_item_group ::= &(UNSAFE? FN   ) fn_item
+                           | &(UNSAFE? TRAIT) trait_item
+                           | &(UNSAFE? IMPL ) impl_item
                            | mod_item
                            | foreign_mod_item
                            | struct_item
                            | enum_item
-                           | trait_item
-                           | impl_item
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn_item ::= FN IDENTIFIER generic_params fn_params ret_type? where_clause? inner_attrs_and_block {
-   pin(".*")=2
+fn_item ::= UNSAFE? FN IDENTIFIER generic_params fn_params ret_type? where_clause? inner_attrs_and_block {
+   pin(".*")=3
    recoverWhile="fn_item_recover"
 }
 
@@ -419,9 +418,7 @@ pat_field ::=     binding_mode? IDENTIFIER [ COLON pat ]
 
 binding_mode ::= REF MUT? | MUT
 
-private unsafe_fn_item ::= UNSAFE fn_item
-
-extern_fn_item ::= EXTERN abi? fn_item
+extern_fn_item ::= UNSAFE? EXTERN abi? fn_item
 
 decl_item ::= IDENTIFIER COLON type
 

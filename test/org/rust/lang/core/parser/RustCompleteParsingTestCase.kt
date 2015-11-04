@@ -18,5 +18,6 @@ class RustCompleteParsingTestCase : RustParsingTestCaseBase("parser/well-formed"
     fun testSuper()                 { doTest(true) }
     fun testRanges()                { doTest(true) }
     fun testExternCrates()          { doTest(true) }
+    fun testExternFns()             { doTest(true) }
     // @formatter:off
 }

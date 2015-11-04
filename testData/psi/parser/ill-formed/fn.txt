@@ -114,7 +114,7 @@ FILE
               RustPathExprImpl(PATH_EXPR)
                 RustPathPartImpl(PATH_PART)
                   PsiElement(<IDENTIFIER>)('y')
-            PsiErrorElement:'!', '(', '.', '::', <, '>', '[', '{' or '}' expected, got 'fn'
+            PsiErrorElement:'!', '(', '.', '::', ';', <, '>', '[', '{' or '}' expected, got 'fn'
               <empty list>
       PsiWhiteSpace('\n\n')
       RustDeclStmtImpl(DECL_STMT)
