@@ -27,6 +27,7 @@ class RustResolveTestCase : RustTestCase() {
     fun testStructPatterns1()      { checkIsBound(atOffset = 69) }
     fun testStructPatterns2()      { checkIsBound()   }
     fun testModItems()             { checkIsBound()   }
+    fun testNestedModule()         { checkIsBound(atOffset = 48) }
     fun testUnbound()              { checkIsUnbound() }
     fun testOrdering()             { checkIsUnbound() }
     //@formatter:on
@@ -36,10 +37,12 @@ class RustResolveTestCase : RustTestCase() {
 
         assertThat(declaration).isInstanceOf(RustNamedElement::class.java)
         declaration as RustNamedElement
-        assertThat(declaration.name).isEqualTo(usage.canonicalText)
+
 
         if (expectedOffset != null) {
-            assertThat(declaration.textRange.startOffset).isEqualTo(expectedOffset)
+            assertThat(declaration.textOffset).isEqualTo(expectedOffset)
+        } else {
+            assertThat(declaration.name).isEqualTo(usage.canonicalText)
         }
     }
 
