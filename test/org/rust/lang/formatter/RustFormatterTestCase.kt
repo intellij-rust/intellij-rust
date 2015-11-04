@@ -1,27 +1,15 @@
 package org.rust.lang.formatter
 
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.codeStyle.CodeStyleManager
-import org.rust.lang.RustTestCase
+import com.intellij.psi.formatter.FormatterTestCase
 
-class RustFormatterTestCase : RustTestCase() {
-    override fun getTestDataPath() = "testData/formatter"
+class RustFormatterTestCase : FormatterTestCase() {
+    override fun getTestDataPath() = "testData"
 
-    private fun doTest() {
-        myFixture.configureByFile(fileName)
+    override fun getBasePath() = "formatter"
 
-        object : WriteCommandAction.Simple<Any>(project) {
-            override fun run() {
-                CodeStyleManager.getInstance(project).reformat(myFixture.file)
-            }
-        }.execute()
+    override fun getFileExtension() = "rs"
 
-        myFixture.checkResultByFile(goldFileName)
-    }
-
-    //@formatter:off
-    fun testBlocks()                { doTest() }
-    fun testItems()                 { doTest() }
-    fun testExpressions()           { doTest() }
-    //@formatter:on
+    fun testBlocks() = doTest()
+    fun testItems() = doTest()
+    fun testExpressions() = doTest()
 }
