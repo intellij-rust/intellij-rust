@@ -4,7 +4,7 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 
 object RustColors {
-    fun r(id: String, attrKey: TextAttributesKey) =
+    private fun r(id: String, attrKey: TextAttributesKey) =
             TextAttributesKey.createTextAttributesKey(id, attrKey)
 
     val IDENTIFIER      = r("org.rust.IDENTIFIER",      DefaultLanguageHighlighterColors.IDENTIFIER)

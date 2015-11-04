@@ -9,8 +9,8 @@ import org.rust.lang.highlight.RustHighlighter
 import org.rust.lang.icons.RustIcons
 
 public class RustColorSettingsPage : ColorSettingsPage {
-    fun d(displayName: String, key: TextAttributesKey) = AttributesDescriptor(displayName, key)
-    val ATTRS = arrayOf(
+    private fun d(displayName: String, key: TextAttributesKey) = AttributesDescriptor(displayName, key)
+    private val ATTRS = arrayOf(
             d("Identifier", RustColors.IDENTIFIER),
             d("Lifetime", RustColors.LIFETIME),
             d("Char", RustColors.CHAR),
@@ -29,8 +29,8 @@ public class RustColorSettingsPage : ColorSettingsPage {
             d("Comma", RustColors.COMMA),
             d("Attribute", RustColors.ATTRIBUTE)
     )
-    val TAGS = emptyMap<String, TextAttributesKey>()
-    val DEMO_TEXT by lazy {
+    private val TAGS = emptyMap<String, TextAttributesKey>()
+    private val DEMO_TEXT by lazy {
         val stream = javaClass.classLoader.getResourceAsStream("org/rust/colorscheme/highlighterDemoText.rs")
         StreamUtil.readText(stream, "UTF-8")
     }
