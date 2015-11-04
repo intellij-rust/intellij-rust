@@ -30,6 +30,7 @@ class RustResolveTestCase : RustTestCase() {
     fun testNestedModule()         { checkIsBound(atOffset = 48) }
     fun testUnbound()              { checkIsUnbound() }
     fun testOrdering()             { checkIsUnbound() }
+    fun testModBoundary()          { checkIsUnbound() }
     //@formatter:on
 
     private fun assertIsValidDeclaration(declaration: PsiElement, usage: PsiReference,
