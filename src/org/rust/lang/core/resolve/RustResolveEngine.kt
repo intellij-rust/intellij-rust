@@ -1,18 +1,14 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RustDeclaringElement
+import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.util.isBefore
 import org.rust.lang.core.psi.util.match
 import org.rust.lang.core.resolve.ref.RustQualifiedValue
-import org.rust.lang.core.resolve.scope.RustResolveScope
-import org.rust.lang.core.resolve.scope.resolveWith
-import org.rust.lang.core.resolve.util.RustResolveUtil
 import java.util.*
 
-public class RustResolveEngine(ref: RustQualifiedValue) {
-
-    private val ref = ref;
+public class RustResolveEngine(private val ref: RustQualifiedValue) {
 
     open class ResolveResult(elem: RustNamedElement?) : com.intellij.psi.ResolveResult {
 
@@ -20,30 +16,18 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
 
         object UNRESOLVED : ResolveResult(null)
 
-        override fun getElement():      PsiElement? = resolved
-        override fun isValidResult():   Boolean     = resolved != null
+        override fun getElement(): PsiElement? = resolved
+        override fun isValidResult(): Boolean = resolved != null
 
     }
 
-    fun runFrom(scope: RustResolveScope?): ResolveResult {
-        var current = scope
-        val visitor = ResolveScopeVisitor(ref)
-        while (current != null) {
-            current.resolveWith(visitor)?.let {
-                return ResolveResult(it)
-            }
-
-            current = RustResolveUtil.getResolveScope(current)
-        }
-
-        return ResolveResult.UNRESOLVED;
-    }
-
-    internal class ResolveScopeVisitor(val ref: RustQualifiedValue) : RustVisitor() {
+    private class ResolveScopeProcessor(val ref: RustQualifiedValue) : RustScopeProcessor() {
 
         val qualifiersStack = stackUp(ref)
 
         var matched: RustNamedElement? = null
+
+        var goesUp = true
 
         companion object {
             fun stackUp(ref: RustQualifiedValue): Stack<RustQualifiedValue> {
@@ -59,73 +43,52 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
             }
         }
 
-        override fun visitModItem(o: RustModItem) {
-            seek(o.items)
-        }
+        override fun processScope(declarations: Collection<RustDeclaringElement>): Search =
+                searchIn(declarations.flatMap { it.getBoundElements() })
 
-        override fun visitForExpr(o: RustForExpr) {
-            seek(o.scopedForDecl)
-        }
 
-        override fun visitScopedLetExpr(o: RustScopedLetExpr) {
-            visitResolveScope(o)
-        }
+        override fun processBlockScope(declarations: List<RustDeclaringElement>): Search =
+                searchIn(declarations
+                        .asReversed()
+                        .flatMap { it.getBoundElements() }
+                        .filter { it.isBefore(ref) })
 
-        override fun visitLambdaExpr(o: RustLambdaExpr) {
-            visitResolveScope(o)
-        }
-
-        override fun visitMethod(o: RustMethod) {
-            visitResolveScope(o)
-        }
-
-        override fun visitFnItem(o: RustFnItem) {
-            visitResolveScope(o)
-        }
-
-        override fun visitBlock(o: RustBlock) {
-            seek(o.getDeclarations(), orderDependent = true)
-        }
-
-        override fun visitResolveScope(scope: RustResolveScope) {
-            seek(scope.getDeclarations())
-        }
-
-        private fun seek(elem: RustDeclaringElement, orderDependent: Boolean = false) {
-            seek(listOf(elem), orderDependent)
-        }
-
-        private fun seek(decls: Collection<RustDeclaringElement>, orderDependent: Boolean = false) {
-            val boundElements = decls.flatMap { it.getBoundElements() }
-            val candidates = if (orderDependent) {
-                boundElements.asReversed().filter { it.isBefore(ref) }
-            } else {
-                boundElements
-            }
-
-            candidates.forEach { e ->
-                if (match(e)) {
-                    return found(e)
+        private fun searchIn(names: Collection<RustNamedElement>): Search {
+            names.forEach {
+                if (match(it)) {
+                    found(it)
+                    return Search.STOP
                 }
             }
+            return if (goesUp) Search.GO_UP else Search.STOP
         }
 
         private fun found(elem: RustNamedElement) {
-            qualifiersStack.pop();
+            goesUp = false
+            qualifiersStack.pop()
 
             if (qualifiersStack.size == 0)
                 matched = elem
-            else if (elem is RustResolveScope) {
-                elem.resolveWith(this)
+            else {
+                elem.accept(RustScopeVisitor(this))
             }
         }
 
         private fun match(e: RustNamedElement): Boolean =
-            e.name.let { n ->
-                qualifiersStack.peek().let { qual ->
-                    qual.getReferenceNameElement().match(n)
+                e.name.let { n ->
+                    qualifiersStack.peek().let { qual ->
+                        qual.getReferenceNameElement().match(n)
+                    }
                 }
-            }
     }
 
+    fun runFrom(element: PsiElement?): ResolveResult {
+        val processor = ResolveScopeProcessor(ref)
+        element?.accept(RustScopeVisitor(processor))
+        return if (processor.matched == null) {
+            ResolveResult.UNRESOLVED
+        } else {
+            ResolveResult(processor.matched)
+        }
+    }
 }
