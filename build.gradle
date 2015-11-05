@@ -84,7 +84,7 @@ apply plugin: 'org.jetbrains.intellij'
 intellij {
     version ideaVersion
     pluginName 'Rust'
-    downloadSources downloadSources
+    downloadSources Boolean.valueOf(DOWNLOAD_SOURCES)
 }
 
 
