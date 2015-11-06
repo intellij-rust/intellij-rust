@@ -14,7 +14,7 @@ class RustFormattingModelBuilder : FormattingModelBuilder {
     override fun getRangeAffectingIndent(file: PsiFile?, offset: Int, elementAtOffset: ASTNode?): TextRange? = null
 
     override fun createModel(element: PsiElement, settings: CodeStyleSettings): FormattingModel {
-        val block = RustFormattingBlock(element.node, Indent.getNoneIndent())
+        val block = RustFormattingBlock(element.node)
         return FormattingModelProvider.createFormattingModelForPsiFile(element.containingFile, block, settings)
     }
 

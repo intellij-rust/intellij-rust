@@ -7,7 +7,9 @@ import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.lexer.RustTokenElementTypes.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 
-class RustFormattingBlock(private val node: ASTNode, private val indent: Indent?) : ASTBlock {
+class RustFormattingBlock(private val node: ASTNode,
+                          private val indent: Indent = Indent.getNoneIndent(),
+                          private val alignment: Alignment? = null) : ASTBlock {
 
     override fun getChildAttributes(newChildIndex: Int): ChildAttributes {
         val childIndent = if (node.elementType in BLOCKS_TOKEN_SET) {
@@ -20,7 +22,7 @@ class RustFormattingBlock(private val node: ASTNode, private val indent: Indent?
     }
 
     override fun getNode() = node
-    override fun getAlignment() = null
+    override fun getAlignment() = alignment
     override fun getIndent() = indent
     override fun getWrap() = null
     override fun getTextRange() = node.textRange
@@ -33,12 +35,28 @@ class RustFormattingBlock(private val node: ASTNode, private val indent: Indent?
     override fun getSubBlocks(): List<Block> = mySubBlock
 
     private val mySubBlock: List<Block> by lazy {
+        val anchor = if (node.elementType == ARG_LIST) {
+            Alignment.createAlignment()
+        } else {
+            null
+        }
+
         node.getChildren(null)
                 .filter { it.textRange.length > 0 && it.elementType != WHITE_SPACE }
                 .map {
-                    RustFormattingBlock(it, calcChildIndent(it))
+                    RustFormattingBlock(it,
+                            calcChildIndent(it),
+                            calcAlignment(it, anchor))
                 }
     }
+
+    private fun calcAlignment(child: ASTNode, anchor: Alignment?): Alignment? =
+            if (child.elementType in BRACES_TOKEN_SET) {
+                null
+            } else {
+                anchor
+            }
+
 
     private fun calcChildIndent(child: ASTNode): Indent {
         val parentType = node.elementType
@@ -77,5 +95,6 @@ private val BLOCKS_TOKEN_SET = TokenSet.create(
 )
 
 private val BRACES_TOKEN_SET = TokenSet.create(
-        LBRACE, RBRACE
+        LBRACE, RBRACE,
+        LPAREN, RPAREN
 )
