@@ -36,6 +36,17 @@ interface Foo<out T : Any>  : Bar
 
 Applying spacing accordingly therefore `:` is aligned with a `,`.
 
+## When
+
+Align case-branches in columns:
+
+``` kotlin
+        when (element) {
+            is RustNamedElement -> 1
+            else                -> 0
+        }
+```
+
 ## Lambdas
 
 In lambda expressions, spaces should be used around the curly braces, as well as around the arrow which separates the parameters
