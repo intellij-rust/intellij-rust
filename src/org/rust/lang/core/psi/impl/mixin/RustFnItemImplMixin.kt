@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Iconable
 import org.rust.lang.core.psi.RustDeclaringElement
 import org.rust.lang.core.psi.RustFnItem
 import org.rust.lang.core.psi.impl.RustItemImpl
+import org.rust.lang.core.psi.util.isPublic
 import org.rust.lang.icons.RustIcons
 import org.rust.lang.icons.addTestMark
 import org.rust.lang.icons.addVisibilityIcon
@@ -26,7 +27,7 @@ public abstract class RustFnItemImplMixin(node: ASTNode) : RustItemImpl(node)
     }
 
     fun isTest(): Boolean {
-        return attrs?.map { it.metaItem?.identifier?.text }?.find { "test".equals(it) } != null
+        return outerAttrList.map { it.metaItem?.identifier?.text }.find { "test".equals(it) } != null
     }
 
 }

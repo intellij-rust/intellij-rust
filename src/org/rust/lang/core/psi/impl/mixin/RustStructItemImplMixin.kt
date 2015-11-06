@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.Iconable
 import org.rust.lang.core.psi.RustStructItem
 import org.rust.lang.core.psi.impl.RustItemImpl
+import org.rust.lang.core.psi.util.isPublic
 import org.rust.lang.icons.RustIcons
 import org.rust.lang.icons.addVisibilityIcon
 import javax.swing.Icon
