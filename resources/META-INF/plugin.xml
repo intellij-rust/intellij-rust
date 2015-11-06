@@ -46,6 +46,8 @@
 
         <annotator language="RUST" implementationClass="org.rust.lang.annotator.RustAnnotator"/>
 
+        <spellchecker.support language="RUST" implementationClass="org.rust.lang.spellchecker.RustSpellcheckingStrategy"/>
+
         <colorSettingsPage implementation="org.rust.lang.colorscheme.RustColorSettingsPage"/>
 
         <additionalTextAttributes scheme="Default" file="org/rust/colorscheme/RustDefault.xml"/>
