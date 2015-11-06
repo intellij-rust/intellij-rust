@@ -3,8 +3,8 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
+import com.intellij.psi.PsiReferenceBase.EMPTY_ARRAY
 import org.rust.lang.core.resolve.RustResolveEngine
-import org.rust.lang.core.resolve.util.RustResolveUtil
 
 public open class RustReference<T : RustQualifiedValue>(element: T,
                                                         range: TextRange = element.textRange,
@@ -19,7 +19,7 @@ public open class RustReference<T : RustQualifiedValue>(element: T,
 
     override fun resolve(): PsiElement? {
         return RustResolveEngine(element)
-                .runFrom(RustResolveUtil.getResolveScope(element))
+                .runFrom(element)
                 .element
     }
 

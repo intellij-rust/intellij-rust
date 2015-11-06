@@ -11,9 +11,6 @@ import javax.swing.Icon
 abstract class RustImplMethodImplMixin(node: ASTNode)   : RustNamedElementImpl(node)
                                                         , RustImplMethod {
 
-    override fun getDeclarations(): Collection<RustDeclaringElement> =
-        paramList.orEmpty().filterNotNull()
-
     override fun getIcon(flags: Int): Icon? {
         val icon = if (isStatic()) RustIcons.METHOD.addStaticMark() else RustIcons.METHOD
         if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)

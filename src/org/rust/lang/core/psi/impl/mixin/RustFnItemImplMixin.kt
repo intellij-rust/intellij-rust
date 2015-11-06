@@ -13,9 +13,6 @@ import javax.swing.Icon
 public abstract class RustFnItemImplMixin(node: ASTNode) : RustItemImpl(node)
                                                          , RustFnItem {
 
-    override fun getDeclarations(): Collection<RustDeclaringElement> =
-        fnParams?.paramList.orEmpty().filterNotNull()
-
 
     override fun getIcon(flags: Int): Icon? {
         val icon = if (isTest()) RustIcons.FUNCTION.addTestMark() else RustIcons.FUNCTION
