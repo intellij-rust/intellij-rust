@@ -20,11 +20,11 @@ public class RustModuleType() : ModuleType<RustModuleBuilder>(RustModuleType.RUS
     }
 
     override fun getBigIcon(): Icon {
-        return RustIcons.BIG
+        return RustIcons.FILE_BIG
     }
 
     override fun getNodeIcon(isOpened: Boolean): Icon {
-        return RustIcons.NORMAL
+        return RustIcons.FILE
     }
 
     companion object {

@@ -19,7 +19,7 @@ public class RustModuleBuilder() : ModuleBuilder() {
     override fun modifySettingsStep(settingsStep: SettingsStep): ModuleWizardStep? =
         StdModuleTypes.JAVA!!.modifySettingsStep(settingsStep, this)
 
-    override fun getBigIcon(): Icon = RustIcons.BIG
+    override fun getBigIcon(): Icon = RustIcons.FILE_BIG
 
     override fun getGroupName(): String? = "Rust"
 

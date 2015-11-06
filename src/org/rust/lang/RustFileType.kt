@@ -15,7 +15,7 @@ public open class RustFileType : LanguageFileType(RustLanguage.INSTANCE) {
 
     override fun getName(): String = "Rust"
 
-    override fun getIcon(): Icon = RustIcons.NORMAL;
+    override fun getIcon(): Icon = RustIcons.FILE;
 
     override fun getDefaultExtension(): String = DEFAULTS.EXTENSION
 
