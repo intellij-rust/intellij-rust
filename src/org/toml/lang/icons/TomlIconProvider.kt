@@ -8,18 +8,16 @@ import javax.swing.Icon
 
 public class TomlIconProvider : IconProvider() {
     override fun getIcon(element: PsiElement, flags: Int): Icon? {
-        return when(element) {
+        return when (element) {
             is TomlFile -> getFileIcon(element)
             else -> null
         }
     }
 
     fun getFileIcon(element: TomlFile): Icon? {
-        return when(element.name) {
-            "Cargo.toml" -> TomlIcons.CARGO_FILE
+        return when (element.name) {
+            "Cargo.toml", "Cargo.lock" -> TomlIcons.CARGO_FILE
             else -> null
         }
     }
 }
-
-
