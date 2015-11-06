@@ -270,7 +270,8 @@ private item_inner ::= stmt_item_group
 // NOTA BENE: Naming is crucial
 //
 fake item_ ::= attrs_and_vis {
-  implements = "org.rust.lang.core.psi.RustDeclaringElement"
+  implements  = [ "org.rust.lang.core.psi.RustDeclaringElement" "org.rust.lang.core.psi.RustNamedElement" ]
+  mixin       = "org.rust.lang.core.psi.impl.mixin.RustItemImplMixin"
 }
 
 upper item ::= << injectInto attrs_and_vis item_inner >> {
