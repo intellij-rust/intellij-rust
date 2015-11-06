@@ -60,7 +60,7 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
         }
 
         override fun visitModItem(o: RustModItem) {
-            seek(o.items)
+            seek(o.itemList)
         }
 
         override fun visitForExpr(o: RustForExpr) {
