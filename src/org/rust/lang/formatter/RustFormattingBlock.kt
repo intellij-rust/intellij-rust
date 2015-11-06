@@ -3,7 +3,6 @@ package org.rust.lang.formatter
 import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
 import com.intellij.psi.TokenType.WHITE_SPACE
-import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.lexer.RustTokenElementTypes.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
@@ -11,7 +10,7 @@ import org.rust.lang.core.psi.RustCompositeElementTypes.*
 class RustFormattingBlock(private val node: ASTNode, private val indent: Indent?) : ASTBlock {
 
     override fun getChildAttributes(newChildIndex: Int): ChildAttributes {
-        val childIndent = if (node.elementType isIn BLOCKS_TOKEN_SET) {
+        val childIndent = if (node.elementType in BLOCKS_TOKEN_SET) {
             Indent.getNormalIndent()
         } else {
             Indent.getNoneIndent()
@@ -45,8 +44,8 @@ class RustFormattingBlock(private val node: ASTNode, private val indent: Indent?
         val parentType = node.elementType
         val childType = child.elementType
 
-        if (parentType isIn BLOCKS_TOKEN_SET) {
-            if (childType isIn BLOCK_START_TOKEN_SET || childType isIn BRACES_TOKEN_SET) {
+        if (parentType in BLOCKS_TOKEN_SET) {
+            if (childType in BLOCK_START_TOKEN_SET || childType in BRACES_TOKEN_SET) {
                 return Indent.getNoneIndent()
             }
             return Indent.getNormalIndent()
@@ -80,5 +79,3 @@ private val BLOCKS_TOKEN_SET = TokenSet.create(
 private val BRACES_TOKEN_SET = TokenSet.create(
         LBRACE, RBRACE
 )
-
-infix fun IElementType.isIn(set: TokenSet) = set.contains(this)
