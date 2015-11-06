@@ -25,6 +25,8 @@
     -->
 
     <extensions defaultExtensionNs="com.intellij">
+        <!--RUST-->
+
         <moduleType id="RUST_MODULE" classpathProvider="false"
                     implementationClass="org.rust.lang.module.RustModuleType"/>
 
@@ -44,6 +46,13 @@
 
         <annotator language="RUST" implementationClass="org.rust.lang.annotator.RustAnnotator"/>
 
+        <colorSettingsPage implementation="org.rust.lang.colorscheme.RustColorSettingsPage"/>
+
+        <additionalTextAttributes scheme="Default" file="org/rust/colorscheme/RustDefault.xml"/>
+        <additionalTextAttributes scheme="Darcula" file="org/rust/colorscheme/RustDarcula.xml"/>
+
+        <!--TOML-->
+
         <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
 
         <lang.syntaxHighlighterFactory language="TOML" implementationClass="org.toml.lang.TomlHighlighterFactory"/>
@@ -53,10 +62,7 @@
 
         <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.core.parser.TomlParserDefinition"/>
 
-        <colorSettingsPage implementation="org.rust.lang.colorscheme.RustColorSettingsPage"/>
-
-        <additionalTextAttributes scheme="Default" file="org/rust/colorscheme/RustDefault.xml"/>
-        <additionalTextAttributes scheme="Darcula" file="org/rust/colorscheme/RustDarcula.xml"/>
+        <annotator language="TOML" implementationClass="org.toml.lang.annotator.TomlAnnotator"/>
     </extensions>
 
     <application-components>
