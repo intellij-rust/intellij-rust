@@ -261,7 +261,17 @@ private attrs_and_vis ::= outer_attrs? vis?
 private item_inner ::= stmt_item_group
                      | item_macro
 
-private item ::= << injectInto attrs_and_vis item_inner >>
+//
+// TODO(kudinkin): That's a hack to force GK to generate accessors
+//                 for the items
+//
+// NOTA BENE: Naming is crucial
+//
+fake item_ ::= attrs_and_vis
+
+upper item ::= << injectInto attrs_and_vis item_inner >> {
+  elementType = item_
+}
 
 private stmt_item_group ::= static_item
                           | const_item
@@ -449,7 +459,9 @@ private crate_name ::= IDENTIFIER [ AS IDENTIFIER ]
 // Struct & Enum
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-mod_item ::= MOD IDENTIFIER (SEMICOLON | LBRACE inner_attrs? item* RBRACE) { pin(".*")=1 }
+mod_item ::= MOD IDENTIFIER (SEMICOLON | LBRACE inner_attrs? item * RBRACE) {
+  pin(".*") = 1
+}
 
 foreign_mod_item ::= EXTERN abi? LBRACE inner_attrs? foreign_items? RBRACE
 
