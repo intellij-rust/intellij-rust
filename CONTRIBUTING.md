@@ -55,14 +55,9 @@ Please, make sure that all tests pass and Travis reports build as green prior to
 
 ## Code style
 
-There're no formal code-style for the code in Kotlin just yet, so, please, be responsible, and make sure that your code aligns 
-just fine with the rest of the code base.
+Please, consider our [code-style](STYLE.md) prior to submitting the P/R. We love P/R's, but much more than just P/Rs we love P/Rs that are 'on style'.
 
 For the Java sources we're sticked to the Google's [one](https://google.github.io/styleguide/javaguide.html).
-
-**NOTA BENE**
-
-Please *don't* use class comments with information about author or date and time of creation.
 
 
 # Plugin overview

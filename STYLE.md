@@ -15,6 +15,12 @@ If in doubt default to the Java Coding Conventions such as:
 * use 4 space indentation
 * public functions should have documentation such that it appears in Kotlin Doc
 
+## Docs
+
+**NOTA BENE**
+
+Please *don't* use class comments with information about author or date and time of creation.
+
 ## Colon
 
 There is a space before colon where colon separates type and supertype and there's no space where colon separates instance and type:
