@@ -63,6 +63,7 @@
         <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.core.parser.TomlParserDefinition"/>
 
         <annotator language="TOML" implementationClass="org.toml.lang.annotator.TomlAnnotator"/>
+        <iconProvider implementation="org.toml.lang.icons.TomlIconProvider"/>
     </extensions>
 
     <application-components>

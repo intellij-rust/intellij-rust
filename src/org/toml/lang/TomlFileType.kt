@@ -7,8 +7,6 @@ import javax.swing.Icon
 
 public class TomlFileType : LanguageFileType(TomlLanguage.INSTANCE) {
 
-    private var myIcon: Icon = TomlIcons.NORMAL
-
     public object DEFAULTS {
         public val EXTENSION: String = "toml";
     }
@@ -22,8 +20,7 @@ public class TomlFileType : LanguageFileType(TomlLanguage.INSTANCE) {
     override fun getDefaultExtension(): String =
             DEFAULTS.EXTENSION
 
-    override fun getIcon(): Icon =
-            myIcon
+    override fun getIcon(): Icon = TomlIcons.FILE
 
     override fun getCharset(file: VirtualFile, content: ByteArray): String =
             "UTF-8"
