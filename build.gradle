@@ -182,7 +182,7 @@ task generateParsers {
 }
 
 task generate {
-    dependsOn generateLexers, generateParsers
+    dependsOn clean, generateLexers, generateParsers
 }
 
 compileJava     .dependsOn generate
