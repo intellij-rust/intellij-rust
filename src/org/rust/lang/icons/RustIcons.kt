@@ -23,6 +23,7 @@ public object RustIcons {
     public val FUNCTION = AllIcons.Nodes.Function
     public val METHOD   = AllIcons.Nodes.Method
     public val ABSTRACT_METHOD   = AllIcons.Nodes.AbstractMethod
+    public val MODULE = AllIcons.Nodes.Package
 
     public val STATIC_MARK   = AllIcons.Nodes.StaticMark
     public val TEST_MARK   = AllIcons.Nodes.JunitTestMark

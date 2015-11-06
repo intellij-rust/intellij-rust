@@ -23,4 +23,5 @@ class RustStructureViewTest : RustTestCase() {
     fun testEnums() = doFileTest()
     fun testTraits() = doFileTest()
     fun testImpls() = doFileTest()
+    fun testMods() = doFileTest()
 }
