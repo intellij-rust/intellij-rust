@@ -1,7 +1,4 @@
 ---
-type: doc
-layout: reference
-category: Basics
 title: Coding Conventions
 ---
 
@@ -28,6 +25,17 @@ interface Foo<out T : Any> : Bar {
 }
 ```
 
+Though if your type extends not just single supertype, but many of them place them one on top the other in an aligned fashion:
+
+``` kotlin
+interface Foo<out T : Any>  : Bar
+                            , Baz {
+  /* ... */
+}
+```
+
+Applying spacing accordingly therefore `:` is aligned with a `,`.
+
 ## Lambdas
 
 In lambda expressions, spaces should be used around the curly braces, as well as around the arrow which separates the parameters
@@ -49,3 +57,28 @@ fun foo() { // ": Unit" is omitted here
 
 }
 ```
+
+
+# Commit Conventions
+
+## Content
+
+Try to maintain granularity of your commits to facilitate the review process. 
+
+## Message
+
+Commit message is a primary mean of providing brief excerpt of piece of work you're (no doubt, particularly dedicated) contributing to the project.
+Therefore, please, be concise but reasonable. Do not abuse commit's message with: `++`, `minor`, `fix`, etc. as those would be relentlessly rejected as completely useless,
+ failing to shed the light on the brilliant piece of code you're trying to contribute.
+  
+  We're not enforcing the format we're particularly sticked too, but hopefully ask you to not abuse it. At least too much.
+   
+   Typical commit's message contains parenthesized acronym of the system it's contents are (primarily) refer to: `(PAR)` (from parsing), `(PSI)` (from PSI), etc.
+   Do not scratch your head trying to come up with the best acronym of all the worlds, just be reasonable enough -- we (all the contributors) are smart enough to get what you're trying to say.
+   
+   Please, assure that your message shortly ascribe the whole content of your commit. If it touches more than just a single piece, please, let the world know:
+   
+   ```
+    (PAR): Replaced `skip_until_eol_rec` recovery util with hand-crafted strategy;
+           Tidied up `GeneratedParserUtilBase`
+   ```
