@@ -35,6 +35,10 @@ class RustFileTreeElement(file: RustFileImpl) : PsiTreeElementBase<RustFileImpl>
             override fun visitFnItem(o: RustFnItem) {
                 result += (RustFnTreeElement(o))
             }
+
+            override fun visitModItem(o: RustModItem) {
+                result += (RustModTreeElement(o))
+            }
         })
         return result;
     }
