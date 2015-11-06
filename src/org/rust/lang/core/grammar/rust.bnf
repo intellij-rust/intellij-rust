@@ -155,8 +155,7 @@
     implements  ("mod_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("mod_item") = "org.rust.lang.core.psi.impl.mixin.RustModItemImplMixin"
 
-    implements  ("fn_item") = ["org.rust.lang.core.psi.RustItem"
-                               "org.rust.lang.core.resolve.scope.RustResolveScope"]
+    implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
 
     implements  ("method") = "org.rust.lang.core.resolve.scope.RustResolveScope"
@@ -213,10 +212,7 @@
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
 
-    extends("impl_method") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
-
-    implements("(?!meta_item).*_item") = "org.rust.lang.core.psi.RustItem"
-    extends   ("(?!meta_item).*_item") = "org.rust.lang.core.psi.impl.RustItemImpl"
+    extends("(?!meta_item).*_item") = item_
 
     extends("(if|while)_let_expr") = scoped_let_expr
     extends(".*_expr") = restricted_expr
@@ -228,7 +224,7 @@
     generateTokens=false
     generateTokenAccessors=true
 
-    recoverWhile = skip_until_eol_rec
+    //recoverWhile = skip_until_eol_rec
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
