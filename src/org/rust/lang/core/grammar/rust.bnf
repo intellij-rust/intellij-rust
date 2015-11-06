@@ -227,6 +227,8 @@
 
     generateTokens=false
     generateTokenAccessors=true
+
+    recoverWhile = skip_until_eol_rec
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -295,7 +297,6 @@ private block_item_group ::= &(UNSAFE? FN   ) fn_item
 
 fn_item ::= UNSAFE? FN IDENTIFIER generic_params fn_params ret_type? where_clause? inner_attrs_and_block {
    pin(".*")=3
-   recoverWhile="fn_item_recover"
 }
 
 foreign_fn_item ::= FN IDENTIFIER generic_params fn_decl_allow_variadic where_clause? SEMICOLON
@@ -346,8 +347,6 @@ where_clause ::= WHERE <<comma_separated_list where_pred>>
 where_pred ::= for_lifetimes? (lifetime COLON bounds | type type_param_bounds)
 
 for_lifetimes ::= FOR LT lifetimes GT
-
-private fn_item_recover ::= !(<< skipUntilEOL >>)
 
 fn_params ::= LPAREN !COMMA params COMMA? RPAREN    { pin(".*")=1 }
 ret_type  ::= ARROW (type | EXCL)                   { pin=1 }
@@ -1051,3 +1050,5 @@ LTEQ   ::= LT EQ
 
 // Trailing commas are allowed
 private meta comma_separated_list ::= <<param>> ( COMMA <<param>> ) * COMMA?
+
+private skip_until_eol_rec ::= !(<< skipUntilEOL >>)
