@@ -1,12 +1,13 @@
 package org.toml.lang.icons
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
 import javax.swing.Icon
 
 
 public object TomlIcons {
-    public val NORMAL: Icon = IconLoader.getIcon("/org/toml/icons/cargo16.png")
-    public val BIG: Icon = IconLoader.getIcon("/org/toml/icons/cargo32.png")
+    public val FILE = AllIcons.FileTypes.Text;
+    public val CARGO_FILE = IconLoader.getIcon("/org/toml/icons/cargo.png")
 }
 
 
