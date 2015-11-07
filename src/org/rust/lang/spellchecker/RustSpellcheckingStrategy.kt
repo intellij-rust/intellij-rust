@@ -4,16 +4,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy
 import com.intellij.spellchecker.tokenizer.Tokenizer
 import org.rust.lang.RustLanguage
-import org.rust.lang.core.psi.RustLitExpr
+import org.rust.lang.core.lexer.RustTokenElementTypes.STRING_LITERAL
 
 class RustSpellcheckingStrategy : SpellcheckingStrategy() {
-    private val literalExpressionTokenizer = LiteralExpressionTokenizer()
+    private val stringLiteralTokenizer = StringLiteralTokenizer()
 
     override fun isMyContext(element: PsiElement) = RustLanguage.INSTANCE.`is`(element.language)
 
     override fun getTokenizer(element: PsiElement?): Tokenizer<*> {
-        if (element is RustLitExpr) {
-            return literalExpressionTokenizer
+        if (element?.node?.elementType == STRING_LITERAL) {
+            return stringLiteralTokenizer
         }
         return super.getTokenizer(element)
     }
