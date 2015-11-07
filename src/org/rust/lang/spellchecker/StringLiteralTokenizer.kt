@@ -1,15 +1,15 @@
 package org.rust.lang.spellchecker
 
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.spellchecker.inspections.PlainTextSplitter
 import com.intellij.spellchecker.tokenizer.EscapeSequenceTokenizer
 import com.intellij.spellchecker.tokenizer.TokenConsumer
-import org.rust.lang.core.psi.RustLitExpr
 
-class LiteralExpressionTokenizer : EscapeSequenceTokenizer<RustLitExpr>() {
+class StringLiteralTokenizer : EscapeSequenceTokenizer<LeafPsiElement>() {
 
-    override fun tokenize(element: RustLitExpr, consumer: TokenConsumer) {
-        val text = element.stringLiteral?.text ?: return
+    override fun tokenize(element: LeafPsiElement, consumer: TokenConsumer) {
+        val text = element.text
 
         if ("\\" !in text) {
             consumer.consumeToken(element, PlainTextSplitter.getInstance())
@@ -19,7 +19,7 @@ class LiteralExpressionTokenizer : EscapeSequenceTokenizer<RustLitExpr>() {
     }
 
     companion object {
-        fun processTextWithEscapeSequences(element: RustLitExpr, text: String, consumer: TokenConsumer) {
+        fun processTextWithEscapeSequences(element: LeafPsiElement, text: String, consumer: TokenConsumer) {
             val unescapedText = StringBuilder()
             val offsets = IntArray(text.length + 1)
             PsiLiteralExpressionImpl.parseStringCharacters(text, unescapedText, offsets)
