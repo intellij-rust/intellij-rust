@@ -15,4 +15,9 @@ class RustCommenterTest : RustTestCase() {
     fun testMultiLine() = doTest(IdeActions.ACTION_COMMENT_LINE)
     fun testSingleLineBlock() = doTest(IdeActions.ACTION_COMMENT_BLOCK)
     fun testMultiLineBlock() = doTest(IdeActions.ACTION_COMMENT_BLOCK)
+
+    fun testSingleLineUncomment() = doTest(IdeActions.ACTION_COMMENT_LINE)
+    fun testMultiLineUncomment() = doTest(IdeActions.ACTION_COMMENT_LINE)
+    fun testSingleLineBlockUncomment() = doTest(IdeActions.ACTION_COMMENT_BLOCK)
+    fun testMultiLineBlockUncomment() = doTest(IdeActions.ACTION_COMMENT_BLOCK)
 }
