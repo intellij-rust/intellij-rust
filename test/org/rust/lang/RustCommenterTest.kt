@@ -2,6 +2,9 @@ package org.rust.lang
 
 import com.intellij.openapi.actionSystem.IdeActions
 
+/**
+ * @see RustCommenter
+ */
 class RustCommenterTest : RustTestCase() {
     override fun getTestDataPath() = "testData/commenter"
 
@@ -20,4 +23,8 @@ class RustCommenterTest : RustTestCase() {
     fun testMultiLineUncomment() = doTest(IdeActions.ACTION_COMMENT_LINE)
     fun testSingleLineBlockUncomment() = doTest(IdeActions.ACTION_COMMENT_BLOCK)
     fun testMultiLineBlockUncomment() = doTest(IdeActions.ACTION_COMMENT_BLOCK)
+
+    fun testSingleLineUncommentWithSpace() = doTest(IdeActions.ACTION_COMMENT_LINE)
+    fun testNestedBlockComments() = doTest(IdeActions.ACTION_COMMENT_BLOCK) // FIXME
+    fun testIndentedSingleLineComment() = doTest(IdeActions.ACTION_COMMENT_LINE)
 }
