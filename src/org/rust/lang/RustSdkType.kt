@@ -29,6 +29,15 @@ class RustSdkType : SdkType("Rust SDK") {
         return rustc.canExecute() && cargo.canExecute()
     }
 
+    override fun adjustSelectedSdkHome(homePath: String?): String? {
+        val file = File(homePath)
+        return when (file.nameWithoutExtension) {
+            "rustc", "cargo" -> file.parentFile.absolutePath
+            "bin"            -> file.parentFile.absolutePath
+            else             -> super.adjustSelectedSdkHome(homePath)
+        }
+    }
+
     private fun getSdkExecutable(sdkHome: String, command: String): File {
         return File(File(sdkHome, "bin"), getExecutableFileName(command))
     }
