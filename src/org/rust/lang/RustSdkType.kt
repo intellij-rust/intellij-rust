@@ -21,7 +21,16 @@ class RustSdkType : SdkType("Rust SDK") {
     override fun getIcon() = RustIcons.FILE
     override fun getIconForAddAction() = icon
 
-    override fun suggestHomePath() = null
+    override fun suggestHomePath(): String? {
+        if (SystemInfo.isMac) {
+            // look for rust installed by homebrew
+            val homebrew = File("/usr/local/Cellar/rust")
+            if (homebrew.exists())
+                return homebrew.absolutePath
+        }
+
+        return null
+    }
 
     override fun isValidSdkHome(path: String): Boolean {
         val rustc = getSdkExecutable(path, "rustc")
