@@ -182,8 +182,15 @@ task generateParsers {
 }
 
 task generate {
-    dependsOn clean, generateLexers, generateParsers
+    dependsOn generateLexers, generateParsers
 }
+
+generate.mustRunAfter clean
+
+task generateClean {
+    dependsOn clean, generate
+}
+
 
 compileJava     .dependsOn generate
 compileKotlin   .dependsOn generate
