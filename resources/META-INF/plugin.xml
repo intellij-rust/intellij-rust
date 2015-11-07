@@ -49,6 +49,8 @@
         <spellchecker.support language="RUST" implementationClass="org.rust.lang.spellchecker.RustSpellcheckingStrategy"/>
 
         <colorSettingsPage implementation="org.rust.lang.colorscheme.RustColorSettingsPage"/>
+        <codeStyleSettingsProvider implementation="org.rust.lang.codestyle.RustCodeStyleSettingsProvider"/>
+        <langCodeStyleSettingsProvider implementation="org.rust.lang.codestyle.RustLanguageCodeStyleSettingsProvider"/>
 
         <additionalTextAttributes scheme="Default" file="org/rust/colorscheme/RustDefault.xml"/>
         <additionalTextAttributes scheme="Darcula" file="org/rust/colorscheme/RustDarcula.xml"/>
