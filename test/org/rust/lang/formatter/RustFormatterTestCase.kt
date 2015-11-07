@@ -12,11 +12,12 @@ class RustFormatterTestCase : FormatterTestCase() {
 
     override fun getTestName(lowercaseFirstLetter: Boolean): String? {
         val camelCase = super.getTestName(lowercaseFirstLetter)
-        return RustTestCase.camelToSnake(camelCase);
+        return RustTestCase.camelToSnake(camelCase)
     }
 
     fun testBlocks() = doTest()
     fun testItems() = doTest()
     fun testExpressions() = doTest()
     fun testArgumentAlignment() = doTest()
+    fun testTraits() = doTest()
 }

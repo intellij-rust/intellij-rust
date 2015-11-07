@@ -1,0 +1,3 @@
+trait T {
+fn foo() { }
+}
