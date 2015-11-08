@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.colorscheme.RustColors
 import org.rust.lang.core.psi.RustAttr
 import org.rust.lang.core.psi.RustMacroExpr
+import org.rust.lang.core.psi.RustTypeParam
 
 
 public class RustAnnotator : Annotator {
@@ -24,6 +25,9 @@ public class RustAnnotator : Annotator {
             is RustMacroExpr -> {
                 addTextAttributes(element.identifier, holder, RustColors.MACRO)
                 addTextAttributes(element.excl, holder, RustColors.MACRO)
+            }
+            is RustTypeParam -> {
+                addTextAttributes(element, holder, RustColors.TYPE_PARAMETER)
             }
         }
     }
