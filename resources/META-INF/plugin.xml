@@ -65,6 +65,13 @@
         <lang.psiStructureViewFactory language="RUST"
                                       implementationClass="org.rust.lang.structure.RustPsiStructureViewFactory"/>
 
+        <!-- Navigation -->
+
+        <gotoClassContributor implementation="org.rust.lang.navigation.goto.RustClassNavigationContributor"/>
+        <gotoSymbolContributor implementation="org.rust.lang.navigation.RustSymbolNavigationContributor"/>
+
+        <!-- Annotator -->
+
         <annotator language="RUST" implementationClass="org.rust.lang.annotator.RustAnnotator"/>
 
         <!-- Spell-checker -->
