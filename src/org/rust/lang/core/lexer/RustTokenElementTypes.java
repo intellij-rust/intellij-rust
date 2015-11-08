@@ -1,5 +1,7 @@
 package org.rust.lang.core.lexer;
 
+import com.intellij.psi.tree.TokenSet;
+
 public interface RustTokenElementTypes {
 
     // Keywords
@@ -132,4 +134,18 @@ public interface RustTokenElementTypes {
     RustTokenType AT = new RustTokenType("@");
     RustTokenType UNDERSCORE = new RustTokenType("_");
     RustTokenType DOLLAR = new RustTokenType("$");
+
+
+    //
+    // Token Sets
+    //
+
+    public static final TokenSet PHANTOM_TOKEN_SET = TokenSet.create(
+        RustTokenElementTypes.BLOCK_COMMENT,
+        RustTokenElementTypes.EOL_COMMENT,
+        RustTokenElementTypes.INNER_DOC_COMMENT,
+        RustTokenElementTypes.OUTER_DOC_COMMENT,
+        com.intellij.psi.TokenType.WHITE_SPACE
+    );
+
 }

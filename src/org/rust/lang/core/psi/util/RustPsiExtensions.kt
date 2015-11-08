@@ -17,11 +17,7 @@ fun PsiElement?.getNextNonPhantomSibling(): PsiElement? =
         val next = it.nextSibling
         val et = next.node.elementType
 
-        if (et == RustTokenElementTypes.BLOCK_COMMENT
-        ||  et == RustTokenElementTypes.EOL_COMMENT
-        ||  et == RustTokenElementTypes.INNER_DOC_COMMENT
-        ||  et == RustTokenElementTypes.OUTER_DOC_COMMENT
-        ||  et == com.intellij.psi.TokenType.WHITE_SPACE)
+        if (et in RustTokenElementTypes.PHANTOM_TOKEN_SET)
             return next.getNextNonPhantomSibling()
         else
             return next
