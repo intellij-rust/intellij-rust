@@ -27,7 +27,8 @@ public class RustColorSettingsPage : ColorSettingsPage {
             d("Semicolon", RustColors.SEMICOLON),
             d("Dot", RustColors.DOT),
             d("Comma", RustColors.COMMA),
-            d("Attribute", RustColors.ATTRIBUTE)
+            d("Attribute", RustColors.ATTRIBUTE),
+            d("Macro", RustColors.MACRO)
     )
     private val TAGS = emptyMap<String, TextAttributesKey>()
     private val DEMO_TEXT by lazy {

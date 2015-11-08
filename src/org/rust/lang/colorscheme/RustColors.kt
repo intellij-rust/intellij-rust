@@ -31,5 +31,7 @@ object RustColors {
     val DOT             = r("org.rust.DOT",             DefaultLanguageHighlighterColors.DOT)
     val COMMA           = r("org.rust.COMMA",           DefaultLanguageHighlighterColors.COMMA)
 
-    val ATTRIBUTE       = r("org.rust.ATTRIBUTE",    DefaultLanguageHighlighterColors.METADATA)
+    val ATTRIBUTE       = r("org.rust.ATTRIBUTE",       DefaultLanguageHighlighterColors.METADATA)
+
+    val MACRO           = r("org.rust.MACRO",           DefaultLanguageHighlighterColors.IDENTIFIER)
 }

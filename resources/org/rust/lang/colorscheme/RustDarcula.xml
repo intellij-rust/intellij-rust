@@ -2,6 +2,12 @@
 <list>
     <option name="org.rust.LIFETIME">
         <value>
+            <option name="FOREGROUND" value="20999d"/>
+            <option name="FONT_TYPE" value="2"/>
+        </value>
+    </option>
+    <option name="org.rust.MACRO">
+        <value>
             <option name="FOREGROUND" value="c57633"/>
             <option name="FONT_TYPE" value="2"/>
         </value>
