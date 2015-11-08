@@ -6,14 +6,16 @@ import org.rust.lang.core.psi.RustPatIdent
 
 class RustDocumentationProvider : AbstractDocumentationProvider() {
 
-    override fun getQuickNavigateInfo(element: PsiElement?, originalElement: PsiElement?): String? {
-        if (element is RustPatIdent) {
-            val location = getLocationString(element)
-            val bindingMode = element.bindingMode?.mut?.let { "mut " }.orEmpty()
+    override fun getQuickNavigateInfo(element: PsiElement?, originalElement: PsiElement?) = when (element) {
+        is RustPatIdent -> getQuickNavigateInfo(element)
+        else -> null
+    }
 
-            return "let $bindingMode<b>${element.identifier.text}</b>$location"
-        }
-        return null
+    private fun getQuickNavigateInfo(element: RustPatIdent): String {
+        val location = getLocationString(element)
+        val bindingMode = element.bindingMode?.mut?.let { "mut " }.orEmpty()
+
+        return "let $bindingMode<b>${element.identifier.text}</b>$location"
     }
 
     private fun getLocationString(element: PsiElement?): String {
