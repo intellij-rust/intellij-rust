@@ -816,12 +816,12 @@ block_expr ::= while_expr
 private atom_expr ::= lit_expr
                     | macro_expr
                     | struct_expr
-                    | path_expr
                     | qual_path_expr
                     | self_expr
                     | method_call_expr
                     | field_expr
                     | index_expr
+                    | path_expr !LPAREN
                     | call_expr
                     | array_expr
                     | tuple_expr
@@ -879,10 +879,6 @@ struct_expr_body ::= LBRACE
                        [ <<comma_separated_list (IDENTIFIER COLON any_expr)>> ]
                        (DOTDOT  any_expr)?
                      RBRACE
-// matklad: this are ambiguous with path_expr and call_expr
-//                 | path_expr LPAREN expr
-//                         (COMMA  expr)* RPAREN
-//                 | path_expr
 
 path_expr ::= path_generic_args_with_colons
 
