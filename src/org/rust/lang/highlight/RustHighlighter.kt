@@ -19,9 +19,8 @@ public class RustHighlighter : SyntaxHighlighterBase() {
     }
 
     private fun map(tokenType: IElementType?): TextAttributesKey? {
-        return if (tokenType is RustKeywordTokenType)
-            RustColors.KEYWORD
-        else when (tokenType) {
+        return when (tokenType) {
+            is RustKeywordTokenType -> RustColors.KEYWORD
 
             IDENTIFIER -> RustColors.IDENTIFIER
 
