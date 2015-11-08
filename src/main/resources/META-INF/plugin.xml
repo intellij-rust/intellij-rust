@@ -28,7 +28,7 @@
         <!-- Rust -->
 
         <!-- JPS -->
-        <compileServer.plugin classpath="rust-jps-plugin.jar"/>
+        <compileServer.plugin classpath="jps-plugin.jar"/>
 
         <!-- Modules -->
 
