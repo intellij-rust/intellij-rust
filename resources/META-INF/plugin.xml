@@ -25,41 +25,71 @@
     -->
 
     <extensions defaultExtensionNs="com.intellij">
-        <!--RUST-->
+
+        <!-- Rust -->
 
         <moduleType id="RUST_MODULE" classpathProvider="false"
                     implementationClass="org.rust.lang.module.RustModuleType"/>
 
         <fileTypeFactory implementation="org.rust.lang.RustFileTypeFactory"/>
 
+        <lang.parserDefinition language="RUST" implementationClass="org.rust.lang.core.RustParserDefinition"/>
+
+        <!-- SDK -->
+
         <sdkType implementation="org.rust.lang.RustSdkType"/>
 
+        <!-- Syntax Highlighter -->
+
         <lang.syntaxHighlighterFactory language="RUST" implementationClass="org.rust.lang.highlight.RustHighlighterFactory"/>
+
+        <!-- Formatter -->
+
         <lang.formatter language="RUST" implementationClass="org.rust.lang.formatter.RustFormattingModelBuilder"/>
+
+        <!-- Commenter -->
+
         <lang.commenter language="RUST" implementationClass="org.rust.lang.RustCommenter"/>
+
+        <!-- Matchers -->
+
         <lang.braceMatcher language="RUST" implementationClass="org.rust.lang.highlight.RustBraceMatcher"/>
         <lang.quoteHandler language="RUST" implementationClass="org.rust.lang.RustQuoteHandler"/>
+
+        <!-- Doc-Provider -->
+
         <lang.documentationProvider language="RUST" implementationClass="org.rust.lang.RustDocumentationProvider"/>
 
-        <lang.parserDefinition language="RUST" implementationClass="org.rust.lang.core.RustParserDefinition"/>
+        <!-- Structure View -->
 
         <lang.psiStructureViewFactory language="RUST"
                                       implementationClass="org.rust.lang.structure.RustPsiStructureViewFactory"/>
 
         <annotator language="RUST" implementationClass="org.rust.lang.annotator.RustAnnotator"/>
 
+        <!-- Spell-checker -->
+
         <spellchecker.support language="RUST" implementationClass="org.rust.lang.spellchecker.RustSpellcheckingStrategy"/>
+
+        <!-- Handlers -->
 
         <enterHandlerDelegate implementation="org.rust.lang.typing.RustEnterInLineCommentHandler" id="RustEnterInComments"/>
 
-        <colorSettingsPage implementation="org.rust.lang.colorscheme.RustColorSettingsPage"/>
+        <!-- Code Style -->
+
         <codeStyleSettingsProvider implementation="org.rust.lang.codestyle.RustCodeStyleSettingsProvider"/>
         <langCodeStyleSettingsProvider implementation="org.rust.lang.codestyle.RustLanguageCodeStyleSettingsProvider"/>
+
+        <!-- Color Settings -->
+
+        <colorSettingsPage implementation="org.rust.lang.colorscheme.RustColorSettingsPage"/>
 
         <additionalTextAttributes scheme="Default" file="org/rust/lang/colorscheme/RustDefault.xml"/>
         <additionalTextAttributes scheme="Darcula" file="org/rust/lang/colorscheme/RustDarcula.xml"/>
 
-        <!--TOML-->
+
+
+        <!-- Toml -->
 
         <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
 
