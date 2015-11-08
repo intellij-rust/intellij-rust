@@ -31,7 +31,7 @@ public class RustColorSettingsPage : ColorSettingsPage {
     )
     private val TAGS = emptyMap<String, TextAttributesKey>()
     private val DEMO_TEXT by lazy {
-        val stream = javaClass.classLoader.getResourceAsStream("org/rust/colorscheme/highlighterDemoText.rs")
+        val stream = javaClass.classLoader.getResourceAsStream("org/rust/lang/colorscheme/highlighterDemoText.rs")
         StreamUtil.readText(stream, "UTF-8")
     }
 

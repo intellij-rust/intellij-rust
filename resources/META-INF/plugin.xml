@@ -50,8 +50,8 @@
 
         <colorSettingsPage implementation="org.rust.lang.colorscheme.RustColorSettingsPage"/>
 
-        <additionalTextAttributes scheme="Default" file="org/rust/colorscheme/RustDefault.xml"/>
-        <additionalTextAttributes scheme="Darcula" file="org/rust/colorscheme/RustDarcula.xml"/>
+        <additionalTextAttributes scheme="Default" file="org/rust/lang/colorscheme/RustDefault.xml"/>
+        <additionalTextAttributes scheme="Darcula" file="org/rust/lang/colorscheme/RustDarcula.xml"/>
 
         <!--TOML-->
 
