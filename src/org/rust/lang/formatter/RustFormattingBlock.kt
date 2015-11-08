@@ -85,7 +85,6 @@ private val BLOCK_START_TOKEN_SET = TokenSet.create(
 
 private val BLOCKS_TOKEN_SET = TokenSet.create(
         BLOCK,
-        INNER_ATTRS_AND_BLOCK,
         MOD_ITEM,
         ENUM_ITEM,
         STRUCT_DECL_ARGS,

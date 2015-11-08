@@ -1029,8 +1029,14 @@ let_decl ::= LET pat [ COLON type ] [ EQ restricted_expr ] SEMICOLON
 // Statements
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-block                 ::= LBRACE              stmt_* restricted_expr? RBRACE { pin(".*")=1 }
-inner_attrs_and_block ::= LBRACE inner_attrs? stmt_* restricted_expr? RBRACE { pin(".*")=1 }
+block ::= LBRACE stmt_* restricted_expr? RBRACE {
+  pin(".*")=1
+}
+
+inner_attrs_and_block ::= LBRACE inner_attrs? stmt_* restricted_expr? RBRACE {
+  elementType = block
+  pin(".*")=1
+}
 
 
 expr_stmt   ::= restricted_expr SEMICOLON | block_expr
