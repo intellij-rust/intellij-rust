@@ -1,5 +1,5 @@
 FILE
-  RustModItemImpl(MOD_ITEM)
+  RustCrateItemImpl(CRATE_ITEM)
     RustStructItemImpl(STRUCT_ITEM)
       PsiElement(struct)('struct')
       PsiWhiteSpace(' ')

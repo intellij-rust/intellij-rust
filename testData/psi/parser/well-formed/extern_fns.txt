@@ -1,5 +1,5 @@
 FILE
-  RustModItemImpl(MOD_ITEM)
+  RustCrateItemImpl(CRATE_ITEM)
     RustExternFnItemImpl(EXTERN_FN_ITEM)
       PsiElement(extern)('extern')
       PsiWhiteSpace(' ')

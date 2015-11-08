@@ -157,7 +157,8 @@
     // Resolve scopes
     //
 
-    implements  ("crate") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    implements  ("crate_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("crate_item") = "org.rust.lang.core.psi.impl.mixin.RustCrateItemImplMixin"
 
     implements  ("mod_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("mod_item") = "org.rust.lang.core.psi.impl.mixin.RustModItemImplMixin"
@@ -219,7 +220,7 @@
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
 
-    extends("(?!meta_item).*_item") = item_
+    extends("(?!meta_item)(?!crate_item).*_item") = item_
 
     extends("(if|while)_let_expr") = scoped_let_expr
     extends(".*_expr") = restricted_expr
@@ -238,10 +239,10 @@
 // Root
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-root ::= crate
+root ::= crate_item
 
-crate ::= [ SHEBANG_LINE ] [ inner_attrs ] item * {
-  elementType = mod_item
+crate_item ::= [ SHEBANG_LINE ] [ inner_attrs ] item * {
+  extends = mod_item
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
