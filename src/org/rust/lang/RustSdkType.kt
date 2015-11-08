@@ -41,9 +41,8 @@ class RustSdkType : SdkType("Rust SDK") {
     override fun adjustSelectedSdkHome(homePath: String?): String? {
         val file = File(homePath)
         return when (file.nameWithoutExtension) {
-            "rustc", "cargo" -> file.parentFile.absolutePath
-            "bin"            -> file.parentFile.absolutePath
-            else             -> super.adjustSelectedSdkHome(homePath)
+            "bin" -> file.parentFile.absolutePath
+            else  -> super.adjustSelectedSdkHome(homePath)
         }
     }
 
