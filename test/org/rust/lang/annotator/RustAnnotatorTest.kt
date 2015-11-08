@@ -12,4 +12,8 @@ class RustAnnotatorTest : RustTestCase() {
     fun testAttributes() {
         doTestInfo()
     }
+
+    fun testMacro() {
+        doTestInfo()
+    }
 }
