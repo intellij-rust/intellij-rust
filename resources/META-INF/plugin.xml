@@ -32,6 +32,8 @@
 
         <fileTypeFactory implementation="org.rust.lang.RustFileTypeFactory"/>
 
+        <sdkType implementation="org.rust.lang.RustSdkType"/>
+
         <lang.syntaxHighlighterFactory language="RUST" implementationClass="org.rust.lang.highlight.RustHighlighterFactory"/>
         <lang.formatter language="RUST" implementationClass="org.rust.lang.formatter.RustFormattingModelBuilder"/>
         <lang.commenter language="RUST" implementationClass="org.rust.lang.RustCommenter"/>
