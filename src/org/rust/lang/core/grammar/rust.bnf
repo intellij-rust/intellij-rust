@@ -132,21 +132,26 @@
     mixin       ("pat_ident") = "org.rust.lang.core.psi.impl.mixin.RustPatIdentImplMixin"
     implements  ("pat_ident") = "org.rust.lang.core.psi.RustNamedElement"
 
+    mixin       ("trait_item") = "org.rust.lang.core.psi.impl.mixin.RustTraitItemImplMixin"
+
+    mixin       ("impl_item")  = "org.rust.lang.core.psi.impl.mixin.RustImplItemImplMixin"
+
+    mixin       ("trait_method") = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodImplMixin"
+
+    mixin       ("enum_item") = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
+
+    mixin       ("enum_def") = "org.rust.lang.core.psi.impl.mixin.RustEnumDefImplMixin"
+
+    mixin       ("struct_item") = "org.rust.lang.core.psi.impl.mixin.RustStructItemImplMixin"
+
+    mixin       ("struct_decl_field") = "org.rust.lang.core.psi.impl.mixin.RustStructDeclFieldImplMixin"
+
+    //
+    // References
+    //
+
     mixin       ("path_part") = "org.rust.lang.core.psi.impl.mixin.RustPathPartImplMixin"
-
-    mixin      ("trait_item") = "org.rust.lang.core.psi.impl.mixin.RustTraitItemImplMixin"
-
-    mixin      ("impl_item")  = "org.rust.lang.core.psi.impl.mixin.RustImplItemImplMixin"
-
-    mixin      ("trait_method") = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodImplMixin"
-
-    mixin      ("enum_item") = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
-
-    mixin      ("enum_def") = "org.rust.lang.core.psi.impl.mixin.RustEnumDefImplMixin"
-
-    mixin      ("struct_item") = "org.rust.lang.core.psi.impl.mixin.RustStructItemImplMixin"
-
-    mixin      ("struct_decl_field") = "org.rust.lang.core.psi.impl.mixin.RustStructDeclFieldImplMixin"
+    implements  ("path_part") = "org.rust.lang.core.psi.RustQualifiedReferenceElement"
 
     //
     // Resolve scopes
@@ -627,7 +632,7 @@ private for_in_type_suffix ::= type_bare_fn
 // Paths
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-path_part ::=
+path_part ::= ident_or_self_or_super [ COLONCOLON generic_args ]
 
 //
 // Paths (with `::` separating `generic_args` from actual name) used in expression contexts:

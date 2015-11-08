@@ -1,27 +1,29 @@
 package org.rust.lang.core.psi.impl.mixin
 
-import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiReference
+import org.rust.lang.core.lexer.RustTokenElementTypes
 import org.rust.lang.core.psi.RustPathPart
-import org.rust.lang.core.resolve.ref.RustQualifiedValue
+import org.rust.lang.core.psi.impl.RustNamedElementImpl
 import org.rust.lang.core.resolve.ref.RustReference
+import org.rust.lang.core.psi.RustQualifiedReferenceElement
+import org.rust.lang.core.resolve.ref.RustReferenceImpl
 
-abstract class RustPathPartImplMixin(node: ASTNode) : ASTWrapperPsiElement(node)
-        , RustQualifiedValue
-        , RustPathPart {
+abstract class RustPathPartImplMixin(node: ASTNode) : RustNamedElementImpl(node)
+                                                    , RustQualifiedReferenceElement
+                                                    , RustPathPart {
 
-    override fun getSeparator(): PsiElement? = null
+    override fun getReference(): RustReference = RustReferenceImpl(this)
 
-    override fun getReference(): PsiReference = RustReference(this)
+    override fun getNameElement() = identifier
 
-    override fun getReferenceNameElement() = identifier
+    override fun getSeparator(): PsiElement? = findChildByType(RustTokenElementTypes.COLONCOLON)
 
-    override fun getQualifier(): RustQualifiedValue? = findChildByClass(javaClass)
+    override fun getQualifier(): RustQualifiedReferenceElement? =
+        pathPart?.let {
+            if (it.firstChild != null) it else null
+        }
 
-    override fun setName(name: String): PsiElement? {
-        throw UnsupportedOperationException()
-    }
-
+    override val isFullyQualified: Boolean
+        get() = getQualifier() == null && getSeparator() != null
 }
