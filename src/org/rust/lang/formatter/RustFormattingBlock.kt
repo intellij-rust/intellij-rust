@@ -51,11 +51,10 @@ class RustFormattingBlock(private val node: ASTNode,
     }
 
     private fun calcAlignment(child: ASTNode, anchor: Alignment?): Alignment? =
-            if (child.elementType in BRACES_TOKEN_SET) {
-                null
-            } else {
-                anchor
-            }
+        when (child.elementType) {
+            in BRACES_TOKEN_SET -> null
+            else                -> anchor
+        }
 
 
     private fun calcChildIndent(child: ASTNode): Indent {
