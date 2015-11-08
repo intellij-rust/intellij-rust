@@ -12,8 +12,8 @@ import javax.swing.Icon
 
 public object RustIcons {
 
-    public val FILE = IconLoader.getIcon("/org/rust/icons/rust.png")
-    public val FILE_BIG = IconLoader.getIcon("/org/rust/icons/rust@2x.png")
+    public val FILE = IconLoader.getIcon("/org/rust/lang/icons/rust.png")
+    public val FILE_BIG = IconLoader.getIcon("/org/rust/lang/icons/rust@2x.png")
 
     public val TRAIT = AllIcons.Nodes.Interface
     public val CLASS = AllIcons.Nodes.Class
