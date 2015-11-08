@@ -873,7 +873,7 @@ unary_expr ::= (MINUS | MUL | EXCL | (AND | ANDAND) MUT?) restricted_expr
 lambda_expr ::= MOVE? (OROR | OR [<<comma_separated_list lambda_param>>] OR) ret_type? any_expr
 lambda_param ::= pat type_ascription?
 
-struct_expr ::= <<checkStructAllowed>> path_generic_args_with_colons struct_expr_body
+struct_expr ::= << checkStructAllowed >> path_generic_args_with_colons struct_expr_body
 
 struct_expr_body ::= LBRACE
                        [ <<comma_separated_list (IDENTIFIER COLON any_expr)>> ]

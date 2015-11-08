@@ -11,7 +11,7 @@ import org.rust.lang.icons.addVisibilityIcon
 import javax.swing.Icon
 
 abstract class RustModItemImplMixin(node: ASTNode) : RustItemImpl(node)
-        , RustModItem {
+                                                   , RustModItem {
 
     override fun getDeclarations(): Collection<RustDeclaringElement> =
         itemList
