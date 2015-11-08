@@ -17,27 +17,31 @@ class RustFileTreeElement(file: RustFileImpl) : PsiTreeElementBase<RustFileImpl>
             }
 
             override fun visitEnumItem(o: RustEnumItem) {
-                result += (RustEnumTreeElement(o))
+                result += RustEnumTreeElement(o)
             }
 
             override fun visitTraitItem(o: RustTraitItem) {
-                result += (RustTraitTreeElement(o))
+                result += RustTraitTreeElement(o)
             }
 
             override fun visitStructItem(o: RustStructItem) {
-                result += (RustStructTreeElement(o))
+                result += RustStructTreeElement(o)
             }
 
             override fun visitImplItem(o: RustImplItem) {
-                result += (RustImplTreeElement(o))
+                result += RustImplTreeElement(o)
             }
 
             override fun visitFnItem(o: RustFnItem) {
-                result += (RustFnTreeElement(o))
+                result += RustFnTreeElement(o)
             }
 
             override fun visitModItem(o: RustModItem) {
-                result += (RustModTreeElement(o))
+                result += RustModTreeElement(o)
+            }
+
+            override fun visitCrateItem(o: RustCrateItem) {
+                result += RustCrateTreeElement(o)
             }
         })
         return result;

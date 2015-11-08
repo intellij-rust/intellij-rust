@@ -1,4 +1,5 @@
 -functions.rs
- fn_foo()
- test_something()
- double(i32) -> i32
+ -functions
+  fn_foo()
+  test_something()
+  double(i32) -> i32

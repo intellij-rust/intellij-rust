@@ -2,6 +2,7 @@ package org.rust.lang.structure
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil.assertTreeEqual
+import com.intellij.util.ui.tree.TreeUtil
 import org.rust.lang.RustTestCase
 import java.io.File
 
@@ -10,7 +11,10 @@ class RustStructureViewTest : RustTestCase() {
 
     private fun doTest(expected: String) {
         myFixture.configureByFile(fileName);
-        myFixture.testStructureView { assertTreeEqual(it.tree, expected) }
+        myFixture.testStructureView {
+            TreeUtil.expandAll(it.tree)
+            assertTreeEqual(it.tree, expected)
+        }
     }
 
     private fun doFileTest() {
@@ -19,9 +23,9 @@ class RustStructureViewTest : RustTestCase() {
     }
 
     fun testFunctions() = doFileTest()
-    fun testStructs() = doFileTest()
-    fun testEnums() = doFileTest()
-    fun testTraits() = doFileTest()
-    fun testImpls() = doFileTest()
-    fun testMods() = doFileTest()
+    fun testStructs()   = doFileTest()
+    fun testEnums()     = doFileTest()
+    fun testTraits()    = doFileTest()
+    fun testImpls()     = doFileTest()
+    fun testMods()      = doFileTest()
 }

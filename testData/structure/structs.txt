@@ -1,6 +1,7 @@
 -structs.rs
- ProcessEngine
- Numbers
- -CommandPrototype
-  ty: CommandType
-  builder: ProcessBuilder
+ -structs
+  ProcessEngine
+  Numbers
+  -CommandPrototype
+   ty: CommandType
+   builder: ProcessBuilder
