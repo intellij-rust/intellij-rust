@@ -52,18 +52,18 @@ class RustSdkType : SdkType("Rust SDK") {
     }
 
     private fun getExecutableFileName(executableName: String): String {
-        return if (SystemInfo.isWindows) executableName + ".exe" else executableName
+        return if (SystemInfo.isWindows) "$executableName.exe" else executableName
     }
 
     override fun suggestSdkName(currentSdkName: String?, sdkHome: String) =
-            getVersionString(sdkHome)?.let { "Rust " + it }
-                    ?: "Unknown Rust version at " + sdkHome
+            getVersionString(sdkHome)?.let { "Rust $it" }
+                    ?: "Unknown Rust version at $sdkHome"
 
     override fun getVersionString(sdkHome: String): String? {
         val rustc = getSdkExecutable(sdkHome, "rustc")
         if (!rustc.canExecute()) {
-            val reason = rustc.path + (if (rustc.exists()) " is not executable." else " is missing.")
-            LOG.warn("Can't detect rustc version: " + reason)
+            val reason = "${rustc.path}${if (rustc.exists()) " is not executable." else " is missing."}"
+            LOG.warn("Can't detect rustc version: $reason")
             return null
         }
 
@@ -78,7 +78,7 @@ class RustSdkType : SdkType("Rust SDK") {
                 return null
 
             val line = output.stdoutLines.firstOrNull()
-            LOG.debug("rustc --version returned: " + line)
+            LOG.debug("rustc --version returned: $line")
 
             val matcher = RE_VERSION.matcher(line)
             if (!matcher.matches())
