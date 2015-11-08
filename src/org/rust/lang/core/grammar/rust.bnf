@@ -157,6 +157,8 @@
     // Resolve scopes
     //
 
+    implements  ("crate") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+
     implements  ("mod_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("mod_item") = "org.rust.lang.core.psi.impl.mixin.RustModItemImplMixin"
 
@@ -236,7 +238,11 @@
 // Root
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-crate ::= [ SHEBANG_LINE ] [ inner_attrs ] item *
+root ::= crate
+
+crate ::= [ SHEBANG_LINE ] [ inner_attrs ] item * {
+  elementType = mod_item
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Attributes
