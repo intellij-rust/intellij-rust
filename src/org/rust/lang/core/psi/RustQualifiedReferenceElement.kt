@@ -9,9 +9,9 @@ public interface RustQualifiedReferenceElement : RustNamedElement {
 
     fun getSeparator(): PsiElement?
 
-    fun getNameElement(): PsiElement?
-
     fun getQualifier(): RustQualifiedReferenceElement?
+
+    override fun getNameElement(): PsiElement?
 
     override fun getReference(): RustReference?
 }

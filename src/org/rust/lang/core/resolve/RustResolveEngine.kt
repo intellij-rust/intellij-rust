@@ -84,7 +84,7 @@ public class RustResolveEngine() {
 
         private fun match(elem: RustNamedElement): Boolean =
             ref.getNameElement()?.let { refName ->
-                elem.textMatches(refName)
+                elem.getNameElement()?.textMatches(refName)
             } ?: false
     }
 
