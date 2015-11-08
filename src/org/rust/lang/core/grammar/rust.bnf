@@ -565,7 +565,7 @@ private named_arg ::= &( IDENTIFIER
                        ) pat
 
 
-trait_ref ::= COLONCOLON? path_generic_args_without_colons
+trait_ref ::= path_generic_args_without_colons
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -612,7 +612,7 @@ private type ::= BOX type
                | LPAREN [ type_sums COMMA? ] RPAREN
 
                /* Paths */
-               | !LT [ SELF? COLONCOLON ] path_generic_args_without_colons
+               | !LT path_generic_args_without_colons
                | &LT type_qual_path
 
 type_item ::= TYPE IDENTIFIER generic_params where_clause? EQ type_sum SEMICOLON
@@ -652,7 +652,7 @@ left path_generic_args_with_colons_part ::= COLONCOLON path_generic_args_with_co
   elementType = path_part
 }
 
-path_generic_args_with_colons_part_leftish ::= path_generic_args_with_colons_part_inner {
+path_generic_args_with_colons_part_leftish ::= path_generic_args_with_colons_part_inner | &COLONCOLON {
   elementType = path_part
 }
 
@@ -713,7 +713,7 @@ left path_generic_args_without_colons_part ::= COLONCOLON path_generic_args_with
   elementType = path_part
 }
 
-path_generic_args_without_colons_part_leftish ::= path_generic_args_without_colons_part_inner {
+path_generic_args_without_colons_part_leftish ::= path_generic_args_without_colons_part_inner | &COLONCOLON {
   elementType = path_part
 }
 
@@ -884,7 +884,7 @@ struct_expr_body ::= LBRACE
 //                         (COMMA  expr)* RPAREN
 //                 | path_expr
 
-path_expr ::= [ SELF? COLONCOLON ] path_generic_args_with_colons
+path_expr ::= path_generic_args_with_colons
 
 qual_path_expr ::= << qualified_path path_generic_args_with_colons >>
               /* | LTLT type_sum [ AS trait_ref ] GT COLONCOLON IDENTIFIER generic_args? [ AS trait_ref ] GT COLONCOLON IDENTIFIER generic_args? */

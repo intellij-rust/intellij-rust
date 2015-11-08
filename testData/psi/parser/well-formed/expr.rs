@@ -3,6 +3,7 @@ fn f() -> i32 {}
 fn test() -> u32 {
 
     x :: y;         /* path-expr */
+    :: x :: y;
 
     x + y - z * 0;  /* binary */
 
