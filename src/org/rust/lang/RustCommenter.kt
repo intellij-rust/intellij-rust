@@ -10,6 +10,6 @@ class RustCommenter : Commenter {
 
     // for nested comments
 
-    override fun getCommentedBlockCommentPrefix(): String = "/*"
-    override fun getCommentedBlockCommentSuffix(): String = "*/"
+    override fun getCommentedBlockCommentPrefix(): String = "*//*"
+    override fun getCommentedBlockCommentSuffix(): String = "*//*"
 }
