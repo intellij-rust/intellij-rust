@@ -818,7 +818,6 @@ private atom_expr ::= lit_expr
                     | macro_expr
                     | struct_expr
                     | qual_path_expr
-                    | self_expr
                     | method_call_expr
                     | field_expr
                     | index_expr
@@ -829,8 +828,6 @@ private atom_expr ::= lit_expr
                     | unit_expr
                     | paren_expr
                     | unary_expr
-
-self_expr ::= SELF
 
 
 binary_expr ::= restricted_expr + {

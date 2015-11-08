@@ -4,6 +4,7 @@ fn test() -> u32 {
 
     x :: y;         /* path-expr */
     :: x :: y;
+    self :: x :: y;
 
     x + y - z * 0;  /* binary */
 
