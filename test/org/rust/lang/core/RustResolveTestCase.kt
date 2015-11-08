@@ -1,10 +1,10 @@
 package org.rust.lang.core
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiReference
+import org.assertj.core.api.Assertions.assertThat
 import org.rust.lang.RustTestCase
 import org.rust.lang.core.psi.RustNamedElement
-import org.assertj.core.api.Assertions.assertThat
+import org.rust.lang.core.resolve.ref.RustReference
 
 class RustResolveTestCase : RustTestCase() {
     override fun getTestDataPath() = "testData/resolve"
@@ -27,13 +27,14 @@ class RustResolveTestCase : RustTestCase() {
     fun testStructPatterns1()      { checkIsBound(atOffset = 69) }
     fun testStructPatterns2()      { checkIsBound()   }
     fun testModItems()             { checkIsBound()   }
+    fun testCrateItems()           { checkIsBound()   }
     fun testNestedModule()         { checkIsBound(atOffset = 48) }
     fun testUnbound()              { checkIsUnbound() }
     fun testOrdering()             { checkIsUnbound() }
     fun testModBoundary()          { checkIsUnbound() }
     //@formatter:on
 
-    private fun assertIsValidDeclaration(declaration: PsiElement, usage: PsiReference,
+    private fun assertIsValidDeclaration(declaration: PsiElement, usage: RustReference,
                                          expectedOffset: Int?) {
 
         assertThat(declaration).isInstanceOf(RustNamedElement::class.java)
@@ -43,14 +44,14 @@ class RustResolveTestCase : RustTestCase() {
         if (expectedOffset != null) {
             assertThat(declaration.textOffset).isEqualTo(expectedOffset)
         } else {
-            assertThat(declaration.name).isEqualTo(usage.canonicalText)
+            assertThat(declaration.name).isEqualTo(usage.element.name)
         }
     }
 
     private fun checkIsBound(atOffset: Int? = null) {
         myFixture.configureByFile(fileName)
 
-        val usage = referenceAtCaret()
+        val usage = referenceAtCaret() as RustReference
         val declaration = usage.resolve()!!
 
         assertIsValidDeclaration(declaration, usage, atOffset)

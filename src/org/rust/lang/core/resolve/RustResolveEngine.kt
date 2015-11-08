@@ -3,16 +3,11 @@ package org.rust.lang.core.resolve
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.isBefore
-import org.rust.lang.core.psi.util.match
-import org.rust.lang.core.resolve.ref.RustQualifiedValue
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.scope.resolveWith
 import org.rust.lang.core.resolve.util.RustResolveUtil
-import java.util.*
 
-public class RustResolveEngine(ref: RustQualifiedValue) {
-
-    private val ref = ref;
+public class RustResolveEngine() {
 
     open class ResolveResult(elem: RustNamedElement?) : com.intellij.psi.ResolveResult {
 
@@ -25,39 +20,12 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
 
     }
 
-    fun runFrom(scope: RustResolveScope?): ResolveResult {
-        var current = scope
-        val visitor = ResolveScopeVisitor(ref)
-        while (current != null) {
-            current.resolveWith(visitor)?.let {
-                return ResolveResult(it)
-            }
-
-            current = RustResolveUtil.getResolveScope(current)
-        }
-
-        return ResolveResult.UNRESOLVED;
-    }
-
-    internal class ResolveScopeVisitor(val ref: RustQualifiedValue) : RustVisitor() {
-
-        val qualifiersStack = stackUp(ref)
+    //
+    // TODO(kudinkin): Replace with just 'name' instance
+    //
+    internal class ResolveScopeVisitor(private val ref: RustQualifiedReferenceElement) : RustVisitor() {
 
         var matched: RustNamedElement? = null
-
-        companion object {
-            fun stackUp(ref: RustQualifiedValue): Stack<RustQualifiedValue> {
-                val s = Stack<RustQualifiedValue>()
-
-                var q: RustQualifiedValue? = ref
-                while (q != null) {
-                    s.add(q)
-                    q = q.getQualifier()
-                }
-
-                return s
-            }
-        }
 
         override fun visitModItem(o: RustModItem) {
             seek(o.itemList)
@@ -111,21 +79,62 @@ public class RustResolveEngine(ref: RustQualifiedValue) {
         }
 
         private fun found(elem: RustNamedElement) {
-            qualifiersStack.pop();
+            matched = elem
+        }
 
-            if (qualifiersStack.size == 0)
-                matched = elem
-            else if (elem is RustResolveScope) {
-                elem.resolveWith(this)
+        private fun match(elem: RustNamedElement): Boolean =
+            ref.getNameElement()?.let { refName ->
+                elem.textMatches(refName)
+            } ?: false
+    }
+
+    fun resolve(ref: RustQualifiedReferenceElement): ResolveResult {
+        val scopes =
+            ref.getQualifier()?.let { qual ->
+                qual.reference?.let { qualRef ->
+                    qualRef  .resolve()
+                            ?.let { it as? RustResolveScope }
+                            ?.let { listOf(it) }
+                }
+            } ?: enumerateScopesFor(ref)
+
+        return resolveIn(ResolveScopeVisitor(ref), scopes)
+    }
+
+    private fun resolveIn(v: ResolveScopeVisitor, scopes: Iterable<RustResolveScope>): ResolveResult {
+        scopes.forEach { s ->
+            s.resolveWith(v)?.let {
+                return ResolveResult(it)
             }
         }
 
-        private fun match(e: RustNamedElement): Boolean =
-            e.name.let { n ->
-                qualifiersStack.peek().let { qual ->
-                    qual.getReferenceNameElement().match(n)
-                }
-            }
+        return ResolveResult.UNRESOLVED
     }
 
+    private fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Iterable<RustResolveScope> {
+        if (ref.isFullyQualified)
+            return listOf(RustResolveUtil.getGlobalResolveScopeFor(ref))
+
+        return object: Iterable<RustResolveScope> {
+            override fun iterator(): Iterator<RustResolveScope> {
+                return object: Iterator<RustResolveScope> {
+
+                    var next = RustResolveUtil.getResolveScopeFor(ref)
+
+                    fun climb(): RustResolveScope {
+                        val prev = next!!
+                        next =  when (prev) {
+                                    is RustModItem -> null
+                                    else           -> RustResolveUtil.getResolveScopeFor(prev)
+                                }
+                        return prev
+                    }
+
+                    override fun next(): RustResolveScope = climb()
+
+                    override fun hasNext(): Boolean = next != null
+                }
+            }
+        }
+    }
 }

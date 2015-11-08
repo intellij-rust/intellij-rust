@@ -14,7 +14,7 @@ internal class RustReferenceImpl<T : RustQualifiedReferenceElement>(element: T,
     , RustReference {
 
     override fun resolve(): PsiElement? =
-            RustResolveEngine(element).resolve(element).element
+            RustResolveEngine().resolve(element).element
 
     override fun getVariants(): Array<out Any> = EMPTY_ARRAY
 
