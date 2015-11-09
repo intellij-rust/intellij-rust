@@ -7,7 +7,7 @@ import org.rust.lang.RustTestCase
  * @see RustCommenter
  */
 class RustCommenterTest : RustTestCase() {
-    override fun getTestDataPath() = "testData/commenter"
+    override fun getTestDataPath() = "testData/org/rust/lang/commenter/testdata"
 
     private fun doTest(actionId: String) {
         myFixture.configureByFile(fileName)
