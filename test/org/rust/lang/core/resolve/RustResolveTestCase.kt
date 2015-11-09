@@ -1,4 +1,4 @@
-package org.rust.lang.core
+package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiElement
 import org.assertj.core.api.Assertions.assertThat
