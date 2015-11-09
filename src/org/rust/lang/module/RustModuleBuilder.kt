@@ -8,6 +8,7 @@ import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import org.rust.lang.i18n.RustBundle
 import org.rust.lang.icons.RustIcons
 import javax.swing.Icon
 
@@ -21,9 +22,9 @@ public class RustModuleBuilder() : ModuleBuilder() {
 
     override fun getBigIcon(): Icon = RustIcons.FILE_BIG
 
-    override fun getGroupName(): String? = "Rust"
+    override fun getGroupName() = RustBundle.message("rust.display_name")
 
-    override fun getPresentableName(): String? = "Rust"
+    override fun getPresentableName() = RustBundle.message("rust.display_name")
 
     override fun createWizardSteps(wizardContext: WizardContext, modulesProvider: ModulesProvider): Array<ModuleWizardStep> =
         moduleType.createWizardSteps(wizardContext, this, modulesProvider)
