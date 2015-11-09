@@ -3,7 +3,7 @@ package org.rust.lang.typing
 import org.rust.lang.RustTestCase
 
 class RustEnterHandlerTest : RustTestCase() {
-    override fun getTestDataPath() = "testData/org/rust/lang/typing/testdata"
+    override fun getTestDataPath() = "testData/org/rust/lang/typing/fixtures"
 
     private fun doTest() {
         myFixture.configureByFile(fileName)

@@ -7,7 +7,7 @@ import org.rust.lang.RustTestCase
 import java.io.File
 
 class RustDocumentationProviderTest : RustTestCase() {
-    override fun getTestDataPath() = "testData/org/rust/lang/documentation/testdata"
+    override fun getTestDataPath() = "testData/org/rust/lang/documentation/fixtures"
 
     private fun doTest(expected: String) {
         myFixture.configureByFile(fileName)
