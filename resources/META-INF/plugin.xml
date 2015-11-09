@@ -68,7 +68,7 @@
         <!-- Navigation -->
 
         <gotoClassContributor implementation="org.rust.lang.navigation.goto.RustClassNavigationContributor"/>
-        <gotoSymbolContributor implementation="org.rust.lang.navigation.RustSymbolNavigationContributor"/>
+        <gotoSymbolContributor implementation="org.rust.lang.navigation.goto.RustSymbolNavigationContributor"/>
 
         <!-- Annotator -->
 
