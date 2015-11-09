@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
-import com.intellij.psi.tree.TokenSet
 import com.intellij.util.text.CharArrayUtil
 import org.rust.lang.core.lexer.RustTokenElementTypes.INNER_DOC_COMMENT
 import org.rust.lang.core.lexer.RustTokenElementTypes.OUTER_DOC_COMMENT
@@ -65,9 +64,5 @@ class RustEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
         caretAdvance.set(commentToken.length)
 
         return Result.DefaultForceIndent
-    }
-
-    companion object {
-        val LINE_COMMENT_TYPES = TokenSet.create(EOL_COMMENT, INNER_DOC_COMMENT, OUTER_DOC_COMMENT)
     }
 }
