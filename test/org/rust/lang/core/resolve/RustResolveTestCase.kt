@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.resolve.ref.RustReference
 
 class RustResolveTestCase : RustTestCase() {
-    override fun getTestDataPath() = "testData/resolve"
+    override fun getTestDataPath() = "testData/org/rust/lang/core/resolve/testdata"
     private fun referenceAtCaret() = file.findReferenceAt(myFixture.caretOffset)!!
 
     //@formatter:off
