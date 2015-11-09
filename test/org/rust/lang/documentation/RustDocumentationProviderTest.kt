@@ -24,4 +24,5 @@ class RustDocumentationProviderTest : RustTestCase() {
 
     fun testVariable1() = doFileTest()
     fun testVariable2() = doFileTest()
+    fun testNestedFunction() = doFileTest()
 }
