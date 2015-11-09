@@ -4,7 +4,7 @@ import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import org.rust.lang.RustTestCase
 
 class RustSpellCheckerTest : RustTestCase() {
-    override fun getTestDataPath() = "testData/spellchecker"
+    override fun getTestDataPath() = "testData/org/rust/lang/spellchecker/testdata"
     private fun doTest(processComments: Boolean = true, processLiterals: Boolean = true) {
         val inspection = SpellCheckingInspection()
         inspection.processLiterals = processLiterals
