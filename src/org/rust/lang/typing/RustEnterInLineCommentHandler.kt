@@ -57,6 +57,9 @@ class RustEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
             else -> return Result.Continue
         }
 
+        if (caret < elementAtCaret.textOffset + commentToken.length - 1)
+            return Result.Continue
+
         // prefix the next line with an identical comment token
         document.insertString(caret, commentToken)
         caretAdvance.set(commentToken.length)
