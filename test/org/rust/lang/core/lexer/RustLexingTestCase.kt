@@ -14,7 +14,7 @@ import java.nio.file.Paths
 public class RustLexingTestCase : LexerTestCase() {
     override fun getDirPath(): String {
         val home = Paths.get(PathManager.getHomePath()).toAbsolutePath()
-        val testData = Paths.get("testData", "lexer").toAbsolutePath()
+        val testData = Paths.get("testData", "org", "rust", "lang", "core", "lexer", "testdata").toAbsolutePath()
 
         // XXX: unfortunately doFileTest will look for the file relative to the home directory of
         // the test instance of IDEA, so let's cook a dirPath starting with several ../../

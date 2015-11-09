@@ -1,4 +1,4 @@
-package org.rust.lang
+package org.rust.lang.documentation
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.psi.PsiElement

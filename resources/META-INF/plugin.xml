@@ -49,8 +49,7 @@
 
         <!-- Commenter -->
 
-        <lang.commenter language="RUST" implementationClass="org.rust.lang.RustCommenter"/>
-
+        <lang.commenter language="RUST" implementationClass="org.rust.lang.commenter.RustCommenter"/>
         <!-- Matchers -->
 
         <lang.braceMatcher language="RUST" implementationClass="org.rust.lang.highlight.RustBraceMatcher"/>
@@ -58,7 +57,7 @@
 
         <!-- Doc-Provider -->
 
-        <lang.documentationProvider language="RUST" implementationClass="org.rust.lang.RustDocumentationProvider"/>
+        <lang.documentationProvider language="RUST" implementationClass="org.rust.lang.documentation.RustDocumentationProvider"/>
 
         <!-- Structure View -->
 

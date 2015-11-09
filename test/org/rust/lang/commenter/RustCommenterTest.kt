@@ -1,12 +1,13 @@
-package org.rust.lang
+package org.rust.lang.commenter
 
 import com.intellij.openapi.actionSystem.IdeActions
+import org.rust.lang.RustTestCase
 
 /**
  * @see RustCommenter
  */
 class RustCommenterTest : RustTestCase() {
-    override fun getTestDataPath() = "testData/commenter"
+    override fun getTestDataPath() = "testData/org/rust/lang/commenter/testdata"
 
     private fun doTest(actionId: String) {
         myFixture.configureByFile(fileName)

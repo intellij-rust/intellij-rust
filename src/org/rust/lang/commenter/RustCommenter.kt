@@ -1,4 +1,4 @@
-package org.rust.lang
+package org.rust.lang.commenter
 
 import com.intellij.lang.Commenter
 
