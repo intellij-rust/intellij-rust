@@ -6,7 +6,7 @@ import org.rust.lang.RustTestCase
 class RustFormatterTestCase : FormatterTestCase() {
     override fun getTestDataPath() = "testData"
 
-    override fun getBasePath() = "formatter"
+    override fun getBasePath() = "org/rust/lang/formatter/testdata"
 
     override fun getFileExtension() = "rs"
 
