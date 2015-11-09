@@ -19,4 +19,7 @@ class RustEnterHandlerTest : RustTestCase() {
     fun testAfterOuterDocComment() = doTest()
     fun testInInnerDocComment() = doTest()
     fun testAfterInnerDocComment() = doTest()
+
+    fun testDirectlyAfterToken() = doTest()
+    fun testInsideToken() = doTest()
 }
