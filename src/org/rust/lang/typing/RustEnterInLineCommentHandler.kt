@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
-import com.intellij.psi.tree.TokenSet
 import com.intellij.util.text.CharArrayUtil
 import org.rust.lang.core.lexer.RustTokenElementTypes.INNER_DOC_COMMENT
 import org.rust.lang.core.lexer.RustTokenElementTypes.OUTER_DOC_COMMENT
@@ -42,29 +41,28 @@ class RustEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
         }
 
         // check if the element at the caret is a line comment
-        val type = elementAtCaret.node?.elementType
-        if (type !in LINE_COMMENT_TYPES) {
-            return Result.Continue
+        // and extract the comment token (//, /// or //!) from the comment text
+        val commentToken = when (elementAtCaret.node?.elementType) {
+            OUTER_DOC_COMMENT -> "/// "
+            INNER_DOC_COMMENT -> "//! "
+            EOL_COMMENT -> {
+                // return if caret is at end of line for a non-documentation comment
+                if (isEOL) {
+                    return Result.Continue
+                }
+
+                "// "
+            }
+            else -> return Result.Continue
         }
 
-        // return if caret is at end of line for a non-documentation comment
-        if (isEOL && type == EOL_COMMENT) {
+        if (caret < elementAtCaret.textOffset + commentToken.length - 1)
             return Result.Continue
-        }
-
-        // extract the comment token (//, /// or //!) from the comment text
-        val commentText = elementAtCaret.textRange.subSequence(text)
-        val commentTokenLength = CharArrayUtil.shiftForward(commentText, 0, "/!")
-        val commentToken = commentText.subSequence(0, commentTokenLength).toString()
 
         // prefix the next line with an identical comment token
-        document.insertString(caret, commentToken + " ")
-        caretAdvance.set(commentToken.length + 1)
+        document.insertString(caret, commentToken)
+        caretAdvance.set(commentToken.length)
 
         return Result.DefaultForceIndent
-    }
-
-    companion object {
-        val LINE_COMMENT_TYPES = TokenSet.create(EOL_COMMENT, INNER_DOC_COMMENT, OUTER_DOC_COMMENT)
     }
 }

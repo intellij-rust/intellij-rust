@@ -11,6 +11,7 @@ class RustEnterHandlerTest : RustTestCase() {
         myFixture.checkResultByFile(fileName.replace(".rs", "_after.rs"), true)
     }
 
+    fun testBeforeLineComment() = doTest()
     fun testInLineComment() = doTest()
     fun testAfterLineComment() = doTest()
     fun testInBlockComment() = doTest()
@@ -18,4 +19,7 @@ class RustEnterHandlerTest : RustTestCase() {
     fun testAfterOuterDocComment() = doTest()
     fun testInInnerDocComment() = doTest()
     fun testAfterInnerDocComment() = doTest()
+
+    fun testDirectlyAfterToken() = doTest()
+    fun testInsideToken() = doTest()
 }
