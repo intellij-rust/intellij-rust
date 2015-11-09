@@ -1,8 +1,9 @@
-package org.rust.lang
+package org.rust.lang.documentation
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.util.io.FileUtil
 import org.assertj.core.api.Assertions.assertThat
+import org.rust.lang.RustTestCase
 import java.io.File
 
 class RustDocumentationProviderTest : RustTestCase() {

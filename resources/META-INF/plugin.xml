@@ -58,7 +58,7 @@
 
         <!-- Doc-Provider -->
 
-        <lang.documentationProvider language="RUST" implementationClass="org.rust.lang.RustDocumentationProvider"/>
+        <lang.documentationProvider language="RUST" implementationClass="org.rust.lang.documentation.RustDocumentationProvider"/>
 
         <!-- Structure View -->
 
