@@ -42,24 +42,24 @@ class RustEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
         }
 
         // check if the element at the caret is a line comment
-        val type = elementAtCaret.node?.elementType
-        if (type !in LINE_COMMENT_TYPES) {
-            return Result.Continue
-        }
+        // and extract the comment token (//, /// or //!) from the comment text
+        val commentToken = when (elementAtCaret.node?.elementType) {
+            OUTER_DOC_COMMENT -> "/// "
+            INNER_DOC_COMMENT -> "//! "
+            EOL_COMMENT -> {
+                // return if caret is at end of line for a non-documentation comment
+                if (isEOL) {
+                    return Result.Continue
+                }
 
-        // return if caret is at end of line for a non-documentation comment
-        if (isEOL && type == EOL_COMMENT) {
-            return Result.Continue
+                "// "
+            }
+            else -> return Result.Continue
         }
-
-        // extract the comment token (//, /// or //!) from the comment text
-        val commentText = elementAtCaret.textRange.subSequence(text)
-        val commentTokenLength = CharArrayUtil.shiftForward(commentText, 0, "/!")
-        val commentToken = commentText.subSequence(0, commentTokenLength).toString()
 
         // prefix the next line with an identical comment token
-        document.insertString(caret, commentToken + " ")
-        caretAdvance.set(commentToken.length + 1)
+        document.insertString(caret, commentToken)
+        caretAdvance.set(commentToken.length)
 
         return Result.DefaultForceIndent
     }
