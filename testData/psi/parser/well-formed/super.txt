@@ -60,7 +60,7 @@ FILE
             RustLetDeclImpl(LET_DECL)
               PsiElement(let)('let')
               PsiWhiteSpace(' ')
-              RustPatIdentImpl(PAT_IDENT)
+              RustPatBindingImpl(PAT_BINDING)
                 PsiElement(<IDENTIFIER>)('x')
               PsiWhiteSpace(' ')
               PsiElement(=)('=')

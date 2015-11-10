@@ -3,9 +3,7 @@ package org.rust.lang.core.psi.util
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.lexer.RustTokenElementTypes
-import org.rust.lang.core.psi.RustItem
-import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustPat
+import org.rust.lang.core.psi.*
 
 
 //
@@ -47,3 +45,7 @@ val RustPat.boundElements: List<RustNamedElement>
 
 
 fun RustItem.isPublic() = vis != null
+
+
+val RustPatBinding.isMut: Boolean
+    get()  = bindingMode?.mut != null

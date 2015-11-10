@@ -129,9 +129,6 @@
     // Mixins
     //
 
-    mixin       ("pat_ident") = "org.rust.lang.core.psi.impl.mixin.RustPatIdentImplMixin"
-    implements  ("pat_ident") = "org.rust.lang.core.psi.RustNamedElement"
-
     mixin       ("trait_item") = "org.rust.lang.core.psi.impl.mixin.RustTraitItemImplMixin"
 
     mixin       ("impl_item")  = "org.rust.lang.core.psi.impl.mixin.RustImplItemImplMixin"
@@ -213,9 +210,8 @@
     implements  ("match_pat")   = "org.rust.lang.core.psi.RustDeclaringElement"
     mixin       ("match_pat")   = "org.rust.lang.core.psi.impl.mixin.RustMatchPatImplMixin"
 
-    implements  ("pat_field")   = [ "org.rust.lang.core.psi.RustDeclaringElement" "org.rust.lang.core.psi.RustNamedElement" ]
-    mixin       ("pat_field")   = "org.rust.lang.core.psi.impl.mixin.RustPatFieldImplMixin"
-
+    implements  ("pat_binding") = ["org.rust.lang.core.psi.RustDeclaringElement" "org.rust.lang.core.psi.RustNamedElement"]
+    mixin       ("pat_binding") = "org.rust.lang.core.psi.impl.mixin.RustPatBindingImplMixin"
 
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
@@ -389,9 +385,8 @@ pat_uniq        ::= BOX pat
 //       None => { } // match enum variant
 //       Name => { } // bind Name to x
 //   }
-pat_ident       ::= binding_mode IDENTIFIER [AT pat]
-                  |              IDENTIFIER AT pat
-                  |              IDENTIFIER !DOTDOTDOT !COLONCOLON
+pat_ident       ::= pat_binding [ AT pat ]
+
 
 pat_struct      ::= path_expr LBRACE pat_struct_fields RBRACE
 pat_enum        ::= path_expr LPAREN (DOTDOT | pat_tup_elts) RPAREN
@@ -408,6 +403,7 @@ pat_reg ::= AND MUT? pat
           | ANDAND pat
 
 pat_wild ::= UNDERSCORE
+pat_binding ::= binding_mode? IDENTIFIER !DOTDOTDOT !COLONCOLON
 
 private lit_or_path ::= path_expr | lit | MINUS lit
 
@@ -433,8 +429,8 @@ pat_struct_fields ::= (pat_field COMMA)+ DOTDOT
                     | <<comma_separated_list pat_field>>
                     | DOTDOT
 
-pat_field ::=     binding_mode? IDENTIFIER [ COLON pat ]
-            | BOX binding_mode? IDENTIFIER
+pat_field ::= IDENTIFIER COLON pat
+            | BOX? pat_binding
 
 binding_mode ::= REF MUT? | MUT
 
