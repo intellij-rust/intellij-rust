@@ -3,11 +3,13 @@ package org.rust.lang
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.projectRoots.SdkModel
 import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import org.jdom.Element
 import org.rust.lang.icons.RustIcons
 import java.io.File
@@ -23,10 +25,14 @@ class RustSdkType : SdkType("Rust SDK") {
 
     override fun suggestHomePath(): String? {
         if (SystemInfo.isMac) {
-            // look for rust installed by homebrew
+            val multiRust = File(FileUtil.expandUserHome("~/.multirust/toolchains"))
+            if (multiRust.exists()) {
+                return multiRust.absolutePath
+            }
             val homebrew = File("/usr/local/Cellar/rust")
-            if (homebrew.exists())
+            if (homebrew.exists()) {
                 return homebrew.absolutePath
+            }
         }
 
         return null
@@ -50,6 +56,12 @@ class RustSdkType : SdkType("Rust SDK") {
         return File(File(sdkHome, "bin"), getExecutableFileName(command))
     }
 
+    private fun getSdkLibrary(sdkHome: String): File {
+        return File(sdkHome, "lib")
+    }
+
+    private fun isMultiRust(sdkHome: String): Boolean = ".multirust" in sdkHome
+
     private fun getExecutableFileName(executableName: String): String {
         return if (SystemInfo.isWindows) "$executableName.exe" else executableName
     }
@@ -57,6 +69,12 @@ class RustSdkType : SdkType("Rust SDK") {
     override fun suggestSdkName(currentSdkName: String?, sdkHome: String) =
             getVersionString(sdkHome)?.let { "Rust $it" }
                     ?: "Unknown Rust version at $sdkHome"
+
+    override fun getHomeChooserDescriptor(): FileChooserDescriptor? {
+        val suggestHomePath = suggestHomePath()
+        return super.getHomeChooserDescriptor()
+            .withShowHiddenFiles(suggestHomePath != null && isMultiRust(suggestHomePath))
+    }
 
     override fun getVersionString(sdkHome: String): String? {
         val rustc = getSdkExecutable(sdkHome, "rustc")
@@ -67,10 +85,22 @@ class RustSdkType : SdkType("Rust SDK") {
         }
 
         try {
-            val cmd = GeneralCommandLine()
+            val cmd = if (isMultiRust(sdkHome)) {
+                val sdkLibraryPath = getSdkLibrary(sdkHome).absolutePath
+                GeneralCommandLine()
+                    .withWorkDirectory(sdkHome)
+                    .withEnvironment(hashMapOf(
+                        "DYLD_LIBRARY_PATH" to sdkLibraryPath,
+                        "LD_LIBRARY_PATH" to sdkLibraryPath
+                    ))
+                    .withExePath(rustc.absolutePath)
+                    .withParameters("-C rpath", "--version")
+            } else {
+                GeneralCommandLine()
                     .withWorkDirectory(sdkHome)
                     .withExePath(rustc.absolutePath)
                     .withParameters("--version")
+            }
 
             val output = CapturingProcessHandler(cmd.createProcess()).runProcess(10 * 1000)
             if (output.exitCode != 0 || output.isCancelled || output.isTimeout)
