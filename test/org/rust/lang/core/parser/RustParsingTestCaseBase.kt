@@ -13,7 +13,7 @@ import org.rust.lang.core.RustParserDefinition
 import org.rust.lang.highlight.RustBraceMatcher
 
 abstract class RustParsingTestCaseBase(@NonNls dataPath: String)
- : ParsingTestCase("psi/" + dataPath, "rs", true /*lowerCaseFirstLetter*/, RustParserDefinition()) {
+ : ParsingTestCase("org/rust/lang/core/parser/fixtures/" + dataPath, "rs", true /*lowerCaseFirstLetter*/, RustParserDefinition()) {
 
     final protected fun hasError(file: PsiFile): Boolean {
         var hasErrors = false

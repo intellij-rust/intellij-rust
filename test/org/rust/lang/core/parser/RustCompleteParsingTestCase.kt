@@ -1,6 +1,6 @@
 package org.rust.lang.core.parser
 
-class RustCompleteParsingTestCase : RustParsingTestCaseBase("parser/well-formed") {
+class RustCompleteParsingTestCase : RustParsingTestCaseBase("well-formed") {
 
 
     // @formatter:off

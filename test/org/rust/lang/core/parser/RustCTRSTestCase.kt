@@ -6,7 +6,7 @@ import com.intellij.psi.impl.DebugUtil
 import org.assertj.core.api.Assertions.assertThat
 import java.io.File
 
-public class RustCTRSTestCase : RustParsingTestCaseBase("parser/ctrs") {
+public class RustCTRSTestCase : RustParsingTestCaseBase("ctrs") {
 
     fun testCtrs() {
         var nFilesVisited = 0
@@ -34,7 +34,8 @@ public class RustCTRSTestCase : RustParsingTestCaseBase("parser/ctrs") {
     }
 
     private val expectedErrors = setOf(
-            "testData/psi/parser/ctrs/test/1.1.0/run-pass/utf8-bom.rs"
+            "testData/org/rust/lang/core/parser/fixtures/ctrs/test/1.1.0/run-pass/utf8-bom.rs"
+
     ).map { it.replace("/", File.separator) }
 }
 

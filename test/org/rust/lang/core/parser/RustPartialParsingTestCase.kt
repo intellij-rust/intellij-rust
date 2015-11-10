@@ -3,7 +3,7 @@ package org.rust.lang.core.parser
 import com.intellij.psi.PsiFile
 import org.assertj.core.api.Assertions.assertThat
 
-class RustPartialParsingTestCase : RustParsingTestCaseBase("parser/ill-formed") {
+class RustPartialParsingTestCase : RustParsingTestCaseBase("ill-formed") {
     override fun checkResult(targetDataName: String?, file: PsiFile?) {
         checkHasError(file)
         super.checkResult(targetDataName, file)
