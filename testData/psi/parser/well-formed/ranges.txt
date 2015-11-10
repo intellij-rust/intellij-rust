@@ -99,7 +99,7 @@ FILE
           PsiElement(for)('for')
           PsiWhiteSpace(' ')
           RustScopedForDeclImpl(SCOPED_FOR_DECL)
-            RustPatIdentImpl(PAT_IDENT)
+            RustPatBindingImpl(PAT_BINDING)
               PsiElement(<IDENTIFIER>)('i')
             PsiWhiteSpace(' ')
             PsiElement(in)('in')

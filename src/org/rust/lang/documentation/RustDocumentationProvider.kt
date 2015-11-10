@@ -3,17 +3,17 @@ package org.rust.lang.documentation
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustFnItem
-import org.rust.lang.core.psi.RustPatIdent
+import org.rust.lang.core.psi.RustPatBinding
 
 class RustDocumentationProvider : AbstractDocumentationProvider() {
 
     override fun getQuickNavigateInfo(element: PsiElement?, originalElement: PsiElement?) = when (element) {
-        is RustPatIdent -> getQuickNavigateInfo(element)
-        is RustFnItem -> getQuickNavigateInfo(element)
-        else -> null
+        is RustPatBinding -> getQuickNavigateInfo(element)
+        is RustFnItem     -> getQuickNavigateInfo(element)
+        else              -> null
     }
 
-    private fun getQuickNavigateInfo(element: RustPatIdent): String {
+    private fun getQuickNavigateInfo(element: RustPatBinding): String {
         val location = getLocationString(element)
         val bindingMode = element.bindingMode?.mut?.let { "mut " }.orEmpty()
 
