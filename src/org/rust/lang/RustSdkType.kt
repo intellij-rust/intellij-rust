@@ -24,15 +24,34 @@ class RustSdkType : SdkType("Rust SDK") {
     override fun getIconForAddAction() = icon
 
     override fun suggestHomePath(): String? {
-        if (SystemInfo.isMac) {
+        if (SystemInfo.isUnix) {
             val multiRust = File(FileUtil.expandUserHome("~/.multirust/toolchains"))
             if (multiRust.exists()) {
                 return multiRust.absolutePath
             }
-            val homebrew = File("/usr/local/Cellar/rust")
-            if (homebrew.exists()) {
-                return homebrew.absolutePath
+
+            if (SystemInfo.isMac) {
+                val homebrew = File("/usr/local/Cellar/rust")
+                if (homebrew.exists()) {
+                    return homebrew.absolutePath
+                }
             }
+
+            val local = File("/usr/local/bin/rustc")
+            if (local.exists()) {
+                return local.parentFile.absolutePath
+            }
+
+        } else if (SystemInfo.isWindows) {
+            val programFiles = File(System.getenv("ProgramFiles"))
+            if (!programFiles.exists() || !programFiles.isDirectory)
+                return null
+
+            return programFiles
+                .listFiles { file: File -> file.isDirectory }
+                ?.filter { file -> file.nameWithoutExtension.startsWith("Rust") }
+                ?.firstOrNull()
+                ?.absolutePath
         }
 
         return null
