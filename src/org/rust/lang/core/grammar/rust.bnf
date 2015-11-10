@@ -129,9 +129,6 @@
     // Mixins
     //
 
-    mixin       ("pat_binding") = "org.rust.lang.core.psi.impl.mixin.RustPatBindingImplMixin"
-    implements  ("pat_binding") = "org.rust.lang.core.psi.RustNamedElement"
-
     mixin       ("trait_item") = "org.rust.lang.core.psi.impl.mixin.RustTraitItemImplMixin"
 
     mixin       ("impl_item")  = "org.rust.lang.core.psi.impl.mixin.RustImplItemImplMixin"
@@ -213,9 +210,8 @@
     implements  ("match_pat")   = "org.rust.lang.core.psi.RustDeclaringElement"
     mixin       ("match_pat")   = "org.rust.lang.core.psi.impl.mixin.RustMatchPatImplMixin"
 
-    implements  ("pat_field")   = [ "org.rust.lang.core.psi.RustDeclaringElement" "org.rust.lang.core.psi.RustNamedElement" ]
-    mixin       ("pat_field")   = "org.rust.lang.core.psi.impl.mixin.RustPatFieldImplMixin"
-
+    implements  ("pat_binding") = ["org.rust.lang.core.psi.RustDeclaringElement" "org.rust.lang.core.psi.RustNamedElement"]
+    mixin       ("pat_binding") = "org.rust.lang.core.psi.impl.mixin.RustPatBindingImplMixin"
 
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr

@@ -4,6 +4,7 @@ import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustFnItem
 import org.rust.lang.core.psi.RustPatBinding
+import org.rust.lang.core.psi.util.isMut
 
 class RustDocumentationProvider : AbstractDocumentationProvider() {
 
@@ -15,7 +16,7 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
 
     private fun getQuickNavigateInfo(element: RustPatBinding): String {
         val location = getLocationString(element)
-        val bindingMode = element.bindingMode?.mut?.let { "mut " }.orEmpty()
+        val bindingMode = if (element.isMut) "mut " else ""
 
         return "let $bindingMode<b>${element.identifier.text}</b>$location"
     }
