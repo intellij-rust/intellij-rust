@@ -1,8 +1,8 @@
 package org.toml.lang
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.vfs.VirtualFile
-import org.toml.lang.icons.TomlIcons
 
 public object TomlFileType : LanguageFileType(TomlLanguage) {
     public object DEFAULTS {
@@ -14,7 +14,7 @@ public object TomlFileType : LanguageFileType(TomlLanguage) {
     override fun getDescription()       = DEFAULTS.DESCRIPTION
     override fun getDefaultExtension()  = DEFAULTS.EXTENSION
 
-    override fun getIcon() = TomlIcons.FILE
+    override fun getIcon() = AllIcons.FileTypes.Text
 
     override fun getCharset(file: VirtualFile, content: ByteArray) = "UTF-8"
 }
