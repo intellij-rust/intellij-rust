@@ -2,29 +2,11 @@ package org.rust.lang.core.parser
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiErrorElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.DebugUtil
 import org.assertj.core.api.Assertions.assertThat
 import java.io.File
 
 public class RustCTRSTestCase : RustParsingTestCaseBase("parser/ctrs") {
-
-    public fun hasError(file: PsiFile): Boolean {
-        var hasErrors = false
-        file.accept(object : PsiElementVisitor() {
-            override fun visitElement(element: PsiElement?) {
-                if (element is PsiErrorElement) {
-                    hasErrors = true
-                    return
-                }
-                element!!.acceptChildren(this)
-            }
-        })
-        return hasErrors
-    }
 
     fun testCtrs() {
         var nFilesVisited = 0
