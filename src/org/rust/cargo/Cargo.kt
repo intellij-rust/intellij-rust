@@ -1,7 +1,7 @@
 package org.rust.cargo
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import org.toml.lang.icons.TomlIcons
+import org.rust.cargo.icons.CargoIcons
 
 object Cargo {
     val ID      = "Cargo"
@@ -10,7 +10,7 @@ object Cargo {
     val BUILD_FILE  = "Cargo.toml"
     val LOCK_FILE   = "Cargo.lock"
 
-    val ICON by lazy { TomlIcons.CARGO }
+    val ICON by lazy { CargoIcons.ICON }
 
     val PROJECT_SYSTEM_ID = ProjectSystemId(ID)
 }
