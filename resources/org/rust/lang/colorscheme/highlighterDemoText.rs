@@ -4,18 +4,18 @@ fn main() {
     // `*` or `/` means multiply or divide by 2
 
     let program = "+ + * - /";
-    let mut accumulator = 0;
+    let mut <mut-binding>accumulator</mut-binding> = 0;
 
     for token in program.chars() {
         match token {
-            '+' => accumulator += 1,
-            '-' => accumulator -= 1,
-            '*' => accumulator *= 2,
-            '/' => accumulator /= 2,
+            '+' => <mut-binding>accumulator</mut-binding> += 1,
+            '-' => <mut-binding>accumulator</mut-binding> -= 1,
+            '*' => <mut-binding>accumulator</mut-binding> *= 2,
+            '/' => <mut-binding>accumulator</mut-binding> /= 2,
             _ => { /* ignore everything else */ }
         }
     }
 
-    println!("The program \"{}\" calculates the value {}",
-              program, accumulator);
+    <macro>println!</macro>("The program \"{}\" calculates the value {}",
+             program, <mut-binding>accumulator</mut-binding>);
 }
