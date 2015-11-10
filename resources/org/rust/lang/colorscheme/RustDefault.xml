@@ -17,4 +17,10 @@
             <option name="FOREGROUND" value="20999d"/>
         </value>
     </option>
+    <option name="org.rust.MUT_BINDING">
+        <value>
+            <option name="EFFECT_COLOR" value="000000" />
+            <option name="EFFECT_TYPE" value="1" />
+        </value>
+    </option>
 </list>

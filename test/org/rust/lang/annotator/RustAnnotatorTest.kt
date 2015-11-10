@@ -20,4 +20,8 @@ class RustAnnotatorTest : RustTestCase() {
     fun testTypeParameters() {
         doTestInfo()
     }
+
+    fun testMutBinding() {
+        doTestInfo()
+    }
 }
