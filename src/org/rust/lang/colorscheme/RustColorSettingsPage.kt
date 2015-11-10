@@ -29,7 +29,8 @@ public class RustColorSettingsPage : ColorSettingsPage {
             d("Comma", RustColors.COMMA),
             d("Attribute", RustColors.ATTRIBUTE),
             d("Macro", RustColors.MACRO),
-            d("Type Parameter", RustColors.TYPE_PARAMETER)
+            d("Type Parameter", RustColors.TYPE_PARAMETER),
+            d("Mutable binding", RustColors.MUT_BINDING)
     )
     private val TAGS = emptyMap<String, TextAttributesKey>()
     private val DEMO_TEXT by lazy {

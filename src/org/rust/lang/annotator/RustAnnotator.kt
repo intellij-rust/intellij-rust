@@ -5,9 +5,8 @@ import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.PsiElement
 import org.rust.lang.colorscheme.RustColors
-import org.rust.lang.core.psi.RustAttr
-import org.rust.lang.core.psi.RustMacroExpr
-import org.rust.lang.core.psi.RustTypeParam
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.util.isMut
 
 
 public class RustAnnotator : Annotator {
@@ -28,6 +27,18 @@ public class RustAnnotator : Annotator {
             }
             is RustTypeParam -> {
                 addTextAttributes(element, holder, RustColors.TYPE_PARAMETER)
+            }
+            is RustPatBinding -> {
+                if (element.isMut) {
+                    addTextAttributes(element.identifier, holder, RustColors.MUT_BINDING)
+                }
+            }
+            is RustPathPart -> {
+                element.reference?.resolve().let {
+                    if (it is RustPatBinding && it.isMut) {
+                        addTextAttributes(element.identifier, holder, RustColors.MUT_BINDING)
+                    }
+                }
             }
         }
     }

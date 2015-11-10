@@ -36,4 +36,6 @@ object RustColors {
     val MACRO           = r("org.rust.MACRO",           DefaultLanguageHighlighterColors.IDENTIFIER)
 
     val TYPE_PARAMETER  = r("org.rust.TYPE_PARAMETER",  DefaultLanguageHighlighterColors.IDENTIFIER)
+
+    val MUT_BINDING     = r("org.rust.MUT_BINDING",     DefaultLanguageHighlighterColors.IDENTIFIER)
 }
