@@ -93,6 +93,10 @@
         <additionalTextAttributes scheme="Default" file="org/rust/lang/colorscheme/RustDefault.xml"/>
         <additionalTextAttributes scheme="Darcula" file="org/rust/lang/colorscheme/RustDarcula.xml"/>
 
+        <!-- Inspections -->
+
+        <localInspection language="RUST" enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.lang.inspections.ApproxConstantInspection"/>
 
 
         <!-- Toml -->
