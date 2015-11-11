@@ -32,7 +32,13 @@ public class RustColorSettingsPage : ColorSettingsPage {
             d("Type Parameter", RustColors.TYPE_PARAMETER),
             d("Mutable binding", RustColors.MUT_BINDING)
     )
-    private val TAGS = emptyMap<String, TextAttributesKey>()
+    // This tags should be kept in sync with RustAnnotator highlighting logic
+    private val ANNOTATOR_TAGS = mapOf(
+        "attribute" to RustColors.ATTRIBUTE,
+        "macro" to RustColors.MACRO,
+        "type-parameter" to RustColors.TYPE_PARAMETER,
+        "mut-binding" to RustColors.MUT_BINDING
+    )
     private val DEMO_TEXT by lazy {
         val stream = javaClass.classLoader.getResourceAsStream("org/rust/lang/colorscheme/highlighterDemoText.rs")
         StreamUtil.readText(stream, "UTF-8")
@@ -43,6 +49,6 @@ public class RustColorSettingsPage : ColorSettingsPage {
     override fun getAttributeDescriptors() = ATTRS
     override fun getColorDescriptors() = ColorDescriptor.EMPTY_ARRAY
     override fun getHighlighter() = RustHighlighter()
-    override fun getAdditionalHighlightingTagToDescriptorMap() = TAGS
+    override fun getAdditionalHighlightingTagToDescriptorMap() = ANNOTATOR_TAGS
     override fun getDemoText() = DEMO_TEXT
 }
