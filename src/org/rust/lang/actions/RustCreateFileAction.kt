@@ -20,6 +20,5 @@ class RustCreateFileAction : CreateFileFromTemplateAction(NEW_RUST_FILE, "", Rus
                              builder: CreateFileFromTemplateDialog.Builder) {
         builder.setTitle(NEW_RUST_FILE)
                 .addKind("Empty File", RustIcons.FILE, "Rust File")
-                .addKind("Empty Module", RustIcons.FILE, "Rust Module");
     }
 }
