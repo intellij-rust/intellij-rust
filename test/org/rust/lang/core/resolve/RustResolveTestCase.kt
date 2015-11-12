@@ -10,29 +10,27 @@ class RustResolveTestCase : RustTestCase() {
     override fun getTestDataPath() = "testData/org/rust/lang/core/resolve/fixtures"
     private fun referenceAtCaret() = file.findReferenceAt(myFixture.caretOffset)!!
 
-    //@formatter:off
-    fun testFunctionArgument()     { checkIsBound()   }
-    fun testLocals()               { checkIsBound()   }
-    fun testShadowing()            { checkIsBound(atOffset = 35) }
-    fun testNestedPatterns()       { checkIsBound()   }
-    fun testClosure()              { checkIsBound()   }
-    fun testMatch()                { checkIsBound()   }
-    fun testIfLet()                { checkIsBound()   }
-    fun testIfLetX()               { checkIsUnbound() }
-    fun testWhileLet()             { checkIsBound()   }
-    fun testWhileLetX()            { checkIsUnbound() }
-    fun testFor()                  { checkIsBound()   }
-    fun testTraitMethodArgument()  { checkIsBound()   }
-    fun testImplMethodArgument()   { checkIsBound()   }
-    fun testStructPatterns1()      { checkIsBound(atOffset = 69) }
-    fun testStructPatterns2()      { checkIsBound()   }
-    fun testModItems()             { checkIsBound()   }
-    fun testCrateItems()           { checkIsBound()   }
-    fun testNestedModule()         { checkIsBound(atOffset = 48) }
-    fun testUnbound()              { checkIsUnbound() }
-    fun testOrdering()             { checkIsUnbound() }
-    fun testModBoundary()          { checkIsUnbound() }
-    //@formatter:on
+    fun testFunctionArgument() = checkIsBound()
+    fun testLocals() = checkIsBound()
+    fun testShadowing() = checkIsBound(atOffset = 35)
+    fun testNestedPatterns() = checkIsBound()
+    fun testClosure() = checkIsBound()
+    fun testMatch() = checkIsBound()
+    fun testIfLet() = checkIsBound()
+    fun testIfLetX() = checkIsUnbound()
+    fun testWhileLet() = checkIsBound()
+    fun testWhileLetX() = checkIsUnbound()
+    fun testFor() = checkIsBound()
+    fun testTraitMethodArgument() = checkIsBound()
+    fun testImplMethodArgument() = checkIsBound()
+    fun testStructPatterns1() = checkIsBound(atOffset = 69)
+    fun testStructPatterns2() = checkIsBound()
+    fun testModItems() = checkIsBound()
+    fun testCrateItems() = checkIsBound()
+    fun testNestedModule() = checkIsBound(atOffset = 48)
+    fun testUnbound() = checkIsUnbound()
+    fun testOrdering() = checkIsUnbound()
+    fun testModBoundary() = checkIsUnbound()
 
     private fun assertIsValidDeclaration(declaration: PsiElement, usage: RustReference,
                                          expectedOffset: Int?) {
