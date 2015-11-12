@@ -8,7 +8,6 @@ import org.rust.lang.core.resolve.ref.RustReference
 
 class RustResolveTestCase : RustTestCase() {
     override fun getTestDataPath() = "testData/org/rust/lang/core/resolve/fixtures"
-    private fun referenceAtCaret() = file.findReferenceAt(myFixture.caretOffset)!!
 
     fun testFunctionArgument() = checkIsBound()
     fun testLocals() = checkIsBound(atOffset = 19)
@@ -47,18 +46,14 @@ class RustResolveTestCase : RustTestCase() {
     }
 
     private fun checkIsBound(atOffset: Int? = null) {
-        myFixture.configureByFile(fileName)
-
-        val usage = referenceAtCaret() as RustReference
+        val usage = myFixture.getReferenceAtCaretPosition(fileName) as RustReference
         val declaration = usage.resolve()!!
 
         assertIsValidDeclaration(declaration, usage, atOffset)
     }
 
     private fun checkIsUnbound() {
-        myFixture.configureByFile(fileName)
-
-        val usage = referenceAtCaret()
+        val usage = myFixture.getReferenceAtCaretPosition(fileName) as RustReference
         val declaration = usage.resolve()
 
         assertThat(declaration).isNull()
