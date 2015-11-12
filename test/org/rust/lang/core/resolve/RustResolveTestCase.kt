@@ -11,7 +11,7 @@ class RustResolveTestCase : RustTestCase() {
     private fun referenceAtCaret() = file.findReferenceAt(myFixture.caretOffset)!!
 
     fun testFunctionArgument() = checkIsBound()
-    fun testLocals() = checkIsBound()
+    fun testLocals() = checkIsBound(atOffset = 19)
     fun testShadowing() = checkIsBound(atOffset = 35)
     fun testNestedPatterns() = checkIsBound()
     fun testClosure() = checkIsBound()
