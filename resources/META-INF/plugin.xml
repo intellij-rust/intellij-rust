@@ -119,7 +119,10 @@
     </project-components>
 
     <actions>
-        <!-- Add your actions here -->
+        <action class="org.rust.lang.actions.RustCreateFileAction" id="Rust.NewRustFile" text="Rust File"
+                description="Create new Rust file">
+            <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+        </action>
     </actions>
 
 </idea-plugin>
