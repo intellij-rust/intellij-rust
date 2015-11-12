@@ -1,10 +1,11 @@
 # Contributors
 
-IntelliJ would never see support for the Rust programming language without these great people: 
+IntelliJ would never see support for the Rust programming language without these great people:
 
   * [Aleksey Kladov](https://github.com/matklad)
   * [Alexey Kudinkin](https://github.com/alexeykudinkin)
   * [Evgeny Kurbatsky](https://github.com/atsky)
+  * [Justin Graham](https://github.com/Falkenfighter)
   * [Nikita Ofitserov](https://github.com/himikof)
   * [Pavel Chernykh](https://github.com/pavel-v-chernykh)
   * [Tobias Bieniek](https://github.com/Turbo87)
