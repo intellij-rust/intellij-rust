@@ -10,10 +10,13 @@ Please note that most of the features are missing at the moment.
   want.
 
 
-Semantic features already implemented:
+## Features
 
 * `Go to definition` for local variables,
 * `File structure`, aka imenu. `Ctrl-F12` and `Alt-7` by default,
 * `Expand selection` bound to `Ctrl-w` by default.
+* `Live templates` aka snippets (`Ctrl-j` by default).
+
+## Editors
 
 We also have guides for [Emacs](Emacs.md) and [Vim](Vim.md) users :)
