@@ -84,7 +84,7 @@ intellij {
     pluginName 'IntelliJ Rust'
 
     version ideaVersion
-    downloadSources Boolean.valueOf(DOWNLOAD_SOURCES)
+    downloadSources Boolean.valueOf(downloadSources)
 
     sandboxDirectory project.rootDir.canonicalPath + "/.sandbox"
 }
