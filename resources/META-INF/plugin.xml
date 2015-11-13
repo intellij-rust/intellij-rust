@@ -73,6 +73,10 @@
 
         <annotator language="RUST" implementationClass="org.rust.lang.annotator.RustAnnotator"/>
 
+        <!-- Description Provider -->
+
+        <elementDescriptionProvider implementation="org.rust.lang.RustDescriptionProvider"/>
+
         <!-- Spell-checker -->
 
         <spellchecker.support language="RUST" implementationClass="org.rust.lang.spellchecker.RustSpellcheckingStrategy"/>
