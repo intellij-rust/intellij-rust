@@ -85,6 +85,8 @@ intellij {
 
     version ideaVersion
     downloadSources Boolean.valueOf(DOWNLOAD_SOURCES)
+
+    sandboxDirectory project.rootDir.canonicalPath + "/.sandbox"
 }
 
 
