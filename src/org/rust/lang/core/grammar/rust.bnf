@@ -522,7 +522,7 @@ trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params? for_sized? type_param_bo
 for_sized ::= FOR Q IDENTIFIER
             | FOR IDENTIFIER Q
 
-private trait_contents ::= trait_const | trait_type | trait_method_
+private trait_contents ::= trait_const | trait_type | trait_method
 
 trait_const ::= outer_attrs? CONST IDENTIFIER type_ascription? const_default? SEMICOLON
 
@@ -532,16 +532,16 @@ private const_default ::= EQ any_expr
 
 trait_type ::= outer_attrs? TYPE type_param SEMICOLON
 
-fake trait_method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause?
+fake trait_method_ ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause?
 
-private trait_method_ ::= type_method | method
+private trait_method ::= type_method | method
 
 type_method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause? SEMICOLON {
-  extends = trait_method
+  extends = trait_method_
 }
 
 method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause? inner_attrs_and_block {
-  extends = trait_method
+  extends = trait_method_
 }
 
 private fn_decl_with_self_allow_anon_params ::= fn_anon_params_with_self ret_type?
