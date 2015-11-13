@@ -11,7 +11,7 @@ buildscript {
 }
 
 plugins {
-    id 'org.jetbrains.intellij' version "0.0.27"
+    id 'org.jetbrains.intellij' version "0.0.28"
 }
 
 
@@ -81,8 +81,9 @@ test {
 apply plugin: 'org.jetbrains.intellij'
 
 intellij {
+    pluginName 'IntelliJ Rust'
+
     version ideaVersion
-    pluginName 'Rust'
     downloadSources Boolean.valueOf(DOWNLOAD_SOURCES)
 }
 
