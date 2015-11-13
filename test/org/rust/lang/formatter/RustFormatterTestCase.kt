@@ -19,5 +19,6 @@ class RustFormatterTestCase : FormatterTestCase() {
     fun testItems() = doTest()
     fun testExpressions() = doTest()
     fun testArgumentAlignment() = doTest()
+    fun testArgumentIndent() = doTest()
     fun testTraits() = doTest()
 }
