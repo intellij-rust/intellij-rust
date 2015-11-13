@@ -64,6 +64,10 @@
         <lang.psiStructureViewFactory language="RUST"
                                       implementationClass="org.rust.lang.structure.RustPsiStructureViewFactory"/>
 
+        <!-- Usages Provider -->
+
+        <lang.findUsagesProvider language="RUST" implementationClass="org.rust.lang.search.RustFindUsagesProvider"/>
+
         <!-- Navigation -->
 
         <gotoClassContributor implementation="org.rust.lang.navigation.goto.RustClassNavigationContributor"/>
