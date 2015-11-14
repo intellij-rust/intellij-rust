@@ -102,6 +102,13 @@
         <defaultLiveTemplatesProvider implementation="org.rust.lang.template.RustLiveTemplatesProvider"/>
         <liveTemplateContext implementation="org.rust.lang.template.RustFileContextType"/>
 
+        <!-- Intentions -->
+
+        <intentionAction>
+            <className>org.rust.lang.intentions.ExpandModule</className>
+            <category>Rust</category>
+        </intentionAction>
+
         <!-- Toml -->
 
         <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>

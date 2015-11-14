@@ -1,6 +1,7 @@
 .idea
 *.iml
 .gradle
+.sandbox
 build/
 out
 classes
