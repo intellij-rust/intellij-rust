@@ -3,19 +3,18 @@
 ## Clone
 
 ```
-git clone https://github.com/alexeykudinkin/intellij-rust.git
+git clone --recursive https://github.com/alexeykudinkin/intellij-rust.git
 cd intellij-rust
-git submodule update --init
 ```
 
 ## Building
 
-To build the plugin just navigate to the directory you've previously checked it out and type `gradle build`. That's it.  
+To build the plugin just navigate to the directory you've previously checked it out and type `./gradlew build`. That's it.  
 
 
 ## Running
 
-To launch the plugin from console just type `gradle runIdea`.
+To launch the plugin from console just type `./gradlew runIdea`.
 
 
 ## Development
@@ -50,12 +49,12 @@ being on par with the current development efforts.
 
 **NOTA BENE**
 
-Please, make sure that all tests pass and Travis reports build as green prior to making P/R. 
+Please, make sure that all tests pass and Travis reports build as green prior to making a pull request. 
 
 
 ## Code style
 
-Please, consider our [code-style](STYLE.md) prior to submitting the P/R. We love P/R's, but much more than just P/Rs we love P/Rs that are 'on style'.
+Please, consider our [code-style](STYLE.md) prior to submitting the pull request. We love PRs, but much more than just PRs we love PRs that are 'on style'.
 
 For the Java sources we're sticked to the Google's [one](https://google.github.io/styleguide/javaguide.html).
 
@@ -85,3 +84,7 @@ tests. Test classes are placed in the `test` directory, `testData` holds rust fi
 which are used as fixtures. We also include
 [CTRS](https://github.com/brson/ctrs) as a submodule and use it to test the
 parser.
+
+The test suite can be run by launching:
+
+    ./gradlew test
