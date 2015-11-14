@@ -15,7 +15,7 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
     }
 
     private fun getQuickNavigateInfo(element: RustPatBinding): String {
-        val location = getLocationString(element)
+        val location = element.locationString
         val bindingMode = if (element.isMut) "mut " else ""
 
         return "let $bindingMode<b>${element.identifier.text}</b>$location"
@@ -23,7 +23,7 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
 
     private fun getQuickNavigateInfo(element: RustFnItem): String {
         val signature = element.formatSignature()
-        val location = getLocationString(element)
+        val location = element.locationString
         return "$signature$location"
     }
 
@@ -39,7 +39,6 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
         return "$beforeIdent<b>$identText</b>$afterIdent"
     }
 
-    private fun getLocationString(element: PsiElement?): String {
-        return element?.containingFile?.let { " [${it.name}]" }.orEmpty()
-    }
+    private val PsiElement.locationString: String
+        get() = containingFile?.let { " [${it.name}]" }.orEmpty()
 }
