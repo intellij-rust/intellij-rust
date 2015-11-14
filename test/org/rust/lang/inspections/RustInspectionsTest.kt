@@ -12,4 +12,5 @@ class RustInspectionsTest : RustTestCase() {
     }
 
     fun testApproxConstant() = doTest<ApproxConstantInspection>()
+    fun testSelfConvention() = doTest<SelfConventionInspection>()
 }
