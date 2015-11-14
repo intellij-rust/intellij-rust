@@ -148,4 +148,10 @@ public interface RustTokenElementTypes {
         com.intellij.psi.TokenType.WHITE_SPACE
     );
 
+    TokenSet COMMENTS_TOKEN_SET = TokenSet.create(
+        BLOCK_COMMENT,
+        EOL_COMMENT,
+        INNER_DOC_COMMENT,
+        OUTER_DOC_COMMENT
+    );
 }

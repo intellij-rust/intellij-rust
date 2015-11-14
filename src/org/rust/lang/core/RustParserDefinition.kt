@@ -13,6 +13,7 @@ import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.lexer.RustLexer
+import org.rust.lang.core.lexer.RustTokenElementTypes
 import org.rust.lang.core.lexer.RustTokenElementTypes.*
 import org.rust.lang.core.parser.RustParser
 import org.rust.lang.core.psi.RustCompositeElementTypes
@@ -38,8 +39,7 @@ public class RustParserDefinition : ParserDefinition {
     override fun getWhitespaceTokens(): TokenSet =
         TokenSet.create(TokenType.WHITE_SPACE)
 
-    override fun getCommentTokens() =
-        TokenSet.create(BLOCK_COMMENT, EOL_COMMENT, INNER_DOC_COMMENT, OUTER_DOC_COMMENT)
+    override fun getCommentTokens() = RustTokenElementTypes.COMMENTS_TOKEN_SET
 
     override fun createElement(node: ASTNode?): PsiElement =
         RustCompositeElementTypes.Factory.createElement(node)
