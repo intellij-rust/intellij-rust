@@ -1,6 +1,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.isBefore
 import org.rust.lang.core.resolve.scope.RustResolveScope
@@ -52,30 +53,33 @@ public class RustResolveEngine() {
         }
 
         override fun visitBlock(o: RustBlock) {
-            seek(o.getDeclarations(), orderDependent = true)
+            o.getDeclarations()
+                .takeWhile { it.isBefore(ref) }
+                .reversed()
+                .forEach { letDecl ->
+                    letDecl.getBoundElements().forEach { e ->
+                        if (match(e) && !PsiTreeUtil.isAncestor(letDecl, ref, true)) {
+                            return found(e)
+                        }
+                    }
+                }
         }
 
         override fun visitResolveScope(scope: RustResolveScope) {
             seek(scope.getDeclarations())
         }
 
-        private fun seek(elem: RustDeclaringElement, orderDependent: Boolean = false) {
-            seek(listOf(elem), orderDependent)
+        private fun seek(elem: RustDeclaringElement) {
+            seek(listOf(elem))
         }
 
-        private fun seek(decls: Collection<RustDeclaringElement>, orderDependent: Boolean = false) {
-            val boundElements = decls.flatMap { it.getBoundElements() }
-            val candidates = if (orderDependent) {
-                boundElements.asReversed().filter { it.isBefore(ref) }
-            } else {
-                boundElements
-            }
-
-            candidates.forEach { e ->
-                if (match(e)) {
-                    return found(e)
-                }
-            }
+        private fun seek(decls: Collection<RustDeclaringElement>) {
+            decls.flatMap { it.getBoundElements() }
+                 .forEach { e ->
+                     if (match(e)) {
+                         return found(e)
+                     }
+                 }
         }
 
         private fun found(elem: RustNamedElement) {
