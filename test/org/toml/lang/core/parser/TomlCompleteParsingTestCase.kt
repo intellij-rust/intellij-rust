@@ -1,6 +1,6 @@
 package org.toml.lang.core.parser
 
-class TomlCompleteParsingTestCase : TomlParsingTestCaseBase("parser/well-formed") {
+class TomlCompleteParsingTestCase : TomlParsingTestCaseBase("well-formed") {
 
     // @formatter:off
 
