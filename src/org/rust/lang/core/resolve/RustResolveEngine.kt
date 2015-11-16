@@ -4,6 +4,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.isBefore
+import org.rust.lang.core.psi.util.containingMod
+import org.rust.lang.core.psi.util.submoduleFile
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.scope.resolveWith
 import org.rust.lang.core.resolve.util.RustResolveUtil
@@ -84,6 +86,16 @@ public class RustResolveEngine() {
 
         private fun found(elem: RustNamedElement) {
             matched = elem
+
+            if (elem is RustModDeclItem) {
+                val mod = elem.containingMod ?: return
+                val name = elem.name ?: return
+                val submod = mod.submoduleFile(name).mod
+                if (submod != null) {
+                    matched = submod
+                }
+            }
+
         }
 
         private fun match(elem: RustNamedElement): Boolean =

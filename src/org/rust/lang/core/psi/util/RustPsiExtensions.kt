@@ -10,6 +10,18 @@ import org.rust.lang.core.psi.*
 // Extension points
 //
 
+inline fun <reified T : PsiElement> PsiElement.parentOfType(): T? {
+    var current = parent
+    while (current != null) {
+        when (current) {
+            is T -> return current
+            else -> current = current.parent
+        }
+    }
+    return null
+}
+
+
 fun PsiElement?.getNextNonPhantomSibling(): PsiElement? =
     this?.let {
         val next = it.nextSibling
@@ -49,3 +61,6 @@ fun RustItem.isPublic() = vis != null
 
 val RustPatBinding.isMut: Boolean
     get()  = bindingMode?.mut != null
+
+val RustCompositeElement.containingMod: RustModItem?
+    get() = parentOfType<RustModItem>()

@@ -292,6 +292,7 @@ private stmt_item_group ::= static_item
 private block_item_group ::= &(UNSAFE? FN   ) fn_item
                            | &(UNSAFE? TRAIT) trait_item
                            | &(UNSAFE? IMPL ) impl_item
+                           | mod_decl_item
                            | mod_item
                            | foreign_mod_item
                            | struct_item
@@ -465,7 +466,9 @@ private crate_name ::= IDENTIFIER [ AS IDENTIFIER ]
 // Struct & Enum
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-mod_item ::= MOD IDENTIFIER (SEMICOLON | LBRACE inner_attrs? item * RBRACE) {
+mod_decl_item ::= MOD IDENTIFIER SEMICOLON
+
+mod_item ::= MOD IDENTIFIER LBRACE inner_attrs? item * RBRACE {
   pin(".*") = 1
 }
 
