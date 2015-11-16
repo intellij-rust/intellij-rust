@@ -2,6 +2,7 @@ package org.rust.lang.core.psi.util
 
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
+import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.RustModItem
 
 
@@ -33,26 +34,28 @@ sealed class ChildModFile {
 
     class NotFound : ChildModFile()
     class Found(val file: PsiFile) : ChildModFile()
-    class Ambigious(val paths: Collection<PsiFile>) : ChildModFile()
+    class Ambiguous(val paths: Collection<PsiFile>) : ChildModFile()
 }
 
-fun RustModItem.submoduleFile(modName: String): ChildModFile {
-    if (!ownsDirectory) {
-        return ChildModFile.NotFound()
+val RustModDeclItem.moduleFile: ChildModFile
+    get() {
+        val parent = containingMod
+        val name = name
+        if (parent == null || name == null || !parent.ownsDirectory) {
+            return ChildModFile.NotFound()
+        }
+
+        val dir = parent.modDir
+        val dirMod = dir?.findSubdirectory(name)?.findFile(MOD_RS)
+        val fileMod = dir?.findFile("$name.rs")
+
+        val variants = listOf(fileMod, dirMod).filterNotNull()
+
+        when (variants.size) {
+            0 -> return ChildModFile.NotFound()
+            2 -> return ChildModFile.Ambiguous(variants)
+        }
+
+        return ChildModFile.Found(variants.single())
     }
-
-    val dir = modDir
-    val dirMod = dir?.findSubdirectory(modName)?.findFile(MOD_RS)
-    val fileMod = dir?.findFile("$modName.rs")
-
-    val variants = listOf(fileMod, dirMod).filterNotNull()
-
-    when (variants.size) {
-        0 -> return ChildModFile.NotFound()
-        2 -> return ChildModFile.Ambigious(variants)
-    }
-
-    return ChildModFile.Found(variants.first())
-}
-
 
