@@ -5,6 +5,8 @@ import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RustModItem
 
 
+val MOD_RS = "mod.rs"
+
 private val RustModItem.modDir: PsiDirectory?
     get() {
         val parent = containingMod ?: return containingFile.parent
@@ -21,7 +23,7 @@ private val RustModItem.isCrateRoot: Boolean
 
 private val RustModItem.ownsDirectory: Boolean
     get() = containingMod != null || // any inline nested module owns a directory
-        containingFile.name == "mod.rs" ||
+        containingFile.name == MOD_RS ||
         isCrateRoot
 
 
@@ -40,7 +42,7 @@ fun RustModItem.submoduleFile(modName: String): ChildModFile {
     }
 
     val dir = modDir
-    val dirMod = dir?.findSubdirectory(modName)?.findFile("mod.rs")
+    val dirMod = dir?.findSubdirectory(modName)?.findFile(MOD_RS)
     val fileMod = dir?.findFile("$modName.rs")
 
     val variants = listOf(fileMod, dirMod).filterNotNull()
