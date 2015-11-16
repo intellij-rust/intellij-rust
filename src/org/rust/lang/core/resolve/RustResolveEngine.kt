@@ -93,14 +93,17 @@ public class RustResolveEngine() {
     }
 
     fun resolve(ref: RustQualifiedReferenceElement): ResolveResult {
-        val scopes =
-            ref.getQualifier()?.let { qual ->
-                qual.reference?.let { qualRef ->
-                    qualRef  .resolve()
-                            ?.let { it as? RustResolveScope }
-                            ?.let { listOf(it) }
-                }
-            } ?: enumerateScopesFor(ref)
+        val qual = ref.getQualifier()
+
+        val scopes = if (qual != null) {
+            val parent = qual.reference.resolve()
+            when (parent) {
+                is RustResolveScope -> listOf(parent)
+                else -> return ResolveResult.UNRESOLVED
+            }
+        } else {
+            enumerateScopesFor(ref)
+        }
 
         return resolveIn(ResolveScopeVisitor(ref), scopes)
     }

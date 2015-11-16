@@ -13,5 +13,5 @@ public interface RustQualifiedReferenceElement : RustNamedElement {
 
     override fun getNameElement(): PsiElement?
 
-    override fun getReference(): RustReference?
+    override fun getReference(): RustReference
 }

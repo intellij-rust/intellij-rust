@@ -32,6 +32,7 @@ class RustResolveTestCase : RustTestCase() {
     fun testUnbound() = checkIsUnbound()
     fun testOrdering() = checkIsUnbound()
     fun testModBoundary() = checkIsUnbound()
+    fun testFollowPath() = checkIsUnbound()
 
     private fun assertIsValidDeclaration(declaration: PsiElement, usage: RustReference,
                                          expectedOffset: Int?) {
