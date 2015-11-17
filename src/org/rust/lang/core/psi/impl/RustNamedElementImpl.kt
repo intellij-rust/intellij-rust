@@ -20,4 +20,6 @@ public abstract class RustNamedElementImpl(node: ASTNode)   : RustCompositeEleme
     }
 
     override fun getNavigationElement() = getNameElement()
+
+    override fun getTextOffset(): Int = getNameElement()?.textOffset ?: super.getTextOffset()
 }
