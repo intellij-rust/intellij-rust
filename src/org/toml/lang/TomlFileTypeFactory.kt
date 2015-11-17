@@ -8,7 +8,7 @@ import com.intellij.openapi.fileTypes.FileTypeFactory
 
 public class TomlFileTypeFactory : FileTypeFactory() {
     override fun createFileTypes(consumer: FileTypeConsumer) {
-        consumer.consume(TomlFileType.INSTANCE,
+        consumer.consume(TomlFileType,
                 ExactFileNameMatcher("Cargo.lock"),
                 ExtensionFileNameMatcher(TomlFileType.DEFAULTS.EXTENSION))
     }

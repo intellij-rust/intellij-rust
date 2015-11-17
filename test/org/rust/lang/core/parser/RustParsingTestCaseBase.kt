@@ -39,7 +39,7 @@ abstract class RustParsingTestCaseBase(@NonNls dataPath: String)
 
     override fun setUp() {
         super.setUp()
-        addExplicitExtension(LanguageBraceMatching.INSTANCE, RustLanguage.INSTANCE, RustBraceMatcher())
+        addExplicitExtension(LanguageBraceMatching.INSTANCE, RustLanguage, RustBraceMatcher())
     }
 
     override fun tearDown() {

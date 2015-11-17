@@ -21,7 +21,7 @@ import org.rust.lang.core.psi.impl.RustFileImpl
 
 public class RustParserDefinition : ParserDefinition {
 
-    val RUST_FILE_TYPE: IFileElementType = IFileElementType(RustLanguage.INSTANCE)
+    val RUST_FILE_TYPE: IFileElementType = IFileElementType(RustLanguage)
 
     override fun createFile(viewProvider: FileViewProvider): PsiFile? =
         RustFileImpl(viewProvider)

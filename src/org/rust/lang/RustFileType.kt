@@ -5,9 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.rust.lang.icons.RustIcons
 import javax.swing.Icon
 
-public open class RustFileType : LanguageFileType(RustLanguage.INSTANCE) {
-
-    public object INSTANCE : RustFileType() {}
+object RustFileType : LanguageFileType(RustLanguage) {
 
     public object DEFAULTS {
         public val EXTENSION: String = "rs";
@@ -25,6 +23,5 @@ public open class RustFileType : LanguageFileType(RustLanguage.INSTANCE) {
     override fun getDescription(): String {
         return "Rust Files"
     }
-
 }
 

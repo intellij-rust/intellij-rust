@@ -6,9 +6,9 @@ import com.intellij.psi.FileViewProvider
 import org.toml.lang.TomlFileType
 import org.toml.lang.TomlLanguage
 
-class TomlFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, TomlLanguage.INSTANCE) {
+class TomlFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, TomlLanguage) {
     override fun getFileType(): FileType =
-            TomlFileType.INSTANCE
+            TomlFileType
 
     override fun toString(): String =
             "TOML File"

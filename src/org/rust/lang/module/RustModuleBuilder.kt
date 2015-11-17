@@ -29,7 +29,7 @@ public class RustModuleBuilder() : ModuleBuilder() {
         moduleType.createWizardSteps(wizardContext, this, modulesProvider)
 
     override fun getModuleType(): RustModuleType {
-        return RustModuleType.INSTANCE
+        return RustModuleType
     }
 
     override fun setupRootModel(rootModel: ModifiableRootModel?) {

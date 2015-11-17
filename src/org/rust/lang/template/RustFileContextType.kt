@@ -8,5 +8,5 @@ import org.rust.lang.RustLanguage
 
 class RustFileContextType : TemplateContextType("RUST_FILE", "Rust file") {
     override fun isInContext(file: PsiFile, offset: Int): Boolean =
-        PsiUtilCore.getLanguageAtOffset(file, offset).isKindOf(RustLanguage.INSTANCE)
+        PsiUtilCore.getLanguageAtOffset(file, offset).isKindOf(RustLanguage)
 }

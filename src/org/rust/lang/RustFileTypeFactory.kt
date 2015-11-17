@@ -6,7 +6,7 @@ import com.intellij.openapi.fileTypes.FileTypeFactory
 public class RustFileTypeFactory : FileTypeFactory() {
 
     override fun createFileTypes(consumer: FileTypeConsumer) {
-        consumer.consume(RustFileType.INSTANCE, RustFileType.DEFAULTS.EXTENSION);
+        consumer.consume(RustFileType, RustFileType.DEFAULTS.EXTENSION);
     }
 
 }

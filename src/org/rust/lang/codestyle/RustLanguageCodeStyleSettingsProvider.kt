@@ -7,7 +7,7 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import org.rust.lang.RustLanguage
 
 class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() {
-    override fun getLanguage() = RustLanguage.INSTANCE
+    override fun getLanguage() = RustLanguage
 
     override fun customizeSettings(consumer: CodeStyleSettingsCustomizable,
                                    settingsType: LanguageCodeStyleSettingsProvider.SettingsType) {
