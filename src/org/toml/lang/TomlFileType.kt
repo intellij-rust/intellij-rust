@@ -4,7 +4,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.vfs.VirtualFile
 import org.toml.lang.icons.TomlIcons
 
-public class TomlFileType : LanguageFileType(TomlLanguage.INSTANCE) {
+object  TomlFileType : LanguageFileType(TomlLanguage) {
     public object DEFAULTS {
         val EXTENSION = "toml";
         val DESCRIPTION = "TOML file";
@@ -15,8 +15,4 @@ public class TomlFileType : LanguageFileType(TomlLanguage.INSTANCE) {
     override fun getDefaultExtension() = DEFAULTS.EXTENSION
     override fun getIcon() = TomlIcons.FILE
     override fun getCharset(file: VirtualFile, content: ByteArray) = "UTF-8"
-
-    companion object {
-        public val INSTANCE: TomlFileType = TomlFileType()
-    }
 }

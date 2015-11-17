@@ -21,7 +21,7 @@ class RustCodeStyleSettingsProvider : CodeStyleSettingsProvider() {
     }
 
     private class RustCodeStyleMainPanel(currentSettings: CodeStyleSettings, settings: CodeStyleSettings) :
-            TabbedLanguageCodeStylePanel(RustLanguage.INSTANCE, currentSettings, settings) {
+            TabbedLanguageCodeStylePanel(RustLanguage, currentSettings, settings) {
 
         override fun initTabs(settings: CodeStyleSettings?) {
             addWrappingAndBracesTab(settings)

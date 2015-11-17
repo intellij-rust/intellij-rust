@@ -9,7 +9,7 @@ import org.rust.lang.core.lexer.RustTokenElementTypes.STRING_LITERAL
 class RustSpellcheckingStrategy : SpellcheckingStrategy() {
     private val stringLiteralTokenizer = StringLiteralTokenizer()
 
-    override fun isMyContext(element: PsiElement) = RustLanguage.INSTANCE.`is`(element.language)
+    override fun isMyContext(element: PsiElement) = RustLanguage.`is`(element.language)
 
     override fun getTokenizer(element: PsiElement?): Tokenizer<*> {
         if (element?.node?.elementType == STRING_LITERAL) {
