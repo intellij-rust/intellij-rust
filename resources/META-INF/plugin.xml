@@ -109,6 +109,9 @@
         <localInspection language="RUST" enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.lang.inspections.SelfConventionInspection"/>
 
+        <localInspection language="RUST" enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.lang.inspections.NonexistentModuleDeclarationInspection"/>
+
         <!-- Live Templates -->
         <defaultLiveTemplatesProvider implementation="org.rust.lang.template.RustLiveTemplatesProvider"/>
         <liveTemplateContext implementation="org.rust.lang.template.RustFileContextType"/>
