@@ -5,7 +5,7 @@ import org.rust.lang.icons.RustIcons
 import javax.swing.Icon
 
 
-object RustModuleType : ModuleType<RustModuleBuilder>("RUST_MODULE") {
+class RustModuleType : ModuleType<RustModuleBuilder>("RUST_MODULE") {
 
     override fun createModuleBuilder(): RustModuleBuilder {
         return RustModuleBuilder()
@@ -25,5 +25,9 @@ object RustModuleType : ModuleType<RustModuleBuilder>("RUST_MODULE") {
 
     override fun getNodeIcon(isOpened: Boolean): Icon {
         return RustIcons.FILE
+    }
+
+    companion object {
+        val INSTANCE = RustModuleType()
     }
 }
