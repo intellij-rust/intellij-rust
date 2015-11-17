@@ -26,7 +26,7 @@ class RustResolveTestCase : RustTestCase() {
     fun testStructPatterns2() = checkIsBound()
     fun testModItems() = checkIsBound()
     fun testCrateItems() = checkIsBound()
-    fun testNestedModule() = checkIsBound(atOffset = 48)
+    fun testNestedModule() = checkIsBound(atOffset = 55)
     fun testLetCycle2() = checkIsBound(atOffset = 20)
     fun testLetCycle1() = checkIsUnbound()
     fun testUnbound() = checkIsUnbound()
