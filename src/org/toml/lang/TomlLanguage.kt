@@ -3,9 +3,9 @@ package org.toml.lang
 import com.intellij.lang.Language
 
 
-public class TomlLanguage : Language("TOML", "text/toml") {
+open public class TomlLanguage : Language("TOML", "text/toml") {
+    // XXX: can't use companion object here because companions are loaded lazily
+    public object INSTANCE : TomlLanguage() {}
 
-    companion object {
-        public val INSTANCE: TomlLanguage = TomlLanguage();
-    }
+    override fun isCaseSensitive() = true
 }
