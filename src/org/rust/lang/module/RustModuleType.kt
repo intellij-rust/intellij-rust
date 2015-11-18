@@ -1,11 +1,12 @@
 package org.rust.lang.module
 
 import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.module.ModuleTypeManager
 import org.rust.lang.icons.RustIcons
 import javax.swing.Icon
 
 
-class RustModuleType : ModuleType<RustModuleBuilder>("RUST_MODULE") {
+class RustModuleType : ModuleType<RustModuleBuilder>(RustModuleType.MODULE_TYPE_ID) {
 
     override fun createModuleBuilder(): RustModuleBuilder {
         return RustModuleBuilder()
@@ -28,6 +29,7 @@ class RustModuleType : ModuleType<RustModuleBuilder>("RUST_MODULE") {
     }
 
     companion object {
-        val INSTANCE = RustModuleType()
+        val MODULE_TYPE_ID = "RUST_MODULE"
+        val INSTANCE: RustModuleType = ModuleTypeManager.getInstance().findByID(MODULE_TYPE_ID) as RustModuleType
     }
 }
