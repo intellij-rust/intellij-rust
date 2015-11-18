@@ -16,6 +16,10 @@ Please note that most of the features are missing at the moment.
 * `File structure`, aka imenu. `Ctrl-F12` and `Alt-7` by default,
 * `Expand selection` bound to `Ctrl-w` by default.
 * `Live templates` aka snippets (`Ctrl-j` by default).
+* `Expand module` intention helps you switch file based module to 
+  directory module structure.
+* `Nonexistent module declaration` inspection and corresponding 
+  quick fix facilitates you creating file based module for specified module name.
 
 ## Editors
 
