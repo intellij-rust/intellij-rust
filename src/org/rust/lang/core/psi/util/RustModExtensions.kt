@@ -7,6 +7,8 @@ import org.rust.lang.core.psi.RustModItem
 
 
 val MOD_RS = "mod.rs"
+val MAIN_RS = "main.rs"
+val LIB_RS = "lib.rs"
 
 private val RustModItem.modDir: PsiDirectory?
     get() {
@@ -20,7 +22,7 @@ private val RustModItem.modDir: PsiDirectory?
 
 private val RustModItem.isCrateRoot: Boolean
     get() = containingMod == null &&
-        (containingFile.name == "main.rs" || containingFile.name == "lib.rs")
+        (containingFile.name == MAIN_RS || containingFile.name == LIB_RS)
 
 private val RustModItem.ownsDirectory: Boolean
     get() = containingMod != null || // any inline nested module owns a directory
@@ -51,11 +53,10 @@ val RustModDeclItem.moduleFile: ChildModFile
 
         val variants = listOf(fileMod, dirMod).filterNotNull()
 
-        when (variants.size) {
-            0 -> return ChildModFile.NotFound()
-            2 -> return ChildModFile.Ambiguous(variants)
+        return when (variants.size) {
+            0    -> ChildModFile.NotFound()
+            1    -> ChildModFile.Found(variants.single())
+            else -> ChildModFile.Ambiguous(variants)
         }
-
-        return ChildModFile.Found(variants.single())
     }
 
