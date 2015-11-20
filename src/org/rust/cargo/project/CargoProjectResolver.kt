@@ -77,7 +77,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
                 val moduleData = ModuleData(
                         pkg.name,
                         CargoProjectSystem.ID,
-                        RustModuleType.RUST_MODULE,
+                        RustModuleType.MODULE_TYPE_ID,
                         pkg.name,
                         packageRoot.absolutePath,
                         packageRoot.absolutePath)
