@@ -6,8 +6,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.Cargo
 import javax.swing.Icon
 
-class CargoProjectImportProvider(builder: CargoProjectImportBuilder) :
-        AbstractExternalProjectImportProvider(builder, CargoProjectSystem.ID) {
+class CargoProjectImportProvider(builder: CargoProjectImportBuilder)
+        : AbstractExternalProjectImportProvider(builder, CargoProjectSystem.ID) {
 
     override fun getId(): String {
         return Cargo.ID

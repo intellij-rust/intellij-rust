@@ -10,9 +10,10 @@ import org.rust.cargo.Cargo
 import java.io.File
 import javax.swing.Icon
 
-class CargoProjectImportBuilder(projectDataManager: ProjectDataManager) :
-        AbstractExternalProjectImportBuilder<CargoImportControl>(
-                projectDataManager, CargoImportControl(), CargoProjectSystem.ID) {
+class CargoProjectImportBuilder(projectDataManager: ProjectDataManager)
+        : AbstractExternalProjectImportBuilder<CargoImportControl>( projectDataManager,
+                                                                    CargoImportControl(),
+                                                                    CargoProjectSystem.ID) {
 
     override fun getName(): String {
         return Cargo.NAME
@@ -22,16 +23,13 @@ class CargoProjectImportBuilder(projectDataManager: ProjectDataManager) :
         return Cargo.ICON
     }
 
-    override fun doPrepare(wizardContext: WizardContext) {
-    }
-
-    override fun beforeCommit(dataNode: DataNode<ProjectData>, project: Project) {
-    }
-
     override fun getExternalProjectConfigToUse(file: File): File {
         return file
     }
 
-    override fun applyExtraSettings(wizardContext: WizardContext) {
-    }
+    override fun doPrepare(wizardContext: WizardContext) {}
+
+    override fun beforeCommit(dataNode: DataNode<ProjectData>, project: Project) {}
+
+    override fun applyExtraSettings(wizardContext: WizardContext) {}
 }
