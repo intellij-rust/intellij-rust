@@ -15,20 +15,20 @@ class CargoSettings(project: Project)
         : AbstractExternalSystemSettings<CargoSettings, CargoProjectSettings, CargoProjectSettingsListener>(
             CargoTopic.INSTANCE,
             project)
-        , PersistentStateComponent<CargoSettingsState> {
+        , PersistentStateComponent<CargoSettings.Companion.State> {
 
     override fun subscribe(listener: ExternalSystemSettingsListener<CargoProjectSettings>) {
         val adapter = CargoProjectSettingsListenerAdapter(listener)
         project.messageBus.connect(project).subscribe(CargoTopic.INSTANCE, adapter)
     }
 
-    override fun getState(): CargoSettingsState {
-        val state = CargoSettingsState()
+    override fun getState(): CargoSettings.Companion.State {
+        val state = CargoSettings.Companion.State()
         fillState(state)
         return state
     }
 
-    override fun loadState(state: CargoSettingsState) {
+    override fun loadState(state: CargoSettings.Companion.State) {
         super.loadState(state)
     }
 
@@ -40,21 +40,23 @@ class CargoSettings(project: Project)
 
     companion object {
 
+        class State : AbstractExternalSystemSettings.State<CargoProjectSettings> {
+            private var linkedExternalProjects: Set<CargoProjectSettings> = ContainerUtilRt.newHashSet<CargoProjectSettings>()
+
+            @AbstractCollection(surroundWithTag = false, elementTypes = arrayOf(CargoProjectSettings::class))
+            override fun getLinkedExternalProjectsSettings(): Set<CargoProjectSettings> {
+                return linkedExternalProjects
+            }
+
+            override fun setLinkedExternalProjectsSettings(set: Set<CargoProjectSettings>) {
+                linkedExternalProjects = set
+            }
+        }
+
         fun getInstance(project: Project): CargoSettings {
             return ServiceManager.getService(project, CargoSettings::class.java)
         }
     }
 }
 
-class CargoSettingsState : AbstractExternalSystemSettings.State<CargoProjectSettings> {
-    private var linkedExternalProjects: Set<CargoProjectSettings> = ContainerUtilRt.newHashSet<CargoProjectSettings>()
 
-    @AbstractCollection(surroundWithTag = false, elementTypes = arrayOf(CargoProjectSettings::class))
-    override fun getLinkedExternalProjectsSettings(): Set<CargoProjectSettings> {
-        return linkedExternalProjects
-    }
-
-    override fun setLinkedExternalProjectsSettings(set: Set<CargoProjectSettings>) {
-        linkedExternalProjects = set
-    }
-}
