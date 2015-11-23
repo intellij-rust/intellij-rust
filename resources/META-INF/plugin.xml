@@ -163,6 +163,9 @@
         <projectImportBuilder implementation="org.rust.cargo.project.CargoProjectImportBuilder"/>
 
         <applicationService serviceImplementation="org.rust.lang.config.RustConfigService" />
+
+        <applicationService serviceImplementation="org.rust.cargo.service.CargoInstallationManager" />
+
         <applicationConfigurable instance="org.rust.lang.config.RustConfigEntry" />
 
     </extensions>

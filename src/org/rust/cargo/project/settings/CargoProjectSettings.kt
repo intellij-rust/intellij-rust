@@ -15,4 +15,31 @@ class CargoProjectSettings : ExternalProjectSettings() {
         copyTo(result)
         return result
     }
+
+    fun setCargoHome(path: String?) {
+        throw NotImplementedError()
+    }
+
+    fun getCargoHome(): String {
+        throw NotImplementedError()
+    }
+
+    fun setDistributionType(type: Companion.Distribution) {
+        throw NotImplementedError()
+    }
+
+    fun getDistributionType(): Companion.Distribution? {
+        throw NotImplementedError()
+    }
+
+    companion object {
+
+        enum class Distribution {
+            /**
+             * Employ local-distribution of the Cargo
+             */
+            LOCAL
+        }
+
+    }
 }

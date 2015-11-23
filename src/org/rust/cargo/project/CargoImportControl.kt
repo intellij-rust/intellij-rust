@@ -1,6 +1,5 @@
 package org.rust.cargo.project
 
-import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectSettingsControl
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl
 import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel
@@ -9,6 +8,7 @@ import com.intellij.openapi.project.ProjectManager
 import org.rust.cargo.project.settings.CargoProjectSettings
 import org.rust.cargo.project.settings.CargoProjectSettingsListener
 import org.rust.cargo.project.settings.CargoSettings
+import org.rust.cargo.project.settings.controls.CargoProjectSettingsControl
 
 class CargoImportControl
     : AbstractImportFromExternalSystemControl<CargoProjectSettings, CargoProjectSettingsListener, CargoSettings>(
@@ -21,20 +21,7 @@ class CargoImportControl
     }
 
     override fun createProjectSettingsControl(settings: CargoProjectSettings): ExternalSystemSettingsControl<CargoProjectSettings> {
-        return object : AbstractExternalProjectSettingsControl<CargoProjectSettings>(settings) {
-            override fun isExtraSettingModified(): Boolean {
-                return false
-            }
-
-            override fun fillExtraControls(paintAwarePanel: PaintAwarePanel, identLevel: Int) {}
-            override fun resetExtraSettings(b: Boolean) {}
-            override fun applyExtraSettings(settings: CargoProjectSettings) {}
-
-            @Throws(ConfigurationException::class)
-            override fun validate(settings: CargoProjectSettings): Boolean {
-                return true
-            }
-        }
+        return CargoProjectSettingsControl(settings)
     }
 
     override fun createSystemSettingsControl(systemSettings: CargoSettings): ExternalSystemSettingsControl<CargoSettings>? {
