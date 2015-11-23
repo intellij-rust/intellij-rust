@@ -7,12 +7,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtilRt
 import com.intellij.util.xmlb.annotations.AbstractCollection
 
-@State(name = "CargoSettings", storages = arrayOf(
-        Storage(file = StoragePathMacros.PROJECT_FILE),
-        Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/cargo.xml", scheme = StorageScheme.DIRECTORY_BASED)))
-class CargoSettings(project: Project) :
-        AbstractExternalSystemSettings<CargoSettings, CargoProjectSettings, CargoProjectSettingsListener>(CargoTopic.INSTANCE, project),
-        PersistentStateComponent<CargoSettingsState> {
+@State( name = "CargoSettings",
+        storages = arrayOf( Storage(file = StoragePathMacros.PROJECT_FILE),
+                            Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/cargo.xml",
+        scheme = StorageScheme.DIRECTORY_BASED)))
+class CargoSettings(project: Project)
+        : AbstractExternalSystemSettings<CargoSettings, CargoProjectSettings, CargoProjectSettingsListener>(
+            CargoTopic.INSTANCE,
+            project)
+        , PersistentStateComponent<CargoSettingsState> {
 
     override fun subscribe(listener: ExternalSystemSettingsListener<CargoProjectSettings>) {
         val adapter = CargoProjectSettingsListenerAdapter(listener)

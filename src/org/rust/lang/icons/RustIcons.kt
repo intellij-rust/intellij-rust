@@ -12,21 +12,24 @@ import javax.swing.Icon
 
 public object RustIcons {
 
-    public val FILE = IconLoader.getIcon("/org/rust/lang/icons/rust.png")
+    public val FILE     = IconLoader.getIcon("/org/rust/lang/icons/rust.png")
     public val FILE_BIG = IconLoader.getIcon("/org/rust/lang/icons/rust@2x.png")
 
-    public val TRAIT = AllIcons.Nodes.Interface
-    public val CLASS = AllIcons.Nodes.Class
-    public val IMPL = AllIcons.Nodes.AbstractClass
-    public val ENUM   = AllIcons.Nodes.Enum
-    public val FIELD   = AllIcons.Nodes.Field
+    public val MODULE   = AllIcons.Nodes.Package
+
+    public val TRAIT    = AllIcons.Nodes.Interface
+    public val CLASS    = AllIcons.Nodes.Class
+    public val IMPL     = AllIcons.Nodes.AbstractClass
+    public val ENUM     = AllIcons.Nodes.Enum
+
+    public val FIELD    = AllIcons.Nodes.Field
     public val FUNCTION = AllIcons.Nodes.Function
     public val METHOD   = AllIcons.Nodes.Method
-    public val ABSTRACT_METHOD   = AllIcons.Nodes.AbstractMethod
-    public val MODULE = AllIcons.Nodes.Package
 
-    public val STATIC_MARK   = AllIcons.Nodes.StaticMark
-    public val TEST_MARK   = AllIcons.Nodes.JunitTestMark
+    public val ABSTRACT_METHOD = AllIcons.Nodes.AbstractMethod
+
+    public val STATIC_MARK  = AllIcons.Nodes.StaticMark
+    public val TEST_MARK    = AllIcons.Nodes.JunitTestMark
 }
 
 fun Icon.addStaticMark(): Icon {
