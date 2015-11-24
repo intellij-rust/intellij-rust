@@ -2,6 +2,7 @@ package org.rust.lang.core.psi.util
 
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.RustModItem
 
@@ -22,11 +23,13 @@ private val RustModItem.isCrateRoot: Boolean
     get() = containingMod == null &&
         (containingFile.name == "main.rs" || containingFile.name == "lib.rs")
 
-private val RustModItem.ownsDirectory: Boolean
+val RustModItem.ownsDirectory: Boolean
     get() = containingMod != null || // any inline nested module owns a directory
         containingFile.name == MOD_RS ||
         isCrateRoot
 
+val RustModItem.modDecls: Collection<RustModDeclItem>
+    get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
 
 sealed class ChildModFile {
     val mod: RustModItem?

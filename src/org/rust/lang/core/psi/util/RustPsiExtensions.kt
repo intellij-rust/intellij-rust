@@ -10,8 +10,8 @@ import org.rust.lang.core.psi.*
 // Extension points
 //
 
-inline fun <reified T : PsiElement> PsiElement.parentOfType(): T? {
-    var current = parent
+inline fun <reified T : PsiElement> PsiElement.parentOfType(strict: Boolean = true): T? {
+    var current = if (strict) parent else this
     while (current != null) {
         when (current) {
             is T -> return current

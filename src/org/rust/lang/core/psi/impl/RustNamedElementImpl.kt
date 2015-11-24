@@ -19,7 +19,7 @@ public abstract class RustNamedElementImpl(node: ASTNode)   : RustCompositeEleme
         throw UnsupportedOperationException();
     }
 
-    override fun getNavigationElement() = getNameElement()
+    override fun getNavigationElement(): PsiElement = getNameElement() ?: this
 
     override fun getTextOffset(): Int = getNameElement()?.textOffset ?: super.getTextOffset()
 }
