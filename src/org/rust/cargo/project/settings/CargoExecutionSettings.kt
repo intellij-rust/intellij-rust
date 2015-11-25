@@ -19,8 +19,9 @@ class CargoExecutionSettings(var cargoExecutable: String, var features: List<Str
 
     override fun hashCode(): Int{
         var result = super.hashCode()
-        result += 31 * result + cargoExecutable.hashCode()
-        result += 31 * result + features.hashCode()
+            result += 31 * result + cargoExecutable.hashCode()
+            result += 31 * result + features.hashCode()
+
         return result
     }
 }

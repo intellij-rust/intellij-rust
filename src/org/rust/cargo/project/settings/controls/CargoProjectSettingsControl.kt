@@ -8,7 +8,11 @@ import org.rust.cargo.project.settings.CargoProjectSettings
 import org.rust.cargo.project.settings.controls.builders.CargoProjectSettingsControlBuilder
 import org.rust.cargo.project.settings.controls.builders.CargoProjectSettingsControlBuilderImpl
 
-class CargoProjectSettingsControl(private val myBuilder: CargoProjectSettingsControlBuilder) : AbstractExternalProjectSettingsControl<CargoProjectSettings>(null, myBuilder.getInitialSettings(), myBuilder.getExternalSystemSettingsControlCustomizer()) {
+class CargoProjectSettingsControl(private val myBuilder: CargoProjectSettingsControlBuilder)
+    : AbstractExternalProjectSettingsControl<CargoProjectSettings>(
+        null,
+        myBuilder.getInitialSettings(),
+        myBuilder.getExternalSystemSettingsControlCustomizer()) {
 
     constructor(initialSettings: CargoProjectSettings) : this(CargoProjectSettingsControlBuilderImpl(initialSettings)) {
     }

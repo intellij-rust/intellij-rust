@@ -129,9 +129,9 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
 
                 if (local) {
                     if (pathField.text.isEmpty()) {
-                        tryFindCargoHome()
+                        tryDetectCargoHome()
                     } else {
-                        if (installationManager.isCargoSDK(pathField.text)) {
+                        if (installationManager.containsCargoBinary(pathField.text)) {
                             cargoHomeSettingType = LocationSettingType.EXPLICIT_CORRECT
                         } else {
                             cargoHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT
@@ -204,7 +204,7 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
                     if (StringUtil.isEmpty(cargoHomePath)) {
                         cargoHomeSettingType = LocationSettingType.UNKNOWN
                         throw ConfigurationException("Cargo binary location is not specified!")
-                    } else if (!installationManager.isCargoSDK(cargoHomePath)) {
+                    } else if (!installationManager.containsCargoBinary(cargoHomePath)) {
                         cargoHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT
                         showBalloon(MessageType.ERROR, cargoHomeSettingType)
                         throw ConfigurationException("Cargo binary not found at: {0}!", cargoHomePath)
@@ -250,10 +250,10 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
 
         if (StringUtil.isEmpty(cargoHome)) {
             cargoHomeSettingType = LocationSettingType.UNKNOWN
-            tryFindCargoHome()
+            tryDetectCargoHome()
         } else {
             cargoHomeSettingType =
-                if (installationManager.isCargoSDK(cargoHome))
+                if (installationManager.containsCargoBinary(cargoHome))
                     LocationSettingType.EXPLICIT_CORRECT
                 else
                     LocationSettingType.EXPLICIT_INCORRECT
@@ -273,8 +273,8 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
     private fun showBalloon() {
         @Suppress("NON_EXHAUSTIVE_WHEN")
         when (cargoHomeSettingType) {
-            LocationSettingType.DEDUCED                                         -> showBalloon(MessageType.INFO, cargoHomeSettingType)
             LocationSettingType.EXPLICIT_INCORRECT, LocationSettingType.UNKNOWN -> showBalloon(MessageType.ERROR, cargoHomeSettingType)
+            LocationSettingType.DEDUCED                                         -> showBalloon(MessageType.INFO, cargoHomeSettingType)
         }
     }
 
@@ -286,7 +286,7 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
         return myInitialSettings
     }
 
-    private fun tryFindCargoHome() {
+    private fun tryDetectCargoHome() {
         cargoHomePathField?.let { pathField ->
             val cargoHome = installationManager.tryFindCargoHome()
             if (cargoHome == null) {
@@ -306,16 +306,18 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
     override fun isModified(): Boolean {
         val distributionType = myInitialSettings.distributionType
 
-        if (useLocalDistributionButton != null && useLocalDistributionButton!!.isSelected && distributionType !== CargoProjectSettings.Companion.Distribution.LOCAL) {
-            return true
+        useLocalDistributionButton?.let { button ->
+            if (button.isSelected && distributionType !== CargoProjectSettings.Companion.Distribution.LOCAL)
+                return true
         }
 
-        if (cargoHomePathField == null) return false
-        val cargoHome = FileUtil.toCanonicalPath(cargoHomePathField!!.text)
-        if (StringUtil.isEmpty(cargoHome)) {
-            return !StringUtil.isEmpty(myInitialSettings.cargoHome)
-        } else {
-            return cargoHome != myInitialSettings.cargoHome
-        }
+        return cargoHomePathField?.let { pathField ->
+            val cargoHome = FileUtil.toCanonicalPath(pathField.text)
+            if (StringUtil.isEmpty(cargoHome)) {
+                !StringUtil.isEmpty(myInitialSettings.cargoHome)
+            } else {
+                cargoHome != myInitialSettings.cargoHome
+            }
+        } ?: false;
     }
 }
