@@ -32,7 +32,7 @@ sealed class ChildModFile {
     val mod: RustModItem?
         get() = (this as? Found)?.file?.firstChild as? RustModItem
 
-    class NotFound : ChildModFile()
+    class NotFound(val suggestedName: String? = null) : ChildModFile()
     class Found(val file: PsiFile) : ChildModFile()
     class Ambiguous(val paths: Collection<PsiFile>) : ChildModFile()
 }
@@ -47,15 +47,19 @@ val RustModDeclItem.moduleFile: ChildModFile
 
         val dir = parent.modDir
         val dirMod = dir?.findSubdirectory(name)?.findFile(MOD_RS)
-        val fileMod = dir?.findFile("$name.rs")
+        val fileName = "$name.rs"
+        val fileMod = dir?.findFile(fileName)
 
         val variants = listOf(fileMod, dirMod).filterNotNull()
 
-        when (variants.size) {
-            0 -> return ChildModFile.NotFound()
-            2 -> return ChildModFile.Ambiguous(variants)
+        return when (variants.size) {
+            0    -> ChildModFile.NotFound(fileName)
+            1    -> ChildModFile.Found(variants.single())
+            else -> ChildModFile.Ambiguous(variants)
         }
-
-        return ChildModFile.Found(variants.single())
     }
 
+fun RustModDeclItem.createModuleFile(): PsiFile? {
+    val child = moduleFile as? ChildModFile.NotFound ?: return null
+    return containingMod?.modDir?.createFile(child.suggestedName ?: return null)
+}
