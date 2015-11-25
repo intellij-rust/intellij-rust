@@ -9,7 +9,7 @@ import org.rust.lang.icons.RustIcons
 import org.rust.lang.icons.addVisibilityIcon
 import javax.swing.Icon
 
-abstract  class RustStructItemImplMixin(node: ASTNode): RustItemImpl(node), RustStructItem {
+abstract class RustStructItemImplMixin(node: ASTNode): RustItemImpl(node), RustStructItem {
     override fun getIcon(flags: Int): Icon? {
         if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
             return RustIcons.CLASS;
