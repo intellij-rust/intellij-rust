@@ -25,7 +25,7 @@ class CargoInstallationManager {
         module?.let { m ->
             OrderEnumerator.orderEntries(m).allLibrariesAndSdkClassesRoots
                 .filterNotNull()
-                .find { isCargoSDK(it) }
+                .find { containsCargoBinary(it) }
         }
 
     fun getCargoHome(module: Module?, project: Project?, linkedProjectPath: String): VirtualFile? {
@@ -46,7 +46,7 @@ class CargoInstallationManager {
         when (settings.distributionType) {
             CargoProjectSettings.Companion.Distribution.LOCAL ->
                 settings.cargoHome.let { File(it).let {
-                    return  if (isCargoSDK(it)) it
+                    return  if (containsCargoBinary(it)) it
                             else tryFindCargoHome()
                     }
                 }
@@ -58,7 +58,7 @@ class CargoInstallationManager {
      * and getting from environment var `$CARGO_HOME`
      */
     fun tryFindCargoHome(): File? {
-        return tryFindCargoHomeInPATH() ?: getCargoHomeFromEnvProperty()
+        return tryFindCargoHomeInPATH() ?: tryGetCargoHomeFromEnv()
     }
 
     fun tryFindCargoHomeInPATH(): File? {
@@ -76,7 +76,7 @@ class CargoInstallationManager {
             val target = File(dir, CARGO_BINARY_NAME)
             if (target.isFile) {
                 val candidate = dir.parentFile // $CARGO_HOME/bin
-                if (isCargoSDK(candidate)) {
+                if (containsCargoBinary(candidate)) {
                     myCachedCargoHomeFromPath = Ref(candidate)
                     return candidate
                 }
@@ -86,23 +86,32 @@ class CargoInstallationManager {
         return null
     }
 
-    private fun getCargoHomeFromEnvProperty(): File? =
+    private fun tryGetCargoHomeFromEnv(): File? =
         System.getenv(CARGO_HOME_ENV_PROPERTY_NAME)?.let {
-            val candidate = File(it)
-            if (isCargoSDK(candidate))  candidate
-            else                        null
+            File(it).let {
+                return  if (containsCargoBinary(it)) it
+                        else File(it, "bin").let {
+                                return  if (containsCargoBinary(it)) it
+                                        else                         null
+                            }
+            }
         }
 
-    fun isCargoSDK(cargoHomePath: String): Boolean {
-        return isCargoSDK(File(cargoHomePath))
+    fun isCargoBinary(cargoPath: String): Boolean =
+        File(cargoPath).parentFile?.let {
+            containsCargoBinary(it)
+        } ?: false
+
+    fun containsCargoBinary(cargoHomePath: String): Boolean {
+        return containsCargoBinary(File(cargoHomePath))
     }
 
-    private fun isCargoSDK(file: VirtualFile?): Boolean =
-        file?.let { isCargoSDK(File(it.path)) } ?: false
+    private fun containsCargoBinary(file: VirtualFile?): Boolean =
+        file?.let { containsCargoBinary(File(it.path)) } ?: false
 
-    private fun isCargoSDK(path: File?): Boolean =
+    private fun containsCargoBinary(path: File?): Boolean =
         path?.let {
-            val bin = File(path, "/bin/${Platform.getCanonicalNativeExecutableName(CARGO_BINARY_NAME)}")
+            val bin = File(path, Platform.getCanonicalNativeExecutableName(CARGO_BINARY_NAME))
             return !bin.isDirectory && bin.canExecute()
         } ?: false
 
