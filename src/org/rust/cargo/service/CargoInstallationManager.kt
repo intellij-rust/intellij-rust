@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.NonNls
 import org.rust.cargo.project.settings.CargoProjectSettings
 import org.rust.cargo.project.settings.CargoSettings
+import org.rust.cargo.util.Platform
 
 import java.io.File
 
@@ -35,16 +36,16 @@ class CargoInstallationManager {
     private fun getCargoHomeInternal(project: Project?, linkedProjectPath: String): File? =
         project?.let { p ->
             val settings = CargoSettings.getInstance(p).getLinkedProjectSettings(linkedProjectPath)
-            if (settings == null || settings.getDistributionType() == null)
+            if (settings == null || settings.distributionType == null)
                 return null
 
             return getCargoHomeFromInternal(settings)
         }
 
     private fun getCargoHomeFromInternal(settings: CargoProjectSettings): File? =
-        when (settings.getDistributionType()) {
+        when (settings.distributionType) {
             CargoProjectSettings.Companion.Distribution.LOCAL ->
-                settings.getCargoHome().let { File(it).let {
+                settings.cargoHome.let { File(it).let {
                     return  if (isCargoSDK(it)) it
                             else tryFindCargoHome()
                     }
@@ -101,7 +102,7 @@ class CargoInstallationManager {
 
     private fun isCargoSDK(path: File?): Boolean =
         path?.let {
-            val bin = File(path, CARGO_BINARY_NAME)
+            val bin = File(path, "/bin/${Platform.getCanonicalNativeExecutableName(CARGO_BINARY_NAME)}")
             return !bin.isDirectory && bin.canExecute()
         } ?: false
 

@@ -16,21 +16,8 @@ class CargoProjectSettings : ExternalProjectSettings() {
         return result
     }
 
-    fun setCargoHome(path: String?) {
-        throw NotImplementedError()
-    }
-
-    fun getCargoHome(): String {
-        throw NotImplementedError()
-    }
-
-    fun setDistributionType(type: Companion.Distribution) {
-        throw NotImplementedError()
-    }
-
-    fun getDistributionType(): Companion.Distribution? {
-        throw NotImplementedError()
-    }
+    var cargoHome: String? = null
+    var distributionType: Companion.Distribution? = null
 
     companion object {
 

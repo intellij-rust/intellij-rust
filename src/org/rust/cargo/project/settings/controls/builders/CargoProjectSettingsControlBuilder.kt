@@ -22,7 +22,7 @@ interface CargoProjectSettingsControlBuilder {
     /**
      * Add Gradle home components to the panel
      */
-    fun addGradleHomeComponents(content: PaintAwarePanel, indentLevel: Int): CargoProjectSettingsControlBuilder
+    fun addCargoHomeComponents(content: PaintAwarePanel, indentLevel: Int): CargoProjectSettingsControlBuilder
 
     /**
      * Add Gradle distribution chooser component to the panel
