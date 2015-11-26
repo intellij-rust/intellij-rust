@@ -21,14 +21,12 @@ object Platform {
     private fun detectOperatingSystem(): OS {
         val name = System.getProperty(OS_NAME_PROPERTY_PATH).toLowerCase()
 
-        if (name.contains("windows"))
-            return OS.Windows
-        else if (name.contains("mac"))
-            return OS.Mac
-        else if (name.contains("linux"))
-            return OS.Linux
-        else
-            return OS.Other
+        return when {
+            name.contains("windows") -> OS.Windows
+            name.contains("mac")     -> OS.Mac
+            name.contains("linux")   -> OS.Linux
+            else                     -> OS.Other
+        }
     }
 
 }
