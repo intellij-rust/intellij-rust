@@ -23,6 +23,8 @@ import org.rust.cargo.Cargo
 import org.rust.cargo.project.model.CargoProjectInfo
 import org.rust.cargo.project.settings.CargoExecutionSettings
 import org.rust.cargo.service.CargoInstallationManager
+import org.rust.cargo.util.Platform
+import org.rust.lang.RustSdkType
 import org.rust.lang.module.RustModuleType
 import java.io.File
 import java.util.*
@@ -40,13 +42,11 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
 
         val data: CargoProjectInfo
         try {
-            val cargoInstallationManager = ServiceManager.getService(CargoInstallationManager::class.java)
-
             val processOut =
-                cargoInstallationManager.runExecutableWith(
+                Platform.runExecutableWith(
                     settings!!.cargoExecutable,
                     arrayListOf(
-                        "metadata",
+                        RustSdkType.CARGO_METADATA_SUBCOMMAND,
                         "--output-format",  "json",
                         "--manifest-path",  File(projectPath, Cargo.BUILD_FILE).absolutePath,
                         "--features",       StringUtils.join(settings.features, ",")

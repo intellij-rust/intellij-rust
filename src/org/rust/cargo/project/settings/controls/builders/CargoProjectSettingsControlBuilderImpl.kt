@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.util.PaintAwarePanel
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -20,6 +21,7 @@ import com.intellij.util.Consumer
 import org.rust.cargo.Cargo
 import org.rust.cargo.project.settings.CargoProjectSettings
 import org.rust.cargo.service.CargoInstallationManager
+import org.rust.lang.RustSdkType
 import java.awt.event.ActionListener
 import java.beans.PropertyChangeListener
 import javax.swing.ButtonGroup
@@ -30,8 +32,7 @@ import javax.swing.event.DocumentListener
 
 class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: CargoProjectSettings) : CargoProjectSettingsControlBuilder {
 
-    private val installationManager: CargoInstallationManager =
-        ServiceManager.getService(CargoInstallationManager::class.java)
+    private val sdk: RustSdkType = SdkType.findInstance(RustSdkType::class.java)
 
     private var cargoHomeSettingType = LocationSettingType.UNKNOWN
 
@@ -129,9 +130,9 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
 
                 if (local) {
                     if (pathField.text.isEmpty()) {
-                        tryDetectCargoHome()
+                        tryFindCargoHome()
                     } else {
-                        if (installationManager.containsCargoBinary(pathField.text)) {
+                        if (isValidSDKHome(pathField.text)) {
                             cargoHomeSettingType = LocationSettingType.EXPLICIT_CORRECT
                         } else {
                             cargoHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT
@@ -200,18 +201,20 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
             val cargoHomePath = FileUtil.toCanonicalPath(pathField.text)
 
             useLocalDistributionButton?.let { button ->
+                val installationManager = ServiceManager.getService(CargoInstallationManager::class.java)
+
                 if (button.isSelected) {
                     if (StringUtil.isEmpty(cargoHomePath)) {
                         cargoHomeSettingType = LocationSettingType.UNKNOWN
                         throw ConfigurationException("Cargo binary location is not specified!")
-                    } else if (!installationManager.containsCargoBinary(cargoHomePath)) {
+                    } else if (!isValidSDKHome(cargoHomePath)) {
                         cargoHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT
                         showBalloon(MessageType.ERROR, cargoHomeSettingType)
                         throw ConfigurationException("Cargo binary not found at: {0}!", cargoHomePath)
                     } else if (!installationManager.hasCargoMetadata(cargoHomePath)) {
                         cargoHomeSettingType = LocationSettingType.EXPLICIT_CORRECT
                         throw ConfigurationException(   "Cargo lacks 'metadata' subcommand necessary to properly import project.\n" +
-                                                        "Please, install it with `cargo install metadata` to proceed!")
+                                                        "Please, install it with 'cargo install metadata' to proceed!")
                     }
                 }
             }
@@ -254,10 +257,10 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
 
         if (StringUtil.isEmpty(cargoHome)) {
             cargoHomeSettingType = LocationSettingType.UNKNOWN
-            tryDetectCargoHome()
+            tryFindCargoHome()
         } else {
             cargoHomeSettingType =
-                if (installationManager.containsCargoBinary(cargoHome))
+                if (isValidSDKHome(cargoHome))
                     LocationSettingType.EXPLICIT_CORRECT
                 else
                     LocationSettingType.EXPLICIT_INCORRECT
@@ -290,9 +293,12 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
         return myInitialSettings
     }
 
-    private fun tryDetectCargoHome() {
+    private fun isValidSDKHome(sdkHome: String): Boolean =
+        sdk.isValidSdkHome(sdkHome) || sdk.adjustSelectedSdkHome(sdkHome)?.let { sdk.isValidSdkHome(it) } ?: false
+
+    private fun tryFindCargoHome() {
         cargoHomePathField?.let { pathField ->
-            val cargoHome = installationManager.tryFindCargoHome()
+            val cargoHome = sdk.suggestHomePath()
             if (cargoHome == null) {
                 showBalloon(MessageType.WARNING, LocationSettingType.UNKNOWN)
                 return
@@ -302,7 +308,7 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
 
             showBalloon(MessageType.INFO, LocationSettingType.DEDUCED)
 
-            pathField.text                  = cargoHome.path
+            pathField.text                  = cargoHome
             pathField.textField.foreground  = LocationSettingType.DEDUCED.color
         }
     }

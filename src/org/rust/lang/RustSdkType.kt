@@ -4,13 +4,11 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
-import com.intellij.openapi.projectRoots.SdkAdditionalData
-import com.intellij.openapi.projectRoots.SdkModel
-import com.intellij.openapi.projectRoots.SdkModificator
-import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import org.jdom.Element
+import org.rust.cargo.util.Platform
 import org.rust.lang.icons.RustIcons
 import java.io.File
 import java.util.concurrent.ExecutionException
@@ -25,129 +23,162 @@ class RustSdkType : SdkType("Rust SDK") {
 
     override fun suggestHomePath(): String? {
         if (SystemInfo.isUnix) {
-            val multiRust = File(FileUtil.expandUserHome("~/.multirust/toolchains"))
-            if (multiRust.exists()) {
-                return multiRust.absolutePath
-            }
+            // Check whether there is multi-rust installation
+            val multi = File(FileUtil.expandUserHome("~/.multirust/toolchains"))
+            if (multi.exists())
+                return multi.absolutePath
 
+            // Check Homebrew's cellar for the rust binaries
+            // pre-installed
             if (SystemInfo.isMac) {
-                val homebrew = File("/usr/local/Cellar/rust")
-                if (homebrew.exists()) {
-                    return homebrew.absolutePath
+                val cellar = File("/usr/local/Cellar/rust")
+                if (isValidSdkHome(cellar)) {
+                    return cellar.absolutePath
                 }
             }
 
-            val local = File("/usr/local/bin/rustc")
-            if (local.exists()) {
-                return local.parentFile.absolutePath
+            // Fallback to the local typical option of `make install`
+            val local = File("/usr/local/")
+            if (isValidSdkHome(local)) {
+                return local.absolutePath
             }
-
         } else if (SystemInfo.isWindows) {
             val programFiles = File(System.getenv("ProgramFiles"))
             if (!programFiles.exists() || !programFiles.isDirectory)
                 return null
 
-            return programFiles
-                .listFiles { file: File -> file.isDirectory }
-                ?.filter { file -> file.nameWithoutExtension.startsWith("Rust") }
-                ?.firstOrNull()
-                ?.absolutePath
+            return programFiles  .listFiles     { file -> file.isDirectory }
+                                ?.filter        { path -> path.nameWithoutExtension.toLowerCase().startsWith("rust") && isValidSdkHome(path) }
+                                ?.firstOrNull()
+                                ?.absolutePath
+        }
+
+        return tryFindSDKHomeInPATH() ?: tryGetSDKHomeFromEnv()
+    }
+
+    private fun tryFindSDKHomeInPATH(): String? {
+        val PATH = System.getenv("PATH") ?: return null
+
+        for (path in PATH.split(File.pathSeparator.toRegex()).dropLastWhile { it.isEmpty() }) {
+            val dir = File(path)
+            if (!dir.isDirectory)
+                continue
+
+            val candidate = dir.parentFile // $RUST_HOME/bin
+            if (isValidSdkHome(candidate)) {
+                return candidate.absolutePath
+            }
         }
 
         return null
     }
 
+    private fun tryGetSDKHomeFromEnv(): String? =
+        (System.getenv(RustSdkType.RUST_HOME_ENV_PROPERTY_NAME) ?: System.getenv(RustSdkType.CARGO_HOME_ENV_PROPERTY_NAME))
+            ?.let {
+                if (isValidSdkHome(it)) it else null
+            }
+
     override fun isValidSdkHome(path: String): Boolean {
-        val rustc = getSdkExecutable(path, "rustc")
-        val cargo = getSdkExecutable(path, "cargo")
-        return rustc.canExecute() && cargo.canExecute()
+        return isValidSdkHome(File(path))
+    }
+
+    private fun isValidSdkHome(path: File): Boolean {
+        return getPathToExecInSDK(path, RUSTC_BINARY_NAME).canExecute()
+            && getPathToExecInSDK(path, CARGO_BINARY_NAME).canExecute()
     }
 
     override fun adjustSelectedSdkHome(homePath: String?): String? {
         val file = File(homePath)
         return when (file.nameWithoutExtension) {
-            "bin" -> file.parentFile.absolutePath
-            else  -> super.adjustSelectedSdkHome(homePath)
+            BIN_DIR -> file.parentFile.absolutePath
+            else    -> super.adjustSelectedSdkHome(homePath)
         }
-    }
-
-    private fun getSdkExecutable(sdkHome: String, command: String): File {
-        return File(File(sdkHome, "bin"), getExecutableFileName(command))
-    }
-
-    private fun getSdkLibrary(sdkHome: String): File {
-        return File(sdkHome, "lib")
-    }
-
-    private fun isMultiRust(sdkHome: String): Boolean = ".multirust" in sdkHome
-
-    private fun getExecutableFileName(executableName: String): String {
-        return if (SystemInfo.isWindows) "$executableName.exe" else executableName
     }
 
     override fun suggestSdkName(currentSdkName: String?, sdkHome: String) =
-            getVersionString(sdkHome)?.let { "Rust $it" }
-                    ?: "Unknown Rust version at $sdkHome"
+        getVersionString(sdkHome)?.let { "Rust $it" } ?: "Rust"
 
     override fun getHomeChooserDescriptor(): FileChooserDescriptor? {
-        val suggestHomePath = suggestHomePath()
+        val suggested = suggestHomePath()
         return super.getHomeChooserDescriptor()
-            .withShowHiddenFiles(suggestHomePath != null && isMultiRust(suggestHomePath))
+                    .withShowHiddenFiles(suggested != null && isMultiRust(suggested))
     }
 
     override fun getVersionString(sdkHome: String): String? {
-        val rustc = getSdkExecutable(sdkHome, "rustc")
-        if (!rustc.canExecute()) {
-            val reason = "${rustc.path}${if (rustc.exists()) " is not executable." else " is missing."}"
-            LOG.warn("Can't detect rustc version: $reason")
-            return null
-        }
+        val rustc = getPathToExecInSDK(sdkHome, RUSTC_BINARY_NAME)
 
         try {
-            val cmd = if (isMultiRust(sdkHome)) {
-                val sdkLibraryPath = getSdkLibrary(sdkHome).absolutePath
-                GeneralCommandLine()
-                    .withWorkDirectory(sdkHome)
-                    .withEnvironment(hashMapOf(
-                        "DYLD_LIBRARY_PATH" to sdkLibraryPath,
-                        "LD_LIBRARY_PATH" to sdkLibraryPath
-                    ))
-                    .withExePath(rustc.absolutePath)
-                    .withParameters("-C rpath", "--version")
-            } else {
-                GeneralCommandLine()
-                    .withWorkDirectory(sdkHome)
-                    .withExePath(rustc.absolutePath)
-                    .withParameters("--version")
-            }
+            val cmd =
+                if (isMultiRust(sdkHome)) {
+                    val sdkLibraryPath = getPathToLibDirInSDK(sdkHome).absolutePath
+                    GeneralCommandLine()
+                        .withWorkDirectory(sdkHome)
+                        .withEnvironment(hashMapOf(
+                            "DYLD_LIBRARY_PATH" to sdkLibraryPath,
+                            "LD_LIBRARY_PATH"   to sdkLibraryPath
+                        ))
+                        .withExePath(rustc.absolutePath)
+                        .withParameters("-C rpath", "--version")
+                } else {
+                    GeneralCommandLine()
+                        .withWorkDirectory(sdkHome)
+                        .withExePath(rustc.absolutePath)
+                        .withParameters("--version")
+                }
 
-            val output = CapturingProcessHandler(cmd.createProcess()).runProcess(10 * 1000)
-            if (output.exitCode != 0 || output.isCancelled || output.isTimeout)
+            val procOut = CapturingProcessHandler(cmd.createProcess()).runProcess(10 * 1000)
+            if (procOut.exitCode != 0 || procOut.isCancelled || procOut.isTimeout)
                 return null
 
-            val line = output.stdoutLines.firstOrNull()
-            LOG.debug("rustc --version returned: $line")
+            val line = procOut.stdoutLines.firstOrNull()
 
-            val matcher = RE_VERSION.matcher(line)
-            if (!matcher.matches())
-                return null
+            log.debug("`rustc --version` returned: $line")
 
-            return matcher.group(1)
+            val m = VERSION_PATTERN.matcher(line)
+
+            return if (m.matches()) m.group(1) else null
 
         } catch (e: ExecutionException) {
-            LOG.warn(e);
+            log.warn("Failed to detect `rustc` version!", e);
             return null;
         }
     }
 
-    override fun createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator) = null
-    override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {
-    }
+    override fun createAdditionalDataConfigurable(sdkModel: SdkModel,
+                                                  sdkModificator: SdkModificator): AdditionalDataConfigurable? = null
+
+    override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {}
+
+    fun getPathToBinDirInSDK(sdkHome: File): File   = File(sdkHome, BIN_DIR)
+    fun getPathToBinDirInSDK(sdkHome: String): File = getPathToBinDirInSDK(File(sdkHome))
+
+    fun getPathToLibDirInSDK(sdkHome: File): File   = File(sdkHome, LIB_DIR)
+    fun getPathToLibDirInSDK(sdkHome: String): File = getPathToLibDirInSDK(File(sdkHome))
+
+    fun getPathToExecInSDK(sdkHome: File, fileName: String): File =
+        File(getPathToBinDirInSDK(sdkHome), Platform.getCanonicalNativeExecutableName(fileName))
+
+    fun getPathToExecInSDK(sdkHome: String, fileName: String): File =
+        getPathToExecInSDK(File(sdkHome), fileName)
+
+    private fun isMultiRust(sdkHome: String): Boolean = ".multirust" in sdkHome
 
     companion object {
-        val LOG = Logger.getInstance(RustSdkType::class.java)
-        val RE_VERSION = Pattern.compile("rustc (\\d+\\.\\d+\\.\\d).*")
 
-        fun getInstance() = SdkType.findInstance(RustSdkType::class.java)
+        private val log = Logger.getInstance(RustSdkType::class.java)
+
+        private val VERSION_PATTERN = Pattern.compile("rustc (\\d+\\.\\d+\\.\\d).*")
+
+        internal val CARGO_HOME_ENV_PROPERTY_NAME   = System.getProperty("cargo.home.env",  "CARGO_HOME")
+        internal val RUST_HOME_ENV_PROPERTY_NAME    = System.getProperty("rust.home.env",   "RUST_HOME")
+
+        private val BIN_DIR = "bin"
+        private val LIB_DIR = "lib"
+
+        internal val RUSTC_BINARY_NAME = "rustc"
+        internal val CARGO_BINARY_NAME = "cargo"
+
+        internal val CARGO_METADATA_SUBCOMMAND  = "metadata"
     }
 }
