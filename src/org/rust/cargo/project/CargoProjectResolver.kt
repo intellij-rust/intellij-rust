@@ -26,39 +26,60 @@ import java.io.File
 import java.util.*
 
 class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSettings> {
+
     @Throws(ExternalSystemException::class, IllegalArgumentException::class, IllegalStateException::class)
-    override fun resolveProjectInfo(
-            id: ExternalSystemTaskId,
-            projectPath: String,
-            isPreviewMode: Boolean,
-            settings: CargoExecutionSettings?,
-            listener: ExternalSystemTaskNotificationListener): DataNode<ProjectData>? {
+    override fun resolveProjectInfo(id: ExternalSystemTaskId,
+                                    projectPath: String,
+                                    isPreviewMode: Boolean,
+                                    settings: CargoExecutionSettings?,
+                                    listener: ExternalSystemTaskNotificationListener): DataNode<ProjectData>? {
+
         listener.onStatusChange(ExternalSystemTaskNotificationEvent(id, "Resolving dependencies..."))
+
         val data: CargoProjectInfo
         try {
             val cmd = GeneralCommandLine()
+
             cmd.exePath = settings!!.cargoExecutable
-            cmd.addParameter("metadata")
-            cmd.addParameters("--output-format", "json")
-            cmd.addParameters("--manifest-path", File(projectPath, Cargo.BUILD_FILE).absolutePath)
-            cmd.addParameters("--features", StringUtils.join(settings.features, ","))
+
+            cmd.addParameter    ("metadata")
+            cmd.addParameters   ("--output-format", "json")
+            cmd.addParameters   ("--manifest-path", File(projectPath, Cargo.BUILD_FILE).absolutePath)
+            cmd.addParameters   ("--features", StringUtils.join(settings.features, ","))
+
             val process = cmd.createProcess()
             val handler = CapturingProcessHandler(process)
+
             handler.addProcessListener(
                     object : ProcessAdapter() {
                         override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
-                            if (event.text.startsWith("    Updating") || event.text.startsWith(" Downloading")) {
-                                listener.onStatusChange(ExternalSystemTaskNotificationEvent(id, event.text.trim { it <= ' ' }))
+                            val text = event.text.trim { it <= ' ' }
+                            if (text.startsWith("Updating") || text.startsWith("Downloading")) {
+                                listener.onStatusChange(ExternalSystemTaskNotificationEvent(id, text))
                             } else {
-                                listener.onTaskOutput(id, event.text, outputType === ProcessOutputTypes.STDOUT)
+                                listener.onTaskOutput(id, text, outputType === ProcessOutputTypes.STDOUT)
                             }
                         }
                     })
-            val output = handler.runProcess()
-            if (output.exitCode != 0) {
-                throw ExternalSystemException("Failed to execute cargo: " + output.stderr)
+
+            val po = handler.runProcess()
+            if (po.exitCode != 0) {
+                //
+                // NOTE:
+                //  Since `metadata` isn't made its way into Cargo bundle (yet),
+                //  this particular check verifies whether user has it installed already or not.
+                //  Hopefully based on the following lines
+                //
+                //  https://github.com/rust-lang/cargo/blob/master/src/bin/cargo.rs#L189 (`execute_subcommand`)
+                //
+                throw ExternalSystemException("Failed to execute cargo: " + po.stderr)
             }
-            data = Gson().fromJson(output.stdout.dropWhile { c -> c != '{' }, CargoProjectInfo::class.java)
+
+            data = Gson().fromJson(
+                po.stdout.dropWhile { c -> c != '{' },
+                CargoProjectInfo::class.java
+            )
+
         } catch (e: ExecutionException) {
             throw ExternalSystemException(e)
         }
