@@ -7,6 +7,7 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ExternalSystemException
 import com.intellij.openapi.externalSystem.model.ProjectKeys
@@ -21,6 +22,7 @@ import org.apache.commons.lang.StringUtils
 import org.rust.cargo.Cargo
 import org.rust.cargo.project.model.CargoProjectInfo
 import org.rust.cargo.project.settings.CargoExecutionSettings
+import org.rust.cargo.service.CargoInstallationManager
 import org.rust.lang.module.RustModuleType
 import java.io.File
 import java.util.*
@@ -38,19 +40,17 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
 
         val data: CargoProjectInfo
         try {
-            val cmd = GeneralCommandLine()
+            val cargoInstallationManager = ServiceManager.getService(CargoInstallationManager::class.java)
 
-            cmd.exePath = settings!!.cargoExecutable
-
-            cmd.addParameter    ("metadata")
-            cmd.addParameters   ("--output-format", "json")
-            cmd.addParameters   ("--manifest-path", File(projectPath, Cargo.BUILD_FILE).absolutePath)
-            cmd.addParameters   ("--features", StringUtils.join(settings.features, ","))
-
-            val process = cmd.createProcess()
-            val handler = CapturingProcessHandler(process)
-
-            handler.addProcessListener(
+            val processOut =
+                cargoInstallationManager.runExecutableWith(
+                    settings!!.cargoExecutable,
+                    arrayListOf(
+                        "metadata",
+                        "--output-format",  "json",
+                        "--manifest-path",  File(projectPath, Cargo.BUILD_FILE).absolutePath,
+                        "--features",       StringUtils.join(settings.features, ",")
+                    ),
                     object : ProcessAdapter() {
                         override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
                             val text = event.text.trim { it <= ' ' }
@@ -62,8 +62,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
                         }
                     })
 
-            val po = handler.runProcess()
-            if (po.exitCode != 0) {
+            if (processOut.exitCode != 0) {
                 //
                 // NOTE:
                 //  Since `metadata` isn't made its way into Cargo bundle (yet),
@@ -72,11 +71,11 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
                 //
                 //  https://github.com/rust-lang/cargo/blob/master/src/bin/cargo.rs#L189 (`execute_subcommand`)
                 //
-                throw ExternalSystemException("Failed to execute cargo: " + po.stderr)
+                throw ExternalSystemException("Failed to execute cargo: " + processOut.stderr)
             }
 
             data = Gson().fromJson(
-                po.stdout.dropWhile { c -> c != '{' },
+                processOut.stdout.dropWhile { c -> c != '{' },
                 CargoProjectInfo::class.java
             )
 

@@ -1,5 +1,9 @@
 package org.rust.cargo.service
 
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
@@ -10,7 +14,6 @@ import org.jetbrains.annotations.NonNls
 import org.rust.cargo.project.settings.CargoProjectSettings
 import org.rust.cargo.project.settings.CargoSettings
 import org.rust.cargo.util.Platform
-
 import java.io.File
 
 class CargoInstallationManager {
@@ -96,6 +99,45 @@ class CargoInstallationManager {
                             }
             }
         }
+
+    /**
+     * Runs cargo-executable specified with the given path, supplying it with given parameters
+     * and attaching to the running process the listener supplied
+     *
+     * @return process 'output' object (containing `stderr`/`stdout` streams, exit-code, etc.)
+     */
+    fun runExecutableWith(cargoPath: String, params: List<String>, listener: ProcessListener? = null): ProcessOutput {
+        val cmd = GeneralCommandLine()
+
+        cmd.exePath = cargoPath
+
+        cmd.addParameters(*params.toTypedArray())
+
+        val process = cmd.createProcess()
+        val handler = CapturingProcessHandler(process)
+
+        listener?.let { handler.addProcessListener(it) }
+
+        return handler.runProcess()
+    }
+
+    fun hasCargoMetadata(cargoHomePath: String?): Boolean {
+        val cargoPath = "$cargoHomePath/$CARGO_BINARY_NAME"
+
+        if (!isCargoBinary(cargoPath))
+            return false
+
+        //
+        // NOTE:
+        //  Since `metadata` isn't made its way into Cargo bundle (yet),
+        //  this particular check verifies whether user has it installed already or not.
+        //  Hopefully based on the following lines
+        //
+        //  https://github.com/rust-lang/cargo/blob/master/src/bin/cargo.rs#L189 (`execute_subcommand`)
+        //
+
+        return runExecutableWith(cargoPath, arrayListOf("metadata")).exitCode == 0
+    }
 
     fun isCargoBinary(cargoPath: String): Boolean =
         File(cargoPath).parentFile?.let {
