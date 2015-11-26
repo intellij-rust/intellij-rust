@@ -161,7 +161,9 @@ class CargoInstallationManager {
 
         @NonNls
         private val CARGO_HOME_ENV_PROPERTY_NAME    = System.getProperty("cargo.home.env",  "CARGO_HOME")
-        private val CARGO_BINARY_NAME               = System.getProperty("cargo.name",      "cargo")
+
+        private val CARGO_BINARY_NAME               = "cargo"
+        private val CARGO_METADATA_SUBCOMMAND       = "metadata"
 
     }
 }
