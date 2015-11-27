@@ -127,9 +127,11 @@ public class RustResolveEngine() {
         return ResolveResult.UNRESOLVED
     }
 
+
     private fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Iterable<RustResolveScope> {
-        if (ref.isFullyQualified)
-            return listOf(RustResolveUtil.getGlobalResolveScopeFor(ref))
+        if (ref.isFullyQualified) {
+            return RustResolveUtil.getCrateRootFor(ref)?.let { listOf(it) } ?: emptyList()
+        }
 
         return object: Iterable<RustResolveScope> {
             override fun iterator(): Iterator<RustResolveScope> {

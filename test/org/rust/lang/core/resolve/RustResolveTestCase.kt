@@ -1,12 +1,10 @@
 package org.rust.lang.core.resolve
 
-import com.intellij.psi.PsiElement
-import org.assertj.core.api.Assertions.assertThat
 import org.rust.lang.RustTestCase
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.resolve.ref.RustReference
 
-class RustResolveTestCase : RustTestCase() {
+class RustResolveTestCase : RustResolveTestCaseBase() {
     override fun getTestDataPath() = "testData/org/rust/lang/core/resolve/fixtures"
 
     fun testFunctionArgument() = checkIsBound()
@@ -34,31 +32,4 @@ class RustResolveTestCase : RustTestCase() {
     fun testModBoundary() = checkIsUnbound()
     fun testFollowPath() = checkIsUnbound()
 
-    private fun assertIsValidDeclaration(declaration: PsiElement, usage: RustReference,
-                                         expectedOffset: Int?) {
-
-        assertThat(declaration).isInstanceOf(RustNamedElement::class.java)
-        declaration as RustNamedElement
-
-
-        if (expectedOffset != null) {
-            assertThat(declaration.textOffset).isEqualTo(expectedOffset)
-        } else {
-            assertThat(declaration.name).isEqualTo(usage.element.name)
-        }
-    }
-
-    private fun checkIsBound(atOffset: Int? = null) {
-        val usage = myFixture.getReferenceAtCaretPosition(fileName) as RustReference
-        val declaration = usage.resolve()!!
-
-        assertIsValidDeclaration(declaration, usage, atOffset)
-    }
-
-    private fun checkIsUnbound() {
-        val usage = myFixture.getReferenceAtCaretPosition(fileName) as RustReference
-        val declaration = usage.resolve()
-
-        assertThat(declaration).isNull()
-    }
 }
