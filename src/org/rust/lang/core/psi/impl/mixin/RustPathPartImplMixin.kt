@@ -8,13 +8,13 @@ import org.rust.lang.core.psi.RustQualifiedReferenceElement
 import org.rust.lang.core.psi.RustViewPath
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
 import org.rust.lang.core.resolve.ref.RustReference
-import org.rust.lang.core.resolve.ref.RustReferenceImpl
+import org.rust.lang.core.resolve.ref.RustQualifiedReferenceImpl
 
 abstract class RustPathPartImplMixin(node: ASTNode) : RustNamedElementImpl(node)
                                                     , RustQualifiedReferenceElement
                                                     , RustPathPart {
 
-    override fun getReference(): RustReference = RustReferenceImpl(this)
+    override fun getReference(): RustReference = RustQualifiedReferenceImpl(this)
 
     override fun getNameElement() = identifier
 

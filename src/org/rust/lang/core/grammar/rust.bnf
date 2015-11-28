@@ -143,6 +143,8 @@
 
     mixin       ("struct_decl_field") = "org.rust.lang.core.psi.impl.mixin.RustStructDeclFieldImplMixin"
 
+    mixin       ("mod_decl_item") = "org.rust.lang.core.psi.impl.mixin.RustModDeclItemImplMixin"
+
     //
     // References
     //
