@@ -83,73 +83,100 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
             throw ExternalSystemException(e)
         }
 
-        val projectNode = DataNode(
+        val projectNode =
+            DataNode(
                 ProjectKeys.PROJECT,
                 ProjectData(CargoProjectSystem.ID, data.root.name, projectPath, projectPath),
-                null)
+                null
+            )
+
         val projectRoot = File(projectPath)
-        // TODO properly handle versions
+
+        // TODO(winger, kudinkin): properly handle versions
         val moduleOrLibrary = HashMap<String, DataNode<*>>()
-        for (pkg in data.packages) {
-            val packageRoot = File(pkg.manifest_path).parentFile
-            if (VfsUtil.isAncestor(projectRoot, packageRoot, false)) {
-                // Create module
-                val moduleData = ModuleData(
-                        pkg.name,
+
+        for (p in data.packages) {
+            val packageRoot = File(p.manifest_path).parentFile
+
+            if (VfsUtil.isAncestor(projectRoot, packageRoot, /* strict = */ false)) {
+                // Add as a module
+                val moduleData =
+                    ModuleData(
+                        p.name,
                         CargoProjectSystem.ID,
                         RustModuleType.MODULE_TYPE_ID,
-                        pkg.name,
+                        p.name,
                         packageRoot.absolutePath,
-                        packageRoot.absolutePath)
+                        packageRoot.absolutePath
+                    )
+
                 val moduleNode = projectNode.createChild(ProjectKeys.MODULE, moduleData)
-                moduleOrLibrary.put(pkg.name, moduleNode)
+
+                moduleOrLibrary.put(p.name, moduleNode)
                 addSourceRoot(moduleNode, packageRoot.absolutePath)
             } else {
-                // Create library
-                val libraryData = LibraryData(CargoProjectSystem.ID, pkg.name + " " + pkg.version)
+                // Add as a library
+                val libraryData = LibraryData(CargoProjectSystem.ID, "${p.name} ${p.version}")
+
                 libraryData.addPath(LibraryPathType.BINARY, packageRoot.absolutePath)
                 libraryData.addPath(LibraryPathType.SOURCE, packageRoot.absolutePath)
-                val libraryNode = projectNode.createChild(ProjectKeys.LIBRARY, libraryData)
-                moduleOrLibrary.put(pkg.name, libraryNode)
+
+                moduleOrLibrary.put(
+                    p.name,
+                    projectNode.createChild(ProjectKeys.LIBRARY, libraryData)
+                )
             }
         }
+
+        // TODO(winger, kudinkin): add transitive dependencies too?
+
         // Add dependencies
-        // TODO add transitive dependencies too
         for (pkg in data.packages) {
             val pkgNode = moduleOrLibrary[pkg.name]!!
+
             if (pkgNode.key != ProjectKeys.MODULE) {
                 // Skip dependencies for libraries
                 continue
             }
-            for (dependency in pkg.dependencies) {
-                val dependencyNode = moduleOrLibrary[dependency.name]!!
-                if (dependencyNode.key == ProjectKeys.MODULE) {
+
+            for (dep in pkg.dependencies) {
+                val depNode = moduleOrLibrary[dep.name] ?: continue
+
+                if (depNode.key == ProjectKeys.MODULE) {
                     pkgNode.createChild(
-                            ProjectKeys.MODULE_DEPENDENCY,
-                            ModuleDependencyData(
-                                    pkgNode.data as ModuleData,
-                                    dependencyNode.data as ModuleData))
-                } else if (dependencyNode.key == ProjectKeys.LIBRARY) {
+                        ProjectKeys.MODULE_DEPENDENCY,
+                        ModuleDependencyData(
+                            pkgNode.data as ModuleData,
+                            depNode.data as ModuleData
+                        )
+                    )
+                } else if (depNode.key == ProjectKeys.LIBRARY) {
                     pkgNode.createChild(
-                            ProjectKeys.LIBRARY_DEPENDENCY,
-                            LibraryDependencyData(
-                                    pkgNode.data as ModuleData,
-                                    dependencyNode.data as LibraryData,
-                                    LibraryLevel.PROJECT))
+                        ProjectKeys.LIBRARY_DEPENDENCY,
+                        LibraryDependencyData(
+                                pkgNode.data as ModuleData,
+                                depNode.data as LibraryData,
+                                LibraryLevel.PROJECT
+                        )
+                    )
                 } else {
-                    throw AssertionError("unreachable")
+                    throw AssertionError("Panic! You may not reach this point!")
                 }
             }
         }
+
         return projectNode
     }
 
     private fun addSourceRoot(node: DataNode<ModuleData>, path: String) {
-        node.createChild(ProjectKeys.CONTENT_ROOT, ContentRootData(CargoProjectSystem.ID, path))
+        node.createChild(
+            ProjectKeys.CONTENT_ROOT,
+            ContentRootData(CargoProjectSystem.ID, path)
+        )
     }
 
     override fun cancelTask(taskId: ExternalSystemTaskId, listener: ExternalSystemTaskNotificationListener): Boolean {
-        //TODO proper cancellation
+        // TODO(kudinkin): cancel properly
         return false
     }
 }
