@@ -10,7 +10,7 @@ is highly *unstable* just yet.
 ## Installation
 
 We intentionally do not provide a download for the plugin just yet. If you are
-brave enough and want to use the plugin, you have to build it from source. Note that it will download all build dependencies, so make sure you have enough space (one GB should be enough). 
+brave enough and want to use the plugin, you have to build it from source. Note that it will download all build dependencies, so make sure you have enough space (one GB should be enough). IDEA 15 is required. 
 
 Building:
 
