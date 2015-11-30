@@ -1032,7 +1032,7 @@ inner_attrs_and_block ::= LBRACE inner_attrs? stmt_* restricted_expr? RBRACE {
 }
 
 
-expr_stmt   ::= restricted_expr SEMICOLON | block_expr
+expr_stmt   ::= restricted_expr SEMICOLON | (block_expr !DOT)
 decl_stmt   ::= item | let_decl
 empty_stmt  ::= SEMICOLON
 

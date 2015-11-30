@@ -47,6 +47,10 @@ fn test() -> u32 {
 
     unsafe { 92 }
 
+    {
+        {92}.to_string()
+    }
+
     // TBA(kudinkin)
 
     return (x = y)  /* return */
