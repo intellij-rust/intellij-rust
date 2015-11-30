@@ -21,4 +21,5 @@ class RustMultiFileResolveTestCase : RustTestCase() {
     fun testNestedChildMod() = doTest("nested_child_mod/main.rs", "nested_child_mod/inner/child.rs")
     fun testGlobalPath() = doTest("global_path/foo.rs", "global_path/bar.rs", "global_path/lib.rs")
     fun testUseViewPath() = doTest("global_path/foo.rs", "global_path/bar.rs", "global_path/lib.rs")
+    fun testModDecl() = doTest("mod_decl/main.rs", "mod_decl/foo.rs")
 }

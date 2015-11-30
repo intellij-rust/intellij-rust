@@ -7,10 +7,9 @@ import org.rust.lang.core.psi.RustQualifiedReferenceElement
 import org.rust.lang.core.resolve.RustResolveEngine
 
 
-internal class RustReferenceImpl<T : RustQualifiedReferenceElement>(element: T,
-                                                                   range: TextRange = element.textRange,
-                                                                   soft: Boolean = false)
-    : PsiReferenceBase<T>(element, range, soft)
+internal class RustQualifiedReferenceImpl<T : RustQualifiedReferenceElement>(element: T,
+                                                                             soft: Boolean = false)
+    : PsiReferenceBase<T>(element, null, soft)
     , RustReference {
 
     override fun resolve(): PsiElement? =
@@ -26,7 +25,7 @@ internal class RustReferenceImpl<T : RustQualifiedReferenceElement>(element: T,
     override fun getCanonicalText(): String =
         element.let { qualRef ->
             var qual = qualRef.getQualifier()
-                            ?.let { qual -> qual.reference?.canonicalText }
+                            ?.let { qual -> qual.reference.canonicalText }
                              .orEmpty()
 
             if (qual.isNotEmpty())
@@ -34,9 +33,6 @@ internal class RustReferenceImpl<T : RustQualifiedReferenceElement>(element: T,
 
             qual + qualRef.name
         }
-
-    protected override fun calculateDefaultRangeInElement(): TextRange? =
-            TextRange.from(0, myElement.textLength)
 
     override fun getRangeInElement(): TextRange? =
         element.getSeparator().let {
