@@ -50,7 +50,6 @@ public object RustResolveUtil {
             return superInFile
         }
 
-        val file = self.containingFile
         val dir = self.containingFile?.containingDirectory ?: return null
         val dirOfParent = if (self.ownsDirectory) dir.parent else dir
         dirOfParent?.files.orEmpty()
@@ -59,9 +58,7 @@ public object RustResolveUtil {
             .filterNotNull()
             .forEach { mod ->
                 for (declaration in mod.modDecls) {
-                    val childFile = declaration.moduleFile as? ChildModFile.Found ?: continue
-
-                    if (childFile.file == file ) {
+                    if (declaration.reference?.resolve() == self) {
                         return mod
                     }
                 }

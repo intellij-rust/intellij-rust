@@ -1,10 +1,8 @@
 package org.rust.lang.core.resolve
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.isBefore
-import org.rust.lang.core.psi.util.moduleFile
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.scope.resolveWith
 import org.rust.lang.core.resolve.util.RustResolveUtil
@@ -17,8 +15,8 @@ public class RustResolveEngine() {
 
         object UNRESOLVED : ResolveResult(null)
 
-        override fun getElement():      PsiElement? = resolved
-        override fun isValidResult():   Boolean     = resolved != null
+        override fun getElement():      RustNamedElement? = resolved
+        override fun isValidResult():   Boolean           = resolved != null
 
     }
 
@@ -87,12 +85,10 @@ public class RustResolveEngine() {
             matched = elem
 
             if (elem is RustModDeclItem) {
-                val submod = elem.moduleFile.mod
-                if (submod != null) {
-                    matched = submod
+                elem.reference?.resolve().let {
+                    matched = it
                 }
             }
-
         }
 
         private fun match(elem: RustNamedElement): Boolean =
@@ -104,17 +100,14 @@ public class RustResolveEngine() {
     fun resolve(ref: RustQualifiedReferenceElement): ResolveResult {
         val qual = ref.getQualifier()
 
-        val scopes = if (qual != null) {
+        if (qual != null) {
             val parent = qual.reference.resolve()
-            when (parent) {
-                is RustResolveScope -> listOf(parent)
-                else -> return ResolveResult.UNRESOLVED
+            return when (parent) {
+                is RustResolveScope -> resolveIn(ResolveScopeVisitor(ref), listOf(parent))
+                else                -> ResolveResult.UNRESOLVED
             }
-        } else {
-            enumerateScopesFor(ref)
         }
-
-        return resolveIn(ResolveScopeVisitor(ref), scopes)
+        return resolveIn(ResolveScopeVisitor(ref), enumerateScopesFor(ref))
     }
 
     private fun resolveIn(v: ResolveScopeVisitor, scopes: Iterable<RustResolveScope>): ResolveResult {
