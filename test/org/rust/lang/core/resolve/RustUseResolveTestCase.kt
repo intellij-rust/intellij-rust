@@ -4,4 +4,7 @@ class RustUseResolveTestCase : RustResolveTestCaseBase() {
     override fun getTestDataPath() = "testData/org/rust/lang/core/resolve/fixtures/use"
 
     fun testViewPath() = checkIsBound()
+    fun testUsePath() = checkIsBound()
+    fun testNoUse() = checkIsUnbound()
+    fun testCycle() = checkIsUnbound()
 }

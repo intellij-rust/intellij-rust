@@ -3,6 +3,7 @@ package org.rust.lang.core.resolve
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.isBefore
+import org.rust.lang.core.psi.util.useDeclarations
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.scope.resolveWith
 import org.rust.lang.core.resolve.util.RustResolveUtil
@@ -29,6 +30,14 @@ public class RustResolveEngine() {
 
         override fun visitModItem(o: RustModItem) {
             seek(o.itemList)
+
+            for (use in o.useDeclarations) {
+                if (shouldStop) {
+                    return
+                }
+
+                processUseDeclaration(use)
+            }
         }
 
         override fun visitForExpr(o: RustForExpr) {
@@ -68,6 +77,18 @@ public class RustResolveEngine() {
             seek(scope.getDeclarations())
         }
 
+        private fun processUseDeclaration(use: RustUseItem) {
+            val path = use.viewPath
+            val item = path.pathPart?.reference?.resolve() ?: return
+            val isPlainPathImport = path.`as` == null && path.mul == null && path.lbrace == null
+            if (isPlainPathImport) {
+                if (match(path.pathPart ?: return)) {
+                    return found(item)
+                }
+            }
+        }
+
+
         private fun seek(elem: RustDeclaringElement) {
             seek(listOf(elem))
         }
@@ -95,6 +116,9 @@ public class RustResolveEngine() {
             ref.getNameElement()?.let { refName ->
                 elem.getNameElement()?.textMatches(refName)
             } ?: false
+
+        private val shouldStop: Boolean
+            get() = matched != null
     }
 
     fun resolve(ref: RustQualifiedReferenceElement): ResolveResult {
