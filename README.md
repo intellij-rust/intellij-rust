@@ -15,7 +15,7 @@ brave enough and want to use the plugin, you have to build it from source. Note 
 Building:
 
 ```
-$ git clone https://github.com/alexeykudinkin/intellij-rust
+$ git clone https://github.com/intellij-rust/intellij-rust
 $ cd intellij-rust
 $ ./gradlew buildPlugin
 ```
@@ -28,10 +28,6 @@ This creates a zip archive in `build/distributions` which you can install with
 
 See the [usage docs](doc/Usage.md).
 
-## FAQ
-
-Here would be a list of the most frequent asked questions: [FAQ](https://github.com/alexeykudinkin/intellij-rust/wiki/FAQ)
- 
 ## Bugs
 
 Current high-volatility state entails no support just yet, so be patient, please, and save your anger until it hits stability milestone (at least)
