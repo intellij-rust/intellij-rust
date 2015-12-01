@@ -7,6 +7,7 @@ import org.rust.lang.core.psi.util.useDeclarations
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.scope.resolveWith
 import org.rust.lang.core.resolve.util.RustResolveUtil
+import java.util.*
 
 public class RustResolveEngine() {
 
@@ -24,7 +25,8 @@ public class RustResolveEngine() {
     //
     // TODO(kudinkin): Replace with just 'name' instance
     //
-    internal class ResolveScopeVisitor(private val ref: RustQualifiedReferenceElement) : RustVisitor() {
+    internal class ResolveScopeVisitor(private val ref: RustQualifiedReferenceElement,
+                                       private val visited: MutableSet<RustUseItem>) : RustVisitor() {
 
         var matched: RustNamedElement? = null
 
@@ -78,11 +80,18 @@ public class RustResolveEngine() {
         }
 
         private fun processUseDeclaration(use: RustUseItem) {
+            if (use in visited) {
+                return
+            }
+            visited += use
+
             val path = use.viewPath
-            val item = path.pathPart?.reference?.resolve() ?: return
+            val pathPart = path.pathPart ?: return
+            val item = RustResolveEngine().resolve(pathPart, visited).element ?: return
+
             val isPlainPathImport = path.`as` == null && path.mul == null && path.lbrace == null
             if (isPlainPathImport) {
-                if (match(path.pathPart ?: return)) {
+                if (match(pathPart)) {
                     return found(item)
                 }
             }
@@ -122,16 +131,20 @@ public class RustResolveEngine() {
     }
 
     fun resolve(ref: RustQualifiedReferenceElement): ResolveResult {
+        return resolve(ref, HashSet())
+    }
+
+    private fun resolve(ref: RustQualifiedReferenceElement, visited: MutableSet<RustUseItem>): ResolveResult {
         val qual = ref.getQualifier()
 
         if (qual != null) {
-            val parent = qual.reference.resolve()
+            val parent = resolve(qual, visited).element
             return when (parent) {
-                is RustResolveScope -> resolveIn(ResolveScopeVisitor(ref), listOf(parent))
+                is RustResolveScope -> resolveIn(ResolveScopeVisitor(ref, visited), listOf(parent))
                 else                -> ResolveResult.UNRESOLVED
             }
         }
-        return resolveIn(ResolveScopeVisitor(ref), enumerateScopesFor(ref))
+        return resolveIn(ResolveScopeVisitor(ref, visited), enumerateScopesFor(ref))
     }
 
     private fun resolveIn(v: ResolveScopeVisitor, scopes: Iterable<RustResolveScope>): ResolveResult {
@@ -147,7 +160,7 @@ public class RustResolveEngine() {
 
     private fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Iterable<RustResolveScope> {
         if (ref.isFullyQualified) {
-            return RustResolveUtil.getCrateRootFor(ref)?.let { listOf(it) } ?: emptyList()
+            return listOfNotNull(RustResolveUtil.getCrateRootFor(ref))
         }
 
         return object: Iterable<RustResolveScope> {
