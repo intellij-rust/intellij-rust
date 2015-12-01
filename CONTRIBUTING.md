@@ -3,7 +3,7 @@
 ## Clone
 
 ```
-git clone --recursive https://github.com/alexeykudinkin/intellij-rust.git
+git clone --recursive https://github.com/intellij-rust/intellij-rust.git
 cd intellij-rust
 ```
 
@@ -42,7 +42,7 @@ sources`, and select `build.gradle` from the root directory of the plugin.
 To contribute to the code of the project check out the the latest version and follow instructions on how to build & run it.
 
 If you feel yourself new to the field or don't know what you should start coping with check out issue-tracker for the 
-[up-for-grab](https://github.com/alexeykudinkin/intellij-rust/labels/up%20for%20grab) tasks as these may be greatest entry points to the project source code.
+[up-for-grab](https://github.com/intellij-rust/intellij-rust/labels/up%20for%20grab) tasks as these may be greatest entry points to the project source code.
 
 If you want to contribute to the project in any of the numerous other ways, first of all consider joining our [Gitter](https://gitter.im/alexeykudinkin/intellij-rust?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) therefore
 being on par with the current development efforts.
