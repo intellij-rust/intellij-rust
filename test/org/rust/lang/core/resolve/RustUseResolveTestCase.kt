@@ -5,6 +5,7 @@ class RustUseResolveTestCase : RustResolveTestCaseBase() {
 
     fun testViewPath() = checkIsBound()
     fun testUsePath() = checkIsBound()
+    fun testChildFromParent() = checkIsBound(atOffset = 117)
     fun testNoUse() = checkIsUnbound()
     fun testCycle() = checkIsUnbound()
 }
