@@ -89,9 +89,10 @@ public class RustResolveEngine() {
             val pathPart = path.pathPart ?: return
             val item = RustResolveEngine().resolve(pathPart, visited).element ?: return
 
-            val isPlainPathImport = path.`as` == null && path.mul == null && path.lbrace == null
+            val isPlainPathImport = path.mul == null && path.lbrace == null
             if (isPlainPathImport) {
-                if (match(pathPart)) {
+                val name = path.rename ?: pathPart
+                if (match(name)) {
                     return found(item)
                 }
             }
