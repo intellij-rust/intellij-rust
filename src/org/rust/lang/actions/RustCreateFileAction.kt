@@ -9,7 +9,7 @@ import org.rust.lang.icons.RustIcons
 
 private val NEW_RUST_FILE = "New Rust File"
 
-class RustCreateFileAction : CreateFileFromTemplateAction(NEW_RUST_FILE, "", RustIcons.FILE)
+class RustCreateFileAction : CreateFileFromTemplateAction(NEW_RUST_FILE, "", RustIcons.RUST)
                            , DumbAware {
 
     override fun getActionName(directory: PsiDirectory?, newName: String?, templateName: String?): String {
@@ -19,6 +19,6 @@ class RustCreateFileAction : CreateFileFromTemplateAction(NEW_RUST_FILE, "", Rus
     override fun buildDialog(project: Project?, directory: PsiDirectory?,
                              builder: CreateFileFromTemplateDialog.Builder) {
         builder.setTitle(NEW_RUST_FILE)
-                .addKind("Empty File", RustIcons.FILE, "Rust File")
+                .addKind("Empty File", RustIcons.RUST, "Rust File")
     }
 }

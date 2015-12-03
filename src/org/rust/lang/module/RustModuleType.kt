@@ -1,5 +1,6 @@
 package org.rust.lang.module
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.ModuleTypeManager
 import org.rust.lang.icons.RustIcons
@@ -8,25 +9,13 @@ import javax.swing.Icon
 
 class RustModuleType : ModuleType<RustModuleBuilder>(RustModuleType.MODULE_TYPE_ID) {
 
-    override fun createModuleBuilder(): RustModuleBuilder {
-        return RustModuleBuilder()
-    }
+    override fun createModuleBuilder(): RustModuleBuilder = RustModuleBuilder()
 
-    override fun getName(): String {
-        return "Rust Module"
-    }
+    override fun getName(): String = "Rust Module"
+    override fun getDescription(): String = "Rust Module"
 
-    override fun getDescription(): String {
-        return "Rust Module"
-    }
-
-    override fun getBigIcon(): Icon {
-        return RustIcons.FILE_BIG
-    }
-
-    override fun getNodeIcon(isOpened: Boolean): Icon {
-        return RustIcons.FILE
-    }
+    override fun getBigIcon(): Icon = RustIcons.RUST
+    override fun getNodeIcon(isOpened: Boolean): Icon = AllIcons.Nodes.Module
 
     companion object {
         val MODULE_TYPE_ID = "RUST_MODULE"

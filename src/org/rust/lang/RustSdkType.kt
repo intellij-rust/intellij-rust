@@ -18,7 +18,7 @@ class RustSdkType : SdkType("Rust SDK") {
 
     override fun getPresentableName() = name
 
-    override fun getIcon() = RustIcons.FILE
+    override fun getIcon() = RustIcons.RUST
     override fun getIconForAddAction() = icon
 
     override fun suggestHomePath(): String? {

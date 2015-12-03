@@ -45,7 +45,7 @@ public class RustColorSettingsPage : ColorSettingsPage {
     }
 
     override fun getDisplayName() = "Rust"
-    override fun getIcon() = RustIcons.FILE
+    override fun getIcon() = RustIcons.RUST
     override fun getAttributeDescriptors() = ATTRS
     override fun getColorDescriptors() = ColorDescriptor.EMPTY_ARRAY
     override fun getHighlighter() = RustHighlighter()

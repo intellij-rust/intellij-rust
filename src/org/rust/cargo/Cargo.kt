@@ -10,7 +10,7 @@ object Cargo {
     val BUILD_FILE  = "Cargo.toml"
     val LOCK_FILE   = "Cargo.lock"
 
-    val ICON by lazy { TomlIcons.CARGO_FILE }
+    val ICON by lazy { TomlIcons.CARGO }
 
     val PROJECT_SYSTEM_ID = ProjectSystemId(ID)
 }

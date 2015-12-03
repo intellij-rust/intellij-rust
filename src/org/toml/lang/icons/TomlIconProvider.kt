@@ -16,8 +16,8 @@ public class TomlIconProvider : IconProvider() {
 
     fun getFileIcon(element: TomlFile): Icon? {
         return when (element.name) {
-            "Cargo.toml" -> TomlIcons.CARGO_FILE
-            "Cargo.lock" -> TomlIcons.CARGO_LOCK_FILE
+            "Cargo.toml" -> TomlIcons.CARGO
+            "Cargo.lock" -> TomlIcons.CARGO_LOCK
             else -> null
         }
     }
