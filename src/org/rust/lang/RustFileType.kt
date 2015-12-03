@@ -13,7 +13,7 @@ object RustFileType : LanguageFileType(RustLanguage) {
 
     override fun getName(): String = "Rust"
 
-    override fun getIcon(): Icon = RustIcons.FILE;
+    override fun getIcon(): Icon = RustIcons.RUST;
 
     override fun getDefaultExtension(): String = DEFAULTS.EXTENSION
 
