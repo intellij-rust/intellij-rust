@@ -29,41 +29,25 @@ class CargoExternalSystemManager : ExternalSystemAutoImportAware,
         return CargoProjectSystem.ID
     }
 
-    override fun getSettingsProvider(): Function<Project, CargoSettings> {
-        return object : Function<Project, CargoSettings> {
-            override fun `fun`(project: Project): CargoSettings {
-                return CargoSettings.getInstance(project)
-            }
+    override fun getSettingsProvider(): Function<Project, CargoSettings> =
+        Function { p -> CargoSettings.getInstance(p) }
+
+    override fun getLocalSettingsProvider(): Function<Project, CargoLocalSettings> =
+        Function { p -> CargoLocalSettings.getInstance(p) }
+
+    override fun getExecutionSettingsProvider(): Function<Pair<Project, String>, CargoExecutionSettings> =
+        Function {
+            pair -> executionSettingsFor(pair.getFirst(), pair.getSecond())
         }
-    }
 
-    override fun getLocalSettingsProvider(): Function<Project, CargoLocalSettings> {
-        return object : Function<Project, CargoLocalSettings> {
-            override fun `fun`(project: Project): CargoLocalSettings {
-                return CargoLocalSettings.getInstance(project)
-            }
-        }
-    }
+    override fun getProjectResolverClass(): Class<out ExternalSystemProjectResolver<CargoExecutionSettings>> =
+        CargoProjectResolver::class.java
 
-    override fun getExecutionSettingsProvider(): Function<Pair<Project, String>, CargoExecutionSettings> {
-        return object : Function<Pair<Project, String>, CargoExecutionSettings> {
-            override fun `fun`(pair: Pair<Project, String>): CargoExecutionSettings {
-                return executionSettingsFor(pair.getFirst(), pair.getSecond())
-            }
-        }
-    }
+    override fun getTaskManagerClass(): Class<out ExternalSystemTaskManager<CargoExecutionSettings>> =
+        CargoTaskManager::class.java
 
-    override fun getProjectResolverClass(): Class<out ExternalSystemProjectResolver<CargoExecutionSettings>> {
-        return CargoProjectResolver::class.java
-    }
-
-    override fun getTaskManagerClass(): Class<out ExternalSystemTaskManager<CargoExecutionSettings>> {
-        return CargoTaskManager::class.java
-    }
-
-    override fun getExternalProjectDescriptor(): FileChooserDescriptor {
-        return CargoOpenProjectDescriptor()
-    }
+    override fun getExternalProjectDescriptor(): FileChooserDescriptor =
+        CargoOpenProjectDescriptor()
 
     private val delegate = CachingExternalSystemAutoImportAware(CargoAutoImport())
 
