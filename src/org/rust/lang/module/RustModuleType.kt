@@ -30,6 +30,8 @@ class RustModuleType : ModuleType<RustModuleBuilder>(RustModuleType.MODULE_TYPE_
 
     companion object {
         val MODULE_TYPE_ID = "RUST_MODULE"
-        val INSTANCE: RustModuleType = ModuleTypeManager.getInstance().findByID(MODULE_TYPE_ID) as RustModuleType
+        val INSTANCE by lazy {
+            ModuleTypeManager.getInstance().findByID(MODULE_TYPE_ID) as RustModuleType
+        }
     }
 }
