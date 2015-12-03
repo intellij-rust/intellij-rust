@@ -24,6 +24,6 @@ class CargoInstallationManager {
         return Platform.runExecutableWith(
             sdk.getPathToExecInSDK(cargoHomePath, RustSdkType.CARGO_BINARY_NAME).absolutePath,
             arrayListOf(RustSdkType.CARGO_METADATA_SUBCOMMAND)
-        ).exitCode == 0
+        ).exitCode != 127
     }
 }
