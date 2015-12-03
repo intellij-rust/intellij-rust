@@ -80,19 +80,19 @@ public class RustResolveEngine() {
         }
 
         private fun processUseDeclaration(use: RustUseItem) {
-            if (use in visited) {
-                return
-            }
-            visited += use
-
             val path = use.viewPath
             val pathPart = path.pathPart ?: return
-            val item = RustResolveEngine().resolve(pathPart, visited).element ?: return
 
             val isPlainPathImport = path.mul == null && path.lbrace == null
             if (isPlainPathImport) {
                 val name = path.rename ?: pathPart
                 if (match(name)) {
+                    if (use in visited) {
+                        return
+                    }
+                    visited += use
+
+                    val item = RustResolveEngine().resolve(pathPart, visited).element  ?: return
                     return found(item)
                 }
             }
