@@ -210,7 +210,7 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
                     } else if (!isValidSDKHome(cargoHomePath)) {
                         cargoHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT
                         showBalloon(MessageType.ERROR, cargoHomeSettingType)
-                        throw ConfigurationException("Cargo binary not found at: {0}!", cargoHomePath)
+                        throw ConfigurationException("Cargo binary not found at: $cargoHomePath!")
                     } else if (!installationManager.hasCargoMetadata(cargoHomePath)) {
                         cargoHomeSettingType = LocationSettingType.EXPLICIT_CORRECT
                         throw ConfigurationException(   "Cargo lacks 'metadata' subcommand necessary to properly import project.\n" +
