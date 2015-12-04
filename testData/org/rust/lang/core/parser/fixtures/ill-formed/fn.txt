@@ -5,7 +5,7 @@ FILE
   PsiWhiteSpace('\n\n')
   PsiComment(<EOL_COMMENT>)('// Trailing decl')
   PsiWhiteSpace('\n')
-  RustCrateItemImpl(CRATE_ITEM)
+  RustAnonModItemImpl(ANON_MOD_ITEM)
     RustFnItemImpl(FN_ITEM)
       PsiElement(fn)('fn')
       PsiWhiteSpace(' ')

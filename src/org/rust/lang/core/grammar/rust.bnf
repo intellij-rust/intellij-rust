@@ -242,7 +242,12 @@
 
 root ::= anon_mod_item
 
-anon_mod_item ::= [ SHEBANG_LINE ] [ inner_attrs ] item * {
+//
+// NOTA BENE
+//  Its marked left just to impede GK from collapsing it in the
+//  case there're no `SHEBANG_LINE` & it starts with `inner_attrs` or `item`
+//
+left anon_mod_item ::= [ SHEBANG_LINE ] [ inner_attrs ] item * {
   extends = mod_item
 }
 
