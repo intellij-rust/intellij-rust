@@ -85,7 +85,7 @@ public class RustResolveEngine() {
 
             val isPlainPathImport = path.mul == null && path.lbrace == null
             if (isPlainPathImport) {
-                val name = path.rename ?: pathPart
+                val name = path.alias ?: pathPart
                 if (match(name)) {
                     if (use in visited) {
                         return

@@ -215,8 +215,8 @@
     implements  ("pat_binding") = ["org.rust.lang.core.psi.RustDeclaringElement" "org.rust.lang.core.psi.RustNamedElement"]
     mixin       ("pat_binding") = "org.rust.lang.core.psi.impl.mixin.RustPatBindingImplMixin"
 
-    implements  ("rename") = "org.rust.lang.core.psi.RustNamedElement"
-    extends     ("rename") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
+    implements  ("alias") = "org.rust.lang.core.psi.RustNamedElement"
+    extends     ("alias") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
 
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
@@ -464,7 +464,7 @@ abi ::= STRING_LITERAL
 
 extern_decl_item ::= EXTERN CRATE crate_name SEMICOLON
 
-private crate_name ::= IDENTIFIER rename?
+private crate_name ::= IDENTIFIER alias?
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -752,11 +752,11 @@ private meta qualified_path ::= LT type [ AS trait_ref ] GT COLONCOLON << param 
 view_path ::= view_path_prefix? COLONCOLON LBRACE [ idents_or_self COMMA? ] RBRACE
             | view_path_prefix  COLONCOLON MUL
             |                                   LBRACE [ idents_or_self COMMA? ] RBRACE
-            | view_path_prefix rename?
+            | view_path_prefix alias?
 
-rename ::= AS IDENTIFIER
+alias ::= AS IDENTIFIER
 
-private idents_or_self ::= (IDENTIFIER | SELF) rename? (COMMA idents_or_self)*
+private idents_or_self ::= (IDENTIFIER | SELF) alias? (COMMA idents_or_self)*
 
 private view_path_prefix ::= view_path_part_leftish view_path_part*
 

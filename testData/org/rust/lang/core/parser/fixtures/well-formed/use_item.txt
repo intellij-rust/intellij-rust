@@ -122,7 +122,7 @@ FILE
           PsiWhiteSpace(' ')
           PsiElement(<IDENTIFIER>)('y')
         PsiWhiteSpace(' ')
-        RustRenameImpl(RENAME)
+        RustAliasImpl(ALIAS)
           PsiElement(as)('as')
           PsiWhiteSpace(' ')
           PsiElement(<IDENTIFIER>)('z')
