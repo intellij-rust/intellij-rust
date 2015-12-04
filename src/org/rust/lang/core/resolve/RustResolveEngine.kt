@@ -123,8 +123,8 @@ public class RustResolveEngine() {
         }
 
         private fun match(elem: RustNamedElement): Boolean =
-            ref.getNameElement()?.let { refName ->
-                elem.getNameElement()?.textMatches(refName)
+            ref.nameElement?.let { refName ->
+                elem.nameElement?.textMatches(refName)
             } ?: false
 
         private val shouldStop: Boolean
@@ -136,7 +136,7 @@ public class RustResolveEngine() {
     }
 
     private fun resolve(ref: RustQualifiedReferenceElement, visited: MutableSet<RustUseItem>): ResolveResult {
-        val qual = ref.getQualifier()
+        val qual = ref.qualifier
 
         if (qual != null) {
             val parent = resolve(qual, visited).element

@@ -3,15 +3,15 @@ package org.rust.lang.core.psi
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.resolve.ref.RustReference
 
-public interface RustQualifiedReferenceElement : RustNamedElement {
+interface RustQualifiedReferenceElement : RustNamedElement {
 
     val isFullyQualified: Boolean
 
-    fun getSeparator(): PsiElement?
+    val separator: PsiElement?
 
-    fun getQualifier(): RustQualifiedReferenceElement?
+    val qualifier: RustQualifiedReferenceElement?
 
-    override fun getNameElement(): PsiElement?
+    override val nameElement: PsiElement?
 
     override fun getReference(): RustReference
 }

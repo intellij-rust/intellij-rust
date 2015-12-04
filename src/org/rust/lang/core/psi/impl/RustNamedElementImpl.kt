@@ -8,18 +8,19 @@ import org.rust.lang.core.psi.RustNamedElement
 public abstract class RustNamedElementImpl(node: ASTNode)   : RustCompositeElementImpl(node)
                                                             , RustNamedElement {
 
-    override fun getNameElement(): PsiElement? =
+    override val nameElement: PsiElement?
+        get() =
         findChildByType(RustTokenElementTypes.IDENTIFIER)
 
     override fun getName(): String? {
-        return getNameElement()?.text
+        return nameElement?.text
     }
 
     override fun setName(name: String): PsiElement? {
         throw UnsupportedOperationException();
     }
 
-    override fun getNavigationElement(): PsiElement = getNameElement() ?: this
+    override fun getNavigationElement(): PsiElement = nameElement ?: this
 
-    override fun getTextOffset(): Int = getNameElement()?.textOffset ?: super.getTextOffset()
+    override fun getTextOffset(): Int = nameElement?.textOffset ?: super.getTextOffset()
 }

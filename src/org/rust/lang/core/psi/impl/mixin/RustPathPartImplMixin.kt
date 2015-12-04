@@ -16,14 +16,14 @@ abstract class RustPathPartImplMixin(node: ASTNode) : RustNamedElementImpl(node)
 
     override fun getReference(): RustReference = RustQualifiedReferenceImpl(this)
 
-    override fun getNameElement() = identifier
+    override val nameElement: PsiElement?
+        get() = identifier
 
-    override fun getSeparator(): PsiElement? = findChildByType(RustTokenElementTypes.COLONCOLON)
+    override val separator: PsiElement?
+        get() = findChildByType(RustTokenElementTypes.COLONCOLON)
 
-    override fun getQualifier(): RustQualifiedReferenceElement? =
-        pathPart?.let {
-            if (it.firstChild != null) it else null
-        }
+    override val qualifier: RustQualifiedReferenceElement?
+        get() = if (pathPart?.firstChild != null) pathPart else null
 
     private val isViewPath: Boolean
         get() {
@@ -59,9 +59,9 @@ abstract class RustPathPartImplMixin(node: ASTNode) : RustNamedElementImpl(node)
      */
     override val isFullyQualified: Boolean
         get() {
-            val qual = getQualifier()
+            val qual = qualifier
             return if (qual == null) {
-                getSeparator() != null || (isViewPath && self == null && `super` == null)
+                separator != null || (isViewPath && self == null && `super` == null)
             } else {
                 qual.isFullyQualified
             }

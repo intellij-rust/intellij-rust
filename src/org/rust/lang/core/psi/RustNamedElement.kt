@@ -8,7 +8,7 @@ public interface RustNamedElement   : RustCompositeElement
                                     , PsiNamedElement
                                     , NavigatablePsiElement {
 
-    fun getNameElement(): PsiElement?
+    val nameElement: PsiElement?
 
 }
 

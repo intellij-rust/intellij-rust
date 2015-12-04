@@ -25,9 +25,8 @@ internal class RustQualifiedReferenceImpl<T : RustQualifiedReferenceElement>(ele
 
     override fun getCanonicalText(): String =
         element.let { qualRef ->
-            var qual = qualRef.getQualifier()
-                            ?.let { qual -> qual.reference.canonicalText }
-                             .orEmpty()
+            var qual = qualRef.qualifier?.reference?.canonicalText
+                              .orEmpty()
 
             if (qual.isNotEmpty())
                 qual += RustTokenElementTypes.COLONCOLON.s;
@@ -36,7 +35,7 @@ internal class RustQualifiedReferenceImpl<T : RustQualifiedReferenceElement>(ele
         }
 
     override fun getRangeInElement(): TextRange? =
-        element.getSeparator().let {
+        element.separator.let {
             sep ->
             when (sep) {
                 null -> TextRange.from(0, element.textLength)
