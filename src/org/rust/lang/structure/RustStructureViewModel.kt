@@ -4,7 +4,7 @@ import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel
 import com.intellij.openapi.editor.Editor
-import org.rust.lang.core.psi.RustCrateItem
+import org.rust.lang.core.psi.RustAnonModItem
 import org.rust.lang.core.psi.RustFnItem
 import org.rust.lang.core.psi.RustImplMethod
 import org.rust.lang.core.psi.RustStructDeclField

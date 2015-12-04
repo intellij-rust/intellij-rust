@@ -157,7 +157,7 @@
     //
 
     implements  ("crate_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    mixin       ("crate_item") = "org.rust.lang.core.psi.impl.mixin.RustCrateItemImplMixin"
+    mixin       ("crate_item") = "org.rust.lang.core.psi.impl.mixin.RustAnonModItemImplMixin"
 
     implements  ("mod_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("mod_item") = "org.rust.lang.core.psi.impl.mixin.RustModItemImplMixin"
@@ -240,9 +240,9 @@
 // Root
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-root ::= crate_item
+root ::= anon_mod_item
 
-crate_item ::= [ SHEBANG_LINE ] [ inner_attrs ] item * {
+anon_mod_item ::= [ SHEBANG_LINE ] [ inner_attrs ] item * {
   extends = mod_item
 }
 
