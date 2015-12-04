@@ -156,8 +156,8 @@
     // Resolve scopes
     //
 
-    implements  ("crate_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    mixin       ("crate_item") = "org.rust.lang.core.psi.impl.mixin.RustAnonModItemImplMixin"
+    implements  ("anon_mod_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("anon_mod_item") = "org.rust.lang.core.psi.impl.mixin.RustAnonModItemImplMixin"
 
     implements  ("mod_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("mod_item") = "org.rust.lang.core.psi.impl.mixin.RustModItemImplMixin"
