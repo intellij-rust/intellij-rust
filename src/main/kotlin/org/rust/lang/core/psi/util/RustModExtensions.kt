@@ -24,10 +24,10 @@ private val RustModItem.isCrateRoot: Boolean
     get() = containingMod == null &&
         (containingFile.name == "main.rs" || containingFile.name == "lib.rs")
 
-val RustModItem.ownsDirectory: Boolean
-    get() = containingMod != null || // any inline nested module owns a directory
-        containingFile.name == MOD_RS ||
-        isCrateRoot
+private val RustModItem.ownsDirectory: Boolean
+    get() =     containingMod != null // any inline nested module owns a directory
+            ||  containingFile.name == MOD_RS
+            ||  isCrateRoot
 
 val RustModItem.modDecls: Collection<RustModDeclItem>
     get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
