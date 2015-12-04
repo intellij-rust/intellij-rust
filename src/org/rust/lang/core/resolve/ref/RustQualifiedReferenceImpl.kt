@@ -14,7 +14,7 @@ internal class RustQualifiedReferenceImpl<T : RustQualifiedReferenceElement>(ele
     , RustReference {
 
     override fun resolve(): RustNamedElement? =
-            RustResolveEngine().resolve(element).element
+            RustResolveEngine.resolve(element).element
 
     override fun getVariants(): Array<out Any> = EMPTY_ARRAY
 

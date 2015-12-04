@@ -9,7 +9,7 @@ import org.rust.lang.core.resolve.scope.resolveWith
 import org.rust.lang.core.resolve.util.RustResolveUtil
 import java.util.*
 
-public class RustResolveEngine() {
+object RustResolveEngine {
 
     open class ResolveResult(elem: RustNamedElement?) : com.intellij.psi.ResolveResult {
 
@@ -92,7 +92,7 @@ public class RustResolveEngine() {
                     }
                     visited += use
 
-                    val item = RustResolveEngine().resolve(pathPart, visited).element  ?: return
+                    val item = RustResolveEngine.resolve(pathPart, visited).element  ?: return
                     return found(item)
                 }
             }
