@@ -1,5 +1,5 @@
 FILE
-  RustCrateItemImpl(CRATE_ITEM)
+  RustAnonModItemImpl(ANON_MOD_ITEM)
     PsiElement(<SHEBANG_LINE>)('#!/she-bang line')
     PsiWhiteSpace('\n')
     PsiComment(<EOL_COMMENT>)('//inner attributes')

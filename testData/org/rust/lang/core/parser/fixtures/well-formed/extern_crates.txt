@@ -1,5 +1,5 @@
 FILE
-  RustCrateItemImpl(CRATE_ITEM)
+  RustAnonModItemImpl(ANON_MOD_ITEM)
     RustExternDeclItemImpl(EXTERN_DECL_ITEM)
       PsiElement(extern)('extern')
       PsiWhiteSpace(' ')

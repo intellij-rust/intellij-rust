@@ -1,5 +1,5 @@
 FILE
-  RustCrateItemImpl(CRATE_ITEM)
+  RustAnonModItemImpl(ANON_MOD_ITEM)
     RustUseItemImpl(USE_ITEM)
       PsiElement(use)('use')
       PsiWhiteSpace(' ')
