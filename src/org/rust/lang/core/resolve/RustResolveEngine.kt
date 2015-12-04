@@ -22,10 +22,7 @@ object RustResolveEngine {
 
     }
 
-    //
-    // TODO(kudinkin): Replace with just 'name' instance
-    //
-    internal class ResolveScopeVisitor(private val ref: RustQualifiedReferenceElement,
+    internal class ResolveScopeVisitor(private val name: RustNamedElement,
                                        private val visited: MutableSet<RustUseItem>) : RustVisitor() {
 
         var matched: RustNamedElement? = null
@@ -64,11 +61,11 @@ object RustResolveEngine {
 
         override fun visitBlock(o: RustBlock) {
             o.getDeclarations()
-                .takeWhile { it.isBefore(ref) }
+                .takeWhile { it.isBefore(name) }
                 .reversed()
                 .forEach { letDecl ->
                     letDecl.getBoundElements().forEach { e ->
-                        if (match(e) && !PsiTreeUtil.isAncestor(letDecl, ref, true)) {
+                        if (match(e) && !PsiTreeUtil.isAncestor(letDecl, name, true)) {
                             return found(e)
                         }
                     }
@@ -123,7 +120,7 @@ object RustResolveEngine {
         }
 
         private fun match(elem: RustNamedElement): Boolean =
-            ref.nameElement?.let { refName ->
+            name.nameElement?.let { refName ->
                 elem.nameElement?.textMatches(refName)
             } ?: false
 
