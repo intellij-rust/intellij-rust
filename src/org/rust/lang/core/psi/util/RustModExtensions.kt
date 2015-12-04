@@ -5,6 +5,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.RustModItem
+import org.rust.lang.core.psi.RustUseItem
 
 
 val MOD_RS = "mod.rs"
@@ -30,6 +31,10 @@ val RustModItem.ownsDirectory: Boolean
 
 val RustModItem.modDecls: Collection<RustModDeclItem>
     get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
+
+val RustModItem.useDeclarations: Collection<RustUseItem>
+    get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustUseItem::class.java)
+
 
 sealed class ChildModFile {
     val mod: RustModItem?

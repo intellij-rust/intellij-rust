@@ -3,9 +3,11 @@ package org.rust.lang.core.resolve
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.isBefore
+import org.rust.lang.core.psi.util.useDeclarations
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.scope.resolveWith
 import org.rust.lang.core.resolve.util.RustResolveUtil
+import java.util.*
 
 public class RustResolveEngine() {
 
@@ -23,12 +25,21 @@ public class RustResolveEngine() {
     //
     // TODO(kudinkin): Replace with just 'name' instance
     //
-    internal class ResolveScopeVisitor(private val ref: RustQualifiedReferenceElement) : RustVisitor() {
+    internal class ResolveScopeVisitor(private val ref: RustQualifiedReferenceElement,
+                                       private val visited: MutableSet<RustUseItem>) : RustVisitor() {
 
         var matched: RustNamedElement? = null
 
         override fun visitModItem(o: RustModItem) {
             seek(o.itemList)
+
+            for (use in o.useDeclarations) {
+                if (shouldStop) {
+                    return
+                }
+
+                processUseDeclaration(use)
+            }
         }
 
         override fun visitForExpr(o: RustForExpr) {
@@ -68,6 +79,26 @@ public class RustResolveEngine() {
             seek(scope.getDeclarations())
         }
 
+        private fun processUseDeclaration(use: RustUseItem) {
+            val path = use.viewPath
+            val pathPart = path.pathPart ?: return
+
+            val isPlainPathImport = path.mul == null && path.lbrace == null
+            if (isPlainPathImport) {
+                val name = path.alias ?: pathPart
+                if (match(name)) {
+                    if (use in visited) {
+                        return
+                    }
+                    visited += use
+
+                    val item = RustResolveEngine().resolve(pathPart, visited).element  ?: return
+                    return found(item)
+                }
+            }
+        }
+
+
         private fun seek(elem: RustDeclaringElement) {
             seek(listOf(elem))
         }
@@ -95,19 +126,26 @@ public class RustResolveEngine() {
             ref.getNameElement()?.let { refName ->
                 elem.getNameElement()?.textMatches(refName)
             } ?: false
+
+        private val shouldStop: Boolean
+            get() = matched != null
     }
 
     fun resolve(ref: RustQualifiedReferenceElement): ResolveResult {
+        return resolve(ref, HashSet())
+    }
+
+    private fun resolve(ref: RustQualifiedReferenceElement, visited: MutableSet<RustUseItem>): ResolveResult {
         val qual = ref.getQualifier()
 
         if (qual != null) {
-            val parent = qual.reference.resolve()
+            val parent = resolve(qual, visited).element
             return when (parent) {
-                is RustResolveScope -> resolveIn(ResolveScopeVisitor(ref), listOf(parent))
+                is RustResolveScope -> resolveIn(ResolveScopeVisitor(ref, visited), listOf(parent))
                 else                -> ResolveResult.UNRESOLVED
             }
         }
-        return resolveIn(ResolveScopeVisitor(ref), enumerateScopesFor(ref))
+        return resolveIn(ResolveScopeVisitor(ref, visited), enumerateScopesFor(ref))
     }
 
     private fun resolveIn(v: ResolveScopeVisitor, scopes: Iterable<RustResolveScope>): ResolveResult {
@@ -123,7 +161,7 @@ public class RustResolveEngine() {
 
     private fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Iterable<RustResolveScope> {
         if (ref.isFullyQualified) {
-            return RustResolveUtil.getCrateRootFor(ref)?.let { listOf(it) } ?: emptyList()
+            return listOfNotNull(RustResolveUtil.getCrateRootFor(ref))
         }
 
         return object: Iterable<RustResolveScope> {
