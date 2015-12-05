@@ -37,33 +37,7 @@ targetCompatibility = javaVersion
 tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 
 sourceSets {
-    main {
-        java {
-            srcDirs = [ 'src', 'gen' ]
-            include '**/*.java'
-        }
-
-        kotlin {
-            srcDirs = [ 'src' ]
-            include '**/*.kt'
-        }
-
-        resources.srcDirs = [ 'resources' ]
-    }
-
-    test {
-        java {
-            srcDirs = [ 'test' ]
-            include '**/*.java'
-        }
-
-        kotlin {
-            srcDirs = [ 'test' ]
-            include '**/*.kt'
-        }
-
-        resources.srcDirs = [ 'testData' ]
-    }
+    main.java.srcDirs += "gen"
 }
 
 test {
@@ -114,14 +88,14 @@ dependencies {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 def jflexArgs(srcFlex, targetDir) {
-    return [    "--skel",   "src/org/rust/lang/core/lexer/RustLexer.skeleton",
+    return [    "--skel",   "src/main/kotlin/org/rust/lang/core/lexer/RustLexer.skeleton",
                 "-d",       targetDir,
                 srcFlex
     ]
 }
 
 task generateRustLexer(type: JavaExec) {
-    ext.src = "src/org/rust/lang/core/lexer/RustLexer.flex"
+    ext.src = "src/main/kotlin/org/rust/lang/core/lexer/RustLexer.flex"
     ext.dst = "gen/org/rust/lang/core/lexer/"
 
     main = "jflex.Main"
@@ -135,7 +109,7 @@ task generateRustLexer(type: JavaExec) {
 }
 
 task generateTomlLexer(type: JavaExec) {
-    ext.src = "src/org/toml/lang/core/lexer/TomlLexer.flex"
+    ext.src = "src/main/kotlin/org/toml/lang/core/lexer/TomlLexer.flex"
     ext.dst = "gen/org/toml/lang/core/lexer/"
 
     main = "jflex.Main"
@@ -149,7 +123,7 @@ task generateTomlLexer(type: JavaExec) {
 }
 
 task generateRustPsiAndParser(type: JavaExec) {
-    ext.src     = "src/org/rust/lang/core/grammar/rust.bnf"
+    ext.src     = "src/main/kotlin/org/rust/lang/core/grammar/rust.bnf"
     ext.dstRoot = "gen"
 
     main = "org.intellij.grammar.Main"
@@ -163,7 +137,7 @@ task generateRustPsiAndParser(type: JavaExec) {
 }
 
 task generateTomlPsiAndParser(type: JavaExec) {
-    ext.src     = "src/org/toml/lang/core/grammar/toml.bnf"
+    ext.src     = "src/main/kotlin/org/toml/lang/core/grammar/toml.bnf"
     ext.dstRoot = "gen"
 
     main = "org.intellij.grammar.Main"
