@@ -2,6 +2,7 @@ package org.rust.lang.core.resolve
 
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.util.containingMod
 import org.rust.lang.core.psi.util.isBefore
 import org.rust.lang.core.psi.util.useDeclarations
 import org.rust.lang.core.resolve.scope.RustResolveScope
@@ -136,13 +137,27 @@ object RustResolveEngine {
         val qual = ref.qualifier
 
         if (qual != null) {
-            val parent = resolve(qual, visited).element
+            val parent = if (qual.isModulePrefix) {
+                resolveModulePrefix(qual)
+            } else {
+                resolve(qual, visited).element
+            }
             return when (parent) {
                 is RustResolveScope -> resolveIn(ResolveScopeVisitor(ref, visited), listOf(parent))
                 else                -> ResolveResult.UNRESOLVED
             }
         }
         return resolveIn(ResolveScopeVisitor(ref, visited), enumerateScopesFor(ref))
+    }
+
+    private fun resolveModulePrefix(ref: RustQualifiedReferenceElement): RustModItem? {
+        return if (ref.isSelf) {
+            RustResolveUtil.getSelfModFor(ref)
+        } else {
+            val qual = ref.qualifier
+            val mod = if (qual != null) resolveModulePrefix(qual) else ref.containingMod
+            RustResolveUtil.getSuperModFor(mod ?: return null)
+        }
     }
 
     private fun resolveIn(v: ResolveScopeVisitor, scopes: Iterable<RustResolveScope>): ResolveResult {
