@@ -10,5 +10,3 @@ mod foo {
         <caret>baz();
     }
 }
-
-fn dummy() {}

@@ -1,2 +1,1 @@
 fn foo() {}
-fn bar() {}
