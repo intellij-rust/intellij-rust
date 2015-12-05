@@ -146,11 +146,6 @@
 
         <annotator language="TOML" implementationClass="org.toml.lang.annotator.TomlAnnotator"/>
 
-        <!-- Icon Provider -->
-
-        <iconProvider implementation="org.toml.lang.icons.TomlIconProvider"/>
-
-
         <!-- Cargo -->
 
         <externalSystemManager implementation="org.rust.cargo.project.CargoExternalSystemManager"/>
@@ -167,6 +162,10 @@
         <applicationService serviceImplementation="org.rust.cargo.service.CargoInstallationManager" />
 
         <applicationConfigurable instance="org.rust.lang.config.RustConfigEntry" />
+
+        <!-- Icon Provider -->
+
+        <iconProvider implementation="org.rust.cargo.icons.CargoIconProvider"/>
 
     </extensions>
 
