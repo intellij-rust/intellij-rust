@@ -1,20 +1,25 @@
 package org.rust.lang.intentions
 
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
-import org.assertj.core.api.Assertions
 import org.rust.lang.RustTestCase
-import java.io.File
 
 class RustIntentionsTest : RustTestCase() {
     override fun getTestDataPath() = "src/test/resources/org/rust/lang/intentions/fixtures/"
 
     fun testExpandModule() {
-        val originalVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(File("$testDataPath/$fileName"))
-        myFixture.configureByFile(fileName)
+        val before = testName + "/before"
+        val after = testName + "/after"
+        val beforeDir = myFixture.copyDirectoryToProject(before, "")
+        myFixture.openFileInEditor(myFixture.findFileInTempDir("foo.rs"))
+
         myFixture.launchAction(ExpandModule())
 
-        Assertions.assertThat(myFixture.file.virtualFile.path).isEqualTo("/src/expand_module/mod.rs")
-        PlatformTestUtil.assertFilesEqual(myFixture.file.virtualFile, originalVirtualFile)
+        val afterDir = getVirtualFileByName(testDataPath + after)
+        PlatformTestUtil.assertDirectoriesEqual(afterDir, beforeDir)
     }
+
+    private fun getVirtualFileByName(path: String): VirtualFile? =
+            LocalFileSystem.getInstance().findFileByPath(path)
 }

@@ -4,9 +4,11 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 abstract class RustTestCase : LightCodeInsightFixtureTestCase() {
 
-
     final protected val fileName: String
-        get() = "${camelToSnake(getTestName(true))}.rs"
+        get() = "$testName.rs"
+
+    final protected val testName: String
+        get() = camelToSnake(getTestName(true))
 
 
     companion object {
