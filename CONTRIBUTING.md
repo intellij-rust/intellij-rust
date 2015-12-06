@@ -19,7 +19,7 @@ To launch the plugin from console just type `./gradlew runIdea`.
 
 ## Development
 
-For development you could use any editor/IDE of your choice. There is no peculiar dependency on IDEA, though we're particularly sticked to it, therefore providing instructions how to nail it from that side. 
+For development you could use any editor/IDE of your choice. There is no peculiar dependency on IDEA, though we're particularly stuck to it, therefore providing instructions how to nail it from that side.
 
 If you're using any other particular stack feel free to contribute to that list.
 
@@ -56,7 +56,7 @@ Please, make sure that all tests pass and Travis reports build as green prior to
 
 Please, consider our [code-style](STYLE.md) prior to submitting the pull request. We love PRs, but much more than just PRs we love PRs that are 'on style'.
 
-For the Java sources we're sticked to the Google's [one](https://google.github.io/styleguide/javaguide.html).
+For the Java sources we're stuck to the Google's [one](https://google.github.io/styleguide/javaguide.html).
 
 
 # Plugin overview
@@ -80,7 +80,7 @@ It's also very inspirational to browse existing plugins. Check out
 # Testing
 
 It is much easier to understand code changes if they are accompanied with
-tests. Test classes are placed in the `test` directory, `testData` holds rust files,
+tests. Test classes are placed in the `src/test/kotlin` directory, `src/test/resources` holds rust files
 which are used as fixtures. We also include
 [CTRS](https://github.com/brson/ctrs) as a submodule and use it to test the
 parser.
@@ -88,3 +88,7 @@ parser.
 The test suite can be run by launching:
 
     ./gradlew test
+
+To execute tests from within IDE edit *default* run configuration for JUnit. In the `befor launch` section remove
+`make` and add gradle task `assemble testClasses`. Now you can select any test function, class or folder and use
+`Ctlr + Shift + f10` to launch specific tests.
