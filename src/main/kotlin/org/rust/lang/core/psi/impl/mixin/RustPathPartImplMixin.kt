@@ -66,4 +66,30 @@ abstract class RustPathPartImplMixin(node: ASTNode) : RustNamedElementImpl(node)
                 qual.isFullyQualified
             }
         }
+
+    /**
+     *  Returns true if this path references ancestor module via `self` and `super` chain.
+     *
+     *  Paths can contain any combination of identifiers and self and super keywords.
+     *  However, a path is "well formed" only if it starts with `(self::)? (super::)*`.
+     *  In other words, in `foo::super::bar` the `super` is meaningless and resolves
+     *  to nothing.
+     *
+     *  This check returns true for `(self::)? (super::)*` part of a path.
+     *
+     *  Reference:
+     *    https://doc.rust-lang.org/reference.html#paths
+     */
+    override val isModulePrefix: Boolean
+        get() {
+            val qual = qualifier
+            return if (qual == null) {
+                separator == null && (self != null || `super` != null)
+            } else {
+                `super` != null && qual.isModulePrefix
+            }
+        }
+
+    override val isSelf: Boolean
+        get() = self != null
 }

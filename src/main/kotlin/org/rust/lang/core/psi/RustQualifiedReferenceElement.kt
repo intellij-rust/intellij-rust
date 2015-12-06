@@ -6,6 +6,8 @@ import org.rust.lang.core.resolve.ref.RustReference
 interface RustQualifiedReferenceElement : RustNamedElement {
 
     val isFullyQualified: Boolean
+    val isModulePrefix: Boolean
+    val isSelf: Boolean
 
     val separator: PsiElement?
 
