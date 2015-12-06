@@ -18,7 +18,8 @@ FILE
         PsiWhiteSpace(' ')
         PsiElement({)('{')
         PsiWhiteSpace(' ')
-        PsiElement(self)('self')
+        RustImportSpecImpl(IMPORT_SPEC)
+          PsiElement(self)('self')
         PsiWhiteSpace(' ')
         PsiElement(})('}')
       PsiErrorElement:';' expected, unexpected end of file

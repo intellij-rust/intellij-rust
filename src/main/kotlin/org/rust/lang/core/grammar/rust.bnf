@@ -218,6 +218,9 @@
     implements  ("alias") = "org.rust.lang.core.psi.RustNamedElement"
     extends     ("alias") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
 
+    implements  ("import_spec") = "org.rust.lang.core.psi.RustNamedElement"
+    extends     ("import_spec") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
+
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
 
@@ -754,10 +757,11 @@ private meta qualified_path ::= LT type [ AS trait_ref ] GT COLONCOLON << param 
 //    ::foo::*
 //    foo::bar as baz
 //
-view_path ::= view_path_prefix? COLONCOLON LBRACE [ idents_or_self COMMA? ] RBRACE
-            | view_path_prefix  COLONCOLON MUL
-            |                                   LBRACE [ idents_or_self COMMA? ] RBRACE
-            | view_path_prefix alias?
+view_path ::= [ view_path_prefix? COLONCOLON ] LBRACE [ <<comma_separated_list import_spec>> ] RBRACE
+            |   view_path_prefix  COLONCOLON MUL
+            |   view_path_prefix  alias?
+
+import_spec ::= (IDENTIFIER | SELF) alias?
 
 alias ::= AS IDENTIFIER
 
