@@ -769,7 +769,7 @@ view_path_part_leftish ::= COLONCOLON? (SELF | SUPER | IDENTIFIER) {
   elementType = path_part
 }
 
-left view_path_part ::= COLONCOLON IDENTIFIER {
+left view_path_part ::= COLONCOLON (SUPER | IDENTIFIER) {
   elementType = path_part
 }
 

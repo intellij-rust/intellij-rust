@@ -1,7 +1,14 @@
 package org.rust.lang.core.parser
 
-class RustCompleteParsingTestCase : RustParsingTestCaseBase("well-formed") {
+import com.intellij.psi.PsiFile
+import org.assertj.core.api.Assertions.assertThat
 
+class RustCompleteParsingTestCase : RustParsingTestCaseBase("well-formed") {
+    override fun checkResult(targetDataName: String?, file: PsiFile?) {
+        assertThat(hasError(file!!)).overridingErrorMessage("Error in well formed file ${file.name}")
+                .isFalse()
+        super.checkResult(targetDataName, file)
+    }
 
     // @formatter:off
     fun testFn()                    { doTest(true) }
@@ -19,5 +26,6 @@ class RustCompleteParsingTestCase : RustParsingTestCaseBase("well-formed") {
     fun testRanges()                { doTest(true) }
     fun testExternCrates()          { doTest(true) }
     fun testExternFns()             { doTest(true) }
+    fun testSuperPaths()            { doTest(true) }
     // @formatter:off
 }
