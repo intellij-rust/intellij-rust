@@ -18,7 +18,7 @@ FILE
         PsiWhiteSpace(' ')
         PsiElement({)('{')
         PsiWhiteSpace(' ')
-        RustImportSpecImpl(IMPORT_SPEC)
+        RustUseGlobImpl(USE_GLOB)
           PsiElement(self)('self')
         PsiWhiteSpace(' ')
         PsiElement(})('}')

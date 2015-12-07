@@ -9,6 +9,10 @@ class RustUseResolveTestCase : RustResolveTestCaseBase() {
     fun testPathRename() = checkIsBound(atOffset = 3)
     fun testDeepRedirection() = checkIsBound(atOffset = 21)
     fun testRelativeChild() = checkIsBound()
+    fun testUseGlobIdent() = checkIsBound()
+    fun testUseGlobSelf() = checkIsBound(atOffset = 42)
+    fun testUseGlobSelfFn() = checkIsBound(atOffset = 3)
+
     fun testNoUse() = checkIsUnbound()
     fun testCycle() = checkIsUnbound()
 }
