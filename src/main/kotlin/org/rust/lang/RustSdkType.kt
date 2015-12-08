@@ -24,9 +24,15 @@ class RustSdkType : SdkType("Rust SDK") {
     override fun suggestHomePath(): String? {
         if (SystemInfo.isUnix) {
             // Check whether there is multi-rust installation
-            val multi = File(FileUtil.expandUserHome("~/.multirust/toolchains"))
-            if (multi.exists())
-                return multi.absolutePath
+            val root = File(FileUtil.expandUserHome("~/.multirust/toolchains"))
+            if (root.exists()) {
+                listOf("stable", "beta", "nightly").forEach {
+                    val multiSub = File(root, it)
+                    if (multiSub.exists()) {
+                        return multiSub.absolutePath
+                    }
+                }
+            }
 
             // Check Homebrew's cellar for the rust binaries
             // pre-installed
