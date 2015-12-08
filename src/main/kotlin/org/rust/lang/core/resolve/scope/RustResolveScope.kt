@@ -9,11 +9,3 @@ public interface RustResolveScope : RustCompositeElement {
     fun getDeclarations(): Collection<RustDeclaringElement>
 }
 
-//
-// Extension points
-//
-
-internal fun RustResolveScope.resolveWith(v: RustResolveEngine.ResolveScopeVisitor): RustNamedElement? {
-    this.accept(v)
-    return v.matched
-}
