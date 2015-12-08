@@ -7,7 +7,6 @@ import org.rust.lang.core.psi.util.isBefore
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.util.useDeclarations
 import org.rust.lang.core.resolve.scope.RustResolveScope
-import org.rust.lang.core.resolve.scope.resolveWith
 import org.rust.lang.core.resolve.util.RustResolveUtil
 import java.util.*
 
@@ -21,19 +20,83 @@ object RustResolveEngine {
 
         override fun getElement():      RustNamedElement? = resolved
         override fun isValidResult():   Boolean           = resolved != null
-
     }
 
-    fun resolve(ref: RustQualifiedReferenceElement): ResolveResult {
-        return resolve(ref, HashSet())
+    fun resolve(ref: RustQualifiedReferenceElement): ResolveResult =
+        Resolver().resolve(ref)
+
+    fun resolveUseGlob(ref: RustUseGlob): ResolveResult =
+        Resolver().resolveUseGlob(ref)
+}
+
+
+private val UNRESOLVED = RustResolveEngine.ResolveResult.UNRESOLVED
+
+
+private class Resolver(private val visitedImports: MutableSet<RustUseItem> = HashSet()) {
+    fun resolve(ref: RustQualifiedReferenceElement): RustResolveEngine.ResolveResult {
+        val qual = ref.qualifier
+
+        if (qual != null) {
+            val parent = if (qual.isModulePrefix) {
+                resolveModulePrefix(qual)
+            } else {
+                resolve(qual).element
+            }
+            return when (parent) {
+                is RustResolveScope -> resolveIn(ResolveScopeVisitor(ref), listOf(parent))
+                else                -> UNRESOLVED
+            }
+        }
+        return resolveIn(ResolveScopeVisitor(ref), enumerateScopesFor(ref))
     }
 
-    fun resolveUseGlob(ref: RustUseGlob): ResolveResult {
-        return resolveUseGlob(ref, HashSet())
+    fun resolveUseGlob(ref: RustUseGlob): RustResolveEngine.ResolveResult {
+        val useItem = ref.parentOfType<RustUseItem>()
+        val basePath = useItem?.let { it.viewPath.pathPart } ?: return UNRESOLVED
+
+        // this is not necessary a module, e.g.
+        //
+        //   ```
+        //   fn foo() {}
+        //
+        //   mod inner {
+        //       use foo::{self};
+        //   }
+        //   ```
+        val baseItem = resolve(basePath).element
+
+        // `use foo::{self}`
+        if (ref.self != null) {
+            return RustResolveEngine.ResolveResult(baseItem)
+        }
+
+        // `use foo::{bar}`
+        val scope = baseItem as? RustResolveScope ?: return UNRESOLVED
+        return resolveIn(ResolveScopeVisitor(ref), listOf(scope))
     }
 
-    internal class ResolveScopeVisitor(private val name: RustNamedElement,
-                                       private val visited: MutableSet<RustUseItem>) : RustVisitor() {
+    private fun resolveModulePrefix(ref: RustQualifiedReferenceElement): RustModItem? {
+        return if (ref.isSelf) {
+            RustResolveUtil.getSelfModFor(ref)
+        } else {
+            val qual = ref.qualifier
+            val mod = if (qual != null) resolveModulePrefix(qual) else ref.containingMod
+            RustResolveUtil.getSuperModFor(mod ?: return null)
+        }
+    }
+
+    private fun resolveIn(v: ResolveScopeVisitor, scopes: Iterable<RustResolveScope>): RustResolveEngine.ResolveResult {
+        for (s in scopes) {
+            s.resolveWith(v)?.let {
+                return RustResolveEngine.ResolveResult(it)
+            }
+        }
+
+        return UNRESOLVED
+    }
+
+    inner class ResolveScopeVisitor(private val name: RustNamedElement) : RustVisitor() {
 
         var matched: RustNamedElement? = null
 
@@ -49,25 +112,12 @@ object RustResolveEngine {
             }
         }
 
-        override fun visitForExpr(o: RustForExpr) {
-            seek(o.scopedForDecl)
-        }
-
-        override fun visitScopedLetExpr(o: RustScopedLetExpr) {
-            visitResolveScope(o)
-        }
-
-        override fun visitLambdaExpr(o: RustLambdaExpr) {
-            visitResolveScope(o)
-        }
-
-        override fun visitMethod(o: RustMethod) {
-            visitResolveScope(o)
-        }
-
-        override fun visitFnItem(o: RustFnItem) {
-            visitResolveScope(o)
-        }
+        override fun visitForExpr(o: RustForExpr)               = seek(o.scopedForDecl)
+        override fun visitScopedLetExpr(o: RustScopedLetExpr)   = visitResolveScope(o)
+        override fun visitLambdaExpr(o: RustLambdaExpr)         = visitResolveScope(o)
+        override fun visitMethod(o: RustMethod)                 = visitResolveScope(o)
+        override fun visitFnItem(o: RustFnItem)                 = visitResolveScope(o)
+        override fun visitResolveScope(scope: RustResolveScope) = seek(scope.getDeclarations())
 
         override fun visitBlock(o: RustBlock) {
             o.getDeclarations()
@@ -75,6 +125,7 @@ object RustResolveEngine {
                 .reversed()
                 .forEach { letDecl ->
                     letDecl.getBoundElements().forEach { e ->
+                        // defer costly isAncestor checks
                         if (match(e) && !PsiTreeUtil.isAncestor(letDecl, name, true)) {
                             return found(e)
                         }
@@ -82,41 +133,33 @@ object RustResolveEngine {
                 }
         }
 
-        override fun visitResolveScope(scope: RustResolveScope) {
-            seek(scope.getDeclarations())
-        }
-
         private fun processUseDeclaration(use: RustUseItem) {
             val path = use.viewPath
             val pathPart = path.pathPart ?: return
 
             val isPlainPathImport = path.mul == null && path.lbrace == null
+
+            // `use foo::bar as baz;`
             if (isPlainPathImport) {
                 val name = path.alias ?: pathPart
                 if (match(name)) {
-                    if (use in visited) {
+                    if (use in visitedImports) {
                         return
                     }
-                    visited += use
+                    visitedImports += use
 
-                    val item = RustResolveEngine.resolve(pathPart, visited).element  ?: return
+                    val item = resolve(pathPart).element ?: return
                     return found(item)
                 }
             }
         }
 
-
-        private fun seek(elem: RustDeclaringElement) {
-            seek(listOf(elem))
-        }
+        private fun seek(elem: RustDeclaringElement) = seek(listOf(elem))
 
         private fun seek(decls: Collection<RustDeclaringElement>) {
             decls.flatMap { it.getBoundElements() }
-                 .forEach { e ->
-                     if (match(e)) {
-                         return found(e)
-                     }
-                 }
+                 .find { match(it) }
+                 ?.let { found(it) }
         }
 
         private fun found(elem: RustNamedElement) {
@@ -137,92 +180,39 @@ object RustResolveEngine {
         private val shouldStop: Boolean
             get() = matched != null
     }
+}
 
-    private fun resolve(ref: RustQualifiedReferenceElement, visited: MutableSet<RustUseItem>): ResolveResult {
-        val qual = ref.qualifier
 
-        if (qual != null) {
-            val parent = if (qual.isModulePrefix) {
-                resolveModulePrefix(qual)
-            } else {
-                resolve(qual, visited).element
-            }
-            return when (parent) {
-                is RustResolveScope -> resolveIn(ResolveScopeVisitor(ref, visited), listOf(parent))
-                else                -> ResolveResult.UNRESOLVED
-            }
-        }
-        return resolveIn(ResolveScopeVisitor(ref, visited), enumerateScopesFor(ref))
+private fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Iterable<RustResolveScope> {
+    if (ref.isFullyQualified) {
+        return listOfNotNull(RustResolveUtil.getCrateRootFor(ref))
     }
 
-    private fun resolveUseGlob(ref: RustUseGlob, visited: MutableSet<RustUseItem>): ResolveResult {
-        val useItem = ref.parentOfType<RustUseItem>()
-        val basePath = useItem?.let { it.viewPath.pathPart } ?: return ResolveResult.UNRESOLVED
+    return object : Iterable<RustResolveScope> {
+        override fun iterator(): Iterator<RustResolveScope> {
+            return object : Iterator<RustResolveScope> {
 
-        // this is not necessary a module, e.g.
-        //
-        //   ```
-        //   fn foo() {}
-        //
-        //   mod inner {
-        //       use foo::{self};
-        //   }
-        //   ```
-        val baseItem = resolve(basePath, visited).element
-        if (ref.self != null) {
-            return ResolveResult(baseItem)
-        }
-        val scope = baseItem as? RustResolveScope ?: return ResolveResult.UNRESOLVED
-        return resolveIn(ResolveScopeVisitor(ref, visited), listOf(scope))
-    }
+                private var next = RustResolveUtil.getResolveScopeFor(ref)
 
-
-    private fun resolveModulePrefix(ref: RustQualifiedReferenceElement): RustModItem? {
-        return if (ref.isSelf) {
-            RustResolveUtil.getSelfModFor(ref)
-        } else {
-            val qual = ref.qualifier
-            val mod = if (qual != null) resolveModulePrefix(qual) else ref.containingMod
-            RustResolveUtil.getSuperModFor(mod ?: return null)
-        }
-    }
-
-    private fun resolveIn(v: ResolveScopeVisitor, scopes: Iterable<RustResolveScope>): ResolveResult {
-        scopes.forEach { s ->
-            s.resolveWith(v)?.let {
-                return ResolveResult(it)
-            }
-        }
-
-        return ResolveResult.UNRESOLVED
-    }
-
-
-    private fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Iterable<RustResolveScope> {
-        if (ref.isFullyQualified) {
-            return listOfNotNull(RustResolveUtil.getCrateRootFor(ref))
-        }
-
-        return object: Iterable<RustResolveScope> {
-            override fun iterator(): Iterator<RustResolveScope> {
-                return object: Iterator<RustResolveScope> {
-
-                    var next = RustResolveUtil.getResolveScopeFor(ref)
-
-                    fun climb(): RustResolveScope {
-                        val prev = next!!
-                        next =  when (prev) {
-                                    is RustModItem -> null
-                                    else           -> RustResolveUtil.getResolveScopeFor(prev)
-                                }
-                        return prev
+                private fun climb(): RustResolveScope {
+                    val prev = next!!
+                    next = when (prev) {
+                        is RustModItem -> null
+                        else           -> RustResolveUtil.getResolveScopeFor(prev)
                     }
-
-                    override fun next(): RustResolveScope = climb()
-
-                    override fun hasNext(): Boolean = next != null
+                    return prev
                 }
+
+                override fun next(): RustResolveScope = climb()
+
+                override fun hasNext(): Boolean = next != null
             }
         }
     }
+}
+
+
+private fun RustResolveScope.resolveWith(v: Resolver.ResolveScopeVisitor): RustNamedElement? {
+    this.accept(v)
+    return v.matched
 }
