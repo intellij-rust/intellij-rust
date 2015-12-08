@@ -6,9 +6,9 @@ import com.intellij.openapi.project.Project
 import org.rust.cargo.project.CargoProjectSystem
 
 @State(name = "CargoLocalSettings", storages = arrayOf(Storage(file = StoragePathMacros.WORKSPACE_FILE)))
-class CargoLocalSettings protected constructor(project: Project) :
-        AbstractExternalSystemLocalSettings(CargoProjectSystem.ID, project),
-        PersistentStateComponent<AbstractExternalSystemLocalSettings.State> {
+class CargoLocalSettings protected constructor(project: Project)
+    : AbstractExternalSystemLocalSettings(CargoProjectSystem.ID, project)
+    , PersistentStateComponent<AbstractExternalSystemLocalSettings.State> {
 
     override fun getState(): AbstractExternalSystemLocalSettings.State? {
         val state = AbstractExternalSystemLocalSettings.State()
