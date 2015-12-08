@@ -4,6 +4,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.containingMod
 import org.rust.lang.core.psi.util.isBefore
+import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.util.useDeclarations
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.scope.resolveWith
@@ -21,6 +22,14 @@ object RustResolveEngine {
         override fun getElement():      RustNamedElement? = resolved
         override fun isValidResult():   Boolean           = resolved != null
 
+    }
+
+    fun resolve(ref: RustQualifiedReferenceElement): ResolveResult {
+        return resolve(ref, HashSet())
+    }
+
+    fun resolveUseGlob(ref: RustUseGlob): ResolveResult {
+        return resolveUseGlob(ref, HashSet())
     }
 
     internal class ResolveScopeVisitor(private val name: RustNamedElement,
@@ -129,10 +138,6 @@ object RustResolveEngine {
             get() = matched != null
     }
 
-    fun resolve(ref: RustQualifiedReferenceElement): ResolveResult {
-        return resolve(ref, HashSet())
-    }
-
     private fun resolve(ref: RustQualifiedReferenceElement, visited: MutableSet<RustUseItem>): ResolveResult {
         val qual = ref.qualifier
 
@@ -149,6 +154,28 @@ object RustResolveEngine {
         }
         return resolveIn(ResolveScopeVisitor(ref, visited), enumerateScopesFor(ref))
     }
+
+    private fun resolveUseGlob(ref: RustUseGlob, visited: MutableSet<RustUseItem>): ResolveResult {
+        val useItem = ref.parentOfType<RustUseItem>()
+        val basePath = useItem?.let { it.viewPath.pathPart } ?: return ResolveResult.UNRESOLVED
+
+        // this is not necessary a module, e.g.
+        //
+        //   ```
+        //   fn foo() {}
+        //
+        //   mod inner {
+        //       use foo::{self};
+        //   }
+        //   ```
+        val baseItem = resolve(basePath, visited).element
+        if (ref.self != null) {
+            return ResolveResult(baseItem)
+        }
+        val scope = baseItem as? RustResolveScope ?: return ResolveResult.UNRESOLVED
+        return resolveIn(ResolveScopeVisitor(ref, visited), listOf(scope))
+    }
+
 
     private fun resolveModulePrefix(ref: RustQualifiedReferenceElement): RustModItem? {
         return if (ref.isSelf) {
