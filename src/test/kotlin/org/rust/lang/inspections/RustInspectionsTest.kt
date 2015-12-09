@@ -1,10 +1,11 @@
 package org.rust.lang.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
-import org.rust.lang.RustTestCase
+import org.rust.lang.RustTestCaseBase
 
-class RustInspectionsTest : RustTestCase() {
-    override fun getTestDataPath() = "src/test/resources/org/rust/lang/inspections/fixtures"
+class RustInspectionsTest : RustTestCaseBase() {
+
+    override val dataPath = "org/rust/lang/inspections/fixtures"
 
     private inline  fun <reified T: LocalInspectionTool>doTest() {
         myFixture.enableInspections(T::class.java)

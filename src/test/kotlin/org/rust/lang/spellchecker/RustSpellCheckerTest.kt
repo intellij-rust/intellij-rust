@@ -1,10 +1,12 @@
 package org.rust.lang.spellchecker
 
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
-import org.rust.lang.RustTestCase
+import org.rust.lang.RustTestCaseBase
 
-class RustSpellCheckerTest : RustTestCase() {
-    override fun getTestDataPath() = "src/test/resources/org/rust/lang/spellchecker/fixtures"
+class RustSpellCheckerTest : RustTestCaseBase() {
+
+    override val dataPath = "org/rust/lang/spellchecker/fixtures"
+
     private fun doTest(processComments: Boolean = true, processLiterals: Boolean = true) {
         val inspection = SpellCheckingInspection()
         inspection.processLiterals = processLiterals

@@ -1,9 +1,10 @@
 package org.rust.lang.typing
 
-import org.rust.lang.RustTestCase
+import org.rust.lang.RustTestCaseBase
 
-class RustEnterHandlerTest : RustTestCase() {
-    override fun getTestDataPath() = "src/test/resources/org/rust/lang/typing/fixtures"
+class RustEnterHandlerTest : RustTestCaseBase() {
+
+    override val dataPath = "org/rust/lang/typing/fixtures"
 
     private fun doTest() {
         myFixture.configureByFile(fileName)

@@ -9,11 +9,13 @@ import com.intellij.testFramework.ParsingTestCase
 import org.jetbrains.annotations.NonNls
 import org.rust.lang.RustLanguage
 import org.rust.lang.RustTestCase
+import org.rust.lang.RustTestCaseBase
 import org.rust.lang.core.RustParserDefinition
 import org.rust.lang.highlight.RustBraceMatcher
 
 abstract class RustParsingTestCaseBase(@NonNls dataPath: String)
- : ParsingTestCase("org/rust/lang/core/parser/fixtures/" + dataPath, "rs", true /*lowerCaseFirstLetter*/, RustParserDefinition()) {
+    : ParsingTestCase("org/rust/lang/core/parser/fixtures/" + dataPath, "rs", true /*lowerCaseFirstLetter*/, RustParserDefinition())
+    , RustTestCase {
 
     final protected fun hasError(file: PsiFile): Boolean {
         var hasErrors = false
@@ -34,7 +36,7 @@ abstract class RustParsingTestCaseBase(@NonNls dataPath: String)
 
     override fun getTestName(lowercaseFirstLetter: Boolean): String? {
         val camelCase = super.getTestName(lowercaseFirstLetter)
-        return RustTestCase.camelToSnake(camelCase);
+        return RustTestCaseBase.camelToSnake(camelCase);
     }
 
     override fun setUp() {

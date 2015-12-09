@@ -3,11 +3,13 @@ package org.rust.lang.core.resolve
 import com.intellij.psi.PsiElement
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.lang.RustTestCase
+import org.rust.lang.RustTestCaseBase
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.resolve.ref.RustReference
 
-abstract class RustResolveTestCaseBase : RustTestCase() {
-    override fun getTestDataPath() = "src/test/resources/org/rust/lang/core/resolve/fixtures"
+abstract class RustResolveTestCaseBase : RustTestCaseBase() {
+
+    override val dataPath = "org/rust/lang/core/resolve/fixtures"
 
     private fun assertIsValidDeclaration(declaration: PsiElement, usage: RustReference,
                                          expectedOffset: Int?) {

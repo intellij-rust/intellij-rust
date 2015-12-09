@@ -1,21 +1,24 @@
 package org.rust.lang
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import java.nio.file.Path
+import java.nio.file.Paths
 
-abstract class RustTestCase : LightCodeInsightFixtureTestCase() {
+interface RustTestCase {
 
-    final protected val fileName: String
-        get() = "$testName.rs"
-
-    final protected val testName: String
-        get() = camelToSnake(getTestName(true))
-
+    fun getTestDataPath(): String
 
     companion object {
-        @JvmStatic
-        fun camelToSnake(camelCaseName: String): String =
-                camelCaseName.split("(?=[A-Z])".toRegex())
-                        .map { it.toLowerCase() }
-                        .joinToString("_")
+        val testResourcesPath = "src/test/resources"
     }
 }
+
+
+
+// Extensions
+
+fun RustTestCase.pathToSourceTestFile(name: String): Path =
+    Paths.get("${RustTestCase.testResourcesPath}/${getTestDataPath()}/$name.${RustFileType.DEFAULTS.EXTENSION}")
+
+fun RustTestCase.pathToGoldTestFile(name: String): Path =
+    Paths.get("${RustTestCase.testResourcesPath}/${getTestDataPath()}/$name.txt")
+

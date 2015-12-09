@@ -1,9 +1,10 @@
 package org.rust.lang.annotator
 
-import org.rust.lang.RustTestCase
+import org.rust.lang.RustTestCaseBase
 
-class RustAnnotatorTest : RustTestCase() {
-    override fun getTestDataPath() = "src/test/resources/org/rust/lang/annotator/fixtures"
+class RustAnnotatorTest : RustTestCaseBase() {
+
+    override val dataPath = "org/rust/lang/annotator/fixtures"
 
     private fun doTestInfo() {
         myFixture.testHighlighting(false, true, false, fileName)

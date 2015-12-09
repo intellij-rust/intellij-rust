@@ -1,8 +1,8 @@
 package org.toml.lang
 
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.rust.lang.RustTestCase
+import org.rust.lang.RustTestCaseBase
 
 abstract class TomlTestCase : LightCodeInsightFixtureTestCase() {
-    final protected val fileName: String get() = "${RustTestCase.camelToSnake(getTestName(true))}.toml"
+    final protected val fileName: String get() = "${RustTestCaseBase.camelToSnake(getTestName(true))}.toml"
 }

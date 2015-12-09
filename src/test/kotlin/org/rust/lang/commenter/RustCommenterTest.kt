@@ -1,13 +1,11 @@
 package org.rust.lang.commenter
 
 import com.intellij.openapi.actionSystem.IdeActions
-import org.rust.lang.RustTestCase
+import org.rust.lang.RustTestCaseBase
 
-/**
- * @see RustCommenter
- */
-class RustCommenterTest : RustTestCase() {
-    override fun getTestDataPath() = "src/test/resources/org/rust/lang/commenter/fixtures"
+class RustCommenterTest : RustTestCaseBase() {
+
+    override val dataPath = "org/rust/lang/commenter/fixtures"
 
     private fun doTest(actionId: String) {
         myFixture.configureByFile(fileName)

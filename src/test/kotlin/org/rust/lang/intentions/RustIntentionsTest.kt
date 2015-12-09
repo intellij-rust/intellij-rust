@@ -3,10 +3,11 @@ package org.rust.lang.intentions
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
-import org.rust.lang.RustTestCase
+import org.rust.lang.RustTestCaseBase
 
-class RustIntentionsTest : RustTestCase() {
-    override fun getTestDataPath() = "src/test/resources/org/rust/lang/intentions/fixtures/"
+class RustIntentionsTest : RustTestCaseBase() {
+
+    override val dataPath = "org/rust/lang/intentions/fixtures/"
 
     fun testExpandModule() {
         val before = testName + "/before"

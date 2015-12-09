@@ -9,30 +9,33 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.testFramework.LexerTestCase
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.annotations.NonNls
+import org.rust.lang.RustTestCase
+import org.rust.lang.pathToGoldTestFile
+import org.rust.lang.pathToSourceTestFile
 import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
 
 
-public class RustLexingTestCase : LexerTestCase() {
+public class RustLexingTestCase : LexerTestCase(), RustTestCase {
     override fun getDirPath(): String {
         throw UnsupportedOperationException()
     }
 
-    val testDataPath = "src/test/resources/org/rust/lang/core/lexer/fixtures"
+    override fun getTestDataPath(): String = "org/rust/lang/core/lexer/fixtures"
 
     override fun createLexer(): Lexer? = RustLexer()
 
     // NOTE(matkad): this is basically a copy-paste of doFileTest.
     // The only difference is that encoding is set to utf-8
     fun doTest() {
-        val fileName = testDataPath + "/" + getTestName(true) + ".rs"
+        val filePath = pathToSourceTestFile(getTestName(true))
         var text = ""
         try {
-            val fileText = FileUtil.loadFile(File(fileName), CharsetToolkit.UTF8);
+            val fileText = FileUtil.loadFile(filePath.toFile(), CharsetToolkit.UTF8);
             text = StringUtil.convertLineSeparators(if (shouldTrim()) fileText.trim() else fileText);
         } catch (e: IOException) {
-            fail("can't load file " + fileName + ": " + e.message);
+            fail("can't load file " + filePath + ": " + e.message);
         }
         doTest(text);
     }
@@ -42,7 +45,7 @@ public class RustLexingTestCase : LexerTestCase() {
         if (expected != null) {
             UsefulTestCase.assertSameLines(expected, result)
         } else {
-            UsefulTestCase.assertSameLinesWithFile(testDataPath + "/" + getTestName(true) + ".txt", result)
+            UsefulTestCase.assertSameLinesWithFile(pathToGoldTestFile(getTestName(true)).toFile().canonicalPath, result)
         }
     }
 

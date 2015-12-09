@@ -3,11 +3,12 @@ package org.rust.lang.structure
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil.assertTreeEqual
 import com.intellij.util.ui.tree.TreeUtil
-import org.rust.lang.RustTestCase
+import org.rust.lang.RustTestCaseBase
 import java.io.File
 
-class RustStructureViewTest : RustTestCase() {
-    override fun getTestDataPath() = "src/test/resources/org/rust/lang/structure/fixtures"
+class RustStructureViewTest : RustTestCaseBase() {
+
+    override val dataPath = "org/rust/lang/structure/fixtures"
 
     private fun doTest(expected: String) {
         myFixture.configureByFile(fileName);

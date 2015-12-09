@@ -1,6 +1,6 @@
 package org.rust.lang.core.resolve
 
-import org.rust.lang.RustTestCase
+import org.rust.lang.RustTestCaseBase
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.resolve.ref.RustReference
 

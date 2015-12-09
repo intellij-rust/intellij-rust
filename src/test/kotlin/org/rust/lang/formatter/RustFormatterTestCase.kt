@@ -1,7 +1,7 @@
 package org.rust.lang.formatter
 
 import com.intellij.psi.formatter.FormatterTestCase
-import org.rust.lang.RustTestCase
+import org.rust.lang.RustTestCaseBase
 
 class RustFormatterTestCase : FormatterTestCase() {
     override fun getTestDataPath() = "src/test/resources"
@@ -12,7 +12,7 @@ class RustFormatterTestCase : FormatterTestCase() {
 
     override fun getTestName(lowercaseFirstLetter: Boolean): String? {
         val camelCase = super.getTestName(lowercaseFirstLetter)
-        return RustTestCase.camelToSnake(camelCase)
+        return RustTestCaseBase.camelToSnake(camelCase)
     }
 
     fun testBlocks() = doTest()
