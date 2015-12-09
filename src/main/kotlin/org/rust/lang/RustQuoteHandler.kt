@@ -7,7 +7,7 @@ import org.rust.lang.core.lexer.RustTokenElementTypes.BYTE_STRING_LITERAL
 import org.rust.lang.core.lexer.RustTokenElementTypes.STRING_LITERAL
 
 
-// NOTE(matklad): do not autopair `'` in char literals because of lifeteimes, which use a single `'`: `'a`
+// do not autopair `'` in char literals because of lifeteimes, which use a single `'`: `'a`
 class RustQuoteHandler : SimpleTokenSetQuoteHandler(
         STRING_LITERAL,
         BYTE_STRING_LITERAL) {
