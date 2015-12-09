@@ -1,5 +1,11 @@
 mod foo {
-    use bar::{<caret>self};
+    pub fn hello() {}
 }
 
-pub mod bar { }
+mod bar {
+    use foo::{self};
+
+    fn main() {
+        foo::<caret>hello();
+    }
+}
