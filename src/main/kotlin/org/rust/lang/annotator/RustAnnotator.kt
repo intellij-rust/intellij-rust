@@ -34,7 +34,7 @@ public class RustAnnotator : Annotator {
                 }
             }
             is RustPathPart -> {
-                element.reference?.resolve().let {
+                element.reference.resolve().let {
                     if (it is RustPatBinding && it.isMut) {
                         addTextAttributes(element.identifier, holder, RustColors.MUT_BINDING)
                     }
