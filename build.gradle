@@ -74,6 +74,7 @@ repositories {
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+    compile "org.jetbrains.kotlin:kotlin-runtime:$kotlinVersion"
 
     gen 'de.jflex:jflex:1.6.0'
     gen files('lib/gk/grammar-kit-patched.jar')
