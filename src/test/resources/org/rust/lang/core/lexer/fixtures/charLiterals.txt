@@ -2,4 +2,4 @@
 WHITE_SPACE ('\n')
 <CHAR> (''💕'')
 WHITE_SPACE ('\n')
-<CHAR> (''a'')
+<CHAR> (''a'x')
