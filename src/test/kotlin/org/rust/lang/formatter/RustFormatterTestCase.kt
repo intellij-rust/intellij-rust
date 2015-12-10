@@ -4,6 +4,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.formatter.FormatterTestCase
 import com.intellij.testFramework.LightPlatformTestCase
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -37,7 +38,8 @@ class RustFormatterTestCase(val fileName: String) : FormatterTestCase() {
 
         @JvmStatic @Parameterized.Parameters(name = "{0}")
         fun params() = File(FileUtil.toSystemDependentName("$TEST_DATA_PATH/$BASE_PATH"))
-            .listFiles { !it.nameWithoutExtension.endsWith("_after") }!!
-            .map { arrayOf(it.nameWithoutExtension) }
+            .listFiles { !it.nameWithoutExtension.endsWith("_after") }
+            ?.map { arrayOf(it.nameWithoutExtension) }
+            .apply { assertThat(this).overridingErrorMessage("No test files found").isNotEmpty() }
     }
 }
