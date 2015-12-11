@@ -1013,11 +1013,9 @@ private lit ::= ( STRING_LITERAL
                 | BYTE_LITERAL
                 | INTEGER_LITERAL
                 | FLOAT_LITERAL
-                | bool_lit ) lit_suffix?
+                | bool_lit )
 
 private bool_lit ::= FALSE | TRUE
-
-private lit_suffix ::= IDENTIFIER
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
