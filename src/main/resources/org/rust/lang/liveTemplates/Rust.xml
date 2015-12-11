@@ -26,9 +26,9 @@
     </template>
 
     <template name="fn0" description="Function with no parameters" toReformat="true" toShortenFQNames="true"
-              value="$PUB$fn $NAME$() -&gt; $RETURN$ {&#10;  $END$&#10;}">
+              value="$PUB$ fn $NAME$() -&gt; $RETURN$ {&#10;  $END$&#10;}">
         <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
-        <variable name="PUB" expression="" defaultValue="&quot;pub &quot;" alwaysStopAt="true" />
+        <variable name="PUB" expression="" defaultValue="&quot;pub&quot;" alwaysStopAt="true" />
         <variable name="RETURN" expression="" defaultValue="&quot;()&quot;" alwaysStopAt="true" />
         <context>
             <option name="RUST_FILE" value="true" />
@@ -36,9 +36,9 @@
     </template>
 
     <template name="fn1" description="Function with one parameter" toReformat="true" toShortenFQNames="true"
-              value="$PUB$fn $NAME$($PARAM1$: $PARAM1TYPE$) -&gt; $RETURN$ {&#10;  $END$&#10;}">
+              value="$PUB$ fn $NAME$($PARAM1$: $PARAM1TYPE$) -&gt; $RETURN$ {&#10;  $END$&#10;}">
         <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
-        <variable name="PUB" expression="" defaultValue="&quot;pub &quot;" alwaysStopAt="true" />
+        <variable name="PUB" expression="" defaultValue="&quot;pub&quot;" alwaysStopAt="true" />
         <variable name="PARAM1" expression="" defaultValue="&quot;x&quot;" alwaysStopAt="true" />
         <variable name="PARAM1TYPE" expression="" defaultValue="&quot;i32&quot;" alwaysStopAt="true" />
         <variable name="RETURN" expression="" defaultValue="&quot;()&quot;" alwaysStopAt="true" />
@@ -48,9 +48,9 @@
     </template>
 
     <template name="fn2" description="Function with two parameters" toReformat="true" toShortenFQNames="true"
-              value="$PUB$fn $NAME$($PARAM1$: $PARAM1TYPE$, $PARAM2$: $PARAM2TYPE$) -&gt; $RETURN$ {&#10;  $END$&#10;}">
+              value="$PUB$ fn $NAME$($PARAM1$: $PARAM1TYPE$, $PARAM2$: $PARAM2TYPE$) -&gt; $RETURN$ {&#10;  $END$&#10;}">
         <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
-        <variable name="PUB" expression="" defaultValue="&quot;pub &quot;" alwaysStopAt="true" />
+        <variable name="PUB" expression="" defaultValue="&quot;pub&quot;" alwaysStopAt="true" />
         <variable name="PARAM1" expression="" defaultValue="&quot;x&quot;" alwaysStopAt="true" />
         <variable name="PARAM1TYPE" expression="" defaultValue="&quot;i32&quot;" alwaysStopAt="true" />
         <variable name="PARAM2" expression="" defaultValue="&quot;y&quot;" alwaysStopAt="true" />
