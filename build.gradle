@@ -11,7 +11,7 @@ buildscript {
 }
 
 plugins {
-    id 'org.jetbrains.intellij' version "0.0.31"
+    id 'org.jetbrains.intellij' version "0.0.33"
 }
 
 
