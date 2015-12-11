@@ -11,15 +11,11 @@ import org.rust.lang.core.resolve.util.RustResolveUtil
 import java.util.*
 
 object RustResolveEngine {
-
-    open class ResolveResult(elem: RustNamedElement?) : com.intellij.psi.ResolveResult {
-
-        val resolved = elem
-
-        object UNRESOLVED : ResolveResult(null)
-
+    open class ResolveResult(val resolved: RustNamedElement?) : com.intellij.psi.ResolveResult {
         override fun getElement():      RustNamedElement? = resolved
         override fun isValidResult():   Boolean           = resolved != null
+
+        object UNRESOLVED : ResolveResult(null)
     }
 
     fun resolve(ref: RustQualifiedReferenceElement): ResolveResult =
@@ -27,13 +23,14 @@ object RustResolveEngine {
 
     fun resolveUseGlob(ref: RustUseGlob): ResolveResult =
         Resolver().resolveUseGlob(ref)
+
 }
 
 
-private val UNRESOLVED = RustResolveEngine.ResolveResult.UNRESOLVED
+private class Resolver {
 
+    private val visitedImports: MutableSet<RustUseItem> = HashSet()
 
-private class Resolver(private val visitedImports: MutableSet<RustUseItem> = HashSet()) {
     fun resolve(ref: RustQualifiedReferenceElement): RustResolveEngine.ResolveResult {
         val qual = ref.qualifier
 
@@ -45,7 +42,7 @@ private class Resolver(private val visitedImports: MutableSet<RustUseItem> = Has
             }
             return when (parent) {
                 is RustResolveScope -> resolveIn(ResolveScopeVisitor(ref), listOf(parent))
-                else                -> UNRESOLVED
+                else                -> RustResolveEngine.ResolveResult.UNRESOLVED
             }
         }
         return resolveIn(ResolveScopeVisitor(ref), enumerateScopesFor(ref))
@@ -53,7 +50,7 @@ private class Resolver(private val visitedImports: MutableSet<RustUseItem> = Has
 
     fun resolveUseGlob(ref: RustUseGlob): RustResolveEngine.ResolveResult {
         val useItem = ref.parentOfType<RustUseItem>()
-        val basePath = useItem?.let { it.viewPath.pathPart } ?: return UNRESOLVED
+        val basePath = useItem?.let { it.viewPath.pathPart } ?: return RustResolveEngine.ResolveResult.UNRESOLVED
 
         // this is not necessary a module, e.g.
         //
@@ -72,7 +69,7 @@ private class Resolver(private val visitedImports: MutableSet<RustUseItem> = Has
         }
 
         // `use foo::{bar}`
-        val scope = baseItem as? RustResolveScope ?: return UNRESOLVED
+        val scope = baseItem as? RustResolveScope ?: return RustResolveEngine.ResolveResult.UNRESOLVED
         return resolveIn(ResolveScopeVisitor(ref), listOf(scope))
     }
 
@@ -93,7 +90,7 @@ private class Resolver(private val visitedImports: MutableSet<RustUseItem> = Has
             }
         }
 
-        return UNRESOLVED
+        return RustResolveEngine.ResolveResult.UNRESOLVED
     }
 
     inner class ResolveScopeVisitor(private val name: RustNamedElement) : RustVisitor() {
@@ -112,12 +109,12 @@ private class Resolver(private val visitedImports: MutableSet<RustUseItem> = Has
             }
         }
 
-        override fun visitForExpr(o: RustForExpr)               = seek(o.scopedForDecl)
-        override fun visitScopedLetExpr(o: RustScopedLetExpr)   = visitResolveScope(o)
-        override fun visitLambdaExpr(o: RustLambdaExpr)         = visitResolveScope(o)
-        override fun visitMethod(o: RustMethod)                 = visitResolveScope(o)
-        override fun visitFnItem(o: RustFnItem)                 = visitResolveScope(o)
-        override fun visitResolveScope(scope: RustResolveScope) = seek(scope.getDeclarations())
+        override fun visitForExpr       (o: RustForExpr)            = seek(o.scopedForDecl)
+        override fun visitScopedLetExpr (o: RustScopedLetExpr)      = visitResolveScope(o)
+        override fun visitLambdaExpr    (o: RustLambdaExpr)         = visitResolveScope(o)
+        override fun visitMethod        (o: RustMethod)             = visitResolveScope(o)
+        override fun visitFnItem        (o: RustFnItem)             = visitResolveScope(o)
+        override fun visitResolveScope  (scope: RustResolveScope)   = seek(scope.getDeclarations())
 
         override fun visitBlock(o: RustBlock) {
             o.getDeclarations()
