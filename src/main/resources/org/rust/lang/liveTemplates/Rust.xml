@@ -85,4 +85,53 @@
         </context>
     </template>
 
+    <template name="struct0" description="Unit-like struct" toReformat="true" toShortenFQNames="true"
+            value="struct $NAME$;$END$">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="struct1" description="Struct with one field" toReformat="true" toShortenFQNames="true"
+            value="struct $NAME$ {&#10;  $FIELD1$: $FIELD1TYPE$,&#10;}$END$">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+        <variable name="FIELD1" expression="" defaultValue="&quot;x&quot;" alwaysStopAt="true" />
+        <variable name="FIELD1TYPE" expression="" defaultValue="&quot;i32&quot;" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="struct2" description="Struct with two fields" toReformat="true" toShortenFQNames="true"
+            value="struct $NAME$ {&#10;  $FIELD1$: $FIELD1TYPE$,&#10;  $FIELD2$: $FIELD2TYPE$,&#10;}$END$">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+        <variable name="FIELD1" expression="" defaultValue="&quot;x&quot;" alwaysStopAt="true" />
+        <variable name="FIELD1TYPE" expression="" defaultValue="&quot;i32&quot;" alwaysStopAt="true" />
+        <variable name="FIELD2" expression="" defaultValue="&quot;y&quot;" alwaysStopAt="true" />
+        <variable name="FIELD2TYPE" expression="" defaultValue="&quot;i32&quot;" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="tstruct1" description="Tuple struct with one field" toReformat="true" toShortenFQNames="true"
+            value="struct $NAME$($FIELD1TYPE$);$END$">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+        <variable name="FIELD1TYPE" expression="" defaultValue="&quot;i32&quot;" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="tstruct2" description="Tuple struct with two fields" toReformat="true" toShortenFQNames="true"
+            value="struct $NAME$($FIELD1TYPE$, $FIELD2TYPE$);$END$">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+        <variable name="FIELD1TYPE" expression="" defaultValue="&quot;i32&quot;" alwaysStopAt="true" />
+        <variable name="FIELD2TYPE" expression="" defaultValue="&quot;i32&quot;" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
 </templateSet>
