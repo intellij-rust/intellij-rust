@@ -24,4 +24,108 @@
             <option name="RUST_FILE" value="true"/>
         </context>
     </template>
+
+    <template name="fn0" description="Function with no parameters" toReformat="true" toShortenFQNames="true"
+              value="$PUB$ fn $NAME$() -&gt; $RETURN$ {&#10;  $END$&#10;}">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+        <variable name="PUB" expression="" defaultValue="&quot;pub&quot;" alwaysStopAt="true" />
+        <variable name="RETURN" expression="" defaultValue="&quot;()&quot;" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="fn1" description="Function with one parameter" toReformat="true" toShortenFQNames="true"
+              value="$PUB$ fn $NAME$($PARAM1$: $PARAM1TYPE$) -&gt; $RETURN$ {&#10;  $END$&#10;}">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+        <variable name="PUB" expression="" defaultValue="&quot;pub&quot;" alwaysStopAt="true" />
+        <variable name="PARAM1" expression="" defaultValue="&quot;x&quot;" alwaysStopAt="true" />
+        <variable name="PARAM1TYPE" expression="" defaultValue="&quot;i32&quot;" alwaysStopAt="true" />
+        <variable name="RETURN" expression="" defaultValue="&quot;()&quot;" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="fn2" description="Function with two parameters" toReformat="true" toShortenFQNames="true"
+              value="$PUB$ fn $NAME$($PARAM1$: $PARAM1TYPE$, $PARAM2$: $PARAM2TYPE$) -&gt; $RETURN$ {&#10;  $END$&#10;}">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+        <variable name="PUB" expression="" defaultValue="&quot;pub&quot;" alwaysStopAt="true" />
+        <variable name="PARAM1" expression="" defaultValue="&quot;x&quot;" alwaysStopAt="true" />
+        <variable name="PARAM1TYPE" expression="" defaultValue="&quot;i32&quot;" alwaysStopAt="true" />
+        <variable name="PARAM2" expression="" defaultValue="&quot;y&quot;" alwaysStopAt="true" />
+        <variable name="PARAM2TYPE" expression="" defaultValue="&quot;i32&quot;" alwaysStopAt="true" />
+        <variable name="RETURN" expression="" defaultValue="&quot;()&quot;" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="loop" description="Infinite loop" toReformat="true" toShortenFQNames="true"
+              value="loop {&#10;  $SELECTION$&#10;}$END$">
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="while" description="Conditional loop" toReformat="true" toShortenFQNames="true"
+              value="while $CONDITION$ {&#10;  $SELECTION$&#10;}$END$">
+        <variable name="CONDITION" expression="" defaultValue="&quot;true&quot;" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="for" description="Iterator loop" toReformat="true" toShortenFQNames="true"
+            value="for $VARIABLE$ in $EXPRESSION$ {&#10;  $SELECTION$&#10;}$END$">
+        <variable name="VARIABLE" expression="" defaultValue="&quot;x&quot;" alwaysStopAt="true" />
+        <variable name="EXPRESSION" expression="" defaultValue="&quot;0..10&quot;" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="struct" description="Struct" toReformat="true" toShortenFQNames="true"
+              value="struct $NAME$ {&#10;  $END$&#10;}">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="f" description="Struct field" toReformat="true" toShortenFQNames="true"
+              value="$PUB$ $NAME$: $TYPE$,$END$">
+        <variable name="NAME" expression="" defaultValue="&quot;x&quot;" alwaysStopAt="true" />
+        <variable name="TYPE" expression="" defaultValue="&quot;i32&quot;" alwaysStopAt="true" />
+        <variable name="PUB" expression="" defaultValue="&quot;pub&quot;" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="enum" description="Enum" toReformat="true" toShortenFQNames="true"
+              value="enum $NAME$ {&#10;  $END$&#10;}">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="match" description="Match expression" toReformat="true" toShortenFQNames="true"
+              value="match $EXPRESSION$ {&#10;  _ =&gt; $END$,&#10;}">
+        <variable name="EXPRESSION" expression="" defaultValue="&quot;x&quot;" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="test" description="Test function" toReformat="true" toShortenFQNames="true"
+              value="#[test]&#10;fn $NAME$() {&#10;    assert!($ASSERTION$);&#10;}$END$">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+        <variable name="ASSERTION" expression="" defaultValue="&quot;true&quot;" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
 </templateSet>
