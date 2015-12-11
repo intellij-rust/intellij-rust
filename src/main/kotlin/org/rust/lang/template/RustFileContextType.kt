@@ -6,7 +6,7 @@ import com.intellij.psi.util.PsiUtilCore
 import org.rust.lang.RustLanguage
 
 
-class RustFileContextType : TemplateContextType("RUST_FILE", "Rust file") {
+class RustFileContextType : TemplateContextType("RUST_FILE", "Rust") {
     override fun isInContext(file: PsiFile, offset: Int): Boolean =
         PsiUtilCore.getLanguageAtOffset(file, offset).isKindOf(RustLanguage)
 }
