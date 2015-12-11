@@ -134,4 +134,12 @@
         </context>
     </template>
 
+    <template name="enum" description="Enum" toReformat="true" toShortenFQNames="true"
+              value="enum $NAME$ {&#10;  $END$&#10;}">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
 </templateSet>
