@@ -6,6 +6,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.RustUseItem
+import org.rust.lang.core.psi.impl.RustFileImpl
 
 
 val MOD_RS = "mod.rs"
@@ -38,7 +39,10 @@ val RustModItem.useDeclarations: Collection<RustUseItem>
 
 sealed class ChildModFile {
     val mod: RustModItem?
-        get() = (this as? Found)?.file?.firstChild as? RustModItem
+        get() = when (this) {
+            is Found -> (file as? RustFileImpl)?.mod
+            else -> null
+        }
 
     class NotFound(val suggestedName: String? = null) : ChildModFile()
     class Found(val file: PsiFile) : ChildModFile()

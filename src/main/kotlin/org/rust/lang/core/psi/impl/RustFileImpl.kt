@@ -12,6 +12,6 @@ public class RustFileImpl(fileViewProvider: FileViewProvider) : PsiFileBase(file
     override fun getFileType(): FileType = RustFileType
 
     val mod: RustModItem?
-        get() = firstChild as? RustModItem
+        get() = findChildByClass(RustModItem::class.java)
 
 }
