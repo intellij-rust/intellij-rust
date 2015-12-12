@@ -21,4 +21,5 @@ class RustMultiFileResolveTestCase : RustResolveTestCaseBase() {
     fun testGlobalPath()        = doTest("global_path/foo.rs", "global_path/bar.rs", "global_path/lib.rs")
     fun testUseViewPath()       = doTest("global_path/foo.rs", "global_path/bar.rs", "global_path/lib.rs")
     fun testModDecl()           = doTest("mod_decl/main.rs", "mod_decl/foo.rs")
+    fun testModDeclNonOwn()     = doTest("mod_decl_non_own/foo.rs", "mod_decl_non_own/bar.rs")
 }

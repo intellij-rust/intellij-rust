@@ -9,11 +9,7 @@ import org.rust.lang.core.psi.RustUseItem
 import org.rust.lang.core.psi.impl.RustFileImpl
 
 
-object RustModules {
-    val LIB_RS  = "lib.rs"
-    val MAIN_RS = "main.rs"
-    val MOD_RS  = "mod.rs"
-}
+val MOD_RS = "mod.rs"
 
 private val RustModItem.modDir: PsiDirectory?
     get() {
@@ -28,11 +24,11 @@ private val RustModItem.modDir: PsiDirectory?
 // NOTE(kudinkin, matklad): fix
 private val RustModItem.isCrateRoot: Boolean
     get() = containingMod == null &&
-        (containingFile.name == RustModules.MAIN_RS || containingFile.name == RustModules.LIB_RS)
+        (containingFile.name == "main.rs" || containingFile.name == "lib.rs")
 
 internal val RustModItem.ownsDirectory: Boolean
     get() =     containingMod != null // any inline nested module owns a directory
-            ||  containingFile.name == RustModules.MOD_RS
+            ||  containingFile.name == MOD_RS
             ||  isCrateRoot
 
 val RustModItem.modDecls: Collection<RustModDeclItem>
@@ -45,8 +41,8 @@ val RustModItem.useDeclarations: Collection<RustUseItem>
 sealed class ChildModFile {
     val mod: RustModItem?
         get() = when (this) {
-            is Found -> (file as? RustFileImpl)?.mod
-            else -> null
+            is Found    -> (file as? RustFileImpl)?.mod
+            else        -> null
         }
 
     class NotFound(val suggestedName: String? = null) : ChildModFile()
@@ -58,14 +54,15 @@ val RustModDeclItem.moduleFile: ChildModFile
     get() {
         val parent = containingMod
         val name = name
-        if (parent == null || name == null || !parent.ownsDirectory) {
+        if (parent == null || name == null) {
             return ChildModFile.NotFound()
         }
 
-        val dir = parent.modDir
-        val dirMod = dir?.findSubdirectory(name)?.findFile(RustModules.MOD_RS)
+        val dir     = parent.modDir
+        val dirMod  = dir?.findSubdirectory(name)?.findFile(MOD_RS)
+
         val fileName = "$name.rs"
-        val fileMod = dir?.findFile(fileName)
+        val fileMod  = dir?.findFile(fileName)
 
         val variants = listOf(fileMod, dirMod).filterNotNull()
 
