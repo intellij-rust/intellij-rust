@@ -25,6 +25,7 @@ private val RustModItem.modDir: PsiDirectory?
     }
 
 
+// NOTE(kudinkin, matklad): fix
 private val RustModItem.isCrateRoot: Boolean
     get() = containingMod == null &&
         (containingFile.name == RustModules.MAIN_RS || containingFile.name == RustModules.LIB_RS)

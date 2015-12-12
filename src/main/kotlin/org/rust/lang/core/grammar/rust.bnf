@@ -156,8 +156,8 @@
     // Resolve scopes
     //
 
-    implements  ("anon_mod_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    mixin       ("anon_mod_item") = "org.rust.lang.core.psi.impl.mixin.RustAnonModItemImplMixin"
+    implements  ("file_mod_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("file_mod_item") = "org.rust.lang.core.psi.impl.mixin.RustFileModItemImplMixin"
 
     implements  ("mod_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("mod_item") = "org.rust.lang.core.psi.impl.mixin.RustModItemImplMixin"
@@ -243,14 +243,14 @@
 // Root
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-root ::= anon_mod_item
+root ::= file_mod_item
 
 //
 // NOTA BENE
 //  Its marked left just to impede GK from collapsing it in the
 //  case there're no `SHEBANG_LINE` & it starts with `inner_attrs` or `item`
 //
-left anon_mod_item ::= [ SHEBANG_LINE ] [ inner_attrs ] item * {
+left file_mod_item ::= [ SHEBANG_LINE ] [ inner_attrs ] item * {
   extends = mod_item
 }
 
