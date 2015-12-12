@@ -25,6 +25,7 @@ import org.rust.cargo.project.settings.CargoExecutionSettings
 import org.rust.cargo.service.CargoInstallationManager
 import org.rust.cargo.util.Platform
 import org.rust.cargo.project.RustSdkType
+import org.rust.cargo.project.model.CargoPackageInfo
 import org.rust.cargo.project.module.RustModuleType
 import java.io.File
 import java.util.*
@@ -95,35 +96,38 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
         // TODO(winger, kudinkin): properly handle versions
         val moduleOrLibrary = HashMap<String, DataNode<*>>()
 
-        for (p in data.packages) {
-            val packageRoot = File(p.manifest_path).parentFile
+        for (pkg in data.packages) {
+            val root = File(pkg.manifest_path).parentFile
 
-            if (VfsUtil.isAncestor(projectRoot, packageRoot, /* strict = */ false)) {
+            if (VfsUtil.isAncestor(projectRoot, root, /* strict = */ false)) {
                 // Add as a module
-                val moduleData =
+                val modData =
                     ModuleData(
-                        p.name,
+                        pkg.name,
                         CargoProjectSystem.ID,
                         RustModuleType.MODULE_TYPE_ID,
-                        p.name,
-                        packageRoot.absolutePath,
-                        packageRoot.absolutePath
+                        pkg.name,
+                        root.absolutePath,
+                        root.absolutePath
                     )
 
-                val moduleNode = projectNode.createChild(ProjectKeys.MODULE, moduleData)
+                val moduleNode = projectNode.createChild(ProjectKeys.MODULE, modData)
 
-                moduleOrLibrary.put(p.name, moduleNode)
-                addSourceRoot(moduleNode, packageRoot.absolutePath)
+                moduleOrLibrary.put(pkg.name, moduleNode)
+
+                // Publish source-/test-/resources- roots
+                addContentRoots(moduleNode, root, pkg)
+
             } else {
                 // Add as a library
-                val libraryData = LibraryData(CargoProjectSystem.ID, "${p.name} ${p.version}")
+                val libData = LibraryData(CargoProjectSystem.ID, "${pkg.name} ${pkg.version}")
 
-                libraryData.addPath(LibraryPathType.BINARY, packageRoot.absolutePath)
-                libraryData.addPath(LibraryPathType.SOURCE, packageRoot.absolutePath)
+                libData.addPath(LibraryPathType.BINARY, root.absolutePath)
+                libData.addPath(LibraryPathType.SOURCE, root.absolutePath)
 
                 moduleOrLibrary.put(
-                    p.name,
-                    projectNode.createChild(ProjectKeys.LIBRARY, libraryData)
+                    pkg.name,
+                    projectNode.createChild(ProjectKeys.LIBRARY, libData)
                 )
             }
         }
@@ -168,11 +172,17 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
         return projectNode
     }
 
-    private fun addSourceRoot(node: DataNode<ModuleData>, path: String) {
-        node.createChild(
-            ProjectKeys.CONTENT_ROOT,
-            ContentRootData(CargoProjectSystem.ID, path)
-        )
+    private fun addContentRoots(node: DataNode<ModuleData>, root: File, pkg: CargoPackageInfo) {
+        val content = ContentRootData(CargoProjectSystem.ID, root.absolutePath)
+
+        //
+        // TODO(kudinkin):  Align with established Cargo's layout
+        //                  http://doc.crates.io/manifest.html#the-project-layout
+        //
+        for (t in pkg.targets)
+            content.storePath(ExternalSystemSourceType.SOURCE, File(t.src_path).parentFile.absolutePath)
+
+        node.createChild(ProjectKeys.CONTENT_ROOT, content)
     }
 
     override fun cancelTask(taskId: ExternalSystemTaskId, listener: ExternalSystemTaskNotificationListener): Boolean {
