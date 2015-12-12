@@ -1,4 +1,4 @@
-package org.rust.lang.highlight
+package org.rust.lang.highlight.syntax
 
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project

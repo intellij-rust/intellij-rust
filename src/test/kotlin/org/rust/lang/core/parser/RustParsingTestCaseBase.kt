@@ -11,7 +11,7 @@ import org.rust.lang.RustLanguage
 import org.rust.lang.RustTestCase
 import org.rust.lang.RustTestCaseBase
 import org.rust.lang.core.RustParserDefinition
-import org.rust.lang.highlight.RustBraceMatcher
+import org.rust.lang.highlight.matcher.RustBraceMatcher
 
 abstract class RustParsingTestCaseBase(@NonNls dataPath: String)
     : ParsingTestCase("org/rust/lang/core/parser/fixtures/" + dataPath, "rs", true /*lowerCaseFirstLetter*/, RustParserDefinition())

@@ -1,4 +1,4 @@
-package org.rust.lang.highlight
+package org.rust.lang.highlight.matcher
 
 import com.intellij.lang.BracePair
 import com.intellij.lang.PairedBraceMatcher
@@ -20,9 +20,9 @@ public class RustBraceMatcher() : PairedBraceMatcher {
 
     companion object {
         val PAIRS: Array<BracePair> = arrayOf(
-                BracePair(RustTokenElementTypes.LBRACE, RustTokenElementTypes.RBRACE, true /* structural */),
-                BracePair(RustTokenElementTypes.LPAREN, RustTokenElementTypes.RPAREN, false),
-                BracePair(RustTokenElementTypes.LBRACK, RustTokenElementTypes.RBRACK, false)
+            BracePair(RustTokenElementTypes.LBRACE, RustTokenElementTypes.RBRACE, true /* structural */),
+            BracePair(RustTokenElementTypes.LPAREN, RustTokenElementTypes.RPAREN, false),
+            BracePair(RustTokenElementTypes.LBRACK, RustTokenElementTypes.RBRACK, false)
         )
     }
 }

@@ -5,7 +5,7 @@ import com.intellij.openapi.options.colors.AttributesDescriptor
 import com.intellij.openapi.options.colors.ColorDescriptor
 import com.intellij.openapi.options.colors.ColorSettingsPage
 import com.intellij.openapi.util.io.StreamUtil
-import org.rust.lang.highlight.RustHighlighter
+import org.rust.lang.highlight.syntax.RustHighlighter
 import org.rust.lang.icons.RustIcons
 
 public class RustColorSettingsPage : ColorSettingsPage {

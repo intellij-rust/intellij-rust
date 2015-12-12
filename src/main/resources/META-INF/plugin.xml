@@ -40,7 +40,7 @@
 
         <!-- Syntax Highlighter -->
 
-        <lang.syntaxHighlighterFactory language="RUST" implementationClass="org.rust.lang.highlight.RustHighlighterFactory"/>
+        <lang.syntaxHighlighterFactory language="RUST" implementationClass="org.rust.lang.highlight.syntax.RustHighlighterFactory"/>
 
         <!-- Formatter -->
 
@@ -51,8 +51,8 @@
         <lang.commenter language="RUST" implementationClass="org.rust.lang.commenter.RustCommenter"/>
         <!-- Matchers -->
 
-        <lang.braceMatcher language="RUST" implementationClass="org.rust.lang.highlight.RustBraceMatcher"/>
-        <lang.quoteHandler language="RUST" implementationClass="org.rust.lang.RustQuoteHandler"/>
+        <lang.braceMatcher language="RUST" implementationClass="org.rust.lang.highlight.matcher.RustBraceMatcher"/>
+        <lang.quoteHandler language="RUST" implementationClass="org.rust.lang.highlight.RustQuoteHandler"/>
 
         <!-- Doc-Provider -->
 
