@@ -2,7 +2,7 @@ package org.rust.cargo.service
 
 import com.intellij.openapi.projectRoots.SdkType
 import org.rust.cargo.util.Platform
-import org.rust.lang.RustSdkType
+import org.rust.cargo.project.RustSdkType
 
 class CargoInstallationManager {
 

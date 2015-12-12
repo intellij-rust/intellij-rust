@@ -1,4 +1,4 @@
-package org.rust.lang.config
+package org.rust.cargo.project.config
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State

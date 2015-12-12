@@ -1,4 +1,4 @@
-package org.rust.lang.module
+package org.rust.cargo.project.module
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.module.ModuleType
@@ -7,7 +7,7 @@ import org.rust.lang.icons.RustIcons
 import javax.swing.Icon
 
 
-class RustModuleType : ModuleType<RustModuleBuilder>(RustModuleType.MODULE_TYPE_ID) {
+class RustModuleType : ModuleType<RustModuleBuilder>(RustModuleType.Companion.MODULE_TYPE_ID) {
 
     override fun createModuleBuilder(): RustModuleBuilder = RustModuleBuilder()
 

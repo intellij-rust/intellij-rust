@@ -24,8 +24,8 @@ import org.rust.cargo.project.model.CargoProjectInfo
 import org.rust.cargo.project.settings.CargoExecutionSettings
 import org.rust.cargo.service.CargoInstallationManager
 import org.rust.cargo.util.Platform
-import org.rust.lang.RustSdkType
-import org.rust.lang.module.RustModuleType
+import org.rust.cargo.project.RustSdkType
+import org.rust.cargo.project.module.RustModuleType
 import java.io.File
 import java.util.*
 

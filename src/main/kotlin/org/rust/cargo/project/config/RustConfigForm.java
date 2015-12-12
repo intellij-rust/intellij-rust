@@ -1,4 +1,4 @@
-package org.rust.lang.config;
+package org.rust.cargo.project.config;
 
 import org.rust.lang.i18n.RustBundle;
 

@@ -1,4 +1,4 @@
-package org.rust.lang.module
+package org.rust.cargo.project.module
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.SettingsStep

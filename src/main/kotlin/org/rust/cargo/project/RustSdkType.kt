@@ -1,4 +1,4 @@
-package org.rust.lang
+package org.rust.cargo.project
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
@@ -80,7 +80,7 @@ class RustSdkType : SdkType("Rust SDK") {
     }
 
     private fun tryGetSDKHomeFromEnv(): String? =
-        (System.getenv(RustSdkType.RUST_HOME_ENV_PROPERTY_NAME) ?: System.getenv(RustSdkType.CARGO_HOME_ENV_PROPERTY_NAME))
+        (System.getenv(RUST_HOME_ENV_PROPERTY_NAME) ?: System.getenv(CARGO_HOME_ENV_PROPERTY_NAME))
             ?.let {
                 if (isValidSdkHome(it)) it else null
             }
@@ -156,10 +156,10 @@ class RustSdkType : SdkType("Rust SDK") {
 
     override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {}
 
-    fun getPathToBinDirInSDK(sdkHome: File): File   = File(sdkHome, BIN_DIR)
+    fun getPathToBinDirInSDK(sdkHome: File): File = File(sdkHome, BIN_DIR)
     fun getPathToBinDirInSDK(sdkHome: String): File = getPathToBinDirInSDK(File(sdkHome))
 
-    fun getPathToLibDirInSDK(sdkHome: File): File   = File(sdkHome, LIB_DIR)
+    fun getPathToLibDirInSDK(sdkHome: File): File = File(sdkHome, LIB_DIR)
     fun getPathToLibDirInSDK(sdkHome: String): File = getPathToLibDirInSDK(File(sdkHome))
 
     fun getPathToExecInSDK(sdkHome: File, fileName: String): File =

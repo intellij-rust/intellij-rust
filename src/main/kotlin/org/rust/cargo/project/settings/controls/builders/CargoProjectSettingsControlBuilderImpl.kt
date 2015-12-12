@@ -21,7 +21,7 @@ import com.intellij.util.Consumer
 import org.rust.cargo.Cargo
 import org.rust.cargo.project.settings.CargoProjectSettings
 import org.rust.cargo.service.CargoInstallationManager
-import org.rust.lang.RustSdkType
+import org.rust.cargo.project.RustSdkType
 import java.awt.event.ActionListener
 import java.beans.PropertyChangeListener
 import javax.swing.ButtonGroup

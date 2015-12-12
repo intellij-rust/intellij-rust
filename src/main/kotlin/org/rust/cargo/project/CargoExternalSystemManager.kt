@@ -17,7 +17,7 @@ import com.intellij.util.Function
 import com.intellij.util.PathUtil
 import org.apache.commons.lang.StringUtils
 import org.rust.cargo.project.settings.*
-import org.rust.lang.config.RustConfigService
+import org.rust.cargo.project.config.RustConfigService
 
 import java.net.URL
 
