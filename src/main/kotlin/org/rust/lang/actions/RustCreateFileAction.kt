@@ -7,18 +7,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDirectory
 import org.rust.lang.icons.RustIcons
 
-private val NEW_RUST_FILE = "New Rust File"
 
-class RustCreateFileAction : CreateFileFromTemplateAction(NEW_RUST_FILE, "", RustIcons.RUST)
+class RustCreateFileAction : CreateFileFromTemplateAction(RustCreateFileAction.CAPTION, "", RustIcons.RUST)
                            , DumbAware {
 
-    override fun getActionName(directory: PsiDirectory?, newName: String?, templateName: String?): String {
-        return NEW_RUST_FILE
-    }
+    override fun getActionName(directory: PsiDirectory?, newName: String?, templateName: String?): String = CAPTION
 
     override fun buildDialog(project: Project?, directory: PsiDirectory?,
                              builder: CreateFileFromTemplateDialog.Builder) {
-        builder.setTitle(NEW_RUST_FILE)
+        builder .setTitle(CAPTION)
                 .addKind("Empty File", RustIcons.RUST, "Rust File")
+    }
+
+    private companion object {
+        private val CAPTION = "New Rust File"
     }
 }
