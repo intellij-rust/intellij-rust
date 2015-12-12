@@ -9,13 +9,13 @@ public abstract class RustNamedElementImpl(node: ASTNode)   : RustCompositeEleme
                                                             , RustNamedElement {
 
     override val nameElement: PsiElement?
-        get() =
-        findChildByType(RustTokenElementTypes.IDENTIFIER)
+        get() = findChildByType(RustTokenElementTypes.IDENTIFIER)
 
-    override fun getName(): String? {
-        return nameElement?.text
-    }
+    override fun getName(): String? = nameElement?.text
 
+    /**
+     * NOTE: This is orphaned purposefully
+     */
     override fun setName(name: String): PsiElement? {
         throw UnsupportedOperationException();
     }
