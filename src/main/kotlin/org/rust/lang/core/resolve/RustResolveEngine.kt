@@ -2,24 +2,39 @@ package org.rust.lang.core.resolve
 
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.util.containingMod
-import org.rust.lang.core.psi.util.isBefore
-import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.psi.util.useDeclarations
+import org.rust.lang.core.psi.impl.RustFileImpl
+import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
 import java.util.*
 
 object RustResolveEngine {
-    open class ResolveResult(val resolved: RustNamedElement?) : com.intellij.psi.ResolveResult {
+    open class ResolveResult private constructor(val resolved: RustNamedElement?) : com.intellij.psi.ResolveResult {
         override fun getElement():      RustNamedElement? = resolved
         override fun isValidResult():   Boolean           = resolved != null
 
-        object UNRESOLVED : ResolveResult(null)
+        /**
+         * Designates resolve-engine failure to properly resolve item
+         */
+        object Unresolved : ResolveResult(null)
+
+        /**
+         * Designates resolve-engine failure to properly recognise target item
+         * among the possible candidates
+         */
+        class Ambiguous(val candidates: Collection<RustNamedElement>) : ResolveResult(null)
+
+        /**
+         * Designates resolve-engine successfully resolved given target
+         */
+        class Resolved(resolved: RustNamedElement) : ResolveResult(resolved)
     }
 
     fun resolve(ref: RustQualifiedReferenceElement): ResolveResult =
         Resolver().resolve(ref)
+
+    fun resolveModDecl(ref: RustModDeclItem): ResolveResult =
+        Resolver().resolveModDecl(ref)
 
     fun resolveUseGlob(ref: RustUseGlob): ResolveResult =
         Resolver().resolveUseGlob(ref)
@@ -31,6 +46,9 @@ private class Resolver {
 
     private val visitedImports: MutableSet<RustNamedElement> = HashSet()
 
+    /**
+     * Resolves `qualified-reference`s
+     */
     fun resolve(ref: RustQualifiedReferenceElement): RustResolveEngine.ResolveResult {
         val qual = ref.qualifier
 
@@ -42,15 +60,69 @@ private class Resolver {
             }
             return when (parent) {
                 is RustResolveScope -> resolveIn(ResolveScopeVisitor(ref), listOf(parent))
-                else                -> RustResolveEngine.ResolveResult.UNRESOLVED
+                else                -> RustResolveEngine.ResolveResult.Unresolved
             }
         }
         return resolveIn(ResolveScopeVisitor(ref), enumerateScopesFor(ref))
     }
 
+    /**
+     * Looks-up file corresponding to particular module designated by `mod-declaration-item`:
+     *
+     *  ```
+     *  // foo.rs
+     *  pub mod bar; // looks up `bar.rs` or `bar/mod.rs` in the same dir
+     *
+     *  pub mod nested {
+     *      pub mod baz; // looks up `nested/baz.rs` or `nested/baz/mod.rs`
+     *  }
+     *
+     *  ```
+     *
+     *  | A module without a body is loaded from an external file, by default with the same name as the module,
+     *  | plus the '.rs' extension. When a nested sub-module is loaded from an external file, it is loaded
+     *  | from a subdirectory path that mirrors the module hierarchy.
+     *
+     * Reference:
+     *      https://github.com/rust-lang/rust/blob/master/src/doc/reference.md#modules
+     */
+    fun resolveModDecl(ref: RustModDeclItem): RustResolveEngine.ResolveResult {
+        val parent  = ref.containingMod
+        val name    = ref.name
+
+        if (parent == null || name == null || !parent.ownsDirectory) {
+            return RustResolveEngine.ResolveResult.Unresolved
+        }
+
+        val dir = parent.ownedDirectory
+
+        // Lookup `name.rs` module
+        val fileName = "$name.rs"
+        val fileMod  = dir?.findFile(fileName) as? RustFileImpl
+
+        // Lookup `name/mod.rs` module
+        val dirMod = dir?.findSubdirectory(name)?.findFile(RustModules.MOD_RS) as? RustFileImpl
+
+        val resolved = listOf(fileMod, dirMod).mapNotNull { it?.mod }
+
+        return when (resolved.size) {
+            0    -> RustResolveEngine.ResolveResult.Unresolved
+            1    -> RustResolveEngine.ResolveResult.Resolved    (resolved.single())
+            else -> RustResolveEngine.ResolveResult.Ambiguous   (resolved)
+        }
+    }
+
+    /**
+     * Resolves `use-glob`s, ie:
+     *
+     *  ```
+     *  use foo::bar::{baz as boo}
+     *  use foo::*
+     *  ```
+     */
     fun resolveUseGlob(ref: RustUseGlob): RustResolveEngine.ResolveResult {
         val useItem = ref.parentOfType<RustUseItem>()
-        val basePath = useItem?.let { it.viewPath.pathPart } ?: return RustResolveEngine.ResolveResult.UNRESOLVED
+        val basePath = useItem?.let { it.viewPath.pathPart } ?: return RustResolveEngine.ResolveResult.Unresolved
 
         // this is not necessary a module, e.g.
         //
@@ -64,33 +136,33 @@ private class Resolver {
         val baseItem = resolve(basePath).element
 
         // `use foo::{self}`
-        if (ref.self != null) {
-            return RustResolveEngine.ResolveResult(baseItem)
+        if (ref.self != null && baseItem != null) {
+            return RustResolveEngine.ResolveResult.Resolved(baseItem)
         }
 
         // `use foo::{bar}`
-        val scope = baseItem as? RustResolveScope ?: return RustResolveEngine.ResolveResult.UNRESOLVED
+        val scope = baseItem as? RustResolveScope ?: return RustResolveEngine.ResolveResult.Unresolved
         return resolveIn(ResolveScopeVisitor(ref), listOf(scope))
     }
 
     private fun resolveModulePrefix(ref: RustQualifiedReferenceElement): RustModItem? {
         return if (ref.isSelf) {
-            RustResolveUtil.getSelfModFor(ref)
+            ref.containingMod
         } else {
             val qual = ref.qualifier
             val mod = if (qual != null) resolveModulePrefix(qual) else ref.containingMod
-            RustResolveUtil.getSuperModFor(mod ?: return null)
+            mod?.`super`
         }
     }
 
     private fun resolveIn(v: ResolveScopeVisitor, scopes: Iterable<RustResolveScope>): RustResolveEngine.ResolveResult {
         for (s in scopes) {
             s.resolveWith(v)?.let {
-                return RustResolveEngine.ResolveResult(it)
+                return RustResolveEngine.ResolveResult.Resolved(it)
             }
         }
 
-        return RustResolveEngine.ResolveResult.UNRESOLVED
+        return RustResolveEngine.ResolveResult.Unresolved
     }
 
     inner class ResolveScopeVisitor(private val name: RustNamedElement) : RustVisitor() {
