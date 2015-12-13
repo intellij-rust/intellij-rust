@@ -810,6 +810,7 @@ restricted_expr ::= ret_expr
                   | add_bin_expr
                   | mul_bin_expr
                   | cast_expr
+                  | unary_expr
                   | atom_expr {
   elementType = expr
 }
@@ -842,7 +843,6 @@ private atom_expr ::= lit_expr
                     | tuple_expr
                     | unit_expr
                     | paren_expr
-                    | unary_expr
 
 
 binary_expr ::= restricted_expr + {
