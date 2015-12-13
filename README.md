@@ -23,6 +23,9 @@ $ ./gradlew buildPlugin
 This creates a zip archive in `build/distributions` which you can install with
 `install plugin from disk` action.
 
+To check which version of Java is used by
+  - gradle: run `./gradlew --version`;
+  - IDEA: check `Help > About` menu.
 
 ## Usage
 
