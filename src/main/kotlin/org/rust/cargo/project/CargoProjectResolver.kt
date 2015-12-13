@@ -23,7 +23,7 @@ import org.rust.cargo.Cargo
 import org.rust.cargo.project.model.CargoProjectInfo
 import org.rust.cargo.project.settings.CargoExecutionSettings
 import org.rust.cargo.service.CargoInstallationManager
-import org.rust.cargo.util.Platform
+import org.rust.cargo.util.PlatformUtil
 import org.rust.cargo.project.RustSdkType
 import org.rust.cargo.project.model.CargoPackageInfo
 import org.rust.cargo.project.module.RustModuleType
@@ -44,7 +44,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
         val data: CargoProjectInfo
         try {
             val processOut =
-                Platform.runExecutableWith(
+                PlatformUtil.runExecutableWith(
                     settings!!.cargoExecutable,
                     arrayListOf(
                         RustSdkType.CARGO_METADATA_SUBCOMMAND,

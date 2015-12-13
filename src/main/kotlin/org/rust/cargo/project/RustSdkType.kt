@@ -8,7 +8,7 @@ import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import org.jdom.Element
-import org.rust.cargo.util.Platform
+import org.rust.cargo.util.PlatformUtil
 import org.rust.lang.icons.RustIcons
 import java.io.File
 import java.util.concurrent.ExecutionException
@@ -163,7 +163,7 @@ class RustSdkType : SdkType("Rust SDK") {
     fun getPathToLibDirInSDK(sdkHome: String): File = getPathToLibDirInSDK(File(sdkHome))
 
     fun getPathToExecInSDK(sdkHome: File, fileName: String): File =
-        File(getPathToBinDirInSDK(sdkHome), Platform.getCanonicalNativeExecutableName(fileName))
+        File(getPathToBinDirInSDK(sdkHome), PlatformUtil.getCanonicalNativeExecutableName(fileName))
 
     fun getPathToExecInSDK(sdkHome: String, fileName: String): File =
         getPathToExecInSDK(File(sdkHome), fileName)

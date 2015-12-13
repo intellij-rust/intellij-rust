@@ -12,7 +12,7 @@ import org.rust.cargo.project.CargoProjectSystem
 import java.nio.file.Path
 import java.nio.file.Paths
 
-object Util {
+object ProjectUtil {
 
     val projectDataManager by lazy { ProjectDataManager.getInstance() }
 
@@ -32,14 +32,14 @@ object Util {
 }
 
 fun Project.getProjectData(): ProjectData? =
-    Util.getProjectDataNode(this)?.getData(ProjectKeys.PROJECT)
+    ProjectUtil.getProjectDataNode(this)?.getData(ProjectKeys.PROJECT)
 
 fun Project.getModulesData(): Collection<ModuleData> =
-    Util.getProjectModulesDataNodes(this)
+    ProjectUtil.getProjectModulesDataNodes(this)
         .map { it.data }
 
-fun Project.getSourceRootFor(path: Path): Path? =
-    Util.getProjectModulesDataNodes(this)
+fun Project.getCrateSourceRootFor(path: Path): Path? =
+    ProjectUtil.getProjectModulesDataNodes(this)
         .flatMap { it.children }
         .flatMap {
             it.getData(ProjectKeys.CONTENT_ROOT)?.let {
@@ -47,4 +47,3 @@ fun Project.getSourceRootFor(path: Path): Path? =
             } ?: ContainerUtil.emptyList()
         }
         .find { path.startsWith(it) }
-
