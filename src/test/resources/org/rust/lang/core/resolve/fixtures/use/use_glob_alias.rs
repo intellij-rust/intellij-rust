@@ -3,9 +3,9 @@ mod foo {
 }
 
 mod bar {
-    use foo::{hello};
+    use foo::{hello as spam};
 
     fn main() {
-        <caret>hello();
+        <caret>spam();
     }
 }

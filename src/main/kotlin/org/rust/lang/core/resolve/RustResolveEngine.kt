@@ -29,7 +29,7 @@ object RustResolveEngine {
 
 private class Resolver {
 
-    private val visitedImports: MutableSet<RustUseItem> = HashSet()
+    private val visitedImports: MutableSet<RustNamedElement> = HashSet()
 
     fun resolve(ref: RustQualifiedReferenceElement): RustResolveEngine.ResolveResult {
         val qual = ref.qualifier
@@ -140,15 +140,33 @@ private class Resolver {
             if (isPlainPathImport) {
                 val name = path.alias ?: pathPart
                 if (match(name)) {
-                    if (use in visitedImports) {
+                    if (addToVisited(use)) {
                         return
                     }
-                    visitedImports += use
-
                     val item = resolve(pathPart).element ?: return
                     return found(item)
                 }
             }
+
+            // `use foo::{self, bar as baz}`
+            if (path.lbrace != null) {
+                for (glob in path.useGlobList) {
+                    val boundElement = glob.boundElement ?: continue
+                    if (match(boundElement)) {
+                        if (addToVisited(glob)) {
+                            return
+                        }
+                        val item = resolveUseGlob(glob).element ?: return
+                        return found(item)
+                    }
+                }
+            }
+        }
+
+        private fun addToVisited(element: RustNamedElement): Boolean {
+            val result = element in visitedImports
+            visitedImports += element
+            return result
         }
 
         private fun seek(elem: RustDeclaringElement) = seek(listOf(elem))
@@ -213,3 +231,14 @@ private fun RustResolveScope.resolveWith(v: Resolver.ResolveScopeVisitor): RustN
     this.accept(v)
     return v.matched
 }
+
+private val RustUseGlob.basePath: RustQualifiedReferenceElement?
+    get() = parentOfType<RustUseItem>()?.let { it.viewPath.pathPart }
+
+private val RustUseGlob.boundElement: RustNamedElement?
+    get() = when {
+        alias != null      -> alias
+        identifier != null -> this
+        self != null       -> basePath
+        else               -> null
+    }
