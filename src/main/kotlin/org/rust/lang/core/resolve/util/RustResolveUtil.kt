@@ -1,6 +1,7 @@
 package org.rust.lang.core.resolve.util
 
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.impl.RustFileImpl
 import org.rust.lang.core.psi.util.*
@@ -28,10 +29,10 @@ public object RustResolveUtil {
      *  Reference:
      *    https://doc.rust-lang.org/reference.html#crates-and-source-files
      */
-    fun getCrateRootFor(elem: PsiElement): RustModItem? {
-        val mod = elem as RustModItem? ?: elem.containingMod ?: return null
+    fun getCrateRootModFor(elem: RustCompositeElement): RustModItem? {
+        val mod = elem as? RustModItem? ?: elem.containingMod ?: return null
 
         val superMod = mod.`super`
-        return if (superMod == null) mod else getCrateRootFor(superMod)
+        return if (superMod == null) mod else getCrateRootModFor(superMod)
     }
 }
