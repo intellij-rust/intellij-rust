@@ -1,49 +1,21 @@
 package org.rust.cargo.project.util
 
-import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.model.ProjectKeys
-import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
-import com.intellij.openapi.externalSystem.model.project.ModuleData
-import com.intellij.openapi.externalSystem.model.project.ProjectData
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.util.containers.ContainerUtil
-import org.rust.cargo.project.CargoProjectSystem
-import java.nio.file.Path
-import java.nio.file.Paths
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
+import org.rust.cargo.project.module.util.getSourceRoots
 
-object ProjectUtil {
+object ProjectUtil
 
-    val projectDataManager by lazy { ProjectDataManager.getInstance() }
-
-    fun getProjectDataNode(p: Project): DataNode<ProjectData>? =
-        projectDataManager   .getExternalProjectData(p, CargoProjectSystem.ID, p.basePath!!)
-                            ?.externalProjectStructure
-
-    fun getProjectModulesDataNodes(p: Project): Collection<DataNode<ModuleData>> =
-        getProjectDataNode(p)?.let {
-            it.children
-                .map {
-                    c -> c.getDataNode(ProjectKeys.MODULE)
-                }
-                .filterNotNull()
-        } ?: ContainerUtil.emptyList()
-
-}
-
-fun Project.getProjectData(): ProjectData? =
-    ProjectUtil.getProjectDataNode(this)?.getData(ProjectKeys.PROJECT)
-
-fun Project.getModulesData(): Collection<ModuleData> =
-    ProjectUtil.getProjectModulesDataNodes(this)
-        .map { it.data }
-
-fun Project.getCrateSourceRootFor(path: Path): Path? =
-    ProjectUtil.getProjectModulesDataNodes(this)
-        .flatMap { it.children }
-        .flatMap {
-            it.getData(ProjectKeys.CONTENT_ROOT)?.let {
-                it.getPaths(ExternalSystemSourceType.SOURCE).map { Paths.get(it.path) }
-            } ?: ContainerUtil.emptyList()
+fun Project.getCrateSourceRootFor(file: VirtualFile): VirtualFile? =
+    ModuleUtilCore.findModuleForFile(file, this)?.let {
+        it.getSourceRoots().find { root ->
+            FileUtil.isAncestor(root.canonicalPath!!, file.canonicalPath!!, /* strict = */ false)
         }
-        .find { path.startsWith(it) }
+    }
+
+fun Project.getModules(): Iterable<Module> =
+    ModuleManager.getInstance(this).modules.toList()

@@ -1,6 +1,8 @@
 package org.rust.lang.core.resolve
 
+import com.intellij.openapi.module.Module
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.cargo.project.module.util.rootMod
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFileImpl
@@ -165,7 +167,8 @@ private class Resolver {
         val useItem = ref.parentOfType<RustUseItem>()
         val basePath = useItem?.let { it.viewPath.pathPart } ?: return RustResolveEngine.ResolveResult.Unresolved
 
-        // this is not necessary a module, e.g.
+        //
+        // This is not necessarily a module, e.g.
         //
         //   ```
         //   fn foo() {}
@@ -174,6 +177,7 @@ private class Resolver {
         //       use foo::{self};
         //   }
         //   ```
+        //
         val baseItem = resolve(basePath).element
 
         // `use foo::{self}`

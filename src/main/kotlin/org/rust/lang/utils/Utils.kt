@@ -1,6 +1,8 @@
 package org.rust.lang.utils
 
 import com.intellij.openapi.Disposable
+import java.util.concurrent.locks.Lock
+import kotlin.concurrent.withLock
 
 /**
  * Cookie-helper allowing to mutate the state of the supplied object (exception-safe).
@@ -31,4 +33,3 @@ public fun <T> using(d: Disposable, block: () -> T): T {
         d.dispose()
     }
 }
-

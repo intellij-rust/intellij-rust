@@ -11,7 +11,7 @@ class RustModReferenceImpl(modDecl: RustModDeclItem)
     , RustReference {
 
     override fun resolve(): RustModItem? =
-        RustResolveEngine.resolveModDecl(element).element as RustModItem
+        RustResolveEngine.resolveModDecl(element).element as RustModItem?
 
     override fun getVariants(): Array<out Any> = EMPTY_ARRAY
 }

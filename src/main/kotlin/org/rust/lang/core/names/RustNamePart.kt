@@ -7,4 +7,10 @@ interface RustNamePart {
      */
     val identifier: String
 
+
+    companion object {
+        fun parse(s: String): RustNamePart {
+            return RustIdNamePart(s)
+        }
+    }
 }
