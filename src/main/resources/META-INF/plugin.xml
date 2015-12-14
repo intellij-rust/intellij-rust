@@ -67,10 +67,14 @@
 
         <lang.findUsagesProvider language="RUST" implementationClass="org.rust.lang.search.RustFindUsagesProvider"/>
 
+        <!-- Indices -->
+
+        <fileBasedIndex implementation="org.rust.lang.index.RustSymbolIndex"/>
+
         <!-- Navigation -->
 
         <gotoClassContributor implementation="org.rust.lang.navigation.goto.RustClassNavigationContributor"/>
-        <gotoSymbolContributor implementation="org.rust.lang.navigation.goto.RustSymbolNavigationContributor"/>
+        <gotoSymbolContributor implementation="org.rust.lang.navigation.goto.RustSymbolContributor"/>
 
         <!-- Annotator -->
 
