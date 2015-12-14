@@ -2,12 +2,9 @@ package org.rust.cargo.project
 
 import com.google.gson.Gson
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutputTypes
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ExternalSystemException
 import com.intellij.openapi.externalSystem.model.ProjectKeys
@@ -20,13 +17,13 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
 import org.apache.commons.lang.StringUtils
 import org.rust.cargo.Cargo
-import org.rust.cargo.project.model.CargoProjectInfo
-import org.rust.cargo.project.settings.CargoExecutionSettings
-import org.rust.cargo.service.CargoInstallationManager
-import org.rust.cargo.util.PlatformUtil
-import org.rust.cargo.project.RustSdkType
 import org.rust.cargo.project.model.CargoPackageInfo
-import org.rust.cargo.project.module.RustModuleType
+import org.rust.cargo.project.model.CargoProjectInfo
+import org.rust.cargo.project.module.RustExecutableModuleType
+import org.rust.cargo.project.module.RustLibraryModuleType
+import org.rust.cargo.project.settings.CargoExecutionSettings
+import org.rust.cargo.util.PlatformUtil
+import org.rust.lang.core.psi.util.RustModules
 import java.io.File
 import java.util.*
 
@@ -105,7 +102,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
                     ModuleData(
                         pkg.name,
                         CargoProjectSystem.ID,
-                        RustModuleType.MODULE_TYPE_ID,
+                        deviseModuleType(pkg),
                         pkg.name,
                         root.absolutePath,
                         root.absolutePath
@@ -170,6 +167,19 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
         }
 
         return projectNode
+    }
+
+    private fun deviseModuleType(pkg: CargoPackageInfo): String {
+        var moduleType: String? = null
+
+        for (t in pkg.targets) {
+            if (t.src_path.endsWith(RustModules.MAIN_RS))
+                moduleType = RustExecutableModuleType.MODULE_TYPE_ID
+            else if (t.src_path.endsWith(RustModules.LIB_RS))
+                moduleType = moduleType ?: RustLibraryModuleType.MODULE_TYPE_ID
+        }
+
+        return moduleType ?: RustExecutableModuleType.MODULE_TYPE_ID
     }
 
     private fun addContentRoots(node: DataNode<ModuleData>, root: File, pkg: CargoPackageInfo) {

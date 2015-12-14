@@ -4,6 +4,8 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.SettingsStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder
+import com.intellij.openapi.module.ModifiableModuleModel
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -14,13 +16,10 @@ import org.rust.lang.icons.RustIcons
 import javax.swing.Icon
 
 
-public class RustModuleBuilder()
+public class RustModuleBuilder(private val moduleType: RustModuleType)
     : AbstractExternalModuleBuilder<CargoProjectSettings>(Cargo.PROJECT_SYSTEM_ID, CargoProjectSettings()) {
 
-    override fun getBuilderId() = "rust.module.builder"
-
-    override fun modifySettingsStep(settingsStep: SettingsStep): ModuleWizardStep? =
-        StdModuleTypes.JAVA!!.modifySettingsStep(settingsStep, this)
+    override fun getBuilderId() = "org.rust.cargo.project.module.builder"
 
     override fun getBigIcon(): Icon = RustIcons.RUST_BIG
 
@@ -28,12 +27,12 @@ public class RustModuleBuilder()
 
     override fun getPresentableName(): String? = "Rust"
 
+    override fun getModuleType(): RustModuleType = moduleType
+
+    override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean = true
+
     override fun createWizardSteps(wizardContext: WizardContext, modulesProvider: ModulesProvider): Array<ModuleWizardStep> =
         moduleType.createWizardSteps(wizardContext, this, modulesProvider)
-
-    override fun getModuleType(): RustModuleType {
-        return RustModuleType.INSTANCE
-    }
 
     override fun setupRootModel(rootModel: ModifiableRootModel?) {
         if (myJdk != null) {
@@ -45,7 +44,7 @@ public class RustModuleBuilder()
         doAddContentEntry(rootModel)
     }
 
-    override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean {
-        return true
+    override fun createModule(moduleModel: ModifiableModuleModel): Module {
+        return super.createModule(moduleModel)
     }
 }

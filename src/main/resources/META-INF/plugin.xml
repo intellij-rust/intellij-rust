@@ -27,8 +27,15 @@
 
         <!-- Rust -->
 
-        <moduleType id="RUST_MODULE" classpathProvider="false"
-                    implementationClass="org.rust.cargo.project.module.RustModuleType"/>
+        <!-- Modules -->
+
+        <moduleType id="RUST_EXECUTABLE_MODULE" classpathProvider="false"
+                    implementationClass="org.rust.cargo.project.module.RustExecutableModuleType"/>
+
+        <moduleType id="RUST_LIBRARY_MODULE" classpathProvider="false"
+                    implementationClass="org.rust.cargo.project.module.RustLibraryModuleType"/>
+
+        <!-- File-type Factory -->
 
         <fileTypeFactory implementation="org.rust.lang.RustFileTypeFactory"/>
 
