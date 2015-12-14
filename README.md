@@ -9,23 +9,12 @@ is highly *unstable* just yet.
 
 ## Installation
 
-We intentionally do not provide a download for the plugin just yet. If you are
-brave enough and want to use the plugin, you have to build it from source. Note that it will download all build dependencies, so make sure you have enough space (one GB should be enough). You need Java 8 and IDEA 15. 
+You can grab the latest build [here](https://teamcity.jetbrains.com/repository/download/IntellijIdeaPlugins_Rust_Tests/.lastSuccessful/IntelliJ%20Rust-0.0.1.{build.number}.zip?guest=1).
+The link contains a zip archive which you can install with `install plugin from disk` action.
+Java 8 and IDEA 15 are required to use the plugin.
+See `Help > About` menu in IDEA to verify that the IDE uses Java 8.
 
-Building:
-
-```
-$ git clone https://github.com/intellij-rust/intellij-rust
-$ cd intellij-rust
-$ ./gradlew buildPlugin
-```
-
-This creates a zip archive in `build/distributions` which you can install with
-`install plugin from disk` action.
-
-To check which version of Java is used by
-  - gradle: run `./gradlew --version`;
-  - IDEA: check `Help > About` menu.
+Check [CONTRIBUTING.md](CONTRIBUTING.md) for instructions on how to build from source.
 
 ## Usage
 

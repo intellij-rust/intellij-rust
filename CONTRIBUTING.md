@@ -9,8 +9,10 @@ cd intellij-rust
 
 ## Building
 
-To build the plugin just navigate to the directory you've previously checked it out and type `./gradlew build`. That's it.  
-
+To build the plugin just navigate to the directory you've previously checked it out and type `./gradlew build`. 
+This creates a zip archive in `build/distributions` which you can install with `install plugin from disk` action.
+If you get `invalid source release: 1.8.` then gradle uses an old Java version.
+To verify that gradle uses Java 8, run `./gradlew --version`.
 
 ## Running
 
