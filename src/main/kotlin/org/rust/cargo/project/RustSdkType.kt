@@ -9,7 +9,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import org.jdom.Element
 import org.rust.cargo.util.PlatformUtil
-import org.rust.lang.icons.RustIcons
+import org.rust.ide.icons.RustIcons
 import java.io.File
 import java.util.concurrent.ExecutionException
 import java.util.regex.Pattern

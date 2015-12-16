@@ -2,7 +2,7 @@ package org.rust.cargo.project.module
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.module.ModuleTypeManager
-import org.rust.lang.icons.RustIcons
+import org.rust.ide.icons.RustIcons
 import javax.swing.Icon
 
 class RustExecutableModuleType : RustModuleType(RustExecutableModuleType.MODULE_TYPE_ID) {

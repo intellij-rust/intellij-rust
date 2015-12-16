@@ -2,7 +2,7 @@ package org.rust.lang
 
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.vfs.VirtualFile
-import org.rust.lang.icons.RustIcons
+import org.rust.ide.icons.RustIcons
 import javax.swing.Icon
 
 object RustFileType : LanguageFileType(RustLanguage) {

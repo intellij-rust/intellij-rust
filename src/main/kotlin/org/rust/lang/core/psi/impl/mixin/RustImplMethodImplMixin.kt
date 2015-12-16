@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Iconable
 import org.rust.lang.core.psi.RustDeclaringElement
 import org.rust.lang.core.psi.RustImplMethod
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
-import org.rust.lang.icons.*
+import org.rust.ide.icons.*
 import javax.swing.Icon
 
 abstract class RustImplMethodImplMixin(node: ASTNode)   : RustNamedElementImpl(node)

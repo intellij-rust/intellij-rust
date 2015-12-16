@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import org.rust.cargo.Cargo
 import org.rust.cargo.project.settings.CargoProjectSettings
-import org.rust.lang.icons.RustIcons
+import org.rust.ide.icons.RustIcons
 import javax.swing.Icon
 
 

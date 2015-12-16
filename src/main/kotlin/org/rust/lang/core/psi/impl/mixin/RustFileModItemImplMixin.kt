@@ -5,7 +5,7 @@ import org.rust.lang.RustFileType
 import org.rust.lang.core.psi.RustFileModItem
 import org.rust.lang.core.psi.impl.RustModItemImpl
 import org.rust.lang.core.psi.util.RustModules
-import org.rust.lang.icons.addVisibilityIcon
+import org.rust.ide.icons.addVisibilityIcon
 import javax.swing.Icon
 
 public abstract class RustFileModItemImplMixin(node: ASTNode) : RustModItemImpl(node)

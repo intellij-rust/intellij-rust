@@ -6,8 +6,8 @@ import org.rust.lang.core.psi.RustDeclaringElement
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.impl.RustItemImpl
 import org.rust.lang.core.psi.util.isPublic
-import org.rust.lang.icons.RustIcons
-import org.rust.lang.icons.addVisibilityIcon
+import org.rust.ide.icons.RustIcons
+import org.rust.ide.icons.addVisibilityIcon
 import javax.swing.Icon
 
 abstract class RustModItemImplMixin(node: ASTNode) : RustItemImpl(node)

@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Iconable
 import org.rust.lang.core.psi.RustTraitMethod
 import org.rust.lang.core.psi.RustTypeMethod
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
-import org.rust.lang.icons.*
+import org.rust.ide.icons.*
 import javax.swing.Icon
 
 

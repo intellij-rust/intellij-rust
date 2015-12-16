@@ -1,6 +1,6 @@
 package org.rust.cargo.project.config
 
-import org.rust.lang.i18n.RustBundle
+import org.rust.ide.i18n.RustBundle
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTextField

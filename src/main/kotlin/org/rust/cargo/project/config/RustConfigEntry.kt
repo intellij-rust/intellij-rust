@@ -4,7 +4,7 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import org.jetbrains.annotations.Nls
-import org.rust.lang.i18n.RustBundle
+import org.rust.ide.i18n.RustBundle
 import javax.swing.JComponent
 
 class RustConfigEntry : Configurable {
