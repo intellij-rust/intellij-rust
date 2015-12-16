@@ -1,4 +1,4 @@
-package org.rust.lang.core.modules
+package org.rust.ide.core.modules
 
 import com.intellij.openapi.module.ModuleComponent
 
