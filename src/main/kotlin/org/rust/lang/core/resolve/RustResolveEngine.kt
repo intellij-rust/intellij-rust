@@ -79,7 +79,7 @@ private class Resolver {
 
         return resolve(name.qualifier!!, crate).element?.let {
             when (it) {
-                is RustResolveScope -> resolveIn(ResolveNonLocalScopesVisitor(name.part.identifier), listOf(it))
+                is RustResolveScope -> resolveIn(listOf(it), by(name))
                 else                -> null
             }
         } ?: RustResolveEngine.ResolveResult.Unresolved
@@ -100,12 +100,12 @@ private class Resolver {
             }
 
             return when (parent) {
-                is RustResolveScope -> resolveIn(ResolveAllScopesVisitor(ref), listOf(parent))
+                is RustResolveScope -> resolveIn(listOf(parent), by(ref))
                 else                -> RustResolveEngine.ResolveResult.Unresolved
             }
         }
 
-        return resolveIn(ResolveAllScopesVisitor(ref), enumerateScopesFor(ref))
+        return resolveIn(enumerateScopesFor(ref), by(ref))
     }
 
     /**
@@ -186,7 +186,7 @@ private class Resolver {
 
         // `use foo::{bar}`
         val scope = baseItem as? RustResolveScope ?: return RustResolveEngine.ResolveResult.Unresolved
-        return resolveIn(ResolveAllScopesVisitor(ref), listOf(scope))
+        return resolveIn(listOf(scope), by(ref))
     }
 
     private fun resolveModulePrefix(ref: RustQualifiedReferenceElement): RustModItem? {
@@ -199,9 +199,52 @@ private class Resolver {
         }
     }
 
-    private fun resolveIn(v: ResolveScopeVisitor, scopes: Iterable<RustResolveScope>): RustResolveEngine.ResolveResult {
+    /**
+     * Hook to compose non-local resolving-context to resolve (ie module-level) _items_ in a
+     * context-free manner: it's essentially just scraping the whole scope seeking for the
+     * given name
+     *
+     * @name name to be sought after
+     */
+    private fun by(name: RustQualifiedName) =
+        ResolveContext.Companion.Trivial(ResolveNonLocalScopesVisitor(name.part.identifier))
+
+    /**
+     * Hook to compose _total_ (ie including both local & non-local) context to resolve
+     * any items, taking into account what lexical point we're particularly looking that name up from,
+     * therefore effectively ignoring items being declared 'lexically-after' lookup-point
+     */
+    private fun by(e: RustNamedElement) =
+        e.name?.let {
+            ResolveContext.Companion.Trivial(ResolveLocalScopesVisitor(e))
+        } ?: ResolveContext.Companion.Empty
+
+    /**
+     * Resolve-context wrapper
+     */
+    interface ResolveContext {
+        fun accept(scope: RustResolveScope): RustNamedElement?
+
+        companion object {
+
+            class Trivial(val v: ResolveScopeVisitor) : ResolveContext {
+                override fun accept(scope: RustResolveScope): RustNamedElement? {
+                    scope.accept(v)
+                    return v.matched
+                }
+            }
+
+            object Empty : ResolveContext {
+                override fun accept(scope: RustResolveScope): RustNamedElement? = null
+            }
+        }
+    }
+
+
+
+    private fun resolveIn(scopes: Iterable<RustResolveScope>, ctx: ResolveContext): RustResolveEngine.ResolveResult {
         for (s in scopes) {
-            s.resolveWith(v)?.let {
+            s.resolveUsing(ctx)?.let {
                 return RustResolveEngine.ResolveResult.Resolved(it)
             }
         }
@@ -306,7 +349,7 @@ private class Resolver {
     /**
      * This particular visitor traverses both local & non-local scopes
      */
-    inner class ResolveAllScopesVisitor(ref: RustNamedElement) : ResolveNonLocalScopesVisitor(ref.name!!) {
+    inner class ResolveLocalScopesVisitor(ref: RustNamedElement) : ResolveNonLocalScopesVisitor(ref.name!!) {
 
         private val context: RustCompositeElement = ref
 
@@ -363,10 +406,7 @@ private fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Iterable<Rus
 }
 
 
-private fun RustResolveScope.resolveWith(v: Resolver.ResolveScopeVisitor): RustNamedElement? {
-    this.accept(v)
-    return v.matched
-}
+private fun RustResolveScope.resolveUsing(c: Resolver.ResolveContext): RustNamedElement? = c.accept(this)
 
 private val RustUseGlob.basePath: RustQualifiedReferenceElement?
     get() = parentOfType<RustUseItem>()?.let { it.viewPath.pathPart }
