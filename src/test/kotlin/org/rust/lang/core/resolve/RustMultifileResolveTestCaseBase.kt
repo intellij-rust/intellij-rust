@@ -27,7 +27,7 @@ abstract class RustMultiFileResolveTestCaseBase : RustResolveTestCaseBase() {
 
     private fun trimDir(path: String): String {
         val idx = path.substring(1).indexOfFirst {
-            it == File.separatorChar
+            it == '/'
         } + 1
         return path.substring(idx)
     }
