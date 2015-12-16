@@ -1,5 +1,5 @@
 FILE
-  RustAnonModItemImpl(ANON_MOD_ITEM)
+  RustFileModItemImpl(FILE_MOD_ITEM)
     RustTypeItemImpl(TYPE_ITEM)
       PsiElement(type)('type')
       PsiWhiteSpace(' ')

@@ -1,5 +1,5 @@
 FILE
-  RustAnonModItemImpl(ANON_MOD_ITEM)
+  RustFileModItemImpl(FILE_MOD_ITEM)
     RustItemMacroImpl(ITEM_MACRO)
       PsiElement(<IDENTIFIER>)('macro_rules')
       PsiElement(!)('!')

@@ -1,5 +1,5 @@
 FILE
-  RustAnonModItemImpl(ANON_MOD_ITEM)
+  RustFileModItemImpl(FILE_MOD_ITEM)
     RustExternFnItemImpl(EXTERN_FN_ITEM)
       PsiElement(extern)('extern')
       PsiWhiteSpace(' ')
