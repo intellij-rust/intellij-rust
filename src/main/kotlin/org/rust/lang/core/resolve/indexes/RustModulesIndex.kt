@@ -1,10 +1,8 @@
-package org.rust.lang.core.modules
+package org.rust.lang.core.resolve.indexes
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.ID
-import org.rust.cargo.project.module.util.rootMod
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.util.getCrate
@@ -14,18 +12,15 @@ interface RustModulesIndex {
 
     companion object {
 
-        val indexID: ID<VirtualFile, RustQualifiedName> = ID.create("org.rust.lang.core.modules.RustModulesIndex")
-
-        fun getInstance(m: Module): RustModulesIndex? =
-            m.getComponent(RustModulesIndex::class.java)
-
+        internal val ID: ID<RustModulePath, RustQualifiedName> =
+            com.intellij.util.indexing.ID.create("org.rust.lang.indexes.RustModulesIndex")
 
         fun getSuperFor(mod: RustModItem): RustModItem? =
-            mod.containingFile.virtualFile?.let {
+            mod.containingFile.let {
                 val crate = mod.getCrate()
                 findByCanonical(
-                    FileBasedIndex.getInstance().getValues(indexID, it, crate.moduleContentScope)
-                                                .single(),
+                    FileBasedIndex.getInstance().getValues(ID, RustModulePath.devise(it), crate.moduleContentScope)
+                                                .firstOrNull(),
                     crate
                 )
             }
@@ -33,6 +28,6 @@ interface RustModulesIndex {
         private fun findByCanonical(name: RustQualifiedName?, crate: Module): RustModItem? =
             name?.let {
                 RustResolveEngine.resolve(name, crate).resolved as RustModItem?
-            } ?: crate.rootMod
+            }
     }
 }

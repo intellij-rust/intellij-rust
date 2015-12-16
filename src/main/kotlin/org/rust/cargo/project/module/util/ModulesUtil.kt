@@ -2,6 +2,8 @@ package org.rust.cargo.project.module.util
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import org.rust.cargo.project.module.RustExecutableModuleType
@@ -11,7 +13,6 @@ import org.rust.lang.core.psi.impl.RustFileImpl
 import org.rust.lang.core.psi.util.RustModules
 
 object ModulesUtil
-
 
 fun Module.getSourceRoots(includingTestRoots: Boolean = false): Collection<VirtualFile> =
     ModuleRootManager.getInstance(this).getSourceRoots(includingTestRoots).toList()
@@ -33,3 +34,15 @@ val Module.rootMod: RustModItem?
             }
         }
     }
+
+fun Module.relativise(f: VirtualFile): String? =
+    getSourceRoots()
+        .find {
+            FileUtil.isAncestor(it.path, f.path, /* strict = */ false)
+        }
+        ?.let {
+            FileUtil.getRelativePath(
+                VfsUtil.virtualToIoFile(it),
+                VfsUtil.virtualToIoFile(f)
+            )
+        }

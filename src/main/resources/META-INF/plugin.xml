@@ -177,7 +177,7 @@
 
         <!-- Indices -->
 
-        <fileBasedIndex implementation="org.rust.lang.core.modules.RustModulesIndexExtension"/>
+        <fileBasedIndex implementation="org.rust.lang.core.resolve.indexes.RustModulesIndexExtension"/>
 
     </extensions>
 
