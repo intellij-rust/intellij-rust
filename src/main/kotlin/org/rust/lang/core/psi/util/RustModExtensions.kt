@@ -4,8 +4,9 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.util.getCrateSourceRootFor
-import org.rust.lang.core.modules.RustModulesIndex
-import org.rust.lang.core.names.RustIdNamePart
+import org.rust.lang.core.resolve.indexes.RustModulesIndex
+import org.rust.lang.core.names.RustAnonymousId
+import org.rust.lang.core.names.parts.RustIdNamePart
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.RustModItem
@@ -26,7 +27,7 @@ object RustModules {
  */
 public val RustModItem.canonicalName: RustQualifiedName?
     get() = if (!isCrateRoot)   name?.let { RustQualifiedName(RustIdNamePart(it), `super`?.canonicalName) }
-            else                null
+            else RustAnonymousId
 
 /**
  *  Returns a parent module (`super::` in paths).

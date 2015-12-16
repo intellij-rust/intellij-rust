@@ -3,6 +3,7 @@ package org.rust.lang.core.resolve
 import com.intellij.openapi.module.Module
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.module.util.rootMod
+import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFileImpl
@@ -73,17 +74,15 @@ private class Resolver {
      * For more details check out `RustResolveEngine.resolve`
      */
     fun resolve(name: RustQualifiedName, crate: Module): RustResolveEngine.ResolveResult {
-        val qual = name.qualifier
-        if (qual != null) {
-            resolve(qual, crate).element?.let {
-                return when (it) {
-                    is RustResolveScope -> resolveIn(ResolveNonLocalScopesVisitor(name.part.identifier), listOf(it))
-                    else                -> RustResolveEngine.ResolveResult.Unresolved
-                }
-            }
-        }
+        if (name == RustAnonymousId)
+            return RustResolveEngine.ResolveResult.Resolved(crate.rootMod!!)
 
-        return resolveIn(ResolveNonLocalScopesVisitor(name.part.identifier), listOf(crate.rootMod!!))
+        return resolve(name.qualifier!!, crate).element?.let {
+            when (it) {
+                is RustResolveScope -> resolveIn(ResolveNonLocalScopesVisitor(name.part.identifier), listOf(it))
+                else                -> null
+            }
+        } ?: RustResolveEngine.ResolveResult.Unresolved
     }
 
     /**
