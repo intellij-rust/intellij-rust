@@ -1,7 +1,12 @@
 package org.rust.lang.core.names
 
+import com.intellij.util.io.IOUtil
 import org.rust.lang.core.names.parts.RustIdNamePart
 import org.rust.lang.core.names.parts.RustNamePart
+import org.rust.lang.core.resolve.indexes.RustModulePath
+import java.io.DataInput
+import java.io.DataOutput
+import java.util.stream.IntStream
 
 /**
  * Abstract qualified-name representation serving purposes of
@@ -12,19 +17,25 @@ import org.rust.lang.core.names.parts.RustNamePart
  * @name        Non-qualified name-part
  * @qualifier   Qualified name-part
  */
-open class RustQualifiedName(val part: RustNamePart, val qualifier: RustQualifiedName? = null) {
+open class RustQualifiedName(open val part: RustNamePart, open val qualifier: RustQualifiedName? = null) {
 
     override fun toString(): String =
         "${qualifier?.toString()}::${part.toString()}"
 
-    companion object {
+    val tip: RustQualifiedName?
+        get() {
+            var tip: RustQualifiedName? = this
+            while (qualifier != null)
+                tip = qualifier
 
-        fun parse(s: String): RustQualifiedName? {
-            return s.split("::").fold(RustAnonymousId as RustQualifiedName, {
-                qual, part -> RustQualifiedName(RustIdNamePart.parse(part), qual)
-            })
+            return tip
         }
 
+    fun remove(head: RustQualifiedName): RustQualifiedName? {
+        return when (!equals(head)) {
+            true -> RustQualifiedName(part, qualifier?.remove(head))
+            else -> null
+        }
     }
 
 }
