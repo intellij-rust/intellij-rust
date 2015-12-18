@@ -12,7 +12,7 @@ import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.impl.RustFileImpl
 import org.rust.lang.core.psi.util.RustModules
 
-object ModulesUtil
+object RustCrateUtil
 
 fun Module.getSourceRoots(includingTestRoots: Boolean = false): Collection<VirtualFile> =
     ModuleRootManager.getInstance(this).getSourceRoots(includingTestRoots).toList()
@@ -41,8 +41,5 @@ fun Module.relativise(f: VirtualFile): String? =
             FileUtil.isAncestor(it.path, f.path, /* strict = */ false)
         }
         ?.let {
-            FileUtil.getRelativePath(
-                VfsUtil.virtualToIoFile(it),
-                VfsUtil.virtualToIoFile(f)
-            )
+            FileUtil.getRelativePath(it.canonicalPath!!, f.canonicalPath!!, '/')
         }

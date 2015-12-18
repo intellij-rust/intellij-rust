@@ -5,14 +5,14 @@ import com.intellij.psi.PsiManager
 import com.intellij.util.containers.HashMap
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
-import com.intellij.util.io.IOUtil
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.RustFileType
+import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.RustVisitor
 import org.rust.lang.core.psi.impl.RustFileImpl
-import org.rust.lang.core.psi.util.canonicalName
+import org.rust.lang.core.psi.util.canonicalNameInFile
 import org.rust.lang.core.psi.util.modDecls
 import java.io.DataInput
 import java.io.DataOutput
@@ -38,14 +38,14 @@ class RustModulesIndexExtension : FileBasedIndexExtension<RustModulePath, RustQu
 
         val keyDescriptor = object: KeyDescriptor<RustModulePath> {
 
-            override fun read(`in`: DataInput): RustModulePath? =
-                RustModulePath.readFrom(`in`)
-
             override fun save(out: DataOutput, path: RustModulePath?) {
                 path?.let {
-                    RustModulePath.writeTo(it, out)
+                    RustModulePath.writeTo(out, it)
                 }
             }
+
+            override fun read(`in`: DataInput): RustModulePath? =
+                RustModulePath.readFrom(`in`)
 
             override fun isEqual(one: RustModulePath?, other: RustModulePath?): Boolean =
                 one?.equals(other) ?: one == other
@@ -55,12 +55,20 @@ class RustModulesIndexExtension : FileBasedIndexExtension<RustModulePath, RustQu
 
         val valueExternalizer = object: DataExternalizer<RustQualifiedName> {
 
-            override fun save(out: DataOutput, value: RustQualifiedName?) {
-                value?.let { IOUtil.writeUTF(out, it.toString()) }
+            override fun save(out: DataOutput, name: RustQualifiedName?) {
+                name?.let({
+                    val tip = it as RustFileModuleId
+
+                    RustModulePath      .writeTo(out, tip.part.path)
+                    RustQualifiedName   .writeTo(out, name.remove(tip)!!)
+                })
             }
 
             override fun read(`in`: DataInput): RustQualifiedName? {
-                return RustQualifiedName.parse(IOUtil.readUTF(`in`))
+                val path = RustModulePath   .readFrom(`in`)
+                val name = RustQualifiedName.readFrom(`in`)
+
+                return name?.put(path?.let { RustFileModuleId(it) })
             }
 
         }
@@ -107,7 +115,7 @@ class RustModulesIndexExtension : FileBasedIndexExtension<RustModulePath, RustQu
                     }
 
                     if (resolved.size > 0)
-                        raw.put(m.canonicalName, resolved)
+                        m.canonicalNameInFile?.let { raw.put(it, resolved) }
 
                     m.acceptChildren(this)
                 }

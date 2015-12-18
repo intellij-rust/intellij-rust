@@ -4,13 +4,14 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.util.getCrateSourceRootFor
-import org.rust.lang.core.resolve.indexes.RustModulesIndex
 import org.rust.lang.core.names.RustAnonymousId
-import org.rust.lang.core.names.parts.RustIdNamePart
+import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
+import org.rust.lang.core.names.parts.RustIdNamePart
 import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.RustUseItem
+import org.rust.lang.core.resolve.indexes.RustModulesIndex
 
 
 object RustModules {
@@ -26,8 +27,19 @@ object RustModules {
  * NOTE: That this is unique (since its a _tree_) for any particular module
  */
 public val RustModItem.canonicalName: RustQualifiedName?
-    get() = if (!isCrateRoot)   name?.let { RustQualifiedName(RustIdNamePart(it), `super`?.canonicalName) }
-            else RustAnonymousId
+    get() =
+        when (isCrateRoot) {
+            true -> RustAnonymousId
+            else -> name?.let { RustQualifiedName(RustIdNamePart(it), `super`?.canonicalName) }
+        }
+
+
+public val RustModItem.canonicalNameInFile: RustQualifiedName?
+    get() =
+        when (containingMod) {
+            null -> containingFile.modulePath?.let  { RustFileModuleId(it) }
+            else -> name?.let                       { RustQualifiedName(RustIdNamePart(it), `super`?.canonicalName) }
+        }
 
 /**
  *  Returns a parent module (`super::` in paths).

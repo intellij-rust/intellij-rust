@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.module.util.rootMod
 import org.rust.lang.core.names.RustAnonymousId
+import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFileImpl
@@ -41,7 +42,9 @@ object RustResolveEngine {
      *       therefore none of them may contain `super`, `self` references
      */
     fun resolve(name: RustQualifiedName, crate: Module): ResolveResult =
-        Resolver().resolve(name, crate)
+        crate.rootMod?.let { crateRoot ->
+            Resolver().resolve(name, crateRoot)
+        } ?: ResolveResult.Unresolved
 
     /**
      * Resolves `qualified-reference` bearing PSI-elements
@@ -73,11 +76,16 @@ private class Resolver {
      *
      * For more details check out `RustResolveEngine.resolve`
      */
-    fun resolve(name: RustQualifiedName, crate: Module): RustResolveEngine.ResolveResult {
-        if (name == RustAnonymousId)
-            return RustResolveEngine.ResolveResult.Resolved(crate.rootMod!!)
+    fun resolve(name: RustQualifiedName, root: RustModItem): RustResolveEngine.ResolveResult {
+        if (name == RustAnonymousId) {
+            return RustResolveEngine.ResolveResult.Resolved(root)
+        } else if (name is RustFileModuleId) {
+            return name.part.path.findModuleIn(root.project)?.let {
+                RustResolveEngine.ResolveResult.Resolved(it)
+            } ?: RustResolveEngine.ResolveResult.Unresolved
+        }
 
-        return resolve(name.qualifier!!, crate).element?.let {
+        return resolve(name.qualifier!!, root).element?.let {
             when (it) {
                 is RustResolveScope -> resolveIn(listOf(it), by(name))
                 else                -> null

@@ -6,6 +6,7 @@ import com.intellij.util.indexing.ID
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.util.getCrate
+import org.rust.lang.core.psi.util.modulePath
 import org.rust.lang.core.resolve.RustResolveEngine
 
 interface RustModulesIndex {
@@ -16,18 +17,21 @@ interface RustModulesIndex {
             com.intellij.util.indexing.ID.create("org.rust.lang.indexes.RustModulesIndex")
 
         fun getSuperFor(mod: RustModItem): RustModItem? =
-            mod.containingFile.let {
+            mod.containingFile.let { file ->
                 val crate = mod.getCrate()
-                findByCanonical(
-                    FileBasedIndex.getInstance().getValues(ID, RustModulePath.devise(it), crate.moduleContentScope)
-                                                .firstOrNull(),
-                    crate
-                )
+
+                file.modulePath?.let { path ->
+                    findByHeterogeneous(
+                        FileBasedIndex.getInstance().getValues(ID, path, crate.moduleContentScope)
+                            .firstOrNull(),
+                        crate
+                    )
+                }
             }
 
-        private fun findByCanonical(name: RustQualifiedName?, crate: Module): RustModItem? =
-            name?.let {
-                RustResolveEngine.resolve(name, crate).resolved as RustModItem?
+        private fun findByHeterogeneous(path: RustQualifiedName?, crate: Module): RustModItem? =
+            path?.let {
+                RustResolveEngine.resolve(path, crate).resolved as RustModItem?
             }
     }
 }

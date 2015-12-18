@@ -4,9 +4,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.rust.lang.core.lexer.RustTokenElementTypes
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.visitors.RecursiveRustVisitor
+import org.rust.lang.core.resolve.indexes.RustModulePath
 
 
 //
@@ -54,6 +56,10 @@ fun PsiElement.isBefore(anchor: Int): Boolean = textOffset < anchor
 
 fun PsiElement.getCrate(): Module =
     ModuleUtilCore.findModuleForPsiElement(this)!!
+
+
+val PsiFile.modulePath: RustModulePath?
+    get() = RustModulePath.devise(this)
 
 
 //

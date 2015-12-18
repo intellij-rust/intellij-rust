@@ -1,11 +1,14 @@
 package org.rust.lang.core.resolve.indexes
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.util.io.IOUtil
+import org.rust.cargo.project.module.util.getSourceRoots
 import org.rust.cargo.project.module.util.relativise
+import org.rust.lang.core.psi.RustFileModItem
+import org.rust.lang.core.psi.impl.RustFileImpl
 import org.rust.lang.core.psi.util.getCrate
 import java.io.DataInput
 import java.io.DataOutput
@@ -14,9 +17,22 @@ import java.util.*
 /**
  * URI for the particular module of the Crate
  */
-data class RustModulePath(private val name: String, val path: String) {
+data class RustModulePath private constructor (private val name: String, val path: String) {
 
-    fun findModuleIn(p: Project): Module? = ModuleManager.getInstance(p).findModuleByName(name)
+    fun findModuleIn(p: Project): RustFileModItem? =
+        run {
+            ModuleManager.getInstance(p).findModuleByName(name)?.let { crate ->
+                crate.getSourceRoots(includingTestRoots = true)
+                    .mapNotNull { sourceRoot ->
+                        sourceRoot.findChild(path)
+                    }
+                    .firstOrNull()
+                   ?.let {
+                       PsiManager.getInstance(p).findFile(it)
+                   }
+            } as? RustFileImpl
+        }
+            ?.let { it.mod as RustFileModItem }
 
     override fun hashCode(): Int =
         Objects.hash(name, path)
@@ -28,20 +44,22 @@ data class RustModulePath(private val name: String, val path: String) {
 
     companion object {
 
-        fun devise(f: PsiFile): RustModulePath = f.getCrate().let {
-            RustModulePath(it.name, it.relativise(f.virtualFile ?: f.viewProvider.virtualFile)!!)
+        fun devise(f: PsiFile): RustModulePath? =
+            f.getCrate().let { crate ->
+                crate.relativise(f.virtualFile ?: f.viewProvider.virtualFile)?.let { path ->
+                    RustModulePath(crate.name, path)
+                }
+            }
+
+        fun writeTo(out: DataOutput, path: RustModulePath) {
+            IOUtil.writeUTF(out, path.name)
+            IOUtil.writeUTF(out, path.path)
         }
 
-        fun readFrom(`in`: DataInput): RustModulePath =
-            RustModulePath(
-                name = IOUtil.readUTF(`in`),
-                path = IOUtil.readUTF(`in`)
-            )
-
-        fun writeTo(p: RustModulePath, out: DataOutput): Unit {
-            IOUtil.writeUTF(out, p.name)
-            IOUtil.writeUTF(out, p.path);
+        fun readFrom(`in`: DataInput): RustModulePath? {
+            return RustModulePath(IOUtil.readUTF(`in`), IOUtil.readUTF(`in`))
         }
+
     }
 }
 
