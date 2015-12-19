@@ -6,7 +6,7 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.util.SystemInfo
 
-object Platform {
+object PlatformUtil {
 
     /**
      * Adjusts filename to become canonical executable one (adding 'exe' extension on Windows, for example)

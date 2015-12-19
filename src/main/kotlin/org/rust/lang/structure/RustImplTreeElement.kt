@@ -5,7 +5,7 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import org.rust.lang.core.psi.RustImplItem
 import org.rust.lang.core.psi.RustImplMethod
 import org.rust.lang.core.psi.RustTypeSum
-import org.rust.lang.core.psi.util.RecursiveRustVisitor
+import org.rust.lang.core.psi.visitors.RecursiveRustVisitor
 
 class RustImplTreeElement(element: RustImplItem) : PsiTreeElementBase<RustImplItem>(element) {
 

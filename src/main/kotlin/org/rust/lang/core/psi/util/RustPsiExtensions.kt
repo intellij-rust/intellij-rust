@@ -1,9 +1,14 @@
 package org.rust.lang.core.psi.util
 
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.rust.lang.core.lexer.RustTokenElementTypes
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.visitors.RecursiveRustVisitor
+import org.rust.lang.core.resolve.indexes.RustModulePath
 
 
 //
@@ -38,8 +43,28 @@ val PsiElement.parentRelativeRange: TextRange?
         TextRange(startOffsetInParent, startOffsetInParent + textLength)
     }
 
+/**
+ * Utility checking whether this particular element precedes the other one
+ */
 fun PsiElement.isBefore(other: PsiElement): Boolean = textOffset < other.textOffset
 
+/**
+ * Utility checking whether this particular element precedes text-anchor (offset)
+ */
+fun PsiElement.isBefore(anchor: Int): Boolean = textOffset < anchor
+
+
+fun PsiElement.getCrate(): Module =
+    ModuleUtilCore.findModuleForPsiElement(this)!!
+
+
+val PsiFile.modulePath: RustModulePath?
+    get() = RustModulePath.devise(this)
+
+
+//
+// TODO(kudinkin): move
+//
 
 val RustPat.boundElements: List<RustNamedElement>
     get() {

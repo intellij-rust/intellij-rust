@@ -1,7 +1,7 @@
 FILE
   PsiComment(<EOL_COMMENT>)('// #1')
   PsiWhiteSpace('\n')
-  RustAnonModItemImpl(ANON_MOD_ITEM)
+  RustFileModItemImpl(FILE_MOD_ITEM)
     RustUseItemImpl(USE_ITEM)
       PsiElement(use)('use')
       PsiWhiteSpace(' ')

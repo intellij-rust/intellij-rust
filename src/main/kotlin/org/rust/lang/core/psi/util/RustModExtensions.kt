@@ -3,10 +3,15 @@ package org.rust.lang.core.psi.util
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.cargo.project.util.getCrateSourceRootFor
+import org.rust.lang.core.names.RustAnonymousId
+import org.rust.lang.core.names.RustFileModuleId
+import org.rust.lang.core.names.RustQualifiedName
+import org.rust.lang.core.names.parts.RustIdNamePart
 import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.RustUseItem
-import org.rust.lang.core.psi.impl.RustFileImpl
+import org.rust.lang.core.resolve.indexes.RustModulesIndex
 
 
 object RustModules {
@@ -15,24 +20,70 @@ object RustModules {
     val MOD_RS  = "mod.rs"
 }
 
-private val RustModItem.modDir: PsiDirectory?
+/**
+ * Seals down canonical-path inside the module-tree of the particular
+ * crate
+ *
+ * NOTE: That this is unique (since its a _tree_) for any particular module
+ */
+public val RustModItem.canonicalName: RustQualifiedName?
+    get() =
+        when (isCrateRoot) {
+            true -> RustAnonymousId
+            else -> name?.let { RustQualifiedName(RustIdNamePart(it), `super`?.canonicalName) }
+        }
+
+
+public val RustModItem.canonicalNameInFile: RustQualifiedName?
+    get() =
+        when (containingMod) {
+            null -> containingFile.modulePath?.let  { RustFileModuleId(it) }
+            else -> name?.let                       { RustQualifiedName(RustIdNamePart(it), `super`?.canonicalName) }
+        }
+
+/**
+ *  Returns a parent module (`super::` in paths).
+ *
+ *  The parent module may be in the same or other file.
+ *
+ *  Reference:
+ *    https://doc.rust-lang.org/reference.html#paths
+ */
+public val RustModItem.`super`: RustModItem?
     get() {
-        val parent = containingMod ?: return containingFile.parent
+        if (isCrateRoot) return null
 
-        val name = this.name ?: return null
+        val self = this
+        val superInFile = self.containingMod
+        if (superInFile != null)
+            return superInFile
 
-        return parent.modDir?.findSubdirectory(name)
+        return RustModulesIndex.getSuperFor(self)
     }
 
+internal val RustModItem.ownsDirectory: Boolean
+    get() = containingMod != null /* Any inline nested module owns a directory */
+        ||  containingFile.name == RustModules.MOD_RS
+        ||  isCrateRoot
+
+internal val RustModItem.ownedDirectory: PsiDirectory?
+    get() {
+        if (!ownsDirectory) return null
+
+        val parent  = containingMod ?: return containingFile.parent
+        val name    = this.name     ?: return null
+
+        return parent.ownedDirectory?.findSubdirectory(name)
+    }
 
 private val RustModItem.isCrateRoot: Boolean
-    get() = containingMod == null &&
-        (containingFile.name == RustModules.MAIN_RS || containingFile.name == RustModules.LIB_RS)
-
-internal val RustModItem.ownsDirectory: Boolean
-    get() =     containingMod != null // any inline nested module owns a directory
-            ||  containingFile.name == RustModules.MOD_RS
-            ||  isCrateRoot
+    get() {
+        val file = containingFile.virtualFile
+        val containingDir = file.parent
+        return project.getCrateSourceRootFor(file)?.let {
+            it.equals(containingDir) && (containingFile.name == RustModules.MAIN_RS || containingFile.name == RustModules.LIB_RS)
+        } ?: false
+    }
 
 val RustModItem.modDecls: Collection<RustModDeclItem>
     get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
@@ -40,42 +91,7 @@ val RustModItem.modDecls: Collection<RustModDeclItem>
 val RustModItem.useDeclarations: Collection<RustUseItem>
     get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustUseItem::class.java)
 
-
-sealed class ChildModFile {
-    val mod: RustModItem?
-        get() = when (this) {
-            is Found -> (file as? RustFileImpl)?.mod
-            else -> null
-        }
-
-    class NotFound(val suggestedName: String? = null) : ChildModFile()
-    class Found(val file: PsiFile) : ChildModFile()
-    class Ambiguous(val paths: Collection<PsiFile>) : ChildModFile()
-}
-
-val RustModDeclItem.moduleFile: ChildModFile
-    get() {
-        val parent = containingMod
-        val name = name
-        if (parent == null || name == null || !parent.ownsDirectory) {
-            return ChildModFile.NotFound()
-        }
-
-        val dir = parent.modDir
-        val dirMod = dir?.findSubdirectory(name)?.findFile(RustModules.MOD_RS)
-        val fileName = "$name.rs"
-        val fileMod = dir?.findFile(fileName)
-
-        val variants = listOf(fileMod, dirMod).filterNotNull()
-
-        return when (variants.size) {
-            0    -> ChildModFile.NotFound(fileName)
-            1    -> ChildModFile.Found(variants.single())
-            else -> ChildModFile.Ambiguous(variants)
-        }
-    }
-
-fun RustModDeclItem.createModuleFile(): PsiFile? {
-    val child = moduleFile as? ChildModFile.NotFound ?: return null
-    return containingMod?.modDir?.createFile(child.suggestedName ?: return null)
+fun RustModDeclItem.getOrCreateModuleFile(): PsiFile? {
+    return  reference!!.resolve()?.let { it.containingFile } ?:
+            containingMod?.ownedDirectory?.createFile(name ?: return null)
 }

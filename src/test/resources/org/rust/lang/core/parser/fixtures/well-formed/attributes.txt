@@ -1,5 +1,5 @@
 FILE
-  RustAnonModItemImpl(ANON_MOD_ITEM)
+  RustFileModItemImpl(FILE_MOD_ITEM)
     PsiElement(<SHEBANG_LINE>)('#!/she-bang line')
     PsiWhiteSpace('\n')
     PsiComment(<EOL_COMMENT>)('//inner attributes')

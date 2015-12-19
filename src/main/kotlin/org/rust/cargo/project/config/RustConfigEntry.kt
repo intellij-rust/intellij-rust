@@ -8,9 +8,10 @@ import org.rust.lang.i18n.RustBundle
 import javax.swing.JComponent
 
 class RustConfigEntry : Configurable {
+
+    private val config = ServiceManager.getService(RustConfigService::class.java).state
+
     private var form: RustConfigForm? = null
-    private val configService = ServiceManager.getService(RustConfigService::class.java)
-    private val config = configService.state
 
     @Nls
     override fun getDisplayName(): String {
@@ -23,20 +24,23 @@ class RustConfigEntry : Configurable {
 
     override fun createComponent(): JComponent? {
         form = RustConfigForm()
-		return form
+        return form
     }
 
-    override fun isModified(): Boolean {
-        return config.cargoBinary != form!!.cargoBinary
-    }
+    override fun isModified(): Boolean =
+        form?.let { f -> config.cargoBinary != f.cargoBinary } ?: false
 
     @Throws(ConfigurationException::class)
     override fun apply() {
-        config.cargoBinary = form!!.cargoBinary
+        form?.let { f ->
+            config.cargoBinary = form!!.cargoBinary
+        }
     }
 
     override fun reset() {
-        form!!.cargoBinary = config.cargoBinary
+        form?.let { f ->
+            f.cargoBinary = config.cargoBinary
+        }
     }
 
     override fun disposeUIResources() {

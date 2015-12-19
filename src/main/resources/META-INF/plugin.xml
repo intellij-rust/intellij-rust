@@ -27,10 +27,19 @@
 
         <!-- Rust -->
 
-        <moduleType id="RUST_MODULE" classpathProvider="false"
-                    implementationClass="org.rust.cargo.project.module.RustModuleType"/>
+        <!-- Modules -->
+
+        <moduleType id="RUST_EXECUTABLE_MODULE" classpathProvider="false"
+                    implementationClass="org.rust.cargo.project.module.RustExecutableModuleType"/>
+
+        <moduleType id="RUST_LIBRARY_MODULE" classpathProvider="false"
+                    implementationClass="org.rust.cargo.project.module.RustLibraryModuleType"/>
+
+        <!-- File-type Factory -->
 
         <fileTypeFactory implementation="org.rust.lang.RustFileTypeFactory"/>
+
+        <!-- Parser -->
 
         <lang.parserDefinition language="RUST" implementationClass="org.rust.lang.core.RustParserDefinition"/>
 
@@ -166,15 +175,23 @@
 
         <iconProvider implementation="org.rust.cargo.icons.CargoIconProvider"/>
 
+        <!-- Indices -->
+
+        <fileBasedIndex implementation="org.rust.lang.core.resolve.indexes.RustModulesIndexExtension"/>
+
     </extensions>
 
     <application-components>
-        <!-- Add your application components here -->
+        <!-- Add your project components here -->
     </application-components>
 
     <project-components>
         <!-- Add your project components here -->
     </project-components>
+
+    <module-components>
+        <!-- Add your modules components here -->
+    </module-components>
 
     <actions>
         <action class="org.rust.lang.actions.RustCreateFileAction" id="Rust.NewRustFile" text="Rust File"

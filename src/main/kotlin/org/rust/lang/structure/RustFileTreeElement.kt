@@ -40,8 +40,8 @@ class RustFileTreeElement(file: RustFileImpl) : PsiTreeElementBase<RustFileImpl>
                 result += RustModTreeElement(o)
             }
 
-            override fun visitAnonModItem(o: RustAnonModItem) {
-                result += RustAnonModTreeElement(o)
+            override fun visitFileModItem(o: RustFileModItem) {
+                result += RustFileModTreeElement(o)
             }
         })
         return result;

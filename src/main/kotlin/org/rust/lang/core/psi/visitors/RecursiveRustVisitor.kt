@@ -1,4 +1,4 @@
-package org.rust.lang.core.psi.util
+package org.rust.lang.core.psi.visitors
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustVisitor
