@@ -42,12 +42,12 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
         try {
             val processOut =
                 PlatformUtil.runExecutableWith(
-                    settings!!.cargoExecutable,
+                    RustSdkType.CARGO_BINARY_NAME,
                     arrayListOf(
                         RustSdkType.CARGO_METADATA_SUBCOMMAND,
                         "--output-format",  "json",
                         "--manifest-path",  File(projectPath, Cargo.BUILD_FILE).absolutePath,
-                        "--features",       StringUtils.join(settings.features, ",")
+                        "--features",       StringUtils.join(settings!!.features, ",")
                     ),
                     object : ProcessAdapter() {
                         override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
