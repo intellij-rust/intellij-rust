@@ -9,6 +9,6 @@ class RustMultiFileResolveTestCaseLibraryTarget : RustMultiFileResolveTestCaseBa
     override val moduleType: ModuleType<*>
         get() = RustLibraryModuleType.INSTANCE
 
-    fun testGlobalPath()    = doTest("global_path/foo.rs", "global_path/lib.rs", "global_path/bar.rs")
-    fun testUseViewPath()   = doTest("global_path/foo.rs", "global_path/lib.rs", "global_path/bar.rs")
+    fun testGlobalPath()    = doTestResolved("global_path/foo.rs", "global_path/lib.rs", "global_path/bar.rs")
+    fun testUseViewPath()   = doTestResolved("global_path/foo.rs", "global_path/lib.rs", "global_path/bar.rs")
 }

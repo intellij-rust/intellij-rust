@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import org.assertj.core.api.Assertions.assertThat
+import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.resolve.ref.RustReference
 import java.io.File
 
@@ -38,15 +39,21 @@ abstract class RustMultiFileResolveTestCaseBase : RustResolveTestCaseBase() {
         );
     }
 
-    protected fun doTest(vararg files: String) {
-        // myFixture.configureByFiles(*files)
+    protected fun doTestResolved(vararg files: String) {
+        assertThat(configureAndResolve(*files)).isNotNull()
+    }
+
+    protected fun doTestUnresolved(vararg files: String) {
+        assertThat(configureAndResolve(*files)).isNull()
+    }
+
+    protected fun configureAndResolve(vararg files: String): RustNamedElement? {
         files.reversed().forEach {
             configureByFile(it)
         }
 
         val usage = file.findReferenceAt(myFixture.caretOffset)!! as RustReference
-        val declaration = usage.resolve()
 
-        assertThat(declaration).isNotNull()
+        return usage.resolve()
     }
 }
