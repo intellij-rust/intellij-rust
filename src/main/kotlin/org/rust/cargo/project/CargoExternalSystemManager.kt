@@ -17,8 +17,6 @@ import com.intellij.util.Function
 import com.intellij.util.PathUtil
 import org.apache.commons.lang.StringUtils
 import org.rust.cargo.project.settings.*
-import org.rust.cargo.project.config.RustConfigService
-
 import java.net.URL
 
 class CargoExternalSystemManager : ExternalSystemAutoImportAware,
@@ -70,7 +68,6 @@ class CargoExternalSystemManager : ExternalSystemAutoImportAware,
     companion object {
         internal fun executionSettingsFor(project: Project, path: String): CargoExecutionSettings {
             return CargoExecutionSettings(
-                    ServiceManager.getService(RustConfigService::class.java).state.cargoBinary,
                     ServiceManager.getService(project, CargoProjectSettings::class.java).features)
         }
     }

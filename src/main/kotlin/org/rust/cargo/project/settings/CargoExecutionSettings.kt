@@ -2,7 +2,7 @@ package org.rust.cargo.project.settings
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings
 
-class CargoExecutionSettings(var cargoExecutable: String, var features: List<String>) : ExternalSystemExecutionSettings() {
+class CargoExecutionSettings(var features: List<String>) : ExternalSystemExecutionSettings() {
 
     override fun equals(other: Any?): Boolean{
         if (this === other) return true
@@ -11,7 +11,6 @@ class CargoExecutionSettings(var cargoExecutable: String, var features: List<Str
 
         other as CargoExecutionSettings
 
-        if (cargoExecutable != other.cargoExecutable) return false
         if (features != other.features) return false
 
         return true
@@ -19,7 +18,6 @@ class CargoExecutionSettings(var cargoExecutable: String, var features: List<Str
 
     override fun hashCode(): Int{
         var result = super.hashCode()
-            result += 31 * result + cargoExecutable.hashCode()
             result += 31 * result + features.hashCode()
 
         return result
