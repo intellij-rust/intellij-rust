@@ -5,8 +5,8 @@ import com.intellij.openapi.util.Iconable
 import org.rust.lang.core.psi.RustStructItem
 import org.rust.lang.core.psi.impl.RustItemImpl
 import org.rust.lang.core.psi.util.isPublic
-import org.rust.lang.icons.RustIcons
-import org.rust.lang.icons.addVisibilityIcon
+import org.rust.ide.icons.RustIcons
+import org.rust.ide.icons.addVisibilityIcon
 import javax.swing.Icon
 
 abstract class RustStructItemImplMixin(node: ASTNode): RustItemImpl(node), RustStructItem {

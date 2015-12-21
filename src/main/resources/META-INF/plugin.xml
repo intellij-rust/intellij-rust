@@ -49,82 +49,83 @@
 
         <!-- Syntax Highlighter -->
 
-        <lang.syntaxHighlighterFactory language="RUST" implementationClass="org.rust.lang.highlight.syntax.RustHighlighterFactory"/>
+        <lang.syntaxHighlighterFactory language="RUST" implementationClass="org.rust.ide.highlight.syntax.RustHighlighterFactory"/>
 
         <!-- Formatter -->
 
-        <lang.formatter language="RUST" implementationClass="org.rust.lang.formatter.RustFormattingModelBuilder"/>
+        <lang.formatter language="RUST" implementationClass="org.rust.ide.formatter.RustFormattingModelBuilder"/>
 
         <!-- Commenter -->
 
-        <lang.commenter language="RUST" implementationClass="org.rust.lang.commenter.RustCommenter"/>
+        <lang.commenter language="RUST" implementationClass="org.rust.ide.commenter.RustCommenter"/>
+
         <!-- Matchers -->
 
-        <lang.braceMatcher language="RUST" implementationClass="org.rust.lang.highlight.matcher.RustBraceMatcher"/>
-        <lang.quoteHandler language="RUST" implementationClass="org.rust.lang.highlight.RustQuoteHandler"/>
+        <lang.braceMatcher language="RUST" implementationClass="org.rust.ide.highlight.matcher.RustBraceMatcher"/>
+        <lang.quoteHandler language="RUST" implementationClass="org.rust.ide.highlight.RustQuoteHandler"/>
 
         <!-- Doc-Provider -->
 
-        <lang.documentationProvider language="RUST" implementationClass="org.rust.lang.documentation.RustDocumentationProvider"/>
+        <lang.documentationProvider language="RUST" implementationClass="org.rust.ide.documentation.RustDocumentationProvider"/>
 
         <!-- Structure View -->
 
         <lang.psiStructureViewFactory language="RUST"
-                                      implementationClass="org.rust.lang.structure.RustPsiStructureViewFactory"/>
+                                      implementationClass="org.rust.ide.structure.RustPsiStructureViewFactory"/>
 
         <!-- Usages Provider -->
 
-        <lang.findUsagesProvider language="RUST" implementationClass="org.rust.lang.search.RustFindUsagesProvider"/>
+        <lang.findUsagesProvider language="RUST" implementationClass="org.rust.ide.search.RustFindUsagesProvider"/>
 
         <!-- Navigation -->
 
-        <gotoClassContributor implementation="org.rust.lang.navigation.goto.RustClassNavigationContributor"/>
-        <gotoSymbolContributor implementation="org.rust.lang.navigation.goto.RustSymbolNavigationContributor"/>
+        <gotoClassContributor implementation="org.rust.ide.navigation.goto.RustClassNavigationContributor"/>
+        <gotoSymbolContributor implementation="org.rust.ide.navigation.goto.RustSymbolNavigationContributor"/>
 
         <!-- Annotator -->
 
-        <annotator language="RUST" implementationClass="org.rust.lang.annotator.RustAnnotator"/>
+        <annotator language="RUST" implementationClass="org.rust.ide.annotator.RustAnnotator"/>
 
         <!-- Description Provider -->
 
-        <elementDescriptionProvider implementation="org.rust.lang.RustDescriptionProvider"/>
+        <elementDescriptionProvider implementation="org.rust.ide.RustDescriptionProvider"/>
 
         <!-- Spell-checker -->
 
-        <spellchecker.support language="RUST" implementationClass="org.rust.lang.spellchecker.RustSpellcheckingStrategy"/>
+        <spellchecker.support language="RUST" implementationClass="org.rust.ide.spellchecker.RustSpellcheckingStrategy"/>
 
         <!-- Handlers -->
 
-        <enterHandlerDelegate implementation="org.rust.lang.typing.RustEnterInLineCommentHandler" id="RustEnterInComments"/>
+        <enterHandlerDelegate implementation="org.rust.ide.typing.RustEnterInLineCommentHandler" id="RustEnterInComments"/>
 
         <!-- Code Style -->
 
-        <codeStyleSettingsProvider implementation="org.rust.lang.codestyle.RustCodeStyleSettingsProvider"/>
-        <langCodeStyleSettingsProvider implementation="org.rust.lang.codestyle.RustLanguageCodeStyleSettingsProvider"/>
+        <codeStyleSettingsProvider implementation="org.rust.ide.codestyle.RustCodeStyleSettingsProvider"/>
+        <langCodeStyleSettingsProvider implementation="org.rust.ide.codestyle.RustLanguageCodeStyleSettingsProvider"/>
 
         <!-- Color Settings -->
 
-        <colorSettingsPage implementation="org.rust.lang.colorscheme.RustColorSettingsPage"/>
+        <colorSettingsPage implementation="org.rust.ide.colorscheme.RustColorSettingsPage"/>
 
-        <additionalTextAttributes scheme="Default" file="org/rust/lang/colorscheme/RustDefault.xml"/>
-        <additionalTextAttributes scheme="Darcula" file="org/rust/lang/colorscheme/RustDarcula.xml"/>
+        <additionalTextAttributes scheme="Default" file="org/rust/ide/colorscheme/RustDefault.xml"/>
+        <additionalTextAttributes scheme="Darcula" file="org/rust/ide/colorscheme/RustDarcula.xml"/>
 
         <!-- Inspections -->
 
         <localInspection language="RUST" enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.lang.inspections.ApproxConstantInspection"/>
+                         implementationClass="org.rust.ide.inspections.ApproxConstantInspection"/>
 
         <localInspection language="RUST" enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.lang.inspections.SelfConventionInspection"/>
+                         implementationClass="org.rust.ide.inspections.SelfConventionInspection"/>
 
         <!-- Live Templates -->
-        <defaultLiveTemplatesProvider implementation="org.rust.lang.template.RustLiveTemplatesProvider"/>
-        <liveTemplateContext implementation="org.rust.lang.template.RustFileContextType"/>
+        <defaultLiveTemplatesProvider implementation="org.rust.ide.template.RustLiveTemplatesProvider"/>
+        <liveTemplateContext implementation="org.rust.ide.template.RustFileContextType"/>
 
         <!-- Intentions -->
 
         <intentionAction>
-            <className>org.rust.lang.intentions.ExpandModule</className>
+            <className>org.rust.ide.intentions.ExpandModule</className>
             <category>Rust</category>
         </intentionAction>
 
@@ -136,23 +137,23 @@
 
         <!-- Syntax Highlighter -->
 
-        <lang.syntaxHighlighterFactory language="TOML" implementationClass="org.toml.lang.TomlHighlighterFactory"/>
+        <lang.syntaxHighlighterFactory language="TOML" implementationClass="org.toml.ide.TomlHighlighterFactory"/>
 
         <!-- Commenter -->
 
-        <lang.commenter language="TOML" implementationClass="org.toml.lang.TomlCommenter"/>
+        <lang.commenter language="TOML" implementationClass="org.toml.ide.TomlCommenter"/>
 
         <!-- Brace Matcher -->
 
-        <lang.braceMatcher language="TOML" implementationClass="org.toml.lang.TomlBraceMatcher"/>
+        <lang.braceMatcher language="TOML" implementationClass="org.toml.ide.TomlBraceMatcher"/>
 
         <!-- Quote Handlers -->
 
-        <lang.quoteHandler language="TOML" implementationClass="org.toml.lang.TomlQuoteHandler"/>
+        <lang.quoteHandler language="TOML" implementationClass="org.toml.ide.TomlQuoteHandler"/>
 
         <!-- Annotator -->
 
-        <annotator language="TOML" implementationClass="org.toml.lang.annotator.TomlAnnotator"/>
+        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlAnnotator"/>
 
         <!-- Cargo -->
 
@@ -194,7 +195,7 @@
     </module-components>
 
     <actions>
-        <action class="org.rust.lang.actions.RustCreateFileAction" id="Rust.NewRustFile" text="Rust File"
+        <action class="org.rust.ide.actions.RustCreateFileAction" id="Rust.NewRustFile" text="Rust File"
                 description="Create new Rust file">
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>

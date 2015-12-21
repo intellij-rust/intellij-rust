@@ -18,10 +18,10 @@ import org.toml.lang.core.psi.TomlTypes
 
 public class TomlParserDefinition : ParserDefinition {
     override fun createParser(project: Project?): PsiParser =
-            TomlParser()
+        TomlParser()
 
     override fun createFile(viewProvider: FileViewProvider): PsiFile =
-            TomlFile(viewProvider)
+        TomlFile(viewProvider)
 
     override fun spaceExistanceTypeBetweenTokens(left: ASTNode?, right: ASTNode?): ParserDefinition.SpaceRequirements? {
         return ParserDefinition.SpaceRequirements.MAY
@@ -41,7 +41,7 @@ public class TomlParserDefinition : ParserDefinition {
             FILE
 
     override fun createLexer(project: Project?): Lexer =
-            TomlLexer()
+        TomlLexer()
 
     override fun createElement(node: ASTNode?): PsiElement =
             TomlTypes.Factory.createElement(node)
