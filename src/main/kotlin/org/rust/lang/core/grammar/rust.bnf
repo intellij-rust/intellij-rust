@@ -302,9 +302,9 @@ private stmt_item_group ::= static_item
                           | view_item
 
 
-private block_item_group ::= &(UNSAFE? FN   ) fn_item
-                           | &(UNSAFE? TRAIT) trait_item
-                           | &(UNSAFE? IMPL ) impl_item
+private block_item_group ::= &(UNSAFE? [ EXTERN abi? ] FN) fn_item
+                           | &(UNSAFE? TRAIT             ) trait_item
+                           | &(UNSAFE? IMPL              ) impl_item
                            | mod_decl_item
                            | mod_item
                            | foreign_mod_item
@@ -316,8 +316,8 @@ private block_item_group ::= &(UNSAFE? FN   ) fn_item
 // Functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn_item ::= UNSAFE? FN IDENTIFIER generic_params fn_params ret_type? where_clause? inner_attrs_and_block {
-   pin(".*")=3
+fn_item ::= UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_params ret_type? where_clause? inner_attrs_and_block {
+   pin(".*")=4
 }
 
 foreign_fn_item ::= FN IDENTIFIER generic_params fn_decl_allow_variadic where_clause? SEMICOLON
@@ -448,16 +448,13 @@ pat_field ::= IDENTIFIER COLON pat
 
 binding_mode ::= REF MUT? | MUT
 
-extern_fn_item ::= UNSAFE? EXTERN abi? fn_item
-
-decl_item ::= IDENTIFIER COLON type
+private decl_item ::= IDENTIFIER COLON type
 
 static_item ::= STATIC MUT? decl_item EQ any_expr SEMICOLON
 
 const_item ::= CONST decl_item EQ any_expr SEMICOLON
 
 private view_item ::= use_item
-                    | extern_fn_item
                     | extern_decl_item
 
 use_item ::= USE view_path SEMICOLON { pin = 2 }
