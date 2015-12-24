@@ -42,6 +42,7 @@
         <!-- Parser -->
 
         <lang.parserDefinition language="RUST" implementationClass="org.rust.lang.core.RustParserDefinition"/>
+        <stubElementTypeHolder class="org.rust.lang.core.psi.RustCompositeElementTypes"/>
 
         <!-- SDK -->
 
