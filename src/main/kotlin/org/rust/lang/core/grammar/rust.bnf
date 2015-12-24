@@ -334,8 +334,10 @@ private block_item_group ::= &(UNSAFE? [ EXTERN abi? ] FN) fn_item
 // Functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn_item ::= UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_params ret_type? where_clause? inner_attrs_and_block {
-   pin(".*")=4
+private fn_header ::= UNSAFE? [ EXTERN abi? ] FN IDENTIFIER
+
+fn_item ::= fn_header generic_params fn_params ret_type? where_clause? inner_attrs_and_block {
+   pin(".*")=1
 }
 
 foreign_fn_item ::= FN IDENTIFIER generic_params fn_decl_allow_variadic where_clause? SEMICOLON
@@ -563,15 +565,15 @@ private const_default ::= EQ any_expr
 
 trait_type ::= outer_attrs? TYPE type_param SEMICOLON
 
-fake trait_method_ ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause?
+fake trait_method_ ::= attrs_and_vis fn_header generic_params fn_decl_with_self_allow_anon_params where_clause?
 
 private trait_method ::= type_method | method
 
-type_method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause? SEMICOLON {
+type_method ::= attrs_and_vis fn_header generic_params fn_decl_with_self_allow_anon_params where_clause? SEMICOLON {
   extends = trait_method_
 }
 
-method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self_allow_anon_params where_clause? inner_attrs_and_block {
+method ::= attrs_and_vis fn_header generic_params fn_decl_with_self_allow_anon_params where_clause? inner_attrs_and_block {
   extends = trait_method_
 }
 
@@ -611,7 +613,7 @@ private impl_contents ::= impl_method
                         | impl_macro
                         | impl_type
 
-impl_method ::= attrs_and_vis UNSAFE? [ EXTERN abi? ] FN IDENTIFIER generic_params fn_decl_with_self where_clause? inner_attrs_and_block
+impl_method ::= attrs_and_vis fn_header generic_params fn_decl_with_self where_clause? inner_attrs_and_block
 
 private fn_decl_with_self ::= fn_params_with_self ret_type?
 
