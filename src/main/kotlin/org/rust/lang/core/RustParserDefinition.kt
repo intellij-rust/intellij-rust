@@ -21,8 +21,6 @@ import org.rust.lang.core.psi.impl.RustFileImpl
 
 public class RustParserDefinition : ParserDefinition {
 
-    val RUST_FILE_TYPE: IFileElementType = IFileElementType(RustLanguage)
-
     override fun createFile(viewProvider: FileViewProvider): PsiFile? =
         RustFileImpl(viewProvider)
 
@@ -31,7 +29,7 @@ public class RustParserDefinition : ParserDefinition {
         return ParserDefinition.SpaceRequirements.MUST
     }
 
-    override fun getFileNodeType(): IFileElementType? = RUST_FILE_TYPE
+    override fun getFileNodeType(): IFileElementType? = RustFileElementType
 
     override fun getStringLiteralElements(): TokenSet =
         TokenSet.create(STRING_LITERAL)

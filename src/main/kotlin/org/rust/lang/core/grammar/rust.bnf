@@ -145,6 +145,20 @@
 
     mixin       ("mod_decl_item") = "org.rust.lang.core.psi.impl.mixin.RustModDeclItemImplMixin"
 
+    mixin       ("const_item") = "org.rust.lang.core.psi.impl.mixin.RustConstItemImplMixin"
+
+    mixin       ("extern_decl_item") = "org.rust.lang.core.psi.impl.mixin.RustExternDeclItemImplMixin"
+
+    mixin       ("foreign_fn_item") = "org.rust.lang.core.psi.impl.mixin.RustForeignFnItemImplMixin"
+
+    mixin       ("foreign_mod_item") = "org.rust.lang.core.psi.impl.mixin.RustForeignModItemImplMixin"
+
+    mixin       ("static_item") = "org.rust.lang.core.psi.impl.mixin.RustStaticItemImplMixin"
+
+    mixin       ("type_item") = "org.rust.lang.core.psi.impl.mixin.RustTypeItemImplMixin"
+
+    mixin       ("use_item") = "org.rust.lang.core.psi.impl.mixin.RustUseItemImplMixin"
+
     //
     // References
     //
@@ -224,7 +238,10 @@
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
 
-    extends("(?!meta_item)(?!crate_item).*_item") = item_
+    extends           ("(?!meta_item)(?!crate_item)(?!foreign_item).*_item") = item_
+    elementTypeFactory("(?!meta_item)(?!crate_item)(?!foreign_item).*_item") = "org.rust.lang.core.stubs.types.ElementFactoryKt.factory"
+    stubClass         ("(?!meta_item)(?!crate_item)(?!foreign_item).*_item") = "org.rust.lang.core.stubs.RustItemStub"
+
 
     extends("(if|while)_let_expr") = scoped_let_expr
     extends(".*_expr") = restricted_expr
@@ -289,6 +306,7 @@ private item_inner ::= stmt_item_group
 fake item_ ::= attrs_and_vis {
   implements  = [ "org.rust.lang.core.psi.RustDeclaringElement" "org.rust.lang.core.psi.RustNamedElement" ]
   mixin       = "org.rust.lang.core.psi.impl.mixin.RustItemImplMixin"
+  stubClass   = "org.rust.lang.core.stubs.RustItemStub"
 }
 
 upper item ::= << injectInto attrs_and_vis item_inner >> {

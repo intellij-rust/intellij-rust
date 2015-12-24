@@ -2,17 +2,24 @@ package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.Iconable
+import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RustDeclaringElement
 import org.rust.lang.core.psi.RustFnItem
-import org.rust.lang.core.psi.impl.RustItemImpl
 import org.rust.lang.core.psi.util.isPublic
 import org.rust.ide.icons.RustIcons
 import org.rust.ide.icons.addTestMark
 import org.rust.ide.icons.addVisibilityIcon
+import org.rust.lang.core.psi.impl.RustItemImpl
+import org.rust.lang.core.stubs.RustItemStub
 import javax.swing.Icon
 
-public abstract class RustFnItemImplMixin(node: ASTNode) : RustItemImpl(node)
-                                                         , RustFnItem {
+public abstract class RustFnItemImplMixin : RustItemImpl
+                                          , RustFnItem {
+
+    constructor(node: ASTNode) : super(node)
+
+    constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+
 
     override fun getDeclarations(): Collection<RustDeclaringElement> =
         fnParams?.paramList.orEmpty().filterNotNull()
