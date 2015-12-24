@@ -1,15 +1,12 @@
 package org.rust.lang.core.psi.impl.mixin
 
-import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.stubs.IStubElementType
-import com.intellij.psi.stubs.StubElement
-import com.intellij.psi.tree.IElementType
-import org.rust.lang.RustFileType
+import org.rust.ide.icons.addVisibilityIcon
 import org.rust.lang.core.psi.RustFileModItem
 import org.rust.lang.core.psi.impl.RustModItemImpl
 import org.rust.lang.core.psi.util.RustModules
-import org.rust.ide.icons.addVisibilityIcon
 import org.rust.lang.core.stubs.RustItemStub
 import javax.swing.Icon
 
@@ -25,7 +22,7 @@ public abstract class RustFileModItemImplMixin : RustModItemImpl
         containingFile.let { file ->
             when (file.name) {
                 RustModules.MOD_RS -> file.parent?.name
-                else               -> file.name.removeSuffix(RustFileType.DEFAULTS.EXTENSION)
+                else               -> FileUtilRt.getNameWithoutExtension(file.name)
             }
         }
 
