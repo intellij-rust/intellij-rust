@@ -10,7 +10,8 @@ is highly *unstable* just yet.
 ## Installation
 
 We intentionally do not provide a download for the plugin just yet. If you are
-brave enough and want to use the plugin, you have to build it from source. Note that it will download all build dependencies, so make sure you have enough space (one GB should be enough). You need Java 8 and IDEA 15. 
+brave enough and want to use the plugin, you have to build it from source. Note that it will download all build dependencies, so make sure you have enough space (one GB should be enough). 
+You need IDEA 15 (or newer) to use this plugin. 
 
 Building:
 
@@ -22,10 +23,6 @@ $ ./gradlew buildPlugin
 
 This creates a zip archive in `build/distributions` which you can install with
 `install plugin from disk` action.
-
-To check which version of Java is used by
-  - gradle: run `./gradlew --version`;
-  - IDEA: check `Help > About` menu.
 
 ## Usage
 
