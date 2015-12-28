@@ -3,13 +3,3 @@ apply plugin: 'org.jetbrains.intellij'
 apply plugin: 'java'
 
 jar.archiveName = "jps-plugin.jar"
-
-sourceSets {
-    main {
-        java {
-            srcDirs = ['src']
-            include '**/*.java'
-        }
-        resources.srcDirs = [ 'resources' ]
-    }
-}
