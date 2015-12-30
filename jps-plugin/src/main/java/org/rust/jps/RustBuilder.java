@@ -40,13 +40,12 @@ public class RustBuilder extends ModuleLevelBuilder {
         super(BuilderCategory.TRANSLATOR);
     }
 
-
     public ExitCode build(final CompileContext context,
                           final ModuleChunk chunk,
                           final DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                           final OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
 
-        context.processMessage(new CompilerMessage("rust", BuildMessage.Kind.INFO, "Start"));
+        context.processMessage(new CompilerMessage("cargo", BuildMessage.Kind.INFO, "cargo build"));
 
         for (JpsModule module : chunk.getModules()) {
             String path = getContentRootPath(module);
@@ -55,29 +54,49 @@ public class RustBuilder extends ModuleLevelBuilder {
             processBuilder.redirectErrorStream(true);
             processBuilder.directory(new File(path));
             final Process process = processBuilder.start();
-            processOut(context, process);
+            processOut(module, context, process);
             try {
-                if (process.waitFor() != 0) {
-                    return ExitCode.ABORT;
-                }
+                process.waitFor();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            if (process.exitValue() != 0) {
+                return ExitCode.ABORT;
+            }
         }
-
-
 
         return ExitCode.OK;
     }
 
-    private void processOut(CompileContext context, Process process) throws IOException {
+    private void processOut(JpsModule module, CompileContext context, Process process) throws IOException {
         Iterator<String> processOut = collectOutput(process);
 
         while (processOut.hasNext()) {
             String line = processOut.next();
-            context.processMessage(new CompilerMessage("rust", BuildMessage.Kind.INFO, line));
+
+            Matcher matcher = Pattern.compile("(.*):(\\d+):(\\d+): (\\d+):(\\d+) error:(.*)").matcher(line);
+            if (matcher.find()) {
+                String file = matcher.group(1);
+
+                String sourcePath = getContentRootPath(module) + "/" + file.replace('\\', '/');
+
+                long startLineNum = Long.parseLong(matcher.group(2));
+                long startColNum = Long.parseLong(matcher.group(3));
+                long endLineNum = Long.parseLong(matcher.group(4));
+                long endColNum = Long.parseLong(matcher.group(5));
+                String msg = matcher.group(6);
+
+                context.processMessage(new CompilerMessage(
+                    "cargo",
+                    BuildMessage.Kind.ERROR,
+                    msg,
+                    sourcePath,
+                    -1L, -1L, -1L,
+                    startLineNum, startColNum));
+            }
         }
     }
+
 
     private Iterator<String> collectOutput(Process process) throws IOException {
         final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
