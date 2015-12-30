@@ -40,14 +40,19 @@ public class RustBuilder extends ModuleLevelBuilder {
         super(BuilderCategory.TRANSLATOR);
     }
 
+
     public ExitCode build(final CompileContext context,
                           final ModuleChunk chunk,
                           final DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                           final OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
 
-        context.processMessage(new CompilerMessage("cargo", BuildMessage.Kind.INFO, "cargo build"));
-
         for (JpsModule module : chunk.getModules()) {
+            if (!(module.getModuleType() instanceof JpsRustModuleType)) {
+                continue;
+            }
+
+            context.processMessage(new CompilerMessage("cargo", BuildMessage.Kind.INFO, "cargo build"));
+
             String path = getContentRootPath(module);
 
             ProcessBuilder processBuilder = new ProcessBuilder("cargo", "build");

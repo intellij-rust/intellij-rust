@@ -23,10 +23,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class RustBuilderService extends BuilderService {
-  @NotNull
-  @Override
-  public List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
-    return Collections.singletonList(new RustBuilder());
-  }
+    @NotNull
+    @Override
+    public List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
+        return Collections.singletonList(new RustBuilder());
+    }
+
 
 }
