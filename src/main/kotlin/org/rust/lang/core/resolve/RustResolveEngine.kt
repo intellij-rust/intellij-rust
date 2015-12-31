@@ -54,6 +54,9 @@ object RustResolveEngine {
     fun resolve(ref: RustQualifiedReferenceElement): ResolveResult =
         Resolver().resolve(ref)
 
+    fun complete(ref: RustQualifiedReferenceElement): Collection<RustNamedElement> =
+        Resolver().complete(ref)
+
     //
     // TODO(kudinkin): Unify following?
     //
@@ -101,6 +104,16 @@ private class Resolver {
     fun resolve(ref: RustQualifiedReferenceElement): RustResolveEngine.ResolveResult {
         val base = resolveQualifier(ref) ?: return RustResolveEngine.ResolveResult.Unresolved
         return resolveIn(enumerateScopesFrom(base), by(ref))
+    }
+
+    fun complete(ref: RustQualifiedReferenceElement): Collection<RustNamedElement> {
+        val base = resolveQualifier(ref) ?: return emptyList()
+        val processor = CompletionNameProcessor()
+        val visitor = ResolveLocalScopesVisitor(ref, processor)
+        for (scope in enumerateScopesFrom(base)) {
+            scope.accept(visitor)
+        }
+        return processor.completions
     }
 
     /**
@@ -425,4 +438,16 @@ private class ResolveNameProcessor(private val target: String): NameProcessor() 
 
     private fun match(elem: RustNamedElement): Boolean =
         elem.nameElement?.textMatches(target) ?: false
+}
+
+
+private class CompletionNameProcessor: NameProcessor() {
+    val completions = HashSet<RustNamedElement>()
+    override fun process(name: RustNamedElement, nameTarget: () -> RustNamedElement?) {
+        if (name.name != null) {
+            completions.add(name)
+        }
+    }
+
+    override val shouldStop: Boolean = false
 }

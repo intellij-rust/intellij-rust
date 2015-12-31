@@ -17,7 +17,8 @@ internal class RustQualifiedReferenceImpl<T : RustQualifiedReferenceElement>(ele
     override fun resolve(): RustNamedElement? =
         RustResolveEngine.resolve(element).element
 
-    override fun getVariants(): Array<out Any> = EMPTY_ARRAY
+    override fun getVariants(): Array<out RustNamedElement> =
+        RustResolveEngine.complete(element).toTypedArray()
 
     override fun isReferenceTo(element: PsiElement): Boolean {
         val target = resolve()
