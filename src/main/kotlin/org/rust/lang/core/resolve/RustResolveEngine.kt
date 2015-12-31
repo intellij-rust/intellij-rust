@@ -211,18 +211,21 @@ private class Resolver {
      *
      * @name name to be sought after
      */
-    private fun by(name: RustQualifiedName) =
-        ResolveContext.Companion.Trivial(ResolveNonLocalScopesVisitor(name.part.identifier))
+    private fun by(name: RustQualifiedName): ResolveContext {
+        val processor = ResolveNameProcessor(name.part.identifier)
+        return ResolveContext.Companion.Trivial(ResolveNonLocalScopesVisitor(processor), processor)
+    }
+
 
     /**
      * Hook to compose _total_ (ie including both local & non-local) context to resolve
      * any items, taking into account what lexical point we're particularly looking that name up from,
      * therefore effectively ignoring items being declared 'lexically-after' lookup-point
      */
-    private fun by(e: RustNamedElement) =
-        e.name?.let {
-            ResolveContext.Companion.Trivial(ResolveLocalScopesVisitor(e))
-        } ?: ResolveContext.Companion.Empty
+    private fun by(e: RustNamedElement): ResolveContext = e.name?.let { name ->
+        val processor = ResolveNameProcessor(name)
+        ResolveContext.Companion.Trivial(ResolveLocalScopesVisitor(e, processor), processor)
+    } ?: ResolveContext.Companion.Empty
 
     /**
      * Resolve-context wrapper
@@ -232,10 +235,10 @@ private class Resolver {
 
         companion object {
 
-            class Trivial(val v: ResolveScopeVisitor) : ResolveContext {
+            class Trivial(val v: ResolveScopeVisitor, val processor: ResolveNameProcessor) : ResolveContext {
                 override fun accept(scope: RustResolveScope): RustNamedElement? {
                     scope.accept(v)
-                    return v.matched
+                    return processor.result
                 }
             }
 
@@ -260,26 +263,18 @@ private class Resolver {
     /**
      * Abstract resolving-scope-visitor
      */
-    abstract inner class ResolveScopeVisitor : RustVisitor() {
-
-        /**
-         * Matched resolve-target
-         */
-        abstract var matched: RustNamedElement?
-    }
+    abstract inner class ResolveScopeVisitor(protected val processor: NameProcessor) : RustVisitor()
 
     /**
      * This particular visitor visits _non-local_ scopes only (!)
      */
-    open inner class ResolveNonLocalScopesVisitor(protected val name: String) : ResolveScopeVisitor() {
-
-        override var matched: RustNamedElement? = null
+    open inner class ResolveNonLocalScopesVisitor(processor: NameProcessor) : ResolveScopeVisitor(processor) {
 
         override fun visitModItem(o: RustModItem) {
             seek(o.itemList)
 
             for (use in o.useDeclarations) {
-                if (shouldStop) {
+                if (processor.shouldStop) {
                     return
                 }
 
@@ -296,12 +291,11 @@ private class Resolver {
             // `use foo::bar as baz;`
             if (isPlainPathImport) {
                 val name = path.alias ?: pathPart
-                if (match(name)) {
-                    if (addToVisited(use)) {
-                        return
-                    }
-                    val item = resolve(pathPart).element ?: return
-                    return found(item)
+                processor.process(name) {
+                    if (addToVisited(use))
+                        null
+                    else
+                        resolve(pathPart).element
                 }
             }
 
@@ -309,12 +303,14 @@ private class Resolver {
             if (path.lbrace != null) {
                 for (glob in path.useGlobList) {
                     val boundElement = glob.boundElement ?: continue
-                    if (match(boundElement)) {
-                        if (addToVisited(glob)) {
-                            return
-                        }
-                        val item = resolveUseGlob(glob).element ?: return
-                        return found(item)
+                    processor.process(boundElement) {
+                        if (addToVisited(glob))
+                            null
+                        else
+                            resolveUseGlob(glob).element
+                    }
+                    if (processor.shouldStop) {
+                        return
                     }
                 }
             }
@@ -326,35 +322,31 @@ private class Resolver {
             return result
         }
 
-        private val shouldStop: Boolean
-            get() = matched != null
-
         protected fun seek(elem: RustDeclaringElement) = seek(listOf(elem))
 
         protected fun seek(decls: Collection<RustDeclaringElement>) {
-            decls.flatMap { it.getBoundElements() }
-                .find { match(it) }
-                ?.let { found(it) }
-        }
 
-        protected fun found(elem: RustNamedElement) {
-            matched = elem
+            for (name in decls.flatMap { it.getBoundElements() } ) {
+                processor.process(name) {
+                    if (name is RustModDeclItem)
+                        name.reference?.resolve()
+                    else
+                        name
+                }
 
-            if (elem is RustModDeclItem) {
-                elem.reference?.resolve().let {
-                    matched = it
+                if (processor.shouldStop) {
+                    return
                 }
             }
         }
 
-        protected fun match(elem: RustNamedElement): Boolean =
-            elem.nameElement?.textMatches(name) ?: false
     }
 
     /**
      * This particular visitor traverses both local & non-local scopes
      */
-    inner class ResolveLocalScopesVisitor(ref: RustNamedElement) : ResolveNonLocalScopesVisitor(ref.name!!) {
+    inner class ResolveLocalScopesVisitor(ref: RustNamedElement, processor: NameProcessor)
+        : ResolveNonLocalScopesVisitor(processor) {
 
         private val context: RustCompositeElement = ref
 
@@ -369,12 +361,12 @@ private class Resolver {
             o.getDeclarations()
                 .takeWhile { it.isBefore(context) }
                 .reversed()
-                .forEach { letDecl ->
-                    letDecl.getBoundElements().forEach { e ->
-                        // defer costly isAncestor checks
-                        if (match(e) && !PsiTreeUtil.isAncestor(letDecl, context, true)) {
-                            return found(e)
-                        }
+                .dropWhile { PsiTreeUtil.isAncestor(it, context, true) }
+                .flatMap { it.getBoundElements() }
+                .forEach {
+                    processor.process(it)
+                    if (processor.shouldStop) {
+                        return
                     }
                 }
         }
@@ -394,8 +386,10 @@ private fun enumerateScopesFrom(scope: RustResolveScope): Sequence<RustResolveSc
 
 private fun RustResolveScope.resolveUsing(c: Resolver.ResolveContext): RustNamedElement? = c.accept(this)
 
+
 private val RustUseGlob.basePath: RustQualifiedReferenceElement?
     get() = parentOfType<RustUseItem>()?.let { it.viewPath.pathPart }
+
 
 private val RustUseGlob.boundElement: RustNamedElement?
     get() = when {
@@ -404,3 +398,31 @@ private val RustUseGlob.boundElement: RustNamedElement?
         self != null       -> basePath
         else               -> null
     }
+
+
+private abstract class NameProcessor {
+    final fun process(name: RustNamedElement) {
+        process(name, {name})
+    }
+    abstract fun process(name: RustNamedElement, nameTarget: () -> RustNamedElement?)
+    abstract val shouldStop: Boolean
+}
+
+
+private class ResolveNameProcessor(private val target: String): NameProcessor() {
+    private var finished: Boolean = false
+    var result: RustNamedElement? = null
+
+    override fun process(name: RustNamedElement, nameTarget: () -> RustNamedElement?) {
+        if (match(name)) {
+            finished = true
+            result = nameTarget()
+        }
+    }
+
+    override val shouldStop: Boolean
+        get() = finished
+
+    private fun match(elem: RustNamedElement): Boolean =
+        elem.nameElement?.textMatches(target) ?: false
+}
