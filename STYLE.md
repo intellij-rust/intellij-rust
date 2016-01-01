@@ -53,6 +53,29 @@ Align case-branches in columns:
         }
 ```
 
+## If
+
+Omit braces in `if` expressions:
+
+```Kotlin
+val foo = if (condition)
+    bar()
+else
+    baz() + quux()
+```
+
+Use braces in `if` statements
+
+```Kotlin
+if (condition) {
+    counter += 1
+} else {
+    counter = 0
+}
+```
+
+Corollary: use braces if an `if` has only one arm.
+
 ## Lambdas
 
 In lambda expressions, spaces should be used around the curly braces, as well as around the arrow which separates the parameters
