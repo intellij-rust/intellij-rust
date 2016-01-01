@@ -10,7 +10,8 @@ class RustPartialParsingTestCase : RustParsingTestCaseBase("ill-formed") {
     }
 
     private fun checkHasError(file: PsiFile?) {
-        assertThat(hasError(file!!)).overridingErrorMessage("Invalid file was parsed successfully: ${file.name}")
+        assertThat(hasError(file!!))
+            .withFailMessage("Invalid file was parsed successfully: ${file.name}")
             .isTrue()
     }
 

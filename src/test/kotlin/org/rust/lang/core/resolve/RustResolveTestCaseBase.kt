@@ -2,7 +2,6 @@ package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiElement
 import org.assertj.core.api.Assertions.assertThat
-import org.rust.lang.RustTestCase
 import org.rust.lang.RustTestCaseBase
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.resolve.ref.RustReference
@@ -28,8 +27,8 @@ abstract class RustResolveTestCaseBase : RustTestCaseBase() {
     final protected fun checkIsBound(atOffset: Int? = null) {
         val usage = myFixture.getReferenceAtCaretPosition(fileName) as RustReference
         assertThat(usage.resolve())
-                .overridingErrorMessage("Failed to resolve `${usage.element.text}`.")
-                .isNotNull()
+            .withFailMessage("Failed to resolve `${usage.element.text}`.")
+            .isNotNull()
         val declaration = usage.resolve()!!
 
         assertIsValidDeclaration(declaration, usage, atOffset)

@@ -17,25 +17,27 @@ public class RustCTRSTestCase : RustParsingTestCaseBase("ctrs/test") {
                 val psi = createPsiFile(file.name, text)
                 val expectedError = expectedErrors.any { file.path.endsWith(it) }
                 val messageTail = "in ${file.path}:\n\n" +
-                        "$text\n\n" +
-                        "${DebugUtil.psiToString(psi, true)}"
+                    "$text\n\n" +
+                    "${DebugUtil.psiToString(psi, true)}"
                 if (hasError(psi) ) {
-                    assertThat(expectedError).overridingErrorMessage("New error " + messageTail)
-                            .isTrue()
+                    assertThat(expectedError)
+                        .withFailMessage("New error " + messageTail)
+                        .isTrue()
                 } else {
-                    assertThat(expectedError).overridingErrorMessage("No error " + messageTail)
-                            .isFalse()
+                    assertThat(expectedError)
+                        .withFailMessage("No error " + messageTail)
+                        .isFalse()
                 }
             }
             true
         })
-        assertThat(nFilesVisited).overridingErrorMessage("CTRS tests were not run.")
-                .isGreaterThan(3000)
+        assertThat(nFilesVisited)
+            .withFailMessage("CTRS tests were not run.")
+            .isGreaterThan(3000)
     }
 
     private val expectedErrors = setOf(
-            "/1.1.0/run-pass/utf8-bom.rs"
-
+        "/1.1.0/run-pass/utf8-bom.rs"
     ).map { it.replace("/", File.separator) }
 }
 
