@@ -1,6 +1,7 @@
 package org.rust.ide.navigation.goto
 
-import com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor
+import org.rust.lang.core.psi.RustItem
+import org.rust.lang.core.stubs.index.RustItemIndex
 
-public class RustSymbolNavigationContributor : DefaultSymbolNavigationContributor()
-
+class RustSymbolNavigationContributor
+    : RustNavigationContributorBase<RustItem>(RustItemIndex.KEY, RustItem::class.java)
