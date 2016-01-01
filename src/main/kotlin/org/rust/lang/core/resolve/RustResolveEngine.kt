@@ -87,7 +87,7 @@ private class Resolver {
 
         return resolve(name.qualifier!!, root).element?.let {
             when (it) {
-                is RustResolveScope -> resolveIn(listOf(it), by(name))
+                is RustResolveScope -> resolveIn(sequenceOf(it), by(name))
                 else                -> null
             }
         } ?: RustResolveEngine.ResolveResult.Unresolved
@@ -108,7 +108,7 @@ private class Resolver {
             }
 
             return when (parent) {
-                is RustResolveScope -> resolveIn(listOf(parent), by(ref))
+                is RustResolveScope -> resolveIn(sequenceOf(parent), by(ref))
                 else                -> RustResolveEngine.ResolveResult.Unresolved
             }
         }
@@ -194,7 +194,7 @@ private class Resolver {
 
         // `use foo::{bar}`
         val scope = baseItem as? RustResolveScope ?: return RustResolveEngine.ResolveResult.Unresolved
-        return resolveIn(listOf(scope), by(ref))
+        return resolveIn(sequenceOf(scope), by(ref))
     }
 
     private fun resolveModulePrefix(ref: RustQualifiedReferenceElement): RustModItem? {
@@ -250,7 +250,7 @@ private class Resolver {
 
 
 
-    private fun resolveIn(scopes: Iterable<RustResolveScope>, ctx: ResolveContext): RustResolveEngine.ResolveResult {
+    private fun resolveIn(scopes: Sequence<RustResolveScope>, ctx: ResolveContext): RustResolveEngine.ResolveResult {
         for (s in scopes) {
             s.resolveUsing(ctx)?.let {
                 return RustResolveEngine.ResolveResult.Resolved(it)
@@ -385,30 +385,15 @@ private class Resolver {
 }
 
 
-private fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Iterable<RustResolveScope> {
+private fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolveScope> {
     if (ref.isFullyQualified) {
-        return listOfNotNull(RustResolveUtil.getCrateRootModFor(ref))
+        return listOfNotNull(RustResolveUtil.getCrateRootModFor(ref)).asSequence()
     }
-
-    return object : Iterable<RustResolveScope> {
-        override fun iterator(): Iterator<RustResolveScope> {
-            return object : Iterator<RustResolveScope> {
-
-                private var next = RustResolveUtil.getResolveScopeFor(ref)
-
-                private fun climb(): RustResolveScope {
-                    val prev = next!!
-                    next = when (prev) {
-                        is RustModItem -> null
-                        else           -> RustResolveUtil.getResolveScopeFor(prev)
-                    }
-                    return prev
-                }
-
-                override fun next(): RustResolveScope = climb()
-
-                override fun hasNext(): Boolean = next != null
-            }
+    val initial = RustResolveUtil.getResolveScopeFor(ref)
+    return sequence(initial) { previous ->
+        when (previous) {
+            is RustModItem -> null
+            else           -> RustResolveUtil.getResolveScopeFor(previous)
         }
     }
 }
