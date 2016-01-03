@@ -1,5 +1,5 @@
 apply plugin: 'org.jetbrains.intellij'
 
-apply plugin: 'java'
+apply plugin: 'kotlin'
 
 jar.archiveName = "jps-plugin.jar"
