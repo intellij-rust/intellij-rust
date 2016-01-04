@@ -14,6 +14,14 @@ abstract class RustTestCaseBase : LightCodeInsightFixtureTestCase(), RustTestCas
     final protected val testName: String
         get() = camelToSnake(getTestName(true))
 
+    final protected fun checkByFile(ignore_trailing_whitespace: Boolean = true, action: () -> Unit) {
+        val before = fileName
+        val after = before.replace(".rs", "_after.rs")
+        myFixture.configureByFile(before)
+        action()
+        myFixture.checkResultByFile(after, ignore_trailing_whitespace)
+    }
+
 
     companion object {
         @JvmStatic
