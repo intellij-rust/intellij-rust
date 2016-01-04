@@ -78,7 +78,7 @@ internal val RustModItem.ownedDirectory: PsiDirectory?
 
 private val RustModItem.isCrateRoot: Boolean
     get() {
-        val file = containingFile.virtualFile
+        val file = containingFile.virtualFile ?: return false
         val containingDir = file.parent
         return project.getCrateSourceRootFor(file)?.let {
             it.equals(containingDir) && (containingFile.name == RustModules.MAIN_RS || containingFile.name == RustModules.LIB_RS)
