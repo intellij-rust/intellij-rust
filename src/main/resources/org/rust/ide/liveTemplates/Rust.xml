@@ -24,4 +24,19 @@
             <option name="RUST_FILE" value="true"/>
         </context>
     </template>
+
+    <template name="a" value="assert!($END$);" description="assert" toReformat="true" toShortenFQNames="true">
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+    
+    <template name="ae" value="assert_eq!($LEFT$, $RIGHT$);" description="assert equals" toReformat="true" toShortenFQNames="true">
+        <variable name="LEFT" expression="" defaultValue="" alwaysStopAt="true" />
+        <variable name="RIGHT" expression="" defaultValue="" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
 </templateSet>
