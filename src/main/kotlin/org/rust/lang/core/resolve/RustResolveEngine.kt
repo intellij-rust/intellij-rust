@@ -385,15 +385,15 @@ private class Resolver {
 }
 
 
-private fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolveScope> {
+fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolveScope> {
     if (ref.isFullyQualified) {
         return listOfNotNull(RustResolveUtil.getCrateRootModFor(ref)).asSequence()
     }
-    val initial = RustResolveUtil.getResolveScopeFor(ref)
-    return sequence(initial) { previous ->
-        when (previous) {
-            is RustModItem -> null
-            else           -> RustResolveUtil.getResolveScopeFor(previous)
+
+    return sequence(RustResolveUtil.getResolveScopeFor(ref)) { parent ->
+        when (parent) {
+            is RustModItem  -> null
+            else            -> RustResolveUtil.getResolveScopeFor(parent)
         }
     }
 }
