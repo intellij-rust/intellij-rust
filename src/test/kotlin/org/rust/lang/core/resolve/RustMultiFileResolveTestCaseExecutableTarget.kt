@@ -16,7 +16,7 @@ class RustMultiFileResolveTestCaseExecutableTarget : RustMultiFileResolveTestCas
 
     // Check whether resolving-procedure (presumably) fails
 
-    fun testModDeclNonOwn()     = doTestUnresolved( "mod_decl_non_own/foo.rs",
-                                                    "mod_decl_non_own/main.rs",
-                                                    "mod_decl_non_own/bar.rs")
+    fun testModDeclNonOwn()     = doTestUnresolved( "mod_decl_failure/foo.rs",
+                                                    "mod_decl_failure/main.rs",
+                                                    "mod_decl_failure/bar.rs")
 }
