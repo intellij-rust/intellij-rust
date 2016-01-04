@@ -238,9 +238,9 @@
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
 
-    extends           ("(?!meta_item)(?!crate_item)(?!foreign_item).*_item") = item_
-    elementTypeFactory("(?!meta_item)(?!crate_item)(?!foreign_item).*_item") = "org.rust.lang.core.stubs.types.ElementFactoryKt.factory"
-    stubClass         ("(?!meta_item)(?!crate_item)(?!foreign_item).*_item") = "org.rust.lang.core.stubs.RustItemStub"
+    extends           ("(?!meta_item)(?!foreign_item).*_item") = item_
+    elementTypeFactory("(?!meta_item)(?!foreign_item).*_item") = "org.rust.lang.core.stubs.types.ElementFactoryKt.factory"
+    stubClass         ("(?!meta_item)(?!foreign_item).*_item") = "org.rust.lang.core.stubs.RustItemStub"
 
 
     extends("(if|while)_let_expr") = scoped_let_expr
@@ -775,14 +775,12 @@ private meta qualified_path ::= LT type [ AS trait_ref ] GT COLONCOLON << param 
 //    foo::bar as baz
 //
 view_path ::= [ view_path_prefix? COLONCOLON ] LBRACE [ <<comma_separated_list use_glob>> ] RBRACE
-            |   view_path_prefix  COLONCOLON MUL
-            |   view_path_prefix  alias?
+            |   view_path_prefix COLONCOLON MUL
+            |   view_path_prefix alias?
 
 use_glob ::= (IDENTIFIER | SELF) alias?
 
 alias ::= AS IDENTIFIER
-
-private idents_or_self ::= (IDENTIFIER | SELF) alias? (COMMA idents_or_self)*
 
 private view_path_prefix ::= view_path_part_leftish view_path_part*
 
