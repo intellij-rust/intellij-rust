@@ -8,6 +8,7 @@ import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFileImpl
+import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
@@ -69,7 +70,7 @@ object RustResolveEngine {
 
 private class Resolver {
 
-    private val visitedImports: MutableSet<RustNamedElement> = HashSet()
+    private val seen: MutableSet<RustNamedElement> = HashSet()
 
     /**
      * Resolves abstract qualified-names
@@ -171,8 +172,7 @@ private class Resolver {
      *  ```
      */
     fun resolveUseGlob(ref: RustUseGlob): RustResolveEngine.ResolveResult {
-        val useItem = ref.parentOfType<RustUseItem>()
-        val basePath = useItem?.let { it.viewPath.pathPart } ?: return RustResolveEngine.ResolveResult.Unresolved
+        val basePath = ref.basePath ?: return RustResolveEngine.ResolveResult.Unresolved
 
         //
         // This is not necessarily a module, e.g.
@@ -280,57 +280,13 @@ private class Resolver {
 
         override fun visitModItem(o: RustModItem) {
             seek(o.itemList)
-
-            for (use in o.useDeclarations) {
-                if (shouldStop) {
-                    return
-                }
-
-                processUseDeclaration(use)
-            }
         }
 
-        protected fun processUseDeclaration(use: RustUseItem) {
-            val path = use.viewPath
-            val pathPart = path.pathPart ?: return
-
-            val isPlainPathImport = path.mul == null && path.lbrace == null
-
-            // `use foo::bar as baz;`
-            if (isPlainPathImport) {
-                val name = path.alias ?: pathPart
-                if (match(name)) {
-                    if (addToVisited(use)) {
-                        return
-                    }
-                    val item = resolve(pathPart).element ?: return
-                    return found(item)
-                }
-            }
-
-            // `use foo::{self, bar as baz}`
-            if (path.lbrace != null) {
-                for (glob in path.useGlobList) {
-                    val boundElement = glob.boundElement ?: continue
-                    if (match(boundElement)) {
-                        if (addToVisited(glob)) {
-                            return
-                        }
-                        val item = resolveUseGlob(glob).element ?: return
-                        return found(item)
-                    }
-                }
-            }
-        }
-
-        private fun addToVisited(element: RustNamedElement): Boolean {
-            val result = element in visitedImports
-            visitedImports += element
+        private fun addToSeen(element: RustNamedElement): Boolean {
+            val result = element in seen
+            seen += element
             return result
         }
-
-        private val shouldStop: Boolean
-            get() = matched != null
 
         protected fun seek(elem: RustDeclaringElement) = seek(listOf(elem))
 
@@ -341,13 +297,46 @@ private class Resolver {
         }
 
         protected fun found(elem: RustNamedElement) {
-            matched = elem
+            matched =
+                when (elem) {
+                    // mod-decl-items constitute a (sub-) _tree_
+                    // inside the crate's module-tree, therefore
+                    // there is no need to mark them as seen
+                    is RustModDeclItem ->
+                        elem.reference?.let { it.resolve() }
 
-            if (elem is RustModDeclItem) {
-                elem.reference?.resolve().let {
-                    matched = it
+                    // Check whether resolved element (being path-part, use-glob, or alias)
+                    // could be further resolved
+
+                    is RustPathPart ->
+                        if (!addToSeen(elem))   resolve(elem).element
+                        else                    null
+
+                    is RustUseGlob ->
+                        if (!addToSeen(elem))   resolveUseGlob(elem).element
+                        else                    null
+
+                    is RustAlias -> {
+                        val parent = elem.parent
+                        when (parent) {
+
+                            is RustViewPath ->
+                                parent.pathPart?.let {
+                                    if (!addToSeen(it)) resolve(it).element
+                                    else                null
+                                }
+
+
+                            is RustUseGlob ->
+                                if (!addToSeen(parent)) resolveUseGlob(parent).element
+                                else                    null
+
+                            else -> elem
+                        }
+                    }
+
+                    else -> elem
                 }
-            }
         }
 
         protected fun match(elem: RustNamedElement): Boolean =
@@ -400,14 +389,3 @@ fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolve
 
 
 private fun RustResolveScope.resolveUsing(c: Resolver.ResolveContext): RustNamedElement? = c.accept(this)
-
-private val RustUseGlob.basePath: RustQualifiedReferenceElement?
-    get() = parentOfType<RustUseItem>()?.let { it.viewPath.pathPart }
-
-private val RustUseGlob.boundElement: RustNamedElement?
-    get() = when {
-        alias != null      -> alias
-        identifier != null -> this
-        self != null       -> basePath
-        else               -> null
-    }
