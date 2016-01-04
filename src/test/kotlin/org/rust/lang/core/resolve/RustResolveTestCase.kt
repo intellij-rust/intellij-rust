@@ -18,6 +18,8 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testStructPatterns1()     = checkIsBound(atOffset = 69)
     fun testStructPatterns2()     = checkIsBound()
     fun testModItems()            = checkIsBound()
+    fun testModItems2()           = checkIsBound()
+    fun testModItems4()           = checkIsBound()
     fun testCrateItems()          = checkIsBound()
     fun testNestedModule()        = checkIsBound(atOffset = 55)
     fun testLetCycle2()           = checkIsBound(atOffset = 20)
@@ -32,4 +34,6 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testFollowPath()          = checkIsUnbound()
     fun testWrongSelf()           = checkIsUnbound()
     fun testWrongSuper()          = checkIsUnbound()
+    fun testModItems3()           = checkIsUnbound()
+    fun testModItems5()           = checkIsUnbound()
 }
