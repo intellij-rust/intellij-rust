@@ -100,21 +100,8 @@ private class Resolver {
      * For more details check out `RustResolveEngine.resolve`
      */
     fun resolve(ref: RustQualifiedReferenceElement): RustResolveEngine.ResolveResult {
-        val qual = ref.qualifier
-        if (qual != null) {
-            val parent = if (qual.isModulePrefix) {
-                resolveModulePrefix(qual)
-            } else {
-                resolve(qual).element
-            }
-
-            return when (parent) {
-                is RustResolveScope -> resolveIn(sequenceOf(parent), by(ref))
-                else                -> RustResolveEngine.ResolveResult.Unresolved
-            }
-        }
-
-        return resolveIn(enumerateScopesFor(ref), by(ref))
+        val base = resolveQualifier(ref) ?: return RustResolveEngine.ResolveResult.Unresolved
+        return resolveIn(enumerateScopesFrom(base), by(ref))
     }
 
     /**
@@ -195,6 +182,16 @@ private class Resolver {
         // `use foo::{bar}`
         val scope = baseItem as? RustResolveScope ?: return RustResolveEngine.ResolveResult.Unresolved
         return resolveIn(sequenceOf(scope), by(ref))
+    }
+
+    private fun resolveQualifier(ref: RustQualifiedReferenceElement): RustResolveScope? {
+        val qual = ref.qualifier
+        return when {
+            qual != null && qual.isModulePrefix -> resolveModulePrefix(qual)
+            qual != null                        -> resolve(qual).element as? RustResolveScope?
+            ref.isFullyQualified                -> RustResolveUtil.getCrateRootModFor(ref)
+            else                                -> RustResolveUtil.getResolveScopeFor(ref)
+        }
     }
 
     private fun resolveModulePrefix(ref: RustQualifiedReferenceElement): RustModItem? {
@@ -374,12 +371,8 @@ private class Resolver {
 }
 
 
-fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolveScope> {
-    if (ref.isFullyQualified) {
-        return listOfNotNull(RustResolveUtil.getCrateRootModFor(ref)).asSequence()
-    }
-
-    return sequence(RustResolveUtil.getResolveScopeFor(ref)) { parent ->
+fun enumerateScopesFrom(scope: RustResolveScope): Sequence<RustResolveScope> {
+    return sequence(scope) { parent ->
         when (parent) {
             is RustModItem  -> null
             else            -> RustResolveUtil.getResolveScopeFor(parent)
