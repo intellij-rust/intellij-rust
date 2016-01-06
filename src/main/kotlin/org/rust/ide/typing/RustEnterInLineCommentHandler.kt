@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
+import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.util.text.CharArrayUtil
 import org.rust.lang.core.lexer.RustTokenElementTypes.INNER_DOC_COMMENT
 import org.rust.lang.core.lexer.RustTokenElementTypes.OUTER_DOC_COMMENT
@@ -35,9 +36,9 @@ class RustEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
 
         // find the PsiElement at the caret
         var elementAtCaret = file.findElementAt(caret) ?: return Result.Continue
-        if (isEOL) {
+        if (isEOL && elementAtCaret.node?.elementType == WHITE_SPACE) {
             // ... or the previous one if this is end-of-line whitespace
-            elementAtCaret = elementAtCaret.prevSibling
+            elementAtCaret = elementAtCaret.prevSibling ?: return Result.Continue
         }
 
         // check if the element at the caret is a line comment
