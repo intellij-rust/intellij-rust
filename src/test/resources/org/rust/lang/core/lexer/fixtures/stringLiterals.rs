@@ -5,6 +5,10 @@
 r"Quick brown fox jumps over the lazy dog"
 r"Quick brown fox jumps over the lazy dog"x
 
+"Quick brown fox
+ jumps over
+ the lazy dog"
+
 "Quick brown fox \
   jumps over \
   the lazy dog"
