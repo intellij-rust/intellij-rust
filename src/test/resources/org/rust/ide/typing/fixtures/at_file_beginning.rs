@@ -1,0 +1,2 @@
+<caret>
+// Some comment
