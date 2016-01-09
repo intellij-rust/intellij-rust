@@ -9,3 +9,6 @@ public interface RustResolveScope : RustCompositeElement {
     fun getDeclarations(): Collection<RustDeclaringElement>
 }
 
+val RustResolveScope.boundElements: Collection<RustNamedElement>
+    get() = getDeclarations().flatMap { it.getBoundElements() }
+

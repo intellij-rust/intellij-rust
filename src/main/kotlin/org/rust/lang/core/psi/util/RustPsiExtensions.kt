@@ -49,6 +49,12 @@ val PsiElement.parentRelativeRange: TextRange?
 fun PsiElement.isBefore(other: PsiElement): Boolean = textOffset < other.textOffset
 
 /**
+ * Utility checking whether this particular element succeeds the other one
+ */
+fun PsiElement.isAfter(other: PsiElement): Boolean = other.textOffset < textOffset
+
+
+/**
  * Utility checking whether this particular element precedes text-anchor (offset)
  */
 fun PsiElement.isBefore(anchor: Int): Boolean = textOffset < anchor
