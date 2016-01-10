@@ -121,8 +121,8 @@ BYTE_LITERAL = b\x27 ([^'] | {ESCAPE_SEQUENCE}) \x27
 
 STRING_LITERAL = \x22 ([^\"\\] | {ESCAPE_SEQUENCE})* (\x22|\\)?
 
-ESCAPE_SEQUENCE = \\[^\r\n\t\\] | \\\R | {BYTE_ESCAPE} | {UNICODE_ESCAPE}
-BYTE_ESCAPE = \\n|\\r|\\t|\\\\|\\x{HEX_DIGIT}{2}
+ESCAPE_SEQUENCE = \\{EOL_WS} | {BYTE_ESCAPE} | {UNICODE_ESCAPE}
+BYTE_ESCAPE = \\n|\\r|\\t|\\\\|\\\x27|\\\x22|\\0|\\x{HEX_DIGIT}{2}
 UNICODE_ESCAPE = \\u\{{HEX_DIGIT}{1,6}\}
 
 
