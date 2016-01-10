@@ -15,6 +15,7 @@ Please note that most of the features are missing at the moment.
 * `Go to definition` for local variables and items.
 * `Go to class/symbol` (`Ctrl+N`, `Ctrl+Shift+N`)
 * `File structure`, aka imenu (`Ctrl+F12`, `Alt+7`).
+* `Basic completion`
 * `Expand selection` (`Ctrl+W`).
 * `Live templates` aka snippets (`Ctrl+J`).
 

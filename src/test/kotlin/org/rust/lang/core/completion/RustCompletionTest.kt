@@ -23,8 +23,9 @@ class RustCompletionTest : RustTestCaseBase() {
         assertThat(variants.size).isZero()
     }
 
-    fun testLocalVariable() = checkSoleCompletion()
-    fun testFunctionName()  = checkSoleCompletion()
-    fun testPath()          = checkSoleCompletion()
-    fun testLocalScope()    = checkNoCompletion()
+    fun testLocalVariable()      = checkSoleCompletion()
+    fun testFunctionName()       = checkSoleCompletion()
+    fun testPath()               = checkSoleCompletion()
+    fun testAnonymousItem()      = checkSoleCompletion()
+    fun testLocalScope()         = checkNoCompletion()
 }

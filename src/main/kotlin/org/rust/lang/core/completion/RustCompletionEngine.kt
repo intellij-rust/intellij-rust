@@ -8,7 +8,10 @@ import org.rust.lang.core.resolve.scope.boundElements
 import java.util.*
 
 object RustCompletionEngine {
-    fun complete(ref: RustQualifiedReferenceElement): Collection<RustNamedElement> {
+    fun complete(ref: RustQualifiedReferenceElement): Collection<RustNamedElement> =
+        collectNamedElements(ref).filter { it.name != null }
+
+    private fun collectNamedElements(ref: RustQualifiedReferenceElement): Collection<RustNamedElement> {
         val qual = ref.qualifier
         if (qual != null) {
             val scope = qual.reference.resolve()
