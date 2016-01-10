@@ -605,7 +605,7 @@ trait_ref ::= path_generic_args_without_colons
 impl_item ::= UNSAFE? IMPL generic_params type_sum                      where_clause? LBRACE inner_attrs? impl_contents* RBRACE
             | UNSAFE? IMPL generic_params LPAREN type RPAREN            where_clause? LBRACE inner_attrs? impl_contents* RBRACE
             | UNSAFE? IMPL generic_params EXCL? trait_ref FOR (type_sum where_clause? LBRACE inner_attrs? impl_contents* RBRACE | DOTDOT LBRACE RBRACE) {
-  pin = "LBRACE"
+  pin(".*") = "LBRACE"
 }
 
 private impl_contents ::= impl_method
