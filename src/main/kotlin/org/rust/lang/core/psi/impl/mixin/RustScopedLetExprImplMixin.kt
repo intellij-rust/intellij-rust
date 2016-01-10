@@ -8,6 +8,6 @@ import org.rust.lang.core.psi.impl.RustCompositeElementImpl
 abstract class RustScopedLetExprImplMixin(node: ASTNode)    : RustCompositeElementImpl(node)
                                                             , RustScopedLetExpr {
 
-    override fun getDeclarations(): Collection<RustDeclaringElement> =
-        arrayListOf(scopedLetDecl)
+    override val declarations: Collection<RustDeclaringElement>
+        get() = arrayListOf(scopedLetDecl)
 }

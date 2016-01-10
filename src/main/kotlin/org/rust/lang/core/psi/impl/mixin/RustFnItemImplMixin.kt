@@ -21,8 +21,8 @@ public abstract class RustFnItemImplMixin : RustItemImpl
     constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
 
-    override fun getDeclarations(): Collection<RustDeclaringElement> =
-        fnParams?.paramList.orEmpty().filterNotNull()
+    override val declarations: Collection<RustDeclaringElement>
+        get() = fnParams?.paramList.orEmpty().filterNotNull()
 
 
     override fun getIcon(flags: Int): Icon? {

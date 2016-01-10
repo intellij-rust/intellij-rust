@@ -15,11 +15,15 @@ If in doubt default to the Java Coding Conventions such as:
 * use 4 space indentation
 * public functions should have documentation such that it appears in Kotlin Doc
 
+Don't use getters and setters. Instead of `fun getFoo(): Foo {}` use `val foo: Foo get() {}`
+
 ## Docs
 
 **NOTA BENE**
 
 Please *don't* use class comments with information about author or date and time of creation.
+
+Use [KDoc syntax](https://kotlinlang.org/docs/reference/kotlin-doc.html#kdoc-syntax). 
 
 ## Colon
 

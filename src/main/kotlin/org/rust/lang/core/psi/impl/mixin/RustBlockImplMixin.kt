@@ -9,10 +9,10 @@ import org.rust.lang.core.psi.util.isAfter
 abstract class RustBlockImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
                                                  , RustBlock {
 
-    override fun getDeclarations(): Collection<RustDeclaringElement> =
-        stmtList.filterIsInstance<RustDeclStmt>()
-                .map { it.letDecl }
-                .filterNotNull()
+    override val declarations: Collection<RustDeclaringElement>
+        get() = stmtList.filterIsInstance<RustDeclStmt>()
+            .map { it.letDecl }
+            .filterNotNull()
 }
 
 /**

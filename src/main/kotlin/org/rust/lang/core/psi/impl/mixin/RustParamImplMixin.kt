@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.util.boundElements
 public abstract class RustParamImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
                                                         , RustParam {
 
-    override fun getBoundElements() : Collection<RustNamedElement> =
-        pat.boundElements
+    override val boundElements: Collection<RustNamedElement>
+        get() = pat.boundElements
 }
 

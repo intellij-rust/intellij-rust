@@ -11,6 +11,7 @@ public abstract class RustPatBindingImplMixin(node: ASTNode)  : RustNamedElement
 
     override fun getNavigationElement(): PsiElement = identifier
 
-    override fun getBoundElements(): Collection<RustNamedElement> = listOf(this)
+    override val boundElements: Collection<RustNamedElement>
+        get() = listOf(this)
 }
 

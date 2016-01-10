@@ -6,9 +6,9 @@ import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.resolve.RustResolveEngine
 
 public interface RustResolveScope : RustCompositeElement {
-    fun getDeclarations(): Collection<RustDeclaringElement>
+    val declarations: Collection<RustDeclaringElement>
 }
 
 val RustResolveScope.boundElements: Collection<RustNamedElement>
-    get() = getDeclarations().flatMap { it.getBoundElements() }
+    get() = declarations.flatMap { it.boundElements }
 

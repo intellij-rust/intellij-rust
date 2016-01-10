@@ -8,7 +8,7 @@ import org.rust.lang.core.psi.impl.RustNamedElementImpl
 abstract class RustMethodImplMixin(node: ASTNode)   : RustNamedElementImpl(node)
                                                     , RustMethod {
 
-    override fun getDeclarations(): Collection<RustDeclaringElement> =
-        anonParams?.anonParamList.orEmpty().filterNotNull()
+    override val declarations: Collection<RustDeclaringElement>
+        get() = anonParams?.anonParamList.orEmpty().filterNotNull()
 
 }

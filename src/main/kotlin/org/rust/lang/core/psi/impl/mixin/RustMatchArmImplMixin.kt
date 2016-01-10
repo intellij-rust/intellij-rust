@@ -8,6 +8,6 @@ import org.rust.lang.core.psi.impl.RustCompositeElementImpl
 public abstract class RustMatchArmImplMixin(node: ASTNode)  : RustCompositeElementImpl(node)
                                                             , RustMatchArm {
 
-    override fun getDeclarations(): Collection<RustDeclaringElement> =
-        arrayListOf(matchPat)
+    override val declarations: Collection<RustDeclaringElement>
+        get() = arrayListOf(matchPat)
 }

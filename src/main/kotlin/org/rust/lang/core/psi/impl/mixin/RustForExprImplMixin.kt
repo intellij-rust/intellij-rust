@@ -8,7 +8,7 @@ import org.rust.lang.core.psi.impl.RustCompositeElementImpl
 public abstract class RustForExprImplMixin(node: ASTNode)   : RustCompositeElementImpl(node)
                                                             , RustForExpr {
 
-    override fun getDeclarations(): Collection<RustDeclaringElement> =
-        arrayListOf(scopedForDecl)
+    override val declarations: Collection<RustDeclaringElement>
+        get() = arrayListOf(scopedForDecl)
 }
 

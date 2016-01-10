@@ -291,7 +291,7 @@ private class Resolver {
         protected fun seek(elem: RustDeclaringElement) = seek(listOf(elem))
 
         protected fun seek(decls: Collection<RustDeclaringElement>) {
-            decls.flatMap { it.getBoundElements() }
+            decls.flatMap { it.boundElements }
                 .find { match(it) }
                 ?.let { found(it) }
         }
@@ -355,11 +355,11 @@ private class Resolver {
         override fun visitLambdaExpr    (o: RustLambdaExpr)         = visitResolveScope(o)
         override fun visitMethod        (o: RustMethod)             = visitResolveScope(o)
         override fun visitFnItem        (o: RustFnItem)             = visitResolveScope(o)
-        override fun visitResolveScope  (scope: RustResolveScope)   = seek(scope.getDeclarations())
+        override fun visitResolveScope  (scope: RustResolveScope)   = seek(scope.declarations)
 
         override fun visitBlock(o: RustBlock) {
             o.letDeclarationsVisibleAt(context)
-                .flatMap { it.getBoundElements().asSequence() }
+                .flatMap { it.boundElements.asSequence() }
                 .filter { match(it) }
                 .firstOrNull()
                 ?.let { found(it) }

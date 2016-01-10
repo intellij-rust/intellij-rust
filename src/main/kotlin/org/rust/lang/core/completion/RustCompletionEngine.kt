@@ -43,11 +43,11 @@ private class CompletionScopeVisitor(private val context: RustQualifiedReference
     }
 
     override fun visitForExpr(o: RustForExpr) {
-        completions.addAll(o.scopedForDecl.getBoundElements())
+        completions.addAll(o.scopedForDecl.boundElements)
     }
 
     override fun visitBlock(block: RustBlock) {
         block.letDeclarationsVisibleAt(context)
-            .flatMapTo(completions) { it.getBoundElements().asSequence() }
+            .flatMapTo(completions) { it.boundElements.asSequence() }
     }
 }

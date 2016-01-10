@@ -8,7 +8,7 @@ import org.rust.lang.core.psi.impl.RustNamedElementImpl
 public abstract class RustLambdaExprImplMixin(node: ASTNode)    : RustNamedElementImpl(node)
                                                                 , RustLambdaExpr {
 
-    override fun getDeclarations(): List<RustDeclaringElement> =
-        lambdaParamList.orEmpty()
+    override val declarations: List<RustDeclaringElement>
+        get() = lambdaParamList.orEmpty()
 }
 

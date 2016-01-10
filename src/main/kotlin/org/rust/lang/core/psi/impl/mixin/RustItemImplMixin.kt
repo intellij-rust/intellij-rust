@@ -17,8 +17,8 @@ public abstract class RustItemImplMixin : RustStubbedNamedElementImpl<RustItemSt
     constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
 
-    override fun getBoundElements(): Collection<RustNamedElement> =
-        listOf(this)
+    override val boundElements: Collection<RustNamedElement>
+        get() = listOf(this)
 
     override fun getPresentation(): ItemPresentation = object : ItemPresentation {
         override fun getLocationString(): String? = "(in ${containingFile.name})"

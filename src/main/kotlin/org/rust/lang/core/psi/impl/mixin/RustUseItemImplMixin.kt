@@ -13,8 +13,8 @@ abstract class RustUseItemImplMixin : RustItemImpl, RustUseItem {
 
     constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getBoundElements(): Collection<RustNamedElement> =
-        viewPath.useGlobList
+    override val boundElements: Collection<RustNamedElement>
+        get() = viewPath.useGlobList
             .mapNotNull { it.boundElement }
             .plus(
                 listOf(viewPath.alias ?: viewPath.pathPart).filterNotNull()

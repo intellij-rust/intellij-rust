@@ -9,8 +9,8 @@ import org.rust.lang.core.psi.util.boundElements
 public abstract class RustMatchPatImplMixin(node: ASTNode)  : RustCompositeElementImpl(node)
                                                             , RustMatchPat {
 
-    override fun getBoundElements(): Collection<RustNamedElement> =
-        patList .flatMap { it.boundElements }
-                .filterNotNull()
+    override val boundElements: Collection<RustNamedElement>
+        get() = patList.flatMap { it.boundElements }
+            .filterNotNull()
 }
 

@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.util.boundElements
 public abstract class RustScopedLetDeclImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
                                                                 , RustScopedLetDecl {
 
-    override fun getBoundElements(): Collection<RustNamedElement> =
-        pat.boundElements
+    override val boundElements: Collection<RustNamedElement>
+        get() = pat.boundElements
 }
 
