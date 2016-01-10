@@ -524,11 +524,11 @@ private struct_tuple_fields ::= struct_tuple_field (COMMA struct_tuple_field)*
 
 struct_tuple_field ::= attrs_and_vis type_sum
 
-struct_decl_args ::= LBRACE struct_decl_fields COMMA? RBRACE
+struct_decl_args ::= LBRACE struct_decl_fields COMMA? RBRACE { pin=1 }
 
 private struct_decl_fields ::= [ struct_decl_field (COMMA struct_decl_field)* ]
 
-struct_decl_field ::= attrs_and_vis IDENTIFIER COLON type_sum
+struct_decl_field ::= attrs_and_vis IDENTIFIER COLON type_sum { pin=2 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

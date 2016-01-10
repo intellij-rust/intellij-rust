@@ -124,7 +124,8 @@
 
         <!-- Live Templates -->
         <defaultLiveTemplatesProvider implementation="org.rust.ide.template.RustLiveTemplatesProvider"/>
-        <liveTemplateContext implementation="org.rust.ide.template.RustFileContextType"/>
+        <liveTemplateContext implementation="org.rust.ide.template.RustContextType$Generic"/>
+        <liveTemplateContext implementation="org.rust.ide.template.RustContextType$Struct"/>
 
         <!-- Intentions -->
 

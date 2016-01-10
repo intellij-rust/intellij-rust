@@ -30,12 +30,20 @@
             <option name="RUST_FILE" value="true" />
         </context>
     </template>
-    
+
     <template name="ae" value="assert_eq!($LEFT$, $RIGHT$);" description="assert equals" toReformat="true" toShortenFQNames="true">
         <variable name="LEFT" expression="" defaultValue="" alwaysStopAt="true" />
         <variable name="RIGHT" expression="" defaultValue="" alwaysStopAt="true" />
         <context>
             <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="f" value="$IDENT$: $TYPE$," description="field" toReformat="true" toShortenFQNames="true">
+        <variable name="IDENT" expression="" defaultValue="&quot;foo&quot;" alwaysStopAt="true"/>
+        <variable name="TYPE" expression="" defaultValue="&quot;u32&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STRUCT" value="true"/>
         </context>
     </template>
 
