@@ -1,7 +1,6 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.module.util.rootMod
 import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
@@ -9,6 +8,7 @@ import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFileImpl
 import org.rust.lang.core.psi.impl.mixin.basePath
+import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
 import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
@@ -358,17 +358,11 @@ private class Resolver {
         override fun visitResolveScope  (scope: RustResolveScope)   = seek(scope.getDeclarations())
 
         override fun visitBlock(o: RustBlock) {
-            o.getDeclarations()
-                .takeWhile { it.isBefore(context) }
-                .reversed()
-                .forEach { letDecl ->
-                    letDecl.getBoundElements().forEach { e ->
-                        // defer costly isAncestor checks
-                        if (match(e) && !PsiTreeUtil.isAncestor(letDecl, context, true)) {
-                            return found(e)
-                        }
-                    }
-                }
+            o.letDeclarationsVisibleAt(context)
+                .flatMap { it.getBoundElements().asSequence() }
+                .filter { match(it) }
+                .firstOrNull()
+                ?.let { found(it) }
         }
     }
 }

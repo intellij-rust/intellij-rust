@@ -3,6 +3,7 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
+import org.rust.lang.core.completion.RustCompletionEngine
 import org.rust.lang.core.lexer.RustTokenElementTypes
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustQualifiedReferenceElement
@@ -17,7 +18,8 @@ internal class RustQualifiedReferenceImpl<T : RustQualifiedReferenceElement>(ele
     override fun resolve(): RustNamedElement? =
         RustResolveEngine.resolve(element).element
 
-    override fun getVariants(): Array<out Any> = EMPTY_ARRAY
+    override fun getVariants(): Array<out Any> =
+        RustCompletionEngine.complete(element).toTypedArray()
 
     override fun isReferenceTo(element: PsiElement): Boolean {
         val target = resolve()
