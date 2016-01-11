@@ -22,7 +22,7 @@ abstract class RustImplMethodImplMixin(node: ASTNode)   : RustNamedElementImpl(n
         return icon.addVisibilityIcon(isPublic)
     }
 
-    val isPublic: Boolean
+    override val isPublic: Boolean
         get() = vis != null
 
     val isStatic: Boolean

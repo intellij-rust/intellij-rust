@@ -16,7 +16,7 @@ abstract class RustStructDeclFieldImplMixin(node: ASTNode) : RustCompositeElemen
         return RustIcons.FIELD.addVisibilityIcon(isPublic)
     }
 
-    val isPublic: Boolean
-        get() = vis != null;
+    override val isPublic: Boolean
+        get() = vis != null
 
 }
