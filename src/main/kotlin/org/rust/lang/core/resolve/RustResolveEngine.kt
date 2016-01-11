@@ -353,7 +353,7 @@ private class Resolver {
         override fun visitForExpr       (o: RustForExpr)            = seek(o.scopedForDecl)
         override fun visitScopedLetExpr (o: RustScopedLetExpr)      = visitResolveScope(o)
         override fun visitLambdaExpr    (o: RustLambdaExpr)         = visitResolveScope(o)
-        override fun visitMethod        (o: RustMethod)             = visitResolveScope(o)
+        override fun visitTraitMethod   (o: RustTraitMethod)        = visitResolveScope(o)
         override fun visitFnItem        (o: RustFnItem)             = visitResolveScope(o)
         override fun visitResolveScope  (scope: RustResolveScope)   = seek(scope.declarations)
 

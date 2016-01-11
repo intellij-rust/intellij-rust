@@ -133,8 +133,6 @@
 
     mixin       ("impl_item")  = "org.rust.lang.core.psi.impl.mixin.RustImplItemImplMixin"
 
-    mixin       ("trait_method") = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodImplMixin"
-
     mixin       ("enum_item") = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
 
     mixin       ("enum_def") = "org.rust.lang.core.psi.impl.mixin.RustEnumDefImplMixin"
@@ -179,8 +177,8 @@
     implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
 
-    implements  ("method") = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    mixin       ("method") = "org.rust.lang.core.psi.impl.mixin.RustMethodImplMixin"
+    implements  ("trait_method") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("trait_method") = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodImplMixin"
 
     implements  ("lambda_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("lambda_expr") = "org.rust.lang.core.psi.impl.mixin.RustLambdaExprImplMixin"
@@ -565,17 +563,7 @@ private const_default ::= EQ any_expr
 
 trait_type ::= outer_attrs? TYPE type_param SEMICOLON
 
-fake trait_method_ ::= attrs_and_vis fn_header generic_params fn_decl_with_self_allow_anon_params where_clause?
-
-private trait_method ::= type_method | method
-
-type_method ::= attrs_and_vis fn_header generic_params fn_decl_with_self_allow_anon_params where_clause? SEMICOLON {
-  extends = trait_method_
-}
-
-method ::= attrs_and_vis fn_header generic_params fn_decl_with_self_allow_anon_params where_clause? inner_attrs_and_block {
-  extends = trait_method_
-}
+trait_method ::= outer_attrs? fn_header generic_params fn_decl_with_self_allow_anon_params where_clause? (SEMICOLON | inner_attrs_and_block)
 
 private fn_decl_with_self_allow_anon_params ::= fn_anon_params_with_self ret_type?
 private fn_anon_params_with_self ::= LPAREN [ AND lifetime? ] MUT? SELF type_ascription? comma_anon_params? RPAREN

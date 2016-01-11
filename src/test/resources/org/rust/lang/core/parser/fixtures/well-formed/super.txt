@@ -120,7 +120,7 @@ FILE
           <empty list>
         PsiElement({)('{')
         PsiWhiteSpace('\n        ')
-        RustMethodImpl(METHOD)
+        RustTraitMethodImpl(TRAIT_METHOD)
           PsiElement(fn)('fn')
           PsiWhiteSpace(' ')
           PsiElement(<IDENTIFIER>)('foo')
