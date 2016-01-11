@@ -32,8 +32,7 @@ public abstract class RustFnItemImplMixin : RustItemImpl
         return icon.addVisibilityIcon(isPublic)
     }
 
-    val isTest: Boolean
-        get() = outerAttrList.map { it.metaItem?.identifier?.text }.find { "test".equals(it) } != null
+    val isTest: Boolean get() = hasAttribute("test")
 
 }
 

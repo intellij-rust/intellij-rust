@@ -29,5 +29,10 @@ public abstract class RustItemImplMixin : RustStubbedNamedElementImpl<RustItemSt
     }
 }
 
+
 val RustItem.isPublic: Boolean
     get() = vis != null
+
+
+fun RustItem.hasAttribute(name: String): Boolean =
+    outerAttrList.any { it.metaItem?.identifier?.text.equals(name) }
