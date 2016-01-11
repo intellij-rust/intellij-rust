@@ -8,7 +8,5 @@ import javax.swing.Icon
 
 
 abstract class RustEnumDefImplMixin(node: ASTNode) : RustCompositeElementImpl(node), RustEnumDef {
-    override fun getIcon(flags: Int): Icon? {
-        return RustIcons.FIELD
-    }
+    override fun getIcon(flags: Int): Icon = RustIcons.FIELD
 }

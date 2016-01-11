@@ -3,6 +3,7 @@ package org.rust.lang.core.psi.impl.mixin
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.stubs.IStubElementType
+import org.rust.ide.icons.RustIcons
 import org.rust.ide.icons.addVisibilityIcon
 import org.rust.lang.core.psi.RustFileModItem
 import org.rust.lang.core.psi.impl.RustModItemImpl
@@ -26,9 +27,6 @@ public abstract class RustFileModItemImplMixin : RustModItemImpl
             }
         }
 
-    override fun getIcon(flags: Int): Icon? =
-        super.getIcon(flags)?.let {
-            it.addVisibilityIcon(true)
-        }
+    override fun getIcon(flags: Int): Icon = RustIcons.MODULE
 }
 

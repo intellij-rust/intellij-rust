@@ -18,7 +18,7 @@ public object RustIcons {
     public val MODULE   = AllIcons.Nodes.Package
 
     public val TRAIT    = AllIcons.Nodes.Interface
-    public val CLASS    = AllIcons.Nodes.Class
+    public val STRUCT   = AllIcons.Nodes.Class
     public val IMPL     = AllIcons.Nodes.AbstractClass
     public val ENUM     = AllIcons.Nodes.Enum
 
