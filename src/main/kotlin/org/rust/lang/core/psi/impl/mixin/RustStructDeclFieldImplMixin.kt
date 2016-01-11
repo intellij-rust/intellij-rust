@@ -13,11 +13,10 @@ abstract class RustStructDeclFieldImplMixin(node: ASTNode) : RustCompositeElemen
         if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
             return RustIcons.FIELD;
 
-        return RustIcons.FIELD.addVisibilityIcon(isPublic())
+        return RustIcons.FIELD.addVisibilityIcon(isPublic)
     }
 
-    fun isPublic(): Boolean {
-        return vis != null;
-    }
+    val isPublic: Boolean
+        get() = vis != null;
 
 }

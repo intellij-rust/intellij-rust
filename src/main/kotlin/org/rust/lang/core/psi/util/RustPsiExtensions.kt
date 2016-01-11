@@ -87,9 +87,6 @@ val RustPat.boundElements: List<RustNamedElement>
     }
 
 
-fun RustItem.isPublic() = vis != null
-
-
 val RustPatBinding.isMut: Boolean
     get()  = bindingMode?.mut != null
 

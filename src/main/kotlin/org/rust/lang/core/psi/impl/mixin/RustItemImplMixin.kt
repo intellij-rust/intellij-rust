@@ -29,3 +29,5 @@ public abstract class RustItemImplMixin : RustStubbedNamedElementImpl<RustItemSt
     }
 }
 
+val RustItem.isPublic: Boolean
+    get() = vis != null

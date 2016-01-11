@@ -15,18 +15,16 @@ abstract class RustImplMethodImplMixin(node: ASTNode)   : RustNamedElementImpl(n
         get() = paramList.orEmpty().filterNotNull()
 
     override fun getIcon(flags: Int): Icon? {
-        val icon = if (isStatic()) RustIcons.METHOD.addStaticMark() else RustIcons.METHOD
+        val icon = if (isStatic) RustIcons.METHOD.addStaticMark() else RustIcons.METHOD
         if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
             return icon;
 
-        return icon.addVisibilityIcon(isPublic())
+        return icon.addVisibilityIcon(isPublic)
     }
 
-    fun isPublic(): Boolean {
-        return vis != null;
-    }
+    val isPublic: Boolean
+        get() = vis != null
 
-    fun isStatic(): Boolean {
-        return self == null;
-    }
+    val isStatic: Boolean
+        get() = self == null
 }

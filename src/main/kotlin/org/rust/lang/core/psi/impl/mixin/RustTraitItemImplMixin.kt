@@ -3,7 +3,6 @@ package org.rust.lang.core.psi.impl.mixin
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.stubs.IStubElementType
-import org.rust.lang.core.psi.util.isPublic
 import org.rust.ide.icons.RustIcons
 import org.rust.ide.icons.addVisibilityIcon
 import org.rust.lang.core.psi.RustTraitItem
@@ -22,6 +21,6 @@ abstract class RustTraitItemImplMixin : RustItemImpl, RustTraitItem {
         if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
             return RustIcons.TRAIT;
 
-        return RustIcons.TRAIT.addVisibilityIcon(isPublic())
+        return RustIcons.TRAIT.addVisibilityIcon(isPublic)
     }
 }

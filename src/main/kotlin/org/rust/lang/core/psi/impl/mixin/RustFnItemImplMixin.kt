@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RustDeclaringElement
 import org.rust.lang.core.psi.RustFnItem
-import org.rust.lang.core.psi.util.isPublic
 import org.rust.ide.icons.RustIcons
 import org.rust.ide.icons.addTestMark
 import org.rust.ide.icons.addVisibilityIcon
@@ -26,16 +25,15 @@ public abstract class RustFnItemImplMixin : RustItemImpl
 
 
     override fun getIcon(flags: Int): Icon? {
-        val icon = if (isTest()) RustIcons.FUNCTION.addTestMark() else RustIcons.FUNCTION
+        val icon = if (isTest) RustIcons.FUNCTION.addTestMark() else RustIcons.FUNCTION
         if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
             return icon;
 
-        return icon.addVisibilityIcon(isPublic())
+        return icon.addVisibilityIcon(isPublic)
     }
 
-    fun isTest(): Boolean {
-        return outerAttrList.map { it.metaItem?.identifier?.text }.find { "test".equals(it) } != null
-    }
+    val isTest: Boolean
+        get() = outerAttrList.map { it.metaItem?.identifier?.text }.find { "test".equals(it) } != null
 
 }
 

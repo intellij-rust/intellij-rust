@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RustDeclaringElement
 import org.rust.lang.core.psi.RustModItem
-import org.rust.lang.core.psi.util.isPublic
 import org.rust.ide.icons.RustIcons
 import org.rust.ide.icons.addVisibilityIcon
 import org.rust.lang.core.psi.impl.RustItemImpl
@@ -27,6 +26,6 @@ abstract class RustModItemImplMixin : RustItemImpl
         if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
             return icon;
 
-        return icon.addVisibilityIcon(isPublic())
+        return icon.addVisibilityIcon(isPublic)
     }
 }
