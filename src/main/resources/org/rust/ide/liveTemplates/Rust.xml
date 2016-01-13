@@ -25,21 +25,34 @@
         </context>
     </template>
 
-    <template name="a" value="assert!($END$);" description="assert" toReformat="true" toShortenFQNames="true">
+    <template name="a" description="assert" toReformat="true" toShortenFQNames="true"
+              value="assert!($END$);">
+
         <context>
-            <option name="RUST_FILE" value="true" />
+            <option name="RUST_FILE" value="true"/>
         </context>
     </template>
 
-    <template name="ae" value="assert_eq!($LEFT$, $RIGHT$);" description="assert equals" toReformat="true" toShortenFQNames="true">
-        <variable name="LEFT" expression="" defaultValue="" alwaysStopAt="true" />
-        <variable name="RIGHT" expression="" defaultValue="" alwaysStopAt="true" />
+    <template name="ae" description="assert equals" toReformat="true" toShortenFQNames="true"
+              value="assert_eq!($LEFT$, $RIGHT$);">
+
+        <variable name="LEFT" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="RIGHT" expression="" defaultValue="" alwaysStopAt="true"/>
         <context>
-            <option name="RUST_FILE" value="true" />
+            <option name="RUST_FILE" value="true"/>
         </context>
     </template>
 
-    <template name="f" value="$IDENT$: $TYPE$," description="field" toReformat="true" toShortenFQNames="true">
+    <template name="tmod" description="test module" toReformat="false" toShortenFQNames="true"
+              value="#[cfg(test)]&#10;mod tests {&#10;    use super::*;&#10;    &#10;    $END$   &#10;}">
+        <context>
+            <option name="RUST_FILE" value="true"/>
+        </context>
+    </template>
+
+    <template name="f" description="field" toReformat="true" toShortenFQNames="true"
+              value="$IDENT$: $TYPE$,">
+
         <variable name="IDENT" expression="" defaultValue="&quot;foo&quot;" alwaysStopAt="true"/>
         <variable name="TYPE" expression="" defaultValue="&quot;u32&quot;" alwaysStopAt="true"/>
         <context>

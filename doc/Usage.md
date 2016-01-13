@@ -25,6 +25,18 @@ Use `Alt+Enter` to invoke an intention.
 
 * `ExpandModule`: inside `foo.rs` file invoke this action to get `foo/mod.rs`. 
 
+## Live Templates
+
+Use `Ctrl+J` to view the list of templates applicable in the current context.
+
+* In Rust File:
+  - `p`, `pd`, `ppd` -- `print!` a (debug representation) of a value,
+  - `a`, `ae` -- `assert!` / `assert_eq!`,
+  - `tmod` -- test module boilerplate.
+
+* In Rust structure:
+  - `f` -- filed name and type.
+
 ## Tips
 
 You may find [external tools](https://www.jetbrains.com/idea/help/external-tools.html) 
