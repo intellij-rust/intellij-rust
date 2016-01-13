@@ -3,3 +3,20 @@ apply plugin: 'org.jetbrains.intellij'
 apply plugin: 'kotlin'
 
 jar.archiveName = "jps-plugin.jar"
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+}
