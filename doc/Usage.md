@@ -35,7 +35,7 @@ Use `Ctrl+J` to view the list of templates applicable in the current context.
   - `tmod` -- test module boilerplate.
 
 * In Rust structure:
-  - `f` -- filed name and type.
+  - `f` -- field name and type.
 
 ## Tips
 
