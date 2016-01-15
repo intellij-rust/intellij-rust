@@ -17,5 +17,5 @@ fun Project.getCrateSourceRootFor(file: VirtualFile): VirtualFile? =
         }
     }
 
-fun Project.getModules(): Iterable<Module> =
+fun Project.getModules(): Collection<Module> =
     ModuleManager.getInstance(this).modules.toList()
