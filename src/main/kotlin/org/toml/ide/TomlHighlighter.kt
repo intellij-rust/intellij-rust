@@ -8,6 +8,7 @@ import com.intellij.psi.tree.IElementType
 import gnu.trove.THashMap
 import org.toml.lang.core.lexer.TomlLexer
 import org.toml.lang.core.psi.TomlTypes
+import kotlin.collections.set
 
 
 class TomlHighlighter : SyntaxHighlighterBase() {
@@ -16,7 +17,7 @@ class TomlHighlighter : SyntaxHighlighterBase() {
 
 
     override fun getTokenHighlights(tokenType: IElementType?): Array<out TextAttributesKey> =
-        pack(tokenMap.getRaw(tokenType))
+        pack(tokenType?.let { tokenMap[it] })
 
 
     private val tokenMap: Map<IElementType, TextAttributesKey> = makeTokenMap()
