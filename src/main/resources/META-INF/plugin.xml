@@ -28,7 +28,7 @@
         <!-- Rust -->
 
         <!-- JPS -->
-        <compileServer.plugin classpath="jps-plugin.jar;kotlin-runtime.jar;kotlin-reflect.jar"/>
+        <compileServer.plugin classpath="jps-plugin.jar;kotlin-runtime-1.0.0-beta-4584.jar;kotlin-stdlib-1.0.0-beta-4584.jar"/>
 
         <!-- Modules -->
 
