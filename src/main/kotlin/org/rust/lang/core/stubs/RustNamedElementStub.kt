@@ -7,9 +7,9 @@ import com.intellij.util.io.StringRef
 import org.rust.lang.core.psi.RustNamedElement
 
 abstract class RustNamedElementStub<PsiT : RustNamedElement> : NamedStubBase<PsiT> {
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: StringRef?)
+    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: StringRef)
     : super(parent, elementType, name)
 
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: String?)
+    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: String)
     : super(parent, elementType, name)
 }

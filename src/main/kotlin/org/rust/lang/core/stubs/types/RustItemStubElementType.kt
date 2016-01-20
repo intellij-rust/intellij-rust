@@ -12,7 +12,7 @@ abstract class RustItemStubElementType<PsiT: RustItem>(debugName: String)
         dataStream.writeName(stub.name)
 
     override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustItemStub =
-        RustItemStub(parentStub, this, dataStream.readName())
+        RustItemStub(parentStub, this, dataStream.readName()!!)
 
     override fun createStub(psi: PsiT, parentStub: StubElement<*>?): RustItemStub =
         RustItemStub(parentStub, this, psi.name ?: "")
