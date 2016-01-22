@@ -16,9 +16,11 @@ public abstract class RustItemImplMixin : RustStubbedNamedElementImpl<RustItemSt
 
     constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-
     override val boundElements: Collection<RustNamedElement>
         get() = listOf(this)
+
+    override val isPublic: Boolean
+        get() = vis != null
 
     override fun getPresentation(): ItemPresentation = object : ItemPresentation {
         override fun getLocationString(): String? = "(in ${containingFile.name})"
@@ -28,10 +30,6 @@ public abstract class RustItemImplMixin : RustStubbedNamedElementImpl<RustItemSt
         override fun getPresentableText(): String? = name
     }
 }
-
-
-val RustItem.isPublic: Boolean
-    get() = vis != null
 
 
 fun RustItem.hasAttribute(name: String): Boolean =

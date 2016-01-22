@@ -14,7 +14,5 @@ abstract class RustImplItemImplMixin : RustItemImpl, RustImplItem {
 
     constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getIcon(flags: Int): Icon? {
-        return RustIcons.IMPL
-    }
+    override fun getIcon(flags: Int): Icon = RustIcons.IMPL
 }
