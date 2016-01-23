@@ -135,6 +135,7 @@
 
         <!-- Run Configurations -->
 
+        <programRunner implementation="org.rust.cargo.runconfig.RustRunner"/>
         <configurationType implementation="org.rust.cargo.runconfig.RustApplicationRunConfigurationType" />
 
         <!-- Cargo -->

@@ -129,8 +129,7 @@ class RustSdkType : SdkType("Rust SDK") {
                         .withExePath(rustc.absolutePath)
                         .withParameters("--version")
                 }
-
-            val procOut = CapturingProcessHandler(cmd.createProcess()).runProcess(10 * 1000)
+            val procOut = CapturingProcessHandler(cmd.createProcess(), Charsets.UTF_8, cmd.commandLineString).runProcess(10 * 1000)
             if (procOut.exitCode != 0 || procOut.isCancelled || procOut.isTimeout)
                 return null
 
