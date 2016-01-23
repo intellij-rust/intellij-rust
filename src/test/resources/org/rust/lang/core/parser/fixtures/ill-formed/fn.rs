@@ -15,3 +15,5 @@ fn add0(x: i32, y: i32) -> i32 {
 
 fn wrong_comma(,) -> i32 {
 }
+
+unsafe const fn b() -> () { () }
