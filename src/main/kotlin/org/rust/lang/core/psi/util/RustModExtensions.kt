@@ -90,8 +90,3 @@ val RustModItem.modDecls: Collection<RustModDeclItem>
 
 val RustModItem.useDeclarations: Collection<RustUseItem>
     get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustUseItem::class.java)
-
-fun RustModDeclItem.getOrCreateModuleFile(): PsiFile? {
-    return  reference!!.resolve()?.let { it.containingFile } ?:
-            containingMod?.ownedDirectory?.createFile(name ?: return null)
-}

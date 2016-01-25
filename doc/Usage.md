@@ -23,7 +23,8 @@ Please note that most of the features are missing at the moment.
 
 Use `Alt+Enter` to invoke an intention.
 
-* `ExpandModule`: inside `foo.rs` file invoke this action to get `foo/mod.rs`. 
+* `Expand Module`: inside `foo.rs` file invoke this action to get `foo/mod.rs`.
+* `Create Module`: if you have unresolved `mod foo;` this intention will create `foo.rs`.
 
 ## Live Templates
 

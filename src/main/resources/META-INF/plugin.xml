@@ -122,6 +122,9 @@
         <localInspection language="RUST" enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.SelfConventionInspection"/>
 
+        <localInspection language="RUST" enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.UnresolvedModuleDeclarationInspection"/>
+
         <!-- Live Templates -->
         <defaultLiveTemplatesProvider implementation="org.rust.ide.template.RustLiveTemplatesProvider"/>
         <liveTemplateContext implementation="org.rust.ide.template.RustContextType$Generic"/>

@@ -7,9 +7,8 @@ import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.RustImplMethod
 import org.rust.lang.core.psi.RustVisitor
 
-class SelfConventionInspection : LocalInspectionTool() {
+class SelfConventionInspection : RustLocalInspectionTool() {
 
-    override fun getGroupDisplayName() = "Rust"
     override fun getDisplayName() = "Self Convention"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {

@@ -1,15 +1,13 @@
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.RustLitExpr
 import org.rust.lang.core.psi.RustVisitor
 
-class ApproxConstantInspection : LocalInspectionTool() {
+class ApproxConstantInspection : RustLocalInspectionTool() {
 
-    override fun getGroupDisplayName() = "Rust"
     override fun getDisplayName() = "Approximate Constants"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
