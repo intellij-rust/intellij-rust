@@ -1,10 +1,13 @@
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Buildscript
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 buildscript {
+    repositories {
+        mavenCentral()
+    }
+
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
     }
@@ -14,76 +17,84 @@ plugins {
     id 'org.jetbrains.intellij' version "0.0.36"
 }
 
-apply plugin: 'org.jetbrains.intellij'
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Configurations
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-configurations {
-    gen
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Projects
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-apply plugin: 'java'
-apply plugin: 'kotlin'
+allprojects {
 
-sourceCompatibility = javaVersion
-targetCompatibility = javaVersion
+    // IntelliJ plugin configuration
 
-tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
+    apply plugin: 'org.jetbrains.intellij'
 
-sourceSets {
-    main.java.srcDirs += "gen"
-}
+    intellij {
+        pluginName 'IntelliJ Rust'
 
-test {
-    testLogging {
-        events "passed", "skipped", "failed"
-        exceptionFormat = 'full'
+        version ideaVersion
+        downloadSources Boolean.valueOf(downloadIdeaSources)
+
+        sandboxDirectory project.rootDir.canonicalPath + "/.sandbox"
+    }
+
+    apply plugin: 'java'
+    apply plugin: 'kotlin'
+
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+
+    tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
+
+    sourceSets {
+        main.java.srcDirs += "gen"
+    }
+
+    test {
+        testLogging {
+            events "passed", "skipped", "failed"
+            exceptionFormat = 'full'
+        }
+    }
+
+    // Configurations
+
+    configurations {
+        gen
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+        compile "org.jetbrains.kotlin:kotlin-runtime:$kotlinVersion"
+
+        gen 'de.jflex:jflex:1.6.0'
+        gen files('lib/gk/grammar-kit-patched.jar')
+
+        testCompile "junit:junit:4.+"
+        testCompile 'org.assertj:assertj-core:3.2.0'
     }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// IntelliJ plugin configuration
+// IDE support
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-intellij {
-    pluginName 'IntelliJ Rust'
+apply plugin: 'idea'
 
-    version ideaVersion
-    downloadSources Boolean.valueOf(downloadIdeaSources)
+idea {
+    project {
+        jdkName = javaVersion
+        languageLevel = javaVersion
+    }
 
-    sandboxDirectory project.rootDir.canonicalPath + "/.sandbox"
+    module {
+        generatedSourceDirs += file('gen')
+    }
 }
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Dependencies
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
-    compile "org.jetbrains.kotlin:kotlin-runtime:$kotlinVersion"
-
-    gen 'de.jflex:jflex:1.6.0'
-    gen files('lib/gk/grammar-kit-patched.jar')
-
-    testCompile "junit:junit:4.+"
-    testCompile 'org.assertj:assertj-core:3.2.0'
-
-    compile project('jps')
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Tasks
@@ -110,20 +121,6 @@ task generateRustLexer(type: JavaExec) {
     classpath configurations.gen
 }
 
-task generateTomlLexer(type: JavaExec) {
-    ext.src = "src/main/kotlin/org/toml/lang/core/lexer/TomlLexer.flex"
-    ext.dst = "gen/org/toml/lang/core/lexer/"
-
-    main = "jflex.Main"
-
-    args = jflexArgs(src, dst)
-
-    inputs  .file   file(src)
-    outputs .dir    file(dst + "_TomlLexer.java")
-
-    classpath configurations.gen
-}
-
 task generateRustPsiAndParser(type: JavaExec) {
     ext.src     = "src/main/kotlin/org/rust/lang/core/grammar/rust.bnf"
     ext.dstRoot = "gen"
@@ -138,66 +135,24 @@ task generateRustPsiAndParser(type: JavaExec) {
     classpath configurations.gen
 }
 
-task generateTomlPsiAndParser(type: JavaExec) {
-    ext.src     = "src/main/kotlin/org/toml/lang/core/grammar/toml.bnf"
-    ext.dstRoot = "gen"
-
-    main = "org.intellij.grammar.Main"
-
-    args = [ dstRoot, file(src) ]
-
-    inputs  .file   file(src)
-    outputs .dir    fileTree(dir: dstRoot + '/org/toml/lang/core/', include: '**/*.java')
-
-    classpath configurations.gen
-}
-
 task generateLexers {
-    dependsOn generateRustLexer, generateTomlLexer
+    dependsOn generateRustLexer
 }
 
 task generateParsers {
-    dependsOn generateRustPsiAndParser, generateTomlPsiAndParser
+    dependsOn generateRustPsiAndParser
 }
 
-task generate {
-    dependsOn generateLexers, generateParsers
-}
-
-generate.mustRunAfter clean
-
-task generateClean {
-    dependsOn clean, generate
-}
-
-
-compileJava     .dependsOn generate
-compileKotlin   .dependsOn generate
-
-compileTestJava     .dependsOn generate
-compileTestKotlin   .dependsOn generate
-
-
-clean {
-    delete "gen"
-}
+apply from: "shared.gradle"
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// IDE support
+// Dependencies
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-apply plugin: 'idea'
-
-idea {
-    project {
-        jdkName         = javaVersion
-        languageLevel   = javaVersion
-    }
-
-    module {
-        generatedSourceDirs += file('gen')
-    }
+dependencies {
+    compile project('jps')
+    compile project('toml')
 }
 
 

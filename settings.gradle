@@ -1,3 +1,6 @@
 rootProject.name = "intellij-rust"
 
-include 'jps'
+include     ':jps'
+includeFlat ':toml'
+
+project(':toml').projectDir = new File(settingsDir, "./toml")

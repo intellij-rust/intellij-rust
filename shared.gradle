@@ -1,0 +1,27 @@
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Tasks
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+task generate {
+    dependsOn generateLexers, generateParsers
+}
+
+generate.mustRunAfter clean
+
+task generateClean {
+    dependsOn clean, generate
+}
+
+
+compileJava     .dependsOn generate
+compileKotlin   .dependsOn generate
+
+compileTestJava     .dependsOn generate
+compileTestKotlin   .dependsOn generate
+
+
+clean {
+    delete "gen"
+}
+

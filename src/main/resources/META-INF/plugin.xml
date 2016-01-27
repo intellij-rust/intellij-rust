@@ -137,32 +137,6 @@
             <category>Rust</category>
         </intentionAction>
 
-        <!-- Toml -->
-
-        <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
-
-        <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.core.parser.TomlParserDefinition"/>
-
-        <!-- Syntax Highlighter -->
-
-        <lang.syntaxHighlighterFactory language="TOML" implementationClass="org.toml.ide.TomlHighlighterFactory"/>
-
-        <!-- Commenter -->
-
-        <lang.commenter language="TOML" implementationClass="org.toml.ide.TomlCommenter"/>
-
-        <!-- Brace Matcher -->
-
-        <lang.braceMatcher language="TOML" implementationClass="org.toml.ide.TomlBraceMatcher"/>
-
-        <!-- Quote Handlers -->
-
-        <lang.quoteHandler language="TOML" implementationClass="org.toml.ide.TomlQuoteHandler"/>
-
-        <!-- Annotator -->
-
-        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlAnnotator"/>
-
         <!-- Cargo -->
 
         <externalSystemManager implementation="org.rust.cargo.project.CargoExternalSystemManager"/>

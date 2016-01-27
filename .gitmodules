@@ -1,3 +1,6 @@
 [submodule "testData/ctrs"]
 	path = src/test/resources/org/rust/lang/core/parser/fixtures/ctrs
 	url = https://github.com/brson/ctrs.git
+[submodule "toml"]
+	path = toml
+	url = https://github.com/intellij-rust/intellij-toml.git
