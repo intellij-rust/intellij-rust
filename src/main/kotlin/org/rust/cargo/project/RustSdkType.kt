@@ -94,7 +94,7 @@ class RustSdkType : SdkType("Rust SDK") {
             && getPathToExecInSDK(path, CARGO_BINARY_NAME).canExecute()
     }
 
-    override fun adjustSelectedSdkHome(homePath: String?): String? {
+    override fun adjustSelectedSdkHome(homePath: String): String {
         val file = File(homePath)
         return when (file.nameWithoutExtension) {
             BIN_DIR -> file.parentFile.absolutePath
@@ -105,7 +105,7 @@ class RustSdkType : SdkType("Rust SDK") {
     override fun suggestSdkName(currentSdkName: String?, sdkHome: String) =
         getVersionString(sdkHome)?.let { "Rust $it" } ?: "Rust"
 
-    override fun getHomeChooserDescriptor(): FileChooserDescriptor? {
+    override fun getHomeChooserDescriptor(): FileChooserDescriptor {
         val suggested = suggestHomePath()
         return super.getHomeChooserDescriptor()
                     .withShowHiddenFiles(suggested != null && isMultiRust(suggested))
