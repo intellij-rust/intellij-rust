@@ -16,7 +16,7 @@ You need IDEA 15 (or newer) to use this plugin.
 Building:
 
 ```
-$ git clone https://github.com/intellij-rust/intellij-rust
+$ git clone https://github.com/intellij-rust/intellij-rust --recursive
 $ cd intellij-rust
 $ ./gradlew buildPlugin
 ```
