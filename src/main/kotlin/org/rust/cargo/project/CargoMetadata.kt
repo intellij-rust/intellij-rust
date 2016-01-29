@@ -10,9 +10,7 @@ import java.util.*
 class CargoMetadata private constructor(private val project: Project) {
     val modules: Collection<Module>
     val libraries: Collection<Library>
-
     val projectName: String
-        get() = project.resolve.root.name
 
     inner class Module(val contentRoot: File,
                        val name: String,
@@ -35,6 +33,14 @@ class CargoMetadata private constructor(private val project: Project) {
     }
 
     init {
+        val idToPackage = project.packages.toMap { it.id to it }
+
+        val dependenciesMap = project.resolve.nodes.toMap { node ->
+            idToPackage[node.id]!! to node.dependencies.map { idToPackage[it]!! }
+        }
+
+        projectName = idToPackage[project.resolve.root]!!.name
+
         val idToModule = project.packages
             .filter { it.isModule }
             .toMap { pkg ->
@@ -79,38 +85,6 @@ class CargoMetadata private constructor(private val project: Project) {
         modules = idToModule.values
         libraries = idToLibrary.values
     }
-
-
-    private val dependenciesMap: Map<Package, Collection<Package>>
-        get() {
-            val result = project.packages.toMap { it to ArrayList<Package>() }
-            val idToPackage = project.packages.toMap { it.id to it }
-
-            // FIXME: temporary workaround for `cargo metadata` bug
-            // (https://github.com/rust-lang/cargo/pull/2196#issuecomment-176491631)
-            val fixPackageId = { id: String ->
-                idToPackage.keys.find { it.startsWith(id) }
-            }
-
-            val nvsToPackage = project.packages.toMap { it.nvs to it }
-
-            val resolveRoot = project.resolve.root
-            val rootPackage = nvsToPackage[Triple(resolveRoot.name, resolveRoot.version, resolveRoot.source)]
-            val rootDependencies = result[rootPackage]!!
-            for (id in resolveRoot.dependencies) {
-                rootDependencies.add(idToPackage[fixPackageId(id)]!!)
-            }
-
-            for (node in project.resolve.`package`) {
-                val pkg = nvsToPackage[Triple(node.name, node.version, node.source)]!!
-                val pkgDependencies = result[pkg]!!
-                for (id in node.dependencies) {
-                    pkgDependencies.add(idToPackage[fixPackageId(id)]!!)
-                }
-            }
-            return result
-        }
-
 }
 
 
@@ -172,8 +146,8 @@ private data class Package(
     val targets: List<Target>
 ) {
 
-    val nvs: Triple<String, String, String?> get() = Triple(name, version, source)
     val isModule: Boolean get() = source == null
+
 }
 
 
@@ -202,27 +176,16 @@ private data class Target(
  * A rooted DAG of dependencies, represented as adjacency list
  */
 private data class Resolve(
-    val root: ResolveRoot,
-    val `package`: List<ResolveNode>
-)
-
-
-private data class ResolveRoot(
-    val name: String,
-    val version: String,
-    val source: String?,
     /**
-     * `id`'s of dependent packages
+     * id of the main package
      */
-    val dependencies: List<String>
+    val root: String,
+    val nodes: List<ResolveNode>
 )
 
 
 private data class ResolveNode(
-    val name: String,
-    val version: String,
-    val source: String?,
-    // To get an `id`, look up the `Package` with matching (name, version, source)
+    val id: String,
 
     /**
      * id's of dependent packages
