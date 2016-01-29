@@ -214,7 +214,7 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
                     } else if (!installationManager.hasCargoMetadata(cargoHomePath)) {
                         cargoHomeSettingType = LocationSettingType.EXPLICIT_CORRECT
                         throw ConfigurationException(   "Cargo lacks 'metadata' subcommand necessary to properly import project.\n" +
-                                                        "Please, install it with 'cargo install metadata' to proceed!")
+                                                        "Please, update cargo to the latest nightly build to proceed!")
                     }
                 }
             }

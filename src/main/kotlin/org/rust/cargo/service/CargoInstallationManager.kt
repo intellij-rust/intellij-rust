@@ -14,7 +14,7 @@ class CargoInstallationManager {
 
         //
         // NOTE:
-        //  Since `metadata` isn't made its way into Cargo bundle (yet),
+        //  Since `metadata` isn't made its way into Cargo bundle for stable Rust (yet),
         //  this particular check verifies whether user has it installed already or not.
         //  Hopefully based on the following lines
         //

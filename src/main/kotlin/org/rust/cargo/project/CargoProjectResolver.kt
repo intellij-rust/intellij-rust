@@ -1,6 +1,5 @@
 package org.rust.cargo.project
 
-import com.google.gson.Gson
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
@@ -14,18 +13,11 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.VfsUtil
 import org.apache.commons.lang.StringUtils
 import org.rust.cargo.Cargo
-import org.rust.cargo.project.model.CargoPackageInfo
-import org.rust.cargo.project.model.CargoProjectInfo
-import org.rust.cargo.project.module.RustExecutableModuleType
-import org.rust.cargo.project.module.RustLibraryModuleType
 import org.rust.cargo.project.settings.CargoExecutionSettings
 import org.rust.cargo.util.PlatformUtil
-import org.rust.lang.core.psi.util.RustModules
 import java.io.File
-import java.util.*
 
 class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSettings> {
 
@@ -36,167 +28,136 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
                                     settings: CargoExecutionSettings?,
                                     listener: ExternalSystemTaskNotificationListener): DataNode<ProjectData>? {
 
-        listener.onStatusChange(ExternalSystemTaskNotificationEvent(id, "Resolving dependencies..."))
-
-        val data: CargoProjectInfo
-        try {
-            val processOut =
-                PlatformUtil.runExecutableWith(
-                    RustSdkType.CARGO_BINARY_NAME,
-                    arrayListOf(
-                        RustSdkType.CARGO_METADATA_SUBCOMMAND,
-                        "--output-format",  "json",
-                        "--manifest-path",  File(projectPath, Cargo.BUILD_FILE).absolutePath,
-                        "--features",       StringUtils.join(settings!!.features, ",")
-                    ),
-                    object : ProcessAdapter() {
-                        override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
-                            val text = event.text.trim { it <= ' ' }
-                            if (text.startsWith("Updating") || text.startsWith("Downloading")) {
-                                listener.onStatusChange(ExternalSystemTaskNotificationEvent(id, text))
-                            } else {
-                                listener.onTaskOutput(id, text, outputType === ProcessOutputTypes.STDOUT)
-                            }
-                        }
-                    })
-
-            if (processOut.exitCode != 0) {
-                //
-                // NOTE:
-                //  Since `metadata` isn't made its way into Cargo bundle (yet),
-                //  this particular check verifies whether user has it installed already or not.
-                //  Hopefully based on the following lines
-                //
-                //  https://github.com/rust-lang/cargo/blob/master/src/bin/cargo.rs#L189 (`execute_subcommand`)
-                //
-                throw ExternalSystemException("Failed to execute cargo: " + processOut.stderr)
-            }
-
-            data = Gson().fromJson(
-                processOut.stdout.dropWhile { c -> c != '{' },
-                CargoProjectInfo::class.java
-            )
-
-        } catch (e: ExecutionException) {
-            throw ExternalSystemException(e)
-        }
+        val metadata = readCargoMetadata(id, listener, projectPath, settings)
 
         val projectNode =
             DataNode(
                 ProjectKeys.PROJECT,
-                ProjectData(CargoProjectSystem.ID, data.root.name, projectPath, projectPath),
+                ProjectData(CargoProjectSystem.ID, metadata.projectName, projectPath, projectPath),
                 null
             )
 
-        val projectRoot = File(projectPath)
+        val modules = metadata.modules.toMap { it to createModuleNode(it, projectNode) }
+        val libraries = metadata.libraries.toMap { it to createLibraryNode(it, projectNode) }
 
-        // TODO(winger, kudinkin): properly handle versions
-        val moduleOrLibrary = HashMap<String, DataNode<*>>()
-
-        for (pkg in data.packages) {
-            val root = File(pkg.manifest_path).parentFile
-
-            if (VfsUtil.isAncestor(projectRoot, root, /* strict = */ false)) {
-                // Add as a module
-                val modData =
-                    ModuleData(
-                        pkg.name,
-                        CargoProjectSystem.ID,
-                        deviseModuleType(pkg),
-                        pkg.name,
-                        root.absolutePath,
-                        root.absolutePath
-                    )
-
-                val moduleNode = projectNode.createChild(ProjectKeys.MODULE, modData)
-
-                moduleOrLibrary.put(pkg.name, moduleNode)
-
-                // Publish source-/test-/resources- roots
-                addContentRoots(moduleNode, root, pkg)
-
-            } else {
-                // Add as a library
-                val libData = LibraryData(CargoProjectSystem.ID, "${pkg.name} ${pkg.version}")
-
-                libData.addPath(LibraryPathType.BINARY, root.absolutePath)
-                libData.addPath(LibraryPathType.SOURCE, root.absolutePath)
-
-                moduleOrLibrary.put(
-                    pkg.name,
-                    projectNode.createChild(ProjectKeys.LIBRARY, libData)
-                )
-            }
-        }
-
-        // TODO(winger, kudinkin): add transitive dependencies too?
-
-        // Add dependencies
-        for (pkg in data.packages) {
-            val pkgNode = moduleOrLibrary[pkg.name]!!
-
-            if (pkgNode.key != ProjectKeys.MODULE) {
-                // Skip dependencies for libraries
-                continue
-            }
-
-            for (dep in pkg.dependencies) {
-                val depNode = moduleOrLibrary[dep.name] ?: continue
-
-                if (depNode.key == ProjectKeys.MODULE) {
-                    pkgNode.createChild(
-                        ProjectKeys.MODULE_DEPENDENCY,
-                        ModuleDependencyData(
-                            pkgNode.data as ModuleData,
-                            depNode.data as ModuleData
-                        )
-                    )
-                } else if (depNode.key == ProjectKeys.LIBRARY) {
-                    pkgNode.createChild(
-                        ProjectKeys.LIBRARY_DEPENDENCY,
-                        LibraryDependencyData(
-                                pkgNode.data as ModuleData,
-                                depNode.data as LibraryData,
-                                LibraryLevel.PROJECT
-                        )
-                    )
-                } else {
-                    throw AssertionError("Panic! You may not reach this point!")
-                }
-            }
-        }
+        addDependencies(modules, libraries)
 
         return projectNode
     }
 
-    private fun deviseModuleType(pkg: CargoPackageInfo): String {
-        var moduleType: String? = null
+    private fun addDependencies(modules: Map<CargoMetadata.Module, DataNode<ModuleData>>,
+                                libraries: Map<CargoMetadata.Library, DataNode<LibraryData>>) {
+        for ((module, node) in modules) {
+            for (dep in module.moduleDependencies) {
+                node.createChild(
+                    ProjectKeys.MODULE_DEPENDENCY,
+                    ModuleDependencyData(
+                        node.data,
+                        modules[dep]!!.data
+                    )
+                )
+            }
 
-        for (t in pkg.targets) {
-            if (t.src_path.endsWith(RustModules.MAIN_RS))
-                moduleType = RustExecutableModuleType.MODULE_TYPE_ID
-            else if (t.src_path.endsWith(RustModules.LIB_RS))
-                moduleType = moduleType ?: RustLibraryModuleType.MODULE_TYPE_ID
+            for (dep in module.libraryDependencies) {
+                node.createChild(
+                    ProjectKeys.LIBRARY_DEPENDENCY,
+                    LibraryDependencyData(
+                        node.data,
+                        libraries[dep]!!.data,
+                        LibraryLevel.PROJECT
+                    )
+                )
+            }
         }
-
-        return moduleType ?: RustExecutableModuleType.MODULE_TYPE_ID
-    }
-
-    private fun addContentRoots(node: DataNode<ModuleData>, root: File, pkg: CargoPackageInfo) {
-        val content = ContentRootData(CargoProjectSystem.ID, root.absolutePath)
-
-        //
-        // TODO(kudinkin):  Align with established Cargo's layout
-        //                  http://doc.crates.io/manifest.html#the-project-layout
-        //
-        for (t in pkg.targets)
-            content.storePath(ExternalSystemSourceType.SOURCE, File(t.src_path).parentFile.absolutePath)
-
-        node.createChild(ProjectKeys.CONTENT_ROOT, content)
     }
 
     override fun cancelTask(taskId: ExternalSystemTaskId, listener: ExternalSystemTaskNotificationListener): Boolean {
         // TODO(kudinkin): cancel properly
         return false
+    }
+
+    private fun readCargoMetadata(id: ExternalSystemTaskId,
+                                  listener: ExternalSystemTaskNotificationListener,
+                                  projectPath: String,
+                                  settings: CargoExecutionSettings?): CargoMetadata {
+
+        listener.onStatusChange(ExternalSystemTaskNotificationEvent(id, "Resolving dependencies..."))
+
+        val processOut = try {
+            PlatformUtil.runExecutableWith(
+                RustSdkType.CARGO_BINARY_NAME,
+                arrayListOf(
+                    RustSdkType.CARGO_METADATA_SUBCOMMAND,
+                    "--manifest-path", File(projectPath, Cargo.BUILD_FILE).absolutePath,
+                    "--features", StringUtils.join(settings!!.features, ",")
+                ),
+                object : ProcessAdapter() {
+                    override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
+                        val text = event.text.trim { it <= ' ' }
+                        if (text.startsWith("Updating") || text.startsWith("Downloading")) {
+                            listener.onStatusChange(ExternalSystemTaskNotificationEvent(id, text))
+                        } else {
+                            listener.onTaskOutput(id, text, outputType === ProcessOutputTypes.STDOUT)
+                        }
+                    }
+                })
+        } catch (e: ExecutionException) {
+            throw ExternalSystemException(e)
+        }
+
+        if (processOut.exitCode != 0) {
+            //
+            // NOTE:
+            //  Since `metadata` isn't made its way into Cargo bundle (yet),
+            //  this particular check verifies whether user has it installed already or not.
+            //  Hopefully based on the following lines
+            //
+            //  https://github.com/rust-lang/cargo/blob/master/src/bin/cargo.rs#L189 (`execute_subcommand`)
+            //
+            throw ExternalSystemException("Failed to execute cargo: ${processOut.stderr}")
+        }
+
+        // drop leading "Downloading foo ..." stuff
+        val json = processOut.stdout.dropWhile { it != '{' }
+
+        return CargoMetadata.fromJson(json)
+    }
+
+    private fun createModuleNode(module: CargoMetadata.Module, projectNode: DataNode<ProjectData>): DataNode<ModuleData> {
+        val root = module.contentRoot.absolutePath
+        val modData =
+            ModuleData(
+                module.name,
+                CargoProjectSystem.ID,
+                module.moduleType,
+                module.name,
+                root,
+                root
+            )
+
+        val moduleNode = projectNode.createChild(ProjectKeys.MODULE, modData)
+
+        // Publish source-/test-/resources- roots
+        val content = ContentRootData(CargoProjectSystem.ID, module.contentRoot.absolutePath)
+
+        // Standard cargo layout
+        // http://doc.crates.io/manifest.html#the-project-layout
+        for (src in listOf("src", "examples")) {
+            content.storePath(ExternalSystemSourceType.SOURCE, File(module.contentRoot, src).absolutePath)
+        }
+
+        for (test in listOf("tests", "benches")) {
+            content.storePath(ExternalSystemSourceType.TEST, File(module.contentRoot, test).absolutePath)
+        }
+
+        moduleNode.createChild(ProjectKeys.CONTENT_ROOT, content)
+        return moduleNode
+    }
+
+    private fun createLibraryNode(lib: CargoMetadata.Library, projectNode: DataNode<ProjectData>): DataNode<LibraryData> {
+        val libData = LibraryData(CargoProjectSystem.ID, "${lib.name} ${lib.version}")
+        libData.addPath(LibraryPathType.SOURCE, lib.contentRoot.absolutePath)
+        val libNode = projectNode.createChild(ProjectKeys.LIBRARY, libData)
+        return libNode
     }
 }
