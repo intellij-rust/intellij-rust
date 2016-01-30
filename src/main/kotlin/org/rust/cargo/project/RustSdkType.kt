@@ -59,7 +59,7 @@ class RustSdkType : SdkType("Rust SDK") {
                                 ?.absolutePath
         }
 
-        return tryFindSDKHomeInPATH() ?: tryGetSDKHomeFromEnv()
+        return tryFindSDKHomeInPATH()
     }
 
     private fun tryFindSDKHomeInPATH(): String? {
@@ -78,12 +78,6 @@ class RustSdkType : SdkType("Rust SDK") {
 
         return null
     }
-
-    private fun tryGetSDKHomeFromEnv(): String? =
-        (System.getenv(RUST_HOME_ENV_PROPERTY_NAME) ?: System.getenv(CARGO_HOME_ENV_PROPERTY_NAME))
-            ?.let {
-                if (isValidSdkHome(it)) it else null
-            }
 
     override fun isValidSdkHome(path: String): Boolean {
         return isValidSdkHome(File(path))
@@ -175,9 +169,6 @@ class RustSdkType : SdkType("Rust SDK") {
         private val log = Logger.getInstance(RustSdkType::class.java)
 
         private val VERSION_PATTERN = Pattern.compile("rustc (\\d+\\.\\d+\\.\\d).*")
-
-        internal val CARGO_HOME_ENV_PROPERTY_NAME   = System.getProperty("cargo.home.env",  "CARGO_HOME")
-        internal val RUST_HOME_ENV_PROPERTY_NAME    = System.getProperty("rust.home.env",   "RUST_HOME")
 
         private val BIN_DIR = "bin"
         private val LIB_DIR = "lib"
