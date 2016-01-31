@@ -22,9 +22,9 @@ data class RustModulePath private constructor (private val name: String, val pat
     fun findModuleIn(p: Project): RustFileModItem? =
         run {
             ModuleManager.getInstance(p).findModuleByName(name)?.let { crate ->
-                crate.getSourceRoots(includingTestRoots = true)
+                    crate.getSourceRoots(includingTestRoots = true)
                     .mapNotNull { sourceRoot ->
-                        sourceRoot.findChild(path)
+                        sourceRoot.findFileByRelativePath(path)
                     }
                     .firstOrNull()
                    ?.let {
