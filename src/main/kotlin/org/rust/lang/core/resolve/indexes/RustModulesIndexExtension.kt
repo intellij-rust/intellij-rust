@@ -78,9 +78,8 @@ class RustModulesIndexExtension : FileBasedIndexExtension<RustModulePath, RustQu
                 val map = HashMap<RustModulePath, RustQualifiedName>()
 
                 PsiManager.getInstance(it.project).findFile(it.file)?.let {
-                    process(it).entries.forEach {
-                        val qualName = it.key
-                        it.value.forEach {
+                    for ((qualName, targets) in process(it)) {
+                        targets.forEach {
                             map.put(RustModulePath.devise(it), qualName)
                         }
                     }
@@ -95,7 +94,7 @@ class RustModulesIndexExtension : FileBasedIndexExtension<RustModulePath, RustQu
             f.accept(object: RustVisitor() {
 
                 //
-                // TODO(kudinkin): move this `RustVisitor`
+                // TODO(kudinkin): move this to `RustVisitor`
                 //
                 override fun visitFile(file: PsiFile?) {
                     (file as? RustFileImpl)?.let {

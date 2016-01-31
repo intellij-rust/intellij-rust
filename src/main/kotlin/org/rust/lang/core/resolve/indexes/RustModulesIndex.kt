@@ -22,7 +22,8 @@ interface RustModulesIndex {
 
                 file.modulePath?.let { path ->
                     findByHeterogeneous(
-                        FileBasedIndex.getInstance().getValues(ID, path, crate.moduleContentScope)
+                        FileBasedIndex.getInstance()
+                            .getValues(ID, path, crate.moduleContentScope)
                             .firstOrNull(),
                         crate
                     )

@@ -81,7 +81,7 @@ private class Resolver {
         if (name == RustAnonymousId) {
             return RustResolveEngine.ResolveResult.Resolved(root)
         } else if (name is RustFileModuleId) {
-            return name.part.path.findModuleIn(root.project)?.let {
+            return name.path.findModuleIn(root.project)?.let {
                 RustResolveEngine.ResolveResult.Resolved(it)
             } ?: RustResolveEngine.ResolveResult.Unresolved
         }
