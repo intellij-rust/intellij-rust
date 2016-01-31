@@ -1,10 +1,20 @@
 # Usage
 
+Use `import project` action and select appropriate `Cargo.toml` to teach the IDE
+about your project. You will need a fairly recent version of `cargo` installed,
+at least `cargo 0.9.0-nightly (6c05bcb 2016-01-29)`. Note that you can use
+nightly cargo with stable Rust just fine.
+
+You can also just `open` your project, but in this case `go to definition`
+support will be limited and `go to symbol` will not work for dependencies.
+
+
 Please note that most of the features are missing at the moment.
 
-* There is no cargo support, you have to use command line to build your
-  project. You can start a shell from the IDE with `Alt+F12`.
-* There is no intelligent completion. You can use `expand word` (`Alt+/` by
+* There is no run configurations yet, you have to use the command line or an
+  external tool integration to build your project. You can start a shell from
+  the IDE with `Alt+F12`.
+* Only basic completion is implemented. You can use `expand word` (`Alt+/` by
   default) to complete based on the words present in the file.
 * Formatting support is very basic, so `reformat code` will not do what you
   want.
@@ -24,7 +34,9 @@ Please note that most of the features are missing at the moment.
 Use `Alt+Enter` to invoke an intention.
 
 * `Expand Module`: inside `foo.rs` file invoke this action to get `foo/mod.rs`.
-* `Create Module`: if you have unresolved `mod foo;` this intention will create `foo.rs`.
+* `Create Module`: if you have unresolved `mod foo;` this intention will create
+  `foo.rs`. It's a convenient way to add a new Rust file: just type `mod bar;` and
+  press `Alt+Enter`.
 
 ## Live Templates
 
@@ -33,16 +45,17 @@ Use `Ctrl+J` to view the list of templates applicable in the current context.
 * In Rust File:
   - `p`, `pd`, `ppd` -- `print!` a (debug representation) of a value,
   - `a`, `ae` -- `assert!` / `assert_eq!`,
-  - `tmod` -- test module boilerplate.
+  - `tmod` -- test module boilerplate,
+  - `loop`, `while`, `for` surround templates.
 
 * In Rust structure:
   - `f` -- field name and type.
 
 ## Tips
 
-You may find [external tools](https://www.jetbrains.com/idea/help/external-tools.html) 
-useful to invoke cargo commands. You can create tools for `cargo run` and `cargo fmt` 
-and assign shortcuts to them.  
+You may find [external tools](https://www.jetbrains.com/idea/help/external-tools.html)
+useful to invoke cargo commands. You can create tools for `cargo run` and `cargo fmt`
+and assign shortcuts to them.
 
 ## Editors
 
