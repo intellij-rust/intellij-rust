@@ -56,19 +56,11 @@ class RustModulesIndexExtension : FileBasedIndexExtension<RustModulePath, RustQu
         val valueExternalizer = object: DataExternalizer<RustQualifiedName> {
 
             override fun save(out: DataOutput, name: RustQualifiedName?) {
-                name?.let({
-                    val tip = it as RustFileModuleId
-
-                    RustModulePath      .writeTo(out, tip.part.path)
-                    RustQualifiedName   .writeTo(out, name.remove(tip)!!)
-                })
+                name?.let { RustQualifiedName.writeTo(`out`, it) }
             }
 
             override fun read(`in`: DataInput): RustQualifiedName? {
-                val path = RustModulePath   .readFrom(`in`)
-                val name = RustQualifiedName.readFrom(`in`)
-
-                return name?.put(path?.let { RustFileModuleId(it) })
+                return RustQualifiedName.readFrom(`in`)
             }
 
         }
