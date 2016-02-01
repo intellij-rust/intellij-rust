@@ -46,7 +46,7 @@ data class RustModulePath private constructor (private val name: String, val pat
     companion object {
 
         fun devise(f: PsiFile): RustModulePath? =
-            f.getCrate().let { crate ->
+            f.getCrate()?.let { crate ->
                 crate.relativise(f.virtualFile ?: f.viewProvider.virtualFile)?.let { path ->
                     RustModulePath(crate.name, path)
                 }

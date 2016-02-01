@@ -18,15 +18,15 @@ interface RustModulesIndex {
 
         fun getSuperFor(mod: RustModItem): RustModItem? =
             mod.containingFile.let { file ->
-                val crate = mod.getCrate()
-
-                file.modulePath?.let { path ->
-                    findByHeterogeneous(
-                        FileBasedIndex.getInstance()
-                            .getValues(ID, path, crate.moduleContentScope)
-                            .firstOrNull(),
-                        crate
-                    )
+                mod.getCrate()?.let { crate ->
+                    file.modulePath?.let { path ->
+                        findByHeterogeneous(
+                            FileBasedIndex.getInstance()
+                                .getValues(ID, path, crate.moduleContentScope)
+                                .firstOrNull(),
+                            crate
+                        )
+                    }
                 }
             }
 
