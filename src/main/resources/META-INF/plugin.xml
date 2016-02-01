@@ -3,10 +3,10 @@
     <name>Rust</name>
     <version>0.0.1</version>
 
-    <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
+    <vendor url="https://github.com/intellij-rust/intellij-rust"/>
 
     <description><![CDATA[
-      Rust support
+      Rust language support
     ]]></description>
 
     <!--<change-notes><![CDATA[-->
