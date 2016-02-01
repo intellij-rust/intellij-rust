@@ -48,7 +48,7 @@ class RustModulesIndexExtension : FileBasedIndexExtension<RustModulePath, RustQu
                 RustModulePath.readFrom(`in`)
 
             override fun isEqual(one: RustModulePath?, other: RustModulePath?): Boolean =
-                one?.equals(other) ?: one == other
+                one?.equals(other) ?: false
 
             override fun getHashCode(value: RustModulePath?): Int = value?.hashCode() ?: -1
         }

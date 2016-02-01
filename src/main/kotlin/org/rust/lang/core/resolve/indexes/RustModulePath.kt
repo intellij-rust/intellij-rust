@@ -12,12 +12,13 @@ import org.rust.lang.core.psi.impl.RustFileImpl
 import org.rust.lang.core.psi.util.getCrate
 import java.io.DataInput
 import java.io.DataOutput
+import java.io.Serializable
 import java.util.*
 
 /**
  * URI for the particular module of the Crate
  */
-data class RustModulePath private constructor (private val name: String, val path: String) {
+data class RustModulePath private constructor (private val name: String, val path: String) : Serializable {
 
     fun findModuleIn(p: Project): RustFileModItem? =
         run {

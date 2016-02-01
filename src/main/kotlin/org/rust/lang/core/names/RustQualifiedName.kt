@@ -13,8 +13,7 @@ import java.io.*
  * @name        Non-qualified name-part
  * @qualifier   Qualified name-part
  */
-open class RustQualifiedName(open val part: RustNamePart, open val qualifier: RustQualifiedName? = null)
-    : java.io.Serializable {
+open class RustQualifiedName(open val part: RustNamePart, open val qualifier: RustQualifiedName? = null) : Serializable {
 
     override fun toString(): String =
         "${qualifier?.toString()}::${part.toString()}"
@@ -46,12 +45,19 @@ open class RustQualifiedName(open val part: RustNamePart, open val qualifier: Ru
             val bos = ByteArrayOutputStream()
             ObjectOutputStream(bos).writeObject(name)
 
-            IOUtil.writeUTF(out, String(bos.toByteArray(), Charsets.UTF_8))
+            val bs = bos.toByteArray()
+
+            out.writeInt(bs.size)
+            out.write(bs)
         }
 
         fun readFrom(`in`: DataInput): RustQualifiedName? {
-            val bs = IOUtil.readUTF(`in`)
-            return ObjectInputStream(bs.byteInputStream()).readObject() as? RustQualifiedName
+            val size = `in`.readInt()
+            val bs = ByteArray(size)
+
+            `in`.readFully(bs)
+
+            return ObjectInputStream(ByteArrayInputStream(bs)).readObject() as? RustQualifiedName
         }
 
     }
