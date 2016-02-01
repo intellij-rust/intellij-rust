@@ -32,11 +32,8 @@
 
         <!-- Modules -->
 
-        <moduleType id="RUST_EXECUTABLE_MODULE" classpathProvider="false"
-                    implementationClass="org.rust.cargo.project.module.RustExecutableModuleType"/>
-
-        <moduleType id="RUST_LIBRARY_MODULE" classpathProvider="false"
-                    implementationClass="org.rust.cargo.project.module.RustLibraryModuleType"/>
+        <moduleType id="RUST_MODULE" classpathProvider="false"
+                    implementationClass="org.rust.cargo.project.module.RustModuleType"/>
 
         <!-- File-type Factory -->
 

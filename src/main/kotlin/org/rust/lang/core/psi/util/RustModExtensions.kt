@@ -1,9 +1,8 @@
 package org.rust.lang.core.psi.util
 
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.cargo.project.util.getCrateSourceRootFor
+import org.rust.cargo.project.module.util.isCrateRootFile
 import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
@@ -77,13 +76,7 @@ internal val RustModItem.ownedDirectory: PsiDirectory?
     }
 
 private val RustModItem.isCrateRoot: Boolean
-    get() {
-        val file = containingFile.virtualFile ?: return false
-        val containingDir = file.parent
-        return project.getCrateSourceRootFor(file)?.let {
-            it.equals(containingDir) && (containingFile.name == RustModules.MAIN_RS || containingFile.name == RustModules.LIB_RS)
-        } ?: false
-    }
+    get() = containingMod == null && getModule()?.isCrateRootFile(containingFile.virtualFile) ?: false
 
 val RustModItem.modDecls: Collection<RustModDeclItem>
     get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)

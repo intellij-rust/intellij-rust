@@ -1,12 +1,6 @@
 package org.rust.lang.core.resolve
 
-import com.intellij.openapi.module.ModuleType
-import org.rust.cargo.project.module.RustExecutableModuleType
-
 class RustMultiFileResolveTestCaseExecutableTarget : RustMultiFileResolveTestCaseBase() {
-
-    override val moduleType: ModuleType<*>
-        get() = RustExecutableModuleType.INSTANCE
 
     // Check whether resolving-procedure succeeds
 

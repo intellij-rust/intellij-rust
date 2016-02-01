@@ -9,7 +9,7 @@ import org.rust.cargo.project.module.util.getSourceRoots
 import org.rust.cargo.project.module.util.relativise
 import org.rust.lang.core.psi.RustFileModItem
 import org.rust.lang.core.psi.impl.RustFileImpl
-import org.rust.lang.core.psi.util.getCrate
+import org.rust.lang.core.psi.util.getModule
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.Serializable
@@ -22,8 +22,8 @@ data class RustModulePath private constructor (private val name: String, val pat
 
     fun findModuleIn(p: Project): RustFileModItem? =
         run {
-            ModuleManager.getInstance(p).findModuleByName(name)?.let { crate ->
-                    crate.getSourceRoots(includingTestRoots = true)
+            ModuleManager.getInstance(p).findModuleByName(name)?.let { module ->
+                    module.getSourceRoots(includingTestRoots = true)
                     .mapNotNull { sourceRoot ->
                         sourceRoot.findFileByRelativePath(path)
                     }
@@ -46,9 +46,9 @@ data class RustModulePath private constructor (private val name: String, val pat
     companion object {
 
         fun devise(f: PsiFile): RustModulePath? =
-            f.getCrate()?.let { crate ->
-                crate.relativise(f.virtualFile ?: f.viewProvider.virtualFile)?.let { path ->
-                    RustModulePath(crate.name, path)
+            f.getModule()?.let { module ->
+                module.relativise(f.virtualFile ?: f.viewProvider.virtualFile)?.let { path ->
+                    RustModulePath(module.name, path)
                 }
             }
 
