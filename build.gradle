@@ -29,7 +29,7 @@ allprojects {
     apply plugin: 'org.jetbrains.intellij'
 
     intellij {
-        pluginName 'IntelliJ Rust'
+        pluginName 'intellij-rust'
 
         version ideaVersion
         downloadSources Boolean.valueOf(downloadIdeaSources)
