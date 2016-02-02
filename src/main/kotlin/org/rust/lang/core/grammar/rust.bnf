@@ -931,7 +931,7 @@ for_expr ::= [lifetime COLON] FOR scoped_for_decl block { pin = "IN" }
 
 match_expr ::= MATCH no_struct_lit_expr LBRACE match_arm* RBRACE
 
-match_arm ::= outer_attrs* match_pat FAT_ARROW (any_expr (COMMA | & RBRACE) | block )
+match_arm ::= outer_attrs* match_pat FAT_ARROW (block_expr COMMA? | any_expr (COMMA | &RBRACE))
 match_pat ::= pat (OR pat)* (IF any_expr)?
 
 if_expr ::= IF no_struct_lit_expr block else_tail?
