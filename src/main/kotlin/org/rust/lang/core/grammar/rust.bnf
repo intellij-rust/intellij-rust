@@ -266,6 +266,8 @@
     generateTokens=false
     generateTokenAccessors=true
 
+    consumeTokenMethod(".*") = "consumeTokenFast"
+
     //recoverWhile = skip_until_eol_rec
 }
 
