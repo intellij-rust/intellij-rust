@@ -23,7 +23,7 @@ FILE
             RustPathPartImpl(PATH_PART)
               PsiElement(<IDENTIFIER>)('i32')
         PsiElement(,)(',')
-        PsiErrorElement:')' or <pat> expected, got 'fn'
+        PsiErrorElement:')' or <IDENTIFIER> expected, got 'fn'
           <empty list>
     PsiWhiteSpace('\n\n')
     PsiComment(<EOL_COMMENT>)('// Trailing '{'')
@@ -115,7 +115,7 @@ FILE
                 RustPathExprImpl(PATH_EXPR)
                   RustPathPartImpl(PATH_PART)
                     PsiElement(<IDENTIFIER>)('y')
-              PsiErrorElement:'!', '(', '.', '::', ';', <, '>', '[', '{' or '}' expected, got 'fn'
+              PsiErrorElement:'!', '.', ';' or '}' expected, got 'fn'
                 <empty list>
         PsiWhiteSpace('\n\n')
         RustDeclStmtImpl(DECL_STMT)
@@ -127,9 +127,8 @@ FILE
               <empty list>
             RustFnParamsImpl(FN_PARAMS)
               PsiElement(()('(')
-            PsiErrorElement:'->', where or '{' expected, got ','
-              <empty list>
-  PsiElement(,)(',')
+  PsiErrorElement:<expr stmt>, <item>, <restricted expr> or '}' expected, got ','
+    PsiElement(,)(',')
   PsiElement(DUMMY_BLOCK)
     PsiElement())(')')
     PsiWhiteSpace(' ')
