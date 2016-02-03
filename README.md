@@ -21,8 +21,7 @@ $ cd intellij-rust
 $ ./gradlew buildPlugin
 ```
 
-This creates a zip archive in `build/distributions` which you can install with
-`install plugin from disk` action.
+This creates a zip archive in `build/distributions` which you can install with the `Install plugin from disk...` action found in `Settings > Plugins`.
 
 ## Usage
 
