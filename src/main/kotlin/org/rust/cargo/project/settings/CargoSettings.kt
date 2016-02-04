@@ -7,6 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtilRt
 import com.intellij.util.xmlb.annotations.AbstractCollection
 
+/**
+ * Global Cargo based projects' settings
+ *
+ * See @AbstractExternalSystemSettings for more details
+ */
 @State( name = "CargoSettings",
         storages = arrayOf( Storage(file = StoragePathMacros.PROJECT_FILE),
                             Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/cargo.xml",
@@ -32,11 +37,9 @@ class CargoSettings(project: Project)
         super.loadState(state)
     }
 
-    override fun copyExtraSettingsFrom(settings: CargoSettings) {
-    }
+    override fun copyExtraSettingsFrom(settings: CargoSettings) {}
 
-    override fun checkSettings(settings1: CargoProjectSettings, settings2: CargoProjectSettings) {
-    }
+    override fun checkSettings(settings1: CargoProjectSettings, settings2: CargoProjectSettings) {}
 
     companion object {
 

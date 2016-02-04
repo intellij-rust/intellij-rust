@@ -79,14 +79,17 @@ class RustSdkType : SdkType("Rust SDK") {
         return null
     }
 
-    override fun isValidSdkHome(path: String): Boolean {
-        return isValidSdkHome(File(path))
-    }
+    override fun isValidSdkHome(path: String): Boolean = isValidRustCHome(path)
 
-    private fun isValidSdkHome(path: File): Boolean {
-        return getPathToExecInSDK(path, RUSTC_BINARY_NAME).canExecute()
-            && getPathToExecInSDK(path, CARGO_BINARY_NAME).canExecute()
-    }
+    private fun isValidSdkHome(path: File): Boolean = isValidRustCHome(path)
+
+    fun isValidCargoHome(path: String) = isValidCargoHome(File(path))
+
+    private fun isValidCargoHome(path: File) = getPathToExecInSDK(path, CARGO_BINARY_NAME).canExecute()
+
+    fun isValidRustCHome(path: String) = isValidRustCHome(File(path))
+
+    private fun isValidRustCHome(path: File) = getPathToExecInSDK(path, RUSTC_BINARY_NAME).canExecute()
 
     override fun adjustSelectedSdkHome(homePath: String): String {
         val file = File(homePath)

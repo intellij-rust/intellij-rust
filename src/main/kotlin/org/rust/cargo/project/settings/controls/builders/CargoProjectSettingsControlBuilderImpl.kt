@@ -132,7 +132,7 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
                     if (pathField.text.isEmpty()) {
                         tryFindCargoHome()
                     } else {
-                        if (isValidSDKHome(pathField.text)) {
+                        if (isValidCargoHome(pathField.text)) {
                             cargoHomeSettingType = LocationSettingType.EXPLICIT_CORRECT
                         } else {
                             cargoHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT
@@ -207,11 +207,11 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
                     if (StringUtil.isEmpty(cargoHomePath)) {
                         cargoHomeSettingType = LocationSettingType.UNKNOWN
                         throw ConfigurationException("Cargo binary location is not specified!")
-                    } else if (!isValidSDKHome(cargoHomePath)) {
+                    } else if (!isValidCargoHome(cargoHomePath)) {
                         cargoHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT
                         showBalloon(MessageType.ERROR, cargoHomeSettingType)
                         throw ConfigurationException("Cargo binary not found at: $cargoHomePath!")
-                    } else if (!installationManager.hasCargoMetadata(cargoHomePath)) {
+                    } else if (!installationManager.hasCargoMetadata(adjustCargoHome(cargoHomePath))) {
                         cargoHomeSettingType = LocationSettingType.EXPLICIT_CORRECT
                         throw ConfigurationException(   "Cargo lacks 'metadata' subcommand necessary to properly import project.\n" +
                                                         "Please, update cargo to the latest nightly build to proceed!")
@@ -229,7 +229,7 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
             if (StringUtil.isEmpty(cargoHomePath)) {
                 settings.cargoHome = null
             } else {
-                settings.cargoHome = cargoHomePath
+                settings.cargoHome = adjustCargoHome(cargoHomePath)
             }
         }
 
@@ -260,7 +260,7 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
             tryFindCargoHome()
         } else {
             cargoHomeSettingType =
-                if (isValidSDKHome(cargoHome))
+                if (isValidCargoHome(cargoHome))
                     LocationSettingType.EXPLICIT_CORRECT
                 else
                     LocationSettingType.EXPLICIT_INCORRECT
@@ -293,8 +293,15 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
         return myInitialSettings
     }
 
-    private fun isValidSDKHome(sdkHome: String): Boolean =
-        sdk.isValidSdkHome(sdkHome) || sdk.adjustSelectedSdkHome(sdkHome)?.let { sdk.isValidSdkHome(it) } ?: false
+    private fun isValidCargoHome(cargoHome: String): Boolean =
+        sdk.isValidCargoHome(cargoHome) || sdk.adjustSelectedSdkHome(cargoHome).let { sdk.isValidCargoHome(it) }
+
+    private fun adjustCargoHome(cargoHome: String): String {
+        if (sdk.isValidCargoHome(cargoHome))
+            return cargoHome
+
+        return sdk.adjustSelectedSdkHome(cargoHome)
+    }
 
     private fun tryFindCargoHome() {
         cargoHomePathField?.let { pathField ->

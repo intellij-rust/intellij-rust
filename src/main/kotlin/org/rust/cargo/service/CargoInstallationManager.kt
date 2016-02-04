@@ -9,7 +9,7 @@ class CargoInstallationManager {
     fun hasCargoMetadata(cargoHomePath: String?): Boolean {
         val sdk = SdkType.findInstance(RustSdkType::class.java)
 
-        if (cargoHomePath == null || !sdk.isValidSdkHome(cargoHomePath))
+        if (cargoHomePath == null || !sdk.isValidCargoHome(cargoHomePath))
             return false
 
         //

@@ -67,8 +67,7 @@ class CargoExternalSystemManager : ExternalSystemAutoImportAware,
 
     companion object {
         internal fun executionSettingsFor(project: Project, path: String): CargoExecutionSettings {
-            return CargoExecutionSettings(
-                    ServiceManager.getService(project, CargoProjectSettings::class.java).features)
+            return CargoExecutionSettings.from(ServiceManager.getService(project, CargoProjectSettings::class.java))
         }
     }
 }

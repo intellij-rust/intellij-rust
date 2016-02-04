@@ -85,7 +85,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
 
         val processOut = try {
             PlatformUtil.runExecutableWith(
-                RustSdkType.CARGO_BINARY_NAME,
+                settings!!.cargoPath,
                 arrayListOf(
                     RustSdkType.CARGO_METADATA_SUBCOMMAND,
                     "--manifest-path", File(projectPath, Cargo.BUILD_FILE).absolutePath,

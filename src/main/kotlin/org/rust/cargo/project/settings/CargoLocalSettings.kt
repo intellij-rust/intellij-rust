@@ -5,6 +5,11 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.CargoProjectSystem
 
+/**
+ * Local (project-wise) settings for the Cargo based projects
+ *
+ * See @AbstractExternalSystemLocalSettings for more details
+ */
 @State(name = "CargoLocalSettings", storages = arrayOf(Storage(file = StoragePathMacros.WORKSPACE_FILE)))
 class CargoLocalSettings protected constructor(project: Project)
     : AbstractExternalSystemLocalSettings(CargoProjectSystem.ID, project)

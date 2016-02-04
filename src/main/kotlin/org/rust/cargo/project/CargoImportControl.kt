@@ -1,5 +1,6 @@
 package org.rust.cargo.project
 
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl
 import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel
@@ -14,7 +15,7 @@ class CargoImportControl
     : AbstractImportFromExternalSystemControl<CargoProjectSettings, CargoProjectSettingsListener, CargoSettings>(
         CargoProjectSystem.ID,
         CargoSettings(ProjectManager.getInstance().defaultProject),
-        CargoProjectSettings(),
+        ServiceManager.getService(ProjectManager.getInstance().defaultProject, CargoProjectSettings::class.java),
         /* showProjectFormatPanel = */ true) {
 
     override fun onLinkedProjectPathChange(s: String) {
