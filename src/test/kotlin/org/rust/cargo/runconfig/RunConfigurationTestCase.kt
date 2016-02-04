@@ -20,10 +20,10 @@ class RunConfigurationTestCase : CargoTestCaseBase() {
        assertThat(result.stdout).contains("Hello, world!")
     }
 
-    private fun createConfiguration(): RustApplicationConfiguration {
-        val configurationType = ConfigurationTypeUtil.findConfigurationType(RustApplicationRunConfigurationType::class.java)
+    private fun createConfiguration(): CargoCommandConfiguration {
+        val configurationType = ConfigurationTypeUtil.findConfigurationType(CargoCommandRunConfigurationType::class.java)
         val factory = configurationType.configurationFactories[0]
-        val configuration = factory.createTemplateConfiguration(myProject) as RustApplicationConfiguration
+        val configuration = factory.createTemplateConfiguration(myProject) as CargoCommandConfiguration
         configuration.setModule(myModule)
         return configuration
     }

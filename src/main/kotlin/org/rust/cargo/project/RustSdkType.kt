@@ -183,7 +183,7 @@ class RustSdkType : SdkType("Rust SDK") {
     }
 }
 
-val Sdk.cargoCommandLine: GeneralCommandLine get() {
+fun Sdk.cargoCommandLine(cmd: String): GeneralCommandLine {
     val cargoPath = RustSdkType.INSTANCE.getPathToExecInSDK(homePath!!, RustSdkType.CARGO_BINARY_NAME).absolutePath
-    return GeneralCommandLine(cargoPath)
+    return GeneralCommandLine(cargoPath).withParameters(cmd)
 }

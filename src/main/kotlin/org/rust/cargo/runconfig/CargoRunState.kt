@@ -7,19 +7,18 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.projectRoots.Sdk
 import org.rust.cargo.project.cargoCommandLine
 
-class RustRunState(environment: ExecutionEnvironment,
-                   private val sdk: Sdk,
-                   // TODO: use path to Cargo.toml here
-                   private val workDirectory: String,
-                   private val isRelease: Boolean) : CommandLineState(environment) {
+class CargoRunState(environment: ExecutionEnvironment,
+                    private val sdk: Sdk,
+                    // TODO: use path to Cargo.toml here
+                    private val workDirectory: String,
+                    private val command: String,
+                    private val additionalArguments: List<String>) : CommandLineState(environment) {
 
     override fun startProcess(): ProcessHandler {
-        val cmd = sdk.cargoCommandLine
-            .withParameters("run")
+        val cmd = sdk.cargoCommandLine(command)
+            .withParameters(additionalArguments)
             .withWorkDirectory(workDirectory)
-        if (isRelease) {
-            cmd.addParameter("--release")
-        }
+
         return OSProcessHandler(cmd)
     }
 }

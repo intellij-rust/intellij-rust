@@ -6,7 +6,7 @@ import com.intellij.execution.runners.DefaultProgramRunner
 
 class RustRunner : DefaultProgramRunner() {
     override fun canRun(executorId: String, profile: RunProfile): Boolean =
-        DefaultRunExecutor.EXECUTOR_ID == executorId && profile is RustApplicationConfiguration
+        DefaultRunExecutor.EXECUTOR_ID == executorId && profile is CargoCommandConfiguration
 
     override fun getRunnerId(): String = "RustRunner"
 

@@ -11,19 +11,26 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.util.PathUtil
+import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 import org.rust.cargo.project.util.getModules
+import org.rust.cargo.runconfig.forms.CargoRunConfigurationEditorForm
 
-class RustApplicationConfiguration(project: Project,
-                                   name: String,
-                                   configurationType: RustApplicationRunConfigurationType)
+class CargoCommandConfiguration(project: Project,
+                                name: String,
+                                configurationType: CargoCommandRunConfigurationType)
 
     : ModuleBasedConfiguration<RustRunConfigurationModule>(name,
                                                            RustRunConfigurationModule(project),
                                                            configurationType.configurationFactories[0]) {
 
-    var isRelease: Boolean = false
+    var command: String = "run"
+    var additionalArguments: String = ""
+
+    init {
+        configurationModule.module = project.getModules().firstOrNull()
+    }
 
     override fun getValidModules(): Collection<Module> = project.getModules()
 
@@ -33,14 +40,15 @@ class RustApplicationConfiguration(project: Project,
     }
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
-        RustRunConfigurationEditorForm()
+        CargoRunConfigurationEditorForm()
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
         val module = configurationModule.module ?: return null
         val moduleManager = ModuleRootManager.getInstance(module)
         val sdk = moduleManager.sdk ?: return null
         val workDirectory = PathUtil.getParentPath(module.moduleFilePath)
-        return RustRunState(environment, sdk, workDirectory, isRelease)
+        val args = ParametersListUtil.parse(additionalArguments)
+        return CargoRunState(environment, sdk, workDirectory, command, args)
     }
 
     override fun writeExternal(element: Element) {
