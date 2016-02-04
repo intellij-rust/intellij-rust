@@ -34,6 +34,13 @@ allprojects {
         version ideaVersion
         downloadSources Boolean.valueOf(downloadIdeaSources)
 
+        publish {
+            username publishUsername
+            password publishPassword
+            pluginId '8182'
+            channel publishChannel
+        }
+
         sandboxDirectory project.rootDir.canonicalPath + "/.sandbox"
     }
 
