@@ -153,6 +153,19 @@ task generateParsers {
 apply from: "shared.gradle"
 
 
+task buildPluginCombo(type: Zip, overwrite: true) {
+    dependsOn 'toml:prepareSandbox'
+    dependsOn ':prepareSandbox'
+
+    from '.sandbox/plugins'
+}
+
+clean {
+    doLast {
+        delete '.sandbox'
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Dependencies
 ///////////////////////////////////////////////////////////////////////////////////////////////////
