@@ -17,9 +17,9 @@ public class CargoIconProvider : IconProvider() {
 
     fun getFileIcon(element: PsiFile): Icon? {
         return when (element.name) {
-            Cargo.BUILD_FILE -> CargoIcons.ICON
-            Cargo.LOCK_FILE  -> CargoIcons.LOCK_ICON
-            else             -> null
+            Cargo.MANIFEST_FILE -> CargoIcons.ICON
+            Cargo.LOCK_FILE     -> CargoIcons.LOCK_ICON
+            else                -> null
         }
     }
 }

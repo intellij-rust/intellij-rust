@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataMan
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportBuilder
 import com.intellij.openapi.project.Project
 import org.rust.cargo.Cargo
+import org.rust.cargo.icons.CargoIcons
 import java.io.File
 import javax.swing.Icon
 
@@ -15,17 +16,11 @@ class CargoProjectImportBuilder(projectDataManager: ProjectDataManager)
                                                                     CargoImportControl(),
                                                                     CargoProjectSystem.ID) {
 
-    override fun getName(): String {
-        return Cargo.NAME
-    }
+    override fun getName(): String = Cargo.NAME
 
-    override fun getIcon(): Icon {
-        return Cargo.ICON
-    }
+    override fun getIcon(): Icon = CargoIcons.ICON
 
-    override fun getExternalProjectConfigToUse(file: File): File {
-        return file
-    }
+    override fun getExternalProjectConfigToUse(file: File): File = file
 
     override fun doPrepare(wizardContext: WizardContext) {}
 

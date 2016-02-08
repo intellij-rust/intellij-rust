@@ -89,7 +89,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
                 settings!!.cargoPath,
                 arrayListOf(
                     RustSdkType.CARGO_METADATA_SUBCOMMAND,
-                    "--manifest-path", File(projectPath, Cargo.BUILD_FILE).absolutePath,
+                    "--manifest-path", File(projectPath, Cargo.MANIFEST_FILE).absolutePath,
                     "--features", StringUtils.join(settings.features, ",")
                 ),
                 object : ProcessAdapter() {

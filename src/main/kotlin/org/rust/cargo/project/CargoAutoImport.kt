@@ -12,7 +12,7 @@ class CargoAutoImport : ExternalSystemAutoImportAware {
         val changed = File(changedFileOrDirPath)
         val name = changed.name
         val base = File(project.basePath)
-        if ((Cargo.BUILD_FILE == name || Cargo.LOCK_FILE == name) && VfsUtilCore.isAncestor(base, changed, true)) {
+        if ((Cargo.MANIFEST_FILE == name || Cargo.LOCK_FILE == name) && VfsUtilCore.isAncestor(base, changed, true)) {
             return project.basePath
         }
         return null
