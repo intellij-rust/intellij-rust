@@ -15,6 +15,7 @@ import com.intellij.openapi.externalSystem.service.project.ExternalSystemProject
 import com.intellij.openapi.util.Key
 import org.apache.commons.lang.StringUtils
 import org.rust.cargo.Cargo
+import org.rust.cargo.project.module.RustModuleType
 import org.rust.cargo.project.settings.CargoExecutionSettings
 import org.rust.cargo.util.PlatformUtil
 import java.io.File
@@ -129,7 +130,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
             ModuleData(
                 module.name,
                 CargoProjectSystem.ID,
-                module.moduleType,
+                RustModuleType.MODULE_TYPE_ID,
                 module.name,
                 root,
                 root

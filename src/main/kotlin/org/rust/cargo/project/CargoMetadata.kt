@@ -2,7 +2,6 @@ package org.rust.cargo.project
 
 import com.google.gson.Gson
 import com.intellij.util.PathUtil
-import org.rust.cargo.project.module.RustModuleType
 import java.io.File
 import java.util.*
 
@@ -13,7 +12,6 @@ class CargoMetadata private constructor(private val project: Project) {
 
     inner class Module(val contentRoot: File,
                        val name: String,
-                       val moduleType: String,
                        val moduleDependencies: MutableCollection<Module> = ArrayList(),
                        val libraryDependencies: MutableCollection<Library> = ArrayList())
 
@@ -45,8 +43,7 @@ class CargoMetadata private constructor(private val project: Project) {
             .toMap { pkg ->
                 pkg.id to Module(
                     File(PathUtil.getParentPath(pkg.manifest_path)),
-                    pkg.name,
-                    RustModuleType.MODULE_TYPE_ID
+                    pkg.name
                 )
             }
 
