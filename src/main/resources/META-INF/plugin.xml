@@ -144,8 +144,6 @@
         <projectImportProvider implementation="org.rust.cargo.project.CargoProjectImportProvider"/>
         <projectImportBuilder implementation="org.rust.cargo.project.CargoProjectImportBuilder"/>
 
-        <applicationService serviceImplementation="org.rust.cargo.service.CargoInstallationManager" />
-
         <!-- Icon Provider -->
 
         <iconProvider implementation="org.rust.cargo.icons.CargoIconProvider"/>

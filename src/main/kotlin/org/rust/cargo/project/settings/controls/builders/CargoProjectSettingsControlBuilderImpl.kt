@@ -1,6 +1,5 @@
 package org.rust.cargo.project.settings.controls.builders
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.externalSystem.model.settings.LocationSettingType
 import com.intellij.openapi.externalSystem.service.settings.ExternalSystemSettingsControlCustomizer
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil
@@ -19,9 +18,8 @@ import com.intellij.ui.components.JBRadioButton
 import com.intellij.util.Alarm
 import com.intellij.util.Consumer
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.project.settings.CargoProjectSettings
-import org.rust.cargo.service.CargoInstallationManager
 import org.rust.cargo.project.RustSdkType
+import org.rust.cargo.project.settings.CargoProjectSettings
 import java.awt.event.ActionListener
 import java.beans.PropertyChangeListener
 import javax.swing.ButtonGroup
@@ -201,8 +199,6 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
             val cargoHomePath = FileUtil.toCanonicalPath(pathField.text)
 
             useLocalDistributionButton?.let { button ->
-                val installationManager = ServiceManager.getService(CargoInstallationManager::class.java)
-
                 if (button.isSelected) {
                     if (StringUtil.isEmpty(cargoHomePath)) {
                         cargoHomeSettingType = LocationSettingType.UNKNOWN
@@ -211,10 +207,6 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
                         cargoHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT
                         showBalloon(MessageType.ERROR, cargoHomeSettingType)
                         throw ConfigurationException("Cargo binary not found at: $cargoHomePath!")
-                    } else if (!installationManager.hasCargoMetadata(adjustCargoHome(cargoHomePath))) {
-                        cargoHomeSettingType = LocationSettingType.EXPLICIT_CORRECT
-                        throw ConfigurationException(   "Cargo lacks 'metadata' subcommand necessary to properly import project.\n" +
-                                                        "Please, update cargo to the latest nightly build to proceed!")
                     }
                 }
             }
