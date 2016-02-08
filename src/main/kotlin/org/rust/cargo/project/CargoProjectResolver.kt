@@ -14,7 +14,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
 import com.intellij.openapi.util.Key
 import org.apache.commons.lang.StringUtils
-import org.rust.cargo.Cargo
+import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.module.RustModuleType
 import org.rust.cargo.project.settings.CargoExecutionSettings
 import org.rust.cargo.util.PlatformUtil
@@ -89,7 +89,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
                 settings!!.cargoPath,
                 arrayListOf(
                     RustSdkType.CARGO_METADATA_SUBCOMMAND,
-                    "--manifest-path", File(projectPath, Cargo.MANIFEST_FILE).absolutePath,
+                    "--manifest-path", File(projectPath, CargoConstants.MANIFEST_FILE).absolutePath,
                     "--features", StringUtils.join(settings.features, ",")
                 ),
                 object : ProcessAdapter() {

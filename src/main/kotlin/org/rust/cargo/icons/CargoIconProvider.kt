@@ -3,7 +3,7 @@ package org.rust.cargo.icons
 import com.intellij.ide.IconProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.cargo.Cargo
+import org.rust.cargo.CargoConstants
 import javax.swing.Icon
 
 
@@ -17,9 +17,9 @@ public class CargoIconProvider : IconProvider() {
 
     fun getFileIcon(element: PsiFile): Icon? {
         return when (element.name) {
-            Cargo.MANIFEST_FILE -> CargoIcons.ICON
-            Cargo.LOCK_FILE     -> CargoIcons.LOCK_ICON
-            else                -> null
+            CargoConstants.MANIFEST_FILE -> CargoIcons.ICON
+            CargoConstants.LOCK_FILE     -> CargoIcons.LOCK_ICON
+            else                         -> null
         }
     }
 }

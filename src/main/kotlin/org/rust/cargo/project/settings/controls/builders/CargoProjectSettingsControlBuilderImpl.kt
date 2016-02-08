@@ -18,7 +18,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.util.Alarm
 import com.intellij.util.Consumer
-import org.rust.cargo.Cargo
+import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.settings.CargoProjectSettings
 import org.rust.cargo.service.CargoInstallationManager
 import org.rust.cargo.project.RustSdkType
@@ -286,7 +286,7 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
     }
 
     private fun showBalloon(messageType: MessageType, settingType: LocationSettingType) {
-        ExternalSystemUiUtil.showBalloon(cargoHomePathField!!, messageType, settingType.getDescription(Cargo.PROJECT_SYSTEM_ID))
+        ExternalSystemUiUtil.showBalloon(cargoHomePathField!!, messageType, settingType.getDescription(CargoConstants.PROJECT_SYSTEM_ID))
     }
 
     override fun getInitialSettings(): CargoProjectSettings {

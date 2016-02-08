@@ -8,14 +8,14 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
-import org.rust.cargo.Cargo
+import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.settings.CargoProjectSettings
 import org.rust.ide.icons.RustIcons
 import javax.swing.Icon
 
 
 public class RustModuleBuilder(private val moduleType: RustModuleType)
-    : AbstractExternalModuleBuilder<CargoProjectSettings>(Cargo.PROJECT_SYSTEM_ID, CargoProjectSettings()) {
+    : AbstractExternalModuleBuilder<CargoProjectSettings>(CargoConstants.PROJECT_SYSTEM_ID, CargoProjectSettings()) {
 
     override fun getBuilderId() = "org.rust.cargo.project.module.builder"
 
