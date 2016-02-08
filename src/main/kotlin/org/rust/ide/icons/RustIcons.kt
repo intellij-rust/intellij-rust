@@ -11,9 +11,10 @@ import com.intellij.util.ui.EmptyIcon
 import javax.swing.Icon
 
 public object RustIcons {
-
     public val RUST     = IconLoader.getIcon("/org/rust/ide/icons/rust.png")
-    public val RUST_BIG = IconLoader.getIcon("/org/rust/ide/icons/rust@2x.png")
+    public val RUST_BIG = IconLoader.getIcon("/org/rust/ide/icons/rust-big.png")
+
+    public val RUST_FILE = IconLoader.getIcon("/org/rust/ide/icons/rust-file.png")
 
     public val MODULE   = AllIcons.Nodes.Package
 

@@ -13,15 +13,12 @@ object RustFileType : LanguageFileType(RustLanguage) {
 
     override fun getName(): String = "Rust"
 
-    override fun getIcon(): Icon = RustIcons.RUST
+    override fun getIcon(): Icon = RustIcons.RUST_FILE
 
     override fun getDefaultExtension(): String = DEFAULTS.EXTENSION
 
-    override fun getCharset(file: VirtualFile, content: ByteArray): String =
-            "UTF-8"
+    override fun getCharset(file: VirtualFile, content: ByteArray): String = "UTF-8"
 
-    override fun getDescription(): String {
-        return "Rust Files"
-    }
+    override fun getDescription(): String = "Rust Files"
 }
 

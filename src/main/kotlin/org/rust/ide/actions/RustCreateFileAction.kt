@@ -8,7 +8,7 @@ import com.intellij.psi.PsiDirectory
 import org.rust.ide.icons.RustIcons
 
 
-class RustCreateFileAction : CreateFileFromTemplateAction(RustCreateFileAction.CAPTION, "", RustIcons.RUST)
+class RustCreateFileAction : CreateFileFromTemplateAction(RustCreateFileAction.CAPTION, "", RustIcons.RUST_FILE)
                            , DumbAware {
 
     override fun getActionName(directory: PsiDirectory?, newName: String?, templateName: String?): String = CAPTION
@@ -16,7 +16,7 @@ class RustCreateFileAction : CreateFileFromTemplateAction(RustCreateFileAction.C
     override fun buildDialog(project: Project?, directory: PsiDirectory?,
                              builder: CreateFileFromTemplateDialog.Builder) {
         builder .setTitle(CAPTION)
-                .addKind("Empty File", RustIcons.RUST, "Rust File")
+                .addKind("Empty File", RustIcons.RUST_FILE, "Rust File")
     }
 
     private companion object {
