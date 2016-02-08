@@ -1,7 +1,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
-import org.rust.cargo.project.module.util.rootMod
+import org.rust.cargo.project.module.util.crateRoots
 import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
@@ -42,10 +42,11 @@ object RustResolveEngine {
      * NOTE: Those names are treated as implicitly _fully-qualified_ once
      *       therefore none of them may contain `super`, `self` references
      */
-    fun resolve(name: RustQualifiedName, crate: Module): ResolveResult =
-        crate.rootMod?.let { crateRoot ->
-            Resolver().resolve(name, crateRoot)
-        } ?: ResolveResult.Unresolved
+    fun resolve(name: RustQualifiedName, module: Module): ResolveResult =
+        module.crateRoots
+              .map { Resolver().resolve(name, it) }
+              .firstOrNull { it.isValidResult }
+              ?: ResolveResult.Unresolved
 
     /**
      * Resolves `qualified-reference` bearing PSI-elements

@@ -2,8 +2,7 @@ package org.rust.cargo.project
 
 import com.google.gson.Gson
 import com.intellij.util.PathUtil
-import org.rust.cargo.project.module.RustExecutableModuleType
-import org.rust.cargo.project.module.RustLibraryModuleType
+import org.rust.cargo.project.module.RustModuleType
 import java.io.File
 import java.util.*
 
@@ -44,18 +43,10 @@ class CargoMetadata private constructor(private val project: Project) {
         val idToModule = project.packages
             .filter { it.isModule }
             .toMap { pkg ->
-                var moduleType: String? = null
-                for (t in pkg.targets) {
-                    if (t.kind == listOf("bin"))
-                        moduleType = RustExecutableModuleType.MODULE_TYPE_ID
-                    else if (t.kind.contains("lib"))
-                        moduleType = moduleType ?: RustLibraryModuleType.MODULE_TYPE_ID
-                }
-
                 pkg.id to Module(
                     File(PathUtil.getParentPath(pkg.manifest_path)),
                     pkg.name,
-                    moduleType ?: RustExecutableModuleType.MODULE_TYPE_ID
+                    RustModuleType.MODULE_TYPE_ID
                 )
             }
 

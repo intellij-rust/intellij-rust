@@ -5,7 +5,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.ID
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.RustModItem
-import org.rust.lang.core.psi.util.getCrate
+import org.rust.lang.core.psi.util.getModule
 import org.rust.lang.core.psi.util.modulePath
 import org.rust.lang.core.resolve.RustResolveEngine
 
@@ -18,21 +18,21 @@ interface RustModulesIndex {
 
         fun getSuperFor(mod: RustModItem): RustModItem? =
             mod.containingFile.let { file ->
-                mod.getCrate()?.let { crate ->
+                mod.getModule()?.let { module ->
                     file.modulePath?.let { path ->
                         findByHeterogeneous(
                             FileBasedIndex.getInstance()
-                                .getValues(ID, path, crate.moduleContentScope)
+                                .getValues(ID, path, module.moduleContentScope)
                                 .firstOrNull(),
-                            crate
+                            module
                         )
                     }
                 }
             }
 
-        private fun findByHeterogeneous(path: RustQualifiedName?, crate: Module): RustModItem? =
+        private fun findByHeterogeneous(path: RustQualifiedName?, module: Module): RustModItem? =
             path?.let {
-                RustResolveEngine.resolve(path, crate).resolved as RustModItem?
+                RustResolveEngine.resolve(path, module).resolved as RustModItem?
             }
     }
 }

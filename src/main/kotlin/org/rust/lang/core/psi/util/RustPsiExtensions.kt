@@ -60,7 +60,7 @@ fun PsiElement.isAfter(other: PsiElement): Boolean = other.textOffset < textOffs
 fun PsiElement.isBefore(anchor: Int): Boolean = textOffset < anchor
 
 
-fun PsiElement.getCrate(): Module? =
+fun PsiElement.getModule(): Module? =
     ModuleUtilCore.findModuleForPsiElement(this)
 
 
