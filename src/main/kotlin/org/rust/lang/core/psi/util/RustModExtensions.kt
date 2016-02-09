@@ -76,7 +76,14 @@ internal val RustModItem.ownedDirectory: PsiDirectory?
     }
 
 private val RustModItem.isCrateRoot: Boolean
-    get() = containingMod == null && getModule()?.isCrateRootFile(containingFile.virtualFile) ?: false
+    get() {
+        val vFile = containingFile.virtualFile
+        val module = getModule()
+        if (containingMod != null || vFile == null || module == null) {
+            return false
+        }
+        return module.isCrateRootFile(vFile)
+    }
 
 val RustModItem.modDecls: Collection<RustModDeclItem>
     get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
