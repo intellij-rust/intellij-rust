@@ -1,0 +1,3 @@
+<STRING> ('"foo')
+VALID_STRING_ESCAPE_TOKEN ('\u{aaa}')
+<STRING> ('"')
