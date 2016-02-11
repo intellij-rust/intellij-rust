@@ -6,58 +6,58 @@ public interface RustTokenElementTypes {
 
     // Keywords
 
-    RustTokenType ABSTRACT   = new RustKeywordTokenType("abstract");
-    RustTokenType ALIGNOF    = new RustKeywordTokenType("alignof");
-    RustTokenType AS         = new RustKeywordTokenType("as");
-    RustTokenType BECOME     = new RustKeywordTokenType("become");
-    RustTokenType BOX        = new RustKeywordTokenType("box");
-    RustTokenType BREAK      = new RustKeywordTokenType("break");
-    RustTokenType CONST      = new RustKeywordTokenType("const");
-    RustTokenType CONTINUE   = new RustKeywordTokenType("continue");
-    RustTokenType CRATE      = new RustKeywordTokenType("crate");
-    RustTokenType CSELF      = new RustKeywordTokenType("Self");
-    RustTokenType DO         = new RustKeywordTokenType("do");
-    RustTokenType ELSE       = new RustKeywordTokenType("else");
-    RustTokenType ENUM       = new RustKeywordTokenType("enum");
-    RustTokenType EXTERN     = new RustKeywordTokenType("extern");
-    RustTokenType FALSE      = new RustKeywordTokenType("false");
-    RustTokenType FINAL      = new RustKeywordTokenType("final");
-    RustTokenType FN         = new RustKeywordTokenType("fn");
-    RustTokenType FOR        = new RustKeywordTokenType("for");
-    RustTokenType IF         = new RustKeywordTokenType("if");
-    RustTokenType IMPL       = new RustKeywordTokenType("impl");
-    RustTokenType IN         = new RustKeywordTokenType("in");
-    RustTokenType LET        = new RustKeywordTokenType("let");
-    RustTokenType LOOP       = new RustKeywordTokenType("loop");
-    RustTokenType MACRO      = new RustKeywordTokenType("macro");
-    RustTokenType MATCH      = new RustKeywordTokenType("match");
-    RustTokenType MOD        = new RustKeywordTokenType("mod");
-    RustTokenType MOVE       = new RustKeywordTokenType("move");
-    RustTokenType MUT        = new RustKeywordTokenType("mut");
-    RustTokenType OFFSETOF   = new RustKeywordTokenType("offsetof");
-    RustTokenType OVERRIDE   = new RustKeywordTokenType("override");
-    RustTokenType PRIV       = new RustKeywordTokenType("priv");
-    RustTokenType PROC       = new RustKeywordTokenType("proc");
-    RustTokenType PUB        = new RustKeywordTokenType("pub");
-    RustTokenType PURE       = new RustKeywordTokenType("pure");
-    RustTokenType REF        = new RustKeywordTokenType("ref");
-    RustTokenType RETURN     = new RustKeywordTokenType("return");
-    RustTokenType SELF       = new RustKeywordTokenType("self");
-    RustTokenType SIZEOF     = new RustKeywordTokenType("sizeof");
-    RustTokenType STATIC     = new RustKeywordTokenType("static");
-    RustTokenType STRUCT     = new RustKeywordTokenType("struct");
-    RustTokenType SUPER      = new RustKeywordTokenType("super");
-    RustTokenType TRAIT      = new RustKeywordTokenType("trait");
-    RustTokenType TRUE       = new RustKeywordTokenType("true");
-    RustTokenType TYPE       = new RustKeywordTokenType("type");
-    RustTokenType TYPEOF     = new RustKeywordTokenType("typeof");
-    RustTokenType UNSAFE     = new RustKeywordTokenType("unsafe");
-    RustTokenType UNSIZED    = new RustKeywordTokenType("unsized");
-    RustTokenType USE        = new RustKeywordTokenType("use");
-    RustTokenType VIRTUAL    = new RustKeywordTokenType("virtual");
-    RustTokenType WHERE      = new RustKeywordTokenType("where");
-    RustTokenType WHILE      = new RustKeywordTokenType("while");
-    RustTokenType YIELD      = new RustKeywordTokenType("yield");
+    RustTokenType ABSTRACT = new RustKeywordTokenType("abstract");
+    RustTokenType ALIGNOF = new RustKeywordTokenType("alignof");
+    RustTokenType AS = new RustKeywordTokenType("as");
+    RustTokenType BECOME = new RustKeywordTokenType("become");
+    RustTokenType BOX = new RustKeywordTokenType("box");
+    RustTokenType BREAK = new RustKeywordTokenType("break");
+    RustTokenType CONST = new RustKeywordTokenType("const");
+    RustTokenType CONTINUE = new RustKeywordTokenType("continue");
+    RustTokenType CRATE = new RustKeywordTokenType("crate");
+    RustTokenType CSELF = new RustKeywordTokenType("Self");
+    RustTokenType DO = new RustKeywordTokenType("do");
+    RustTokenType ELSE = new RustKeywordTokenType("else");
+    RustTokenType ENUM = new RustKeywordTokenType("enum");
+    RustTokenType EXTERN = new RustKeywordTokenType("extern");
+    RustTokenType FALSE = new RustKeywordTokenType("false");
+    RustTokenType FINAL = new RustKeywordTokenType("final");
+    RustTokenType FN = new RustKeywordTokenType("fn");
+    RustTokenType FOR = new RustKeywordTokenType("for");
+    RustTokenType IF = new RustKeywordTokenType("if");
+    RustTokenType IMPL = new RustKeywordTokenType("impl");
+    RustTokenType IN = new RustKeywordTokenType("in");
+    RustTokenType LET = new RustKeywordTokenType("let");
+    RustTokenType LOOP = new RustKeywordTokenType("loop");
+    RustTokenType MACRO = new RustKeywordTokenType("macro");
+    RustTokenType MATCH = new RustKeywordTokenType("match");
+    RustTokenType MOD = new RustKeywordTokenType("mod");
+    RustTokenType MOVE = new RustKeywordTokenType("move");
+    RustTokenType MUT = new RustKeywordTokenType("mut");
+    RustTokenType OFFSETOF = new RustKeywordTokenType("offsetof");
+    RustTokenType OVERRIDE = new RustKeywordTokenType("override");
+    RustTokenType PRIV = new RustKeywordTokenType("priv");
+    RustTokenType PROC = new RustKeywordTokenType("proc");
+    RustTokenType PUB = new RustKeywordTokenType("pub");
+    RustTokenType PURE = new RustKeywordTokenType("pure");
+    RustTokenType REF = new RustKeywordTokenType("ref");
+    RustTokenType RETURN = new RustKeywordTokenType("return");
+    RustTokenType SELF = new RustKeywordTokenType("self");
+    RustTokenType SIZEOF = new RustKeywordTokenType("sizeof");
+    RustTokenType STATIC = new RustKeywordTokenType("static");
+    RustTokenType STRUCT = new RustKeywordTokenType("struct");
+    RustTokenType SUPER = new RustKeywordTokenType("super");
+    RustTokenType TRAIT = new RustKeywordTokenType("trait");
+    RustTokenType TRUE = new RustKeywordTokenType("true");
+    RustTokenType TYPE = new RustKeywordTokenType("type");
+    RustTokenType TYPEOF = new RustKeywordTokenType("typeof");
+    RustTokenType UNSAFE = new RustKeywordTokenType("unsafe");
+    RustTokenType UNSIZED = new RustKeywordTokenType("unsized");
+    RustTokenType USE = new RustKeywordTokenType("use");
+    RustTokenType VIRTUAL = new RustKeywordTokenType("virtual");
+    RustTokenType WHERE = new RustKeywordTokenType("where");
+    RustTokenType WHILE = new RustKeywordTokenType("while");
+    RustTokenType YIELD = new RustKeywordTokenType("yield");
 
     // Identifiers
 
@@ -69,13 +69,12 @@ public interface RustTokenElementTypes {
 
     RustTokenType INTEGER_LITERAL = new RustTokenType("<INTEGER>");
     RustTokenType FLOAT_LITERAL = new RustTokenType("<FLOAT>");
-    RustTokenType STRING_LITERAL = new RustTokenType("<STRING>");
-    RustTokenType RAW_STRING_LITERAL = STRING_LITERAL;
-    RustTokenType CHAR_LITERAL = new RustTokenType("<CHAR>");
-    RustTokenType BYTE_STRING_LITERAL = new RustTokenType("<BYTE_STRING>");
-    RustTokenType RAW_BYTE_STRING_LITERAL = BYTE_STRING_LITERAL;
     RustTokenType BYTE_LITERAL = new RustTokenType("<BYTE>");
-
+    RustTokenType CHAR_LITERAL = new RustTokenType("<CHAR>");
+    RustTokenType STRING_LITERAL = new RustTokenType("<STRING>");
+    RustTokenType BYTE_STRING_LITERAL = new RustTokenType("<BYTE_STRING>");
+    RustTokenType RAW_STRING_LITERAL = new RustTokenType("<RAW_STRING>");
+    RustTokenType RAW_BYTE_STRING_LITERAL = new RustTokenType("<RAW_BYTE_STRING>");
 
     // Comments
 
@@ -140,7 +139,7 @@ public interface RustTokenElementTypes {
     // Token Sets
     //
 
-    public static final TokenSet PHANTOM_TOKEN_SET = TokenSet.create(
+    TokenSet PHANTOM_TOKEN_SET = TokenSet.create(
         RustTokenElementTypes.BLOCK_COMMENT,
         RustTokenElementTypes.EOL_COMMENT,
         RustTokenElementTypes.INNER_DOC_COMMENT,

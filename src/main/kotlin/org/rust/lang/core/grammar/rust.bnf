@@ -1033,6 +1033,8 @@ private lit ::= ( STRING_LITERAL
                 | CHAR_LITERAL
                 | BYTE_STRING_LITERAL
                 | BYTE_LITERAL
+                | RAW_STRING_LITERAL
+                | RAW_BYTE_STRING_LITERAL
                 | INTEGER_LITERAL
                 | FLOAT_LITERAL
                 | bool_lit )
