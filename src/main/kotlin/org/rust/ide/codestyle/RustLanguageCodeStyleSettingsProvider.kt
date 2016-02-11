@@ -25,6 +25,8 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
 
     private val CODE_SAMPLE by lazy {
         val stream = javaClass.classLoader.getResourceAsStream("org/rust/ide/codestyle/code_sample.rs")
-        StreamUtil.readText(stream, "UTF-8")
+        // We need to convert line separators here, because IntelliJ always expects \n,
+        // while on Windows the resource file will be read with \r\n as line separator.
+        StreamUtil.convertSeparators(StreamUtil.readText(stream, "UTF-8"))
     }
 }
