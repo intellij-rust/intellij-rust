@@ -97,28 +97,25 @@ SUFFIX     = {IDENTIFIER}
 // Literals
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-FLT_NORMAL = ({DEC_LITERAL} (\. {DEC_LITERAL} {FLT_EXP}? | {FLT_EXP}) {FLT_SUFFIX}?)
-           | ({DEC_LITERAL} {FLT_SUFFIX})
-FLT_TRAILING_DOT = {DEC_LITERAL} \.
+EXPONENT      = [eE] [-+]? [0-9_]+
+FLT_SUFFIX    = f32 | f64
+FLT_LITERAL   = ( {DEC_LITERAL} \. {DEC_LITERAL} {EXPONENT}? {SUFFIX}? )
+              | ( {DEC_LITERAL} {EXPONENT} {SUFFIX}? )
+FLT_TDOT      = {DEC_LITERAL} \.
 
-FLT_EXP = [eE][+-]?{DEC_LITERAL}
-FLT_SUFFIX = f32|f64
 
-INT_LITERAL = ({DEC_LITERAL} | {HEX_LITERAL} | {OCT_LITERAL} | {BIN_LITERAL}){INT_SUFFIX}?
+INT_LITERAL = ( {DEC_LITERAL}
+              | {HEX_LITERAL}
+              | {OCT_LITERAL}
+              | {BIN_LITERAL} ) {SUFFIX}?
 
-DEC_LITERAL = {DEC_DIGIT}({DEC_DIGIT}|_)*
-HEX_LITERAL = "0x" ({HEX_DIGIT}|_)*
-OCT_LITERAL = "0o" ({OCT_DIGIT}|_)*
-BIN_LITERAL = "0b" ({BIN_DIGIT}|_)*
+DEC_LITERAL = [0-9] [0-9_]*
+HEX_LITERAL = "0x" [a-fA-F0-9_]*
+OCT_LITERAL = "0o" [0-7_]*
+BIN_LITERAL = "0b" [01_]*
 
-INT_SUFFIX = u8|u16|u32|u64|usize|i8|i16|i32|i64|isize
 
-DEC_DIGIT = [0-9]
-HEX_DIGIT = [a-fA-F0-9]
-OCT_DIGIT = [0-7]
-BIN_DIGIT = [0-1]
-
-CHAR_LITERAL   = ( \' ( [^\\\'\r\n] | \\[^\r\n] | "\\x" {HEX_DIGIT}+ | "\\u{" {HEX_DIGIT}* "}"? )? ( \' {SUFFIX}? | \\ )? )
+CHAR_LITERAL   = ( \' ( [^\\\'\r\n] | \\[^\r\n] | "\\x" [a-fA-F0-9]+ | "\\u{" [a-fA-F0-9]* "}"? )? ( \' {SUFFIX}? | \\ )? )
                | ( \' [\p{xidcontinue}]* \' {SUFFIX}? )
 STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
 
@@ -241,11 +238,15 @@ SHEBANG_LINE=\#\![^\[].*
 
   /* LITERALS */
 
+  // Match 1f32 and 1f64 as floats, not integers (kinda hack)
+  {DEC_LITERAL} {FLT_SUFFIX}      { return FLOAT_LITERAL; }
+
   {INT_LITERAL}                   { return INTEGER_LITERAL; }
 
-  {FLT_NORMAL}                    { return FLOAT_LITERAL; }
-  {FLT_TRAILING_DOT}/[^._\p{xidstart}]
-                                  { return FLOAT_LITERAL; }
+  {FLT_LITERAL}                   { return FLOAT_LITERAL; }
+
+  // Correctly handle 1.f32 and 0..9
+  {FLT_TDOT} / [^.\p{xidstart}]   { return FLOAT_LITERAL; }
 
   "b" {CHAR_LITERAL}              { return BYTE_LITERAL; }
 
