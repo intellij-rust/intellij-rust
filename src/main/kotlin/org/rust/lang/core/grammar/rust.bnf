@@ -380,7 +380,7 @@ private generic_params_inner ::= LT lifetimes [ COMMA [ type_params COMMA? ] ] G
 lifetimes ::= lifetime_and_bounds (COMMA lifetime_and_bounds)*
 
 private lifetime_and_bounds ::= LIFETIME lifetime_bounds?
-private lifetime_bounds     ::= COLON lifetime (PLUS lifetime)*
+private lifetime_bounds     ::= COLON LIFETIME (PLUS LIFETIME)*
 
 private type_params ::= type_param (COMMA type_params)*
 
@@ -397,12 +397,12 @@ private type_param_bound_seq_right  ::= [ PLUS polybound type_param_bound_seq_ri
 
 polybound ::= [ FOR LT lifetimes? GT | Q ] bound
 
-bound   ::= lifetime | trait_ref
+bound   ::= LIFETIME | trait_ref
 bounds  ::= bound (PLUS bound)*
 
 where_clause ::= WHERE <<comma_separated_list where_pred>>
 
-where_pred ::= for_lifetimes? (lifetime COLON bounds | type type_param_bounds)
+where_pred ::= for_lifetimes? (LIFETIME COLON bounds | type type_param_bounds)
 
 for_lifetimes ::= FOR LT lifetimes GT
 
@@ -585,7 +585,7 @@ trait_type ::= outer_attrs? TYPE type_param SEMICOLON
 trait_method ::= outer_attrs? fn_header generic_params fn_decl_with_self_allow_anon_params where_clause? (SEMICOLON | inner_attrs_and_block)
 
 private fn_decl_with_self_allow_anon_params ::= fn_anon_params_with_self ret_type?
-private fn_anon_params_with_self ::= LPAREN [ AND lifetime? ] MUT? SELF type_ascription? comma_anon_params? RPAREN
+private fn_anon_params_with_self ::= LPAREN [ AND LIFETIME? ] MUT? SELF type_ascription? comma_anon_params? RPAREN
                                    | LPAREN anon_params? RPAREN
 
 private comma_anon_params ::= COMMA [ anon_params COMMA? ]
@@ -624,7 +624,7 @@ impl_method ::= attrs_and_vis fn_header generic_params fn_decl_with_self where_c
 
 private fn_decl_with_self ::= fn_params_with_self ret_type?
 
-private fn_params_with_self ::= LPAREN [ AND lifetime? ] MUT? SELF type_ascription? comma_params? RPAREN
+private fn_params_with_self ::= LPAREN [ AND LIFETIME? ] MUT? SELF type_ascription? comma_params? RPAREN
                               | LPAREN params? RPAREN
 
 private comma_params ::= COMMA [ params COMMA? ]
@@ -640,8 +640,8 @@ private impl_type ::= attrs_and_vis TYPE IDENTIFIER generic_params EQ type_sum S
 
 private type ::= BOX type
                | MUL    [ MUT | CONST ] type
-               | AND    [ lifetime? MUT? ] type
-               | ANDAND [ lifetime? MUT? ] type
+               | AND    [ LIFETIME? MUT? ] type
+               | ANDAND [ LIFETIME? MUT? ] type
                | LBRACK type [ (COMMA DOTDOT | SEMICOLON) any_expr ] RBRACK
                | UNDERSCORE
                | type_bare_fn
@@ -920,16 +920,16 @@ path_expr ::= path_generic_args_with_colons
 qual_path_expr ::= << qualified_path path_generic_args_with_colons >>
               /* | LTLT type_sum [ AS trait_ref ] GT COLONCOLON IDENTIFIER generic_args? [ AS trait_ref ] GT COLONCOLON IDENTIFIER generic_args? */
 
-while_expr ::= [lifetime COLON] WHILE no_struct_lit_expr block
+while_expr ::= [LIFETIME COLON] WHILE no_struct_lit_expr block
 
-loop_expr ::= [lifetime COLON] LOOP block
-cont_expr ::= CONTINUE lifetime?
+loop_expr ::= [LIFETIME COLON] LOOP block
+cont_expr ::= CONTINUE LIFETIME?
 
-break_expr ::= BREAK lifetime?
+break_expr ::= BREAK LIFETIME?
 
 scoped_for_decl ::= pat IN no_struct_lit_expr
 
-for_expr ::= [lifetime COLON] FOR scoped_for_decl block { pin = "IN" }
+for_expr ::= [LIFETIME COLON] FOR scoped_for_decl block { pin = "IN" }
 
 match_expr ::= MATCH no_struct_lit_expr LBRACE match_arm* RBRACE
 
@@ -1040,13 +1040,6 @@ private lit ::= ( STRING_LITERAL
                 | bool_lit )
 
 private bool_lit ::= FALSE | TRUE
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Lifetimes
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-private lifetime ::= LIFETIME
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
