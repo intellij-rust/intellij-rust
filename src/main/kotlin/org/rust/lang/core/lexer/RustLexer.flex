@@ -117,12 +117,12 @@ HEX_DIGIT = [a-fA-F0-9]
 OCT_DIGIT = [0-7]
 BIN_DIGIT = [0-1]
 
-BYTE_LITERAL = b\x27 ([^'] | {ESCAPE_SEQUENCE}) \x27
+BYTE_LITERAL = b\' ([^'] | {ESCAPE_SEQUENCE}) \'
 
-STRING_LITERAL = \x22 ([^\"\\] | {ESCAPE_SEQUENCE})* (\x22|\\)?
+STRING_LITERAL = \" ([^\"\\] | {ESCAPE_SEQUENCE})* (\"|\\)?
 
 ESCAPE_SEQUENCE = \\{EOL_WS} | {BYTE_ESCAPE} | {UNICODE_ESCAPE}
-BYTE_ESCAPE = \\n|\\r|\\t|\\\\|\\\x27|\\\x22|\\0|\\x{HEX_DIGIT}{2}
+BYTE_ESCAPE = \\n|\\r|\\t|\\\\|\\\'|\\\"|\\0|\\x{HEX_DIGIT}{2}
 UNICODE_ESCAPE = \\u\{{HEX_DIGIT}{1,6}\}
 
 
@@ -133,7 +133,7 @@ UNICODE_ESCAPE = \\u\{{HEX_DIGIT}{1,6}\}
 SHEBANG_LINE=\#\![^\[].*
 
 %%
-<YYINITIAL> \x27                  { yybegin(LIFETIME_OR_CHAR); yypushback(1); }
+<YYINITIAL> \'                  { yybegin(LIFETIME_OR_CHAR); yypushback(1); }
 
 <YYINITIAL>                       {
 
@@ -254,14 +254,14 @@ SHEBANG_LINE=\#\![^\[].*
   "b"{STRING_LITERAL} {IDENTIFIER}?
                                   { return RustTokenElementTypes.BYTE_STRING_LITERAL; }
 
-  "br" #* \x22                    { yybegin(RAW_LITERAL);
+  "br" #* \"                    { yybegin(RAW_LITERAL);
 
                                     zzPostponedMarkedPos = zzStartRead;
                                     zzShaStride          = yylength() - 3; }
 
   {STRING_LITERAL} {IDENTIFIER}?  { return RustTokenElementTypes.STRING_LITERAL; }
 
-  "r" #* \x22                     { yybegin(RAW_LITERAL);
+  "r" #* \"                     { yybegin(RAW_LITERAL);
 
                                     zzPostponedMarkedPos = zzStartRead;
                                     zzShaStride          = yylength() - 2; }
@@ -278,7 +278,7 @@ SHEBANG_LINE=\#\![^\[].*
 
 <RAW_LITERAL> {
 
-  \x22 #* {
+  \" #* {
     int shaExcess = yylength() - 1 - zzShaStride;
     if (shaExcess >= 0) {
       yybegin(RAW_LITERAL_SUFFIX);
@@ -346,13 +346,13 @@ SHEBANG_LINE=\#\![^\[].*
 
 <LIFETIME_OR_CHAR> {
 
-  \x27static                                       { yybegin(YYINITIAL); return RustTokenElementTypes.STATIC_LIFETIME; }
-  \x27{IDENTIFIER}                                 { yybegin(YYINITIAL); return RustTokenElementTypes.LIFETIME; }
-  \x27\\[nrt\\\x27\x220]\x27     {IDENTIFIER}?     { yybegin(YYINITIAL); return RustTokenElementTypes.CHAR_LITERAL; }
-  \x27\\x[0-9a-fA-F]{2}\x27      {IDENTIFIER}?     { yybegin(YYINITIAL); return RustTokenElementTypes.CHAR_LITERAL; }
-  \x27\\u\{[0-9a-fA-F]?{6}\}\x27 {IDENTIFIER}?     { yybegin(YYINITIAL); return RustTokenElementTypes.CHAR_LITERAL; }
-  \x27.\x27                      {IDENTIFIER}?     { yybegin(YYINITIAL); return RustTokenElementTypes.CHAR_LITERAL; }
-  \x27[\x80-\xff]{2,4}\x27       {IDENTIFIER}?     { yybegin(YYINITIAL); return RustTokenElementTypes.CHAR_LITERAL; }
+  \'static                                       { yybegin(YYINITIAL); return RustTokenElementTypes.STATIC_LIFETIME; }
+  \'{IDENTIFIER}                                 { yybegin(YYINITIAL); return RustTokenElementTypes.LIFETIME; }
+  \'\\[nrt\\\'\"0]\'     {IDENTIFIER}?     { yybegin(YYINITIAL); return RustTokenElementTypes.CHAR_LITERAL; }
+  \'\\x[0-9a-fA-F]{2}\'      {IDENTIFIER}?     { yybegin(YYINITIAL); return RustTokenElementTypes.CHAR_LITERAL; }
+  \'\\u\{[0-9a-fA-F]?{6}\}\' {IDENTIFIER}?     { yybegin(YYINITIAL); return RustTokenElementTypes.CHAR_LITERAL; }
+  \'.\'                      {IDENTIFIER}?     { yybegin(YYINITIAL); return RustTokenElementTypes.CHAR_LITERAL; }
+  \'[\x80-\xff]{2,4}\'       {IDENTIFIER}?     { yybegin(YYINITIAL); return RustTokenElementTypes.CHAR_LITERAL; }
   <<EOF>>                                          { yybegin(YYINITIAL); return com.intellij.psi.TokenType.BAD_CHARACTER; }
 
 }
