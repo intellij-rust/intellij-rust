@@ -63,7 +63,6 @@ public interface RustTokenElementTypes {
 
     RustTokenType IDENTIFIER = new RustTokenType("<IDENTIFIER>");
     RustTokenType LIFETIME = new RustTokenType("<LIFETIME>");
-    RustTokenType STATIC_LIFETIME = new RustTokenType("<STATIC_LIFETIME>");
 
     // Literals
 

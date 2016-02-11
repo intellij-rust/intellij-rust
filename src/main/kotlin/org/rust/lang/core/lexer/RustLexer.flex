@@ -330,7 +330,6 @@ SHEBANG_LINE=\#\![^\[].*
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 <IN_LIFETIME_OR_CHAR> {
-  \'static                              { yybegin(YYINITIAL); return STATIC_LIFETIME; }
   \'{IDENTIFIER}                        { yybegin(YYINITIAL); return LIFETIME; }
   {CHAR_LITERAL}                        { yybegin(YYINITIAL); return CHAR_LITERAL; }
   <<EOF>>                               { yybegin(YYINITIAL); return BAD_CHARACTER; }

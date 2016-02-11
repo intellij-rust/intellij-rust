@@ -379,7 +379,7 @@ private generic_params_inner ::= LT lifetimes [ COMMA [ type_params COMMA? ] ] G
 
 lifetimes ::= lifetime_and_bounds (COMMA lifetime_and_bounds)*
 
-private lifetime_and_bounds ::= LIFETIME lifetime_bounds? | STATIC_LIFETIME
+private lifetime_and_bounds ::= LIFETIME lifetime_bounds?
 private lifetime_bounds     ::= COLON lifetime (PLUS lifetime)*
 
 private type_params ::= type_param (COMMA type_params)*
@@ -1046,7 +1046,7 @@ private bool_lit ::= FALSE | TRUE
 // Lifetimes
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private lifetime ::= LIFETIME | STATIC_LIFETIME
+private lifetime ::= LIFETIME
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
