@@ -118,13 +118,9 @@ HEX_DIGIT = [a-fA-F0-9]
 OCT_DIGIT = [0-7]
 BIN_DIGIT = [0-1]
 
-BYTE_LITERAL = b\' ([^'] | {ESCAPE_SEQUENCE}) \'
-
-STRING_LITERAL = \" ([^\"\\] | {ESCAPE_SEQUENCE})* (\"|\\)?
-
-ESCAPE_SEQUENCE = \\{EOL_WS} | {BYTE_ESCAPE} | {UNICODE_ESCAPE}
-BYTE_ESCAPE     = \\n|\\r|\\t|\\\\|\\\'|\\\"|\\0|\\x{HEX_DIGIT}{2}
-UNICODE_ESCAPE  = \\u\{{HEX_DIGIT}{1,6}\}
+CHAR_LITERAL   = ( \' ( [^\\\'\r\n] | \\[^\r\n] | "\\x" {HEX_DIGIT}+ | "\\u{" {HEX_DIGIT}* "}"? )? ( \' {SUFFIX}? | \\ )? )
+               | ( \' [\p{xidcontinue}]* \' {SUFFIX}? )
+STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -251,15 +247,14 @@ SHEBANG_LINE=\#\![^\[].*
   {FLT_TRAILING_DOT}/[^._\p{xidstart}]
                                   { return FLOAT_LITERAL; }
 
-  {BYTE_LITERAL}                  { return BYTE_LITERAL; }
+  "b" {CHAR_LITERAL}              { return BYTE_LITERAL; }
 
-  "b" {STRING_LITERAL} {SUFFIX}?  { return BYTE_STRING_LITERAL; }
+  "b" {STRING_LITERAL}            { return BYTE_STRING_LITERAL; }
+  {STRING_LITERAL}                { return STRING_LITERAL; }
 
   "br" #* \"                      { yybegin(IN_RAW_LITERAL);
                                     zzPostponedMarkedPos = zzStartRead;
                                     zzShaStride          = yylength() - 3; }
-
-  {STRING_LITERAL} {SUFFIX}?      { return STRING_LITERAL; }
 
   "r" #* \"                       { yybegin(IN_RAW_LITERAL);
                                     zzPostponedMarkedPos = zzStartRead;
@@ -335,16 +330,10 @@ SHEBANG_LINE=\#\![^\[].*
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 <IN_LIFETIME_OR_CHAR> {
-
   \'static                              { yybegin(YYINITIAL); return STATIC_LIFETIME; }
   \'{IDENTIFIER}                        { yybegin(YYINITIAL); return LIFETIME; }
-  \'\\[nrt\\\'\"0]\'         {SUFFIX}?  { yybegin(YYINITIAL); return CHAR_LITERAL; }
-  \'\\x[0-9a-fA-F]{2}\'      {SUFFIX}?  { yybegin(YYINITIAL); return CHAR_LITERAL; }
-  \'\\u\{[0-9a-fA-F]?{6}\}\' {SUFFIX}?  { yybegin(YYINITIAL); return CHAR_LITERAL; }
-  \'.\'                      {SUFFIX}?  { yybegin(YYINITIAL); return CHAR_LITERAL; }
-  \'[\x80-\xff]{2,4}\'       {SUFFIX}?  { yybegin(YYINITIAL); return CHAR_LITERAL; }
+  {CHAR_LITERAL}                        { yybegin(YYINITIAL); return CHAR_LITERAL; }
   <<EOF>>                               { yybegin(YYINITIAL); return BAD_CHARACTER; }
-
 }
 
 
