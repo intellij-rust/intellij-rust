@@ -2,9 +2,9 @@ package org.rust.ide.colorscheme
 
 import com.intellij.openapi.options.colors.ColorDescriptor
 import com.intellij.openapi.options.colors.ColorSettingsPage
-import com.intellij.openapi.util.io.StreamUtil
 import org.rust.ide.highlight.syntax.RustHighlighter
 import org.rust.ide.icons.RustIcons
+import org.rust.ide.utils.loadCodeSampleResource
 import com.intellij.openapi.options.colors.AttributesDescriptor as d
 
 public class RustColorSettingsPage : ColorSettingsPage {
@@ -40,10 +40,7 @@ public class RustColorSettingsPage : ColorSettingsPage {
         "mut-binding" to RustColors.MUT_BINDING
     )
     private val DEMO_TEXT by lazy {
-        val stream = javaClass.classLoader.getResourceAsStream("org/rust/ide/colorscheme/highlighterDemoText.rs")
-        // We need to convert line separators here, because IntelliJ always expects \n,
-        // while on Windows the resource file will be read with \r\n as line separator.
-        StreamUtil.convertSeparators(StreamUtil.readText(stream, "UTF-8"))
+        loadCodeSampleResource("org/rust/ide/colorscheme/highlighterDemoText.rs")
     }
 
     override fun getDisplayName() = "Rust"

@@ -1,9 +1,9 @@
 package org.rust.ide.codestyle
 
-import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
+import org.rust.ide.utils.loadCodeSampleResource
 import org.rust.lang.RustLanguage
 
 class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() {
@@ -24,7 +24,6 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
     override fun getCodeSample(settingsType: LanguageCodeStyleSettingsProvider.SettingsType) = CODE_SAMPLE
 
     private val CODE_SAMPLE by lazy {
-        val stream = javaClass.classLoader.getResourceAsStream("org/rust/ide/codestyle/code_sample.rs")
-        StreamUtil.readText(stream, "UTF-8")
+        loadCodeSampleResource("org/rust/ide/codestyle/code_sample.rs")
     }
 }
