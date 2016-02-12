@@ -33,6 +33,9 @@ allprojects {
 
         version ideaVersion
         downloadSources Boolean.valueOf(downloadIdeaSources)
+        // FIXME: hack to support both IDEA 15 and IDEA 16.
+        // See https://github.com/intellij-rust/intellij-rust/issues/243
+        updateSinceUntilBuild = false
 
         publish {
             username publishUsername
