@@ -9,9 +9,10 @@ public class RustLexingTestCase : RustLexingTestCaseBase() {
 
     fun testComments() = doTest()
     fun testShebang() = doTest()
-    fun testFloat() = doTest()
+    fun testNumbers() = doTest()
     fun testIdentifiers() = doTest()
     fun testCharLiterals() = doTest()
     fun testStringLiterals() = doTest()
     fun testByteLiterals() = doTest()
+    fun testInvalidEscape() = doTest()
 }

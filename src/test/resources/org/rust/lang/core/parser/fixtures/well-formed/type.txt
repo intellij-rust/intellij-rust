@@ -312,7 +312,7 @@ FILE
                   RustGenericArgsImpl(GENERIC_ARGS)
                     PsiElement(<)('<')
                     RustLifetimesImpl(LIFETIMES)
-                      PsiElement(<STATIC_LIFETIME>)(''static')
+                      PsiElement(<LIFETIME>)(''static')
                     PsiElement(,)(',')
                     PsiElement(>)('>')
             PsiElement(>)('>')

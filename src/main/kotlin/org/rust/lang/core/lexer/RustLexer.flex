@@ -1,6 +1,10 @@
 package org.rust.lang.core.lexer;
+
 import com.intellij.lexer.*;
 import com.intellij.psi.tree.IElementType;
+
+import static org.rust.lang.core.lexer.RustTokenElementTypes.*;
+import static com.intellij.psi.TokenType.*;
 
 %%
 
@@ -32,18 +36,18 @@ import com.intellij.psi.tree.IElementType;
   IElementType imbueBlockComment() {
       yybegin(YYINITIAL);
 
-      zzStartRead           = zzPostponedMarkedPos;
-      zzPostponedMarkedPos  = -1;
+      zzStartRead = zzPostponedMarkedPos;
+      zzPostponedMarkedPos = -1;
 
       if (yylength() >= 3) {
           if (yycharat(2) == '!') {
-              return RustTokenElementTypes.INNER_DOC_COMMENT;
+              return INNER_DOC_COMMENT;
           } else if (yycharat(2) == '*' && (yylength() == 3 || yycharat(3) != '*' && yycharat(3) != '/')) {
-              return RustTokenElementTypes.OUTER_DOC_COMMENT;
+              return OUTER_DOC_COMMENT;
           }
       }
 
-      return RustTokenElementTypes.BLOCK_COMMENT;
+      return BLOCK_COMMENT;
   }
 
   IElementType imbueRawLiteral() {
@@ -53,12 +57,8 @@ import com.intellij.psi.tree.IElementType;
       zzShaStride = -1;
       zzPostponedMarkedPos = -1;
 
-      if (yycharat(0) == 'b')
-          return RustTokenElementTypes.RAW_BYTE_STRING_LITERAL;
-      else
-          return RustTokenElementTypes.RAW_STRING_LITERAL;
+      return yycharat(0) == 'b' ? RAW_BYTE_STRING_LITERAL : RAW_STRING_LITERAL;
   }
-
 %}
 
 %public
@@ -67,13 +67,13 @@ import com.intellij.psi.tree.IElementType;
 %function advance
 %type IElementType
 
-%s BLOCK_COMMENT
-%s EOL_COMMENT
+%s IN_BLOCK_COMMENT
+%s IN_EOL_COMMENT
 
-%s LIFETIME_OR_CHAR
+%s IN_LIFETIME_OR_CHAR
 
-%s RAW_LITERAL
-%s RAW_LITERAL_SUFFIX
+%s IN_RAW_LITERAL
+%s IN_RAW_LITERAL_SUFFIX
 
 %unicode
 
@@ -81,49 +81,43 @@ import com.intellij.psi.tree.IElementType;
 // Whitespaces
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-EOL_WS  = \r|\n|\r\n
-LINE_WS = [\ \t]
-
-WHITE_SPACE = ({LINE_WS}|{EOL_WS})+
+EOL_WS           = \n | \r | \r\n
+LINE_WS          = [\ \t]
+WHITE_SPACE_CHAR = {EOL_WS} | {LINE_WS}
+WHITE_SPACE      = {WHITE_SPACE_CHAR}+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Identifier
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-IDENTIFIER=[_\p{xidstart}][\p{xidcontinue}]*
+IDENTIFIER = [_\p{xidstart}][\p{xidcontinue}]*
+SUFFIX     = {IDENTIFIER}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Literals
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-FLT_NORMAL = ({DEC_LITERAL} (\. {DEC_LITERAL} {FLT_EXP}? | {FLT_EXP}) {FLT_SUFFIX}?)
-           | ({DEC_LITERAL} {FLT_SUFFIX})
-FLT_TRAILING_DOT = {DEC_LITERAL} \.
+EXPONENT      = [eE] [-+]? [0-9_]+
+FLT_SUFFIX    = f32 | f64
+FLT_LITERAL   = ( {DEC_LITERAL} \. {DEC_LITERAL} {EXPONENT}? {SUFFIX}? )
+              | ( {DEC_LITERAL} {EXPONENT} {SUFFIX}? )
+FLT_TDOT      = {DEC_LITERAL} \.
 
-FLT_EXP = [eE][+-]?{DEC_LITERAL}
-FLT_SUFFIX = f32|f64
 
-INT_LITERAL = ({DEC_LITERAL} | {HEX_LITERAL} | {OCT_LITERAL} | {BIN_LITERAL}){INT_SUFFIX}?
+INT_LITERAL = ( {DEC_LITERAL}
+              | {HEX_LITERAL}
+              | {OCT_LITERAL}
+              | {BIN_LITERAL} ) {SUFFIX}?
 
-DEC_LITERAL = {DEC_DIGIT}({DEC_DIGIT}|_)*
-HEX_LITERAL = 0x({HEX_DIGIT}|_)*
-OCT_LITERAL = 0o({OCT_DIGIT}|_)*
-BIN_LITERAL = 0b({BIN_DIGIT}|_)*
+DEC_LITERAL = [0-9] [0-9_]*
+HEX_LITERAL = "0x" [a-fA-F0-9_]*
+OCT_LITERAL = "0o" [0-7_]*
+BIN_LITERAL = "0b" [01_]*
 
-INT_SUFFIX = u8|u16|u32|u64|usize|i8|i16|i32|i64|isize
 
-DEC_DIGIT = [0-9]
-HEX_DIGIT = [a-fA-F0-9]
-OCT_DIGIT = [0-7]
-BIN_DIGIT = [0-1]
-
-BYTE_LITERAL = b\x27 ([^'] | {ESCAPE_SEQUENCE}) \x27
-
-STRING_LITERAL = \x22 ([^\"\\] | {ESCAPE_SEQUENCE})* (\x22|\\)?
-
-ESCAPE_SEQUENCE = \\{EOL_WS} | {BYTE_ESCAPE} | {UNICODE_ESCAPE}
-BYTE_ESCAPE = \\n|\\r|\\t|\\\\|\\\x27|\\\x22|\\0|\\x{HEX_DIGIT}{2}
-UNICODE_ESCAPE = \\u\{{HEX_DIGIT}{1,6}\}
+CHAR_LITERAL   = ( \' ( [^\\\'\r\n] | \\[^\r\n] | "\\x" [a-fA-F0-9]+ | "\\u{" [a-fA-F0-9]* "}"? )? ( \' {SUFFIX}? | \\ )? )
+               | ( \' [\p{xidcontinue}]* \' {SUFFIX}? )
+STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -133,142 +127,143 @@ UNICODE_ESCAPE = \\u\{{HEX_DIGIT}{1,6}\}
 SHEBANG_LINE=\#\![^\[].*
 
 %%
-<YYINITIAL> \x27                  { yybegin(LIFETIME_OR_CHAR); yypushback(1); }
+
+<YYINITIAL> \'                    { yybegin(IN_LIFETIME_OR_CHAR); yypushback(1); }
 
 <YYINITIAL>                       {
 
-  "{"                             { return RustTokenElementTypes.LBRACE; }
-  "}"                             { return RustTokenElementTypes.RBRACE; }
-  "["                             { return RustTokenElementTypes.LBRACK; }
-  "]"                             { return RustTokenElementTypes.RBRACK; }
-  "("                             { return RustTokenElementTypes.LPAREN; }
-  ")"                             { return RustTokenElementTypes.RPAREN; }
-  "::"                            { return RustTokenElementTypes.COLONCOLON; }
-  ":"                             { return RustTokenElementTypes.COLON; }
-  ";"                             { return RustTokenElementTypes.SEMICOLON; }
-  ","                             { return RustTokenElementTypes.COMMA; }
-  "."                             { return RustTokenElementTypes.DOT; }
-  ".."                            { return RustTokenElementTypes.DOTDOT; }
-  "..."                           { return RustTokenElementTypes.DOTDOTDOT; }
-  "="                             { return RustTokenElementTypes.EQ; }
-  "!="                            { return RustTokenElementTypes.EXCLEQ; }
-  "=="                            { return RustTokenElementTypes.EQEQ; }
-  "!"                             { return RustTokenElementTypes.EXCL; }
-  "+="                            { return RustTokenElementTypes.PLUSEQ; }
-  "+"                             { return RustTokenElementTypes.PLUS; }
-  "-="                            { return RustTokenElementTypes.MINUSEQ; }
-  "-"                             { return RustTokenElementTypes.MINUS; }
-  "#"                             { return RustTokenElementTypes.SHA; }
-  "#!"                            { return RustTokenElementTypes.SHEBANG; }
-  "||"                            { return RustTokenElementTypes.OROR; }
-  "|="                            { return RustTokenElementTypes.OREQ; }
-  "&&"                            { return RustTokenElementTypes.ANDAND; }
-  "&="                            { return RustTokenElementTypes.ANDEQ; }
-  "&"                             { return RustTokenElementTypes.AND; }
-  "|"                             { return RustTokenElementTypes.OR; }
-  "<"                             { return RustTokenElementTypes.LT; }
-  "^="                            { return RustTokenElementTypes.XOREQ; }
-  "^"                             { return RustTokenElementTypes.XOR; }
-  "*="                            { return RustTokenElementTypes.MULEQ; }
-  "*"                             { return RustTokenElementTypes.MUL; }
-  "/="                            { return RustTokenElementTypes.DIVEQ; }
-  "/"                             { return RustTokenElementTypes.DIV; }
-  "%="                            { return RustTokenElementTypes.REMEQ; }
-  "%"                             { return RustTokenElementTypes.REM; }
-  ">"                             { return RustTokenElementTypes.GT; }
-  "->"                            { return RustTokenElementTypes.ARROW; }
-  "=>"                            { return RustTokenElementTypes.FAT_ARROW; }
-  "?"                             { return RustTokenElementTypes.Q; }
-  "@"                             { return RustTokenElementTypes.AT; }
-  "_"                             { return RustTokenElementTypes.UNDERSCORE; }
-  "$"                             { return RustTokenElementTypes.DOLLAR; }
+  "{"                             { return LBRACE; }
+  "}"                             { return RBRACE; }
+  "["                             { return LBRACK; }
+  "]"                             { return RBRACK; }
+  "("                             { return LPAREN; }
+  ")"                             { return RPAREN; }
+  "::"                            { return COLONCOLON; }
+  ":"                             { return COLON; }
+  ";"                             { return SEMICOLON; }
+  ","                             { return COMMA; }
+  "."                             { return DOT; }
+  ".."                            { return DOTDOT; }
+  "..."                           { return DOTDOTDOT; }
+  "="                             { return EQ; }
+  "!="                            { return EXCLEQ; }
+  "=="                            { return EQEQ; }
+  "!"                             { return EXCL; }
+  "+="                            { return PLUSEQ; }
+  "+"                             { return PLUS; }
+  "-="                            { return MINUSEQ; }
+  "-"                             { return MINUS; }
+  "#"                             { return SHA; }
+  "#!"                            { return SHEBANG; }
+  "||"                            { return OROR; }
+  "|="                            { return OREQ; }
+  "&&"                            { return ANDAND; }
+  "&="                            { return ANDEQ; }
+  "&"                             { return AND; }
+  "|"                             { return OR; }
+  "<"                             { return LT; }
+  "^="                            { return XOREQ; }
+  "^"                             { return XOR; }
+  "*="                            { return MULEQ; }
+  "*"                             { return MUL; }
+  "/="                            { return DIVEQ; }
+  "/"                             { return DIV; }
+  "%="                            { return REMEQ; }
+  "%"                             { return REM; }
+  ">"                             { return GT; }
+  "->"                            { return ARROW; }
+  "=>"                            { return FAT_ARROW; }
+  "?"                             { return Q; }
+  "@"                             { return AT; }
+  "_"                             { return UNDERSCORE; }
+  "$"                             { return DOLLAR; }
 
-  "abstract"                      { return RustTokenElementTypes.ABSTRACT; }
-  "alignof"                       { return RustTokenElementTypes.ALIGNOF; }
-  "as"                            { return RustTokenElementTypes.AS; }
-  "become"                        { return RustTokenElementTypes.BECOME; }
-  "box"                           { return RustTokenElementTypes.BOX; }
-  "break"                         { return RustTokenElementTypes.BREAK; }
-  "const"                         { return RustTokenElementTypes.CONST; }
-  "continue"                      { return RustTokenElementTypes.CONTINUE; }
-  "crate"                         { return RustTokenElementTypes.CRATE; }
-  "do"                            { return RustTokenElementTypes.DO; }
-  "else"                          { return RustTokenElementTypes.ELSE; }
-  "enum"                          { return RustTokenElementTypes.ENUM; }
-  "extern"                        { return RustTokenElementTypes.EXTERN; }
-  "false"                         { return RustTokenElementTypes.FALSE; }
-  "final"                         { return RustTokenElementTypes.FINAL; }
-  "fn"                            { return RustTokenElementTypes.FN; }
-  "for"                           { return RustTokenElementTypes.FOR; }
-  "if"                            { return RustTokenElementTypes.IF; }
-  "impl"                          { return RustTokenElementTypes.IMPL; }
-  "in"                            { return RustTokenElementTypes.IN; }
-  "let"                           { return RustTokenElementTypes.LET; }
-  "loop"                          { return RustTokenElementTypes.LOOP; }
-  "macro"                         { return RustTokenElementTypes.MACRO; }
-  "match"                         { return RustTokenElementTypes.MATCH; }
-  "mod"                           { return RustTokenElementTypes.MOD; }
-  "move"                          { return RustTokenElementTypes.MOVE; }
-  "mut"                           { return RustTokenElementTypes.MUT; }
-  "offsetof"                      { return RustTokenElementTypes.OFFSETOF; }
-  "override"                      { return RustTokenElementTypes.OVERRIDE; }
-  "priv"                          { return RustTokenElementTypes.PRIV; }
-  "proc"                          { return RustTokenElementTypes.PROC; }
-  "pub"                           { return RustTokenElementTypes.PUB; }
-  "pure"                          { return RustTokenElementTypes.PURE; }
-  "ref"                           { return RustTokenElementTypes.REF; }
-  "return"                        { return RustTokenElementTypes.RETURN; }
-  "Self"                          { return RustTokenElementTypes.CSELF; }
-  "self"                          { return RustTokenElementTypes.SELF; }
-  "sizeof"                        { return RustTokenElementTypes.SIZEOF; }
-  "static"                        { return RustTokenElementTypes.STATIC; }
-  "struct"                        { return RustTokenElementTypes.STRUCT; }
-  "super"                         { return RustTokenElementTypes.SUPER; }
-  "trait"                         { return RustTokenElementTypes.TRAIT; }
-  "true"                          { return RustTokenElementTypes.TRUE; }
-  "type"                          { return RustTokenElementTypes.TYPE; }
-  "typeof"                        { return RustTokenElementTypes.TYPEOF; }
-  "unsafe"                        { return RustTokenElementTypes.UNSAFE; }
-  "unsized"                       { return RustTokenElementTypes.UNSIZED; }
-  "use"                           { return RustTokenElementTypes.USE; }
-  "virtual"                       { return RustTokenElementTypes.VIRTUAL; }
-  "where"                         { return RustTokenElementTypes.WHERE; }
-  "while"                         { return RustTokenElementTypes.WHILE; }
-  "yield"                         { return RustTokenElementTypes.YIELD; }
+  "abstract"                      { return ABSTRACT; }
+  "alignof"                       { return ALIGNOF; }
+  "as"                            { return AS; }
+  "become"                        { return BECOME; }
+  "box"                           { return BOX; }
+  "break"                         { return BREAK; }
+  "const"                         { return CONST; }
+  "continue"                      { return CONTINUE; }
+  "crate"                         { return CRATE; }
+  "do"                            { return DO; }
+  "else"                          { return ELSE; }
+  "enum"                          { return ENUM; }
+  "extern"                        { return EXTERN; }
+  "false"                         { return FALSE; }
+  "final"                         { return FINAL; }
+  "fn"                            { return FN; }
+  "for"                           { return FOR; }
+  "if"                            { return IF; }
+  "impl"                          { return IMPL; }
+  "in"                            { return IN; }
+  "let"                           { return LET; }
+  "loop"                          { return LOOP; }
+  "macro"                         { return MACRO; }
+  "match"                         { return MATCH; }
+  "mod"                           { return MOD; }
+  "move"                          { return MOVE; }
+  "mut"                           { return MUT; }
+  "offsetof"                      { return OFFSETOF; }
+  "override"                      { return OVERRIDE; }
+  "priv"                          { return PRIV; }
+  "proc"                          { return PROC; }
+  "pub"                           { return PUB; }
+  "pure"                          { return PURE; }
+  "ref"                           { return REF; }
+  "return"                        { return RETURN; }
+  "Self"                          { return CSELF; }
+  "self"                          { return SELF; }
+  "sizeof"                        { return SIZEOF; }
+  "static"                        { return STATIC; }
+  "struct"                        { return STRUCT; }
+  "super"                         { return SUPER; }
+  "trait"                         { return TRAIT; }
+  "true"                          { return TRUE; }
+  "type"                          { return TYPE; }
+  "typeof"                        { return TYPEOF; }
+  "unsafe"                        { return UNSAFE; }
+  "unsized"                       { return UNSIZED; }
+  "use"                           { return USE; }
+  "virtual"                       { return VIRTUAL; }
+  "where"                         { return WHERE; }
+  "while"                         { return WHILE; }
+  "yield"                         { return YIELD; }
 
-  "/*"                            { yybegin(BLOCK_COMMENT); yypushback(2); }
-  "//"                            { yybegin(EOL_COMMENT);   yypushback(2); }
+  "/*"                            { yybegin(IN_BLOCK_COMMENT); yypushback(2); }
+  "//"                            { yybegin(IN_EOL_COMMENT);   yypushback(2); }
 
-  {IDENTIFIER}                    { return RustTokenElementTypes.IDENTIFIER; }
+  {IDENTIFIER}                    { return IDENTIFIER; }
 
   /* LITERALS */
 
-  {INT_LITERAL}                   { return RustTokenElementTypes.INTEGER_LITERAL; }
+  // Match 1f32 and 1f64 as floats, not integers (kinda hack)
+  {DEC_LITERAL} {FLT_SUFFIX}      { return FLOAT_LITERAL; }
 
-  {FLT_NORMAL}                    { return RustTokenElementTypes.FLOAT_LITERAL; }
-  {FLT_TRAILING_DOT}/[^._\p{xidstart}]
-                                  { return RustTokenElementTypes.FLOAT_LITERAL; }
+  {INT_LITERAL}                   { return INTEGER_LITERAL; }
 
-  {BYTE_LITERAL}                  { return RustTokenElementTypes.BYTE_LITERAL; }
+  {FLT_LITERAL}                   { return FLOAT_LITERAL; }
 
-  "b"{STRING_LITERAL} {IDENTIFIER}?
-                                  { return RustTokenElementTypes.BYTE_STRING_LITERAL; }
+  // Correctly handle 1.f32 and 0..9
+  {FLT_TDOT} / [^.\p{xidstart}]   { return FLOAT_LITERAL; }
 
-  "br" #* \x22                    { yybegin(RAW_LITERAL);
+  "b" {CHAR_LITERAL}              { return BYTE_LITERAL; }
 
+  "b" {STRING_LITERAL}            { return BYTE_STRING_LITERAL; }
+  {STRING_LITERAL}                { return STRING_LITERAL; }
+
+  "br" #* \"                      { yybegin(IN_RAW_LITERAL);
                                     zzPostponedMarkedPos = zzStartRead;
                                     zzShaStride          = yylength() - 3; }
 
-  {STRING_LITERAL} {IDENTIFIER}?  { return RustTokenElementTypes.STRING_LITERAL; }
-
-  "r" #* \x22                     { yybegin(RAW_LITERAL);
-
+  "r" #* \"                       { yybegin(IN_RAW_LITERAL);
                                     zzPostponedMarkedPos = zzStartRead;
                                     zzShaStride          = yylength() - 2; }
 
-  {SHEBANG_LINE}                  { return RustTokenElementTypes.SHEBANG_LINE; }
+  {SHEBANG_LINE}                  { return SHEBANG_LINE; }
 
-  {WHITE_SPACE}                   { return com.intellij.psi.TokenType.WHITE_SPACE; }
+  {WHITE_SPACE}                   { return WHITE_SPACE; }
 }
 
 
@@ -276,12 +271,12 @@ SHEBANG_LINE=\#\![^\[].*
 // Literals
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-<RAW_LITERAL> {
+<IN_RAW_LITERAL> {
 
-  \x22 #* {
+  \" #* {
     int shaExcess = yylength() - 1 - zzShaStride;
     if (shaExcess >= 0) {
-      yybegin(RAW_LITERAL_SUFFIX);
+      yybegin(IN_RAW_LITERAL_SUFFIX);
       yypushback(shaExcess);
     }
   }
@@ -293,26 +288,17 @@ SHEBANG_LINE=\#\![^\[].*
 
 }
 
-<RAW_LITERAL_SUFFIX> {
-  {IDENTIFIER} {
-    return imbueRawLiteral();
-  }
-
-  [^] {
-    yypushback(1);
-    return imbueRawLiteral();
-  }
-
-  <<EOF>> {
-    return imbueRawLiteral();
-  }
+<IN_RAW_LITERAL_SUFFIX> {
+  {SUFFIX}  { return imbueRawLiteral(); }
+  [^]       { yypushback(1); return imbueRawLiteral(); }
+  <<EOF>>   { return imbueRawLiteral(); }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Comments
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-<BLOCK_COMMENT> {
+<IN_BLOCK_COMMENT> {
   "/*"    { if (zzNestedCommentLevel++ == 0)
               zzPostponedMarkedPos = zzStartRead;
           }
@@ -326,17 +312,17 @@ SHEBANG_LINE=\#\![^\[].*
   [^]     { }
 }
 
-<EOL_COMMENT>.* {
+<IN_EOL_COMMENT>.* {
     yybegin(YYINITIAL);
 
     if (yylength() >= 3) {
         if (yycharat(2) == '!') {
-            return RustTokenElementTypes.INNER_DOC_COMMENT;
+            return INNER_DOC_COMMENT;
         } else if (yycharat(2) == '/' && (yylength() == 3 || yycharat(3) != '/')) {
-            return RustTokenElementTypes.OUTER_DOC_COMMENT;
+            return OUTER_DOC_COMMENT;
         }
     }
-    return RustTokenElementTypes.EOL_COMMENT;
+    return EOL_COMMENT;
 }
 
 
@@ -344,17 +330,10 @@ SHEBANG_LINE=\#\![^\[].*
 // Lifetimes & Literals
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-<LIFETIME_OR_CHAR> {
-
-  \x27static                                       { yybegin(YYINITIAL); return RustTokenElementTypes.STATIC_LIFETIME; }
-  \x27{IDENTIFIER}                                 { yybegin(YYINITIAL); return RustTokenElementTypes.LIFETIME; }
-  \x27\\[nrt\\\x27\x220]\x27     {IDENTIFIER}?     { yybegin(YYINITIAL); return RustTokenElementTypes.CHAR_LITERAL; }
-  \x27\\x[0-9a-fA-F]{2}\x27      {IDENTIFIER}?     { yybegin(YYINITIAL); return RustTokenElementTypes.CHAR_LITERAL; }
-  \x27\\u\{[0-9a-fA-F]?{6}\}\x27 {IDENTIFIER}?     { yybegin(YYINITIAL); return RustTokenElementTypes.CHAR_LITERAL; }
-  \x27.\x27                      {IDENTIFIER}?     { yybegin(YYINITIAL); return RustTokenElementTypes.CHAR_LITERAL; }
-  \x27[\x80-\xff]{2,4}\x27       {IDENTIFIER}?     { yybegin(YYINITIAL); return RustTokenElementTypes.CHAR_LITERAL; }
-  <<EOF>>                                          { yybegin(YYINITIAL); return com.intellij.psi.TokenType.BAD_CHARACTER; }
-
+<IN_LIFETIME_OR_CHAR> {
+  \'{IDENTIFIER}                        { yybegin(YYINITIAL); return LIFETIME; }
+  {CHAR_LITERAL}                        { yybegin(YYINITIAL); return CHAR_LITERAL; }
+  <<EOF>>                               { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 
 
@@ -362,4 +341,4 @@ SHEBANG_LINE=\#\![^\[].*
 // Catch All
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-[^] { return com.intellij.psi.TokenType.BAD_CHARACTER; }
+[^] { return BAD_CHARACTER; }

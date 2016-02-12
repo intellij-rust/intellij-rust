@@ -127,7 +127,7 @@ FILE
               <empty list>
             RustFnParamsImpl(FN_PARAMS)
               PsiElement(()('(')
-  PsiErrorElement:<expr stmt>, <item>, <restricted expr> or '}' expected, got ','
+  PsiErrorElement:<IDENTIFIER>, <expr stmt>, <item>, <restricted expr> or '}' expected, got ','
     PsiElement(,)(',')
   PsiElement(DUMMY_BLOCK)
     PsiElement())(')')
