@@ -8,38 +8,42 @@ import org.rust.ide.colorscheme.RustColors
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.isMut
 
+class RustAnnotator : Annotator {
+    override fun annotate(element: PsiElement, holder: AnnotationHolder) =
+        element.accept(RustAnnotatorVisitor(holder))
+}
 
-public class RustAnnotator : Annotator {
-    private fun addTextAttributes(element: PsiElement?, holder: AnnotationHolder, textAttributes: TextAttributesKey) {
-        if (element != null) {
-            holder.createInfoAnnotation(element, null).textAttributes = textAttributes
+private class RustAnnotatorVisitor(private val holder: AnnotationHolder) : RustVisitor() {
+    override fun visitAttr(o: RustAttr) {
+        holder.highlight(o, RustColors.ATTRIBUTE)
+    }
+
+    override fun visitMacroExpr(o: RustMacroExpr) {
+        holder.highlight(o.identifier, RustColors.MACRO)
+        holder.highlight(o.excl, RustColors.MACRO)
+    }
+
+    override fun visitTypeParam(o: RustTypeParam) {
+        holder.highlight(o, RustColors.TYPE_PARAMETER)
+    }
+
+    override fun visitPatBinding(o: RustPatBinding) {
+        if (o.isMut) {
+            holder.highlight(o.identifier, RustColors.MUT_BINDING)
         }
     }
 
-    override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-        when (element) {
-            is RustAttr -> {
-                addTextAttributes(element, holder, RustColors.ATTRIBUTE)
-            }
-            is RustMacroExpr -> {
-                addTextAttributes(element.identifier, holder, RustColors.MACRO)
-                addTextAttributes(element.excl, holder, RustColors.MACRO)
-            }
-            is RustTypeParam -> {
-                addTextAttributes(element, holder, RustColors.TYPE_PARAMETER)
-            }
-            is RustPatBinding -> {
-                if (element.isMut) {
-                    addTextAttributes(element.identifier, holder, RustColors.MUT_BINDING)
-                }
-            }
-            is RustPathPart -> {
-                element.reference.resolve().let {
-                    if (it is RustPatBinding && it.isMut) {
-                        addTextAttributes(element.identifier, holder, RustColors.MUT_BINDING)
-                    }
-                }
+    override fun visitPathPart(o: RustPathPart) {
+        o.reference.resolve().let {
+            if (it is RustPatBinding && it.isMut) {
+                holder.highlight(o.identifier, RustColors.MUT_BINDING)
             }
         }
+    }
+}
+
+private fun AnnotationHolder.highlight(element: PsiElement?, textAttributes: TextAttributesKey) {
+    if (element != null) {
+        createInfoAnnotation(element, null).textAttributes = textAttributes
     }
 }
