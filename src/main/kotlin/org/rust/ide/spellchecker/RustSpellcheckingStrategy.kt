@@ -4,7 +4,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy
 import com.intellij.spellchecker.tokenizer.Tokenizer
 import org.rust.lang.RustLanguage
-import org.rust.lang.core.lexer.RustTokenElementTypes.STRING_LITERAL
+import org.rust.lang.core.psi.RustTokenElementTypes.STRING_LITERAL
 
 class RustSpellcheckingStrategy : SpellcheckingStrategy() {
     private val stringLiteralTokenizer = StringLiteralTokenizer()

@@ -1,7 +1,7 @@
 package org.rust.lang.core.lexer
 
 import com.intellij.lexer.LayeredLexer
-import org.rust.lang.core.lexer.RustTokenElementTypes.*
+import org.rust.lang.core.psi.RustTokenElementTypes.*
 
 class RustHighlightingLexer : LayeredLexer(RustLexer()) {
     init {

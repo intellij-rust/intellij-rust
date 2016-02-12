@@ -1,4 +1,4 @@
-package org.rust.lang.core.lexer;
+package org.rust.lang.core.psi;
 
 import com.intellij.psi.tree.TokenSet;
 

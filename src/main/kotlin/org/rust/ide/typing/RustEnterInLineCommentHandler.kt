@@ -9,9 +9,9 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.util.text.CharArrayUtil
-import org.rust.lang.core.lexer.RustTokenElementTypes.INNER_DOC_COMMENT
-import org.rust.lang.core.lexer.RustTokenElementTypes.OUTER_DOC_COMMENT
-import org.rust.lang.core.lexer.RustTokenElementTypes.EOL_COMMENT
+import org.rust.lang.core.psi.RustTokenElementTypes.INNER_DOC_COMMENT
+import org.rust.lang.core.psi.RustTokenElementTypes.OUTER_DOC_COMMENT
+import org.rust.lang.core.psi.RustTokenElementTypes.EOL_COMMENT
 import org.rust.lang.core.psi.impl.RustFileImpl
 
 class RustEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {

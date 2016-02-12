@@ -3,6 +3,7 @@ package org.rust.lang.core.lexer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
+import org.rust.lang.core.psi.RustTokenElementTypes
 
 private const val BYTE_ESCAPE_LENGTH = "\\x00".length
 private const val UNICODE_ESCAPE_MIN_LENGTH = "\\u{0}".length
