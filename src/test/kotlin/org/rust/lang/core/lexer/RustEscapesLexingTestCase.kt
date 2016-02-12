@@ -3,10 +3,10 @@ package org.rust.lang.core.lexer
 import com.intellij.lexer.Lexer
 import java.util.*
 
-public class RustStringLiteralLexingTestCase : RustLexingTestCaseBase() {
+public class RustEscapesLexingTestCase : RustLexingTestCaseBase() {
     override fun getTestDataPath(): String = "org/rust/lang/core/lexer/fixtures/escapes"
 
-    override fun createLexer(): Lexer = RustStringLiteralLexer.forStringLiterals()
+    override fun createLexer(): Lexer = RustEscapesLexer.forStringLiterals()
 
     fun testShortByteEscapes() = doTest()
     fun testLongByteEscapes() = doTest()
@@ -20,10 +20,10 @@ public class RustStringLiteralLexingTestCase : RustLexingTestCaseBase() {
 
     fun testFuzzy() {
         val lexers = listOf(
-            RustStringLiteralLexer.forByteLiterals(),
-            RustStringLiteralLexer.forByteStringLiterals(),
-            RustStringLiteralLexer.forCharLiterals(),
-            RustStringLiteralLexer.forStringLiterals()
+            RustEscapesLexer.forByteLiterals(),
+            RustEscapesLexer.forByteStringLiterals(),
+            RustEscapesLexer.forCharLiterals(),
+            RustEscapesLexer.forStringLiterals()
         )
 
         for (lexer in lexers) {
@@ -33,7 +33,7 @@ public class RustStringLiteralLexingTestCase : RustLexingTestCaseBase() {
         }
     }
 
-    private fun execute(lexer: RustStringLiteralLexer, input: CharSequence)  {
+    private fun execute(lexer: RustEscapesLexer, input: CharSequence)  {
         lexer.start(input)
         while (lexer.tokenType != null) {
             lexer.advance()
