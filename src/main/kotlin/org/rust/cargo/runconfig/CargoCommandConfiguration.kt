@@ -14,6 +14,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
+import org.rust.cargo.project.pathToCargo
 import org.rust.cargo.project.util.getModules
 import org.rust.cargo.runconfig.forms.CargoRunConfigurationEditorForm
 
@@ -45,10 +46,10 @@ class CargoCommandConfiguration(project: Project,
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
         val module = configurationModule.module ?: return null
         val moduleManager = ModuleRootManager.getInstance(module)
-        val sdk = moduleManager.sdk ?: return null
-        val workDirectory = PathUtil.getParentPath(module.moduleFilePath)
+        val pathToCargo = moduleManager.sdk?.pathToCargo ?: return null
+        val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
         val args = ParametersListUtil.parse(additionalArguments)
-        return CargoRunState(environment, sdk, workDirectory, command, args)
+        return CargoRunState(environment, pathToCargo, moduleDirectory, command, args)
     }
 
     override fun writeExternal(element: Element) {

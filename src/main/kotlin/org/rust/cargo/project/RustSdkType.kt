@@ -152,21 +152,21 @@ class RustSdkType : SdkType("Rust SDK") {
 
     override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {}
 
-    fun getPathToBinDirInSDK(sdkHome: File): File = File(sdkHome, BIN_DIR)
-    fun getPathToBinDirInSDK(sdkHome: String): File = getPathToBinDirInSDK(File(sdkHome))
-
-    fun getPathToLibDirInSDK(sdkHome: File): File = File(sdkHome, LIB_DIR)
-    fun getPathToLibDirInSDK(sdkHome: String): File = getPathToLibDirInSDK(File(sdkHome))
-
-    fun getPathToExecInSDK(sdkHome: File, fileName: String): File =
-        File(getPathToBinDirInSDK(sdkHome), PlatformUtil.getCanonicalNativeExecutableName(fileName))
-
-    fun getPathToExecInSDK(sdkHome: String, fileName: String): File =
-        getPathToExecInSDK(File(sdkHome), fileName)
-
     private fun isMultiRust(sdkHome: String): Boolean = ".multirust" in sdkHome
 
     companion object {
+        fun getPathToBinDirInSDK(sdkHome: File): File = File(sdkHome, BIN_DIR)
+        fun getPathToBinDirInSDK(sdkHome: String): File = getPathToBinDirInSDK(File(sdkHome))
+
+        fun getPathToLibDirInSDK(sdkHome: File): File = File(sdkHome, LIB_DIR)
+        fun getPathToLibDirInSDK(sdkHome: String): File = getPathToLibDirInSDK(File(sdkHome))
+
+        fun getPathToExecInSDK(sdkHome: File, fileName: String): File =
+            File(getPathToBinDirInSDK(sdkHome), PlatformUtil.getCanonicalNativeExecutableName(fileName))
+
+        fun getPathToExecInSDK(sdkHome: String, fileName: String): File =
+            getPathToExecInSDK(File(sdkHome), fileName)
+
         val INSTANCE by lazy {
             SdkType.findInstance(RustSdkType::class.java)
         }
@@ -183,7 +183,6 @@ class RustSdkType : SdkType("Rust SDK") {
     }
 }
 
-fun Sdk.cargoCommandLine(cmd: String): GeneralCommandLine {
-    val cargoPath = RustSdkType.INSTANCE.getPathToExecInSDK(homePath!!, RustSdkType.CARGO_BINARY_NAME).absolutePath
-    return GeneralCommandLine(cargoPath).withParameters(cmd)
-}
+val Sdk.pathToCargo: String? get() =
+    homePath?.let { RustSdkType.getPathToExecInSDK(it, RustSdkType.CARGO_BINARY_NAME).absolutePath }
+

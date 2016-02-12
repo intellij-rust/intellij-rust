@@ -10,7 +10,7 @@ import org.rust.cargo.runconfig.CargoCommandConfiguration
 import javax.swing.*
 
 
-class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration>(null) {
+class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration>() {
 
     private lateinit var root: JComponent
     private lateinit var command: JTextField

@@ -1,7 +1,6 @@
 package org.rust.cargo.project.settings
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings
-import com.intellij.openapi.projectRoots.SdkType
 import org.rust.cargo.project.RustSdkType
 
 /**
@@ -28,13 +27,9 @@ class CargoExecutionSettings(val cargoPath: String) : ExternalSystemExecutionSet
 
     companion object {
 
-        fun from(settings: CargoProjectSettings): CargoExecutionSettings {
-            val sdk = SdkType.findInstance(RustSdkType::class.java)
-
-            return CargoExecutionSettings(
-                sdk.getPathToExecInSDK(settings.cargoHome!!, RustSdkType.CARGO_BINARY_NAME).absolutePath
+        fun from(settings: CargoProjectSettings): CargoExecutionSettings =
+            CargoExecutionSettings(
+                RustSdkType.getPathToExecInSDK(settings.cargoHome!!, RustSdkType.CARGO_BINARY_NAME).absolutePath
             )
-        }
-
     }
 }
