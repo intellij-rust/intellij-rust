@@ -16,7 +16,8 @@ class CargoProjectImportProvider(builder: CargoProjectImportBuilder)
 
     override fun getIcon(): Icon = CargoIcons.ICON
 
-    override fun canImport(entry: VirtualFile, project: Project?): Boolean = canImport(entry)
+    override fun canImport(fileOrDirectory: VirtualFile, project: Project?): Boolean =
+        canImport(fileOrDirectory)
 
     override fun getPathToBeImported(file: VirtualFile): String =
         if (file.isDirectory) file.path else file.parent.path
@@ -24,12 +25,11 @@ class CargoProjectImportProvider(builder: CargoProjectImportBuilder)
     override fun getFileSample(): String = "<b>Cargo</b> project file (Cargo.toml)"
 
     companion object {
-        fun canImport(entry0: VirtualFile?): Boolean {
-            var entry = entry0
-            if (entry != null && entry.isDirectory) {
-                entry = entry.findChild(CargoConstants.MANIFEST_FILE)
-            }
-            return entry != null && !entry.isDirectory && CargoConstants.MANIFEST_FILE == entry.name
-        }
+        fun canImport(fileOrDirectory: VirtualFile): Boolean =
+            if (fileOrDirectory.isDirectory)
+                fileOrDirectory.findChild(CargoConstants.MANIFEST_FILE) != null
+            else
+                fileOrDirectory.name == CargoConstants.MANIFEST_FILE
     }
 }
+

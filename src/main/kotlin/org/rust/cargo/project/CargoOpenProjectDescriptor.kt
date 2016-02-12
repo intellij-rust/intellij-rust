@@ -6,11 +6,9 @@ import org.rust.cargo.CargoConstants
 
 class CargoOpenProjectDescriptor : OpenProjectFileChooserDescriptor(true) {
 
-    override fun isFileVisible(file: VirtualFile, showHiddenFiles: Boolean): Boolean {
-        return super.isFileVisible(file, showHiddenFiles) && (file.isDirectory || CargoConstants.MANIFEST_FILE == file.name)
-    }
+    override fun isFileVisible(file: VirtualFile, showHiddenFiles: Boolean): Boolean =
+        super.isFileVisible(file, showHiddenFiles) && (file.isDirectory || CargoConstants.MANIFEST_FILE == file.name)
 
-    override fun isFileSelectable(file: VirtualFile): Boolean {
-        return super.isFileSelectable(file) && CargoProjectImportProvider.canImport(file)
-    }
+    override fun isFileSelectable(file: VirtualFile): Boolean =
+        super.isFileSelectable(file) && CargoProjectImportProvider.canImport(file)
 }
