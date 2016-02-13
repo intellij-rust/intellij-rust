@@ -7,7 +7,7 @@ import org.rust.cargo.project.RustSdkType
 /**
  * Settings required to execute Cargo-specific tasks inside isolated process
  */
-class CargoExecutionSettings(val cargoPath: String, val features: List<String>) : ExternalSystemExecutionSettings() {
+class CargoExecutionSettings(val cargoPath: String) : ExternalSystemExecutionSettings() {
 
     override fun equals(other: Any?): Boolean{
         if (this === other) return true
@@ -16,15 +16,12 @@ class CargoExecutionSettings(val cargoPath: String, val features: List<String>) 
 
         other as CargoExecutionSettings
 
-        if (features != other.features) return false
-
         return true
     }
 
     override fun hashCode(): Int{
         var result = super.hashCode()
             result += 31 * result + cargoPath.hashCode()
-            result += 31 * result + features.hashCode()
 
         return result
     }
@@ -35,8 +32,7 @@ class CargoExecutionSettings(val cargoPath: String, val features: List<String>) 
             val sdk = SdkType.findInstance(RustSdkType::class.java)
 
             return CargoExecutionSettings(
-                sdk.getPathToExecInSDK(settings.cargoHome!!, RustSdkType.CARGO_BINARY_NAME).absolutePath,
-                settings.features
+                sdk.getPathToExecInSDK(settings.cargoHome!!, RustSdkType.CARGO_BINARY_NAME).absolutePath
             )
         }
 

@@ -4,10 +4,8 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings
 
 class CargoProjectSettings : ExternalProjectSettings() {
 
-    var features = emptyList<String>()
-
     protected fun copyTo(receiver: CargoProjectSettings) {
-        receiver.features = features
+        receiver.cargoHome = cargoHome
         super.copyTo(receiver)
     }
 
