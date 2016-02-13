@@ -51,15 +51,12 @@ class RustLiteralImpl(type: IElementType, text: CharSequence) : LeafPsiElement(t
 }
 
 private fun Lexer.findToken(buffer: CharSequence, tokenType: IElementType): String? {
-    var tt = this.tokenType
-
     start(buffer)
-    while (tt != null) {
-        if (tt == tokenType) {
+    while (this.tokenType != null) {
+        if (this.tokenType == tokenType) {
             return tokenText
         }
         advance()
-        tt = this.tokenType
     }
 
     return null
@@ -67,15 +64,12 @@ private fun Lexer.findToken(buffer: CharSequence, tokenType: IElementType): Stri
 
 private fun Lexer.countToken(buffer: CharSequence, tokenType: IElementType): Int {
     var i = 0
-    var tt = this.tokenType
-
     start(buffer)
-    while (tt != null) {
-        if (tt == tokenType) {
+    while (this.tokenType != null) {
+        if (this.tokenType == tokenType) {
             i++
         }
         advance()
-        tt = this.tokenType
     }
     return i
 }

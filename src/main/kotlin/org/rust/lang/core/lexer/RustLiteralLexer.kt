@@ -3,7 +3,7 @@ package org.rust.lang.core.lexer
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 
-abstract class RustLiteralLexer : LexerBaseKt() {
+abstract class RustLiteralLexer : LexerBaseEx() {
     companion object {
         /**
          * Create an instance of [RustLiteralLexer] able to handle [INTEGER_LITERAL] and [FLOAT_LITERAL].
