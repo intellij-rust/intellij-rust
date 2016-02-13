@@ -14,28 +14,8 @@ private const val UNICODE_ESCAPE_MAX_LENGTH = "\\u{000000}".length
  */
 class RustEscapesLexer private constructor(val defaultToken: IElementType,
                                            val unicode: Boolean = false,
-                                           val eol: Boolean = false) : LexerBaseKt() {
-    private var myTokenType: Lazy<IElementType?> = lazy { null }
-
-    override fun start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
-        bufferSequence = buffer
-        bufferEnd = endOffset
-        state = initialState
-
-        tokenStart = startOffset
-        tokenEnd = locateToken(tokenStart)
-        myTokenType = lazy { determineTokenType() }
-    }
-
-    override fun advance() {
-        tokenStart = tokenEnd
-        tokenEnd = locateToken(tokenStart)
-        myTokenType = lazy { determineTokenType() }
-    }
-
-    override fun getTokenType(): IElementType? = myTokenType.value
-
-    private fun determineTokenType(): IElementType? {
+                                           val eol: Boolean = false) : LexerBaseEx() {
+    protected override fun determineTokenType(): IElementType? {
         // We're at the end of the string token => finish lexing
         if (tokenStart >= tokenEnd) {
             return null
@@ -65,7 +45,7 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
         }
     }
 
-    private fun locateToken(start: Int): Int {
+    protected override fun locateToken(start: Int): Int {
         if (start >= bufferEnd) {
             return start
         }
