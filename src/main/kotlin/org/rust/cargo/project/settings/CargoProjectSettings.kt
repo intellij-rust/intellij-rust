@@ -16,16 +16,4 @@ class CargoProjectSettings : ExternalProjectSettings() {
     }
 
     var cargoHome: String? = null
-    var distributionType: Companion.Distribution? = null
-
-    companion object {
-
-        enum class Distribution {
-            /**
-             * Employ local-distribution of the Cargo
-             */
-            LOCAL
-        }
-
-    }
 }

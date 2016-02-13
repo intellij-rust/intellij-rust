@@ -20,14 +20,9 @@ interface CargoProjectSettingsControlBuilder {
     fun getInitialSettings(): CargoProjectSettings
 
     /**
-     * Add Gradle home components to the panel
+     * Add Cargo home components to the panel
      */
     fun addCargoHomeComponents(content: PaintAwarePanel, indentLevel: Int): CargoProjectSettingsControlBuilder
-
-    /**
-     * Add Gradle distribution chooser component to the panel
-     */
-    fun addChooserComponents(content: PaintAwarePanel, indentLevel: Int): CargoProjectSettingsControlBuilder
 
     @Throws(ConfigurationException::class)
     fun validate(settings: CargoProjectSettings): Boolean

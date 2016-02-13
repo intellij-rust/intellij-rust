@@ -14,15 +14,12 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBRadioButton
 import com.intellij.util.Alarm
 import com.intellij.util.Consumer
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.RustSdkType
 import org.rust.cargo.project.settings.CargoProjectSettings
-import java.awt.event.ActionListener
 import java.beans.PropertyChangeListener
-import javax.swing.ButtonGroup
 import javax.swing.JLabel
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
@@ -38,21 +35,13 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
 
     private var dropUseAutoImportBox: Boolean = false
     private var dropCreateEmptyContentRootDirectoriesBox: Boolean = false
-    private var disabledUseLocalDistributionButton: Boolean = false
     private var disabledCargoHomePathComponents: Boolean = false
 
     private var cargoHomeLabel: JLabel? = null
     private var cargoHomePathField: TextFieldWithBrowseButton? = null
 
-    private var useLocalDistributionButton: JBRadioButton? = null
-
     fun disableCargoHomePathComponents(): CargoProjectSettingsControlBuilder {
         disabledCargoHomePathComponents = true
-        return this
-    }
-
-    fun disableUseLocalDistributionButton(): CargoProjectSettingsControlBuilder {
-        disabledUseLocalDistributionButton = true
         return this
     }
 
@@ -101,7 +90,6 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
             }
         })
 
-        addChooserComponents    (content, indentLevel)
         addCargoHomeComponents  (content, indentLevel)
     }
 
@@ -110,50 +98,6 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
 
     override fun disposeUIResources() {
         ExternalSystemUiUtil.disposeUi(this)
-    }
-
-    override fun addChooserComponents(content: PaintAwarePanel, indentLevel: Int): CargoProjectSettingsControlBuilderImpl {
-        if (disabledUseLocalDistributionButton)
-            return this;
-
-        val buttonGroup = ButtonGroup()
-
-        val button = JBRadioButton("Use local distribution")
-
-        button.addActionListener(ActionListener {
-            cargoHomePathField?.let { pathField ->
-                val local = useLocalDistributionButton?.let { it.isSelected } ?: false
-
-                pathField.isEnabled = local
-
-                if (local) {
-                    if (pathField.text.isEmpty()) {
-                        tryFindCargoHome()
-                    } else {
-                        if (isValidCargoHome(pathField.text)) {
-                            cargoHomeSettingType = LocationSettingType.EXPLICIT_CORRECT
-                        } else {
-                            cargoHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT
-                        }
-                    }
-
-                    showBalloon()
-                } else {
-                    scheduler.cancelAllRequests()
-                }
-            }
-        })
-
-        buttonGroup.add(button)
-
-        content.add(button, ExternalSystemUiUtil.getFillLineConstraints(indentLevel))
-
-        // Selected by default?
-        button.isSelected = true;
-
-        useLocalDistributionButton = button
-
-        return this
     }
 
     override fun addCargoHomeComponents(content: PaintAwarePanel, indentLevel: Int): CargoProjectSettingsControlBuilder {
@@ -198,17 +142,15 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
         cargoHomePathField?.let { pathField ->
             val cargoHomePath = FileUtil.toCanonicalPath(pathField.text)
 
-            useLocalDistributionButton?.let { button ->
-                if (button.isSelected) {
-                    if (StringUtil.isEmpty(cargoHomePath)) {
-                        cargoHomeSettingType = LocationSettingType.UNKNOWN
-                        throw ConfigurationException("Cargo binary location is not specified!")
-                    } else if (!isValidCargoHome(cargoHomePath)) {
-                        cargoHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT
-                        showBalloon(MessageType.ERROR, cargoHomeSettingType)
-                        throw ConfigurationException("Cargo binary not found at: $cargoHomePath!")
-                    }
-                }
+            if (StringUtil.isEmpty(cargoHomePath)) {
+                cargoHomeSettingType = LocationSettingType.UNKNOWN
+                throw ConfigurationException("Cargo binary location is not specified!")
+            }
+
+            if (!isValidCargoHome(cargoHomePath)) {
+                cargoHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT
+                showBalloon(MessageType.ERROR, cargoHomeSettingType)
+                throw ConfigurationException("Cargo binary not found at: $cargoHomePath!")
             }
         }
 
@@ -224,12 +166,6 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
                 settings.cargoHome = adjustCargoHome(cargoHomePath)
             }
         }
-
-        useLocalDistributionButton?.let { button ->
-            if (button.isSelected) {
-                settings.distributionType = CargoProjectSettings.Companion.Distribution.LOCAL
-            }
-        }
     }
 
     override fun reset(project: Project?, settings: CargoProjectSettings, isDefaultModuleCreation: Boolean) {
@@ -238,13 +174,6 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
         cargoHomePathField?.let { pathField ->
             pathField.text = cargoHome
             pathField.textField.foreground = LocationSettingType.EXPLICIT_CORRECT.color
-        }
-
-        useLocalDistributionButton?.let { button ->
-            if (!button.isSelected) {
-                cargoHomePathField!!.isEnabled = false
-                return
-            }
         }
 
         if (StringUtil.isEmpty(cargoHome)) {
@@ -259,7 +188,7 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
 
             scheduler.cancelAllRequests()
 
-            if (cargoHomeSettingType == LocationSettingType.EXPLICIT_INCORRECT && settings.distributionType === CargoProjectSettings.Companion.Distribution.LOCAL) {
+            if (cargoHomeSettingType == LocationSettingType.EXPLICIT_INCORRECT) {
                 showBalloon(MessageType.ERROR, cargoHomeSettingType)
             }
         }
@@ -313,13 +242,6 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
     }
 
     override fun isModified(): Boolean {
-        val distributionType = myInitialSettings.distributionType
-
-        useLocalDistributionButton?.let { button ->
-            if (button.isSelected && distributionType !== CargoProjectSettings.Companion.Distribution.LOCAL)
-                return true
-        }
-
         return cargoHomePathField?.let { pathField ->
             val cargoHome = FileUtil.toCanonicalPath(pathField.text)
             if (StringUtil.isEmpty(cargoHome)) {
