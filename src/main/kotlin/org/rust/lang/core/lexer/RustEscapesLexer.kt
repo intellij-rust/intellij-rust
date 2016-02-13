@@ -3,7 +3,7 @@ package org.rust.lang.core.lexer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
-import org.rust.lang.core.psi.RustTokenElementTypes
+import org.rust.lang.core.psi.RustTokenElementTypes.*
 
 private const val BYTE_ESCAPE_LENGTH = "\\x00".length
 private const val UNICODE_ESCAPE_MIN_LENGTH = "\\u{0}".length
@@ -123,15 +123,30 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
 
     companion object {
         fun forByteLiterals(): RustEscapesLexer =
-            RustEscapesLexer(RustTokenElementTypes.BYTE_LITERAL)
+            RustEscapesLexer(BYTE_LITERAL)
 
         fun forCharLiterals(): RustEscapesLexer =
-            RustEscapesLexer(RustTokenElementTypes.CHAR_LITERAL, unicode = true)
+            RustEscapesLexer(CHAR_LITERAL, unicode = true)
 
         fun forByteStringLiterals(): RustEscapesLexer =
-            RustEscapesLexer(RustTokenElementTypes.BYTE_STRING_LITERAL, eol = true)
+            RustEscapesLexer(BYTE_STRING_LITERAL, eol = true)
 
         fun forStringLiterals(): RustEscapesLexer =
-            RustEscapesLexer(RustTokenElementTypes.STRING_LITERAL, unicode = true, eol = true)
+            RustEscapesLexer(STRING_LITERAL, unicode = true, eol = true)
+
+        /**
+         * Create an instance of [RustEscapesLexer] suitable for given [IElementType].
+         *
+         * For the set of supported token types see [ESCAPABLE_LITERALS_TOKEN_SET].
+         *
+         * @throws IllegalArgumentException when given token type is unsupported
+         */
+        fun of(tokenType: IElementType): RustEscapesLexer = when (tokenType) {
+            BYTE_LITERAL -> forByteLiterals()
+            CHAR_LITERAL -> forCharLiterals()
+            BYTE_STRING_LITERAL -> forByteStringLiterals()
+            STRING_LITERAL -> forStringLiterals()
+            else -> throw IllegalArgumentException("unsupported literal type")
+        }
     }
 }

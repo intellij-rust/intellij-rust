@@ -1,13 +1,12 @@
 package org.rust.lang.core.lexer
 
 import com.intellij.lexer.LayeredLexer
-import org.rust.lang.core.psi.RustTokenElementTypes.*
+import org.rust.lang.core.psi.RustTokenElementTypes.ESCAPABLE_LITERALS_TOKEN_SET
 
 class RustHighlightingLexer : LayeredLexer(RustLexer()) {
     init {
-        registerLayer(RustEscapesLexer.forByteLiterals(), BYTE_LITERAL)
-        registerLayer(RustEscapesLexer.forCharLiterals(), CHAR_LITERAL)
-        registerLayer(RustEscapesLexer.forByteStringLiterals(), BYTE_STRING_LITERAL)
-        registerLayer(RustEscapesLexer.forStringLiterals(), STRING_LITERAL)
+        ESCAPABLE_LITERALS_TOKEN_SET.types.forEach {
+            registerLayer(RustEscapesLexer.of(it), it)
+        }
     }
 }
