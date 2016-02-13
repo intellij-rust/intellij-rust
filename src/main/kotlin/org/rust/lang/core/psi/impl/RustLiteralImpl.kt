@@ -3,7 +3,6 @@ package org.rust.lang.core.psi.impl
 import com.intellij.lexer.Lexer
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
-import com.intellij.util.containers.ContainerUtil
 import org.rust.lang.core.lexer.RustLiteralLexer
 import org.rust.lang.core.psi.LiteralTokenTypes
 import org.rust.lang.core.psi.RustLiteral
@@ -30,7 +29,7 @@ class RustLiteralImpl(type: IElementType, text: CharSequence) : LeafPsiElement(t
         get() = when (tokenType) {
             RustTokenElementTypes.INTEGER_LITERAL -> VALID_INTEGER_SUFFIXES
             RustTokenElementTypes.FLOAT_LITERAL   -> VALID_FLOAT_SUFFIXES
-            else                                  -> ContainerUtil.emptyList()
+            else                                  -> emptyList()
         }
 
     override val hasPairedDelimiters: Boolean
