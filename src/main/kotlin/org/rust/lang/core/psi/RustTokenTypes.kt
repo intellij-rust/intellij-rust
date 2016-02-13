@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.ILeafElementType
 import org.rust.lang.RustLanguage
+import org.rust.lang.core.psi.impl.RustLiteralImpl
 
 private val defaultASTFactory by lazy { service<DefaultASTFactory>() }
 
@@ -20,4 +21,6 @@ class RustCommentTokenType(debugName: String) : RustTokenType(debugName) {
 
 class RustKeywordTokenType(debugName: String) : RustTokenType(debugName)
 
-class RustLiteralTokenType(debugName: String) : RustTokenType(debugName)
+class RustLiteralTokenType(debugName: String) : RustTokenType(debugName) {
+    override fun createLeafNode(leafText: CharSequence?): ASTNode = RustLiteralImpl(this, leafText!!)
+}
