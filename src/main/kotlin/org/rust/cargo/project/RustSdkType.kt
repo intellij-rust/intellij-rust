@@ -178,7 +178,5 @@ class RustSdkType : SdkType("Rust SDK") {
 
         internal val RUSTC_BINARY_NAME = "rustc"
         internal val CARGO_BINARY_NAME = "cargo"
-
-        internal val CARGO_METADATA_SUBCOMMAND  = "metadata"
     }
 }
