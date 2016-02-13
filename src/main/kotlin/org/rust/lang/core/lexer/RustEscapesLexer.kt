@@ -15,6 +15,8 @@ private const val UNICODE_ESCAPE_MAX_LENGTH = "\\u{000000}".length
 class RustEscapesLexer private constructor(val defaultToken: IElementType,
                                            val unicode: Boolean = false,
                                            val eol: Boolean = false) : LexerBaseKt() {
+    private var myTokenType: Lazy<IElementType?> = lazy { null }
+
     override fun start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
         bufferSequence = buffer
         bufferEnd = endOffset
@@ -22,14 +24,18 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
 
         tokenStart = startOffset
         tokenEnd = locateToken(tokenStart)
+        myTokenType = lazy { determineTokenType() }
     }
 
     override fun advance() {
         tokenStart = tokenEnd
         tokenEnd = locateToken(tokenStart)
+        myTokenType = lazy { determineTokenType() }
     }
 
-    override fun getTokenType(): IElementType? {
+    override fun getTokenType(): IElementType? = myTokenType.value
+
+    private fun determineTokenType(): IElementType? {
         // We're at the end of the string token => finish lexing
         if (tokenStart >= tokenEnd) {
             return null
@@ -48,14 +54,14 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
         return when (bufferSequence[tokenStart + 1]) {
             'u' ->
                 when {
-                    !unicode -> INVALID_CHARACTER_ESCAPE_TOKEN
+                    !unicode                                   -> INVALID_CHARACTER_ESCAPE_TOKEN
                     isValidUnicodeEscape(tokenStart, tokenEnd) -> VALID_STRING_ESCAPE_TOKEN
-                    else -> INVALID_UNICODE_ESCAPE_TOKEN
+                    else                                       -> INVALID_UNICODE_ESCAPE_TOKEN
                 }
-            'x' -> esc(isValidByteEscape(tokenStart, tokenEnd))
-            '\r', '\n' -> esc(eol)
+            'x'                                 -> esc(isValidByteEscape(tokenStart, tokenEnd))
+            '\r', '\n'                          -> esc(eol)
             'n', 'r', 't', '0', '\\', '\'', '"' -> VALID_STRING_ESCAPE_TOKEN
-            else -> INVALID_CHARACTER_ESCAPE_TOKEN
+            else                                -> INVALID_CHARACTER_ESCAPE_TOKEN
         }
     }
 
@@ -142,11 +148,11 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
          * @throws IllegalArgumentException when given token type is unsupported
          */
         fun of(tokenType: IElementType): RustEscapesLexer = when (tokenType) {
-            BYTE_LITERAL -> forByteLiterals()
-            CHAR_LITERAL -> forCharLiterals()
+            BYTE_LITERAL        -> forByteLiterals()
+            CHAR_LITERAL        -> forCharLiterals()
             BYTE_STRING_LITERAL -> forByteStringLiterals()
-            STRING_LITERAL -> forStringLiterals()
-            else -> throw IllegalArgumentException("unsupported literal type")
+            STRING_LITERAL      -> forStringLiterals()
+            else                -> throw IllegalArgumentException("unsupported literal type")
         }
     }
 }
