@@ -4,7 +4,7 @@ import com.intellij.lang.BracePair
 import com.intellij.lang.PairedBraceMatcher
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
-import org.rust.lang.core.lexer.RustTokenElementTypes
+import org.rust.lang.core.psi.RustTokenElementTypes
 
 public class RustBraceMatcher() : PairedBraceMatcher {
 

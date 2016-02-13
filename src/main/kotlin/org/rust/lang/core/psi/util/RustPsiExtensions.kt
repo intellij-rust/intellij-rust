@@ -5,7 +5,7 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.lang.core.lexer.RustTokenElementTypes
+import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.visitors.RecursiveRustVisitor
 import org.rust.lang.core.resolve.indexes.RustModulePath

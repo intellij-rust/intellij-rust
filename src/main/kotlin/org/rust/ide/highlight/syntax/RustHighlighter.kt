@@ -5,8 +5,8 @@ import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
 import org.rust.ide.colorscheme.RustColors
 import org.rust.lang.core.lexer.RustHighlightingLexer
-import org.rust.lang.core.lexer.RustKeywordTokenType
-import org.rust.lang.core.lexer.RustTokenElementTypes.*
+import org.rust.lang.core.psi.RustKeywordTokenType
+import org.rust.lang.core.psi.RustTokenElementTypes.*
 
 public class RustHighlighter : SyntaxHighlighterBase() {
 

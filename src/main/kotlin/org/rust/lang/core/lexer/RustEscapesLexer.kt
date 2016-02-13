@@ -3,18 +3,18 @@ package org.rust.lang.core.lexer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
+import org.rust.lang.core.psi.RustTokenElementTypes
 
 private const val BYTE_ESCAPE_LENGTH = "\\x00".length
 private const val UNICODE_ESCAPE_MIN_LENGTH = "\\u{0}".length
 private const val UNICODE_ESCAPE_MAX_LENGTH = "\\u{000000}".length
 
-// TODO: Maybe implement lexing of prefixes and suffixes?
 /**
  * Performs lexical analysis of Rust byte/char/string/byte string literals using Rust character escaping rules.
  */
-class RustStringLiteralLexer private constructor(val defaultToken: IElementType,
-                                                 val unicode: Boolean = false,
-                                                 val eol: Boolean = false) : LexerBaseKt() {
+class RustEscapesLexer private constructor(val defaultToken: IElementType,
+                                           val unicode: Boolean = false,
+                                           val eol: Boolean = false) : LexerBaseKt() {
     override fun start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
         bufferSequence = buffer
         bufferEnd = endOffset
@@ -122,16 +122,16 @@ class RustStringLiteralLexer private constructor(val defaultToken: IElementType,
         }
 
     companion object {
-        fun forByteLiterals(): RustStringLiteralLexer =
-            RustStringLiteralLexer(RustTokenElementTypes.BYTE_LITERAL)
+        fun forByteLiterals(): RustEscapesLexer =
+            RustEscapesLexer(RustTokenElementTypes.BYTE_LITERAL)
 
-        fun forCharLiterals(): RustStringLiteralLexer =
-            RustStringLiteralLexer(RustTokenElementTypes.CHAR_LITERAL, unicode = true)
+        fun forCharLiterals(): RustEscapesLexer =
+            RustEscapesLexer(RustTokenElementTypes.CHAR_LITERAL, unicode = true)
 
-        fun forByteStringLiterals(): RustStringLiteralLexer =
-            RustStringLiteralLexer(RustTokenElementTypes.BYTE_STRING_LITERAL, eol = true)
+        fun forByteStringLiterals(): RustEscapesLexer =
+            RustEscapesLexer(RustTokenElementTypes.BYTE_STRING_LITERAL, eol = true)
 
-        fun forStringLiterals(): RustStringLiteralLexer =
-            RustStringLiteralLexer(RustTokenElementTypes.STRING_LITERAL, unicode = true, eol = true)
+        fun forStringLiterals(): RustEscapesLexer =
+            RustEscapesLexer(RustTokenElementTypes.STRING_LITERAL, unicode = true, eol = true)
     }
 }

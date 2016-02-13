@@ -5,7 +5,7 @@ import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.openapi.util.Key
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
-import org.rust.lang.core.lexer.RustTokenElementTypes
+import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.lexer.containsEOL
 import org.rust.lang.utils.Cookie
 import org.rust.lang.utils.using

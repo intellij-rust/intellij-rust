@@ -3,7 +3,7 @@ package org.rust.lang.core.psi.impl
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
-import org.rust.lang.core.lexer.RustTokenElementTypes
+import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.stubs.RustNamedElementStub
 

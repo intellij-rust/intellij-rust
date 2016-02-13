@@ -4,7 +4,7 @@ import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
 import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.tree.TokenSet
-import org.rust.lang.core.lexer.RustTokenElementTypes.*
+import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 
 class RustFormattingBlock(private val node: ASTNode,

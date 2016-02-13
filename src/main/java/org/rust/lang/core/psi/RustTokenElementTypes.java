@@ -1,4 +1,4 @@
-package org.rust.lang.core.lexer;
+package org.rust.lang.core.psi;
 
 import com.intellij.psi.tree.TokenSet;
 
@@ -66,14 +66,14 @@ public interface RustTokenElementTypes {
 
     // Literals
 
-    RustTokenType INTEGER_LITERAL = new RustTokenType("<INTEGER>");
-    RustTokenType FLOAT_LITERAL = new RustTokenType("<FLOAT>");
-    RustTokenType BYTE_LITERAL = new RustTokenType("<BYTE>");
-    RustTokenType CHAR_LITERAL = new RustTokenType("<CHAR>");
-    RustTokenType STRING_LITERAL = new RustTokenType("<STRING>");
-    RustTokenType BYTE_STRING_LITERAL = new RustTokenType("<BYTE_STRING>");
-    RustTokenType RAW_STRING_LITERAL = new RustTokenType("<RAW_STRING>");
-    RustTokenType RAW_BYTE_STRING_LITERAL = new RustTokenType("<RAW_BYTE_STRING>");
+    RustTokenType INTEGER_LITERAL = new RustLiteralTokenType("<INTEGER>");
+    RustTokenType FLOAT_LITERAL = new RustLiteralTokenType("<FLOAT>");
+    RustTokenType BYTE_LITERAL = new RustLiteralTokenType("<BYTE>");
+    RustTokenType CHAR_LITERAL = new RustLiteralTokenType("<CHAR>");
+    RustTokenType STRING_LITERAL = new RustLiteralTokenType("<STRING>");
+    RustTokenType BYTE_STRING_LITERAL = new RustLiteralTokenType("<BYTE_STRING>");
+    RustTokenType RAW_STRING_LITERAL = new RustLiteralTokenType("<RAW_STRING>");
+    RustTokenType RAW_BYTE_STRING_LITERAL = new RustLiteralTokenType("<RAW_BYTE_STRING>");
 
     // Comments
 
@@ -151,5 +151,19 @@ public interface RustTokenElementTypes {
         EOL_COMMENT,
         INNER_DOC_COMMENT,
         OUTER_DOC_COMMENT
+    );
+
+    TokenSet NUMERIC_LITERALS_TOKEN_SET = TokenSet.create(
+        INTEGER_LITERAL,
+        FLOAT_LITERAL
+    );
+
+    TokenSet TEXT_LITERALS_TOKEN_SET = TokenSet.create(
+        BYTE_LITERAL,
+        CHAR_LITERAL,
+        STRING_LITERAL,
+        BYTE_STRING_LITERAL,
+        RAW_STRING_LITERAL,
+        RAW_BYTE_STRING_LITERAL
     );
 }

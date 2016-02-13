@@ -8,14 +8,14 @@
     elementTypeHolderClass='org.rust.lang.core.psi.RustCompositeElementTypes'
 
     elementTypeClass='org.rust.lang.core.psi.RustCompositeElementType'
-    tokenTypeClass='org.rust.lang.core.lexer.RustTokenType'
+    tokenTypeClass='org.rust.lang.core.psi.RustTokenType'
 
     psiClassPrefix='Rust'
     psiImplClassSuffix='Impl'
     psiPackage='org.rust.lang.core.psi'
     psiImplPackage='org.rust.lang.core.psi.impl'
 
-    parserImports='static org.rust.lang.core.lexer.RustTokenElementTypes.*'
+    parserImports='static org.rust.lang.core.psi.RustTokenElementTypes.*'
 
 
     tokens = [
