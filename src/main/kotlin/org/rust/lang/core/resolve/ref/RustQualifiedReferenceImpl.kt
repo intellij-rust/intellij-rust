@@ -32,7 +32,7 @@ internal class RustQualifiedReferenceImpl<T : RustQualifiedReferenceElement>(ele
                               .orEmpty()
 
             if (qual.isNotEmpty())
-                qual += RustTokenElementTypes.COLONCOLON.debugName;
+                qual += RustTokenElementTypes.COLONCOLON.toString();
 
             qual + qualRef.name
         }

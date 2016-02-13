@@ -3,8 +3,8 @@ package org.rust.lang.core.psi
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.RustLanguage
 
-public open class RustTokenType(val debugName: String) : IElementType(debugName, RustLanguage) {}
+open class RustTokenType(debugName: String) : IElementType(debugName, RustLanguage)
 
-public class RustKeywordTokenType(debugName: String) : RustTokenType(debugName) {}
+class RustKeywordTokenType(debugName: String) : RustTokenType(debugName)
 
-public class RustLiteralTokenType(debugName: String) : RustTokenType(debugName) {}
+class RustLiteralTokenType(debugName: String) : RustTokenType(debugName)
