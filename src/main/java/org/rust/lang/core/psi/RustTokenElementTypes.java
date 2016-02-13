@@ -169,6 +169,8 @@ public interface RustTokenElementTypes {
         RAW_BYTE_STRING_LITERAL
     );
 
+    TokenSet LITERALS_TOKEN_SET = TokenSet.orSet(NUMERIC_LITERALS_TOKEN_SET, TEXT_LITERALS_TOKEN_SET);
+
     /**
      * Set of possible arguments for {@link RustEscapesLexer.Companion#of(IElementType)}
      */
