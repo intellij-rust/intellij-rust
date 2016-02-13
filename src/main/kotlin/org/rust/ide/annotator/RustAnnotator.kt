@@ -14,8 +14,49 @@ class RustAnnotator : Annotator {
 }
 
 private class RustAnnotatorVisitor(private val holder: AnnotationHolder) : RustVisitor() {
+    override fun visitElement(element: PsiElement?) {
+        when (element) {
+            is RustLiteral -> visitLiteral(element)
+            else           -> super.visitElement(element)
+        }
+    }
+
     override fun visitAttr(o: RustAttr) {
         holder.highlight(o, RustColors.ATTRIBUTE)
+    }
+
+    fun visitLiteral(o: RustLiteral) {
+        // TODO: Use some human-friendly names instead of debug ones
+        val displayName = o.toString()
+
+        // Check char literal length
+        when (o.tokenType) {
+            RustTokenElementTypes.BYTE_LITERAL, RustTokenElementTypes.CHAR_LITERAL -> {
+                val value = o.valueString
+                when {
+                    value.isNullOrEmpty() -> holder.createErrorAnnotation(o, "empty $displayName")
+                    value.length > 1      -> holder.createErrorAnnotation(o, "too many characters in $displayName")
+                }
+            }
+        }
+
+        // Check delimiters
+        if (!o.hasPairedDelimiters) {
+            holder.createErrorAnnotation(o, "unclosed $displayName")
+        }
+
+        // Check suffix
+        val suffix = o.suffix
+        val possibleSuffixes = o.possibleSuffixes
+        if (suffix !in possibleSuffixes) {
+            holder.createErrorAnnotation(o, if (possibleSuffixes.isNotEmpty()) {
+                "invalid suffix '$suffix' for $displayName; the suffix must be one of: ${possibleSuffixes.joinToString()}"
+            } else {
+                "$displayName with a suffix is invalid"
+            })
+        }
+
+        // TODO: Check numeric literals boundaries
     }
 
     override fun visitMacroExpr(o: RustMacroExpr) {
