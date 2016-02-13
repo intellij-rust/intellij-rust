@@ -13,11 +13,10 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
 import com.intellij.openapi.util.Key
-import org.apache.commons.lang.StringUtils
-import org.rust.cargo.CargoConstants
+import org.rust.cargo.commands.Cargo
+import org.rust.cargo.commands.CargoProjectDescription
 import org.rust.cargo.project.module.RustModuleType
 import org.rust.cargo.project.settings.CargoExecutionSettings
-import org.rust.cargo.util.PlatformUtil
 import java.io.File
 
 class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSettings> {
@@ -29,7 +28,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
                                     settings: CargoExecutionSettings?,
                                     listener: ExternalSystemTaskNotificationListener): DataNode<ProjectData>? {
 
-        val metadata = readCargoMetadata(id, listener, projectPath, settings)
+        val metadata = readProjectDescription(id, listener, projectPath, settings)
 
         val projectNode =
             DataNode(
@@ -46,8 +45,8 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
         return projectNode
     }
 
-    private fun addDependencies(modules: Map<CargoMetadata.Module, DataNode<ModuleData>>,
-                                libraries: Map<CargoMetadata.Library, DataNode<LibraryData>>) {
+    private fun addDependencies(modules: Map<CargoProjectDescription.Module, DataNode<ModuleData>>,
+                                libraries: Map<CargoProjectDescription.Library, DataNode<LibraryData>>) {
         for ((module, node) in modules) {
             for (dep in module.moduleDependencies) {
                 node.createChild(
@@ -77,54 +76,31 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
         return false
     }
 
-    private fun readCargoMetadata(id: ExternalSystemTaskId,
-                                  listener: ExternalSystemTaskNotificationListener,
-                                  projectPath: String,
-                                  settings: CargoExecutionSettings?): CargoMetadata {
+    private fun readProjectDescription(id: ExternalSystemTaskId,
+                                       listener: ExternalSystemTaskNotificationListener,
+                                       projectPath: String,
+                                       settings: CargoExecutionSettings?): CargoProjectDescription {
 
         listener.onStatusChange(ExternalSystemTaskNotificationEvent(id, "Resolving dependencies..."))
+        val cargoListener = object : ProcessAdapter() {
+            override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
+                val text = event.text.trim { it <= ' ' }
+                if (text.startsWith("Updating") || text.startsWith("Downloading")) {
+                    listener.onStatusChange(ExternalSystemTaskNotificationEvent(id, text))
+                } else {
+                    listener.onTaskOutput(id, text, outputType === ProcessOutputTypes.STDOUT)
+                }
+            }
+        }
 
-        val processOut = try {
-            PlatformUtil.runExecutableWith(
-                settings!!.cargoPath,
-                arrayListOf(
-                    RustSdkType.CARGO_METADATA_SUBCOMMAND,
-                    "--manifest-path", File(projectPath, CargoConstants.MANIFEST_FILE).absolutePath,
-                    "--features", StringUtils.join(settings.features, ",")
-                ),
-                object : ProcessAdapter() {
-                    override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
-                        val text = event.text.trim { it <= ' ' }
-                        if (text.startsWith("Updating") || text.startsWith("Downloading")) {
-                            listener.onStatusChange(ExternalSystemTaskNotificationEvent(id, text))
-                        } else {
-                            listener.onTaskOutput(id, text, outputType === ProcessOutputTypes.STDOUT)
-                        }
-                    }
-                })
-        } catch (e: ExecutionException) {
+        return try {
+           Cargo.fromProjectDirectory(settings!!.cargoPath, projectPath).fullProjectDescription(cargoListener)
+        } catch(e: ExecutionException) {
             throw ExternalSystemException(e)
         }
-
-        if (processOut.exitCode != 0) {
-            //
-            // NOTE:
-            //  Since `metadata` isn't made its way into Cargo bundle (yet),
-            //  this particular check verifies whether user has it installed already or not.
-            //  Hopefully based on the following lines
-            //
-            //  https://github.com/rust-lang/cargo/blob/master/src/bin/cargo.rs#L189 (`execute_subcommand`)
-            //
-            throw ExternalSystemException("Failed to execute cargo: ${processOut.stderr}")
-        }
-
-        // drop leading "Downloading foo ..." stuff
-        val json = processOut.stdout.dropWhile { it != '{' }
-
-        return CargoMetadata.fromJson(json)
     }
 
-    private fun createModuleNode(module: CargoMetadata.Module, projectNode: DataNode<ProjectData>): DataNode<ModuleData> {
+    private fun createModuleNode(module: CargoProjectDescription.Module, projectNode: DataNode<ProjectData>): DataNode<ModuleData> {
         val root = module.contentRoot.absolutePath
         val modData =
             ModuleData(
@@ -157,7 +133,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
         return moduleNode
     }
 
-    private fun createLibraryNode(lib: CargoMetadata.Library, projectNode: DataNode<ProjectData>): DataNode<LibraryData> {
+    private fun createLibraryNode(lib: CargoProjectDescription.Library, projectNode: DataNode<ProjectData>): DataNode<LibraryData> {
         val libData = LibraryData(CargoProjectSystem.ID, "${lib.name} ${lib.version}")
         libData.addPath(LibraryPathType.SOURCE, lib.contentRoot.absolutePath)
         val libNode = projectNode.createChild(ProjectKeys.LIBRARY, libData)
