@@ -14,6 +14,8 @@ abstract class LexerBaseEx : LexerBase() {
     private var bufferEnd: Int = 0
     private var myTokenType: Lazy<IElementType?> = lazyOf(null)
 
+    var nextState: Int = 0
+
     /**
      * Determine type of the current token (the one delimited by [tokenStart] and [tokenEnd]).
      */
@@ -29,6 +31,7 @@ abstract class LexerBaseEx : LexerBase() {
         bufferSequence = buffer
         bufferEnd = endOffset
         state = initialState
+        nextState = initialState
 
         tokenStart = startOffset
         tokenEnd = locateToken(tokenStart)
@@ -36,6 +39,7 @@ abstract class LexerBaseEx : LexerBase() {
     }
 
     override fun advance() {
+        state = nextState
         tokenStart = tokenEnd
         tokenEnd = locateToken(tokenStart)
         myTokenType = lazy { determineTokenType() }

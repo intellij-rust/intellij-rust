@@ -48,7 +48,7 @@ private class RustAnnotatorVisitor(private val holder: AnnotationHolder) : RustV
         // Check suffix
         val suffix = o.suffix
         val possibleSuffixes = o.possibleSuffixes
-        if (suffix !in possibleSuffixes) {
+        if (!suffix.isNullOrEmpty() && suffix !in possibleSuffixes) {
             holder.createErrorAnnotation(o, if (possibleSuffixes.isNotEmpty()) {
                 "invalid suffix '$suffix' for $displayName; the suffix must be one of: ${possibleSuffixes.joinToString()}"
             } else {

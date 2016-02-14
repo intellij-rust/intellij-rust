@@ -17,7 +17,7 @@ abstract class RustLexingTestCaseBase : LexerTestCase(), RustTestCase {
 
     // NOTE(matkad): this is basically a copy-paste of doFileTest.
     // The only difference is that encoding is set to utf-8
-    protected fun doTest() {
+    protected open fun doTest() {
         val filePath = pathToSourceTestFile(getTestName(true))
         var text = ""
         try {
