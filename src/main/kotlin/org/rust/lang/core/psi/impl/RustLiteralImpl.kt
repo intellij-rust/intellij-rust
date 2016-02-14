@@ -12,6 +12,7 @@ import org.rust.lang.utils.unescapeRust
 private val VALID_INTEGER_SUFFIXES = listOf("u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "isize", "usize")
 private val VALID_FLOAT_SUFFIXES = listOf("f32", "f64")
 
+// TODO: Consider caching
 class RustLiteralImpl(type: IElementType, text: CharSequence) : LeafPsiElement(type, text), RustLiteral {
     override val tokenType: IElementType
         get() = node.elementType
@@ -58,7 +59,6 @@ private fun Lexer.findToken(buffer: CharSequence, tokenType: IElementType): Stri
         }
         advance()
     }
-
     return null
 }
 

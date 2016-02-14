@@ -13,9 +13,9 @@ private const val UNICODE_ESCAPE_MAX_LENGTH = "\\u{000000}".length
 /**
  * Performs lexical analysis of Rust byte/char/string/byte string literals using Rust character escaping rules.
  */
-class RustEscapesLexer private constructor(val defaultToken: IElementType,
-                                           val unicode: Boolean = false,
-                                           val eol: Boolean = false) : LexerBaseEx() {
+class RustEscapesLexer constructor(val defaultToken: IElementType,
+                                   val unicode: Boolean = false,
+                                   val eol: Boolean = false) : LexerBaseEx() {
     protected override fun determineTokenType(): IElementType? {
         // We're at the end of the string token => finish lexing
         if (tokenStart >= tokenEnd) {

@@ -6,8 +6,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RustTokenElementTypes
-import org.rust.lang.core.lexer.containsEOL
 import org.rust.lang.utils.Cookie
+import org.rust.lang.utils.containsRustEOL
 import org.rust.lang.utils.using
 
 public object RustParserUtil : GeneratedParserUtilBase() {
@@ -87,7 +87,7 @@ public object RustParserUtil : GeneratedParserUtilBase() {
     public fun skipUntilEOL(b: PsiBuilder, level: Int): Boolean {
         while (!b.eof()) {
             if (b.tokenType == TokenType.WHITE_SPACE
-            ||  b.tokenText?.containsEOL() != null) return true;
+            ||  b.tokenText?.containsRustEOL() != null) return true;
 
             b.advanceLexer();
         }
