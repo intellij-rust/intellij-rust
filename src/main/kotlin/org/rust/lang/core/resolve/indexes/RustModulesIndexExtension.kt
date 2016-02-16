@@ -28,11 +28,11 @@ class RustModulesIndexExtension : FileBasedIndexExtension<RustModulePath, RustQu
     override fun getInputFilter(): FileBasedIndex.InputFilter =
         DefaultFileTypeSpecificInputFilter(RustFileType)
 
-    override fun getKeyDescriptor(): KeyDescriptor<RustModulePath> = keyDescriptor
+    override fun getKeyDescriptor(): KeyDescriptor<RustModulePath> = Companion.keyDescriptor
 
-    override fun getValueExternalizer(): DataExternalizer<RustQualifiedName> = valueExternalizer
+    override fun getValueExternalizer(): DataExternalizer<RustQualifiedName> = Companion.valueExternalizer
 
-    override fun getIndexer(): DataIndexer<RustModulePath, RustQualifiedName, FileContent> = dataIndexer
+    override fun getIndexer(): DataIndexer<RustModulePath, RustQualifiedName, FileContent> = Companion.dataIndexer
 
     companion object {
 
