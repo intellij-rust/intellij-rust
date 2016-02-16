@@ -10,6 +10,14 @@ class RustStructureViewTest : RustTestCaseBase() {
 
     override val dataPath = "org/rust/ide/structure/fixtures"
 
+    fun testFunctions() = doFileTest()
+
+    fun testStructs()   = doFileTest()
+    fun testEnums()     = doFileTest()
+    fun testTraits()    = doFileTest()
+    fun testImpls()     = doFileTest()
+    fun testMods()      = doFileTest()
+
     private fun doTest(expected: String) {
         myFixture.configureByFile(fileName);
         myFixture.testStructureView {
@@ -19,14 +27,8 @@ class RustStructureViewTest : RustTestCaseBase() {
     }
 
     private fun doFileTest() {
-        val text = FileUtil.loadFile(File(testDataPath + "/" + fileName.replace(".rs", ".txt")))
-        doTest(text)
+        val file = File(testDataPath + "/" + fileName.replace(".rs", ".txt"))
+        val expected = FileUtil.loadFile(file, /* convertLineSeparators = */ true)
+        doTest(expected)
     }
-
-    fun testFunctions() = doFileTest()
-    fun testStructs()   = doFileTest()
-    fun testEnums()     = doFileTest()
-    fun testTraits()    = doFileTest()
-    fun testImpls()     = doFileTest()
-    fun testMods()      = doFileTest()
 }
