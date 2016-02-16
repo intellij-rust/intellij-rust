@@ -11,13 +11,11 @@ may be highly *unstable* just yet.
 
 At the moment we ship pre-release builds in the nightly channel _only_.
 
-To use them you need to:
-
-1. Follow the instructions of adding additional plugin repository
-2. Paste the URL for the version you need:
+To use them you need to follow the [instructions](https://www.jetbrains.com/idea/help/managing-enterprise-plugin-repositories.html) of adding 
+additional plugin repository and paste the URL for the one you need:
      
-    Rust: https://plugins.jetbrains.com/plugins/nightly/8182
-    TOML: https://plugins.jetbrains.com/plugins/nightly/8195 
+    - Rust: https://plugins.jetbrains.com/plugins/nightly/8182
+    - TOML: https://plugins.jetbrains.com/plugins/nightly/8195 
 
 *NOTA BENE*: As this is a preview release, something might go wrong. So, be brave to face some nasty bugs.
 
