@@ -124,8 +124,8 @@ private abstract class RustDelimitedLiteralLexerBase : RustLiteralLexer() {
 
     protected abstract fun locateValue(start: Int): Int
 
-    override fun determineTokenType(): IElementType? {
-        return if (tokenStart >= tokenEnd) {
+    override fun determineTokenType(): IElementType? =
+        if (tokenStart >= tokenEnd) {
             null
         } else when (state) {
             IN_PREFIX      -> LiteralTokenTypes.PREFIX
@@ -135,7 +135,6 @@ private abstract class RustDelimitedLiteralLexerBase : RustLiteralLexer() {
             IN_SUFFIX      -> LiteralTokenTypes.SUFFIX
             else           -> error("unreachable")
         }
-    }
 
     override fun locateToken(start: Int): Int =
         if (start >= bufferEnd) {

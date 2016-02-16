@@ -26,23 +26,20 @@ private class RustAnnotatorVisitor(private val holder: AnnotationHolder) : RustV
     }
 
     fun visitLiteral(o: RustLiteral) {
-        // TODO: Use some human-friendly names instead of debug ones
-        val displayName = o.toString()
-
         // Check char literal length
         when (o.tokenType) {
             RustTokenElementTypes.BYTE_LITERAL, RustTokenElementTypes.CHAR_LITERAL -> {
                 val value = o.valueString
                 when {
-                    value.isNullOrEmpty() -> holder.createErrorAnnotation(o, "empty $displayName")
-                    value.length > 1      -> holder.createErrorAnnotation(o, "too many characters in $displayName")
+                    value.isNullOrEmpty() -> holder.createErrorAnnotation(o, "empty ${o.displayName}")
+                    value.length > 1      -> holder.createErrorAnnotation(o, "too many characters in ${o.displayName}")
                 }
             }
         }
 
         // Check delimiters
         if (!o.hasPairedDelimiters) {
-            holder.createErrorAnnotation(o, "unclosed $displayName")
+            holder.createErrorAnnotation(o, "unclosed ${o.displayName}")
         }
 
         // Check suffix
@@ -50,9 +47,10 @@ private class RustAnnotatorVisitor(private val holder: AnnotationHolder) : RustV
         val possibleSuffixes = o.possibleSuffixes
         if (!suffix.isNullOrEmpty() && suffix !in possibleSuffixes) {
             holder.createErrorAnnotation(o, if (possibleSuffixes.isNotEmpty()) {
-                "invalid suffix '$suffix' for $displayName; the suffix must be one of: ${possibleSuffixes.joinToString()}"
+                val possibleSuffixesStr = possibleSuffixes.map { "'$it'" }.joinToString()
+                "invalid suffix '$suffix' for ${o.displayName}; the suffix must be one of: $possibleSuffixesStr"
             } else {
-                "$displayName with a suffix is invalid"
+                "${o.displayName} with a suffix is invalid"
             })
         }
 
@@ -88,3 +86,21 @@ private fun AnnotationHolder.highlight(element: PsiElement?, textAttributes: Tex
         createInfoAnnotation(element, null).textAttributes = textAttributes
     }
 }
+
+// TODO: Make this more generic
+private val PsiElement.displayName: String
+    get() = when (node.elementType) {
+        RustTokenElementTypes.INTEGER_LITERAL         -> "numeric literal"
+        RustTokenElementTypes.FLOAT_LITERAL           -> "float literal"
+
+        RustTokenElementTypes.CHAR_LITERAL            -> "char literal"
+        RustTokenElementTypes.BYTE_LITERAL            -> "byte literal"
+
+        RustTokenElementTypes.STRING_LITERAL          -> "string literal"
+        RustTokenElementTypes.BYTE_STRING_LITERAL     -> "byte string literal"
+
+        RustTokenElementTypes.RAW_STRING_LITERAL      -> "raw string literal"
+        RustTokenElementTypes.RAW_BYTE_STRING_LITERAL -> "raw byte string literal"
+
+        else                                          -> toString()
+    }
