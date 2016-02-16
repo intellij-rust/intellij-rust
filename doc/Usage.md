@@ -50,6 +50,7 @@ Use `Ctrl+J` to view the list of templates applicable in the current context.
 
 * In Rust structure:
   - `f` -- field name and type.
+  - `pf` -- `pub` filed.
 
 ## Tips
 
