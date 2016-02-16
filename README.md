@@ -2,18 +2,26 @@
 
 [![Build Status](https://teamcity.jetbrains.com/app/rest/builds/buildType:(id:IntellijIdeaPlugins_Rust_Tests)/statusIcon.svg)](https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_Tests&guest=1) [![Build Status](https://img.shields.io/travis/intellij-rust/intellij-rust/master.svg)](https://travis-ci.org/intellij-rust/intellij-rust) [![Join the chat at https://gitter.im/intellij-rust/intellij-rust](https://img.shields.io/badge/Gitter-Join%20Chat-blue.svg)](https://gitter.im/intellij-rust/intellij-rust?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-**BEWARE**
+**NOTA BENE**
 
 This is experimental implementation targeting bleeding-edge version of Rust language and (as may be assumed reasonably enough) 
-is highly *unstable* just yet.
+may be highly *unstable* just yet.
 
 ## Installation
 
-We intentionally do not provide a download for the plugin just yet. If you are
-brave enough and want to use the plugin, you have to build it from source. Note that it will download all build dependencies, so make sure you have enough space (one GB should be enough). 
-You need IDEA 15 (or newer) to use this plugin. 
+At the moment we ship pre-release builds in the nightly channel _only_.
 
-Building:
+To use them you need to:
+
+1. Follow the instructions of adding additional plugin repository
+2. Paste the URL for the version you need:
+     
+    Rust: https://plugins.jetbrains.com/plugins/nightly/8182
+    TOML: https://plugins.jetbrains.com/plugins/nightly/8195 
+
+*NOTA BENE*: As this is a preview release, something might go wrong. So, be brave to face some nasty bugs.
+
+## Building
 
 ```
 $ git clone https://github.com/intellij-rust/intellij-rust --recursive
@@ -22,6 +30,9 @@ $ ./gradlew buildPlugin
 ```
 
 This creates a zip archive in `build/distributions` which you can install with the `Install plugin from disk...` action found in `Settings > Plugins`.
+
+Note that it will download all build dependencies, so make sure you have enough space (one GB should be enough). 
+You need IDEA 15 (or newer) to use this plugin. 
 
 ## Usage
 
