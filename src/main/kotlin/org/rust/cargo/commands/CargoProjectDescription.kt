@@ -9,7 +9,9 @@ import java.util.*
 class CargoProjectDescription(private val project: Project) {
     val modules: Collection<Module>
     val libraries: Collection<Library>
-    val projectName: String
+    val projectName: String get() = rootModule.name
+
+    private val rootModule: Module
 
     class Module(val contentRoot: File,
                  val name: String,
@@ -35,26 +37,10 @@ class CargoProjectDescription(private val project: Project) {
             idToPackage[node.id]!! to node.dependencies.map { idToPackage[it]!! }
         }
 
-        projectName = idToPackage[project.resolve.root]!!.name
+        val (modPackages, libPackages) = project.packages.partition { it.isModule }
 
-        val idToModule = project.packages
-            .filter { it.isModule }
-            .toMap { pkg ->
-                pkg.id to CargoProjectDescription.Module(
-                    File(PathUtil.getParentPath(pkg.manifest_path)),
-                    pkg.name
-                )
-            }
-
-        val idToLibrary = project.packages
-            .filter { !it.isModule }
-            .toMap { pkg ->
-                pkg.id to CargoProjectDescription.Library(
-                    File(PathUtil.getParentPath(pkg.manifest_path)),
-                    pkg.name,
-                    pkg.version
-                )
-            }
+        val idToModule = modPackages.toMap { it.id to it.intoModule() }
+        val idToLibrary = libPackages.toMap { it.id to it.intoLibrary() }
 
         for ((pkg, deps) in dependenciesMap) {
             val module = idToModule[pkg.id] ?: continue
@@ -69,11 +55,32 @@ class CargoProjectDescription(private val project: Project) {
             }
         }
 
+        rootModule = idToModule[project.resolve.root]!!
         modules = idToModule.values
         libraries = idToLibrary.values
     }
 
     private val Package.isModule: Boolean get() = this.source == null
+
+    private val Package.rootDirectory: File get() = File(PathUtil.getParentPath(manifest_path))
+
+    private fun Package.intoModule(): Module {
+        require(isModule)
+        return Module(
+            rootDirectory,
+            name
+        )
+    }
+
+    private fun Package.intoLibrary(): Library {
+        require(!isModule)
+        return Library(
+            rootDirectory,
+            name,
+            version
+        )
+    }
+
 }
 
 
