@@ -58,6 +58,10 @@ Please, consider our [code-style](STYLE.md) prior to submitting the pull request
 
 For the Java sources we're stuck to the Google's [one](https://google.github.io/styleguide/javaguide.html).
 
+## PR style
+
+It's much easier to review small, focused pull requests. So if you can split your changes into several chunks then 
+please do it. 
 
 # Plugin overview
 
