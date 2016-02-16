@@ -6,6 +6,7 @@ import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RustItem
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
+import org.rust.lang.core.psi.impl.usefulName
 import org.rust.lang.core.stubs.RustItemStub
 import javax.swing.Icon
 
@@ -23,7 +24,7 @@ public abstract class RustItemImplMixin : RustStubbedNamedElementImpl<RustItemSt
         get() = vis != null
 
     override fun getPresentation(): ItemPresentation = object : ItemPresentation {
-        override fun getLocationString(): String? = "(in ${containingFile.name})"
+        override fun getLocationString(): String? = "(in ${containingFile.usefulName})"
 
         override fun getIcon(unused: Boolean): Icon? = this@RustItemImplMixin.getIcon(0)
 

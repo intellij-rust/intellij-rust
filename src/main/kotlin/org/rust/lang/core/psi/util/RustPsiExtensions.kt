@@ -64,9 +64,6 @@ fun PsiElement.getModule(): Module? =
     ModuleUtilCore.findModuleForPsiElement(this)
 
 
-val PsiFile.modulePath: RustModulePath?
-    get() = RustModulePath.devise(this)
-
 
 //
 // TODO(kudinkin): move
