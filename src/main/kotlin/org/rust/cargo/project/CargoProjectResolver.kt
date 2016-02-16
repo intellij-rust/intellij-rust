@@ -37,8 +37,8 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
                 null
             )
 
-        val modules = metadata.modules.toMap { it to createModuleNode(it, projectNode) }
-        val libraries = metadata.libraries.toMap { it to createLibraryNode(it, projectNode) }
+        val modules = metadata.modules.associate { it to createModuleNode(it, projectNode) }
+        val libraries = metadata.libraries.associate { it to createLibraryNode(it, projectNode) }
 
         addDependencies(modules, libraries)
 

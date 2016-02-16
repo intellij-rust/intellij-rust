@@ -72,7 +72,7 @@ class RustBuilder : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
     @Throws(IOException::class)
     private fun collectOutput(process: Process): Sequence<String> {
         val reader = BufferedReader(InputStreamReader(process.inputStream))
-        return sequence() {
+        return generateSequence {
             reader.readLine();
         }
     }
@@ -107,11 +107,11 @@ data class RawErrorInfo(
 fun extractErrors(lines: Sequence<String>): Sequence<RawErrorInfo> {
     val matcher = ErrorMatchingDFA()
     val iterator = lines.iterator()
-    return sequence {
+    return generateSequence {
         for (line in iterator) {
-            matcher.feed(line)?.let { return@sequence it }
+            matcher.feed(line)?.let { return@generateSequence it }
         }
-        return@sequence matcher.feed(null)
+        return@generateSequence matcher.feed(null)
     }
 }
 

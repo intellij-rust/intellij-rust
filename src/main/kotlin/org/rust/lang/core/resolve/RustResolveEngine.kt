@@ -374,7 +374,7 @@ fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolve
         return listOfNotNull(RustResolveUtil.getCrateRootModFor(ref)).asSequence()
     }
 
-    return sequence(RustResolveUtil.getResolveScopeFor(ref)) { parent ->
+    return generateSequence(RustResolveUtil.getResolveScopeFor(ref)) { parent ->
         when (parent) {
             is RustModItem  -> null
             else            -> RustResolveUtil.getResolveScopeFor(parent)

@@ -43,16 +43,16 @@ class CargoProjectDescription(private val project: Project) {
     }
 
     init {
-        val idToPackage = project.packages.toMap { it.id to it }
+        val idToPackage = project.packages.associate { it.id to it }
 
-        val dependenciesMap = project.resolve.nodes.toMap { node ->
+        val dependenciesMap = project.resolve.nodes.associate { node ->
             idToPackage[node.id]!! to node.dependencies.map { idToPackage[it]!! }
         }
 
         val (modPackages, libPackages) = project.packages.partition { it.isModule }
 
-        val idToModule = modPackages.toMap { it.id to it.intoModule() }
-        val idToLibrary = libPackages.toMap { it.id to it.intoLibrary() }
+        val idToModule = modPackages.associate { it.id to it.intoModule() }
+        val idToLibrary = libPackages.associate { it.id to it.intoLibrary() }
 
         for ((pkg, deps) in dependenciesMap) {
             val module = idToModule[pkg.id] ?: continue

@@ -58,7 +58,7 @@ class CargoExternalSystemManager : ExternalSystemAutoImportAware,
         parameters.classPath.add(PathUtil.getJarPathForClass(StringUtils::class.java))
         parameters.classPath.add(PathUtil.getJarPathForClass(Gson::class.java))
         parameters.classPath.add(PathUtil.getJarPathForClass(TypeCastException::class.java))
-        parameters.classPath.add(PathUtil.getJarPathForClass(kotlin.Charsets::class.java))
+        parameters.classPath.add(PathUtil.getJarPathForClass(kotlin.text.Charsets::class.java))
         //parameters.getVMParametersList().add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
     }
 
