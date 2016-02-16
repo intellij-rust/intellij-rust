@@ -1,6 +1,8 @@
 package org.rust.lang.core.psi;
 
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.rust.lang.core.lexer.RustEscapesLexer;
 
 public interface RustTokenElementTypes {
 
@@ -77,11 +79,11 @@ public interface RustTokenElementTypes {
 
     // Comments
 
-    RustTokenType BLOCK_COMMENT = new RustTokenType("<BLOCK_COMMENT>");
-    RustTokenType EOL_COMMENT = new RustTokenType("<EOL_COMMENT>");
+    RustTokenType BLOCK_COMMENT = new RustCommentTokenType("<BLOCK_COMMENT>");
+    RustTokenType EOL_COMMENT = new RustCommentTokenType("<EOL_COMMENT>");
 
-    RustTokenType INNER_DOC_COMMENT = new RustTokenType("<INNER_DOC_COMMENT>");
-    RustTokenType OUTER_DOC_COMMENT = new RustTokenType("<OUTER_DOC_COMMENT>");
+    RustTokenType INNER_DOC_COMMENT = new RustCommentTokenType("<INNER_DOC_COMMENT>");
+    RustTokenType OUTER_DOC_COMMENT = new RustCommentTokenType("<OUTER_DOC_COMMENT>");
 
     RustTokenType SHEBANG_LINE = new RustTokenType("<SHEBANG_LINE>");
 
@@ -165,5 +167,17 @@ public interface RustTokenElementTypes {
         BYTE_STRING_LITERAL,
         RAW_STRING_LITERAL,
         RAW_BYTE_STRING_LITERAL
+    );
+
+    TokenSet LITERALS_TOKEN_SET = TokenSet.orSet(NUMERIC_LITERALS_TOKEN_SET, TEXT_LITERALS_TOKEN_SET);
+
+    /**
+     * Set of possible arguments for {@link RustEscapesLexer.Companion#of(IElementType)}
+     */
+    TokenSet ESCAPABLE_LITERALS_TOKEN_SET = TokenSet.create(
+        BYTE_LITERAL,
+        CHAR_LITERAL,
+        STRING_LITERAL,
+        BYTE_STRING_LITERAL
     );
 }
