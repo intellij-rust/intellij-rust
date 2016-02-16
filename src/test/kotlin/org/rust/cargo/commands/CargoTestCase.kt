@@ -29,6 +29,10 @@ class CargoTestCase : PlatformTestCase() {
         val description = Cargo.fromProjectDirectory(cargoPath!!, project.basePath!!).fullProjectDescription()
 
         assertThat(description.modules.size == 2)
+        for (module in description.modules) {
+            val target = module.targets.single()
+            assertThat(target.rootModFile.startsWith(module.contentRoot))
+        }
         assertThat(description.libraries.size == 1)
     }
 }

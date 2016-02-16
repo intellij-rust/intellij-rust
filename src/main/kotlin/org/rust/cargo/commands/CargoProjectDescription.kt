@@ -15,6 +15,7 @@ class CargoProjectDescription(private val project: Project) {
 
     class Module(val contentRoot: File,
                  val name: String,
+                 val targets: Collection<Target>,
                  val moduleDependencies: MutableCollection<Module> = ArrayList(),
                  val libraryDependencies: MutableCollection<Library> = ArrayList()) {
         init {
@@ -28,6 +29,17 @@ class CargoProjectDescription(private val project: Project) {
         init {
             require(contentRoot.exists())
         }
+    }
+
+    class Target(val rootModFile: File,
+                 val kind: TargetKind) {
+        init {
+            require(rootModFile.exists())
+        }
+    }
+
+    enum class TargetKind {
+        LIB, BIN, TEST, EXAMPLE, BENCH, UNKNOWN
     }
 
     init {
@@ -67,17 +79,35 @@ class CargoProjectDescription(private val project: Project) {
     private fun Package.intoModule(): Module {
         require(isModule)
         return Module(
-            rootDirectory,
-            name
+                rootDirectory,
+                name,
+                targets.map { target ->
+                    val file = if (File(target.src_path).isAbsolute)
+                        File(target.src_path)
+                    else
+                        File(rootDirectory, target.src_path)
+
+                    val kind = when (target.kind) {
+                        listOf("bin") -> TargetKind.BIN
+                        listOf("example") -> TargetKind.EXAMPLE
+                        listOf("test") -> TargetKind.TEST
+                        listOf("bench") -> TargetKind.BENCH
+                        else -> if (target.kind.any { it.endsWith("lib") }) TargetKind.LIB else TargetKind.UNKNOWN
+                    }
+                    CargoProjectDescription.Target(
+                            file,
+                            kind
+                    )
+                }
         )
     }
 
     private fun Package.intoLibrary(): Library {
         require(!isModule)
         return Library(
-            rootDirectory,
-            name,
-            version
+                rootDirectory,
+                name,
+                version
         )
     }
 
