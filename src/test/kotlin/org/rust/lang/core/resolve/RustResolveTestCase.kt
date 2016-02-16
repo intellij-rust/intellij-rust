@@ -25,8 +25,10 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testLetCycle2()           = checkIsBound(atOffset = 20)
     fun testSelf()                = checkIsBound()
     fun testSuper()               = checkIsBound()
-    fun testNestedSuper()         = checkIsBound()
+    fun testFormatPositional()    = checkIsBound()
+    fun testFormatNamed()         = checkIsBound()
 
+    fun testNestedSuper()         = checkIsBound()
     fun testLetCycle1()           = checkIsUnbound()
     fun testUnbound()             = checkIsUnbound()
     fun testOrdering()            = checkIsUnbound()
