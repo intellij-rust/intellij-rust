@@ -145,7 +145,7 @@
 
     mixin       ("const_item") = "org.rust.lang.core.psi.impl.mixin.RustConstItemImplMixin"
 
-    mixin       ("extern_decl_item") = "org.rust.lang.core.psi.impl.mixin.RustExternDeclItemImplMixin"
+    mixin       ("extern_crate_item") = "org.rust.lang.core.psi.impl.mixin.RustExternCrateItemImplMixin"
 
     mixin       ("foreign_fn_item") = "org.rust.lang.core.psi.impl.mixin.RustForeignFnItemImplMixin"
 
@@ -492,7 +492,7 @@ static_item ::= STATIC MUT? decl_item EQ any_expr SEMICOLON
 const_item ::= CONST decl_item EQ any_expr SEMICOLON
 
 private view_item ::= use_item
-                    | extern_decl_item
+                    | extern_crate_item
 
 use_item ::= USE view_path SEMICOLON { pin = 2 }
 
@@ -504,7 +504,7 @@ abi ::= STRING_LITERAL
 // Crate
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern_decl_item ::= EXTERN CRATE crate_name SEMICOLON
+extern_crate_item ::= EXTERN CRATE crate_name SEMICOLON
 
 private crate_name ::= IDENTIFIER alias?
 
