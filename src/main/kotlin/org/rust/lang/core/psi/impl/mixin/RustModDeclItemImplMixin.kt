@@ -5,7 +5,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.impl.RustItemImpl
-import org.rust.lang.core.psi.util.containingMod
+import org.rust.lang.core.psi.containingMod
 import org.rust.lang.core.psi.util.ownedDirectory
 
 

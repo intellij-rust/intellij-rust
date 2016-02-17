@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.PsiElement
 import org.rust.ide.colorscheme.RustColors
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.util.isMut
+import org.rust.lang.core.psi.impl.mixin.isMut
 
 class RustAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) =

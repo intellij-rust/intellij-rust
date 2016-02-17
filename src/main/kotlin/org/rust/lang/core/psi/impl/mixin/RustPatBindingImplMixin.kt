@@ -6,12 +6,15 @@ import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustPatBinding
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
 
-public abstract class RustPatBindingImplMixin(node: ASTNode)  : RustNamedElementImpl(node)
-                                                              , RustPatBinding {
+abstract class RustPatBindingImplMixin(node: ASTNode) : RustNamedElementImpl(node)
+                                                      , RustPatBinding {
 
     override fun getNavigationElement(): PsiElement = identifier
 
     override val boundElements: Collection<RustNamedElement>
         get() = listOf(this)
 }
+
+val RustPatBinding.isMut: Boolean
+    get() = bindingMode?.mut != null
 

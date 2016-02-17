@@ -10,6 +10,7 @@ import org.rust.lang.core.names.parts.RustIdNamePart
 import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.RustUseItem
+import org.rust.lang.core.psi.containingMod
 import org.rust.lang.core.psi.impl.modulePath
 import org.rust.lang.core.resolve.indexes.RustModulesIndex
 

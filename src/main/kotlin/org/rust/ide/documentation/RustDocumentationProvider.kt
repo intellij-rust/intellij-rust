@@ -4,7 +4,7 @@ import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustFnItem
 import org.rust.lang.core.psi.RustPatBinding
-import org.rust.lang.core.psi.util.isMut
+import org.rust.lang.core.psi.impl.mixin.isMut
 
 class RustDocumentationProvider : AbstractDocumentationProvider() {
 

@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.RustVisitor
 import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
-import org.rust.lang.core.psi.util.containingMod
+import org.rust.lang.core.psi.containingMod
 import org.rust.lang.core.psi.util.ownsDirectory
 
 class UnresolvedModuleDeclarationInspection : RustLocalInspectionTool() {

@@ -82,10 +82,3 @@ val RustPat.boundElements: List<RustNamedElement>
         })
         return result
     }
-
-
-val RustPatBinding.isMut: Boolean
-    get()  = bindingMode?.mut != null
-
-val RustCompositeElement.containingMod: RustModItem?
-    get() = parentOfType<RustModItem>()
