@@ -79,35 +79,35 @@ class CargoProjectDescription(private val project: Project) {
     private fun Package.intoModule(): Module {
         require(isModule)
         return Module(
-                rootDirectory,
-                name,
-                targets.map { target ->
-                    val file = if (File(target.src_path).isAbsolute)
-                        File(target.src_path)
-                    else
-                        File(rootDirectory, target.src_path)
+            rootDirectory,
+            name,
+            targets.map { target ->
+                val file = if (File(target.src_path).isAbsolute)
+                    File(target.src_path)
+                else
+                    File(rootDirectory, target.src_path)
 
-                    val kind = when (target.kind) {
-                        listOf("bin") -> TargetKind.BIN
-                        listOf("example") -> TargetKind.EXAMPLE
-                        listOf("test") -> TargetKind.TEST
-                        listOf("bench") -> TargetKind.BENCH
-                        else -> if (target.kind.any { it.endsWith("lib") }) TargetKind.LIB else TargetKind.UNKNOWN
-                    }
-                    CargoProjectDescription.Target(
-                            file,
-                            kind
-                    )
+                val kind = when (target.kind) {
+                    listOf("bin")     -> TargetKind.BIN
+                    listOf("example") -> TargetKind.EXAMPLE
+                    listOf("test")    -> TargetKind.TEST
+                    listOf("bench")   -> TargetKind.BENCH
+                    else              -> if (target.kind.any { it.endsWith("lib") }) TargetKind.LIB else TargetKind.UNKNOWN
                 }
+                CargoProjectDescription.Target(
+                    file,
+                    kind
+                )
+            }
         )
     }
 
     private fun Package.intoLibrary(): Library {
         require(!isModule)
         return Library(
-                rootDirectory,
-                name,
-                version
+            rootDirectory,
+            name,
+            version
         )
     }
 
