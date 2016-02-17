@@ -38,10 +38,8 @@ fun PsiElement?.getNextNonPhantomSibling(): PsiElement? =
             return next
     }
 
-val PsiElement.parentRelativeRange: TextRange?
-    get() = this.parent?.let {
-        TextRange(startOffsetInParent, startOffsetInParent + textLength)
-    }
+val PsiElement.parentRelativeRange: TextRange
+    get() = TextRange.from(startOffsetInParent, textLength)
 
 /**
  * Utility checking whether this particular element precedes the other one
