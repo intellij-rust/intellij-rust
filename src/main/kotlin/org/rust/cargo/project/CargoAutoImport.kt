@@ -7,7 +7,7 @@ import org.rust.cargo.CargoConstants
 
 import java.io.File
 
-class CargoAutoImport : ExternalSystemAutoImportAware {
+object CargoAutoImport : ExternalSystemAutoImportAware {
     override fun getAffectedExternalProjectPath(changedFileOrDirPath: String, project: Project): String? {
         val changed = File(changedFileOrDirPath)
         val name = changed.name

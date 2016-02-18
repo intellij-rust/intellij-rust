@@ -19,23 +19,25 @@ import org.apache.commons.lang.StringUtils
 import org.rust.cargo.project.settings.*
 import java.net.URL
 
-class CargoExternalSystemManager : ExternalSystemAutoImportAware,
-        ExternalSystemManager<CargoProjectSettings, CargoProjectSettingsListener, CargoSettings,
-                CargoLocalSettings, CargoExecutionSettings> {
+class CargoExternalSystemManager : ExternalSystemAutoImportAware by CachingExternalSystemAutoImportAware(CargoAutoImport)
+                                 , ExternalSystemManager<CargoProjectSettings,
+                                                         CargoProjectSettingsListener,
+                                                         CargoSettings,
+                                                         CargoLocalSettings,
+                                                         CargoExecutionSettings> {
 
-    override fun getSystemId(): ProjectSystemId {
-        return CargoProjectSystem.ID
-    }
+
+    override fun getSystemId(): ProjectSystemId = CargoProjectSystem.ID
 
     override fun getSettingsProvider(): Function<Project, CargoSettings> =
-        Function { p -> CargoSettings.getInstance(p) }
+        Function { CargoSettings.getInstance(it) }
 
     override fun getLocalSettingsProvider(): Function<Project, CargoLocalSettings> =
-        Function { p -> CargoLocalSettings.getInstance(p) }
+        Function { CargoLocalSettings.getInstance(it) }
 
     override fun getExecutionSettingsProvider(): Function<Pair<Project, String>, CargoExecutionSettings> =
         Function {
-            pair -> executionSettingsFor(pair.getFirst(), pair.getSecond())
+            pair -> executionSettingsFor(pair.first, pair.second)
         }
 
     override fun getProjectResolverClass(): Class<out ExternalSystemProjectResolver<CargoExecutionSettings>> =
@@ -45,20 +47,19 @@ class CargoExternalSystemManager : ExternalSystemAutoImportAware,
         CargoTaskManager::class.java
 
     override fun getExternalProjectDescriptor(): FileChooserDescriptor =
-        CargoOpenProjectDescriptor()
-
-    private val delegate = CachingExternalSystemAutoImportAware(CargoAutoImport())
-
-    override fun getAffectedExternalProjectPath(changedFileOrDirPath: String, project: Project): String? {
-        return delegate.getAffectedExternalProjectPath(changedFileOrDirPath, project)
-    }
+        CargoOpenProjectDescriptor
 
     @Throws(ExecutionException::class)
     override fun enhanceRemoteProcessing(parameters: SimpleJavaParameters) {
-        parameters.classPath.add(PathUtil.getJarPathForClass(StringUtils::class.java))
-        parameters.classPath.add(PathUtil.getJarPathForClass(Gson::class.java))
-        parameters.classPath.add(PathUtil.getJarPathForClass(TypeCastException::class.java))
-        parameters.classPath.add(PathUtil.getJarPathForClass(kotlin.text.Charsets::class.java))
+        val classesToAdd = listOf(
+            StringUtils::class.java,
+            Gson::class.java,
+            TypeCastException::class.java,
+            Charsets::class.java
+        )
+        for (clazz in classesToAdd) {
+            parameters.classPath.add(PathUtil.getJarPathForClass(clazz))
+        }
         //parameters.getVMParametersList().add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
     }
 
