@@ -3,7 +3,7 @@ package org.rust.lang.core.lexer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
-import org.rust.lang.core.psi.RustTokenElementTypes
+import org.rust.lang.core.psi.RustTokenElementTypes.*
 
 private const val BYTE_ESCAPE_LENGTH = "\\x00".length
 private const val UNICODE_ESCAPE_MIN_LENGTH = "\\u{0}".length
@@ -12,24 +12,10 @@ private const val UNICODE_ESCAPE_MAX_LENGTH = "\\u{000000}".length
 /**
  * Performs lexical analysis of Rust byte/char/string/byte string literals using Rust character escaping rules.
  */
-class RustEscapesLexer private constructor(val defaultToken: IElementType,
-                                           val unicode: Boolean = false,
-                                           val eol: Boolean = false) : LexerBaseKt() {
-    override fun start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
-        bufferSequence = buffer
-        bufferEnd = endOffset
-        state = initialState
-
-        tokenStart = startOffset
-        tokenEnd = locateToken(tokenStart)
-    }
-
-    override fun advance() {
-        tokenStart = tokenEnd
-        tokenEnd = locateToken(tokenStart)
-    }
-
-    override fun getTokenType(): IElementType? {
+class RustEscapesLexer constructor(val defaultToken: IElementType,
+                                   val unicode: Boolean = false,
+                                   val eol: Boolean = false) : LexerBaseEx() {
+    override fun determineTokenType(): IElementType? {
         // We're at the end of the string token => finish lexing
         if (tokenStart >= tokenEnd) {
             return null
@@ -46,20 +32,20 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
         }
 
         return when (bufferSequence[tokenStart + 1]) {
-            'u' ->
+            'u'                                 ->
                 when {
-                    !unicode -> INVALID_CHARACTER_ESCAPE_TOKEN
+                    !unicode                                   -> INVALID_CHARACTER_ESCAPE_TOKEN
                     isValidUnicodeEscape(tokenStart, tokenEnd) -> VALID_STRING_ESCAPE_TOKEN
-                    else -> INVALID_UNICODE_ESCAPE_TOKEN
+                    else                                       -> INVALID_UNICODE_ESCAPE_TOKEN
                 }
-            'x' -> esc(isValidByteEscape(tokenStart, tokenEnd))
-            '\r', '\n' -> esc(eol)
+            'x'                                 -> esc(isValidByteEscape(tokenStart, tokenEnd))
+            '\r', '\n'                          -> esc(eol)
             'n', 'r', 't', '0', '\\', '\'', '"' -> VALID_STRING_ESCAPE_TOKEN
-            else -> INVALID_CHARACTER_ESCAPE_TOKEN
+            else                                -> INVALID_CHARACTER_ESCAPE_TOKEN
         }
     }
 
-    private fun locateToken(start: Int): Int {
+    override fun locateToken(start: Int): Int {
         if (start >= bufferEnd) {
             return start
         }
@@ -72,7 +58,7 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
             }
 
             when (bufferSequence[i]) {
-                'x' ->
+                'x'        ->
                     if (bufferEnd - (i + 1) >= 1 && StringUtil.isHexDigit(bufferSequence[i + 1])) {
                         if (bufferEnd - (i + 2) >= 1 && StringUtil.isHexDigit(bufferSequence[i + 2])) {
                             return i + 2 + 1
@@ -80,16 +66,18 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
                             return i + 1 + 1
                         }
                     }
-                'u' ->
+                'u'        ->
                     if (bufferEnd - (i + 1) >= 1 && bufferSequence[i + 1] == '{') {
                         val idx = bufferSequence.indexOf('}', i + 1)
                         return if (idx != -1) Math.min(idx + 1, bufferEnd) else bufferEnd
                     }
-                'r' ->
-                    // Check if we have \r\n and consume additional \n
-                    if (bufferEnd - (i + 1) >= 2 && bufferSequence.startsWith("\\n", i + 1)) {
-                        return i + 2 + 1
+                '\r', '\n' -> {
+                    var j = i
+                    while (j < bufferEnd && bufferSequence[j].isRustWhitespaceChar()) {
+                        j++
                     }
+                    return j
+                }
             }
             return i + 1
         } else {
@@ -122,16 +110,24 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
         }
 
     companion object {
-        fun forByteLiterals(): RustEscapesLexer =
-            RustEscapesLexer(RustTokenElementTypes.BYTE_LITERAL)
-
-        fun forCharLiterals(): RustEscapesLexer =
-            RustEscapesLexer(RustTokenElementTypes.CHAR_LITERAL, unicode = true)
-
-        fun forByteStringLiterals(): RustEscapesLexer =
-            RustEscapesLexer(RustTokenElementTypes.BYTE_STRING_LITERAL, eol = true)
-
-        fun forStringLiterals(): RustEscapesLexer =
-            RustEscapesLexer(RustTokenElementTypes.STRING_LITERAL, unicode = true, eol = true)
+        /**
+         * Create an instance of [RustEscapesLexer] suitable for given [IElementType].
+         *
+         * For the set of supported token types see [ESCAPABLE_LITERALS_TOKEN_SET].
+         *
+         * @throws IllegalArgumentException when given token type is unsupported
+         */
+        fun of(tokenType: IElementType): RustEscapesLexer = when (tokenType) {
+            BYTE_LITERAL        -> RustEscapesLexer(BYTE_LITERAL)
+            CHAR_LITERAL        -> RustEscapesLexer(CHAR_LITERAL, unicode = true)
+            BYTE_STRING_LITERAL -> RustEscapesLexer(BYTE_STRING_LITERAL, eol = true)
+            STRING_LITERAL      -> RustEscapesLexer(STRING_LITERAL, unicode = true, eol = true)
+            else                -> throw IllegalArgumentException("unsupported literal type")
+        }
     }
 }
+
+/**
+ * Determines if the char is a Rust whitespace character.
+ */
+private fun Char.isRustWhitespaceChar(): Boolean = equals(' ') || equals('\r') || equals('\n') || equals('\t')
