@@ -4,6 +4,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RustTokenElementTypes.*
+import org.rust.lang.utils.isRustWhitespaceChar
 
 private const val BYTE_ESCAPE_LENGTH = "\\x00".length
 private const val UNICODE_ESCAPE_MIN_LENGTH = "\\u{0}".length
@@ -85,11 +86,13 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
                         val idx = bufferSequence.indexOf('}', i + 1)
                         return if (idx != -1) Math.min(idx + 1, bufferEnd) else bufferEnd
                     }
-                'r' ->
-                    // Check if we have \r\n and consume additional \n
-                    if (bufferEnd - (i + 1) >= 2 && bufferSequence.startsWith("\\n", i + 1)) {
-                        return i + 2 + 1
+                '\r', '\n' -> {
+                    var j = i
+                    while (j < bufferEnd && bufferSequence[j].isRustWhitespaceChar()) {
+                        j++
                     }
+                    return j
+                }
             }
             return i + 1
         } else {
