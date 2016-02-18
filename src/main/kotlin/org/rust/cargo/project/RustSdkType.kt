@@ -129,8 +129,7 @@ class RustSdkType : SdkType("Rust SDK") {
                         .withExePath(rustc.absolutePath)
                         .withParameters("--version")
                 }
-
-            val procOut = CapturingProcessHandler(cmd.createProcess()).runProcess(10 * 1000)
+            val procOut = CapturingProcessHandler(cmd.createProcess(), Charsets.UTF_8, cmd.commandLineString).runProcess(10 * 1000)
             if (procOut.exitCode != 0 || procOut.isCancelled || procOut.isTimeout)
                 return null
 
@@ -153,21 +152,24 @@ class RustSdkType : SdkType("Rust SDK") {
 
     override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {}
 
-    fun getPathToBinDirInSDK(sdkHome: File): File = File(sdkHome, BIN_DIR)
-    fun getPathToBinDirInSDK(sdkHome: String): File = getPathToBinDirInSDK(File(sdkHome))
-
-    fun getPathToLibDirInSDK(sdkHome: File): File = File(sdkHome, LIB_DIR)
-    fun getPathToLibDirInSDK(sdkHome: String): File = getPathToLibDirInSDK(File(sdkHome))
-
-    fun getPathToExecInSDK(sdkHome: File, fileName: String): File =
-        File(getPathToBinDirInSDK(sdkHome), PlatformUtil.getCanonicalNativeExecutableName(fileName))
-
-    fun getPathToExecInSDK(sdkHome: String, fileName: String): File =
-        getPathToExecInSDK(File(sdkHome), fileName)
-
     private fun isMultiRust(sdkHome: String): Boolean = ".multirust" in sdkHome
 
     companion object {
+        fun getPathToBinDirInSDK(sdkHome: File): File = File(sdkHome, BIN_DIR)
+        fun getPathToBinDirInSDK(sdkHome: String): File = getPathToBinDirInSDK(File(sdkHome))
+
+        fun getPathToLibDirInSDK(sdkHome: File): File = File(sdkHome, LIB_DIR)
+        fun getPathToLibDirInSDK(sdkHome: String): File = getPathToLibDirInSDK(File(sdkHome))
+
+        fun getPathToExecInSDK(sdkHome: File, fileName: String): File =
+            File(getPathToBinDirInSDK(sdkHome), PlatformUtil.getCanonicalNativeExecutableName(fileName))
+
+        fun getPathToExecInSDK(sdkHome: String, fileName: String): File =
+            getPathToExecInSDK(File(sdkHome), fileName)
+
+        val INSTANCE by lazy {
+            SdkType.findInstance(RustSdkType::class.java)
+        }
 
         private val log = Logger.getInstance(RustSdkType::class.java)
 
@@ -180,3 +182,7 @@ class RustSdkType : SdkType("Rust SDK") {
         internal val CARGO_BINARY_NAME = "cargo"
     }
 }
+
+val Sdk.pathToCargo: String? get() =
+    homePath?.let { RustSdkType.getPathToExecInSDK(it, RustSdkType.CARGO_BINARY_NAME).absolutePath }
+

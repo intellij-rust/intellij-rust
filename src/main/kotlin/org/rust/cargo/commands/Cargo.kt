@@ -7,11 +7,9 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
-import com.intellij.openapi.util.io.FileUtil
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.commands.impl.Project
 import java.io.File
-
 
 /**
  * A main gateway for executing cargo commands.
@@ -21,11 +19,15 @@ import java.io.File
  */
 class Cargo(
     private val pathToCargoExecutable: String,
-    private val pathToManifest: String
+    // It's more convenient to use project directory rather then path to `Cargo.toml`
+    // because some commands don't accept `--manifest-path` argument
+    private val projectDirectory: String
 ) {
     init {
-        require(File(pathToCargoExecutable).canExecute())
-        require(File(pathToManifest).canRead())
+        require(File(pathToCargoExecutable).canExecute()) { "Invalid path to cargo $pathToCargoExecutable" }
+        require(File(projectDirectory, CargoConstants.MANIFEST_FILE).exists()) {
+            "No Cargo.toml in $projectDirectory"
+        }
     }
 
     /**
@@ -42,15 +44,13 @@ class Cargo(
         return CargoProjectDescription(data)
     }
 
-    companion object {
-        fun fromProjectDirectory(pathToCargoExecutable: String, projectDir: String): Cargo =
-            Cargo(pathToCargoExecutable, FileUtil.join(projectDir, CargoConstants.MANIFEST_FILE))
-    }
-
-    private val metadataCommandline: GeneralCommandLine get() =
+    fun generalCommand(command: String, additionalArguments: List<String> = emptyList()): GeneralCommandLine =
         GeneralCommandLine(pathToCargoExecutable)
-            .withParameters("metadata")
-            .withParameters("--manifest-path", pathToManifest)
+            .withWorkDirectory(projectDirectory)
+            .withParameters(command)
+            .withParameters(additionalArguments)
+
+    private val metadataCommandline: GeneralCommandLine get() = generalCommand("metadata", emptyList())
 
     private fun GeneralCommandLine.execute(listener: ProcessListener? = null): ProcessOutput {
         val process = createProcess()
@@ -83,7 +83,7 @@ class Cargo(
         return try {
             Gson().fromJson(json, Project::class.java)
         } catch(e: JsonSyntaxException) {
-           throw ExecutionException(e)
+            throw ExecutionException(e)
         }
     }
 }

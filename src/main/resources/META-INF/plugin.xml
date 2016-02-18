@@ -133,6 +133,11 @@
             <category>Rust</category>
         </intentionAction>
 
+        <!-- Run Configurations -->
+
+        <programRunner implementation="org.rust.cargo.runconfig.RustRunner"/>
+        <configurationType implementation="org.rust.cargo.runconfig.CargoCommandRunConfigurationType" />
+
         <!-- Cargo -->
 
         <externalSystemManager implementation="org.rust.cargo.project.CargoExternalSystemManager"/>

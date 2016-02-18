@@ -94,7 +94,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
         }
 
         return try {
-           Cargo.fromProjectDirectory(settings!!.cargoPath, projectPath).fullProjectDescription(cargoListener)
+           Cargo(settings!!.cargoPath, projectPath).fullProjectDescription(cargoListener)
         } catch(e: ExecutionException) {
             throw ExternalSystemException(e)
         }
