@@ -10,7 +10,7 @@ import org.rust.lang.core.lexer.containsEOL
 import org.rust.lang.utils.Cookie
 import org.rust.lang.utils.using
 
-public object RustParserUtil : GeneratedParserUtilBase() {
+object RustParserUtil : GeneratedParserUtilBase() {
 
     private val STRUCT_ALLOWED: Key<Boolean> = Key("org.rust.STRUCT_ALLOWED")
 
@@ -29,8 +29,7 @@ public object RustParserUtil : GeneratedParserUtilBase() {
     // Helpers
     //
 
-    @JvmStatic
-    public fun injectInto(b: PsiBuilder, level: Int, s: Parser, t: Parser) : Boolean {
+    @JvmStatic fun injectInto(b: PsiBuilder, level: Int, s: Parser, t: Parser) : Boolean {
         fun done(m: PsiBuilder.Marker, tt: IElementType)    { m.done(tt) }
         fun drop(m: PsiBuilder.Marker)                      { m.drop() }
 
@@ -61,30 +60,25 @@ public object RustParserUtil : GeneratedParserUtilBase() {
         return false;
     }
 
-    @JvmStatic
-    public fun checkStructAllowed(b: PsiBuilder, level: Int) : Boolean = b.getStructAllowed()
+    @JvmStatic fun checkStructAllowed(b: PsiBuilder, level: Int) : Boolean = b.getStructAllowed()
 
-    @JvmStatic
-    public fun checkBraceAllowed(b: PsiBuilder, level: Int) : Boolean {
+    @JvmStatic fun checkBraceAllowed(b: PsiBuilder, level: Int) : Boolean {
         return b.getStructAllowed() || b.tokenType != RustTokenElementTypes.LBRACE
     }
 
-    @JvmStatic
-    public fun withoutStructLiterals(b: PsiBuilder, level: Int, parser: GeneratedParserUtilBase.Parser): Boolean {
+    @JvmStatic fun withoutStructLiterals(b: PsiBuilder, level: Int, parser: GeneratedParserUtilBase.Parser): Boolean {
         return using (Cookie(b, { this.setStructAllowed(it) }, false)) {
             parser.parse(b, level)
         }
     }
 
-    @JvmStatic
-    public fun withStructLiterals(b: PsiBuilder, level: Int, parser: GeneratedParserUtilBase.Parser): Boolean {
+    @JvmStatic fun withStructLiterals(b: PsiBuilder, level: Int, parser: GeneratedParserUtilBase.Parser): Boolean {
         return using (Cookie(b, { this.setStructAllowed(it) }, true)) {
             parser.parse(b, level)
         }
     }
 
-    @JvmStatic
-    public fun skipUntilEOL(b: PsiBuilder, level: Int): Boolean {
+    @JvmStatic fun skipUntilEOL(b: PsiBuilder, level: Int): Boolean {
         while (!b.eof()) {
             if (b.tokenType == TokenType.WHITE_SPACE
             ||  b.tokenText?.containsEOL() != null) return true;
@@ -95,8 +89,7 @@ public object RustParserUtil : GeneratedParserUtilBase() {
         return false;
     }
 
-    @JvmStatic
-    public fun unpairedToken(b: PsiBuilder, level: Int): Boolean {
+    @JvmStatic fun unpairedToken(b: PsiBuilder, level: Int): Boolean {
         when (b.tokenType) {
             RustTokenElementTypes.LBRACE, RustTokenElementTypes.RBRACE -> return false
             RustTokenElementTypes.LPAREN, RustTokenElementTypes.RPAREN -> return false

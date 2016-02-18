@@ -5,7 +5,7 @@ import org.rust.lang.core.psi.RustDeclaringElement
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.resolve.RustResolveEngine
 
-public interface RustResolveScope : RustCompositeElement {
+interface RustResolveScope : RustCompositeElement {
     val declarations: Collection<RustDeclaringElement>
 }
 

@@ -7,7 +7,7 @@ import org.rust.ide.icons.RustIcons
 import org.rust.ide.utils.loadCodeSampleResource
 import com.intellij.openapi.options.colors.AttributesDescriptor as d
 
-public class RustColorSettingsPage : ColorSettingsPage {
+class RustColorSettingsPage : ColorSettingsPage {
     private val ATTRS = arrayOf(
         d("Identifier", RustColors.IDENTIFIER),
         d("Lifetime", RustColors.LIFETIME),

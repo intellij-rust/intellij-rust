@@ -27,7 +27,7 @@ object RustModules {
  *
  * NOTE: That this is unique (since its a _tree_) for any particular module
  */
-public val RustModItem.canonicalName: RustQualifiedName?
+val RustModItem.canonicalName: RustQualifiedName?
     get() =
         when (isCrateRoot) {
             true -> RustAnonymousId
@@ -35,7 +35,7 @@ public val RustModItem.canonicalName: RustQualifiedName?
         }
 
 
-public val RustModItem.canonicalNameInFile: RustQualifiedName?
+val RustModItem.canonicalNameInFile: RustQualifiedName?
     get() =
         when (containingMod) {
             null -> containingFile.modulePath?.let  { RustFileModuleId(it) }
@@ -50,7 +50,7 @@ public val RustModItem.canonicalNameInFile: RustQualifiedName?
  *  Reference:
  *    https://doc.rust-lang.org/reference.html#paths
  */
-public val RustModItem.`super`: RustModItem?
+val RustModItem.`super`: RustModItem?
     get() {
         if (isCrateRoot) return null
 

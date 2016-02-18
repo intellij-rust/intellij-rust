@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.impl.RustFileImpl
 
-public class RustPsiStructureViewFactory: PsiStructureViewFactory {
+class RustPsiStructureViewFactory: PsiStructureViewFactory {
     override fun getStructureViewBuilder(psiFile: PsiFile?): StructureViewBuilder {
         val rustFile = psiFile as RustFileImpl;
         return object: TreeBasedStructureViewBuilder() {

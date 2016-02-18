@@ -5,8 +5,8 @@ import org.rust.lang.core.psi.RustDeclaringElement
 import org.rust.lang.core.psi.RustLambdaExpr
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
 
-public abstract class RustLambdaExprImplMixin(node: ASTNode)    : RustNamedElementImpl(node)
-                                                                , RustLambdaExpr {
+abstract class RustLambdaExprImplMixin(node: ASTNode)    : RustNamedElementImpl(node)
+                                                         , RustLambdaExpr {
 
     override val declarations: List<RustDeclaringElement>
         get() = lambdaParamList.orEmpty()

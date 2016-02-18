@@ -8,7 +8,7 @@ import org.rust.lang.core.lexer.RustHighlightingLexer
 import org.rust.lang.core.psi.RustKeywordTokenType
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 
-public class RustHighlighter : SyntaxHighlighterBase() {
+class RustHighlighter : SyntaxHighlighterBase() {
 
     override fun getHighlightingLexer() = RustHighlightingLexer()
 

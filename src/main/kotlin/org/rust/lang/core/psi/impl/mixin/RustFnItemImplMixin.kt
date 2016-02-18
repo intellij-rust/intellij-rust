@@ -11,8 +11,8 @@ import org.rust.lang.core.psi.impl.RustItemImpl
 import org.rust.lang.core.stubs.RustItemStub
 import javax.swing.Icon
 
-public abstract class RustFnItemImplMixin : RustItemImpl
-                                          , RustFnItem {
+abstract class RustFnItemImplMixin : RustItemImpl
+                                   , RustFnItem {
 
     constructor(node: ASTNode) : super(node)
 

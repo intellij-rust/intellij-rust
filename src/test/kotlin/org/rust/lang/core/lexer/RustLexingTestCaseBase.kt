@@ -29,7 +29,7 @@ abstract class RustLexingTestCaseBase : LexerTestCase(), RustTestCase {
         doTest(text);
     }
 
-    protected override fun doTest(@NonNls text: String, expected: String?, lexer: Lexer) {
+    override fun doTest(@NonNls text: String, expected: String?, lexer: Lexer) {
         val result = printTokens(text, 0, lexer)
         if (expected != null) {
             UsefulTestCase.assertSameLines(expected, result)

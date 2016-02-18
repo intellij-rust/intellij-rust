@@ -5,8 +5,8 @@ import com.intellij.lang.ASTNode
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.resolve.ref.RustReference
 
-public open class RustCompositeElementImpl(node: ASTNode)   : ASTWrapperPsiElement(node)
-                                                            , RustCompositeElement {
+open class RustCompositeElementImpl(node: ASTNode)   : ASTWrapperPsiElement(node)
+                                                     , RustCompositeElement {
     override fun getReference(): RustReference? = null
 
 }

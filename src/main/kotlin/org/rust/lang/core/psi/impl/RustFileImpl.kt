@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.util.RustModules
 import org.rust.lang.core.resolve.indexes.RustModulePath
 
-public class RustFileImpl(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvider, RustLanguage) {
+class RustFileImpl(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvider, RustLanguage) {
 
     override fun getFileType(): FileType = RustFileType
 

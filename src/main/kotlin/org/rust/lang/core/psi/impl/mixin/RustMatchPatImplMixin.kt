@@ -6,8 +6,8 @@ import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
 import org.rust.lang.core.psi.util.boundElements
 
-public abstract class RustMatchPatImplMixin(node: ASTNode)  : RustCompositeElementImpl(node)
-                                                            , RustMatchPat {
+abstract class RustMatchPatImplMixin(node: ASTNode)  : RustCompositeElementImpl(node)
+                                                     , RustMatchPat {
 
     override val boundElements: Collection<RustNamedElement>
         get() = patList.flatMap { it.boundElements }

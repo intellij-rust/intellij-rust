@@ -11,8 +11,8 @@ import org.rust.lang.core.psi.util.RustModules
 import org.rust.lang.core.stubs.RustItemStub
 import javax.swing.Icon
 
-public abstract class RustFileModItemImplMixin : RustModItemImpl
-                                               , RustFileModItem {
+abstract class RustFileModItemImplMixin : RustModItemImpl
+                                        , RustFileModItem {
 
     constructor(node: ASTNode?) : super(node)
 

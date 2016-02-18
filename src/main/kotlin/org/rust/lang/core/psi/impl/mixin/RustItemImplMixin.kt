@@ -10,8 +10,8 @@ import org.rust.lang.core.psi.impl.usefulName
 import org.rust.lang.core.stubs.RustItemStub
 import javax.swing.Icon
 
-public abstract class RustItemImplMixin : RustStubbedNamedElementImpl<RustItemStub>
-                                        , RustItem {
+abstract class RustItemImplMixin : RustStubbedNamedElementImpl<RustItemStub>
+                                 , RustItem {
 
     constructor(node: ASTNode) : super(node)
 

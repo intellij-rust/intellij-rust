@@ -4,6 +4,6 @@ import com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor
 import org.rust.lang.core.psi.RustItem
 import org.rust.lang.core.stubs.index.RustStructOrEnumIndex
 
-public class RustClassNavigationContributor
+class RustClassNavigationContributor
     : RustNavigationContributorBase<RustItem>(RustStructOrEnumIndex.KEY, RustItem::class.java)
 

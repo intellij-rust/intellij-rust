@@ -7,7 +7,7 @@ import org.rust.cargo.CargoConstants
 import javax.swing.Icon
 
 
-public class CargoIconProvider : IconProvider() {
+class CargoIconProvider : IconProvider() {
     override fun getIcon(element: PsiElement, flags: Int): Icon? {
         return when (element) {
             is PsiFile -> getFileIcon(element)

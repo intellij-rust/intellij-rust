@@ -5,8 +5,8 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustNamedElement
 
-public abstract class RustNamedElementImpl(node: ASTNode)   : RustCompositeElementImpl(node)
-                                                            , RustNamedElement {
+abstract class RustNamedElementImpl(node: ASTNode)   : RustCompositeElementImpl(node)
+                                                     , RustNamedElement {
 
     override val nameElement: PsiElement?
         get() = findChildByType(RustTokenElementTypes.IDENTIFIER)

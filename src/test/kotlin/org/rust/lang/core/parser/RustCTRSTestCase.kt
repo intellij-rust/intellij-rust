@@ -6,7 +6,7 @@ import com.intellij.psi.impl.DebugUtil
 import org.assertj.core.api.Assertions.assertThat
 import java.io.File
 
-public class RustCTRSTestCase : RustParsingTestCaseBase("ctrs/test") {
+class RustCTRSTestCase : RustParsingTestCaseBase("ctrs/test") {
 
     fun testCtrs() {
         var nFilesVisited = 0

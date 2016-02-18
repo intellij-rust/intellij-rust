@@ -6,15 +6,15 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RustTokenElementTypes
 
-public class RustBraceMatcher() : PairedBraceMatcher {
+class RustBraceMatcher() : PairedBraceMatcher {
 
-    public override fun getPairs() = PAIRS
+    override fun getPairs() = PAIRS
 
-    public override fun isPairedBracesAllowedBeforeType(lbraceType: IElementType, contextType: IElementType?): Boolean {
+    override fun isPairedBracesAllowedBeforeType(lbraceType: IElementType, contextType: IElementType?): Boolean {
         return true
     }
 
-    public override fun getCodeConstructStart(file: PsiFile?, openingBraceOffset: Int): Int {
+    override fun getCodeConstructStart(file: PsiFile?, openingBraceOffset: Int): Int {
         return openingBraceOffset
     }
 

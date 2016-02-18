@@ -3,7 +3,7 @@ package org.rust.lang.core.lexer
 import com.intellij.lexer.Lexer
 import java.util.*
 
-public class RustEscapesLexingTestCase : RustLexingTestCaseBase() {
+class RustEscapesLexingTestCase : RustLexingTestCaseBase() {
     override fun getTestDataPath(): String = "org/rust/lang/core/lexer/fixtures/escapes"
 
     override fun createLexer(): Lexer = RustEscapesLexer.forStringLiterals()

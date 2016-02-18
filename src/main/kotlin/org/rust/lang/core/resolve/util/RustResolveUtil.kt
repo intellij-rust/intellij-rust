@@ -8,7 +8,7 @@ import org.rust.lang.core.psi.impl.RustFileImpl
 import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.resolve.scope.RustResolveScope
 
-public object RustResolveUtil {
+object RustResolveUtil {
 
     fun getResolveScopeFor(elem: PsiElement): RustResolveScope? {
         var current = elem.parent

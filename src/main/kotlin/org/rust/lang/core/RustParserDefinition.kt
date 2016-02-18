@@ -19,7 +19,7 @@ import org.rust.lang.core.parser.RustParser
 import org.rust.lang.core.psi.RustCompositeElementTypes
 import org.rust.lang.core.psi.impl.RustFileImpl
 
-public class RustParserDefinition : ParserDefinition {
+class RustParserDefinition : ParserDefinition {
 
     override fun createFile(viewProvider: FileViewProvider): PsiFile? =
         RustFileImpl(viewProvider)

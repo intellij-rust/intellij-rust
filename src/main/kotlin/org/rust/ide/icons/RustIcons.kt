@@ -10,27 +10,27 @@ import com.intellij.util.VisibilityIcons
 import com.intellij.util.ui.EmptyIcon
 import javax.swing.Icon
 
-public object RustIcons {
-    public val RUST     = IconLoader.getIcon("/org/rust/ide/icons/rust.png")
-    public val RUST_BIG = IconLoader.getIcon("/org/rust/ide/icons/rust-big.png")
+object RustIcons {
+    val RUST     = IconLoader.getIcon("/org/rust/ide/icons/rust.png")
+    val RUST_BIG = IconLoader.getIcon("/org/rust/ide/icons/rust-big.png")
 
-    public val RUST_FILE = IconLoader.getIcon("/org/rust/ide/icons/rust-file.png")
+    val RUST_FILE = IconLoader.getIcon("/org/rust/ide/icons/rust-file.png")
 
-    public val MODULE   = AllIcons.Nodes.Package
+    val MODULE   = AllIcons.Nodes.Package
 
-    public val TRAIT    = AllIcons.Nodes.Interface
-    public val STRUCT   = AllIcons.Nodes.Class
-    public val IMPL     = AllIcons.Nodes.AbstractClass
-    public val ENUM     = AllIcons.Nodes.Enum
+    val TRAIT    = AllIcons.Nodes.Interface
+    val STRUCT   = AllIcons.Nodes.Class
+    val IMPL     = AllIcons.Nodes.AbstractClass
+    val ENUM     = AllIcons.Nodes.Enum
 
-    public val FIELD    = AllIcons.Nodes.Field
-    public val FUNCTION = AllIcons.Nodes.Function
-    public val METHOD   = AllIcons.Nodes.Method
+    val FIELD    = AllIcons.Nodes.Field
+    val FUNCTION = AllIcons.Nodes.Function
+    val METHOD   = AllIcons.Nodes.Method
 
-    public val ABSTRACT_METHOD = AllIcons.Nodes.AbstractMethod
+    val ABSTRACT_METHOD = AllIcons.Nodes.AbstractMethod
 
-    public val STATIC_MARK  = AllIcons.Nodes.StaticMark
-    public val TEST_MARK    = AllIcons.Nodes.JunitTestMark
+    val STATIC_MARK  = AllIcons.Nodes.StaticMark
+    val TEST_MARK    = AllIcons.Nodes.JunitTestMark
 }
 
 fun Icon.addStaticMark(): Icon {

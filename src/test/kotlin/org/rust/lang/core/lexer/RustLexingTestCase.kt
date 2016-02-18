@@ -2,7 +2,7 @@ package org.rust.lang.core.lexer
 
 import com.intellij.lexer.Lexer
 
-public class RustLexingTestCase : RustLexingTestCaseBase() {
+class RustLexingTestCase : RustLexingTestCaseBase() {
     override fun getTestDataPath(): String = "org/rust/lang/core/lexer/fixtures"
 
     override fun createLexer(): Lexer? = RustLexer()

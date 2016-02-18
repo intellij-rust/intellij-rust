@@ -14,7 +14,7 @@ import org.rust.ide.icons.RustIcons
 import javax.swing.Icon
 
 
-public class RustModuleBuilder(private val moduleType: RustModuleType)
+class RustModuleBuilder(private val moduleType: RustModuleType)
     : AbstractExternalModuleBuilder<CargoProjectSettings>(CargoConstants.PROJECT_SYSTEM_ID, CargoProjectSettings()) {
 
     override fun getBuilderId() = "org.rust.cargo.project.module.builder"
