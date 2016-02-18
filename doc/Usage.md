@@ -1,3 +1,25 @@
+# Quick Start 
+
+After you have installed the plugin and a recent version of Cargo, you can
+import project. You can do this from the welcome screen, or you can use find
+action (`Ctrl+Shift+A` > import project).
+
+![Welcome screen](imgs/welcome.png)
+
+Select `Cargo.toml`.
+
+![Select project](imgs/select_cargo_toml.png)
+
+Plugin should find cargo automatically, but you can specify the path to folder
+with cargo via `Cargo home` setting:
+
+![Import project](imgs/import_project.png)
+
+Wait until Cargo downloads all project dependencies. To check that everything is
+working, try go to symbol action (`Ctrl+Alt+Shift+N`) and type something.
+ 
+![Go to symbol](imgs/go_to_symbol.png)
+
 # Usage
 
 Use `import project` action and select appropriate `Cargo.toml` to teach the IDE
