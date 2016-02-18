@@ -3,6 +3,9 @@ package org.rust.lang.core.psi;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.rust.lang.core.lexer.RustEscapesLexer;
+import org.rust.lang.core.psi.impl.RustNumericLiteralImpl;
+import org.rust.lang.core.psi.impl.RustRawStringLiteralImpl;
+import org.rust.lang.core.psi.impl.RustStringLiteralImpl;
 
 public interface RustTokenElementTypes {
 
@@ -68,14 +71,14 @@ public interface RustTokenElementTypes {
 
     // Literals
 
-    RustTokenType INTEGER_LITERAL = new RustLiteralTokenType("<INTEGER>");
-    RustTokenType FLOAT_LITERAL = new RustLiteralTokenType("<FLOAT>");
-    RustTokenType BYTE_LITERAL = new RustLiteralTokenType("<BYTE>");
-    RustTokenType CHAR_LITERAL = new RustLiteralTokenType("<CHAR>");
-    RustTokenType STRING_LITERAL = new RustLiteralTokenType("<STRING>");
-    RustTokenType BYTE_STRING_LITERAL = new RustLiteralTokenType("<BYTE_STRING>");
-    RustTokenType RAW_STRING_LITERAL = new RustLiteralTokenType("<RAW_STRING>");
-    RustTokenType RAW_BYTE_STRING_LITERAL = new RustLiteralTokenType("<RAW_BYTE_STRING>");
+    RustTokenType INTEGER_LITERAL = RustNumericLiteralImpl.createTokenType("<INTEGER>");
+    RustTokenType FLOAT_LITERAL = RustNumericLiteralImpl.createTokenType("<FLOAT>");
+    RustTokenType BYTE_LITERAL = RustStringLiteralImpl.createTokenType("<BYTE>");
+    RustTokenType CHAR_LITERAL = RustStringLiteralImpl.createTokenType("<CHAR>");
+    RustTokenType STRING_LITERAL = RustStringLiteralImpl.createTokenType("<STRING>");
+    RustTokenType BYTE_STRING_LITERAL = RustStringLiteralImpl.createTokenType("<BYTE_STRING>");
+    RustTokenType RAW_STRING_LITERAL = RustRawStringLiteralImpl.createTokenType("<RAW_STRING>");
+    RustTokenType RAW_BYTE_STRING_LITERAL = RustRawStringLiteralImpl.createTokenType("<RAW_BYTE_STRING>");
 
     // Comments
 

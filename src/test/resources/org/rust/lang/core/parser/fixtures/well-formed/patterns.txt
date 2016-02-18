@@ -140,7 +140,7 @@ FILE
             PsiElement(=)('=')
             PsiWhiteSpace(' ')
             RustLitExprImpl(LIT_EXPR)
-              PsiElement(<INTEGER>)('92')
+              RustNumericLiteralImpl(<INTEGER>)('92')
             PsiElement(;)(';')
         PsiWhiteSpace('\n')
         PsiElement(})('}')
