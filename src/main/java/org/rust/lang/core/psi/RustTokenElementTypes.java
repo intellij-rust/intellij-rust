@@ -79,11 +79,11 @@ public interface RustTokenElementTypes {
 
     // Comments
 
-    RustTokenType BLOCK_COMMENT = new RustTokenType("<BLOCK_COMMENT>");
-    RustTokenType EOL_COMMENT = new RustTokenType("<EOL_COMMENT>");
+    RustTokenType BLOCK_COMMENT = new RustCommentTokenType("<BLOCK_COMMENT>");
+    RustTokenType EOL_COMMENT = new RustCommentTokenType("<EOL_COMMENT>");
 
-    RustTokenType INNER_DOC_COMMENT = new RustTokenType("<INNER_DOC_COMMENT>");
-    RustTokenType OUTER_DOC_COMMENT = new RustTokenType("<OUTER_DOC_COMMENT>");
+    RustTokenType INNER_DOC_COMMENT = new RustCommentTokenType("<INNER_DOC_COMMENT>");
+    RustTokenType OUTER_DOC_COMMENT = new RustCommentTokenType("<OUTER_DOC_COMMENT>");
 
     RustTokenType SHEBANG_LINE = new RustTokenType("<SHEBANG_LINE>");
 
