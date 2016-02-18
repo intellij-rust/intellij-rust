@@ -1,6 +1,8 @@
 package org.rust.lang.core.psi;
 
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.rust.lang.core.lexer.RustEscapesLexer;
 
 public interface RustTokenElementTypes {
 
@@ -165,5 +167,15 @@ public interface RustTokenElementTypes {
         BYTE_STRING_LITERAL,
         RAW_STRING_LITERAL,
         RAW_BYTE_STRING_LITERAL
+    );
+
+    /**
+     * Set of possible arguments for {@link RustEscapesLexer.Companion#of(IElementType)}
+     */
+    TokenSet ESCAPABLE_LITERALS_TOKEN_SET = TokenSet.create(
+        BYTE_LITERAL,
+        CHAR_LITERAL,
+        STRING_LITERAL,
+        BYTE_STRING_LITERAL
     );
 }

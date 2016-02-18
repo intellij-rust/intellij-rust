@@ -1,6 +1,7 @@
 package org.rust.lang.core.lexer
 
 import com.intellij.lexer.Lexer
+import org.rust.lang.core.psi.RustTokenElementTypes.ESCAPABLE_LITERALS_TOKEN_SET
 import java.util.*
 
 class RustEscapesLexingTestCase : RustLexingTestCaseBase() {
@@ -19,12 +20,7 @@ class RustEscapesLexingTestCase : RustLexingTestCaseBase() {
     fun testMixedQuoted() = doTest()
 
     fun testFuzzy() {
-        val lexers = listOf(
-            RustEscapesLexer.forByteLiterals(),
-            RustEscapesLexer.forByteStringLiterals(),
-            RustEscapesLexer.forCharLiterals(),
-            RustEscapesLexer.forStringLiterals()
-        )
+        val lexers = ESCAPABLE_LITERALS_TOKEN_SET.types.map { RustEscapesLexer.of(it) }
 
         for (lexer in lexers) {
             repeat(10000) {
@@ -33,7 +29,7 @@ class RustEscapesLexingTestCase : RustLexingTestCaseBase() {
         }
     }
 
-    private fun execute(lexer: RustEscapesLexer, input: CharSequence)  {
+    private fun execute(lexer: RustEscapesLexer, input: CharSequence) {
         lexer.start(input)
         while (lexer.tokenType != null) {
             lexer.advance()
