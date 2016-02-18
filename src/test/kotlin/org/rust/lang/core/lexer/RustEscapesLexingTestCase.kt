@@ -2,12 +2,13 @@ package org.rust.lang.core.lexer
 
 import com.intellij.lexer.Lexer
 import org.rust.lang.core.psi.RustTokenElementTypes.ESCAPABLE_LITERALS_TOKEN_SET
+import org.rust.lang.core.psi.RustTokenElementTypes.STRING_LITERAL
 import java.util.*
 
 class RustEscapesLexingTestCase : RustLexingTestCaseBase() {
     override fun getTestDataPath(): String = "org/rust/lang/core/lexer/fixtures/escapes"
 
-    override fun createLexer(): Lexer = RustEscapesLexer.forStringLiterals()
+    override fun createLexer(): Lexer = RustEscapesLexer.of(STRING_LITERAL)
 
     fun testShortByteEscapes() = doTest()
     fun testLongByteEscapes() = doTest()

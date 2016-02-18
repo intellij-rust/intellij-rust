@@ -4,7 +4,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RustTokenElementTypes.*
-import org.rust.lang.utils.isRustWhitespaceChar
 
 private const val BYTE_ESCAPE_LENGTH = "\\x00".length
 private const val UNICODE_ESCAPE_MIN_LENGTH = "\\u{0}".length
@@ -13,9 +12,9 @@ private const val UNICODE_ESCAPE_MAX_LENGTH = "\\u{000000}".length
 /**
  * Performs lexical analysis of Rust byte/char/string/byte string literals using Rust character escaping rules.
  */
-class RustEscapesLexer private constructor(val defaultToken: IElementType,
-                                           val unicode: Boolean = false,
-                                           val eol: Boolean = false) : LexerBaseEx() {
+class RustEscapesLexer constructor(val defaultToken: IElementType,
+                                   val unicode: Boolean = false,
+                                   val eol: Boolean = false) : LexerBaseEx() {
     override fun determineTokenType(): IElementType? {
         // We're at the end of the string token => finish lexing
         if (tokenStart >= tokenEnd) {
@@ -111,18 +110,6 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
         }
 
     companion object {
-        fun forByteLiterals(): RustEscapesLexer =
-            RustEscapesLexer(BYTE_LITERAL)
-
-        fun forCharLiterals(): RustEscapesLexer =
-            RustEscapesLexer(CHAR_LITERAL, unicode = true)
-
-        fun forByteStringLiterals(): RustEscapesLexer =
-            RustEscapesLexer(BYTE_STRING_LITERAL, eol = true)
-
-        fun forStringLiterals(): RustEscapesLexer =
-            RustEscapesLexer(STRING_LITERAL, unicode = true, eol = true)
-
         /**
          * Create an instance of [RustEscapesLexer] suitable for given [IElementType].
          *
@@ -131,11 +118,16 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
          * @throws IllegalArgumentException when given token type is unsupported
          */
         fun of(tokenType: IElementType): RustEscapesLexer = when (tokenType) {
-            BYTE_LITERAL        -> forByteLiterals()
-            CHAR_LITERAL        -> forCharLiterals()
-            BYTE_STRING_LITERAL -> forByteStringLiterals()
-            STRING_LITERAL      -> forStringLiterals()
+            BYTE_LITERAL        -> RustEscapesLexer(BYTE_LITERAL)
+            CHAR_LITERAL        -> RustEscapesLexer(CHAR_LITERAL, unicode = true)
+            BYTE_STRING_LITERAL -> RustEscapesLexer(BYTE_STRING_LITERAL, eol = true)
+            STRING_LITERAL      -> RustEscapesLexer(STRING_LITERAL, unicode = true, eol = true)
             else                -> throw IllegalArgumentException("unsupported literal type")
         }
     }
 }
+
+/**
+ * Determines if the char is a Rust whitespace character.
+ */
+private fun Char.isRustWhitespaceChar(): Boolean = equals(' ') || equals('\r') || equals('\n') || equals('\t')
