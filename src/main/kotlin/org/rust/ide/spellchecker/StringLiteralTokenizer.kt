@@ -1,7 +1,7 @@
 package org.rust.ide.spellchecker
 
+import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.spellchecker.inspections.PlainTextSplitter
 import com.intellij.spellchecker.tokenizer.EscapeSequenceTokenizer
 import com.intellij.spellchecker.tokenizer.TokenConsumer
@@ -22,7 +22,7 @@ class StringLiteralTokenizer : EscapeSequenceTokenizer<LeafPsiElement>() {
         fun processTextWithEscapeSequences(element: LeafPsiElement, text: String, consumer: TokenConsumer) {
             val unescapedText = StringBuilder()
             val offsets = IntArray(text.length + 1)
-            PsiLiteralExpressionImpl.parseStringCharacters(text, unescapedText, offsets)
+            CodeInsightUtilCore.parseStringCharacters(text, unescapedText, offsets)
 
             processTextWithOffsets(element, consumer, unescapedText, offsets, 1)
         }
