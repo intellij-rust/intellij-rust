@@ -55,13 +55,10 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
         return this
     }
 
-    override fun showUi(show: Boolean) {
-        ExternalSystemUiUtil.showUi(this, show)
-    }
+    override fun showUi(show: Boolean) = ExternalSystemUiUtil.showUi(this, show)
 
-    override fun getExternalSystemSettingsControlCustomizer(): ExternalSystemSettingsControlCustomizer? {
-        return ExternalSystemSettingsControlCustomizer(dropUseAutoImportBox, dropCreateEmptyContentRootDirectoriesBox)
-    }
+    override fun getExternalSystemSettingsControlCustomizer(): ExternalSystemSettingsControlCustomizer =
+        ExternalSystemSettingsControlCustomizer(dropUseAutoImportBox, dropCreateEmptyContentRootDirectoriesBox)
 
     override fun createAndFillControls(content: PaintAwarePanel, indentLevel: Int) {
         //
@@ -72,19 +69,19 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
         content.paintCallback = Consumer {
             if (shouldShowBalloon() && rightTimeToShowBalloon) {
                 showBalloon()
-                rightTimeToShowBalloon = false;
+                rightTimeToShowBalloon = false
             }
         }
 
-        content.addPropertyChangeListener(PropertyChangeListener { e ->
-            if ("ancestor" != e.propertyName) {
+        content.addPropertyChangeListener(PropertyChangeListener { event ->
+            if ("ancestor" != event.propertyName) {
                 return@PropertyChangeListener
             }
 
             // Show balloon on the first drawing only
-            rightTimeToShowBalloon = e.newValue != null && e.oldValue == null
+            rightTimeToShowBalloon = event.newValue != null && event.oldValue == null
 
-            if (e.newValue == null && e.oldValue != null) {
+            if (event.newValue == null && event.oldValue != null) {
                 // Cancel balloons in the case configurable is hidden
                 scheduler.cancelAllRequests()
             }
@@ -94,20 +91,16 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
     }
 
     private fun shouldShowBalloon(): Boolean =
-        cargoHomePathField?.let { it.isEnabled } ?: false
+        cargoHomePathField?.isEnabled ?: false
 
-    override fun disposeUIResources() {
-        ExternalSystemUiUtil.disposeUi(this)
-    }
+    override fun disposeUIResources() = ExternalSystemUiUtil.disposeUi(this)
 
     override fun addCargoHomeComponents(content: PaintAwarePanel, indentLevel: Int): CargoProjectSettingsControlBuilder {
         if (disabledCargoHomePathComponents)
             return this
 
-        val pathField = TextFieldWithBrowseButton()
-
-        pathField.let { field ->
-            field.addBrowseFolderListener(
+        val pathField = TextFieldWithBrowseButton().apply {
+            addBrowseFolderListener(
                 "",
                 "Cargo home",
                 null,
@@ -115,7 +108,7 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
                 TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
                 false)
 
-            field.textField.document.addDocumentListener(object : DocumentListener {
+            textField.document.addDocumentListener(object : DocumentListener {
                 override fun insertUpdate(e: DocumentEvent) {
                     cargoHomePathField!!.textField.foreground = LocationSettingType.EXPLICIT_CORRECT.color
                 }
@@ -124,15 +117,16 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
                     cargoHomePathField!!.textField.foreground = LocationSettingType.EXPLICIT_CORRECT.color
                 }
 
-                override fun changedUpdate(e: DocumentEvent) {}
+                override fun changedUpdate(e: DocumentEvent) {
+                }
             })
         }
 
-        cargoHomeLabel      = JBLabel("Cargo home")
-        cargoHomePathField  = pathField
+        cargoHomeLabel = JBLabel("Cargo home")
+        cargoHomePathField = pathField
 
-        content.add(cargoHomeLabel,       ExternalSystemUiUtil.getLabelConstraints(indentLevel))
-        content.add(cargoHomePathField,   ExternalSystemUiUtil.getFillLineConstraints(0))
+        content.add(cargoHomeLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel))
+        content.add(cargoHomePathField, ExternalSystemUiUtil.getFillLineConstraints(0))
 
         return this
     }
@@ -169,14 +163,14 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
     }
 
     override fun reset(project: Project?, settings: CargoProjectSettings, isDefaultModuleCreation: Boolean) {
-        val cargoHome = settings.cargoHome  ?: ""
+        val cargoHome = settings.cargoHome ?: ""
 
         cargoHomePathField?.let { pathField ->
             pathField.text = cargoHome
             pathField.textField.foreground = LocationSettingType.EXPLICIT_CORRECT.color
         }
 
-        if (StringUtil.isEmpty(cargoHome)) {
+        if (cargoHome.isEmpty()) {
             cargoHomeSettingType = LocationSettingType.UNKNOWN
             tryFindCargoHome()
         } else {
@@ -210,9 +204,7 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
         ExternalSystemUiUtil.showBalloon(cargoHomePathField!!, messageType, settingType.getDescription(CargoConstants.PROJECT_SYSTEM_ID))
     }
 
-    override fun getInitialSettings(): CargoProjectSettings {
-        return myInitialSettings
-    }
+    override fun getInitialSettings(): CargoProjectSettings = myInitialSettings
 
     private fun isValidCargoHome(cargoHome: String): Boolean =
         sdk.isValidCargoHome(cargoHome) || sdk.adjustSelectedSdkHome(cargoHome).let { sdk.isValidCargoHome(it) }
@@ -236,8 +228,8 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
 
             showBalloon(MessageType.INFO, LocationSettingType.DEDUCED)
 
-            pathField.text                  = cargoHome
-            pathField.textField.foreground  = LocationSettingType.DEDUCED.color
+            pathField.text = cargoHome
+            pathField.textField.foreground = LocationSettingType.DEDUCED.color
         }
     }
 
