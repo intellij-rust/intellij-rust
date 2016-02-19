@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.Alarm
 import com.intellij.util.Consumer
@@ -37,8 +36,8 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
     private var dropCreateEmptyContentRootDirectoriesBox: Boolean = false
     private var disabledCargoHomePathComponents: Boolean = false
 
-    private var cargoHomeLabel: JLabel? = null
-    private var cargoHomePathField: TextFieldWithBrowseButton? = null
+    private lateinit var cargoHomeLabel: JLabel
+    private lateinit var cargoHomePathField: TextFieldWithBrowseButton
 
     fun disableCargoHomePathComponents(): CargoProjectSettingsControlBuilder {
         disabledCargoHomePathComponents = true
@@ -91,7 +90,7 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
     }
 
     private fun shouldShowBalloon(): Boolean =
-        cargoHomePathField?.isEnabled ?: false
+        cargoHomePathField.isEnabled
 
     override fun disposeUIResources() = ExternalSystemUiUtil.disposeUi(this)
 
@@ -99,7 +98,7 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
         if (disabledCargoHomePathComponents)
             return this
 
-        val pathField = TextFieldWithBrowseButton().apply {
+        cargoHomePathField = TextFieldWithBrowseButton().apply {
             addBrowseFolderListener(
                 "",
                 "Cargo home",
@@ -110,11 +109,11 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
 
             textField.document.addDocumentListener(object : DocumentListener {
                 override fun insertUpdate(e: DocumentEvent) {
-                    cargoHomePathField!!.textField.foreground = LocationSettingType.EXPLICIT_CORRECT.color
+                    cargoHomePathField.textField.foreground = LocationSettingType.EXPLICIT_CORRECT.color
                 }
 
                 override fun removeUpdate(e: DocumentEvent) {
-                    cargoHomePathField!!.textField.foreground = LocationSettingType.EXPLICIT_CORRECT.color
+                    cargoHomePathField.textField.foreground = LocationSettingType.EXPLICIT_CORRECT.color
                 }
 
                 override fun changedUpdate(e: DocumentEvent) {
@@ -123,7 +122,6 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
         }
 
         cargoHomeLabel = JBLabel("Cargo home")
-        cargoHomePathField = pathField
 
         content.add(cargoHomeLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel))
         content.add(cargoHomePathField, ExternalSystemUiUtil.getFillLineConstraints(0))
@@ -133,42 +131,32 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
 
     @Throws(ConfigurationException::class)
     override fun validate(settings: CargoProjectSettings): Boolean {
-        cargoHomePathField?.let { pathField ->
-            val cargoHomePath = FileUtil.toCanonicalPath(pathField.text)
+        val cargoHomePath = FileUtil.toCanonicalPath(cargoHomePathField.text)
 
-            if (StringUtil.isEmpty(cargoHomePath)) {
-                cargoHomeSettingType = LocationSettingType.UNKNOWN
-                throw ConfigurationException("Cargo binary location is not specified!")
-            }
+        if (cargoHomePath.isEmpty()) {
+            cargoHomeSettingType = LocationSettingType.UNKNOWN
+            throw ConfigurationException("Cargo binary location is not specified!")
+        }
 
-            if (!isValidCargoHome(cargoHomePath)) {
-                cargoHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT
-                showBalloon(MessageType.ERROR, cargoHomeSettingType)
-                throw ConfigurationException("Cargo binary not found at: $cargoHomePath!")
-            }
+        if (!isValidCargoHome(cargoHomePath)) {
+            cargoHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT
+            showBalloon(MessageType.ERROR, cargoHomeSettingType)
+            throw ConfigurationException("Cargo binary not found at: $cargoHomePath!")
         }
 
         return true
     }
 
     override fun apply(settings: CargoProjectSettings) {
-        cargoHomePathField?.let { pathField ->
-            val cargoHomePath = FileUtil.toCanonicalPath(pathField.text)
-            if (StringUtil.isEmpty(cargoHomePath)) {
-                settings.cargoHome = null
-            } else {
-                settings.cargoHome = adjustCargoHome(cargoHomePath)
-            }
-        }
+        val cargoHomePath = FileUtil.toCanonicalPath(cargoHomePathField.text)
+        settings.cargoHome = if (cargoHomePath.isEmpty()) null else adjustCargoHome(cargoHomePath)
     }
 
     override fun reset(project: Project?, settings: CargoProjectSettings, isDefaultModuleCreation: Boolean) {
         val cargoHome = settings.cargoHome ?: ""
 
-        cargoHomePathField?.let { pathField ->
-            pathField.text = cargoHome
-            pathField.textField.foreground = LocationSettingType.EXPLICIT_CORRECT.color
-        }
+        cargoHomePathField.text = cargoHome
+        cargoHomePathField.textField.foreground = LocationSettingType.EXPLICIT_CORRECT.color
 
         if (cargoHome.isEmpty()) {
             cargoHomeSettingType = LocationSettingType.UNKNOWN
@@ -201,7 +189,7 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
     }
 
     private fun showBalloon(messageType: MessageType, settingType: LocationSettingType) {
-        ExternalSystemUiUtil.showBalloon(cargoHomePathField!!, messageType, settingType.getDescription(CargoConstants.PROJECT_SYSTEM_ID))
+        ExternalSystemUiUtil.showBalloon(cargoHomePathField, messageType, settingType.getDescription(CargoConstants.PROJECT_SYSTEM_ID))
     }
 
     override fun getInitialSettings(): CargoProjectSettings = myInitialSettings
@@ -217,30 +205,26 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
     }
 
     private fun tryFindCargoHome() {
-        cargoHomePathField?.let { pathField ->
-            val cargoHome = sdk.suggestHomePath()
-            if (cargoHome == null) {
-                showBalloon(MessageType.WARNING, LocationSettingType.UNKNOWN)
-                return
-            }
-
-            cargoHomeSettingType = LocationSettingType.DEDUCED
-
-            showBalloon(MessageType.INFO, LocationSettingType.DEDUCED)
-
-            pathField.text = cargoHome
-            pathField.textField.foreground = LocationSettingType.DEDUCED.color
+        val cargoHome = sdk.suggestHomePath()
+        if (cargoHome == null) {
+            showBalloon(MessageType.WARNING, LocationSettingType.UNKNOWN)
+            return
         }
+
+        cargoHomeSettingType = LocationSettingType.DEDUCED
+
+        showBalloon(MessageType.INFO, LocationSettingType.DEDUCED)
+
+        cargoHomePathField.text = cargoHome
+        cargoHomePathField.textField.foreground = LocationSettingType.DEDUCED.color
     }
 
     override fun isModified(): Boolean {
-        return cargoHomePathField?.let { pathField ->
-            val cargoHome = FileUtil.toCanonicalPath(pathField.text)
-            if (StringUtil.isEmpty(cargoHome)) {
-                !StringUtil.isEmpty(myInitialSettings.cargoHome)
-            } else {
-                cargoHome != myInitialSettings.cargoHome
-            }
-        } ?: false;
+        val cargoHome = FileUtil.toCanonicalPath(cargoHomePathField.text)
+        return if (cargoHome.isEmpty()) {
+            !myInitialSettings.cargoHome.isNullOrEmpty()
+        } else {
+            cargoHome != myInitialSettings.cargoHome
+        }
     }
 }
