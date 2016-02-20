@@ -1,5 +1,8 @@
 package org.rust.cargo.project
 
+import com.intellij.openapi.roots.ProjectRootManager
+import org.assertj.core.api.Assertions.assertThat
+
 class CargoImportTestCase : CargoImportTestCaseBase() {
     fun testModuleStructure() {
         createProjectSubFile("src/main.rs", "fn main() {}")
@@ -19,5 +22,8 @@ class CargoImportTestCase : CargoImportTestCaseBase() {
 
         assertTargets("src/main.rs", "src/lib.rs")
         assertExternCrates("libc", "hello")
+
+        val sdk = ProjectRootManager.getInstance(myTestFixture.project).projectSdk
+        assertThat(sdk).isNotNull()
     }
 }

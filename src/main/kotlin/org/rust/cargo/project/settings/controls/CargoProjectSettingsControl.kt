@@ -1,63 +1,58 @@
 package org.rust.cargo.project.settings.controls
 
 import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectSettingsControl
+import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel
 import com.intellij.openapi.options.ConfigurationException
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ui.configuration.JdkComboBox
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.util.Conditions
+import com.intellij.ui.components.JBLabel
+import org.rust.cargo.project.RustSdkType
 import org.rust.cargo.project.settings.CargoProjectSettings
-import org.rust.cargo.project.settings.controls.builders.CargoProjectSettingsControlBuilder
-import org.rust.cargo.project.settings.controls.builders.CargoProjectSettingsControlBuilderImpl
+import java.awt.GridBagConstraints
+import javax.swing.JButton
 
-class CargoProjectSettingsControl(private val myBuilder: CargoProjectSettingsControlBuilder)
-    : AbstractExternalProjectSettingsControl<CargoProjectSettings>(
-        null,
-        myBuilder.getInitialSettings(),
-        myBuilder.getExternalSystemSettingsControlCustomizer()) {
+class CargoProjectSettingsControl(settings: CargoProjectSettings)
+    : AbstractExternalProjectSettingsControl<CargoProjectSettings>(settings) {
 
-    constructor(initialSettings: CargoProjectSettings) : this(CargoProjectSettingsControlBuilderImpl(initialSettings)) {
-    }
+    private lateinit var sdkComboBox: JdkComboBox
+
+    private lateinit var sdkModel: ProjectSdksModel
 
     override fun fillExtraControls(content: PaintAwarePanel, indentLevel: Int) {
-        myBuilder.createAndFillControls(content, indentLevel)
-    }
+        sdkModel = ProjectSdksModel()
+        sdkModel.reset(project)
 
-    @Throws(ConfigurationException::class)
-    override fun validate(settings: CargoProjectSettings): Boolean {
-        return myBuilder.validate(settings)
-    }
+        sdkComboBox = JdkComboBox(sdkModel, Conditions.equalTo(RustSdkType.INSTANCE))
+        sdkComboBox.setSetupButton(JButton("New..."), project, sdkModel, null, null, false)
 
-    override fun applyExtraSettings(settings: CargoProjectSettings) {
-        myBuilder.apply(settings)
-    }
-
-    override fun updateInitialExtraSettings() {
-        myBuilder.apply(initialSettings)
-    }
-
-    override fun isExtraSettingModified(): Boolean {
-        return myBuilder.isModified()
+        with(content) {
+            add(JBLabel("Rust SDK:"), ExternalSystemUiUtil.getLabelConstraints(indentLevel))
+            add(sdkComboBox, ExternalSystemUiUtil.getFillLineConstraints(0).coverLine(GridBagConstraints.RELATIVE))
+            add(sdkComboBox.setUpButton, ExternalSystemUiUtil.getFillLineConstraints(0))
+        }
     }
 
     override fun resetExtraSettings(isDefaultModuleCreation: Boolean) {
-        myBuilder.reset(project, initialSettings, isDefaultModuleCreation)
+        sdkComboBox.reloadModel(JdkComboBox.NoneJdkComboBoxItem(), project)
     }
 
-    fun update(linkedProjectPath: String?, isDefaultModuleCreation: Boolean) {
-        myBuilder.update(linkedProjectPath, initialSettings, isDefaultModuleCreation)
+    override fun validate(settings: CargoProjectSettings): Boolean {
+        if (currentCargoHome == null) {
+            throw ConfigurationException("Select a Rust SDK")
+        }
+        return true
     }
 
-    override fun showUi(show: Boolean) {
-        super.showUi(show)
-        myBuilder.showUi(show)
+    override fun applyExtraSettings(settings: CargoProjectSettings) {
+        settings.sdkName = currentSdkName
+        sdkModel.apply()
     }
 
-    override fun setCurrentProject(project: Project?) {
-        super.setCurrentProject(project)
-        myBuilder.reset(project, initialSettings, false)
-    }
+    override fun isExtraSettingModified(): Boolean = initialSettings.sdkName != currentSdkName
 
-    override fun disposeUIResources() {
-        super.disposeUIResources()
-        myBuilder.disposeUIResources()
-    }
+    private val currentCargoHome: String? get() = sdkComboBox.selectedJdk?.homePath
+
+    private val currentSdkName: String? get() = sdkComboBox.selectedJdk?.name
 }

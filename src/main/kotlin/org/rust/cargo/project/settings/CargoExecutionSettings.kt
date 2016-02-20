@@ -6,20 +6,29 @@ import org.rust.cargo.project.RustSdkType
 /**
  * Settings required to execute Cargo-specific tasks inside isolated process
  */
-class CargoExecutionSettings(val cargoPath: String?) : ExternalSystemExecutionSettings() {
+class CargoExecutionSettings(
+    val cargoPath: String?,
+    val sdkName: String?
+) : ExternalSystemExecutionSettings() {
 
-    override fun equals(other: Any?): Boolean{
+
+    override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other?.javaClass != javaClass) return false
         if (!super.equals(other)) return false
 
-        return (other as CargoExecutionSettings).cargoPath == cargoPath
+        other as CargoExecutionSettings
+
+        if (cargoPath != other.cargoPath) return false
+        if (sdkName != other.sdkName) return false
+
+        return true
     }
 
-    override fun hashCode(): Int{
+    override fun hashCode(): Int {
         var result = super.hashCode()
         result += 31 * result + (cargoPath?.hashCode() ?: 0)
-
+        result += 31 * result + (sdkName?.hashCode() ?: 0)
         return result
     }
 
@@ -29,7 +38,7 @@ class CargoExecutionSettings(val cargoPath: String?) : ExternalSystemExecutionSe
             val pathToCargo = settings?.cargoHome?.let {
                 RustSdkType.getPathToExecInSDK(it, RustSdkType.CARGO_BINARY_NAME).absolutePath
             }
-            return CargoExecutionSettings(pathToCargo)
+            return CargoExecutionSettings(pathToCargo, settings?.sdkName)
         }
     }
 }

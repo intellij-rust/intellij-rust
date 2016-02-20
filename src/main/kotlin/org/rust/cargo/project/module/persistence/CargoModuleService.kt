@@ -6,7 +6,7 @@ import java.io.Serializable
 /**
  * Stores information about crate roots (aka targets) of the module
  *
- * See [CargoProjectDataService] for how this is populated
+ * See [CargoModuleDataService] for how this is populated
  */
 interface CargoModuleService {
     /**
