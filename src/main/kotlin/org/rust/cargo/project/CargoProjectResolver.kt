@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
 import com.intellij.openapi.util.Key
+import org.rust.cargo.CargoConstants
 import org.rust.cargo.commands.Cargo
 import org.rust.cargo.commands.CargoProjectDescription
 import org.rust.cargo.project.module.RustModuleType
@@ -28,7 +29,8 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
                                     settings: CargoExecutionSettings?,
                                     listener: ExternalSystemTaskNotificationListener): DataNode<ProjectData>? {
 
-        val metadata = readProjectDescription(id, listener, projectPath, settings)
+        val pathToCargo = settings?.cargoPath ?: CargoConstants.CARGO_EXECUTABLE_NAME
+        val metadata = readProjectDescription(id, listener, projectPath, pathToCargo)
 
         val projectNode =
             DataNode(
@@ -79,7 +81,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
     private fun readProjectDescription(id: ExternalSystemTaskId,
                                        listener: ExternalSystemTaskNotificationListener,
                                        projectPath: String,
-                                       settings: CargoExecutionSettings?): CargoProjectDescription {
+                                       pathToCargo: String): CargoProjectDescription {
 
         listener.onStatusChange(ExternalSystemTaskNotificationEvent(id, "Resolving dependencies..."))
         val cargoListener = object : ProcessAdapter() {
@@ -94,7 +96,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
         }
 
         return try {
-           Cargo(settings!!.cargoPath, projectPath).fullProjectDescription(cargoListener)
+           Cargo(pathToCargo, projectPath).fullProjectDescription(cargoListener)
         } catch(e: ExecutionException) {
             throw ExternalSystemException(e)
         }
