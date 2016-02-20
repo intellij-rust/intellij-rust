@@ -3,6 +3,9 @@ package org.rust.lang.core.psi;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.rust.lang.core.lexer.RustEscapesLexer;
+import org.rust.lang.core.psi.impl.RustNumericLiteralImpl;
+import org.rust.lang.core.psi.impl.RustRawStringLiteralImpl;
+import org.rust.lang.core.psi.impl.RustStringLiteralImpl;
 
 public interface RustTokenElementTypes {
 
@@ -68,22 +71,22 @@ public interface RustTokenElementTypes {
 
     // Literals
 
-    RustTokenType INTEGER_LITERAL = new RustLiteralTokenType("<INTEGER>");
-    RustTokenType FLOAT_LITERAL = new RustLiteralTokenType("<FLOAT>");
-    RustTokenType BYTE_LITERAL = new RustLiteralTokenType("<BYTE>");
-    RustTokenType CHAR_LITERAL = new RustLiteralTokenType("<CHAR>");
-    RustTokenType STRING_LITERAL = new RustLiteralTokenType("<STRING>");
-    RustTokenType BYTE_STRING_LITERAL = new RustLiteralTokenType("<BYTE_STRING>");
-    RustTokenType RAW_STRING_LITERAL = new RustLiteralTokenType("<RAW_STRING>");
-    RustTokenType RAW_BYTE_STRING_LITERAL = new RustLiteralTokenType("<RAW_BYTE_STRING>");
+    RustTokenType INTEGER_LITERAL = RustNumericLiteralImpl.createTokenType("<INTEGER>");
+    RustTokenType FLOAT_LITERAL = RustNumericLiteralImpl.createTokenType("<FLOAT>");
+    RustTokenType BYTE_LITERAL = RustStringLiteralImpl.createTokenType("<BYTE>");
+    RustTokenType CHAR_LITERAL = RustStringLiteralImpl.createTokenType("<CHAR>");
+    RustTokenType STRING_LITERAL = RustStringLiteralImpl.createTokenType("<STRING>");
+    RustTokenType BYTE_STRING_LITERAL = RustStringLiteralImpl.createTokenType("<BYTE_STRING>");
+    RustTokenType RAW_STRING_LITERAL = RustRawStringLiteralImpl.createTokenType("<RAW_STRING>");
+    RustTokenType RAW_BYTE_STRING_LITERAL = RustRawStringLiteralImpl.createTokenType("<RAW_BYTE_STRING>");
 
     // Comments
 
-    RustTokenType BLOCK_COMMENT = new RustTokenType("<BLOCK_COMMENT>");
-    RustTokenType EOL_COMMENT = new RustTokenType("<EOL_COMMENT>");
+    RustTokenType BLOCK_COMMENT = new RustCommentTokenType("<BLOCK_COMMENT>");
+    RustTokenType EOL_COMMENT = new RustCommentTokenType("<EOL_COMMENT>");
 
-    RustTokenType INNER_DOC_COMMENT = new RustTokenType("<INNER_DOC_COMMENT>");
-    RustTokenType OUTER_DOC_COMMENT = new RustTokenType("<OUTER_DOC_COMMENT>");
+    RustTokenType INNER_DOC_COMMENT = new RustCommentTokenType("<INNER_DOC_COMMENT>");
+    RustTokenType OUTER_DOC_COMMENT = new RustCommentTokenType("<OUTER_DOC_COMMENT>");
 
     RustTokenType SHEBANG_LINE = new RustTokenType("<SHEBANG_LINE>");
 
@@ -153,20 +156,6 @@ public interface RustTokenElementTypes {
         EOL_COMMENT,
         INNER_DOC_COMMENT,
         OUTER_DOC_COMMENT
-    );
-
-    TokenSet NUMERIC_LITERALS_TOKEN_SET = TokenSet.create(
-        INTEGER_LITERAL,
-        FLOAT_LITERAL
-    );
-
-    TokenSet TEXT_LITERALS_TOKEN_SET = TokenSet.create(
-        BYTE_LITERAL,
-        CHAR_LITERAL,
-        STRING_LITERAL,
-        BYTE_STRING_LITERAL,
-        RAW_STRING_LITERAL,
-        RAW_BYTE_STRING_LITERAL
     );
 
     /**

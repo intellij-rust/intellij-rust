@@ -60,7 +60,7 @@ FILE
       PsiElement(<IDENTIFIER>)('f')
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
-      PsiElement(<FLOAT>)('92.0')
+      RustNumericLiteralImpl(<FLOAT>)('92.0')
     PsiWhiteSpace(' ')
     PsiElement(})('}')
   PsiElement(;)(';')

@@ -40,7 +40,7 @@ FILE
       PsiElement(extern)('extern')
       PsiWhiteSpace(' ')
       RustAbiImpl(ABI)
-        PsiElement(<STRING>)('"C"')
+        RustStringLiteralImpl(<STRING>)('"C"')
       PsiWhiteSpace(' ')
       PsiElement(fn)('fn')
       PsiWhiteSpace(' ')
