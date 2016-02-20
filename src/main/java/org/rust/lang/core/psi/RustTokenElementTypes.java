@@ -158,20 +158,6 @@ public interface RustTokenElementTypes {
         OUTER_DOC_COMMENT
     );
 
-    TokenSet NUMERIC_LITERALS_TOKEN_SET = TokenSet.create(
-        INTEGER_LITERAL,
-        FLOAT_LITERAL
-    );
-
-    TokenSet TEXT_LITERALS_TOKEN_SET = TokenSet.create(
-        BYTE_LITERAL,
-        CHAR_LITERAL,
-        STRING_LITERAL,
-        BYTE_STRING_LITERAL,
-        RAW_STRING_LITERAL,
-        RAW_BYTE_STRING_LITERAL
-    );
-
     /**
      * Set of possible arguments for {@link RustEscapesLexer.Companion#of(IElementType)}
      */
