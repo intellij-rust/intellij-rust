@@ -1,0 +1,5 @@
+// File: bar/foo/mod.rs
+
+fn foo() {
+    println!("Hello from foo mod");
+}

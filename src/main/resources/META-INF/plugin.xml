@@ -132,6 +132,10 @@
             <className>org.rust.ide.intentions.ExpandModule</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.ContractModule</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 
