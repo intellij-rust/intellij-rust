@@ -2,24 +2,21 @@ package org.rust.lang.utils
 
 import com.intellij.psi.StringEscapesTokenTypes.*
 import org.rust.lang.core.lexer.RustEscapesLexer
+import org.rust.lang.core.lexer.tokenize
 import org.rust.lang.core.psi.RustTokenElementTypes.STRING_LITERAL
 
 /**
  * Unescape string escaped using Rust escaping rules.
  */
-fun String.unescapeRust(unicode: Boolean = true, eol: Boolean = true): String {
-    val sb = StringBuilder(length)
-    val lexer = RustEscapesLexer(STRING_LITERAL, unicode, eol)
-    lexer.start(this)
-    while (lexer.tokenType != null) {
-        sb.append(when (lexer.tokenType) {
-            VALID_STRING_ESCAPE_TOKEN -> decodeEscape(lexer.tokenText)
-            else                      -> lexer.tokenText
-        })
-        lexer.advance()
-    }
-    return sb.toString()
-}
+fun String.unescapeRust(unicode: Boolean = true, eol: Boolean = true): String =
+    this.tokenize(RustEscapesLexer(STRING_LITERAL, unicode, eol))
+        .joinToString(separator = "") {
+            val (type, text) = it
+            when (type) {
+                VALID_STRING_ESCAPE_TOKEN -> decodeEscape(text)
+                else                      -> text
+            }
+        }
 
 /**
  * Mimics [com.intellij.codeInsight.CodeInsightUtilCore.parseStringCharacters], but obeys Rust escaping rules.
@@ -27,20 +24,18 @@ fun String.unescapeRust(unicode: Boolean = true, eol: Boolean = true): String {
 fun parseRustStringCharacters(chars: String, outChars: StringBuilder, sourceOffsets: IntArray? = null): Boolean {
     assert(sourceOffsets == null || sourceOffsets.size == chars.length + 1)
 
-    val lexer = RustEscapesLexer(STRING_LITERAL, true, true)
-    lexer.start(chars)
-
     val outOffset = outChars.length
     var index = 0
-    while (lexer.tokenType != null) {
-        when (lexer.tokenType) {
+    chars.tokenize(RustEscapesLexer(STRING_LITERAL, true, true)).forEach {
+        val (type, text) = it
+        when (type) {
             VALID_STRING_ESCAPE_TOKEN    -> {
-                outChars.append(decodeEscape(lexer.tokenText))
+                outChars.append(decodeEscape(text))
                 if (sourceOffsets != null) {
                     // Set offset for the decoded character to the beginning of the escape sequence.
                     sourceOffsets[outChars.length - outOffset - 1] = index
                     // And perform a "jump"
-                    index += lexer.tokenEnd - lexer.tokenStart
+                    index += text.length
                 }
             }
 
@@ -50,7 +45,7 @@ fun parseRustStringCharacters(chars: String, outChars: StringBuilder, sourceOffs
 
             else                         -> {
                 val first = outChars.length - outOffset
-                outChars.append(lexer.tokenText)
+                outChars.append(text)
                 val last = outChars.length - outOffset - 1
                 if (sourceOffsets != null) {
                     // Set offsets for each character of given chunk
@@ -61,7 +56,6 @@ fun parseRustStringCharacters(chars: String, outChars: StringBuilder, sourceOffs
                 }
             }
         }
-        lexer.advance()
     }
 
     return true
