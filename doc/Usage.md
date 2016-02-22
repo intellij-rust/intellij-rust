@@ -1,7 +1,7 @@
 **Bold text** denotes the names of actions you can type in the **Find Action**
   dialog (`Ctrl+Shift+A`).
 
-# Quick Start 
+# Quick Start
 
 After you have installed the plugin and a recent version of Cargo, you can
 **import project**. You can do this from the welcome screen.
@@ -19,7 +19,7 @@ with Cargo via `Cargo home` setting:
 
 Wait until Cargo downloads all project dependencies. To check that everything is
 working, try **Goto Symbol** (`Ctrl+Alt+Shift+N`) and type something.
- 
+
 ![Go to symbol](imgs/go_to_symbol.png)
 
 To execute Cargo tasks from within IDE, you need to set up a [Rust
@@ -81,6 +81,7 @@ Please note that most of the features are missing at the moment.
 Use `Alt+Enter` to invoke an intention.
 
 * **Expand Module**: inside `foo.rs` file invoke this action to get `foo/mod.rs`.
+* **Contract Module**: the opposite of **Expand Module**.
 * **Create Module File**: if you have unresolved `mod foo;` this intention will create
   `foo.rs`. It's a convenient way to add a new Rust file: just type `mod bar;` and
   press `Alt+Enter`.
