@@ -8,7 +8,7 @@ import org.rust.ide.colorscheme.RustColors
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.isMut
 
-class RustAnnotator : Annotator {
+class RustHighlightingAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) =
         element.accept(RustAnnotatorVisitor(holder))
 }

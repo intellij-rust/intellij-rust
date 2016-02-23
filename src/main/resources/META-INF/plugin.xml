@@ -84,7 +84,7 @@
 
         <!-- Annotator -->
 
-        <annotator language="RUST" implementationClass="org.rust.ide.annotator.RustAnnotator"/>
+        <annotator language="RUST" implementationClass="org.rust.ide.annotator.RustHighlightingAnnotator"/>
 
         <!-- Description Provider -->
 
