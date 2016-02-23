@@ -29,7 +29,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
                                     settings: CargoExecutionSettings?,
                                     listener: ExternalSystemTaskNotificationListener): DataNode<ProjectData>? {
 
-        val pathToCargo = settings?.cargoPath ?: CargoConstants.CARGO_EXECUTABLE_NAME
+        val pathToCargo = settings?.cargoPath ?: return null
         val metadata = readProjectDescription(id, listener, projectPath, pathToCargo)
 
         val projectNode =
