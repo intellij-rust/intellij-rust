@@ -20,4 +20,5 @@ class RustSpellCheckerTest : RustTestCaseBase() {
     fun testStringLiterals() = doTest()
     fun testCommentsSuppressed() = doTest(processComments = false)
     fun testStringLiteralsSuppressed() = doTest(processLiterals = false)
+    fun testStringLiteralsWithEscapes() = doTest()
 }

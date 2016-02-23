@@ -22,18 +22,10 @@ class RustEscapesLexingTestCase : RustLexingTestCaseBase() {
 
     fun testFuzzy() {
         val lexers = ESCAPABLE_LITERALS_TOKEN_SET.types.map { RustEscapesLexer.of(it) }
-
         for (lexer in lexers) {
             repeat(10000) {
-                execute(lexer, randomLiteral())
+                randomLiteral().tokenize(lexer).forEach { }
             }
-        }
-    }
-
-    private fun execute(lexer: RustEscapesLexer, input: CharSequence) {
-        lexer.start(input)
-        while (lexer.tokenType != null) {
-            lexer.advance()
         }
     }
 
