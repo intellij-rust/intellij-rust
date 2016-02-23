@@ -2,14 +2,17 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import org.assertj.core.api.Assertions.assertThat
+import org.rust.cargo.CargoProjectDescription
 import org.rust.cargo.project.module.RustModuleType
+import org.rust.cargo.project.module.persistence.CargoModuleTargetsService
+import org.rust.cargo.util.getService
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.resolve.ref.RustReference
-import java.io.File
 
 
 abstract class RustMultiFileResolveTestCaseBase : RustResolveTestCaseBase() {
@@ -18,6 +21,13 @@ abstract class RustMultiFileResolveTestCaseBase : RustResolveTestCaseBase() {
         return object : DefaultLightProjectDescriptor() {
 
             override fun getModuleType(): ModuleType<*> = RustModuleType.INSTANCE
+
+            override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
+                super.configureModule(module, model, contentEntry)
+                module.getService<CargoModuleTargetsService>().saveTargets(listOf(
+                    binTarget("main.rs"), libTarget("lib.rs")
+                ))
+            }
         }
     }
 
@@ -51,4 +61,10 @@ abstract class RustMultiFileResolveTestCaseBase : RustResolveTestCaseBase() {
 
         return usage.resolve()
     }
+
+    private fun binTarget(path: String): CargoProjectDescription.Target =
+        CargoProjectDescription.Target(path, CargoProjectDescription.TargetKind.BIN)
+
+    private fun libTarget(path: String): CargoProjectDescription.Target =
+        CargoProjectDescription.Target(path, CargoProjectDescription.TargetKind.LIB)
 }
