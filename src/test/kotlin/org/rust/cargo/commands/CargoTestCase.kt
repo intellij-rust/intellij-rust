@@ -13,7 +13,7 @@ class CargoTestCase : CargoTestCaseBase() {
         assertThat(description.modules.size == 2)
         for (module in description.modules) {
             val target = module.targets.single()
-            assertThat(target.rootModFile.startsWith(module.contentRoot))
+            assertThat(target.path).startsWith("src")
         }
         assertThat(description.libraries.size == 1)
     }

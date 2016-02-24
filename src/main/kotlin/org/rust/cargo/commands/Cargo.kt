@@ -41,7 +41,7 @@ class Cargo(
     fun fullProjectDescription(listener: ProcessListener? = null): CargoProjectDescription {
         val output = metadataCommandline.execute(listener)
         val data = parse(output)
-        return CargoProjectDescription(data)
+        return CargoProjectDescription.fromCargoMetadata(data)
     }
 
     fun generalCommand(command: String, additionalArguments: List<String> = emptyList()): GeneralCommandLine =
