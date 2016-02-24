@@ -9,8 +9,9 @@ cd intellij-rust
 
 ## Building
 
-To build the plugin just navigate to the directory you've previously checked it out and type `./gradlew build`. That's it.  
+To build the plugin just navigate to the directory you've previously checked it out and type `./gradlew build`. That's it.
 
+This creates a zip archive in `build/distributions` which you can install with the `Install plugin from disk...` action found in `Settings > Plugins`.
 
 ## Running
 
@@ -41,7 +42,7 @@ sources`, and select `build.gradle` from the root directory of the plugin.
 
 To contribute to the code of the project check out the the latest version and follow instructions on how to build & run it.
 
-If you feel yourself new to the field or don't know what you should start coping with check out issue-tracker for the 
+If you feel yourself new to the field or don't know what you should start coping with check out issue-tracker for the
 [up-for-grab](https://github.com/intellij-rust/intellij-rust/labels/up%20for%20grab) tasks as these may be greatest entry points to the project source code.
 
 If you want to contribute to the project in any of the numerous other ways, first of all consider joining our [Gitter](https://gitter.im/alexeykudinkin/intellij-rust?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) therefore
@@ -49,7 +50,7 @@ being on par with the current development efforts.
 
 **NOTA BENE**
 
-Please, make sure that all tests pass and Travis reports build as green prior to making a pull request. 
+Please, make sure that all tests pass and Travis reports build as green prior to making a pull request.
 
 
 ## Code style
@@ -60,8 +61,8 @@ For the Java sources we're stuck to the Google's [one](https://google.github.io/
 
 ## PR style
 
-It's much easier to review small, focused pull requests. So if you can split your changes into several chunks then 
-please do it. 
+It's much easier to review small, focused pull requests. So if you can split your changes into several chunks then
+please do it.
 
 # Plugin overview
 
