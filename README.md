@@ -21,6 +21,8 @@ additional plugin repository and paste the URL for the one you need:
 (at least `cargo 0.9.0-nightly (6c05bcb 2016-01-29)`). To install nightly version of the Cargo please follow the 
 instructions at [crates.io](https://crates.io/install). Note that you can use nightly Cargo with stable version of Rust just fine. 
 
+*NOTA BENE*: To use Run Configurations with IDEA 15.0.3 please update your Kotlin plugin.
+
 As this is a preview release, something might go wrong. So, be brave to face some nasty bugs.
 
 ## Building
