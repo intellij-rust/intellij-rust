@@ -9,7 +9,13 @@ import org.rust.lang.core.psi.RustTokenElementTypes.STRING_LITERAL
  * Unescape string escaped using Rust escaping rules.
  */
 fun String.unescapeRust(unicode: Boolean = true, eol: Boolean = true): String =
-    this.tokenize(RustEscapesLexer(STRING_LITERAL, unicode, eol))
+    this.unescapeRust(RustEscapesLexer(STRING_LITERAL, unicode, eol))
+
+/**
+ * Unescape string escaped using Rust escaping rules.
+ */
+fun String.unescapeRust(escapesLexer: RustEscapesLexer): String =
+    this.tokenize(escapesLexer)
         .joinToString(separator = "") {
             val (type, text) = it
             when (type) {
