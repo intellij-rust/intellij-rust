@@ -384,3 +384,13 @@ fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolve
 
 
 private fun RustResolveScope.resolveUsing(c: Resolver.ResolveContext): RustNamedElement? = c.accept(this)
+
+/**
+ * Helper to debug complex iterator pipelines
+ */
+private fun<T> Sequence<T>.inspect(f: (T) -> Unit = { println("inspecting $it") }): Sequence<T> {
+    return map { it ->
+        f(it)
+        it
+    }
+}

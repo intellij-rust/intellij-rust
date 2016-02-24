@@ -1,6 +1,7 @@
 package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustUseItem
@@ -14,9 +15,14 @@ abstract class RustUseItemImplMixin : RustItemImpl, RustUseItem {
     constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override val boundElements: Collection<RustNamedElement>
-        get() = viewPath.useGlobList
-            .mapNotNull { it.boundElement }
-            .plus(
+        get() {
+            val globs = viewPath.useGlobList
+            return if (globs == null) {
+                // use foo::bar;
                 listOf(viewPath.alias ?: viewPath.pathPart).filterNotNull()
-            )
+            } else {
+                // use foo::bar::{...};
+                globs.useGlobList.mapNotNull { it.boundElement }
+            }
+        }
 }

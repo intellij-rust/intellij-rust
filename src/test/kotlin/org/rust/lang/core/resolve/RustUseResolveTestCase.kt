@@ -20,4 +20,5 @@ class RustUseResolveTestCase : RustResolveTestCaseBase() {
     fun testNoUse()                      = checkIsUnbound()
     fun testCycle()                      = checkIsUnbound()
     fun testUseGlobCycle()               = checkIsUnbound()
+    fun testEmptyGlobList()              = checkIsUnbound()
 }

@@ -780,11 +780,13 @@ private meta qualified_path ::= LT type [ AS trait_ref ] GT COLONCOLON << param 
 //    {foo, bar}
 //    ::foo::*
 //    foo::bar as baz
+//    foo::{}
 //
-view_path ::= [ view_path_prefix? COLONCOLON ] LBRACE [ <<comma_separated_list use_glob>> ] RBRACE
+view_path ::= [ view_path_prefix? COLONCOLON ] use_glob_list
             |   view_path_prefix COLONCOLON MUL
             |   view_path_prefix alias?
 
+use_glob_list ::= LBRACE [ <<comma_separated_list use_glob>> ] RBRACE
 use_glob ::= (IDENTIFIER | SELF) alias?
 
 alias ::= AS IDENTIFIER
