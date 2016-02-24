@@ -1,4 +1,4 @@
-package org.rust.cargo.commands
+package org.rust.cargo
 
 import com.intellij.util.PathUtil
 import org.rust.cargo.commands.impl.Package
@@ -110,7 +110,7 @@ class CargoProjectDescription private constructor(
                         else              ->
                             if (target.kind.any { it.endsWith("lib") }) TargetKind.LIB else TargetKind.UNKNOWN
                     }
-                    CargoProjectDescription.Target(path, kind)
+                    Target(path, kind)
                 }
             )
         }

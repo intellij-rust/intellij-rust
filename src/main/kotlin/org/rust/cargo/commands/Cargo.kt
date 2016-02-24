@@ -8,6 +8,7 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.CargoProjectDescription
 import org.rust.cargo.commands.impl.Project
 import java.io.File
 
