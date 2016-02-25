@@ -36,8 +36,12 @@ class CargoExternalSystemManager : ExternalSystemAutoImportAware by CachingExter
         Function { CargoLocalSettings.getInstance(it) }
 
     override fun getExecutionSettingsProvider(): Function<Pair<Project, String>, CargoExecutionSettings> =
-        Function {
-            pair -> executionSettingsFor(pair.first, pair.second)
+        Function { pair ->
+            val project = pair.first
+            val linkedProjectPath = pair.second
+            val settings = CargoSettings.getInstance(project)
+            val projectSettings = settings.getLinkedProjectSettings(linkedProjectPath)
+            CargoExecutionSettings.from(projectSettings)
         }
 
     override fun getProjectResolverClass(): Class<out ExternalSystemProjectResolver<CargoExecutionSettings>> =
@@ -66,9 +70,4 @@ class CargoExternalSystemManager : ExternalSystemAutoImportAware by CachingExter
     override fun enhanceLocalProcessing(urls: List<URL>) {
     }
 
-    companion object {
-        internal fun executionSettingsFor(project: Project, path: String): CargoExecutionSettings {
-            return CargoExecutionSettings.from(ServiceManager.getService(project, CargoProjectSettings::class.java))
-        }
-    }
 }

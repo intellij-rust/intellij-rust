@@ -25,8 +25,8 @@ class CargoExecutionSettings(val cargoPath: String?) : ExternalSystemExecutionSe
 
     companion object {
 
-        fun from(settings: CargoProjectSettings): CargoExecutionSettings {
-            val pathToCargo = settings.cargoHome?.let {
+        fun from(settings: CargoProjectSettings?): CargoExecutionSettings {
+            val pathToCargo = settings?.cargoHome?.let {
                 RustSdkType.getPathToExecInSDK(it, RustSdkType.CARGO_BINARY_NAME).absolutePath
             }
             return CargoExecutionSettings(pathToCargo)
