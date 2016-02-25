@@ -2,13 +2,12 @@ package org.rust.lang.core.psi.impl
 
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.lexer.RustEscapesLexer
-import org.rust.lang.core.psi.RustLiteral
 import org.rust.lang.core.psi.RustLiteralTokenType
 import org.rust.lang.core.psi.RustTokenElementTypes.BYTE_LITERAL
 import org.rust.lang.core.psi.RustTokenElementTypes.CHAR_LITERAL
 import org.rust.lang.utils.unescapeRust
 
-class RustStringLiteralImpl(type: IElementType, text: CharSequence) : RustLiteral.Text(type, text) {
+class RustStringLiteralImpl(type: IElementType, text: CharSequence) : RustTextLiteralImplBase(type, text) {
     override val value: String?
         get() = valueString?.unescapeRust(RustEscapesLexer.of(tokenType))
 

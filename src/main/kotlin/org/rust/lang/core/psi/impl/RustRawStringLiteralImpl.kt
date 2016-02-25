@@ -1,10 +1,9 @@
 package org.rust.lang.core.psi.impl
 
 import com.intellij.psi.tree.IElementType
-import org.rust.lang.core.psi.RustLiteral
 import org.rust.lang.core.psi.RustLiteralTokenType
 
-class RustRawStringLiteralImpl(type: IElementType, text: CharSequence) : RustLiteral.Text(type, text) {
+class RustRawStringLiteralImpl(type: IElementType, text: CharSequence) : RustTextLiteralImplBase(type, text) {
     override val value: String?
         get() = valueString
 

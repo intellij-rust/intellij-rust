@@ -5,51 +5,48 @@ import com.intellij.lang.annotation.Annotator
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustLiteral
 import org.rust.lang.core.psi.RustTokenElementTypes.*
-import org.rust.lang.core.psi.RustVisitorEx
+import org.rust.lang.core.psi.visitors.RustVisitorEx
 
 class RustLiteralAnnotator : Annotator {
-    override fun annotate(element: PsiElement, holder: AnnotationHolder) =
-        element.accept(RustLiteralAnnotatorVisitor(holder))
-}
-
-private class RustLiteralAnnotatorVisitor(private val holder: AnnotationHolder) : RustVisitorEx() {
-    override fun visitLiteral(literal: RustLiteral) {
-        // Check suffix
-        val suffix = literal.suffix
-        val possibleSuffixes = literal.possibleSuffixes
-        if (!suffix.isNullOrEmpty() && suffix !in possibleSuffixes) {
-            holder.createErrorAnnotation(literal as PsiElement, if (possibleSuffixes.isNotEmpty()) {
-                val possibleSuffixesStr = possibleSuffixes.map { "'$it'" }.joinToString()
-                "invalid suffix '$suffix' for ${literal.displayName}; the suffix must be one of: $possibleSuffixesStr"
-            } else {
-                "${literal.displayName} with a suffix is invalid"
-            })
-        }
-    }
-
-    override fun visitNumericLiteral(literal: RustLiteral.Number) {
-        // TODO: Check numeric literals boundaries
-        super.visitNumericLiteral(literal)
-    }
-
-    override fun visitTextLiteral(literal: RustLiteral.Text) {
-        // Check char literal length
-        when (literal.tokenType) {
-            BYTE_LITERAL, CHAR_LITERAL -> when {
-                literal.value.isNullOrEmpty() ->
-                    holder.createErrorAnnotation(literal as PsiElement, "empty ${literal.displayName}")
-                literal.value!!.length > 1    ->
-                    holder.createErrorAnnotation(literal as PsiElement, "too many characters in ${literal.displayName}")
+    override fun annotate(element: PsiElement, holder: AnnotationHolder) = element.accept(object : RustVisitorEx() {
+        override fun visitLiteral(literal: RustLiteral) {
+            // Check suffix
+            val suffix = literal.suffix
+            val possibleSuffixes = literal.possibleSuffixes
+            if (!suffix.isNullOrEmpty() && suffix !in possibleSuffixes) {
+                holder.createErrorAnnotation(literal as PsiElement, if (possibleSuffixes.isNotEmpty()) {
+                    val possibleSuffixesStr = possibleSuffixes.map { "'$it'" }.joinToString()
+                    "invalid suffix '$suffix' for ${literal.displayName}; the suffix must be one of: $possibleSuffixesStr"
+                } else {
+                    "${literal.displayName} with a suffix is invalid"
+                })
             }
         }
 
-        // Check delimiters
-        if (!literal.hasPairedQuotes) {
-            holder.createErrorAnnotation(literal as PsiElement, "unclosed ${literal.displayName}")
+        override fun visitNumericLiteral(literal: RustLiteral.Number) {
+            // TODO: Check numeric literals boundaries
+            super.visitNumericLiteral(literal)
         }
 
-        super.visitTextLiteral(literal)
-    }
+        override fun visitTextLiteral(literal: RustLiteral.Text) {
+            // Check char literal length
+            when (literal.tokenType) {
+                BYTE_LITERAL, CHAR_LITERAL -> when {
+                    literal.value.isNullOrEmpty() ->
+                        holder.createErrorAnnotation(literal as PsiElement, "empty ${literal.displayName}")
+                    literal.value!!.length > 1    ->
+                        holder.createErrorAnnotation(literal as PsiElement, "too many characters in ${literal.displayName}")
+                }
+            }
+
+            // Check delimiters
+            if (!literal.hasPairedQuotes) {
+                holder.createErrorAnnotation(literal as PsiElement, "unclosed ${literal.displayName}")
+            }
+
+            super.visitTextLiteral(literal)
+        }
+    })
 }
 
 // TODO: Make this more generic

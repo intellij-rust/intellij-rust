@@ -7,16 +7,7 @@ import org.rust.lang.core.psi.RustLiteral
 import org.rust.lang.core.psi.RustLiteralTokenType
 import org.rust.lang.core.psi.RustTokenElementTypes.FLOAT_LITERAL
 import org.rust.lang.core.psi.RustTokenElementTypes.INTEGER_LITERAL
-import org.rust.lang.core.psi.RustVisitorEx
-
-private val VALID_INTEGER_SUFFIXES = listOf("u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "isize", "usize")
-private val VALID_FLOAT_SUFFIXES = listOf("f32", "f64")
-const val DEC_DIGIT = "0123456789"
-const val BIN_DIGIT = "01"
-const val OCT_DIGIT = "01234567"
-const val HEX_DIGIT = "0123456789abcdefABCDEF"
-const val NUM_OTHER_CHARS = "+-_."
-const val EXP_CHARS = "eE"
+import org.rust.lang.core.psi.visitors.RustVisitorEx
 
 class RustNumericLiteralImpl(type: IElementType, text: CharSequence) : RustLiteral.Number(type, text) {
     override val value: Any?
@@ -59,6 +50,15 @@ class RustNumericLiteralImpl(type: IElementType, text: CharSequence) : RustLiter
     }
 
     companion object {
+        private val VALID_INTEGER_SUFFIXES = listOf("u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "isize", "usize")
+        private val VALID_FLOAT_SUFFIXES = listOf("f32", "f64")
+        private const val DEC_DIGIT = "0123456789"
+        private const val BIN_DIGIT = "01"
+        private const val OCT_DIGIT = "01234567"
+        private const val HEX_DIGIT = "0123456789abcdefABCDEF"
+        private const val NUM_OTHER_CHARS = "+-_."
+        private const val EXP_CHARS = "eE"
+
         @JvmStatic fun createTokenType(debugName: String): RustLiteralTokenType =
             RustLiteralTokenType(debugName, ::RustNumericLiteralImpl)
     }
