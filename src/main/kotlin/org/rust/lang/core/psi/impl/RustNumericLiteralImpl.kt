@@ -1,11 +1,13 @@
 package org.rust.lang.core.psi.impl
 
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RustLiteral
 import org.rust.lang.core.psi.RustLiteralTokenType
 import org.rust.lang.core.psi.RustTokenElementTypes.FLOAT_LITERAL
 import org.rust.lang.core.psi.RustTokenElementTypes.INTEGER_LITERAL
+import org.rust.lang.core.psi.RustVisitorEx
 
 private val VALID_INTEGER_SUFFIXES = listOf("u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "isize", "usize")
 private val VALID_FLOAT_SUFFIXES = listOf("f32", "f64")
@@ -49,6 +51,11 @@ class RustNumericLiteralImpl(type: IElementType, text: CharSequence) : RustLiter
         }
 
         return Metadata(value = TextRange.allOf(text))
+    }
+
+    override fun accept(visitor: PsiElementVisitor) = when (visitor) {
+        is RustVisitorEx -> visitor.visitNumericLiteral(this)
+        else             -> super.accept(visitor)
     }
 
     companion object {

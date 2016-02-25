@@ -1,6 +1,7 @@
 package org.rust.lang.core.psi
 
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
 
@@ -39,6 +40,11 @@ sealed class RustLiteral(type: IElementType, text: CharSequence) : LeafPsiElemen
     val suffix: String?
         get() = metadata.suffix?.substring(text)
 
+    override fun accept(visitor: PsiElementVisitor) = when (visitor) {
+        is RustVisitorEx -> visitor.visitLiteral(this)
+        else             -> super.accept(visitor)
+    }
+
     /**
      * Base class for numeric literals: integers and floats.
      */
@@ -67,6 +73,11 @@ sealed class RustLiteral(type: IElementType, text: CharSequence) : LeafPsiElemen
         protected abstract fun locateOpenDelim(start: Int): Int
         protected abstract fun locateValue(start: Int): Int
         protected abstract fun locateCloseDelim(start: Int): Int
+
+        override fun accept(visitor: PsiElementVisitor) = when (visitor) {
+            is RustVisitorEx -> visitor.visitTextLiteral(this)
+            else             -> super.accept(visitor)
+        }
 
         private fun locatePrefix(): Int {
             text.forEachIndexed { i, ch ->

@@ -10,10 +10,10 @@ import org.rust.lang.core.psi.impl.mixin.isMut
 
 class RustHighlightingAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) =
-        element.accept(RustAnnotatorVisitor(holder))
+        element.accept(RustHighlightingAnnotatorVisitor(holder))
 }
 
-private class RustAnnotatorVisitor(private val holder: AnnotationHolder) : RustVisitor() {
+private class RustHighlightingAnnotatorVisitor(private val holder: AnnotationHolder) : RustVisitor() {
     override fun visitAttr(o: RustAttr) {
         holder.highlight(o, RustColors.ATTRIBUTE)
     }
