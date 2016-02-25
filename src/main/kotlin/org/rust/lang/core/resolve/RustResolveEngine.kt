@@ -6,7 +6,7 @@ import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustFileImpl
+import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
 import org.rust.lang.core.psi.util.*
@@ -150,10 +150,10 @@ private class Resolver {
 
         // Lookup `name.rs` module
         val fileName = "$name.rs"
-        val fileMod  = dir?.findFile(fileName) as? RustFileImpl
+        val fileMod  = dir?.findFile(fileName) as? RustFile
 
         // Lookup `name/mod.rs` module
-        val dirMod = dir?.findSubdirectory(name)?.findFile(RustModules.MOD_RS) as? RustFileImpl
+        val dirMod = dir?.findSubdirectory(name)?.findFile(RustModules.MOD_RS) as? RustFile
 
         val resolved = listOf(fileMod, dirMod).mapNotNull { it?.mod }
 

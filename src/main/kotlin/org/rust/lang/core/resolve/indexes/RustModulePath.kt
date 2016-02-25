@@ -8,7 +8,7 @@ import com.intellij.util.io.IOUtil
 import org.rust.cargo.project.module.util.getSourceRoots
 import org.rust.cargo.project.module.util.relativise
 import org.rust.lang.core.psi.RustFileModItem
-import org.rust.lang.core.psi.impl.RustFileImpl
+import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.util.getModule
 import java.io.DataInput
 import java.io.DataOutput
@@ -31,7 +31,7 @@ data class RustModulePath private constructor (private val name: String, val pat
                    ?.let {
                        PsiManager.getInstance(p).findFile(it)
                    }
-            } as? RustFileImpl
+            } as? RustFile
         }
             ?.let { it.mod as RustFileModItem }
 

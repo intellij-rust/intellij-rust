@@ -12,7 +12,7 @@ import com.intellij.util.text.CharArrayUtil
 import org.rust.lang.core.psi.RustTokenElementTypes.INNER_DOC_COMMENT
 import org.rust.lang.core.psi.RustTokenElementTypes.OUTER_DOC_COMMENT
 import org.rust.lang.core.psi.RustTokenElementTypes.EOL_COMMENT
-import org.rust.lang.core.psi.impl.RustFileImpl
+import org.rust.lang.core.psi.impl.RustFile
 
 class RustEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
 
@@ -21,7 +21,7 @@ class RustEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
                                  originalHandler: EditorActionHandler?): Result {
 
         // return if this is not a Rust file
-        if (file !is RustFileImpl) {
+        if (file !is RustFile) {
             return Result.Continue
         }
 

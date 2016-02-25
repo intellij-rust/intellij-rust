@@ -17,12 +17,12 @@ import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.core.parser.RustParser
 import org.rust.lang.core.psi.RustCompositeElementTypes
-import org.rust.lang.core.psi.impl.RustFileImpl
+import org.rust.lang.core.psi.impl.RustFile
 
 class RustParserDefinition : ParserDefinition {
 
     override fun createFile(viewProvider: FileViewProvider): PsiFile? =
-        RustFileImpl(viewProvider)
+        RustFile(viewProvider)
 
     override fun spaceExistanceTypeBetweenTokens(left: ASTNode?, right: ASTNode?): ParserDefinition.SpaceRequirements? {
         // TODO(kudinkin): Fix

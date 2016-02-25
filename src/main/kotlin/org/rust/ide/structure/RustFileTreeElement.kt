@@ -4,9 +4,9 @@ import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustFileImpl
+import org.rust.lang.core.psi.impl.RustFile
 
-class RustFileTreeElement(file: RustFileImpl) : PsiTreeElementBase<RustFileImpl>(file) {
+class RustFileTreeElement(file: RustFile) : PsiTreeElementBase<RustFile>(file) {
     override fun getPresentableText() = element?.name
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {
