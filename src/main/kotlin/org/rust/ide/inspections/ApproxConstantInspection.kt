@@ -3,8 +3,11 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.PsiTreeUtil
+import org.rust.lang.core.psi.RustAttr
 import org.rust.lang.core.psi.RustLiteral
 import org.rust.lang.core.psi.RustNumber
+import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.visitors.RustVisitorEx
 
 class ApproxConstantInspection : RustLocalInspectionTool() {
@@ -13,15 +16,17 @@ class ApproxConstantInspection : RustLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RustVisitorEx() {
             override fun visitNumericLiteral(literal: RustLiteral.Number) {
-                analyzeLiteral(literal, holder)
+                if (literal.tokenType == RustTokenElementTypes.FLOAT_LITERAL &&
+                    PsiTreeUtil.getParentOfType(literal, RustAttr::class.java) == null) {
+                    analyzeLiteral(literal, holder)
+                }
             }
         }
 
     private fun analyzeLiteral(literal: RustLiteral.Number, holder: ProblemsHolder) {
         val value = (literal.value as RustNumber.Float?)?.javaValue ?: return
         val constant = KNOWN_CONSTS.find { it.matches(value) } ?: return
-        val type = if (literal.text.endsWith("f32")) "f32" else "f64"
-        holder.registerProblem(literal, type, constant)
+        holder.registerProblem(literal, literal.suffix ?: "f64", constant)
     }
 
     companion object {

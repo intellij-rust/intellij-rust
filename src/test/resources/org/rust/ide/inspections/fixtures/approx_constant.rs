@@ -1,3 +1,4 @@
+#[false_positive=3.141]
 fn main() {
     let pi = 3.1;
     let pi = 3.14;
