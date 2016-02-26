@@ -10,4 +10,12 @@ before_script:
   # because of this export, we can't put this into separate `install-rust.sh` script
   - export PATH=$PATH:$HOME/rust/bin
 
+# https://docs.travis-ci.com/user/languages/java/#Caching
+before_cache:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+
 env: ORG_GRADLE_PROJECT_downloadIdeaSources=false
