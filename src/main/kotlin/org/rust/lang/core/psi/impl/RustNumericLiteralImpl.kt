@@ -5,13 +5,14 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RustLiteral
 import org.rust.lang.core.psi.RustLiteralTokenType
+import org.rust.lang.core.psi.RustNumber
 import org.rust.lang.core.psi.RustTokenElementTypes.FLOAT_LITERAL
 import org.rust.lang.core.psi.RustTokenElementTypes.INTEGER_LITERAL
 import org.rust.lang.core.psi.visitors.RustVisitorEx
 
 class RustNumericLiteralImpl(type: IElementType, text: CharSequence) : RustLiteral.Number(type, text) {
-    override val value: Any?
-        get() = TODO() // TODO Implement this.
+    override val value: RustNumber<*>?
+        get() = valueString?.let { RustNumber.create(it, suffix, tokenType) }
 
     override val possibleSuffixes: Collection<String>
         get() = when (tokenType) {
