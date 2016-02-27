@@ -1,8 +1,7 @@
 package org.rust.cargo
 
 import com.intellij.util.PathUtil
-import org.rust.cargo.commands.impl.Package
-import org.rust.cargo.commands.impl.Project
+import org.rust.cargo.commands.impl.CargoMetadata
 import java.io.File
 import java.util.*
 
@@ -55,7 +54,7 @@ class CargoProjectDescription private constructor(
     val projectName: String get() = rootModule.name
 
     companion object {
-        fun fromCargoMetadata(project: Project): CargoProjectDescription {
+        fun fromCargoMetadata(project: CargoMetadata.Project): CargoProjectDescription {
             val idToPackage = project.packages.associate { it.id to it }
 
             val dependenciesMap = project.resolve.nodes.associate { node ->
@@ -87,9 +86,9 @@ class CargoProjectDescription private constructor(
             )
         }
 
-        private val Package.isModule: Boolean get() = this.source == null
+        private val CargoMetadata.Package.isModule: Boolean get() = this.source == null
 
-        private fun Package.intoModule(): Module {
+        private fun CargoMetadata.Package.intoModule(): Module {
             require(isModule)
             return Module(
                 rootDirectory,
@@ -115,7 +114,7 @@ class CargoProjectDescription private constructor(
             )
         }
 
-        private fun Package.intoLibrary(): Library {
+        private fun CargoMetadata.Package.intoLibrary(): Library {
             require(!isModule)
             return Library(
                 rootDirectory,
@@ -124,7 +123,7 @@ class CargoProjectDescription private constructor(
             )
         }
 
-        private val Package.rootDirectory: File get() = File(PathUtil.getParentPath(manifest_path))
+        private val CargoMetadata.Package.rootDirectory: File get() = File(PathUtil.getParentPath(manifest_path))
     }
 }
 

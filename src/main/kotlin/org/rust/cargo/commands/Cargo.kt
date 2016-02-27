@@ -9,7 +9,7 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CargoProjectDescription
-import org.rust.cargo.commands.impl.Project
+import org.rust.cargo.commands.impl.CargoMetadata
 import java.io.File
 
 /**
@@ -78,11 +78,11 @@ class Cargo(
         return output
     }
 
-    private fun parse(output: ProcessOutput): Project {
+    private fun parse(output: ProcessOutput): CargoMetadata.Project {
         // Skip "Downloading..." stuff
         val json = output.stdout.dropWhile { it != '{' }
         return try {
-            Gson().fromJson(json, Project::class.java)
+            Gson().fromJson(json, CargoMetadata.Project::class.java)
         } catch(e: JsonSyntaxException) {
             throw ExecutionException(e)
         }
