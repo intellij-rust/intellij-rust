@@ -9,15 +9,15 @@ abstract class RustTextLiteralImplBase(type: IElementType, text: CharSequence) :
     override val possibleSuffixes: Collection<String>
         get() = emptyList()
 
-    override val hasPairedQuotes: Boolean
-        get() = metadata.openDelim != null && metadata.closeDelim != null
+    override val hasUnpairedQuotes: Boolean
+        get() = offsets.openDelim == null || offsets.closeDelim == null
 
-    override fun computeMetadata(): Metadata {
+    override fun computeOffsets(): Offsets {
         val prefixEnd = checkBounds(0) { locatePrefix() }
         val openDelimEnd = checkBounds(prefixEnd) { locateOpenDelim(prefixEnd) }
         val valueEnd = checkBounds(openDelimEnd) { locateValue(openDelimEnd) }
         val closeDelimEnd = checkBounds(valueEnd) { locateCloseDelim(valueEnd) }
-        return Metadata.fromEndOffsets(prefixEnd, openDelimEnd, valueEnd, closeDelimEnd, textLength)
+        return Offsets.fromEndOffsets(prefixEnd, openDelimEnd, valueEnd, closeDelimEnd, textLength)
     }
 
     protected abstract fun locateOpenDelim(start: Int): Int
@@ -38,7 +38,7 @@ abstract class RustTextLiteralImplBase(type: IElementType, text: CharSequence) :
         return textLength
     }
 
-    private fun checkBounds(start: Int, locator: () -> Int): Int =
+    private inline fun checkBounds(start: Int, locator: () -> Int): Int =
         if (start >= textLength) {
             start
         } else {

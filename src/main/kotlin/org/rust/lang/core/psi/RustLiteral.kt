@@ -8,20 +8,15 @@ import org.rust.lang.core.psi.visitors.RustVisitorEx
 
 sealed class RustLiteral(type: IElementType, text: CharSequence) : LeafPsiElement(type, text) {
     /**
-     * Get literal value as a Java object.
-     */
-    abstract val value: Any?
-
-    /**
      * Get a list of possible suffixes for given literal type.
      */
     abstract val possibleSuffixes: Collection<String>
 
     abstract override fun toString(): String
 
-    protected abstract fun computeMetadata(): Metadata
+    protected abstract fun computeOffsets(): Offsets
 
-    val metadata: Metadata by lazy { computeMetadata() }
+    val offsets: Offsets by lazy { computeOffsets() }
 
     /**
      * Literal token type.
@@ -33,13 +28,13 @@ sealed class RustLiteral(type: IElementType, text: CharSequence) : LeafPsiElemen
      * Get a fragment of the source which denotes the value of the literal as-is (without any escaping etc).
      */
     val valueString: String?
-        get() = metadata.value?.substring(text)
+        get() = offsets.value?.substring(text)
 
     /**
      * Get literal suffix.
      */
     val suffix: String?
-        get() = metadata.suffix?.substring(text)
+        get() = offsets.suffix?.substring(text)
 
     override fun accept(visitor: PsiElementVisitor) = when (visitor) {
         is RustVisitorEx -> visitor.visitLiteral(this)
@@ -50,29 +45,31 @@ sealed class RustLiteral(type: IElementType, text: CharSequence) : LeafPsiElemen
      * Base class for numeric literals: integers and floats.
      */
     abstract class Number(type: IElementType, text: CharSequence) : RustLiteral(type, text) {
-        abstract override val value: RustNumber<*>?
+        abstract val value: RustNumber<*>?
+        abstract val isInt: Boolean
+        abstract val isFloat: Boolean
     }
 
     /**
      * Base class for character and string literals.
      */
     abstract class Text(type: IElementType, text: CharSequence) : RustLiteral(type, text) {
-        override abstract val value: String?
-        abstract val hasPairedQuotes: Boolean
+        abstract val value: String?
+        abstract val hasUnpairedQuotes: Boolean
     }
 
     /**
      * Stores offsets of distinguishable parts of a literal.
      */
-    data class Metadata(val prefix: TextRange? = null,
-                        val openDelim: TextRange? = null,
-                        val value: TextRange? = null,
-                        val closeDelim: TextRange? = null,
-                        val suffix: TextRange? = null) {
+    data class Offsets(val prefix: TextRange? = null,
+                       val openDelim: TextRange? = null,
+                       val value: TextRange? = null,
+                       val closeDelim: TextRange? = null,
+                       val suffix: TextRange? = null) {
         companion object {
             fun fromEndOffsets(prefixEnd: Int, openDelimEnd: Int, valueEnd: Int,
-                               closeDelimEnd: Int, suffixEnd: Int): Metadata =
-                Metadata(
+                               closeDelimEnd: Int, suffixEnd: Int): Offsets =
+                Offsets(
                     prefix = makeRange(0, prefixEnd),
                     openDelim = makeRange(prefixEnd, openDelimEnd),
                     value = makeRange(openDelimEnd, valueEnd),

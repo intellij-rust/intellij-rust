@@ -15,18 +15,18 @@ import org.rust.lang.core.psi.RustTokenElementTypes.INTEGER_LITERAL as INT
 import org.rust.lang.core.psi.RustTokenElementTypes.RAW_BYTE_STRING_LITERAL as BRW
 import org.rust.lang.core.psi.RustTokenElementTypes.RAW_STRING_LITERAL as RAW
 
-abstract class RustLiteralMetadataTestCase(
+abstract class RustLiteralOffsetsTestCase(
     private val type: IElementType,
     private val text: String,
     private val constructor: (IElementType, CharSequence) -> RustLiteral) {
 
     protected fun doTest() {
         val literal = constructor(type, text.replace("|", ""))
-        val expectedMeta = makeMeta(text)
-        assertEquals(expectedMeta, literal.metadata)
+        val expected = makeOffsets(text)
+        assertEquals(expected, literal.offsets)
     }
 
-    private fun makeMeta(text: String): RustLiteral.Metadata {
+    private fun makeOffsets(text: String): RustLiteral.Offsets {
         val parts = text.split('|')
         assert(parts.size == 5)
         val prefixEnd = parts[0].length;
@@ -34,13 +34,13 @@ abstract class RustLiteralMetadataTestCase(
         val valueEnd = openDelimEnd + parts[2].length
         val closeDelimEnd = valueEnd + parts[3].length
         val suffixEnd = closeDelimEnd + parts[4].length
-        return RustLiteral.Metadata.fromEndOffsets(prefixEnd, openDelimEnd, valueEnd, closeDelimEnd, suffixEnd)
+        return RustLiteral.Offsets.fromEndOffsets(prefixEnd, openDelimEnd, valueEnd, closeDelimEnd, suffixEnd)
     }
 }
 
 @RunWith(Parameterized::class)
-class RustNumericLiteralMetadataTest(type: IElementType, text: String) :
-    RustLiteralMetadataTestCase(type, text, ::RustNumericLiteralImpl) {
+class RustNumericLiteralOffsetsTest(type: IElementType, text: String) :
+    RustLiteralOffsetsTestCase(type, text, ::RustNumericLiteralImpl) {
     @Test
     fun test() = doTest()
 
@@ -66,8 +66,8 @@ class RustNumericLiteralMetadataTest(type: IElementType, text: String) :
 }
 
 @RunWith(Parameterized::class)
-class RustStringLiteralMetadataTest(type: IElementType, text: String) :
-    RustLiteralMetadataTestCase(type, text, ::RustStringLiteralImpl) {
+class RustStringLiteralOffsetsTest(type: IElementType, text: String) :
+    RustLiteralOffsetsTestCase(type, text, ::RustStringLiteralImpl) {
     @Test
     fun test() = doTest()
 
@@ -90,8 +90,8 @@ class RustStringLiteralMetadataTest(type: IElementType, text: String) :
 }
 
 @RunWith(Parameterized::class)
-class RustRawStringLiteralMetadataTest(type: IElementType, text: String) :
-    RustLiteralMetadataTestCase(type, text, ::RustRawStringLiteralImpl) {
+class RustRawStringLiteralOffsetsTest(type: IElementType, text: String) :
+    RustLiteralOffsetsTestCase(type, text, ::RustRawStringLiteralImpl) {
     @Test
     fun test() = doTest()
 

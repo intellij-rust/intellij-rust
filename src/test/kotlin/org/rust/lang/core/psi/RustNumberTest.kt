@@ -31,7 +31,7 @@ class RustNumberJavaValueTest<T>(private val constructor: (String) -> RustNumber
             arrayOf(i32, "", null)
         )
 
-        val i32 = { s: String -> RustNumber.Int.I32(s) }
-        val f32 = { s: String -> RustNumber.Float.F32(s) }
+        val i32 = { s: String -> RustNumber.Int(s) }
+        val f32 = { s: String -> RustNumber.Float(s) }
     }
 }

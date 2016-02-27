@@ -1,8 +1,10 @@
 package org.rust.ide.annotator
 
+import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RustLiteral
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.core.psi.visitors.RustVisitorEx
@@ -14,9 +16,10 @@ class RustLiteralAnnotator : Annotator {
             val suffix = literal.suffix
             val possibleSuffixes = literal.possibleSuffixes
             if (!suffix.isNullOrEmpty() && suffix !in possibleSuffixes) {
-                holder.createErrorAnnotation(literal as PsiElement, if (possibleSuffixes.isNotEmpty()) {
+                holder.literalError(literal, if (possibleSuffixes.isNotEmpty()) {
                     val possibleSuffixesStr = possibleSuffixes.map { "'$it'" }.joinToString()
-                    "invalid suffix '$suffix' for ${literal.displayName}; the suffix must be one of: $possibleSuffixesStr"
+                    "invalid suffix '$suffix' for ${literal.displayName}; " +
+                        "the suffix must be one of: $possibleSuffixesStr"
                 } else {
                     "${literal.displayName} with a suffix is invalid"
                 })
@@ -31,17 +34,19 @@ class RustLiteralAnnotator : Annotator {
         override fun visitTextLiteral(literal: RustLiteral.Text) {
             // Check char literal length
             when (literal.tokenType) {
-                BYTE_LITERAL, CHAR_LITERAL -> when {
-                    literal.value.isNullOrEmpty() ->
-                        holder.createErrorAnnotation(literal as PsiElement, "empty ${literal.displayName}")
-                    literal.value!!.length > 1    ->
-                        holder.createErrorAnnotation(literal as PsiElement, "too many characters in ${literal.displayName}")
+                BYTE_LITERAL, CHAR_LITERAL -> {
+                    val value = literal.value
+                    when {
+                        value == null || value.length == 0 -> "empty ${literal.displayName}"
+                        value.length > 1                   -> "too many characters in ${literal.displayName}"
+                        else                               -> null
+                    }?.let { holder.literalError(literal, it) }
                 }
             }
 
             // Check delimiters
-            if (!literal.hasPairedQuotes) {
-                holder.createErrorAnnotation(literal as PsiElement, "unclosed ${literal.displayName}")
+            if (literal.hasUnpairedQuotes) {
+                holder.literalError(literal, "unclosed ${literal.displayName}")
             }
 
             super.visitTextLiteral(literal)
@@ -49,9 +54,15 @@ class RustLiteralAnnotator : Annotator {
     })
 }
 
-// TODO: Make this more generic
+private fun AnnotationHolder.literalError(literal: RustLiteral, errorMessage: String): Annotation? =
+    createErrorAnnotation(literal as PsiElement, errorMessage)
+
 private val PsiElement.displayName: String
-    get() = when (node.elementType) {
+    get() = node.elementType.displayName
+
+// TODO: Make this more generic
+private val IElementType.displayName: String
+    get() = when (this) {
         INTEGER_LITERAL         -> "numeric literal"
         FLOAT_LITERAL           -> "float literal"
 

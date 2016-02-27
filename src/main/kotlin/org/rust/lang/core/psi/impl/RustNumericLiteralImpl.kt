@@ -21,9 +21,15 @@ class RustNumericLiteralImpl(type: IElementType, text: CharSequence) : RustLiter
             else            -> error("unreachable")
         }
 
+    override val isInt: Boolean
+        get() = tokenType == INTEGER_LITERAL
+
+    override val isFloat: Boolean
+        get() = tokenType == FLOAT_LITERAL
+
     override fun toString(): String = "RustNumericLiteralImpl($tokenType)"
 
-    override fun computeMetadata(): Metadata {
+    override fun computeOffsets(): Offsets {
         val (start, digits) = when {
             text.startsWith("0b") -> 2 to BIN_DIGIT
             text.startsWith("0o") -> 2 to OCT_DIGIT
@@ -33,16 +39,16 @@ class RustNumericLiteralImpl(type: IElementType, text: CharSequence) : RustLiter
 
         var hasExponent = false
         text.substring(start).forEachIndexed { i, ch ->
-            if (!hasExponent && EXP_CHARS.contains(ch)) {
+            if (!hasExponent && ch in EXP_CHARS) {
                 hasExponent = true
-            } else if (!digits.contains(ch) && !NUM_OTHER_CHARS.contains(ch)) {
-                return Metadata(
+            } else if (ch !in digits && ch !in NUM_OTHER_CHARS) {
+                return Offsets(
                     value = TextRange.create(0, i + start),
                     suffix = TextRange(i + start, textLength))
             }
         }
 
-        return Metadata(value = TextRange.allOf(text))
+        return Offsets(value = TextRange.allOf(text))
     }
 
     override fun accept(visitor: PsiElementVisitor) = when (visitor) {
