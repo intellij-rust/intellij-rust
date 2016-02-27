@@ -93,24 +93,7 @@ class CargoProjectDescription private constructor(
             return Module(
                 rootDirectory,
                 name,
-                targets.map { target ->
-                    val path = if (File(target.src_path).isAbsolute)
-                        File(target.src_path).relativeTo(rootDirectory).path
-                    else
-                        target.src_path
-
-                    check(File(rootDirectory, path).exists())
-
-                    val kind = when (target.kind) {
-                        listOf("bin")     -> TargetKind.BIN
-                        listOf("example") -> TargetKind.EXAMPLE
-                        listOf("test")    -> TargetKind.TEST
-                        listOf("bench")   -> TargetKind.BENCH
-                        else              ->
-                            if (target.kind.any { it.endsWith("lib") }) TargetKind.LIB else TargetKind.UNKNOWN
-                    }
-                    Target(path, kind)
-                }
+                targets.map { it.intoTarget(rootDirectory) }
             )
         }
 
@@ -124,6 +107,25 @@ class CargoProjectDescription private constructor(
         }
 
         private val CargoMetadata.Package.rootDirectory: File get() = File(PathUtil.getParentPath(manifest_path))
+
+        private fun CargoMetadata.Target.intoTarget(packageRoot: File): Target {
+            val path = if (File(src_path).isAbsolute)
+                File(src_path).relativeTo(packageRoot).path
+            else
+                src_path
+
+            check(File(packageRoot, path).exists())
+
+            val kind = when (kind) {
+                listOf("bin")     -> TargetKind.BIN
+                listOf("example") -> TargetKind.EXAMPLE
+                listOf("test")    -> TargetKind.TEST
+                listOf("bench")   -> TargetKind.BENCH
+                else              ->
+                    if (kind.any { it.endsWith("lib") }) TargetKind.LIB else TargetKind.UNKNOWN
+            }
+            return Target(path, kind)
+        }
     }
 }
 
