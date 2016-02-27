@@ -3,6 +3,7 @@ package org.rust.cargo
 import com.intellij.util.PathUtil
 import org.rust.cargo.commands.impl.CargoMetadata
 import java.io.File
+import java.io.Serializable
 import java.util.*
 
 class CargoProjectDescription private constructor(
@@ -34,14 +35,13 @@ class CargoProjectDescription private constructor(
         }
     }
 
-    class Target(
+    data class Target(
         /**
          * Path to the crate root file, relative to the directory with Cargo.toml
          */
         val path: String,
         val kind: TargetKind
-    ) {
-
+    ) : Serializable {
         init {
             require(!File(path).isAbsolute)
         }

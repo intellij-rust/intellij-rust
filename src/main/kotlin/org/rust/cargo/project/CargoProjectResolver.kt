@@ -116,22 +116,9 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
 
         val moduleNode = projectNode.createChild(ProjectKeys.MODULE, modData)
 
-        // Publish source-/test-/resources- roots
-        val content = ContentRootData(CargoProjectSystem.ID, module.contentRoot.absolutePath)
+        moduleNode.addRoots(module)
+        moduleNode.addTargets(module)
 
-        // Standard cargo layout
-        // http://doc.crates.io/manifest.html#the-project-layout
-        for (src in listOf("src", "examples")) {
-            content.storePath(ExternalSystemSourceType.SOURCE, File(module.contentRoot, src).absolutePath)
-        }
-
-        for (test in listOf("tests", "benches")) {
-            content.storePath(ExternalSystemSourceType.TEST, File(module.contentRoot, test).absolutePath)
-        }
-
-        content.storePath(ExternalSystemSourceType.EXCLUDED, File(module.contentRoot, "target").absolutePath)
-
-        moduleNode.createChild(ProjectKeys.CONTENT_ROOT, content)
         return moduleNode
     }
 
@@ -140,5 +127,29 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
         libData.addPath(LibraryPathType.SOURCE, lib.contentRoot.absolutePath)
         val libNode = projectNode.createChild(ProjectKeys.LIBRARY, libData)
         return libNode
+    }
+}
+
+private fun DataNode<ModuleData>.addRoots(module: CargoProjectDescription.Module) {
+    val content = ContentRootData(CargoProjectSystem.ID, module.contentRoot.absolutePath)
+
+    // Standard cargo layout
+    // http://doc.crates.io/manifest.html#the-project-layout
+    for (src in listOf("src", "examples")) {
+        content.storePath(ExternalSystemSourceType.SOURCE, File(module.contentRoot, src).absolutePath)
+    }
+
+    for (test in listOf("tests", "benches")) {
+        content.storePath(ExternalSystemSourceType.TEST, File(module.contentRoot, test).absolutePath)
+    }
+
+    content.storePath(ExternalSystemSourceType.EXCLUDED, File(module.contentRoot, "target").absolutePath)
+
+    createChild(ProjectKeys.CONTENT_ROOT, content)
+}
+
+private fun DataNode<ModuleData>.addTargets(module: CargoProjectDescription.Module) {
+    for (target in module.targets) {
+        createChild(CargoConstants.KEYS.TARGET, target)
     }
 }

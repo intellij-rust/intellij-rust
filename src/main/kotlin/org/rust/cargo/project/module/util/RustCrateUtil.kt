@@ -5,9 +5,11 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import org.rust.cargo.CargoProjectDescription
+import org.rust.cargo.project.module.persistence.CargoModuleTargetsService
+import org.rust.cargo.util.getService
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.impl.RustFile
-import org.rust.lang.core.psi.util.RustModules
 
 object RustCrateUtil
 
@@ -31,10 +33,13 @@ fun Module.relativise(f: VirtualFile): String? =
             FileUtil.getRelativePath(it.canonicalPath!!, f.canonicalPath!!, '/')
         }
 
-private val Module.crateRootFiles: Collection<VirtualFile>
-    get() = getSourceRoots(includingTestRoots = false).firstOrNull()?.let { sourceRoot ->
-        // TODO: precise information about targets is available via metadata
-        val targets = listOf(RustModules.MAIN_RS, RustModules.LIB_RS)
-        targets.mapNotNull { sourceRoot.findChild(it) }
-    }.orEmpty()
+val Module.crateRootFiles: Collection<VirtualFile>
+    get() = targets.mapNotNull { target ->
+        contentRoot.findFileByRelativePath(target.path)
+    }
 
+val Module.targets: Collection<CargoProjectDescription.Target> get() =
+    getService<CargoModuleTargetsService>().targets
+
+private val Module.contentRoot: VirtualFile get() =
+    ModuleRootManager.getInstance(this).contentRoots.single()
