@@ -9,13 +9,18 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.CargoProjectDescription
 import org.rust.cargo.project.module.RustModuleType
-import org.rust.cargo.project.module.persistence.CargoModuleTargetsService
+import org.rust.cargo.project.module.persistence.CargoModuleService
+import org.rust.cargo.project.module.persistence.ExternCrateData
 import org.rust.cargo.util.getService
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.resolve.ref.RustReference
 
 
 abstract class RustMultiFileResolveTestCaseBase : RustResolveTestCaseBase() {
+
+    abstract val targets: Collection<CargoProjectDescription.Target>
+
+    open val externCrates: Collection<ExternCrateData> = emptyList()
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return object : DefaultLightProjectDescriptor() {
@@ -24,9 +29,7 @@ abstract class RustMultiFileResolveTestCaseBase : RustResolveTestCaseBase() {
 
             override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
                 super.configureModule(module, model, contentEntry)
-                module.getService<CargoModuleTargetsService>().saveTargets(listOf(
-                    binTarget("main.rs"), libTarget("lib.rs")
-                ))
+                module.getService<CargoModuleService>().saveData(targets, externCrates)
             }
         }
     }
@@ -62,9 +65,9 @@ abstract class RustMultiFileResolveTestCaseBase : RustResolveTestCaseBase() {
         return usage.resolve()
     }
 
-    private fun binTarget(path: String): CargoProjectDescription.Target =
+    final protected fun binTarget(path: String): CargoProjectDescription.Target =
         CargoProjectDescription.Target(path, CargoProjectDescription.TargetKind.BIN)
 
-    private fun libTarget(path: String): CargoProjectDescription.Target =
+    final protected fun libTarget(path: String): CargoProjectDescription.Target =
         CargoProjectDescription.Target(path, CargoProjectDescription.TargetKind.LIB)
 }

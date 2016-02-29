@@ -11,23 +11,23 @@ import com.intellij.openapi.project.Project
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CargoProjectDescription
 import org.rust.cargo.util.getService
+import java.io.Serializable
 
 /**
- * Populates [CargoModuleTargetsService] on project import
+ * Populates [CargoModuleService] on project import
  */
-class CargoProjectDataService : AbstractProjectDataService<CargoProjectDescription.Target, Module>() {
-    override fun getTargetDataKey(): Key<CargoProjectDescription.Target> = CargoConstants.KEYS.TARGET
+class CargoProjectDataService : AbstractProjectDataService<CargoModuleData, Module>() {
+    override fun getTargetDataKey(): Key<CargoModuleData> = CargoConstants.KEYS.CARGO_MODULE_DATA
 
-    override fun postProcess(toImport: Collection<DataNode<CargoProjectDescription.Target>>,
+    override fun postProcess(toImport: Collection<DataNode<CargoModuleData>>,
                              projectData: ProjectData?,
                              project: Project,
                              modelsProvider: IdeModifiableModelsProvider) {
-        val targetsByModule = toImport.groupBy { it.getData(ProjectKeys.MODULE)?.internalName }
-
-        for ((moduleName, targets) in targetsByModule) {
+        for (node in toImport) {
+            val moduleName = node.getData(ProjectKeys.MODULE)?.internalName ?: continue
             val module = modelsProvider.modules.find { it.name == moduleName } ?: continue
-            val service = module.getService<CargoModuleTargetsService>()
-            service.saveTargets(targets.map { it.data })
+            val service = module.getService<CargoModuleService>()
+            service.saveData(node.data.targets, node.data.externCrates)
         }
     }
 }
