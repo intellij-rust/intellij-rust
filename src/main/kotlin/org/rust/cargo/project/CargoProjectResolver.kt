@@ -47,8 +47,8 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
         return projectNode
     }
 
-    private fun addDependencies(modules: Map<CargoProjectDescription.Module, DataNode<ModuleData>>,
-                                libraries: Map<CargoProjectDescription.Library, DataNode<LibraryData>>) {
+    private fun addDependencies(modules: Map<CargoProjectDescription.Package, DataNode<ModuleData>>,
+                                libraries: Map<CargoProjectDescription.Package, DataNode<LibraryData>>) {
         for ((module, node) in modules) {
             for (dep in module.moduleDependencies) {
                 node.createChild(
@@ -102,7 +102,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
         }
     }
 
-    private fun createModuleNode(module: CargoProjectDescription.Module, projectNode: DataNode<ProjectData>): DataNode<ModuleData> {
+    private fun createModuleNode(module: CargoProjectDescription.Package, projectNode: DataNode<ProjectData>): DataNode<ModuleData> {
         val root = module.contentRoot.absolutePath
         val modData =
             ModuleData(
@@ -122,7 +122,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
         return moduleNode
     }
 
-    private fun createLibraryNode(lib: CargoProjectDescription.Library, projectNode: DataNode<ProjectData>): DataNode<LibraryData> {
+    private fun createLibraryNode(lib: CargoProjectDescription.Package, projectNode: DataNode<ProjectData>): DataNode<LibraryData> {
         val libData = LibraryData(CargoProjectSystem.ID, "${lib.name} ${lib.version}")
         libData.addPath(LibraryPathType.SOURCE, lib.contentRoot.absolutePath)
         val libNode = projectNode.createChild(ProjectKeys.LIBRARY, libData)
@@ -130,7 +130,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
     }
 }
 
-private fun DataNode<ModuleData>.addRoots(module: CargoProjectDescription.Module) {
+private fun DataNode<ModuleData>.addRoots(module: CargoProjectDescription.Package) {
     val content = ContentRootData(CargoProjectSystem.ID, module.contentRoot.absolutePath)
 
     // Standard cargo layout
@@ -148,8 +148,20 @@ private fun DataNode<ModuleData>.addRoots(module: CargoProjectDescription.Module
     createChild(ProjectKeys.CONTENT_ROOT, content)
 }
 
-private fun DataNode<ModuleData>.addTargets(module: CargoProjectDescription.Module) {
+private fun DataNode<ModuleData>.addTargets(module: CargoProjectDescription.Package) {
     for (target in module.targets) {
         createChild(CargoConstants.KEYS.TARGET, target)
     }
 }
+
+private val CargoProjectDescription.modules: Collection<CargoProjectDescription.Package> get() =
+    packages.filter { it.isModule }
+
+private val CargoProjectDescription.libraries: Collection<CargoProjectDescription.Package> get() =
+    packages.filter { !it.isModule }
+
+private val CargoProjectDescription.Package.moduleDependencies: Collection<CargoProjectDescription.Package> get() =
+    dependencies.filter { it.isModule }
+
+private val CargoProjectDescription.Package.libraryDependencies: Collection<CargoProjectDescription.Package> get() =
+    dependencies.filter { !it.isModule }

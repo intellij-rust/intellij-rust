@@ -10,12 +10,11 @@ class CargoTestCase : CargoTestCaseBase() {
     fun testCargoMetadata() {
         val description = Cargo(testProjectJdk?.pathToCargo!!, project.basePath!!).fullProjectDescription()
 
-        assertThat(description.modules.size == 2)
-        for (module in description.modules) {
+        assertThat(description.packages.size == 3)
+        for (module in description.packages) {
             val target = module.targets.single()
             assertThat(target.path).startsWith("src")
         }
-        assertThat(description.libraries.size == 1)
     }
 }
 
