@@ -31,4 +31,4 @@ As this is a preview release, something might go wrong. So, be brave to face som
 
 You're encouraged to contribute to the plugin in any form if you've found any issues or missing
 functionality that you'd want to see. In order to get started, check out
-[CONTRIBUTING.md](CONTRIBUTING.md) guide.
+[CONTRIBUTING.md](CONTRIBUTING.md) guide and [up-for-grab](https://github.com/intellij-rust/intellij-rust/labels/up%20for%20grab) tasks.
