@@ -5,14 +5,38 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RustLiteral
 import org.rust.lang.core.psi.RustLiteralTokenType
-import org.rust.lang.core.psi.RustNumber
 import org.rust.lang.core.psi.RustTokenElementTypes.FLOAT_LITERAL
 import org.rust.lang.core.psi.RustTokenElementTypes.INTEGER_LITERAL
 import org.rust.lang.core.psi.visitors.RustVisitorEx
 
 class RustNumericLiteralImpl(type: IElementType, text: CharSequence) : RustLiteral.Number(type, text) {
-    override val value: RustNumber<*>?
-        get() = valueString?.let { RustNumber.create(it, suffix, tokenType) }
+    override val valueAsLong: Long?
+        get() = this.valueString
+            ?.filter { it != '_' }
+            ?.let {
+                val (start, radix) = when (it.take(2)) {
+                    "0b" -> 2 to 2
+                    "0o" -> 2 to 8
+                    "0x" -> 2 to 16
+                    else -> 0 to 10
+                }
+                try {
+                    java.lang.Long.parseUnsignedLong(it.substring(start), radix)
+                } catch(e: NumberFormatException) {
+                    null
+                }
+            }
+
+    override val valueAsDouble: Double?
+        get() = this.valueString
+            ?.filter { it != '_' }
+            ?.let {
+                try {
+                    it.toDouble()
+                } catch(e: NumberFormatException) {
+                    null
+                }
+            }
 
     override val possibleSuffixes: Collection<String>
         get() = when (tokenType) {
@@ -30,11 +54,11 @@ class RustNumericLiteralImpl(type: IElementType, text: CharSequence) : RustLiter
     override fun toString(): String = "RustNumericLiteralImpl($tokenType)"
 
     override fun computeOffsets(): Offsets {
-        val (start, digits) = when {
-            text.startsWith("0b") -> 2 to BIN_DIGIT
-            text.startsWith("0o") -> 2 to OCT_DIGIT
-            text.startsWith("0x") -> 2 to HEX_DIGIT
-            else                  -> 0 to DEC_DIGIT
+        val (start, digits) = when (text.take(2)) {
+            "0b" -> 2 to BIN_DIGIT
+            "0o" -> 2 to OCT_DIGIT
+            "0x" -> 2 to HEX_DIGIT
+            else -> 0 to DEC_DIGIT
         }
 
         var hasExponent = false

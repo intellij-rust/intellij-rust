@@ -18,7 +18,7 @@ class ApproxConstantInspection : RustLocalInspectionTool() {
 
     private fun analyzeLiteral(literal: RustLiteral.Number, holder: ProblemsHolder) {
         check(literal.isFloat)
-        val value = literal.value?.javaValue as Double? ?: return
+        val value = literal.valueAsDouble ?: return
         val constant = KNOWN_CONSTS.find { it.matches(value) } ?: return
         holder.registerProblem(literal, literal.suffix ?: "f64", constant)
     }

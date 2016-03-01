@@ -45,7 +45,8 @@ sealed class RustLiteral(type: IElementType, text: CharSequence) : LeafPsiElemen
      * Base class for numeric literals: integers and floats.
      */
     abstract class Number(type: IElementType, text: CharSequence) : RustLiteral(type, text) {
-        abstract val value: RustNumber<*>?
+        abstract val valueAsLong: Long?
+        abstract val valueAsDouble: Double?
         abstract val isInt: Boolean
         abstract val isFloat: Boolean
     }
