@@ -9,29 +9,35 @@ class RustRawStringLiteralImpl(type: IElementType, text: CharSequence) : RustTex
 
     override fun toString(): String = "RustRawStringLiteralImpl($tokenType)"
 
-    private var hashes = 0
+    override fun computeOffsets(): Offsets {
+        val prefixEnd = locatePrefix()
 
-    override fun locateOpenDelim(start: Int): Int {
-        assert(text[start] == '#' || text[start] == '"') { "expected open delim" }
+        val hashes = countHashes(prefixEnd)
+
+        val openDelimEnd = doLocate(prefixEnd) {
+            assert(textLength - it >= 1 + hashes && text[it] == '#' || text[it] == '"') { "expected open delim" }
+            it + 1 + hashes
+        }
+
+        val valueEnd = doLocate(openDelimEnd) { locateValue(it, hashes) }
+
+        val closeDelimEnd = doLocate(valueEnd) {
+            assert(textLength - it >= 1 + hashes && text[it] == '"') { "expected close delim" }
+            it + 1 + hashes
+        }
+
+        return Offsets.fromEndOffsets(prefixEnd, openDelimEnd, valueEnd, closeDelimEnd, textLength)
+    }
+
+    private fun countHashes(start: Int): Int {
         var pos = start
         while (pos < textLength && text[pos] == '#') {
-            hashes++
             pos++
         }
-        if (pos < textLength) {
-            assert(text[pos] == '"') { "expected \" but found ${text[pos]}" }
-            return pos + 1
-        } else {
-            return textLength
-        }
+        return pos - start
     }
 
-    override fun locateCloseDelim(start: Int): Int {
-        assert(textLength - start >= 1 + hashes && text[start] == '"') { "expected close delim" }
-        return start + 1 + hashes
-    }
-
-    override fun locateValue(start: Int): Int {
+    private fun locateValue(start: Int, hashes: Int): Int {
         text.substring(start).forEachIndexed { i, ch ->
             if (start + i + hashes < textLength &&
                 ch == '"' &&

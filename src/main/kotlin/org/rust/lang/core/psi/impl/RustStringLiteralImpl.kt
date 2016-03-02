@@ -13,23 +13,30 @@ class RustStringLiteralImpl(type: IElementType, text: CharSequence) : RustTextLi
 
     override fun toString(): String = "RustStringLiteralImpl($tokenType)"
 
-    private val quote: Char
-        get() = when (tokenType) {
-            BYTE_LITERAL,
-            CHAR_LITERAL -> '\''
-            else         -> '"'
+    override fun computeOffsets(): Offsets {
+        val quote = when (tokenType) {
+            BYTE_LITERAL, CHAR_LITERAL -> '\''
+            else                       -> '"'
         }
 
-    override fun locateOpenDelim(start: Int): Int = locateDelim(start)
-    override fun locateCloseDelim(start: Int): Int = locateDelim(start)
+        val prefixEnd = locatePrefix()
 
-    private fun locateDelim(start: Int): Int {
-        assert(start < textLength) { "start is after textLength" }
-        assert(text[start] == quote) { "expected delimiter `$quote` but found `${text[start]}`" }
-        return start + 1
+        val openDelimEnd = doLocate(prefixEnd) {
+            assert(text[it] == quote) { "expected open delimiter `$quote` but found `${text[it]}`" }
+            it + 1
+        }
+
+        val valueEnd = doLocate(openDelimEnd) { locateValue(it, quote) }
+
+        val closeDelimEnd = doLocate(valueEnd) {
+            assert(text[it] == quote) { "expected close delimiter `$quote` but found `${text[it]}`" }
+            it + 1
+        }
+
+        return Offsets.fromEndOffsets(prefixEnd, openDelimEnd, valueEnd, closeDelimEnd, textLength)
     }
 
-    override fun locateValue(start: Int): Int {
+    private fun locateValue(start: Int, quote: Char): Int {
         var escape = false
         text.substring(start).forEachIndexed { i, ch ->
             if (escape) {
