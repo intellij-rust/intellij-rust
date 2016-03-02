@@ -2,7 +2,7 @@ package org.rust.cargo.project.settings
 
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings
 
-class CargoProjectSettings : ExternalProjectSettings() {
+class CargoProjectSettings(var cargoHome: String? = null) : ExternalProjectSettings() {
 
     protected fun copyTo(receiver: CargoProjectSettings) {
         receiver.cargoHome = cargoHome
@@ -14,6 +14,4 @@ class CargoProjectSettings : ExternalProjectSettings() {
         copyTo(result)
         return result
     }
-
-    var cargoHome: String? = null
 }
