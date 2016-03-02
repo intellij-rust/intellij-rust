@@ -14,6 +14,8 @@ class RustNumericLiteralImpl(type: IElementType, text: CharSequence) : RustLiter
         get() = this.valueString
             ?.filter { it != '_' }
             ?.let {
+                // We do not expect negative values, because they are treated as
+                // unary expressions, not literals, in our lexing/parsing code.
                 val (start, radix) = when (it.take(2)) {
                     "0b" -> 2 to 2
                     "0o" -> 2 to 8
@@ -21,7 +23,9 @@ class RustNumericLiteralImpl(type: IElementType, text: CharSequence) : RustLiter
                     else -> 0 to 10
                 }
                 try {
-                    java.lang.Long.parseUnsignedLong(it.substring(start), radix)
+                    java.lang.Long.parseLong(it.substring(start), radix)
+                    // TODO: Replace this with: (when we migrate to Java 8)
+                    // java.lang.Long.parseUnsignedLong(it.substring(start), radix)
                 } catch(e: NumberFormatException) {
                     null
                 }
