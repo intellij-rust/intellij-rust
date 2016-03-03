@@ -63,11 +63,54 @@ object RustResolveEngine {
     // TODO(kudinkin): Unify following?
     //
 
-    fun resolveModDecl(ref: RustModDeclItem): ResolveResult =
-        Resolver().resolveModDecl(ref)
-
     fun resolveUseGlob(ref: RustUseGlob): ResolveResult =
         Resolver().resolveUseGlob(ref)
+
+    /**
+     * Looks-up file corresponding to particular module designated by `mod-declaration-item`:
+     *
+     *  ```
+     *  // foo.rs
+     *  pub mod bar; // looks up `bar.rs` or `bar/mod.rs` in the same dir
+     *
+     *  pub mod nested {
+     *      pub mod baz; // looks up `nested/baz.rs` or `nested/baz/mod.rs`
+     *  }
+     *
+     *  ```
+     *
+     *  | A module without a body is loaded from an external file, by default with the same name as the module,
+     *  | plus the '.rs' extension. When a nested sub-module is loaded from an external file, it is loaded
+     *  | from a subdirectory path that mirrors the module hierarchy.
+     *
+     * Reference:
+     *      https://github.com/rust-lang/rust/blob/master/src/doc/reference.md#modules
+     */
+    fun resolveModDecl(ref: RustModDeclItem): ResolveResult {
+        val parent  = ref.containingMod
+        val name    = ref.name
+
+        if (parent == null || name == null || !parent.ownsDirectory) {
+            return RustResolveEngine.ResolveResult.Unresolved
+        }
+
+        val dir = parent.ownedDirectory
+
+        // Lookup `name.rs` module
+        val fileName = "$name.rs"
+        val fileMod  = dir?.findFile(fileName) as? RustFile
+
+        // Lookup `name/mod.rs` module
+        val dirMod = dir?.findSubdirectory(name)?.findFile(RustModules.MOD_RS) as? RustFile
+
+        val resolved = listOf(fileMod, dirMod).mapNotNull { it?.mod }
+
+        return when (resolved.size) {
+            0    -> RustResolveEngine.ResolveResult.Unresolved
+            1    -> RustResolveEngine.ResolveResult.Resolved    (resolved.single())
+            else -> RustResolveEngine.ResolveResult.Ambiguous   (resolved)
+        }
+    }
 
     fun resolveExternCrate(crate: RustExternCrateItem): ResolveResult {
         val name = crate.name ?: return ResolveResult.Unresolved
@@ -97,9 +140,7 @@ private class Resolver {
         if (name == RustAnonymousId) {
             return RustResolveEngine.ResolveResult.Resolved(root)
         } else if (name is RustFileModuleId) {
-            return name.path.findModuleIn(root.project)?.let {
-                RustResolveEngine.ResolveResult.Resolved(it)
-            } ?: RustResolveEngine.ResolveResult.Unresolved
+            return name.path.findModuleIn(root.project).asResolveResult()
         }
 
         return resolve(name.qualifier!!, root).element?.let {
@@ -131,52 +172,6 @@ private class Resolver {
         }
 
         return resolveIn(enumerateScopesFor(ref), by(ref))
-    }
-
-    /**
-     * Looks-up file corresponding to particular module designated by `mod-declaration-item`:
-     *
-     *  ```
-     *  // foo.rs
-     *  pub mod bar; // looks up `bar.rs` or `bar/mod.rs` in the same dir
-     *
-     *  pub mod nested {
-     *      pub mod baz; // looks up `nested/baz.rs` or `nested/baz/mod.rs`
-     *  }
-     *
-     *  ```
-     *
-     *  | A module without a body is loaded from an external file, by default with the same name as the module,
-     *  | plus the '.rs' extension. When a nested sub-module is loaded from an external file, it is loaded
-     *  | from a subdirectory path that mirrors the module hierarchy.
-     *
-     * Reference:
-     *      https://github.com/rust-lang/rust/blob/master/src/doc/reference.md#modules
-     */
-    fun resolveModDecl(ref: RustModDeclItem): RustResolveEngine.ResolveResult {
-        val parent  = ref.containingMod
-        val name    = ref.name
-
-        if (parent == null || name == null || !parent.ownsDirectory) {
-            return RustResolveEngine.ResolveResult.Unresolved
-        }
-
-        val dir = parent.ownedDirectory
-
-        // Lookup `name.rs` module
-        val fileName = "$name.rs"
-        val fileMod  = dir?.findFile(fileName) as? RustFile
-
-        // Lookup `name/mod.rs` module
-        val dirMod = dir?.findSubdirectory(name)?.findFile(RustModules.MOD_RS) as? RustFile
-
-        val resolved = listOf(fileMod, dirMod).mapNotNull { it?.mod }
-
-        return when (resolved.size) {
-            0    -> RustResolveEngine.ResolveResult.Unresolved
-            1    -> RustResolveEngine.ResolveResult.Resolved    (resolved.single())
-            else -> RustResolveEngine.ResolveResult.Ambiguous   (resolved)
-        }
     }
 
     /**
