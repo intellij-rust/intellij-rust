@@ -3,39 +3,24 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import org.rust.lang.core.psi.RustLitExpr
-import org.rust.lang.core.psi.RustVisitor
+import org.rust.lang.core.psi.RustLiteral
+import org.rust.lang.core.psi.visitors.RustVisitorEx
 
 class ApproxConstantInspection : RustLocalInspectionTool() {
-
     override fun getDisplayName() = "Approximate Constants"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return object : RustVisitor() {
-            override fun visitLitExpr(o: RustLitExpr) {
-                analyzeLiteral(o.floatLiteral ?: return, holder)
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+        object : RustVisitorEx() {
+            override fun visitNumericLiteral(literal: RustLiteral.Number) {
+                if (literal.isFloat) analyzeLiteral(literal, holder)
             }
         }
-    }
 
-    private fun analyzeLiteral(psiElement: PsiElement, holder: ProblemsHolder) {
-        val text = psiElement.text
-            .filter { it != '_' }
-            .removeSuffix("f32")
-            .removeSuffix("f64")
-
-        // Parse the float literal and skip inspection on failure
-        val value = try {
-            text.toDouble()
-        } catch (e: NumberFormatException) {
-            return
-        }
-
+    private fun analyzeLiteral(literal: RustLiteral.Number, holder: ProblemsHolder) {
+        check(literal.isFloat)
+        val value = literal.valueAsDouble ?: return
         val constant = KNOWN_CONSTS.find { it.matches(value) } ?: return
-
-        val type = if (psiElement.text.endsWith("f32")) "f32" else "f64"
-
-        holder.registerProblem(psiElement, type, constant)
+        holder.registerProblem(literal, literal.suffix ?: "f64", constant)
     }
 
     companion object {
