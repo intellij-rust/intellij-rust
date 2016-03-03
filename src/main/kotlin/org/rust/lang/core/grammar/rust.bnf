@@ -864,9 +864,8 @@ private atom_expr ::= lit_expr
                     | path_expr !LPAREN
                     | call_expr
                     | array_expr
-                    | tuple_expr
                     | unit_expr
-                    | paren_expr
+                    | tuple_or_paren_expr
 
 
 binary_expr ::= restricted_expr + {
@@ -953,11 +952,20 @@ while_let_expr ::= WHILE scoped_let_decl block
 
 ret_expr ::= RETURN restricted_expr?
 
-paren_expr ::= (LPAREN any_expr RPAREN)
-
 unit_expr ::= LPAREN RPAREN
 
-tuple_expr ::= LPAREN any_expr ((COMMA any_expr)+ | COMMA) RPAREN
+// It is possible to distinguish between paren_expr (any_expr) and a single element
+// tuple_expr (any_expr,) only after almost all input has been consumed. That is, it's
+// not LL(k) for any k. So let's use a custom rule to avoid exponential backtracking.
+tuple_or_paren_expr ::= << tupleOrParenExpr any_expr tuple_expr_end paren_expr_end >>
+
+// Used by `tupleOrParenExpr`
+tuple_expr ::= LPAREN any_expr tuple_expr_end
+private tuple_expr_end ::= COMMA [ any_expr (COMMA any_expr)* COMMA? ] RPAREN
+
+// Used by `tupleOrParenExpr`
+paren_expr ::= LPAREN any_expr paren_expr_end
+private paren_expr_end ::= RPAREN
 
 array_expr ::= LBRACK array_elems? RBRACK {pin=1}
 
