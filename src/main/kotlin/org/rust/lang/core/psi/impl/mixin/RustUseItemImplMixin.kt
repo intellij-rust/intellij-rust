@@ -19,7 +19,7 @@ abstract class RustUseItemImplMixin : RustItemImpl, RustUseItem {
             val globs = viewPath.useGlobList
             return if (globs == null) {
                 // use foo::bar;
-                listOf(viewPath.alias ?: viewPath.pathPart).filterNotNull()
+                listOfNotNull(viewPath.alias ?: viewPath.pathPart)
             } else {
                 // use foo::bar::{...};
                 globs.useGlobList.mapNotNull { it.boundElement }
