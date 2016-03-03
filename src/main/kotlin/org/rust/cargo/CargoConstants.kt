@@ -2,6 +2,7 @@ package org.rust.cargo
 
 import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import org.rust.cargo.project.module.persistence.CargoModuleData
 
 object CargoConstants {
     const val ID      = "Cargo"
@@ -15,6 +16,6 @@ object CargoConstants {
     const val CARGO_EXECUTABLE_NAME: String = "cargo"
 
     object KEYS {
-        val TARGET = Key.create(CargoProjectDescription.Target::class.java, 0)
+        val CARGO_MODULE_DATA = Key.create(CargoModuleData::class.java, 0)
     }
 }

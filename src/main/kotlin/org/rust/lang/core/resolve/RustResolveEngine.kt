@@ -1,7 +1,10 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
+import com.intellij.psi.PsiManager
 import org.rust.cargo.project.module.util.crateRoots
+import org.rust.cargo.project.module.util.externCrates
+import org.rust.cargo.project.module.util.targets
 import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
@@ -66,8 +69,20 @@ object RustResolveEngine {
     fun resolveUseGlob(ref: RustUseGlob): ResolveResult =
         Resolver().resolveUseGlob(ref)
 
-}
+    fun resolveExternCrate(crate: RustExternCrateItem): ResolveResult {
+        val name = crate.name ?: return ResolveResult.Unresolved
+        val module = crate.getModule() ?: return ResolveResult.Unresolved
+        for (c in module.externCrates) {
+            if (c.name == name) {
+                val file = c.psiFile.value as? RustFile
+                return file?.mod.asResolveResult()
+            }
+        }
 
+        return RustResolveEngine.ResolveResult.Unresolved
+    }
+
+}
 
 private class Resolver {
 
@@ -306,6 +321,9 @@ private class Resolver {
                     is RustModDeclItem ->
                         elem.reference?.let { it.resolve() }
 
+                    is RustExternCrateItem ->
+                        elem.reference?.let { it.resolve() }
+
                     // Check whether resolved element (being path-part, use-glob, or alias)
                     // could be further resolved
 
@@ -384,6 +402,14 @@ fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolve
 
 
 private fun RustResolveScope.resolveUsing(c: Resolver.ResolveContext): RustNamedElement? = c.accept(this)
+
+
+fun RustNamedElement?.asResolveResult(): RustResolveEngine.ResolveResult =
+    if (this == null)
+        RustResolveEngine.ResolveResult.Unresolved
+    else
+        RustResolveEngine.ResolveResult.Resolved(this)
+
 
 /**
  * Helper to debug complex iterator pipelines

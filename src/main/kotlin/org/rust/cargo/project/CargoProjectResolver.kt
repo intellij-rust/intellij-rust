@@ -17,6 +17,8 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.commands.Cargo
 import org.rust.cargo.CargoProjectDescription
 import org.rust.cargo.project.module.RustModuleType
+import org.rust.cargo.project.module.persistence.CargoModuleData
+import org.rust.cargo.project.module.persistence.ExternCrateData
 import org.rust.cargo.project.settings.CargoExecutionSettings
 import java.io.File
 
@@ -117,7 +119,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
         val moduleNode = projectNode.createChild(ProjectKeys.MODULE, modData)
 
         moduleNode.addRoots(module)
-        moduleNode.addTargets(module)
+        moduleNode.addCargoData(module)
 
         return moduleNode
     }
@@ -148,10 +150,13 @@ private fun DataNode<ModuleData>.addRoots(module: CargoProjectDescription.Packag
     createChild(ProjectKeys.CONTENT_ROOT, content)
 }
 
-private fun DataNode<ModuleData>.addTargets(module: CargoProjectDescription.Package) {
-    for (target in module.targets) {
-        createChild(CargoConstants.KEYS.TARGET, target)
-    }
+private fun DataNode<ModuleData>.addCargoData(module: CargoProjectDescription.Package) {
+    check(module.isModule)
+    val externCrates = module.dependencies.mapNotNull { it.asExternCrateFor(module) }
+    createChild(CargoConstants.KEYS.CARGO_MODULE_DATA, CargoModuleData(
+        module.targets,
+        externCrates
+    ))
 }
 
 private val CargoProjectDescription.modules: Collection<CargoProjectDescription.Package> get() =
@@ -165,3 +170,19 @@ private val CargoProjectDescription.Package.moduleDependencies: Collection<Cargo
 
 private val CargoProjectDescription.Package.libraryDependencies: Collection<CargoProjectDescription.Package> get() =
     dependencies.filter { !it.isModule }
+
+private val CargoProjectDescription.Package.libTarget: CargoProjectDescription.Target? get() =
+    targets.find { it.isLib }
+
+private fun CargoProjectDescription.Package.asExternCrateFor(module: CargoProjectDescription.Package): ExternCrateData? {
+    check(module.isModule)
+    val target = libTarget ?: return null
+
+    val absPath = File(contentRoot, target.path).absolutePath
+    val path = if (isModule)
+        File(absPath).relativeTo(module.contentRoot).path
+    else
+        absPath
+
+    return ExternCrateData(name, path)
+}

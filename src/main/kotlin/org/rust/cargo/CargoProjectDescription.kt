@@ -36,6 +36,8 @@ class CargoProjectDescription private constructor(
         init {
             require(!File(path).isAbsolute)
         }
+
+        val isLib: Boolean get() = kind == TargetKind.LIB
     }
 
     enum class TargetKind {

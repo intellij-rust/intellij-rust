@@ -1,6 +1,9 @@
 package org.rust.lang.core.resolve
 
+import org.rust.cargo.CargoProjectDescription
+
 class RustMultiFileResolveTestCaseExecutableTarget : RustMultiFileResolveTestCaseBase() {
+    override val targets: Collection<CargoProjectDescription.Target> = listOf(binTarget("main.rs"))
 
     // Check whether resolving-procedure succeeds
 
