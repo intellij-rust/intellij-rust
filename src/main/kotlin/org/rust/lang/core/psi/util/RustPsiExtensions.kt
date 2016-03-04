@@ -4,12 +4,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustPat
 import org.rust.lang.core.psi.RustTokenElementTypes
-import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.visitors.RecursiveRustVisitor
-import org.rust.lang.core.resolve.indexes.RustModulePath
 
 
 //

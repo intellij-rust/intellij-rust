@@ -1,7 +1,6 @@
 package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
-import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustUseItem

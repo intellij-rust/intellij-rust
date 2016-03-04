@@ -71,6 +71,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Vladislav.Soroka
  * @since 6/30/2014
  */
+@SuppressWarnings("ALL")
 public abstract class ExternalSystemImportingTestCase extends ExternalSystemTestCase {
 
   @Override

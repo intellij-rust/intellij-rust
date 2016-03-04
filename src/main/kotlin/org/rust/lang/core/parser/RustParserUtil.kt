@@ -35,7 +35,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         fun drop(m: PsiBuilder.Marker)                      { m.drop() }
 
         val m = b.mark()
-        var r = false
+        var r: Boolean
 
         try {
 
@@ -86,9 +86,9 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return result
     }
 
-    @JvmStatic fun checkStructAllowed(b: PsiBuilder, level: Int) : Boolean = b.getStructAllowed()
+    @JvmStatic fun checkStructAllowed(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int) : Boolean = b.getStructAllowed()
 
-    @JvmStatic fun checkBraceAllowed(b: PsiBuilder, level: Int) : Boolean {
+    @JvmStatic fun checkBraceAllowed(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int) : Boolean {
         return b.getStructAllowed() || b.tokenType != RustTokenElementTypes.LBRACE
     }
 
@@ -104,7 +104,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         }
     }
 
-    @JvmStatic fun skipUntilEOL(b: PsiBuilder, level: Int): Boolean {
+    @JvmStatic fun skipUntilEOL(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int): Boolean {
         while (!b.eof()) {
             if (b.tokenType == TokenType.WHITE_SPACE
             ||  b.tokenText?.containsEOL() != null) return true;
@@ -115,7 +115,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return false;
     }
 
-    @JvmStatic fun unpairedToken(b: PsiBuilder, level: Int): Boolean {
+    @JvmStatic fun unpairedToken(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int): Boolean {
         when (b.tokenType) {
             RustTokenElementTypes.LBRACE, RustTokenElementTypes.RBRACE -> return false
             RustTokenElementTypes.LPAREN, RustTokenElementTypes.RPAREN -> return false

@@ -11,12 +11,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
-import org.rust.lang.RustLanguage
 import org.rust.lang.core.lexer.RustLexer
-import org.rust.lang.core.psi.RustTokenElementTypes
-import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.core.parser.RustParser
 import org.rust.lang.core.psi.RustCompositeElementTypes
+import org.rust.lang.core.psi.RustTokenElementTypes
+import org.rust.lang.core.psi.RustTokenElementTypes.STRING_LITERAL
 import org.rust.lang.core.psi.impl.RustFile
 
 class RustParserDefinition : ParserDefinition {

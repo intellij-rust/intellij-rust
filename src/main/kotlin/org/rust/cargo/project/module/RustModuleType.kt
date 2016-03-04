@@ -1,12 +1,8 @@
 package org.rust.cargo.project.module
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.ModuleTypeManager
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.vfs.VirtualFile
-import org.rust.cargo.project.module.persistence.impl.CargoModuleServiceImpl
 import org.rust.ide.icons.RustIcons
 import javax.swing.Icon
 

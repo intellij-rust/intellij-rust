@@ -7,7 +7,6 @@ import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.RustFileType
-import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.RustVisitor

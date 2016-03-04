@@ -4,8 +4,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.containingMod
-import org.rust.lang.core.psi.impl.RustFile
-import org.rust.lang.core.psi.util.*
+import org.rust.lang.core.psi.util.`super`
 import org.rust.lang.core.resolve.scope.RustResolveScope
 
 object RustResolveUtil {

@@ -55,7 +55,7 @@ class Cargo(
 
     private fun GeneralCommandLine.execute(listener: ProcessListener? = null): ProcessOutput {
         val process = createProcess()
-        val handler = CapturingProcessHandler(process)
+        val handler = CapturingProcessHandler(process, Charsets.UTF_8, commandLineString)
 
         listener?.let { handler.addProcessListener(it) }
 

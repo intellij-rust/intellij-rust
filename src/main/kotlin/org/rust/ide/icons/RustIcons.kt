@@ -33,17 +33,13 @@ object RustIcons {
     val TEST_MARK    = AllIcons.Nodes.JunitTestMark
 }
 
-fun Icon.addStaticMark(): Icon {
-    return LayeredIcon(this, RustIcons.STATIC_MARK);
-}
+fun Icon.addStaticMark(): Icon = LayeredIcon(this, RustIcons.STATIC_MARK)
 
-fun Icon.addTestMark(): Icon {
-    return LayeredIcon(this, RustIcons.TEST_MARK);
-}
+fun Icon.addTestMark(): Icon = LayeredIcon(this, RustIcons.TEST_MARK)
 
 fun Icon.addVisibilityIcon(pub: Boolean): RowIcon {
     val visibility = if (pub) PsiUtil.ACCESS_LEVEL_PUBLIC else PsiUtil.ACCESS_LEVEL_PRIVATE
     val icon = RowIcon(this, EmptyIcon.create(PlatformIcons.PUBLIC_ICON))
-    VisibilityIcons.setVisibilityIcon(visibility, icon);
-    return icon;
+    VisibilityIcons.setVisibilityIcon(visibility, icon)
+    return icon
 }

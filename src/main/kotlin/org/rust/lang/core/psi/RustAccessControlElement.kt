@@ -1,8 +1,6 @@
 package org.rust.lang.core.psi
 
 import com.intellij.openapi.util.Iconable
-import com.intellij.psi.impl.ElementBase
-import org.rust.ide.icons.RustIcons
 import org.rust.ide.icons.addVisibilityIcon
 import javax.swing.Icon
 

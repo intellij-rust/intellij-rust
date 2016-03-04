@@ -3,7 +3,6 @@ package org.rust.cargo.project
 import com.google.gson.Gson
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.SimpleJavaParameters
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId

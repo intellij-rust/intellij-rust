@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
-import org.rust.ide.icons.addVisibilityIcon
 import org.rust.lang.core.psi.RustFileModItem
 import org.rust.lang.core.psi.impl.RustModItemImpl
 import org.rust.lang.core.psi.util.RustModules

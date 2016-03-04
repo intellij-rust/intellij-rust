@@ -2,7 +2,6 @@ package org.rust.lang.core.psi
 
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ref.RustReference
 
@@ -13,4 +12,4 @@ interface RustCompositeElement   : PsiElement
 }
 
 val RustCompositeElement.containingMod: RustModItem?
-    get() = parentOfType<RustModItem>()
+    get() = parentOfType()

@@ -1,6 +1,5 @@
 package org.rust.lang.core.names
 
-import com.intellij.util.io.IOUtil
 import org.rust.lang.core.names.parts.RustNamePart
 import java.io.*
 
