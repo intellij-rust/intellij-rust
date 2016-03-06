@@ -24,7 +24,6 @@ abstract class RustTraitMethodImplMixin(node: ASTNode) : RustCompositeElementImp
     val isAbstract: Boolean
         get() = block == null
 
-    val isStatic: Boolean
-        get() = self == null;
-
 }
+
+val RustTraitMethod.isStatic: Boolean get() = self == null

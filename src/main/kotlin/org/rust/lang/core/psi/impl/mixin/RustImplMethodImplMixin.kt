@@ -26,6 +26,6 @@ abstract class RustImplMethodImplMixin(node: ASTNode)   : RustNamedElementImpl(n
     override val isPublic: Boolean
         get() = vis != null
 
-    val isStatic: Boolean
-        get() = self == null
 }
+
+val RustImplMethod.isStatic: Boolean get() = self == null

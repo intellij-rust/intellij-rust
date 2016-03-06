@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.colorscheme.RustColors
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.isMut
+import org.rust.lang.core.psi.impl.mixin.isStatic
 
 class RustHighlightingAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) = element.accept(object : RustVisitor() {
@@ -35,6 +36,18 @@ class RustHighlightingAnnotator : Annotator {
                     holder.highlight(o.identifier, RustColors.MUT_BINDING)
                 }
             }
+        }
+
+        override fun visitFnItem(o: RustFnItem) {
+            holder.highlight(o.identifier, RustColors.FUNCTION_DECLARATION)
+        }
+
+        override fun visitImplMethod(o: RustImplMethod) {
+            holder.highlight(o.identifier, if (o.isStatic) RustColors.STATIC_METHOD else RustColors.INSTANCE_METHOD)
+        }
+
+        override fun visitTraitMethod(o: RustTraitMethod) {
+            holder.highlight(o.identifier, if (o.isStatic) RustColors.STATIC_METHOD else RustColors.INSTANCE_METHOD)
         }
     })
 }
