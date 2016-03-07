@@ -1,4 +1,4 @@
 <info>#[cfg_attr(foo)]</info>
-fn main() {
+fn <info>main</info>() {
     <info>#![crate_type = "lib"]</info>
 }

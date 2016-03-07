@@ -17,6 +17,7 @@ class RustAnnotatorTest : RustTestCaseBase() {
     fun testMacro() = doTestInfo()
     fun testTypeParameters() = doTestInfo()
     fun testMutBinding() = doTestInfo()
+    fun testFunctions() = doTestInfo()
 
     fun testCharLiteralLength() = doTest()
     fun testLiteralSuffixes() = doTest()
