@@ -11,7 +11,6 @@ import org.rust.cargo.CargoProjectDescription
 import org.rust.cargo.project.module.persistence.CargoModuleService
 import org.rust.cargo.util.getService
 import org.rust.lang.core.psi.RustModItem
-import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.rustMod
 import java.io.File
 
@@ -39,7 +38,7 @@ fun Module.relativise(f: VirtualFile): String? =
 val Module.crateRootFiles: Collection<VirtualFile>
     get() = targets.mapNotNull { target ->
         contentRoot.findFileByRelativePath(target.path)
-    }
+    } + externCrates.mapNotNull { it.virtualFile }
 
 val Module.targets: Collection<CargoProjectDescription.Target> get() =
     getService<CargoModuleService>().targets
@@ -53,6 +52,8 @@ data class ExternCrate(
     /**
      * Root module file (typically `src/lib.rs`)
      */
+    val virtualFile: VirtualFile,
+
     val psiFile: Lazy<PsiFile?>
 )
 
@@ -71,6 +72,7 @@ val Module.externCrates: Collection<ExternCrate> get() =
         vFile?.let { vFile ->
             ExternCrate(
                 crate.name,
+                vFile,
                 lazy {
                     PsiManager.getInstance(project).findFile(vFile)
                 }
