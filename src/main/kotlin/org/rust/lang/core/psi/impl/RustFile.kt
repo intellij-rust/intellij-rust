@@ -7,6 +7,7 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
 import org.rust.lang.RustFileType
 import org.rust.lang.RustLanguage
+import org.rust.lang.core.psi.RustFileModItem
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.util.RustModules
 import org.rust.lang.core.resolve.indexes.RustModulePath
@@ -15,8 +16,8 @@ class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvide
 
     override fun getFileType(): FileType = RustFileType
 
-    val mod: RustModItem?
-        get() = findChildByClass(RustModItem::class.java)
+    val mod: RustFileModItem?
+        get() = findChildByClass(RustFileModItem::class.java)
 
 }
 
@@ -34,3 +35,6 @@ val PsiFile.usefulName: String get() = when (name) {
     } ?: name
     else -> name
 }
+
+val PsiFile.rustMod: RustFileModItem? get() =
+    (this as? RustFile)?.mod

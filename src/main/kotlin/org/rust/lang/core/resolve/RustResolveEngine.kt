@@ -12,6 +12,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
+import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
@@ -98,12 +99,12 @@ object RustResolveEngine {
 
         // Lookup `name.rs` module
         val fileName = "$name.rs"
-        val fileMod  = dir?.findFile(fileName) as? RustFile
+        val fileMod  = dir?.findFile(fileName)
 
         // Lookup `name/mod.rs` module
-        val dirMod = dir?.findSubdirectory(name)?.findFile(RustModules.MOD_RS) as? RustFile
+        val dirMod = dir?.findSubdirectory(name)?.findFile(RustModules.MOD_RS)
 
-        val resolved = listOf(fileMod, dirMod).mapNotNull { it?.mod }
+        val resolved = listOf(fileMod, dirMod).mapNotNull { it?.rustMod }
 
         return when (resolved.size) {
             0    -> RustResolveEngine.ResolveResult.Unresolved
@@ -117,8 +118,7 @@ object RustResolveEngine {
         val module = crate.getModule() ?: return ResolveResult.Unresolved
         for (c in module.externCrates) {
             if (c.name == name) {
-                val file = c.psiFile.value as? RustFile
-                return file?.mod.asResolveResult()
+                return c.psiFile.value?.rustMod.asResolveResult()
             }
         }
 

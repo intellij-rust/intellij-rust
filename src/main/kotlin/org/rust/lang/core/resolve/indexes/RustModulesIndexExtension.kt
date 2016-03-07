@@ -11,6 +11,7 @@ import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.RustVisitor
 import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.canonicalNameInFile
 import org.rust.lang.core.psi.util.modDecls
 import java.io.DataInput
@@ -88,9 +89,7 @@ class RustModulesIndexExtension : FileBasedIndexExtension<RustModulePath, RustQu
                 // TODO(kudinkin): move this to `RustVisitor`
                 //
                 override fun visitFile(file: PsiFile?) {
-                    (file as? RustFile)?.let {
-                        it.mod?.accept(this)
-                    }
+                    file?.rustMod?.let { it.accept(this) }
                 }
 
                 override fun visitModItem(m: RustModItem) {

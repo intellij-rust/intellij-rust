@@ -9,8 +9,8 @@ import org.rust.lang.core.psi.RustImplMethod
 import org.rust.lang.core.psi.RustStructDeclField
 import org.rust.lang.core.psi.impl.RustFile
 
-class RustStructureViewModel(editor: Editor?, file: RustFile)   : TextEditorBasedStructureViewModel(editor, file)
-                                                                    , StructureViewModel.ElementInfoProvider {
+class RustStructureViewModel(editor: Editor?, file: RustFile) : TextEditorBasedStructureViewModel(editor, file)
+                                                              , StructureViewModel.ElementInfoProvider {
 
     override fun getRoot() = RustFileTreeElement(psiFile)
 

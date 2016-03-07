@@ -9,6 +9,7 @@ import org.rust.cargo.project.module.util.getSourceRoots
 import org.rust.cargo.project.module.util.relativise
 import org.rust.lang.core.psi.RustFileModItem
 import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.getModule
 import java.io.DataInput
 import java.io.DataOutput
@@ -21,19 +22,16 @@ import java.util.*
 data class RustModulePath private constructor (private val name: String, val path: String) : Serializable {
 
     fun findModuleIn(p: Project): RustFileModItem? =
-        run {
-            ModuleManager.getInstance(p).findModuleByName(name)?.let { module ->
-                    module.getSourceRoots(includingTestRoots = true)
-                    .mapNotNull { sourceRoot ->
-                        sourceRoot.findFileByRelativePath(path)
-                    }
-                    .firstOrNull()
-                   ?.let {
-                       PsiManager.getInstance(p).findFile(it)
-                   }
-            } as? RustFile
-        }
-            ?.let { it.mod as RustFileModItem }
+        ModuleManager.getInstance(p).findModuleByName(name)?.let { module ->
+                module.getSourceRoots(includingTestRoots = true)
+                .mapNotNull { sourceRoot ->
+                    sourceRoot.findFileByRelativePath(path)
+                }
+                .firstOrNull()
+               ?.let {
+                   PsiManager.getInstance(p).findFile(it)
+               }
+        }?.rustMod
 
     override fun hashCode(): Int =
         Objects.hash(name, path)

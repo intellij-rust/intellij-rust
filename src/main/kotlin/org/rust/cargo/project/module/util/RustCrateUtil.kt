@@ -12,6 +12,7 @@ import org.rust.cargo.project.module.persistence.CargoModuleService
 import org.rust.cargo.util.getService
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.impl.rustMod
 import java.io.File
 
 object RustCrateUtil
@@ -21,8 +22,7 @@ fun Module.getSourceRoots(includingTestRoots: Boolean = false): Collection<Virtu
 
 val Module.crateRoots: Sequence<RustModItem>
     get() = crateRootFiles.asSequence()
-        .mapNotNull { PsiManager.getInstance(project).findFile(it) as? RustFile }
-        .mapNotNull { it.mod }
+        .mapNotNull { PsiManager.getInstance(project).findFile(it)?.rustMod }
 
 fun Module.isCrateRootFile(file: VirtualFile): Boolean =
     crateRootFiles.contains(file)
