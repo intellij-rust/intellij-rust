@@ -42,7 +42,10 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
             )
 
         val modules = metadata.modules.associate { it to createModuleNode(it, projectNode) }
-        val libraries = metadata.libraries.associate { it to createLibraryNode(it, projectNode) }
+        // We don't include transitive dependencies here and we also don't want to create
+        // unused library nodes (to avoid "memory leak detected" errors). So let's create node
+        // lazily.
+        val libraries = metadata.libraries.associate { it to lazy { createLibraryNode(it, projectNode) } }
 
         addDependencies(modules, libraries)
 
@@ -50,7 +53,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
     }
 
     private fun addDependencies(modules: Map<CargoProjectDescription.Package, DataNode<ModuleData>>,
-                                libraries: Map<CargoProjectDescription.Package, DataNode<LibraryData>>) {
+                                libraries: Map<CargoProjectDescription.Package, Lazy<DataNode<LibraryData>>>) {
         for ((module, node) in modules) {
             for (dep in module.moduleDependencies) {
                 node.createChild(
@@ -67,7 +70,7 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
                     ProjectKeys.LIBRARY_DEPENDENCY,
                     LibraryDependencyData(
                         node.data,
-                        libraries[dep]!!.data,
+                        libraries[dep]!!.value.data,
                         LibraryLevel.PROJECT
                     )
                 )
