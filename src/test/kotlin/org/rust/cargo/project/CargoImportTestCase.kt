@@ -11,7 +11,7 @@ class CargoImportTestCase : CargoImportTestCaseBase() {
             authors = ["Aleksey Kladov <aleksey.kladov@gmail.com>"]
 
             [dependencies]
-            libc = "0.2.7"
+            libc = "=0.2.7"
         """)
 
         assertModules("hello")
