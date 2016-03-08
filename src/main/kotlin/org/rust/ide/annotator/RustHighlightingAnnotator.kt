@@ -9,6 +9,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.isMut
 import org.rust.lang.core.psi.impl.mixin.isStatic
 
+// Highlighting logic here should be kept in sync with tags in RustColorSettingsPage
 class RustHighlightingAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) = element.accept(object : RustVisitor() {
         override fun visitAttr(o: RustAttr) {

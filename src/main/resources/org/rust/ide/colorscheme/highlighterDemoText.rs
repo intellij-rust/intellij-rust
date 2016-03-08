@@ -1,5 +1,5 @@
 /* Block comment */
-fn main() {
+fn <function-decl>main</function-decl>() {
     // A simple integer calculator:
     // `+` or `-` means add or subtract by 1
     // `*` or `/` means multiply or divide by 2
@@ -23,7 +23,7 @@ fn main() {
 
 /// Some documentation
 <attribute>#[cfg(target_os="linux")]</attribute>
-unsafe fn a_function<<type-parameter>T</type-parameter>: 'lifetime>() {
+unsafe fn <function-decl>a_function</function-decl><<type-parameter>T</type-parameter>: 'lifetime>() {
     'label: loop {
         println!("Hello\x20W\u{f3}rld!\u{abcdef}");
     }

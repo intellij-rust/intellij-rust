@@ -10,6 +10,9 @@ import com.intellij.openapi.options.colors.AttributesDescriptor as d
 class RustColorSettingsPage : ColorSettingsPage {
     private val ATTRS = arrayOf(
         d("Identifier", RustColors.IDENTIFIER),
+        d("Function declaration", RustColors.FUNCTION_DECLARATION),
+        d("Instance method declaration", RustColors.INSTANCE_METHOD),
+        d("Static method declaration", RustColors.STATIC_METHOD),
         d("Lifetime", RustColors.LIFETIME),
         d("Char", RustColors.CHAR),
         d("String", RustColors.STRING),
@@ -32,12 +35,15 @@ class RustColorSettingsPage : ColorSettingsPage {
         d("Valid escape sequence", RustColors.VALID_STRING_ESCAPE),
         d("Invalid escape sequence", RustColors.INVALID_STRING_ESCAPE)
     )
-    // This tags should be kept in sync with RustAnnotator highlighting logic
+    // This tags should be kept in sync with RustHighlightingAnnotator highlighting logic
     private val ANNOTATOR_TAGS = mapOf(
         "attribute" to RustColors.ATTRIBUTE,
         "macro" to RustColors.MACRO,
         "type-parameter" to RustColors.TYPE_PARAMETER,
-        "mut-binding" to RustColors.MUT_BINDING
+        "mut-binding" to RustColors.MUT_BINDING,
+        "function-decl" to RustColors.FUNCTION_DECLARATION,
+        "instance-method-decl" to RustColors.INSTANCE_METHOD,
+        "static-method-decl" to RustColors.STATIC_METHOD
     )
     private val DEMO_TEXT by lazy {
         loadCodeSampleResource("org/rust/ide/colorscheme/highlighterDemoText.rs")
