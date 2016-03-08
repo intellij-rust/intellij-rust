@@ -1,11 +1,6 @@
 package org.rust.lang.core.resolve
 
-import com.intellij.openapi.module.Module
-import org.rust.cargo.project.module.util.crateRoots
 import org.rust.cargo.project.module.util.findExternCrateByName
-import org.rust.lang.core.names.RustAnonymousId
-import org.rust.lang.core.names.RustFileModuleId
-import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
@@ -36,18 +31,6 @@ object RustResolveEngine {
          */
         class Resolved(resolved: RustNamedElement) : ResolveResult(resolved)
     }
-
-    /**
-     * Resolves abstract `qualified-names`
-     *
-     * NOTE: Those names are treated as implicitly _fully-qualified_ once
-     *       therefore none of them may contain `super`, `self` references
-     */
-    fun resolve(name: RustQualifiedName, module: Module): ResolveResult =
-        module.crateRoots
-              .map { Resolver().resolve(name, it) }
-              .firstOrNull { it.isValidResult }
-              ?: ResolveResult.Unresolved
 
     /**
      * Resolves `qualified-reference` bearing PSI-elements
@@ -123,26 +106,6 @@ private class Resolver {
     private val seen: MutableSet<RustNamedElement> = HashSet()
 
     /**
-     * Resolves abstract qualified-names
-     *
-     * For more details check out `RustResolveEngine.resolve`
-     */
-    fun resolve(name: RustQualifiedName, root: RustModItem): RustResolveEngine.ResolveResult {
-        if (name == RustAnonymousId) {
-            return RustResolveEngine.ResolveResult.Resolved(root)
-        } else if (name is RustFileModuleId) {
-            return name.path.findModuleIn(root.project).asResolveResult()
-        }
-
-        return resolve(name.qualifier!!, root).element?.let {
-            when (it) {
-                is RustResolveScope -> resolveIn(sequenceOf(it), by(name))
-                else                -> null
-            }
-        } ?: RustResolveEngine.ResolveResult.Unresolved
-    }
-
-    /**
      * Resolves `qualified-reference` bearing PSI-elements
      *
      * For more details check out `RustResolveEngine.resolve`
@@ -208,16 +171,6 @@ private class Resolver {
             mod?.`super`
         }
     }
-
-    /**
-     * Hook to compose non-local resolving-context to resolve (ie module-level) _items_ in a
-     * context-free manner: it's essentially just scraping the whole scope seeking for the
-     * given name
-     *
-     * @name name to be sought after
-     */
-    private fun by(name: RustQualifiedName) =
-        ResolveContext.Companion.Trivial(ResolveNonLocalScopesVisitor(name.part.identifier))
 
     /**
      * Hook to compose _total_ (ie including both local & non-local) context to resolve

@@ -1,116 +1,111 @@
 package org.rust.lang.core.resolve.indexes
 
-import com.intellij.psi.PsiFile
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import com.intellij.util.containers.HashMap
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
+import com.intellij.util.io.IOUtil
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.RustFileType
-import org.rust.lang.core.names.RustQualifiedName
-import org.rust.lang.core.psi.RustModItem
+import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.RustVisitor
-import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.rustMod
-import org.rust.lang.core.psi.util.canonicalNameInFile
-import org.rust.lang.core.psi.util.modDecls
 import java.io.DataInput
 import java.io.DataOutput
 
-class RustModulesIndexExtension : FileBasedIndexExtension<RustModulePath, RustQualifiedName>() {
+data class VirtualFileUrl(private val url: String) {
+    constructor(file: VirtualFile) : this(file.url)
 
-    override fun getVersion(): Int = 2
+    fun resolve(): VirtualFile? = VirtualFileManager.getInstance().findFileByUrl(url)
+
+    fun writeTo(out: DataOutput) {
+        IOUtil.writeUTF(out, url)
+    }
+
+    companion object {
+        fun readFrom(`in`: DataInput): VirtualFileUrl? =
+            IOUtil.readUTF(`in`)?.let { VirtualFileUrl(it) }
+    }
+}
+
+// Maps child mod virtual file to parent mod virtual file
+//
+// Example
+//
+// ```
+// # src/main.rs
+// mod foo;
+//
+// # src/foo/mod.rs
+// fn hello() {}
+// ```
+// will result in a mapping "src/foo/mod.rs" -> "src/main.rs"
+class RustModulesIndexExtension : FileBasedIndexExtension<VirtualFileUrl, VirtualFileUrl>() {
+
+    override fun getVersion(): Int = 3
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getName(): ID<RustModulePath, RustQualifiedName> = RustModulesIndex.ID
+    override fun getName(): ID<VirtualFileUrl, VirtualFileUrl> = RustModulesIndex.ID
 
     override fun getInputFilter(): FileBasedIndex.InputFilter =
         DefaultFileTypeSpecificInputFilter(RustFileType)
 
-    override fun getKeyDescriptor(): KeyDescriptor<RustModulePath> = Companion.keyDescriptor
+    override fun getKeyDescriptor(): KeyDescriptor<VirtualFileUrl> = myKeyDescriptor
 
-    override fun getValueExternalizer(): DataExternalizer<RustQualifiedName> = Companion.valueExternalizer
+    override fun getValueExternalizer(): DataExternalizer<VirtualFileUrl> = myValueExternalizer
 
-    override fun getIndexer(): DataIndexer<RustModulePath, RustQualifiedName, FileContent> = Companion.dataIndexer
+    override fun getIndexer(): DataIndexer<VirtualFileUrl, VirtualFileUrl, FileContent> = myDataIndexer
 
-    companion object {
+    private object myKeyDescriptor : KeyDescriptor<VirtualFileUrl> {
 
-        val keyDescriptor = object: KeyDescriptor<RustModulePath> {
-
-            override fun save(out: DataOutput, path: RustModulePath?) {
-                path?.let {
-                    RustModulePath.writeTo(out, it)
-                }
-            }
-
-            override fun read(`in`: DataInput): RustModulePath? =
-                RustModulePath.readFrom(`in`)
-
-            override fun isEqual(one: RustModulePath?, other: RustModulePath?): Boolean =
-                one?.equals(other) ?: false
-
-            override fun getHashCode(value: RustModulePath?): Int = value?.hashCode() ?: -1
+        override fun save(out: DataOutput, url: VirtualFileUrl?) {
+            url?.writeTo(out)
         }
 
-        val valueExternalizer = object: DataExternalizer<RustQualifiedName> {
+        override fun read(`in`: DataInput): VirtualFileUrl? =
+            VirtualFileUrl.readFrom(`in`)
 
-            override fun save(out: DataOutput, name: RustQualifiedName?) {
-                name?.let { RustQualifiedName.writeTo(`out`, it) }
-            }
+        override fun isEqual(one: VirtualFileUrl?, other: VirtualFileUrl?): Boolean =
+            one == other
 
-            override fun read(`in`: DataInput): RustQualifiedName? {
-                return RustQualifiedName.readFrom(`in`)
-            }
+        override fun getHashCode(value: VirtualFileUrl?): Int = value?.hashCode() ?: -1
+    }
 
+    private object myValueExternalizer : DataExternalizer<VirtualFileUrl> {
+
+        override fun save(out: DataOutput, url: VirtualFileUrl?) {
+            url?.writeTo(out)
         }
 
-        val dataIndexer =
-            DataIndexer<RustModulePath, RustQualifiedName, FileContent> {
-                val map = HashMap<RustModulePath, RustQualifiedName>()
+        override fun read(`in`: DataInput): VirtualFileUrl? =
+            VirtualFileUrl.readFrom(`in`)
+    }
 
-                PsiManager.getInstance(it.project).findFile(it.file)?.let {
-                    for ((qualName, targets) in process(it)) {
-                        targets.forEach {
-                            map.put(RustModulePath.devise(it), qualName)
-                        }
-                    }
-                }
+    private object myDataIndexer : DataIndexer<VirtualFileUrl, VirtualFileUrl, FileContent> {
+        override fun map(inputData: FileContent): Map<VirtualFileUrl, VirtualFileUrl> {
+            val parentUrl = VirtualFileUrl(inputData.file)
+            val map = HashMap<VirtualFileUrl, VirtualFileUrl>()
 
-                map
-            }
+            // Something dodgy is going on here. Ideally, we would use `inputData.psiFile`, but
+            // `inputData.psiFile.virtualFile` is `null`, which breaks code in `ResolveEngine`.
+            // `FileContentImpl` stores virtualFile in a `IndexingDataKeys.VIRTUAL_FILE` user data key,
+            // but it is not used anywhere. So lets fetch a psiFile from PsiManager.
+            //
+            // TODO: bypass the issue by not hooking into ResolveEngine at all?
+            val psiFile = PsiManager.getInstance(inputData.project).findFile(inputData.file)
 
-        private fun process(f: PsiFile): Map<RustQualifiedName, List<PsiFile>> {
-            val raw = HashMap<RustQualifiedName, List<PsiFile>>()
-
-            f.accept(object: RustVisitor() {
-
-                //
-                // TODO(kudinkin): move this to `RustVisitor`
-                //
-                override fun visitFile(file: PsiFile?) {
-                    file?.rustMod?.let { it.accept(this) }
-                }
-
-                override fun visitModItem(m: RustModItem) {
-                    val resolved = arrayListOf<PsiFile>()
-
-                    m.modDecls.forEach { decl ->
-                        decl.reference?.let { ref ->
-                            (ref.resolve() as RustModItem?)?.let { mod ->
-                                resolved.add(mod.containingFile)
-                            }
-                        }
-                    }
-
-                    if (resolved.size > 0)
-                        m.canonicalNameInFile?.let { raw.put(it, resolved) }
-
-                    m.acceptChildren(this)
+            psiFile?.rustMod?.acceptChildren(object : RustVisitor() {
+                override fun visitModDeclItem(mod: RustModDeclItem) {
+                    val vFile = mod.reference?.resolve()?.containingFile?.virtualFile ?: return
+                    val childUrl = VirtualFileUrl(vFile)
+                    map += childUrl to parentUrl
                 }
             })
-
-            return raw
+            return map
         }
     }
+
 }

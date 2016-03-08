@@ -1,38 +1,26 @@
 package org.rust.lang.core.resolve.indexes
 
-import com.intellij.openapi.module.Module
+import com.intellij.psi.PsiManager
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.ID
-import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.RustModItem
-import org.rust.lang.core.psi.impl.modulePath
-import org.rust.lang.core.psi.util.getModule
-import org.rust.lang.core.resolve.RustResolveEngine
+import org.rust.lang.core.psi.impl.rustMod
 
-interface RustModulesIndex {
+object RustModulesIndex {
+    val ID: ID<VirtualFileUrl, VirtualFileUrl> =
+        com.intellij.util.indexing.ID.create("org.rust.lang.indexes.RustModulesIndex")
 
-    companion object {
+    fun getSuperFor(mod: RustModItem): RustModItem? =
+        mod.containingFile.virtualFile?.let { file ->
+            val url = VirtualFileUrl(file)
+            val superUrl = FileBasedIndex.getInstance()
+                .getValues(ID, url, GlobalSearchScope.allScope(mod.project))
+                .firstOrNull()
 
-        internal val ID: ID<RustModulePath, RustQualifiedName> =
-            com.intellij.util.indexing.ID.create("org.rust.lang.indexes.RustModulesIndex")
-
-        fun getSuperFor(mod: RustModItem): RustModItem? =
-            mod.containingFile.let { file ->
-                mod.getModule()?.let { module ->
-                    file.modulePath?.let { path ->
-                        findByHeterogeneous(
-                            FileBasedIndex.getInstance()
-                                .getValues(ID, path, module.moduleContentScope)
-                                .firstOrNull(),
-                            module
-                        )
-                    }
-                }
+            superUrl?.resolve()?.let {
+                PsiManager.getInstance(mod.project).findFile(it)?.rustMod
             }
+        }
 
-        private fun findByHeterogeneous(path: RustQualifiedName?, module: Module): RustModItem? =
-            path?.let {
-                RustResolveEngine.resolve(path, module).resolved as RustModItem?
-            }
-    }
 }
