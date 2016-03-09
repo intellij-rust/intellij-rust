@@ -530,17 +530,11 @@ private foreign_static_item ::= MUT? IDENTIFIER COLON type SEMICOLON
 
 struct_item ::= STRUCT IDENTIFIER generic_params (struct_tuple_args? where_clause? SEMICOLON | where_clause? struct_decl_args)
 
-struct_tuple_args ::= LPAREN struct_tuple_fields COMMA? RPAREN
-
-private struct_tuple_fields ::= struct_tuple_field (COMMA struct_tuple_field)*
-
+struct_tuple_args ::= LPAREN <<comma_separated_list struct_tuple_field>> RPAREN { pin = 1}
 struct_tuple_field ::= attrs_and_vis type_sum
 
-struct_decl_args ::= LBRACE struct_decl_fields COMMA? RBRACE { pin=1 }
-
-private struct_decl_fields ::= [ struct_decl_field (COMMA struct_decl_field)* ]
-
-struct_decl_field ::= attrs_and_vis IDENTIFIER COLON type_sum { pin=2 }
+struct_decl_args ::= LBRACE <<comma_separated_list struct_decl_field>> RBRACE { pin = 1 }
+struct_decl_field ::= attrs_and_vis IDENTIFIER COLON type_sum { pin = 2 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -553,10 +547,16 @@ private enum_defs ::= enum_def (COMMA enum_def)*
 
 enum_def ::= outer_attrs? IDENTIFIER enum_args?
 
-enum_args ::= LBRACE struct_decl_fields COMMA? RBRACE
-            | LPAREN type_sums? RPAREN
+enum_args ::= enum_struct_args
+            | enum_tuple_args
             | EQ any_expr
 
+// unlike real structs, enum variants can't have `pub` visibility applied to fields
+enum_tuple_args ::= LPAREN <<comma_separated_list enum_tuple_field>> RPAREN { pin = 1 }
+enum_tuple_field ::= outer_attrs? type_sum
+
+enum_struct_args ::= LBRACE <<comma_separated_list enum_struct_field>> RBRACE { pin = 1 }
+enum_struct_field ::= outer_attrs? IDENTIFIER COLON type_sum { pin = 2}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Trait
