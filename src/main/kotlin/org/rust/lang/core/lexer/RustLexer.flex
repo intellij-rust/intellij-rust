@@ -34,6 +34,7 @@ import static com.intellij.psi.TokenType.*;
 
 %{
   IElementType imbueBlockComment() {
+      assert(zzNestedCommentLevel == 0);
       yybegin(YYINITIAL);
 
       zzStartRead = zzPostponedMarkedPos;
@@ -307,7 +308,7 @@ SHEBANG_LINE=\#\![^\[].*
               return imbueBlockComment();
           }
 
-  <<EOF>> { return imbueBlockComment(); }
+  <<EOF>> { zzNestedCommentLevel = 0; return imbueBlockComment(); }
 
   [^]     { }
 }
