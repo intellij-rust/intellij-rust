@@ -551,7 +551,7 @@ enum_item ::= ENUM IDENTIFIER generic_params where_clause? LBRACE enum_defs? COM
 
 private enum_defs ::= enum_def (COMMA enum_def)*
 
-enum_def ::= attrs_and_vis IDENTIFIER enum_args?
+enum_def ::= outer_attrs? IDENTIFIER enum_args?
 
 enum_args ::= LBRACE struct_decl_fields COMMA? RBRACE
             | LPAREN type_sums? RPAREN

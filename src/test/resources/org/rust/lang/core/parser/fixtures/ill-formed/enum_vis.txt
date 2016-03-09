@@ -1,0 +1,17 @@
+FILE
+  RustFileModItemImpl(FILE_MOD_ITEM)
+    <empty list>
+  PsiElement(enum)('enum')
+  PsiWhiteSpace(' ')
+  PsiElement(<IDENTIFIER>)('E')
+  PsiWhiteSpace(' ')
+  PsiElement({)('{')
+  PsiWhiteSpace('\n    ')
+  PsiErrorElement:<IDENTIFIER> or '}' expected, got 'pub'
+    PsiElement(pub)('pub')
+  PsiWhiteSpace(' ')
+  PsiElement(<IDENTIFIER>)('F')
+  PsiWhiteSpace(' ')
+  PsiComment(<EOL_COMMENT>)('// Enum variants are always implicitly public, and `pub` keyword is forbidden here')
+  PsiWhiteSpace('\n')
+  PsiElement(})('}')
