@@ -370,12 +370,7 @@ generic_params ::= [ generic_params_inner ]
 
 private generic_params_inner ::= LT lifetimes [ COMMA [ type_params COMMA? ] ] GT
                                | LT                     type_params COMMA?     GT
-                            /* | LT lifetimes                         GTGT
-                               | LT lifetimes COMMA                   GTGT */
-                            /* | LT lifetimes COMMA type_params       GTGT
-                               | LT lifetimes COMMA type_params COMMA GTGT */
-                            /* | LT                 type_params SHR
-                               | LT                 type_params COMMA SHR */
+                               | LT GT
 
 lifetimes ::= lifetime_and_bounds (COMMA lifetime_and_bounds)*
 
