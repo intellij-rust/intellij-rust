@@ -23,6 +23,19 @@ class RustInspectionsTest : RustTestCaseBase() {
         assertThat(openFiles.find { it.name == "foo.rs" })
             .isNotNull()
     }
+    fun testUnnecessaryParenthesis() {
+        enableInspection<UnnecessaryParenthesisInspection>()
+        myFixture.testHighlighting(true, false, true, fileName)
+
+        for (action in myFixture.getAllQuickFixes()) {
+            if (action.familyName.equals("Remove parenthesis")) {
+                myFixture.launchAction(action)
+            }
+        }
+
+        val after = fileName.replace(".rs", "_after.rs")
+        myFixture.checkResultByFile(after, true)
+    }
 
     private inline fun<reified T: LocalInspectionTool>enableInspection() {
         myFixture.enableInspections(T::class.java)

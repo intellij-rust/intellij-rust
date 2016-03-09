@@ -13,14 +13,14 @@ import org.rust.lang.core.psi.impl.RustParenExprImpl
  * Created by zjh on 16/3/8.
  */
 class UnnecessaryParenthesisInspection : RustLocalInspectionTool() {
-    override fun getDisplayName() = "Unnecessary Parenthesis"
+    override fun getDisplayName() = "Unnecessary parenthesis"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RustVisitor() {
             override fun visitIfExpr(expr: RustIfExpr) {
                 val exprText = expr.expr?.text
                 if (exprText?.startsWith("(")!! && exprText?.endsWith(")")!!) {
-                    holder.registerProblem(expr.expr!!, "Unnecessary Parenthesis", RemoveParenthesis);
+                    holder.registerProblem(expr.expr!!, "Unnecessary parenthesis", RemoveParenthesis);
                 }
             }
         }
