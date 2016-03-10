@@ -19,7 +19,7 @@ import java.io.DataOutput
 
 class RustModulesIndexExtension : FileBasedIndexExtension<RustModulePath, RustQualifiedName>() {
 
-    override fun getVersion(): Int = 1
+    override fun getVersion(): Int = 2
 
     override fun dependsOnFileContent(): Boolean = true
 

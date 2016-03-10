@@ -1,7 +1,7 @@
 package org.rust.lang.core.psi.util
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -49,8 +49,18 @@ fun PsiElement.isAfter(other: PsiElement): Boolean = other.textOffset < textOffs
 fun PsiElement.isBefore(anchor: Int): Boolean = textOffset < anchor
 
 
-fun PsiElement.getModule(): Module? =
-    ModuleUtilCore.findModuleForPsiElement(this)
+/**
+ * Returns module for this PsiElement.
+ *
+ * If the element is in a library, returns the module which depends on
+ * the library.
+ */
+fun PsiElement.getModule(): Module? {
+    val vFile = this.containingFile.virtualFile ?: return null
+    return ProjectRootManager.getInstance(project).fileIndex
+        .getOrderEntriesForFile(vFile)
+        .firstOrNull()?.ownerModule
+}
 
 
 
