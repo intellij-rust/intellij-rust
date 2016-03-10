@@ -1,15 +1,12 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
-import com.intellij.psi.PsiManager
 import org.rust.cargo.project.module.util.crateRoots
 import org.rust.cargo.project.module.util.externCrates
-import org.rust.cargo.project.module.util.targets
 import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
 import org.rust.lang.core.psi.impl.rustMod
@@ -409,6 +406,7 @@ fun RustNamedElement?.asResolveResult(): RustResolveEngine.ResolveResult =
 /**
  * Helper to debug complex iterator pipelines
  */
+@Suppress("unused")
 private fun<T> Sequence<T>.inspect(f: (T) -> Unit = { println("inspecting $it") }): Sequence<T> {
     return map { it ->
         f(it)
