@@ -313,11 +313,8 @@ private class Resolver {
                     // mod-decl-items constitute a (sub-) _tree_
                     // inside the crate's module-tree, therefore
                     // there is no need to mark them as seen
-                    is RustModDeclItem ->
-                        elem.reference?.let { it.resolve() }
-
-                    is RustExternCrateItem ->
-                        elem.reference?.let { it.resolve() }
+                    is RustModDeclItem, is RustExternCrateItem ->
+                        elem.reference?.resolve()
 
                     // Check whether resolved element (being path-part, use-glob, or alias)
                     // could be further resolved
@@ -344,6 +341,9 @@ private class Resolver {
                             is RustUseGlob ->
                                 if (!addToSeen(parent)) resolveUseGlob(parent).element
                                 else                    null
+
+                            is RustExternCrateItem ->
+                                parent.reference?.resolve()
 
                             else -> elem
                         }
