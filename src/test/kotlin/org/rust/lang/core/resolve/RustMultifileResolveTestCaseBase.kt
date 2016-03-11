@@ -22,15 +22,13 @@ abstract class RustMultiFileResolveTestCaseBase : RustResolveTestCaseBase() {
 
     open val externCrates: Collection<ExternCrateData> = emptyList()
 
-    override fun getProjectDescriptor(): LightProjectDescriptor {
-        return object : DefaultLightProjectDescriptor() {
+    override fun getProjectDescriptor(): LightProjectDescriptor = object : DefaultLightProjectDescriptor() {
 
-            override fun getModuleType(): ModuleType<*> = RustModuleType.INSTANCE
+        override fun getModuleType(): ModuleType<*> = RustModuleType.INSTANCE
 
-            override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-                super.configureModule(module, model, contentEntry)
-                module.getService<CargoModuleService>().saveData(targets, externCrates)
-            }
+        override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
+            super.configureModule(module, model, contentEntry)
+            module.getService<CargoModuleService>().saveData(targets, externCrates)
         }
     }
 
@@ -60,7 +58,7 @@ abstract class RustMultiFileResolveTestCaseBase : RustResolveTestCaseBase() {
             configureByFile(it)
         }
 
-        val usage = file.findReferenceAt(myFixture.caretOffset)!! as RustReference
+        val usage = myFixture.file.findReferenceAt(myFixture.caretOffset)!! as RustReference
 
         return usage.resolve()
     }

@@ -1,8 +1,10 @@
 package org.rust.lang
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 
-abstract class RustTestCaseBase : LightCodeInsightFixtureTestCase(), RustTestCase {
+abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), RustTestCase {
+
+    override fun isWriteActionRequired(): Boolean = false
 
     abstract val dataPath: String
 
