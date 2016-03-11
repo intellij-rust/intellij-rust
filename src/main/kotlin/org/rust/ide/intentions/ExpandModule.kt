@@ -8,7 +8,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.file.PsiFileImplUtil
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.RustModules
+import org.rust.lang.core.psi.util.ownsDirectory
 
 class ExpandModule : IntentionAction {
 
@@ -17,7 +19,7 @@ class ExpandModule : IntentionAction {
     override fun startInWriteAction()   = true
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) =
-        file is RustFile && file.name != RustModules.MOD_RS
+        file is RustFile && !(file.rustMod?.ownsDirectory ?: false)
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
         file ?: return
