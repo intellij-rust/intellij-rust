@@ -130,6 +130,8 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
     private fun createLibraryNode(lib: CargoProjectDescription.Package, projectNode: DataNode<ProjectData>): DataNode<LibraryData> {
         val libData = LibraryData(CargoProjectSystem.ID, "${lib.name} ${lib.version}")
         libData.addPath(LibraryPathType.SOURCE, lib.contentRoot.absolutePath)
+        // without BINARY (aka CLASSES) root IDEA won't show library contents in project view
+        libData.addPath(LibraryPathType.BINARY, lib.contentRoot.absolutePath)
         val libNode = projectNode.createChild(ProjectKeys.LIBRARY, libData)
         return libNode
     }
