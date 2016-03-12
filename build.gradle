@@ -15,6 +15,7 @@ buildscript {
 
 plugins {
     id 'org.jetbrains.intellij' version "0.0.42"
+    id 'de.undercouch.download' version "2.1.0"
 }
 
 
@@ -27,6 +28,7 @@ allprojects {
     // IntelliJ plugin configuration
 
     apply plugin: 'org.jetbrains.intellij'
+    apply plugin: 'de.undercouch.download'
 
     intellij {
         pluginName 'intellij-rust'
@@ -152,6 +154,19 @@ task generateLexers {
 task generateParsers {
     dependsOn generateRustPsiAndParser
 }
+
+task downloadRustSources(type: de.undercouch.gradle.tasks.download.Download) {
+    overwrite false
+    src 'https://static.rust-lang.org/dist/rustc-nightly-src.tar.gz'
+    dest new File(buildDir, "rustc-nightly-src.tar.gz")
+}
+
+task downloadAndUntarRustSources(dependsOn: downloadRustSources, type: Copy) {
+    from  tarTree(downloadRustSources.dest)
+    into "src/test/resources"
+}
+
+test.dependsOn downloadAndUntarRustSources
 
 apply from: "shared.gradle"
 
