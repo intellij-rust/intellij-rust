@@ -87,3 +87,5 @@ private val RustModItem.isCrateRoot: Boolean
 val RustModItem.modDecls: Collection<RustModDeclItem>
     get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
 
+val RustModItem.isTopLevelInFile: Boolean
+    get() = this.containingMod == null

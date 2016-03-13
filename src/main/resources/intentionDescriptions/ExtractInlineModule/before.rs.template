@@ -1,0 +1,11 @@
+// File: src/main.rs
+
+mod foo {
+    fn bar() {
+        println!("Hello from foo mod");
+    }
+}
+
+fn main() {
+    println!("Hello from main");
+}

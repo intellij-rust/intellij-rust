@@ -1,5 +1,7 @@
 package org.rust.lang
 
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 
 abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), RustTestCase {
@@ -24,6 +26,8 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         myFixture.checkResultByFile(after, ignoreTrailingWhitespace)
     }
 
+    final protected fun getVirtualFileByName(path: String): VirtualFile? =
+        LocalFileSystem.getInstance().findFileByPath(path)
 
     companion object {
         @JvmStatic
