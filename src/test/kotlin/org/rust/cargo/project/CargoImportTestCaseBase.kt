@@ -4,12 +4,11 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.test.ExternalSystemImportingTestCase
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.roots.ModuleRootManager
+import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.project.module.util.findExternCrateByName
 import org.rust.cargo.project.module.util.targets
 import org.rust.cargo.project.settings.CargoProjectSettings
-import org.assertj.core.api.Assertions.*
-import org.rust.cargo.project.module.util.externCrates
 
 abstract class CargoImportTestCaseBase : ExternalSystemImportingTestCase() {
     override fun getTestsTempDir(): String = "cargoImportTests"
@@ -37,8 +36,10 @@ abstract class CargoImportTestCaseBase : ExternalSystemImportingTestCase() {
     }
 
     final protected fun assertExternCrates(vararg crateNames: String) {
-        assertThat(module.externCrates.map { it.name })
-            .containsOnly(*crateNames)
+        for (name in crateNames) {
+            assertThat(module.findExternCrateByName(name))
+                .isNotNull()
+        }
     }
 
     private val module: Module get() =

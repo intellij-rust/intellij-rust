@@ -52,16 +52,22 @@ data class ExternCrate(
     /**
      * Root module file (typically `src/lib.rs`)
      */
-    val virtualFile: VirtualFile,
-
-    val psiFile: Lazy<PsiFile?>
+    val virtualFile: VirtualFile
 )
+
+/**
+ * Searches for the PsiFile of the root mod of the crate.
+ */
+fun Module.findExternCrateByName(crateName: String): PsiFile? =
+    externCrates.find { it.name == crateName }?.let {
+        PsiManager.getInstance(project).findFile(it.virtualFile)
+    }
 
 /**
  * A set of external crates for the module. External crate can refer
  * to another module or a library.
  */
-val Module.externCrates: Collection<ExternCrate> get() =
+private val Module.externCrates: Collection<ExternCrate> get() =
     getService<CargoModuleService>().externCrates.mapNotNull { crate ->
         val file = File(crate.path)
         val vFile = if (file.isAbsolute)
@@ -69,15 +75,7 @@ val Module.externCrates: Collection<ExternCrate> get() =
         else
             contentRoot.findFileByRelativePath(crate.path)
 
-        vFile?.let { vFile ->
-            ExternCrate(
-                crate.name,
-                vFile,
-                lazy {
-                    PsiManager.getInstance(project).findFile(vFile)
-                }
-            )
-        }
+        vFile?.let { ExternCrate(crate.name, it) }
     }
 
 private val Module.contentRoot: VirtualFile get() =

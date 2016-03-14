@@ -2,7 +2,7 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
 import org.rust.cargo.project.module.util.crateRoots
-import org.rust.cargo.project.module.util.externCrates
+import org.rust.cargo.project.module.util.findExternCrateByName
 import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
@@ -113,13 +113,7 @@ object RustResolveEngine {
     fun resolveExternCrate(crate: RustExternCrateItem): ResolveResult {
         val name = crate.name ?: return ResolveResult.Unresolved
         val module = crate.getModule() ?: return ResolveResult.Unresolved
-        for (c in module.externCrates) {
-            if (c.name == name) {
-                return c.psiFile.value?.rustMod.asResolveResult()
-            }
-        }
-
-        return RustResolveEngine.ResolveResult.Unresolved
+        return module.findExternCrateByName(name)?.rustMod.asResolveResult()
     }
 
 }
