@@ -23,8 +23,9 @@ FILE
         RustGenericParamsImpl(GENERIC_PARAMS)
           <empty list>
         PsiElement(()('(')
-        PsiElement(&)('&')
-        PsiElement(self)('self')
+        RustSelfArgumentImpl(SELF_ARGUMENT)
+          PsiElement(&)('&')
+          PsiElement(self)('self')
         PsiElement())(')')
         PsiWhiteSpace(' ')
         RustRetTypeImpl(RET_TYPE)

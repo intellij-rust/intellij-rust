@@ -12,11 +12,10 @@ class SelfConventionInspection : RustLocalInspectionTool() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : RustVisitor() {
-            override fun visitImplMethod(o: RustImplMethod) {
-                val convention = SELF_CONVENTIONS.find { o.identifier.text.startsWith(it.prefix) } ?: return
-                val selfType = SelfType.from(o.and, o.mut, o.self)
-                if (selfType !in convention.selfTypes) {
-                    holder.registerProblem(o.self ?: o.identifier, convention)
+            override fun visitImplMethod(m: RustImplMethod) {
+                val convention = SELF_CONVENTIONS.find { m.identifier.text.startsWith(it.prefix) } ?: return
+                if (m.selfType !in convention.selfTypes) {
+                    holder.registerProblem(m.selfArgument ?: m.identifier, convention)
                 }
             }
         }
@@ -38,15 +37,15 @@ enum class SelfType(val description: String) {
     SELF("self by value"),
     REF_SELF("self by reference"),
     REF_MUT_SELF("self by mutable reference");
+}
 
-    companion object {
-        fun from(and: PsiElement?, mut: PsiElement?, self: PsiElement?) =
-            when {
-                self == null -> NO_SELF
-                and == null  -> SELF
-                mut == null  -> REF_SELF
-                else         -> REF_MUT_SELF
-            }
+private val RustImplMethod.selfType: SelfType get() {
+    val self = selfArgument
+    return when {
+        self == null -> SelfType.NO_SELF
+        self.and == null -> SelfType.SELF
+        self.mut == null -> SelfType.REF_SELF
+        else -> SelfType.REF_MUT_SELF
     }
 }
 

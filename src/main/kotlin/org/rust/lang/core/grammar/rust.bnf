@@ -245,6 +245,10 @@
     implements  ("alias") = "org.rust.lang.core.psi.RustNamedElement"
     extends     ("alias") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
 
+    implements  ("self_argument") = [ "org.rust.lang.core.psi.RustNamedElement"
+                                      "org.rust.lang.core.psi.RustDeclaringElement" ]
+    mixin       ("self_argument") = "org.rust.lang.core.psi.impl.mixin.RustSelfArgumentImplMixin"
+
     implements  ("use_glob") = "org.rust.lang.core.psi.RustNamedElement"
     mixin       ("use_glob") = "org.rust.lang.core.psi.impl.mixin.RustUseGlobImplMixin"
 
@@ -580,7 +584,7 @@ trait_type ::= outer_attrs? TYPE type_param SEMICOLON
 trait_method ::= outer_attrs? fn_header generic_params fn_decl_with_self_allow_anon_params where_clause? (SEMICOLON | inner_attrs_and_block)
 
 private fn_decl_with_self_allow_anon_params ::= fn_anon_params_with_self ret_type?
-private fn_anon_params_with_self ::= LPAREN [ AND LIFETIME? ] MUT? SELF type_ascription? comma_anon_params? RPAREN
+private fn_anon_params_with_self ::= LPAREN self_argument comma_anon_params? RPAREN
                                    | LPAREN anon_params? RPAREN
 
 private comma_anon_params ::= COMMA [ anon_params COMMA? ]
@@ -619,8 +623,10 @@ impl_method ::= attrs_and_vis fn_header generic_params fn_decl_with_self where_c
 
 private fn_decl_with_self ::= fn_params_with_self ret_type?
 
-private fn_params_with_self ::= LPAREN [ AND LIFETIME? ] MUT? SELF type_ascription? comma_params? RPAREN
+private fn_params_with_self ::= LPAREN self_argument comma_params? RPAREN
                               | LPAREN params? RPAREN
+
+self_argument ::= [ AND LIFETIME? ] MUT? SELF type_ascription?
 
 private comma_params ::= COMMA [ params COMMA? ]
 

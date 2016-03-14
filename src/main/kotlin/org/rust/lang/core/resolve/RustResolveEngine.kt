@@ -156,7 +156,7 @@ private class Resolver {
     fun resolve(ref: RustQualifiedReferenceElement): RustResolveEngine.ResolveResult {
         val qual = ref.qualifier
         if (qual != null) {
-            val parent = if (qual.isModulePrefix) {
+            val parent = if (qual.isAncestorModulePrefix) {
                 resolveModulePrefix(qual)
             } else {
                 resolve(qual).element
@@ -365,6 +365,7 @@ private class Resolver {
         override fun visitScopedLetExpr (o: RustScopedLetExpr)      = visitResolveScope(o)
         override fun visitLambdaExpr    (o: RustLambdaExpr)         = visitResolveScope(o)
         override fun visitTraitMethod   (o: RustTraitMethod)        = visitResolveScope(o)
+        override fun visitImplMethod    (o: RustImplMethod)         = visitResolveScope(o)
         override fun visitFnItem        (o: RustFnItem)             = visitResolveScope(o)
         override fun visitResolveScope  (scope: RustResolveScope)   = seek(scope.declarations)
 

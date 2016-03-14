@@ -13,7 +13,7 @@ abstract class RustImplMethodImplMixin(node: ASTNode)   : RustNamedElementImpl(n
                                                         , RustImplMethod {
 
     override val declarations: Collection<RustDeclaringElement>
-        get() = paramList.orEmpty().filterNotNull()
+        get() = listOfNotNull(selfArgument) + paramList.orEmpty()
 
     override fun getIcon(flags: Int): Icon? {
         var icon = RustIcons.METHOD
@@ -28,4 +28,4 @@ abstract class RustImplMethodImplMixin(node: ASTNode)   : RustNamedElementImpl(n
 
 }
 
-val RustImplMethod.isStatic: Boolean get() = self == null
+val RustImplMethod.isStatic: Boolean get() = selfArgument == null

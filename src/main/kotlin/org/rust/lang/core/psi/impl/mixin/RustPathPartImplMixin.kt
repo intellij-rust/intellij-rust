@@ -2,13 +2,13 @@ package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustPathPart
 import org.rust.lang.core.psi.RustQualifiedReferenceElement
+import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustViewPath
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
-import org.rust.lang.core.resolve.ref.RustReference
 import org.rust.lang.core.resolve.ref.RustQualifiedReferenceImpl
+import org.rust.lang.core.resolve.ref.RustReference
 
 abstract class RustPathPartImplMixin(node: ASTNode) : RustNamedElementImpl(node)
                                                     , RustQualifiedReferenceElement
@@ -17,7 +17,7 @@ abstract class RustPathPartImplMixin(node: ASTNode) : RustNamedElementImpl(node)
     override fun getReference(): RustReference = RustQualifiedReferenceImpl(this)
 
     override val nameElement: PsiElement?
-        get() = identifier
+        get() = identifier ?: self ?: `super`
 
     override val separator: PsiElement?
         get() = findChildByType(RustTokenElementTypes.COLONCOLON)
@@ -45,14 +45,19 @@ abstract class RustPathPartImplMixin(node: ASTNode) : RustNamedElementImpl(node)
             }
         }
 
-    override val isModulePrefix: Boolean
+    override val isAncestorModulePrefix: Boolean
         get() {
             val qual = qualifier
-            return if (qual == null) {
-                separator == null && (self != null || `super` != null)
-            } else {
-                `super` != null && qual.isModulePrefix
+            if (qual != null) {
+                return `super` != null && qual.isAncestorModulePrefix
             }
+            val isFullyQualified = separator != null
+            if (isFullyQualified) {
+                return false
+            }
+            // `self` by itself is not a module prefix, it's and identifier.
+            // So for `self` we need to check that it is not the only segment of path.
+            return `super` != null || (self != null && nextSibling != null)
         }
 
     override val isSelf: Boolean

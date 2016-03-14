@@ -41,7 +41,7 @@ interface RustQualifiedReferenceElement : RustNamedElement {
      *  Reference:
      *    https://doc.rust-lang.org/reference.html#paths
      */
-    val isModulePrefix: Boolean
+    val isAncestorModulePrefix: Boolean
 
     /**
      * Returns true if this is a `self::` prefixed qualified-reference
