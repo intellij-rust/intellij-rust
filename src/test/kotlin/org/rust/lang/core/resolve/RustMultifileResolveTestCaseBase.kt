@@ -18,7 +18,7 @@ abstract class RustMultiFileResolveTestCaseBase : RustResolveTestCaseBase() {
     private fun configureByFile(file: String) {
         myFixture.configureFromExistingVirtualFile(
             myFixture.copyFileToProject(file, trimDir(file))
-        );
+        )
     }
 
     protected fun doTestResolved(vararg files: String) {

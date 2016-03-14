@@ -82,6 +82,7 @@
 
         <gotoClassContributor implementation="org.rust.ide.navigation.goto.RustClassNavigationContributor"/>
         <gotoSymbolContributor implementation="org.rust.ide.navigation.goto.RustSymbolNavigationContributor"/>
+        <codeInsight.gotoSuper language="RUST" implementationClass="org.rust.ide.navigation.goto.RustGotoSuperHandler"/>
 
         <!-- Annotator -->
 
