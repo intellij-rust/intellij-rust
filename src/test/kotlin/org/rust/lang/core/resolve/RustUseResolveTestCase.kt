@@ -18,9 +18,14 @@ class RustUseResolveTestCase : RustResolveTestCaseBase() {
     fun testUseGlobRedirection()         = checkIsBound(atOffset = 21)
     fun testEnumVariant()                = checkIsBound()
     fun testSuperPart()                  = checkIsBound(atOffset = 0)
+    fun testWildcard()                   = checkIsBound()
+    fun testSuperWildcard()              = checkIsBound()
+    fun testTwoWildcards()               = checkIsBound()
+    fun testNestedWildcards()            = checkIsBound()
 
     fun testNoUse()                      = checkIsUnbound()
     fun testCycle()                      = checkIsUnbound()
     fun testUseGlobCycle()               = checkIsUnbound()
     fun testEmptyGlobList()              = checkIsUnbound()
+    fun testWildcardCycle()              = checkIsUnbound()
 }

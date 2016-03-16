@@ -11,6 +11,7 @@ import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.basePath
+import org.rust.lang.core.psi.impl.mixin.isStarImport
 import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
 import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
@@ -298,10 +299,27 @@ private class Resolver {
 
         protected fun seek(elem: RustDeclaringElement) = seek(listOf(elem))
 
-        protected fun seek(decls: Collection<RustDeclaringElement>) {
-            decls.flatMap { it.boundElements }
-                .find { match(it) }
-                ?.let { found(it) }
+        protected fun seek(declaringElements: Collection<RustDeclaringElement>) {
+            for (element in declaringElements) {
+                check(matched == null)
+
+                // Recursively step into `use foo::*`
+                if (element is RustUseItem && element.isStarImport) {
+                    val pathPart = element.viewPath.pathPart ?: continue
+                    if (!addToSeen(pathPart)) {
+                        resolve(pathPart).element?.accept(this)
+                    }
+
+                    if (matched != null) {
+                        return
+                    }
+                } else {
+                    element.boundElements.find { match(it) }?.let {
+                        found(it)
+                        return
+                    }
+                }
+            }
         }
 
         protected fun found(elem: RustNamedElement) {
