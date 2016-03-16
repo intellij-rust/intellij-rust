@@ -73,7 +73,7 @@ FILE
         <empty list>
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      RustEnumDefImpl(ENUM_DEF)
+      RustEnumVariantImpl(ENUM_VARIANT)
         RustOuterAttrImpl(OUTER_ATTR)
           PsiElement(#)('#')
           PsiElement([)('[')

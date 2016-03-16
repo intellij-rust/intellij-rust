@@ -34,7 +34,7 @@ FILE
       PsiWhiteSpace(' ')
       PsiElement({)('{')
       PsiWhiteSpace(' ')
-      RustEnumDefImpl(ENUM_DEF)
+      RustEnumVariantImpl(ENUM_VARIANT)
         PsiElement(<IDENTIFIER>)('V')
       PsiWhiteSpace(' ')
       PsiElement(})('}')

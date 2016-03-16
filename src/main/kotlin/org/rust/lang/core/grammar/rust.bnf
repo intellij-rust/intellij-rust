@@ -133,10 +133,6 @@
 
     mixin       ("impl_item")  = "org.rust.lang.core.psi.impl.mixin.RustImplItemImplMixin"
 
-    mixin       ("enum_item") = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
-
-    mixin       ("enum_def") = "org.rust.lang.core.psi.impl.mixin.RustEnumDefImplMixin"
-
     mixin       ("struct_item") = "org.rust.lang.core.psi.impl.mixin.RustStructItemImplMixin"
 
     mixin       ("struct_decl_field") = "org.rust.lang.core.psi.impl.mixin.RustStructDeclFieldImplMixin"
@@ -180,6 +176,9 @@
     implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
 
+    implements  ("enum_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("enum_item") = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
+
     implements  ("trait_method") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("trait_method") = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodImplMixin"
 
@@ -206,6 +205,9 @@
     //
     // Declaring elements
     //
+
+    implements  ("enum_variant")    = ["org.rust.lang.core.psi.RustDeclaringElement" "org.rust.lang.core.psi.RustNamedElement"]
+    mixin       ("enum_variant")    = "org.rust.lang.core.psi.impl.mixin.RustEnumVariantImplMixin"
 
     implements  ("let_decl")    = "org.rust.lang.core.psi.RustDeclaringElement"
     mixin       ("let_decl")    = "org.rust.lang.core.psi.impl.mixin.RustLetDeclImplMixin"
@@ -545,11 +547,11 @@ struct_decl_field ::= attrs_and_vis IDENTIFIER COLON type_sum { pin = 2 }
 // Enum
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-enum_item ::= ENUM IDENTIFIER generic_params where_clause? LBRACE enum_defs? COMMA? RBRACE
+enum_item ::= ENUM IDENTIFIER generic_params where_clause? LBRACE enum_variants? COMMA? RBRACE
 
-private enum_defs ::= enum_def (COMMA enum_def)*
+private enum_variants ::= enum_variant (COMMA enum_variant)*
 
-enum_def ::= outer_attrs? IDENTIFIER enum_args?
+enum_variant ::= outer_attrs? IDENTIFIER enum_args?
 
 enum_args ::= enum_struct_args
             | enum_tuple_args

@@ -284,6 +284,10 @@ private class Resolver {
             seek(o.itemList)
         }
 
+        override fun visitEnumItem(enum: RustEnumItem) {
+            seek(enum.enumVariantList)
+        }
+
         private fun addToSeen(element: RustNamedElement): Boolean {
             val result = element in seen
             seen += element

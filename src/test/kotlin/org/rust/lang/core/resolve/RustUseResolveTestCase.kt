@@ -16,6 +16,7 @@ class RustUseResolveTestCase : RustResolveTestCaseBase() {
     fun testUseGlobSelf()                = checkIsBound(atOffset = 21)
     fun testUseGlobAlias()               = checkIsBound(atOffset = 21)
     fun testUseGlobRedirection()         = checkIsBound(atOffset = 21)
+    fun testEnumVariant()                = checkIsBound()
 
     fun testNoUse()                      = checkIsUnbound()
     fun testCycle()                      = checkIsUnbound()
