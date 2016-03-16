@@ -148,13 +148,13 @@ private class Resolver {
      * For more details check out `RustResolveEngine.resolve`
      */
     fun resolve(ref: RustQualifiedReferenceElement): RustResolveEngine.ResolveResult {
+        if (ref.isAncestorModulePrefix) {
+            return resolveModulePrefix(ref).asResolveResult()
+        }
+
         val qual = ref.qualifier
         if (qual != null) {
-            val parent = if (qual.isAncestorModulePrefix) {
-                resolveModulePrefix(qual)
-            } else {
-                resolve(qual).element
-            }
+            val parent = resolve(qual).element
 
             return when (parent) {
                 is RustResolveScope -> resolveIn(sequenceOf(parent), by(ref))
