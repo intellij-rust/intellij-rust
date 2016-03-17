@@ -191,5 +191,8 @@ private fun CargoProjectDescription.Package.asExternCrateFor(module: CargoProjec
     else
         absPath
 
+    // crate name must be a valid Rust identifier, so map `-` to `_`
+    // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
+    val name = name.replace("-", "_")
     return ExternCrateData(name, path)
 }
