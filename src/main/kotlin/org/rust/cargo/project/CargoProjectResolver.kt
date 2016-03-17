@@ -14,8 +14,8 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
 import com.intellij.openapi.util.Key
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.commands.Cargo
 import org.rust.cargo.CargoProjectDescription
+import org.rust.cargo.commands.Cargo
 import org.rust.cargo.project.module.RustModuleType
 import org.rust.cargo.project.module.persistence.CargoModuleData
 import org.rust.cargo.project.module.persistence.ExternCrateData
@@ -157,7 +157,9 @@ private fun DataNode<ModuleData>.addRoots(module: CargoProjectDescription.Packag
 
 private fun DataNode<ModuleData>.addCargoData(module: CargoProjectDescription.Package) {
     check(module.isModule)
-    val externCrates = module.dependencies.mapNotNull { it.asExternCrateFor(module) }
+    // binary, example and test crates of a package depend on the library crate
+    val selfDependency = listOfNotNull(module.asExternCrateFor(module))
+    val externCrates = module.dependencies.mapNotNull { it.asExternCrateFor(module) } + selfDependency
     createChild(CargoConstants.KEYS.CARGO_MODULE_DATA, CargoModuleData(
         module.targets,
         externCrates

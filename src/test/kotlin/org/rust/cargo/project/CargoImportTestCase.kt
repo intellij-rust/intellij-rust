@@ -18,6 +18,6 @@ class CargoImportTestCase : CargoImportTestCaseBase() {
         assertModuleLibDep("hello", "Cargo: libc 0.2.7")
 
         assertTargets("src/main.rs", "src/lib.rs")
-        assertExternCrates("libc")
+        assertExternCrates("libc", "hello")
     }
 }
