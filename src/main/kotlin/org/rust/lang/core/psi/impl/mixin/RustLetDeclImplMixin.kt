@@ -10,6 +10,6 @@ abstract class RustLetDeclImplMixin(node: ASTNode)   : RustCompositeElementImpl(
                                                      , RustLetDecl {
 
     override val boundElements: Collection<RustNamedElement>
-        get() = pat.boundElements
+        get() = pat?.boundElements.orEmpty()
 
 }

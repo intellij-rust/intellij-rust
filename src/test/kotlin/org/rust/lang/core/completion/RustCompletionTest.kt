@@ -27,5 +27,6 @@ class RustCompletionTest : RustTestCaseBase() {
     fun testFunctionName()       = checkSoleCompletion()
     fun testPath()               = checkSoleCompletion()
     fun testAnonymousItem()      = checkSoleCompletion()
+    fun testIncompleteLet()      = checkSoleCompletion()
     fun testLocalScope()         = checkNoCompletion()
 }
