@@ -13,12 +13,12 @@ object RustModulesIndex {
 
     fun getSuperFor(mod: RustModItem): RustModItem? =
         mod.containingFile.virtualFile?.let { file ->
-            val url = VirtualFileUrl(file)
+            val url = VirtualFileUrl(file, mod.project)
             val superUrl = FileBasedIndex.getInstance()
                 .getValues(ID, url, GlobalSearchScope.allScope(mod.project))
                 .firstOrNull()
 
-            superUrl?.resolve()?.let {
+            superUrl?.resolve(mod.project)?.let {
                 PsiManager.getInstance(mod.project).findFile(it)?.rustMod
             }
         }

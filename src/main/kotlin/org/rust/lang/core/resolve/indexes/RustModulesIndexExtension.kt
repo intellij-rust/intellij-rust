@@ -1,5 +1,7 @@
 package org.rust.lang.core.resolve.indexes
 
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
@@ -15,10 +17,16 @@ import org.rust.lang.core.psi.impl.rustMod
 import java.io.DataInput
 import java.io.DataOutput
 
-data class VirtualFileUrl(private val url: String) {
-    constructor(file: VirtualFile) : this(file.url)
+/**
+ * A wrapper around virtual file URL which is not a string and is suitable for persistence.
+ *
+ * Internally URLs are stored relative to the project directory or user home directory.
+ */
+data class VirtualFileUrl private constructor(private val url: String) {
+    constructor(file: VirtualFile, project: Project) : this(makeRelativeUrl(file.url, project))
 
-    fun resolve(): VirtualFile? = VirtualFileManager.getInstance().findFileByUrl(url)
+    fun resolve(project: Project): VirtualFile? =
+        VirtualFileManager.getInstance().findFileByUrl(restoreAbsoluteUrl(url, project))
 
     fun writeTo(out: DataOutput) {
         IOUtil.writeUTF(out, url)
@@ -27,6 +35,12 @@ data class VirtualFileUrl(private val url: String) {
     companion object {
         fun readFrom(`in`: DataInput): VirtualFileUrl? =
             IOUtil.readUTF(`in`)?.let { VirtualFileUrl(it) }
+
+        fun makeRelativeUrl(url: String, project: Project): String =
+            PathMacroManager.getInstance(project).collapsePath(url)
+
+        fun restoreAbsoluteUrl(url: String, project: Project): String =
+            PathMacroManager.getInstance(project).expandPath(url)
     }
 }
 
@@ -86,7 +100,7 @@ class RustModulesIndexExtension : FileBasedIndexExtension<VirtualFileUrl, Virtua
 
     private object myDataIndexer : DataIndexer<VirtualFileUrl, VirtualFileUrl, FileContent> {
         override fun map(inputData: FileContent): Map<VirtualFileUrl, VirtualFileUrl> {
-            val parentUrl = VirtualFileUrl(inputData.file)
+            val parentUrl = VirtualFileUrl(inputData.file, inputData.project)
             val map = HashMap<VirtualFileUrl, VirtualFileUrl>()
 
             // Something dodgy is going on here. Ideally, we would use `inputData.psiFile`, but
@@ -100,7 +114,7 @@ class RustModulesIndexExtension : FileBasedIndexExtension<VirtualFileUrl, Virtua
             psiFile?.rustMod?.acceptChildren(object : RustVisitor() {
                 override fun visitModDeclItem(mod: RustModDeclItem) {
                     val vFile = mod.reference?.resolve()?.containingFile?.virtualFile ?: return
-                    val childUrl = VirtualFileUrl(vFile)
+                    val childUrl = VirtualFileUrl(vFile, inputData.project)
                     map += childUrl to parentUrl
                 }
             })
