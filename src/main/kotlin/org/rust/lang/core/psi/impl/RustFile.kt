@@ -8,9 +8,7 @@ import com.intellij.psi.PsiFile
 import org.rust.lang.RustFileType
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.RustFileModItem
-import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.util.RustModules
-import org.rust.lang.core.resolve.indexes.RustModulePath
 
 class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvider, RustLanguage) {
 
@@ -20,11 +18,6 @@ class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvide
         get() = findChildByClass(RustFileModItem::class.java)
 
 }
-
-
-val PsiFile.modulePath: RustModulePath?
-    get() = RustModulePath.devise(this)
-
 
 /**
  * Prepends directory name to this file, if it is `mod.rs`
