@@ -13,8 +13,6 @@ object CargoConstants {
 
     val PROJECT_SYSTEM_ID = ProjectSystemId(ID)
 
-    const val CARGO_EXECUTABLE_NAME: String = "cargo"
-
     object KEYS {
         val CARGO_MODULE_DATA = Key.create(CargoModuleData::class.java, 0)
     }
