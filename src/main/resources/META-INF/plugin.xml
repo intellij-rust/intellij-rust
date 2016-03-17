@@ -79,7 +79,7 @@
 
         <!-- Smart Editor -->
 
-        <lang.smartEnterProcessor language="RUST" implementationClass="org.rust.ide.smart.RustSmartEnterProcessor"/>
+        <lang.smartEnterProcessor language="RUST" implementationClass="org.rust.ide.editor.RustSmartEnterProcessor"/>
 
         <!-- Navigation -->
 

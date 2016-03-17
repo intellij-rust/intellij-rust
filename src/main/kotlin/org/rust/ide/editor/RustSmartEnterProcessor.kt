@@ -1,4 +1,4 @@
-package org.rust.ide.smart
+package org.rust.ide.editor
 
 import com.intellij.lang.SmartEnterProcessorWithFixers
 import com.intellij.openapi.editor.Editor
