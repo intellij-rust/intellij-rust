@@ -65,7 +65,7 @@ fun Module.findExternCrateByName(crateName: String): PsiFile? =
 
 /**
  * A set of external crates for the module. External crate can refer
- * to another module or a library.
+ * to another module or a library or a crate form the sdk.
  */
 private val Module.externCrates: Collection<ExternCrate> get() =
     getService<CargoModuleService>().externCrates.mapNotNull { crate ->
@@ -76,7 +76,42 @@ private val Module.externCrates: Collection<ExternCrate> get() =
             contentRoot.findFileByRelativePath(crate.path)
 
         vFile?.let { ExternCrate(crate.name, it) }
+    } + sdkCrates
+
+object SdkCrates {
+    const val std: String = "std"
+    const val core: String = "core"
+}
+
+private val Module.sdkCrates: Collection<ExternCrate> get() {
+    val src = locateRustSources() ?: return emptyList()
+
+    return listOf(
+        "std" to "libstd/lib.rs",
+        "core" to "libcore/lib.rs",
+        "collections" to "libcollections/lib.rs"
+    ).mapNotNull {
+        val (crateName, srcLocation) = it
+        src.findFileByRelativePath(srcLocation)?.let { crateFile ->
+            ExternCrate(crateName, crateFile)
+        }
     }
+}
+
+private fun Module.locateRustSources(): VirtualFile? {
+    val sourceRoot = ModuleRootManager.getInstance(this)
+        .orderEntries()
+        .sdkOnly()
+        .classesRoots
+        .firstOrNull() ?: return null
+
+    // Allow to add the whole Rust distribution or only
+    // the src subdirectory as a root.
+    return if (sourceRoot.name == "src")
+        sourceRoot
+    else
+        sourceRoot.findFileByRelativePath("src")
+}
 
 private val Module.contentRoot: VirtualFile get() =
     ModuleRootManager.getInstance(this).contentRoots.single()

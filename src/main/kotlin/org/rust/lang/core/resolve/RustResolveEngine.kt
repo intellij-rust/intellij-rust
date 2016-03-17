@@ -1,6 +1,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
+import org.rust.cargo.project.module.util.SdkCrates
 import org.rust.cargo.project.module.util.crateRoots
 import org.rust.cargo.project.module.util.findExternCrateByName
 import org.rust.lang.core.names.RustAnonymousId
@@ -280,8 +281,11 @@ private class Resolver {
 
         override var matched: RustNamedElement? = null
 
-        override fun visitModItem(o: RustModItem) {
-            seek(o.itemList)
+        override fun visitModItem(mod: RustModItem) {
+            seek(mod.itemList)
+            if (matched == null) {
+                seekInjectedItems(mod)
+            }
         }
 
         override fun visitEnumItem(enum: RustEnumItem) {
@@ -350,6 +354,20 @@ private class Resolver {
 
         protected fun match(elem: RustNamedElement): Boolean =
             elem.nameElement?.textMatches(name) ?: false
+
+        private fun seekInjectedItems(mod: RustModItem) {
+            // Rust injects implicit `extern crate std` in every crate root module unless it is
+            // a `#![no_std]` crate, in which case `extern crate core` is injected.
+            // The stdlib lib itself is `#![no_std]`.
+            // We inject both crates for simplicity for now.
+            if (mod.isCrateRoot) {
+                if (name == SdkCrates.std || name == SdkCrates.core) {
+                    mod.getModule()?.findExternCrateByName(name)?.rustMod?.let {
+                        found(it)
+                    }
+                }
+            }
+        }
     }
 
     /**

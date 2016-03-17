@@ -74,7 +74,7 @@ internal val RustModItem.ownedDirectory: PsiDirectory?
         return parent.ownedDirectory?.findSubdirectory(name)
     }
 
-private val RustModItem.isCrateRoot: Boolean
+val RustModItem.isCrateRoot: Boolean
     get() {
         val vFile = containingFile.virtualFile
         val module = getModule()
