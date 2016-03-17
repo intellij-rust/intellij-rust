@@ -1,44 +1,52 @@
 package org.rust.ide.colorscheme
 
+import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.options.colors.AttributesDescriptor
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Default
-import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey as r
 
-object RustColors {
-    val IDENTIFIER            = r("org.rust.IDENTIFIER",            Default.IDENTIFIER)
-    val FUNCTION_DECLARATION  = r("org.rust.FUNCTION_DECLARATION",  Default.FUNCTION_DECLARATION)
-    val INSTANCE_METHOD       = r("org.rust.INSTANCE_METHOD",       Default.INSTANCE_METHOD)
-    val STATIC_METHOD         = r("org.rust.STATIC_METHOD",         Default.STATIC_METHOD)
+/**
+ * See [RustColorSettingsPage] and [org.rust.ide.highlight.syntax.RustHighlighter]
+ */
+enum class RustColor(val humanName: String, externalName: String, fallback: TextAttributesKey) {
+    IDENTIFIER            ("Identifier", "org.rust.IDENTIFIER", Default.IDENTIFIER),
+    FUNCTION_DECLARATION  ("Function declaration", "org.rust.FUNCTION_DECLARATION", Default.FUNCTION_DECLARATION),
+    INSTANCE_METHOD       ("Instance method declaration", "org.rust.INSTANCE_METHOD", Default.INSTANCE_METHOD),
+    STATIC_METHOD         ("Static method declaration", "org.rust.STATIC_METHOD", Default.STATIC_METHOD),
 
-    val LIFETIME              = r("org.rust.LIFETIME",              Default.IDENTIFIER)
+    LIFETIME              ("Lifetime", "org.rust.LIFETIME", Default.IDENTIFIER),
 
-    val CHAR                  = r("org.rust.CHAR",                  Default.STRING)
-    val STRING                = r("org.rust.STRING",                Default.STRING)
-    val NUMBER                = r("org.rust.NUMBER",                Default.NUMBER)
+    CHAR                  ("Char", "org.rust.CHAR", Default.STRING),
+    STRING                ("String", "org.rust.STRING", Default.STRING),
+    NUMBER                ("Number", "org.rust.NUMBER", Default.NUMBER),
 
-    val KEYWORD               = r("org.rust.KEYWORD",               Default.KEYWORD)
+    KEYWORD               ("Keyword", "org.rust.KEYWORD", Default.KEYWORD),
 
-    val BLOCK_COMMENT         = r("org.rust.BLOCK_COMMENT",         Default.BLOCK_COMMENT)
-    val EOL_COMMENT           = r("org.rust.EOL_COMMENT",           Default.LINE_COMMENT)
-    val DOC_COMMENT           = r("org.rust.DOC_COMMENT",           Default.DOC_COMMENT)
+    BLOCK_COMMENT         ("Block comment", "org.rust.BLOCK_COMMENT", Default.BLOCK_COMMENT),
+    EOL_COMMENT           ("Line comment", "org.rust.EOL_COMMENT", Default.LINE_COMMENT),
+    DOC_COMMENT           ("Documentation comment", "org.rust.DOC_COMMENT", Default.DOC_COMMENT),
 
-    val PARENTHESIS           = r("org.rust.PARENTHESIS",           Default.PARENTHESES)
-    val BRACKETS              = r("org.rust.BRACKETS",              Default.BRACKETS)
-    val BRACES                = r("org.rust.BRACES",                Default.BRACES)
+    PARENTHESIS           ("Parenthesis", "org.rust.PARENTHESIS", Default.PARENTHESES),
+    BRACKETS              ("Brackets", "org.rust.BRACKETS", Default.BRACKETS),
+    BRACES                ("Braces", "org.rust.BRACES", Default.BRACES),
 
-    val OPERATORS             = r("org.rust.OPERATORS",             Default.OPERATION_SIGN)
+    OPERATORS             ("Operator sign", "org.rust.OPERATORS", Default.OPERATION_SIGN),
 
-    val SEMICOLON             = r("org.rust.SEMICOLON",             Default.SEMICOLON)
-    val DOT                   = r("org.rust.DOT",                   Default.DOT)
-    val COMMA                 = r("org.rust.COMMA",                 Default.COMMA)
+    SEMICOLON             ("Semicolon", "org.rust.SEMICOLON", Default.SEMICOLON),
+    DOT                   ("Dot", "org.rust.DOT", Default.DOT),
+    COMMA                 ("Comma", "org.rust.COMMA", Default.COMMA),
 
-    val ATTRIBUTE             = r("org.rust.ATTRIBUTE",             Default.METADATA)
+    ATTRIBUTE             ("Attribute", "org.rust.ATTRIBUTE", Default.METADATA),
 
-    val MACRO                 = r("org.rust.MACRO",                 Default.IDENTIFIER)
+    MACRO                 ("Macro", "org.rust.MACRO", Default.IDENTIFIER),
 
-    val TYPE_PARAMETER        = r("org.rust.TYPE_PARAMETER",        Default.IDENTIFIER)
+    TYPE_PARAMETER        ("Type parameter", "org.rust.TYPE_PARAMETER", Default.IDENTIFIER),
 
-    val MUT_BINDING           = r("org.rust.MUT_BINDING",           Default.IDENTIFIER)
+    MUT_BINDING           ("Mutable binding", "org.rust.MUT_BINDING", Default.IDENTIFIER),
 
-    val VALID_STRING_ESCAPE   = r("org.rust.VALID_STRING_ESCAPE",   Default.VALID_STRING_ESCAPE)
-    val INVALID_STRING_ESCAPE = r("org.rust.INVALID_STRING_ESCAPE", Default.INVALID_STRING_ESCAPE)
+    VALID_STRING_ESCAPE   ("Valid escape sequence", "org.rust.VALID_STRING_ESCAPE", Default.VALID_STRING_ESCAPE),
+    INVALID_STRING_ESCAPE ("Invalid excape sequence", "org.rust.INVALID_STRING_ESCAPE", Default.INVALID_STRING_ESCAPE);
+
+    val textAttributesKey = TextAttributesKey.createTextAttributesKey(externalName, fallback)
+    val attributesDescriptor = AttributesDescriptor(humanName, textAttributesKey)
 }
+
