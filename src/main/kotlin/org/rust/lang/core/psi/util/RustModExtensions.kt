@@ -9,15 +9,12 @@ import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.names.parts.RustIdNamePart
 import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.RustModItem
-import org.rust.lang.core.psi.RustUseItem
 import org.rust.lang.core.psi.containingMod
 import org.rust.lang.core.psi.impl.modulePath
 import org.rust.lang.core.resolve.indexes.RustModulesIndex
 
 
 object RustModules {
-    val LIB_RS  = "lib.rs"
-    val MAIN_RS = "main.rs"
     val MOD_RS  = "mod.rs"
 }
 
@@ -90,5 +87,3 @@ private val RustModItem.isCrateRoot: Boolean
 val RustModItem.modDecls: Collection<RustModDeclItem>
     get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
 
-val RustModItem.useDeclarations: Collection<RustUseItem>
-    get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustUseItem::class.java)
