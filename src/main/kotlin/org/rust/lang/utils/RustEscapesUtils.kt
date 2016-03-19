@@ -8,8 +8,8 @@ import org.rust.lang.core.psi.RustTokenElementTypes.STRING_LITERAL
 /**
  * Unescape string escaped using Rust escaping rules.
  */
-fun String.unescapeRust(unicode: Boolean = true, eol: Boolean = true): String =
-    this.unescapeRust(RustEscapesLexer(STRING_LITERAL, unicode, eol))
+fun String.unescapeRust(unicode: Boolean = true, eol: Boolean = true, extendedByte: Boolean = true): String =
+    this.unescapeRust(RustEscapesLexer(STRING_LITERAL, unicode, eol, extendedByte))
 
 /**
  * Unescape string escaped using Rust escaping rules.
@@ -32,7 +32,7 @@ fun parseRustStringCharacters(chars: String, outChars: StringBuilder, sourceOffs
 
     val outOffset = outChars.length
     var index = 0
-    chars.tokenize(RustEscapesLexer(STRING_LITERAL, true, true)).forEach {
+    chars.tokenize(RustEscapesLexer(STRING_LITERAL, true, true, true)).forEach {
         val (type, text) = it
         when (type) {
             VALID_STRING_ESCAPE_TOKEN    -> {
