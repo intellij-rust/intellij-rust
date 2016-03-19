@@ -89,13 +89,10 @@ class RustEscapesLexer constructor(val defaultToken: IElementType,
     private fun esc(test: Boolean): IElementType =
         if (test) VALID_STRING_ESCAPE_TOKEN else INVALID_CHARACTER_ESCAPE_TOKEN
 
-    // https://doc.rust-lang.org/reference.html#byte-escapes
-    // A byte escape escape starts with U+0078 (x) and is followed by
-    // exactly two hex digits. It denotes the byte equal to the provided hex value.
     private fun isValidByteEscape(start: Int, end: Int): Boolean =
         end - start == BYTE_ESCAPE_LENGTH &&
             bufferSequence.startsWith("\\x", start) &&
-            testCodepointRange(start + 2, end, 0xff)
+            testCodepointRange(start + 2, end, 0x7f)
 
     private fun isValidUnicodeEscape(start: Int, end: Int): Boolean =
         // FIXME: I'm not sure if this max codepoint is correct.
