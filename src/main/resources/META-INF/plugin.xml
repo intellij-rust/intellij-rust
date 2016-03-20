@@ -33,6 +33,7 @@
 
         <moduleType id="RUST_MODULE" classpathProvider="false"
                     implementationClass="org.rust.cargo.project.module.RustModuleType"/>
+        <moduleConfigurationEditorProvider implementation="org.rust.cargo.project.module.RustModuleConfigurationEditorProvider" />
 
         <!-- File-type Factory -->
 
