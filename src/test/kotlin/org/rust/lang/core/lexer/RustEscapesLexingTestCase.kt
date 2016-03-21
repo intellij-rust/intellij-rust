@@ -7,6 +7,7 @@ import java.util.*
 class RustEscapesLexingTestCase : RustLexingTestCaseBase() {
     override fun getTestDataPath(): String = "org/rust/lang/core/lexer/fixtures/escapes"
 
+    // We want unicode and eol but not extended escapes. String literals are perfect.
     override fun createLexer(): Lexer = RustEscapesLexer.of(STRING_LITERAL)
 
     fun testShortByteEscapes() = doTest()
