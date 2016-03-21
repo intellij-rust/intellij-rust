@@ -3,10 +3,7 @@ package org.rust.lang.core.psi.impl.mixin
 import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.stubs.IStubElementType
-import org.rust.lang.core.psi.RustItem
-import org.rust.lang.core.psi.RustMetaItem
-import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustOuterAttr
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
 import org.rust.lang.core.psi.impl.usefulName
 import org.rust.lang.core.stubs.RustItemStub
@@ -42,7 +39,14 @@ class QueryAttributes(private val outerAttributes: List<RustOuterAttr>) {
     fun hasAtomAttribute(name: String): Boolean =
         metaItems
             .filter { it.eq == null && it.lparen == null }
-            .any { it.name == name}
+            .any { it.identifier.text == name}
+
+    fun lookupStringValueForKey(key: String): String? =
+        metaItems
+            .filter { it.identifier.text == key }
+            .mapNotNull { (it.litExpr?.stringLiteral as? RustLiteral.Text)?.value }
+            .singleOrNull()
+
 
     //TODO: handle inner attributes here.
     private val metaItems: List<RustMetaItem> get() = outerAttributes.mapNotNull { it.metaItem }

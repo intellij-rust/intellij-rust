@@ -1,6 +1,8 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiFile
 import org.rust.cargo.project.module.util.SdkCrates
 import org.rust.cargo.project.module.util.crateRoots
 import org.rust.cargo.project.module.util.findExternCrateByName
@@ -10,6 +12,7 @@ import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
+import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.resolve.scope.RustResolveScope
@@ -95,14 +98,9 @@ object RustResolveEngine {
 
         val dir = parent.ownedDirectory
 
-        // Lookup `name.rs` module
-        val fileName = "$name.rs"
-        val fileMod  = dir?.findFile(fileName)
-
-        // Lookup `name/mod.rs` module
-        val dirMod = dir?.findSubdirectory(name)?.findFile(RustModules.MOD_RS)
-
-        val resolved = listOf(fileMod, dirMod).mapNotNull { it?.rustMod }
+        val resolved = ref.possiblePaths.mapNotNull {
+            dir?.findFileByRelativePath(it)?.rustMod
+        }
 
         return when (resolved.size) {
             0    -> RustResolveEngine.ResolveResult.Unresolved
@@ -418,6 +416,19 @@ fun RustNamedElement?.asResolveResult(): RustResolveEngine.ResolveResult =
         RustResolveEngine.ResolveResult.Unresolved
     else
         RustResolveEngine.ResolveResult.Resolved(this)
+
+
+private fun PsiDirectory.findFileByRelativePath(path: String): PsiFile? {
+    val parts = path.split("/")
+    val fileName = parts.lastOrNull() ?: return null
+
+    var dir = this
+    for (part in parts.dropLast(1)) {
+        dir = dir.findSubdirectory(part) ?: return null
+    }
+
+    return dir.findFile(fileName)
+}
 
 
 /**
