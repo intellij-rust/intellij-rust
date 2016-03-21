@@ -142,6 +142,10 @@
             <className>org.rust.ide.intentions.ContractModule</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.ExtractInlineModule</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 

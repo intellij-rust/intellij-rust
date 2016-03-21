@@ -1,7 +1,5 @@
 package org.rust.ide.intentions
 
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import org.rust.lang.RustTestCaseBase
 
@@ -32,7 +30,4 @@ class RustIntentionsTest : RustTestCaseBase() {
         val afterDir = getVirtualFileByName(testDataPath + after)
         PlatformTestUtil.assertDirectoriesEqual(afterDir, beforeDir)
     }
-
-    private fun getVirtualFileByName(path: String): VirtualFile? =
-            LocalFileSystem.getInstance().findFileByPath(path)
 }
