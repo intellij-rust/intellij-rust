@@ -197,6 +197,10 @@
                 description="Create new Rust file">
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
+        <action class="org.rust.ide.actions.RustFmtFileAction" id="Rust.CargoFmtFile"  text="Cargo fmt file"
+                description="Format selected file with Cargo fmt util">
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+        </action>
     </actions>
 
 </idea-plugin>

@@ -4,7 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.CargoTestCaseBase
 import org.rust.cargo.project.pathToCargo
 
-class CargoTestCase : CargoTestCaseBase() {
+class CargoMetadataTest : CargoTestCaseBase() {
     override val testDataPath = "src/test/resources/org/rust/cargo/commands/fixtures/hello"
 
     fun testCargoMetadata() {

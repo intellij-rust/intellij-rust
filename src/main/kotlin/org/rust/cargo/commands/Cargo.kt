@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.util.execution.ParametersListUtil
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CargoProjectDescription
 import org.rust.cargo.commands.impl.CargoMetadata
@@ -45,6 +46,9 @@ class Cargo(
         return CargoProjectDescription.fromCargoMetadata(data)
     }
 
+    @Throws(ExecutionException::class)
+    fun reformatFile(filePath: String, listener: ProcessListener? = null) = rustfmtCommandline(filePath).execute(listener)
+
     fun generalCommand(command: String, additionalArguments: List<String> = emptyList()): GeneralCommandLine =
         GeneralCommandLine(pathToCargoExecutable)
             .withWorkDirectory(projectDirectory)
@@ -52,6 +56,9 @@ class Cargo(
             .withParameters(additionalArguments)
 
     private val metadataCommandline: GeneralCommandLine get() = generalCommand("metadata", emptyList())
+
+    private fun rustfmtCommandline(filePath: String) =
+        generalCommand("fmt").withParameters("-v", "--", "--write-mode=overwrite", "--skip-children", filePath)
 
     private fun GeneralCommandLine.execute(listener: ProcessListener? = null): ProcessOutput {
         val process = createProcess()
