@@ -4,7 +4,9 @@ import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RustItem
+import org.rust.lang.core.psi.RustMetaItem
 import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustOuterAttr
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
 import org.rust.lang.core.psi.impl.usefulName
 import org.rust.lang.core.stubs.RustItemStub
@@ -33,5 +35,15 @@ abstract class RustItemImplMixin : RustStubbedNamedElementImpl<RustItemStub>
 }
 
 
-fun RustItem.hasAttribute(name: String): Boolean =
-    outerAttrList.any { it.metaItem?.identifier?.text.equals(name) }
+val RustItem.queryAttributes: QueryAttributes get() = QueryAttributes(outerAttrList)
+
+class QueryAttributes(private val outerAttributes: List<RustOuterAttr>) {
+
+    fun hasAtomAttribute(name: String): Boolean =
+        metaItems
+            .filter { it.eq == null && it.lparen == null }
+            .any { it.name == name}
+
+    //TODO: handle inner attributes here.
+    private val metaItems: List<RustMetaItem> get() = outerAttributes.mapNotNull { it.metaItem }
+}

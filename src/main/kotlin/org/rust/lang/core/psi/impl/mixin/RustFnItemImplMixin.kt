@@ -30,7 +30,7 @@ abstract class RustFnItemImplMixin : RustItemImpl
         return iconWithVisibility(flags, icon)
     }
 
-    val isTest: Boolean get() = hasAttribute("test")
+    val isTest: Boolean get() = queryAttributes.hasAtomAttribute("test")
 
 }
 
