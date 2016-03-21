@@ -12,9 +12,10 @@ private const val UNICODE_ESCAPE_MAX_LENGTH = "\\u{000000}".length
 /**
  * Performs lexical analysis of Rust byte/char/string/byte string literals using Rust character escaping rules.
  */
-class RustEscapesLexer constructor(val defaultToken: IElementType,
-                                   val unicode: Boolean = false,
-                                   val eol: Boolean = false) : LexerBaseEx() {
+class RustEscapesLexer private constructor(val defaultToken: IElementType,
+                                           val unicode: Boolean = false,
+                                           val eol: Boolean = false,
+                                           val extendedByte: Boolean = false) : LexerBaseEx() {
     override fun determineTokenType(): IElementType? {
         // We're at the end of the string token => finish lexing
         if (tokenStart >= tokenEnd) {
@@ -38,7 +39,7 @@ class RustEscapesLexer constructor(val defaultToken: IElementType,
                     isValidUnicodeEscape(tokenStart, tokenEnd) -> VALID_STRING_ESCAPE_TOKEN
                     else                                       -> INVALID_UNICODE_ESCAPE_TOKEN
                 }
-            'x'                                 -> esc(isValidByteEscape(tokenStart, tokenEnd))
+            'x'                                 -> esc(isValidByteEscape(tokenStart, tokenEnd, extendedByte))
             '\r', '\n'                          -> esc(eol)
             'n', 'r', 't', '0', '\\', '\'', '"' -> VALID_STRING_ESCAPE_TOKEN
             else                                -> INVALID_CHARACTER_ESCAPE_TOKEN
@@ -89,13 +90,10 @@ class RustEscapesLexer constructor(val defaultToken: IElementType,
     private fun esc(test: Boolean): IElementType =
         if (test) VALID_STRING_ESCAPE_TOKEN else INVALID_CHARACTER_ESCAPE_TOKEN
 
-    // https://doc.rust-lang.org/reference.html#byte-escapes
-    // A byte escape escape starts with U+0078 (x) and is followed by
-    // exactly two hex digits. It denotes the byte equal to the provided hex value.
-    private fun isValidByteEscape(start: Int, end: Int): Boolean =
+    private fun isValidByteEscape(start: Int, end: Int, extended: Boolean = false): Boolean =
         end - start == BYTE_ESCAPE_LENGTH &&
             bufferSequence.startsWith("\\x", start) &&
-            testCodepointRange(start + 2, end, 0xff)
+            testCodepointRange(start + 2, end, if (extended) 0xff else 0x7f)
 
     private fun isValidUnicodeEscape(start: Int, end: Int): Boolean =
         // FIXME: I'm not sure if this max codepoint is correct.
@@ -121,12 +119,21 @@ class RustEscapesLexer constructor(val defaultToken: IElementType,
          * @throws IllegalArgumentException when given token type is unsupported
          */
         fun of(tokenType: IElementType): RustEscapesLexer = when (tokenType) {
-            BYTE_LITERAL        -> RustEscapesLexer(BYTE_LITERAL)
+            BYTE_LITERAL        -> RustEscapesLexer(BYTE_LITERAL, extendedByte = true)
             CHAR_LITERAL        -> RustEscapesLexer(CHAR_LITERAL, unicode = true)
-            BYTE_STRING_LITERAL -> RustEscapesLexer(BYTE_STRING_LITERAL, eol = true)
+            BYTE_STRING_LITERAL -> RustEscapesLexer(BYTE_STRING_LITERAL, eol = true, extendedByte = true)
             STRING_LITERAL      -> RustEscapesLexer(STRING_LITERAL, unicode = true, eol = true)
             else                -> throw IllegalArgumentException("unsupported literal type")
         }
+
+        /**
+         * Create an instance of [RustEscapesLexer] suitable for situations
+         * when there is no need to care about token types.
+         *
+         * There are no constraints on the value of [RustEscapesLexer.defaultToken] in dummy instances.
+         */
+        fun dummy(unicode: Boolean = true, eol: Boolean = true, extendedByte: Boolean = true): RustEscapesLexer =
+            RustEscapesLexer(STRING_LITERAL, unicode, eol, extendedByte)
     }
 }
 
