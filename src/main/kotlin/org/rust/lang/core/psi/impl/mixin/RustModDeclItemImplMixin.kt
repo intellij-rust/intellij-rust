@@ -4,10 +4,12 @@ package org.rust.lang.core.psi.impl.mixin
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiFile
 import com.intellij.psi.stubs.IStubElementType
+import org.rust.lang.core.psi.RustBlock
 import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.containingMod
 import org.rust.lang.core.psi.impl.RustItemImpl
 import org.rust.lang.core.psi.util.ownedDirectory
+import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ref.RustModReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
 import org.rust.lang.core.stubs.RustItemStub
@@ -41,6 +43,13 @@ val RustModDeclItem.possiblePaths: List<String> get() {
     return implicitPaths
 }
 
+/*
+ * mods inside blocks require explicit path  attribute
+ * https://github.com/rust-lang/rust/pull/31534
+ */
+val RustModDeclItem.isPathAttributeRequired: Boolean get() =
+    parentOfType<RustBlock>() != null
+
 
 //TODO: use explicit path if present.
 private val RustModDeclItem.suggestChildFileName: String?
@@ -49,11 +58,14 @@ private val RustModDeclItem.suggestChildFileName: String?
 
 private val RustModDeclItem.implicitPaths: List<String> get() {
     val name = name ?: return emptyList()
+    if (isPathAttributeRequired) {
+        return emptyList()
+    }
     return listOf("$name.rs", "$name/mod.rs")
 }
 
 
-private val RustModDeclItem.explicitPath: String? get() {
+val RustModDeclItem.explicitPath: String? get() {
     val pathAttr = queryAttributes.lookupStringValueForKey("path") ?: return null
     return if (!File(pathAttr).isAbsolute)
         pathAttr

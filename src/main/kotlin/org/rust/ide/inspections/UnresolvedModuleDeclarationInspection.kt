@@ -1,13 +1,18 @@
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.LocalQuickFixBase
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.RustVisitor
-import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
 import org.rust.lang.core.psi.containingMod
+import org.rust.lang.core.psi.impl.mixin.explicitPath
+import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
+import org.rust.lang.core.psi.impl.mixin.isPathAttributeRequired
 import org.rust.lang.core.psi.util.ownsDirectory
 
 class UnresolvedModuleDeclarationInspection : RustLocalInspectionTool() {
@@ -18,11 +23,16 @@ class UnresolvedModuleDeclarationInspection : RustLocalInspectionTool() {
         object : RustVisitor() {
             override fun visitModDeclItem(mod: RustModDeclItem) {
                 if (mod.reference?.resolve() == null) {
-                    if (mod.containingMod?.ownsDirectory ?: false) {
-                        holder.registerProblem(mod, "Unresolved module", AddModuleFile)
+                    val message: String
+                    val quickFix: LocalQuickFix?
+                    if (mod.isPathAttributeRequired && mod.explicitPath == null ) {
+                        message = "Cannot declare a non-inline module inside a block unless it has a path attribute"
+                        quickFix = null
                     } else {
-                        holder.registerProblem(mod, "Unresolved module")
+                        message = "Unresolved module"
+                        quickFix = if (mod.containingMod?.ownsDirectory ?: false ) AddModuleFile else null
                     }
+                    holder.registerProblem(mod, message, quickFix)
                 }
             }
         }

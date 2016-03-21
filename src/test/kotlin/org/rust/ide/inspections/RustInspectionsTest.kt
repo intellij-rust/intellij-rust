@@ -1,7 +1,6 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorManager
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.lang.RustTestCaseBase
@@ -12,6 +11,7 @@ class RustInspectionsTest : RustTestCaseBase() {
 
     fun testApproxConstant() = doTest<ApproxConstantInspection>()
     fun testSelfConvention() = doTest<SelfConventionInspection>()
+
     fun testUnresolvedModuleDeclaration() {
         enableInspection<UnresolvedModuleDeclarationInspection>()
         myFixture.testHighlighting(false, false, false,
@@ -23,6 +23,8 @@ class RustInspectionsTest : RustTestCaseBase() {
         assertThat(openFiles.find { it.name == "foo.rs" })
             .isNotNull()
     }
+
+    fun testUnresolvedLocalModuleDeclaration() = doTest<UnresolvedModuleDeclarationInspection>()
 
     private inline fun<reified T: LocalInspectionTool>enableInspection() {
         myFixture.enableInspections(T::class.java)
