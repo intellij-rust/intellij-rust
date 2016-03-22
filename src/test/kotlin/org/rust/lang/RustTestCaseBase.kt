@@ -36,8 +36,8 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
         action()
 
-        val affterDir = getVirtualFileByName(testDataPath + after)
-        PlatformTestUtil.assertDirectoriesEqual(affterDir, beforeDir)
+        val afterDir = getVirtualFileByName("$testDataPath/$after")
+        PlatformTestUtil.assertDirectoriesEqual(afterDir, beforeDir)
     }
 
     protected fun openFileInEditor(path: String) {

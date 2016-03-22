@@ -1,4 +1,4 @@
-<error>mod <caret>foo;</error>
+mod <caret>foo;
 
 fn main() {
     println!("Hello, World!");

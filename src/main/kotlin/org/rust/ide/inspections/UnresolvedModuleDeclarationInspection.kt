@@ -4,7 +4,6 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.LocalQuickFixBase
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.RustModDeclItem
@@ -41,7 +40,7 @@ class UnresolvedModuleDeclarationInspection : RustLocalInspectionTool() {
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val mod = descriptor.psiElement as RustModDeclItem
             val file = mod.getOrCreateModuleFile() ?: return
-            FileEditorManager.getInstance(project).openFile(file.virtualFile, /* focusEditor = */ true)
+            file.navigate(true)
         }
 
     }
