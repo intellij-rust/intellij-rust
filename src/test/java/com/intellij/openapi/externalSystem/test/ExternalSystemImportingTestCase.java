@@ -306,16 +306,6 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     assertOrderedElementsAreEqual(collectModuleDepsNames(moduleName, clazz), expectedDeps);
   }
 
-  protected void assertModuleModuleDepScope(String moduleName, String depName, DependencyScope... scopes) {
-    List<ModuleOrderEntry> deps = getModuleModuleDeps(moduleName, depName);
-    assertUnorderedElementsAreEqual(ContainerUtil.map2Array(deps, new Function<ModuleOrderEntry, Object>() {
-      @Override
-      public Object fun(ModuleOrderEntry entry) {
-        return entry.getScope();
-      }
-    }), scopes);
-  }
-
   @NotNull
   private List<ModuleOrderEntry> getModuleModuleDeps(@NotNull String moduleName, @NotNull String depName) {
     return getModuleDep(moduleName, depName, ModuleOrderEntry.class);
