@@ -309,15 +309,13 @@ private class Resolver {
                     if (!addToSeen(pathPart)) {
                         resolve(pathPart).element?.accept(this)
                     }
-
-                    if (matched != null) {
-                        return
-                    }
                 } else {
-                    element.boundElements.find { match(it) }?.let {
-                        found(it)
-                        return
-                    }
+                    element.boundElements.find { match(it) }?.let { found(it) }
+                }
+
+                // Check whether the match is already found
+                if (matched != null) {
+                    return
                 }
             }
         }
