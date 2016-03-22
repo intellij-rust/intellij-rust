@@ -411,7 +411,7 @@ fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolve
 private fun RustResolveScope.resolveUsing(c: Resolver.ResolveContext): RustNamedElement? = c.accept(this)
 
 
-fun RustNamedElement?.asResolveResult(): RustResolveEngine.ResolveResult =
+private fun RustNamedElement?.asResolveResult(): RustResolveEngine.ResolveResult =
     if (this == null)
         RustResolveEngine.ResolveResult.Unresolved
     else
