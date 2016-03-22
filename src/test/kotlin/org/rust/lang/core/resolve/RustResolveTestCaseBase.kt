@@ -24,7 +24,7 @@ abstract class RustResolveTestCaseBase : RustTestCaseBase() {
         }
     }
 
-    final protected fun checkIsBound(atOffset: Int? = null) {
+    protected fun checkIsBound(atOffset: Int? = null) {
         val usage = myFixture.getReferenceAtCaretPosition(fileName) as RustReference
         assertThat(usage.resolve())
             .withFailMessage("Failed to resolve `${usage.element.text}`.")
@@ -34,7 +34,7 @@ abstract class RustResolveTestCaseBase : RustTestCaseBase() {
         assertIsValidDeclaration(declaration, usage, atOffset)
     }
 
-    final protected fun checkIsUnbound() {
+    protected fun checkIsUnbound() {
         val usage = myFixture.getReferenceAtCaretPosition(fileName) as RustReference
         val declaration = usage.resolve()
 

@@ -12,13 +12,13 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
     override fun getTestDataPath(): String = "${RustTestCase.testResourcesPath}/$dataPath"
 
-    final protected val fileName: String
+    protected val fileName: String
         get() = "$testName.rs"
 
-    final protected val testName: String
+    protected val testName: String
         get() = camelToSnake(getTestName(true))
 
-    final protected fun checkByFile(ignoreTrailingWhitespace: Boolean = true, action: () -> Unit) {
+    protected fun checkByFile(ignoreTrailingWhitespace: Boolean = true, action: () -> Unit) {
         val before = fileName
         val after = before.replace(".rs", "_after.rs")
         myFixture.configureByFile(before)
@@ -26,7 +26,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         myFixture.checkResultByFile(after, ignoreTrailingWhitespace)
     }
 
-    final protected fun getVirtualFileByName(path: String): VirtualFile? =
+    protected fun getVirtualFileByName(path: String): VirtualFile? =
         LocalFileSystem.getInstance().findFileByPath(path)
 
     companion object {

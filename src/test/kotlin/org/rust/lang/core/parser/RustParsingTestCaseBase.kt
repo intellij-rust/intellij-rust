@@ -7,17 +7,17 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ParsingTestCase
 import org.jetbrains.annotations.NonNls
+import org.rust.ide.highlight.matcher.RustBraceMatcher
 import org.rust.lang.RustLanguage
 import org.rust.lang.RustTestCase
 import org.rust.lang.RustTestCaseBase
 import org.rust.lang.core.RustParserDefinition
-import org.rust.ide.highlight.matcher.RustBraceMatcher
 
 abstract class RustParsingTestCaseBase(@NonNls dataPath: String)
     : ParsingTestCase("org/rust/lang/core/parser/fixtures/" + dataPath, "rs", true /*lowerCaseFirstLetter*/, RustParserDefinition())
     , RustTestCase {
 
-    final protected fun hasError(file: PsiFile): Boolean {
+    protected fun hasError(file: PsiFile): Boolean {
         var hasErrors = false
         file.accept(object : PsiElementVisitor() {
             override fun visitElement(element: PsiElement?) {

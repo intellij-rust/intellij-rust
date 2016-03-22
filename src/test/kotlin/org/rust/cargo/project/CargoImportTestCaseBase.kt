@@ -30,12 +30,12 @@ abstract class CargoImportTestCaseBase : ExternalSystemImportingTestCase() {
         super.runTest()
     }
 
-    final protected fun assertTargets(vararg paths: String) {
+    protected fun assertTargets(vararg paths: String) {
         assertThat(module.targets.map { it.path })
             .containsOnly(*paths)
     }
 
-    final protected fun assertExternCrates(vararg crateNames: String) {
+    protected fun assertExternCrates(vararg crateNames: String) {
         for (name in crateNames) {
             assertThat(module.findExternCrateByName(name))
                 .isNotNull()

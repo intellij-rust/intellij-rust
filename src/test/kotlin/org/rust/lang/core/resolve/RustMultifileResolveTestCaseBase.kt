@@ -83,9 +83,9 @@ abstract class RustMultiFileResolveTestCaseBase : RustResolveTestCaseBase() {
         return usage.resolve()
     }
 
-    final protected fun binTarget(path: String): CargoProjectDescription.Target =
+    protected fun binTarget(path: String): CargoProjectDescription.Target =
         CargoProjectDescription.Target(path, CargoProjectDescription.TargetKind.BIN)
 
-    final protected fun libTarget(path: String): CargoProjectDescription.Target =
+    protected fun libTarget(path: String): CargoProjectDescription.Target =
         CargoProjectDescription.Target(path, CargoProjectDescription.TargetKind.LIB)
 }
