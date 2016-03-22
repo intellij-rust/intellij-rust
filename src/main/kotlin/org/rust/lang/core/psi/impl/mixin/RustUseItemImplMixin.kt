@@ -25,3 +25,5 @@ abstract class RustUseItemImplMixin : RustItemImpl, RustUseItem {
             }
         }
 }
+
+val RustUseItem.isStarImport: Boolean get() = viewPath.mul != null
