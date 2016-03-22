@@ -2,6 +2,7 @@ package org.rust.lang
 
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 
 abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), RustTestCase {
@@ -24,6 +25,23 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         myFixture.configureByFile(before)
         action()
         myFixture.checkResultByFile(after, ignoreTrailingWhitespace)
+    }
+
+    protected fun checkByDirectory(action: () -> Unit) {
+        val after = "$testName/after"
+        val before = "$testName/before"
+
+        val targetPath = ""
+        val beforeDir = myFixture.copyDirectoryToProject(before, targetPath)
+
+        action()
+
+        val affterDir = getVirtualFileByName(testDataPath + after)
+        PlatformTestUtil.assertDirectoriesEqual(affterDir, beforeDir)
+    }
+
+    protected fun openFileInEditor(path: String) {
+        myFixture.configureFromExistingVirtualFile(myFixture.findFileInTempDir(path))
     }
 
     protected fun getVirtualFileByName(path: String): VirtualFile? =
