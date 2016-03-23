@@ -2,6 +2,7 @@ package org.rust.cargo
 
 import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import org.rust.cargo.project.module.persistence.CargoModuleData
 
 object CargoConstants {
@@ -14,6 +15,6 @@ object CargoConstants {
     val PROJECT_SYSTEM_ID = ProjectSystemId(ID)
 
     object KEYS {
-        val CARGO_MODULE_DATA = Key.create(CargoModuleData::class.java, 0)
+        val CARGO_MODULE_DATA = Key.create(CargoModuleData::class.java, ExternalSystemConstants.UNORDERED)
     }
 }
