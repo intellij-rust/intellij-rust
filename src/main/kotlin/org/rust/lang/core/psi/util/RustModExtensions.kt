@@ -68,7 +68,7 @@ internal val RustModItem.ownedDirectory: PsiDirectory?
     get() {
         if (!ownsDirectory) return null
 
-        val parent  = containingMod ?: return containingFile.parent
+        val parent  = containingMod ?: return containingFile.originalFile.parent
         val name    = this.name     ?: return null
 
         return parent.ownedDirectory?.findSubdirectory(name)
@@ -76,7 +76,7 @@ internal val RustModItem.ownedDirectory: PsiDirectory?
 
 val RustModItem.isCrateRoot: Boolean
     get() {
-        val vFile = containingFile.virtualFile
+        val vFile = containingFile.originalFile.virtualFile
         val module = getModule()
         if (containingMod != null || vFile == null || module == null) {
             return false

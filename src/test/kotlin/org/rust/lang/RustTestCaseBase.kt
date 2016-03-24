@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.rust.cargo.CargoProjectDescription
 import org.rust.cargo.project.RustSdkType
@@ -72,7 +71,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
                 .joinToString("_")
     }
 
-    open class RustProjectDescriptor : DefaultLightProjectDescriptor() {
+    open class RustProjectDescriptor : LightProjectDescriptor() {
         override fun getModuleType(): ModuleType<*> = RustModuleType.INSTANCE
 
         override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {

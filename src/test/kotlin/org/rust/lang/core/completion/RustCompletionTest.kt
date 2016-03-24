@@ -7,13 +7,22 @@ class RustCompletionTest : RustTestCaseBase() {
 
     override val dataPath = "org/rust/lang/core/completion/fixtures"
 
-    private fun checkSoleCompletion() {
-        checkByFile {
-            val variants = myFixture.completeBasic()
-            assertThat(variants)
-                .withFailMessage("Expected a single completion, but got ${variants?.size}")
-                .isNull()
-        }
+    fun testLocalVariable()      = checkSoleCompletion()
+    fun testFunctionName()       = checkSoleCompletion()
+    fun testPath()               = checkSoleCompletion()
+    fun testAnonymousItem()      = checkSoleCompletion()
+    fun testIncompleteLet()      = checkSoleCompletion()
+
+    fun testMultifile() = checkByDirectory {
+        openFileInEditor("main.rs")
+        executeSoloCompletion()
+    }
+
+    fun testLocalScope()         = checkNoCompletion()
+
+
+    private fun checkSoleCompletion() = checkByFile {
+        executeSoloCompletion()
     }
 
     private fun checkNoCompletion() {
@@ -23,10 +32,10 @@ class RustCompletionTest : RustTestCaseBase() {
         assertThat(variants.size).isZero()
     }
 
-    fun testLocalVariable()      = checkSoleCompletion()
-    fun testFunctionName()       = checkSoleCompletion()
-    fun testPath()               = checkSoleCompletion()
-    fun testAnonymousItem()      = checkSoleCompletion()
-    fun testIncompleteLet()      = checkSoleCompletion()
-    fun testLocalScope()         = checkNoCompletion()
+    private fun executeSoloCompletion() {
+        val variants = myFixture.completeBasic()
+        assertThat(variants)
+            .withFailMessage("Expected a single completion, but got ${variants?.size}")
+            .isNull()
+    }
 }

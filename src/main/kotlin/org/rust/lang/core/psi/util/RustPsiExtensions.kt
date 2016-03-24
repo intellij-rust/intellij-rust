@@ -59,7 +59,7 @@ fun PsiElement.isBefore(anchor: Int): Boolean = textOffset < anchor
  * the library.
  */
 fun PsiElement.getModule(): Module? {
-    val vFile = this.containingFile.virtualFile ?: return null
+    val vFile = this.containingFile.originalFile.virtualFile ?: return null
     return ProjectRootManager.getInstance(project).fileIndex
         .getOrderEntriesForFile(vFile)
         .firstOrNull()?.ownerModule
