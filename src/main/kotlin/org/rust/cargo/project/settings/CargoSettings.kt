@@ -1,9 +1,6 @@
 package org.rust.cargo.project.settings
 
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener
 import com.intellij.openapi.project.Project
@@ -15,7 +12,13 @@ import com.intellij.util.xmlb.annotations.AbstractCollection
  *
  * See @AbstractExternalSystemSettings for more details
  */
-@State(name = "CargoSettings", storages = arrayOf(Storage("cargo.xml")))
+
+// TODO: change this to @State(name = "CargoSettings", storages = arrayOf(Storage("cargo.xml")))
+// when we drop support for IDEA 15.0.4
+@State( name = "CargoSettings",
+        storages = arrayOf( Storage(file = StoragePathMacros.PROJECT_FILE),
+                            Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/cargo.xml",
+        scheme = StorageScheme.DIRECTORY_BASED)))
 class CargoSettings(project: Project)
         : AbstractExternalSystemSettings<CargoSettings, CargoProjectSettings, CargoProjectSettingsListener>(
             CargoTopic.INSTANCE,
