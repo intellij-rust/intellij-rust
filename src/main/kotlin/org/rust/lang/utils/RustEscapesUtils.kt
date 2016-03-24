@@ -3,7 +3,6 @@ package org.rust.lang.utils
 import com.intellij.psi.StringEscapesTokenTypes.*
 import org.rust.lang.core.lexer.RustEscapesLexer
 import org.rust.lang.core.lexer.tokenize
-import org.rust.lang.core.psi.RustTokenElementTypes.STRING_LITERAL
 
 /**
  * Unescape string escaped using Rust escaping rules.
@@ -79,8 +78,8 @@ private fun decodeEscape(esc: String): String = when (esc) {
         assert(esc.length >= 2)
         assert(esc[0] == '\\')
         when (esc[1]) {
-            'x'        -> Integer.parseUnsignedInt(esc.substring(2), 16).toChar().toString()
-            'u'        -> Integer.parseUnsignedInt(esc.substring(3, esc.length - 1), 16).toChar().toString()
+            'x'        -> Integer.parseInt(esc.substring(2), 16).toChar().toString()
+            'u'        -> Integer.parseInt(esc.substring(3, esc.length - 1), 16).toChar().toString()
             '\r', '\n' -> ""
             else       -> error("unreachable")
         }
