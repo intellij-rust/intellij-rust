@@ -1,13 +1,13 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.testFramework.LightProjectDescriptor
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.CargoProjectDescription
 
 class RustStdlibResolveTestCase : RustMultiFileResolveTestCaseBase() {
-    override val targets: Collection<CargoProjectDescription.Target> = listOf(binTarget("main.rs"))
 
-    override val needsSdkSources = true
+    override fun getProjectDescriptor(): LightProjectDescriptor = WithSdkRustProjectDescriptor()
 
     override val dataPath = "org/rust/lang/core/resolve/fixtures/stdlib"
 
