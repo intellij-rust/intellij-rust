@@ -1,6 +1,7 @@
 package org.rust.lang.core.completion
 
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
 import org.rust.lang.core.resolve.enumerateScopesFor
 import org.rust.lang.core.resolve.scope.RustResolveScope
@@ -11,14 +12,15 @@ object RustCompletionEngine {
     fun complete(ref: RustQualifiedReferenceElement): Collection<RustNamedElement> =
         collectNamedElements(ref).filter { it.name != null }
 
+    fun complete(glob: RustUseGlob): Collection<RustNamedElement> =
+        glob.basePath?.reference?.resolve()
+            .completionsFromResolveScope()
+
     private fun collectNamedElements(ref: RustQualifiedReferenceElement): Collection<RustNamedElement> {
         val qual = ref.qualifier
         if (qual != null) {
-            val scope = qual.reference.resolve()
-            return when (scope) {
-                is RustResolveScope -> scope.boundElements
-                else                -> emptyList()
-            }
+            return qual.reference.resolve()
+                .completionsFromResolveScope()
         }
 
         val visitor = CompletionScopeVisitor(ref)
@@ -54,3 +56,9 @@ private class CompletionScopeVisitor(private val context: RustQualifiedReference
             .flatMapTo(completions) { it.boundElements.asSequence() }
     }
 }
+
+private fun RustNamedElement?.completionsFromResolveScope(): Collection<RustNamedElement> =
+    when (this) {
+        is RustResolveScope -> boundElements
+        else -> emptyList()
+    }
