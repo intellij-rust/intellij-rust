@@ -53,7 +53,7 @@ In general updating the plugin should just work even if we change things we
 cache or persist. However given the current rate of change we do not test for
 this and so it is possible for data from the previous versions to confuse the
 newer version of the plugin. You can **Refresh all external projects** to force a
-reimport of Cargo project. You can use **Invalidata cahces/Restart** to rebuild indices.
+reimport of Cargo project. You can use **Invalidata caches/Restart** to rebuild indices.
 
 
 # Usage
