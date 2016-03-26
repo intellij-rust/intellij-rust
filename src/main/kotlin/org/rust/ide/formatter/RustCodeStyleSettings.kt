@@ -1,4 +1,4 @@
-package org.rust.ide.codestyle
+package org.rust.ide.formatter
 
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings
