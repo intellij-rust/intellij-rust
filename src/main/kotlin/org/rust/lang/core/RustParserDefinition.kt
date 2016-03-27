@@ -1,6 +1,7 @@
 package org.rust.lang.core
 
 import com.intellij.lang.ASTNode
+import com.intellij.lang.LanguageUtil
 import com.intellij.lang.ParserDefinition
 import com.intellij.lang.PsiParser
 import com.intellij.lexer.Lexer
@@ -23,10 +24,8 @@ class RustParserDefinition : ParserDefinition {
     override fun createFile(viewProvider: FileViewProvider): PsiFile? =
         RustFile(viewProvider)
 
-    override fun spaceExistanceTypeBetweenTokens(left: ASTNode?, right: ASTNode?): ParserDefinition.SpaceRequirements? {
-        // TODO(kudinkin): Fix
-        return ParserDefinition.SpaceRequirements.MUST
-    }
+    override fun spaceExistanceTypeBetweenTokens(left: ASTNode?, right: ASTNode?): ParserDefinition.SpaceRequirements? =
+        LanguageUtil.canStickTokensTogetherByLexer(left, right, RustLexer())
 
     override fun getFileNodeType(): IFileElementType? = RustFileElementType
 

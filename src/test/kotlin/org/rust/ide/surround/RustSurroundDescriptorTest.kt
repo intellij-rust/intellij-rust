@@ -37,6 +37,12 @@ class RustSurroundDescriptorTest : RustTestCaseBase() {
         "fn main() { let a = { let inner = 3; inner * inner };}"
     )
 
+    fun testSpacing() = doTest(
+        parenthesisSurrounder,
+        "fn main() {let _ = <selection>1 + 1</selection>; }",
+        "fn main() {let _ = (1 + 1); }"
+    )
+
     private fun doTest(surrounder: Surrounder, before: String, after: String) {
         myFixture.configureByText(fileName, before)
         perform(surrounder)
