@@ -31,5 +31,6 @@ class RustCompleteParsingTestCase : RustParsingTestCaseBase("well-formed") {
     fun testPrecedence()            = doTest(true)
     fun testWayTooManyParens()      = doTest(true)
     fun testEmptyGenerics()         = doTest(true)
+    fun testStructLiterals()        = doTest(true)
     // @formatter:on
 }
