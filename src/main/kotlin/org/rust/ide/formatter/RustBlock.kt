@@ -3,19 +3,17 @@ package org.rust.ide.formatter
 import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
 import com.intellij.psi.TokenType.WHITE_SPACE
-import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 
 class RustBlock(
     node: ASTNode,
-    private val settings: CodeStyleSettings,
-    private val spacingBuilder: SpacingBuilder,
-    alignment: Alignment? = null,
-    indent: Indent? = Indent.getNoneIndent(),
-    wrap: Wrap? = null
-) : AbstractRustBlock(node, alignment, indent, wrap) {
+    alignment: Alignment?,
+    indent: Indent?,
+    wrap: Wrap?,
+    ctx: RustBlockContext
+) : AbstractRustBlock(node, alignment, indent, wrap, ctx) {
 
     override fun getChildIndent(): Indent? = when (node.elementType) {
         in BLOCKS_TOKEN_SET -> Indent.getNormalIndent()
@@ -23,7 +21,7 @@ class RustBlock(
     }
 
     override fun getSpacing(child1: Block?, child2: Block): Spacing? {
-        return spacingBuilder.getSpacing(this, child1, child2)
+        return ctx.spacingBuilder.getSpacing(this, child1, child2)
     }
 
     override fun buildChildren(): List<Block> {
@@ -37,9 +35,8 @@ class RustBlock(
             .map { buildChild(it, anchor) }
     }
 
-    private fun buildChild(child: ASTNode, anchor: Alignment?): RustBlock =
-        RustBlock(child, settings, spacingBuilder,
-            calcAlignment(child, anchor), calcIndent(child), null)
+    private fun buildChild(child: ASTNode, anchor: Alignment?): AbstractRustBlock =
+        AbstractRustBlock.createBlock(child, calcAlignment(child, anchor), calcIndent(child), null, ctx)
 
     private fun calcAlignment(child: ASTNode, anchor: Alignment?): Alignment? =
         when (child.elementType) {
@@ -79,10 +76,12 @@ class RustBlock(
             ENUM_ITEM,
             STRUCT_DECL_ARGS,
             TRAIT_ITEM,
-            IMPL_ITEM,
-            STRUCT_EXPR_BODY,
             MATCH_EXPR,
-            ARG_LIST
+            ARG_LIST,
+            STRUCT_EXPR_BODY,
+            IMPL_BODY,
+            MATCH_BODY,
+            TRAIT_BODY
         )
 
         private val BRACES_TOKEN_SET = TokenSet.create(

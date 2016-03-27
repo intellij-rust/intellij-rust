@@ -1,2 +1,2 @@
-#[derive(<caret>)]struct Test {
+#[derive(<caret>)] struct Test {
 }

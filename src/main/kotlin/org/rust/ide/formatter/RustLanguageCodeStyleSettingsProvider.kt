@@ -27,9 +27,11 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
     override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType) {
         when (settingsType) {
             BLANK_LINES_SETTINGS         -> {
+                // TODO Implement this.
             }
 
             SPACING_SETTINGS             -> {
+                // TODO Implement this.
             }
 
             WRAPPING_AND_BRACES_SETTINGS -> {
@@ -37,6 +39,7 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
             }
 
             INDENT_SETTINGS              -> {
+                // TODO Implement this.
             }
 
             else                         -> {

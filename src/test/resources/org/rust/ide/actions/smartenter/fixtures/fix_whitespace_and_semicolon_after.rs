@@ -1,4 +1,4 @@
 fn f(x: i32) -> i32 {
-    f(f(x))  ;
+    f(f(x));
     <caret>
 }
