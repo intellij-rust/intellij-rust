@@ -391,13 +391,13 @@ private class Resolver {
 
         private val context: RustCompositeElement = ref
 
-        override fun visitForExpr       (o: RustForExpr)            = seek(o.scopedForDecl)
-        override fun visitScopedLetExpr (o: RustScopedLetExpr)      = visitResolveScope(o)
-        override fun visitLambdaExpr    (o: RustLambdaExpr)         = visitResolveScope(o)
-        override fun visitTraitMethod   (o: RustTraitMethod)        = visitResolveScope(o)
-        override fun visitImplMethod    (o: RustImplMethod)         = visitResolveScope(o)
-        override fun visitFnItem        (o: RustFnItem)             = visitResolveScope(o)
-        override fun visitResolveScope  (scope: RustResolveScope)   = seek(scope.declarations)
+        override fun visitForExpr             (o: RustForExpr)            = seek(o.scopedForDecl)
+        override fun visitScopedLetExpr       (o: RustScopedLetExpr)      = visitResolveScope(o)
+        override fun visitLambdaExpr          (o: RustLambdaExpr)         = visitResolveScope(o)
+        override fun visitTraitMethodMember   (o: RustTraitMethodMember)  = visitResolveScope(o)
+        override fun visitImplMethod          (o: RustImplMethod)         = visitResolveScope(o)
+        override fun visitFnItem              (o: RustFnItem)             = visitResolveScope(o)
+        override fun visitResolveScope        (scope: RustResolveScope)   = seek(scope.declarations)
 
         override fun visitBlock(o: RustBlock) {
             o.letDeclarationsVisibleAt(context)

@@ -179,8 +179,8 @@
     implements  ("enum_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("enum_item") = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
 
-    implements  ("trait_method") = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    mixin       ("trait_method") = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodImplMixin"
+    implements  ("trait_method_member") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    mixin       ("trait_method_member") = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodMemberImplMixin"
 
     implements  ("lambda_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("lambda_expr") = "org.rust.lang.core.psi.impl.mixin.RustLambdaExprImplMixin"
@@ -572,22 +572,24 @@ enum_struct_field ::= outer_attrs? IDENTIFIER COLON type_sum { pin = 2}
 // Trait
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params? for_sized? type_param_bounds? where_clause? LBRACE trait_contents* RBRACE
+trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params? for_sized? type_param_bounds? where_clause? LBRACE trait_member* RBRACE
 
 for_sized ::= FOR Q IDENTIFIER
             | FOR IDENTIFIER Q
 
-private trait_contents ::= trait_const | trait_type | trait_method
+private trait_member ::= trait_const_member
+                       | trait_type_member
+                       | trait_method_member
 
-trait_const ::= outer_attrs? CONST IDENTIFIER type_ascription? const_default? SEMICOLON
+trait_const_member ::= outer_attrs? CONST IDENTIFIER type_ascription? const_default? SEMICOLON
 
 type_ascription ::= COLON type_sum
 
 private const_default ::= EQ any_expr
 
-trait_type ::= outer_attrs? TYPE type_param SEMICOLON
+trait_type_member ::= outer_attrs? TYPE type_param SEMICOLON
 
-trait_method ::= outer_attrs? fn_header generic_params fn_decl_with_self_allow_anon_params where_clause? (SEMICOLON | inner_attrs_and_block)
+trait_method_member ::= outer_attrs? fn_header generic_params fn_decl_with_self_allow_anon_params where_clause? (SEMICOLON | inner_attrs_and_block)
 
 private fn_decl_with_self_allow_anon_params ::= fn_anon_params_with_self ret_type?
 private fn_anon_params_with_self ::= LPAREN self_argument comma_anon_params? RPAREN

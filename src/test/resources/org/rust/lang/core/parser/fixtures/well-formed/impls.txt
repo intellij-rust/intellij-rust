@@ -17,7 +17,7 @@ FILE
         <empty list>
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      RustTraitTypeImpl(TRAIT_TYPE)
+      RustTraitTypeMemberImpl(TRAIT_TYPE_MEMBER)
         PsiElement(type)('type')
         PsiWhiteSpace(' ')
         RustTypeParamImpl(TYPE_PARAM)

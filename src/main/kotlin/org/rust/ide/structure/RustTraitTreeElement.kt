@@ -20,11 +20,9 @@ class RustTraitTreeElement(element: RustTraitItem) : PsiTreeElementBase<RustTrai
         return text
     }
 
-
-    override fun getChildrenBase(): Collection<StructureViewTreeElement> {
-        return element?.traitMethodList?.let { methods ->
-            methods .filterNotNull()
-                    .map { RustTraitMethodTreeElement(it) }
-        }.orEmpty();
-    }
+    override fun getChildrenBase(): Collection<StructureViewTreeElement> =
+        element?.traitMethodMemberList?.let { methods ->
+            methods.filterNotNull()
+                .map { RustTraitMethodTreeElement(it) }
+        }.orEmpty()
 }

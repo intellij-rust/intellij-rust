@@ -4,12 +4,13 @@ import com.intellij.lang.ASTNode
 import org.rust.ide.icons.RustIcons
 import org.rust.ide.icons.addStaticMark
 import org.rust.lang.core.psi.RustDeclaringElement
-import org.rust.lang.core.psi.RustTraitMethod
+import org.rust.lang.core.psi.RustTraitMethodMember
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
 import javax.swing.Icon
 
 
-abstract class RustTraitMethodImplMixin(node: ASTNode) : RustCompositeElementImpl(node), RustTraitMethod {
+abstract class RustTraitMethodMemberImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
+                                                             , RustTraitMethodMember {
     override val declarations: Collection<RustDeclaringElement>
         get() = listOfNotNull(selfArgument) + anonParams?.anonParamList.orEmpty()
 
@@ -26,4 +27,4 @@ abstract class RustTraitMethodImplMixin(node: ASTNode) : RustCompositeElementImp
 
 }
 
-val RustTraitMethod.isStatic: Boolean get() = selfArgument == null
+val RustTraitMethodMember.isStatic: Boolean get() = selfArgument == null

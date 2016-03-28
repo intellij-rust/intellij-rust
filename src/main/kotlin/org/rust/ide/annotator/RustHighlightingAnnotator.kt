@@ -47,7 +47,7 @@ class RustHighlightingAnnotator : Annotator {
             holder.highlight(o.identifier, color)
         }
 
-        override fun visitTraitMethod(o: RustTraitMethod) {
+        override fun visitTraitMethodMember(o: RustTraitMethodMember) {
             val color = if (o.isStatic) RustColor.STATIC_METHOD else RustColor.INSTANCE_METHOD
             holder.highlight(o.identifier, color)
         }

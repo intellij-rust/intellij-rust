@@ -37,11 +37,11 @@ private class CompletionScopeVisitor(private val context: RustQualifiedReference
 
     val completions: MutableSet<RustNamedElement> = HashSet()
 
-    override fun visitModItem(o: RustModItem)             = visitResolveScope(o)
-    override fun visitScopedLetExpr(o: RustScopedLetExpr) = visitResolveScope(o)
-    override fun visitLambdaExpr(o: RustLambdaExpr)       = visitResolveScope(o)
-    override fun visitTraitMethod(o: RustTraitMethod)     = visitResolveScope(o)
-    override fun visitFnItem(o: RustFnItem)               = visitResolveScope(o)
+    override fun visitModItem(o: RustModItem)                         = visitResolveScope(o)
+    override fun visitScopedLetExpr(o: RustScopedLetExpr)             = visitResolveScope(o)
+    override fun visitLambdaExpr(o: RustLambdaExpr)                   = visitResolveScope(o)
+    override fun visitTraitMethodMember(o: RustTraitMethodMember)     = visitResolveScope(o)
+    override fun visitFnItem(o: RustFnItem)                           = visitResolveScope(o)
 
     override fun visitResolveScope(scope: RustResolveScope) {
         completions.addAll(scope.boundElements)
