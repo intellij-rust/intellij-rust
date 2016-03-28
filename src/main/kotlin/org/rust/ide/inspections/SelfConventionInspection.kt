@@ -3,7 +3,7 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import org.rust.lang.core.psi.RustImplMethod
+import org.rust.lang.core.psi.RustImplMethodMember
 import org.rust.lang.core.psi.RustVisitor
 
 class SelfConventionInspection : RustLocalInspectionTool() {
@@ -12,7 +12,7 @@ class SelfConventionInspection : RustLocalInspectionTool() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : RustVisitor() {
-            override fun visitImplMethod(m: RustImplMethod) {
+            override fun visitImplMethodMember(m: RustImplMethodMember) {
                 val convention = SELF_CONVENTIONS.find { m.identifier.text.startsWith(it.prefix) } ?: return
                 if (m.selfType !in convention.selfTypes) {
                     holder.registerProblem(m.selfArgument ?: m.identifier, convention)
@@ -39,7 +39,7 @@ enum class SelfType(val description: String) {
     REF_MUT_SELF("self by mutable reference");
 }
 
-private val RustImplMethod.selfType: SelfType get() {
+private val RustImplMethodMember.selfType: SelfType get() {
     val self = selfArgument
     return when {
         self == null -> SelfType.NO_SELF

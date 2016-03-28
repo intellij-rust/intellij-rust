@@ -185,9 +185,9 @@
     implements  ("lambda_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("lambda_expr") = "org.rust.lang.core.psi.impl.mixin.RustLambdaExprImplMixin"
 
-    implements  ("impl_method") = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
-                                    "org.rust.lang.core.psi.RustAccessControlElement" ]
-    mixin       ("impl_method") = "org.rust.lang.core.psi.impl.mixin.RustImplMethodImplMixin"
+    implements  ("impl_method_member") = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
+                                           "org.rust.lang.core.psi.RustAccessControlElement" ]
+    mixin       ("impl_method_member") = "org.rust.lang.core.psi.impl.mixin.RustImplMethodImplMixinMember"
 
     implements  ("block") =  "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("block") =  "org.rust.lang.core.psi.impl.mixin.RustBlockImplMixin"
@@ -577,6 +577,7 @@ trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params? for_sized? type_param_bo
 for_sized ::= FOR Q IDENTIFIER
             | FOR IDENTIFIER Q
 
+// TODO: use upper rules and inheritance here
 private trait_member ::= trait_const_member
                        | trait_type_member
                        | trait_method_member
@@ -616,18 +617,19 @@ trait_ref ::= path_generic_args_without_colons
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl_item ::= UNSAFE? IMPL generic_params type_sum                      where_clause? LBRACE inner_attrs? impl_contents* RBRACE
-            | UNSAFE? IMPL generic_params LPAREN type RPAREN            where_clause? LBRACE inner_attrs? impl_contents* RBRACE
-            | UNSAFE? IMPL generic_params EXCL? trait_ref FOR (type_sum where_clause? LBRACE inner_attrs? impl_contents* RBRACE | DOTDOT LBRACE RBRACE) {
+impl_item ::= UNSAFE? IMPL generic_params type_sum                      where_clause? LBRACE inner_attrs? impl_member* RBRACE
+            | UNSAFE? IMPL generic_params LPAREN type RPAREN            where_clause? LBRACE inner_attrs? impl_member* RBRACE
+            | UNSAFE? IMPL generic_params EXCL? trait_ref FOR (type_sum where_clause? LBRACE inner_attrs? impl_member* RBRACE | DOTDOT LBRACE RBRACE) {
   pin(".*") = "LBRACE"
 }
 
-private impl_contents ::= impl_method
-                        | impl_const
-                        | impl_macro
-                        | impl_type
+// TODO: unify with trait_member?
+private impl_member ::= impl_method_member
+                      | impl_const_member
+                      | impl_macro_member
+                      | impl_type_member
 
-impl_method ::= attrs_and_vis fn_header generic_params fn_decl_with_self where_clause? inner_attrs_and_block
+impl_method_member ::= attrs_and_vis fn_header generic_params fn_decl_with_self where_clause? inner_attrs_and_block
 
 private fn_decl_with_self ::= fn_params_with_self ret_type?
 
@@ -638,9 +640,9 @@ self_argument ::= [ AND LIFETIME? ] MUT? SELF type_ascription?
 
 private comma_params ::= COMMA [ params COMMA? ]
 
-private impl_const ::= attrs_and_vis const_item
+private impl_const_member ::= attrs_and_vis const_item
 
-private impl_type ::= attrs_and_vis TYPE IDENTIFIER generic_params EQ type_sum SEMICOLON
+private impl_type_member ::= attrs_and_vis TYPE IDENTIFIER generic_params EQ type_sum SEMICOLON
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1045,7 +1047,7 @@ item_macro ::= IDENTIFIER EXCL IDENTIFIER?
              | LBRACE token_tree? RBRACE
              | LBRACK token_tree? RBRACK SEMICOLON )
 
-impl_macro ::= IDENTIFIER EXCL IDENTIFIER?
+impl_macro_member ::= IDENTIFIER EXCL IDENTIFIER?
              ( LPAREN token_tree? RPAREN SEMICOLON
              | LBRACE token_tree? RBRACE
              | LBRACK token_tree? RBRACK SEMICOLON )

@@ -42,7 +42,7 @@ class RustHighlightingAnnotator : Annotator {
             holder.highlight(o.identifier, RustColor.FUNCTION_DECLARATION)
         }
 
-        override fun visitImplMethod(o: RustImplMethod) {
+        override fun visitImplMethodMember(o: RustImplMethodMember) {
             val color = if (o.isStatic) RustColor.STATIC_METHOD else RustColor.INSTANCE_METHOD
             holder.highlight(o.identifier, color)
         }

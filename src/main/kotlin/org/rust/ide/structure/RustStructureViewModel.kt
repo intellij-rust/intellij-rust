@@ -5,7 +5,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel
 import com.intellij.openapi.editor.Editor
 import org.rust.lang.core.psi.RustFnItem
-import org.rust.lang.core.psi.RustImplMethod
+import org.rust.lang.core.psi.RustImplMethodMember
 import org.rust.lang.core.psi.RustStructDeclField
 import org.rust.lang.core.psi.impl.RustFile
 
@@ -25,10 +25,8 @@ class RustStructureViewModel(editor: Editor?, file: RustFile) : TextEditorBasedS
     override fun isAlwaysLeaf(element: StructureViewTreeElement) =
         when(element.value) {
             is RustFnItem           -> true
-            is RustImplMethod       -> true
+            is RustImplMethodMember -> true
             is RustStructDeclField  -> true
             else                    -> false
         }
 }
-
-

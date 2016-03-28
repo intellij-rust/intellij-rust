@@ -4,13 +4,13 @@ import com.intellij.lang.ASTNode
 import org.rust.ide.icons.RustIcons
 import org.rust.ide.icons.addStaticMark
 import org.rust.lang.core.psi.RustDeclaringElement
-import org.rust.lang.core.psi.RustImplMethod
+import org.rust.lang.core.psi.RustImplMethodMember
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
 import javax.swing.Icon
 
-abstract class RustImplMethodImplMixin(node: ASTNode)   : RustNamedElementImpl(node)
-                                                        , RustImplMethod {
+abstract class RustImplMethodImplMixinMember(node: ASTNode) : RustNamedElementImpl(node)
+                                                            , RustImplMethodMember {
 
     override val declarations: Collection<RustDeclaringElement>
         get() = listOfNotNull(selfArgument) + paramList.orEmpty()
@@ -28,4 +28,4 @@ abstract class RustImplMethodImplMixin(node: ASTNode)   : RustNamedElementImpl(n
 
 }
 
-val RustImplMethod.isStatic: Boolean get() = selfArgument == null
+val RustImplMethodMember.isStatic: Boolean get() = selfArgument == null

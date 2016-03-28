@@ -334,7 +334,7 @@ FILE
           PsiElement(<IDENTIFIER>)('T')
       PsiElement(;)(';')
       PsiWhiteSpace('\n\n    ')
-      RustImplMacroImpl(IMPL_MACRO)
+      RustImplMacroMemberImpl(IMPL_MACRO_MEMBER)
         PsiElement(<IDENTIFIER>)('foo')
         PsiElement(!)('!')
         PsiElement(()('(')
