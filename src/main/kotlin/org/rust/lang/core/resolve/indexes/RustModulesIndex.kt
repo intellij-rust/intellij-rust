@@ -17,7 +17,7 @@ interface RustModulesIndex {
             com.intellij.util.indexing.ID.create("org.rust.lang.indexes.RustModulesIndex")
 
         fun getSuperFor(mod: RustModItem): RustModItem? =
-            mod.containingFile.let { file ->
+            mod.containingFile.originalFile.let { file ->
                 mod.getModule()?.let { module ->
                     file.modulePath?.let { path ->
                         findByHeterogeneous(

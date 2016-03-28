@@ -14,8 +14,13 @@ class RustCompletionTest : RustTestCaseBase() {
     fun testIncompleteLet()      = checkSoleCompletion()
     fun testUseGlob()            = checkSoleCompletion()
 
-    fun testMultifile() = checkByDirectory {
+    fun testChildFile() = checkByDirectory {
         openFileInEditor("main.rs")
+        executeSoloCompletion()
+    }
+
+    fun testParentFile() = checkByDirectory {
+        openFileInEditor("foo.rs")
         executeSoloCompletion()
     }
 
