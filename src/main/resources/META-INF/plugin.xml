@@ -1,7 +1,6 @@
 <idea-plugin version="2">
     <id>org.rust.lang</id>
     <name>Rust</name>
-    <version>0.0.1</version>
 
     <vendor url="https://github.com/intellij-rust/intellij-rust"/>
 
