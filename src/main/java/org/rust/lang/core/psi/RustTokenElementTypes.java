@@ -54,7 +54,7 @@ public interface RustTokenElementTypes {
     RustTokenType SUPER = new RustKeywordTokenType("super");
     RustTokenType TRAIT = new RustKeywordTokenType("trait");
     RustTokenType TRUE = new RustKeywordTokenType("true");
-    RustTokenType TYPE = new RustKeywordTokenType("type");
+    RustTokenType TYPE_KW = new RustKeywordTokenType("type");
     RustTokenType TYPEOF = new RustKeywordTokenType("typeof");
     RustTokenType UNSAFE = new RustKeywordTokenType("unsafe");
     RustTokenType UNSIZED = new RustKeywordTokenType("unsized");

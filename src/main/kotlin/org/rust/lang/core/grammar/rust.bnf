@@ -108,7 +108,7 @@
         SUPER     = 'super'
         TRAIT     = 'trait'
         TRUE      = 'true'
-        TYPE      = 'type'
+        TYPE_KW   = 'type'
         TYPEOF    = 'typeof'
         UNSAFE    = 'unsafe'
         UNSIZED   = 'unsized'
@@ -266,6 +266,7 @@
 
     extends("(if|while)_let_expr") = scoped_let_expr
     extends(".*_expr") = restricted_expr
+    extends("(?!ret_type).*_type") = type
     extends(".*_stmt") = stmt
     extends("pat_.*")  = pat
     extends(".*_attr") = attr
@@ -366,7 +367,7 @@ private fn_header ::= CONST? UNSAFE? [ EXTERN abi? ] FN IDENTIFIER
 
 fn_params ::= LPAREN !COMMA params COMMA? RPAREN { pin(".*") = 1 }
 private params ::= [ param (COMMA param)* ]
-param ::= pat COLON type_sum
+param ::= pat COLON type
 
 ret_type  ::= ARROW (type | EXCL) { pin = 1 }
 
@@ -396,25 +397,18 @@ private lifetime_bounds     ::= COLON LIFETIME (PLUS LIFETIME)*
 
 private type_params ::= type_param (COMMA type_params)*
 
-type_param ::= [ IDENTIFIER Q ] IDENTIFIER type_param_bounds? type_param_default?
+type_param ::= [ IDENTIFIER Q ] IDENTIFIER type_param_bounds? [ EQ type ]
 
 type_param_bounds   ::= COLON [ type_param_bound_seq ]
-type_param_default  ::= EQ type_sum
-
-type_sum    ::= type [ PLUS bounds ]
-type_sums   ::= type_sum !EQ (COMMA type_sum !EQ)*
 
 private type_param_bound_seq        ::= polybound type_param_bound_seq_right
 private type_param_bound_seq_right  ::= [ PLUS polybound type_param_bound_seq_right ]
 
 polybound ::= [ FOR LT lifetimes? GT | Q ] bound
 
-bound   ::= LIFETIME | trait_ref
-bounds  ::= bound (PLUS bound)*
-
 where_clause ::= WHERE <<comma_separated_list where_pred>>
 
-where_pred ::= for_lifetimes? (LIFETIME COLON bounds | type type_param_bounds)
+where_pred ::= for_lifetimes? (LIFETIME COLON [ LIFETIME ( PLUS LIFETIME )* ] | type type_param_bounds)
 
 for_lifetimes ::= FOR LT lifetimes GT
 
@@ -475,8 +469,8 @@ generic_args ::= LT generic_values GT
 private generic_values ::= lifetimes [ COMMA type_sums_and_or_bindings ] COMMA?
                          |                   type_sums_and_or_bindings?
 
-private type_sums_and_or_bindings ::=                   bindings   COMMA?
-                                    | type_sums [ COMMA bindings ] COMMA?
+private type_sums_and_or_bindings ::=               bindings   COMMA?
+                                    | types [ COMMA bindings ] COMMA?
 
 bindings ::= binding (COMMA binding)*
 binding  ::= IDENTIFIER EQ type
@@ -540,10 +534,10 @@ private foreign_static_item ::= MUT? IDENTIFIER COLON type SEMICOLON
 struct_item ::= STRUCT IDENTIFIER generic_params (struct_tuple_args? where_clause? SEMICOLON | where_clause? struct_decl_args)
 
 struct_tuple_args ::= LPAREN <<comma_separated_list struct_tuple_field>> RPAREN { pin = 1}
-struct_tuple_field ::= attrs_and_vis type_sum
+struct_tuple_field ::= attrs_and_vis type
 
 struct_decl_args ::= LBRACE <<comma_separated_list struct_decl_field>> RBRACE { pin = 1 }
-struct_decl_field ::= attrs_and_vis IDENTIFIER COLON type_sum { pin = 2 }
+struct_decl_field ::= attrs_and_vis IDENTIFIER COLON type { pin = 2 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -562,10 +556,10 @@ enum_args ::= enum_struct_args
 
 // unlike real structs, enum variants can't have `pub` visibility applied to fields
 enum_tuple_args ::= LPAREN <<comma_separated_list enum_tuple_field>> RPAREN { pin = 1 }
-enum_tuple_field ::= outer_attrs? type_sum
+enum_tuple_field ::= outer_attrs? type
 
 enum_struct_args ::= LBRACE <<comma_separated_list enum_struct_field>> RBRACE { pin = 1 }
-enum_struct_field ::= outer_attrs? IDENTIFIER COLON type_sum { pin = 2}
+enum_struct_field ::= outer_attrs? IDENTIFIER COLON type { pin = 2}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -584,11 +578,11 @@ private trait_member ::= trait_const_member
 
 trait_const_member ::= outer_attrs? CONST IDENTIFIER type_ascription? const_default? SEMICOLON
 
-type_ascription ::= COLON type_sum
+type_ascription ::= COLON type
 
 private const_default ::= EQ any_expr
 
-trait_type_member ::= outer_attrs? TYPE type_param SEMICOLON
+trait_type_member ::= outer_attrs? TYPE_KW type_param SEMICOLON
 
 trait_method_member ::= outer_attrs? fn_header generic_params fn_decl_with_self_allow_anon_params where_clause? (SEMICOLON | inner_attrs_and_block)
 
@@ -617,9 +611,9 @@ trait_ref ::= path_generic_args_without_colons
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl_item ::= UNSAFE? IMPL generic_params type_sum                      where_clause? LBRACE inner_attrs? impl_member* RBRACE
-            | UNSAFE? IMPL generic_params LPAREN type RPAREN            where_clause? LBRACE inner_attrs? impl_member* RBRACE
-            | UNSAFE? IMPL generic_params EXCL? trait_ref FOR (type_sum where_clause? LBRACE inner_attrs? impl_member* RBRACE | DOTDOT LBRACE RBRACE) {
+impl_item ::= UNSAFE? IMPL generic_params type                      where_clause? LBRACE inner_attrs? impl_member* RBRACE
+            | UNSAFE? IMPL generic_params LPAREN type RPAREN        where_clause? LBRACE inner_attrs? impl_member* RBRACE
+            | UNSAFE? IMPL generic_params EXCL? trait_ref FOR (type where_clause? LBRACE inner_attrs? impl_member* RBRACE | DOTDOT LBRACE RBRACE) {
   pin(".*") = "LBRACE"
 }
 
@@ -642,32 +636,49 @@ private comma_params ::= COMMA [ params COMMA? ]
 
 private impl_const_member ::= attrs_and_vis const_item
 
-private impl_type_member ::= attrs_and_vis TYPE IDENTIFIER generic_params EQ type_sum SEMICOLON
+private impl_type_member ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params EQ type SEMICOLON
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Types
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private type ::= BOX type
-               | MUL    [ MUT | CONST ] type
-               | AND    [ LIFETIME? MUT? ] type
-               | ANDAND [ LIFETIME? MUT? ] type
-               | LBRACK type [ (COMMA DOTDOT | SEMICOLON) any_expr ] RBRACK
-               | UNDERSCORE
-               | type_bare_fn
-               | for_in_type
-               | LPAREN [ type_sums COMMA? ] RPAREN
+type ::= vec_type
+       | ptr_type
+       | ref_type
+       | bare_fn_type
+       | tuple_type
+       | path_type
+       | type_with_bounds_type
+       | for_in_type
+       | wildcard_type
 
-               /* Paths */
-               | !LT path_generic_args_without_colons
-               | &LT type_qual_path
+vec_type ::= LBRACK type [SEMICOLON any_expr] RBRACK
 
-type_item ::= TYPE IDENTIFIER generic_params where_clause? EQ type_sum SEMICOLON
+ptr_type ::= MUL [ MUT | CONST ] type
+
+ref_type ::= ( AND | ANDAND ) [ LIFETIME? MUT? ] type
+
+bare_fn_type ::= [ UNSAFE? [ EXTERN abi? ] ] FN type_fn_decl
+
+tuple_type ::= LPAREN [ <<comma_separated_list type>> ] RPAREN
+
+path_type ::= !LT path_generic_args_without_colons
+            | &LT type_qual_path
+
+type_with_bounds_type ::= type PLUS bound (PLUS bound)*
+bound ::= LIFETIME | trait_ref
+
+for_in_type ::= FOR LT lifetimes? GT (bare_fn_type | trait_ref)
+
+wildcard_type ::= UNDERSCORE
+
+
+type_item ::= TYPE_KW IDENTIFIER generic_params where_clause? EQ type SEMICOLON
 
 type_qual_path ::= << qualified_path view_path_prefix >>
 
-private type_bare_fn ::= [ UNSAFE? [ EXTERN abi? ] ] FN type_fn_decl
+private types ::= type !EQ (COMMA type !EQ)*
 
 private type_fn_decl ::= generic_params fn_anon_params ret_type?
 
@@ -677,9 +688,6 @@ private fn_anon_params ::= LPAREN anon_param anon_params_allow_variadic_tail RPA
 private anon_params_allow_variadic_tail ::= [ COMMA (DOTDOTDOT | anon_param anon_params_allow_variadic_tail) ]
 
 
-private for_in_type ::= FOR LT lifetimes? GT for_in_type_suffix
-private for_in_type_suffix ::= type_bare_fn
-                             | trait_ref
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -761,7 +769,7 @@ path_generic_args_without_colons_part_leftish ::= path_generic_args_without_colo
   elementType = path_part
 }
 
-private path_generic_args_without_colons_part_inner ::= ident_or_self_or_super [ generic_args | LPAREN type_sums? RPAREN ret_type? ]
+private path_generic_args_without_colons_part_inner ::= ident_or_self_or_super [ generic_args | LPAREN types? RPAREN ret_type? ]
 
 
 //

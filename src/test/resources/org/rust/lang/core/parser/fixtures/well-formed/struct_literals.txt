@@ -14,7 +14,7 @@ FILE
           PsiElement(<IDENTIFIER>)('f')
           PsiElement(:)(':')
           PsiWhiteSpace(' ')
-          RustTypeSumImpl(TYPE_SUM)
+          RustPathTypeImpl(PATH_TYPE)
             RustPathPartImpl(PATH_PART)
               PsiElement(<IDENTIFIER>)('i32')
         PsiWhiteSpace(' ')

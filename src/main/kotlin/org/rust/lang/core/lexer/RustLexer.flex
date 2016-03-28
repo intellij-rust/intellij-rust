@@ -222,7 +222,7 @@ SHEBANG_LINE=\#\![^\[].*
   "super"                         { return SUPER; }
   "trait"                         { return TRAIT; }
   "true"                          { return TRUE; }
-  "type"                          { return TYPE; }
+  "type"                          { return TYPE_KW; }
   "typeof"                        { return TYPEOF; }
   "unsafe"                        { return UNSAFE; }
   "unsized"                       { return UNSIZED; }
