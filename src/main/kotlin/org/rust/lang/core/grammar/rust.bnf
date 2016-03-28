@@ -185,8 +185,8 @@
     implements  ("lambda_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("lambda_expr") = "org.rust.lang.core.psi.impl.mixin.RustLambdaExprImplMixin"
 
-    implements  ("impl_method") = ["org.rust.lang.core.resolve.scope.RustResolveScope"
-                                   "org.rust.lang.core.psi.RustAccessControlElement"]
+    implements  ("impl_method") = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
+                                    "org.rust.lang.core.psi.RustAccessControlElement" ]
     mixin       ("impl_method") = "org.rust.lang.core.psi.impl.mixin.RustImplMethodImplMixin"
 
     implements  ("block") =  "org.rust.lang.core.resolve.scope.RustResolveScope"
@@ -206,7 +206,8 @@
     // Declaring elements
     //
 
-    implements  ("enum_variant")    = ["org.rust.lang.core.psi.RustDeclaringElement" "org.rust.lang.core.psi.RustNamedElement"]
+    implements  ("enum_variant")    = [ "org.rust.lang.core.psi.RustDeclaringElement"
+                                        "org.rust.lang.core.psi.RustNamedElement" ]
     mixin       ("enum_variant")    = "org.rust.lang.core.psi.impl.mixin.RustEnumVariantImplMixin"
 
     implements  ("let_decl")    = "org.rust.lang.core.psi.RustDeclaringElement"
@@ -230,7 +231,8 @@
     implements  ("match_pat")   = "org.rust.lang.core.psi.RustDeclaringElement"
     mixin       ("match_pat")   = "org.rust.lang.core.psi.impl.mixin.RustMatchPatImplMixin"
 
-    implements  ("pat_binding") = ["org.rust.lang.core.psi.RustDeclaringElement" "org.rust.lang.core.psi.RustNamedElement"]
+    implements  ("pat_binding") = [ "org.rust.lang.core.psi.RustDeclaringElement"
+                                    "org.rust.lang.core.psi.RustNamedElement" ]
     mixin       ("pat_binding") = "org.rust.lang.core.psi.impl.mixin.RustPatBindingImplMixin"
 
     //
@@ -277,6 +279,7 @@
     //recoverWhile = skip_until_eol_rec
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Root
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -291,6 +294,7 @@ root ::= file_mod_item
 left file_mod_item ::= [ SHEBANG_LINE ] [ inner_attrs ] item * {
   extends = mod_item
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Attributes
@@ -307,6 +311,7 @@ private outer_attrs ::= outer_attr +
 outer_attr ::= SHA LBRACK meta_item RBRACK | OUTER_DOC_COMMENT
 
 fake attr ::=
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Items
@@ -359,8 +364,14 @@ private block_item_group ::= &(CONST? UNSAFE? [ EXTERN abi? ] FN) fn_item
 
 private fn_header ::= CONST? UNSAFE? [ EXTERN abi? ] FN IDENTIFIER
 
+fn_params ::= LPAREN !COMMA params COMMA? RPAREN { pin(".*") = 1 }
+private params ::= [ param (COMMA param)* ]
+param ::= pat COLON type_sum
+
+ret_type  ::= ARROW (type | EXCL) { pin = 1 }
+
 fn_item ::= fn_header generic_params fn_params ret_type? where_clause? inner_attrs_and_block {
-   pin(".*")=1
+   pin(".*") = 1
 }
 
 foreign_fn_item ::= FN IDENTIFIER generic_params fn_decl_allow_variadic where_clause? SEMICOLON
@@ -406,13 +417,6 @@ where_clause ::= WHERE <<comma_separated_list where_pred>>
 where_pred ::= for_lifetimes? (LIFETIME COLON bounds | type type_param_bounds)
 
 for_lifetimes ::= FOR LT lifetimes GT
-
-fn_params ::= LPAREN !COMMA params COMMA? RPAREN    { pin(".*")=1 }
-ret_type  ::= ARROW (type | EXCL)                   { pin=1 }
-
-private params ::= [ param (COMMA param)* ]
-
-param ::= pat COLON type_sum
 
 pat ::= pat_wild
       | pat_reg
@@ -500,7 +504,6 @@ use_item ::= USE view_path SEMICOLON { pin = 2 }
 abi ::= STRING_LITERAL
 
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Crate
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -563,6 +566,7 @@ enum_tuple_field ::= outer_attrs? type_sum
 
 enum_struct_args ::= LBRACE <<comma_separated_list enum_struct_field>> RBRACE { pin = 1 }
 enum_struct_field ::= outer_attrs? IDENTIFIER COLON type_sum { pin = 2}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Trait
@@ -715,9 +719,6 @@ private path_generic_args_with_colons_part_inner ::= ident_or_self_or_super [ CO
 //
 // We parse all the above paths as valid.
 //
-
-
-
 private ident_or_self_or_super ::= IDENTIFIER | SUPER | SELF | CSELF
 
 
@@ -726,7 +727,6 @@ private ident_or_self_or_super ::= IDENTIFIER | SUPER | SELF | CSELF
 //
 //    a::b::c
 //
-
 private path_without_types ::= path_without_types_part_leftish path_without_types_part*
 
 path_without_types_part_leftish ::= path_without_types_part_inner {
@@ -768,7 +768,6 @@ private path_generic_args_without_colons_part_inner ::= ident_or_self_or_super [
 //    <T>::c<V,W>
 //    <T as Foo>::c(V) -> W
 //
-
 private meta qualified_path ::= LT type [ AS trait_ref ] GT COLONCOLON << param >>
 
 
@@ -808,7 +807,6 @@ left view_path_part ::= COLONCOLON (SUPER | IDENTIFIER) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Expressions
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 //
 // NOTA BENE
@@ -909,7 +907,7 @@ cast_expr ::= restricted_expr AS type
 
 unary_expr ::= (MINUS | MUL | EXCL | (AND | ANDAND) MUT?) restricted_expr
 
-lambda_expr ::= MOVE? (OROR | OR [<<comma_separated_list lambda_param>>] OR) ret_type? any_expr
+lambda_expr ::= MOVE? (OROR | OR [ <<comma_separated_list lambda_param>> ] OR) ret_type? any_expr
 lambda_param ::= pat type_ascription?
 
 struct_expr ::= << checkStructAllowed >> path_generic_args_with_colons struct_expr_body
@@ -924,16 +922,16 @@ path_expr ::= path_generic_args_with_colons
 qual_path_expr ::= << qualified_path path_generic_args_with_colons >>
               /* | LTLT type_sum [ AS trait_ref ] GT COLONCOLON IDENTIFIER generic_args? [ AS trait_ref ] GT COLONCOLON IDENTIFIER generic_args? */
 
-while_expr ::= [LIFETIME COLON] WHILE no_struct_lit_expr block
+while_expr ::= [ LIFETIME COLON ] WHILE no_struct_lit_expr block
 
-loop_expr ::= [LIFETIME COLON] LOOP block
+loop_expr ::= [ LIFETIME COLON ] LOOP block
 cont_expr ::= CONTINUE LIFETIME?
 
 break_expr ::= BREAK LIFETIME?
 
 scoped_for_decl ::= pat IN no_struct_lit_expr
 
-for_expr ::= [LIFETIME COLON] FOR scoped_for_decl block { pin = "IN" }
+for_expr ::= [ LIFETIME COLON ] FOR scoped_for_decl block { pin = "IN" }
 
 match_expr ::= MATCH no_struct_lit_expr LBRACE match_arm* RBRACE
 
@@ -952,7 +950,6 @@ if_let_expr ::= IF scoped_let_decl block else_tail?
 
 while_let_expr ::= WHILE scoped_let_decl block
 
-
 ret_expr ::= RETURN restricted_expr?
 
 unit_expr ::= LPAREN RPAREN
@@ -970,7 +967,7 @@ private tuple_expr_end ::= COMMA [ any_expr (COMMA any_expr)* COMMA? ] RPAREN
 paren_expr ::= LPAREN any_expr paren_expr_end
 private paren_expr_end ::= RPAREN
 
-array_expr ::= LBRACK array_elems? RBRACK {pin=1}
+array_expr ::= LBRACK array_elems? RBRACK { pin = 1 }
 
 private array_elems ::= any_expr SEMICOLON any_expr
                       | expr_list
@@ -996,13 +993,13 @@ private index_arg ::= LBRACK restricted_expr RBRACK
 
 call_expr ::= restricted_expr arg_list
 
-method_call_expr ::= restricted_expr DOT IDENTIFIER [COLONCOLON generic_args] arg_list { pin=2 }
+method_call_expr ::= restricted_expr DOT IDENTIFIER [ COLONCOLON generic_args ] arg_list { pin = 2 }
 
-arg_list ::= LPAREN expr_list? RPAREN {pin=1}
+arg_list ::= LPAREN expr_list? RPAREN { pin = 1 }
 
 private expr_list ::= <<comma_separated_list any_expr>>
 
-field_expr ::= restricted_expr DOT (IDENTIFIER | INTEGER_LITERAL) { pin(".*")=2 }
+field_expr ::= restricted_expr DOT (IDENTIFIER | INTEGER_LITERAL) { pin(".*") = 2 }
 
 lit_expr ::= lit
 
@@ -1010,7 +1007,6 @@ lit_expr ::= lit
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Macros
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 macro_expr ::= build_in_macro | IDENTIFIER EXCL macro_arg
 
@@ -1039,7 +1035,7 @@ pat_macro  ::= IDENTIFIER EXCL macro_arg
 
 macro_arg ::= LPAREN token_tree? RPAREN
             | LBRACE token_tree? RBRACE
-            | LBRACK token_tree?  RBRACK {pin=1}
+            | LBRACK token_tree?  RBRACK { pin = 1 }
 
 // This "parses" both macro definitions and macro usage
 item_macro ::= IDENTIFIER EXCL IDENTIFIER?
@@ -1087,12 +1083,12 @@ let_decl ::= LET pat [ COLON type ] [ EQ any_expr ] SEMICOLON { pin = "LET" }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 block ::= LBRACE stmt_* any_expr? RBRACE {
-  pin(".*")=1
+  pin(".*") = 1
 }
 
 inner_attrs_and_block ::= LBRACE inner_attrs? stmt_* any_expr? RBRACE {
   elementType = block
-  pin(".*")=1
+  pin(".*") = 1
 }
 
 
@@ -1108,6 +1104,7 @@ stmt ::=
 private stmt_ ::= expr_stmt
                 | decl_stmt
                 | empty_stmt
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Utils
