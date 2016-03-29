@@ -4,8 +4,7 @@
 
 **NOTA BENE**
 
-This is experimental implementation targeting bleeding-edge version of Rust language and (as may be assumed reasonably enough)
-may be highly *unstable* just yet.
+This is a work in progress and (as may be assumed reasonably enough) may be highly *unstable* just yet.
 
 ## Installation
 
@@ -17,7 +16,7 @@ additional plugin repository and paste the URL for the one you need:
     - Rust: https://plugins.jetbrains.com/plugins/nightly/8182
     - TOML: https://plugins.jetbrains.com/plugins/nightly/8195
 
-See the [usage docs](doc/Usage.md) for tutorial, screenshots and tips!
+See the [quick start](doc/QuickStart.md) and [tips & tricks](doc/Tips.md) for tutorial and screenshots!
 
 *NOTA BENE*: To successfully import Cargo-backed project you will need a fairly recent version of `cargo` installed
 (at least `cargo 0.9.0-nightly (6c05bcb 2016-01-29)`). To install nightly version of the Cargo please follow the
