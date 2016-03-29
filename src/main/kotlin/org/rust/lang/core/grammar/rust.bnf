@@ -336,6 +336,7 @@ fake item_ ::= attrs_and_vis {
                   "org.rust.lang.core.psi.RustAccessControlElement" ]
   mixin       = "org.rust.lang.core.psi.impl.mixin.RustItemImplMixin"
   stubClass   = "org.rust.lang.core.stubs.RustItemStub"
+  methods     = [getPresentation]
 }
 
 upper item ::= << injectInto attrs_and_vis item_inner >> {
