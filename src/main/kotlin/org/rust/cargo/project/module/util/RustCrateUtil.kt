@@ -105,12 +105,17 @@ private fun Module.locateRustSources(): VirtualFile? {
         .classesRoots
         .firstOrNull() ?: return null
 
-    // Allow to add the whole Rust distribution or only
-    // the src subdirectory as a root.
-    return if (sourceRoot.name == "src")
-        sourceRoot
+    // We want to handle three cases here
+    // * sourceRoot points to a zip archive with a single folder with sources
+    // * sourceRoot points to the directory with sources
+    // * sourceRoot points to the `src` subdirectory of sources
+
+    val baseDir = sourceRoot.children.singleOrNull() ?: sourceRoot
+
+    return if (baseDir.name == "src")
+        baseDir
     else
-        sourceRoot.findFileByRelativePath("src")
+        baseDir.findFileByRelativePath("src")
 }
 
 private val Module.contentRoot: VirtualFile get() =

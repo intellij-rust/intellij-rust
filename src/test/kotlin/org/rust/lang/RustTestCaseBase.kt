@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
@@ -92,9 +93,14 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             val sdk = ProjectJdkImpl("RustTest", RustSdkType.INSTANCE)
             val sdkModificator = sdk.sdkModificator
 
-            val sdkSrc = "${RustTestCase.testResourcesPath}/rustc-nightly/src"
-            val sdkSrcFile = LocalFileSystem.getInstance().findFileByPath(sdkSrc)
-            sdkModificator.addRoot(sdkSrcFile, OrderRootType.CLASSES)
+            val sdkArchiveFile = LocalFileSystem.getInstance()
+                .findFileByPath("${RustTestCase.testResourcesPath}/rustc-src.zip")
+
+            val sdkFile = checkNotNull(
+                sdkArchiveFile?.let { JarFileSystem.getInstance().getJarRootForLocalFile(it) },
+                { "Rust sources archive not found. Run `./gradlew test` to download the archive." }
+            )
+            sdkModificator.addRoot(sdkFile, OrderRootType.CLASSES)
             sdkModificator.commitChanges()
             return sdk
         }

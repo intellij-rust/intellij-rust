@@ -157,16 +157,12 @@ task generateParsers {
 
 task downloadRustSources(type: de.undercouch.gradle.tasks.download.Download) {
     overwrite false
-    src 'https://static.rust-lang.org/dist/rustc-nightly-src.tar.gz'
-    dest new File(buildDir, "rustc-nightly-src.tar.gz")
+    src 'https://github.com/rust-lang/rust/archive/1.7.0.zip'
+    dest new File(projectDir, "src/test/resources/rustc-src.zip")
 }
 
-task downloadAndUntarRustSources(dependsOn: downloadRustSources, type: Copy) {
-    from  tarTree(downloadRustSources.dest)
-    into "src/test/resources"
-}
 
-test.dependsOn downloadAndUntarRustSources
+test.dependsOn downloadRustSources
 
 apply from: "shared.gradle"
 

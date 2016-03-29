@@ -7,4 +7,4 @@ out
 classes
 lib
 gen
-src/test/resources/rustc-nightly/
+src/test/resources/rustc-src.zip
