@@ -30,8 +30,11 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
                                     isPreviewMode: Boolean,
                                     settings: CargoExecutionSettings?,
                                     listener: ExternalSystemTaskNotificationListener): DataNode<ProjectData>? {
+        if (settings == null) {
+            return null
+        }
 
-        val pathToCargo = settings?.cargoPath ?: return null
+        val pathToCargo = settings.cargoPath ?: return null
         val metadata = readProjectDescription(id, listener, projectPath, pathToCargo)
 
         val projectNode =
@@ -40,6 +43,12 @@ class CargoProjectResolver : ExternalSystemProjectResolver<CargoExecutionSetting
                 ProjectData(CargoProjectSystem.ID, metadata.projectName, projectPath, projectPath),
                 null
             )
+
+        projectNode.addChild(DataNode(
+            CargoConstants.KEYS.CARGO_PROJECT_DATA,
+            CargoProjectData(settings.sdkName),
+            null
+        ))
 
         val modules = metadata.modules.associate { it to createModuleNode(it, projectNode) }
         // We don't include transitive dependencies here and we also don't want to create

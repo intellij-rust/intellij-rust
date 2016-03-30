@@ -9,14 +9,12 @@ import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjec
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.CargoProjectDescription
 import org.rust.cargo.util.getService
-import java.io.Serializable
 
 /**
  * Populates [CargoModuleService] on project import
  */
-class CargoProjectDataService : AbstractProjectDataService<CargoModuleData, Module>() {
+class CargoModuleDataService : AbstractProjectDataService<CargoModuleData, Module>() {
     override fun getTargetDataKey(): Key<CargoModuleData> = CargoConstants.KEYS.CARGO_MODULE_DATA
 
     override fun postProcess(toImport: Collection<DataNode<CargoModuleData>>,

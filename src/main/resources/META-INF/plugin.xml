@@ -159,7 +159,8 @@
         <projectService serviceImplementation="org.rust.cargo.project.settings.CargoSettings"/>
         <projectService serviceImplementation="org.rust.cargo.project.settings.CargoLocalSettings"/>
         <projectService serviceImplementation="org.rust.cargo.project.settings.CargoProjectSettings"/>
-        <externalProjectDataService implementation="org.rust.cargo.project.module.persistence.CargoProjectDataService"/>
+        <externalProjectDataService implementation="org.rust.cargo.project.module.persistence.CargoModuleDataService"/>
+        <externalProjectDataService implementation="org.rust.cargo.project.CargoProjectDataService"/>
 
         <moduleService serviceInterface="org.rust.cargo.project.module.persistence.CargoModuleService"
                        serviceImplementation="org.rust.cargo.project.module.persistence.impl.CargoModuleServiceImpl"/>
