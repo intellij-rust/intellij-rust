@@ -15,9 +15,8 @@ class RustHighlightingAnnotator : Annotator {
             holder.highlight(o, RustColor.ATTRIBUTE)
         }
 
-        override fun visitMacroExpr(o: RustMacroExpr) {
-            holder.highlight(o.identifier, RustColor.MACRO)
-            holder.highlight(o.excl, RustColor.MACRO)
+        override fun visitMacroInvocation(m: RustMacroInvocation) {
+            holder.highlight(m, RustColor.MACRO)
         }
 
         override fun visitTypeParam(o: RustTypeParam) {

@@ -262,7 +262,7 @@ FILE
   PsiWhiteSpace('\n')
   PsiElement(if)('if')
   PsiWhiteSpace('\n')
-  PsiErrorElement:<IDENTIFIER> or <restricted expr> expected, got '}'
+  PsiErrorElement:<restricted expr> expected, got '}'
     PsiElement(})('}')
   PsiElement(DUMMY_BLOCK)
     PsiWhiteSpace('\n')

@@ -1020,25 +1020,33 @@ lit_expr ::= lit
 // Macros
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-macro_expr ::= build_in_macro | IDENTIFIER EXCL macro_arg
+macro_invocation ::= IDENTIFIER EXCL
 
-private build_in_macro ::= "try" EXCL LPAREN any_expr RPAREN
-                         | format_like_macro EXCL LPAREN format_macro_args RPAREN
+macro_expr ::= build_in_macro | macro_invocation macro_arg
+
+private build_in_macro ::= try_macro_invocation LPAREN any_expr RPAREN
+                         | format_like_macro_invocation LPAREN format_macro_args RPAREN
+
+try_macro_invocation ::= "try" EXCL {
+  elementType = macro_invocation
+}
 
 // https://doc.rust-lang.org/std/fmt/
-private format_like_macro ::= "format"
-                            | "format_args"
-                            | "write"
-                            | "writeln"
-                            | "print"
-                            | "println"
-                            // logging macros from the log crate
-                            | "debug"
-                            | "error"
-                            | "info"
-                            | "log"
-                            | "trace"
-                            | "warn"
+format_like_macro_invocation ::= ( "format"
+                                 | "format_args"
+                                 | "write"
+                                 | "writeln"
+                                 | "print"
+                                 | "println"
+                                 // logging macros from the log crate
+                                 | "debug"
+                                 | "error"
+                                 | "info"
+                                 | "log"
+                                 | "trace"
+                                 | "warn" ) EXCL {
+  elementType = macro_invocation
+}
 
 format_macro_args ::= <<comma_separated_list format_macro_arg>>
 private format_macro_arg ::= IDENTIFIER EQ any_expr | any_expr
@@ -1050,12 +1058,12 @@ macro_arg ::= LPAREN token_tree? RPAREN
             | LBRACK token_tree?  RBRACK { pin = 1 }
 
 // This "parses" both macro definitions and macro usage
-item_macro ::= IDENTIFIER EXCL IDENTIFIER?
+item_macro ::= macro_invocation IDENTIFIER?
              ( LPAREN token_tree? RPAREN SEMICOLON
              | LBRACE token_tree? RBRACE
              | LBRACK token_tree? RBRACK SEMICOLON )
 
-impl_macro_member ::= IDENTIFIER EXCL IDENTIFIER?
+impl_macro_member ::= macro_invocation IDENTIFIER?
              ( LPAREN token_tree? RPAREN SEMICOLON
              | LBRACE token_tree? RBRACE
              | LBRACK token_tree? RBRACK SEMICOLON )
