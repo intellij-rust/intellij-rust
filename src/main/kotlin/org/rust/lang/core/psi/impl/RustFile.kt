@@ -3,12 +3,12 @@ package org.rust.lang.core.psi.impl
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
 import org.rust.lang.RustFileType
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.RustFileModItem
-import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.util.RustModules
 import org.rust.lang.core.resolve.indexes.RustModulePath
 
@@ -25,6 +25,8 @@ class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvide
 val PsiFile.modulePath: RustModulePath?
     get() = RustModulePath.devise(this)
 
+val VirtualFile.isRustFile: Boolean get() = fileType == RustFileType
+val VirtualFile.isNotRustFile: Boolean get() = !isRustFile
 
 /**
  * Prepends directory name to this file, if it is `mod.rs`
