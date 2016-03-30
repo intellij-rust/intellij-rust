@@ -1,20 +1,17 @@
 package org.rust.cargo.runconfig
 
 import com.intellij.execution.Executor
-import com.intellij.execution.configurations.ModuleBasedConfiguration
-import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.execution.configurations.RunConfigurationModule
-import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 import org.rust.cargo.project.pathToCargo
+import org.rust.cargo.project.rustSdk
 import org.rust.cargo.project.util.getModules
 import org.rust.cargo.runconfig.forms.CargoRunConfigurationEditorForm
 
@@ -37,6 +34,10 @@ class CargoCommandConfiguration(project: Project,
 
     override fun checkConfiguration() {
         super.checkConfiguration()
+        val module = configurationModule.module
+        if (module != null && module.rustSdk == null) {
+            throw RuntimeConfigurationError("No Rust SDK specified for module ${module.name}")
+        }
         configurationModule.checkForWarning()
     }
 
@@ -45,8 +46,7 @@ class CargoCommandConfiguration(project: Project,
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
         val module = configurationModule.module ?: return null
-        val moduleManager = ModuleRootManager.getInstance(module)
-        val pathToCargo = moduleManager.sdk?.pathToCargo ?: return null
+        val pathToCargo = module.pathToCargo ?: return null
         val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
         val args = ParametersListUtil.parse(additionalArguments)
         return CargoRunState(environment, pathToCargo, moduleDirectory, command, args)

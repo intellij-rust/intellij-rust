@@ -4,7 +4,10 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import org.jdom.Element
@@ -183,6 +186,24 @@ class RustSdkType : SdkType("Rust SDK") {
     }
 }
 
-val Sdk.pathToCargo: String? get() =
-    homePath?.let { RustSdkType.getPathToExecInSDK(it, RustSdkType.CARGO_BINARY_NAME).absolutePath }
+val Module.pathToCargo: String? get()  {
+    val sdk = rustSdk ?: return null
+    return sdk.homePath?.let { RustSdkType.getPathToExecInSDK(it, RustSdkType.CARGO_BINARY_NAME).absolutePath }
+}
 
+val Module.rustSdk: Sdk? get() {
+    val moduleSdk = ModuleRootManager.getInstance(this).sdk
+    if (moduleSdk.isRustSdk) {
+        return moduleSdk
+    }
+
+    val projectSdk = ProjectRootManager.getInstance(project).projectSdk
+    if (projectSdk.isRustSdk) {
+        return projectSdk
+    }
+
+    return null
+}
+
+private val Sdk?.isRustSdk: Boolean get() =
+    this != null && sdkType == RustSdkType.INSTANCE
