@@ -98,7 +98,7 @@ private val Module.sdkCrates: Collection<ExternCrate> get() {
     }
 }
 
-private fun Module.locateRustSources(): VirtualFile? {
+fun Module.locateRustSources(): VirtualFile? {
     val sourceRoot = ModuleRootManager.getInstance(this)
         .orderEntries()
         .sdkOnly()

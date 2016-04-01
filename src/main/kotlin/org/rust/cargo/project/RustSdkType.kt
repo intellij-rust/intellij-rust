@@ -15,7 +15,6 @@ import org.rust.cargo.util.PlatformUtil
 import org.rust.ide.icons.RustIcons
 import java.io.File
 import java.util.concurrent.ExecutionException
-import java.util.regex.Pattern
 
 class RustSdkType : SdkType("Rust SDK") {
 
@@ -112,50 +111,14 @@ class RustSdkType : SdkType("Rust SDK") {
     }
 
     override fun getVersionString(sdkHome: String): String? {
-        val rustc = getPathToExecInSDK(sdkHome, RUSTC_BINARY_NAME)
-
-        try {
-            val cmd =
-                if (isMultiRust(sdkHome)) {
-                    val sdkLibraryPath = getPathToLibDirInSDK(sdkHome).absolutePath
-                    GeneralCommandLine()
-                        .withWorkDirectory(sdkHome)
-                        .withEnvironment(hashMapOf(
-                            "DYLD_LIBRARY_PATH" to sdkLibraryPath,
-                            "LD_LIBRARY_PATH"   to sdkLibraryPath
-                        ))
-                        .withExePath(rustc.absolutePath)
-                        .withParameters("-C rpath", "--version")
-                } else {
-                    GeneralCommandLine()
-                        .withWorkDirectory(sdkHome)
-                        .withExePath(rustc.absolutePath)
-                        .withParameters("--version")
-                }
-            val procOut = CapturingProcessHandler(cmd.createProcess(), Charsets.UTF_8, cmd.commandLineString).runProcess(10 * 1000)
-            if (procOut.exitCode != 0 || procOut.isCancelled || procOut.isTimeout)
-                return null
-
-            val line = procOut.stdoutLines.firstOrNull()
-
-            log.debug("`rustc --version` returned: $line")
-
-            val m = VERSION_PATTERN.matcher(line)
-
-            return if (m.matches()) m.group(1) else null
-
-        } catch (e: ExecutionException) {
-            log.warn("Failed to detect `rustc` version!", e);
-            return null;
-        }
+        val fullVersion = RustcVersion.queryFromRustc(sdkHome)
+        return fullVersion?.release
     }
 
     override fun createAdditionalDataConfigurable(sdkModel: SdkModel,
                                                   sdkModificator: SdkModificator): AdditionalDataConfigurable? = null
 
     override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {}
-
-    private fun isMultiRust(sdkHome: String): Boolean = ".multirust" in sdkHome
 
     companion object {
         fun getPathToBinDirInSDK(sdkHome: File): File = File(sdkHome, BIN_DIR)
@@ -174,9 +137,6 @@ class RustSdkType : SdkType("Rust SDK") {
             SdkType.findInstance(RustSdkType::class.java)
         }
 
-        private val log = Logger.getInstance(RustSdkType::class.java)
-
-        private val VERSION_PATTERN = Pattern.compile("rustc (\\d+\\.\\d+\\.\\d).*")
 
         private val BIN_DIR = "bin"
         private val LIB_DIR = "lib"
@@ -205,5 +165,86 @@ val Module.rustSdk: Sdk? get() {
     return null
 }
 
+/* Parsed result of `rustc -vV` output, which looks like this
+ *
+ * ```
+ *
+ * rustc 1.8.0-beta.1 (facbfdd71 2016-03-02)
+ * binary: rustc
+ * commit-hash: facbfdd71cb6ed0aeaeb06b6b8428f333de4072b
+ * commit-date: 2016-03-02
+ * host: x86_64-unknown-linux-gnu
+ * release: 1.8.0-beta.1
+ * ```
+ */
+data class RustcVersion(
+    val commitHash: String,
+    val release: String,
+    val isStable: Boolean
+) {
+    val sourcesArchiveUrl: String get() {
+        // We download sources from github and not from rust-lang.org, because we want zip archives. rust-lang.org
+        // hosts only .tar.gz.
+        val tag = if (isStable) release else commitHash
+        return "https://github.com/rust-lang/rust/archive/$tag.zip"
+    }
+
+    companion object {
+        fun queryFromRustc(sdkHome: String): RustcVersion? {
+            val cmd = createRustcCommandLine(sdkHome)
+
+            val procOut = try {
+                CapturingProcessHandler(cmd.createProcess(), Charsets.UTF_8, cmd.commandLineString).runProcess(10 * 1000)
+            } catch (e: ExecutionException) {
+                log.warn("Failed to detect `rustc` version!", e)
+                return null
+            }
+
+            if (procOut.exitCode != 0 || procOut.isCancelled || procOut.isTimeout) {
+                return null
+            }
+
+            return parseLines(procOut.stdoutLines)
+        }
+
+        private fun createRustcCommandLine(sdkHome: String): GeneralCommandLine {
+            val rustc = RustSdkType.getPathToExecInSDK(sdkHome, RustSdkType.RUSTC_BINARY_NAME)
+            return  GeneralCommandLine()
+                .withWorkDirectory(sdkHome)
+                .withExePath(rustc.absolutePath)
+                .withParameters("--version", "--verbose")
+        }
+
+        private fun parseLines(lines: List<String>): RustcVersion? {
+            // We want to parse here
+            // rustc 1.8.0-beta.1 (facbfdd71 2016-03-02)
+            // binary: rustc
+            // commit-hash: facbfdd71cb6ed0aeaeb06b6b8428f333de4072b
+            // commit-date: 2016-03-02
+            // host: x86_64-unknown-linux-gnu
+            // release: 1.8.0-beta.1
+            val commitHashRe = "commit-hash: (.*)".toRegex()
+            val releaseRe = """release: (\d+\.\d+\.\d+)(.*)""".toRegex()
+            val find = { re: Regex -> lines.mapNotNull { re.matchEntire(it) }.firstOrNull() }
+
+            val commitHash = find(commitHashRe)?.let { it.groups[1]!!.value } ?: return null
+            val releaseMatch = find(releaseRe) ?: return null
+            val release = releaseMatch.groups[1]!!.value
+            val isStable = releaseMatch.groups[2]!!.value.isEmpty()
+
+            return RustcVersion(
+                commitHash,
+                release,
+                isStable
+            )
+        }
+
+        private val log = Logger.getInstance(RustcVersion::class.java)
+    }
+}
+
 private val Sdk?.isRustSdk: Boolean get() =
     this != null && sdkType == RustSdkType.INSTANCE
+
+private fun isMultiRust(sdkHome: String): Boolean = ".multirust" in sdkHome
+
