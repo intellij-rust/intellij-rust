@@ -18,11 +18,9 @@ additional plugin repository and paste the URL for the one you need:
 
 See the [quick start](doc/QuickStart.md) and [tips & tricks](doc/Tips.md) for tutorial and screenshots!
 
-*NOTA BENE*: To successfully import Cargo-backed project you will need a fairly recent version of `cargo` installed
-(at least `cargo 0.9.0-nightly (6c05bcb 2016-01-29)`). To install nightly version of the Cargo please follow the
-instructions at [crates.io](https://crates.io/install). Note that you can use nightly Cargo with stable version of Rust just fine.
-
-*NOTA BENE*: To use Run Configurations with IDEA 15.0.3 please update your Kotlin plugin.
+*NOTA BENE*: To successfully import Cargo-backed project you will need Cargo
+ from at least 1.8.0 toolchain, which is the current beta. You can use any
+ version of the compiler.
 
 As this is a preview release, something might go wrong. So, be brave to face some nasty bugs.
 
