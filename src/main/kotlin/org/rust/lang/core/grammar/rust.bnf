@@ -457,14 +457,9 @@ pat_binding ::= binding_mode? IDENTIFIER !DOTDOTDOT !COLONCOLON
 
 private lit_or_path ::= path_expr | lit | MINUS lit
 
-generic_args ::= LT generic_values GT
-            /* | LT generic_values GTGT */
-            /* | LT generic_values GTEQ */
-            /* | LT generic_values GTGTEQ */
-            /* | LTLT ty_qualified_path_and_generic_values GT
-               | LTLT ty_qualified_path_and_generic_values GTGT
-               | LTLT ty_qualified_path_and_generic_values GTEQ
-               | LTLT ty_qualified_path_and_generic_values GTGTEQ */
+generic_args ::= LT generic_values GT {
+  pin = "LT"
+}
 
 private generic_values ::= lifetimes [ COMMA type_sums_and_or_bindings ] COMMA?
                          |                   type_sums_and_or_bindings?

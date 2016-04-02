@@ -13,6 +13,7 @@ class RustCompletionTest : RustTestCaseBase() {
     fun testAnonymousItem()      = checkSoleCompletion()
     fun testIncompleteLet()      = checkSoleCompletion()
     fun testUseGlob()            = checkSoleCompletion()
+    fun testTypeParams()         = checkSoleCompletion()
 
     fun testChildFile() = checkByDirectory {
         openFileInEditor("main.rs")
