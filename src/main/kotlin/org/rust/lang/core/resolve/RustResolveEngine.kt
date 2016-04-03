@@ -174,7 +174,7 @@ private class Resolver {
      *  ```
      */
     fun resolveUseGlob(ref: RustUseGlob): RustResolveEngine.ResolveResult {
-        val basePath = ref.basePath ?: return RustResolveEngine.ResolveResult.Unresolved
+        val basePath = ref.basePath
 
         //
         // This is not necessarily a module, e.g.
@@ -187,7 +187,11 @@ private class Resolver {
         //   }
         //   ```
         //
-        val baseItem = resolve(basePath).element
+        val baseItem = if (basePath != null)
+            resolve(basePath).element
+        else
+            // `use ::{foo, bar}`
+            RustResolveUtil.getCrateRootModFor(ref)
 
         // `use foo::{self}`
         if (ref.self != null && baseItem != null) {

@@ -22,6 +22,8 @@ class RustUseResolveTestCase : RustResolveTestCaseBase() {
     fun testSuperWildcard()              = checkIsBound()
     fun testTwoWildcards()               = checkIsBound()
     fun testNestedWildcards()            = checkIsBound()
+    fun testOnlyBraces()                 = checkIsBound()
+    fun testColonBraces()                = checkIsBound()
 
     fun testNoUse()                      = checkIsUnbound()
     fun testCycle()                      = checkIsUnbound()
