@@ -4,9 +4,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
 import org.rust.lang.core.completion.RustCompletionEngine
-import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustQualifiedReferenceElement
+import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.resolve.RustResolveEngine
 
 
@@ -19,7 +19,7 @@ internal class RustQualifiedReferenceImpl<T : RustQualifiedReferenceElement>(ele
         RustResolveEngine.resolve(element).element
 
     override fun getVariants(): Array<out Any> =
-        RustCompletionEngine.complete(element).toTypedArray()
+        RustCompletionEngine.complete(element)
 
     override fun isReferenceTo(element: PsiElement): Boolean {
         val target = resolve()

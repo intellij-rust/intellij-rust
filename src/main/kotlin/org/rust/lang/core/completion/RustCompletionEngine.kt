@@ -9,12 +9,13 @@ import org.rust.lang.core.resolve.scope.boundElements
 import java.util.*
 
 object RustCompletionEngine {
-    fun complete(ref: RustQualifiedReferenceElement): Collection<RustNamedElement> =
-        collectNamedElements(ref).filter { it.name != null }
+    fun complete(ref: RustQualifiedReferenceElement): Array<RustNamedElement> =
+        collectNamedElements(ref).toVariantsArray()
 
-    fun complete(glob: RustUseGlob): Collection<RustNamedElement> =
+    fun complete(glob: RustUseGlob): Array<RustNamedElement> =
         glob.basePath?.reference?.resolve()
             .completionsFromResolveScope()
+            .toVariantsArray()
 
     private fun collectNamedElements(ref: RustQualifiedReferenceElement): Collection<RustNamedElement> {
         val qual = ref.qualifier
@@ -60,5 +61,8 @@ private class CompletionScopeVisitor(private val context: RustQualifiedReference
 private fun RustNamedElement?.completionsFromResolveScope(): Collection<RustNamedElement> =
     when (this) {
         is RustResolveScope -> boundElements
-        else -> emptyList()
+        else                -> emptyList()
     }
+
+private fun Collection<RustNamedElement>.toVariantsArray(): Array<RustNamedElement> =
+    filter { it.name != null }.toTypedArray()
