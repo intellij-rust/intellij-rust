@@ -10,6 +10,7 @@ buildscript {
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+        classpath "net.rdrei.android.buildtimetracker:gradle-plugin:0.5.+"
     }
 }
 
@@ -90,6 +91,18 @@ allprojects {
     }
 }
 
+apply plugin: 'build-time-tracker'
+
+buildtimetracker {
+    reporters {
+        summary {
+            successOutput false
+            ordered true
+            threshold 1000 // don't show tasks which took less then a second
+            barstyle "ascii"
+        }
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // IDE support
