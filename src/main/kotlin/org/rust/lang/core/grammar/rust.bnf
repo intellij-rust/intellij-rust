@@ -308,9 +308,7 @@ inner_attr ::= '#!' '[' meta_item ']' | INNER_DOC_COMMENT
 
 outer_attr ::= '#' '[' meta_item ']' | OUTER_DOC_COMMENT
 
-meta_item ::= IDENTIFIER [ '=' lit_expr | '(' meta_seq ')' ]
-
-private meta_seq ::= meta_item [ ',' meta_seq? ]
+meta_item ::= IDENTIFIER [ '=' lit_expr | '(' <<comma_separated_list meta_item>> ')' ]
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -348,7 +346,7 @@ private stmt_item_group ::= static_item
                           | view_item
 
 
-private block_item_group ::= &(CONST? UNSAFE? [ EXTERN abi? ] FN) fn_item
+private block_item_group ::= &(CONST? UNSAFE? extern_abi? FN) fn_item
                            | &(UNSAFE? TRAIT ) trait_item
                            | &(UNSAFE? IMPL  ) impl_item
                            | mod_decl_item
@@ -362,13 +360,15 @@ private block_item_group ::= &(CONST? UNSAFE? [ EXTERN abi? ] FN) fn_item
 // Functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private fn_header ::= CONST? UNSAFE? [ EXTERN abi? ] FN IDENTIFIER
+private fn_header ::= CONST? UNSAFE? extern_abi? FN IDENTIFIER
+
+extern_abi ::= EXTERN STRING_LITERAL?
 
 fn_params ::= '(' !',' params ','? ')' { pin(".*") = 1 }
 private params ::= [ param (',' param)* ]
 param ::= pat ':' type
 
-ret_type  ::= '->' (type | '!') { pin = 1 }
+ret_type ::= '->' (type | '!') { pin = 1 }
 
 fn_item ::= fn_header generic_params fn_params ret_type? where_clause? inner_attrs_and_block {
    pin(".*") = 1
@@ -398,7 +398,7 @@ private type_params ::= type_param (',' type_params)*
 
 type_param ::= IDENTIFIER type_param_bounds? [ '=' type ]
 
-type_param_bounds   ::= ':' [ type_param_bound_seq ]
+type_param_bounds ::= ':' [ type_param_bound_seq ]
 
 private type_param_bound_seq        ::= polybound type_param_bound_seq_right
 private type_param_bound_seq_right  ::= [ '+' polybound type_param_bound_seq_right ]
@@ -461,9 +461,9 @@ generic_args ::= '<' generic_values '>' {
 }
 
 private generic_values ::= lifetimes [ ',' type_sums_and_or_bindings ] ','?
-                         |                   type_sums_and_or_bindings?
+                         |                 type_sums_and_or_bindings?
 
-private type_sums_and_or_bindings ::=               bindings   ','?
+private type_sums_and_or_bindings ::=             bindings   ','?
                                     | types [ ',' bindings ] ','?
 
 bindings ::= binding (',' binding)*
@@ -489,17 +489,7 @@ private view_item ::= use_item
 
 use_item ::= USE view_path ';' { pin = 2 }
 
-abi ::= STRING_LITERAL
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Crate
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-extern_crate_item ::= EXTERN CRATE crate_name ';'
-
-private crate_name ::= IDENTIFIER alias?
-
+extern_crate_item ::= EXTERN CRATE IDENTIFIER alias? ';'
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Struct & Enum
@@ -511,7 +501,7 @@ mod_item ::= MOD IDENTIFIER '{' inner_attr* item * '}' {
   pin(".*") = 1
 }
 
-foreign_mod_item ::= EXTERN abi? '{' inner_attr* foreign_items? '}'
+foreign_mod_item ::= extern_abi '{' inner_attr* foreign_items? '}'
 
 private foreign_items ::= foreign_item +
 
@@ -650,7 +640,7 @@ ptr_type ::= '*' [ MUT | CONST ] type
 
 ref_type ::= ( '&' | '&&' ) [ LIFETIME? MUT? ] type
 
-bare_fn_type ::= [ UNSAFE? [ EXTERN abi? ] ] FN fn_anon_params ret_type?
+bare_fn_type ::= [ UNSAFE? extern_abi? ] FN fn_anon_params ret_type?
 
 tuple_type ::= '(' [ <<comma_separated_list type>> ] ')'
 
