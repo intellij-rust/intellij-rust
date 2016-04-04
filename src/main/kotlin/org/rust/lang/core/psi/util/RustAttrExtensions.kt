@@ -37,16 +37,15 @@ fun RustAttr.appendMetaToList(meta: RustMetaItem): RustMetaItem? {
         val newLeftParen = attrMeta.addRangeAfter(tempMeta.lparen, tempMeta.rparen, attrMeta.identifier)
         return newLeftParen.nextSibling as RustMetaItem
 
-    } else if (attrMeta.lparen != null) {
+    }
+
+    if (attrMeta.lparen != null) {
         // if left paren is present, add `meta` to the end of the list of items
         val leftParen = attrMeta.lparen!!
 
         if (leftParen.nextSibling != null && leftParen.nextSibling != attrMeta.rparen) {
             // if there are other meta items in parens, add `meta` after the last one of them
-            val elementToInsertAfter = if (attrMeta.rparen != null)
-                attrMeta.rparen!!.prevSibling!!
-            else
-                attrMeta.lastChild!!
+            val elementToInsertAfter = attrMeta.rparen?.prevSibling ?: attrMeta.lastChild!!
 
             // we also need a comma, so first we insert a comma and a temporary meta item from another well-formed meta
             val tempMeta = RustElementFactory.createMeta(this.project, "whatever(item,item)") ?: return null
@@ -61,5 +60,7 @@ fun RustAttr.appendMetaToList(meta: RustMetaItem): RustMetaItem? {
             // otherwise just add `meta` right after the left paren
             return attrMeta.addAfter(meta, leftParen) as RustMetaItem
         }
-    } else return null
+    }
+
+    return null
 }

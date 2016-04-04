@@ -35,6 +35,8 @@ abstract class RustItemImplMixin : RustStubbedNamedElementImpl<RustItemStub>
 val RustItem.queryAttributes: QueryAttributes get() = QueryAttributes(outerAttrList)
 
 class QueryAttributes(private val outerAttributes: List<RustOuterAttr>) {
+    fun findOuterAttr(name: String): RustOuterAttr? =
+        outerAttributes.find { it.metaItem?.identifier?.textMatches(name) ?: false }
 
     fun hasAtomAttribute(name: String): Boolean =
         metaItems

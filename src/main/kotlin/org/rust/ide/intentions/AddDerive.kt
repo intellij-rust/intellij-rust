@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.mixin.queryAttributes
 import org.rust.lang.core.psi.util.appendMetaToList
 import org.rust.lang.core.psi.util.parentOfType
 
@@ -19,16 +20,12 @@ class AddDerive : PsiElementBaseIntentionAction()
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         val item = element.parentOfType<RustItem>() ?: return
-        val existingDeriveAttr = item.outerAttrList.find { it.metaItem?.identifier?.textMatches("derive") ?: false }
+        val existingDeriveAttr = item.queryAttributes.findOuterAttr("derive")
 
         val deriveAttr = if (existingDeriveAttr != null) existingDeriveAttr
         else {
             val attr = RustElementFactory.createOuterAttr(project, "derive") ?: return
-            when (item) {
-                is RustStructItem -> item.addBefore(attr, item.struct)
-                is RustEnumItem   -> item.addBefore(attr, item.enum)
-                else              -> return
-            } as RustOuterAttr
+            item.addBefore(attr, getKeywordItem(item) ?: return) as RustOuterAttr
         }
 
         val newMetaItem = RustElementFactory.createMeta(project, "Trait") ?: return
@@ -54,9 +51,14 @@ class AddDerive : PsiElementBaseIntentionAction()
         if (!element.isWritable) {
             return false
         }
-        val item = element.parentOfType<RustItem>()
-        return item is RustStructItem || item is RustEnumItem
+        return getKeywordItem(element.parentOfType<RustItem>() ?: return false) != null
     }
 
+    private fun getKeywordItem(item: RustItem): PsiElement? =
+        when (item) {
+            is RustStructItem -> item.struct
+            is RustEnumItem   -> item.enum
+            else              -> null
+        }
 }
 

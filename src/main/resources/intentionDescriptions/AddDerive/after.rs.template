@@ -1,0 +1,4 @@
+#[derive()]
+struct Example {
+    field: i32
+}
