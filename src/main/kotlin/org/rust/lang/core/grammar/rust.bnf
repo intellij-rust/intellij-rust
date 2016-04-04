@@ -144,8 +144,6 @@
 
     mixin       ("extern_crate_item") = "org.rust.lang.core.psi.impl.mixin.RustExternCrateItemImplMixin"
 
-    mixin       ("foreign_fn_item") = "org.rust.lang.core.psi.impl.mixin.RustForeignFnItemImplMixin"
-
     mixin       ("foreign_mod_item") = "org.rust.lang.core.psi.impl.mixin.RustForeignModItemImplMixin"
 
     mixin       ("static_item") = "org.rust.lang.core.psi.impl.mixin.RustStaticItemImplMixin"
@@ -374,15 +372,6 @@ fn_item ::= fn_header generic_params fn_params ret_type? where_clause? inner_att
    pin(".*") = 1
 }
 
-foreign_fn_item ::= FN IDENTIFIER generic_params fn_decl_allow_variadic where_clause? ';'
-
-private fn_decl_allow_variadic   ::= fn_params_allow_variadic ret_type?
-private fn_params_allow_variadic ::= '(' params ',' '...' ')'
-                                   | '(' params ',' ')'
-                                   | '(' params ')'
-                                   | '(' ')'
-
-
 generic_params ::= [ generic_params_inner ]
 
 private generic_params_inner ::= '<' lifetimes [ ',' [ type_params ','? ] ] '>'
@@ -491,23 +480,26 @@ use_item ::= USE view_path ';' { pin = 2 }
 extern_crate_item ::= EXTERN CRATE IDENTIFIER alias? ';'
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Struct & Enum
+// Mods
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 mod_decl_item ::= MOD IDENTIFIER ';'
 
 mod_item ::= MOD IDENTIFIER '{' inner_attr* item * '}' {
-  pin(".*") = 1
+  pin(".*") = 3
 }
 
-foreign_mod_item ::= extern_abi '{' inner_attr* foreign_items? '}'
+foreign_mod_item ::= extern_abi '{' inner_attr* foreign_decl* '}'
 
-private foreign_items ::= foreign_item +
+foreign_decl  ::= attrs_and_vis ( foreign_static_decl | foreign_fn_decl ) ';'
 
-foreign_item  ::= attrs_and_vis STATIC  foreign_static_item
-                | attrs_and_vis UNSAFE? foreign_fn_item
+foreign_static_decl ::= STATIC MUT? IDENTIFIER ':' type
+foreign_fn_decl ::= FN IDENTIFIER generic_params fn_params_allow_variadic ret_type? where_clause?
 
-private foreign_static_item ::= MUT? IDENTIFIER ':' type ';'
+private fn_params_allow_variadic ::= '(' params ',' '...' ')'
+                                   | '(' params ',' ')'
+                                   | '(' params ')'
+                                   | '(' ')'
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

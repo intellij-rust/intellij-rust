@@ -6,7 +6,6 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "EXTERN_CRATE_ITEM" -> RustExternCrateItemStubElementType(name)
     "FILE_MOD_ITEM"    -> RustFileModItemStubElementType(name)
     "FN_ITEM"          -> RustFnItemStubElementType(name)
-    "FOREIGN_FN_ITEM"  -> RustForeignFnItemStubElementType(name)
     "FOREIGN_MOD_ITEM" -> RustForeignModItemStubElementType(name)
     "IMPL_ITEM"        -> RustImplItemStubElementType(name)
     "MOD_DECL_ITEM"    -> RustModDeclItemStubElementType(name)
