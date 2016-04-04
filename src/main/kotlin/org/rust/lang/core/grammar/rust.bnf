@@ -562,10 +562,7 @@ enum_struct_field ::= outer_attrs? IDENTIFIER ':' type { pin = 2}
 // Trait
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params? for_sized? type_param_bounds? where_clause? '{' trait_member* '}'
-
-for_sized ::= FOR '?' IDENTIFIER
-            | FOR IDENTIFIER '?'
+trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params? type_param_bounds? where_clause? '{' trait_member* '}'
 
 // TODO: use upper rules and inheritance here
 private trait_member ::= trait_const_member
@@ -655,7 +652,7 @@ ptr_type ::= '*' [ MUT | CONST ] type
 
 ref_type ::= ( '&' | '&&' ) [ LIFETIME? MUT? ] type
 
-bare_fn_type ::= [ UNSAFE? [ EXTERN abi? ] ] FN type_fn_decl
+bare_fn_type ::= [ UNSAFE? [ EXTERN abi? ] ] FN fn_anon_params ret_type?
 
 tuple_type ::= '(' [ <<comma_separated_list type>> ] ')'
 
@@ -675,8 +672,6 @@ type_item ::= TYPE_KW IDENTIFIER generic_params where_clause? '=' type ';'
 type_qual_path ::= << qualified_path view_path_prefix >>
 
 private types ::= type !'=' (',' type !'=')*
-
-private type_fn_decl ::= generic_params fn_anon_params ret_type?
 
 private fn_anon_params ::= '(' anon_param anon_params_allow_variadic_tail ')'
                          | '(' ')'
