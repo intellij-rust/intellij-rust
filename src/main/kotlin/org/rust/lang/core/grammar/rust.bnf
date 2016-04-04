@@ -396,7 +396,7 @@ private lifetime_bounds     ::= ':' LIFETIME ('+' LIFETIME)*
 
 private type_params ::= type_param (',' type_params)*
 
-type_param ::= [ IDENTIFIER '?' ] IDENTIFIER type_param_bounds? [ '=' type ]
+type_param ::= IDENTIFIER type_param_bounds? [ '=' type ]
 
 type_param_bounds   ::= ':' [ type_param_bound_seq ]
 
