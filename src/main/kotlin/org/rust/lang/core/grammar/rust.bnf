@@ -306,7 +306,7 @@ inner_attr ::= '#!' '[' meta_item ']' | INNER_DOC_COMMENT
 
 outer_attr ::= '#' '[' meta_item ']' | OUTER_DOC_COMMENT
 
-meta_item ::= IDENTIFIER [ '=' lit_expr | '(' <<comma_separated_list meta_item>> ')' ]
+meta_item ::= IDENTIFIER [ '=' lit_expr | '(' [ <<comma_separated_list meta_item>> ] ')' ]
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -583,8 +583,7 @@ trait_ref ::= path_generic_args_without_colons
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl_item ::= UNSAFE? IMPL generic_params type                      where_clause? '{' inner_attr* impl_member* '}'
-            | UNSAFE? IMPL generic_params '(' type ')'        where_clause? '{' inner_attr* impl_member* '}'
+impl_item ::= UNSAFE? IMPL generic_params type where_clause? '{' inner_attr* impl_member* '}'
             | UNSAFE? IMPL generic_params '!'? trait_ref FOR (type where_clause? '{' inner_attr* impl_member* '}' | '..' '{' '}') {
   pin(".*") = "'{'"
 }

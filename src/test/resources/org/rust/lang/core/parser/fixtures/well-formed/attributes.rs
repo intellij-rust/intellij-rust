@@ -15,3 +15,6 @@ fn main() {
 enum E {
     #[cfg(test)] F(#[cfg(test)] i32)
 }
+
+#[empty_attr()]
+const t: i32 = 92;
