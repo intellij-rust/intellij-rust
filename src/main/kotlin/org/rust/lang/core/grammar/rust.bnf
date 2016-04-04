@@ -293,7 +293,7 @@ root ::= file_mod_item
 //  Its marked left just to impede GK from collapsing it in the
 //  case there're no `SHEBANG_LINE` & it starts with `inner_attrs` or `item`
 //
-left file_mod_item ::= [ SHEBANG_LINE ] [ inner_attrs ] item * {
+left file_mod_item ::= [ SHEBANG_LINE ] inner_attr* item * {
   extends = mod_item
 }
 
@@ -302,17 +302,15 @@ left file_mod_item ::= [ SHEBANG_LINE ] [ inner_attrs ] item * {
 // Attributes
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private inner_attrs ::= inner_attr +
+fake attr ::= meta_item
+
 inner_attr ::= '#!' '[' meta_item ']' | INNER_DOC_COMMENT
+
+outer_attr ::= '#' '[' meta_item ']' | OUTER_DOC_COMMENT
 
 meta_item ::= IDENTIFIER [ '=' lit_expr | '(' meta_seq ')' ]
 
 private meta_seq ::= meta_item [ ',' meta_seq? ]
-
-private outer_attrs ::= outer_attr +
-outer_attr ::= '#' '[' meta_item ']' | OUTER_DOC_COMMENT
-
-fake attr ::=
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -321,7 +319,7 @@ fake attr ::=
 
 vis ::= PUB
 
-private attrs_and_vis ::= outer_attrs? vis?
+private attrs_and_vis ::= outer_attr* vis?
 private item_inner ::= stmt_item_group
                      | item_macro
 
@@ -509,11 +507,11 @@ private crate_name ::= IDENTIFIER alias?
 
 mod_decl_item ::= MOD IDENTIFIER ';'
 
-mod_item ::= MOD IDENTIFIER '{' inner_attrs? item * '}' {
+mod_item ::= MOD IDENTIFIER '{' inner_attr* item * '}' {
   pin(".*") = 1
 }
 
-foreign_mod_item ::= EXTERN abi? '{' inner_attrs? foreign_items? '}'
+foreign_mod_item ::= EXTERN abi? '{' inner_attr* foreign_items? '}'
 
 private foreign_items ::= foreign_item +
 
@@ -544,7 +542,7 @@ enum_item ::= ENUM IDENTIFIER generic_params where_clause? '{' enum_variants? ',
 
 private enum_variants ::= enum_variant (',' enum_variant)*
 
-enum_variant ::= outer_attrs? IDENTIFIER enum_args?
+enum_variant ::= outer_attr* IDENTIFIER enum_args?
 
 enum_args ::= enum_struct_args
             | enum_tuple_args
@@ -552,10 +550,10 @@ enum_args ::= enum_struct_args
 
 // unlike real structs, enum variants can't have `pub` visibility applied to fields
 enum_tuple_args ::= '(' <<comma_separated_list enum_tuple_field>> ')' { pin = 1 }
-enum_tuple_field ::= outer_attrs? type
+enum_tuple_field ::= outer_attr* type
 
 enum_struct_args ::= '{' <<comma_separated_list enum_struct_field>> '}' { pin = 1 }
-enum_struct_field ::= outer_attrs? IDENTIFIER ':' type { pin = 2}
+enum_struct_field ::= outer_attr* IDENTIFIER ':' type { pin = 2}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -569,15 +567,15 @@ private trait_member ::= trait_const_member
                        | trait_type_member
                        | trait_method_member
 
-trait_const_member ::= outer_attrs? CONST IDENTIFIER type_ascription? const_default? ';'
+trait_const_member ::= outer_attr* CONST IDENTIFIER type_ascription? const_default? ';'
 
 type_ascription ::= ':' type
 
 private const_default ::= '=' any_expr
 
-trait_type_member ::= outer_attrs? TYPE_KW type_param ';'
+trait_type_member ::= outer_attr* TYPE_KW type_param ';'
 
-trait_method_member ::= outer_attrs? fn_header generic_params fn_decl_with_self_allow_anon_params where_clause? (';' | inner_attrs_and_block)
+trait_method_member ::= outer_attr* fn_header generic_params fn_decl_with_self_allow_anon_params where_clause? (';' | inner_attrs_and_block)
 
 private fn_decl_with_self_allow_anon_params ::= fn_anon_params_with_self ret_type?
 private fn_anon_params_with_self ::= '(' self_argument comma_anon_params? ')'
@@ -604,9 +602,9 @@ trait_ref ::= path_generic_args_without_colons
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl_item ::= UNSAFE? IMPL generic_params type                      where_clause? '{' inner_attrs? impl_member* '}'
-            | UNSAFE? IMPL generic_params '(' type ')'        where_clause? '{' inner_attrs? impl_member* '}'
-            | UNSAFE? IMPL generic_params '!'? trait_ref FOR (type where_clause? '{' inner_attrs? impl_member* '}' | '..' '{' '}') {
+impl_item ::= UNSAFE? IMPL generic_params type                      where_clause? '{' inner_attr* impl_member* '}'
+            | UNSAFE? IMPL generic_params '(' type ')'        where_clause? '{' inner_attr* impl_member* '}'
+            | UNSAFE? IMPL generic_params '!'? trait_ref FOR (type where_clause? '{' inner_attr* impl_member* '}' | '..' '{' '}') {
   pin(".*") = "'{'"
 }
 
@@ -937,7 +935,7 @@ for_expr ::= [ LIFETIME ':' ] FOR scoped_for_decl block { pin = "IN" }
 
 match_expr ::= MATCH no_struct_lit_expr '{' match_arm* '}'
 
-match_arm ::= outer_attrs* match_pat '=>' (block_expr ','? | any_expr (',' | &'}'))
+match_arm ::= outer_attr* match_pat '=>' (block_expr ','? | any_expr (',' | &'}'))
 match_pat ::= pat ('|' pat)* (IF any_expr)?
 
 if_expr ::= IF no_struct_lit_expr block else_tail?
@@ -1096,7 +1094,7 @@ block ::= '{' stmt_* any_expr? '}' {
   pin(".*") = 1
 }
 
-inner_attrs_and_block ::= '{' inner_attrs? stmt_* any_expr? '}' {
+inner_attrs_and_block ::= '{' inner_attr* stmt_* any_expr? '}' {
   elementType = block
   pin(".*") = 1
 }
