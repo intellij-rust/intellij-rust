@@ -478,11 +478,10 @@ pat_field ::= IDENTIFIER ':' pat
 
 binding_mode ::= REF MUT? | MUT
 
-private decl_item ::= IDENTIFIER ':' type
+private static_decl ::= IDENTIFIER ':' type '=' any_expr
 
-static_item ::= STATIC MUT? decl_item '=' any_expr ';'
-
-const_item ::= CONST decl_item '=' any_expr ';'
+static_item ::= STATIC MUT? static_decl ';'
+const_item ::= CONST static_decl ';'
 
 private view_item ::= use_item
                     | extern_crate_item
@@ -615,7 +614,7 @@ self_argument ::= [ '&' LIFETIME? ] MUT? SELF type_ascription?
 
 private comma_params ::= ',' [ params ','? ]
 
-private impl_const_member ::= attrs_and_vis const_item
+private impl_const_member ::= attrs_and_vis CONST static_decl ';'
 
 private impl_type_member ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params '=' type ';'
 
