@@ -15,7 +15,7 @@ import org.rust.lang.core.psi.util.ownsDirectory
 class ExpandModule : IntentionAction {
 
     override fun getFamilyName()        = "Expand module structure"
-    override fun getText()              = "Expand Module"
+    override fun getText()              = "Expand module"
     override fun startInWriteAction()   = true
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) =

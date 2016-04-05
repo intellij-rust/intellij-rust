@@ -9,13 +9,12 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.queryAttributes
-import org.rust.lang.core.psi.util.appendMetaToList
 import org.rust.lang.core.psi.util.parentOfType
 
 class AddDerive : PsiElementBaseIntentionAction()
                 , IntentionAction {
     override fun getFamilyName() = "Add derive clause"
-    override fun getText() = "Add Derive Clause"
+    override fun getText() = "Add derive clause"
     override fun startInWriteAction() = true
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
@@ -24,27 +23,21 @@ class AddDerive : PsiElementBaseIntentionAction()
 
         val deriveAttr = if (existingDeriveAttr != null) existingDeriveAttr
         else {
-            val attr = RustElementFactory.createOuterAttr(project, "derive") ?: return
+            val attr = RustElementFactory.createOuterAttr(project, "derive()") ?: return
             item.addBefore(attr, getKeywordItem(item) ?: return) as RustOuterAttr
         }
 
-        val newMetaItem = RustElementFactory.createMeta(project, "Trait") ?: return
-        val appendedNewMetaItem = deriveAttr.appendMetaToList(newMetaItem) ?: return
-
         val marker = Object()
-        PsiTreeUtil.mark(appendedNewMetaItem, marker)
+        PsiTreeUtil.mark(deriveAttr, marker)
 
         // XXX: currently reformat does not do anything
         val reformattedItem = CodeStyleManager.getInstance(project).reformat(item) as RustItem
+        val reformattedDeriveAttr = PsiTreeUtil.releaseMark(reformattedItem, marker) as RustOuterAttr
 
-        val reformattedNewMetaItem = PsiTreeUtil.releaseMark(reformattedItem, marker) as RustMetaItem
-
-        editor?.caretModel?.moveToOffset(reformattedNewMetaItem.textOffset)
-        editor?.selectionModel?.setSelection(
-            reformattedNewMetaItem.textOffset,
-            reformattedNewMetaItem.textOffset + reformattedNewMetaItem.textLength
-        )
-        reformattedNewMetaItem.delete()  // to remove the unnecessary "Trait" word
+        val offset = reformattedDeriveAttr.metaItem?.rparen?.textOffset ?:
+            reformattedDeriveAttr.rbrack?.textOffset ?:
+            reformattedDeriveAttr.textOffset
+        editor?.caretModel?.moveToOffset(offset)
     }
 
     override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
@@ -54,11 +47,10 @@ class AddDerive : PsiElementBaseIntentionAction()
         return getKeywordItem(element.parentOfType<RustItem>() ?: return false) != null
     }
 
-    private fun getKeywordItem(item: RustItem): PsiElement? =
-        when (item) {
-            is RustStructItem -> item.struct
-            is RustEnumItem   -> item.enum
-            else              -> null
-        }
+    private fun getKeywordItem(item: RustItem): PsiElement? = when (item) {
+        is RustStructItem -> item.struct
+        is RustEnumItem   -> item.enum
+        else              -> null
+    }
 }
 
