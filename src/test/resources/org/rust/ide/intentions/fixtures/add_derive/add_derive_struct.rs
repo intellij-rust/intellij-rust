@@ -1,0 +1,2 @@
+struct Te<caret>st {
+}

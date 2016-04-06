@@ -1,0 +1,4 @@
+#[derive(<caret>)]
+struct Example {
+    field: i32
+}

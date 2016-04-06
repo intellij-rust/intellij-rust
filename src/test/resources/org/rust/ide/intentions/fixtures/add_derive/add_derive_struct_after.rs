@@ -1,0 +1,2 @@
+#[derive(<caret>)]struct Test {
+}

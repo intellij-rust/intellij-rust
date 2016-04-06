@@ -17,7 +17,7 @@ import org.rust.lang.core.psi.util.parentOfType
 
 class ExtractInlineModule : IntentionAction {
     override fun getFamilyName() = "Extract inline module structure"
-    override fun getText() = "Extract Inline Module"
+    override fun getText() = "Extract inline module"
     override fun startInWriteAction() = true
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
@@ -29,7 +29,7 @@ class ExtractInlineModule : IntentionAction {
         decl = file.rustMod?.addBefore(decl, mod) as? RustModDeclItem ?: return
         val modFile = decl.getOrCreateModuleFile() ?: return
 
-        val startElement = mod.lbrace?.nextSibling ?: return
+        val startElement = mod.lbrace.nextSibling ?: return
         val endElement = mod.rbrace?.prevSibling ?: return
 
         modFile.addRange(startElement, endElement)

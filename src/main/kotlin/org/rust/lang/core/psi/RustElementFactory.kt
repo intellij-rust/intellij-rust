@@ -19,4 +19,9 @@ object RustElementFactory {
         val file = createFileFromText(project, "mod $modName;")
         return file?.childOfType<RustModDeclItem>()
     }
+
+    fun createOuterAttr(project: Project, attrContents: String): RustOuterAttr? {
+        val file = createFileFromText(project, "#[$attrContents] struct Dummy;")
+        return file?.childOfType<RustOuterAttr>()
+    }
 }

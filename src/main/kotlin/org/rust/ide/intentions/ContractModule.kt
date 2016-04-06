@@ -12,7 +12,7 @@ import org.rust.lang.core.psi.util.RustModules
 class ContractModule : IntentionAction {
 
     override fun getFamilyName()        = "Contract module structure"
-    override fun getText()              = "Contract Module"
+    override fun getText()              = "Contract module"
     override fun startInWriteAction()   = true
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) =
