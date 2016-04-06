@@ -28,7 +28,7 @@ class RustProjectSettingsServiceImpl : PersistentStateComponent<RustProjectSetti
     override var toolchain: RustToolchain?
         get() = toolchainHomeDirectory?.let { RustToolchain(it) }
         set(value) {
-            toolchainHomeDirectory = value?.homeDirectory
+            toolchainHomeDirectory = value?.location
         }
 }
 

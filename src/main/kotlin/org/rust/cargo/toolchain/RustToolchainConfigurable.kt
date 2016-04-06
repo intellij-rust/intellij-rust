@@ -1,26 +1,42 @@
 package org.rust.cargo.toolchain
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.JBColor
+import com.intellij.util.Alarm
 import java.io.File
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.JTextField
+import javax.swing.event.DocumentEvent
 
 class RustToolchainConfigurable(
     private val project: Project
 ) : Configurable {
 
-    private lateinit var component: JPanel
-    private lateinit var toolchainLocation: TextFieldWithBrowseButton
+    private val disposable = Disposer.newDisposable("RustToolchainConfigurableDisposable")
 
-    init {
-        toolchainLocation.addBrowseFolderListener(
+    private lateinit var component: JPanel
+    private lateinit var toolchainLocationField: TextFieldWithBrowseButton
+
+    private lateinit var rustVersion: JLabel
+    private lateinit var versionUpdateAlarm: Alarm
+    private val versionUpdateDelayMillis = 200
+
+
+    override fun createComponent(): JComponent {
+        toolchainLocationField.addBrowseFolderListener(
             "",
             "Cargo location",
             project,
@@ -28,34 +44,70 @@ class RustToolchainConfigurable(
             TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
             false
         )
+        versionUpdateAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
+        listenForUpdates(toolchainLocationField.textField)
+        Disposer.register(disposable, toolchainLocationField)
+        return component
     }
 
     override fun reset() {
-        toolchainLocation.text = project.toolchain?.homeDirectory
+        toolchainLocationField.text = project.toolchain?.location
             ?: suggestToolchainLocation()?.absolutePath
     }
 
     override fun apply() {
         val projectSettings = project.service<RustProjectSettingsService>()
-        projectSettings.toolchain = RustToolchain(toolchainLocation.text)
+        projectSettings.toolchain = RustToolchain(toolchainLocationField.text)
     }
 
     override fun isModified(): Boolean {
-        return toolchainLocation.text != project.toolchain?.homeDirectory
+        return toolchainLocationField.text != project.toolchain?.location
     }
 
     override fun disposeUIResources() {
+        Disposer.dispose(disposable)
     }
 
-    override fun createComponent(): JComponent? = component
 
     override fun getDisplayName(): String? = "Cargo"
 
     override fun getHelpTopic(): String? = null
+
+    private fun listenForUpdates(textField: JTextField) {
+        var previousLocation = textField.text
+
+        textField.document.addDocumentListener(object : DocumentAdapter() {
+            override fun textChanged(e: DocumentEvent?) {
+                val currentLocation = textField.text
+                if (currentLocation != previousLocation) {
+                    scheduleVersionUpdate(currentLocation)
+                    previousLocation = currentLocation
+                }
+            }
+        })
+    }
+
+    private fun scheduleVersionUpdate(toolchainLocation: String) {
+        versionUpdateAlarm.cancelAllRequests()
+        versionUpdateAlarm.addRequest({
+            val version = RustToolchain(toolchainLocation).queryRustcVersion()
+            updateVersion(version?.release)
+        }, versionUpdateDelayMillis)
+    }
+
+    private fun updateVersion(newVersion: String?) {
+        ApplicationManager.getApplication().invokeLater({
+            if (!Disposer.isDisposed(disposable)) {
+                val isInvalid = newVersion == null
+                rustVersion.text = if (isInvalid) "N/A" else newVersion
+                rustVersion.foreground = if (isInvalid) JBColor.RED else JBColor.foreground()
+            }
+        }, ModalityState.any())
+    }
 }
 
 private fun suggestToolchainLocation(): File? = Suggestions.all().find {
-    it.looksLikeToolchainLocation
+    RustToolchain.looksLikeToolchainLocation(it)
 }
 
 private object Suggestions {
@@ -106,6 +158,4 @@ private object Suggestions {
             .map { File(it, "bin") }
     }
 }
-
-private val File.looksLikeToolchainLocation: Boolean get() = File(this, "cargo").canExecute()
 
