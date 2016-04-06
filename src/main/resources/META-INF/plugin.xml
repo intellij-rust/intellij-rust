@@ -167,6 +167,8 @@
         <projectConfigurable groupId="language" provider="org.rust.cargo.toolchain.RustConfigurableProvider" dynamic="true"/>
         <projectService serviceInterface="org.rust.cargo.toolchain.RustProjectSettingsService"
                         serviceImplementation="org.rust.cargo.toolchain.impl.RustProjectSettingsServiceImpl"/>
+        <moduleService serviceImplementation="CargoMetadataRefreshService"/>
+
 
         <moduleService serviceInterface="org.rust.cargo.project.module.persistence.CargoModuleService"
                        serviceImplementation="org.rust.cargo.project.module.persistence.impl.CargoModuleServiceImpl"/>

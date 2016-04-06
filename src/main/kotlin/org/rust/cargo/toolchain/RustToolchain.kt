@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import org.rust.cargo.commands.Cargo
 import org.rust.cargo.util.PlatformUtil
 import java.io.File
 
@@ -33,6 +34,12 @@ class RustToolchain(
 
         return parseVersion(procOut.stdoutLines)
     }
+
+    fun cargo(cargoProjectDirectory: String): Cargo? =
+        if (looksLikeToolchainLocation(File(location)))
+            Cargo(pathToExecutable(CARGO), cargoProjectDirectory)
+        else
+            null
 
     private fun pathToExecutable(fileName: String): String {
         return File(File(location), PlatformUtil.getCanonicalNativeExecutableName(fileName)).absolutePath

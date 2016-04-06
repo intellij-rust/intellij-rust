@@ -1,5 +1,6 @@
 package org.rust.cargo.toolchain
 
+import CargoMetadataRefreshService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
@@ -14,6 +15,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.JBColor
 import com.intellij.util.Alarm
+import org.rust.cargo.project.util.getModules
+import org.rust.cargo.util.getService
 import java.io.File
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -57,7 +60,11 @@ class RustToolchainConfigurable(
 
     override fun apply() {
         val projectSettings = project.service<RustProjectSettingsService>()
-        projectSettings.toolchain = RustToolchain(toolchainLocationField.text)
+        val toolchain = RustToolchain(toolchainLocationField.text)
+        projectSettings.toolchain = toolchain
+        for (module in project.getModules()) {
+            module.getService<CargoMetadataRefreshService>().scheduleUpdate(toolchain)
+        }
     }
 
     override fun isModified(): Boolean {
