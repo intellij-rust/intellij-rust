@@ -164,6 +164,10 @@
         <externalProjectDataService implementation="org.rust.cargo.project.module.persistence.CargoModuleDataService"/>
         <externalProjectDataService implementation="org.rust.cargo.project.CargoProjectDataService"/>
 
+        <projectConfigurable groupId="language" provider="org.rust.cargo.toolchain.RustConfigurableProvider" dynamic="true"/>
+        <projectService serviceInterface="org.rust.cargo.toolchain.RustProjectSettingsService"
+                        serviceImplementation="org.rust.cargo.toolchain.impl.RustProjectSettingsServiceImpl"/>
+
         <moduleService serviceInterface="org.rust.cargo.project.module.persistence.CargoModuleService"
                        serviceImplementation="org.rust.cargo.project.module.persistence.impl.CargoModuleServiceImpl"/>
 
