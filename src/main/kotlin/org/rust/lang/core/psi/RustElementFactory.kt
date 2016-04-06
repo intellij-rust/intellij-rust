@@ -1,7 +1,6 @@
 package org.rust.lang.core.psi
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.impl.RustFile
@@ -24,10 +23,5 @@ object RustElementFactory {
     fun createOuterAttr(project: Project, attrContents: String): RustOuterAttr? {
         val file = createFileFromText(project, "#[$attrContents] struct Dummy;")
         return file?.childOfType<RustOuterAttr>()
-    }
-
-    fun createMeta(project: Project, metaContents: String): RustMetaItem? {
-        val file = createFileFromText(project, "#![$metaContents]")
-        return file?.childOfType<RustMetaItem>()
     }
 }
