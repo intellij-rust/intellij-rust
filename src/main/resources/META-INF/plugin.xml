@@ -26,12 +26,6 @@
 
         <!-- Rust -->
 
-        <!-- Modules -->
-
-        <moduleType id="RUST_MODULE" classpathProvider="false"
-                    implementationClass="org.rust.cargo.project.module.RustModuleType"/>
-        <moduleConfigurationEditorProvider implementation="org.rust.cargo.project.module.RustModuleConfigurationEditorProvider" />
-
         <!-- File-type Factory -->
 
         <fileTypeFactory implementation="org.rust.lang.RustFileTypeFactory"/>
@@ -40,10 +34,6 @@
 
         <lang.parserDefinition language="RUST" implementationClass="org.rust.lang.core.RustParserDefinition"/>
         <stubElementTypeHolder class="org.rust.lang.core.psi.RustCompositeElementTypes"/>
-
-        <!-- SDK -->
-
-        <sdkType implementation="org.rust.cargo.project.RustSdkType"/>
 
         <!-- Syntax Highlighter -->
 
@@ -156,13 +146,6 @@
 
         <!-- Cargo -->
 
-        <externalSystemManager implementation="org.rust.cargo.project.CargoExternalSystemManager"/>
-
-        <projectService serviceImplementation="org.rust.cargo.project.settings.CargoSettings"/>
-        <projectService serviceImplementation="org.rust.cargo.project.settings.CargoLocalSettings"/>
-        <projectService serviceImplementation="org.rust.cargo.project.settings.CargoProjectSettings"/>
-        <externalProjectDataService implementation="org.rust.cargo.project.CargoProjectDataService"/>
-
         <projectConfigurable groupId="language" provider="org.rust.cargo.toolchain.RustConfigurableProvider"
                              dynamic="true"/>
         <projectService serviceInterface="org.rust.cargo.toolchain.RustProjectSettingsService"
@@ -170,9 +153,6 @@
         <moduleService serviceInterface="org.rust.cargo.toolchain.CargoMetadataService"
                        serviceImplementation="org.rust.cargo.toolchain.impl.CargoMetadataServiceImpl"/>
 
-
-        <projectImportProvider implementation="org.rust.cargo.project.CargoProjectImportProvider"/>
-        <projectImportBuilder implementation="org.rust.cargo.project.CargoProjectImportBuilder"/>
 
         <!-- Icon Provider -->
 

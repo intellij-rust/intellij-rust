@@ -14,7 +14,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.JBColor
 import com.intellij.util.Alarm
-import org.rust.cargo.project.util.getModules
+import org.rust.cargo.util.getModules
 import org.rust.cargo.util.getService
 import java.io.File
 import javax.swing.JComponent

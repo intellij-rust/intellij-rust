@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.io.IOUtil
-import org.rust.cargo.project.module.util.getSourceAndLibraryRoots
-import org.rust.cargo.project.module.util.relativise
+import org.rust.cargo.toolchain.getSourceAndLibraryRoots
+import org.rust.cargo.toolchain.relativise
 import org.rust.lang.core.psi.RustFileModItem
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.getModule

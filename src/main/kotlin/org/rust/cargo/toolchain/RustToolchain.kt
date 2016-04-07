@@ -9,7 +9,7 @@ import org.rust.cargo.commands.Cargo
 import org.rust.cargo.util.PlatformUtil
 import java.io.File
 
-class RustToolchain(
+data class RustToolchain(
     val location: String
 ) {
     fun queryRustcVersion(): RustcVersion? {
@@ -35,11 +35,10 @@ class RustToolchain(
         return parseVersion(procOut.stdoutLines)
     }
 
-    fun cargo(cargoProjectDirectory: String): Cargo? =
-        if (looksLikeToolchainLocation(File(location)))
-            Cargo(pathToExecutable(CARGO), cargoProjectDirectory)
-        else
-            null
+    fun cargo(cargoProjectDirectory: String): Cargo =
+        Cargo(pathToExecutable(CARGO), cargoProjectDirectory)
+
+    val isInvalid: Boolean get() = !looksLikeToolchainLocation(File(location))
 
     private fun pathToExecutable(fileName: String): String {
         return File(File(location), PlatformUtil.getCanonicalNativeExecutableName(fileName)).absolutePath

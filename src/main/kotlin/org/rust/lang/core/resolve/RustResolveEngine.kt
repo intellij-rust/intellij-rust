@@ -3,9 +3,9 @@ package org.rust.lang.core.resolve
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
-import org.rust.cargo.project.module.util.SdkCrates
-import org.rust.cargo.project.module.util.crateRoots
-import org.rust.cargo.project.module.util.findExternCrateByName
+import org.rust.cargo.toolchain.SdkCrates
+import org.rust.cargo.toolchain.crateRoots
+import org.rust.cargo.toolchain.findExternCrateByName
 import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName

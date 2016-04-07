@@ -1,4 +1,4 @@
-package org.rust.cargo.project.module.util
+package org.rust.cargo.toolchain
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import org.rust.cargo.CargoProjectDescription
-import org.rust.cargo.toolchain.CargoMetadataService
 import org.rust.cargo.util.getService
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.impl.rustMod
@@ -39,9 +38,10 @@ fun Module.relativise(f: VirtualFile): String? =
         }
 
 val Module.crateRootFiles: Collection<VirtualFile>
-    get() = targets.mapNotNull { target ->
-        contentRoot.findFileByRelativePath(target.path)
-    } + externCrates.mapNotNull { it.virtualFile }
+    get() {
+        val fs = LocalFileSystem.getInstance()
+        return targets.mapNotNull { fs.findFileByPath(it.path) } + externCrates.mapNotNull { it.virtualFile }
+    }
 
 val Module.targets: Collection<CargoProjectDescription.Target> get() =
     cargoProject?.packages.orEmpty().flatMap {
@@ -119,8 +119,10 @@ private fun Module.locateRustSources(): VirtualFile? {
         baseDir.findFileByRelativePath("src")
 }
 
-private val Module.contentRoot: VirtualFile get() =
-    ModuleRootManager.getInstance(this).contentRoots.single()
+val Module.cargoProjectRoot: VirtualFile? get() =
+    ModuleRootManager.getInstance(this).contentRoots.firstOrNull {
+        it.findChild(RustToolchain.CARGO_TOML) != null
+    }
 
 private val Module.cargoProject: CargoProjectDescription?
     get() = getService<CargoMetadataService>().cargoProject

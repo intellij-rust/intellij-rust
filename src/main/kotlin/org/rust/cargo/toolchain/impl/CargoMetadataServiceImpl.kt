@@ -13,7 +13,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
@@ -30,6 +29,7 @@ import com.intellij.util.xmlb.annotations.Transient
 import org.rust.cargo.CargoProjectDescription
 import org.rust.cargo.toolchain.CargoMetadataService
 import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.cargoProjectRoot
 import org.rust.cargo.toolchain.toolchain
 import java.util.*
 
@@ -56,7 +56,7 @@ class CargoMetadataServiceImpl(private val module: Module) : CargoMetadataServic
      * the actual Library update happens on the event dispatch thread.
      */
     override fun scheduleUpdate(toolchain: RustToolchain) {
-        val contentRoot = ModuleRootManager.getInstance(module).contentRoots.firstOrNull() ?: return
+        val contentRoot = module.cargoProjectRoot ?: return
         if (contentRoot.findChild(RustToolchain.CARGO_TOML) == null) {
             return
         }
@@ -98,22 +98,23 @@ class CargoMetadataServiceImpl(private val module: Module) : CargoMetadataServic
 
         override fun run(indicator: ProgressIndicator) {
             LOG.info("Cargo project update started")
+            if (toolchain.isInvalid) {
+                result = Result.Err(ExecutionException("Invalid toolchain $toolchain"))
+                return
+            }
+
             val cargo = toolchain.cargo(projectDirectory)
             result = try {
-                if (cargo == null) {
-                    Result.Err(ExecutionException("Cargo not found"))
-                } else {
-                    val description = cargo.fullProjectDescription(object : ProcessAdapter() {
-                        override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
-                            val text = event.text.trim { it <= ' ' }
-                            if (text.startsWith("Updating") || text.startsWith("Downloading")) {
-                                indicator.text = text
-                            }
+                val description = cargo.fullProjectDescription(object : ProcessAdapter() {
+                    override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
+                        val text = event.text.trim { it <= ' ' }
+                        if (text.startsWith("Updating") || text.startsWith("Downloading")) {
+                            indicator.text = text
                         }
-                    })
+                    }
+                })
 
-                    Result.Ok(description)
-                }
+                Result.Ok(description)
             } catch (e: ExecutionException) {
                 Result.Err(e)
             }
