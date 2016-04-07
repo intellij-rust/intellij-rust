@@ -9,11 +9,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import org.rust.cargo.CargoProjectDescription
-import org.rust.cargo.project.module.persistence.CargoModuleService
+import org.rust.cargo.toolchain.CargoMetadataService
 import org.rust.cargo.util.getService
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.impl.rustMod
-import java.io.File
 
 object RustCrateUtil
 
@@ -45,7 +44,9 @@ val Module.crateRootFiles: Collection<VirtualFile>
     } + externCrates.mapNotNull { it.virtualFile }
 
 val Module.targets: Collection<CargoProjectDescription.Target> get() =
-    getService<CargoModuleService>().targets
+    cargoProject?.packages.orEmpty().flatMap {
+        it.targets
+    }
 
 data class ExternCrate(
     /**
@@ -72,14 +73,10 @@ fun Module.findExternCrateByName(crateName: String): PsiFile? =
  * to another module or a library or a crate form the sdk.
  */
 private val Module.externCrates: Collection<ExternCrate> get() =
-    getService<CargoModuleService>().externCrates.mapNotNull { crate ->
-        val file = File(crate.path)
-        val vFile = if (file.isAbsolute)
-            LocalFileSystem.getInstance().findFileByIoFile(file)
-        else
-            contentRoot.findFileByRelativePath(crate.path)
-
-        vFile?.let { ExternCrate(crate.name, it) }
+    cargoProject?.packages.orEmpty().mapNotNull { pkg ->
+        val target = pkg.libTarget ?: return@mapNotNull null
+        val vFile = LocalFileSystem.getInstance().findFileByPath(target.path)
+        vFile?.let { ExternCrate(pkg.name, it) }
     } + sdkCrates
 
 object SdkCrates {
@@ -124,3 +121,7 @@ private fun Module.locateRustSources(): VirtualFile? {
 
 private val Module.contentRoot: VirtualFile get() =
     ModuleRootManager.getInstance(this).contentRoots.single()
+
+private val Module.cargoProject: CargoProjectDescription?
+    get() = getService<CargoMetadataService>().cargoProject
+

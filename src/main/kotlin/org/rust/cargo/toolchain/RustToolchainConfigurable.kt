@@ -1,6 +1,5 @@
 package org.rust.cargo.toolchain
 
-import CargoMetadataRefreshService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
@@ -63,7 +62,7 @@ class RustToolchainConfigurable(
         val toolchain = RustToolchain(toolchainLocationField.text)
         projectSettings.toolchain = toolchain
         for (module in project.getModules()) {
-            module.getService<CargoMetadataRefreshService>().scheduleUpdate(toolchain)
+            module.getService<CargoMetadataService>().scheduleUpdate(toolchain)
         }
     }
 

@@ -42,7 +42,8 @@ class Cargo(
     fun fullProjectDescription(listener: ProcessListener? = null): CargoProjectDescription {
         val output = metadataCommandline.execute(listener)
         val data = parse(output)
-        return CargoProjectDescription.fromCargoMetadata(data)
+        return CargoMetadata.intoCargoProjectDescription(data)
+            ?: throw ExecutionException("Failed to understand cargo output")
     }
 
     fun generalCommand(command: String, additionalArguments: List<String> = emptyList(), environmentVariables: Map<String, String> = emptyMap()): GeneralCommandLine =

@@ -49,6 +49,7 @@ class RustToolchain(
         private val log = Logger.getInstance(RustcVersion::class.java)
         private val RUSTC = "rustc"
         private val CARGO = "cargo"
+        const val CARGO_TOML = "Cargo.toml"
 
         fun looksLikeToolchainLocation(file: File): Boolean = File(file, CARGO).canExecute()
     }

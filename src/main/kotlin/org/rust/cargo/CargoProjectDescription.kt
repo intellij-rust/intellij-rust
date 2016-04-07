@@ -1,40 +1,47 @@
 package org.rust.cargo
 
-import com.intellij.util.PathUtil
-import org.rust.cargo.commands.impl.CargoMetadata
+import com.intellij.util.containers.BidirectionalMap
+import com.intellij.util.containers.MultiMap
 import java.io.File
-import java.io.Serializable
-import java.util.*
 
+
+/**
+ * Rust project model represented roughly in the same way as in Cargo itself.
+ *
+ * [org.rust.cargo.toolchain.CargoMetadataService] is responsible for providing a [CargoProjectDescription] for
+ * an IDEA module.
+ */
 class CargoProjectDescription private constructor(
-    val packages: Collection<Package>,
-    private val rootModule: Package
+    private val idToPackage: BidirectionalMap<Int, Package>,
+    private val dependencies: MultiMap<Int, Int>
 ) {
+    val packages: Collection<Package> get() = idToPackage.values
+    val rawDependencies: MultiMap<Int, Int> get() = MultiMap(dependencies)
 
-    class Package(
-        val contentRoot: File,
+    data class Package(
+        val contentRoot: String,
         val name: String,
         val version: String,
         val targets: Collection<Target>,
-        val dependencies: Collection<Package>,
-        private val source: String?
+        val source: String?
     ) {
         init {
-            require(contentRoot.exists())
+            require(File(contentRoot).isAbsolute)
         }
 
         val isModule: Boolean get() = source == null
+        val libTarget: Target? get() = targets.find { it.isLib }
     }
 
     data class Target(
         /**
-         * Path to the crate root file, relative to the directory with Cargo.toml
+         * Absolute path to the crate root file
          */
         val path: String,
         val kind: TargetKind
-    ) : Serializable {
+    ) {
         init {
-            require(!File(path).isAbsolute)
+            require(File(path).isAbsolute)
         }
 
         val isLib: Boolean get() = kind == TargetKind.LIB
@@ -44,76 +51,38 @@ class CargoProjectDescription private constructor(
         LIB, BIN, TEST, EXAMPLE, BENCH, UNKNOWN
     }
 
-    val projectName: String get() = rootModule.name
-
     companion object {
-        fun fromCargoMetadata(project: CargoMetadata.Project): CargoProjectDescription {
-            val idToPackage = project.packages.associate { it.id to it }
-            val dependenciesMap = project.resolve.nodes.associate { node ->
-                idToPackage[node.id]!! to node.dependencies.map { idToPackage[it]!! }
+        fun create(packages: Collection<Package>, dependencies: MultiMap<Int, Int>): CargoProjectDescription? {
+            val idToPackage: BidirectionalMap<Int, Package> = BidirectionalMap<Int, Package>().apply {
+                putAll(packages.mapIndexed { i, p -> i to p })
             }
-
-            val alreadyDone = HashMap<CargoMetadata.Package, Package>()
-            val inProgress = HashSet<CargoMetadata.Package>()
-            /**
-             * Recursively constructs a DAG of packages
-             */
-            fun build(pkg: CargoMetadata.Package): Package {
-                if (pkg !in alreadyDone) {
-                    check(pkg !in inProgress) {
-                        "Circular dependency between in Cargo package: $pkg"
-                    }
-                    inProgress += pkg
-                    pkg.targets.forEach {
-                        it.intoTarget(pkg.rootDirectory)
-                    }
-                    alreadyDone[pkg] = Package(
-                        pkg.rootDirectory,
-                        pkg.name,
-                        pkg.version,
-                        pkg.targets.mapNotNull { it.intoTarget(pkg.rootDirectory) },
-                        dependenciesMap[pkg]!!.map { build(it) },
-                        pkg.source
-                    )
-                }
-                return alreadyDone[pkg]!!
+            val deps: MultiMap<Int, Int> = dependencies.copy()
+            if (isValid(idToPackage, deps)) {
+                return CargoProjectDescription(idToPackage, deps)
             }
+            return null
 
-            for (pkg in project.packages) {
-                build(pkg)
-            }
-
-            val rootModule = alreadyDone[idToPackage[project.resolve.root]]!!
-            return CargoProjectDescription(
-                alreadyDone.values.toCollection(arrayListOf<Package>()),
-                rootModule
-            )
         }
 
-        private val CargoMetadata.Package.rootDirectory: File get() = File(PathUtil.getParentPath(manifest_path))
+        private fun isValid(idToPackage: BidirectionalMap<Int, Package>, dependencies: MultiMap<Int, Int>): Boolean {
+            // Has root package
+            if (!idToPackage.containsKey(0)) return false
 
-        private fun CargoMetadata.Target.intoTarget(packageRoot: File): Target? {
-            val path = if (File(src_path).isAbsolute)
-                File(src_path).relativeTo(packageRoot).path
-            else
-                src_path
-
-            if (!File(packageRoot, path).exists()) {
-                // Some targets of a crate may be not published, ignore them
-                return null
+            // all ids in `dependencies` map are known
+            for ((pkg, deps) in dependencies.entrySet()) {
+                if (!idToPackage.containsKey(pkg)) return false
+                for (dep in deps) {
+                    if (!idToPackage.containsKey(dep)) return false
+                }
             }
 
-            val kind = when (kind) {
-                listOf("bin")     -> TargetKind.BIN
-                listOf("example") -> TargetKind.EXAMPLE
-                listOf("test")    -> TargetKind.TEST
-                listOf("bench")   -> TargetKind.BENCH
-                else              ->
-                    if (kind.any { it.endsWith("lib") }) TargetKind.LIB else TargetKind.UNKNOWN
-            }
-            return Target(path, kind)
+            // No need to check if every package from `idToPackage` has
+            // dependencies specifier, because `MultyMap` returns empty collection
+            // as a default
+
+            //TODO: check for cycles?
+            return true
         }
     }
 }
-
 
