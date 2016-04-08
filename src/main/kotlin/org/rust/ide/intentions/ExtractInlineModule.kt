@@ -29,7 +29,7 @@ class ExtractInlineModule : IntentionAction {
         decl = file.rustMod?.addBefore(decl, mod) as? RustModDeclItem ?: return
         val modFile = decl.getOrCreateModuleFile() ?: return
 
-        val startElement = mod.lbrace.nextSibling ?: return
+        val startElement = mod.lbrace?.nextSibling ?: return
         val endElement = mod.rbrace?.prevSibling ?: return
 
         modFile.addRange(startElement, endElement)
