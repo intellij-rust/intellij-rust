@@ -8,12 +8,12 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.openapi.util.Disposer
 import org.assertj.core.api.Assertions.assertThat
-import org.rust.lang.RustTestCaseBase
+import org.rust.cargo.RustWithToolchainTestCaseBase
 
-class RunConfigurationTestCase : RustTestCaseBase() {
-    override val dataPath = "src/test/resources/org/rust/cargo/runconfig/fixtures/hello"
+class RunConfigurationTestCase : RustWithToolchainTestCaseBase() {
+    override val dataPath = "src/test/resources/org/rust/cargo/runconfig/fixtures"
 
-    fun testApplicationConfiguration() {
+    fun testApplicationConfiguration() = withProject("hello") {
         val configuration = createConfiguration()
         val result = execute(configuration)
 

@@ -112,7 +112,7 @@ class RustToolchainConfigurable(
     }
 }
 
-private fun suggestToolchainLocation(): File? = Suggestions.all().find {
+fun suggestToolchainLocation(): File? = Suggestions.all().find {
     RustToolchain.looksLikeToolchainLocation(it)
 }
 
