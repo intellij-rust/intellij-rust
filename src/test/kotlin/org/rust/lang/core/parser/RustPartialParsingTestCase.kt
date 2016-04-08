@@ -18,6 +18,7 @@ class RustPartialParsingTestCase : RustParsingTestCaseBase("ill-formed") {
     // @formatter:off
     fun testFn()            = doTest(true)
     fun testUseItem()       = doTest(true)
+    fun testShifts()        = doTest(true)
     fun testStructPat()     = doTest(true)
     fun testStructDef()     = doTest(true)
     fun testIfExpr()        = doTest(true)

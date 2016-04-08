@@ -133,13 +133,13 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
     @JvmStatic fun collapse(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int,
                             tokenType: IElementType, vararg parts: IElementType): Boolean {
-        val marker = b.mark()
-        parts.forEach {
-            if (!PsiBuilderUtil.expect(b, it)) {
-                marker.rollbackTo()
-                return false
-            }
+        // We do not want whitespace between parts, so firstly we do raw lookup for each part,
+        // and when we make sure that we have desired token, we consume and collapse it.
+        parts.forEachIndexed { i, tt ->
+            if(b.rawLookup(i) != tt) return false
         }
+        val marker = b.mark()
+        PsiBuilderUtil.advance(b, parts.size)
         marker.collapse(tokenType)
         return true
     }

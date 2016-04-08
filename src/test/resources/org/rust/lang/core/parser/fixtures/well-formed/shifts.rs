@@ -13,15 +13,4 @@ fn expressions() {
    let x: V<V<_>>= ();
    x.collect::<Vec<Vec<_>>>();
    type U = Vec<<i32 as F>::Q>;
-
-   // FIXME: ideally, this should be parse errors
-   1 > > 1;
-   x >> = 1;
-   x > >= 1;
-   x > = 1;
-
-   1 < < 1;
-   x << = 1;
-   x < <= 1;
-   x < = 1;
 }
