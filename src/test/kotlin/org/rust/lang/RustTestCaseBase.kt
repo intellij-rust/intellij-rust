@@ -1,23 +1,19 @@
 package org.rust.lang
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.util.containers.MultiMap
 import org.rust.cargo.CargoProjectDescription
-import org.rust.cargo.project.RustSdkType
-import org.rust.cargo.project.module.RustModuleType
-import org.rust.cargo.project.module.persistence.CargoModuleService
-import org.rust.cargo.project.module.persistence.ExternCrateData
+import org.rust.cargo.toolchain.CargoMetadataService
+import org.rust.cargo.toolchain.impl.CargoMetadataServiceImpl
 import org.rust.cargo.util.getService
 
 abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), RustTestCase {
@@ -73,26 +69,35 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
     }
 
     open class RustProjectDescriptor : LightProjectDescriptor() {
-        override fun getModuleType(): ModuleType<*> = RustModuleType.INSTANCE
 
-        override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
+        final override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
             super.configureModule(module, model, contentEntry)
-            module.getService<CargoModuleService>().saveData(targets, externCrates)
+
+            val moduleBaseDir = contentEntry.file!!.url
+            val metadataService = module.getService<CargoMetadataService>() as CargoMetadataServiceImpl
+            metadataService.state.cargoProjectDescription = testCargoProject(moduleBaseDir)
         }
 
-        open protected val externCrates: List<ExternCrateData> = emptyList()
+        open protected fun testCargoProject(contentRoot: String): CargoProjectDescription {
+            val packages = listOf(testCargoPackage(contentRoot))
+            return CargoProjectDescription.create(packages, MultiMap())!!
+        }
 
-        private val targets: List<CargoProjectDescription.Target> = listOf(
-            CargoProjectDescription.Target("main.rs", CargoProjectDescription.TargetKind.BIN),
-            CargoProjectDescription.Target("lib.rs", CargoProjectDescription.TargetKind.LIB)
+        protected fun testCargoPackage(contentRoot: String, name: String ="test-package") = CargoProjectDescription.Package(
+            contentRoot,
+            name = name,
+            version = "0.0.1",
+            targets = listOf(
+                CargoProjectDescription.Target("$contentRoot/main.rs", CargoProjectDescription.TargetKind.BIN),
+                CargoProjectDescription.Target("$contentRoot/lib.rs", CargoProjectDescription.TargetKind.LIB)
+            ),
+            source = null
         )
     }
 
-    class WithSdkRustProjectDescriptor : RustProjectDescriptor() {
+    class WithStdlibRustProjectDescriptor : RustProjectDescriptor() {
         override fun getSdk(): Sdk? {
-            val sdk = ProjectJdkImpl("RustTest", RustSdkType.INSTANCE)
-            val sdkModificator = sdk.sdkModificator
-
+            // FIXME: attach sdk
             val sdkArchiveFile = LocalFileSystem.getInstance()
                 .findFileByPath("${RustTestCase.testResourcesPath}/rustc-src.zip")
 
@@ -100,9 +105,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
                 sdkArchiveFile?.let { JarFileSystem.getInstance().getJarRootForLocalFile(it) },
                 { "Rust sources archive not found. Run `./gradlew test` to download the archive." }
             )
-            sdkModificator.addRoot(sdkFile, OrderRootType.CLASSES)
-            sdkModificator.commitChanges()
-            return sdk
+            return null
         }
     }
 }

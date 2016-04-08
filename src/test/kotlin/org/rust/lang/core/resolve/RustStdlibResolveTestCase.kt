@@ -7,7 +7,7 @@ import org.rust.cargo.CargoProjectDescription
 
 class RustStdlibResolveTestCase : RustMultiFileResolveTestCaseBase() {
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithSdkRustProjectDescriptor()
+    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor()
 
     override val dataPath = "org/rust/lang/core/resolve/fixtures/stdlib"
 

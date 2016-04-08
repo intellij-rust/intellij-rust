@@ -1,8 +1,8 @@
 package org.rust.cargo
 
+import com.intellij.openapi.vfs.*
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.MultiMap
-import java.io.File
 
 
 /**
@@ -19,32 +19,28 @@ class CargoProjectDescription private constructor(
     val rawDependencies: MultiMap<Int, Int> get() = MultiMap(dependencies)
 
     data class Package(
-        val contentRoot: String,
+        val contentRootUrl: String,
         val name: String,
         val version: String,
         val targets: Collection<Target>,
         val source: String?
     ) {
-        init {
-            require(File(contentRoot).isAbsolute)
-        }
-
         val isModule: Boolean get() = source == null
         val libTarget: Target? get() = targets.find { it.isLib }
+
+        val virtualFile: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
     }
 
     data class Target(
         /**
          * Absolute path to the crate root file
          */
-        val path: String,
+        val url: String,
         val kind: TargetKind
     ) {
-        init {
-            require(File(path).isAbsolute)
-        }
-
         val isLib: Boolean get() = kind == TargetKind.LIB
+
+        val virtualFile: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(url)
     }
 
     enum class TargetKind {

@@ -1,5 +1,6 @@
 package org.rust.cargo.commands.impl
 
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.MultiMap
 import org.rust.cargo.CargoProjectDescription
@@ -130,7 +131,7 @@ object CargoMetadata {
         // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
         val name = name.replace("-", "_")
         return CargoProjectDescription.Package(
-            rootDirectory,
+            VfsUtilCore.pathToUrl(rootDirectory),
             name,
             version,
             targets.mapNotNull { it.intoCargoProjectDescriptionTarget(rootDirFile) },
@@ -161,6 +162,6 @@ object CargoMetadata {
                     CargoProjectDescription.TargetKind.UNKNOWN
         }
 
-        return CargoProjectDescription.Target(path, kind)
+        return CargoProjectDescription.Target(VfsUtilCore.pathToUrl(path), kind)
     }
 }

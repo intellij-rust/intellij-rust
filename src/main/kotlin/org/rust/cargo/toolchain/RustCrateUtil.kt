@@ -4,7 +4,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -38,10 +37,7 @@ fun Module.relativise(f: VirtualFile): String? =
         }
 
 val Module.crateRootFiles: Collection<VirtualFile>
-    get() {
-        val fs = LocalFileSystem.getInstance()
-        return targets.mapNotNull { fs.findFileByPath(it.path) } + externCrates.mapNotNull { it.virtualFile }
-    }
+    get() = targets.mapNotNull { it.virtualFile }
 
 val Module.targets: Collection<CargoProjectDescription.Target> get() =
     cargoProject?.packages.orEmpty().flatMap {
@@ -75,8 +71,7 @@ fun Module.findExternCrateByName(crateName: String): PsiFile? =
 private val Module.externCrates: Collection<ExternCrate> get() =
     cargoProject?.packages.orEmpty().mapNotNull { pkg ->
         val target = pkg.libTarget ?: return@mapNotNull null
-        val vFile = LocalFileSystem.getInstance().findFileByPath(target.path)
-        vFile?.let { ExternCrate(pkg.name, it) }
+        target.virtualFile?.let { ExternCrate(pkg.name, it) }
     } + sdkCrates
 
 object SdkCrates {

@@ -18,7 +18,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -156,14 +155,13 @@ private fun updateLibraries(module: Module, cargoProject: CargoProjectDescriptio
 }
 
 fun fillLibrary(cargoLibrary: Library, cargoProject: CargoProjectDescription) {
-    val fs = LocalFileSystem.getInstance()
     val model = cargoLibrary.modifiableModel
     for (url in cargoLibrary.getUrls(OrderRootType.CLASSES)) {
         model.removeRoot(url, OrderRootType.CLASSES)
     }
 
     for (pkg in cargoProject.packages.filter { !it.isModule }) {
-        val root = fs.findFileByPath(pkg.contentRoot)
+        val root = pkg.virtualFile
         if (root == null) {
             LOG.warn("Can't find root for ${pkg.name}")
             continue
@@ -221,7 +219,7 @@ data class DependencyNode(
 )
 
 data class SerializablePackage(
-    var contentRoot: String? = null,
+    var contentRootUrl: String? = null,
     var name: String? = null,
     var version: String? = null,
     var targets: Collection<SerializableTarget> = ArrayList(),
@@ -229,7 +227,7 @@ data class SerializablePackage(
 ) {
     fun into(): CargoProjectDescription.Package? {
         return CargoProjectDescription.Package(
-            contentRoot ?: return null,
+            contentRootUrl ?: return null,
             name ?: return null,
             version ?: return null,
             targets.map { it.into() ?: return null },
@@ -240,7 +238,7 @@ data class SerializablePackage(
     companion object {
         fun from(pkg: CargoProjectDescription.Package): SerializablePackage {
             return SerializablePackage(
-                pkg.contentRoot,
+                pkg.contentRootUrl,
                 pkg.name,
                 pkg.version,
                 pkg.targets.map { SerializableTarget.from(it) },
@@ -252,18 +250,18 @@ data class SerializablePackage(
 
 
 data class SerializableTarget(
-    var path: String? = null,
+    var url: String? = null,
     var kind: CargoProjectDescription.TargetKind? = null
 ) {
     fun into(): CargoProjectDescription.Target? {
         return CargoProjectDescription.Target(
-            path ?: return null,
+            url ?: return null,
             kind ?: return null
         )
     }
 
     companion object {
         fun from(target: CargoProjectDescription.Target): SerializableTarget =
-            SerializableTarget(target.path, target.kind)
+            SerializableTarget(target.url, target.kind)
     }
 }
