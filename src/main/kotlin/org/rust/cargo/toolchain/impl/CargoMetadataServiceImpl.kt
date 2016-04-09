@@ -41,6 +41,9 @@ private val LOG = Logger.getInstance(CargoMetadataServiceImpl::class.java);
 class CargoMetadataServiceImpl(private val module: Module) : CargoMetadataService, PersistentStateComponent<CargoProjectState>, BulkFileListener {
     private var cargoProjectState: CargoProjectState = CargoProjectState()
 
+    // Alarm used to coalesce consecutive update requests.
+    // It uses EDT thread, but the tasks are really tiny and
+    // only spawn background update.
     private val alarm = Alarm()
     private val DELAY_MILLIS = 1000
 
@@ -49,20 +52,16 @@ class CargoMetadataServiceImpl(private val module: Module) : CargoMetadataServic
     }
 
     /*
-     * Updates Rust libraries asynchronously. Consecutive updates are coalesced.
-     *
      * Works in two phases. First `cargo metadata` is executed on the background thread. Then,
      * the actual Library update happens on the event dispatch thread.
      */
     override fun scheduleUpdate(toolchain: RustToolchain) {
         val contentRoot = module.cargoProjectRoot ?: return
-        if (contentRoot.findChild(RustToolchain.CARGO_TOML) == null) {
-            return
-        }
 
         val task = UpdateTask(toolchain, contentRoot.path)
         alarm.cancelAllRequests()
-        alarm.addRequest({ task.queue() }, DELAY_MILLIS)
+        val delay = if (ApplicationManager.getApplication().isUnitTestMode) 0 else DELAY_MILLIS
+        alarm.addRequest({ task.queue() }, delay)
     }
 
     override val cargoProject: CargoProjectDescription?

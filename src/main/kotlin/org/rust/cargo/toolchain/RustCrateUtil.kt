@@ -119,6 +119,6 @@ val Module.cargoProjectRoot: VirtualFile? get() =
         it.findChild(RustToolchain.CARGO_TOML) != null
     }
 
-private val Module.cargoProject: CargoProjectDescription?
+val Module.cargoProject: CargoProjectDescription?
     get() = getService<CargoMetadataService>().cargoProject
 
