@@ -121,8 +121,14 @@ class CargoMetadataServiceImpl(private val module: Module) : CargoMetadataServic
                 is Result.Err -> LOG.info("Cargo project update failed", result.error)
                 is Result.Ok  -> ApplicationManager.getApplication().runWriteAction {
                     if (!module.isDisposed) {
-                        updateLibraries(module, result.cargoProject)
+                        val libraryRoots = result.cargoProject.packages
+                            .filter { !it.isModule }
+                            .mapNotNull { it.virtualFile  }
+
+                        updateLibrary(module, module.cargoLibraryName, libraryRoots)
                         cargoProjectState.cargoProjectDescription = result.cargoProject
+
+                        LOG.info("Cargo project successfully updated")
                     }
                 }
             }
@@ -135,35 +141,3 @@ class CargoMetadataServiceImpl(private val module: Module) : CargoMetadataServic
     }
 }
 
-private fun updateLibraries(module: Module, cargoProject: CargoProjectDescription) {
-    check(ApplicationManager.getApplication().isWriteAccessAllowed)
-
-    val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(module.project)
-    val cargoLibrary = libraryTable.getLibraryByName(module.cargoLibraryName)
-        ?: libraryTable.createLibrary(module.cargoLibraryName)
-        ?: return
-
-    fillLibrary(cargoLibrary, cargoProject)
-
-    ModuleRootModificationUtil.addDependency(module, cargoLibrary)
-    LOG.info("Cargo project successfully updated")
-}
-
-fun fillLibrary(cargoLibrary: Library, cargoProject: CargoProjectDescription) {
-    val model = cargoLibrary.modifiableModel
-    for (url in cargoLibrary.getUrls(OrderRootType.CLASSES)) {
-        model.removeRoot(url, OrderRootType.CLASSES)
-    }
-
-    for (pkg in cargoProject.packages.filter { !it.isModule }) {
-        val root = pkg.virtualFile
-        if (root == null) {
-            LOG.warn("Can't find root for ${pkg.name}")
-            continue
-        }
-        model.addRoot(root, OrderRootType.CLASSES)
-    }
-    model.commit()
-}
-
-private val Module.cargoLibraryName: String get() = "Cargo <$name>"

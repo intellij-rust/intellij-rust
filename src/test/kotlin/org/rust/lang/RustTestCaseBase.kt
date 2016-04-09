@@ -4,6 +4,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -13,6 +15,8 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 import com.intellij.util.containers.MultiMap
 import org.rust.cargo.CargoProjectDescription
 import org.rust.cargo.toolchain.CargoMetadataService
+import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.attachStandardLibrary
 import org.rust.cargo.toolchain.impl.CargoMetadataServiceImpl
 import org.rust.cargo.util.getService
 
@@ -75,15 +79,22 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
             val moduleBaseDir = contentEntry.file!!.url
             val metadataService = module.getService<CargoMetadataService>() as CargoMetadataServiceImpl
-            metadataService.state.cargoProjectDescription = testCargoProject(moduleBaseDir)
+            metadataService.state.cargoProjectDescription = testCargoProject(module, moduleBaseDir)
+
+            // XXX: for whatever reason libraries created by `updateLibrary` are not indexed in tests.
+            // this seems to fix the issue
+            val libraries = LibraryTablesRegistrar.getInstance().getLibraryTable(module.project).libraries
+            for (lib in libraries) {
+                model.addLibraryEntry(lib)
+            }
         }
 
-        open protected fun testCargoProject(contentRoot: String): CargoProjectDescription {
+        open protected fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
             val packages = listOf(testCargoPackage(contentRoot))
             return CargoProjectDescription.create(packages, MultiMap())!!
         }
 
-        protected fun testCargoPackage(contentRoot: String, name: String ="test-package") = CargoProjectDescription.Package(
+        protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CargoProjectDescription.Package(
             contentRoot,
             name = name,
             version = "0.0.1",
@@ -96,16 +107,17 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
     }
 
     class WithStdlibRustProjectDescriptor : RustProjectDescriptor() {
-        override fun getSdk(): Sdk? {
-            // FIXME: attach sdk
-            val sdkArchiveFile = LocalFileSystem.getInstance()
+        override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
+            val sourcesArchive = LocalFileSystem.getInstance()
                 .findFileByPath("${RustTestCase.testResourcesPath}/rustc-src.zip")
 
-            val sdkFile = checkNotNull(
-                sdkArchiveFile?.let { JarFileSystem.getInstance().getJarRootForLocalFile(it) },
-                { "Rust sources archive not found. Run `./gradlew test` to download the archive." }
-            )
-            return null
+            val sourceRoot = checkNotNull(sourcesArchive?.let {
+                JarFileSystem.getInstance().getJarRootForLocalFile(it)
+            }) { "Rust sources archive not found. Run `./gradlew test` to download the archive." }
+
+            val stdlibPackages = attachStandardLibrary(module, sourceRoot)
+            val allPackages = stdlibPackages + testCargoPackage(contentRoot)
+            return CargoProjectDescription.create(allPackages, MultiMap())!!
         }
     }
 }

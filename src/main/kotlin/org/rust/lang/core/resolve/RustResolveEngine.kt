@@ -3,7 +3,7 @@ package org.rust.lang.core.resolve
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
-import org.rust.cargo.toolchain.SdkCrates
+import org.rust.cargo.toolchain.AutoInjectedCrates
 import org.rust.cargo.toolchain.crateRoots
 import org.rust.cargo.toolchain.findExternCrateByName
 import org.rust.lang.core.names.RustAnonymousId
@@ -379,7 +379,7 @@ private class Resolver {
             // The stdlib lib itself is `#![no_std]`.
             // We inject both crates for simplicity for now.
             if (mod.isCrateRoot) {
-                if (name == SdkCrates.std || name == SdkCrates.core) {
+                if (name == AutoInjectedCrates.std || name == AutoInjectedCrates.core) {
                     mod.getModule()?.findExternCrateByName(name)?.rustMod?.let {
                         found(it)
                     }

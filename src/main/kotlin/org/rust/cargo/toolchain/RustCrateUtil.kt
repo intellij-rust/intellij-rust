@@ -70,48 +70,12 @@ fun Module.findExternCrateByName(crateName: String): PsiFile? =
  */
 private val Module.externCrates: Collection<ExternCrate> get() =
     cargoProject?.packages.orEmpty().mapNotNull { pkg ->
-        val target = pkg.libTarget ?: return@mapNotNull null
-        target.virtualFile?.let { ExternCrate(pkg.name, it) }
-    } + sdkCrates
+        pkg.libTarget?.virtualFile?.let { ExternCrate(pkg.name, it) }
+    }
 
-object SdkCrates {
+object AutoInjectedCrates {
     const val std: String = "std"
     const val core: String = "core"
-}
-
-private val Module.sdkCrates: Collection<ExternCrate> get() {
-    val src = locateRustSources() ?: return emptyList()
-
-    return listOf(
-        "std" to "libstd/lib.rs",
-        "core" to "libcore/lib.rs",
-        "collections" to "libcollections/lib.rs"
-    ).mapNotNull {
-        val (crateName, srcLocation) = it
-        src.findFileByRelativePath(srcLocation)?.let { crateFile ->
-            ExternCrate(crateName, crateFile)
-        }
-    }
-}
-
-private fun Module.locateRustSources(): VirtualFile? {
-    val sourceRoot = ModuleRootManager.getInstance(this)
-        .orderEntries()
-        .sdkOnly()
-        .classesRoots
-        .firstOrNull() ?: return null
-
-    // We want to handle three cases here
-    // * sourceRoot points to a zip archive with a single folder with sources
-    // * sourceRoot points to the directory with sources
-    // * sourceRoot points to the `src` subdirectory of sources
-
-    val baseDir = sourceRoot.children.singleOrNull() ?: sourceRoot
-
-    return if (baseDir.name == "src")
-        baseDir
-    else
-        baseDir.findFileByRelativePath("src")
 }
 
 val Module.cargoProjectRoot: VirtualFile? get() =

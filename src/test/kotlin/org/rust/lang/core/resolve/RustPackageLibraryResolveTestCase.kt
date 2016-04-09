@@ -1,5 +1,6 @@
 package org.rust.lang.core.resolve
 
+import com.intellij.openapi.module.Module
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.containers.MultiMap
 import org.rust.cargo.CargoProjectDescription
@@ -7,7 +8,7 @@ import org.rust.cargo.CargoProjectDescription
 class RustPackageLibraryResolveTestCase : RustMultiFileResolveTestCaseBase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = object : RustProjectDescriptor() {
 
-        override fun testCargoProject(contentRoot: String): CargoProjectDescription =
+        override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription =
             CargoProjectDescription.create(
                 listOf(testCargoPackage(contentRoot, name = "my_lib")),
                 MultiMap()

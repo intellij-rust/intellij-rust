@@ -1,9 +1,8 @@
 package org.rust.lang.core.resolve
 
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.testFramework.LightProjectDescriptor
 import org.assertj.core.api.Assertions.assertThat
-import org.rust.cargo.CargoProjectDescription
+import org.rust.cargo.toolchain.cargoProject
 
 class RustStdlibResolveTestCase : RustMultiFileResolveTestCaseBase() {
 
@@ -11,11 +10,11 @@ class RustStdlibResolveTestCase : RustMultiFileResolveTestCaseBase() {
 
     override val dataPath = "org/rust/lang/core/resolve/fixtures/stdlib"
 
-    fun testSdkHasSources() {
-        assertThat(ModuleRootManager.getInstance(myModule).orderEntries().sdkOnly().classesRoots)
+    fun testHasStdlibSources() {
+        assertThat(myModule.cargoProject?.packages.orEmpty().any { it.name == "std" })
             .overridingErrorMessage("No Rust SDK sources found during test.\n" +
                 "Have you run the gradle task to download them?")
-            .hasSize(1)
+            .isTrue()
     }
 
     fun testResolveFs() = doTestResolved("fs/main.rs")
