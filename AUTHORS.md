@@ -14,6 +14,7 @@ IntelliJ would never see support for the Rust programming language without these
   * [Tobias Bieniek](https://github.com/Turbo87)
   * [Vladimir Matveev](https://github.com/netvl)
   * [Vladislav Isenbaev](https://github.com/winger)
+  * [ntakimura](https://github.com/ntakimura)
 
 *We're keenly sorry if we've missed your name on this list, please email us to get it fixed.*
 
