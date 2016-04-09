@@ -1,6 +1,7 @@
 package org.rust.cargo.runconfig.forms
 
 import com.intellij.application.options.ModulesComboBox
+import com.intellij.execution.configuration.EnvironmentVariablesComponent
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.ui.RawCommandLineEditor
@@ -16,6 +17,7 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
     private lateinit var command: JTextField
     private lateinit var comboModules: ModulesComboBox
     private lateinit var additionalArguments: RawCommandLineEditor
+    private lateinit var environmentVariables: EnvironmentVariablesComponent
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         command.text = configuration.command
@@ -24,6 +26,7 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
         comboModules.selectedModule = configuration.configurationModule.module
 
         additionalArguments.text = configuration.additionalArguments
+        environmentVariables.envs = configuration.environmentVariables
     }
 
     @Throws(ConfigurationException::class)
@@ -31,6 +34,7 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
         configuration.command = command.text
         configuration.setModule(comboModules.selectedModule)
         configuration.additionalArguments = additionalArguments.text
+        configuration.environmentVariables = environmentVariables.envs
     }
 
     override fun createEditor(): JComponent = root

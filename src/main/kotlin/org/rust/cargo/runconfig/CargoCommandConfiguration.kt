@@ -25,6 +25,7 @@ class CargoCommandConfiguration(project: Project,
 
     var command: String = "run"
     var additionalArguments: String = ""
+    var environmentVariables: Map<String, String> = mutableMapOf()
 
     init {
         configurationModule.module = project.getModules().firstOrNull()
@@ -49,7 +50,7 @@ class CargoCommandConfiguration(project: Project,
         val pathToCargo = module.pathToCargo ?: return null
         val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
         val args = ParametersListUtil.parse(additionalArguments)
-        return CargoRunState(environment, pathToCargo, moduleDirectory, command, args)
+        return CargoRunState(environment, pathToCargo, moduleDirectory, command, args, environmentVariables)
     }
 
     override fun writeExternal(element: Element) {
