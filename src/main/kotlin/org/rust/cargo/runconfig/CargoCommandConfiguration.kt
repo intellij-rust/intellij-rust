@@ -25,7 +25,7 @@ class CargoCommandConfiguration(project: Project,
 
     var command: String = "run"
     var additionalArguments: String = ""
-    var environmentVariables: Map<String, String>? = null
+    var environmentVariables: Map<String, String> = mutableMapOf()
 
     init {
         configurationModule.module = project.getModules().firstOrNull()

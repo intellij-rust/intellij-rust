@@ -26,9 +26,7 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
         comboModules.selectedModule = configuration.configurationModule.module
 
         additionalArguments.text = configuration.additionalArguments
-        configuration.environmentVariables?.let {
-            environmentVariables.envs = it
-        }
+        environmentVariables.envs = configuration.environmentVariables
     }
 
     @Throws(ConfigurationException::class)

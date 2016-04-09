@@ -45,7 +45,7 @@ class Cargo(
         return CargoProjectDescription.fromCargoMetadata(data)
     }
 
-    fun generalCommand(command: String, additionalArguments: List<String> = emptyList(), environmentVariables: Map<String, String>? = null): GeneralCommandLine =
+    fun generalCommand(command: String, additionalArguments: List<String> = emptyList(), environmentVariables: Map<String, String> = emptyMap()): GeneralCommandLine =
         GeneralCommandLine(pathToCargoExecutable)
             .withWorkDirectory(projectDirectory)
             .withParameters(command)

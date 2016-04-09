@@ -11,7 +11,7 @@ class CargoRunState(environment: ExecutionEnvironment,
                     private val moduleDirectory: String,
                     private val command: String,
                     private val additionalArguments: List<String>,
-                    private val environmentVariables: Map<String, String>?) : CommandLineState(environment) {
+                    private val environmentVariables: Map<String, String>) : CommandLineState(environment) {
 
     override fun startProcess(): ProcessHandler {
         val cmd = Cargo(pathToCargo, moduleDirectory).generalCommand(command, additionalArguments, environmentVariables)
