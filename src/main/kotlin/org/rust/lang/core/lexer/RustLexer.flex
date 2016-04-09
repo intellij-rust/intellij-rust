@@ -35,7 +35,7 @@ import static com.intellij.psi.TokenType.*;
 %{
   IElementType imbueBlockComment() {
       assert(zzNestedCommentLevel == 0);
-      yybegin(YYINITIAL);
+      yybegin(INITIAL);
 
       zzStartRead = zzPostponedMarkedPos;
       zzPostponedMarkedPos = -1;
@@ -52,7 +52,7 @@ import static com.intellij.psi.TokenType.*;
   }
 
   IElementType imbueRawLiteral() {
-      yybegin(YYINITIAL);
+      yybegin(INITIAL);
 
       zzStartRead = zzPostponedMarkedPos;
       zzShaStride = -1;
@@ -67,6 +67,8 @@ import static com.intellij.psi.TokenType.*;
 %implements FlexLexer
 %function advance
 %type IElementType
+
+%s INITIAL
 
 %s IN_BLOCK_COMMENT
 %s IN_EOL_COMMENT
@@ -120,18 +122,17 @@ CHAR_LITERAL   = ( \' ( [^\\\'\r\n] | \\[^\r\n] | "\\x" [a-fA-F0-9]+ | "\\u{" [a
                | ( \' [\p{xidcontinue}]* \' {SUFFIX}? )
 STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Other
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-SHEBANG_LINE=\#\![^\[].*
-
 %%
 
-<YYINITIAL> \'                    { yybegin(IN_LIFETIME_OR_CHAR); yypushback(1); }
+<YYINITIAL>                     {
+  "#!" [\r\n]                     { yybegin(INITIAL); yypushback(1); return SHEBANG_LINE; }
+  "#!" [^\[\r\n] [^\r\n]*         { yybegin(INITIAL); return SHEBANG_LINE; }
+  [^]                             { yybegin(INITIAL); yypushback(1); }
+}
 
-<YYINITIAL>                       {
+<INITIAL> \'                    { yybegin(IN_LIFETIME_OR_CHAR); yypushback(1); }
+
+<INITIAL>                       {
 
   "{"                             { return LBRACE; }
   "}"                             { return RBRACE; }
@@ -155,7 +156,6 @@ SHEBANG_LINE=\#\![^\[].*
   "-="                            { return MINUSEQ; }
   "-"                             { return MINUS; }
   "#"                             { return SHA; }
-  "#!"                            { return SHEBANG; }
   "||"                            { return OROR; }
   "|="                            { return OREQ; }
   "&&"                            { return ANDAND; }
@@ -262,8 +262,6 @@ SHEBANG_LINE=\#\![^\[].*
                                     zzPostponedMarkedPos = zzStartRead;
                                     zzShaStride          = yylength() - 2; }
 
-  {SHEBANG_LINE}                  { return SHEBANG_LINE; }
-
   {WHITE_SPACE}                   { return WHITE_SPACE; }
 }
 
@@ -314,7 +312,7 @@ SHEBANG_LINE=\#\![^\[].*
 }
 
 <IN_EOL_COMMENT>.* {
-    yybegin(YYINITIAL);
+    yybegin(INITIAL);
 
     if (yylength() >= 3) {
         if (yycharat(2) == '!') {
@@ -332,9 +330,9 @@ SHEBANG_LINE=\#\![^\[].*
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 <IN_LIFETIME_OR_CHAR> {
-  \'{IDENTIFIER}                        { yybegin(YYINITIAL); return LIFETIME; }
-  {CHAR_LITERAL}                        { yybegin(YYINITIAL); return CHAR_LITERAL; }
-  <<EOF>>                               { yybegin(YYINITIAL); return BAD_CHARACTER; }
+  \'{IDENTIFIER}                        { yybegin(INITIAL); return LIFETIME; }
+  {CHAR_LITERAL}                        { yybegin(INITIAL); return CHAR_LITERAL; }
+  <<EOF>>                               { yybegin(INITIAL); return BAD_CHARACTER; }
 }
 
 
