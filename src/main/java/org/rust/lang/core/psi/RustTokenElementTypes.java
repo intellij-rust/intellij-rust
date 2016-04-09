@@ -98,7 +98,6 @@ public interface RustTokenElementTypes {
     RustTokenType ARROW = new RustTokenType("->");
     RustTokenType FAT_ARROW = new RustTokenType("=>");
     RustTokenType SHA = new RustTokenType("#");
-    RustTokenType SHEBANG = new RustTokenType("#!");
     RustTokenType COLON = new RustTokenType(":");
     RustTokenType COLONCOLON = new RustTokenType("::");
     RustTokenType COMMA = new RustTokenType(",");
