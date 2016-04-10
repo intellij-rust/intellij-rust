@@ -857,8 +857,8 @@ binary_expr ::= restricted_expr + {
 }
 
 assign_bin_expr ::= restricted_expr
-                  ( GTGTEQ
-                  | LTLTEQ
+                  ( gtgteq
+                  | ltlteq
                   | '|='
                   | '^='
                   | '&='
@@ -871,8 +871,8 @@ assign_bin_expr ::= restricted_expr
                   ) restricted_expr    { rightAssociative = true }
 
 comp_bin_expr       ::= restricted_expr ('==' | '!=') restricted_expr
-rel_comp_bin_expr   ::= restricted_expr ('<' !('<' | '=') | '>' !('>' | '=') | LTEQ | GTEQ) restricted_expr
-bit_shift_bin_expr  ::= restricted_expr (LTLT | GTGT) restricted_expr
+rel_comp_bin_expr   ::= restricted_expr ('<' !('<' | '=') | '>' !('>' | '=') | lteq | gteq) restricted_expr
+bit_shift_bin_expr  ::= restricted_expr (ltlt | gtgt) restricted_expr
 add_bin_expr        ::= restricted_expr ('+' | '-') restricted_expr
 mul_bin_expr        ::= restricted_expr ('*' | '/' | '%') restricted_expr
 
@@ -1097,13 +1097,12 @@ private stmt_ ::= expr_stmt
 // Utils
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-GTGTEQ ::= '>' '>' '='
-GTGT   ::= '>' '>'
-GTEQ   ::= '>' '='
-
-LTLTEQ ::= '<' '<' '='
-LTLT   ::= '<' '<'
-LTEQ   ::= '<' '='
+external gtgteq ::= collapse GTGTEQ GT GT EQ
+external gtgt   ::= collapse GTGT GT GT
+external gteq   ::= collapse GTEQ GT EQ
+external ltlteq ::= collapse LTLTEQ LT LT EQ
+external ltlt   ::= collapse LTLT LT LT
+external lteq   ::= collapse LTEQ LT EQ
 
 // Trailing commas are allowed
 private meta comma_separated_list ::= <<param>> ( ',' <<param>> ) * ','?

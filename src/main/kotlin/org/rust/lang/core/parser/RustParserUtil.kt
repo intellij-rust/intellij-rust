@@ -1,18 +1,18 @@
 package org.rust.lang.core.parser
 
 import com.intellij.lang.PsiBuilder
+import com.intellij.lang.PsiBuilderUtil
 import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.openapi.util.Key
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
-import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.lexer.containsEOL
 import org.rust.lang.core.psi.RustCompositeElementTypes
+import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.utils.Cookie
 import org.rust.lang.utils.using
 
 object RustParserUtil : GeneratedParserUtilBase() {
-
     private val STRUCT_ALLOWED: Key<Boolean> = Key("org.rust.STRUCT_ALLOWED")
 
     private fun PsiBuilder.getStructAllowed(): Boolean {
@@ -30,9 +30,14 @@ object RustParserUtil : GeneratedParserUtilBase() {
     // Helpers
     //
 
-    @JvmStatic fun injectInto(b: PsiBuilder, level: Int, s: Parser, t: Parser) : Boolean {
-        fun done(m: PsiBuilder.Marker, tt: IElementType)    { m.done(tt) }
-        fun drop(m: PsiBuilder.Marker)                      { m.drop() }
+    @JvmStatic fun injectInto(b: PsiBuilder, level: Int, s: Parser, t: Parser): Boolean {
+        fun done(m: PsiBuilder.Marker, tt: IElementType) {
+            m.done(tt)
+        }
+
+        fun drop(m: PsiBuilder.Marker) {
+            m.drop()
+        }
 
         val m = b.mark()
         var r: Boolean
@@ -68,13 +73,13 @@ object RustParserUtil : GeneratedParserUtilBase() {
                                     tupleExprEnd: Parser,
                                     parenExprEnd: Parser): Boolean {
         if (!recursion_guard_(builder, level, "tupleOrParenExpr")) return false
-        if (!nextTokenIsFast(builder, RustTokenElementTypes.LPAREN)) return false
+        if (!nextTokenIsFast(builder, LPAREN)) return false
         val marker = enter_section_(builder)
-        var result = consumeTokenFast(builder, RustTokenElementTypes.LPAREN)
+        var result = consumeTokenFast(builder, LPAREN)
         result = result && anyExpr.parse(builder, level + 1)
 
         var hasComma = false
-        result = result && if (nextTokenIsFast(builder, RustTokenElementTypes.COMMA)) {
+        result = result && if (nextTokenIsFast(builder, COMMA)) {
             hasComma = true
             tupleExprEnd.parse(builder, level + 1)
         } else {
@@ -86,10 +91,10 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return result
     }
 
-    @JvmStatic fun checkStructAllowed(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int) : Boolean = b.getStructAllowed()
+    @JvmStatic fun checkStructAllowed(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int): Boolean = b.getStructAllowed()
 
-    @JvmStatic fun checkBraceAllowed(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int) : Boolean {
-        return b.getStructAllowed() || b.tokenType != RustTokenElementTypes.LBRACE
+    @JvmStatic fun checkBraceAllowed(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int): Boolean {
+        return b.getStructAllowed() || b.tokenType != LBRACE
     }
 
     @JvmStatic fun withoutStructLiterals(b: PsiBuilder, level: Int, parser: GeneratedParserUtilBase.Parser): Boolean {
@@ -107,7 +112,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
     @JvmStatic fun skipUntilEOL(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int): Boolean {
         while (!b.eof()) {
             if (b.tokenType == TokenType.WHITE_SPACE
-            ||  b.tokenText?.containsEOL() != null) return true;
+                || b.tokenText?.containsEOL() != null) return true;
 
             b.advanceLexer();
         }
@@ -115,16 +120,28 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return false;
     }
 
-    @JvmStatic fun unpairedToken(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int): Boolean {
+    @JvmStatic fun unpairedToken(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int): Boolean =
         when (b.tokenType) {
-            RustTokenElementTypes.LBRACE, RustTokenElementTypes.RBRACE -> return false
-            RustTokenElementTypes.LPAREN, RustTokenElementTypes.RPAREN -> return false
-            RustTokenElementTypes.LBRACK, RustTokenElementTypes.RBRACK -> return false
-            else -> {
+            LBRACE, RBRACE -> false
+            LPAREN, RPAREN -> false
+            LBRACK, RBRACK -> false
+            else           -> {
                 b.advanceLexer();
-                return true
+                true
             }
         }
+
+    @JvmStatic fun collapse(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int,
+                            tokenType: IElementType, vararg parts: IElementType): Boolean {
+        // We do not want whitespace between parts, so firstly we do raw lookup for each part,
+        // and when we make sure that we have desired token, we consume and collapse it.
+        parts.forEachIndexed { i, tt ->
+            if(b.rawLookup(i) != tt) return false
+        }
+        val marker = b.mark()
+        PsiBuilderUtil.advance(b, parts.size)
+        marker.collapse(tokenType)
+        return true
     }
 }
 

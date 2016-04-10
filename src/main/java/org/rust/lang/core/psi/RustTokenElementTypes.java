@@ -137,6 +137,16 @@ public interface RustTokenElementTypes {
     RustTokenType UNDERSCORE = new RustTokenType("_");
     RustTokenType DOLLAR = new RustTokenType("$");
 
+    //
+    // Operators created in parser by collapsing
+    //
+
+    RustTokenType GTGTEQ = new RustTokenType(">>=");
+    RustTokenType GTGT = new RustTokenType(">>");
+    RustTokenType GTEQ = new RustTokenType(">=");
+    RustTokenType LTLTEQ = new RustTokenType("<<=");
+    RustTokenType LTLT = new RustTokenType("<<");
+    RustTokenType LTEQ = new RustTokenType("<=");
 
     //
     // Token Sets
