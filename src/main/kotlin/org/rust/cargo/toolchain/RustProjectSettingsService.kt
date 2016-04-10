@@ -6,7 +6,9 @@ import com.intellij.openapi.project.Project
 
 interface RustProjectSettingsService {
     var toolchain: RustToolchain?
+    var autoUpdateEnabled: Boolean
 }
 
-val Project.toolchain: RustToolchain? get() = service<RustProjectSettingsService>().toolchain
-val Module.toolchain: RustToolchain? get() = project.toolchain
+val Project.rustSettings: RustProjectSettingsService get() = service()
+
+val Module.toolchain: RustToolchain? get() = project.rustSettings.toolchain

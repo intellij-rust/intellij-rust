@@ -15,6 +15,13 @@ interface CargoMetadataService {
      * Updates Rust libraries asynchronously. Consecutive updates are coalesced.
      */
     fun scheduleUpdate(toolchain: RustToolchain)
+
+    /**
+     * Immediately schedules an update. Shows balloon upon completion.
+     *
+     * Update is still asynchronous.
+     */
+    fun updateNow(toolchain: RustToolchain)
     val cargoProject: CargoProjectDescription?
 }
 

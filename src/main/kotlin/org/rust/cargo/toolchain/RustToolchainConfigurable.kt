@@ -2,7 +2,6 @@ package org.rust.cargo.toolchain
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
@@ -17,10 +16,7 @@ import com.intellij.util.Alarm
 import org.rust.cargo.util.getModules
 import org.rust.cargo.util.getService
 import java.io.File
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.JTextField
+import javax.swing.*
 import javax.swing.event.DocumentEvent
 
 class RustToolchainConfigurable(
@@ -31,6 +27,7 @@ class RustToolchainConfigurable(
 
     private lateinit var component: JPanel
     private lateinit var toolchainLocationField: TextFieldWithBrowseButton
+    private lateinit var autoUpdateEnabled: JCheckBox
 
     private lateinit var rustVersion: JLabel
     private lateinit var versionUpdateAlarm: Alarm
@@ -53,27 +50,31 @@ class RustToolchainConfigurable(
     }
 
     override fun reset() {
-        toolchainLocationField.text = project.toolchain?.location
+        val settings = project.rustSettings
+        toolchainLocationField.text = settings.toolchain?.location
             ?: suggestToolchainLocation()?.absolutePath
+        autoUpdateEnabled.isSelected = settings.autoUpdateEnabled
     }
 
     override fun apply() {
-        val projectSettings = project.service<RustProjectSettingsService>()
+        val settings = project.rustSettings
         val toolchain = RustToolchain(toolchainLocationField.text)
-        projectSettings.toolchain = toolchain
+        settings.toolchain = toolchain
+        settings.autoUpdateEnabled = autoUpdateEnabled.isSelected
         for (module in project.getModules()) {
             module.getService<CargoMetadataService>().scheduleUpdate(toolchain)
         }
     }
 
     override fun isModified(): Boolean {
-        return toolchainLocationField.text != project.toolchain?.location
+        val settings = project.rustSettings
+        return toolchainLocationField.text != settings.toolchain?.location
+            || autoUpdateEnabled.isSelected != settings.autoUpdateEnabled
     }
 
     override fun disposeUIResources() {
         Disposer.dispose(disposable)
     }
-
 
     override fun getDisplayName(): String? = "Cargo"
 

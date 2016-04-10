@@ -18,6 +18,9 @@ class RustProjectSettingsServiceImpl : PersistentStateComponent<RustProjectSetti
     @Attribute
     private var toolchainHomeDirectory: String? = null
 
+    @Attribute
+    override var autoUpdateEnabled: Boolean = true
+
     override fun getState(): RustProjectSettingsServiceImpl? = this
 
     override fun loadState(state: RustProjectSettingsServiceImpl) {

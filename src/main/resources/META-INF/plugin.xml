@@ -184,6 +184,10 @@
                 description="Create new Rust file">
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
+
+        <action id="Rust.RefreshCargoProject"
+                class="org.rust.cargo.RefreshCargoProjectAction"
+                icon="AllIcons.Actions.Refresh"/>
     </actions>
 
 </idea-plugin>
