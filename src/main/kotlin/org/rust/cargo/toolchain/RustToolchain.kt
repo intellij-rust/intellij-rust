@@ -12,10 +12,14 @@ import java.io.File
 data class RustToolchain(
     val location: String
 ) {
+
+    fun looksLikeValidToolchain(): Boolean =
+        File(pathToExecutable(CARGO)).canExecute()
+
     fun queryRustcVersion(): RustcVersion? {
         check(!ApplicationManager.getApplication().isDispatchThread)
 
-        if (!looksLikeToolchainLocation(File(location))) return null
+        if (!looksLikeValidToolchain()) return null
 
         val cmd = GeneralCommandLine()
             .withExePath(pathToExecutable(RUSTC))
@@ -38,8 +42,6 @@ data class RustToolchain(
     fun cargo(cargoProjectDirectory: String): Cargo =
         Cargo(pathToExecutable(CARGO), cargoProjectDirectory)
 
-    val isInvalid: Boolean get() = !looksLikeToolchainLocation(File(location))
-
     private fun pathToExecutable(fileName: String): String {
         return File(File(location), PlatformUtil.getCanonicalNativeExecutableName(fileName)).absolutePath
     }
@@ -49,8 +51,6 @@ data class RustToolchain(
         private val RUSTC = "rustc"
         private val CARGO = "cargo"
         const val CARGO_TOML = "Cargo.toml"
-
-        fun looksLikeToolchainLocation(file: File): Boolean = File(file, CARGO).canExecute()
     }
 }
 

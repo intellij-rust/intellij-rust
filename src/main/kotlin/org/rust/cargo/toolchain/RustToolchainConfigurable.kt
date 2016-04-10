@@ -113,7 +113,7 @@ class RustToolchainConfigurable(
 }
 
 fun suggestToolchainLocation(): File? = Suggestions.all().find {
-    RustToolchain.looksLikeToolchainLocation(it)
+    RustToolchain(it.absolutePath).looksLikeValidToolchain()
 }
 
 private object Suggestions {

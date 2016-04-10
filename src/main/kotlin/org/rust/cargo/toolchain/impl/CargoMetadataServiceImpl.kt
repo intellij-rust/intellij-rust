@@ -92,7 +92,7 @@ class CargoMetadataServiceImpl(private val module: Module) : CargoMetadataServic
 
         override fun run(indicator: ProgressIndicator) {
             LOG.info("Cargo project update started")
-            if (toolchain.isInvalid) {
+            if (!toolchain.looksLikeValidToolchain()) {
                 result = Result.Err(ExecutionException("Invalid toolchain $toolchain"))
                 return
             }
