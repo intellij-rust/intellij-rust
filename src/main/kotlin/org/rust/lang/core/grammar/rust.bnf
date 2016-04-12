@@ -558,12 +558,12 @@ trait_type_member ::= outer_attr* TYPE_KW type_param ';'
 trait_method_member ::= outer_attr* fn_header generic_params fn_decl_with_self_allow_anon_params where_clause? (';' | inner_attrs_and_block)
 
 private fn_decl_with_self_allow_anon_params ::= fn_anon_params_with_self ret_type?
-private fn_anon_params_with_self ::= '(' self_argument comma_anon_params? ')'
-                                   | '(' anon_params? ')'
+fn_anon_params_with_self ::= '(' self_argument comma_anon_params? ')'
+                           | '(' anon_params? ')'
 
 private comma_anon_params ::= ',' [ anon_params ','? ]
 
-anon_params ::= anon_param (',' anon_param)*
+private anon_params ::= anon_param (',' anon_param)*
 
 anon_param ::= [ named_arg ':' ] type
 
