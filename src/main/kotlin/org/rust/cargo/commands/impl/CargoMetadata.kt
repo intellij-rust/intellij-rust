@@ -2,8 +2,8 @@ package org.rust.cargo.commands.impl
 
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.util.PathUtil
-import com.intellij.util.containers.MultiMap
-import org.rust.cargo.CargoProjectDescription
+import org.rust.cargo.project.CargoProjectDescription
+import org.rust.cargo.project.CargoProjectDescriptionData
 import java.io.File
 
 /**
@@ -108,29 +108,28 @@ object CargoMetadata {
         val dependencies: List<String>
     )
 
-    fun intoCargoProjectDescription(project: Project): CargoProjectDescription? {
-        val isRootPkg = { pkg: Package -> pkg.id == project.resolve.root }
-        val orderedPackages = project.packages.filter(isRootPkg) + project.packages.filter { !isRootPkg(it) }
-        val packageIdToIndex = orderedPackages.mapIndexed { i, p -> p.id to i }.toMap()
-        val packages = orderedPackages.map { it.intoCargoProjectDescriptionPackage() }
-        check(packageIdToIndex[project.resolve.root] == 0)
-        val dependencies = MultiMap<Int, Int>().apply {
-            for ((id, dep_ids) in project.resolve.nodes) {
-                put(packageIdToIndex[id]!!, dep_ids.map { packageIdToIndex[it]!! })
-            }
-        }
-
-        return CargoProjectDescription.create(packages, dependencies)
+    fun intoCargoProjectDescriptionData(project: Project): CargoProjectDescriptionData {
+        val packageIdToIndex = project.packages.mapIndexed { i, p -> p.id to i }.toMap()
+        return CargoProjectDescriptionData(
+            packageIdToIndex[project.resolve.root]!!,
+            project.packages.map { it.intoCargoProjectDescriptionPackage() }.toMutableList(),
+            project.resolve.nodes.map { node ->
+                CargoProjectDescriptionData.DependencyNode(
+                    packageIdToIndex[node.id]!!,
+                    node.dependencies.map { packageIdToIndex[it]!! }.toMutableList()
+                )
+            }.toMutableList()
+        )
     }
 
-    fun Package.intoCargoProjectDescriptionPackage(): CargoProjectDescription.Package {
+    private fun Package.intoCargoProjectDescriptionPackage(): CargoProjectDescriptionData.Package {
         val rootDirectory = PathUtil.getParentPath(manifest_path)
         val rootDirFile = File(rootDirectory)
         check(rootDirFile.isAbsolute)
         // crate name must be a valid Rust identifier, so map `-` to `_`
         // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
         val name = name.replace("-", "_")
-        return CargoProjectDescription.Package(
+        return CargoProjectDescriptionData.Package(
             VfsUtilCore.pathToUrl(rootDirectory),
             name,
             version,
@@ -139,7 +138,7 @@ object CargoMetadata {
         )
     }
 
-    fun Target.intoCargoProjectDescriptionTarget(rootDirectory: File): CargoProjectDescription.Target? {
+    private fun Target.intoCargoProjectDescriptionTarget(rootDirectory: File): CargoProjectDescriptionData.Target? {
         val path = if (File(src_path).isAbsolute)
             src_path
         else
@@ -162,6 +161,6 @@ object CargoMetadata {
                     CargoProjectDescription.TargetKind.UNKNOWN
         }
 
-        return CargoProjectDescription.Target(VfsUtilCore.pathToUrl(path), kind)
+        return CargoProjectDescriptionData.Target(VfsUtilCore.pathToUrl(path), kind)
     }
 }

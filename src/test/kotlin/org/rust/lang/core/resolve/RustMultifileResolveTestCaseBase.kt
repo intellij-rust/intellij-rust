@@ -1,7 +1,7 @@
 package org.rust.lang.core.resolve
 
 import org.assertj.core.api.Assertions.assertThat
-import org.rust.cargo.CargoProjectDescription
+import org.rust.cargo.project.CargoProjectDescription
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.resolve.ref.RustReference
 

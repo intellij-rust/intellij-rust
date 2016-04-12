@@ -1,24 +1,22 @@
 package org.rust.lang
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
-import com.intellij.util.containers.MultiMap
-import org.rust.cargo.CargoProjectDescription
+import org.rust.cargo.project.CargoProjectDescription
+import org.rust.cargo.project.CargoProjectDescriptionData
 import org.rust.cargo.toolchain.CargoMetadataService
-import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.attachStandardLibrary
 import org.rust.cargo.toolchain.impl.CargoMetadataServiceImpl
 import org.rust.cargo.util.getService
+import java.util.*
 
 abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), RustTestCase {
 
@@ -79,7 +77,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
             val moduleBaseDir = contentEntry.file!!.url
             val metadataService = module.getService<CargoMetadataService>() as CargoMetadataServiceImpl
-            metadataService.state.cargoProjectDescription = testCargoProject(module, moduleBaseDir)
+            metadataService.setState(testCargoProject(module, moduleBaseDir))
 
             // XXX: for whatever reason libraries created by `updateLibrary` are not indexed in tests.
             // this seems to fix the issue
@@ -89,25 +87,25 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             }
         }
 
-        open protected fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
-            val packages = listOf(testCargoPackage(contentRoot))
-            return CargoProjectDescription.create(packages, MultiMap())!!
+        open protected fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescriptionData {
+            val packages = mutableListOf(testCargoPackage(contentRoot))
+            return CargoProjectDescriptionData(0, packages, ArrayList())
         }
 
-        protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CargoProjectDescription.Package(
+        protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CargoProjectDescriptionData.Package(
             contentRoot,
             name = name,
             version = "0.0.1",
             targets = listOf(
-                CargoProjectDescription.Target("$contentRoot/main.rs", CargoProjectDescription.TargetKind.BIN),
-                CargoProjectDescription.Target("$contentRoot/lib.rs", CargoProjectDescription.TargetKind.LIB)
+                CargoProjectDescriptionData.Target("$contentRoot/main.rs", CargoProjectDescription.TargetKind.BIN),
+                CargoProjectDescriptionData.Target("$contentRoot/lib.rs", CargoProjectDescription.TargetKind.LIB)
             ),
             source = null
         )
     }
 
     class WithStdlibRustProjectDescriptor : RustProjectDescriptor() {
-        override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
+        override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescriptionData {
             val sourcesArchive = LocalFileSystem.getInstance()
                 .findFileByPath("${RustTestCase.testResourcesPath}/rustc-src.zip")
 
@@ -117,7 +115,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
             val stdlibPackages = attachStandardLibrary(module, sourceRoot)
             val allPackages = stdlibPackages + testCargoPackage(contentRoot)
-            return CargoProjectDescription.create(allPackages, MultiMap())!!
+            return CargoProjectDescriptionData(0, allPackages.toMutableList(), ArrayList())
         }
     }
 }

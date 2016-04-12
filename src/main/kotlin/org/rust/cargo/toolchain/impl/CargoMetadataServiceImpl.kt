@@ -4,7 +4,10 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -17,8 +20,11 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.Alarm
-import org.rust.cargo.CargoProjectDescription
+import org.jetbrains.annotations.TestOnly
+import org.rust.cargo.project.CargoProjectDescription
+import org.rust.cargo.project.CargoProjectDescriptionData
 import org.rust.cargo.toolchain.*
+import kotlin.properties.Delegates
 
 private val LOG = Logger.getInstance(CargoMetadataServiceImpl::class.java);
 
@@ -27,16 +33,27 @@ private val LOG = Logger.getInstance(CargoMetadataServiceImpl::class.java);
     storages = arrayOf(Storage(file = StoragePathMacros.MODULE_FILE))
 )
 class CargoMetadataServiceImpl(private val module: Module) : CargoMetadataService, PersistentStateComponent<CargoProjectState>, BulkFileListener {
-    private var cargoProjectState: CargoProjectState = CargoProjectState()
-
     // Alarm used to coalesce consecutive update requests.
     // It uses EDT thread, but the tasks are really tiny and
     // only spawn background update.
     private val alarm = Alarm()
+
     private val DELAY_MILLIS = 1000
+
+    private var cargoProjectState: CargoProjectState by Delegates.observable(CargoProjectState()) {
+        prop, old, new ->
+        cargoProject = new.projectData?.let { CargoProjectDescription.deserialize(it) }
+    }
+
+    override var cargoProject: CargoProjectDescription? = null
 
     init {
         module.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, this)
+    }
+
+    @TestOnly
+    fun setState(cargoProject: CargoProjectDescriptionData) {
+        cargoProjectState = CargoProjectState(cargoProject)
     }
 
     /*
@@ -59,9 +76,6 @@ class CargoMetadataServiceImpl(private val module: Module) : CargoMetadataServic
         alarm.cancelAllRequests()
         task.queue()
     }
-
-    override val cargoProject: CargoProjectDescription?
-        get() = state.cargoProjectDescription
 
     override fun loadState(state: CargoProjectState?) {
         cargoProjectState = state ?: CargoProjectState()
@@ -125,14 +139,14 @@ class CargoMetadataServiceImpl(private val module: Module) : CargoMetadataServic
                     showBalloon("Cargo project update failed: ${result.error.message}", MessageType.ERROR)
                     LOG.info("Cargo project update failed", result.error)
                 }
-                is Result.Ok -> ApplicationManager.getApplication().runWriteAction {
+                is Result.Ok  -> ApplicationManager.getApplication().runWriteAction {
                     if (!module.isDisposed) {
                         val libraryRoots = result.cargoProject.packages
                             .filter { !it.isModule }
                             .mapNotNull { it.virtualFile }
 
                         updateLibrary(module, module.cargoLibraryName, libraryRoots)
-                        cargoProjectState.cargoProjectDescription = result.cargoProject
+                        cargoProjectState = CargoProjectState(result.cargoProject.serialize())
                         showBalloon("Cargo project successfully updated", MessageType.INFO)
                         LOG.info("Cargo project successfully updated")
                     }
@@ -152,4 +166,9 @@ class CargoMetadataServiceImpl(private val module: Module) : CargoMetadataServic
         class Err(val error: ExecutionException) : Result()
     }
 }
+
+
+data class CargoProjectState(
+    var projectData: CargoProjectDescriptionData? = null
+)
 

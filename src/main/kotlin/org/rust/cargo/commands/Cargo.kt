@@ -8,8 +8,8 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.CargoProjectDescription
 import org.rust.cargo.commands.impl.CargoMetadata
+import org.rust.cargo.project.CargoProjectDescription
 import java.io.File
 
 /**
@@ -41,8 +41,9 @@ class Cargo(
     @Throws(ExecutionException::class)
     fun fullProjectDescription(listener: ProcessListener? = null): CargoProjectDescription {
         val output = metadataCommandline.execute(listener)
-        val data = parse(output)
-        return CargoMetadata.intoCargoProjectDescription(data)
+        val rawData = parse(output)
+        val projectDescriptionData = CargoMetadata.intoCargoProjectDescriptionData(rawData)
+        return CargoProjectDescription.deserialize(projectDescriptionData)
             ?: throw ExecutionException("Failed to understand cargo output")
     }
 
