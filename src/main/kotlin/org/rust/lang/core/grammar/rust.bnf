@@ -606,9 +606,9 @@ self_argument ::= [ '&' LIFETIME? ] MUT? SELF type_ascription?
 
 private comma_params ::= ',' [ params ','? ]
 
-private impl_const_member ::= attrs_and_vis CONST static_decl ';'
+impl_const_member ::= attrs_and_vis CONST static_decl ';'
 
-private impl_type_member ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params '=' type ';'
+impl_type_member ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params '=' type ';'
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
