@@ -816,6 +816,7 @@ restricted_expr ::= ret_expr
                   | mul_bin_expr
                   | cast_expr
                   | unary_expr
+                  | try_expr
                   | atom_expr {
   elementType = expr
 }
@@ -884,6 +885,8 @@ bit_and_bin_expr    ::= restricted_expr '&' restricted_expr
 
 
 cast_expr ::= restricted_expr AS type
+
+try_expr ::= restricted_expr '?'
 
 unary_expr ::= ('-' | '*' | '!' | ('&' | '&&') MUT?) restricted_expr
 
