@@ -599,8 +599,8 @@ impl_method_member ::= attrs_and_vis fn_header generic_params fn_decl_with_self 
 
 private fn_decl_with_self ::= fn_params_with_self ret_type?
 
-private fn_params_with_self ::= '(' self_argument comma_params? ')'
-                              | '(' params? ')'
+fn_params_with_self ::= '(' self_argument comma_params? ')'
+                      | '(' params? ')'
 
 self_argument ::= [ '&' LIFETIME? ] MUT? SELF type_ascription?
 
