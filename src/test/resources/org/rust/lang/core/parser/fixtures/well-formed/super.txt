@@ -51,7 +51,7 @@ FILE
           PsiElement(<IDENTIFIER>)('f')
           RustGenericParamsImpl(GENERIC_PARAMS)
             <empty list>
-          RustFnParamsImpl(FN_PARAMS)
+          RustParamsImpl(PARAMS)
             PsiElement(()('(')
             PsiElement())(')')
           PsiWhiteSpace(' ')
@@ -128,7 +128,7 @@ FILE
           PsiElement(<IDENTIFIER>)('foo')
           RustGenericParamsImpl(GENERIC_PARAMS)
             <empty list>
-          RustFnAnonParamsWithSelfImpl(FN_ANON_PARAMS_WITH_SELF)
+          RustParamsImpl(PARAMS)
             PsiElement(()('(')
             PsiElement())(')')
           PsiWhiteSpace(' ')

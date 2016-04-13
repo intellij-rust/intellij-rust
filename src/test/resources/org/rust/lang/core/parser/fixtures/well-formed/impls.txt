@@ -382,7 +382,7 @@ FILE
           PsiElement(<IDENTIFIER>)('value')
           RustGenericParamsImpl(GENERIC_PARAMS)
             <empty list>
-          RustFnParamsWithSelfImpl(FN_PARAMS_WITH_SELF)
+          RustParamsImpl(PARAMS)
             PsiElement(()('(')
             RustSelfArgumentImpl(SELF_ARGUMENT)
               PsiElement(&)('&')
@@ -418,7 +418,7 @@ FILE
             RustTypeParamImpl(TYPE_PARAM)
               PsiElement(<IDENTIFIER>)('B')
             PsiElement(>)('>')
-          RustFnParamsWithSelfImpl(FN_PARAMS_WITH_SELF)
+          RustParamsImpl(PARAMS)
             PsiElement(()('(')
             RustSelfArgumentImpl(SELF_ARGUMENT)
               PsiElement(&)('&')

@@ -9,7 +9,7 @@ FILE
       PsiElement(<IDENTIFIER>)('amp_sso')
       RustGenericParamsImpl(GENERIC_PARAMS)
         <empty list>
-      RustFnParamsImpl(FN_PARAMS)
+      RustParamsImpl(PARAMS)
         PsiElement(()('(')
         RustParamImpl(PARAM)
           RustPatBindingImpl(PAT_BINDING)

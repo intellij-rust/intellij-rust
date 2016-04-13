@@ -6,10 +6,8 @@ import org.rust.lang.core.psi.RustParam
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
 import org.rust.lang.core.psi.util.boundElements
 
-abstract class RustParamImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
-                                                 , RustParam {
-
+abstract class RustParamImplMixin(node: ASTNode) : RustCompositeElementImpl(node), RustParam {
     override val boundElements: Collection<RustNamedElement>
-        get() = pat.boundElements
+        get() = pat?.boundElements.orEmpty()
 }
 
