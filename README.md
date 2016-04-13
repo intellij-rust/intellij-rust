@@ -19,10 +19,17 @@ additional plugin repository and paste the URL for the one you need:
 See the [quick start](doc/QuickStart.md) and [tips & tricks](doc/Tips.md) for tutorial and screenshots!
 
 *NOTA BENE*: To successfully import Cargo-backed project you will need Cargo
- from at least 1.8.0 toolchain, which is the current beta. You can use any
- version of the compiler.
+ from at least 1.8.0 toolchain.
 
 As this is a preview release, something might go wrong. So, be brave to face some nasty bugs.
+
+## Recent changes
+
+We have completely reworked internal project representation to make plugin
+compatible with all IntelliJ based IDEs. To migrate your project please remove
+`.idea` and `*.iml` files and reopen it as described in the updated [quick
+start](doc/QuickStart.md). The old guide is available
+[here](https://github.com/intellij-rust/intellij-rust/blob/7caa46d2449935456a0e3e99154b6de0bede527d/doc/QuickStart.md).
 
 ## Contributing
 

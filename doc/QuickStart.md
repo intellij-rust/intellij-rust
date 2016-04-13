@@ -1,3 +1,5 @@
+# Quick Start
+
 **Bold text** denotes the names of actions you can type in the **Find Action**
   dialog (`Ctrl+Shift+A` or quickly press `Shift` twice for **Find Anything**).
   Shortcuts are given for the default Windows/Linux keymap. To learn shortcuts
@@ -6,35 +8,52 @@
 
 --------------------------------------------------------------------------------
 
-After you have installed the plugin and a recent version of Cargo, you can
-**import project**. "Importing" means that the IDE will talk with Cargo to learn
-about project structure and dependencies. You can do this from the welcome
-screen.
+## Creating new project
 
-![welcome](https://cloud.githubusercontent.com/assets/1711539/14211294/e0ce72c8-f835-11e5-9bfd-061098d70243.png)
+Creating new project from within IDE is not supported yet, so you have to invoke
+`cargo new my_project` from the command line and then open `my_project` directory.
 
-Select `Cargo.toml`.
+## Opening existing project in IntelliJ IDEA
 
-![select-cargo-toml](https://cloud.githubusercontent.com/assets/1711539/14211300/e89a41a8-f835-11e5-8564-ae7237a5dba3.png)
+After you have
+[installed](https://github.com/intellij-rust/intellij-rust#installation) the
+plugin into IntelliJ IDA you can **import** a project from source (if you use
+other IDE, see [these instructions](#opening-project-all-ides)). You can import a project form
+the welcome screen:
 
-Next you should tell the IDE which version of Cargo it should use. To do this
-you need to set up a Rust SDK. **S**oftware **D**evelopment **K**it is an IDE
-term which means a set of tools used to write programs in a particular language.
-In case of Rust, the SDK is basically `cargo` and `rustc` programms. Press the
-"New..." button. The IDE should find an SDK automatically, but you can manually
-point it to the location of Cargo. **Important**: you need Cargo from at least
-1.8.0 toolchain, which is currently in beta. You can use any version of `rustc`.
+![idea-import](https://cloud.githubusercontent.com/assets/1711539/14211294/e0ce72c8-f835-11e5-9bfd-061098d70243.png)
 
-![add-sdk-1](https://cloud.githubusercontent.com/assets/1711539/14211305/f36b5040-f835-11e5-9fb3-1d3e05052b05.png)
+Select the directory with the project.
 
-![add-sdk-2](https://cloud.githubusercontent.com/assets/1711539/14211306/f385c9a2-f835-11e5-8673-4af824d12720.png)
+![select-directory](https://cloud.githubusercontent.com/assets/1711539/14491098/85f750f6-017f-11e6-81ec-f1fcab920c8f.png)
 
-![add-skd-3](https://cloud.githubusercontent.com/assets/1711539/14211307/f3aaaa9c-f835-11e5-986f-fa54e96149fd.png)
+Use "from existing sources" import.
+
+![from-sources](https://cloud.githubusercontent.com/assets/1711539/14491096/85f346f0-017f-11e6-8f68-138a65d2cfb9.png)
+
+Click throught the wizard steps and select a Rust toolchain:
+
+![import-toolchain-step](https://cloud.githubusercontent.com/assets/1711539/14824500/ef917078-0bde-11e6-9d8f-802e6065fad5.png)
+
+## Opening project (all IDEs)
+
+Instead of importing, you can also simply **open** a project.
+
+![py-open](https://cloud.githubusercontent.com/assets/1711539/14491095/85f23ea4-017f-11e6-9809-fb4c7cbb248e.png)
+
+Select the directory with the project. Open any Rust file and configure toolchain:
+
+![toolchain-notification](https://cloud.githubusercontent.com/assets/1711539/14825248/c6d42ed4-0be1-11e6-96f7-01c76e4cdf10.png)
+
+## After your project is ready...
+
 
 Wait until Cargo downloads all project dependencies. To check that everything is
-working, try **Goto Symbol** (`Ctrl+Alt+Shift+N`) and type something.
+working, try **Goto Symbol** (`Ctrl+Alt+Shift+N`) and type something. Note that
+dependencies are present under external libraries. **Goto Symbol** should also
+work for items from the external crates.
 
-![go-to-symbol](https://cloud.githubusercontent.com/assets/1711539/14211909/2b504076-f839-11e5-86b5-a848c5504522.png)
+![go-to-symbol](https://cloud.githubusercontent.com/assets/1711539/14491412/44200bd0-0181-11e6-9587-10e4a07fa961.png)
 
 To execute Cargo tasks from within the IDE, you need to set up a [Run
 Configuration](https://www.jetbrains.com/idea/help/creating-and-editing-run-debug-configurations.html).
@@ -52,14 +71,25 @@ You should be able to compile and **Run** (`Shift+f10`) your application from th
 
 ![running](https://cloud.githubusercontent.com/assets/1711539/14211917/33cb0c54-f839-11e5-8026-d4fd7a7b44fd.png)
 
-# Updating
+You can change toolchain in the **settings** (`Ctrl+Alt+S`), under `Languages &
+Frameworks > Rust` tab.
+
+![settings](https://cloud.githubusercontent.com/assets/1711539/14491097/85f717d0-017f-11e6-98d6-0f60ee0e2016.png)
+
+Plugin automatically watches `Cargo.toml` for changes and communicates with
+Cargo to learn about project structure and dependencies. If you disable this
+behavior, or if you want to force a project update, you can use **Refresh Cargo
+project** action.
+
+## Updating
 
 In general updating the plugin should just work even if we change things we
 cache or persist. However given the current rate of change we do not test for
 this and so it is possible for data from the previous versions to confuse the
-newer version of the plugin. You can **Refresh all external projects** to force a
-reimport of Cargo project. You can use **Invalidata caches/Restart** to rebuild indices.
+newer version of the plugin. You can **Refresh Cargo project** to force a
+reimport of Cargo project. You can use **Invalidate caches/Restart** to rebuild
+indices.
 
-# Tips
+## Tips
 
 Check out [tips](Tips.md) for some neat tricks!
