@@ -165,6 +165,9 @@
         <stubIndex implementation="org.rust.lang.core.stubs.index.RustItemIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RustStructOrEnumIndex"/>
 
+        <!-- Notification Providers -->
+
+        <editorNotificationProvider implementation="org.rust.cargo.toolchain.BadToolchainNotificationProvider" />
 
     </extensions>
 

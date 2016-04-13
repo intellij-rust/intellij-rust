@@ -3,12 +3,12 @@ package org.rust.lang.core.psi.impl
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
 import org.rust.lang.RustFileType
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.RustFileModItem
-import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.util.RustModules
 import org.rust.lang.core.resolve.indexes.RustModulePath
 
@@ -38,3 +38,5 @@ val PsiFile.usefulName: String get() = when (name) {
 
 val PsiFile.rustMod: RustFileModItem? get() =
     (this as? RustFile)?.mod
+
+val VirtualFile.isNotRustFile: Boolean get() = fileType != RustFileType
