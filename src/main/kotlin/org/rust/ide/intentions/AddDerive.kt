@@ -19,7 +19,7 @@ class AddDerive : PsiElementBaseIntentionAction()
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         val item = element.parentOfType<RustItem>() ?: return
-        val keyword = getStructOrEnumKeyword(item) ?: return
+        val keyword = getLeftmostStructOrEnumKeyword(item) ?: return
 
         val deriveAttr = findOrCreateDeriveAttr(project, item, keyword) ?: return
         val reformattedDeriveAttr = reformat(project, item, deriveAttr)
@@ -31,12 +31,12 @@ class AddDerive : PsiElementBaseIntentionAction()
             return false
         }
         val item = element.parentOfType<RustItem>() ?: return false
-        return getStructOrEnumKeyword(item) != null
+        return getLeftmostStructOrEnumKeyword(item) != null
     }
 
-    private fun getStructOrEnumKeyword(item: RustItem): PsiElement? = when (item) {
-        is RustStructItem -> item.struct
-        is RustEnumItem   -> item.enum
+    private fun getLeftmostStructOrEnumKeyword(item: RustItem): PsiElement? = when (item) {
+        is RustStructItem -> item.vis ?: item.struct
+        is RustEnumItem   -> item.vis ?: item.enum
         else              -> null
     }
 
