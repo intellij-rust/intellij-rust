@@ -547,9 +547,7 @@ private trait_member ::= trait_const_member
                        | trait_type_member
                        | trait_method_member
 
-trait_const_member ::= outer_attr* CONST IDENTIFIER type_ascription? const_default? ';'
-
-type_ascription ::= ':' type
+trait_const_member ::= outer_attr* CONST IDENTIFIER [ ':' type ] const_default? ';'
 
 private const_default ::= '=' any_expr
 
@@ -602,7 +600,7 @@ private fn_decl_with_self ::= fn_params_with_self ret_type?
 fn_params_with_self ::= '(' self_argument comma_params? ')'
                       | '(' params? ')'
 
-self_argument ::= [ '&' LIFETIME? ] MUT? SELF type_ascription?
+self_argument ::= [ '&' LIFETIME? ] MUT? SELF [ ':' type ]
 
 private comma_params ::= ',' [ params ','? ]
 
@@ -893,7 +891,7 @@ try_expr ::= restricted_expr '?'
 unary_expr ::= ('-' | '*' | '!' | ('&' | '&&') MUT?) restricted_expr
 
 lambda_expr ::= MOVE? ('||' | '|' [ <<comma_separated_list lambda_param>> ] '|') ret_type? any_expr
-lambda_param ::= pat type_ascription?
+lambda_param ::= pat [ ':' type ]
 
 struct_expr ::= << checkStructAllowed >> path_generic_args_with_colons struct_expr_body
 
