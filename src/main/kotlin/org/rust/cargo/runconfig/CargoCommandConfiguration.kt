@@ -6,7 +6,6 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
-import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
@@ -48,7 +47,7 @@ class CargoCommandConfiguration(project: Project,
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
         val module = configurationModule.module ?: return null
         val pathToCargo = module.pathToCargo ?: return null
-        val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
+        val moduleDirectory = module.moduleFile?.parent ?: return null
         val args = ParametersListUtil.parse(additionalArguments)
         return CargoRunState(environment, pathToCargo, moduleDirectory, command, args, environmentVariables)
     }
