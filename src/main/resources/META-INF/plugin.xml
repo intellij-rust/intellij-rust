@@ -26,8 +26,6 @@
 
         <!-- Rust -->
 
-        <compileServer.plugin classpath="jps.jar;kotlin-runtime-1.0.1.jar;kotlin-stdlib-1.0.1.jar"/>
-
         <!-- Modules -->
 
         <moduleType id="RUST_MODULE" classpathProvider="false"
