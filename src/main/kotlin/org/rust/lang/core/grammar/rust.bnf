@@ -585,7 +585,7 @@ impl_members_block ::= '{' inner_attr* impl_member* '}' {pin=1}
 // TODO: unify with trait_member?
 private impl_member ::= impl_method_member
                       | impl_const_member
-                      | impl_macro_member
+                      | item_macro
                       | impl_type_member
 
 impl_method_member ::= attrs_and_vis fn_header generic_params fn_params_with_self ret_type? where_clause? inner_attrs_and_block
@@ -993,9 +993,9 @@ macro_expr ::= build_in_macro | macro_invocation macro_arg
 private build_in_macro ::= try_macro_invocation '(' any_expr ')'
                          | format_like_macro_invocation '(' format_macro_args ')'
 
-try_macro_invocation ::= "try" '!' {
-  elementType = macro_invocation
-}
+try_macro_invocation ::= "try" '!' {elementType=macro_invocation}
+
+macro_rules_invocation ::= "macro_rules" '!' {elementType=macro_invocation}
 
 // https://doc.rust-lang.org/std/fmt/
 format_like_macro_invocation ::= ( "format"
@@ -1010,29 +1010,24 @@ format_like_macro_invocation ::= ( "format"
                                  | "info"
                                  | "log"
                                  | "trace"
-                                 | "warn" ) '!' {
-  elementType = macro_invocation
-}
+                                 | "warn" ) '!' {elementType=macro_invocation}
 
 format_macro_args ::= <<comma_separated_list format_macro_arg>>
 private format_macro_arg ::= IDENTIFIER '=' any_expr | any_expr
 
-pat_macro  ::= IDENTIFIER '!' macro_arg
+pat_macro  ::= macro_invocation macro_arg {pin=1}
 
 macro_arg ::= '(' token_tree? ')'
             | '{' token_tree? '}'
-            | '[' token_tree?  ']' { pin = 1 }
+            | '[' token_tree?  ']' {pin=1}
 
-// This "parses" both macro definitions and macro usage
-item_macro ::= macro_invocation IDENTIFIER?
-             ( '(' token_tree? ')' ';'
-             | '{' token_tree? '}'
-             | '[' token_tree? ']' ';' )
+item_macro_arg ::= '(' token_tree? ')' ';'
+                 | '{' token_tree? '}'
+                 | '[' token_tree? ']' ';' {pin=1 elementType=macro_arg}
 
-impl_macro_member ::= macro_invocation IDENTIFIER?
-             ( '(' token_tree? ')' ';'
-             | '{' token_tree? '}'
-             | '[' token_tree? ']' ';' )
+item_macro ::= macro_definition | macro_invocation item_macro_arg {pin=macro_invocation}
+
+macro_definition ::= macro_rules_invocation IDENTIFIER item_macro_arg {pin=1 extends=item_macro}
 
 token_tree ::= '(' token_tree* ')' token_tree*
              | '{' token_tree* '}' token_tree*
