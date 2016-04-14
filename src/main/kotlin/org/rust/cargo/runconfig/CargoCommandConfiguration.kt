@@ -54,13 +54,11 @@ class CargoCommandConfiguration(project: Project,
 
     override fun writeExternal(element: Element) {
         super.writeExternal(element)
-        writeModule(element)
         XmlSerializer.serializeInto(this, element)
     }
 
     override fun readExternal(element: Element) {
         super.readExternal(element)
-        readModule(element)
         XmlSerializer.deserializeInto(this, element)
     }
 }
