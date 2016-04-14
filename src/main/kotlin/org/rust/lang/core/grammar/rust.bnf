@@ -38,7 +38,6 @@
         PLUS                 =  '+'
         MINUSEQ              =  '-='
         MINUS                =  '-'
-        OROR                 =  '||'
         OREQ                 =  '|='
         ANDAND               =  '&&'
         ANDEQ                =  '&='
@@ -872,9 +871,10 @@ bit_shift_bin_expr  ::= restricted_expr (ltlt | gtgt) restricted_expr
 add_bin_expr        ::= restricted_expr ('+' | '-') restricted_expr
 mul_bin_expr        ::= restricted_expr ('*' | '/' | '%') restricted_expr
 
-bool_or_bin_expr    ::= restricted_expr '||' restricted_expr
+// <expr> | <expr> has higher priority than <expr> || <expr>
+bool_or_bin_expr    ::= restricted_expr oror restricted_expr
 bool_and_bin_expr   ::= restricted_expr '&&' restricted_expr
-bit_or_bin_expr     ::= restricted_expr '|' restricted_expr
+bit_or_bin_expr     ::= restricted_expr or restricted_expr
 bit_xor_bin_expr    ::= restricted_expr '^' restricted_expr
 bit_and_bin_expr    ::= restricted_expr '&' restricted_expr
 
@@ -886,7 +886,7 @@ try_expr ::= restricted_expr '?'
 unary_expr ::= ('-' | '*' | '!' | ('&' | '&&') MUT?) restricted_expr
 
 lambda_expr   ::= MOVE? lambda_params ret_type? any_expr
-lambda_params ::= '||' | '|' [ <<comma_separated_list lambda_param>> ] '|' { elementType=params }
+lambda_params ::= '|' [ <<comma_separated_list lambda_param>> ] '|' { elementType=params }
 lambda_param  ::= pat [ ':' type ] { elementType=param }
 
 struct_expr ::= << checkStructAllowed >> path_generic_args_with_colons struct_expr_body
@@ -1102,6 +1102,8 @@ external gteq   ::= collapse GTEQ GT EQ
 external ltlteq ::= collapse LTLTEQ LT LT EQ
 external ltlt   ::= collapse LTLT LT LT
 external lteq   ::= collapse LTEQ LT EQ
+external oror   ::= collapse OROR OR OR
+external or     ::= onlySingle OR
 
 // Trailing commas are allowed
 private meta comma_separated_list ::= <<fn_param>> ( ',' <<fn_param>> ) * ','?

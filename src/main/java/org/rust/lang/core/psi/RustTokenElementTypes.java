@@ -121,7 +121,6 @@ public interface RustTokenElementTypes {
     RustTokenType MULEQ = new RustTokenType("*=");
     RustTokenType OR = new RustTokenType("|");
     RustTokenType OREQ = new RustTokenType("|=");
-    RustTokenType OROR = new RustTokenType("||");
     RustTokenType PLUS = new RustTokenType("+");
     RustTokenType PLUSEQ = new RustTokenType("+=");
     RustTokenType RBRACE = new RustTokenType("}");
@@ -147,6 +146,7 @@ public interface RustTokenElementTypes {
     RustTokenType LTLTEQ = new RustTokenType("<<=");
     RustTokenType LTLT = new RustTokenType("<<");
     RustTokenType LTEQ = new RustTokenType("<=");
+    RustTokenType OROR = new RustTokenType("||");
 
     //
     // Token Sets
