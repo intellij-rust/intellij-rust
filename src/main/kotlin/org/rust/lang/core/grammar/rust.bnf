@@ -357,14 +357,17 @@ private fn_header ::= CONST? UNSAFE? extern_abi? FN IDENTIFIER
 
 extern_abi ::= EXTERN STRING_LITERAL?
 
-fn_params ::= '(' !',' fn_params_ ','? ')' { pin(".*")=1 elementType=params }
+fn_params ::= '(' !',' fn_params_ ','? ')' {
+  pin(".*") = 1
+  elementType = params
+}
 private fn_params_ ::= [ fn_param (',' fn_param)* ]
 fn_param ::= pat ':' type { elementType=param }
 
 ret_type ::= '->' (type | '!') { pin = 1 }
 
 fn_item ::= fn_header generic_params fn_params ret_type? where_clause? inner_attrs_and_block {
-   pin(".*") = 1
+  pin(".*") = 1
 }
 
 generic_params ::= [ generic_params_inner ]
@@ -503,7 +506,7 @@ private fn_params_allow_variadic ::= '(' fn_params_ ',' '...' ')'
 
 struct_item ::= STRUCT IDENTIFIER generic_params (struct_tuple_args? where_clause? ';' | where_clause? struct_decl_args)
 
-struct_tuple_args ::= '(' <<comma_separated_list struct_tuple_field>> ')' { pin = 1}
+struct_tuple_args ::= '(' <<comma_separated_list struct_tuple_field>> ')' { pin = 1 }
 struct_tuple_field ::= attrs_and_vis type
 
 struct_decl_args ::= '{' <<comma_separated_list struct_decl_field>> '}' { pin = 1 }
@@ -529,7 +532,7 @@ enum_tuple_args ::= '(' <<comma_separated_list enum_tuple_field>> ')' { pin = 1 
 enum_tuple_field ::= outer_attr* type
 
 enum_struct_args ::= '{' <<comma_separated_list enum_struct_field>> '}' { pin = 1 }
-enum_struct_field ::= outer_attr* IDENTIFIER ':' type { pin = 2}
+enum_struct_field ::= outer_attr* IDENTIFIER ':' type { pin = 2 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -552,14 +555,15 @@ trait_type_member ::= outer_attr* TYPE_KW type_param ';'
 trait_method_member ::= outer_attr* fn_header generic_params fn_anon_params_with_self ret_type? where_clause? (';' | inner_attrs_and_block)
 
 fn_anon_params_with_self ::= '(' self_argument comma_anon_params? ')'
-                           | '(' anon_params? ')'
-                           { elementType=params }
+                           | '(' anon_params? ')' {
+  elementType = params
+}
 
 private comma_anon_params ::= ',' [ anon_params ','? ]
 
 private anon_params ::= anon_param (',' anon_param)*
 
-anon_param ::= [ named_arg ':' ] type { elementType=param }
+anon_param ::= [ named_arg ':' ] type { elementType = param }
 
 private named_arg ::= &( IDENTIFIER
                        | '_'
@@ -580,7 +584,7 @@ impl_item ::= UNSAFE? IMPL generic_params type where_clause? impl_members_block
   pin(".*") = '{'
 }
 
-impl_members_block ::= '{' inner_attr* impl_member* '}' {pin=1}
+impl_members_block ::= '{' inner_attr* impl_member* '}' { pin = 1 }
 
 // TODO: unify with trait_member?
 private impl_member ::= impl_method_member
@@ -591,8 +595,9 @@ private impl_member ::= impl_method_member
 impl_method_member ::= attrs_and_vis fn_header generic_params fn_params_with_self ret_type? where_clause? inner_attrs_and_block
 
 fn_params_with_self ::= '(' self_argument comma_params? ')'
-                      | '(' fn_params_? ')'
-                      { elementType=params }
+                      | '(' fn_params_? ')' {
+  elementType = params
+}
 
 self_argument ::= [ '&' LIFETIME? ] MUT? SELF [ ':' type ]
 
@@ -845,10 +850,10 @@ private atom_expr ::= lit_expr
 
 
 binary_expr ::= restricted_expr + {
-    methods=[
-        left="/expr[0]"
-        right="/expr[1]"
-    ]
+  methods=[
+    left="/expr[0]"
+    right="/expr[1]"
+  ]
 }
 
 assign_bin_expr ::= restricted_expr
@@ -886,8 +891,8 @@ try_expr ::= restricted_expr '?'
 unary_expr ::= ('-' | '*' | '!' | ('&' | '&&') MUT?) restricted_expr
 
 lambda_expr   ::= MOVE? lambda_params ret_type? any_expr
-lambda_params ::= '|' [ <<comma_separated_list lambda_param>> ] '|' { elementType=params }
-lambda_param  ::= pat [ ':' type ] { elementType=param }
+lambda_params ::= '|' [ <<comma_separated_list lambda_param>> ] '|' { elementType = params }
+lambda_param  ::= pat [ ':' type ] { elementType = param }
 
 struct_expr ::= << checkStructAllowed >> path_generic_args_with_colons struct_expr_body
 
@@ -958,10 +963,10 @@ full_range_expr ::= restricted_expr '..' (&<<checkBraceAllowed>> restricted_expr
 open_range_expr ::=                 '..' (&<<checkBraceAllowed>> restricted_expr)?
 
 range_expr ::= restricted_expr + {
-    methods=[
-        from="/expr[0]"
-        to="/expr[1]"
-    ]
+  methods=[
+    from="/expr[0]"
+    to="/expr[1]"
+  ]
 }
 
 
@@ -993,9 +998,9 @@ macro_expr ::= build_in_macro | macro_invocation macro_arg
 private build_in_macro ::= try_macro_invocation '(' any_expr ')'
                          | format_like_macro_invocation '(' format_macro_args ')'
 
-try_macro_invocation ::= "try" '!' {elementType=macro_invocation}
+try_macro_invocation ::= "try" '!' { elementType = macro_invocation }
 
-macro_rules_invocation ::= "macro_rules" '!' {elementType=macro_invocation}
+macro_rules_invocation ::= "macro_rules" '!' { elementType = macro_invocation }
 
 // https://doc.rust-lang.org/std/fmt/
 format_like_macro_invocation ::= ( "format"
@@ -1010,24 +1015,30 @@ format_like_macro_invocation ::= ( "format"
                                  | "info"
                                  | "log"
                                  | "trace"
-                                 | "warn" ) '!' {elementType=macro_invocation}
+                                 | "warn" ) '!' { elementType = macro_invocation }
 
 format_macro_args ::= <<comma_separated_list format_macro_arg>>
 private format_macro_arg ::= IDENTIFIER '=' any_expr | any_expr
 
-pat_macro  ::= macro_invocation macro_arg {pin=1}
+pat_macro  ::= macro_invocation macro_arg { pin = 1 }
 
 macro_arg ::= '(' token_tree? ')'
             | '{' token_tree? '}'
-            | '[' token_tree?  ']' {pin=1}
+            | '[' token_tree?  ']' { pin = 1 }
 
 item_macro_arg ::= '(' token_tree? ')' ';'
                  | '{' token_tree? '}'
-                 | '[' token_tree? ']' ';' {pin=1 elementType=macro_arg}
+                 | '[' token_tree? ']' ';' {
+  pin = 1
+  elementType = macro_arg
+}
 
-item_macro ::= macro_definition | macro_invocation item_macro_arg {pin=macro_invocation}
+item_macro ::= macro_definition | macro_invocation item_macro_arg { pin = macro_invocation }
 
-macro_definition ::= macro_rules_invocation IDENTIFIER item_macro_arg {pin=1 extends=item_macro}
+macro_definition ::= macro_rules_invocation IDENTIFIER item_macro_arg {
+  pin = 1
+  extends = item_macro
+}
 
 token_tree ::= '(' token_tree* ')' token_tree*
              | '{' token_tree* '}' token_tree*
