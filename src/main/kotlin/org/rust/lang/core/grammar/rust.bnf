@@ -257,9 +257,9 @@
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
 
-    extends           ("(?!meta_item)(?!foreign_item).*_item") = item_
-    elementTypeFactory("(?!meta_item)(?!foreign_item).*_item") = "org.rust.lang.core.stubs.types.ElementFactoryKt.factory"
-    stubClass         ("(?!meta_item)(?!foreign_item).*_item") = "org.rust.lang.core.stubs.RustItemStub"
+    extends           ("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = item_
+    elementTypeFactory("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = "org.rust.lang.core.stubs.types.ElementFactoryKt.factory"
+    stubClass         ("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = "org.rust.lang.core.stubs.RustItemStub"
 
 
     extends("(if|while)_let_expr") = scoped_let_expr
@@ -269,6 +269,10 @@
     extends("pat_.*")  = pat
     extends(".*_attr") = attr
     extends("inner_attrs_and_block") = block
+
+    elementType("macro_call|item_macro") = macro
+    extends("(try|format_like)_macro") = macro
+    elementType(".*_macro_invocation|macro_rules_invocation") = macro_invocation
 
     elementType("(fn|anon|lambda)_param") = param
     elementType("(fn|lambda)_params|fn_anon_params_with_self|fn_params_with_self") = params
@@ -319,7 +323,7 @@ vis ::= PUB
 
 private attrs_and_vis ::= outer_attr* vis?
 private item_inner ::= stmt_item_group
-                     | item_macro
+                     | macro_item
 
 //
 // TODO(kudinkin): That's a hack to force GK to generate accessors
@@ -595,7 +599,7 @@ impl_members_block ::= '{' inner_attr* impl_member* '}' { pin = 1 }
 // TODO: unify with trait_member?
 private impl_member ::= impl_method_member
                       | impl_const_member
-                      | item_macro
+                      | macro_item
                       | impl_type_member
 
 impl_method_member ::= attrs_and_vis fn_header generic_params fn_params_with_self ret_type? where_clause? inner_attrs_and_block
@@ -995,16 +999,25 @@ lit_expr ::= lit
 // Macros
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+fake macro ::= macro_invocation macro_arg?
+macro_call ::= macro_invocation macro_arg
+item_macro ::= macro_invocation item_macro_arg
+
+macro_definition ::= macro_rules_invocation IDENTIFIER item_macro_arg {
+  pin = 1
+  extends = item_macro
+}
+
+try_macro ::= try_macro_invocation try_macro_args
+format_like_macro ::= format_like_macro_invocation format_macro_args
+
+private build_in_macro ::= try_macro | format_like_macro
+private macro_call_    ::= build_in_macro | macro_call { pin(".*") = macro_invocation }
+private macro_item_    ::= macro_definition | item_macro { pin(".*") = macro_invocation }
+
 macro_invocation ::= IDENTIFIER '!'
-
-macro_expr ::= build_in_macro | macro_invocation macro_arg
-
-private build_in_macro ::= try_macro_invocation '(' any_expr ')'
-                         | format_like_macro_invocation '(' format_macro_args ')'
-
-try_macro_invocation ::= "try" '!' { elementType = macro_invocation }
-
-macro_rules_invocation ::= "macro_rules" '!' { elementType = macro_invocation }
+try_macro_invocation ::= "try" '!'
+macro_rules_invocation ::= "macro_rules" '!'
 
 // https://doc.rust-lang.org/std/fmt/
 format_like_macro_invocation ::= ( "format"
@@ -1019,12 +1032,7 @@ format_like_macro_invocation ::= ( "format"
                                  | "info"
                                  | "log"
                                  | "trace"
-                                 | "warn" ) '!' { elementType = macro_invocation }
-
-format_macro_args ::= <<comma_separated_list format_macro_arg>>
-private format_macro_arg ::= IDENTIFIER '=' any_expr | any_expr
-
-pat_macro  ::= macro_invocation macro_arg { pin = 1 }
+                                 | "warn" ) '!'
 
 macro_arg ::= '(' token_tree? ')'
             | '{' token_tree? '}'
@@ -1037,12 +1045,14 @@ item_macro_arg ::= '(' token_tree? ')' ';'
   elementType = macro_arg
 }
 
-item_macro ::= macro_definition | macro_invocation item_macro_arg { pin = macro_invocation }
+try_macro_args ::= '(' any_expr ')'
+format_macro_args ::= '(' <<comma_separated_list format_macro_arg>> ')' { pin = 1 }
+format_macro_arg ::= [ IDENTIFIER '=' ] any_expr
 
-macro_definition ::= macro_rules_invocation IDENTIFIER item_macro_arg {
-  pin = 1
-  extends = item_macro
-}
+macro_expr ::= macro_call_
+pat_macro  ::= macro_call_
+// TODO: Maybe implement item-related stuff for this production?
+macro_item ::= macro_item_
 
 token_tree ::= '(' token_tree* ')' token_tree*
              | '{' token_tree* '}' token_tree*
