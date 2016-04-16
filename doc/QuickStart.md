@@ -4,6 +4,8 @@
   for your keymap consult `Help > Keymap reference`. Shortcut for an action is
   also displayed in the **Find Action** dialog.
 
+--------------------------------------------------------------------------------
+
 After you have installed the plugin and a recent version of Cargo, you can
 **import project**. "Importing" means that the IDE will talk with Cargo to learn
 about project structure and dependencies. You can do this from the welcome

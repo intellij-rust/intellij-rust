@@ -4,6 +4,8 @@
     for your keymap consult `Help > Keymap reference`. Shortcut for an action is
   also displayed in the **Find Action** dialog.
 
+--------------------------------------------------------------------------------
+
 ## Tips
 
 * Use hippie expand (aka dumb completion) for completion based solely on the
