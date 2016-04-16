@@ -5,10 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.io.IOUtil
-import org.rust.cargo.project.module.util.getSourceRoots
+import org.rust.cargo.project.module.util.getSourceAndLibraryRoots
 import org.rust.cargo.project.module.util.relativise
 import org.rust.lang.core.psi.RustFileModItem
-import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.getModule
 import java.io.DataInput
@@ -23,7 +22,7 @@ data class RustModulePath private constructor (private val name: String, val pat
 
     fun findModuleIn(p: Project): RustFileModItem? =
         ModuleManager.getInstance(p).findModuleByName(name)?.let { module ->
-                module.getSourceRoots(includingTestRoots = true)
+                module.getSourceAndLibraryRoots()
                 .mapNotNull { sourceRoot ->
                     sourceRoot.findFileByRelativePath(path)
                 }

@@ -6,13 +6,13 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import org.rust.cargo.project.module.util.getSourceRoots
+import org.rust.cargo.project.module.util.getSourceAndLibraryRoots
 
 object ProjectUtil
 
 fun Project.getCrateSourceRootFor(file: VirtualFile): VirtualFile? =
     ModuleUtilCore.findModuleForFile(file, this)?.let {
-        it.getSourceRoots().find { root ->
+        it.getSourceAndLibraryRoots().find { root ->
             FileUtil.isAncestor(root.canonicalPath!!, file.canonicalPath!!, /* strict = */ false)
         }
     }

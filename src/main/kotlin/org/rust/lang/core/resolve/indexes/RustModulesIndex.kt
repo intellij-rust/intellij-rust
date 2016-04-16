@@ -1,6 +1,7 @@
 package org.rust.lang.core.resolve.indexes
 
 import com.intellij.openapi.module.Module
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.ID
 import org.rust.lang.core.names.RustQualifiedName
@@ -22,7 +23,7 @@ interface RustModulesIndex {
                     file.modulePath?.let { path ->
                         findByHeterogeneous(
                             FileBasedIndex.getInstance()
-                                .getValues(ID, path, module.moduleContentScope)
+                                .getValues(ID, path, GlobalSearchScope.allScope(module.project))
                                 .firstOrNull(),
                             module
                         )

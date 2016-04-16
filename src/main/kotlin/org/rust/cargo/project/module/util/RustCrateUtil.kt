@@ -2,6 +2,7 @@ package org.rust.cargo.project.module.util
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,8 +17,11 @@ import java.io.File
 
 object RustCrateUtil
 
-fun Module.getSourceRoots(includingTestRoots: Boolean = false): Collection<VirtualFile> =
-    ModuleRootManager.getInstance(this).getSourceRoots(includingTestRoots).toList()
+fun Module.getSourceAndLibraryRoots(): Collection<VirtualFile> =
+    ModuleRootManager.getInstance(this).orderEntries.flatMap {
+        it.getFiles(OrderRootType.CLASSES).toList() +
+        it.getFiles(OrderRootType.SOURCES).toList()
+    }
 
 val Module.crateRoots: Sequence<RustModItem>
     get() = crateRootFiles.asSequence()
@@ -27,7 +31,7 @@ fun Module.isCrateRootFile(file: VirtualFile): Boolean =
     crateRootFiles.contains(file)
 
 fun Module.relativise(f: VirtualFile): String? =
-    getSourceRoots()
+    getSourceAndLibraryRoots()
         .find {
             FileUtil.isAncestor(it.path, f.path, /* strict = */ false)
         }
