@@ -1,5 +1,8 @@
 **Bold text** denotes the names of actions you can type in the **Find Action**
-  dialog (`Ctrl+Shift+A`).
+  dialog (`Ctrl+Shift+A` or quickly press `Shift` twice for **Find Anything**).
+  Shortcuts are given for the default Windows/Linux keymap. To learn shortcuts
+    for your keymap consult `Help > Keymap reference`. Shortcut for an action is
+  also displayed in the **Find Action** dialog.
 
 ## Tips
 
