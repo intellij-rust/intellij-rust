@@ -280,6 +280,8 @@
     generateTokens=false
     generateTokenAccessors=true
 
+    // Preserve information about missing ':'
+    consumeTokenMethod("type_ascription") = "consumeToken"
     consumeTokenMethod(".*") = "consumeTokenFast"
 
     //recoverWhile = skip_until_eol_rec
@@ -370,7 +372,7 @@ extern_abi ::= EXTERN STRING_LITERAL?
 
 fn_params ::= '(' !',' params ','? ')' { pin(".*") = 1 }
 private params ::= [ param (',' param)* ]
-param ::= pat ':' type
+param ::= pat type_ascription
 
 ret_type ::= '->' (type | '!') { pin = 1 }
 
@@ -473,7 +475,7 @@ pat_field ::= IDENTIFIER ':' pat
 
 binding_mode ::= REF MUT? | MUT
 
-private static_decl ::= IDENTIFIER ':' type '=' any_expr
+private static_decl ::= IDENTIFIER type_ascription '=' any_expr
 
 static_item ::= STATIC MUT? static_decl ';'
 const_item ::= CONST static_decl ';'
@@ -499,7 +501,7 @@ foreign_mod_item ::= extern_abi '{' inner_attr* foreign_decl* '}'
 
 foreign_decl  ::= attrs_and_vis ( foreign_static_decl | foreign_fn_decl ) ';'
 
-foreign_static_decl ::= STATIC MUT? IDENTIFIER ':' type
+foreign_static_decl ::= STATIC MUT? IDENTIFIER type_ascription
 foreign_fn_decl ::= FN IDENTIFIER generic_params fn_params_allow_variadic ret_type? where_clause?
 
 private fn_params_allow_variadic ::= '(' params ',' '...' ')'
@@ -518,7 +520,7 @@ struct_tuple_args ::= '(' <<comma_separated_list struct_tuple_field>> ')' { pin 
 struct_tuple_field ::= attrs_and_vis type
 
 struct_decl_args ::= '{' <<comma_separated_list struct_decl_field>> '}' { pin = 1 }
-struct_decl_field ::= attrs_and_vis IDENTIFIER ':' type { pin = 2 }
+struct_decl_field ::= attrs_and_vis IDENTIFIER type_ascription { pin = 2 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -540,7 +542,7 @@ enum_tuple_args ::= '(' <<comma_separated_list enum_tuple_field>> ')' { pin = 1 
 enum_tuple_field ::= outer_attr* type
 
 enum_struct_args ::= '{' <<comma_separated_list enum_struct_field>> '}' { pin = 1 }
-enum_struct_field ::= outer_attr* IDENTIFIER ':' type { pin = 2 }
+enum_struct_field ::= outer_attr* IDENTIFIER type_ascription { pin = 2 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -555,8 +557,6 @@ private trait_member ::= trait_const_member
                        | trait_method_member
 
 trait_const_member ::= outer_attr* CONST IDENTIFIER type_ascription? const_default? ';'
-
-type_ascription ::= ':' type
 
 private const_default ::= '=' any_expr
 
@@ -621,6 +621,8 @@ impl_type_member ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params '=' type ';
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Types
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+private type_ascription ::= ':' type
 
 type ::= vec_type
        | ptr_type
@@ -1074,7 +1076,7 @@ private bool_lit ::= FALSE | TRUE
 // Declarations
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-let_decl ::= LET pat [ ':' type ] [ '=' any_expr ] ';' { pin = "LET" }
+let_decl ::= LET pat type_ascription? [ '=' any_expr ] ';' { pin = "LET" }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
