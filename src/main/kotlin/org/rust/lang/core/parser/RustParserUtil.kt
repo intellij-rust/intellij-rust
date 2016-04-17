@@ -136,7 +136,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         // We do not want whitespace between parts, so firstly we do raw lookup for each part,
         // and when we make sure that we have desired token, we consume and collapse it.
         parts.forEachIndexed { i, tt ->
-            if(b.rawLookup(i) != tt) return false
+            if (b.rawLookup(i) != tt) return false
         }
         val marker = b.mark()
         PsiBuilderUtil.advance(b, parts.size)
