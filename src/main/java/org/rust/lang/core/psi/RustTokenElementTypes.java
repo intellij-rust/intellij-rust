@@ -34,7 +34,7 @@ public interface RustTokenElementTypes {
     RustTokenType IN = new RustKeywordTokenType("in");
     RustTokenType LET = new RustKeywordTokenType("let");
     RustTokenType LOOP = new RustKeywordTokenType("loop");
-    RustTokenType MACRO = new RustKeywordTokenType("macro");
+    RustTokenType KW_MACRO = new RustKeywordTokenType("macro");
     RustTokenType MATCH = new RustKeywordTokenType("match");
     RustTokenType MOD = new RustKeywordTokenType("mod");
     RustTokenType MOVE = new RustKeywordTokenType("move");
@@ -121,7 +121,6 @@ public interface RustTokenElementTypes {
     RustTokenType MULEQ = new RustTokenType("*=");
     RustTokenType OR = new RustTokenType("|");
     RustTokenType OREQ = new RustTokenType("|=");
-    RustTokenType OROR = new RustTokenType("||");
     RustTokenType PLUS = new RustTokenType("+");
     RustTokenType PLUSEQ = new RustTokenType("+=");
     RustTokenType RBRACE = new RustTokenType("}");
@@ -147,6 +146,7 @@ public interface RustTokenElementTypes {
     RustTokenType LTLTEQ = new RustTokenType("<<=");
     RustTokenType LTLT = new RustTokenType("<<");
     RustTokenType LTEQ = new RustTokenType("<=");
+    RustTokenType OROR = new RustTokenType("||");
 
     //
     // Token Sets

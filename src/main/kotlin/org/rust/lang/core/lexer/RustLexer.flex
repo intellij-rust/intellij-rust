@@ -156,7 +156,6 @@ STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
   "-="                            { return MINUSEQ; }
   "-"                             { return MINUS; }
   "#"                             { return SHA; }
-  "||"                            { return OROR; }
   "|="                            { return OREQ; }
   "&&"                            { return ANDAND; }
   "&="                            { return ANDEQ; }
@@ -201,7 +200,7 @@ STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
   "in"                            { return IN; }
   "let"                           { return LET; }
   "loop"                          { return LOOP; }
-  "macro"                         { return MACRO; }
+  "macro"                         { return KW_MACRO; }
   "match"                         { return MATCH; }
   "mod"                           { return MOD; }
   "move"                          { return MOVE; }

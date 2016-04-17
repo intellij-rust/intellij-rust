@@ -38,7 +38,6 @@
         PLUS                 =  '+'
         MINUSEQ              =  '-='
         MINUS                =  '-'
-        OROR                 =  '||'
         OREQ                 =  '|='
         ANDAND               =  '&&'
         ANDEQ                =  '&='
@@ -220,12 +219,6 @@
     implements  ("param")       = "org.rust.lang.core.psi.RustDeclaringElement"
     mixin       ("param")       = "org.rust.lang.core.psi.impl.mixin.RustParamImplMixin"
 
-    implements  ("anon_param")  = "org.rust.lang.core.psi.RustDeclaringElement"
-    mixin       ("anon_param")  = "org.rust.lang.core.psi.impl.mixin.RustAnonParamImplMixin"
-
-    implements  ("lambda_param")  = "org.rust.lang.core.psi.RustDeclaringElement"
-    mixin       ("lambda_param")  = "org.rust.lang.core.psi.impl.mixin.RustLambdaParamImplMixin"
-
     implements  ("match_pat")   = "org.rust.lang.core.psi.RustDeclaringElement"
     mixin       ("match_pat")   = "org.rust.lang.core.psi.impl.mixin.RustMatchPatImplMixin"
 
@@ -254,12 +247,19 @@
     implements  ("use_glob") = "org.rust.lang.core.psi.RustNamedElement"
     mixin       ("use_glob") = "org.rust.lang.core.psi.impl.mixin.RustUseGlobImplMixin"
 
+    // HACK(jajakobyly): Grammar-Kit is unable to simply generate accesors for tokens
+    //                   created by external rules. We need to work around this limitation.
+    //                   Fortunately, all "external" tokens are only used inside binary
+    //                   expressions, so we can inject accessors for them using mixins.
+    implements  ("binary_expr") = "org.rust.lang.core.psi.impl.RustBinaryExprExternalTokens"
+    mixin       ("binary_expr") = "org.rust.lang.core.psi.impl.mixin.RustBinaryExprImplMixin"
+
     elementType(".*_bin_expr")   = binary_expr
     elementType(".*_range_expr") = range_expr
 
-    extends           ("(?!meta_item)(?!foreign_item).*_item") = item_
-    elementTypeFactory("(?!meta_item)(?!foreign_item).*_item") = "org.rust.lang.core.stubs.types.ElementFactoryKt.factory"
-    stubClass         ("(?!meta_item)(?!foreign_item).*_item") = "org.rust.lang.core.stubs.RustItemStub"
+    extends           ("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = item_
+    elementTypeFactory("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = "org.rust.lang.core.stubs.types.ElementFactoryKt.factory"
+    stubClass         ("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = "org.rust.lang.core.stubs.RustItemStub"
 
 
     extends("(if|while)_let_expr") = scoped_let_expr
@@ -269,6 +269,13 @@
     extends("pat_.*")  = pat
     extends(".*_attr") = attr
     extends("inner_attrs_and_block") = block
+
+    elementType("macro_call|item_macro") = macro
+    extends("(try|format_like)_macro") = macro
+    elementType(".*_macro_invocation|macro_rules_invocation") = macro_invocation
+
+    elementType("(fn|anon|lambda)_param") = param
+    elementType("(fn|lambda)_params|fn_anon_params_with_self|fn_params_with_self") = params
 
     generateTokens=false
     generateTokenAccessors=true
@@ -316,7 +323,7 @@ vis ::= PUB
 
 private attrs_and_vis ::= outer_attr* vis?
 private item_inner ::= stmt_item_group
-                     | item_macro
+                     | macro_item
 
 //
 // TODO(kudinkin): That's a hack to force GK to generate accessors
@@ -357,18 +364,22 @@ private block_item_group ::= &(CONST? UNSAFE? extern_abi? FN) fn_item
 // Functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+// TODO: Maybe enforce @NotNull's in specific cases
+fake param  ::= pat? type?
+fake params ::= self_argument? param*
+
 private fn_header ::= CONST? UNSAFE? extern_abi? FN IDENTIFIER
 
 extern_abi ::= EXTERN STRING_LITERAL?
 
-fn_params ::= '(' !',' params ','? ')' { pin(".*") = 1 }
-private params ::= [ param (',' param)* ]
-param ::= pat ':' type
+fn_params ::= '(' !',' fn_params_ ','? ')' { pin(".*") = 1 }
+private fn_params_ ::= [ fn_param (',' fn_param)* ]
+fn_param ::= pat ':' type
 
 ret_type ::= '->' (type | '!') { pin = 1 }
 
 fn_item ::= fn_header generic_params fn_params ret_type? where_clause? inner_attrs_and_block {
-   pin(".*") = 1
+  pin(".*") = 1
 }
 
 generic_params ::= [ generic_params_inner ]
@@ -495,9 +506,9 @@ foreign_decl  ::= attrs_and_vis ( foreign_static_decl | foreign_fn_decl ) ';'
 foreign_static_decl ::= STATIC MUT? IDENTIFIER ':' type
 foreign_fn_decl ::= FN IDENTIFIER generic_params fn_params_allow_variadic ret_type? where_clause?
 
-private fn_params_allow_variadic ::= '(' params ',' '...' ')'
-                                   | '(' params ',' ')'
-                                   | '(' params ')'
+private fn_params_allow_variadic ::= '(' fn_params_ ',' '...' ')'
+                                   | '(' fn_params_ ',' ')'
+                                   | '(' fn_params_ ')'
                                    | '(' ')'
 
 
@@ -507,7 +518,7 @@ private fn_params_allow_variadic ::= '(' params ',' '...' ')'
 
 struct_item ::= STRUCT IDENTIFIER generic_params (struct_tuple_args? where_clause? ';' | where_clause? struct_decl_args)
 
-struct_tuple_args ::= '(' <<comma_separated_list struct_tuple_field>> ')' { pin = 1}
+struct_tuple_args ::= '(' <<comma_separated_list struct_tuple_field>> ')' { pin = 1 }
 struct_tuple_field ::= attrs_and_vis type
 
 struct_decl_args ::= '{' <<comma_separated_list struct_decl_field>> '}' { pin = 1 }
@@ -533,7 +544,7 @@ enum_tuple_args ::= '(' <<comma_separated_list enum_tuple_field>> ')' { pin = 1 
 enum_tuple_field ::= outer_attr* type
 
 enum_struct_args ::= '{' <<comma_separated_list enum_struct_field>> '}' { pin = 1 }
-enum_struct_field ::= outer_attr* IDENTIFIER ':' type { pin = 2}
+enum_struct_field ::= outer_attr* IDENTIFIER ':' type { pin = 2 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -547,23 +558,20 @@ private trait_member ::= trait_const_member
                        | trait_type_member
                        | trait_method_member
 
-trait_const_member ::= outer_attr* CONST IDENTIFIER type_ascription? const_default? ';'
-
-type_ascription ::= ':' type
+trait_const_member ::= outer_attr* CONST IDENTIFIER [ ':' type ] const_default? ';'
 
 private const_default ::= '=' any_expr
 
 trait_type_member ::= outer_attr* TYPE_KW type_param ';'
 
-trait_method_member ::= outer_attr* fn_header generic_params fn_decl_with_self_allow_anon_params where_clause? (';' | inner_attrs_and_block)
+trait_method_member ::= outer_attr* fn_header generic_params fn_anon_params_with_self ret_type? where_clause? (';' | inner_attrs_and_block)
 
-private fn_decl_with_self_allow_anon_params ::= fn_anon_params_with_self ret_type?
-private fn_anon_params_with_self ::= '(' self_argument comma_anon_params? ')'
-                                   | '(' anon_params? ')'
+fn_anon_params_with_self ::= '(' self_argument comma_anon_params? ')'
+                           | '(' anon_params? ')'
 
 private comma_anon_params ::= ',' [ anon_params ','? ]
 
-anon_params ::= anon_param (',' anon_param)*
+private anon_params ::= anon_param (',' anon_param)*
 
 anon_param ::= [ named_arg ':' ] type
 
@@ -574,7 +582,6 @@ private named_arg ::= &( IDENTIFIER
                        | MUT IDENTIFIER
                        ) pat
 
-
 trait_ref ::= path_generic_args_without_colons
 
 
@@ -582,31 +589,31 @@ trait_ref ::= path_generic_args_without_colons
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl_item ::= UNSAFE? IMPL generic_params type where_clause? '{' inner_attr* impl_member* '}'
-            | UNSAFE? IMPL generic_params '!'? trait_ref FOR (type where_clause? '{' inner_attr* impl_member* '}' | '..' '{' '}') {
-  pin(".*") = "'{'"
+impl_item ::= UNSAFE? IMPL generic_params type where_clause? impl_members_block
+            | UNSAFE? IMPL generic_params '!'? trait_ref FOR (type where_clause? impl_members_block | '..' '{' '}') {
+  pin(".*") = '{'
 }
+
+impl_members_block ::= '{' inner_attr* impl_member* '}' { pin = 1 }
 
 // TODO: unify with trait_member?
 private impl_member ::= impl_method_member
                       | impl_const_member
-                      | impl_macro_member
+                      | macro_item
                       | impl_type_member
 
-impl_method_member ::= attrs_and_vis fn_header generic_params fn_decl_with_self where_clause? inner_attrs_and_block
+impl_method_member ::= attrs_and_vis fn_header generic_params fn_params_with_self ret_type? where_clause? inner_attrs_and_block
 
-private fn_decl_with_self ::= fn_params_with_self ret_type?
+fn_params_with_self ::= '(' self_argument comma_params? ')'
+                      | '(' fn_params_? ')'
 
-private fn_params_with_self ::= '(' self_argument comma_params? ')'
-                              | '(' params? ')'
+self_argument ::= [ '&' LIFETIME? ] MUT? SELF [ ':' type ]
 
-self_argument ::= [ '&' LIFETIME? ] MUT? SELF type_ascription?
+private comma_params ::= ',' [ fn_params_ ','? ]
 
-private comma_params ::= ',' [ params ','? ]
+impl_const_member ::= attrs_and_vis CONST static_decl ';'
 
-private impl_const_member ::= attrs_and_vis CONST static_decl ';'
-
-private impl_type_member ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params '=' type ';'
+impl_type_member ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params '=' type ';'
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -748,7 +755,7 @@ private path_generic_args_without_colons_part_inner ::= ident_or_self_or_super [
 //    <T>::c<V,W>
 //    <T as Foo>::c(V) -> W
 //
-private meta qualified_path ::= '<' type [ AS trait_ref ] '>' '::' << param >>
+private meta qualified_path ::= '<' type [ AS trait_ref ] '>' '::' << fn_param >>
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -851,10 +858,10 @@ private atom_expr ::= lit_expr
 
 
 binary_expr ::= restricted_expr + {
-    methods=[
-        left="/expr[0]"
-        right="/expr[1]"
-    ]
+  methods=[
+    left="/expr[0]"
+    right="/expr[1]"
+  ]
 }
 
 assign_bin_expr ::= restricted_expr
@@ -877,9 +884,10 @@ bit_shift_bin_expr  ::= restricted_expr (ltlt | gtgt) restricted_expr
 add_bin_expr        ::= restricted_expr ('+' | '-') restricted_expr
 mul_bin_expr        ::= restricted_expr ('*' | '/' | '%') restricted_expr
 
-bool_or_bin_expr    ::= restricted_expr '||' restricted_expr
+// <expr> | <expr> has higher priority than <expr> || <expr>
+bool_or_bin_expr    ::= restricted_expr oror restricted_expr
 bool_and_bin_expr   ::= restricted_expr '&&' restricted_expr
-bit_or_bin_expr     ::= restricted_expr '|' restricted_expr
+bit_or_bin_expr     ::= restricted_expr or restricted_expr
 bit_xor_bin_expr    ::= restricted_expr '^' restricted_expr
 bit_and_bin_expr    ::= restricted_expr '&' restricted_expr
 
@@ -890,8 +898,9 @@ try_expr ::= restricted_expr '?'
 
 unary_expr ::= ('-' | '*' | '!' | ('&' | '&&') MUT?) restricted_expr
 
-lambda_expr ::= MOVE? ('||' | '|' [ <<comma_separated_list lambda_param>> ] '|') ret_type? any_expr
-lambda_param ::= pat type_ascription?
+lambda_expr   ::= MOVE? lambda_params ret_type? any_expr
+lambda_params ::= '|' [ <<comma_separated_list lambda_param>> ] '|'
+lambda_param  ::= pat [ ':' type ]
 
 struct_expr ::= << checkStructAllowed >> path_generic_args_with_colons struct_expr_body
 
@@ -962,10 +971,10 @@ full_range_expr ::= restricted_expr '..' (&<<checkBraceAllowed>> restricted_expr
 open_range_expr ::=                 '..' (&<<checkBraceAllowed>> restricted_expr)?
 
 range_expr ::= restricted_expr + {
-    methods=[
-        from="/expr[0]"
-        to="/expr[1]"
-    ]
+  methods=[
+    from="/expr[0]"
+    to="/expr[1]"
+  ]
 }
 
 
@@ -990,16 +999,25 @@ lit_expr ::= lit
 // Macros
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-macro_invocation ::= IDENTIFIER '!'
+fake macro ::= macro_invocation macro_arg?
+macro_call ::= macro_invocation macro_arg
+item_macro ::= macro_invocation item_macro_arg
 
-macro_expr ::= build_in_macro | macro_invocation macro_arg
-
-private build_in_macro ::= try_macro_invocation '(' any_expr ')'
-                         | format_like_macro_invocation '(' format_macro_args ')'
-
-try_macro_invocation ::= "try" '!' {
-  elementType = macro_invocation
+macro_definition ::= macro_rules_invocation IDENTIFIER item_macro_arg {
+  pin = 1
+  extends = item_macro
 }
+
+try_macro ::= try_macro_invocation try_macro_args
+format_like_macro ::= format_like_macro_invocation format_macro_args
+
+private build_in_macro ::= try_macro | format_like_macro
+private macro_call_    ::= build_in_macro | macro_call { pin(".*") = macro_invocation }
+private macro_item_    ::= macro_definition | item_macro { pin(".*") = macro_invocation }
+
+macro_invocation ::= IDENTIFIER '!'
+try_macro_invocation ::= "try" '!'
+macro_rules_invocation ::= "macro_rules" '!'
 
 // https://doc.rust-lang.org/std/fmt/
 format_like_macro_invocation ::= ( "format"
@@ -1014,29 +1032,27 @@ format_like_macro_invocation ::= ( "format"
                                  | "info"
                                  | "log"
                                  | "trace"
-                                 | "warn" ) '!' {
-  elementType = macro_invocation
-}
-
-format_macro_args ::= <<comma_separated_list format_macro_arg>>
-private format_macro_arg ::= IDENTIFIER '=' any_expr | any_expr
-
-pat_macro  ::= IDENTIFIER '!' macro_arg
+                                 | "warn" ) '!'
 
 macro_arg ::= '(' token_tree? ')'
             | '{' token_tree? '}'
             | '[' token_tree?  ']' { pin = 1 }
 
-// This "parses" both macro definitions and macro usage
-item_macro ::= macro_invocation IDENTIFIER?
-             ( '(' token_tree? ')' ';'
-             | '{' token_tree? '}'
-             | '[' token_tree? ']' ';' )
+item_macro_arg ::= '(' token_tree? ')' ';'
+                 | '{' token_tree? '}'
+                 | '[' token_tree? ']' ';' {
+  pin = 1
+  elementType = macro_arg
+}
 
-impl_macro_member ::= macro_invocation IDENTIFIER?
-             ( '(' token_tree? ')' ';'
-             | '{' token_tree? '}'
-             | '[' token_tree? ']' ';' )
+try_macro_args ::= '(' any_expr ')'
+format_macro_args ::= '(' <<comma_separated_list format_macro_arg>> ')' { pin = 1 }
+format_macro_arg ::= [ IDENTIFIER '=' ] any_expr
+
+macro_expr ::= macro_call_
+pat_macro  ::= macro_call_
+// TODO: Maybe implement item-related stuff for this production?
+macro_item ::= macro_item_
 
 token_tree ::= '(' token_tree* ')' token_tree*
              | '{' token_tree* '}' token_tree*
@@ -1100,14 +1116,16 @@ private stmt_ ::= expr_stmt
 // Utils
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-external gtgteq ::= collapse GTGTEQ GT GT EQ
-external gtgt   ::= collapse GTGT GT GT
-external gteq   ::= collapse GTEQ GT EQ
-external ltlteq ::= collapse LTLTEQ LT LT EQ
-external ltlt   ::= collapse LTLT LT LT
-external lteq   ::= collapse LTEQ LT EQ
+external gtgteq ::= collapse GTGTEQ GT GT EQ  { name = ">>=" }
+external gtgt   ::= collapse GTGT GT GT       { name = ">>" }
+external gteq   ::= collapse GTEQ GT EQ       { name = ">=" }
+external ltlteq ::= collapse LTLTEQ LT LT EQ  { name = "<<=" }
+external ltlt   ::= collapse LTLT LT LT       { name = "<<" }
+external lteq   ::= collapse LTEQ LT EQ       { name = "<=" }
+external oror   ::= collapse OROR OR OR       { name = "||" }
+external or     ::= onlySingle OR             { name = "|" }
 
 // Trailing commas are allowed
-private meta comma_separated_list ::= <<param>> ( ',' <<param>> ) * ','?
+private meta comma_separated_list ::= <<fn_param>> ( ',' <<fn_param>> ) * ','?
 
 private skip_until_eol_rec ::= !(<< skipUntilEOL >>)

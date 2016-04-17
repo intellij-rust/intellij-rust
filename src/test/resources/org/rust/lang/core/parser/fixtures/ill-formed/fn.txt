@@ -12,7 +12,7 @@ FILE
       PsiElement(<IDENTIFIER>)('add')
       RustGenericParamsImpl(GENERIC_PARAMS)
         <empty list>
-      RustFnParamsImpl(FN_PARAMS)
+      RustParamsImpl(PARAMS)
         PsiElement(()('(')
         RustParamImpl(PARAM)
           RustPatBindingImpl(PAT_BINDING)
@@ -34,7 +34,7 @@ FILE
       PsiElement(<IDENTIFIER>)('add')
       RustGenericParamsImpl(GENERIC_PARAMS)
         <empty list>
-      RustFnParamsImpl(FN_PARAMS)
+      RustParamsImpl(PARAMS)
         PsiElement(()('(')
         RustParamImpl(PARAM)
           RustPatBindingImpl(PAT_BINDING)
@@ -75,7 +75,7 @@ FILE
             PsiElement(<IDENTIFIER>)('add0')
             RustGenericParamsImpl(GENERIC_PARAMS)
               <empty list>
-            RustFnParamsImpl(FN_PARAMS)
+            RustParamsImpl(PARAMS)
               PsiElement(()('(')
               RustParamImpl(PARAM)
                 RustPatBindingImpl(PAT_BINDING)
@@ -127,7 +127,7 @@ FILE
             PsiElement(<IDENTIFIER>)('wrong_comma')
             RustGenericParamsImpl(GENERIC_PARAMS)
               <empty list>
-            RustFnParamsImpl(FN_PARAMS)
+            RustParamsImpl(PARAMS)
               PsiElement(()('(')
   PsiErrorElement:<item>, <restricted expr> or '}' expected, got ','
     PsiElement(,)(',')

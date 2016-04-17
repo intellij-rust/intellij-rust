@@ -6,7 +6,7 @@ FILE
       PsiElement(<IDENTIFIER>)('add')
       RustGenericParamsImpl(GENERIC_PARAMS)
         <empty list>
-      RustFnParamsImpl(FN_PARAMS)
+      RustParamsImpl(PARAMS)
         PsiElement(()('(')
         RustParamImpl(PARAM)
           RustPatBindingImpl(PAT_BINDING)
@@ -62,7 +62,7 @@ FILE
       PsiElement(<IDENTIFIER>)('mul')
       RustGenericParamsImpl(GENERIC_PARAMS)
         <empty list>
-      RustFnParamsImpl(FN_PARAMS)
+      RustParamsImpl(PARAMS)
         PsiElement(()('(')
         RustParamImpl(PARAM)
           RustPatBindingImpl(PAT_BINDING)
@@ -115,7 +115,7 @@ FILE
       PsiElement(<IDENTIFIER>)('id')
       RustGenericParamsImpl(GENERIC_PARAMS)
         <empty list>
-      RustFnParamsImpl(FN_PARAMS)
+      RustParamsImpl(PARAMS)
         PsiElement(()('(')
         RustParamImpl(PARAM)
           RustPatBindingImpl(PAT_BINDING)
@@ -150,7 +150,7 @@ FILE
       PsiElement(<IDENTIFIER>)('constant')
       RustGenericParamsImpl(GENERIC_PARAMS)
         <empty list>
-      RustFnParamsImpl(FN_PARAMS)
+      RustParamsImpl(PARAMS)
         PsiElement(()('(')
         PsiElement())(')')
       PsiWhiteSpace(' ')
@@ -177,7 +177,7 @@ FILE
       PsiElement(<IDENTIFIER>)('a')
       RustGenericParamsImpl(GENERIC_PARAMS)
         <empty list>
-      RustFnParamsImpl(FN_PARAMS)
+      RustParamsImpl(PARAMS)
         PsiElement(()('(')
         PsiElement())(')')
       PsiWhiteSpace(' ')
@@ -207,7 +207,7 @@ FILE
       PsiElement(<IDENTIFIER>)('b')
       RustGenericParamsImpl(GENERIC_PARAMS)
         <empty list>
-      RustFnParamsImpl(FN_PARAMS)
+      RustParamsImpl(PARAMS)
         PsiElement(()('(')
         PsiElement())(')')
       PsiWhiteSpace(' ')

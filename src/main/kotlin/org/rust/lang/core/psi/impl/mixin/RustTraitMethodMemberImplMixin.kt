@@ -12,7 +12,7 @@ import javax.swing.Icon
 abstract class RustTraitMethodMemberImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
                                                              , RustTraitMethodMember {
     override val declarations: Collection<RustDeclaringElement>
-        get() = listOfNotNull(selfArgument) + anonParams?.anonParamList.orEmpty()
+        get() = listOfNotNull(params.selfArgument) + params.paramList.orEmpty()
 
     override fun getIcon(flags: Int): Icon {
         var icon = if (isAbstract) RustIcons.ABSTRACT_METHOD else RustIcons.METHOD
@@ -27,4 +27,4 @@ abstract class RustTraitMethodMemberImplMixin(node: ASTNode) : RustCompositeElem
 
 }
 
-val RustTraitMethodMember.isStatic: Boolean get() = selfArgument == null
+val RustTraitMethodMember.isStatic: Boolean get() = params.selfArgument == null
