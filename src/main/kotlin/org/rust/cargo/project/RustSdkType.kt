@@ -1,5 +1,6 @@
 package org.rust.cargo.project
 
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.openapi.diagnostic.Logger
@@ -14,7 +15,6 @@ import org.jdom.Element
 import org.rust.cargo.util.PlatformUtil
 import org.rust.ide.icons.RustIcons
 import java.io.File
-import java.util.concurrent.ExecutionException
 import java.util.regex.Pattern
 
 class RustSdkType : SdkType("Rust SDK") {
