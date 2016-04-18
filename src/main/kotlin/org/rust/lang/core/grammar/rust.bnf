@@ -1032,25 +1032,27 @@ private format_macro_arg ::= IDENTIFIER '=' any_expr | any_expr
 
 pat_macro  ::= IDENTIFIER '!' macro_arg
 
-macro_arg ::= '(' token_tree? ')'
-            | '{' token_tree? '}'
-            | '[' token_tree?  ']' { pin = 1 }
+macro_arg ::= '(' token_trees ')'
+            | '{' token_trees '}'
+            | '[' token_trees ']' { pin = 1 }
 
 // This "parses" both macro definitions and macro usage
 item_macro ::= macro_invocation IDENTIFIER?
-             ( '(' token_tree? ')' ';'
-             | '{' token_tree? '}'
-             | '[' token_tree? ']' ';' )
+             ( '(' token_trees ')' ';'
+             | '{' token_trees '}'
+             | '[' token_trees ']' ';' )
 
 impl_macro_member ::= macro_invocation IDENTIFIER?
-             ( '(' token_tree? ')' ';'
-             | '{' token_tree? '}'
-             | '[' token_tree? ']' ';' )
+             ( '(' token_trees ')' ';'
+             | '{' token_trees '}'
+             | '[' token_trees ']' ';' )
 
-token_tree ::= '(' token_tree* ')' token_tree*
-             | '{' token_tree* '}' token_tree*
-             | '[' token_tree* ']' token_tree*
-             | << unpairedToken >> + token_tree*
+private token_trees ::= token_tree*
+
+token_tree ::= '(' token_trees ')'
+             | '{' token_trees '}'
+             | '[' token_trees ']'
+             | << unpairedToken >> +
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
