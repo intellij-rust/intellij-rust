@@ -53,6 +53,8 @@ fn test() -> u32 {
 
     box 92;
 
+    let _ = 1 as i32 <= 1;
+
     // TBA(kudinkin)
 
     return (x = y)  /* return */
