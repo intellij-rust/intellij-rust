@@ -895,7 +895,7 @@ cast_expr ::= restricted_expr AS type
 
 try_expr ::= restricted_expr '?'
 
-unary_expr ::= ('-' | '*' | '!' | ('&' | '&&') MUT?) restricted_expr
+unary_expr ::= (BOX | '-' | '*' | '!' | ('&' | '&&') MUT?) restricted_expr
 
 lambda_expr ::= MOVE? ('||' | '|' [ <<comma_separated_list lambda_param>> ] '|') ret_type? any_expr
 lambda_param ::= pat type_ascription?

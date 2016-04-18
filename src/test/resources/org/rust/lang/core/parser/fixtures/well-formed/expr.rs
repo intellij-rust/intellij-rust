@@ -51,6 +51,8 @@ fn test() -> u32 {
         {92}.to_string()
     }
 
+    box 92;
+
     // TBA(kudinkin)
 
     return (x = y)  /* return */
