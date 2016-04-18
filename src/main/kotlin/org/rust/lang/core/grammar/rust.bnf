@@ -589,10 +589,12 @@ trait_ref ::= path_generic_args_without_colons
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl_item ::= UNSAFE? IMPL generic_params type where_clause? '{' inner_attr* impl_member* '}'
-            | UNSAFE? IMPL generic_params '!'? trait_ref FOR (type where_clause? '{' inner_attr* impl_member* '}' | '..' '{' '}') {
+impl_item ::= UNSAFE? IMPL generic_params type where_clause? impl_members_block
+            | UNSAFE? IMPL generic_params '!'? trait_ref FOR (type where_clause? impl_members_block | '..' '{' '}') {
   pin(".*") = "'{'"
 }
+
+impl_members_block ::= '{' inner_attr* impl_member* '}' { pin = 1 }
 
 // TODO: unify with trait_member?
 private impl_member ::= impl_method_member
@@ -611,9 +613,9 @@ self_argument ::= [ '&' LIFETIME? ] MUT? SELF type_ascription?
 
 private comma_params ::= ',' [ params ','? ]
 
-private impl_const_member ::= attrs_and_vis CONST static_decl ';'
+impl_const_member ::= attrs_and_vis CONST static_decl ';'
 
-private impl_type_member ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params '=' type ';'
+impl_type_member ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params '=' type ';'
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.visitors.RecursiveRustVisitor
 class RustImplTreeElement(element: RustImplItem) : PsiTreeElementBase<RustImplItem>(element) {
 
     override fun getPresentableText(): String? {
-        val type: RustType = element?.typeList?.firstOrNull() ?: return "<unknown>"
+        val type: RustType = element?.type ?: return "<unknown>"
 
         val traitRef = element?.traitRef ?: return type.text;
 

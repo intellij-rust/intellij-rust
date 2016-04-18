@@ -4,8 +4,8 @@ import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
 import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.tree.TokenSet
-import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
+import org.rust.lang.core.psi.RustTokenElementTypes.*
 
 class RustFormattingBlock(private val node: ASTNode,
                           private val indent: Indent = Indent.getNoneIndent(),
@@ -88,7 +88,7 @@ private val BLOCKS_TOKEN_SET = TokenSet.create(
         ENUM_ITEM,
         STRUCT_DECL_ARGS,
         TRAIT_ITEM,
-        IMPL_ITEM,
+        IMPL_MEMBERS_BLOCK,
         STRUCT_EXPR_BODY,
         MATCH_EXPR,
         ARG_LIST
