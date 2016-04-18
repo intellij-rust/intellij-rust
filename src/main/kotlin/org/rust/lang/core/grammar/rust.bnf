@@ -662,7 +662,7 @@ private types ::= type !'=' (',' type !'=')*
 private fn_anon_params ::= '(' anon_param anon_params_allow_variadic_tail ')'
                          | '(' ')'
 
-private anon_params_allow_variadic_tail ::= [ ',' ('...' | anon_param anon_params_allow_variadic_tail) ]
+private anon_params_allow_variadic_tail ::= [ ',' [ '...' | anon_param anon_params_allow_variadic_tail ] ]
 
 
 
