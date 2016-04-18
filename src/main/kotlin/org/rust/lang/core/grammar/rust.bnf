@@ -1091,8 +1091,8 @@ inner_attrs_and_block ::= '{' inner_attr* stmt_* any_expr? '}' {
 }
 
 
-expr_stmt   ::= any_expr ';' | (block_expr !'.')
-decl_stmt   ::= item | let_decl
+expr_stmt   ::= outer_attr? ( any_expr ';' | (block_expr !'.') )
+decl_stmt   ::= item | outer_attr? let_decl
 empty_stmt  ::= ';'
 
 // TODO(kudinkin):  That's a hack to overcome GK's bug
