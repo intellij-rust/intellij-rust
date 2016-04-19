@@ -10,4 +10,6 @@ internal interface RustBinaryExprExternalTokens {
     fun getLtlteq(): PsiElement?
     fun getLtlt(): PsiElement?
     fun getLteq(): PsiElement?
+    fun getOror(): PsiElement?
+    fun getOr(): PsiElement?
 }

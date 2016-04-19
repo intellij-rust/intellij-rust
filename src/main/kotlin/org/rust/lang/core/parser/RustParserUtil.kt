@@ -143,5 +143,14 @@ object RustParserUtil : GeneratedParserUtilBase() {
         marker.collapse(tokenType)
         return true
     }
+
+    @JvmStatic fun onlySingle(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int, tt: IElementType): Boolean =
+        // We do not want multiple occurences of tt without whitespace between
+        if (b.tokenType == tt && b.rawLookup(1) != tt) {
+            b.advanceLexer()
+            true
+        } else {
+            false
+        }
 }
 
