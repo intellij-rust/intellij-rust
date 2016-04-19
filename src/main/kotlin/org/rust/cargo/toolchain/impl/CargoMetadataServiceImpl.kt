@@ -23,7 +23,11 @@ import com.intellij.util.Alarm
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.CargoProjectDescriptionData
-import org.rust.cargo.toolchain.*
+import org.rust.cargo.projectSettings.rustSettings
+import org.rust.cargo.projectSettings.toolchain
+import org.rust.cargo.toolchain.CargoMetadataService
+import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.cargoProjectRoot
 import kotlin.properties.Delegates
 
 private val LOG = Logger.getInstance(CargoMetadataServiceImpl::class.java);

@@ -8,6 +8,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.util.ui.UIUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.RustWithToolchainTestCaseBase
+import org.rust.cargo.projectSettings.toolchain
 import org.rust.cargo.util.getService
 
 class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {

@@ -5,6 +5,8 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import org.rust.cargo.commands.Cargo
 import org.rust.cargo.util.PlatformUtil
 import java.io.File
@@ -96,3 +98,56 @@ private fun parseVersion(lines: List<String>): RustcVersion? {
     )
 }
 
+fun suggestToolchain(): RustToolchain? = Suggestions.all().mapNotNull {
+    val candidate = RustToolchain(it.absolutePath)
+    if (candidate.looksLikeValidToolchain()) candidate else null
+}.firstOrNull()
+
+private object Suggestions {
+    fun all() = sequenceOf(
+        fromRustup(),
+        fromPath(),
+        forMac(),
+        forUnix(),
+        forWindows()
+    ).flatten()
+
+    private fun fromRustup(): Sequence<File> {
+        val file = File(FileUtil.expandUserHome("~/.cargo/bin"))
+        return if (file.isDirectory) {
+            sequenceOf(file)
+        } else {
+            emptySequence()
+        }
+    }
+
+    private fun fromPath(): Sequence<File> = System.getenv("PATH").orEmpty()
+        .split(File.pathSeparator)
+        .asSequence()
+        .filter { !it.isEmpty() }
+        .map { File(it) }
+        .filter { it.isDirectory }
+
+    private fun forUnix(): Sequence<File> {
+        if (!SystemInfo.isUnix) return emptySequence()
+
+        return sequenceOf(File("/usr/local/bin"))
+    }
+
+    private fun forMac(): Sequence<File> {
+        if (!SystemInfo.isMac) return emptySequence()
+
+        return sequenceOf(File("/usr/local/Cellar/rust/bin"))
+    }
+
+    private fun forWindows(): Sequence<File> {
+        if (!SystemInfo.isWindows) return emptySequence()
+
+        val programFiles = File(System.getenv("ProgramFiles") ?: return emptySequence())
+        if (!programFiles.exists() || !programFiles.isDirectory) return emptySequence()
+
+        return programFiles.listFiles { file -> file.isDirectory }.asSequence()
+            .filter { it.nameWithoutExtension.toLowerCase().startsWith("rust") }
+            .map { File(it, "bin") }
+    }
+}

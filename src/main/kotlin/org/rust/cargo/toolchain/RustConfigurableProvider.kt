@@ -8,5 +8,5 @@ class RustConfigurableProvider(
     private val project: Project
 ) : ConfigurableProvider() {
 
-    override fun createConfigurable(): Configurable = RustToolchainConfigurable(project)
+    override fun createConfigurable(): Configurable = RustProjectConfigurable(project)
 }

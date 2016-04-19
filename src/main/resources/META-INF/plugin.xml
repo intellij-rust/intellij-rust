@@ -21,6 +21,7 @@
          on how to target different products -->
 
     <depends>com.intellij.modules.lang</depends>
+    <depends optional="true" config-file="idea-only.xml">com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
 
@@ -148,8 +149,8 @@
 
         <projectConfigurable groupId="language" provider="org.rust.cargo.toolchain.RustConfigurableProvider"
                              dynamic="true"/>
-        <projectService serviceInterface="org.rust.cargo.toolchain.RustProjectSettingsService"
-                        serviceImplementation="org.rust.cargo.toolchain.impl.RustProjectSettingsServiceImpl"/>
+        <projectService serviceInterface="org.rust.cargo.projectSettings.RustProjectSettingsService"
+                        serviceImplementation="org.rust.cargo.projectSettings.impl.RustProjectSettingsServiceImpl"/>
         <moduleService serviceInterface="org.rust.cargo.toolchain.CargoMetadataService"
                        serviceImplementation="org.rust.cargo.toolchain.impl.CargoMetadataServiceImpl"/>
 

@@ -5,9 +5,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestCase
-import org.rust.cargo.toolchain.RustProjectSettingsService
-import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.toolchain.suggestToolchainLocation
+import org.rust.cargo.projectSettings.RustProjectSettingsService
+import org.rust.cargo.toolchain.suggestToolchain
 
 // This class allows to execute real Cargo during the tests.
 // Unlike `RustTestCaseBase` it does not use in-memory temporary VFS
@@ -15,7 +14,7 @@ import org.rust.cargo.toolchain.suggestToolchainLocation
 abstract class RustWithToolchainTestCaseBase : PlatformTestCase() {
     abstract val dataPath: String
 
-    private val toolchainPath = suggestToolchainLocation()?.absolutePath
+    private val toolchain = suggestToolchain()
 
     protected fun withProject(projectName: String, action: () -> Unit) {
         val projectDirectory = "$dataPath/$projectName"
@@ -29,7 +28,7 @@ abstract class RustWithToolchainTestCaseBase : PlatformTestCase() {
     }
 
     override fun runTest() {
-        if (toolchainPath == null) {
+        if (toolchain == null) {
             System.err.println("SKIP $name: no Rust toolchain found")
             return
         }
@@ -38,8 +37,7 @@ abstract class RustWithToolchainTestCaseBase : PlatformTestCase() {
 
     override fun setUp() {
         super.setUp()
-        if (toolchainPath != null) {
-            val toolchain = RustToolchain(toolchainPath)
+        if (toolchain != null) {
             myModule.project.service<RustProjectSettingsService>().toolchain = toolchain
         }
     }

@@ -6,9 +6,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.isNullOrEmpty
+import org.rust.cargo.projectSettings.toolchain
 import org.rust.cargo.toolchain.CargoMetadataService
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.toolchain.toolchain
 import org.rust.cargo.util.getModules
 import org.rust.cargo.util.getService
 
