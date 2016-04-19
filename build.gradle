@@ -63,6 +63,9 @@ allprojects {
     }
 
     test {
+        useJUnit {
+            excludeCategories 'org.rust.Performance'
+        }
         testLogging {
             events "passed", "skipped", "failed"
             exceptionFormat = 'full'
@@ -165,6 +168,22 @@ task downloadRustSources(type: de.undercouch.gradle.tasks.download.Download) {
 }
 
 test.dependsOn downloadRustSources
+
+task performanceTest(type: Test, group: 'Verification', dependsOn: [classes, testClasses, downloadRustSources]) {
+    useJUnit {
+        includeCategories 'org.rust.Performance'
+        reports.html.destination = "$buildDir/reports/performanceTests"
+    }
+
+    testLogging {
+        events "passed", "skipped", "failed"
+        showStandardStreams = true
+        exceptionFormat = 'full'
+    }
+
+    outputs.upToDateWhen { false } // always execute task, even if already executed.
+}
+check.dependsOn performanceTest
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Misc

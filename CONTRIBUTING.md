@@ -86,6 +86,10 @@ The test suite can be run by launching:
 
     ./gradlew test
 
+To launch parser performance tests, use
+
+    ./gradlew performanceTest
+
 # Plugin architecture
 
 We use Kotlin language for the plugin. If you can program in Java or Rust, you
