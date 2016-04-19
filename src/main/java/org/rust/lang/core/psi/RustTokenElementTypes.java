@@ -34,7 +34,7 @@ public interface RustTokenElementTypes {
     RustTokenType IN = new RustKeywordTokenType("in");
     RustTokenType LET = new RustKeywordTokenType("let");
     RustTokenType LOOP = new RustKeywordTokenType("loop");
-    RustTokenType MACRO = new RustKeywordTokenType("macro");
+    RustTokenType KW_MACRO = new RustKeywordTokenType("macro");
     RustTokenType MATCH = new RustKeywordTokenType("match");
     RustTokenType MOD = new RustKeywordTokenType("mod");
     RustTokenType MOVE = new RustKeywordTokenType("move");
