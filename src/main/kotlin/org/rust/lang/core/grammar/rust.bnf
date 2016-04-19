@@ -804,6 +804,8 @@ left view_path_part ::= '::' (SUPER | IDENTIFIER) {
 //
 expr ::=
 
+// https://doc.rust-lang.org/reference.html#operator-precedence
+// https://github.com/JetBrains/Grammar-Kit/blob/master/HOWTO.md#24-compact-expression-parsing-with-priorities
 restricted_expr ::= ret_expr
                   | assign_bin_expr
                   | block_expr
@@ -814,11 +816,11 @@ restricted_expr ::= ret_expr
                   | open_range_expr
                   | bool_or_bin_expr
                   | bool_and_bin_expr
+                  | comp_bin_expr
+                  | rel_comp_bin_expr
                   | bit_or_bin_expr
                   | bit_xor_bin_expr
                   | bit_and_bin_expr
-                  | comp_bin_expr
-                  | rel_comp_bin_expr
                   | bit_shift_bin_expr
                   | add_bin_expr
                   | mul_bin_expr
