@@ -1044,9 +1044,7 @@ format_like_macro_invocation ::= ( "format"
                                  | "warn" ) '!'
 
 // Arguments
-macro_arg ::= '(' token_trees ')'
-            | '{' token_trees '}'
-            | '[' token_trees ']' { pin = 1 }
+macro_arg ::= <<macro_args_delim token_trees>>
 
 item_macro_arg ::= '(' token_trees ')' ';'
                  | '{' token_trees '}'
@@ -1055,16 +1053,14 @@ item_macro_arg ::= '(' token_trees ')' ';'
   elementType = macro_arg
 }
 
-try_macro_args ::= '(' try_macro_arg ')'
-                 | '[' try_macro_arg ']'
-                 | '{' try_macro_arg '}' { pin = 1 }
-private try_macro_arg ::= any_expr
+try_macro_args ::= <<macro_args_delim any_expr>>
 
-format_macro_args ::= '(' format_macro_args_ ')'
-                    | '[' format_macro_args_ ']'
-                    | '{' format_macro_args_ '}' { pin = 1 }
-private format_macro_args_ ::= <<comma_separated_list format_macro_arg>>
+format_macro_args ::= <<macro_args_delim <<comma_separated_list format_macro_arg>>>>
 format_macro_arg ::= [ IDENTIFIER '=' ] any_expr
+
+private meta macro_args_delim ::= '(' <<param>> ')'
+                                | '{' <<param>> '}'
+                                | '[' <<param>> ']' { pin = 1 }
 
 // Macro wrappers
 macro_expr ::= macro_call_
