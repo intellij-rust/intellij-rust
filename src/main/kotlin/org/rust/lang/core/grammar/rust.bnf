@@ -433,15 +433,15 @@ pat_ident       ::= pat_binding [ '@' pat ]
 
 
 pat_struct      ::= path_expr '{' pat_struct_fields '}'
-pat_enum        ::= path_expr '(' ('..' | pat_tup_elts) ')'
+pat_enum        ::= path_expr '(' ( '..' | patterns ) ')'
 
 pat_range ::= lit_or_path [ '...' lit_or_path ]
 
-pat_tup ::= '(' [ pat_tup_elts ','? ] ')'
+pat_tup ::= '(' patterns? ')'
 pat_vec ::= '[' pat_vec_elts ']'
 
-private pat_tup_elts ::= pat (',' pat)*
-private pat_vec_elts ::= [ pat_tup_elts ','? ] [ '..' [ ',' pat_tup_elts ','? ] ]
+private patterns ::= <<comma_separated_list pat>>
+private pat_vec_elts ::= patterns? [ '..' [ ',' patterns ] ]
 
 pat_reg ::= '&' MUT? pat
           | '&&' pat
