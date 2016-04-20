@@ -746,7 +746,7 @@ path_generic_args_without_colons_part_leftish ::= path_generic_args_without_colo
   elementType = path_part
 }
 
-private path_generic_args_without_colons_part_inner ::= ident_or_self_or_super [ generic_args | '(' types? ')' ret_type? ]
+private path_generic_args_without_colons_part_inner ::= ident_or_self_or_super [ generic_args | '(' [ types ','? ] ')' ret_type? ]
 
 
 //
