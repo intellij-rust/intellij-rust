@@ -13,5 +13,4 @@ abstract class RustBinaryExprImplMixin(node: ASTNode) : RustExprImpl(node), Rust
     override fun getLtlt(): PsiElement? = findChildByType(LTLT)
     override fun getLteq(): PsiElement? = findChildByType(LTEQ)
     override fun getOror(): PsiElement? = findChildByType(OROR)
-    override fun getOr(): PsiElement? = findChildByType(OR)
 }

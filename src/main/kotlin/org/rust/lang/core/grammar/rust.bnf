@@ -890,7 +890,7 @@ mul_bin_expr        ::= restricted_expr ('*' | '/' | '%') restricted_expr
 // <expr> | <expr> has higher priority than <expr> || <expr>
 bool_or_bin_expr    ::= restricted_expr oror restricted_expr
 bool_and_bin_expr   ::= restricted_expr '&&' restricted_expr
-bit_or_bin_expr     ::= restricted_expr or restricted_expr
+bit_or_bin_expr     ::= restricted_expr '|' !'|' restricted_expr
 bit_xor_bin_expr    ::= restricted_expr '^' restricted_expr
 bit_and_bin_expr    ::= restricted_expr '&' restricted_expr
 
@@ -1120,7 +1120,6 @@ external ltlteq ::= collapse LTLTEQ LT LT EQ  { name = "<<=" }
 external ltlt   ::= collapse LTLT LT LT       { name = "<<" }
 external lteq   ::= collapse LTEQ LT EQ       { name = "<=" }
 external oror   ::= collapse OROR OR OR       { name = "||" }
-external or     ::= onlySingle OR             { name = "|" }
 
 // Trailing commas are allowed
 private meta comma_separated_list ::= <<param>> ( ',' <<param>> ) * ','?
