@@ -147,11 +147,11 @@
 
         <!-- Cargo -->
 
-        <projectConfigurable groupId="language" provider="org.rust.cargo.toolchain.RustProjectConfigurableProvider"
+        <projectConfigurable groupId="language" provider="org.rust.cargo.project.configurable.RustProjectConfigurableProvider"
                              dynamic="true"/>
         <projectService serviceInterface="org.rust.cargo.project.settings.RustProjectSettingsService"
-                        serviceImplementation="org.rust.cargo.projectSettings.impl.RustProjectSettingsServiceImpl"/>
-        <moduleService serviceInterface="org.rust.cargo.toolchain.CargoMetadataService"
+                        serviceImplementation="org.rust.cargo.project.settings.impl.RustProjectSettingsServiceImpl"/>
+        <moduleService serviceInterface="org.rust.cargo.project.workspace.CargoProjectWorkspace"
                        serviceImplementation="org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl"/>
 
 
