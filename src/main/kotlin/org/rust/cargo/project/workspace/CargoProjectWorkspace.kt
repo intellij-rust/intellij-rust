@@ -1,4 +1,4 @@
-package org.rust.cargo.project.watcher
+package org.rust.cargo.project.workspace
 
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.toolchain.RustToolchain
@@ -6,7 +6,7 @@ import org.rust.cargo.toolchain.RustToolchain
 /**
  * Uses `cargo metadata` command to update IDEA libraries and Cargo project model.
  */
-interface CargoMetadataService {
+interface CargoProjectWorkspace {
     /**
      * Updates Rust libraries asynchronously. Consecutive updates are coalesced.
      */
@@ -19,5 +19,5 @@ interface CargoMetadataService {
      */
     fun updateNow(toolchain: RustToolchain)
 
-    val cargoProject: CargoProjectDescription?
+    val projectDescription: CargoProjectDescription?
 }

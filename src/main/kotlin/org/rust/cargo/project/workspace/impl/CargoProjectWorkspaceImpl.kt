@@ -1,4 +1,4 @@
-package org.rust.cargo.project.watcher.impl
+package org.rust.cargo.project.workspace.impl
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
@@ -25,20 +25,20 @@ import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.CargoProjectDescriptionData
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.watcher.CargoMetadataService
+import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoLibraryName
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.updateLibrary
 import kotlin.properties.Delegates
 
-private val LOG = Logger.getInstance(CargoMetadataServiceImpl::class.java);
+private val LOG = Logger.getInstance(CargoProjectWorkspaceImpl::class.java);
 
 @State(
     name = "CargoMetadata",
     storages = arrayOf(Storage(file = StoragePathMacros.MODULE_FILE))
 )
-class CargoMetadataServiceImpl(private val module: Module) : CargoMetadataService, PersistentStateComponent<CargoProjectState>, BulkFileListener {
+class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorkspace, PersistentStateComponent<CargoProjectState>, BulkFileListener {
     // Alarm used to coalesce consecutive update requests.
     // It uses EDT thread, but the tasks are really tiny and
     // only spawn background update.
@@ -48,10 +48,10 @@ class CargoMetadataServiceImpl(private val module: Module) : CargoMetadataServic
 
     private var cargoProjectState: CargoProjectState by Delegates.observable(CargoProjectState()) {
         prop, old, new ->
-        cargoProject = new.projectData?.let { CargoProjectDescription.deserialize(it) }
+        projectDescription = new.projectData?.let { CargoProjectDescription.deserialize(it) }
     }
 
-    override var cargoProject: CargoProjectDescription? = null
+    override var projectDescription: CargoProjectDescription? = null
 
     init {
         module.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, this)

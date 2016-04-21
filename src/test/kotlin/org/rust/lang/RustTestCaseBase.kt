@@ -12,8 +12,8 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.CargoProjectDescriptionData
-import org.rust.cargo.project.watcher.CargoMetadataService
-import org.rust.cargo.project.watcher.impl.CargoMetadataServiceImpl
+import org.rust.cargo.project.workspace.CargoProjectWorkspace
+import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
 import org.rust.cargo.util.attachStandardLibrary
 import org.rust.cargo.util.getService
 import java.util.*
@@ -76,7 +76,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             super.configureModule(module, model, contentEntry)
 
             val moduleBaseDir = contentEntry.file!!.url
-            val metadataService = module.getService<CargoMetadataService>() as CargoMetadataServiceImpl
+            val metadataService = module.getService<CargoProjectWorkspace>() as CargoProjectWorkspaceImpl
             metadataService.setState(testCargoProject(module, moduleBaseDir))
 
             // XXX: for whatever reason libraries created by `updateLibrary` are not indexed in tests.

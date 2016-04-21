@@ -7,7 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.isNullOrEmpty
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.watcher.CargoMetadataService
+import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.getModules
 import org.rust.cargo.util.getService
@@ -34,7 +34,7 @@ class RefreshCargoProjectAction : AnAction() {
         if (modules.isNullOrEmpty()) return
         ApplicationManager.getApplication().saveAll()
         for ((module, toolchain) in modules.orEmpty()) {
-            val service = module.getService<CargoMetadataService>()
+            val service = module.getService<CargoProjectWorkspace>()
             service.updateNow(toolchain)
         }
     }

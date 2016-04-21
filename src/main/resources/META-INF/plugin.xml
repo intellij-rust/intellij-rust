@@ -152,7 +152,7 @@
         <projectService serviceInterface="org.rust.cargo.project.settings.RustProjectSettingsService"
                         serviceImplementation="org.rust.cargo.projectSettings.impl.RustProjectSettingsServiceImpl"/>
         <moduleService serviceInterface="org.rust.cargo.toolchain.CargoMetadataService"
-                       serviceImplementation="org.rust.cargo.project.watcher.impl.CargoMetadataServiceImpl"/>
+                       serviceImplementation="org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl"/>
 
 
         <!-- Icon Provider -->

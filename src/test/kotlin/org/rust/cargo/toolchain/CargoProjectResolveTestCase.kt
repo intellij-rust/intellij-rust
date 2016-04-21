@@ -9,7 +9,7 @@ import com.intellij.util.ui.UIUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.RustWithToolchainTestCaseBase
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.watcher.CargoMetadataService
+import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.util.cargoProject
 import org.rust.cargo.util.getService
 
@@ -30,7 +30,7 @@ class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
 
     private fun updateCargoMetadata() {
         check(module.cargoProject == null)
-        val service = module.getService<CargoMetadataService>()
+        val service = module.getService<CargoProjectWorkspace>()
         service.scheduleUpdate(module.toolchain!!)
         waitForCargoProjectUpdate()
     }

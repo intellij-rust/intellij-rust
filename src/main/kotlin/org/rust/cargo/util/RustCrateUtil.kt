@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.project.watcher.CargoMetadataService
+import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.getService
 import org.rust.lang.core.psi.RustModItem
@@ -72,5 +72,5 @@ val Module.cargoProjectRoot: VirtualFile?
  * Extracts Cargo project description out of `Cargo.toml`
  */
 val Module.cargoProject: CargoProjectDescription?
-    get() = getService<CargoMetadataService>().cargoProject
+    get() = getService<CargoProjectWorkspace>().projectDescription
 
