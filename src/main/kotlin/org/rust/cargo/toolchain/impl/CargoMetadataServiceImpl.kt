@@ -27,7 +27,7 @@ import org.rust.cargo.projectSettings.rustSettings
 import org.rust.cargo.projectSettings.toolchain
 import org.rust.cargo.toolchain.CargoMetadataService
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.toolchain.cargoProjectRoot
+import org.rust.cargo.util.cargoProjectRoot
 import kotlin.properties.Delegates
 
 private val LOG = Logger.getInstance(CargoMetadataServiceImpl::class.java);

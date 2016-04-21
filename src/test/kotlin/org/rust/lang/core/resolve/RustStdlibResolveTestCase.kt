@@ -2,7 +2,7 @@ package org.rust.lang.core.resolve
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.assertj.core.api.Assertions.assertThat
-import org.rust.cargo.toolchain.cargoProject
+import org.rust.cargo.util.cargoProject
 
 class RustStdlibResolveTestCase : RustMultiFileResolveTestCaseBase() {
 

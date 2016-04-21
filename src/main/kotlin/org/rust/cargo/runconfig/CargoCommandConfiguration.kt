@@ -11,7 +11,7 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 import org.rust.cargo.runconfig.forms.CargoRunConfigurationEditorForm
-import org.rust.cargo.toolchain.cargoProjectRoot
+import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.projectSettings.toolchain
 import org.rust.cargo.util.getModules
 

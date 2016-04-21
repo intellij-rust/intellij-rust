@@ -1,4 +1,4 @@
-package org.rust.cargo.toolchain
+package org.rust.cargo.util
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
@@ -8,25 +8,27 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import org.rust.cargo.project.CargoProjectDescription
+import org.rust.cargo.toolchain.CargoMetadataService
+import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.getService
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.impl.rustMod
 
 object RustCrateUtil
 
+/**
+ * Extracts content- and library-(ordered)-entries for the given module
+ */
 fun Module.getSourceAndLibraryRoots(): Collection<VirtualFile> =
     ModuleRootManager.getInstance(this).orderEntries.flatMap {
         it.getFiles(OrderRootType.CLASSES).toList() +
         it.getFiles(OrderRootType.SOURCES).toList()
     }
 
-val Module.crateRoots: Sequence<RustModItem>
-    get() = crateRootFiles.asSequence()
-        .mapNotNull { PsiManager.getInstance(project).findFile(it)?.rustMod }
-
-fun Module.isCrateRootFile(file: VirtualFile): Boolean =
-    crateRootFiles.contains(file)
-
+/**
+ * Makes given path relative to the content-root of the module or
+ * one of the respective's dependencies
+ */
 fun Module.relativise(f: VirtualFile): String? =
     getSourceAndLibraryRoots()
         .find {
@@ -36,13 +38,14 @@ fun Module.relativise(f: VirtualFile): String? =
             FileUtil.getRelativePath(it.canonicalPath!!, f.canonicalPath!!, '/')
         }
 
-val Module.crateRootFiles: Collection<VirtualFile>
-    get() = targets.mapNotNull { it.virtualFile }
+/**
+ * Extracts paths ot the Crate's roots'
+ */
+val Module.crateRoots: Collection<VirtualFile>
+    get() = cargoProject?.packages.orEmpty()
+                .flatMap    { it.targets }
+                .mapNotNull { it.virtualFile }
 
-val Module.targets: Collection<CargoProjectDescription.Target> get() =
-    cargoProject?.packages.orEmpty().flatMap {
-        it.targets
-    }
 
 data class ExternCrate(
     /**
@@ -66,7 +69,7 @@ fun Module.findExternCrateByName(crateName: String): PsiFile? =
 
 /**
  * A set of external crates for the module. External crate can refer
- * to another module or a library or a crate form the sdk.
+ * to another module or a library or a crate form the SDK
  */
 private val Module.externCrates: Collection<ExternCrate> get() =
     cargoProject?.packages.orEmpty().mapNotNull { pkg ->
@@ -78,11 +81,17 @@ object AutoInjectedCrates {
     const val core: String = "core"
 }
 
-val Module.cargoProjectRoot: VirtualFile? get() =
-    ModuleRootManager.getInstance(this).contentRoots.firstOrNull {
+/**
+ * Extracts Cargo based project's root-path (the one containing `Cargo.toml`)
+ */
+val Module.cargoProjectRoot: VirtualFile?
+    get() = ModuleRootManager.getInstance(this).contentRoots.firstOrNull {
         it.findChild(RustToolchain.CARGO_TOML) != null
     }
 
+/**
+ * Extracts Cargo project description out of `Cargo.toml`
+ */
 val Module.cargoProject: CargoProjectDescription?
     get() = getService<CargoMetadataService>().cargoProject
 

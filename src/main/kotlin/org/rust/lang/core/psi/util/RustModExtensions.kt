@@ -2,6 +2,7 @@ package org.rust.lang.core.psi.util
 
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.cargo.util.crateRoots
 import org.rust.cargo.toolchain.isCrateRootFile
 import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
@@ -76,12 +77,13 @@ internal val RustModItem.ownedDirectory: PsiDirectory?
 
 val RustModItem.isCrateRoot: Boolean
     get() {
-        val vFile = containingFile.originalFile.virtualFile
+        val file = containingFile.originalFile.virtualFile
         val module = getModule()
-        if (containingMod != null || vFile == null || module == null) {
+        if (containingMod != null || file == null || module == null) {
             return false
         }
-        return module.isCrateRootFile(vFile)
+
+        return module.crateRoots.contains(file)
     }
 
 val RustModItem.modDecls: Collection<RustModDeclItem>
