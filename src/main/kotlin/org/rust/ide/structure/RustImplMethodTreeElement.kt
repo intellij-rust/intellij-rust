@@ -9,7 +9,7 @@ class RustImplMethodTreeElement(element: RustImplMethodMember) : PsiTreeElementB
     override fun getPresentableText(): String? {
         var text = element?.name
 
-        val params = element?.paramList?.map { it.type.text }?.joinToString()
+        val params = element?.parameters?.parameterList?.map { it.type?.text }?.joinToString()
         if (params != null)
             text += "($params)"
 

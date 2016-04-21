@@ -9,9 +9,9 @@ FILE
       PsiElement(<IDENTIFIER>)('amp_sso')
       RustGenericParamsImpl(GENERIC_PARAMS)
         <empty list>
-      RustFnParamsImpl(FN_PARAMS)
+      RustParametersImpl(PARAMETERS)
         PsiElement(()('(')
-        RustParamImpl(PARAM)
+        RustParameterImpl(PARAMETER)
           RustPatBindingImpl(PAT_BINDING)
             PsiElement(<IDENTIFIER>)('request')
           PsiElement(:)(':')
