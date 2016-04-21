@@ -14,7 +14,7 @@ interface RustModulesIndex {
 
     companion object {
 
-        internal val ID: ID<RustModulePath, RustQualifiedName> =
+        val ID: ID<RustModulePath, RustQualifiedName> =
             com.intellij.util.indexing.ID.create("org.rust.lang.indexes.RustModulesIndex")
 
         fun getSuperFor(mod: RustModItem): RustModItem? =
