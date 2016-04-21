@@ -9,7 +9,7 @@ import com.intellij.util.containers.HashSet
 /**
  * Rust project model represented roughly in the same way as in Cargo itself.
  *
- * [org.rust.cargo.toolchain.CargoMetadataService] is responsible for providing a [CargoProjectDescription] for
+ * [org.rust.cargo.project.workspace.CargoProjectWorkspace] is responsible for providing a [CargoProjectDescription] for
  * an IDEA module.
  */
 class CargoProjectDescription private constructor(
