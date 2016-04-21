@@ -21,16 +21,11 @@
          on how to target different products -->
 
     <depends>com.intellij.modules.lang</depends>
+    <depends optional="true" config-file="idea-only.xml">com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
 
         <!-- Rust -->
-
-        <!-- Modules -->
-
-        <moduleType id="RUST_MODULE" classpathProvider="false"
-                    implementationClass="org.rust.cargo.project.module.RustModuleType"/>
-        <moduleConfigurationEditorProvider implementation="org.rust.cargo.project.module.RustModuleConfigurationEditorProvider" />
 
         <!-- File-type Factory -->
 
@@ -40,10 +35,6 @@
 
         <lang.parserDefinition language="RUST" implementationClass="org.rust.lang.core.RustParserDefinition"/>
         <stubElementTypeHolder class="org.rust.lang.core.psi.RustCompositeElementTypes"/>
-
-        <!-- SDK -->
-
-        <sdkType implementation="org.rust.cargo.project.RustSdkType"/>
 
         <!-- Syntax Highlighter -->
 
@@ -156,19 +147,13 @@
 
         <!-- Cargo -->
 
-        <externalSystemManager implementation="org.rust.cargo.project.CargoExternalSystemManager"/>
+        <projectConfigurable groupId="language" provider="org.rust.cargo.project.configurable.RustProjectConfigurableProvider"
+                             dynamic="true"/>
+        <projectService serviceInterface="org.rust.cargo.project.settings.RustProjectSettingsService"
+                        serviceImplementation="org.rust.cargo.project.settings.impl.RustProjectSettingsServiceImpl"/>
+        <moduleService serviceInterface="org.rust.cargo.project.workspace.CargoProjectWorkspace"
+                       serviceImplementation="org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl"/>
 
-        <projectService serviceImplementation="org.rust.cargo.project.settings.CargoSettings"/>
-        <projectService serviceImplementation="org.rust.cargo.project.settings.CargoLocalSettings"/>
-        <projectService serviceImplementation="org.rust.cargo.project.settings.CargoProjectSettings"/>
-        <externalProjectDataService implementation="org.rust.cargo.project.module.persistence.CargoModuleDataService"/>
-        <externalProjectDataService implementation="org.rust.cargo.project.CargoProjectDataService"/>
-
-        <moduleService serviceInterface="org.rust.cargo.project.module.persistence.CargoModuleService"
-                       serviceImplementation="org.rust.cargo.project.module.persistence.impl.CargoModuleServiceImpl"/>
-
-        <projectImportProvider implementation="org.rust.cargo.project.CargoProjectImportProvider"/>
-        <projectImportBuilder implementation="org.rust.cargo.project.CargoProjectImportBuilder"/>
 
         <!-- Icon Provider -->
 
@@ -180,6 +165,9 @@
         <stubIndex implementation="org.rust.lang.core.stubs.index.RustItemIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RustStructOrEnumIndex"/>
 
+        <!-- Notification Providers -->
+
+        <editorNotificationProvider implementation="org.rust.ide.notifications.MissingToolchainNotificationProvider" />
 
     </extensions>
 
@@ -200,6 +188,10 @@
                 description="Create new Rust file">
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
+
+        <action id="Rust.RefreshCargoProject"
+                class="org.rust.ide.actions.RefreshCargoProjectAction"
+                icon="AllIcons.Actions.Refresh"/>
     </actions>
 
 </idea-plugin>

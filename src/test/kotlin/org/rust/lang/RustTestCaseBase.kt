@@ -1,24 +1,22 @@
 package org.rust.lang
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
-import org.rust.cargo.CargoProjectDescription
-import org.rust.cargo.project.RustSdkType
-import org.rust.cargo.project.module.RustModuleType
-import org.rust.cargo.project.module.persistence.CargoModuleService
-import org.rust.cargo.project.module.persistence.ExternCrateData
+import org.rust.cargo.project.CargoProjectDescription
+import org.rust.cargo.project.CargoProjectDescriptionData
+import org.rust.cargo.project.workspace.CargoProjectWorkspace
+import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
+import org.rust.cargo.util.attachStandardLibrary
 import org.rust.cargo.util.getService
+import java.util.*
 
 abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), RustTestCase {
 
@@ -73,36 +71,51 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
     }
 
     open class RustProjectDescriptor : LightProjectDescriptor() {
-        override fun getModuleType(): ModuleType<*> = RustModuleType.INSTANCE
 
-        override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
+        final override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
             super.configureModule(module, model, contentEntry)
-            module.getService<CargoModuleService>().saveData(targets, externCrates)
+
+            val moduleBaseDir = contentEntry.file!!.url
+            val metadataService = module.getService<CargoProjectWorkspace>() as CargoProjectWorkspaceImpl
+            metadataService.setState(testCargoProject(module, moduleBaseDir))
+
+            // XXX: for whatever reason libraries created by `updateLibrary` are not indexed in tests.
+            // this seems to fix the issue
+            val libraries = LibraryTablesRegistrar.getInstance().getLibraryTable(module.project).libraries
+            for (lib in libraries) {
+                model.addLibraryEntry(lib)
+            }
         }
 
-        open protected val externCrates: List<ExternCrateData> = emptyList()
+        open protected fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescriptionData {
+            val packages = mutableListOf(testCargoPackage(contentRoot))
+            return CargoProjectDescriptionData(0, packages, ArrayList())
+        }
 
-        private val targets: List<CargoProjectDescription.Target> = listOf(
-            CargoProjectDescription.Target("main.rs", CargoProjectDescription.TargetKind.BIN),
-            CargoProjectDescription.Target("lib.rs", CargoProjectDescription.TargetKind.LIB)
+        protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CargoProjectDescriptionData.Package(
+            contentRoot,
+            name = name,
+            version = "0.0.1",
+            targets = listOf(
+                CargoProjectDescriptionData.Target("$contentRoot/main.rs", CargoProjectDescription.TargetKind.BIN),
+                CargoProjectDescriptionData.Target("$contentRoot/lib.rs", CargoProjectDescription.TargetKind.LIB)
+            ),
+            source = null
         )
     }
 
-    class WithSdkRustProjectDescriptor : RustProjectDescriptor() {
-        override fun getSdk(): Sdk? {
-            val sdk = ProjectJdkImpl("RustTest", RustSdkType.INSTANCE)
-            val sdkModificator = sdk.sdkModificator
-
-            val sdkArchiveFile = LocalFileSystem.getInstance()
+    class WithStdlibRustProjectDescriptor : RustProjectDescriptor() {
+        override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescriptionData {
+            val sourcesArchive = LocalFileSystem.getInstance()
                 .findFileByPath("${RustTestCase.testResourcesPath}/rustc-src.zip")
 
-            val sdkFile = checkNotNull(
-                sdkArchiveFile?.let { JarFileSystem.getInstance().getJarRootForLocalFile(it) },
-                { "Rust sources archive not found. Run `./gradlew test` to download the archive." }
-            )
-            sdkModificator.addRoot(sdkFile, OrderRootType.CLASSES)
-            sdkModificator.commitChanges()
-            return sdk
+            val sourceRoot = checkNotNull(sourcesArchive?.let {
+                JarFileSystem.getInstance().getJarRootForLocalFile(it)
+            }) { "Rust sources archive not found. Run `./gradlew test` to download the archive." }
+
+            val stdlibPackages = module.attachStandardLibrary(sourceRoot)
+            val allPackages = stdlibPackages + testCargoPackage(contentRoot)
+            return CargoProjectDescriptionData(0, allPackages.toMutableList(), ArrayList())
         }
     }
 }

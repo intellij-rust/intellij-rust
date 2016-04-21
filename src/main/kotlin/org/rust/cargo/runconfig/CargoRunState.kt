@@ -5,10 +5,10 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.vfs.VirtualFile
-import org.rust.cargo.commands.Cargo
+import org.rust.cargo.toolchain.RustToolchain
 
 class CargoRunState(environment: ExecutionEnvironment,
-                    private val pathToCargo: String,
+                    private val toolchain: RustToolchain,
                     private val cargoProjectDirectory: VirtualFile,
                     private val command: String,
                     private val additionalArguments: List<String>,
@@ -19,7 +19,9 @@ class CargoRunState(environment: ExecutionEnvironment,
     }
 
     override fun startProcess(): ProcessHandler {
-        val cmd = Cargo(pathToCargo, cargoProjectDirectory.path).generalCommand(command, additionalArguments, environmentVariables)
+        val cmd = toolchain.cargo(cargoProjectDirectory.path)
+            .generalCommand(command, additionalArguments, environmentVariables)
+
         return OSProcessHandler(cmd)
     }
 }

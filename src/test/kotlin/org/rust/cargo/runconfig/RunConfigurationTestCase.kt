@@ -8,22 +8,22 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.openapi.util.Disposer
 import org.assertj.core.api.Assertions.assertThat
-import org.rust.cargo.CargoTestCaseBase
+import org.rust.cargo.RustWithToolchainTestCaseBase
 
-class RunConfigurationTestCase : CargoTestCaseBase() {
-    override val testDataPath = "src/test/resources/org/rust/cargo/runconfig/fixtures/hello"
+class RunConfigurationTestCase : RustWithToolchainTestCaseBase() {
+    override val dataPath = "src/test/resources/org/rust/cargo/runconfig/fixtures"
 
-    fun testApplicationConfiguration() {
-       val configuration = createConfiguration()
-       val result = execute(configuration)
+    fun testApplicationConfiguration() = withProject("hello") {
+        val configuration = createConfiguration()
+        val result = execute(configuration)
 
-       assertThat(result.stdout).contains("Hello, world!")
+        assertThat(result.stdout).contains("Hello, world!")
     }
 
     private fun createConfiguration(): CargoCommandConfiguration {
         val configurationType = ConfigurationTypeUtil.findConfigurationType(CargoCommandRunConfigurationType::class.java)
         val factory = configurationType.configurationFactories[0]
-        val configuration = factory.createTemplateConfiguration(myProject) as CargoCommandConfiguration
+        val configuration = factory.createTemplateConfiguration(myModule.project) as CargoCommandConfiguration
         configuration.setModule(myModule)
         return configuration
     }

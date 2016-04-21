@@ -5,10 +5,9 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.ui.RawCommandLineEditor
-import org.rust.cargo.project.module.RustModuleType
 import org.rust.cargo.runconfig.CargoCommandConfiguration
-
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JTextField
 
 
 class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration>() {
@@ -22,7 +21,7 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         command.text = configuration.command
 
-        comboModules.fillModules(configuration.project, RustModuleType.INSTANCE)
+        comboModules.fillModules(configuration.project)
         comboModules.selectedModule = configuration.configurationModule.module
 
         additionalArguments.text = configuration.additionalArguments

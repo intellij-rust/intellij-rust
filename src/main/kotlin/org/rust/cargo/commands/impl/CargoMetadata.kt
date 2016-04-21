@@ -1,5 +1,11 @@
 package org.rust.cargo.commands.impl
 
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.util.PathUtil
+import org.rust.cargo.project.CargoProjectDescription
+import org.rust.cargo.project.CargoProjectDescriptionData
+import java.io.File
+
 /**
  * Classes mirroring JSON output of `cargo metadata`.
  * Attribute names and snake_case are crucial.
@@ -101,4 +107,60 @@ object CargoMetadata {
          */
         val dependencies: List<String>
     )
+
+    fun intoCargoProjectDescriptionData(project: Project): CargoProjectDescriptionData {
+        val packageIdToIndex = project.packages.mapIndexed { i, p -> p.id to i }.toMap()
+        return CargoProjectDescriptionData(
+            packageIdToIndex[project.resolve.root]!!,
+            project.packages.map { it.intoCargoProjectDescriptionPackage() }.toMutableList(),
+            project.resolve.nodes.map { node ->
+                CargoProjectDescriptionData.DependencyNode(
+                    packageIdToIndex[node.id]!!,
+                    node.dependencies.map { packageIdToIndex[it]!! }.toMutableList()
+                )
+            }.toMutableList()
+        )
+    }
+
+    private fun Package.intoCargoProjectDescriptionPackage(): CargoProjectDescriptionData.Package {
+        val rootDirectory = PathUtil.getParentPath(manifest_path)
+        val rootDirFile = File(rootDirectory)
+        check(rootDirFile.isAbsolute)
+        // crate name must be a valid Rust identifier, so map `-` to `_`
+        // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
+        val name = name.replace("-", "_")
+        return CargoProjectDescriptionData.Package(
+            VfsUtilCore.pathToUrl(rootDirectory),
+            name,
+            version,
+            targets.mapNotNull { it.intoCargoProjectDescriptionTarget(rootDirFile) },
+            source
+        )
+    }
+
+    private fun Target.intoCargoProjectDescriptionTarget(rootDirectory: File): CargoProjectDescriptionData.Target? {
+        val path = if (File(src_path).isAbsolute)
+            src_path
+        else
+            File(rootDirectory, src_path).absolutePath
+
+        if (!File(path).exists()) {
+            // Some targets of a crate may be not published, ignore them
+            return null
+        }
+
+        val kind = when (kind) {
+            listOf("bin")     -> CargoProjectDescription.TargetKind.BIN
+            listOf("example") -> CargoProjectDescription.TargetKind.EXAMPLE
+            listOf("test")    -> CargoProjectDescription.TargetKind.TEST
+            listOf("bench")   -> CargoProjectDescription.TargetKind.BENCH
+            else              ->
+                if (kind.any { it.endsWith("lib") })
+                    CargoProjectDescription.TargetKind.LIB
+                else
+                    CargoProjectDescription.TargetKind.UNKNOWN
+        }
+
+        return CargoProjectDescriptionData.Target(VfsUtilCore.pathToUrl(path), kind)
+    }
 }

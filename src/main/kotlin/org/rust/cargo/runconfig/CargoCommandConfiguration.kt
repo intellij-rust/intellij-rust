@@ -1,5 +1,6 @@
 package org.rust.cargo.runconfig
 
+import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -9,10 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
-import org.rust.cargo.project.pathToCargo
-import org.rust.cargo.project.rustSdk
-import org.rust.cargo.project.util.getModules
 import org.rust.cargo.runconfig.forms.CargoRunConfigurationEditorForm
+import org.rust.cargo.util.cargoProjectRoot
+import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.util.getModules
 
 class CargoCommandConfiguration(project: Project,
                                 name: String,
@@ -33,12 +34,16 @@ class CargoCommandConfiguration(project: Project,
     override fun getValidModules(): Collection<Module> = project.getModules()
 
     override fun checkConfiguration() {
-        super.checkConfiguration()
         val module = configurationModule.module
-        if (module != null && module.rustSdk == null) {
-            throw RuntimeConfigurationError("No Rust SDK specified for module ${module.name}")
+            ?: throw RuntimeConfigurationError(ExecutionBundle.message("module.not.specified.error.text"))
+
+        if (module.cargoProjectRoot == null) {
+            throw RuntimeConfigurationError("No Cargo.toml at the root of the module")
         }
-        configurationModule.checkForWarning()
+
+        if (module.toolchain == null) {
+            throw RuntimeConfigurationError("No Rust toolchain specified")
+        }
     }
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
@@ -46,10 +51,10 @@ class CargoCommandConfiguration(project: Project,
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
         val module = configurationModule.module ?: return null
-        val pathToCargo = module.pathToCargo ?: return null
-        val moduleDirectory = module.moduleFile?.parent ?: return null
+        val toolchain = module.toolchain ?: return null
+        val moduleDirectory = module.cargoProjectRoot ?: return null
         val args = ParametersListUtil.parse(additionalArguments)
-        return CargoRunState(environment, pathToCargo, moduleDirectory, command, args, environmentVariables)
+        return CargoRunState(environment, toolchain, moduleDirectory, command, args, environmentVariables)
     }
 
     override fun writeExternal(element: Element) {

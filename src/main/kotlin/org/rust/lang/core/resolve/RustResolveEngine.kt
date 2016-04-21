@@ -3,9 +3,10 @@ package org.rust.lang.core.resolve
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
-import org.rust.cargo.project.module.util.SdkCrates
-import org.rust.cargo.project.module.util.crateRoots
-import org.rust.cargo.project.module.util.findExternCrateByName
+import com.intellij.psi.PsiManager
+import org.rust.cargo.util.AutoInjectedCrates
+import org.rust.cargo.util.crateRoots
+import org.rust.cargo.util.findExternCrateByName
 import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
@@ -50,6 +51,8 @@ object RustResolveEngine {
      */
     fun resolve(name: RustQualifiedName, module: Module): ResolveResult =
         module.crateRoots
+              .asSequence()
+              .mapNotNull { PsiManager.getInstance(module.project).findFile(it)?.rustMod }
               .map { Resolver().resolve(name, it) }
               .firstOrNull { it.isValidResult }
               ?: ResolveResult.Unresolved
@@ -379,7 +382,7 @@ private class Resolver {
             // The stdlib lib itself is `#![no_std]`.
             // We inject both crates for simplicity for now.
             if (mod.isCrateRoot) {
-                if (name == SdkCrates.std || name == SdkCrates.core) {
+                if (name == AutoInjectedCrates.std || name == AutoInjectedCrates.core) {
                     mod.getModule()?.findExternCrateByName(name)?.rustMod?.let {
                         found(it)
                     }
