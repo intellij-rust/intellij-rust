@@ -1,4 +1,4 @@
-package org.rust.cargo.projectSettings.impl
+package org.rust.cargo.project.settings.impl
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -6,9 +6,9 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import org.rust.cargo.projectSettings.RustProjectSettingsService
-import org.rust.cargo.toolchain.CargoMetadataService
-import org.rust.cargo.toolchain.RustProjectConfigurable
+import org.rust.cargo.project.settings.RustProjectSettingsService
+import org.rust.cargo.project.watcher.CargoMetadataService
+import org.rust.cargo.project.configurable.RustProjectConfigurable
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.getModules
 import org.rust.cargo.util.getService

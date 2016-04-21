@@ -3,7 +3,6 @@ package org.rust.lang.core.psi.util
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.util.crateRoots
-import org.rust.cargo.toolchain.isCrateRootFile
 import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName

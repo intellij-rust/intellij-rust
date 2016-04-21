@@ -50,9 +50,11 @@ data class RustToolchain(
 
     companion object {
         private val log = Logger.getInstance(RustcVersion::class.java)
+
         private val RUSTC = "rustc"
         private val CARGO = "cargo"
-        const val CARGO_TOML = "Cargo.toml"
+
+        val CARGO_TOML = "Cargo.toml"
     }
 }
 

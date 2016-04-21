@@ -147,12 +147,12 @@
 
         <!-- Cargo -->
 
-        <projectConfigurable groupId="language" provider="org.rust.cargo.toolchain.RustConfigurableProvider"
+        <projectConfigurable groupId="language" provider="org.rust.cargo.toolchain.RustProjectConfigurableProvider"
                              dynamic="true"/>
-        <projectService serviceInterface="org.rust.cargo.projectSettings.RustProjectSettingsService"
+        <projectService serviceInterface="org.rust.cargo.project.settings.RustProjectSettingsService"
                         serviceImplementation="org.rust.cargo.projectSettings.impl.RustProjectSettingsServiceImpl"/>
         <moduleService serviceInterface="org.rust.cargo.toolchain.CargoMetadataService"
-                       serviceImplementation="org.rust.cargo.toolchain.impl.CargoMetadataServiceImpl"/>
+                       serviceImplementation="org.rust.cargo.project.watcher.impl.CargoMetadataServiceImpl"/>
 
 
         <!-- Icon Provider -->
@@ -167,7 +167,7 @@
 
         <!-- Notification Providers -->
 
-        <editorNotificationProvider implementation="org.rust.cargo.toolchain.BadToolchainNotificationProvider" />
+        <editorNotificationProvider implementation="org.rust.ide.notifications.MissingToolchainNotificationProvider" />
 
     </extensions>
 
@@ -190,7 +190,7 @@
         </action>
 
         <action id="Rust.RefreshCargoProject"
-                class="org.rust.cargo.RefreshCargoProjectAction"
+                class="org.rust.ide.actions.RefreshCargoProjectAction"
                 icon="AllIcons.Actions.Refresh"/>
     </actions>
 

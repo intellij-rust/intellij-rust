@@ -12,9 +12,9 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.CargoProjectDescriptionData
-import org.rust.cargo.toolchain.CargoMetadataService
-import org.rust.cargo.toolchain.attachStandardLibrary
-import org.rust.cargo.toolchain.impl.CargoMetadataServiceImpl
+import org.rust.cargo.project.watcher.CargoMetadataService
+import org.rust.cargo.project.watcher.impl.CargoMetadataServiceImpl
+import org.rust.cargo.util.attachStandardLibrary
 import org.rust.cargo.util.getService
 import java.util.*
 
@@ -113,7 +113,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
                 JarFileSystem.getInstance().getJarRootForLocalFile(it)
             }) { "Rust sources archive not found. Run `./gradlew test` to download the archive." }
 
-            val stdlibPackages = attachStandardLibrary(module, sourceRoot)
+            val stdlibPackages = module.attachStandardLibrary(sourceRoot)
             val allPackages = stdlibPackages + testCargoPackage(contentRoot)
             return CargoProjectDescriptionData(0, allPackages.toMutableList(), ArrayList())
         }

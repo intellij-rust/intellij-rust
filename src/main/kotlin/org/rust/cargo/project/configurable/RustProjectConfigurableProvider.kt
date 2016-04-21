@@ -1,10 +1,10 @@
-package org.rust.cargo.toolchain
+package org.rust.cargo.project.configurable
 
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.project.Project
 
-class RustConfigurableProvider(
+class RustProjectConfigurableProvider(
     private val project: Project
 ) : ConfigurableProvider() {
 

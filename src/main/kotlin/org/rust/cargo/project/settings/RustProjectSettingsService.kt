@@ -1,4 +1,4 @@
-package org.rust.cargo.projectSettings
+package org.rust.cargo.project.settings
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module

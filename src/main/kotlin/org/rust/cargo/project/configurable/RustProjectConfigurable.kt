@@ -1,9 +1,10 @@
-package org.rust.cargo.toolchain
+package org.rust.cargo.project.configurable
 
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
-import org.rust.cargo.projectSettings.rustSettings
-import org.rust.cargo.projectSettings.ui.RustProjectSettingsPanel
+import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
+import org.rust.cargo.toolchain.suggestToolchain
 import javax.swing.JComponent
 
 

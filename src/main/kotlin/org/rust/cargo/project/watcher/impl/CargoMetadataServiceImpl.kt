@@ -1,4 +1,4 @@
-package org.rust.cargo.toolchain.impl
+package org.rust.cargo.project.watcher.impl
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
@@ -23,11 +23,13 @@ import com.intellij.util.Alarm
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.CargoProjectDescriptionData
-import org.rust.cargo.projectSettings.rustSettings
-import org.rust.cargo.projectSettings.toolchain
-import org.rust.cargo.toolchain.CargoMetadataService
+import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.watcher.CargoMetadataService
 import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.util.cargoLibraryName
 import org.rust.cargo.util.cargoProjectRoot
+import org.rust.cargo.util.updateLibrary
 import kotlin.properties.Delegates
 
 private val LOG = Logger.getInstance(CargoMetadataServiceImpl::class.java);
@@ -149,7 +151,7 @@ class CargoMetadataServiceImpl(private val module: Module) : CargoMetadataServic
                             .filter { !it.isModule }
                             .mapNotNull { it.virtualFile }
 
-                        updateLibrary(module, module.cargoLibraryName, libraryRoots)
+                        module.updateLibrary(module.cargoLibraryName, libraryRoots)
                         cargoProjectState = CargoProjectState(result.cargoProject.serialize())
                         showBalloon("Cargo project successfully updated", MessageType.INFO)
                         LOG.info("Cargo project successfully updated")

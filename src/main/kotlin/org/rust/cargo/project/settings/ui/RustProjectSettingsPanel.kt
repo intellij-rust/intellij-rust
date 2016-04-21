@@ -1,4 +1,4 @@
-package org.rust.cargo.projectSettings.ui
+package org.rust.cargo.project.settings.ui
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.JBColor
 import com.intellij.util.Alarm
-import org.rust.cargo.projectSettings.RustProjectSettingsService
+import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.suggestToolchain
 import javax.swing.*

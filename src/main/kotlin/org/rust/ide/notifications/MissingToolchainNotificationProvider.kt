@@ -1,4 +1,4 @@
-package org.rust.cargo.toolchain
+package org.rust.ide.notifications
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
@@ -8,14 +8,15 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
-import org.rust.cargo.projectSettings.RustProjectSettingsService
-import org.rust.cargo.projectSettings.toolchain
+import org.rust.cargo.project.settings.RustProjectSettingsService
+import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.toolchain.RustToolchain
 import org.rust.lang.core.psi.impl.isNotRustFile
 
 /*
  * Warn user if no rust toolchain is found for the current module.
  */
-class BadToolchainNotificationProvider(
+class MissingToolchainNotificationProvider(
     private val project: Project,
     private val notifications: EditorNotifications
 ) : EditorNotifications.Provider<EditorNotificationPanel>() {

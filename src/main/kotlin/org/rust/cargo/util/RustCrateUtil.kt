@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.toolchain.CargoMetadataService
+import org.rust.cargo.project.watcher.CargoMetadataService
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.getService
 import org.rust.lang.core.psi.RustModItem
@@ -16,27 +16,6 @@ import org.rust.lang.core.psi.impl.rustMod
 
 object RustCrateUtil
 
-/**
- * Extracts content- and library-(ordered)-entries for the given module
- */
-fun Module.getSourceAndLibraryRoots(): Collection<VirtualFile> =
-    ModuleRootManager.getInstance(this).orderEntries.flatMap {
-        it.getFiles(OrderRootType.CLASSES).toList() +
-        it.getFiles(OrderRootType.SOURCES).toList()
-    }
-
-/**
- * Makes given path relative to the content-root of the module or
- * one of the respective's dependencies
- */
-fun Module.relativise(f: VirtualFile): String? =
-    getSourceAndLibraryRoots()
-        .find {
-            FileUtil.isAncestor(it.path, f.path, /* strict = */ false)
-        }
-        ?.let {
-            FileUtil.getRelativePath(it.canonicalPath!!, f.canonicalPath!!, '/')
-        }
 
 /**
  * Extracts paths ot the Crate's roots'

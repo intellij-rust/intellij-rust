@@ -6,8 +6,8 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpda
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
-import org.rust.cargo.projectSettings.rustSettings
-import org.rust.cargo.projectSettings.ui.RustProjectSettingsPanel
+import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import javax.swing.JComponent
 
 class CargoConfigurationWizardStep(

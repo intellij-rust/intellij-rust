@@ -5,7 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestCase
-import org.rust.cargo.projectSettings.RustProjectSettingsService
+import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.suggestToolchain
 
 // This class allows to execute real Cargo during the tests.
