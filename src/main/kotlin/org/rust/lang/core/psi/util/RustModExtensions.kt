@@ -36,7 +36,7 @@ val RustModItem.canonicalNameInFile: RustQualifiedName?
     get() =
         when (containingMod) {
             null -> containingFile.modulePath?.let  { RustFileModuleId(it) }
-            else -> name?.let                       { RustQualifiedName(RustIdNamePart(it), `super`?.canonicalName) }
+            else -> name?.let                       { RustQualifiedName(RustIdNamePart(it), `super`?.canonicalNameInFile) }
         }
 
 /**
