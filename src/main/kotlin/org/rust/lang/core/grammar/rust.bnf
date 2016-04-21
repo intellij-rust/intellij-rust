@@ -277,7 +277,7 @@
     extends     (".*_attr") = attr
     extends     ("inner_attrs_and_block") = block
 
-    elementType ("macro_call|item_macro") = macro
+    elementType ("expr_like_macro|item_like_macro") = macro
     extends     ("(try|format_like)_macro") = macro
     elementType (".*_macro_invocation|macro_rules_invocation") = macro_invocation
 
@@ -1006,22 +1006,22 @@ lit_expr ::= lit
 fake macro ::= macro_invocation macro_arg?
 
 // Various kinds of macros
-macro_call ::= macro_invocation macro_arg
-item_macro ::= macro_invocation item_macro_arg
+expr_like_macro ::= macro_invocation macro_arg
+item_like_macro ::= macro_invocation item_macro_arg
 
 try_macro ::= try_macro_invocation try_macro_args { pin = 1 }
 format_like_macro ::= format_like_macro_invocation format_macro_args { pin = 1 }
 
 macro_definition ::= macro_rules_invocation IDENTIFIER item_macro_arg {
   pin = 1
-  extends = item_macro
+  extends = item_like_macro
 }
 
 private build_in_macro ::= try_macro
                          | format_like_macro
 
-private macro_call_ ::= build_in_macro | macro_call { pin(".*") = macro_invocation }
-private macro_item_ ::= macro_definition | item_macro { pin(".*") = macro_invocation }
+private zz_macro_call ::= build_in_macro | expr_like_macro { pin(".*") = macro_invocation }
+private zz_macro_item ::= macro_definition | item_like_macro { pin(".*") = macro_invocation }
 
 // Invocations
 macro_invocation ::= IDENTIFIER '!'
@@ -1063,11 +1063,11 @@ private meta macro_args_delim ::= '(' <<param>> ')'
                                 | '[' <<param>> ']' { pin = 1 }
 
 // Macro wrappers
-macro_expr ::= macro_call_
-pat_macro  ::= macro_call_
+macro_expr ::= zz_macro_call
+pat_macro  ::= zz_macro_call
 // TODO: Maybe implement item-related stuff for this production?
-macro_item ::= macro_item_
-impl_macro_member ::= macro_item_
+macro_item ::= zz_macro_item
+impl_macro_member ::= zz_macro_item
 
 // Utils
 private token_trees ::= token_tree*
