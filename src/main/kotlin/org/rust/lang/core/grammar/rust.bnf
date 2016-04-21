@@ -38,7 +38,6 @@
         PLUS                 =  '+'
         MINUSEQ              =  '-='
         MINUS                =  '-'
-        OROR                 =  '||'
         OREQ                 =  '|='
         ANDAND               =  '&&'
         ANDEQ                =  '&='
@@ -807,6 +806,8 @@ left view_path_part ::= '::' (SUPER | IDENTIFIER) {
 //
 expr ::=
 
+// https://doc.rust-lang.org/reference.html#operator-precedence
+// https://github.com/JetBrains/Grammar-Kit/blob/master/HOWTO.md#24-compact-expression-parsing-with-priorities
 restricted_expr ::= ret_expr
                   | assign_bin_expr
                   | block_expr
@@ -817,11 +818,11 @@ restricted_expr ::= ret_expr
                   | open_range_expr
                   | bool_or_bin_expr
                   | bool_and_bin_expr
+                  | comp_bin_expr
+                  | rel_comp_bin_expr
                   | bit_or_bin_expr
                   | bit_xor_bin_expr
                   | bit_and_bin_expr
-                  | comp_bin_expr
-                  | rel_comp_bin_expr
                   | bit_shift_bin_expr
                   | add_bin_expr
                   | mul_bin_expr
@@ -888,9 +889,10 @@ bit_shift_bin_expr  ::= restricted_expr (ltlt | gtgt) restricted_expr
 add_bin_expr        ::= restricted_expr ('+' | '-') restricted_expr
 mul_bin_expr        ::= restricted_expr ('*' | '/' | '%') restricted_expr
 
-bool_or_bin_expr    ::= restricted_expr '||' restricted_expr
+// <expr> | <expr> has higher priority than <expr> || <expr>
+bool_or_bin_expr    ::= restricted_expr oror restricted_expr
 bool_and_bin_expr   ::= restricted_expr '&&' restricted_expr
-bit_or_bin_expr     ::= restricted_expr '|' restricted_expr
+bit_or_bin_expr     ::= restricted_expr '|' !'|' restricted_expr
 bit_xor_bin_expr    ::= restricted_expr '^' restricted_expr
 bit_and_bin_expr    ::= restricted_expr '&' restricted_expr
 
@@ -901,7 +903,7 @@ try_expr ::= restricted_expr '?'
 
 unary_expr ::= (BOX | '-' | '*' | '!' | ('&' | '&&') MUT?) restricted_expr
 
-lambda_expr ::= MOVE? ('||' | '|' [ <<comma_separated_list lambda_param>> ] '|') ret_type? any_expr
+lambda_expr ::= MOVE? ('|' [ <<comma_separated_list lambda_param>> ] '|') ret_type? any_expr
 lambda_param ::= pat type_ascription?
 
 struct_expr ::= << checkStructAllowed >> path_generic_args_with_colons struct_expr_body
@@ -1119,6 +1121,7 @@ external gteq   ::= collapse GTEQ GT EQ       { name = ">=" }
 external ltlteq ::= collapse LTLTEQ LT LT EQ  { name = "<<=" }
 external ltlt   ::= collapse LTLT LT LT       { name = "<<" }
 external lteq   ::= collapse LTEQ LT EQ       { name = "<=" }
+external oror   ::= collapse OROR OR OR       { name = "||" }
 
 // Trailing commas are allowed
 private meta comma_separated_list ::= <<param>> ( ',' <<param>> ) * ','?

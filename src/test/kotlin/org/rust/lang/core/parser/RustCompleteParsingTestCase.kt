@@ -35,6 +35,7 @@ class RustCompleteParsingTestCase : RustParsingTestCaseBase("well-formed") {
     fun testStructLiterals()        = doTest(true)
     fun testTryOperator()           = doTest(true)
     fun testMatch()                 = doTest(true)
+    fun testOror()                  = doTest(true)
 
     fun testIssue320()              = doTest(true)
     // @formatter:on
