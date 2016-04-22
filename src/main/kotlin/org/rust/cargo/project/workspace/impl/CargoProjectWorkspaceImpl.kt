@@ -48,7 +48,7 @@ class CargoProjectWorkspaceImpl(private val module: Module)
      * Alarm used to coalesce consecutive update requests.
      * It uses pooled thread.
      */
-    private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, null)
+    private val alarm = Alarm()
 
     /**
      * Lock to guard reads/updates to [cached]
