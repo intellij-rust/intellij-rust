@@ -5,13 +5,13 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
-import com.intellij.util.ui.UIUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.RustWithToolchainTestCaseBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.util.cargoProject
 import org.rust.cargo.util.getServiceOrThrow
+import java.util.concurrent.Future
 
 class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
     override val dataPath: String = "src/test/resources/org/rust/cargo/toolchain/fixtures"
@@ -30,24 +30,15 @@ class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
 
     private fun updateCargoMetadata() {
         check(module.cargoProject == null)
-        val service = module.getServiceOrThrow<CargoProjectWorkspace>()
-        service.scheduleUpdate(module.toolchain!!)
-        waitForCargoProjectUpdate()
+
+        val project = waitFor {
+            module.getServiceOrThrow<CargoProjectWorkspace>().scheduleUpdate(module.toolchain!!)
+        }
+
+        assertThat(project).isNotNull()
     }
 
-    private fun waitForCargoProjectUpdate() {
-        // Project update goes through several async hops, some
-        // of which invoke actions on EDT, so a busy wait seems to be
-        // the simplest way to detect if the project was updated
-        val timeout = 10 * 1000
-        val start = System.currentTimeMillis()
-        while (module.cargoProject == null) {
-            UIUtil.dispatchAllInvocationEvents()
-            if (System.currentTimeMillis() - start > timeout) {
-                throw AssertionError("Timeout during Cargo project update")
-            }
-        }
-    }
+    private fun <T> waitFor(f: () -> Future<T>): T? = f().get()
 
     private fun extractReference(path: String): PsiReference {
         val vFile = LocalFileSystem.getInstance().findFileByPath("${myProject.basePath}/$path")!!
