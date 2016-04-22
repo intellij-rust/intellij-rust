@@ -19,11 +19,11 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.Alarm
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.project.CargoProjectDescriptionData
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener
+import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener.UpdateResult
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoLibraryName
 import org.rust.cargo.util.cargoProjectRoot
@@ -86,7 +86,7 @@ class CargoProjectWorkspaceImpl(private val module: Module)
         }
     }
 
-    override val projectDescription: CargoProjectDescription
+    override val projectDescription: CargoProjectDescription?
         get() =
             lock (lock) {
                 cached ?: release (lock) {
@@ -95,16 +95,20 @@ class CargoProjectWorkspaceImpl(private val module: Module)
                         .let { f ->
                             usingWith (module.messageBus.connect()) {
                                 c -> c.subscribe(
-                                        CargoProjectWorkspace.UPDATES,
-                                        object : CargoProjectWorkspaceListener {
-                                            override fun onProjectUpdated(projectDescription: CargoProjectDescription) {
-                                                f.set(projectDescription)
+                                        CargoProjectWorkspaceListener.Topics.UPDATES,
+                                        object: CargoProjectWorkspaceListener {
+                                            override fun onProjectUpdated(r: UpdateResult) {
+                                                val d = when (r) {
+                                                    is UpdateResult.Ok  -> r.projectDescription
+                                                    is UpdateResult.Err -> null
+                                                }
+
+                                                f.set(d)
                                             }
                                         })
                             }
 
-                            requestUpdate(module.toolchain!!)
-                            f.get()
+                            module.toolchain?.let { requestUpdate(it); f.get() }
                         }
                 }
             }
@@ -125,18 +129,13 @@ class CargoProjectWorkspaceImpl(private val module: Module)
         }
     }
 
-    private fun updateCargoProjectState(state: CargoProjectState) {
-        val projectData = state.projectData
-        if (projectData != null)
-            lock (lock) {
-                CargoProjectDescription.deserialize(projectData)?.let {
-                    module.messageBus
-                        .syncPublisher(CargoProjectWorkspace.UPDATES)
-                        .onProjectUpdated(it)
-
-                    cached = it
-                }
-            }
+    private fun notifyCargoProjectUpdate(r: UpdateResult) {
+        ApplicationManager.getApplication().runReadAction {
+            if (!module.isDisposed)
+                module.messageBus
+                    .syncPublisher(CargoProjectWorkspaceListener.Topics.UPDATES)
+                    .onProjectUpdated(r)
+        }
     }
 
     private inner class UpdateTask(
@@ -145,12 +144,13 @@ class CargoProjectWorkspaceImpl(private val module: Module)
         private val showFeedback: Boolean
     ) : Task.Backgroundable(module.project, "Updating cargo") {
 
-        private var result: Result? = null
+        private var result: UpdateResult? = null
 
         override fun run(indicator: ProgressIndicator) {
             LOG.info("Cargo project update started")
+
             if (!toolchain.looksLikeValidToolchain()) {
-                result = Result.Err(ExecutionException("Invalid toolchain $toolchain"))
+                result = UpdateResult.Err(ExecutionException("Invalid toolchain $toolchain"))
                 return
             }
 
@@ -165,38 +165,48 @@ class CargoProjectWorkspaceImpl(private val module: Module)
                     }
                 })
 
-                Result.Ok(description)
+                UpdateResult.Ok(description)
             } catch (e: ExecutionException) {
-                Result.Err(e)
+                UpdateResult.Err(e)
             }
         }
 
         override fun onSuccess() {
-            val result = requireNotNull(result)
+            val r = requireNotNull(result)
 
-            when (result) {
-                is Result.Err -> {
-                    showBalloon("Project '${module.project.name}' update failed: ${result.error.message}", MessageType.ERROR)
-                    LOG.info("Project '${module.project.name}' update failed", result.error)
+            when (r) {
+                is UpdateResult.Err -> {
+
+                    lock (lock) {
+                        notifyCargoProjectUpdate(r)
+                    }
+
+                    showBalloon("Project '${module.project.name}' update failed: ${r.error.message}", MessageType.ERROR)
+
+                    LOG.info("Project '${module.project.name}' update failed", r.error)
                 }
 
-                is Result.Ok  ->
+                is UpdateResult.Ok -> {
                     ApplicationManager.getApplication().runWriteAction {
                         if (!module.isDisposed) {
                             val libraryRoots =
-                                result.cargoProject.packages
+                                r.projectDescription.packages
                                     .filter { !it.isModule }
                                     .mapNotNull { it.virtualFile }
 
                             module.updateLibrary(module.cargoLibraryName, libraryRoots)
-
-                            updateCargoProjectState(CargoProjectState(result.cargoProject.serialize()))
-
-                            showBalloon("Project '${module.project.name}' successfully updated!", MessageType.INFO)
-
-                            LOG.info("Project '${module.project.name}' successfully updated")
                         }
                     }
+
+                    lock (lock) {
+                        cached = r.projectDescription
+                        notifyCargoProjectUpdate(r)
+                    }
+
+                    showBalloon("Project '${module.project.name}' successfully updated!", MessageType.INFO)
+
+                    LOG.info("Project '${module.project.name}' successfully updated")
+                }
             }
         }
 
@@ -207,19 +217,12 @@ class CargoProjectWorkspaceImpl(private val module: Module)
         }
     }
 
-    private sealed class Result {
-        class Ok(val cargoProject: CargoProjectDescription) : Result()
-        class Err(val error: ExecutionException) : Result()
-    }
-
     @TestOnly
-    fun setState(cargoProject: CargoProjectDescriptionData) {
-        updateCargoProjectState(CargoProjectState(cargoProject))
+    fun setState(projectDescription: CargoProjectDescription) {
+        lock (lock) {
+            cached = projectDescription
+            notifyCargoProjectUpdate(UpdateResult.Ok(projectDescription))
+        }
     }
 }
-
-
-data class CargoProjectState(
-    var projectData: CargoProjectDescriptionData? = null
-)
 

@@ -1,6 +1,5 @@
 package org.rust.cargo.project.workspace
 
-import com.intellij.util.messages.Topic
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.toolchain.RustToolchain
 
@@ -19,10 +18,6 @@ interface CargoProjectWorkspace {
      *
      * NOTA BENE: In the current implementation it's SYNCHRONOUS
      */
-    val projectDescription: CargoProjectDescription
-
-    companion object {
-        val UPDATES = Topic("org.rust.CargoProjectUpdatesTopic", CargoProjectWorkspaceListener::class.java)
-    }
+    val projectDescription: CargoProjectDescription?
 
 }

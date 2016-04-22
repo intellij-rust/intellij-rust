@@ -7,10 +7,10 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.RustWithToolchainTestCaseBase
-import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener
+import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener.UpdateResult
 import org.rust.cargo.util.getServiceOrThrow
 
 class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
@@ -20,9 +20,11 @@ class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
         module.messageBus
             .connect()
             .subscribe(
-                CargoProjectWorkspace.UPDATES,
+                CargoProjectWorkspaceListener.Topics.UPDATES,
                 object: CargoProjectWorkspaceListener {
-                    override fun onProjectUpdated(projectDescription: CargoProjectDescription) {
+                    override fun onProjectUpdated(r: UpdateResult) {
+                        assertThat(r is UpdateResult.Ok)
+
                         val reference = extractReference("src/main.rs")
                         assertThat(reference.resolve()).isNotNull()
                     }
@@ -35,9 +37,11 @@ class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
         module.messageBus
             .connect()
             .subscribe(
-                CargoProjectWorkspace.UPDATES,
+                CargoProjectWorkspaceListener.Topics.UPDATES,
                 object: CargoProjectWorkspaceListener {
-                    override fun onProjectUpdated(projectDescription: CargoProjectDescription) {
+                    override fun onProjectUpdated(r: UpdateResult) {
+                        assertThat(r is UpdateResult.Ok)
+
                         val reference = extractReference("src/main.rs")
                         assertThat(reference.resolve()).isNotNull()
                     }
