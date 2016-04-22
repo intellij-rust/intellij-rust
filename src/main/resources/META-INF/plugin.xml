@@ -66,6 +66,10 @@
 
         <lang.findUsagesProvider language="RUST" implementationClass="org.rust.ide.search.RustFindUsagesProvider"/>
 
+        <!-- Smart Enter Processor -->
+        <lang.smartEnterProcessor language="RUST"
+                                  implementationClass="org.rust.ide.actions.smartenter.RustSmartEnterProcessor"/>
+
         <!-- Navigation -->
 
         <gotoClassContributor implementation="org.rust.ide.navigation.goto.RustClassNavigationContributor"/>
