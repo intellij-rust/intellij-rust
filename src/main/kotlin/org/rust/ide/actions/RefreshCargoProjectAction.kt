@@ -10,7 +10,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.getModules
-import org.rust.cargo.util.getService
+import org.rust.cargo.util.getServiceOrThrow
 
 class RefreshCargoProjectAction : AnAction() {
     init {
@@ -34,7 +34,7 @@ class RefreshCargoProjectAction : AnAction() {
         if (modules.isNullOrEmpty()) return
         ApplicationManager.getApplication().saveAll()
         for ((module, toolchain) in modules.orEmpty()) {
-            val service = module.getService<CargoProjectWorkspace>()
+            val service = module.getServiceOrThrow<CargoProjectWorkspace>()
             service.updateNow(toolchain)
         }
     }

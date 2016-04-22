@@ -40,14 +40,14 @@ private val LOG = Logger.getInstance(CargoProjectWorkspaceImpl::class.java);
 )
 class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorkspace, PersistentStateComponent<CargoProjectState>, BulkFileListener {
 
+    private val DELAY_MILLIS = 1000
+
     /**
      * Alarm used to coalesce consecutive update requests.
      * It uses EDT thread, but the tasks are really tiny and
      * only spawn background update.
      */
     private val alarm = Alarm()
-
-    private val DELAY_MILLIS = 1000
 
     private var cargoProjectState: CargoProjectState by Delegates.observable(CargoProjectState()) {
         prop, old, new ->
@@ -145,22 +145,25 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
 
             when (result) {
                 is Result.Err -> {
-                    showBalloon("Cargo project update failed: ${result.error.message}", MessageType.ERROR)
-                    LOG.info("Cargo project update failed", result.error)
+                    showBalloon("Project '${module.project.name}' update failed: ${result.error.message}", MessageType.ERROR)
+                    LOG.info("Project '${module.project.name}' update failed", result.error)
                 }
-                is Result.Ok  -> ApplicationManager.getApplication().runWriteAction {
-                    if (!module.isDisposed) {
-                        val libraryRoots =
-                            result.cargoProject.packages
-                                .filter { !it.isModule }
-                                .mapNotNull { it.virtualFile }
+                is Result.Ok  ->
+                    ApplicationManager.getApplication().runWriteAction {
+                        if (!module.isDisposed) {
+                            val libraryRoots =
+                                result.cargoProject.packages
+                                    .filter { !it.isModule }
+                                    .mapNotNull { it.virtualFile }
 
-                        module.updateLibrary(module.cargoLibraryName, libraryRoots)
-                        cargoProjectState = CargoProjectState(result.cargoProject.serialize())
-                        showBalloon("Cargo project successfully updated", MessageType.INFO)
-                        LOG.info("Cargo project successfully updated")
+                            module.updateLibrary(module.cargoLibraryName, libraryRoots)
+                            cargoProjectState = CargoProjectState(result.cargoProject.serialize())
+
+                            showBalloon("Project '${module.project.name}' successfully updated!", MessageType.INFO)
+
+                            LOG.info("Project '${module.project.name}' successfully updated")
+                        }
                     }
-                }
             }
         }
 

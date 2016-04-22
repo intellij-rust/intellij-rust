@@ -10,7 +10,7 @@ import com.intellij.psi.PsiManager
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.util.getService
+import org.rust.cargo.util.getServiceOrThrow
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.impl.rustMod
 
@@ -72,5 +72,5 @@ val Module.cargoProjectRoot: VirtualFile?
  * Extracts Cargo project description out of `Cargo.toml`
  */
 val Module.cargoProject: CargoProjectDescription?
-    get() = getService<CargoProjectWorkspace>().projectDescription
+    get() = getServiceOrThrow<CargoProjectWorkspace>().projectDescription
 

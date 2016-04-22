@@ -2,6 +2,7 @@ package org.rust.cargo.util
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleServiceManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
@@ -25,6 +26,16 @@ val Module.cargoLibraryName: String get() = "Cargo <$name>"
  * Established Rust's 'stdlib' library name
  */
 val Module.rustLibraryName: String get() = "Rust <$name>"
+
+/**
+ * Helper extracting generic service for the particular module
+ */
+inline fun<reified T: Any> Module.getService(): T? =
+    ModuleServiceManager.getService(this, T::class.java)
+
+inline fun<reified T: Any> Module.getServiceOrThrow(): T =
+    getService()!!
+
 
 /**
  * Extracts content- and library-(ordered)-entries for the given module

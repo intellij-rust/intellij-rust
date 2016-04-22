@@ -17,8 +17,5 @@ object PlatformUtil {
 
 }
 
-inline fun<reified T: Any> Module.getService(): T =
-        ModuleServiceManager.getService(this, T::class.java)!!
-
 fun Project.getModules(): Collection<Module> =
     ModuleManager.getInstance(this).modules.toList()

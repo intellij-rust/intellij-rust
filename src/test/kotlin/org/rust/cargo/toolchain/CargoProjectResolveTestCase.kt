@@ -11,7 +11,7 @@ import org.rust.cargo.RustWithToolchainTestCaseBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.util.cargoProject
-import org.rust.cargo.util.getService
+import org.rust.cargo.util.getServiceOrThrow
 
 class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
     override val dataPath: String = "src/test/resources/org/rust/cargo/toolchain/fixtures"
@@ -30,7 +30,7 @@ class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
 
     private fun updateCargoMetadata() {
         check(module.cargoProject == null)
-        val service = module.getService<CargoProjectWorkspace>()
+        val service = module.getServiceOrThrow<CargoProjectWorkspace>()
         service.scheduleUpdate(module.toolchain!!)
         waitForCargoProjectUpdate()
     }

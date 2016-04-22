@@ -11,7 +11,7 @@ import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.configurable.RustProjectConfigurable
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.getModules
-import org.rust.cargo.util.getService
+import org.rust.cargo.util.getServiceOrThrow
 
 @State(
     name = "RustProjectSettings",
@@ -50,7 +50,7 @@ class RustProjectSettingsServiceImpl(
 
                 if (value != null) {
                     for (module in project.getModules()) {
-                        module.getService<CargoProjectWorkspace>().scheduleUpdate(value)
+                        module.getServiceOrThrow<CargoProjectWorkspace>().scheduleUpdate(value)
                     }
                 }
 
