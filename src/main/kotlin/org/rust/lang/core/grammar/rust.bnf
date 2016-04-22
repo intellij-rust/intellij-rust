@@ -263,9 +263,9 @@
     elementType (".*_bin_expr")   = binary_expr
     elementType (".*_range_expr") = range_expr
 
-    extends           ("(?!meta_item)(?!foreign_item).*_item") = item_
-    elementTypeFactory("(?!meta_item)(?!foreign_item).*_item") = "org.rust.lang.core.stubs.types.ElementFactoryKt.factory"
-    stubClass         ("(?!meta_item)(?!foreign_item).*_item") = "org.rust.lang.core.stubs.RustItemStub"
+    extends           ("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = item_
+    elementTypeFactory("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = "org.rust.lang.core.stubs.types.ElementFactoryKt.factory"
+    stubClass         ("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = "org.rust.lang.core.stubs.RustItemStub"
 
 
     extends     ("(if|while)_let_expr") = scoped_let_expr
@@ -275,6 +275,10 @@
     extends     ("pat_.*")  = pat
     extends     (".*_attr") = attr
     extends     ("inner_attrs_and_block") = block
+
+    elementType ("expr_like_macro|item_like_macro") = macro
+    extends     ("(try|format_like)_macro") = macro
+    elementType (".*_macro_invocation|macro_rules_invocation") = macro_invocation
 
     generateTokens=false
     generateTokenAccessors=true
@@ -324,7 +328,7 @@ vis ::= PUB
 
 private attrs_and_vis ::= outer_attr* vis?
 private item_inner ::= stmt_item_group
-                     | item_macro
+                     | macro_item
 
 //
 // TODO(kudinkin): That's a hack to force GK to generate accessors
@@ -1004,16 +1008,30 @@ lit_expr ::= lit
 // Macros
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-macro_invocation ::= IDENTIFIER '!'
+fake macro ::= macro_invocation macro_arg?
 
-macro_expr ::= build_in_macro | macro_invocation macro_arg
+// Various kinds of macros
+expr_like_macro ::= macro_invocation macro_arg
+item_like_macro ::= macro_invocation item_macro_arg
 
-private build_in_macro ::= try_macro_invocation '(' any_expr ')'
-                         | format_like_macro_invocation '(' format_macro_args ')'
+try_macro ::= try_macro_invocation try_macro_args { pin = 1 }
+format_like_macro ::= format_like_macro_invocation format_macro_args { pin = 1 }
 
-try_macro_invocation ::= "try" '!' {
-  elementType = macro_invocation
+macro_definition ::= macro_rules_invocation IDENTIFIER item_macro_arg {
+  pin = 1
+  extends = item_like_macro
 }
+
+private build_in_macro ::= try_macro
+                         | format_like_macro
+
+private zz_macro_call ::= build_in_macro | expr_like_macro { pin(".*") = macro_invocation }
+private zz_macro_item ::= macro_definition | item_like_macro { pin(".*") = macro_invocation }
+
+// Invocations
+macro_invocation ::= IDENTIFIER '!'
+try_macro_invocation ::= "try" '!'
+macro_rules_invocation ::= "macro_rules" '!'
 
 // https://doc.rust-lang.org/std/fmt/
 format_like_macro_invocation ::= ( "format"
@@ -1028,30 +1046,35 @@ format_like_macro_invocation ::= ( "format"
                                  | "info"
                                  | "log"
                                  | "trace"
-                                 | "warn" ) '!' {
-  elementType = macro_invocation
+                                 | "warn" ) '!'
+
+// Arguments
+macro_arg ::= <<macro_args_delim token_trees>>
+
+item_macro_arg ::= '(' token_trees ')' ';'
+                 | '{' token_trees '}'
+                 | '[' token_trees ']' ';' {
+  pin = 1
+  elementType = macro_arg
 }
 
-format_macro_args ::= <<comma_separated_list format_macro_arg>>
-private format_macro_arg ::= IDENTIFIER '=' any_expr | any_expr
+try_macro_args ::= <<macro_args_delim any_expr>>
 
-pat_macro  ::= IDENTIFIER '!' macro_arg
+format_macro_args ::= <<macro_args_delim <<comma_separated_list format_macro_arg>>>>
+format_macro_arg ::= [ IDENTIFIER '=' ] any_expr
 
-macro_arg ::= '(' token_trees ')'
-            | '{' token_trees '}'
-            | '[' token_trees ']' { pin = 1 }
+private meta macro_args_delim ::= '(' <<param>> ')'
+                                | '{' <<param>> '}'
+                                | '[' <<param>> ']' { pin = 1 }
 
-// This "parses" both macro definitions and macro usage
-item_macro ::= macro_invocation IDENTIFIER?
-             ( '(' token_trees ')' ';'
-             | '{' token_trees '}'
-             | '[' token_trees ']' ';' )
+// Macro wrappers
+macro_expr ::= zz_macro_call
+pat_macro  ::= zz_macro_call
+// TODO: Maybe implement item-related stuff for this production?
+macro_item ::= zz_macro_item
+impl_macro_member ::= zz_macro_item
 
-impl_macro_member ::= macro_invocation IDENTIFIER?
-             ( '(' token_trees ')' ';'
-             | '{' token_trees '}'
-             | '[' token_trees ']' ';' )
-
+// Utils
 private token_trees ::= token_tree*
 
 token_tree ::= '(' token_trees ')'
