@@ -1,6 +1,5 @@
 package org.rust.cargo.project.workspace.impl
 
-import com.google.common.util.concurrent.SettableFuture
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
@@ -18,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.Alarm
+import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.settings.rustSettings
@@ -31,15 +31,11 @@ import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.enqueue
 import org.rust.cargo.util.updateLibrary
 import org.rust.lang.utils.lock
-import org.rust.lang.utils.release
-import org.rust.lang.utils.usingWith
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 
 
-class CargoProjectWorkspaceImpl(private val module: Module)
-    : CargoProjectWorkspace
-    , BulkFileListener {
+class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorkspace {
 
     private val DELAY = 1000 /* milliseconds */
 
@@ -62,9 +58,10 @@ class CargoProjectWorkspaceImpl(private val module: Module)
     private var cached: CargoProjectDescription? = null
 
     init {
-        usingWith (module.messageBus.connect()) {
-            c -> c.subscribe(VirtualFileManager.VFS_CHANGES, this)
-        }
+        subscribeTo(VirtualFileManager.VFS_CHANGES, FileChangesWatcher())
+
+        subscribeTo(CargoProjectWorkspaceListener.Topics.UPDATES, ProjectModelUpdater())
+        subscribeTo(CargoProjectWorkspaceListener.Topics.UPDATES, Notifier())
     }
 
     /**
@@ -76,7 +73,7 @@ class CargoProjectWorkspaceImpl(private val module: Module)
 
         val delay = if (ApplicationManager.getApplication().isUnitTestMode) 0 else DELAY
 
-        val task = UpdateTask(toolchain, contentRoot.path, showFeedback = false)
+        val task = UpdateTask(toolchain, contentRoot.path)
 
         alarm.cancelAllRequests()
 
@@ -87,63 +84,32 @@ class CargoProjectWorkspaceImpl(private val module: Module)
         }
     }
 
+    /**
+     * Delivers latest cached project-description instance
+     *
+     * NOTA BENE: [CargoProjectWorkspace] is rather low-level abstraction around, `Cargo.toml`-backed projects
+     *            mapping underpinning state of the `Cargo.toml` workspace _transparently_, i.e. it doesn't provide
+     *            any facade atop of the latter insulating itself from inconsistencies in the underlying layer. For
+     *            example, [CargoProjectWorkspace] wouldn't be able to provide a valid [CargoProjectDescription] instance
+     *            until the `Cargo.toml` becomes sound
+     */
     override val projectDescription: CargoProjectDescription?
-        get() =
-            lock (lock) {
-                cached ?: release (lock) {
-                    SettableFuture
-                        .create<CargoProjectDescription>()
-                        .let { f ->
-                            usingWith (module.messageBus.connect()) {
-                                c -> c.subscribe(
-                                        CargoProjectWorkspaceListener.Topics.UPDATES,
-                                        object: CargoProjectWorkspaceListener {
-                                            override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
-                                                val d = when (r) {
-                                                    is UpdateResult.Ok  -> r.projectDescription
-                                                    is UpdateResult.Err -> null
-                                                }
-
-                                                f.set(d)
-                                            }
-                                        })
-                            }
-
-                            module.toolchain?.let { requestUpdateUsing(it); f.get() }
-                        }
-                }
-            }
-
-    override fun before(events: MutableList<out VFileEvent>) {}
-
-    override fun after(events: MutableList<out VFileEvent>) {
-        if (!module.project.rustSettings.autoUpdateEnabled) return
-        val toolchain = module.toolchain ?: return
-
-        val needsUpdate = events.any {
-            val file = it.file ?: return@any false
-            file.name == RustToolchain.CARGO_TOML && ModuleUtilCore.findModuleForFile(file, module.project) == module
-        }
-
-        if (needsUpdate) {
-            requestUpdateUsing(toolchain)
-        }
-    }
+        get() = lock (lock) { cached }
 
     private fun notifyCargoProjectUpdate(r: UpdateResult) {
-        ApplicationManager.getApplication().runReadAction {
-            if (!module.isDisposed)
-                module.messageBus
-                    .syncPublisher(CargoProjectWorkspaceListener.Topics.UPDATES)
-                    .onWorkspaceUpdateCompleted(r)
-        }
+        ApplicationManager.getApplication().assertIsDispatchThread()
+
+        if (!module.isDisposed)
+            module.messageBus
+                .syncPublisher(CargoProjectWorkspaceListener.Topics.UPDATES)
+                .onWorkspaceUpdateCompleted(r)
     }
 
     private inner class UpdateTask(
         private val toolchain: RustToolchain,
-        private val projectDirectory: String,
-        private val showFeedback: Boolean
-    ) : Task.Backgroundable(module.project, "Updating cargo") {
+        private val projectDirectory: String
+    )
+        : Task.Backgroundable(module.project, "Updating cargo") {
 
         private var result: UpdateResult? = null
 
@@ -175,19 +141,47 @@ class CargoProjectWorkspaceImpl(private val module: Module)
         override fun onSuccess() {
             val r = requireNotNull(result)
 
-            when (r) {
-                is UpdateResult.Err -> {
-
-                    lock (lock) {
-                        notifyCargoProjectUpdate(r)
-                    }
-
-                    showBalloon("Project '${module.project.name}' update failed: ${r.error.message}", MessageType.ERROR)
-
-                    LOG.info("Project '${module.project.name}' update failed", r.error)
+            lock (lock) {
+                cached = when (r) {
+                    is UpdateResult.Ok -> r.projectDescription
+                    else               -> null
                 }
 
-                is UpdateResult.Ok -> {
+                notifyCargoProjectUpdate(r)
+            }
+
+            when (r) {
+                is UpdateResult.Ok  -> LOG.info("Project '${module.project.name}' successfully updated")
+                is UpdateResult.Err -> LOG.info("Project '${module.project.name}' update failed", r.error)
+            }
+        }
+    }
+
+    /**
+     * Project-update task's notifier
+     */
+    inner class Notifier : CargoProjectWorkspaceListener {
+
+        override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
+            when (r) {
+                is UpdateResult.Ok  -> showBalloon("Project '${module.project.name}' successfully updated!", MessageType.INFO)
+                is UpdateResult.Err -> showBalloon("Project '${module.project.name}' update failed: ${r.error.message}", MessageType.ERROR)
+            }
+        }
+
+        private fun showBalloon(message: String, type: MessageType) {
+            PopupUtil.showBalloonForActiveComponent(message, type)
+        }
+    }
+
+    /**
+     * IDEA's project model updater
+     */
+    inner class ProjectModelUpdater : CargoProjectWorkspaceListener {
+
+        override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
+            when (r) {
+                is UpdateResult.Ok ->
                     ApplicationManager.getApplication().runWriteAction {
                         if (!module.isDisposed) {
                             val libraryRoots =
@@ -198,24 +192,34 @@ class CargoProjectWorkspaceImpl(private val module: Module)
                             module.updateLibrary(module.cargoLibraryName, libraryRoots)
                         }
                     }
-
-                    lock (lock) {
-                        cached = r.projectDescription
-                        notifyCargoProjectUpdate(r)
-                    }
-
-                    showBalloon("Project '${module.project.name}' successfully updated!", MessageType.INFO)
-
-                    LOG.info("Project '${module.project.name}' successfully updated")
-                }
             }
         }
+    }
 
-        private fun showBalloon(message: String, type: MessageType) {
-            if (showFeedback) {
-                PopupUtil.showBalloonForActiveComponent(message, type)
+    /**
+     * File changes listener, detecting changes inside the `Cargo.toml` files
+     */
+    inner class FileChangesWatcher : BulkFileListener {
+
+        override fun before(events: MutableList<out VFileEvent>) {}
+
+        override fun after(events: MutableList<out VFileEvent>) {
+            if (!module.project.rustSettings.autoUpdateEnabled) return
+            val toolchain = module.toolchain ?: return
+
+            val needsUpdate = events.any {
+                val file = it.file ?: return@any false
+                file.name == RustToolchain.CARGO_TOML && ModuleUtilCore.findModuleForFile(file, module.project) == module
+            }
+
+            if (needsUpdate) {
+                requestUpdateUsing(toolchain)
             }
         }
+    }
+
+    private inline fun <reified L> subscribeTo(t: Topic<L>, listener: L) {
+        module.messageBus.connect().subscribe(t, listener!!)
     }
 
     @TestOnly
