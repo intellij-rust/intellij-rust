@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -82,7 +83,7 @@ class CargoProjectWorkspaceImpl(private val module: Module)
         if (immediately) {
             task.enqueue()
         } else {
-            alarm.addRequest({ task.enqueue() }, delay)
+            alarm.addRequest({ task.enqueue() }, delay, ModalityState.any())
         }
     }
 
