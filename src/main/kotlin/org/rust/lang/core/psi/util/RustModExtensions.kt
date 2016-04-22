@@ -66,8 +66,6 @@ internal val RustModItem.ownsDirectory: Boolean
 
 internal val RustModItem.ownedDirectory: PsiDirectory?
     get() {
-        if (!ownsDirectory) return null
-
         val parent  = containingMod ?: return containingFile.originalFile.parent
         val name    = this.name     ?: return null
 

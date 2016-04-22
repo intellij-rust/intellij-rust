@@ -12,11 +12,12 @@ class RustMultiFileResolveTestCase : RustMultiFileResolveTestCaseBase() {
     fun testGlobalPath()        = doTestResolved("global_path/foo.rs", "global_path/lib.rs", "global_path/bar.rs")
     fun testUseViewPath()       = doTestResolved("global_path/foo.rs", "global_path/lib.rs", "global_path/bar.rs")
 
-    // Check whether resolving-procedure (presumably) fails
+    // We resolve mod_decls even if the parent module does not own a directory and mod_decl should not be allowed.
+    // This way, we don't need to know the set of crate roots for resolve, which helps indexing.
+    // The `mod_decl not allowed here` error is then reported by an annotator.
+    fun testModDeclNonOwn()     = doTestResolved("mod_decl_non_own/foo.rs", "mod_decl_non_own/main.rs", "mod_decl_non_own/bar.rs")
 
-    fun testModDeclNonOwn()     = doTestUnresolved("mod_decl_failure/foo.rs",
-                                                   "mod_decl_failure/main.rs",
-                                                   "mod_decl_failure/bar.rs")
+    // Check whether resolving-procedure (presumably) fails
 
     fun testModDeclWrongPath() = doTestUnresolved("mod_decl_wrong_path/main.rs")
 }

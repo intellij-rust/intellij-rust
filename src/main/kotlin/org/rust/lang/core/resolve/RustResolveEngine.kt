@@ -96,7 +96,7 @@ object RustResolveEngine {
         val parent  = ref.containingMod
         val name    = ref.name
 
-        if (parent == null || name == null || !parent.ownsDirectory) {
+        if (parent == null || name == null) {
             return RustResolveEngine.ResolveResult.Unresolved
         }
 
