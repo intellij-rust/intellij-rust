@@ -7,48 +7,38 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.RustWithToolchainTestCaseBase
-import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
-import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener
+import org.rust.cargo.util.cargoProject
 import org.rust.cargo.util.getServiceOrThrow
+import java.util.concurrent.Future
 
 class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
     override val dataPath: String = "src/test/resources/org/rust/cargo/toolchain/fixtures"
 
     fun testResolveExternalLibrary() = withProject("external_library") {
-        module.messageBus
-            .connect()
-            .subscribe(
-                CargoProjectWorkspace.UPDATES,
-                object: CargoProjectWorkspaceListener {
-                    override fun onProjectUpdated(projectDescription: CargoProjectDescription) {
-                        val reference = extractReference("src/main.rs")
-                        assertThat(reference.resolve()).isNotNull()
-                    }
-                })
-
-        updateCargoProject()
+        updateCargoMetadata()
+        val reference = extractReference("src/main.rs")
+        assertThat(reference.resolve()).isNotNull()
     }
 
     fun testResolveLocalPackage() = withProject("local_package") {
-        module.messageBus
-            .connect()
-            .subscribe(
-                CargoProjectWorkspace.UPDATES,
-                object: CargoProjectWorkspaceListener {
-                    override fun onProjectUpdated(projectDescription: CargoProjectDescription) {
-                        val reference = extractReference("src/main.rs")
-                        assertThat(reference.resolve()).isNotNull()
-                    }
-                })
-
-        updateCargoProject()
+        updateCargoMetadata()
+        val reference = extractReference("src/main.rs")
+        assertThat(reference.resolve()).isNotNull()
     }
 
-    private fun updateCargoProject() {
-        module.getServiceOrThrow<CargoProjectWorkspace>().requestUpdate(module.toolchain!!)
+    private fun updateCargoMetadata() {
+        check(module.cargoProject == null)
+
+        val project = waitFor {
+            module.getServiceOrThrow<CargoProjectWorkspace>().scheduleUpdate(module.toolchain!!)
+        }
+
+        assertThat(project).isNotNull()
     }
+
+    private fun <T> waitFor(f: () -> Future<T>): T? = f().get()
 
     private fun extractReference(path: String): PsiReference {
         val vFile = LocalFileSystem.getInstance().findFileByPath("${myProject.basePath}/$path")!!

@@ -35,7 +35,7 @@ class RefreshCargoProjectAction : AnAction() {
         ApplicationManager.getApplication().saveAll()
         for ((module, toolchain) in modules.orEmpty()) {
             val service = module.getServiceOrThrow<CargoProjectWorkspace>()
-            service.requestUpdate(toolchain, immediately = true)
+            service.updateNow(toolchain)
         }
     }
 }

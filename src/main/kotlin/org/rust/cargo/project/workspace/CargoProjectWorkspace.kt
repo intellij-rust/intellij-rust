@@ -1,28 +1,24 @@
 package org.rust.cargo.project.workspace
 
-import com.intellij.util.messages.Topic
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.toolchain.RustToolchain
+import java.util.concurrent.Future
 
 /**
  * Uses `cargo metadata` command to update IDEA libraries and Cargo project model.
  */
 interface CargoProjectWorkspace {
-
     /**
-     * Updates Rust libraries asynchronously. Consecutive requests are coalesced.
+     * Updates Rust libraries asynchronously. Consecutive updates are coalesced.
      */
-    fun requestUpdate(toolchain: RustToolchain, immediately: Boolean = false)
+    fun scheduleUpdate(toolchain: RustToolchain): Future<CargoProjectDescription>
 
     /**
-     * Latest version of the Cargo's project-description obtained
+     * Immediately schedules an update. Shows balloon upon completion.
      *
-     * NOTA BENE: In the current implementation it's SYNCHRONOUS
+     * Update is still asynchronous.
      */
-    val projectDescription: CargoProjectDescription
+    fun updateNow(toolchain: RustToolchain): Future<CargoProjectDescription>
 
-    companion object {
-        val UPDATES = Topic("org.rust.CargoProjectUpdatesTopic", CargoProjectWorkspaceListener::class.java)
-    }
-
+    val projectDescription: CargoProjectDescription?
 }
