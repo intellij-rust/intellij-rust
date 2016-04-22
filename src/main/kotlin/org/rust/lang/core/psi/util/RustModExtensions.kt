@@ -77,12 +77,11 @@ internal val RustModItem.ownedDirectory: PsiDirectory?
 val RustModItem.isCrateRoot: Boolean
     get() {
         val file = containingFile.originalFile.virtualFile
-        val module = getModule()
-        if (containingMod != null || file == null || module == null) {
+        if (containingMod != null || file == null) {
             return false
         }
 
-        return module.crateRoots.contains(file)
+        return module?.crateRoots?.contains(file) ?: false
     }
 
 val RustModItem.modDecls: Collection<RustModDeclItem>

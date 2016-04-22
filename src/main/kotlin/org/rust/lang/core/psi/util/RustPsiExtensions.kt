@@ -59,14 +59,13 @@ fun PsiElement.isBefore(anchor: Int): Boolean = textOffset < anchor
  * If the element is in a library, returns the module which depends on
  * the library.
  */
-fun PsiElement.getModule(): Module? {
-    val vFile = this.containingFile.originalFile.virtualFile ?: return null
-    return ModuleUtilCore.findModuleForPsiElement(this) ?:
-        ProjectRootManager.getInstance(project).fileIndex
-            .getOrderEntriesForFile(vFile)
-            .firstOrNull()?.ownerModule
-}
-
+val PsiElement.module: Module?
+    get() {
+        // It's important to look the module for `containingFile` file
+        // and not the element itself. Otherwise this will break for
+        // elements in libraries.
+        return ModuleUtilCore.findModuleForPsiElement(containingFile)
+    }
 
 
 //

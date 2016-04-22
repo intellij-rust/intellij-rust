@@ -9,7 +9,7 @@ import org.rust.cargo.util.getSourceAndLibraryRoots
 import org.rust.cargo.util.relativise
 import org.rust.lang.core.psi.RustFileModItem
 import org.rust.lang.core.psi.impl.rustMod
-import org.rust.lang.core.psi.util.getModule
+import org.rust.lang.core.psi.util.module
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.Serializable
@@ -43,7 +43,7 @@ data class RustModulePath private constructor (private val name: String, val pat
     companion object {
 
         fun devise(f: PsiFile): RustModulePath? =
-            f.getModule()?.let { module ->
+            f.module?.let { module ->
                 module.relativise(f.virtualFile ?: f.viewProvider.virtualFile)?.let { path ->
                     RustModulePath(module.name, path)
                 }

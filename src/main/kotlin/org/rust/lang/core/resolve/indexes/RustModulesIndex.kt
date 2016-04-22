@@ -7,7 +7,7 @@ import com.intellij.util.indexing.ID
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.impl.modulePath
-import org.rust.lang.core.psi.util.getModule
+import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.RustResolveEngine
 
 interface RustModulesIndex {
@@ -19,7 +19,7 @@ interface RustModulesIndex {
 
         fun getSuperFor(mod: RustModItem): RustModItem? =
             mod.containingFile.originalFile.let { file ->
-                mod.getModule()?.let { module ->
+                mod.module?.let { module ->
                     file.modulePath?.let { path ->
                         findByHeterogeneous(
                             FileBasedIndex.getInstance()

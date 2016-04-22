@@ -115,7 +115,7 @@ object RustResolveEngine {
 
     fun resolveExternCrate(crate: RustExternCrateItem): ResolveResult {
         val name = crate.name ?: return ResolveResult.Unresolved
-        val module = crate.getModule() ?: return ResolveResult.Unresolved
+        val module = crate.module ?: return ResolveResult.Unresolved
         return module.findExternCrateByName(name)?.rustMod.asResolveResult()
     }
 
@@ -383,7 +383,7 @@ private class Resolver {
             // We inject both crates for simplicity for now.
             if (mod.isCrateRoot) {
                 if (name == AutoInjectedCrates.std || name == AutoInjectedCrates.core) {
-                    mod.getModule()?.findExternCrateByName(name)?.rustMod?.let {
+                    mod.module?.findExternCrateByName(name)?.rustMod?.let {
                         found(it)
                     }
                 }
