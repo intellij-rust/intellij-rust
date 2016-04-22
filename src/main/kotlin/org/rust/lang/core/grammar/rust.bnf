@@ -834,8 +834,9 @@ restricted_expr ::= ret_expr
 }
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
-private no_struct_lit_expr  ::= << withoutStructLiterals restricted_expr >>
-private any_expr            ::= << withStructLiterals restricted_expr >>
+private no_struct_lit_expr  ::= << withoutStructLiterals restricted_expr >> | never restricted_expr
+private any_expr            ::= << withStructLiterals restricted_expr >>    | never restricted_expr
+private never ::= !()
 
 
 block_expr ::= while_expr
