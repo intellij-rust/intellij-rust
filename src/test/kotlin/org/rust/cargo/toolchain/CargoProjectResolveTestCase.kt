@@ -22,7 +22,7 @@ class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
             .subscribe(
                 CargoProjectWorkspaceListener.Topics.UPDATES,
                 object: CargoProjectWorkspaceListener {
-                    override fun onProjectUpdated(r: UpdateResult) {
+                    override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
                         assertThat(r is UpdateResult.Ok)
 
                         val reference = extractReference("src/main.rs")
@@ -39,7 +39,7 @@ class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
             .subscribe(
                 CargoProjectWorkspaceListener.Topics.UPDATES,
                 object: CargoProjectWorkspaceListener {
-                    override fun onProjectUpdated(r: UpdateResult) {
+                    override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
                         assertThat(r is UpdateResult.Ok)
 
                         val reference = extractReference("src/main.rs")
@@ -51,7 +51,7 @@ class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
     }
 
     private fun updateCargoProject() {
-        module.getServiceOrThrow<CargoProjectWorkspace>().requestUpdate(module.toolchain!!)
+        module.getServiceOrThrow<CargoProjectWorkspace>().requestUpdateUsing(module.toolchain!!)
     }
 
     private fun extractReference(path: String): PsiReference {

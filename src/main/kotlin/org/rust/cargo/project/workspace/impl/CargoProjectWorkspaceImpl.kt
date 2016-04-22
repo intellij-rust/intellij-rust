@@ -70,7 +70,7 @@ class CargoProjectWorkspaceImpl(private val module: Module)
      * Works in two phases. First `cargo metadata` is executed on the background thread. Then,
      * the actual Library update happens on the event dispatch thread.
      */
-    override fun requestUpdate(toolchain: RustToolchain, immediately: Boolean) {
+    override fun requestUpdateUsing(toolchain: RustToolchain, immediately: Boolean) {
         val contentRoot = module.cargoProjectRoot ?: return
 
         val delay = if (ApplicationManager.getApplication().isUnitTestMode) 0 else DELAY
@@ -97,7 +97,7 @@ class CargoProjectWorkspaceImpl(private val module: Module)
                                 c -> c.subscribe(
                                         CargoProjectWorkspaceListener.Topics.UPDATES,
                                         object: CargoProjectWorkspaceListener {
-                                            override fun onProjectUpdated(r: UpdateResult) {
+                                            override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
                                                 val d = when (r) {
                                                     is UpdateResult.Ok  -> r.projectDescription
                                                     is UpdateResult.Err -> null
@@ -108,7 +108,7 @@ class CargoProjectWorkspaceImpl(private val module: Module)
                                         })
                             }
 
-                            module.toolchain?.let { requestUpdate(it); f.get() }
+                            module.toolchain?.let { requestUpdateUsing(it); f.get() }
                         }
                 }
             }
@@ -125,7 +125,7 @@ class CargoProjectWorkspaceImpl(private val module: Module)
         }
 
         if (needsUpdate) {
-            requestUpdate(toolchain)
+            requestUpdateUsing(toolchain)
         }
     }
 
@@ -134,7 +134,7 @@ class CargoProjectWorkspaceImpl(private val module: Module)
             if (!module.isDisposed)
                 module.messageBus
                     .syncPublisher(CargoProjectWorkspaceListener.Topics.UPDATES)
-                    .onProjectUpdated(r)
+                    .onWorkspaceUpdateCompleted(r)
         }
     }
 

@@ -11,7 +11,7 @@ interface CargoProjectWorkspace {
     /**
      * Updates Rust libraries asynchronously. Consecutive requests are coalesced.
      */
-    fun requestUpdate(toolchain: RustToolchain, immediately: Boolean = false)
+    fun requestUpdateUsing(toolchain: RustToolchain, immediately: Boolean = false)
 
     /**
      * Latest version of the Cargo's project-description obtained

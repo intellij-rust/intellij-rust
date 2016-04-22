@@ -13,7 +13,7 @@ interface CargoProjectWorkspaceListener {
      * Called every time Cargo's project gets description updated, no
      * matter whether did it actually changed from the previous update or not
      */
-    fun onProjectUpdated(r: UpdateResult)
+    fun onWorkspaceUpdateCompleted(r: UpdateResult)
 
     sealed class UpdateResult {
         class Ok(val projectDescription: CargoProjectDescription) : UpdateResult()
