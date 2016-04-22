@@ -17,5 +17,3 @@ object PlatformUtil {
 
 }
 
-fun Project.getModules(): Collection<Module> =
-    ModuleManager.getInstance(this).modules.toList()
