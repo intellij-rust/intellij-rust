@@ -20,18 +20,21 @@ class UnresolvedModuleDeclarationInspection : RustLocalInspectionTool() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RustVisitor() {
-            override fun visitModDeclItem(mod: RustModDeclItem) {
-                if (mod.reference?.resolve() == null) {
-                    val message: String
-                    val quickFix: LocalQuickFix?
-                    if (mod.isPathAttributeRequired && mod.explicitPath == null ) {
-                        message = "Cannot declare a non-inline module inside a block unless it has a path attribute"
-                        quickFix = null
-                    } else {
-                        message = "Unresolved module"
-                        quickFix = if (mod.containingMod?.ownsDirectory ?: false ) AddModuleFile else null
-                    }
-                    holder.registerProblem(mod, message, quickFix)
+            override fun visitModDeclItem(modDecl: RustModDeclItem) {
+                if (modDecl.isPathAttributeRequired && modDecl.explicitPath == null ) {
+                    val message = "Cannot declare a non-inline module inside a block unless it has a path attribute"
+                    holder.registerProblem(modDecl, message)
+                    return
+                }
+
+                val containingMod = modDecl.containingMod ?: return
+                if (!containingMod.ownsDirectory) {
+                    holder.registerProblem(modDecl, "Cannot declare a new module at this location")
+                    return
+                }
+
+                if (modDecl.reference?.resolve() == null) {
+                    holder.registerProblem(modDecl, "Unresolved module", AddModuleFile)
                 }
             }
         }
