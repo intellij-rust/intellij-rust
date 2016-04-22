@@ -1,15 +1,10 @@
 package org.rust.cargo.project.workspace.impl
 
-import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -28,17 +23,22 @@ import org.rust.cargo.project.CargoProjectDescriptionData
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
+import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.util.*
-import java.util.concurrent.Future
-import kotlin.properties.Delegates
+import org.rust.cargo.util.cargoLibraryName
+import org.rust.cargo.util.cargoProjectRoot
+import org.rust.cargo.util.enqueue
+import org.rust.cargo.util.updateLibrary
+import org.rust.lang.utils.lock
+import org.rust.lang.utils.release
+import org.rust.lang.utils.usingWith
+import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
 
 
-@State(
-    name = "CargoMetadata",
-    storages = arrayOf(Storage(file = StoragePathMacros.MODULE_FILE))
-)
-class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorkspace, PersistentStateComponent<CargoProjectState>, BulkFileListener {
+class CargoProjectWorkspaceImpl(private val module: Module)
+    : CargoProjectWorkspace
+    , BulkFileListener {
 
     private val DELAY = 1000 /* milliseconds */
 
@@ -50,28 +50,28 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
      */
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, null)
 
-    private var cargoProjectState: CargoProjectState by Delegates.observable(CargoProjectState()) {
-        prop, old, new ->
-            projectDescription = new.projectData?.let { CargoProjectDescription.deserialize(it) }
-    }
+    /**
+     * Lock to guard reads/updates to [cached]
+     */
+    private var lock: Lock = ReentrantLock()
 
-    override var projectDescription: CargoProjectDescription? = null
+    /**
+     * Cached instance of the latest [CargoProjectDescription] instance synced with `Cargo.toml`
+     */
+    private var cached: CargoProjectDescription? = null
 
     init {
-        module.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, this)
-    }
-
-    @TestOnly
-    fun setState(cargoProject: CargoProjectDescriptionData) {
-        cargoProjectState = CargoProjectState(cargoProject)
+        usingWith (module.messageBus.connect()) {
+            c -> c.subscribe(VirtualFileManager.VFS_CHANGES, this)
+        }
     }
 
     /**
      * Works in two phases. First `cargo metadata` is executed on the background thread. Then,
      * the actual Library update happens on the event dispatch thread.
      */
-    override fun scheduleUpdate(toolchain: RustToolchain): Future<CargoProjectDescription> {
-        val contentRoot = module.cargoProjectRoot ?: return Futures.immediateCancelledFuture<CargoProjectDescription>()
+    override fun requestUpdate(toolchain: RustToolchain, immediately: Boolean) {
+        val contentRoot = module.cargoProjectRoot ?: return
 
         val delay = if (ApplicationManager.getApplication().isUnitTestMode) 0 else DELAY
 
@@ -79,32 +79,37 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
 
         alarm.cancelAllRequests()
 
-        val f = SettableFuture.create<CargoProjectDescription>()
-
-        alarm.addRequest({ task.enqueue().flowIntoDiscardingResult(f, { projectDescription }) }, delay)
-
-        return f
+        if (immediately) {
+            task.enqueue()
+        } else {
+            alarm.addRequest({ task.enqueue() }, delay)
+        }
     }
 
-    override fun updateNow(toolchain: RustToolchain): Future<CargoProjectDescription> {
-        val contentRoot = module.cargoProjectRoot ?: return Futures.immediateCancelledFuture<CargoProjectDescription>()
+    override val projectDescription: CargoProjectDescription
+        get() =
+            lock (lock) {
+                cached ?: release (lock) {
+                    SettableFuture
+                        .create<CargoProjectDescription>()
+                        .let { f ->
+                            usingWith (module.messageBus.connect()) {
+                                c -> c.subscribe(
+                                        CargoProjectWorkspace.UPDATES,
+                                        object : CargoProjectWorkspaceListener {
+                                            override fun onProjectUpdated(projectDescription: CargoProjectDescription) {
+                                                f.set(projectDescription)
+                                            }
+                                        })
+                            }
 
-        val task = UpdateTask(toolchain, contentRoot.path, showFeedback = true)
+                            requestUpdate(module.toolchain!!)
+                            f.get()
+                        }
+                }
+            }
 
-        alarm.cancelAllRequests()
-
-        return task .enqueue()
-                    .flowIntoDiscardingResult(SettableFuture.create<CargoProjectDescription>(), { projectDescription })
-    }
-
-    override fun loadState(state: CargoProjectState?) {
-        cargoProjectState = state ?: CargoProjectState()
-    }
-
-    override fun getState(): CargoProjectState = cargoProjectState
-
-    override fun before(events: MutableList<out VFileEvent>) {
-    }
+    override fun before(events: MutableList<out VFileEvent>) {}
 
     override fun after(events: MutableList<out VFileEvent>) {
         if (!module.project.rustSettings.autoUpdateEnabled) return
@@ -114,9 +119,24 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
             val file = it.file ?: return@any false
             file.name == RustToolchain.CARGO_TOML && ModuleUtilCore.findModuleForFile(file, module.project) == module
         }
+
         if (needsUpdate) {
-            scheduleUpdate(toolchain)
+            requestUpdate(toolchain)
         }
+    }
+
+    private fun updateCargoProjectState(state: CargoProjectState) {
+        val projectData = state.projectData
+        if (projectData != null)
+            lock (lock) {
+                CargoProjectDescription.deserialize(projectData)?.let {
+                    module.messageBus
+                        .syncPublisher(CargoProjectWorkspace.UPDATES)
+                        .onProjectUpdated(it)
+
+                    cached = it
+                }
+            }
     }
 
     private inner class UpdateTask(
@@ -169,7 +189,8 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
                                     .mapNotNull { it.virtualFile }
 
                             module.updateLibrary(module.cargoLibraryName, libraryRoots)
-                            cargoProjectState = CargoProjectState(result.cargoProject.serialize())
+
+                            updateCargoProjectState(CargoProjectState(result.cargoProject.serialize()))
 
                             showBalloon("Project '${module.project.name}' successfully updated!", MessageType.INFO)
 
@@ -189,6 +210,11 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     private sealed class Result {
         class Ok(val cargoProject: CargoProjectDescription) : Result()
         class Err(val error: ExecutionException) : Result()
+    }
+
+    @TestOnly
+    fun setState(cargoProject: CargoProjectDescriptionData) {
+        updateCargoProjectState(CargoProjectState(cargoProject))
     }
 }
 
