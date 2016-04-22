@@ -1,7 +1,5 @@
 package org.rust.cargo.project.workspace.impl
 
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.SettableFuture
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
@@ -29,10 +27,12 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.util.*
-import java.util.concurrent.Future
+import org.rust.cargo.util.cargoLibraryName
+import org.rust.cargo.util.cargoProjectRoot
+import org.rust.cargo.util.updateLibrary
 import kotlin.properties.Delegates
 
+private val LOG = Logger.getInstance(CargoProjectWorkspaceImpl::class.java);
 
 @State(
     name = "CargoMetadata",
@@ -40,15 +40,14 @@ import kotlin.properties.Delegates
 )
 class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorkspace, PersistentStateComponent<CargoProjectState>, BulkFileListener {
 
-    private val DELAY = 1000 /* milliseconds */
-
-    private val LOG = Logger.getInstance(CargoProjectWorkspaceImpl::class.java)
+    private val DELAY_MILLIS = 1000
 
     /**
      * Alarm used to coalesce consecutive update requests.
-     * It uses pooled thread.
+     * It uses EDT thread, but the tasks are really tiny and
+     * only spawn background update.
      */
-    private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, null)
+    private val alarm = Alarm()
 
     private var cargoProjectState: CargoProjectState by Delegates.observable(CargoProjectState()) {
         prop, old, new ->
@@ -70,31 +69,21 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
      * Works in two phases. First `cargo metadata` is executed on the background thread. Then,
      * the actual Library update happens on the event dispatch thread.
      */
-    override fun scheduleUpdate(toolchain: RustToolchain): Future<CargoProjectDescription> {
-        val contentRoot = module.cargoProjectRoot ?: return Futures.immediateCancelledFuture<CargoProjectDescription>()
-
-        val delay = if (ApplicationManager.getApplication().isUnitTestMode) 0 else DELAY
+    override fun scheduleUpdate(toolchain: RustToolchain) {
+        val contentRoot = module.cargoProjectRoot ?: return
 
         val task = UpdateTask(toolchain, contentRoot.path, showFeedback = false)
-
         alarm.cancelAllRequests()
-
-        val f = SettableFuture.create<CargoProjectDescription>()
-
-        alarm.addRequest({ task.enqueue().flowIntoDiscardingResult(f, { projectDescription }) }, delay)
-
-        return f
+        val delay = if (ApplicationManager.getApplication().isUnitTestMode) 0 else DELAY_MILLIS
+        alarm.addRequest({ task.queue() }, delay)
     }
 
-    override fun updateNow(toolchain: RustToolchain): Future<CargoProjectDescription> {
-        val contentRoot = module.cargoProjectRoot ?: return Futures.immediateCancelledFuture<CargoProjectDescription>()
+    override fun updateNow(toolchain: RustToolchain) {
+        val contentRoot = module.cargoProjectRoot ?: return
 
         val task = UpdateTask(toolchain, contentRoot.path, showFeedback = true)
-
         alarm.cancelAllRequests()
-
-        return task .enqueue()
-                    .flowIntoDiscardingResult(SettableFuture.create<CargoProjectDescription>(), { projectDescription })
+        task.queue()
     }
 
     override fun loadState(state: CargoProjectState?) {
@@ -159,7 +148,6 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
                     showBalloon("Project '${module.project.name}' update failed: ${result.error.message}", MessageType.ERROR)
                     LOG.info("Project '${module.project.name}' update failed", result.error)
                 }
-
                 is Result.Ok  ->
                     ApplicationManager.getApplication().runWriteAction {
                         if (!module.isDisposed) {
