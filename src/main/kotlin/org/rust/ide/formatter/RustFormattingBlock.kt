@@ -88,7 +88,7 @@ private val BLOCKS_TOKEN_SET = TokenSet.create(
         ENUM_ITEM,
         STRUCT_DECL_ARGS,
         TRAIT_ITEM,
-        IMPL_MEMBERS_BLOCK,
+        IMPL_BODY,
         STRUCT_EXPR_BODY,
         MATCH_EXPR,
         ARG_LIST,

@@ -591,12 +591,12 @@ trait_ref ::= path_generic_args_without_colons
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl_item ::= UNSAFE? IMPL generic_params type where_clause? impl_members_block
-            | UNSAFE? IMPL generic_params '!'? trait_ref FOR (type where_clause? impl_members_block | '..' '{' '}') {
+impl_item ::= UNSAFE? IMPL generic_params type where_clause? impl_body
+            | UNSAFE? IMPL generic_params '!'? trait_ref FOR (type where_clause? impl_body | '..' '{' '}') {
   pin(".*") = "'{'"
 }
 
-impl_members_block ::= '{' inner_attr* impl_member* '}' { pin = 1 }
+impl_body ::= '{' inner_attr* impl_member* '}' { pin = 1 }
 
 // TODO: unify with trait_member?
 private impl_member ::= impl_method_member

@@ -40,7 +40,7 @@ FILE
             RustPathPartImpl(PATH_PART)
               PsiElement(<IDENTIFIER>)('S')
           PsiWhiteSpace(' ')
-          RustImplMembersBlockImpl(IMPL_MEMBERS_BLOCK)
+          RustImplBodyImpl(IMPL_BODY)
             PsiElement({)('{')
             PsiWhiteSpace('\n        ')
             PsiElement(})('}')
