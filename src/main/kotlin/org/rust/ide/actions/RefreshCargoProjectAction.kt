@@ -9,6 +9,7 @@ import com.intellij.util.containers.isNullOrEmpty
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.util.getComponentOrThrow
 import org.rust.cargo.util.getModules
 import org.rust.cargo.util.getServiceOrThrow
 
@@ -34,7 +35,7 @@ class RefreshCargoProjectAction : AnAction() {
         if (modules.isNullOrEmpty()) return
         ApplicationManager.getApplication().saveAll()
         for ((module, toolchain) in modules.orEmpty()) {
-            val service = module.getServiceOrThrow<CargoProjectWorkspace>()
+            val service = module.getComponentOrThrow<CargoProjectWorkspace>()
             service.requestUpdateUsing(toolchain, immediately = true)
         }
     }

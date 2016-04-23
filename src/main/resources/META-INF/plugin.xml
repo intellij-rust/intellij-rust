@@ -151,8 +151,6 @@
                              dynamic="true"/>
         <projectService serviceInterface="org.rust.cargo.project.settings.RustProjectSettingsService"
                         serviceImplementation="org.rust.cargo.project.settings.impl.RustProjectSettingsServiceImpl"/>
-        <moduleService serviceInterface="org.rust.cargo.project.workspace.CargoProjectWorkspace"
-                       serviceImplementation="org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl"/>
 
 
         <!-- Icon Provider -->
@@ -180,7 +178,10 @@
     </project-components>
 
     <module-components>
-        <!-- Add your modules components here -->
+        <component>
+            <interface-class>org.rust.cargo.project.workspace.CargoProjectWorkspace</interface-class>
+            <implementation-class>org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl</implementation-class>
+        </component>
     </module-components>
 
     <actions>

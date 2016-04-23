@@ -15,7 +15,7 @@ import org.rust.cargo.project.CargoProjectDescriptionData
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
 import org.rust.cargo.util.attachStandardLibrary
-import org.rust.cargo.util.getServiceOrThrow
+import org.rust.cargo.util.getComponentOrThrow
 import java.util.*
 
 abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), RustTestCase {
@@ -76,7 +76,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             super.configureModule(module, model, contentEntry)
 
             val moduleBaseDir = contentEntry.file!!.url
-            val metadataService = module.getServiceOrThrow<CargoProjectWorkspace>() as CargoProjectWorkspaceImpl
+            val metadataService = module.getComponentOrThrow<CargoProjectWorkspace>() as CargoProjectWorkspaceImpl
 
             metadataService.setState(testCargoProject(module, moduleBaseDir))
 

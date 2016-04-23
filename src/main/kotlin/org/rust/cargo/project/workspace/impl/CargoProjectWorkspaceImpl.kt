@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleComponent
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -35,7 +36,10 @@ import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 
 
-class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorkspace {
+/**
+ * [CargoProjectWorkspace] component implementation
+ */
+class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorkspace, ModuleComponent {
 
     private val DELAY = 1000 /* milliseconds */
 
@@ -57,14 +61,32 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
      */
     private var cached: CargoProjectDescription? = null
 
-    init {
+    /** Component hooks */
+
+    override fun getComponentName(): String = "org.rust.cargo.CargoProjectWorkspace"
+
+    override fun initComponent() {
         subscribeTo(VirtualFileManager.VFS_CHANGES, FileChangesWatcher())
 
         subscribeTo(CargoProjectWorkspaceListener.Topics.UPDATES, ProjectModelUpdater())
-        subscribeTo(CargoProjectWorkspaceListener.Topics.UPDATES, Notifier())
+        //subscribeTo(CargoProjectWorkspaceListener.Topics.UPDATES, Notifier())
+    }
+
+    override fun disposeComponent() {
+        alarm.dispose()
+    }
+
+    override fun projectClosed() { /* NOP */ }
+
+    override fun projectOpened() { /* NOP */ }
+
+    override fun moduleAdded() {
+        module.toolchain?.let { requestUpdateUsing(it, immediately = true) }
     }
 
     /**
+     * Requests to updates Rust libraries asynchronously. Consecutive requests are coalesced.
+     *
      * Works in two phases. First `cargo metadata` is executed on the background thread. Then,
      * the actual Library update happens on the event dispatch thread.
      */
@@ -77,11 +99,11 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
 
         alarm.cancelAllRequests()
 
-        if (immediately) {
-            task.enqueue()
-        } else {
+        if (immediately)
+            ApplicationManager.getApplication()
+                .invokeLater({ task.enqueue() })
+        else
             alarm.addRequest({ task.enqueue() }, delay, ModalityState.any())
-        }
     }
 
     /**

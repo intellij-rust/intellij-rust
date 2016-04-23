@@ -36,6 +36,16 @@ inline fun<reified T: Any> Module.getService(): T? =
 inline fun<reified T: Any> Module.getServiceOrThrow(): T =
     getService()!!
 
+/**
+ * Helper extracting generic component for the particular module
+ */
+inline fun<reified T: Any> Module.getComponent(): T? =
+    this.getComponent(T::class.java)
+
+inline fun<reified T: Any> Module.getComponentOrThrow(): T =
+    getComponent()!!
+
+
 
 /**
  * Extracts content- and library-(ordered)-entries for the given module
@@ -43,7 +53,7 @@ inline fun<reified T: Any> Module.getServiceOrThrow(): T =
 fun Module.getSourceAndLibraryRoots(): Collection<VirtualFile> =
     ModuleRootManager.getInstance(this).orderEntries.flatMap {
         it.getFiles(OrderRootType.CLASSES).toList() +
-            it.getFiles(OrderRootType.SOURCES).toList()
+        it.getFiles(OrderRootType.SOURCES).toList()
     }
 
 /**

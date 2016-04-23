@@ -11,6 +11,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener.UpdateResult
+import org.rust.cargo.util.getComponentOrThrow
 import org.rust.cargo.util.getServiceOrThrow
 
 class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
@@ -51,7 +52,7 @@ class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
     }
 
     private fun updateCargoProject() {
-        module.getServiceOrThrow<CargoProjectWorkspace>().requestUpdateUsing(module.toolchain!!)
+        module.getComponentOrThrow<CargoProjectWorkspace>().requestUpdateUsing(module.toolchain!!)
     }
 
     private fun extractReference(path: String): PsiReference {
