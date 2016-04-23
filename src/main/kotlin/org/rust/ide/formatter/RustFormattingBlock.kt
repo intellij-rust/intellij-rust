@@ -92,7 +92,8 @@ private val BLOCKS_TOKEN_SET = TokenSet.create(
         STRUCT_EXPR_BODY,
         MATCH_EXPR,
         ARG_LIST,
-        MATCH_BODY
+        MATCH_BODY,
+        TRAIT_BODY
 )
 
 private val BRACES_TOKEN_SET = TokenSet.create(

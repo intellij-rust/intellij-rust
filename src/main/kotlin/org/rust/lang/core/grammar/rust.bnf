@@ -552,7 +552,8 @@ enum_struct_field ::= outer_attr* IDENTIFIER type_ascription { pin = 2 }
 // Trait
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params? type_param_bounds? where_clause? '{' trait_member* '}'
+trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params? type_param_bounds? where_clause? trait_body
+trait_body ::= '{' trait_member* '}' { pin = 1 }
 
 // TODO: use upper rules and inheritance here
 private trait_member ::= trait_const_member
