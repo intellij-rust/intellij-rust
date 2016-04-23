@@ -216,14 +216,8 @@
     implements  ("scoped_for_decl") = "org.rust.lang.core.psi.RustDeclaringElement"
     mixin       ("scoped_for_decl") = "org.rust.lang.core.psi.impl.mixin.RustScopedForDeclImplMixin"
 
-    implements  ("param")       = "org.rust.lang.core.psi.RustDeclaringElement"
-    mixin       ("param")       = "org.rust.lang.core.psi.impl.mixin.RustParamImplMixin"
-
-    implements  ("anon_param")  = "org.rust.lang.core.psi.RustDeclaringElement"
-    mixin       ("anon_param")  = "org.rust.lang.core.psi.impl.mixin.RustAnonParamImplMixin"
-
-    implements  ("lambda_param")  = "org.rust.lang.core.psi.RustDeclaringElement"
-    mixin       ("lambda_param")  = "org.rust.lang.core.psi.impl.mixin.RustLambdaParamImplMixin"
+    implements  ("parameter")       = "org.rust.lang.core.psi.RustDeclaringElement"
+    mixin       ("parameter")       = "org.rust.lang.core.psi.impl.mixin.RustParameterImplMixin"
 
     implements  ("match_pat")   = "org.rust.lang.core.psi.RustDeclaringElement"
     mixin       ("match_pat")   = "org.rust.lang.core.psi.impl.mixin.RustMatchPatImplMixin"
@@ -267,6 +261,8 @@
     elementTypeFactory("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = "org.rust.lang.core.stubs.types.ElementFactoryKt.factory"
     stubClass         ("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = "org.rust.lang.core.stubs.RustItemStub"
 
+    elementType ("(fn|anon|lambda)_parameter") = parameter
+    elementType ("(fn|lambda)_parameters|fn_anon_parameters_with_self|fn_parameters_with_self") = parameters
 
     extends     ("(if|while)_let_expr") = scoped_let_expr
     extends     (".*_expr") = restricted_expr
@@ -369,17 +365,21 @@ private block_item_group ::= &(CONST? UNSAFE? extern_abi? FN) fn_item
 // Functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+// TODO: Maybe enforce @NotNull's in specific cases
+fake parameter  ::= pat? type?
+fake parameters ::= self_argument? parameter*
+
 private fn_header ::= CONST? UNSAFE? extern_abi? FN IDENTIFIER
 
 extern_abi ::= EXTERN STRING_LITERAL?
 
-fn_params ::= '(' !',' params ','? ')' { pin(".*") = 1 }
-private params ::= [ param (',' param)* ]
-param ::= pat type_ascription
+fn_parameters ::= '(' !',' fn_parameter_list ','? ')' { pin(".*") = 1 }
+private fn_parameter_list ::= [ fn_parameter (',' fn_parameter)* ]
+fn_parameter ::= pat ':' type
 
 ret_type ::= '->' (type | '!') { pin = 1 }
 
-fn_item ::= fn_header generic_params fn_params ret_type? where_clause? inner_attrs_and_block {
+fn_item ::= fn_header generic_params fn_parameters ret_type? where_clause? inner_attrs_and_block {
   pin(".*") = 1
 }
 
@@ -507,9 +507,9 @@ foreign_decl  ::= attrs_and_vis ( foreign_static_decl | foreign_fn_decl ) ';'
 foreign_static_decl ::= STATIC MUT? IDENTIFIER type_ascription
 foreign_fn_decl ::= FN IDENTIFIER generic_params fn_params_allow_variadic ret_type? where_clause?
 
-private fn_params_allow_variadic ::= '(' params ',' '...' ')'
-                                   | '(' params ',' ')'
-                                   | '(' params ')'
+private fn_params_allow_variadic ::= '(' fn_parameter_list ',' '...' ')'
+                                   | '(' fn_parameter_list ',' ')'
+                                   | '(' fn_parameter_list ')'
                                    | '(' ')'
 
 
@@ -565,17 +565,16 @@ private const_default ::= '=' any_expr
 
 trait_type_member ::= outer_attr* TYPE_KW type_param ';'
 
-trait_method_member ::= outer_attr* fn_header generic_params fn_decl_with_self_allow_anon_params where_clause? (';' | inner_attrs_and_block)
+trait_method_member ::= outer_attr* fn_header generic_params fn_anon_parameters_with_self ret_type? where_clause? (';' | inner_attrs_and_block)
 
-private fn_decl_with_self_allow_anon_params ::= fn_anon_params_with_self ret_type?
-private fn_anon_params_with_self ::= '(' self_argument comma_anon_params? ')'
-                                   | '(' anon_params? ')'
+fn_anon_parameters_with_self ::= '(' self_argument comma_anon_parameters? ')'
+                               | '(' anon_parameters? ')'
 
-private comma_anon_params ::= ',' [ anon_params ','? ]
+private comma_anon_parameters ::= ',' [ anon_parameters ','? ]
 
-anon_params ::= anon_param (',' anon_param)*
+private anon_parameters ::= anon_parameter (',' anon_parameter)*
 
-anon_param ::= [ named_arg ':' ] type
+anon_parameter ::= [ named_arg ':' ] type
 
 private named_arg ::= &( IDENTIFIER
                        | '_'
@@ -605,16 +604,14 @@ private impl_member ::= impl_method_member
                       | impl_macro_member
                       | impl_type_member
 
-impl_method_member ::= attrs_and_vis fn_header generic_params fn_decl_with_self where_clause? inner_attrs_and_block
+impl_method_member ::= attrs_and_vis fn_header generic_params fn_parameters_with_self ret_type? where_clause? inner_attrs_and_block
 
-private fn_decl_with_self ::= fn_params_with_self ret_type?
-
-private fn_params_with_self ::= '(' self_argument comma_params? ')'
-                              | '(' params? ')'
+fn_parameters_with_self ::= '(' self_argument comma_params? ')'
+                          | '(' fn_parameter_list? ')'
 
 self_argument ::= [ '&' LIFETIME? ] MUT? SELF type_ascription?
 
-private comma_params ::= ',' [ params ','? ]
+private comma_params ::= ',' [ fn_parameter_list ','? ]
 
 impl_const_member ::= attrs_and_vis CONST static_decl ';'
 
@@ -664,10 +661,10 @@ type_qual_path ::= << qualified_path view_path_prefix >>
 
 private types ::= type !'=' (',' type !'=')*
 
-private fn_anon_params ::= '(' anon_param anon_params_allow_variadic_tail ')'
+private fn_anon_params ::= '(' anon_parameter anon_params_allow_variadic_tail ')'
                          | '(' ')'
 
-private anon_params_allow_variadic_tail ::= [ ',' [ '...' | anon_param anon_params_allow_variadic_tail ] ]
+private anon_params_allow_variadic_tail ::= [ ',' [ '...' | anon_parameter anon_params_allow_variadic_tail ] ]
 
 
 
@@ -762,7 +759,7 @@ private path_generic_args_without_colons_part_inner ::= ident_or_self_or_super [
 //    <T>::c<V,W>
 //    <T as Foo>::c(V) -> W
 //
-private meta qualified_path ::= '<' type [ AS trait_ref ] '>' '::' << param >>
+private meta qualified_path ::= '<' type [ AS trait_ref ] '>' '::' <<param>>
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -908,8 +905,9 @@ try_expr ::= restricted_expr '?'
 
 unary_expr ::= (BOX | '-' | '*' | '!' | ('&' | '&&') MUT?) restricted_expr
 
-lambda_expr ::= MOVE? ('|' [ <<comma_separated_list lambda_param>> ] '|') ret_type? any_expr
-lambda_param ::= pat type_ascription?
+lambda_expr ::= MOVE? lambda_parameters ret_type? any_expr
+lambda_parameters ::= '|' [ <<comma_separated_list lambda_parameter>> ] '|'
+lambda_parameter ::= pat type_ascription?
 
 struct_expr ::= << checkStructAllowed >> path_generic_args_with_colons struct_expr_body
 

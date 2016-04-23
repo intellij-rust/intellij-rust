@@ -13,7 +13,7 @@ abstract class RustImplMethodImplMixinMember(node: ASTNode) : RustNamedElementIm
                                                             , RustImplMethodMember {
 
     override val declarations: Collection<RustDeclaringElement>
-        get() = listOfNotNull(selfArgument) + paramList.orEmpty()
+        get() = listOfNotNull(parameters.selfArgument) + parameters.parameterList.orEmpty()
 
     override fun getIcon(flags: Int): Icon? {
         var icon = RustIcons.METHOD
@@ -28,4 +28,4 @@ abstract class RustImplMethodImplMixinMember(node: ASTNode) : RustNamedElementIm
 
 }
 
-val RustImplMethodMember.isStatic: Boolean get() = selfArgument == null
+val RustImplMethodMember.isStatic: Boolean get() = parameters.selfArgument == null

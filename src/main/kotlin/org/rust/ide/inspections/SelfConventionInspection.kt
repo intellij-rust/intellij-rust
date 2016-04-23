@@ -15,7 +15,7 @@ class SelfConventionInspection : RustLocalInspectionTool() {
             override fun visitImplMethodMember(m: RustImplMethodMember) {
                 val convention = SELF_CONVENTIONS.find { m.identifier.text.startsWith(it.prefix) } ?: return
                 if (m.selfType !in convention.selfTypes) {
-                    holder.registerProblem(m.selfArgument ?: m.identifier, convention)
+                    holder.registerProblem(m.parameters.selfArgument ?: m.identifier, convention)
                 }
             }
         }
@@ -40,7 +40,7 @@ enum class SelfType(val description: String) {
 }
 
 private val RustImplMethodMember.selfType: SelfType get() {
-    val self = selfArgument
+    val self = parameters.selfArgument
     return when {
         self == null -> SelfType.NO_SELF
         self.and == null -> SelfType.SELF

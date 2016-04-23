@@ -359,7 +359,7 @@ FILE
         PsiWhiteSpace(' ')
         PsiElement(fn)('fn')
         PsiElement(()('(')
-        RustAnonParamImpl(ANON_PARAM)
+        RustParameterImpl(PARAMETER)
           RustPatBindingImpl(PAT_BINDING)
             PsiElement(<IDENTIFIER>)('x')
           PsiElement(:)(':')

@@ -32,3 +32,8 @@ impl<'a, T> Iterator for Iter<'a, T> + 'a {
 
     foo!();
 }
+
+impl<T> GenVal<T> {
+    fn value(&self) -> &T {}
+    fn foo<A, B>(&mut self, a: i32, b: i32) -> &A {}
+}

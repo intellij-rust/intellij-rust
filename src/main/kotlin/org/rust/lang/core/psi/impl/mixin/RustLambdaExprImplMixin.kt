@@ -9,6 +9,6 @@ abstract class RustLambdaExprImplMixin(node: ASTNode)    : RustNamedElementImpl(
                                                          , RustLambdaExpr {
 
     override val declarations: List<RustDeclaringElement>
-        get() = lambdaParamList.orEmpty()
+        get() = parameters.parameterList.orEmpty()
 }
 

@@ -9,7 +9,7 @@ class RustTraitMethodTreeElement(element: RustTraitMethodMember) : PsiTreeElemen
     override fun getPresentableText(): String? {
         var text = element?.identifier?.text ?: return "<unknown>"
 
-        element?.anonParams?.anonParamList?.let { params ->
+        element?.parameters?.parameterList?.let { params ->
             text += "(${params.map { it.text }.joinToString()})"
         }
 
