@@ -130,7 +130,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
         ApplicationManager.getApplication().assertIsDispatchThread()
 
         if (!module.isDisposed)
-            module.messageBus
+            messageBus
                 .syncPublisher(CargoProjectWorkspaceListener.Topics.UPDATES)
                 .onWorkspaceUpdateCompleted(r)
     }

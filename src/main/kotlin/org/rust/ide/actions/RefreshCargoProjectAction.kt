@@ -50,7 +50,7 @@ class RefreshCargoProjectAction : AnAction() {
     /**
      * Project-update task's notifier
      */
-    inner class Notifier(val module: Module) : CargoProjectWorkspaceListener {
+    private class Notifier(val module: Module) : CargoProjectWorkspaceListener {
 
         val connectionDisposer = Disposer.newDisposable()
 
