@@ -100,10 +100,9 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
         alarm.cancelAllRequests()
 
         if (immediately)
-            ApplicationManager.getApplication()
-                .invokeLater({ task.enqueue() })
+            task.queue()
         else
-            alarm.addRequest({ task.enqueue() }, delay, ModalityState.any())
+            alarm.addRequest({ task.queue() }, delay, ModalityState.any())
     }
 
     /**
