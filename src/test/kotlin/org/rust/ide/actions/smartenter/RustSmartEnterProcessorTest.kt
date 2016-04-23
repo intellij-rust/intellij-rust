@@ -17,20 +17,20 @@ class RustSmartEnterProcessorTest : RustTestCaseBase() {
     fun getSmartProcessors(language: Language) = SmartEnterProcessors.INSTANCE.forKey(language)
 
     private fun doTest() {
-        myFixture.configureByFile("$fileName");
-        val processors = getSmartProcessors(RustLanguage);
+        myFixture.configureByFile("$fileName")
+        val processors = getSmartProcessors(RustLanguage)
 
         val writeCommand = object : WriteCommandAction<RustSmartEnterProcessor>(project) {
             override fun run(result: Result<RustSmartEnterProcessor>) {
-                val editor = myFixture.editor;
+                val editor = myFixture.editor
                 for (processor in processors) {
-                    processor.process(project, editor, myFixture.file);
+                    processor.process(project, editor, myFixture.file)
                 }
             }
         }
-        writeCommand.execute();
+        writeCommand.execute()
 
-        myFixture.checkResultByFile("$fileName".replace(".rs", "_after.rs"), true);
+        myFixture.checkResultByFile("$fileName".replace(".rs", "_after.rs"), true)
     }
 
     fun testFixSimpleMethodCall() = doTest()

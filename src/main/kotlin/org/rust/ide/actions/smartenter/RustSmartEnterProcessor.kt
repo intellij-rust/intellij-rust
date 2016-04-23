@@ -17,7 +17,7 @@ class RustSmartEnterProcessor : SmartEnterProcessorWithFixers() {
     init {
         addFixers(
             MethodCallFixer(),
-            SemicolonFixer());
+            SemicolonFixer())
 
         addEnterProcessors(
             PlainEnterProcessor())
@@ -29,9 +29,9 @@ class RustSmartEnterProcessor : SmartEnterProcessorWithFixers() {
 
         var statementAtCaret = PsiTreeUtil.getParentOfType(atCaret,
             RustStmt::class.java,
-            RustBlock::class.java);
+            RustBlock::class.java)
 
-        return statementAtCaret;
+        return statementAtCaret
     }
 
     private inner class PlainEnterProcessor : SmartEnterProcessorWithFixers.FixEnterProcessor() {

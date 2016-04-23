@@ -11,10 +11,9 @@ import org.rust.lang.core.psi.RustCallExpr
 class MethodCallFixer : SmartEnterProcessorWithFixers.Fixer<RustSmartEnterProcessor>() {
     override fun apply(editor: Editor, processor: RustSmartEnterProcessor, element: PsiElement) {
         if (element is RustCallExpr) {
-            val argList = element.argList;
-
+            val argList = element.argList
             if (argList.lastChild != null && argList.lastChild.text != ")") {
-                editor.document.insertString(element.getTextRange().endOffset, ")");
+                editor.document.insertString(element.getTextRange().endOffset, ")")
             }
         }
     }
