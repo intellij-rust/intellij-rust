@@ -933,8 +933,8 @@ scoped_for_decl ::= pat IN no_struct_lit_expr
 
 for_expr ::= [ LIFETIME ':' ] FOR scoped_for_decl block { pin = "IN" }
 
-match_expr ::= MATCH no_struct_lit_expr '{' match_arm* '}'
-
+match_expr ::= MATCH no_struct_lit_expr match_body
+match_body ::= '{' match_arm* '}' { pin = 1 }
 match_arm ::= outer_attr* match_pat '=>' (block_expr !('.' | '?') ','? | any_expr (',' | &'}'))
 match_pat ::= pat ('|' pat)* (IF any_expr)?
 
