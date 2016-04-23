@@ -55,7 +55,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     /**
      * Lock to guard reads/updates to [cached]
      */
-    private var lock: Lock = ReentrantLock()
+    private val lock: Lock = ReentrantLock()
 
     /**
      * Cached instance of the latest [CargoProjectDescription] instance synced with `Cargo.toml`
@@ -66,7 +66,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
      * Isolated message-bus to insulate cargo-project-workspace related messaging
      * infra from general-purpose listeners, and properly manage listeners' lifetimes
      */
-    private var messageBus: MessageBus? = null
+    private lateinit var messageBus: MessageBus
 
     /** Component hooks */
 
@@ -81,8 +81,8 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     }
 
     override fun disposeComponent() {
-        alarm       .dispose()
-        messageBus!!.dispose()
+        alarm.dispose()
+        messageBus.dispose()
     }
 
     override fun projectClosed() { /* NOP */ }
