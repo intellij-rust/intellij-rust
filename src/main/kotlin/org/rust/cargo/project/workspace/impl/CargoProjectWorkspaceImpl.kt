@@ -139,12 +139,12 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
      * Subscribes given listener to the supplied topic on the [CargoProjectWorkspace]'s private
      * message-bus
      */
-    override fun <L> subscribeTo(t: Topic<L>, listener: L, disposer: Disposable?) {
+    override fun <L: Any> subscribeTo(t: Topic<L>, listener: L, disposer: Disposable?) {
         val conn =
             messageBus
                 .connect()
                 .apply {
-                    this.subscribe(t, listener!!)
+                    this.subscribe(t, listener)
                 }
 
         disposer?.let { Disposer.register(disposer, conn) }

@@ -31,6 +31,6 @@ interface CargoProjectWorkspace {
     /**
      * Subscribes given listener to the supplied topic
      */
-    fun <L> subscribeTo(t: Topic<L>, listener: L, disposer: Disposable? = null)
+    fun <L: Any> subscribeTo(t: Topic<L>, listener: L, disposer: Disposable? = null)
 
 }
