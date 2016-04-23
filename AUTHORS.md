@@ -4,6 +4,7 @@ IntelliJ would never see support for the Rust programming language without these
 
   * [A.J. Gardner](https://github.com/mrhota)
   * [Aleksey Kladov](https://github.com/matklad)
+  * [Alexandru Pană](https://github.com/alexpana)
   * [Alexey Kudinkin](https://github.com/alexeykudinkin)
   * [Evgeny Kurbatsky](https://github.com/atsky)
   * [Jihui Zheng](https://github.com/zjhmale)
