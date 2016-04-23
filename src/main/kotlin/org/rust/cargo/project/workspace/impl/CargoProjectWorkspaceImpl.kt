@@ -86,6 +86,11 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
         task.queue()
     }
 
+    @TestOnly
+    fun flushUpdates() {
+        alarm.flush()
+    }
+
     override fun loadState(state: CargoProjectState?) {
         cargoProjectState = state ?: CargoProjectState()
     }
