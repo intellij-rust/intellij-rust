@@ -1,5 +1,8 @@
 package org.rust.cargo.project.workspace
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.messages.Topic
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.toolchain.RustToolchain
 
@@ -24,5 +27,10 @@ interface CargoProjectWorkspace {
      * NOTA BENE: In the current implementation it's SYNCHRONOUS
      */
     val projectDescription: CargoProjectDescription?
+
+    /**
+     * Subscribes given listener to the supplied topic
+     */
+    fun <L> subscribeTo(t: Topic<L>, listener: L, disposer: Disposable? = null)
 
 }

@@ -5,13 +5,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.isNullOrEmpty
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
+import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.getComponentOrThrow
 import org.rust.cargo.util.getModules
-import org.rust.cargo.util.getServiceOrThrow
 
 class RefreshCargoProjectAction : AnAction() {
     init {
@@ -35,8 +38,33 @@ class RefreshCargoProjectAction : AnAction() {
         if (modules.isNullOrEmpty()) return
         ApplicationManager.getApplication().saveAll()
         for ((module, toolchain) in modules.orEmpty()) {
-            val service = module.getComponentOrThrow<CargoProjectWorkspace>()
-            service.requestUpdateUsing(toolchain, immediately = true)
+            val workspace = module.getComponentOrThrow<CargoProjectWorkspace>()
+
+            Notifier(module).let {
+                workspace.subscribeTo(CargoProjectWorkspaceListener.Topics.UPDATES, it, it.connectionDisposer)
+                workspace.requestUpdateUsing(toolchain, immediately = true)
+            }
+        }
+    }
+
+    /**
+     * Project-update task's notifier
+     */
+    inner class Notifier(val module: Module) : CargoProjectWorkspaceListener {
+
+        val connectionDisposer = Disposer.newDisposable()
+
+        override fun onWorkspaceUpdateCompleted(r: CargoProjectWorkspaceListener.UpdateResult) {
+            when (r) {
+                is CargoProjectWorkspaceListener.UpdateResult.Ok  -> showBalloon("Project '${module.project.name}' successfully updated!", MessageType.INFO)
+                is CargoProjectWorkspaceListener.UpdateResult.Err -> showBalloon("Project '${module.project.name}' update failed: ${r.error.message}", MessageType.ERROR)
+            }
+
+            Disposer.dispose(connectionDisposer)
+        }
+
+        private fun showBalloon(message: String, type: MessageType) {
+            PopupUtil.showBalloonForActiveComponent(message, type)
         }
     }
 }

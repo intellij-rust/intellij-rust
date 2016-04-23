@@ -3,6 +3,7 @@ package org.rust.cargo.project.workspace.impl
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
@@ -11,13 +12,14 @@ import com.intellij.openapi.module.ModuleComponent
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.Alarm
+import com.intellij.util.messages.MessageBus
+import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.CargoProjectDescription
@@ -29,7 +31,6 @@ import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener.UpdateResu
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoLibraryName
 import org.rust.cargo.util.cargoProjectRoot
-import org.rust.cargo.util.enqueue
 import org.rust.cargo.util.updateLibrary
 import org.rust.lang.utils.lock
 import java.util.concurrent.locks.Lock
@@ -61,19 +62,27 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
      */
     private var cached: CargoProjectDescription? = null
 
+    /**
+     * Isolated message-bus to insulate cargo-project-workspace related messaging
+     * infra from general-purpose listeners, and properly manage listeners' lifetimes
+     */
+    private var messageBus: MessageBus? = null
+
     /** Component hooks */
 
     override fun getComponentName(): String = "org.rust.cargo.CargoProjectWorkspace"
 
     override fun initComponent() {
+        messageBus = MessageBusFactory.newMessageBus(CargoProjectWorkspace::class.java.name, module.messageBus)
+
         subscribeTo(VirtualFileManager.VFS_CHANGES, FileChangesWatcher())
 
         subscribeTo(CargoProjectWorkspaceListener.Topics.UPDATES, ProjectModelUpdater())
-        //subscribeTo(CargoProjectWorkspaceListener.Topics.UPDATES, Notifier())
     }
 
     override fun disposeComponent() {
-        alarm.dispose()
+        alarm       .dispose()
+        messageBus!!.dispose()
     }
 
     override fun projectClosed() { /* NOP */ }
@@ -124,6 +133,20 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
             module.messageBus
                 .syncPublisher(CargoProjectWorkspaceListener.Topics.UPDATES)
                 .onWorkspaceUpdateCompleted(r)
+    }
+
+    /**
+     * Subscribes given listener to the supplied topic on the [CargoProjectWorkspace]'s private
+     * message-bus
+     */
+    override fun <L> subscribeTo(t: Topic<L>, listener: L, disposer: Disposable?) {
+        val conn = messageBus!!
+            .connect().let {
+                it.subscribe(t, listener!!)
+                it
+            }
+
+        disposer?.let { Disposer.register(disposer, conn) }
     }
 
     private inner class UpdateTask(
@@ -179,23 +202,6 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     }
 
     /**
-     * Project-update task's notifier
-     */
-    inner class Notifier : CargoProjectWorkspaceListener {
-
-        override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
-            when (r) {
-                is UpdateResult.Ok  -> showBalloon("Project '${module.project.name}' successfully updated!", MessageType.INFO)
-                is UpdateResult.Err -> showBalloon("Project '${module.project.name}' update failed: ${r.error.message}", MessageType.ERROR)
-            }
-        }
-
-        private fun showBalloon(message: String, type: MessageType) {
-            PopupUtil.showBalloonForActiveComponent(message, type)
-        }
-    }
-
-    /**
      * IDEA's project model updater
      */
     inner class ProjectModelUpdater : CargoProjectWorkspaceListener {
@@ -237,10 +243,6 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
                 requestUpdateUsing(toolchain)
             }
         }
-    }
-
-    private inline fun <reified L> subscribeTo(t: Topic<L>, listener: L) {
-        module.messageBus.connect().subscribe(t, listener!!)
     }
 
     @TestOnly
