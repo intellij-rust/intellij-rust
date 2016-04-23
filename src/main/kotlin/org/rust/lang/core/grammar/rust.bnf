@@ -263,6 +263,7 @@
 
     elementType ("(fn|anon|lambda)_parameter") = parameter
     elementType ("(fn|lambda)_parameters|fn_anon_parameters_with_self|fn_parameters_with_self") = parameters
+    extends     ("fn_type_params") = parameters
 
     extends     ("(if|while)_let_expr") = scoped_let_expr
     extends     (".*_expr") = restricted_expr
@@ -641,7 +642,7 @@ ptr_type ::= '*' [ MUT | CONST ] type
 
 ref_type ::= ( '&' | '&&' ) [ LIFETIME? MUT? ] type
 
-bare_fn_type ::= [ UNSAFE? extern_abi? ] FN fn_anon_params ret_type?
+bare_fn_type ::= [ UNSAFE? extern_abi? ] FN fn_type_params ret_type?
 
 tuple_type ::= '(' [ <<comma_separated_list type>> ] ')'
 
@@ -662,8 +663,7 @@ type_qual_path ::= << qualified_path view_path_prefix >>
 
 private types ::= type !'=' (',' type !'=')*
 
-private fn_anon_params ::= '(' anon_parameter anon_params_allow_variadic_tail ')'
-                         | '(' ')'
+fn_type_params ::= '(' [ anon_parameter anon_params_allow_variadic_tail ] ')' { pin = 1 }
 
 private anon_params_allow_variadic_tail ::= [ ',' [ '...' | anon_parameter anon_params_allow_variadic_tail ] ]
 
@@ -749,8 +749,9 @@ path_generic_args_without_colons_part_leftish ::= path_generic_args_without_colo
   elementType = path_part
 }
 
-private path_generic_args_without_colons_part_inner ::= ident_or_self_or_super [ generic_args | '(' [ types ','? ] ')' ret_type? ]
+private path_generic_args_without_colons_part_inner ::= ident_or_self_or_super [ generic_args | type_list ret_type? ]
 
+type_list ::= '(' [ types ','? ] ')' { pin = 1 }
 
 //
 // Qualified paths
