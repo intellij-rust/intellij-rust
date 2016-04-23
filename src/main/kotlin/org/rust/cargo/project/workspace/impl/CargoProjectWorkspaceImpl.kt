@@ -48,7 +48,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
 
     /**
      * Alarm used to coalesce consecutive update requests.
-     * It uses pooled thread.
+     * It uses dispatch-thread.
      */
     private val alarm = Alarm()
 
@@ -140,11 +140,12 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
      * message-bus
      */
     override fun <L> subscribeTo(t: Topic<L>, listener: L, disposer: Disposable?) {
-        val conn = messageBus!!
-            .connect().let {
-                it.subscribe(t, listener!!)
-                it
-            }
+        val conn =
+            messageBus
+                .connect()
+                .apply {
+                    this.subscribe(t, listener!!)
+                }
 
         disposer?.let { Disposer.register(disposer, conn) }
     }
