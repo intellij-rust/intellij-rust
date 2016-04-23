@@ -21,7 +21,7 @@ class RustTraitTreeElement(element: RustTraitItem) : PsiTreeElementBase<RustTrai
     }
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> =
-        element?.traitMethodMemberList?.let { methods ->
+        element?.traitBody?.traitMethodMemberList?.let { methods ->
             methods.filterNotNull()
                 .map { RustTraitMethodTreeElement(it) }
         }.orEmpty()
