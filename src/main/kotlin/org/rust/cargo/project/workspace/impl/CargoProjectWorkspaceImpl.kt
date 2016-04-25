@@ -101,9 +101,6 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
      */
     override fun requestUpdateUsing(toolchain: RustToolchain, immediately: Boolean) {
         val contentRoot = module.cargoProjectRoot ?: return
-
-        val delay = if (ApplicationManager.getApplication().isUnitTestMode) 0 else DELAY
-
         val task = UpdateTask(toolchain, contentRoot.path)
 
         alarm.cancelAllRequests()
@@ -111,7 +108,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
         if (immediately)
             task.queue()
         else
-            alarm.addRequest({ task.queue() }, delay, ModalityState.any())
+            alarm.addRequest({ task.queue() }, DELAY, ModalityState.any())
     }
 
     /**
