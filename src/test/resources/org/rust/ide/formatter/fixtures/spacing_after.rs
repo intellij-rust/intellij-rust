@@ -1,5 +1,7 @@
 #![stable(feature = "rust1", since = "1.0.0")]
 
+extern crate std as ruststd;
+
 use core::hash::{self, Hash};
 use core::intrinsics::{arith_offset, assume};
 use core::iter::FromIterator;
