@@ -3,6 +3,7 @@ package org.rust.cargo.project.settings.ui
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
@@ -71,6 +72,14 @@ class RustProjectSettingsPanel {
             toolchainLocationField.text = value.toolchain?.location
             autoUpdateEnabled.isSelected = value.autoUpdateEnabled
         }
+
+    @Throws(ConfigurationException::class)
+    fun validate() {
+        val toolchain = data.toolchain ?: return
+        if (!toolchain.looksLikeValidToolchain()) {
+            throw ConfigurationException("Invalid toolchain location: can't find cargo in ${toolchain.location}")
+        }
+    }
 
     private fun listenForUpdates(textField: JTextField) {
         var previousLocation = textField.text

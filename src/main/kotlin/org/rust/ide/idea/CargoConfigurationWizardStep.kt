@@ -5,6 +5,7 @@ import com.intellij.ide.util.importProject.ProjectDescriptor
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.roots.ModifiableRootModel
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
@@ -29,6 +30,12 @@ class CargoConfigurationWizardStep(
         newDescriptor.addConfigurationUpdater(updater)
 
         projectDescriptor.modules = listOf(newDescriptor)
+    }
+
+    @Throws(ConfigurationException::class)
+    override fun validate(): Boolean {
+        cargoSettingsPanel.validate()
+        return true
     }
 
     companion object {
