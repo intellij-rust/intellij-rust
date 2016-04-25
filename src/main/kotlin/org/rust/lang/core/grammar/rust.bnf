@@ -299,7 +299,7 @@ root ::= file_mod_item
 //  Its marked left just to impede GK from collapsing it in the
 //  case there're no `SHEBANG_LINE` & it starts with `inner_attrs` or `item`
 //
-left file_mod_item ::= [ SHEBANG_LINE ] inner_attr* item * {
+left file_mod_item ::= [ SHEBANG_LINE ] inner_attr* docs_and_item* {
   extends = mod_item
 }
 
@@ -344,6 +344,8 @@ fake item_ ::= attrs_and_vis {
 upper item ::= << injectInto attrs_and_vis item_inner >> {
   elementType = item_
 }
+
+private docs_and_item ::= item <<bindDocComments>>
 
 private stmt_item_group ::= static_item
                           | const_item
@@ -524,7 +526,7 @@ extern_crate_item ::= EXTERN CRATE IDENTIFIER alias? ';'
 
 mod_decl_item ::= MOD IDENTIFIER ';'
 
-mod_item ::= MOD IDENTIFIER '{' inner_attr* item * '}' {
+mod_item ::= MOD IDENTIFIER '{' inner_attr* docs_and_item* '}' {
   pin(".*") = 3
 }
 
@@ -1108,7 +1110,7 @@ inner_attrs_and_block ::= '{' inner_attr* stmt_* any_expr? '}' {
 
 
 expr_stmt   ::= outer_attr? ( block_expr !('.' | '?') ';'? | any_expr ';' )
-decl_stmt   ::= item | outer_attr? let_decl
+decl_stmt   ::= docs_and_item | outer_attr? let_decl
 empty_stmt  ::= ';'
 
 // TODO(kudinkin):  That's a hack to overcome GK's bug

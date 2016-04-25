@@ -2,12 +2,15 @@ package org.rust.lang.core.parser
 
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilderUtil
+import com.intellij.lang.WhitespacesBinders
 import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.openapi.util.Key
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.lexer.containsEOL
 import org.rust.lang.core.psi.RustCompositeElementTypes
+import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.utils.Cookie
 import org.rust.lang.utils.using
@@ -24,6 +27,10 @@ object RustParserUtil : GeneratedParserUtilBase() {
         putUserData(STRUCT_ALLOWED, value)
         return r
     }
+
+    private val docCommentBinder = WhitespacesBinders.leadingCommentsBinder(
+        TokenSet.create(RustTokenElementTypes.OUTER_DOC_COMMENT)
+    )
 
 
     //
@@ -64,6 +71,11 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
         drop(m)
         return false;
+    }
+
+    @JvmStatic fun bindDocComments(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int): Boolean {
+        (b.latestDoneMarker as PsiBuilder.Marker).setCustomEdgeTokenBinders(docCommentBinder, null)
+        return true
     }
 
     // Parses either a paren_expr (92) or a tuple_expr (92, ) by postponing the decision of
