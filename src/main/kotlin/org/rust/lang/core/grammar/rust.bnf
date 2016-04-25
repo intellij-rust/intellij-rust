@@ -388,7 +388,7 @@ foreign_fn_parameters  ::= <<variadic_params_impl fn_parameter>>
 fn_type_parameters     ::= <<variadic_params_impl anon_parameter>>
 path_parameters        ::= '(' [ <<comma_separated_list path_parameter>> ] ')' { pin = 1 }
 
-private meta variadic_params_impl ::= '(' [ <<param>> (',' <<param>>)*  [',' | '...' ] ] ')' { pin = 1 }
+private meta variadic_params_impl ::= '(' [ <<param>> (',' <<param>>)*  [',' '...'? ] ] ')' { pin = 1 }
 private meta method_params_impl ::= '(' ( self_argument [ ',' [ <<comma_separated_list <<param>>>> ] ]
                                         | [ <<comma_separated_list <<param>>>> ] ) ')' { pin = 1 }
 

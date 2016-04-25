@@ -27,6 +27,7 @@ class RustCompleteParsingTestCase : RustParsingTestCaseBase("well-formed") {
     fun testRanges()                = doTest(true)
     fun testExternCrates()          = doTest(true)
     fun testExternFns()             = doTest(true)
+    fun testExternBlock()           = doTest(true)
     fun testSuperPaths()            = doTest(true)
     fun testPrecedence()            = doTest(true)
     fun testWayTooManyParens()      = doTest(true)
