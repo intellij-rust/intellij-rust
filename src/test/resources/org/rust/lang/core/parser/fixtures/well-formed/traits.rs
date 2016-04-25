@@ -10,3 +10,7 @@ fn foo() {
     trait Inner {};
     unsafe trait UnsafeInner {};
 }
+
+trait bar<T> {
+    fn baz(&self,);
+}
