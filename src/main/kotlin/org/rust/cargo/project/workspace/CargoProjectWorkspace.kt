@@ -29,7 +29,8 @@ interface CargoProjectWorkspace {
     val projectDescription: CargoProjectDescription?
 
     /**
-     * Subscribes given listener to the supplied topic
+     * Subscribes given listener to the supplied topic on the [CargoProjectWorkspace]'s private
+     * message-bus
      */
     fun <L: Any> subscribeTo(t: Topic<L>, listener: L, disposer: Disposable? = null)
 

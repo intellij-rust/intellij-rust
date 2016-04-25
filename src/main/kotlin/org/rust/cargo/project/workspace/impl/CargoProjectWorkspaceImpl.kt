@@ -76,8 +76,6 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
         messageBus = MessageBusFactory.newMessageBus(CargoProjectWorkspace::class.java.name, module.messageBus)
 
         subscribeTo(VirtualFileManager.VFS_CHANGES, FileChangesWatcher())
-
-        subscribeTo(CargoProjectWorkspaceListener.Topics.UPDATES, ProjectModelUpdater())
     }
 
     override fun disposeComponent() {
@@ -132,6 +130,24 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
                 .onWorkspaceUpdateCompleted(r)
     }
 
+    private fun updateModuleDependencies(r: UpdateResult) {
+        ApplicationManager.getApplication().assertIsDispatchThread()
+
+        when (r) {
+            is UpdateResult.Ok ->
+                ApplicationManager.getApplication().runWriteAction {
+                    if (!module.isDisposed) {
+                        val libraryRoots =
+                            r.projectDescription.packages
+                                .filter { !it.isModule }
+                                .mapNotNull { it.virtualFile }
+
+                        module.updateLibrary(module.cargoLibraryName, libraryRoots)
+                    }
+                }
+        }
+    }
+
     /**
      * Subscribes given listener to the supplied topic on the [CargoProjectWorkspace]'s private
      * message-bus
@@ -184,6 +200,8 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
             val r = requireNotNull(result)
 
             lock (lock) {
+                updateModuleDependencies(r);
+
                 cached = when (r) {
                     is UpdateResult.Ok -> r.projectDescription
                     else               -> null
@@ -195,28 +213,6 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
             when (r) {
                 is UpdateResult.Ok  -> LOG.info("Project '${module.project.name}' successfully updated")
                 is UpdateResult.Err -> LOG.info("Project '${module.project.name}' update failed", r.error)
-            }
-        }
-    }
-
-    /**
-     * IDEA's project model updater
-     */
-    inner class ProjectModelUpdater : CargoProjectWorkspaceListener {
-
-        override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
-            when (r) {
-                is UpdateResult.Ok ->
-                    ApplicationManager.getApplication().runWriteAction {
-                        if (!module.isDisposed) {
-                            val libraryRoots =
-                                r.projectDescription.packages
-                                    .filter { !it.isModule }
-                                    .mapNotNull { it.virtualFile }
-
-                            module.updateLibrary(module.cargoLibraryName, libraryRoots)
-                        }
-                    }
             }
         }
     }
