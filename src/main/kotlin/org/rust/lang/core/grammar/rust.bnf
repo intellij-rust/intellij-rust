@@ -1059,7 +1059,7 @@ item_macro_arg ::= '(' token_trees ')' ';'
 
 try_macro_args ::= <<macro_args_delim any_expr>>
 
-format_macro_args ::= <<macro_args_delim <<comma_separated_list format_macro_arg>>>>
+format_macro_args ::= <<macro_args_delim [ <<comma_separated_list format_macro_arg>> ] >>
 format_macro_arg ::= [ IDENTIFIER '=' ] any_expr
 
 private meta macro_args_delim ::= '(' <<param>> ')'
