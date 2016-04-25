@@ -65,6 +65,8 @@ object RustSpacing {
             .afterInside(LBRACE, BLOCK_LIKE).spacing(1, 1, 0, true, 0)
             .beforeInside(RBRACE, BLOCK_LIKE).spacing(1, 1, 0, true, 0)
 
+            .betweenInside(IDENTIFIER, ALIAS, EXTERN_CRATE_ITEM).spaces(1)
+
             //== types
             .afterInside(LIFETIME, REF_TYPE).spaceIf(true)
             .betweenInside(ts(MUL), ts(CONST, MUT), PTR_TYPE).spaces(0)
