@@ -22,7 +22,7 @@ class RustSurroundDescriptorTest : RustTestCaseBase() {
     fun testSurroundbraces() = doTest(
         bracesSurrounder,
         "fn main() { let a = { let inner = 3; <selection>inner * inner</selection> };}",
-        "fn main() { let a = { let inner = 3; {inner * inner} };}"
+        "fn main() { let a = { let inner = 3; { inner * inner } };}"
     )
 
     fun testSelectPartOfExpression() = doTest(
