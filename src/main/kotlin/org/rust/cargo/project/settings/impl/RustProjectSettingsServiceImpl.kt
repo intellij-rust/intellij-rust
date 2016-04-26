@@ -11,7 +11,7 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.getComponentOrThrow
-import org.rust.cargo.util.getModules
+import org.rust.cargo.util.modules
 
 @State(
     name = "RustProjectSettings",
@@ -49,7 +49,7 @@ class RustProjectSettingsServiceImpl(
             if (state.toolchainHomeDirectory != value?.location) {
 
                 if (value != null) {
-                    for (module in project.getModules()) {
+                    for (module in project.modules) {
                         module.getComponentOrThrow<CargoProjectWorkspace>().requestUpdateUsing(value)
                     }
                 }

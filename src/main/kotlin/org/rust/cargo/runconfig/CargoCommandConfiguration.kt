@@ -13,7 +13,7 @@ import org.jdom.Element
 import org.rust.cargo.runconfig.forms.CargoRunConfigurationEditorForm
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.util.getModules
+import org.rust.cargo.util.modules
 
 class CargoCommandConfiguration(project: Project,
                                 name: String,
@@ -28,10 +28,10 @@ class CargoCommandConfiguration(project: Project,
     var environmentVariables: Map<String, String> = mutableMapOf()
 
     init {
-        configurationModule.module = project.getModules().firstOrNull()
+        configurationModule.module = project.modules.firstOrNull()
     }
 
-    override fun getValidModules(): Collection<Module> = project.getModules()
+    override fun getValidModules(): Collection<Module> = project.modules
 
     override fun checkConfiguration() {
         val module = configurationModule.module

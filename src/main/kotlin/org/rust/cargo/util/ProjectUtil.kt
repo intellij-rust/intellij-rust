@@ -9,8 +9,8 @@ object ProjectUtil
 /**
  * Extracts modules for the given project
  */
-fun Project.getModules(): Collection<Module> =
-    ModuleManager.getInstance(this).modules.toList()
+val Project.modules: Collection<Module>
+    get() = ModuleManager.getInstance(this).modules.toList()
 
 
 

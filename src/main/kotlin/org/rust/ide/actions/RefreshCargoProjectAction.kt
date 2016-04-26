@@ -14,7 +14,7 @@ import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.getComponentOrThrow
-import org.rust.cargo.util.getModules
+import org.rust.cargo.util.modules
 
 class RefreshCargoProjectAction : AnAction() {
     init {
@@ -23,7 +23,7 @@ class RefreshCargoProjectAction : AnAction() {
     }
 
     private val Project.modulesWithToolchains: List<Pair<Module, RustToolchain>>
-        get() = getModules().orEmpty().mapNotNull { module ->
+        get() = modules.mapNotNull { module ->
             module.toolchain?.let { Pair(module, it) }
         }
 
