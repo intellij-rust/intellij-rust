@@ -25,9 +25,9 @@ class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
     private fun <T> bindToProjectUpdateEvent(callback: (UpdateResult) -> T): Future<T> {
         val f = SettableFuture.create<T>()
 
-        module
-            .getComponentOrThrow<CargoProjectWorkspace>()
-            .subscribeTo(
+        module.messageBus
+            .connect()
+            .subscribe(
                 CargoProjectWorkspaceListener.Topics.UPDATES,
                 object: CargoProjectWorkspaceListener {
                     override fun onWorkspaceUpdateCompleted(r: UpdateResult) {

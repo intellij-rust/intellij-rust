@@ -41,7 +41,10 @@ class RefreshCargoProjectAction : AnAction() {
             val workspace = module.getComponentOrThrow<CargoProjectWorkspace>()
 
             Notifier(module).let {
-                workspace.subscribeTo(CargoProjectWorkspaceListener.Topics.UPDATES, it, it.connectionDisposer)
+                module.messageBus
+                    .connect(it.connectionDisposer)
+                    .subscribe(CargoProjectWorkspaceListener.Topics.UPDATES, it)
+
                 workspace.requestUpdateUsing(toolchain, immediately = true)
             }
         }

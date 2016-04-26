@@ -3,7 +3,6 @@ package org.rust.cargo.project.workspace.impl
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
@@ -12,15 +11,11 @@ import com.intellij.openapi.module.ModuleComponent
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.Alarm
-import com.intellij.util.messages.MessageBus
-import com.intellij.util.messages.MessageBusFactory
-import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.settings.rustSettings
@@ -62,25 +57,18 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
      */
     private var cached: CargoProjectDescription? = null
 
-    /**
-     * Isolated message-bus to insulate cargo-project-workspace related messaging
-     * infra from general-purpose listeners, and properly manage listeners' lifetimes
-     */
-    private lateinit var messageBus: MessageBus
-
     /** Component hooks */
 
     override fun getComponentName(): String = "org.rust.cargo.CargoProjectWorkspace"
 
     override fun initComponent() {
-        messageBus = MessageBusFactory.newMessageBus(CargoProjectWorkspace::class.java.name, module.messageBus)
-
-        subscribeTo(VirtualFileManager.VFS_CHANGES, FileChangesWatcher())
+        module.messageBus
+            .connect()
+            .subscribe(VirtualFileManager.VFS_CHANGES, FileChangesWatcher())
     }
 
     override fun disposeComponent() {
         alarm.dispose()
-        messageBus.dispose()
     }
 
     override fun projectClosed() { /* NOP */ }
@@ -125,7 +113,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
         ApplicationManager.getApplication().assertIsDispatchThread()
 
         if (!module.isDisposed)
-            messageBus
+            module.messageBus
                 .syncPublisher(CargoProjectWorkspaceListener.Topics.UPDATES)
                 .onWorkspaceUpdateCompleted(r)
     }
@@ -146,21 +134,6 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
                     }
                 }
         }
-    }
-
-    /**
-     * Subscribes given listener to the supplied topic on the [CargoProjectWorkspace]'s private
-     * message-bus
-     */
-    override fun <L: Any> subscribeTo(t: Topic<L>, listener: L, disposer: Disposable?) {
-        val conn =
-            messageBus
-                .connect()
-                .apply {
-                    this.subscribe(t, listener)
-                }
-
-        disposer?.let { Disposer.register(disposer, conn) }
     }
 
     private inner class UpdateTask(
