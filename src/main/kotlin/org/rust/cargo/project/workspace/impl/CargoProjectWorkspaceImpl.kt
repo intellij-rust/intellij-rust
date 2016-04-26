@@ -118,21 +118,18 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
                 .onWorkspaceUpdateCompleted(r)
     }
 
-    private fun updateModuleDependencies(r: UpdateResult) {
+    private fun updateModuleDependencies(projectDescription: CargoProjectDescription) {
         ApplicationManager.getApplication().assertIsDispatchThread()
 
-        when (r) {
-            is UpdateResult.Ok ->
-                ApplicationManager.getApplication().runWriteAction {
-                    if (!module.isDisposed) {
-                        val libraryRoots =
-                            r.projectDescription.packages
-                                .filter { !it.isModule }
-                                .mapNotNull { it.virtualFile }
+        ApplicationManager.getApplication().runWriteAction {
+            if (!module.isDisposed) {
+                val libraryRoots =
+                    projectDescription.packages
+                        .filter     { !it.isModule }
+                        .mapNotNull {  it.virtualFile }
 
-                        module.updateLibrary(module.cargoLibraryName, libraryRoots)
-                    }
-                }
+                module.updateLibrary(module.cargoLibraryName, libraryRoots)
+            }
         }
     }
 
@@ -173,11 +170,12 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
             val r = requireNotNull(result)
 
             lock (lock) {
-                updateModuleDependencies(r);
+                when (r) {
+                    is UpdateResult.Ok -> {
+                        cached = r.projectDescription
 
-                cached = when (r) {
-                    is UpdateResult.Ok -> r.projectDescription
-                    else               -> null
+                        updateModuleDependencies(r.projectDescription);
+                    }
                 }
 
                 notifyCargoProjectUpdate(r)
@@ -216,6 +214,8 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     fun setState(projectDescription: CargoProjectDescription) {
         lock (lock) {
             cached = projectDescription
+
+            updateModuleDependencies(projectDescription)
             notifyCargoProjectUpdate(UpdateResult.Ok(projectDescription))
         }
     }
