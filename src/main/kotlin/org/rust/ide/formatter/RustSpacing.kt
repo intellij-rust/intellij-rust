@@ -48,7 +48,7 @@ object RustSpacing {
             .before(WHERE_CLAUSE).spacing(1, 1, 0, true, 0)
             .applyForEach(BLOCK_LIKE) { before(it).spaces(1) }
             // FIXME(jajakobyly): nonono
-            .beforeInside(LBRACE, ts(FOREIGN_MOD_ITEM, MOD_ITEM)).spaces(1)
+            .beforeInside(LBRACE, MOD_ITEM).spaces(1)
 
             .between(ts(IDENTIFIER, FN), PARAMS_LIKE).spaceIf(false)
             .between(IDENTIFIER, GENERIC_PARAMS).spaceIf(false)
@@ -107,7 +107,7 @@ object RustSpacing {
     private val ANGLE_LIST_HOLDERS = ts(GENERIC_PARAMS, GENERIC_ARGS, QUAL_PATH_EXPR)
     private val ATTRS = ts(OUTER_ATTR, INNER_ATTR)
     private val BLOCK_LIKE = ts(BLOCK, STRUCT_DECL_ARGS, STRUCT_EXPR_BODY, IMPL_BODY, MATCH_BODY, TRAIT_BODY, ENUM_BODY,
-        ENUM_STRUCT_ARGS)
+        ENUM_STRUCT_ARGS, FOREIGN_MOD_BODY)
     private val TYPES = ts(VEC_TYPE, PTR_TYPE, REF_TYPE, BARE_FN_TYPE, TUPLE_TYPE, PATH_TYPE,
         TYPE_WITH_BOUNDS_TYPE, FOR_IN_TYPE, WILDCARD_TYPE)
     private val MACRO_ARGS = ts(MACRO_ARG, FORMAT_MACRO_ARGS, TRY_MACRO_ARGS)
