@@ -555,15 +555,14 @@ struct_decl_field ::= attrs_and_vis IDENTIFIER type_ascription { pin = 2 }
 // Enum
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-enum_item ::= ENUM IDENTIFIER generic_params where_clause? '{' enum_variants? ','? '}'
+enum_item ::= ENUM IDENTIFIER generic_params where_clause? enum_body
 
-private enum_variants ::= enum_variant (',' enum_variant)*
+enum_body ::= '{' [ <<comma_separated_list enum_variant>> ] '}' { pin = 1 }
+enum_variant ::= outer_attr* IDENTIFIER enum_args? { pin = 2 }
 
-enum_variant ::= outer_attr* IDENTIFIER enum_args?
-
-enum_args ::= enum_struct_args
-            | enum_tuple_args
-            | '=' any_expr
+private enum_args ::= enum_struct_args
+                    | enum_tuple_args
+                    | enum_discriminant
 
 // unlike real structs, enum variants can't have `pub` visibility applied to fields
 enum_tuple_args ::= '(' <<comma_separated_list enum_tuple_field>> ')' { pin = 1 }
@@ -571,6 +570,8 @@ enum_tuple_field ::= outer_attr* type
 
 enum_struct_args ::= '{' <<comma_separated_list enum_struct_field>> '}' { pin = 1 }
 enum_struct_field ::= outer_attr* IDENTIFIER type_ascription { pin = 2 }
+
+enum_discriminant ::= '=' any_expr { pin = 1 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

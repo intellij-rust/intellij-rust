@@ -16,7 +16,10 @@ import org.rust.lang.core.psi.impl.mixin.isStarImport
 import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
 import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
-import org.rust.lang.core.psi.util.*
+import org.rust.lang.core.psi.util.`super`
+import org.rust.lang.core.psi.util.isCrateRoot
+import org.rust.lang.core.psi.util.module
+import org.rust.lang.core.psi.util.ownedDirectory
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
 import java.util.*
@@ -295,7 +298,7 @@ private class Resolver {
         }
 
         override fun visitEnumItem(enum: RustEnumItem) {
-            seek(enum.enumVariantList)
+            seek(enum.enumBody.enumVariantList)
         }
 
         private fun addToSeen(element: RustNamedElement): Boolean {

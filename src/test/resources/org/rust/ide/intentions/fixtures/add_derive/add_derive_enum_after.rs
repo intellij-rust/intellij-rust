@@ -1,3 +1,3 @@
-    #[derive(<caret>)] enum Test {
-        Something
-    }
+#[derive(<caret>)] enum Test {
+    Something
+}

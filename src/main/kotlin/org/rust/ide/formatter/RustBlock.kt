@@ -73,10 +73,8 @@ class RustBlock(
         private val BLOCKS_TOKEN_SET = TokenSet.create(
             BLOCK,
             MOD_ITEM,
-            ENUM_ITEM,
+            ENUM_BODY,
             STRUCT_DECL_ARGS,
-            TRAIT_ITEM,
-            MATCH_EXPR,
             ARG_LIST,
             STRUCT_EXPR_BODY,
             IMPL_BODY,
