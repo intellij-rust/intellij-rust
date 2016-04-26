@@ -50,18 +50,17 @@ inline fun<reified T: Any> Module.getComponentOrThrow(): T =
 /**
  * Extracts content- and library-(ordered)-entries for the given module
  */
-fun Module.getSourceAndLibraryRoots(): Collection<VirtualFile> =
-    ModuleRootManager.getInstance(this).orderEntries.flatMap {
-        it.getFiles(OrderRootType.CLASSES).toList() +
-        it.getFiles(OrderRootType.SOURCES).toList()
-    }
+fun Module.getModuleAndLibraryRoots(): Collection<VirtualFile> {
+    val rootManager = ModuleRootManager.getInstance(this)
+    return rootManager.contentRoots.toList() + rootManager.orderEntries().classesRoots
+}
 
 /**
  * Makes given path relative to the content-root of the module or
  * one of the respective's dependencies
  */
 fun Module.relativise(f: VirtualFile): String? =
-    getSourceAndLibraryRoots()
+    getModuleAndLibraryRoots()
         .find {
             FileUtil.isAncestor(it.path, f.path, /* strict = */ false)
         }

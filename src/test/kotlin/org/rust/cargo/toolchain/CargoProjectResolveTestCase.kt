@@ -22,24 +22,6 @@ class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
 
     private val TIMEOUT: Long = 10 * 1000 /* millis */
 
-    private fun <T> bindToProjectUpdateEvent(callback: (UpdateResult) -> T): Future<T> {
-        val f = SettableFuture.create<T>()
-
-        module.messageBus
-            .connect()
-            .subscribe(
-                CargoProjectWorkspaceListener.Topics.UPDATES,
-                object: CargoProjectWorkspaceListener {
-                    override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
-                        assertThat(r is UpdateResult.Ok)
-
-                        f.set(callback(r))
-                    }
-                })
-
-        return f
-    }
-
     fun testResolveExternalLibrary() = withProject("external_library") {
         val f = bindToProjectUpdateEvent() {
             val reference = extractReference("src/main.rs")
@@ -60,6 +42,35 @@ class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
         updateCargoProject()
 
         assertThat(f.get(TIMEOUT, TimeUnit.MILLISECONDS)).isNotNull()
+    }
+
+    fun testModuleRelations() = withProject("mods") {
+        val f = bindToProjectUpdateEvent {
+            val reference = extractReference("src/foo.rs")
+            reference.resolve()
+        }
+
+        updateCargoProject()
+
+        assertThat(f.get(TIMEOUT, TimeUnit.MILLISECONDS)).isNotNull()
+    }
+
+    private fun <T> bindToProjectUpdateEvent(callback: (UpdateResult) -> T): Future<T> {
+        val f = SettableFuture.create<T>()
+
+        module.messageBus
+            .connect()
+            .subscribe(
+                CargoProjectWorkspaceListener.Topics.UPDATES,
+                object: CargoProjectWorkspaceListener {
+                    override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
+                        assertThat(r is UpdateResult.Ok)
+
+                        f.set(callback(r))
+                    }
+                })
+
+        return f
     }
 
     private fun updateCargoProject() {
