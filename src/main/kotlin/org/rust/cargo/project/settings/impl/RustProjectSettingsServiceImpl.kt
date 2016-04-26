@@ -10,6 +10,7 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.configurable.RustProjectConfigurable
 import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.util.getComponentOrThrow
 import org.rust.cargo.util.getModules
 import org.rust.cargo.util.getServiceOrThrow
 
@@ -50,7 +51,7 @@ class RustProjectSettingsServiceImpl(
 
                 if (value != null) {
                     for (module in project.getModules()) {
-                        module.getServiceOrThrow<CargoProjectWorkspace>().scheduleUpdate(value)
+                        module.getComponentOrThrow<CargoProjectWorkspace>().requestUpdateUsing(value)
                     }
                 }
 

@@ -15,7 +15,7 @@ import org.rust.cargo.project.CargoProjectDescriptionData
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
 import org.rust.cargo.util.attachStandardLibrary
-import org.rust.cargo.util.getServiceOrThrow
+import org.rust.cargo.util.getComponentOrThrow
 import java.util.*
 
 abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), RustTestCase {
@@ -76,7 +76,8 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             super.configureModule(module, model, contentEntry)
 
             val moduleBaseDir = contentEntry.file!!.url
-            val metadataService = module.getServiceOrThrow<CargoProjectWorkspace>() as CargoProjectWorkspaceImpl
+            val metadataService = module.getComponentOrThrow<CargoProjectWorkspace>() as CargoProjectWorkspaceImpl
+
             metadataService.setState(testCargoProject(module, moduleBaseDir))
 
             // XXX: for whatever reason libraries created by `updateLibrary` are not indexed in tests.
@@ -87,9 +88,9 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             }
         }
 
-        open protected fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescriptionData {
+        open protected fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
             val packages = mutableListOf(testCargoPackage(contentRoot))
-            return CargoProjectDescriptionData(0, packages, ArrayList())
+            return CargoProjectDescription.deserialize(CargoProjectDescriptionData(0, packages, ArrayList()))!!
         }
 
         protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CargoProjectDescriptionData.Package(
@@ -105,7 +106,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
     }
 
     class WithStdlibRustProjectDescriptor : RustProjectDescriptor() {
-        override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescriptionData {
+        override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
             val sourcesArchive = LocalFileSystem.getInstance()
                 .findFileByPath("${RustTestCase.testResourcesPath}/rustc-src.zip")
 
@@ -115,7 +116,10 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
             val stdlibPackages = module.attachStandardLibrary(sourceRoot)
             val allPackages = stdlibPackages + testCargoPackage(contentRoot)
-            return CargoProjectDescriptionData(0, allPackages.toMutableList(), ArrayList())
+
+            return CargoProjectDescriptionData(0, allPackages.toMutableList(), ArrayList()).let {
+                CargoProjectDescription.deserialize(it)!!
+            }
         }
     }
 }

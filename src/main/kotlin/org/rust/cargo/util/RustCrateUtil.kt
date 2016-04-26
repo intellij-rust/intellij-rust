@@ -72,5 +72,5 @@ val Module.cargoProjectRoot: VirtualFile?
  * Extracts Cargo project description out of `Cargo.toml`
  */
 val Module.cargoProject: CargoProjectDescription?
-    get() = getServiceOrThrow<CargoProjectWorkspace>().projectDescription
+    get() = getComponentOrThrow<CargoProjectWorkspace>().projectDescription
 
