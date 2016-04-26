@@ -2,17 +2,12 @@ package org.rust.cargo.util
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.util.getServiceOrThrow
-import org.rust.lang.core.psi.RustModItem
-import org.rust.lang.core.psi.impl.rustMod
 
 object RustCrateUtil
 

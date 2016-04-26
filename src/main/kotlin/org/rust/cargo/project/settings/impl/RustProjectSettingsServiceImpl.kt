@@ -6,13 +6,12 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import org.rust.cargo.project.configurable.RustProjectConfigurable
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
-import org.rust.cargo.project.configurable.RustProjectConfigurable
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.getComponentOrThrow
 import org.rust.cargo.util.getModules
-import org.rust.cargo.util.getServiceOrThrow
 
 @State(
     name = "RustProjectSettings",
