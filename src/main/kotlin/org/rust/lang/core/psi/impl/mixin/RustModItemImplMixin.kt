@@ -18,7 +18,7 @@ abstract class RustModItemImplMixin : RustItemImpl
     constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override val declarations: Collection<RustDeclaringElement>
-        get() = itemList
+        get() = itemList!!
 
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RustIcons.MODULE)

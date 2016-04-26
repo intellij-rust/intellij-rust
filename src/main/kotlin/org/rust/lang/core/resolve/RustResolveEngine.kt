@@ -291,7 +291,7 @@ private class Resolver {
         override var matched: RustNamedElement? = null
 
         override fun visitModItem(mod: RustModItem) {
-            seek(mod.itemList)
+            seek(mod.itemList!!)
             if (matched == null) {
                 seekInjectedItems(mod)
             }
