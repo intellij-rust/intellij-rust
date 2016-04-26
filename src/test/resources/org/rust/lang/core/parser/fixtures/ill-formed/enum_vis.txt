@@ -1,14 +1,18 @@
 FILE
   RustFileModItemImpl(FILE_MOD_ITEM)
-    <empty list>
-  PsiElement(enum)('enum')
-  PsiWhiteSpace(' ')
-  PsiElement(<IDENTIFIER>)('E')
-  PsiWhiteSpace(' ')
-  PsiElement({)('{')
+    RustEnumItemImpl(ENUM_ITEM)
+      PsiElement(enum)('enum')
+      PsiWhiteSpace(' ')
+      PsiElement(<IDENTIFIER>)('E')
+      PsiWhiteSpace(' ')
+      RustGenericParamsImpl(GENERIC_PARAMS)
+        <empty list>
+      RustEnumBodyImpl(ENUM_BODY)
+        PsiElement({)('{')
+        PsiErrorElement:<IDENTIFIER> or '}' expected, got 'pub'
+          <empty list>
   PsiWhiteSpace('\n    ')
-  PsiErrorElement:<IDENTIFIER> or '}' expected, got 'pub'
-    PsiElement(pub)('pub')
+  PsiElement(pub)('pub')
   PsiWhiteSpace(' ')
   PsiElement(<IDENTIFIER>)('F')
   PsiWhiteSpace(' ')

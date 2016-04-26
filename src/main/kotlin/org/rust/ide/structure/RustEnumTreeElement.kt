@@ -9,5 +9,5 @@ class RustEnumTreeElement(element: RustEnumItem) : PsiTreeElementBase<RustEnumIt
 
     override fun getChildrenBase() = getDefs().orEmpty().map { RustEnumVariantTreeElement(it) }
 
-    fun getDefs() = element?.enumVariantList
+    fun getDefs() = element?.enumBody?.enumVariantList
 }
