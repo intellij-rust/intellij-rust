@@ -12,10 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.util.crateRoots
 import org.rust.lang.RustFileType
 import org.rust.lang.RustLanguage
-import org.rust.lang.core.psi.RustFileModItem
-import org.rust.lang.core.psi.RustMod
-import org.rust.lang.core.psi.RustModDeclItem
-import org.rust.lang.core.psi.RustModItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.RustModules
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.indexes.RustModulePath
@@ -49,6 +46,9 @@ class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvide
 
     override val modDecls: Collection<RustModDeclItem>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
+
+    override val declarations: Collection<RustDeclaringElement>
+        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustItem::class.java)
 }
 
 

@@ -1,8 +1,9 @@
 package org.rust.lang.core.psi
 
 import com.intellij.psi.PsiDirectory
+import org.rust.lang.core.resolve.scope.RustResolveScope
 
-interface RustMod : RustNamedElement {
+interface RustMod : RustNamedElement, RustResolveScope {
     /**
      *  Returns a parent module (`super::` in paths).
      *
