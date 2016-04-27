@@ -12,10 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.util.crateRoots
 import org.rust.lang.RustFileType
 import org.rust.lang.RustLanguage
-import org.rust.lang.core.psi.RustFileModItem
-import org.rust.lang.core.psi.RustItem
-import org.rust.lang.core.psi.RustMod
-import org.rust.lang.core.psi.RustModDeclItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.RustModules
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.indexes.RustModulePath
@@ -31,6 +28,9 @@ class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvide
 
     val mod: RustFileModItem?
         get() = findChildByClass(RustFileModItem::class.java)
+
+    override val items: List<RustItem>
+        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustItem::class.java)
 
     override val `super`: RustMod?
         get() = RustModulesIndex.getSuperFor(this)
@@ -51,8 +51,8 @@ class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvide
     override val modDecls: Collection<RustModDeclItem>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
 
-    override val items: List<RustItem>
-        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustItem::class.java)
+    override val declarations: Collection<RustDeclaringElement>
+        get() = items
 }
 
 
@@ -70,7 +70,6 @@ val PsiFile.usefulName: String get() = when (name) {
     else -> name
 }
 
-val PsiFile.rustMod: RustFileModItem? get() =
-    (this as? RustFile)?.mod
+val PsiFile.rustMod: RustMod? get() = this as? RustFile
 
 val VirtualFile.isNotRustFile: Boolean get() = fileType != RustFileType

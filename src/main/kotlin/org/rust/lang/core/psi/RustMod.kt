@@ -24,10 +24,10 @@ interface RustMod : RustNamedElement, RustResolveScope {
 
     val isTopLevelInFile: Boolean
 
-    val modDecls: Collection<RustModDeclItem>
     //  Default implementation here causes https://youtrack.jetbrains.com/issue/KT-12114
+    val modDecls: Collection<RustModDeclItem>
     //  get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
 
     override val declarations: Collection<RustDeclaringElement>
-        get() = items
+    //  get() = items
 }

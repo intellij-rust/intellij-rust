@@ -40,4 +40,7 @@ abstract class RustModItemImplMixin : RustItemImpl
 
     override val modDecls: Collection<RustModDeclItem>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
+
+    override val declarations: Collection<RustDeclaringElement>
+        get() = items
 }

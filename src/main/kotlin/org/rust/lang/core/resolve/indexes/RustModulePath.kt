@@ -7,7 +7,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.util.io.IOUtil
 import org.rust.cargo.util.getModuleAndLibraryRoots
 import org.rust.cargo.util.relativise
-import org.rust.lang.core.psi.RustFileModItem
+import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.module
 import java.io.DataInput
@@ -20,7 +20,7 @@ import java.util.*
  */
 data class RustModulePath private constructor (private val name: String, val path: String) : Serializable {
 
-    fun findModuleIn(p: Project): RustFileModItem? =
+    fun findModuleIn(p: Project): RustMod? =
         ModuleManager.getInstance(p).findModuleByName(name)?.let { module ->
                 module.getModuleAndLibraryRoots()
                 .mapNotNull { sourceRoot ->

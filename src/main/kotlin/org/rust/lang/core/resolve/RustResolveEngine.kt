@@ -11,7 +11,6 @@ import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.isStarImport
 import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
@@ -131,7 +130,7 @@ private class Resolver {
      *
      * For more details check out `RustResolveEngine.resolve`
      */
-    fun resolve(name: RustQualifiedName, root: RustModItem): RustResolveEngine.ResolveResult {
+    fun resolve(name: RustQualifiedName, root: RustMod): RustResolveEngine.ResolveResult {
         if (name == RustAnonymousId) {
             return RustResolveEngine.ResolveResult.Resolved(root)
         } else if (name is RustFileModuleId) {
@@ -279,16 +278,6 @@ private class Resolver {
          * Matched resolve-target
          */
         abstract var matched: RustNamedElement?
-
-        final override fun visitFile(file: PsiFile?) {
-            (file as? RustFile)?.let { visitMod(it) }
-        }
-
-        final override fun visitModItem(o: RustModItem) {
-            visitMod(o)
-        }
-
-        abstract fun visitMod(mod: RustMod)
     }
 
     /**
@@ -298,11 +287,12 @@ private class Resolver {
 
         override var matched: RustNamedElement? = null
 
-        override fun visitMod(mod: RustMod) {
-            seek(mod.items)
-            if (matched == null) {
-                seekInjectedItems(mod)
-            }
+        override fun visitFile(file: PsiFile) {
+            file.rustMod?.let { visitMod(it) }
+        }
+
+        override fun visitModItem(o: RustModItem) {
+            visitMod(o)
         }
 
         override fun visitEnumItem(enum: RustEnumItem) {
@@ -313,6 +303,13 @@ private class Resolver {
             val result = element in seen
             seen += element
             return result
+        }
+
+        private fun visitMod(mod: RustMod) {
+            seek(mod.items)
+            if (matched == null) {
+                seekInjectedItems(mod)
+            }
         }
 
         protected fun seek(elem: RustDeclaringElement) = seek(listOf(elem))
