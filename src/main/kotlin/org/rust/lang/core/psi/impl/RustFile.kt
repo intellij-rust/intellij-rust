@@ -5,20 +5,44 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
+import org.rust.cargo.util.crateRoots
 import org.rust.lang.RustFileType
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.RustFileModItem
+import org.rust.lang.core.psi.RustMod
+import org.rust.lang.core.psi.RustModDeclItem
+import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.util.RustModules
+import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.indexes.RustModulePath
 
-class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvider, RustLanguage) {
-
+class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvider, RustLanguage), RustMod {
     override fun getFileType(): FileType = RustFileType
 
     val mod: RustFileModItem?
         get() = findChildByClass(RustFileModItem::class.java)
 
+    override val `super`: RustModItem?
+        get() = throw UnsupportedOperationException()
+
+    override val ownsDirectory: Boolean
+        get() = name == RustModules.MOD_RS || isCrateRoot
+
+    override val ownedDirectory: PsiDirectory?
+        get() = originalFile.parent
+
+    override val isCrateRoot: Boolean get() {
+        val file = originalFile.virtualFile ?: return false
+        return file in (module?.crateRoots ?: emptyList())
+    }
+
+    override val isTopLevelInFile: Boolean = true
+
+    override val modDecls: Collection<RustModDeclItem>
+        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
 }
 
 
