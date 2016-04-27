@@ -1,6 +1,9 @@
 package org.rust.ide.formatter
 
-import com.intellij.formatting.*
+import com.intellij.formatting.Alignment
+import com.intellij.formatting.Block
+import com.intellij.formatting.Indent
+import com.intellij.formatting.Wrap
 import com.intellij.lang.ASTNode
 import com.intellij.psi.formatter.common.AbstractBlock
 import org.rust.lang.core.psi.RustCompositeElementTypes.MACRO_ARG
@@ -11,9 +14,12 @@ abstract class AbstractRustBlock(
     private val myIndent: Indent?,
     wrap: Wrap?,
     val ctx: RustBlockContext
-) : AbstractBlock(node, wrap, alignment), ASTBlock {
+) : AbstractBlock(node, wrap, alignment) {
+
     override fun getIndent(): Indent? = myIndent
     override fun isLeaf(): Boolean = node.firstChildNode == null
+
+    // Tell inheritors, that immutable lists are ok
     abstract override fun buildChildren(): List<Block>
 
     companion object {

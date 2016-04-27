@@ -11,7 +11,7 @@ class RustMacroArgBlock(
     ctx: RustBlockContext
 ) : AbstractRustBlock(node, alignment, indent, wrap, ctx) {
 
-    override fun getSpacing(child1: Block?, child2: Block): Spacing? = null
+    override fun getSpacing(child1: Block?, child2: Block): Spacing? = Spacing.getReadOnlySpacing()
 
     override fun buildChildren(): List<Block> = emptyList()
 }
