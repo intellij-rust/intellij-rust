@@ -2,7 +2,7 @@ package org.rust.lang.core.resolve.util
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustCompositeElement
-import org.rust.lang.core.psi.RustModItem
+import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.containingMod
 import org.rust.lang.core.resolve.scope.RustResolveScope
 
@@ -28,8 +28,8 @@ object RustResolveUtil {
      *  Reference:
      *    https://doc.rust-lang.org/reference.html#crates-and-source-files
      */
-    fun getCrateRootModFor(elem: RustCompositeElement): RustModItem? {
-        val mod = elem as? RustModItem? ?: elem.containingMod ?: return null
+    fun getCrateRootModFor(elem: RustCompositeElement): RustMod? {
+        val mod = elem.containingMod ?: return null
 
         val superMod = mod.`super`
         return if (superMod == null) mod else getCrateRootModFor(superMod)

@@ -11,6 +11,7 @@ import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.isStarImport
 import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
@@ -206,7 +207,7 @@ private class Resolver {
         return resolveIn(sequenceOf(scope), by(ref))
     }
 
-    private fun resolveModulePrefix(ref: RustQualifiedReferenceElement): RustModItem? {
+    private fun resolveModulePrefix(ref: RustQualifiedReferenceElement): RustMod? {
         return if (ref.isSelf) {
             ref.containingMod
         } else {
@@ -278,6 +279,16 @@ private class Resolver {
          * Matched resolve-target
          */
         abstract var matched: RustNamedElement?
+
+        final override fun visitFile(file: PsiFile?) {
+            (file as? RustFile)?.let { visitMod(it) }
+        }
+
+        final override fun visitModItem(o: RustModItem) {
+            visitMod(o)
+        }
+
+        abstract fun visitMod(mod: RustMod)
     }
 
     /**
@@ -287,8 +298,8 @@ private class Resolver {
 
         override var matched: RustNamedElement? = null
 
-        override fun visitModItem(mod: RustModItem) {
-            seek(mod.itemList)
+        override fun visitMod(mod: RustMod) {
+            seek(mod.items)
             if (matched == null) {
                 seekInjectedItems(mod)
             }
@@ -376,7 +387,7 @@ private class Resolver {
         protected fun match(elem: RustNamedElement): Boolean =
             elem.nameElement?.textMatches(name) ?: false
 
-        private fun seekInjectedItems(mod: RustModItem) {
+        private fun seekInjectedItems(mod: RustMod) {
             // Rust injects implicit `extern crate std` in every crate root module unless it is
             // a `#![no_std]` crate, in which case `extern crate core` is injected.
             // The stdlib lib itself is `#![no_std]`.

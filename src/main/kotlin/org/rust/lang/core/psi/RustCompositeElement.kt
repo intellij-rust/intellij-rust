@@ -11,5 +11,5 @@ interface RustCompositeElement   : PsiElement
     override fun getReference(): RustReference?
 }
 
-val RustCompositeElement.containingMod: RustModItem?
+val RustCompositeElement.containingMod: RustMod?
     get() = parentOfType()
