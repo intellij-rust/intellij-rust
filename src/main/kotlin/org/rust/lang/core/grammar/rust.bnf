@@ -527,11 +527,17 @@ extern_crate_item ::= EXTERN CRATE IDENTIFIER alias? ';'
 
 mod_decl_item ::= MOD IDENTIFIER ';'
 
-mod_item ::= MOD IDENTIFIER '{' inner_attr* docs_and_item* '}' {
-  pin(".*") = 3
+mod_item ::= MOD IDENTIFIER mod_body {
+  methods = [
+    // FIXME(jajakobyly): This method is tagged as @Nullable while we want @NotNull
+    itemList = "/mod_body/item_"
+  ]
 }
 
-foreign_mod_item ::= extern_abi '{' inner_attr* foreign_decl* '}'
+mod_body ::= '{' inner_attr* docs_and_item* '}' { pin = 1 }
+
+foreign_mod_item ::= extern_abi foreign_mod_body
+foreign_mod_body ::= '{' inner_attr* foreign_decl* '}' { pin = 1 }
 
 foreign_decl  ::= attrs_and_vis ( foreign_static_decl | foreign_fn_decl ) ';'
 
