@@ -167,7 +167,8 @@
     implements  ("file_mod_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("file_mod_item") = "org.rust.lang.core.psi.impl.mixin.RustFileModItemImplMixin"
 
-    implements  ("mod_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    implements  ("mod_item") = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
+                                 "org.rust.lang.core.psi.RustModEx" ]
     mixin       ("mod_item") = "org.rust.lang.core.psi.impl.mixin.RustModItemImplMixin"
 
     implements  ("fn_item") = "org.rust.lang.core.resolve.scope.RustResolveScope"

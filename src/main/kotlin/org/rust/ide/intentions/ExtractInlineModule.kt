@@ -10,9 +10,6 @@ import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
 import org.rust.lang.core.psi.impl.rustMod
-import org.rust.lang.core.psi.util.`super`
-import org.rust.lang.core.psi.util.isTopLevelInFile
-import org.rust.lang.core.psi.util.ownsDirectory
 import org.rust.lang.core.psi.util.parentOfType
 
 class ExtractInlineModule : IntentionAction {

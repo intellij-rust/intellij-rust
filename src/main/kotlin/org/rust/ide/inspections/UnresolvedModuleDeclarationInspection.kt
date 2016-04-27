@@ -1,6 +1,5 @@
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.LocalQuickFixBase
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -14,7 +13,6 @@ import org.rust.lang.core.psi.impl.mixin.explicitPath
 import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
 import org.rust.lang.core.psi.impl.mixin.isPathAttributeRequired
 import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.psi.util.ownsDirectory
 
 class UnresolvedModuleDeclarationInspection : RustLocalInspectionTool() {
 

@@ -10,7 +10,6 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.RustModules
-import org.rust.lang.core.psi.util.ownsDirectory
 
 class ExpandModule : IntentionAction {
 

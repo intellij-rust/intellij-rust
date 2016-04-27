@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.impl.RustFile
-import org.rust.lang.core.psi.util.`super`
 import org.rust.lang.core.psi.util.parentOfType
 
 class RustGotoSuperHandler : LanguageCodeInsightActionHandler {

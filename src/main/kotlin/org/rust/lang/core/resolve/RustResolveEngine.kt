@@ -16,10 +16,7 @@ import org.rust.lang.core.psi.impl.mixin.isStarImport
 import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
 import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
-import org.rust.lang.core.psi.util.`super`
-import org.rust.lang.core.psi.util.isCrateRoot
 import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.psi.util.ownedDirectory
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
 import java.util.*
