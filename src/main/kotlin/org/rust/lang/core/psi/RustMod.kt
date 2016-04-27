@@ -1,9 +1,8 @@
 package org.rust.lang.core.psi
 
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
 
-interface RustMod : PsiElement {
+interface RustMod : RustNamedElement {
     /**
      *  Returns a parent module (`super::` in paths).
      *

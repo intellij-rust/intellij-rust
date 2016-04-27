@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.util.crateRoots
@@ -18,8 +19,13 @@ import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.util.RustModules
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.indexes.RustModulePath
+import org.rust.lang.core.resolve.ref.RustReference
 
 class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvider, RustLanguage), RustMod {
+    override fun getReference(): RustReference? = null
+
+    override val nameElement: PsiElement? = null
+
     override fun getFileType(): FileType = RustFileType
 
     val mod: RustFileModItem?
