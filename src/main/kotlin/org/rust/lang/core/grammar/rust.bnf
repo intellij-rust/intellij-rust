@@ -293,8 +293,9 @@
 // Root
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-root ::= file_mod_item
+file ::= [ SHEBANG_LINE ] inner_attr* docs_and_item*
 
+// FIXME: remove
 //
 // NOTA BENE
 //  Its marked left just to impede GK from collapsing it in the
