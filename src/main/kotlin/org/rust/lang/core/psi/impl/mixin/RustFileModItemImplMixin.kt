@@ -8,12 +8,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.util.crateRoots
 import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.RustFileModItem
+import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.RustModDeclItem
-import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.impl.RustModItemImpl
 import org.rust.lang.core.psi.util.RustModules
 import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.resolve.indexes.RustModulesIndex
 import org.rust.lang.core.stubs.RustItemStub
 import javax.swing.Icon
 
@@ -34,7 +33,7 @@ abstract class RustFileModItemImplMixin : RustModItemImpl
 
     override fun getIcon(flags: Int): Icon = RustIcons.MODULE
 
-    override val `super`: RustModItem? get() = RustModulesIndex.getSuperFor(this)
+    override val `super`: RustMod get() = super.`super`
 
     override val ownsDirectory: Boolean
         get() = containingFile.name == RustModules.MOD_RS || isCrateRoot

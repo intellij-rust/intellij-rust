@@ -5,10 +5,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RustIcons
-import org.rust.lang.core.psi.RustItem
-import org.rust.lang.core.psi.RustModDeclItem
-import org.rust.lang.core.psi.RustModItem
-import org.rust.lang.core.psi.iconWithVisibility
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustItemImpl
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.stubs.RustItemStub
@@ -26,13 +23,15 @@ abstract class RustModItemImplMixin : RustItemImpl
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RustIcons.MODULE)
 
-    override val `super`: RustModItem? get() = parentOfType()
+    override val `super`: RustMod get() = requireNotNull(parentOfType()) {
+        "No parent mod for non-file mod at ${containingFile.virtualFile.path}:\n$text"
+    }
 
     override val ownsDirectory: Boolean = true // Any inline nested mod owns a directory
 
     override val ownedDirectory: PsiDirectory? get() {
         val name = name ?: return null
-        return `super`?.ownedDirectory?.findSubdirectory(name)
+        return `super`.ownedDirectory?.findSubdirectory(name)
     }
 
     override val isCrateRoot: Boolean = false

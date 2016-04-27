@@ -29,7 +29,7 @@ object RustResolveUtil {
      *    https://doc.rust-lang.org/reference.html#crates-and-source-files
      */
     fun getCrateRootModFor(elem: RustCompositeElement): RustMod? {
-        val mod = elem.containingMod ?: return null
+        val mod = elem as? RustMod ?: elem.containingMod ?: return null
 
         val superMod = mod.`super`
         return if (superMod == null) mod else getCrateRootModFor(superMod)

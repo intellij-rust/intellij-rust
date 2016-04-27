@@ -14,7 +14,7 @@ interface RustMod : RustNamedElement, RustResolveScope {
      *  Reference:
      *    https://doc.rust-lang.org/reference.html#paths
      */
-    val `super`: RustModItem?
+    val `super`: RustMod?
 
     val ownsDirectory: Boolean
 
