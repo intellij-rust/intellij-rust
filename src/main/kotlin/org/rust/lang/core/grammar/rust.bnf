@@ -295,16 +295,6 @@
 
 file ::= [ SHEBANG_LINE ] inner_attr* docs_and_item*
 
-// FIXME: remove
-//
-// NOTA BENE
-//  Its marked left just to impede GK from collapsing it in the
-//  case there're no `SHEBANG_LINE` & it starts with `inner_attrs` or `item`
-//
-left file_mod_item ::= [ SHEBANG_LINE ] inner_attr* docs_and_item* {
-  extends = mod_item
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Attributes
