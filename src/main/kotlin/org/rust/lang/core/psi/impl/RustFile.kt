@@ -47,7 +47,7 @@ class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvide
     override val modDecls: Collection<RustModDeclItem>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
 
-    override val declarations: Collection<RustDeclaringElement>
+    override val items: List<RustItem>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustItem::class.java)
 }
 

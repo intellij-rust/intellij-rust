@@ -5,7 +5,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RustIcons
-import org.rust.lang.core.psi.RustDeclaringElement
+import org.rust.lang.core.psi.RustItem
 import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.iconWithVisibility
@@ -21,8 +21,7 @@ abstract class RustModItemImplMixin : RustItemImpl
 
     constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val declarations: Collection<RustDeclaringElement>
-        get() = itemList
+    override val items: List<RustItem> get() = itemList
 
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RustIcons.MODULE)

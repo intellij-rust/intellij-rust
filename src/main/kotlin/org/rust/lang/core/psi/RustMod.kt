@@ -4,6 +4,8 @@ import com.intellij.psi.PsiDirectory
 import org.rust.lang.core.resolve.scope.RustResolveScope
 
 interface RustMod : RustNamedElement, RustResolveScope {
+    val items: List<RustItem>
+
     /**
      *  Returns a parent module (`super::` in paths).
      *
@@ -25,4 +27,7 @@ interface RustMod : RustNamedElement, RustResolveScope {
     val modDecls: Collection<RustModDeclItem>
     //  Default implementation here causes https://youtrack.jetbrains.com/issue/KT-12114
     //  get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
+
+    override val declarations: Collection<RustDeclaringElement>
+        get() = items
 }
