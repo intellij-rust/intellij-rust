@@ -7,9 +7,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.file.PsiFileImplUtil
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
+import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.rustMod
-import org.rust.lang.core.psi.util.RustModules
 
 class ExpandModule : IntentionAction {
 
@@ -25,6 +25,6 @@ class ExpandModule : IntentionAction {
         val dirName = FileUtil.getNameWithoutExtension(file.name)
         val directory = file.parent?.createSubdirectory(dirName)
         MoveFilesOrDirectoriesUtil.doMoveFile(file, directory)
-        PsiFileImplUtil.setName(file, RustModules.MOD_RS)
+        PsiFileImplUtil.setName(file, RustMod.MOD_RS)
     }
 }

@@ -11,10 +11,7 @@ import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.RustModItem
 import org.rust.lang.core.psi.RustVisitor
-import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.rustMod
-import org.rust.lang.core.psi.util.canonicalNameInFile
-import org.rust.lang.core.psi.visitors.RustVisitorEx
 import java.io.DataInput
 import java.io.DataOutput
 

@@ -1,6 +1,7 @@
 package org.rust.lang.core.psi
 
 import com.intellij.psi.PsiDirectory
+import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.resolve.scope.RustResolveScope
 
 interface RustMod : RustNamedElement, RustResolveScope {
@@ -24,10 +25,16 @@ interface RustMod : RustNamedElement, RustResolveScope {
 
     val isTopLevelInFile: Boolean
 
+    val canonicalNameInFile: RustQualifiedName?
+
     //  Default implementation here causes https://youtrack.jetbrains.com/issue/KT-12114
     val modDecls: Collection<RustModDeclItem>
     //  get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
 
     override val declarations: Collection<RustDeclaringElement>
     //  get() = items
+
+    companion object {
+        val MOD_RS = "mod.rs"
+    }
 }

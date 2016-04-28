@@ -5,6 +5,8 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RustIcons
+import org.rust.lang.core.names.RustQualifiedName
+import org.rust.lang.core.names.parts.RustIdNamePart
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustItemImpl
 import org.rust.lang.core.psi.util.parentOfType
@@ -37,6 +39,9 @@ abstract class RustModItemImplMixin : RustItemImpl
     override val isCrateRoot: Boolean = false
 
     override val isTopLevelInFile: Boolean = false
+
+    override val canonicalNameInFile: RustQualifiedName?
+        get() = name?.let { RustQualifiedName(RustIdNamePart(it), `super`.canonicalNameInFile) }
 
     override val modDecls: Collection<RustModDeclItem>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)

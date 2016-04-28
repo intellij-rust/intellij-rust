@@ -12,11 +12,12 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.util.crateRoots
 import org.rust.lang.RustFileType
 import org.rust.lang.RustLanguage
+import org.rust.lang.core.names.RustFileModuleId
+import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.RustDeclaringElement
 import org.rust.lang.core.psi.RustItem
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.RustModDeclItem
-import org.rust.lang.core.psi.util.RustModules
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.indexes.RustModulePath
 import org.rust.lang.core.resolve.indexes.RustModulesIndex
@@ -36,7 +37,7 @@ class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvide
         get() = RustModulesIndex.getSuperFor(this)
 
     override val ownsDirectory: Boolean
-        get() = name == RustModules.MOD_RS || isCrateRoot
+        get() = name == RustMod.MOD_RS || isCrateRoot
 
     override val ownedDirectory: PsiDirectory?
         get() = originalFile.parent
@@ -47,6 +48,9 @@ class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvide
     }
 
     override val isTopLevelInFile: Boolean = true
+
+    override val canonicalNameInFile: RustQualifiedName?
+        get() = modulePath?.let { RustFileModuleId(it) }
 
     override val modDecls: Collection<RustModDeclItem>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
@@ -64,7 +68,7 @@ val PsiFile.modulePath: RustModulePath?
  * Prepends directory name to this file, if it is `mod.rs`
  */
 val PsiFile.usefulName: String get() = when (name) {
-    RustModules.MOD_RS -> containingDirectory?.let { dir ->
+    RustMod.MOD_RS -> containingDirectory?.let { dir ->
         FileUtil.join(dir.name, name)
     } ?: name
     else -> name

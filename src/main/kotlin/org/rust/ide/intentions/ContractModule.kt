@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.file.PsiFileImplUtil
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
+import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.impl.RustFile
-import org.rust.lang.core.psi.util.RustModules
 
 class ContractModule : IntentionAction {
 
@@ -17,7 +17,7 @@ class ContractModule : IntentionAction {
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) =
         file is RustFile
-            && file.name == RustModules.MOD_RS
+            && file.name == RustMod.MOD_RS
             && file.containingDirectory?.children?.size == 1
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
