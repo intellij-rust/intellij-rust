@@ -14,8 +14,7 @@ data class RustBlockContext private constructor(
         fun create(settings: CodeStyleSettings): RustBlockContext {
             val commonSettings = settings.getCommonSettings(RustLanguage)
             val rustSettings = settings.getCustomSettings(RustCodeStyleSettings::class.java)
-            return RustBlockContext(commonSettings, rustSettings,
-                RustSpacing.createSpacingBuilder(commonSettings, rustSettings))
+            return RustBlockContext(commonSettings, rustSettings, createSpacingBuilder(commonSettings, rustSettings))
         }
     }
 }
