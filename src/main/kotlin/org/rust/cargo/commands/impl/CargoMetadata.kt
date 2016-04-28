@@ -112,13 +112,13 @@ object CargoMetadata {
         val packageIdToIndex = project.packages.mapIndexed { i, p -> p.id to i }.toMap()
         return CargoProjectDescriptionData(
             packageIdToIndex[project.resolve.root]!!,
-            project.packages.map { it.intoCargoProjectDescriptionPackage() }.toMutableList(),
+            project.packages.map { it.intoCargoProjectDescriptionPackage() },
             project.resolve.nodes.map { node ->
                 CargoProjectDescriptionData.DependencyNode(
                     packageIdToIndex[node.id]!!,
-                    node.dependencies.map { packageIdToIndex[it]!! }.toMutableList()
+                    node.dependencies.map { packageIdToIndex[it]!! }
                 )
-            }.toMutableList()
+            }
         )
     }
 

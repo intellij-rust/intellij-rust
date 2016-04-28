@@ -13,7 +13,6 @@ import com.intellij.util.containers.HashSet
  * an IDEA module.
  */
 class CargoProjectDescription private constructor(
-    val rootPackage: Package,
     val packages: Collection<Package>
 ) {
 
@@ -47,28 +46,6 @@ class CargoProjectDescription private constructor(
         LIB, BIN, TEST, EXAMPLE, BENCH, UNKNOWN
     }
 
-    fun serialize(): CargoProjectDescriptionData =
-        CargoProjectDescriptionData(
-            rootPackage.index,
-            packages.map { it.serialize() }.toMutableList(),
-            serializeDependencies()
-        )
-
-    private fun serializeDependencies(): MutableList<CargoProjectDescriptionData.DependencyNode> =
-        packages.map { pkg ->
-            CargoProjectDescriptionData.DependencyNode(
-                pkg.index,
-                pkg.dependencies.map { it.index }.toMutableList()
-            )
-        }.toMutableList()
-
-    private val Package.index: Int get() {
-        // TODO: make it O(1)
-        val result = packages.indexOf(this)
-        check(result >= 0)
-        return result
-    }
-
     companion object {
         fun deserialize(data: CargoProjectDescriptionData): CargoProjectDescription? {
             val dependenciesMap = data.dependencies.associate { node ->
@@ -89,15 +66,10 @@ class CargoProjectDescription private constructor(
                     }
                     inProgress += pkg
                     alreadyDone[pkg] = Package(
-                        pkg.contentRootUrl ?: return null,
-                        pkg.name ?: return null,
-                        pkg.version ?: return null,
-                        pkg.targets.map {
-                            CargoProjectDescription.Target(
-                                it.url ?: return null,
-                                it.kind ?: return null
-                            )
-                        },
+                        pkg.contentRootUrl,
+                        pkg.name,
+                        pkg.version,
+                        pkg.targets.map { CargoProjectDescription.Target(it.url, it.kind) },
                         pkg.source,
                         dependenciesMap[pkg].orEmpty().map { build(it) ?: return null }
                     )
@@ -109,24 +81,8 @@ class CargoProjectDescription private constructor(
                 build(pkg)
             }
 
-            val rootPackage = data.packages.getOrNull(data.rootPackageIndex)?.let {
-                alreadyDone[it]
-            } ?: return null
-
-            return CargoProjectDescription(rootPackage, alreadyDone.values)
+            return CargoProjectDescription(alreadyDone.values)
         }
-
-        private fun Package.serialize(): CargoProjectDescriptionData.Package =
-            CargoProjectDescriptionData.Package(
-                contentRootUrl,
-                name,
-                version,
-                targets.map { it.serialize() },
-                source
-            )
-
-        private fun Target.serialize(): CargoProjectDescriptionData.Target =
-            CargoProjectDescriptionData.Target(url, kind)
     }
 }
 
