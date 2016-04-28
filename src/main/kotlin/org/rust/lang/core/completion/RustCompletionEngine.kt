@@ -64,7 +64,7 @@ private class CompletionScopeVisitor(private val context: RustQualifiedReference
     }
 }
 
-private fun RustNamedElement?.completionsFromResolveScope(): Collection<RustNamedElement> =
+private fun RustCompositeElement?.completionsFromResolveScope(): Collection<RustNamedElement> =
     when (this) {
         is RustResolveScope -> boundElements
         else                -> emptyList()

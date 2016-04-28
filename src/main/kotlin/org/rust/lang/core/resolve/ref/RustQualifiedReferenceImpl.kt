@@ -4,7 +4,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
 import org.rust.lang.core.completion.RustCompletionEngine
-import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustQualifiedReferenceElement
 import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.resolve.RustResolveEngine
@@ -15,7 +15,7 @@ internal class RustQualifiedReferenceImpl<T : RustQualifiedReferenceElement>(ele
     : PsiReferenceBase<T>(element, null, soft)
     , RustReference {
 
-    override fun resolve(): RustNamedElement? =
+    override fun resolve(): RustCompositeElement? =
         RustResolveEngine.resolve(element).element
 
     override fun getVariants(): Array<out Any> =
