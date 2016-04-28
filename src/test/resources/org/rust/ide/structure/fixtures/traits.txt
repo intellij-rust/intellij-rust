@@ -1,12 +1,11 @@
 -traits.rs
- -traits
-  -ExecEngine: Send + Sync
-   exec(CommandPrototype) -> Result<(), ProcessError>
-   exec_with_output(CommandPrototype) -> Result<Output, ProcessError>
-  A
-  -Registry
-   query(name: &Dependency) -> CargoResult<Vec<Summary>>
-  -FnBox<A, R>
-   call_box(a: A) -> R
-  T
-  P<X>
+ -ExecEngine: Send + Sync
+  exec(CommandPrototype) -> Result<(), ProcessError>
+  exec_with_output(CommandPrototype) -> Result<Output, ProcessError>
+ A
+ -Registry
+  query(name: &Dependency) -> CargoResult<Vec<Summary>>
+ -FnBox<A, R>
+  call_box(a: A) -> R
+ T
+ P<X>

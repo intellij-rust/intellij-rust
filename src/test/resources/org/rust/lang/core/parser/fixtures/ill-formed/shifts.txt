@@ -1,22 +1,21 @@
 FILE
-  RustFileModItemImpl(FILE_MOD_ITEM)
-    RustFnItemImpl(FN_ITEM)
-      PsiElement(fn)('fn')
-      PsiWhiteSpace(' ')
-      PsiElement(<IDENTIFIER>)('expressions')
-      RustGenericParamsImpl(GENERIC_PARAMS)
+  RustFnItemImpl(FN_ITEM)
+    PsiElement(fn)('fn')
+    PsiWhiteSpace(' ')
+    PsiElement(<IDENTIFIER>)('expressions')
+    RustGenericParamsImpl(GENERIC_PARAMS)
+      <empty list>
+    RustParametersImpl(PARAMETERS)
+      PsiElement(()('(')
+      PsiElement())(')')
+    PsiWhiteSpace(' ')
+    RustBlockImpl(BLOCK)
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      RustLitExprImpl(LIT_EXPR)
+        RustNumericLiteralImpl(<INTEGER>)('1')
+      PsiErrorElement:';' or '}' expected, got '>'
         <empty list>
-      RustParametersImpl(PARAMETERS)
-        PsiElement(()('(')
-        PsiElement())(')')
-      PsiWhiteSpace(' ')
-      RustBlockImpl(BLOCK)
-        PsiElement({)('{')
-        PsiWhiteSpace('\n    ')
-        RustLitExprImpl(LIT_EXPR)
-          RustNumericLiteralImpl(<INTEGER>)('1')
-        PsiErrorElement:';' or '}' expected, got '>'
-          <empty list>
   PsiWhiteSpace(' ')
   PsiElement(>)('>')
   PsiElement(DUMMY_BLOCK)

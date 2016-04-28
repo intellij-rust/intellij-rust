@@ -1,8 +1,10 @@
 package org.rust.lang.core.completion
 
+import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
+import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.resolve.enumerateScopesFor
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.scope.boundElements
@@ -37,6 +39,10 @@ object RustCompletionEngine {
 private class CompletionScopeVisitor(private val context: RustQualifiedReferenceElement) : RustVisitor() {
 
     val completions: MutableSet<RustNamedElement> = HashSet()
+
+    override fun visitFile(o: PsiFile) {
+        o.rustMod?.let { visitResolveScope(it) }
+    }
 
     override fun visitModItem(o: RustModItem)                         = visitResolveScope(o)
     override fun visitScopedLetExpr(o: RustScopedLetExpr)             = visitResolveScope(o)

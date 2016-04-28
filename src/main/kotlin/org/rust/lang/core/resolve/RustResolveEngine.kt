@@ -130,7 +130,7 @@ private class Resolver {
      *
      * For more details check out `RustResolveEngine.resolve`
      */
-    fun resolve(name: RustQualifiedName, root: RustModItem): RustResolveEngine.ResolveResult {
+    fun resolve(name: RustQualifiedName, root: RustMod): RustResolveEngine.ResolveResult {
         if (name == RustAnonymousId) {
             return RustResolveEngine.ResolveResult.Resolved(root)
         } else if (name is RustFileModuleId) {
@@ -206,7 +206,7 @@ private class Resolver {
         return resolveIn(sequenceOf(scope), by(ref))
     }
 
-    private fun resolveModulePrefix(ref: RustQualifiedReferenceElement): RustModItem? {
+    private fun resolveModulePrefix(ref: RustQualifiedReferenceElement): RustMod? {
         return if (ref.isSelf) {
             ref.containingMod
         } else {
@@ -287,11 +287,12 @@ private class Resolver {
 
         override var matched: RustNamedElement? = null
 
-        override fun visitModItem(mod: RustModItem) {
-            seek(mod.itemList)
-            if (matched == null) {
-                seekInjectedItems(mod)
-            }
+        override fun visitFile(file: PsiFile) {
+            file.rustMod?.let { visitMod(it) }
+        }
+
+        override fun visitModItem(o: RustModItem) {
+            visitMod(o)
         }
 
         override fun visitEnumItem(enum: RustEnumItem) {
@@ -302,6 +303,13 @@ private class Resolver {
             val result = element in seen
             seen += element
             return result
+        }
+
+        private fun visitMod(mod: RustMod) {
+            seek(mod.items)
+            if (matched == null) {
+                seekInjectedItems(mod)
+            }
         }
 
         protected fun seek(elem: RustDeclaringElement) = seek(listOf(elem))
@@ -376,7 +384,7 @@ private class Resolver {
         protected fun match(elem: RustNamedElement): Boolean =
             elem.nameElement?.textMatches(name) ?: false
 
-        private fun seekInjectedItems(mod: RustModItem) {
+        private fun seekInjectedItems(mod: RustMod) {
             // Rust injects implicit `extern crate std` in every crate root module unless it is
             // a `#![no_std]` crate, in which case `extern crate core` is injected.
             // The stdlib lib itself is `#![no_std]`.

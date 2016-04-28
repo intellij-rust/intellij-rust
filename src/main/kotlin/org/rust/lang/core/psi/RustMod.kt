@@ -1,9 +1,11 @@
 package org.rust.lang.core.psi
 
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
+import org.rust.lang.core.resolve.scope.RustResolveScope
 
-interface RustModEx: PsiElement {
+interface RustMod : RustNamedElement, RustResolveScope {
+    val items: List<RustItem>
+
     /**
      *  Returns a parent module (`super::` in paths).
      *
@@ -12,7 +14,7 @@ interface RustModEx: PsiElement {
      *  Reference:
      *    https://doc.rust-lang.org/reference.html#paths
      */
-    val `super`: RustModItem?
+    val `super`: RustMod?
 
     val ownsDirectory: Boolean
 
@@ -22,7 +24,10 @@ interface RustModEx: PsiElement {
 
     val isTopLevelInFile: Boolean
 
-    val modDecls: Collection<RustModDeclItem>
     //  Default implementation here causes https://youtrack.jetbrains.com/issue/KT-12114
+    val modDecls: Collection<RustModDeclItem>
     //  get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
+
+    override val declarations: Collection<RustDeclaringElement>
+    //  get() = items
 }

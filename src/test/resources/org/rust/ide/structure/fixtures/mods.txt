@@ -1,8 +1,7 @@
 -mods.rs
- -mods
+ function()
+ -my
   function()
-  -my
+  -nested
    function()
-   -nested
-    function()
-  main()
+ main()

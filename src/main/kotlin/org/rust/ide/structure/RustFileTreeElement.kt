@@ -39,10 +39,6 @@ class RustFileTreeElement(file: RustFile) : PsiTreeElementBase<RustFile>(file) {
             override fun visitModItem(o: RustModItem) {
                 result += RustModTreeElement(o)
             }
-
-            override fun visitFileModItem(o: RustFileModItem) {
-                result += RustFileModTreeElement(o)
-            }
         })
         return result;
     }

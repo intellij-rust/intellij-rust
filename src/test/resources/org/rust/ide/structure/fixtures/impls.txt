@@ -1,11 +1,10 @@
 -impls.rs
- -impls
-  -Registry
-   query(name: &Dependency) -> CargoResult<Vec<Summary>>
-  -Registry for Vec<Summary>
-   query(&Dependency) -> CargoResult<Vec<Summary>>
-  -Registry for Vec<Package>
-   query(&Dependency) -> CargoResult<Vec<Summary>>
-  -PackageRegistry<'cfg>
-   new(&'cfg Config) -> PackageRegistry<'cfg>
-   get(&[PackageId]) -> CargoResult<Vec<Package>>
+ -Registry
+  query(name: &Dependency) -> CargoResult<Vec<Summary>>
+ -Registry for Vec<Summary>
+  query(&Dependency) -> CargoResult<Vec<Summary>>
+ -Registry for Vec<Package>
+  query(&Dependency) -> CargoResult<Vec<Summary>>
+ -PackageRegistry<'cfg>
+  new(&'cfg Config) -> PackageRegistry<'cfg>
+  get(&[PackageId]) -> CargoResult<Vec<Package>>

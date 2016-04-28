@@ -1,10 +1,9 @@
 -enums.rs
- -enums
-  -CompileMode
-   Test
-   Build
-   Bench
-   Doc
-  -CompileFilter
-   Everything
-   Only
+ -CompileMode
+  Test
+  Build
+  Bench
+  Doc
+ -CompileFilter
+  Everything
+  Only
