@@ -1,7 +1,6 @@
 package org.rust.lang.core.resolve
 
 import org.assertj.core.api.Assertions.assertThat
-import org.rust.cargo.project.CargoProjectDescription
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.resolve.ref.RustReference
 
@@ -38,10 +37,4 @@ abstract class RustMultiFileResolveTestCaseBase : RustResolveTestCaseBase() {
 
         return usage.resolve()
     }
-
-    protected fun binTarget(path: String): CargoProjectDescription.Target =
-        CargoProjectDescription.Target(path, CargoProjectDescription.TargetKind.BIN)
-
-    protected fun libTarget(path: String): CargoProjectDescription.Target =
-        CargoProjectDescription.Target(path, CargoProjectDescription.TargetKind.LIB)
 }
