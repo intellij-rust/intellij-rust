@@ -8,12 +8,12 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.formatter.common.AbstractBlock
 import org.rust.lang.core.psi.RustCompositeElementTypes.MACRO_ARG
 
-abstract class AbstractRustBlock(
+abstract class AbstractRustFmtBlock(
     node: ASTNode,
     alignment: Alignment?,
     private val myIndent: Indent?,
     wrap: Wrap?,
-    val ctx: RustBlockContext
+    val ctx: RustFmtBlockContext
 ) : AbstractBlock(node, wrap, alignment) {
 
     override fun getIndent(): Indent? = myIndent
@@ -28,10 +28,10 @@ abstract class AbstractRustBlock(
             alignment: Alignment?,
             indent: Indent?,
             wrap: Wrap?,
-            ctx: RustBlockContext
-        ): AbstractRustBlock = when (node.elementType) {
-            MACRO_ARG -> RustMacroArgBlock(node, alignment, indent, wrap, ctx)
-            else  -> RustBlock(node, alignment, indent, wrap, ctx)
+            ctx: RustFmtBlockContext
+        ): AbstractRustFmtBlock = when (node.elementType) {
+            MACRO_ARG -> RustMacroArgFmtBlock(node, alignment, indent, wrap, ctx)
+            else  -> RustFmtBlock(node, alignment, indent, wrap, ctx)
         }
     }
 }

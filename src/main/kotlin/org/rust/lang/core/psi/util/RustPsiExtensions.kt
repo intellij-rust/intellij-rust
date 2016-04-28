@@ -1,13 +1,15 @@
 package org.rust.lang.core.psi.util
 
+import com.intellij.lang.ASTNode
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustPat
-import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.visitors.RecursiveRustVisitor
 
 
@@ -21,19 +23,24 @@ inline fun <reified T : PsiElement> PsiElement.parentOfType(strict: Boolean = tr
 inline fun <reified T : PsiElement> PsiElement.childOfType(strict: Boolean = true): T? =
     PsiTreeUtil.findChildOfType(this, T::class.java, strict)
 
-fun PsiElement?.getNextNonPhantomSibling(): PsiElement? =
-    this?.let {
-        val next = it.nextSibling
-        val et = next.node.elementType
+/**
+ * Finds first sibling that is neither comment, nor whitespace before given element.
+ */
+fun PsiElement?.getPrevNonCommentSibling(): PsiElement? =
+    PsiTreeUtil.skipSiblingsBackward(this, PsiWhiteSpace::class.java, PsiComment::class.java)
 
-        if (et in RustTokenElementTypes.PHANTOM_TOKEN_SET)
-            return next.getNextNonPhantomSibling()
-        else
-            return next
-    }
+/**
+ * Finds first sibling that is neither comment, nor whitespace after given element.
+ */
+fun PsiElement?.getNextNonCommentSibling(): PsiElement? =
+    PsiTreeUtil.skipSiblingsForward(this, PsiWhiteSpace::class.java, PsiComment::class.java)
 
 val PsiElement.parentRelativeRange: TextRange
     get() = TextRange.from(startOffsetInParent, textLength)
+
+fun ASTNode.containsEOL(): Boolean = textContains('\r') || textContains('\n')
+fun PsiElement.containsEOL(): Boolean = textContains('\r') || textContains('\n')
+
 
 /**
  * Returns module for this PsiElement.

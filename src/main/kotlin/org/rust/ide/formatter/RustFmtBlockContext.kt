@@ -5,16 +5,16 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.rust.lang.RustLanguage
 
-data class RustBlockContext private constructor(
+data class RustFmtBlockContext private constructor(
     val commonSettings: CommonCodeStyleSettings,
     val rustSettings: RustCodeStyleSettings,
     val spacingBuilder: SpacingBuilder
 ) {
     companion object {
-        fun create(settings: CodeStyleSettings): RustBlockContext {
+        fun create(settings: CodeStyleSettings): RustFmtBlockContext {
             val commonSettings = settings.getCommonSettings(RustLanguage)
             val rustSettings = settings.getCustomSettings(RustCodeStyleSettings::class.java)
-            return RustBlockContext(commonSettings, rustSettings, createSpacingBuilder(commonSettings, rustSettings))
+            return RustFmtBlockContext(commonSettings, rustSettings, createSpacingBuilder(commonSettings, rustSettings))
         }
     }
 }
