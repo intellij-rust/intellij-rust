@@ -1,5 +1,3 @@
-use std::fs; // FIXME: docs are not attached correctly to the first item
-
 /// Does useful things
 fn documented_function() {}
 
