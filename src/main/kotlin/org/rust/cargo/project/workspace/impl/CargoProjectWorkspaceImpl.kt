@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleComponent
@@ -27,9 +28,6 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoLibraryName
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.updateLibrary
-import org.rust.lang.utils.lock
-import java.util.concurrent.locks.Lock
-import java.util.concurrent.locks.ReentrantLock
 
 
 /**
@@ -46,11 +44,6 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
      * It uses dispatch-thread.
      */
     private val alarm = Alarm()
-
-    /**
-     * Lock to guard reads/updates to [cached]
-     */
-    private val lock: Lock = ReentrantLock()
 
     /**
      * Cached instance of the latest [CargoProjectDescription] instance synced with `Cargo.toml`
@@ -107,30 +100,43 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
      *            until the `Cargo.toml` becomes sound
      */
     override val projectDescription: CargoProjectDescription?
-        get() = lock (lock) { cached }
+        get() {
+            check(ApplicationManager.getApplication().isReadAccessAllowed)
+            return cached
+        }
 
-    private fun notifyCargoProjectUpdate(r: UpdateResult) {
+    private fun commitUpdate(r: UpdateResult) {
         ApplicationManager.getApplication().assertIsDispatchThread()
+        if (module.isDisposed) return
 
-        if (!module.isDisposed)
-            module.messageBus
-                .syncPublisher(CargoProjectWorkspaceListener.Topics.UPDATES)
-                .onWorkspaceUpdateCompleted(r)
+        if (r is UpdateResult.Ok) {
+            runWriteAction {
+                cached = r.projectDescription
+                updateModuleDependencies(r.projectDescription)
+            }
+        }
+
+        notifyCargoProjectUpdate(r)
+
+        when (r) {
+            is UpdateResult.Ok -> LOG.info("Project '${module.project.name}' successfully updated")
+            is UpdateResult.Err -> LOG.info("Project '${module.project.name}' update failed", r.error)
+        }
     }
 
     private fun updateModuleDependencies(projectDescription: CargoProjectDescription) {
-        ApplicationManager.getApplication().assertIsDispatchThread()
+        val libraryRoots =
+            projectDescription.packages
+                .filter { !it.isModule }
+                .mapNotNull { it.virtualFile }
 
-        ApplicationManager.getApplication().runWriteAction {
-            if (!module.isDisposed) {
-                val libraryRoots =
-                    projectDescription.packages
-                        .filter     { !it.isModule }
-                        .mapNotNull {  it.virtualFile }
+        module.updateLibrary(module.cargoLibraryName, libraryRoots)
+    }
 
-                module.updateLibrary(module.cargoLibraryName, libraryRoots)
-            }
-        }
+    private fun notifyCargoProjectUpdate(r: UpdateResult) {
+        module.messageBus
+            .syncPublisher(CargoProjectWorkspaceListener.Topics.UPDATES)
+            .onWorkspaceUpdateCompleted(r)
     }
 
     private inner class UpdateTask(
@@ -168,23 +174,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
 
         override fun onSuccess() {
             val r = requireNotNull(result)
-
-            lock (lock) {
-                when (r) {
-                    is UpdateResult.Ok -> {
-                        cached = r.projectDescription
-
-                        updateModuleDependencies(r.projectDescription);
-                    }
-                }
-
-                notifyCargoProjectUpdate(r)
-            }
-
-            when (r) {
-                is UpdateResult.Ok  -> LOG.info("Project '${module.project.name}' successfully updated")
-                is UpdateResult.Err -> LOG.info("Project '${module.project.name}' update failed", r.error)
-            }
+            commitUpdate(r)
         }
     }
 
@@ -212,12 +202,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
 
     @TestOnly
     fun setState(projectDescription: CargoProjectDescription) {
-        lock (lock) {
-            cached = projectDescription
-
-            updateModuleDependencies(projectDescription)
-            notifyCargoProjectUpdate(UpdateResult.Ok(projectDescription))
-        }
+        commitUpdate(UpdateResult.Ok(projectDescription))
     }
 }
 
