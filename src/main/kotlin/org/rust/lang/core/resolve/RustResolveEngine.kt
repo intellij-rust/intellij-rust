@@ -381,8 +381,7 @@ private class Resolver {
                 }
         }
 
-        protected fun match(elem: RustNamedElement): Boolean =
-            elem.nameElement?.textMatches(name) ?: false
+        protected fun match(elem: RustNamedElement): Boolean = elem.name == name
 
         private fun seekInjectedItems(mod: RustMod) {
             // Rust injects implicit `extern crate std` in every crate root module unless it is
