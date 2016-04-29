@@ -8,7 +8,5 @@ interface RustNamedElement   : RustCompositeElement
                              , PsiNamedElement
                              , NavigatablePsiElement {
 
-    val nameElement: PsiElement?
-
 }
 

@@ -8,7 +8,7 @@ import org.rust.lang.core.psi.RustNamedElement
 abstract class RustNamedElementImpl(node: ASTNode)   : RustCompositeElementImpl(node)
                                                      , RustNamedElement {
 
-    override val nameElement: PsiElement?
+    protected open val nameElement: PsiElement?
         get() = findChildByType(RustTokenElementTypes.IDENTIFIER)
 
     override fun getName(): String? = nameElement?.text

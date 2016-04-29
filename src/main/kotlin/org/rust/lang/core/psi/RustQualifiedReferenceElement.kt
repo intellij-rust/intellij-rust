@@ -52,7 +52,5 @@ interface RustQualifiedReferenceElement : RustNamedElement {
 
     val qualifier: RustQualifiedReferenceElement?
 
-    override val nameElement: PsiElement?
-
     override fun getReference(): RustReference
 }

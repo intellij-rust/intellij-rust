@@ -15,7 +15,7 @@ abstract class RustStubbedNamedElementImpl<StubT> : RustStubbedElementImpl<StubT
 
     constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val nameElement: PsiElement?
+    protected open val nameElement: PsiElement?
         get() = findChildByType(RustTokenElementTypes.IDENTIFIER)
 
     override fun getName(): String? = stub?.let { stub ->
