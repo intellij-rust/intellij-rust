@@ -1092,28 +1092,20 @@ let_decl ::= LET pat type_ascription? [ '=' any_expr ] ';' { pin = "LET" }
 // Statements
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-block ::= '{' stmt_* any_expr? '}' {
+block ::= '{' stmt* any_expr? '}' {
   pin(".*") = 1
 }
 
-inner_attrs_and_block ::= '{' inner_attr* stmt_* any_expr? '}' {
+inner_attrs_and_block ::= '{' inner_attr* stmt* any_expr? '}' {
   elementType = block
   pin(".*") = 1
 }
 
+stmt ::= expr_stmt | decl_stmt | empty_stmt
 
 expr_stmt   ::= outer_attr? ( block_expr !('.' | '?') ';'? | any_expr ';' )
 decl_stmt   ::= docs_and_item | outer_attr? let_decl
 empty_stmt  ::= ';'
-
-// TODO(kudinkin):  That's a hack to overcome GK's bug
-//                  producing parsing rules for `fake` productions
-
-stmt ::=
-
-private stmt_ ::= expr_stmt
-                | decl_stmt
-                | empty_stmt
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

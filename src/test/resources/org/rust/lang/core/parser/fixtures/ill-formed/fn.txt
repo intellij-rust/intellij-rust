@@ -128,7 +128,7 @@ FILE
             <empty list>
           RustParametersImpl(PARAMETERS)
             PsiElement(()('(')
-  PsiErrorElement:<item>, <restricted expr> or '}' expected, got ','
+  PsiErrorElement:<item>, <restricted expr>, <stmt> or '}' expected, got ','
     PsiElement(,)(',')
   PsiElement(DUMMY_BLOCK)
     PsiElement())(')')
