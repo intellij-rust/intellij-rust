@@ -83,12 +83,7 @@ project** action.
 
 ## Updating
 
-In general updating the plugin should just work even if we change things we
-cache or persist. However given the current rate of change we do not test for
-this and so it is possible for data from the previous versions to confuse the
-newer version of the plugin. You can **Refresh Cargo project** to force a
-reimport of Cargo project. You can use **Invalidate caches/Restart** to rebuild
-indices.
+In general, plugin updates should go smoth. Though, if you experience some weird behaviour, reimport your project (using **Refresh Cargo project** action) or/and rebuild indices (using **Invalidate caches/Restart** action), prior to reporting bugs.
 
 ## Tips
 
