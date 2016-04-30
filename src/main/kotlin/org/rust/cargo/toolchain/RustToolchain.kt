@@ -74,7 +74,14 @@ data class RustcVersion(
     val commitHash: String,
     val release: String,
     val isStable: Boolean
-)
+) {
+    val sourcesArchiveUrl: String get() {
+        // We download sources from github and not from rust-lang.org, because we want zip archives. rust-lang.org
+        // hosts only .tar.gz.
+        val tag = if (isStable) release else commitHash
+        return "https://github.com/rust-lang/rust/archive/$tag.zip"
+    }
+}
 
 private fun parseVersion(lines: List<String>): RustcVersion? {
     // We want to parse here

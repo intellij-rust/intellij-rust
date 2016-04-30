@@ -6,13 +6,13 @@ import com.intellij.openapi.module.ModuleServiceManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.project.CargoProjectDescriptionData
 
 object RustModuleUtil
 
@@ -69,32 +69,33 @@ fun Module.relativise(f: VirtualFile): String? =
         }
 
 /**
- * Creates an IDEA library from an archive with rust. Returns Packages describing crates from the standard library.
+ * Creates an IDEA external library from an zip archive or a folder with rust.
+ * The crates can be extracted with [standardLibraryCrates].
  * Hopefully this function will go away when a standard way to get rust sources appears.
  */
-fun Module.attachStandardLibrary(sourcesArchive: VirtualFile): Collection<CargoProjectDescriptionData.Package> {
-    val baseDir = sourcesArchive.children.singleOrNull()?.findChild("src") ?: return emptyList()
-    val packages = listOf("std", "core", "collections").mapNotNull { standardLibraryPackage(baseDir, it) }
-    val fs = VirtualFileManager.getInstance()
-    val libraryRoots = packages
-        .flatMap { pkg -> pkg.targets.mapNotNull { it.url } }
-        .mapNotNull { fs.findFileByUrl(it)?.parent }
+fun Module.attachStandardLibrary(sourcesArchive: VirtualFile) {
+    val srcDir = findSrcDir(sourcesArchive) ?: return
+    val libraryRoots = stdlibCrateNames.mapNotNull {
+        srcDir.findFileByRelativePath("lib$it")
+    }
 
     updateLibrary(rustLibraryName, libraryRoots)
-    return packages
 }
 
-private fun standardLibraryPackage(baseDir: VirtualFile, name: String): CargoProjectDescriptionData.Package? {
-    return CargoProjectDescriptionData.Package(
-        baseDir.findFileByRelativePath("lib$name")?.url ?: return null,
-        name,
-        version = "1.0.0",
-        targets = listOf(CargoProjectDescriptionData.Target(
-            baseDir.findFileByRelativePath("lib$name/lib.rs")?.url ?: return null,
-            CargoProjectDescription.TargetKind.LIB
-        )),
-        source = "stdlib"
-    )
+/**
+ * Looks up standard Rust crates in the Rust external library.
+ */
+val Module.standardLibraryCrates: Collection<ExternCrate> get() {
+    val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(rustLibraryName)
+        ?: return emptyList()
+
+    val roots: Map<String, VirtualFile> = lib.getFiles(OrderRootType.CLASSES).associateBy { it.name }
+    return stdlibCrateNames.mapNotNull { name ->
+        roots["lib$name"]?.let { libDir ->
+            val file = libDir.findFileByRelativePath("lib.rs") ?: return@let null
+            ExternCrate(name, file)
+        }
+    }
 }
 
 /**
@@ -112,6 +113,19 @@ fun Module.updateLibrary(libraryName: String, roots: Collection<VirtualFile>) {
 
     ModuleRootModificationUtil.addDependency(this, library)
 }
+
+private fun findSrcDir(sources: VirtualFile): VirtualFile? {
+    // sources may be either a zip archive downloaded from github,
+    // or a root directory with rust sources, or its src subdirectory.
+    // In any case, we want to find the src subdir
+    if (sources.isDirectory) {
+        return if (sources.name == "src") sources else sources.findChild("src")
+    }
+    val base = JarFileSystem.getInstance().getJarRootForLocalFile(sources) ?: return null
+    return base.children.singleOrNull()?.findChild("src")
+}
+
+private val stdlibCrateNames = listOf("std", "core", "collections")
 
 private fun fillLibrary(library: Library, roots: Collection<VirtualFile>) {
     val model = library.modifiableModel

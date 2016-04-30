@@ -48,7 +48,7 @@ fun Module.findExternCrateByName(crateName: String): PsiFile? =
 private val Module.externCrates: Collection<ExternCrate> get() =
     cargoProject?.packages.orEmpty().mapNotNull { pkg ->
         pkg.libTarget?.virtualFile?.let { ExternCrate(pkg.name, it) }
-    }
+    } + standardLibraryCrates
 
 object AutoInjectedCrates {
     const val std: String = "std"

@@ -4,7 +4,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
@@ -89,7 +88,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         }
 
         open protected fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
-            val packages = mutableListOf(testCargoPackage(contentRoot))
+            val packages = listOf(testCargoPackage(contentRoot))
             return CargoProjectDescription.deserialize(CargoProjectDescriptionData(0, packages, ArrayList()))!!
         }
 
@@ -107,17 +106,15 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
     class WithStdlibRustProjectDescriptor : RustProjectDescriptor() {
         override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
-            val sourcesArchive = LocalFileSystem.getInstance()
-                .findFileByPath("${RustTestCase.testResourcesPath}/rustc-src.zip")
+            val sourcesArchive = checkNotNull(LocalFileSystem.getInstance()
+                .findFileByPath("${RustTestCase.testResourcesPath}/rustc-src.zip")) {
+               "Rust sources archive not found. Run `./gradlew test` to download the archive."
+            }
 
-            val sourceRoot = checkNotNull(sourcesArchive?.let {
-                JarFileSystem.getInstance().getJarRootForLocalFile(it)
-            }) { "Rust sources archive not found. Run `./gradlew test` to download the archive." }
+            module.attachStandardLibrary(sourcesArchive)
+            val packages = listOf(testCargoPackage(contentRoot))
 
-            val stdlibPackages = module.attachStandardLibrary(sourceRoot)
-            val allPackages = stdlibPackages + testCargoPackage(contentRoot)
-
-            return CargoProjectDescriptionData(0, allPackages.toMutableList(), ArrayList()).let {
+            return CargoProjectDescriptionData(0, packages, emptyList()).let {
                 CargoProjectDescription.deserialize(it)!!
             }
         }
