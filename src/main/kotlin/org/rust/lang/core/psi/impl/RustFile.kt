@@ -26,8 +26,6 @@ import org.rust.lang.core.resolve.ref.RustReference
 class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvider, RustLanguage), RustMod {
     override fun getReference(): RustReference? = null
 
-    override val nameElement: PsiElement? = null
-
     override fun getFileType(): FileType = RustFileType
 
     override val items: List<RustItem>
