@@ -4,9 +4,8 @@ import com.intellij.lang.SmartEnterProcessorWithFixers
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RustCallExpr
-import org.rust.lang.core.psi.impl.RustDeclStmtImpl
+import org.rust.lang.core.psi.RustLetDecl
 import org.rust.lang.core.psi.util.parentOfType
 
 /**
@@ -25,7 +24,7 @@ class SemicolonFixer : SmartEnterProcessorWithFixers.Fixer<RustSmartEnterProcess
     }
 
     private fun fixDeclaration(editor: Editor, element: PsiElement) {
-        if (element is RustDeclStmtImpl && PsiTreeUtil.getDeepestLast(element).text != ";") {
+        if (element is RustLetDecl && element.semicolon == null) {
             editor.document.insertString(element.textRange.endOffset, ";")
         }
     }

@@ -269,7 +269,6 @@
     extends     ("(if|while)_let_expr") = scoped_let_expr
     extends     (".*_expr") = restricted_expr
     extends     ("(?!ret_type).*_type") = type
-    extends     (".*_stmt") = stmt
     extends     ("pat_.*")  = pat
     extends     (".*_attr") = attr
     extends     ("inner_attrs_and_block") = block
@@ -1090,30 +1089,34 @@ private bool_lit ::= FALSE | TRUE
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Declarations
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-let_decl ::= LET pat type_ascription? [ '=' any_expr ] ';' { pin = "LET" }
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 // Statements
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-block ::= '{' stmt* any_expr? '}' {
-  pin(".*") = 1
+block ::= '{' block_tail '}' {
+  pin = 1
 }
 
-inner_attrs_and_block ::= '{' inner_attr* stmt* any_expr? '}' {
+inner_attrs_and_block ::= '{' inner_attr* block_tail '}' {
   elementType = block
-  pin(".*") = 1
+  pin = 1
 }
 
-stmt ::= expr_stmt | decl_stmt | empty_stmt
+private block_tail ::= (stmt | docs_and_item)* any_expr?
 
-expr_stmt   ::= outer_attr? ( block_expr !('.' | '?') ';'? | any_expr ';' )
-decl_stmt   ::= docs_and_item | outer_attr? let_decl
-empty_stmt  ::= ';'
+stmt ::= expr_stmt | let_decl | empty_stmt
+
+expr_stmt ::= outer_attr? ( block_expr !('.' | '?') ';'? | any_expr ';' ) {
+  extends = stmt
+}
+
+let_decl ::= outer_attr? LET pat type_ascription? [ '=' any_expr ] ';' {
+  extends = stmt
+  pin = "LET"
+}
+
+empty_stmt ::= ';' {
+  extends = stmt
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
