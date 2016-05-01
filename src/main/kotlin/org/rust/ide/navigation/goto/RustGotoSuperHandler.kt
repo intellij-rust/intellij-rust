@@ -4,7 +4,7 @@ import com.intellij.lang.LanguageCodeInsightActionHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.rust.lang.core.psi.RustModItem
+import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.util.parentOfType
 
@@ -14,7 +14,7 @@ class RustGotoSuperHandler : LanguageCodeInsightActionHandler {
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
         val focusedElement = file.findElementAt(editor.caretModel.offset) ?: return
 
-        val focusedMod = focusedElement.parentOfType<RustModItem>() ?: return
+        val focusedMod = focusedElement.parentOfType<RustMod>() ?: return
         val superMod = focusedMod.`super` ?: return
 
         superMod.navigate(true)
