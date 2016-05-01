@@ -1,0 +1,32 @@
+FILE
+  RustImplItemImpl(IMPL_ITEM)
+    PsiElement(impl)('impl')
+    PsiWhiteSpace(' ')
+    RustGenericParamsImpl(GENERIC_PARAMS)
+      <empty list>
+    RustTraitRefImpl(TRAIT_REF)
+      RustPathPartImpl(PATH_PART)
+        PsiElement(<IDENTIFIER>)('T')
+    PsiWhiteSpace(' ')
+    PsiElement(for)('for')
+    PsiWhiteSpace(' ')
+    RustPathTypeImpl(PATH_TYPE)
+      RustPathPartImpl(PATH_PART)
+        PsiElement(<IDENTIFIER>)('S')
+    PsiWhiteSpace(' ')
+    RustImplBodyImpl(IMPL_BODY)
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      RustImplMethodMemberImpl(IMPL_METHOD_MEMBER)
+        PsiElement(fn)('fn')
+        PsiWhiteSpace(' ')
+        PsiElement(<IDENTIFIER>)('foo')
+        RustGenericParamsImpl(GENERIC_PARAMS)
+          <empty list>
+        RustParametersImpl(PARAMETERS)
+          PsiElement(()('(')
+          PsiElement())(')')
+        PsiErrorElement:'{' expected, got '}'
+          <empty list>
+      PsiWhiteSpace('\n')
+      PsiElement(})('}')

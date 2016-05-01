@@ -281,8 +281,11 @@
     generateTokens=false
     generateTokenAccessors=true
 
-    // Preserve information about missing ':'
+    // Fast method sometimes fails to report syntax errors,
+    // override it where it matters
     consumeTokenMethod("type_ascription") = "consumeToken"
+    consumeTokenMethod("inner_attrs_and_block") = "consumeToken"
+
     consumeTokenMethod(".*") = "consumeTokenFast"
 
     //recoverWhile = skip_until_eol_rec
@@ -402,7 +405,7 @@ extern_abi ::= EXTERN STRING_LITERAL?
 ret_type ::= '->' (type | '!') { pin = 1 }
 
 fn_item ::= fn_header generic_params fn_parameters ret_type? where_clause? inner_attrs_and_block {
-  pin(".*") = 1
+  pin = fn_header
 }
 
 generic_params ::= [ generic_params_inner ]
@@ -584,7 +587,10 @@ private const_default ::= '=' any_expr
 
 trait_type_member ::= outer_attr* TYPE_KW type_param ';'
 
-trait_method_member ::= outer_attr* fn_header generic_params method_decl_parameters ret_type? where_clause? (';' | inner_attrs_and_block)
+trait_method_member ::= outer_attr* fn_header generic_params method_decl_parameters ret_type? where_clause? (';' | inner_attrs_and_block) {
+  pin = fn_header
+}
+
 
 trait_ref ::= path_generic_args_without_colons
 
@@ -606,7 +612,9 @@ private impl_member ::= impl_method_member
                       | impl_macro_member
                       | impl_type_member
 
-impl_method_member ::= attrs_and_vis fn_header generic_params method_parameters ret_type? where_clause? inner_attrs_and_block
+impl_method_member ::= attrs_and_vis fn_header generic_params method_parameters ret_type? where_clause? inner_attrs_and_block {
+  pin = fn_header
+}
 
 impl_const_member ::= attrs_and_vis CONST static_decl ';'
 

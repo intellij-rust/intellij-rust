@@ -12,8 +12,10 @@ import javax.swing.Icon
 abstract class RustImplMethodImplMixinMember(node: ASTNode) : RustNamedElementImpl(node)
                                                             , RustImplMethodMember {
 
-    override val declarations: Collection<RustDeclaringElement>
-        get() = listOfNotNull(parameters.selfArgument) + parameters.parameterList.orEmpty()
+    override val declarations: Collection<RustDeclaringElement> get() {
+        val params = parameters ?: return emptyList()
+        return listOfNotNull(params.selfArgument) + params.parameterList.orEmpty()
+    }
 
     override fun getIcon(flags: Int): Icon? {
         var icon = RustIcons.METHOD
@@ -28,4 +30,4 @@ abstract class RustImplMethodImplMixinMember(node: ASTNode) : RustNamedElementIm
 
 }
 
-val RustImplMethodMember.isStatic: Boolean get() = parameters.selfArgument == null
+val RustImplMethodMember.isStatic: Boolean get() = parameters?.selfArgument == null

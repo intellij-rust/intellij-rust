@@ -14,6 +14,7 @@ class RustCompletionTest : RustTestCaseBase() {
     fun testIncompleteLet()      = checkSoleCompletion()
     fun testUseGlob()            = checkSoleCompletion()
     fun testTypeParams()         = checkSoleCompletion()
+    fun testImplMethodType()     = checkSoleCompletion()
 
     fun testChildFile() = checkByDirectory {
         openFileInEditor("main.rs")
