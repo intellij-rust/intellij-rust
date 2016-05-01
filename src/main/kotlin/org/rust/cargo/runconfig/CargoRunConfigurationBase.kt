@@ -5,27 +5,27 @@ import com.intellij.execution.Executor
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.options.SettingsEditor
-import com.intellij.openapi.project.Project
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
-import org.rust.cargo.runconfig.forms.CargoRunConfigurationEditorForm
-import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modules
 
-class CargoCommandConfiguration(project: Project,
-                                name: String,
-                                configurationType: CargoCommandRunConfigurationType)
+/**
+ * Base class for cargo run configurations.
+ */
+abstract class CargoRunConfigurationBase<ConfigurationModule : RunConfigurationModule>(name: String,
+                                                                                       runConfigurationModule: ConfigurationModule,
+                                                                                       configurationType: ConfigurationTypeBase)
+: ModuleBasedConfiguration<ConfigurationModule>(name,
+                                                runConfigurationModule,
+                                                configurationType.configurationFactories[0]) {
 
-    : ModuleBasedConfiguration<RustRunConfigurationModule>(name,
-                                                           RustRunConfigurationModule(project),
-                                                           configurationType.configurationFactories[0]) {
-
-    var command: String = "run"
-    var additionalArguments: String = ""
-    var environmentVariables: Map<String, String> = mutableMapOf()
+    open var command: String = "run"
+    open var arguments: String = ""
+    open var additionalArguments: String = ""
+    open var environmentVariables: Map<String, String> = mutableMapOf()
 
     init {
         configurationModule.module = project.modules.firstOrNull()
@@ -46,14 +46,11 @@ class CargoCommandConfiguration(project: Project,
         }
     }
 
-    override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
-        CargoRunConfigurationEditorForm()
-
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
         val module = configurationModule.module ?: return null
         val toolchain = module.toolchain ?: return null
         val moduleDirectory = module.cargoProjectRoot ?: return null
-        val args = ParametersListUtil.parse(additionalArguments)
+        val args = ParametersListUtil.parse(arguments + additionalArguments)
         return CargoRunState(environment, toolchain, moduleDirectory, command, args, environmentVariables)
     }
 
@@ -67,5 +64,3 @@ class CargoCommandConfiguration(project: Project,
         XmlSerializer.deserializeInto(this, element)
     }
 }
-
-class RustRunConfigurationModule(project: Project) : RunConfigurationModule(project)

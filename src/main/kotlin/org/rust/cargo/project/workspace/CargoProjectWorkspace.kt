@@ -1,8 +1,5 @@
 package org.rust.cargo.project.workspace
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.Disposer
-import com.intellij.util.messages.Topic
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.toolchain.RustToolchain
 
