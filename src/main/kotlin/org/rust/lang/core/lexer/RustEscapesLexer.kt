@@ -69,7 +69,7 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
                     }
                 'u'        ->
                     if (bufferEnd - (i + 1) >= 1 && bufferSequence[i + 1] == '{') {
-                        val idx = bufferSequence.indexOf('}', i + 1)
+                        val idx = indexOf('}', i + 1)
                         return if (idx != -1) Math.min(idx + 1, bufferEnd) else bufferEnd
                     }
                 '\r', '\n' -> {
@@ -82,9 +82,16 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
             }
             return i + 1
         } else {
-            val idx = bufferSequence.indexOf('\\', start + 1)
+            val idx = indexOf('\\', start + 1)
             return if (idx != -1) Math.min(idx, bufferEnd) else bufferEnd
         }
+    }
+
+    private fun indexOf(c: Char, start: Int): Int {
+        // `bufferSequence` is the entire file. `indexOf` method does not
+        // accept and `endIndex` argument, so let's use `subSequence` to limit
+        // search.
+        return bufferSequence.subSequence(0, bufferEnd).indexOf(c, start)
     }
 
     private fun esc(test: Boolean): IElementType =
