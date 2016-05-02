@@ -91,7 +91,7 @@ class MissingToolchainNotificationProvider(
 
     private fun createAttachLibraryPanel(module: Module, toolchain: RustToolchain): EditorNotificationPanel =
         EditorNotificationPanel().apply {
-            setText("No Rust standard library found, some code insight will not work")
+            setText("No standard library sources found, some code insight will not work")
             createActionLabel("Download") {
                 val destination = chooseDownloadLocation(this) ?: return@createActionLabel
                 DownloadTask(module, toolchain, destination).queue()
