@@ -1,8 +1,9 @@
 package org.rust.lang.core.lexer
 
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtil.isHexDigit
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
+import com.intellij.util.text.CharArrayUtil.indexOf
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 
 private const val BYTE_ESCAPE_LENGTH = "\\x00".length
@@ -60,8 +61,8 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
 
             when (bufferSequence[i]) {
                 'x'        ->
-                    if (bufferEnd - (i + 1) >= 1 && StringUtil.isHexDigit(bufferSequence[i + 1])) {
-                        if (bufferEnd - (i + 2) >= 1 && StringUtil.isHexDigit(bufferSequence[i + 2])) {
+                    if (bufferEnd - (i + 1) >= 1 && isHexDigit(bufferSequence[i + 1])) {
+                        if (bufferEnd - (i + 2) >= 1 && isHexDigit(bufferSequence[i + 2])) {
                             return i + 2 + 1
                         } else {
                             return i + 1 + 1
@@ -69,8 +70,8 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
                     }
                 'u'        ->
                     if (bufferEnd - (i + 1) >= 1 && bufferSequence[i + 1] == '{') {
-                        val idx = indexOf('}', i + 1)
-                        return if (idx != -1) Math.min(idx + 1, bufferEnd) else bufferEnd
+                        val idx = indexOf(bufferSequence, "}", i + 1, bufferEnd)
+                        return if (idx != -1) idx + 1 else bufferEnd
                     }
                 '\r', '\n' -> {
                     var j = i
@@ -82,16 +83,9 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
             }
             return i + 1
         } else {
-            val idx = indexOf('\\', start + 1)
-            return if (idx != -1) Math.min(idx, bufferEnd) else bufferEnd
+            val idx = indexOf(bufferSequence, "\\", start + 1, bufferEnd)
+            return if (idx != -1) idx else bufferEnd
         }
-    }
-
-    private fun indexOf(c: Char, start: Int): Int {
-        // `bufferSequence` is the entire file. `indexOf` method does not
-        // accept and `endIndex` argument, so let's use `subSequence` to limit
-        // search.
-        return bufferSequence.subSequence(0, bufferEnd).indexOf(c, start)
     }
 
     private fun esc(test: Boolean): IElementType =
@@ -103,7 +97,7 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
             testCodepointRange(start + 2, end, if (extended) 0xff else 0x7f)
 
     private fun isValidUnicodeEscape(start: Int, end: Int): Boolean =
-        // FIXME: I'm not sure if this max codepoint is correct.
+        // FIXME(jajakobyly): I'm not sure if this max codepoint is correct.
         // I've found it by playing with Rust Playground, so it matches rustc behaviour, but it has
         // nothing to do with the Rust Reference (I've expected 0x7fffff or something similar).
         end - start in UNICODE_ESCAPE_MIN_LENGTH..UNICODE_ESCAPE_MAX_LENGTH &&
