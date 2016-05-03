@@ -6,8 +6,7 @@ import com.intellij.openapi.module.ModuleServiceManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
+import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
@@ -111,7 +110,13 @@ fun Module.updateLibrary(libraryName: String, roots: Collection<VirtualFile>) {
 
     fillLibrary(library, roots)
 
-    ModuleRootModificationUtil.addDependency(this, library)
+    ModuleRootModificationUtil.updateModel(this) { model ->
+        OrderEntryUtil.findLibraryOrderEntry(model, library)?.let { previousOrderEntry ->
+            model.removeOrderEntry(previousOrderEntry)
+        }
+
+        model.addLibraryEntry(library)
+    }
 }
 
 private fun findSrcDir(sources: VirtualFile): VirtualFile? {
