@@ -16,8 +16,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.component1
-import com.intellij.openapi.util.component2
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -33,6 +31,7 @@ import org.rust.cargo.util.attachStandardLibrary
 import org.rust.cargo.util.findExternCrateByName
 import org.rust.lang.core.psi.impl.isNotRustFile
 import java.awt.Component
+import java.io.IOException
 
 /*
  * Warn user if rust toolchain is not properly configured. Suggest to download stdlib.
@@ -162,10 +161,15 @@ class MissingToolchainNotificationProvider(
                 val downloader = downloadService.createDownloader(listOf(fileDescription), "rust")
 
                 val downloadTo = VfsUtilCore.virtualToIoFile(destination)
-                val (file, @Suppress("UNUSED_VARIABLE") description) =
-                    downloader.download(downloadTo).singleOrNull() ?: return null
+                val file = try {
+                    downloader.download(downloadTo).singleOrNull()?.first
+                } catch (e: IOException) {
+                    // TODO: probably should use IOExceptionDialog.showErrorDialog here,
+                    // but let's ignore this for now and hope that a better way to get stdlib appears
+                    null
+                }
 
-                return LocalFileSystem.getInstance().findFileByIoFile(file)
+                return file?.let { LocalFileSystem.getInstance().refreshAndFindFileByIoFile(it) }
             }
         }
     }
@@ -177,4 +181,3 @@ class MissingToolchainNotificationProvider(
         private val Module.hasStandardLibrary: Boolean get() = findExternCrateByName(AutoInjectedCrates.std) != null
     }
 }
-
