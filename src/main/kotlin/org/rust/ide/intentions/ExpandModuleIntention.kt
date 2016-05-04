@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.rustMod
 
-class ExpandModule : IntentionAction {
+class ExpandModuleIntention : IntentionAction {
 
     override fun getFamilyName()        = "Expand module structure"
     override fun getText()              = "Expand module"

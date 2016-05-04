@@ -128,19 +128,19 @@
         <!-- Intentions -->
 
         <intentionAction>
-            <className>org.rust.ide.intentions.ExpandModule</className>
+            <className>org.rust.ide.intentions.ExpandModuleIntention</className>
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
-            <className>org.rust.ide.intentions.ContractModule</className>
+            <className>org.rust.ide.intentions.ContractModuleIntention</className>
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
-            <className>org.rust.ide.intentions.ExtractInlineModule</className>
+            <className>org.rust.ide.intentions.ExtractInlineModuleIntention</className>
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
-            <className>org.rust.ide.intentions.AddDerive</className>
+            <className>org.rust.ide.intentions.AddDeriveIntention</className>
             <category>Rust</category>
         </intentionAction>
 

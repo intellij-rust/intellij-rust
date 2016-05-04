@@ -9,7 +9,7 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.impl.RustFile
 
-class ContractModule : IntentionAction {
+class ContractModuleIntention : IntentionAction {
 
     override fun getFamilyName()        = "Contract module structure"
     override fun getText()              = "Contract module"

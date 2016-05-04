@@ -7,22 +7,22 @@ class AddDeriveIntentionTest : RustTestCaseBase() {
 
     fun testAddDeriveStruct() = checkByFile {
         openFileInEditor("add_derive_struct.rs")
-        myFixture.launchAction(AddDerive())
+        myFixture.launchAction(AddDeriveIntention())
     }
 
     fun testAddDerivePubStruct() = checkByFile {
         openFileInEditor("add_derive_pub_struct.rs")
-        myFixture.launchAction(AddDerive())
+        myFixture.launchAction(AddDeriveIntention())
     }
 
     fun testAddDeriveEnum() = checkByFile {
         // FIXME: there is something weird with enum re-formatting, for some reason it adds more indentation
         openFileInEditor("add_derive_enum.rs")
-        myFixture.launchAction(AddDerive())
+        myFixture.launchAction(AddDeriveIntention())
     }
 
     fun testAddDeriveExistingAttr() = checkByFile {
         openFileInEditor("add_derive_existing_attr.rs")
-        myFixture.launchAction(AddDerive())
+        myFixture.launchAction(AddDeriveIntention())
     }
 }

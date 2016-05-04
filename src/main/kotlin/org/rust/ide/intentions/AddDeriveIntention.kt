@@ -11,8 +11,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.queryAttributes
 import org.rust.lang.core.psi.util.parentOfType
 
-class AddDerive : PsiElementBaseIntentionAction()
-                , IntentionAction {
+class AddDeriveIntention : PsiElementBaseIntentionAction(), IntentionAction {
     override fun getFamilyName() = "Add derive clause"
     override fun getText() = "Add derive clause"
     override fun startInWriteAction() = true

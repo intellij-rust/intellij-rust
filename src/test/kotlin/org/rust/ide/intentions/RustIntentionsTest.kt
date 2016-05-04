@@ -8,11 +8,11 @@ class RustIntentionsTest : RustTestCaseBase() {
 
     fun testExpandModule() = checkByDirectory {
         openFileInEditor("foo.rs")
-        myFixture.launchAction(ExpandModule())
+        myFixture.launchAction(ExpandModuleIntention())
     }
 
     fun testContractModule()  = checkByDirectory {
         openFileInEditor("other/mod.rs")
-        myFixture.launchAction(ContractModule())
+        myFixture.launchAction(ContractModuleIntention())
     }
 }

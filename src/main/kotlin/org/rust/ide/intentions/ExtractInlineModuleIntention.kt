@@ -12,7 +12,7 @@ import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.parentOfType
 
-class ExtractInlineModule : IntentionAction {
+class ExtractInlineModuleIntention : IntentionAction {
     override fun getFamilyName() = "Extract inline module structure"
     override fun getText() = "Extract inline module"
     override fun startInWriteAction() = true

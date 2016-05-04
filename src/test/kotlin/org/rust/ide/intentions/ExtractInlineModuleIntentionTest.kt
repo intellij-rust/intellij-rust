@@ -11,6 +11,6 @@ class ExtractInlineModuleIntentionTest : RustTestCaseBase() {
 
     private fun extractInlineModule() = checkByDirectory {
         openFileInEditor("main.rs")
-        myFixture.launchAction(ExtractInlineModule())
+        myFixture.launchAction(ExtractInlineModuleIntention())
     }
 }
