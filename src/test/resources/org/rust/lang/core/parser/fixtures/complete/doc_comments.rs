@@ -1,5 +1,8 @@
 /// Does useful things
-fn documented_function() {}
+fn documented_function() {
+    /// inner items can have docs too!
+    fn foo() { }
+}
 
 mod m {
     //! This is module docs
