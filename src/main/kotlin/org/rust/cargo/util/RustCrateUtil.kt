@@ -41,6 +41,12 @@ fun Module.findExternCrateByName(crateName: String): PsiFile? =
         PsiManager.getInstance(project).findFile(it.virtualFile)
     }
 
+val Module.preludeModule: PsiFile? get() {
+    val stdlib = findExternCrateByName(AutoInjectedCrates.std) ?: return null
+    val preludeFile = stdlib.virtualFile.findFileByRelativePath("../prelude/v1.rs") ?: return null
+    return PsiManager.getInstance(project).findFile(preludeFile)
+}
+
 /**
  * A set of external crates for the module. External crate can refer
  * to another module or a library or a crate form the SDK
@@ -68,4 +74,3 @@ val Module.cargoProjectRoot: VirtualFile?
  */
 val Module.cargoProject: CargoProjectDescription?
     get() = getComponentOrThrow<CargoProjectWorkspace>().projectDescription
-

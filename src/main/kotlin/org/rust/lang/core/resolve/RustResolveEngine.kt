@@ -7,6 +7,7 @@ import com.intellij.psi.PsiManager
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.crateRoots
 import org.rust.cargo.util.findExternCrateByName
+import org.rust.cargo.util.preludeModule
 import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
@@ -123,7 +124,12 @@ object RustResolveEngine {
 
 private class Resolver {
 
+    /**
+     * Tracks `use` items to avoid resolve cycles
+     */
     private val seen: MutableSet<RustNamedElement> = HashSet()
+
+    private var visitedPrelude = false
 
     /**
      * Resolves abstract qualified-names
@@ -388,11 +394,17 @@ private class Resolver {
             // a `#![no_std]` crate, in which case `extern crate core` is injected.
             // The stdlib lib itself is `#![no_std]`.
             // We inject both crates for simplicity for now.
-            if (mod.isCrateRoot) {
-                if (name == AutoInjectedCrates.std || name == AutoInjectedCrates.core) {
+            if (name == AutoInjectedCrates.std || name == AutoInjectedCrates.core) {
+                if (mod.isCrateRoot) {
                     mod.module?.findExternCrateByName(name)?.rustMod?.let {
                         found(it)
                     }
+                }
+            } else {
+                // Rust injects implicit `use std::prelude::v1::*` into every module.
+                if (!visitedPrelude) {
+                    visitedPrelude = true
+                    mod.module?.preludeModule?.accept(this)
                 }
             }
         }
