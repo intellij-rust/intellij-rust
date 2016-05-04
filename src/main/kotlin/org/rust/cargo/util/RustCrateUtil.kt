@@ -18,7 +18,7 @@ object RustCrateUtil
 val Module.crateRoots: Collection<VirtualFile>
     get() = cargoProject?.packages.orEmpty()
                 .flatMap    { it.targets }
-                .mapNotNull { it.virtualFile }
+                .mapNotNull { it.virtualFile } + standardLibraryCrates.map { it.virtualFile }
 
 
 data class ExternCrate(

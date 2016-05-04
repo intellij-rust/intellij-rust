@@ -2,7 +2,6 @@ package org.rust.lang.core.resolve
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.assertj.core.api.Assertions.assertThat
-import org.rust.cargo.util.cargoProject
 import org.rust.cargo.util.findExternCrateByName
 
 class RustStdlibResolveTestCase : RustMultiFileResolveTestCaseBase() {
@@ -20,4 +19,5 @@ class RustStdlibResolveTestCase : RustMultiFileResolveTestCaseBase() {
 
     fun testResolveFs() = doTestResolved("fs/main.rs")
     fun testResolveCollections() = doTestResolved("collections/main.rs")
+    fun testResolveCore() = doTestResolved("core/main.rs")
 }
