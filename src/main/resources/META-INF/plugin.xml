@@ -148,13 +148,13 @@
 
         <programRunner implementation="org.rust.cargo.runconfig.RustRunner"/>
 
-        <configurationType implementation="org.rust.cargo.runconfig.run.CargoRunType"/>
-        <runConfigurationProducer implementation="org.rust.cargo.runconfig.run.CargoRunProducer"/>
+        <configurationType implementation="org.rust.cargo.runconfig.run.CargoRunRunConfigurationType"/>
+        <runConfigurationProducer implementation="org.rust.cargo.runconfig.run.CargoRunRunConfigurationProducer"/>
 
-        <configurationType implementation="org.rust.cargo.runconfig.command.CargoCommandType"/>
+        <configurationType implementation="org.rust.cargo.runconfig.command.CargoCommandRunConfigurationType"/>
 
-        <configurationType implementation="org.rust.cargo.runconfig.test.CargoTestType"/>
-        <runConfigurationProducer implementation="org.rust.cargo.runconfig.test.CargoTestProducer"/>
+        <configurationType implementation="org.rust.cargo.runconfig.test.CargoTestRunConfigurationType"/>
+        <runConfigurationProducer implementation="org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer"/>
 
         <!-- Cargo -->
 
