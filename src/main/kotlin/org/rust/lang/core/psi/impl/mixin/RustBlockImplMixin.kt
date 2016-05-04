@@ -10,9 +10,8 @@ abstract class RustBlockImplMixin(node: ASTNode) : RustCompositeElementImpl(node
                                                  , RustBlock {
 
     override val declarations: Collection<RustDeclaringElement>
-        get() = stmtList.filterIsInstance<RustDeclStmt>()
-            .map { it.letDecl }
-            .filterNotNull()
+        get() = stmtList.filterIsInstance<RustLetDecl>()
+
 }
 
 /**
@@ -32,8 +31,7 @@ abstract class RustBlockImplMixin(node: ASTNode) : RustCompositeElementImpl(node
  */
 fun RustBlock.letDeclarationsVisibleAt(element: RustCompositeElement): Sequence<RustLetDecl> =
     stmtList.asReversed().asSequence()
-        .filterIsInstance<RustDeclStmt>()
-        .mapNotNull { it.letDecl }
+        .filterIsInstance<RustLetDecl>()
         .dropWhile { it.isAfter(element) }
         // Drops at most one element
         .dropWhile { PsiTreeUtil.isAncestor(it, element, true) }
