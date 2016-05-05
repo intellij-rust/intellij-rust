@@ -5,6 +5,7 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.crateRoots
 import org.rust.cargo.util.findExternCrateByName
@@ -377,12 +378,17 @@ private class Resolver {
         private val context: RustCompositeElement = ref
 
         override fun visitForExpr             (o: RustForExpr)            = seek(o.scopedForDecl)
-        override fun visitScopedLetExpr       (o: RustScopedLetExpr)      = visitResolveScope(o)
         override fun visitLambdaExpr          (o: RustLambdaExpr)         = visitResolveScope(o)
         override fun visitTraitMethodMember   (o: RustTraitMethodMember)  = visitResolveScope(o)
         override fun visitImplMethodMember    (o: RustImplMethodMember)   = visitResolveScope(o)
         override fun visitFnItem              (o: RustFnItem)             = visitResolveScope(o)
         override fun visitResolveScope        (scope: RustResolveScope)   = seek(scope.declarations)
+
+        override fun visitScopedLetExpr(o: RustScopedLetExpr) {
+            if (!PsiTreeUtil.isAncestor(o.scopedLetDecl, context, true)) {
+                seek(o.scopedLetDecl)
+            }
+        }
 
         override fun visitBlock(o: RustBlock) {
             o.letDeclarationsVisibleAt(context)

@@ -7,14 +7,17 @@ class RustCompletionTest : RustTestCaseBase() {
 
     override val dataPath = "org/rust/lang/core/completion/fixtures"
 
-    fun testLocalVariable()      = checkSoleCompletion()
-    fun testFunctionName()       = checkSoleCompletion()
-    fun testPath()               = checkSoleCompletion()
-    fun testAnonymousItem()      = checkSoleCompletion()
-    fun testIncompleteLet()      = checkSoleCompletion()
-    fun testUseGlob()            = checkSoleCompletion()
-    fun testTypeParams()         = checkSoleCompletion()
-    fun testImplMethodType()     = checkSoleCompletion()
+    fun testLocalVariable() = checkSoleCompletion()
+    fun testFunctionName() = checkSoleCompletion()
+    fun testPath() = checkSoleCompletion()
+    fun testAnonymousItem() = checkSoleCompletion()
+    fun testIncompleteLet() = checkSoleCompletion()
+    fun testUseGlob() = checkSoleCompletion()
+    fun testTypeParams() = checkSoleCompletion()
+    fun testImplMethodType() = checkSoleCompletion()
+
+    fun testLocalScope() = checkNoCompletion()
+    fun testWhileLet() = checkNoCompletion()
 
     fun testChildFile() = checkByDirectory {
         openFileInEditor("main.rs")
@@ -25,9 +28,6 @@ class RustCompletionTest : RustTestCaseBase() {
         openFileInEditor("foo.rs")
         executeSoloCompletion()
     }
-
-    fun testLocalScope()         = checkNoCompletion()
-
 
     private fun checkSoleCompletion() = checkByFile {
         executeSoloCompletion()
