@@ -1,6 +1,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -20,7 +21,6 @@ import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
-import java.util.*
 
 object RustResolveEngine {
     open class ResolveResult private constructor(val resolved: RustNamedElement?) : com.intellij.psi.ResolveResult {
@@ -124,11 +124,6 @@ object RustResolveEngine {
 
 private class Resolver {
 
-    /**
-     * Tracks `use` items to avoid resolve cycles
-     */
-    private val seen: MutableSet<RustNamedElement> = HashSet()
-
     private var visitedPrelude = false
 
     /**
@@ -156,22 +151,19 @@ private class Resolver {
      *
      * For more details check out `RustResolveEngine.resolve`
      */
-    fun resolve(ref: RustQualifiedReferenceElement): RustResolveEngine.ResolveResult {
-        if (ref.isAncestorModulePrefix) {
-            return resolveModulePrefix(ref).asResolveResult()
-        }
-
+    fun resolve(ref: RustQualifiedReferenceElement): RustResolveEngine.ResolveResult = resolvePreventingRecursion(ref) {
         val qual = ref.qualifier
-        if (qual != null) {
-            val parent = resolve(qual).element
-
-            return when (parent) {
-                is RustResolveScope -> resolveIn(sequenceOf(parent), by(ref))
-                else                -> RustResolveEngine.ResolveResult.Unresolved
+        when {
+            ref.isAncestorModulePrefix -> resolveModulePrefix(ref).asResolveResult()
+            qual != null               -> {
+                val parent = resolve(qual).element
+                when (parent) {
+                    is RustResolveScope -> resolveIn(sequenceOf(parent), by(ref))
+                    else                -> RustResolveEngine.ResolveResult.Unresolved
+                }
             }
+            else                       -> resolveIn(enumerateScopesFor(ref), by(ref))
         }
-
-        return resolveIn(enumerateScopesFor(ref), by(ref))
     }
 
     /**
@@ -182,10 +174,9 @@ private class Resolver {
      *  use foo::*
      *  ```
      */
-    fun resolveUseGlob(ref: RustUseGlob): RustResolveEngine.ResolveResult {
+    fun resolveUseGlob(ref: RustUseGlob): RustResolveEngine.ResolveResult = resolvePreventingRecursion(ref) {
         val basePath = ref.basePath
 
-        //
         // This is not necessarily a module, e.g.
         //
         //   ```
@@ -195,21 +186,21 @@ private class Resolver {
         //       use foo::{self};
         //   }
         //   ```
-        //
         val baseItem = if (basePath != null)
             resolve(basePath).element
         else
             // `use ::{foo, bar}`
             RustResolveUtil.getCrateRootModFor(ref)
 
-        // `use foo::{self}`
-        if (ref.self != null && baseItem != null) {
-            return RustResolveEngine.ResolveResult.Resolved(baseItem)
-        }
+        when {
+            // `use foo::{self}`
+            ref.self != null && baseItem != null -> RustResolveEngine.ResolveResult.Resolved(baseItem)
 
-        // `use foo::{bar}`
-        val scope = baseItem as? RustResolveScope ?: return RustResolveEngine.ResolveResult.Unresolved
-        return resolveIn(sequenceOf(scope), by(ref))
+            // `use foo::{bar}`
+            baseItem is RustResolveScope         -> resolveIn(sequenceOf(baseItem), by(ref))
+
+            else                                 -> RustResolveEngine.ResolveResult.Unresolved
+        }
     }
 
     private fun resolveModulePrefix(ref: RustQualifiedReferenceElement): RustMod? {
@@ -264,7 +255,6 @@ private class Resolver {
     }
 
 
-
     private fun resolveIn(scopes: Sequence<RustResolveScope>, ctx: ResolveContext): RustResolveEngine.ResolveResult {
         for (s in scopes) {
             s.resolveUsing(ctx)?.let {
@@ -305,12 +295,6 @@ private class Resolver {
             seek(enum.enumBody.enumVariantList)
         }
 
-        private fun addToSeen(element: RustNamedElement): Boolean {
-            val result = element in seen
-            seen += element
-            return result
-        }
-
         private fun visitMod(mod: RustMod) {
             seek(mod.items)
             if (matched == null) {
@@ -327,8 +311,9 @@ private class Resolver {
                 // Recursively step into `use foo::*`
                 if (element is RustUseItem && element.isStarImport) {
                     val pathPart = element.viewPath.pathPart ?: continue
-                    if (!addToSeen(pathPart)) {
-                        resolve(pathPart).element?.accept(this)
+                    val mod = resolve(pathPart).element ?: continue
+                    RecursionManager.doPreventingRecursion(this to mod, false) {
+                        mod.accept(this)
                     }
                 } else {
                     element.boundElements.find { match(it) }?.let { found(it) }
@@ -343,47 +328,21 @@ private class Resolver {
 
         protected fun found(elem: RustNamedElement) {
             matched =
+                // Check whether resolved element could be further resolved
                 when (elem) {
-                    // mod-decl-items constitute a (sub-) _tree_
-                    // inside the crate's module-tree, therefore
-                    // there is no need to mark them as seen
-                    is RustModDeclItem, is RustExternCrateItem ->
-                        elem.reference?.resolve()
-
-                    // Check whether resolved element (being path-part, use-glob, or alias)
-                    // could be further resolved
-
-                    is RustPathPart ->
-                        if (!addToSeen(elem))   resolve(elem).element
-                        else                    null
-
-                    is RustUseGlob ->
-                        if (!addToSeen(elem))   resolveUseGlob(elem).element
-                        else                    null
-
-                    is RustAlias -> {
+                    is RustModDeclItem, is RustExternCrateItem -> elem.reference?.resolve()
+                    is RustPathPart -> resolve(elem).element
+                    is RustUseGlob  -> resolveUseGlob(elem).element
+                    is RustAlias    -> {
                         val parent = elem.parent
                         when (parent) {
-
-                            is RustViewPath ->
-                                parent.pathPart?.let {
-                                    if (!addToSeen(it)) resolve(it).element
-                                    else                null
-                                }
-
-
-                            is RustUseGlob ->
-                                if (!addToSeen(parent)) resolveUseGlob(parent).element
-                                else                    null
-
-                            is RustExternCrateItem ->
-                                parent.reference?.resolve()
-
-                            else -> elem
+                            is RustViewPath        -> parent.pathPart?.let { resolve(it).element }
+                            is RustUseGlob         -> resolveUseGlob(parent).element
+                            is RustExternCrateItem -> parent.reference?.resolve()
+                            else                   -> elem
                         }
                     }
-
-                    else -> elem
+                    else            -> elem
                 }
         }
 
@@ -470,6 +429,16 @@ private fun PsiDirectory.findFileByRelativePath(path: String): PsiFile? {
     }
 
     return dir.findFile(fileName)
+}
+
+
+private fun resolvePreventingRecursion(
+    element: RustCompositeElement,
+    block: () -> RustResolveEngine.ResolveResult
+): RustResolveEngine.ResolveResult {
+
+    return RecursionManager.doPreventingRecursion(element, /* memoize = */ true, block)
+        ?: RustResolveEngine.ResolveResult.Unresolved
 }
 
 
