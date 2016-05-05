@@ -44,6 +44,7 @@ Use `Ctrl+J` to view the list of templates applicable in the current context.
 * In Rust File:
   - `p`, `pd`, `ppd` -- `print!` a (debug representation) of a value,
   - `a`, `ae` -- `assert!` / `assert_eq!`,
+  - `tfn` -- test function boilerplate,
   - `tmod` -- test module boilerplate,
   - `loop`, `while`, `for` surround templates.
 
