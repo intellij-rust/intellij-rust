@@ -1,25 +1,11 @@
 package org.rust.cargo.util
 
-import com.google.common.util.concurrent.*
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.impl.CoreProgressManager
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.google.common.util.concurrent.FutureCallback
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.SettableFuture
 
 object TasksUtil
-
-/**
- * Schedules task to run asynchronously (on the application thread-pool)
- *
- * NOTA BENE: This would occupy 2 (sic!) threads: one carrying payload, and the second one to piggyback results of the
- *            former right into `ListenableFuture`. We need to address that
- */
-fun Task.Backgroundable.enqueue(): ListenableFuture<*> =
-    JdkFutureAdapters.listenInPoolThread(
-        (ProgressManager.getInstance() as CoreProgressManager).runProcessWithProgressAsynchronously(this),
-        AppExecutorUtil.getAppExecutorService()
-        )
-
 
 /**
  * Allows to bind one future to the other one, 'piggybacking' results

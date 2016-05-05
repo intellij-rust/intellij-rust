@@ -27,7 +27,7 @@ class RustProjectSettingsPanel {
         }
     }
 
-    private val disposable = Disposer.newDisposable("CargoSettingsPanel")
+    private val disposable = Disposer.newDisposable()
     private lateinit var component: JPanel
     private lateinit var toolchainLocationField: TextFieldWithBrowseButton
 
