@@ -1,6 +1,5 @@
 package org.rust.ide.intentions
 
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -11,12 +10,12 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.queryAttributes
 import org.rust.lang.core.psi.util.parentOfType
 
-class AddDeriveIntention : PsiElementBaseIntentionAction(), IntentionAction {
+class AddDeriveIntention : PsiElementBaseIntentionAction() {
     override fun getFamilyName() = "Add derive clause"
     override fun getText() = "Add derive clause"
     override fun startInWriteAction() = true
 
-    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
+    override fun invoke(project: Project, editor: Editor, element: PsiElement) {
         val item = element.parentOfType<RustItem>() ?: return
         val keyword = getLeftmostStructOrEnumKeyword(item) ?: return
 
@@ -25,7 +24,7 @@ class AddDeriveIntention : PsiElementBaseIntentionAction(), IntentionAction {
         moveCaret(editor, reformattedDeriveAttr)
     }
 
-    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
+    override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
         if (!element.isWritable) {
             return false
         }
@@ -58,11 +57,11 @@ class AddDeriveIntention : PsiElementBaseIntentionAction(), IntentionAction {
         return PsiTreeUtil.releaseMark(reformattedItem, marker) as RustOuterAttr
     }
 
-    private fun moveCaret(editor: Editor?, deriveAttr: RustOuterAttr) {
+    private fun moveCaret(editor: Editor, deriveAttr: RustOuterAttr) {
         val offset = deriveAttr.metaItem?.rparen?.textOffset ?:
             deriveAttr.rbrack?.textOffset ?:
             deriveAttr.textOffset
-        editor?.caretModel?.moveToOffset(offset)
+        editor.caretModel.moveToOffset(offset)
     }
 }
 

@@ -17,11 +17,10 @@ class ExpandModuleIntention : IntentionAction {
     override fun getText()              = "Expand module"
     override fun startInWriteAction()   = true
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) =
+    override fun isAvailable(project: Project, editor: Editor, file: PsiFile) =
         file is RustFile && !(file.rustMod?.ownsDirectory ?: false)
 
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-        file ?: return
+    override fun invoke(project: Project, editor: Editor, file: PsiFile) {
         val dirName = FileUtil.getNameWithoutExtension(file.name)
         val directory = file.parent?.createSubdirectory(dirName)
         MoveFilesOrDirectoriesUtil.doMoveFile(file, directory)
