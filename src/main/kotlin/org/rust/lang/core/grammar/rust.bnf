@@ -541,7 +541,7 @@ struct_item ::= STRUCT IDENTIFIER generic_params (struct_tuple_args? where_claus
 struct_tuple_args ::= '(' <<comma_separated_list struct_tuple_field>> ')' { pin = 1 }
 struct_tuple_field ::= attrs_and_vis type
 
-struct_decl_args ::= '{' <<comma_separated_list struct_decl_field>> '}' { pin = 1 }
+struct_decl_args ::= '{' [ <<comma_separated_list struct_decl_field>> ] '}' { pin = 1 }
 struct_decl_field ::= attrs_and_vis IDENTIFIER type_ascription { pin = 2 }
 
 

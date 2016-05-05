@@ -26,6 +26,7 @@ class RustCompleteParsingTestCase : RustParsingTestCaseBase("complete") {
     fun testWayTooManyParens() = doTest(true)
     fun testWayTooManyBraces() = doTest(true)
     fun testEmptyGenerics() = doTest(true)
+    fun testStructs() = doTest(true)
     fun testStructLiterals() = doTest(true)
     fun testTryOperator() = doTest(true)
     fun testMatch() = doTest(true)
