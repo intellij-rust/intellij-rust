@@ -30,6 +30,7 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testFormatNamed()         = checkIsBound()
     fun testEnumVariant()         = checkIsBound()
     fun testNestedSuper()         = checkIsBound()
+    fun testLocalFn()             = checkIsBound()
 
     fun testLetCycle1()           = checkIsUnbound()
     fun testLetCycle3()           = checkIsUnbound()

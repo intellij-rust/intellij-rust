@@ -391,10 +391,10 @@ private class Resolver {
         }
 
         override fun visitBlock(o: RustBlock) {
-            o.letDeclarationsVisibleAt(context)
-                .flatMap { it.boundElements.asSequence() }
-                .filter { match(it) }
-                .firstOrNull()
+            val letDeclarations = o.letDeclarationsVisibleAt(context).flatMap { it.boundElements.asSequence() }
+            val candidates = letDeclarations + o.itemList
+
+            candidates.find { match(it) }
                 ?.let { found(it) }
         }
     }
