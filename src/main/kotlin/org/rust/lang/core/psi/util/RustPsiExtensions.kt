@@ -2,7 +2,6 @@ package org.rust.lang.core.psi.util
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -35,23 +34,6 @@ fun PsiElement?.getNextNonPhantomSibling(): PsiElement? =
 
 val PsiElement.parentRelativeRange: TextRange
     get() = TextRange.from(startOffsetInParent, textLength)
-
-/**
- * Utility checking whether this particular element precedes the other one
- */
-fun PsiElement.isBefore(other: PsiElement): Boolean = textOffset < other.textOffset
-
-/**
- * Utility checking whether this particular element succeeds the other one
- */
-fun PsiElement.isAfter(other: PsiElement): Boolean = other.textOffset < textOffset
-
-
-/**
- * Utility checking whether this particular element precedes text-anchor (offset)
- */
-fun PsiElement.isBefore(anchor: Int): Boolean = textOffset < anchor
-
 
 /**
  * Returns module for this PsiElement.

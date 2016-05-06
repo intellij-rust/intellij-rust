@@ -2,9 +2,12 @@ package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.lang.core.psi.*
+import com.intellij.psi.util.PsiUtilCore
+import org.rust.lang.core.psi.RustBlock
+import org.rust.lang.core.psi.RustCompositeElement
+import org.rust.lang.core.psi.RustDeclaringElement
+import org.rust.lang.core.psi.RustLetDecl
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
-import org.rust.lang.core.psi.util.isAfter
 
 abstract class RustBlockImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
                                                  , RustBlock {
@@ -32,6 +35,6 @@ abstract class RustBlockImplMixin(node: ASTNode) : RustCompositeElementImpl(node
 fun RustBlock.letDeclarationsVisibleAt(element: RustCompositeElement): Sequence<RustLetDecl> =
     stmtList.asReversed().asSequence()
         .filterIsInstance<RustLetDecl>()
-        .dropWhile { it.isAfter(element) }
+        .dropWhile { PsiUtilCore.compareElementsByPosition(element, it) < 0 }
         // Drops at most one element
         .dropWhile { PsiTreeUtil.isAncestor(it, element, true) }
