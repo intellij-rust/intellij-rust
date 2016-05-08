@@ -245,13 +245,6 @@
     implements  ("use_glob") = "org.rust.lang.core.psi.RustNamedElement"
     mixin       ("use_glob") = "org.rust.lang.core.psi.impl.mixin.RustUseGlobImplMixin"
 
-    // HACK(jajakobyly): Grammar-Kit is unable to simply generate accesors for tokens
-    //                   created by external rules. We need to work around this limitation.
-    //                   Fortunately, all "external" tokens are only used inside binary
-    //                   expressions, so we can inject accessors for them using mixins.
-    implements  ("binary_expr") = "org.rust.lang.core.psi.impl.RustBinaryExprExternalTokens"
-    mixin       ("binary_expr") = "org.rust.lang.core.psi.impl.mixin.RustBinaryExprImplMixin"
-
     elementType (".*_bin_expr")   = binary_expr
     elementType (".*_range_expr") = range_expr
 
@@ -1120,13 +1113,13 @@ empty_stmt ::= ';' {
 // Utils
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-external gtgteq ::= collapse GTGTEQ GT GT EQ  { name = ">>=" }
-external gtgt   ::= collapse GTGT GT GT       { name = ">>" }
-external gteq   ::= collapse GTEQ GT EQ       { name = ">=" }
-external ltlteq ::= collapse LTLTEQ LT LT EQ  { name = "<<=" }
-external ltlt   ::= collapse LTLT LT LT       { name = "<<" }
-external lteq   ::= collapse LTEQ LT EQ       { name = "<=" }
-external oror   ::= collapse OROR OR OR       { name = "||" }
+private gtgteq ::= <<collapse GTGTEQ GT GT EQ>> | never GTGTEQ { name = ">>=" }
+private gtgt   ::= <<collapse GTGT   GT GT>>    | never GTGT   { name = ">>" }
+private gteq   ::= <<collapse GTEQ   GT EQ>>    | never GTEQ   { name = ">=" }
+private ltlteq ::= <<collapse LTLTEQ LT LT EQ>> | never LTLTEQ { name = "<<=" }
+private ltlt   ::= <<collapse LTLT   LT LT>>    | never LTLT   { name = "<<" }
+private lteq   ::= <<collapse LTEQ   LT EQ>>    | never LTEQ   { name = "<=" }
+private oror   ::= <<collapse OROR   OR OR>>    | never OROR   { name = "||" }
 
 // Trailing commas are allowed
 private meta comma_separated_list ::= <<param>> ( ',' <<param>> )* ','?
