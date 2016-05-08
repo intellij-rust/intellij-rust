@@ -60,7 +60,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .before(COLON).spaceIf(false)
         .after(SEMICOLON).spaceIf(true)
         .before(SEMICOLON).spaceIf(false)
-        .afterInside(AND, ts(REF_TYPE, SELF_ARGUMENT)).spaces(0)
+        .afterInside(AND, ts(REF_TYPE, SELF_ARGUMENT, PAT_REG, PARAMETER)).spaces(0)
         .beforeInside(Q, TRY_EXPR).spaces(0)
         .afterInside(UNARY_OPS, UNARY_EXPR).spaces(0)
 
