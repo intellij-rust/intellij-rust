@@ -27,7 +27,10 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
     override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType) {
         when (settingsType) {
             BLANK_LINES_SETTINGS         -> {
-                // TODO Implement this.
+                consumer.showStandardOptions(
+                    "KEEP_LINE_BREAKS",
+                    "KEEP_BLANK_LINES_IN_DECLARATIONS",
+                    "KEEP_BLANK_LINES_IN_CODE")
             }
 
             SPACING_SETTINGS             -> {

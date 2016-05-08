@@ -23,4 +23,5 @@ class RustFormatterTestCase : FormatterTestCase() {
     fun testTraits() = doTest()
 
     fun testSpacing() = doTest()
+    fun testLineBreaks() = doTest()
 }

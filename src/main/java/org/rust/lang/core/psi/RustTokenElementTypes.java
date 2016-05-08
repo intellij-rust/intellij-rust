@@ -152,14 +152,6 @@ public interface RustTokenElementTypes {
     // Token Sets
     //
 
-    TokenSet PHANTOM_TOKEN_SET = TokenSet.create(
-        RustTokenElementTypes.BLOCK_COMMENT,
-        RustTokenElementTypes.EOL_COMMENT,
-        RustTokenElementTypes.INNER_DOC_COMMENT,
-        RustTokenElementTypes.OUTER_DOC_COMMENT,
-        com.intellij.psi.TokenType.WHITE_SPACE
-    );
-
     TokenSet COMMENTS_TOKEN_SET = TokenSet.create(
         BLOCK_COMMENT,
         EOL_COMMENT,

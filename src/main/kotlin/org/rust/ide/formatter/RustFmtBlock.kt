@@ -7,22 +7,20 @@ import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 
-class RustBlock(
+class RustFmtBlock(
     node: ASTNode,
     alignment: Alignment?,
     indent: Indent?,
     wrap: Wrap?,
-    ctx: RustBlockContext
-) : AbstractRustBlock(node, alignment, indent, wrap, ctx) {
+    ctx: RustFmtBlockContext
+) : AbstractRustFmtBlock(node, alignment, indent, wrap, ctx) {
 
     override fun getChildIndent(): Indent? = when (node.elementType) {
         in BLOCKS_TOKEN_SET -> Indent.getNormalIndent()
         else                -> Indent.getNoneIndent()
     }
 
-    override fun getSpacing(child1: Block?, child2: Block): Spacing? {
-        return ctx.spacingBuilder.getSpacing(this, child1, child2)
-    }
+    override fun getSpacing(child1: Block?, child2: Block): Spacing? = computeSpacing(this, child1, child2, ctx)
 
     override fun buildChildren(): List<Block> {
         val anchor = when (node.elementType) {
@@ -35,8 +33,8 @@ class RustBlock(
             .map { buildChild(it, anchor) }
     }
 
-    private fun buildChild(child: ASTNode, anchor: Alignment?): AbstractRustBlock =
-        AbstractRustBlock.createBlock(child, calcAlignment(child, anchor), calcIndent(child), null, ctx)
+    private fun buildChild(child: ASTNode, anchor: Alignment?): AbstractRustFmtBlock =
+        AbstractRustFmtBlock.createBlock(child, calcAlignment(child, anchor), calcIndent(child), null, ctx)
 
     private fun calcAlignment(child: ASTNode, anchor: Alignment?): Alignment? =
         when (child.elementType) {
@@ -58,33 +56,32 @@ class RustBlock(
             else                -> Indent.getNoneIndent()
         }
     }
-
-    companion object {
-        private val BLOCK_START_TOKEN_SET = TokenSet.create(
-            PUB,
-            MOD,
-            STRUCT,
-            ENUM,
-            IMPL,
-            TRAIT,
-            MATCH
-        )
-
-        private val BLOCKS_TOKEN_SET = TokenSet.create(
-            BLOCK,
-            MOD_ITEM,
-            ENUM_BODY,
-            STRUCT_DECL_ARGS,
-            ARG_LIST,
-            STRUCT_EXPR_BODY,
-            IMPL_BODY,
-            MATCH_BODY,
-            TRAIT_BODY
-        )
-
-        private val BRACES_TOKEN_SET = TokenSet.create(
-            LBRACE, RBRACE,
-            LPAREN, RPAREN
-        )
-    }
 }
+
+private val BLOCK_START_TOKEN_SET = TokenSet.create(
+    PUB,
+    MOD,
+    STRUCT,
+    ENUM,
+    IMPL,
+    TRAIT,
+    MATCH
+)
+
+private val BLOCKS_TOKEN_SET = TokenSet.create(
+    BLOCK,
+    MOD_ITEM,
+    ENUM_BODY,
+    STRUCT_DECL_ARGS,
+    ARG_LIST,
+    STRUCT_EXPR_BODY,
+    ENUM_STRUCT_ARGS,
+    IMPL_BODY,
+    MATCH_BODY,
+    TRAIT_BODY
+)
+
+private val BRACES_TOKEN_SET = TokenSet.create(
+    LBRACE, RBRACE,
+    LPAREN, RPAREN
+)
