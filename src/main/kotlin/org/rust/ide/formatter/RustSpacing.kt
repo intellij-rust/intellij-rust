@@ -45,8 +45,12 @@ private val MACRO_ARGS = ts(MACRO_ARG, FORMAT_MACRO_ARGS, TRY_MACRO_ARGS)
 private val PARAMS_LIKE = ts(PARAMETERS, VARIADIC_PARAMETERS)
 
 fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
-                         rustSettings: RustCodeStyleSettings): SpacingBuilder =
-    SpacingBuilder(commonSettings)
+                         @Suppress("UNUSED_PARAMETER") rustSettings: RustCodeStyleSettings): SpacingBuilder {
+
+    // Use `sbX` temporaries to work around
+    // https://youtrack.jetbrains.com/issue/KT-12239
+
+    val sb1 = SpacingBuilder(commonSettings)
         // Rules defined earlier have higher priority.
         // Beware of comments between blocks!
 
@@ -87,6 +91,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .beforeInside(GT, ANGLE_LIST_HOLDERS).spacing(0, 0, 0, false, 0)
         .aroundInside(OR, PARAMS_LIKE).spacing(0, 0, 0, false, 0)
 
+    val sb2 = sb1
         //== items
         .between(PARAMS_LIKE, RET_TYPE).spacing(1, 1, 0, true, 0)
         .before(WHERE_CLAUSE).spacing(1, 1, 0, true, 0)
@@ -117,6 +122,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .betweenInside(IDENTIFIER, ENUM_TUPLE_ARGS, ENUM_VARIANT).spaces(0)
         .betweenInside(IDENTIFIER, ENUM_DISCRIMINANT, ENUM_VARIANT).spaces(1)
 
+    return sb2
         //== types
         .afterInside(LIFETIME, REF_TYPE).spaceIf(true)
         .betweenInside(ts(MUL), ts(CONST, MUT), PTR_TYPE).spaces(0)
@@ -139,6 +145,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .around(NO_SPACE_AROUND_OPS).spaces(0)
         .around(SPACE_AROUND_OPS).spaces(1)
         .around(KEYWORDS).spaces(1)
+}
 
 fun computeSpacing(parentBlock: Block, child1: Block?, child2: Block, ctx: RustFmtBlockContext): Spacing? {
     if (child1 is ASTBlock && child2 is ASTBlock) SpacingContext.create(child1, child2).apply {
