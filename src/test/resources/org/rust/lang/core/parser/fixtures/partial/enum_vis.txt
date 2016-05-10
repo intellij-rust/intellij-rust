@@ -8,7 +8,7 @@ FILE
       <empty list>
     RustEnumBodyImpl(ENUM_BODY)
       PsiElement({)('{')
-      PsiErrorElement:<IDENTIFIER> or '}' expected, got 'pub'
+      PsiErrorElement:'}' expected, got 'pub'
         <empty list>
   PsiWhiteSpace('\n    ')
   PsiElement(pub)('pub')

@@ -58,8 +58,8 @@ class AddDeriveIntention : PsiElementBaseIntentionAction() {
     }
 
     private fun moveCaret(editor: Editor, deriveAttr: RustOuterAttr) {
-        val offset = deriveAttr.metaItem?.rparen?.textOffset ?:
-            deriveAttr.rbrack?.textOffset ?:
+        val offset = deriveAttr.metaItem.rparen?.textOffset ?:
+            deriveAttr.rbrack.textOffset ?:
             deriveAttr.textOffset
         editor.caretModel.moveToOffset(offset)
     }

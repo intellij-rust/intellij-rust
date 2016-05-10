@@ -36,7 +36,7 @@ val RustItem.queryAttributes: QueryAttributes get() = QueryAttributes(outerAttrL
 
 class QueryAttributes(private val outerAttributes: List<RustOuterAttr>) {
     fun findOuterAttr(name: String): RustOuterAttr? =
-        outerAttributes.find { it.metaItem?.identifier?.textMatches(name) ?: false }
+        outerAttributes.find { it.metaItem.identifier.textMatches(name) }
 
     fun hasAtomAttribute(name: String): Boolean =
         metaItems

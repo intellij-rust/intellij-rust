@@ -294,9 +294,9 @@ file ::= [ SHEBANG_LINE ] inner_attr* docs_and_item*
 
 fake attr ::= meta_item
 
-inner_attr ::= '#' '!' '[' meta_item ']' | INNER_DOC_COMMENT
+inner_attr ::= '#' '!' '[' meta_item ']'
 
-outer_attr ::= '#' '[' meta_item ']' | OUTER_DOC_COMMENT
+outer_attr ::= '#' '[' meta_item ']'
 
 meta_item ::= IDENTIFIER [ '=' lit_expr | '(' [ <<comma_separated_list meta_item>> ] ')' ]
 
