@@ -151,8 +151,9 @@
 
         <!-- Cargo -->
 
-        <projectConfigurable groupId="language" provider="org.rust.cargo.project.configurable.RustProjectConfigurableProvider"
-                             dynamic="true"/>
+        <projectConfigurable instance="org.rust.cargo.project.configurable.RustProjectConfigurable"
+                             displayName="Rust"
+                             groupId="language"/>
         <projectService serviceInterface="org.rust.cargo.project.settings.RustProjectSettingsService"
                         serviceImplementation="org.rust.cargo.project.settings.impl.RustProjectSettingsServiceImpl"/>
 

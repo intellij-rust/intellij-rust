@@ -2,6 +2,7 @@ package org.rust.cargo.project.configurable
 
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
@@ -43,7 +44,7 @@ class RustProjectConfigurable(
             || data.autoUpdateEnabled != settings.autoUpdateEnabled
     }
 
-    override fun getDisplayName(): String? = "Rust"
+    override fun getDisplayName(): String = "Rust" // sync me with plugin.xml
 
     override fun getHelpTopic(): String? = null
 }
