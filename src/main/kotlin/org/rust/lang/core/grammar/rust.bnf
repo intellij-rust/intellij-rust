@@ -387,13 +387,13 @@ private restricted_pattern ::= &( IDENTIFIER
                                 ) pat
 
 
-private fn_header ::= CONST? UNSAFE? extern_abi? FN IDENTIFIER
+private fn_header ::= CONST? UNSAFE? extern_abi? FN IDENTIFIER generic_params
 
 extern_abi ::= EXTERN STRING_LITERAL?
 
 ret_type ::= '->' (type | '!') { pin = 1 }
 
-fn_item ::= fn_header generic_params fn_parameters ret_type? where_clause? inner_attrs_and_block {
+fn_item ::= fn_header fn_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
 }
 
@@ -576,7 +576,7 @@ private const_default ::= '=' any_expr
 
 trait_type_member ::= outer_attr* TYPE_KW type_param ';'
 
-trait_method_member ::= outer_attr* fn_header generic_params method_decl_parameters ret_type? where_clause? (';' | inner_attrs_and_block) {
+trait_method_member ::= outer_attr* fn_header method_decl_parameters ret_type? where_clause? (';' | inner_attrs_and_block) {
   pin = fn_header
 }
 
@@ -601,7 +601,7 @@ private impl_member ::= impl_method_member
                       | impl_macro_member
                       | impl_type_member
 
-impl_method_member ::= attrs_and_vis fn_header generic_params method_parameters ret_type? where_clause? inner_attrs_and_block {
+impl_method_member ::= attrs_and_vis fn_header method_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
 }
 
