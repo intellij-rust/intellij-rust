@@ -147,14 +147,12 @@ trait NameC { /* comment */ }
 struct FooC { /* comment */ }
 enum MooC { /* comment */ }
 mod BarC { /* comment */ }
-// FIXME: Indent
 extern { /* comment */ }
 
 trait Name2 { fn moo(self); }
 struct Foo2 { x: i32 }
 enum Moo2 { Mmm(i32) }
 mod Bar2 { fn moo() -> i32 { 45 } }
-// FIXME: Indent
 extern { fn snappy_max_compressed_length(source_length: size_t) -> size_t; }
 
 fn closures() {
@@ -179,7 +177,7 @@ fn closures() {
                                      arg2 * arg1 - temp }
 }
 
-// FIXME: Indent & alignment
+// FIXME: Alignment
 fn reverse(pair: (i32, bool), a: i32,
 
 
@@ -194,7 +192,7 @@ fn reverse(pair: (i32, bool), a: i32,
 
     -> (bool, i32) {}
 
-// FIXME: Indent & alignment
+// FIXME: Alignment
 fn boo(
 
 

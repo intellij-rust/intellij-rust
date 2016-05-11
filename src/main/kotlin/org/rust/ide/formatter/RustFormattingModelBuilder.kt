@@ -16,6 +16,7 @@ class RustFormattingModelBuilder : FormattingModelBuilder {
     override fun createModel(element: PsiElement, settings: CodeStyleSettings): FormattingModel {
         val ctx = RustFmtBlockContext.create(settings)
         val block = AbstractRustFmtBlock.createBlock(element.node, null, Indent.getNoneIndent(), null, ctx)
+        /** / com.intellij.formatting.FormattingModelDumper.dumpFormattingModel(block, 2, System.err) // */
         return FormattingModelProvider.createFormattingModelForPsiFile(element.containingFile, block, settings)
     }
 }

@@ -60,14 +60,14 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         //== paren delimited lists
         // withinPairInside does not accept TokenSet as parent node set :(
         // and we cannot create our own, because RuleCondition stuff is private
-        .afterInside(LPAREN, PAREN_LIST_HOLDERS).spacing(0, 0, 0, true, 0)
-        .beforeInside(RPAREN, PAREN_LIST_HOLDERS).spacing(0, 0, 0, true, 0)
-        .afterInside(LBRACK, BRACK_LIST_HOLDERS).spacing(0, 0, 0, true, 0)
-        .beforeInside(RBRACK, BRACK_LIST_HOLDERS).spacing(0, 0, 0, true, 0)
-        .afterInside(LBRACE, BRACE_LIST_HOLDERS).spacing(0, 0, 0, true, 0)
-        .beforeInside(RBRACE, BRACE_LIST_HOLDERS).spacing(0, 0, 0, true, 0)
-        .afterInside(LT, ANGLE_LIST_HOLDERS).spacing(0, 0, 0, false, 0)
-        .beforeInside(GT, ANGLE_LIST_HOLDERS).spacing(0, 0, 0, false, 0)
+        .afterInside(LPAREN, PAREN_LISTS).spacing(0, 0, 0, true, 0)
+        .beforeInside(RPAREN, PAREN_LISTS).spacing(0, 0, 0, true, 0)
+        .afterInside(LBRACK, BRACK_LISTS).spacing(0, 0, 0, true, 0)
+        .beforeInside(RBRACK, BRACK_LISTS).spacing(0, 0, 0, true, 0)
+        .afterInside(LBRACE, BRACE_LISTS).spacing(0, 0, 0, true, 0)
+        .beforeInside(RBRACE, BRACE_LISTS).spacing(0, 0, 0, true, 0)
+        .afterInside(LT, ANGLE_LISTS).spacing(0, 0, 0, false, 0)
+        .beforeInside(GT, ANGLE_LISTS).spacing(0, 0, 0, false, 0)
         .aroundInside(OR, PARAMS_LIKE).spacing(0, 0, 0, false, 0)
 
     val sb2 = sb1
@@ -75,7 +75,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .between(PARAMS_LIKE, RET_TYPE).spacing(1, 1, 0, true, 0)
         .before(WHERE_CLAUSE).spacing(1, 1, 0, true, 0)
         .applyForEach(BLOCK_LIKE) { before(it).spaces(1) }
-        .beforeInside(LBRACE, ts(FOREIGN_MOD_ITEM, MOD_ITEM)).spaces(1)
+        .beforeInside(LBRACE, FLAT_BLOCKS).spaces(1)
 
         .between(ts(IDENTIFIER, FN), PARAMS_LIKE).spaceIf(false)
         .between(IDENTIFIER, GENERIC_PARAMS).spaceIf(false)

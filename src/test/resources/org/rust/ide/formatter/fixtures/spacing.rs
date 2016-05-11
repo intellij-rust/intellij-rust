@@ -347,7 +347,6 @@ macro_rules!    vec    {
 
 #   [   link   (   name    =    "objc"   )   ]
 extern    {
-    // FIXME: Indent
     fn  foo (name   : *   const    libc   ::   c_uchar   )   ;
     fn  bar (a   :  i32,         ...        )       ->      i32     ;
     fn  baz (b   :  i64,        )       ;
