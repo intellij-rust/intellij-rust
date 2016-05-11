@@ -226,6 +226,10 @@
                                     "org.rust.lang.core.psi.RustNamedElement" ]
     mixin       ("pat_binding") = "org.rust.lang.core.psi.impl.mixin.RustPatBindingImplMixin"
 
+    implements  ("type_param") = [ "org.rust.lang.core.psi.RustDeclaringElement"
+                                   "org.rust.lang.core.psi.RustNamedElement" ]
+    mixin       ("type_param") = "org.rust.lang.core.psi.impl.mixin.RustTypeParamImplMixin"
+
     //
     // VisibilityOwners
     //

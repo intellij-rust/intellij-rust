@@ -20,7 +20,7 @@ abstract class RustFnItemImplMixin : RustItemImpl
 
 
     override val declarations: Collection<RustDeclaringElement>
-        get() = parameters?.parameterList.orEmpty().filterNotNull()
+        get() = parameters?.parameterList.orEmpty().filterNotNull() + genericParams.typeParamList
 
     override fun getIcon(flags: Int): Icon {
         var icon = RustIcons.FUNCTION
