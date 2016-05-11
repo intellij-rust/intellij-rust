@@ -7,12 +7,12 @@ import org.rust.lang.core.completion.RustCompletionEngine
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustQualifiedReferenceElement
 import org.rust.lang.core.psi.RustTokenElementTypes
+import org.rust.lang.core.psi.util.parentRelativeRange
 import org.rust.lang.core.resolve.RustResolveEngine
 
 
-internal class RustQualifiedReferenceImpl<T : RustQualifiedReferenceElement>(element: T,
-                                                                             soft: Boolean = false)
-    : PsiReferenceBase<T>(element, null, soft)
+class RustQualifiedReferenceImpl(element: RustQualifiedReferenceElement, soft: Boolean = false)
+    : PsiReferenceBase<RustQualifiedReferenceElement>(element, null, soft)
     , RustReference {
 
     override fun resolve(): RustNamedElement? =
@@ -37,14 +37,7 @@ internal class RustQualifiedReferenceImpl<T : RustQualifiedReferenceElement>(ele
             qual + qualRef.name
         }
 
-    override fun getRangeInElement(): TextRange? =
-        element.separator.let {
-            sep ->
-            when (sep) {
-                null -> TextRange.from(0, element.textLength)
-                else -> TextRange(sep.startOffsetInParent + sep.textLength, element.textLength)
-            }
-        }
+    override fun getRangeInElement(): TextRange? = element.nameElement?.parentRelativeRange
 
     override fun bindToElement(element: PsiElement): PsiElement? {
         throw UnsupportedOperationException()

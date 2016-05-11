@@ -21,5 +21,5 @@ abstract class RustEnumItemImplMixin : RustItemImpl, RustEnumItem {
         iconWithVisibility(flags, RustIcons.ENUM)
 
     override val declarations: Collection<RustDeclaringElement>
-        get() = enumBody.enumVariantList
+        get() = enumBody.enumVariantList + genericParams.typeParamList
 }

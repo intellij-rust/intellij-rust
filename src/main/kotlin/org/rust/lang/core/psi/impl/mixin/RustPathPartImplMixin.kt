@@ -19,9 +19,6 @@ abstract class RustPathPartImplMixin(node: ASTNode) : RustNamedElementImpl(node)
     override val nameElement: PsiElement?
         get() = identifier ?: self ?: `super`
 
-    override val separator: PsiElement?
-        get() = findChildByType(RustTokenElementTypes.COLONCOLON)
-
     override val qualifier: RustQualifiedReferenceElement?
         get() = if (pathPart?.firstChild != null) pathPart else null
 
@@ -62,4 +59,8 @@ abstract class RustPathPartImplMixin(node: ASTNode) : RustNamedElementImpl(node)
 
     override val isSelf: Boolean
         get() = self != null
+
+    private val separator: PsiElement?
+        get() = findChildByType(RustTokenElementTypes.COLONCOLON)
+
 }

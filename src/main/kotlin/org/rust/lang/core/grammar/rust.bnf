@@ -242,6 +242,8 @@
     //
 
     implements ("struct_item") = "org.rust.lang.core.psi.RustGenericDeclaration"
+    implements ("trait_item")  = "org.rust.lang.core.psi.RustGenericDeclaration"
+    implements ("impl_item")   = "org.rust.lang.core.psi.RustGenericDeclaration"
 
     //
     //  Misc

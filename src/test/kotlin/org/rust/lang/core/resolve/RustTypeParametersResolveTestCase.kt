@@ -6,4 +6,8 @@ class RustTypeParametersResolveTestCase : RustResolveTestCaseBase() {
     fun testFn() = checkIsBound()
     fun testImplMethod() = checkIsBound()
     fun testTraitMethod() = checkIsBound()
+    fun testStruct() = checkIsBound()
+    fun testEnum() = checkIsBound()
+    fun testTrait() = checkIsBound()
+    fun testImpl() = checkIsBound(atOffset = 31)
 }

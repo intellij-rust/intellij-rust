@@ -48,7 +48,7 @@ interface RustQualifiedReferenceElement : RustNamedElement {
      */
     val isSelf: Boolean
 
-    val separator: PsiElement?
+    val nameElement: PsiElement?
 
     val qualifier: RustQualifiedReferenceElement?
 

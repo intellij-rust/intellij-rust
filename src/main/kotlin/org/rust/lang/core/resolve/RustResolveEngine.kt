@@ -292,9 +292,10 @@ private class Resolver {
             visitMod(o)
         }
 
-        override fun visitEnumItem(enum: RustEnumItem) {
-            seek(enum.enumBody.enumVariantList)
-        }
+        override fun visitEnumItem(o: RustEnumItem) = seek(o.declarations)
+        override fun visitTraitItem(o: RustTraitItem) = seek(o.declarations)
+        override fun visitStructItem(o: RustStructItem) = seek(o.declarations)
+        override fun visitImplItem(o: RustImplItem) = seek(o.declarations)
 
         private fun visitMod(mod: RustMod) {
             seek(mod.items)
