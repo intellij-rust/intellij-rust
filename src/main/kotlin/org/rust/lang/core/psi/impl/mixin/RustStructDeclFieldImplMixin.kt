@@ -12,7 +12,4 @@ abstract class RustStructDeclFieldImplMixin(node: ASTNode) : RustCompositeElemen
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RustIcons.FIELD)
 
-    override val isPublic: Boolean
-        get() = vis != null
-
 }

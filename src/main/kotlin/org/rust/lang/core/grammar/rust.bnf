@@ -150,8 +150,6 @@
 
     mixin       ("use_item") = "org.rust.lang.core.psi.impl.mixin.RustUseItemImplMixin"
 
-    mixin       ("struct_tuple_field") = "org.rust.lang.core.psi.impl.mixin.RustStructTupleFieldImplMixin"
-
 
     //
     // References
@@ -181,7 +179,7 @@
     mixin       ("lambda_expr") = "org.rust.lang.core.psi.impl.mixin.RustLambdaExprImplMixin"
 
     implements  ("impl_method_member") = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
-                                           "org.rust.lang.core.psi.RustAccessControlElement" ]
+                                           "org.rust.lang.core.psi.RustVisibilityOwner" ]
     mixin       ("impl_method_member") = "org.rust.lang.core.psi.impl.mixin.RustImplMethodImplMixinMember"
 
     implements  ("block") =  "org.rust.lang.core.resolve.scope.RustResolveScope"
@@ -225,11 +223,11 @@
     mixin       ("pat_binding") = "org.rust.lang.core.psi.impl.mixin.RustPatBindingImplMixin"
 
     //
-    // AccessControl
+    // VisibilityOwners
     //
 
-    implements  ("struct_decl_field")  = "org.rust.lang.core.psi.RustAccessControlElement"
-    implements  ("struct_tuple_field") = "org.rust.lang.core.psi.RustAccessControlElement"
+    implements  ("struct_decl_field")  = "org.rust.lang.core.psi.RustVisibilityOwner"
+    implements  ("struct_tuple_field") = "org.rust.lang.core.psi.RustVisibilityOwner"
 
     //
     //  Misc
@@ -320,7 +318,7 @@ private item_inner ::= stmt_item_group
 fake item_ ::= attrs_and_vis {
   implements  = [ "org.rust.lang.core.psi.RustDeclaringElement"
                   "org.rust.lang.core.psi.RustNamedElement"
-                  "org.rust.lang.core.psi.RustAccessControlElement" ]
+                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
   mixin       = "org.rust.lang.core.psi.impl.mixin.RustItemImplMixin"
   stubClass   = "org.rust.lang.core.stubs.RustItemStub"
 }

@@ -25,9 +25,6 @@ abstract class RustImplMethodImplMixinMember(node: ASTNode) : RustNamedElementIm
         return iconWithVisibility(flags, icon)
     }
 
-    override val isPublic: Boolean
-        get() = vis != null
-
 }
 
 val RustImplMethodMember.isStatic: Boolean get() = parameters?.selfArgument == null

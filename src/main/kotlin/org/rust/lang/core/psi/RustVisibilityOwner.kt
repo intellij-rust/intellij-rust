@@ -4,11 +4,13 @@ import com.intellij.openapi.util.Iconable
 import org.rust.ide.icons.addVisibilityIcon
 import javax.swing.Icon
 
-interface RustAccessControlElement : RustCompositeElement {
-    val isPublic: Boolean
+interface RustVisibilityOwner : RustCompositeElement {
+    val vis: RustVis?
 }
 
-fun RustAccessControlElement.iconWithVisibility(flags: Int, icon: Icon): Icon =
+val RustVisibilityOwner.isPublic: Boolean get() = vis != null
+
+fun RustVisibilityOwner.iconWithVisibility(flags: Int, icon: Icon): Icon =
     if ((flags and Iconable.ICON_FLAG_VISIBILITY) == 0)
         icon
     else
