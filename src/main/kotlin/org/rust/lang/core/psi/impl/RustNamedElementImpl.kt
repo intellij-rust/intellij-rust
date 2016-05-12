@@ -2,8 +2,8 @@ package org.rust.lang.core.psi.impl
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustTokenElementTypes
 
 abstract class RustNamedElementImpl(node: ASTNode)   : RustCompositeElementImpl(node)
                                                      , RustNamedElement {

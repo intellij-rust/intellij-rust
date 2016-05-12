@@ -610,10 +610,10 @@ impl_item ::= UNSAFE? IMPL generic_params type where_clause? impl_body
 impl_body ::= '{' inner_attr* impl_member* '}' { pin = 1 }
 
 // TODO: unify with trait_member?
-private impl_member ::= impl_method_member
-                      | impl_const_member
-                      | impl_macro_member
-                      | impl_type_member
+private impl_member ::= impl_method_member <<bindDocComments>>
+                      | impl_const_member <<bindDocComments>>
+                      | impl_macro_member <<bindDocComments>>
+                      | impl_type_member <<bindDocComments>>
 
 impl_method_member ::= attrs_and_vis fn_header method_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header

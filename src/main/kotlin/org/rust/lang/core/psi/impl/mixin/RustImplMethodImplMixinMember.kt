@@ -24,7 +24,6 @@ abstract class RustImplMethodImplMixinMember(node: ASTNode) : RustNamedElementIm
         }
         return iconWithVisibility(flags, icon)
     }
-
 }
 
 val RustImplMethodMember.isStatic: Boolean get() = parameters?.selfArgument == null
