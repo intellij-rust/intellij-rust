@@ -2,28 +2,21 @@ package org.rust.ide.documentation
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.PsiElement
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.lang.RustTestCaseBase
 import java.io.File
 
-class RustDocumentationProviderTest : RustTestCaseBase() {
+abstract class RustDocumentationProviderTest : RustTestCaseBase() {
 
-    override val dataPath = "org/rust/ide/documentation/fixtures"
+    protected fun compareByHtml(block: (PsiElement, PsiElement?) -> String?) {
+        val expectedFile = File("$testDataPath/${fileName.replace(".rs", ".html")}")
+        val expected = FileUtil.loadFile(expectedFile).trim()
 
-    private fun doTest(expected: String) {
         myFixture.configureByFile(fileName)
         val originalElement = myFixture.elementAtCaret
         val element = DocumentationManager.getInstance(project).findTargetElement(myFixture.editor, myFixture.file)
-        val doc = RustDocumentationProvider().getQuickNavigateInfo(element, originalElement)
-        assertThat(doc).isEqualTo(expected);
+        val actual = block(element, originalElement)?.trim()
+        assertThat(actual).isEqualTo(expected)
     }
-
-    private fun doFileTest() {
-        val text = FileUtil.loadFile(File(testDataPath + "/" + fileName.replace(".rs", ".html"))).trim()
-        doTest(text)
-    }
-
-    fun testVariable1() = doFileTest()
-    fun testVariable2() = doFileTest()
-    fun testNestedFunction() = doFileTest()
 }

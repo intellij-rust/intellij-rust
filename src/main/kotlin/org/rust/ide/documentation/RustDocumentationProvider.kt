@@ -8,28 +8,16 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.text.MarkdownUtil
 import com.petebevin.markdown.MarkdownProcessor
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustImplMethodMemberImpl
 import org.rust.lang.core.psi.impl.mixin.isMut
 import java.util.*
 
 class RustDocumentationProvider : AbstractDocumentationProvider() {
 
-    override fun generateDoc(element: PsiElement?, originalElement: PsiElement?): String? {
-        when (element) {
-            is RustItem -> {
-                val doc = element.documentation
-                return if (doc != null) formatDoc(element.name!!, doc)
-                else null
-            }
-            // Hack until there is a trait interface for "documentable" elements.
-            is RustImplMethodMemberImpl -> {
-                val doc = (element.outerDocumentationLinesForElement + element.innerDocumentationLinesForElement).joinToString("\n")
-                return formatDoc(element.name.orEmpty(), doc)
-            }
-            else -> {
-                return null
-            }
+    override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? {
+        if (element is RustItem) {
+            return element.documentation?.let { formatDoc(element.name ?: "", it) }
         }
+        return null
     }
 
     private fun formatDoc(name: String, docString: String): String {
@@ -41,7 +29,7 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
         return "<pre>$name</pre>\n$md"
     }
 
-    override fun getQuickNavigateInfo(element: PsiElement?, originalElement: PsiElement?) = when (element) {
+    override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?) = when (element) {
         is RustPatBinding -> getQuickNavigateInfo(element)
         is RustFnItem     -> getQuickNavigateInfo(element)
         else              -> null
@@ -83,7 +71,7 @@ val RustItem.documentation: String?
     }
 
 
-private val PsiElement.outerDocumentationLinesForElement: List<String>
+private val RustItem.outerDocumentationLinesForElement: List<String>
     get() {
         // rustdoc appends the contents of each doc comment and doc attribute in order
         // so we have to resolve these attributes that are edge-bound at the top of the
@@ -108,7 +96,7 @@ private val PsiElement.outerDocumentationLinesForElement: List<String>
         return lines
     }
 
-private val PsiElement.innerDocumentationLinesForElement: List<String>
+private val RustItem.innerDocumentationLinesForElement: List<String>
     get() {
         // Next, we have to consider inner comments and meta. These, like the outer case, are appended in
         // lexical order, after the outer elements. This only applies to functions and modules.
