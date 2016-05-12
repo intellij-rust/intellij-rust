@@ -2,11 +2,42 @@ package org.rust.ide.documentation
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustFnItem
-import org.rust.lang.core.psi.RustPatBinding
+import com.intellij.util.text.MarkdownUtil
+import com.petebevin.markdown.MarkdownProcessor
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.RustImplMethodMemberImpl
 import org.rust.lang.core.psi.impl.mixin.isMut
 
 class RustDocumentationProvider : AbstractDocumentationProvider() {
+
+    override fun generateDoc(element: PsiElement?, originalElement: PsiElement?): String? {
+        when (element) {
+            is RustItem -> {
+                val doc = element.documentation
+                return if (doc != null) formatDoc(element.name!!, doc)
+                else null
+            }
+            // THIS IS A HACK UNTIL RustImplMethodMember IS A RustItem
+            // I have a hunch fixing that will also fix struct member resolution...
+            is RustImplMethodMemberImpl -> {
+                val doc = element.documentation
+                return if (doc != null) formatDoc(element.name!!, doc)
+                else null
+            }
+            else -> {
+                return null
+            }
+        }
+    }
+
+    private fun formatDoc(name: String, docString: String): String {
+        val lines = docString.split("\n").toMutableList()
+        MarkdownUtil.replaceHeaders(lines)
+        MarkdownUtil.replaceCodeBlock(lines)
+        val mdp = MarkdownProcessor()
+        val md = mdp.markdown(lines.joinToString("\n"))
+        return "<pre>$name</pre>\n$md"
+    }
 
     override fun getQuickNavigateInfo(element: PsiElement?, originalElement: PsiElement?) = when (element) {
         is RustPatBinding -> getQuickNavigateInfo(element)
