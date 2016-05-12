@@ -12,11 +12,27 @@ mod m {
     fn documented_function() {}
 }
 
-/// Can mix doc comments an outer attributes
+/// Can mix doc comments and outer attributes
 #[cfg(test)]
 /// foo
-struct S;
+struct S {
+    /// Fields can have docs
+    field: f32
+}
 
 /// documentation
 // simple comments do not interfer with doc comments
-struct T;
+struct T (
+  /// Even for tuple structs!
+  i32
+);
+
+enum E {
+    /// doc
+    Foo,
+}
+
+extern {
+    /// Doc
+    fn foo();
+}
