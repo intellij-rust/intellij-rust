@@ -49,15 +49,25 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
     }
 
     private fun RustFnItem.formatSignature(): String {
+        // fn item looks like this:
+        // ```
+        //     ///doc comment
+        //     #[attribute]
+        //     pub const unsafe extern "C" fn foo<T>(x: T): where T: Clone { ... }
+        // ```
+        //
+        // we want to show only the signature, and make the name bold
+        val signatureStartElement = listOf(vis, const, unsafe, externAbi, fn).filterNotNull().firstOrNull()
+        val sigtatureStart = signatureStartElement?.startOffsetInParent ?: 0
+        val signatureEnd = block?.startOffsetInParent ?: textLength
+
         val identStart = identifier.startOffsetInParent
         val identEnd = identStart + identifier.textLength
-        val signatureLength = block?.startOffsetInParent ?: textLength
 
-        val beforeIdent = text.subSequence(0, identStart)
-        val identText = text.subSequence(identStart, identEnd)
-        val afterIdent = text.subSequence(identEnd, signatureLength).toString().trimEnd()
+        val beforeIdent = text.subSequence(sigtatureStart, identStart)
+        val afterIdent = text.subSequence(identEnd, signatureEnd).toString().trimEnd()
 
-        return "$beforeIdent<b>$identText</b>$afterIdent"
+        return "$beforeIdent<b>$name</b>$afterIdent"
     }
 
     private val PsiElement.locationString: String
