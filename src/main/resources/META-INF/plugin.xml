@@ -116,6 +116,9 @@
         <localInspection language="RUST" enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.UnresolvedModuleDeclarationInspection"/>
 
+        <localInspection language="RUST" enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.UnnecessaryParenthesisInspection"/>
+
         <!-- Surrounder -->
         <lang.surroundDescriptor language="RUST"
                                  implementationClass="org.rust.ide.surround.RustSurroundDescriptor"/>
