@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustNamedElementImpl
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
 import org.rust.lang.core.psi.impl.usefulName
 import org.rust.lang.core.stubs.RustItemStub
@@ -27,10 +26,6 @@ abstract class RustItemImplMixin : RustStubbedNamedElementImpl<RustItemStub>
 
         override fun getPresentableText(): String? = name
     }
-
-    override val documentation: String?
-        get() = (RustNamedElementImpl.outerDocumentationLinesForElement(this) +
-            RustNamedElementImpl.innerDocumentationLinesForElement(this)).joinToString("\n")
 }
 
 
@@ -42,12 +37,6 @@ class QueryAttributes(private val outerAttributes: List<RustOuterAttr>) {
      */
     fun findOuterAttr(name: String): RustOuterAttr? =
         outerAttributes.find { it.metaItem.identifier.textMatches(name) }
-
-    /**
-     * Find all the outer attributes with the given identifier.
-     */
-    fun filterOuterAttributes(name: String): List<RustOuterAttr> =
-        outerAttributes.filter { it.metaItem?.identifier?.textMatches(name) ?: false }
 
     fun hasAtomAttribute(name: String): Boolean =
         metaItems

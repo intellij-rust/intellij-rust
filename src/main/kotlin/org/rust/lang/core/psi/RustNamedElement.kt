@@ -6,6 +6,5 @@ import com.intellij.psi.PsiNamedElement
 interface RustNamedElement   : RustCompositeElement
                              , PsiNamedElement
                              , NavigatablePsiElement {
-    val documentation: String?
 }
 

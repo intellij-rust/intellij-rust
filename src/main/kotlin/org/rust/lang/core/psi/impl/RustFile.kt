@@ -54,9 +54,6 @@ class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvide
 
     override val declarations: Collection<RustDeclaringElement>
         get() = items
-
-    override val documentation: String?
-        get() = RustNamedElementImpl.innerDocumentationLinesForElement(this).joinToString("\n")
 }
 
 

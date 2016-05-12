@@ -24,12 +24,6 @@ abstract class RustImplMethodImplMixinMember(node: ASTNode) : RustNamedElementIm
         }
         return iconWithVisibility(flags, icon)
     }
-
-    override val documentation: String?
-        get() {
-            return (RustNamedElementImpl.outerDocumentationLinesForElement(this) +
-                RustNamedElementImpl.innerDocumentationLinesForElement(this)).joinToString("\n")
-        }
 }
 
 val RustImplMethodMember.isStatic: Boolean get() = parameters?.selfArgument == null
