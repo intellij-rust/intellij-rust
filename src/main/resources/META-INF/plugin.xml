@@ -80,6 +80,7 @@
 
         <annotator language="RUST" implementationClass="org.rust.ide.annotator.RustHighlightingAnnotator"/>
         <annotator language="RUST" implementationClass="org.rust.ide.annotator.RustLiteralAnnotator"/>
+        <annotator language="RUST" implementationClass="org.rust.ide.annotator.RustExpressionAnnotator"/>
 
         <!-- Description Provider -->
 
@@ -141,6 +142,10 @@
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddDeriveIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.RemoveParenthesesFromExprIntention</className>
             <category>Rust</category>
         </intentionAction>
 
