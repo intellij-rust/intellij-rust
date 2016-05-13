@@ -29,7 +29,7 @@ class RustHighlightingAnnotator : Annotator {
             }
         }
 
-        override fun visitPathPart(o: RustPathPart) {
+        override fun visitPath(o: RustPath) {
             o.reference.resolve().let {
                 if (it is RustPatBinding && it.isMut) {
                     holder.highlight(o.identifier, RustColor.MUT_BINDING)

@@ -14,7 +14,7 @@ FILE
         PsiElement(:)(':')
         PsiWhiteSpace(' ')
         RustPathTypeImpl(PATH_TYPE)
-          RustPathPartImpl(PATH_PART)
+          RustPathImpl(PATH)
             PsiElement(<IDENTIFIER>)('i32')
       PsiElement(,)(',')
       PsiWhiteSpace('\n    ')

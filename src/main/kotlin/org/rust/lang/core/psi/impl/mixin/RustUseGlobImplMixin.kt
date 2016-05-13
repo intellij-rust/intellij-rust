@@ -16,7 +16,7 @@ abstract class RustUseGlobImplMixin(node: ASTNode) : RustNamedElementImpl(node),
 }
 
 val RustUseGlob.basePath: RustQualifiedReferenceElement?
-    get() = parentOfType<RustUseItem>()?.let { it.pathPart }
+    get() = parentOfType<RustUseItem>()?.let { it.path }
 
 val RustUseGlob.boundElement: RustNamedElement?
     get() = when {

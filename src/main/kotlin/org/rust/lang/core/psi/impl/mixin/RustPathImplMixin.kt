@@ -2,7 +2,7 @@ package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustPathPart
+import org.rust.lang.core.psi.RustPath
 import org.rust.lang.core.psi.RustQualifiedReferenceElement
 import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustUseItem
@@ -10,9 +10,9 @@ import org.rust.lang.core.psi.impl.RustNamedElementImpl
 import org.rust.lang.core.resolve.ref.RustQualifiedReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
 
-abstract class RustPathPartImplMixin(node: ASTNode) : RustNamedElementImpl(node)
-                                                    , RustQualifiedReferenceElement
-                                                    , RustPathPart {
+abstract class RustPathImplMixin(node: ASTNode) : RustNamedElementImpl(node)
+                                                , RustQualifiedReferenceElement
+                                                , RustPath {
 
     override fun getReference(): RustReference = RustQualifiedReferenceImpl(this)
 
@@ -20,15 +20,15 @@ abstract class RustPathPartImplMixin(node: ASTNode) : RustNamedElementImpl(node)
         get() = identifier ?: self ?: `super`
 
     override val qualifier: RustQualifiedReferenceElement?
-        get() = if (pathPart?.firstChild != null) pathPart else null
+        get() = if (path?.firstChild != null) path else null
 
     private val isViewPath: Boolean
         get() {
             val parent = parent
             return when (parent) {
-                is RustUseItem           -> true
-                is RustPathPartImplMixin -> parent.isViewPath
-                else                     -> false
+                is RustUseItem       -> true
+                is RustPathImplMixin -> parent.isViewPath
+                else                 -> false
             }
         }
 

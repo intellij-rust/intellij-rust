@@ -32,7 +32,7 @@ private val SPACE_AROUND_OPS = ts(AND, ANDAND, ANDEQ, ARROW, FAT_ARROW, DIV, DIV
 private val UNARY_OPS = ts(MINUS, MUL, EXCL, AND, ANDAND)
 // PATH_PART because `Fn(A) -> R`
 private val PAREN_LIST_HOLDERS = ts(PAREN_EXPR, TUPLE_EXPR, TUPLE_TYPE, PARAMETERS, VARIADIC_PARAMETERS, ARG_LIST,
-    IMPL_METHOD_MEMBER, BARE_FN_TYPE, PATH_PART, PAT_ENUM, PAT_TUP, ENUM_TUPLE_ARGS)
+    IMPL_METHOD_MEMBER, BARE_FN_TYPE, PATH, PAT_ENUM, PAT_TUP, ENUM_TUPLE_ARGS)
 private val BRACK_LIST_HOLDERS = ts(VEC_TYPE, ARRAY_EXPR, INDEX_EXPR)
 private val BRACE_LIST_HOLDERS = ts(USE_GLOB_LIST)
 private val ANGLE_LIST_HOLDERS = ts(GENERIC_PARAMS, GENERIC_ARGS, QUAL_PATH_EXPR)
@@ -127,7 +127,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .afterInside(LIFETIME, REF_TYPE).spaceIf(true)
         .betweenInside(ts(MUL), ts(CONST, MUT), PTR_TYPE).spaces(0)
         .before(TYPE_PARAM_BOUNDS).spaces(0)
-        .beforeInside(LPAREN, PATH_PART).spaces(0)
+        .beforeInside(LPAREN, PATH).spaces(0)
 
         //== expressions
         .beforeInside(LPAREN, PAT_ENUM).spaces(0)

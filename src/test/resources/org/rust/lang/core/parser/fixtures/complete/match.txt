@@ -17,7 +17,7 @@ FILE
           PsiElement(match)('match')
           PsiWhiteSpace(' ')
           RustPathExprImpl(PATH_EXPR)
-            RustPathPartImpl(PATH_PART)
+            RustPathImpl(PATH)
               PsiElement(<IDENTIFIER>)('x')
           PsiWhiteSpace(' ')
           RustMatchBodyImpl(MATCH_BODY)

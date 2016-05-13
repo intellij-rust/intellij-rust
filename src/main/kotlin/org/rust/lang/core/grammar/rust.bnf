@@ -146,8 +146,8 @@
     // References
     //
 
-    mixin       ("path_part") = "org.rust.lang.core.psi.impl.mixin.RustPathPartImplMixin"
-    implements  ("path_part") = "org.rust.lang.core.psi.RustQualifiedReferenceElement"
+    mixin       ("path") = "org.rust.lang.core.psi.impl.mixin.RustPathImplMixin"
+    implements  ("path") = "org.rust.lang.core.psi.RustQualifiedReferenceElement"
 
     //
     // Resolve scopes
@@ -687,10 +687,10 @@ type_qual_path ::= << qualified_path path_without_types >>
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-private path ::= path_leftish path_part*
+private full_path ::= path_leftish path*
 
 path_leftish ::= (IDENTIFIER | SELF | SUPER | CSELF) path_generics?  | &'::' {
-  elementType = path_part
+  elementType = path
 }
 
 //
@@ -709,7 +709,7 @@ path_leftish ::= (IDENTIFIER | SELF | SUPER | CSELF) path_generics?  | &'::' {
 //
 // We parse all the above paths as valid.
 //
-left path_part ::= '::' (IDENTIFIER | SELF | SUPER | CSELF) path_generics?
+left path ::= '::' (IDENTIFIER | SELF | SUPER | CSELF) path_generics?
 
 private path_generics ::= <<isPathModeColons>> '::' generic_args
                         | <<isPathModeNoColons>> ( generic_args | path_parameters ret_type? ) // Fn(i32) -> i32 sugar
@@ -717,25 +717,25 @@ private path_generics ::= <<isPathModeColons>> '::' generic_args
 
 // Paths (with `::` separating `generic_args` from actual name) used in expression contexts:
 //    a::b::<T,U>::c
-path_generic_args_without_colons ::= <<withPathModeNoColons path>> {
-  elementType = path_part
-  extends = path_part
+path_generic_args_without_colons ::= <<withPathModeNoColons full_path>> {
+  elementType = path
+  extends = path
 }
 
 // Paths (w/o types and therefore `generic_args`, containing only identifiers, `self`, etc.):
 //    a::b::c
-path_without_types ::= <<withPathModeNoTypes path>> {
-  elementType = path_part
-  extends = path_part
+path_without_types ::= <<withPathModeNoTypes full_path>> {
+  elementType = path
+  extends = path
 }
 
 // Paths (w/o `::` separating `generic_args` from actual name) used in type contexts:
 //    a::b<T,U>::c<V,W>
 //    a::b<T,U>::c(V) -> W
 //    a::b<T,U>::c(V)
-path_generic_args_with_colons ::= <<withPathModeColons path>> {
-  elementType = path_part
-  extends = path_part
+path_generic_args_with_colons ::= <<withPathModeColons full_path>> {
+  elementType = path
+  extends = path
 }
 
 //
