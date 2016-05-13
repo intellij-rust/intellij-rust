@@ -12,8 +12,6 @@ import org.rust.lang.core.lexer.containsEOL
 import org.rust.lang.core.psi.RustCompositeElementTypes
 import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustTokenElementTypes.*
-import org.rust.lang.utils.Cookie
-import org.rust.lang.utils.using
 
 @Suppress("UNUSED_PARAMETER")
 object RustParserUtil : GeneratedParserUtilBase() {
@@ -22,15 +20,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
     private val STRUCT_ALLOWED: Key<Boolean> = Key("org.rust.STRUCT_ALLOWED")
     private val PATH_PARSING_MODE: Key<PathParsingMode> = Key("org.rust.PATH_PARSING_MODE")
 
-    private fun PsiBuilder.getStructAllowed(): Boolean {
-        return getUserData(STRUCT_ALLOWED) ?: true
-    }
-
-    private fun PsiBuilder.setStructAllowed(value: Boolean): Boolean {
-        val r = getStructAllowed()
-        putUserData(STRUCT_ALLOWED, value)
-        return r
-    }
+    private val PsiBuilder.structAllowed: Boolean get() = getUserData(STRUCT_ALLOWED) ?: true
 
     private val PsiBuilder.pathParsingMode: PathParsingMode get() = requireNotNull(getUserData(PATH_PARSING_MODE)) {
         "Path context is not set. Be sure to call one of `withParsingMode...` functions"
@@ -110,23 +100,17 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return result
     }
 
-    @JvmStatic fun checkStructAllowed(b: PsiBuilder, level: Int): Boolean = b.getStructAllowed()
+    @JvmStatic fun checkStructAllowed(b: PsiBuilder, level: Int): Boolean = b.structAllowed
 
     @JvmStatic fun checkBraceAllowed(b: PsiBuilder, level: Int): Boolean {
-        return b.getStructAllowed() || b.tokenType != LBRACE
+        return b.structAllowed || b.tokenType != LBRACE
     }
 
-    @JvmStatic fun withoutStructLiterals(b: PsiBuilder, level: Int, parser: GeneratedParserUtilBase.Parser): Boolean {
-        return using (Cookie(b, { this.setStructAllowed(it) }, false)) {
-            parser.parse(b, level)
-        }
-    }
+    @JvmStatic fun withoutStructLiterals(b: PsiBuilder, level: Int, parser: GeneratedParserUtilBase.Parser): Boolean =
+        b.withContext(STRUCT_ALLOWED, false) { parser.parse(this, level) }
 
-    @JvmStatic fun withStructLiterals(b: PsiBuilder, level: Int, parser: GeneratedParserUtilBase.Parser): Boolean {
-        return using (Cookie(b, { this.setStructAllowed(it) }, true)) {
-            parser.parse(b, level)
-        }
-    }
+    @JvmStatic fun withStructLiterals(b: PsiBuilder, level: Int, parser: GeneratedParserUtilBase.Parser): Boolean =
+        b.withContext(STRUCT_ALLOWED, true) { parser.parse(this, level) }
 
     @JvmStatic fun withPathModeNoColons(b: PsiBuilder, level: Int, parser: Parser): Boolean =
         b.withContext(PATH_PARSING_MODE, PathParsingMode.NO_COLONS) { parser.parse(this, level) }
