@@ -24,4 +24,5 @@ class RustAnnotatorTest : RustTestCaseBase() {
     fun testLiteralUnclosedQuotes() = doTest()
 
     fun testUnnecessaryIfParens() = doTest()
+    fun testRedundantParens() = doTest()
 }

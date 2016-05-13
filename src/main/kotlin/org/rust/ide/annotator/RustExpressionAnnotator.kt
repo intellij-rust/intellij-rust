@@ -8,10 +8,23 @@ import org.rust.lang.core.psi.RustExpr
 import org.rust.lang.core.psi.RustIfExpr
 import org.rust.lang.core.psi.RustParenExpr
 
-class RustIfExpressionAnnotator : Annotator {
+class RustExpressionAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-        if (element is RustIfExpr) {
-            checkIfParentheses(element, holder)
+        when (element) {
+            is RustIfExpr -> {
+                checkIfParentheses(element, holder)
+            }
+            is RustParenExpr -> {
+                checkImmediateChildIsParen(element, holder)
+            }
+        }
+    }
+
+    private fun checkImmediateChildIsParen(element: RustParenExpr, holder: AnnotationHolder) {
+        val childExpr = element.expr
+        if (childExpr is RustParenExpr) {
+            holder.createWeakWarningAnnotation(element, "Redundant parentheses in expression")
+                .registerFix(RemoveParenthesesFromExprIntention())
         }
     }
 
