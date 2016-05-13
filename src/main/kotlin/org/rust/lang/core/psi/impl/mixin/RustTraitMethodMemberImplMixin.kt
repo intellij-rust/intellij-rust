@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode
 import org.rust.ide.icons.RustIcons
 import org.rust.ide.icons.addStaticMark
 import org.rust.lang.core.psi.RustDeclaringElement
+import org.rust.lang.core.psi.RustInnerAttr
 import org.rust.lang.core.psi.RustTraitMethodMember
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
 import javax.swing.Icon
@@ -18,11 +19,14 @@ abstract class RustTraitMethodMemberImplMixin(node: ASTNode) : RustCompositeElem
 
     override fun getIcon(flags: Int): Icon {
         var icon = if (isAbstract) RustIcons.ABSTRACT_METHOD else RustIcons.METHOD
-        if (isStatic)
+        if (isStatic) {
             icon = icon.addStaticMark()
-
+        }
         return icon
     }
+
+    override val innerAttrList: List<RustInnerAttr>
+        get() = block?.innerAttrList.orEmpty()
 
     val isAbstract: Boolean
         get() = block == null

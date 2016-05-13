@@ -13,16 +13,16 @@ import org.rust.lang.RustFileType
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
-import org.rust.lang.core.psi.RustDeclaringElement
-import org.rust.lang.core.psi.RustItem
-import org.rust.lang.core.psi.RustMod
-import org.rust.lang.core.psi.RustModDeclItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.indexes.RustModulePath
 import org.rust.lang.core.resolve.indexes.RustModulesIndex
 import org.rust.lang.core.resolve.ref.RustReference
 
-class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvider, RustLanguage), RustMod {
+class RustFile(
+    fileViewProvider: FileViewProvider
+) : PsiFileBase(fileViewProvider, RustLanguage) , RustMod, RustInnerAttributeOwner {
+
     override fun getReference(): RustReference? = null
 
     override fun getFileType(): FileType = RustFileType
@@ -54,6 +54,9 @@ class RustFile(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvide
 
     override val declarations: Collection<RustDeclaringElement>
         get() = items
+
+    override val innerAttrList: List<RustInnerAttr>
+        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttr::class.java)
 }
 
 

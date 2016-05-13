@@ -154,11 +154,13 @@
     //
 
     implements  ("mod_item") = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
-                                 "org.rust.lang.core.psi.RustMod" ]
+                                 "org.rust.lang.core.psi.RustMod"
+                                 "org.rust.lang.core.psi.RustInnerAttributeOwner" ]
     mixin       ("mod_item") = "org.rust.lang.core.psi.impl.mixin.RustModItemImplMixin"
 
     implements  ("fn_item") = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
-                                "org.rust.lang.core.psi.RustGenericDeclaration" ]
+                                "org.rust.lang.core.psi.RustGenericDeclaration"
+                                "org.rust.lang.core.psi.RustInnerAttributeOwner" ]
     mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
 
     implements  ("enum_item") = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
@@ -166,7 +168,8 @@
     mixin       ("enum_item") = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
 
     implements  ("trait_method_member") = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
-                                            "org.rust.lang.core.psi.RustGenericDeclaration" ]
+                                            "org.rust.lang.core.psi.RustGenericDeclaration"
+                                            "org.rust.lang.core.psi.RustInnerAttributeOwner" ]
     mixin       ("trait_method_member") = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodMemberImplMixin"
 
     implements  ("lambda_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
@@ -250,7 +253,6 @@
     extends     ("(?!ret_type).*_type") = type
     extends     ("pat_.*")  = pat
     extends     (".*_attr") = attr
-    extends     ("inner_attrs_and_block") = block
 
     elementType ("expr_like_macro|item_like_macro") = macro
     extends     ("(try|format_like)_macro") = macro
@@ -626,7 +628,8 @@ impl_method_member ::= attrs_and_vis fn_header method_parameters ret_type? where
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner"
                  "org.rust.lang.core.resolve.scope.RustResolveScope"
-                 "org.rust.lang.core.psi.RustGenericDeclaration" ]
+                 "org.rust.lang.core.psi.RustGenericDeclaration"
+                 "org.rust.lang.core.psi.RustInnerAttributeOwner" ]
 }
 
 impl_const_member ::= attrs_and_vis CONST static_decl ';' {
@@ -1054,7 +1057,7 @@ private bool_lit ::= FALSE | TRUE
 // Statements
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-block ::= '{' block_tail '}' {
+block ::= '{' (never inner_attr*)? block_tail '}' {
   pin = 1
 }
 
