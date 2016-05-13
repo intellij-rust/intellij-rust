@@ -15,10 +15,10 @@ abstract class RustUseItemImplMixin : RustItemImpl, RustUseItem {
 
     override val boundElements: Collection<RustNamedElement>
         get() {
-            val globs = viewPath.useGlobList
+            val globs = useGlobList
             return if (globs == null) {
                 // use foo::bar;
-                listOfNotNull(viewPath.alias ?: viewPath.pathPart)
+                listOfNotNull(alias ?: pathPart)
             } else {
                 // use foo::bar::{...};
                 globs.useGlobList.mapNotNull { it.boundElement }
@@ -26,4 +26,4 @@ abstract class RustUseItemImplMixin : RustItemImpl, RustUseItem {
         }
 }
 
-val RustUseItem.isStarImport: Boolean get() = viewPath.mul != null
+val RustUseItem.isStarImport: Boolean get() = mul != null

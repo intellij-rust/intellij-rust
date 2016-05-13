@@ -312,7 +312,7 @@ private class Resolver {
 
                 // Recursively step into `use foo::*`
                 if (element is RustUseItem && element.isStarImport) {
-                    val pathPart = element.viewPath.pathPart ?: continue
+                    val pathPart = element.pathPart ?: continue
                     val mod = resolve(pathPart).element ?: continue
                     RecursionManager.doPreventingRecursion(this to mod, false) {
                         mod.accept(this)
@@ -338,7 +338,7 @@ private class Resolver {
                     is RustAlias    -> {
                         val parent = elem.parent
                         when (parent) {
-                            is RustViewPath        -> parent.pathPart?.let { resolve(it).element }
+                            is RustUseItem         -> parent.pathPart?.let { resolve(it).element }
                             is RustUseGlob         -> resolveUseGlob(parent).element
                             is RustExternCrateItem -> parent.reference?.resolve()
                             else                   -> elem

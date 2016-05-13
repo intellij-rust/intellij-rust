@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustPathPart
 import org.rust.lang.core.psi.RustQualifiedReferenceElement
 import org.rust.lang.core.psi.RustTokenElementTypes
-import org.rust.lang.core.psi.RustViewPath
+import org.rust.lang.core.psi.RustUseItem
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
 import org.rust.lang.core.resolve.ref.RustQualifiedReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
@@ -26,7 +26,7 @@ abstract class RustPathPartImplMixin(node: ASTNode) : RustNamedElementImpl(node)
         get() {
             val parent = parent
             return when (parent) {
-                is RustViewPath          -> true
+                is RustUseItem           -> true
                 is RustPathPartImplMixin -> parent.isViewPath
                 else                     -> false
             }

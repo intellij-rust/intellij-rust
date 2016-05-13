@@ -15,8 +15,12 @@ import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.utils.Cookie
 import org.rust.lang.utils.using
 
+@Suppress("UNUSED_PARAMETER")
 object RustParserUtil : GeneratedParserUtilBase() {
+    enum class PathParsingMode { COLONS, NO_COLONS, NO_TYPES_ALLOWED }
+
     private val STRUCT_ALLOWED: Key<Boolean> = Key("org.rust.STRUCT_ALLOWED")
+    private val PATH_PARSING_MODE: Key<PathParsingMode> = Key("org.rust.PATH_PARSING_MODE")
 
     private fun PsiBuilder.getStructAllowed(): Boolean {
         return getUserData(STRUCT_ALLOWED) ?: true
@@ -28,10 +32,13 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return r
     }
 
+    private val PsiBuilder.pathParsingMode: PathParsingMode get() = requireNotNull(getUserData(PATH_PARSING_MODE)) {
+        "Path context is not set. Be sure to call one of `withParsingMode...` functions"
+    }
+
     private val docCommentBinder = WhitespacesBinders.leadingCommentsBinder(
         TokenSet.create(RustTokenElementTypes.OUTER_DOC_COMMENT)
     )
-
 
     //
     // Helpers
@@ -103,9 +110,9 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return result
     }
 
-    @JvmStatic fun checkStructAllowed(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int): Boolean = b.getStructAllowed()
+    @JvmStatic fun checkStructAllowed(b: PsiBuilder, level: Int): Boolean = b.getStructAllowed()
 
-    @JvmStatic fun checkBraceAllowed(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int): Boolean {
+    @JvmStatic fun checkBraceAllowed(b: PsiBuilder, level: Int): Boolean {
         return b.getStructAllowed() || b.tokenType != LBRACE
     }
 
@@ -121,7 +128,19 @@ object RustParserUtil : GeneratedParserUtilBase() {
         }
     }
 
-    @JvmStatic fun skipUntilEOL(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int): Boolean {
+    @JvmStatic fun withPathModeNoColons(b: PsiBuilder, level: Int, parser: Parser): Boolean =
+        b.withContext(PATH_PARSING_MODE, PathParsingMode.NO_COLONS) { parser.parse(this, level) }
+
+    @JvmStatic fun withPathModeColons(b: PsiBuilder, level: Int, parser: Parser): Boolean =
+        b.withContext(PATH_PARSING_MODE, PathParsingMode.COLONS) { parser.parse(this, level) }
+
+    @JvmStatic fun withPathModeNoTypes(b: PsiBuilder, level: Int, parser: Parser): Boolean =
+        b.withContext(PATH_PARSING_MODE, PathParsingMode.NO_TYPES_ALLOWED) { parser.parse(this, level) }
+
+    @JvmStatic fun isPathModeColons(b: PsiBuilder, level: Int): Boolean = b.pathParsingMode == PathParsingMode.COLONS
+    @JvmStatic fun isPathModeNoColons(b: PsiBuilder, level: Int): Boolean = b.pathParsingMode == PathParsingMode.NO_COLONS
+
+    @JvmStatic fun skipUntilEOL(b: PsiBuilder, level: Int): Boolean {
         while (!b.eof()) {
             if (b.tokenType == TokenType.WHITE_SPACE
                 || b.tokenText?.containsEOL() != null) return true;
@@ -132,7 +151,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return false;
     }
 
-    @JvmStatic fun unpairedToken(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int): Boolean =
+    @JvmStatic fun unpairedToken(b: PsiBuilder, level: Int): Boolean =
         when (b.tokenType) {
             LBRACE, RBRACE -> false
             LPAREN, RPAREN -> false
@@ -143,8 +162,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
             }
         }
 
-    @JvmStatic fun collapse(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int,
-                            tokenType: IElementType, vararg parts: IElementType): Boolean {
+    @JvmStatic fun collapse(b: PsiBuilder, level: Int, tokenType: IElementType, vararg parts: IElementType): Boolean {
         // We do not want whitespace between parts, so firstly we do raw lookup for each part,
         // and when we make sure that we have desired token, we consume and collapse it.
         parts.forEachIndexed { i, tt ->
@@ -155,5 +173,16 @@ object RustParserUtil : GeneratedParserUtilBase() {
         marker.collapse(tokenType)
         return true
     }
+
+    private fun<T> PsiBuilder.withContext(key: Key<T>, value: T, block: PsiBuilder.() -> Boolean): Boolean {
+        val old = getUserData(key)
+        try {
+            putUserData(key, value)
+            return block()
+        } finally {
+            putUserData(key, old)
+        }
+    }
+
 }
 

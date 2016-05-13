@@ -490,7 +490,22 @@ const_item ::= CONST static_decl ';'
 private view_item ::= use_item
                     | extern_crate_item
 
-use_item ::= USE view_path ';' { pin = 2 }
+use_item ::= USE use_path ';' { pin = 1 }
+
+private use_path ::=
+//  use ::{};
+//  use {foo, bar};
+  '::'? use_glob_list
+//  use foo::bar as baz;
+//  use foo::bar::{self, foo};
+//  use foo::{};
+//  use ::foo::*;
+| path_without_types ( alias | '::' ( use_glob_list | '*' ) )?
+
+use_glob_list ::= '{' [ <<comma_separated_list use_glob>> ] '}'
+use_glob ::= (IDENTIFIER | SELF) alias?
+
+alias ::= AS IDENTIFIER
 
 extern_crate_item ::= EXTERN CRATE IDENTIFIER alias? ';'
 
@@ -664,33 +679,19 @@ wildcard_type ::= '_'
 
 type_item ::= TYPE_KW IDENTIFIER generic_params where_clause? '=' type ';'
 
-type_qual_path ::= << qualified_path view_path_prefix >>
+type_qual_path ::= << qualified_path path_without_types >>
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Paths
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-path_part ::= ident_or_self_or_super [ '::' generic_args ]
 
-//
-// Paths (with `::` separating `generic_args` from actual name) used in expression contexts:
-//
-//    a::b::<T,U>::c
-//
+private path ::= path_leftish path_part*
 
-private path_generic_args_with_colons ::= path_generic_args_with_colons_part_leftish path_generic_args_with_colons_part*
-
-left path_generic_args_with_colons_part ::= '::' path_generic_args_with_colons_part_inner {
+path_leftish ::= (IDENTIFIER | SELF | SUPER | CSELF) path_generics?  | &'::' {
   elementType = path_part
 }
-
-path_generic_args_with_colons_part_leftish ::= path_generic_args_with_colons_part_inner | &'::' {
-  elementType = path_part
-}
-
-private path_generic_args_with_colons_part_inner ::= ident_or_self_or_super [ '::' generic_args ]
-
 
 //
 // TODO(kudinkin, matklad):
@@ -708,45 +709,34 @@ private path_generic_args_with_colons_part_inner ::= ident_or_self_or_super [ ':
 //
 // We parse all the above paths as valid.
 //
-private ident_or_self_or_super ::= IDENTIFIER | SUPER | SELF | CSELF
+left path_part ::= '::' (IDENTIFIER | SELF | SUPER | CSELF) path_generics?
+
+private path_generics ::= <<isPathModeColons>> '::' generic_args
+                        | <<isPathModeNoColons>> ( generic_args | path_parameters ret_type? ) // Fn(i32) -> i32 sugar
 
 
-//
+// Paths (with `::` separating `generic_args` from actual name) used in expression contexts:
+//    a::b::<T,U>::c
+path_generic_args_without_colons ::= <<withPathModeNoColons path>> {
+  elementType = path_part
+  extends = path_part
+}
+
 // Paths (w/o types and therefore `generic_args`, containing only identifiers, `self`, etc.):
-//
 //    a::b::c
-//
-private path_without_types ::= path_without_types_part_leftish path_without_types_part*
-
-path_without_types_part_leftish ::= path_without_types_part_inner {
+path_without_types ::= <<withPathModeNoTypes path>> {
   elementType = path_part
+  extends = path_part
 }
 
-left path_without_types_part ::= '::' path_without_types_part_inner {
-  elementType = path_part
-}
-
-private path_without_types_part_inner ::= ident_or_self_or_super
-
-//
 // Paths (w/o `::` separating `generic_args` from actual name) used in type contexts:
-//
 //    a::b<T,U>::c<V,W>
 //    a::b<T,U>::c(V) -> W
 //    a::b<T,U>::c(V)
-//
-
-private path_generic_args_without_colons ::= path_generic_args_without_colons_part_leftish path_generic_args_without_colons_part*
-
-left path_generic_args_without_colons_part ::= '::' path_generic_args_without_colons_part_inner {
+path_generic_args_with_colons ::= <<withPathModeColons path>> {
   elementType = path_part
+  extends = path_part
 }
-
-path_generic_args_without_colons_part_leftish ::= path_generic_args_without_colons_part_inner | &'::' {
-  elementType = path_part
-}
-
-private path_generic_args_without_colons_part_inner ::= ident_or_self_or_super [ generic_args | path_parameters ret_type? ]
 
 //
 // Qualified paths
@@ -757,39 +747,6 @@ private path_generic_args_without_colons_part_inner ::= ident_or_self_or_super [
 //    <T as Foo>::c(V) -> W
 //
 private meta qualified_path ::= '<' type [ AS trait_ref ] '>' '::' <<param>>
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Views
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-//
-// Paths used in use items:
-//
-//    foo::bar::{self, foo}
-//    {foo, bar}
-//    ::foo::*
-//    foo::bar as baz
-//    foo::{}
-//
-view_path ::= [ view_path_prefix? '::' ] use_glob_list
-            |   view_path_prefix '::' '*'
-            |   view_path_prefix alias?
-
-use_glob_list ::= '{' [ <<comma_separated_list use_glob>> ] '}'
-use_glob ::= (IDENTIFIER | SELF) alias?
-
-alias ::= AS IDENTIFIER
-
-private view_path_prefix ::= view_path_part_leftish view_path_part*
-
-view_path_part_leftish ::= '::'? (SELF | SUPER | IDENTIFIER) {
-  elementType = path_part
-}
-
-left view_path_part ::= '::' (SUPER | IDENTIFIER) {
-  elementType = path_part
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
