@@ -2,12 +2,9 @@ package org.rust.ide.icons
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
-import com.intellij.psi.util.PsiUtil
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
-import com.intellij.util.VisibilityIcons
-import com.intellij.util.ui.EmptyIcon
 import javax.swing.Icon
 
 object RustIcons {
@@ -37,9 +34,5 @@ fun Icon.addStaticMark(): Icon = LayeredIcon(this, RustIcons.STATIC_MARK)
 
 fun Icon.addTestMark(): Icon = LayeredIcon(this, RustIcons.TEST_MARK)
 
-fun Icon.addVisibilityIcon(pub: Boolean): RowIcon {
-    val visibility = if (pub) PsiUtil.ACCESS_LEVEL_PUBLIC else PsiUtil.ACCESS_LEVEL_PRIVATE
-    val icon = RowIcon(this, EmptyIcon.create(PlatformIcons.PUBLIC_ICON))
-    VisibilityIcons.setVisibilityIcon(visibility, icon)
-    return icon
-}
+fun Icon.addVisibilityIcon(pub: Boolean): RowIcon =
+    RowIcon(this, if (pub) PlatformIcons.PUBLIC_ICON else PlatformIcons.PRIVATE_ICON)
