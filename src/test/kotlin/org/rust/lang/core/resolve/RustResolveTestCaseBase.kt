@@ -4,7 +4,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.indexing.FileBasedIndex
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.lang.RustTestCaseBase
-import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.resolve.indexes.RustModulesIndex
 import org.rust.lang.core.resolve.ref.RustReference
 
@@ -15,8 +15,8 @@ abstract class RustResolveTestCaseBase : RustTestCaseBase() {
     private fun assertIsValidDeclaration(declaration: PsiElement, usage: RustReference,
                                          expectedOffset: Int?) {
 
-        assertThat(declaration).isInstanceOf(RustNamedElement::class.java)
-        declaration as RustNamedElement
+        assertThat(declaration).isInstanceOf(RustCompositeElement::class.java)
+        declaration as RustCompositeElement
 
 
         if (expectedOffset != null) {

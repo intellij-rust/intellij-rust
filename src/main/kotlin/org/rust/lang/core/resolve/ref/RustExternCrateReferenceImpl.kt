@@ -1,8 +1,8 @@
 package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiReferenceBase
+import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustExternCrateItem
-import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.util.parentRelativeRange
 import org.rust.lang.core.resolve.RustResolveEngine
 
@@ -12,5 +12,5 @@ class RustExternCrateReferenceImpl(externCrate: RustExternCrateItem)
 
     override fun getVariants(): Array<out Any> = emptyArray()
 
-    override fun resolve(): RustNamedElement? = RustResolveEngine.resolveExternCrate(element).element
+    override fun resolve(): RustCompositeElement? = RustResolveEngine.resolveExternCrate(element).element
 }

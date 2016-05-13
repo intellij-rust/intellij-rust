@@ -24,9 +24,9 @@ import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
 
 object RustResolveEngine {
-    open class ResolveResult private constructor(val resolved: RustNamedElement?) : com.intellij.psi.ResolveResult {
-        override fun getElement():      RustNamedElement? = resolved
-        override fun isValidResult():   Boolean           = resolved != null
+    open class ResolveResult private constructor(val resolved: RustCompositeElement?) : com.intellij.psi.ResolveResult {
+        override fun getElement():      RustCompositeElement? = resolved
+        override fun isValidResult():   Boolean               = resolved != null
 
         /**
          * Designates resolve-engine failure to properly resolve item
@@ -37,12 +37,12 @@ object RustResolveEngine {
          * Designates resolve-engine failure to properly recognise target item
          * among the possible candidates
          */
-        class Ambiguous(val candidates: Collection<RustNamedElement>) : ResolveResult(null)
+        class Ambiguous(val candidates: Collection<RustCompositeElement>) : ResolveResult(null)
 
         /**
          * Designates resolve-engine successfully resolved given target
          */
-        class Resolved(resolved: RustNamedElement) : ResolveResult(resolved)
+        class Resolved(resolved: RustCompositeElement) : ResolveResult(resolved)
     }
 
     /**
@@ -238,19 +238,19 @@ private class Resolver {
      * Resolve-context wrapper
      */
     interface ResolveContext {
-        fun accept(scope: RustResolveScope): RustNamedElement?
+        fun accept(scope: RustResolveScope): RustCompositeElement?
 
         companion object {
 
             class Trivial(val v: ResolveScopeVisitor) : ResolveContext {
-                override fun accept(scope: RustResolveScope): RustNamedElement? {
+                override fun accept(scope: RustResolveScope): RustCompositeElement? {
                     scope.accept(v)
                     return v.matched
                 }
             }
 
             object Empty : ResolveContext {
-                override fun accept(scope: RustResolveScope): RustNamedElement? = null
+                override fun accept(scope: RustResolveScope): RustCompositeElement? = null
             }
         }
     }
@@ -274,7 +274,7 @@ private class Resolver {
         /**
          * Matched resolve-target
          */
-        abstract var matched: RustNamedElement?
+        abstract var matched: RustCompositeElement?
     }
 
     /**
@@ -282,7 +282,7 @@ private class Resolver {
      */
     open inner class ResolveNonLocalScopesVisitor(protected val name: String) : ResolveScopeVisitor() {
 
-        override var matched: RustNamedElement? = null
+        override var matched: RustCompositeElement? = null
 
         override fun visitFile(file: PsiFile) {
             file.rustMod?.let { visitMod(it) }
@@ -416,7 +416,7 @@ fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolve
 }
 
 
-private fun RustResolveScope.resolveUsing(c: Resolver.ResolveContext): RustNamedElement? = c.accept(this)
+private fun RustResolveScope.resolveUsing(c: Resolver.ResolveContext): RustCompositeElement? = c.accept(this)
 
 
 private fun RustNamedElement?.asResolveResult(): RustResolveEngine.ResolveResult =
