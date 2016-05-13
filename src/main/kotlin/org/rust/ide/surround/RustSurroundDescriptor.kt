@@ -4,7 +4,6 @@ import com.intellij.lang.surroundWith.SurroundDescriptor
 import com.intellij.lang.surroundWith.Surrounder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RustExpr
 
@@ -21,7 +20,7 @@ class RustSurroundDescriptor : SurroundDescriptor {
 
     override fun getElementsToSurround(file: PsiFile, startOffset: Int, endOffset: Int): Array<out PsiElement> {
         val expr = PsiTreeUtil.findElementOfClassAtRange(file, startOffset, endOffset, RustExpr::class.java)
-        expr ?: return PsiElement.EMPTY_ARRAY
+            ?: return PsiElement.EMPTY_ARRAY
         return arrayOf(expr)
     }
 
