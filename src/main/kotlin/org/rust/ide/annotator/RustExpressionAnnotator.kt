@@ -11,12 +11,8 @@ import org.rust.lang.core.psi.RustParenExpr
 class RustExpressionAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         when (element) {
-            is RustIfExpr -> {
-                checkIfParentheses(element, holder)
-            }
-            is RustParenExpr -> {
-                checkImmediateChildIsParen(element, holder)
-            }
+            is RustIfExpr    -> checkIfParentheses(element, holder)
+            is RustParenExpr -> checkImmediateChildIsParen(element, holder)
         }
     }
 
