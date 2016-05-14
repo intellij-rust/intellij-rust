@@ -692,7 +692,7 @@ type_qual_path ::= << qualified_path path_without_types >>
 
 private full_path ::= path_leftish path*
 
-path_leftish ::= (IDENTIFIER | SELF | SUPER | CSELF) path_generics?  | &'::' {
+path_leftish ::= '::'? (IDENTIFIER | SELF | SUPER | CSELF) path_generics? {
   elementType = path
 }
 

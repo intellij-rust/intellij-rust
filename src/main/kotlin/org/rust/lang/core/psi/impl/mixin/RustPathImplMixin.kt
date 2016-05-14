@@ -19,8 +19,7 @@ abstract class RustPathImplMixin(node: ASTNode) : RustNamedElementImpl(node)
     override val nameElement: PsiElement?
         get() = identifier ?: self ?: `super`
 
-    override val qualifier: RustQualifiedReferenceElement?
-        get() = if (path?.firstChild != null) path else null
+    override val qualifier: RustQualifiedReferenceElement? get() = path
 
     private val isViewPath: Boolean
         get() {

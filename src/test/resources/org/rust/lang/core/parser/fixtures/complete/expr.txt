@@ -57,8 +57,6 @@ FILE
         RustPathExprImpl(PATH_EXPR)
           RustPathImpl(PATH)
             RustPathImpl(PATH)
-              RustPathImpl(PATH)
-                <empty list>
               PsiElement(::)('::')
               PsiWhiteSpace(' ')
               PsiElement(<IDENTIFIER>)('x')
