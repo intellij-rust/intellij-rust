@@ -403,7 +403,7 @@ private class Resolver {
 
 
 fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolveScope> {
-    if (ref.isFullyQualified) {
+    if (ref.isRelativeToCrateRoot) {
         return listOfNotNull(RustResolveUtil.getCrateRootModFor(ref)).asSequence()
     }
 

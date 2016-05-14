@@ -32,13 +32,13 @@ abstract class RustPathImplMixin(node: ASTNode) : RustNamedElementImpl(node)
             }
         }
 
-    override val isFullyQualified: Boolean
+    override val isRelativeToCrateRoot: Boolean
         get() {
             val qual = qualifier
             return if (qual == null) {
                 separator != null || (isViewPath && self == null && `super` == null)
             } else {
-                qual.isFullyQualified
+                qual.isRelativeToCrateRoot
             }
         }
 

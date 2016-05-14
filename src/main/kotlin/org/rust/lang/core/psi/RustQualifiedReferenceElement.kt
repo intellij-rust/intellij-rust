@@ -6,19 +6,19 @@ import org.rust.lang.core.resolve.ref.RustReference
 interface RustQualifiedReferenceElement : RustNamedElement {
 
     /**
-     *  Returns `true` if this is a fully qualified path.
+     *  Returns `true` if this is a path starting at the crate root.
      *
-     *  Paths in use items are special, they are implicitly FQ.
+     *  That is, if this path starts with `::` or if this path is from a use item
      *
      *  Example:
      *
      *    ```Rust
-     *    use ::foo::bar;   // FQ
-     *    use foo::bar;     // FQ, the same as the above
+     *    use ::foo::bar;   // relative to root
+     *    use foo::bar;     // relative to root, the same as the above
      *
      *    fn main() {
-     *        ::foo::bar;   // FQ
-     *        foo::bar;     // not FQ
+     *        ::foo::bar;   // relative to root
+     *        foo::bar;     // relative to current module
      *    }
      *    ```
      *
@@ -26,7 +26,7 @@ interface RustQualifiedReferenceElement : RustNamedElement {
      *    https://doc.rust-lang.org/reference.html#paths
      *    https://doc.rust-lang.org/reference.html#use-declarations
      */
-    val isFullyQualified: Boolean
+    val isRelativeToCrateRoot: Boolean
 
     /**
      *  Returns true if this path references ancestor module via `self` and `super` chain.
