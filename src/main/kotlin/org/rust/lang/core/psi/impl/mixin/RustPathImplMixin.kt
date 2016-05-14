@@ -21,15 +21,10 @@ abstract class RustPathImplMixin(node: ASTNode) : RustNamedElementImpl(node)
 
     override val qualifier: RustQualifiedReferenceElement? get() = path
 
-    private val isViewPath: Boolean
-        get() {
-            val parent = parent
-            return when (parent) {
-                is RustUseItem       -> true
-                is RustPathImplMixin -> parent.isViewPath
-                else                 -> false
-            }
-        }
+    private val isViewPath: Boolean get() {
+        val parent = parent
+        return parent is RustUseItem || (parent is RustPathImplMixin && parent.isViewPath)
+    }
 
     override val isRelativeToCrateRoot: Boolean
         get() {
