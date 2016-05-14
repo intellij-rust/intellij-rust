@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import org.rust.cargo.commands.Cargo
-import org.rust.cargo.util.PlatformUtil
 import java.io.File
 
 data class RustToolchain(
@@ -44,8 +43,9 @@ data class RustToolchain(
     fun cargo(cargoProjectDirectory: String): Cargo =
         Cargo(pathToExecutable(CARGO), cargoProjectDirectory)
 
-    private fun pathToExecutable(fileName: String): String {
-        return File(File(location), PlatformUtil.getCanonicalNativeExecutableName(fileName)).absolutePath
+    private fun pathToExecutable(toolName: String): String {
+        val exeName = if (SystemInfo.isWindows) "$toolName.exe" else toolName
+        return File(File(location), exeName).absolutePath
     }
 
     companion object {
