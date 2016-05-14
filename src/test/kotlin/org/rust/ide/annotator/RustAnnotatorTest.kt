@@ -5,14 +5,6 @@ import org.rust.lang.RustTestCaseBase
 class RustAnnotatorTest : RustTestCaseBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures"
 
-    private fun doTest() {
-        myFixture.testHighlighting(fileName)
-    }
-
-    private fun doTestInfo() {
-        myFixture.testHighlighting(false, true, false, fileName)
-    }
-
     fun testAttributes() = doTestInfo()
     fun testMacro() = doTestInfo()
     fun testTypeParameters() = doTestInfo()
@@ -25,4 +17,14 @@ class RustAnnotatorTest : RustTestCaseBase() {
 
     fun testUnnecessaryIfParens() = doTest()
     fun testRedundantParens() = doTest()
+
+    fun testPaths() = doTest()
+
+    private fun doTest() {
+        myFixture.testHighlighting(fileName)
+    }
+
+    private fun doTestInfo() {
+        myFixture.testHighlighting(false, true, false, fileName)
+    }
 }
