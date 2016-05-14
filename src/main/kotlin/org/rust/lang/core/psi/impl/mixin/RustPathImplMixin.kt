@@ -2,10 +2,7 @@ package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustPath
-import org.rust.lang.core.psi.RustQualifiedReferenceElement
-import org.rust.lang.core.psi.RustTokenElementTypes
-import org.rust.lang.core.psi.RustUseItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
 import org.rust.lang.core.resolve.ref.RustQualifiedReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
@@ -36,20 +33,45 @@ abstract class RustPathImplMixin(node: ASTNode) : RustNamedElementImpl(node)
             }
         }
 
-    override val isAncestorModulePrefix: Boolean
-        get() {
-            val qual = qualifier
-            if (qual != null) {
-                return `super` != null && qual.isAncestorModulePrefix
+    override val relativeModulePrefix: RelativeModulePrefix get() {
+        val qual = qualifier
+        val isSelf = self != null
+        val isSuper = `super` != null
+        check(!(isSelf && isSuper))
+
+        if (qual != null) {
+            if (isSelf) return RelativeModulePrefix.Invalid
+
+            val parent = qual.relativeModulePrefix
+            return when (parent) {
+                is RelativeModulePrefix.Invalid        -> RelativeModulePrefix.Invalid
+                is RelativeModulePrefix.NotRelative    -> when {
+                    isSuper -> RelativeModulePrefix.Invalid
+                    else    -> RelativeModulePrefix.NotRelative
+                }
+                is RelativeModulePrefix.AncestorModule -> when {
+                    isSuper -> RelativeModulePrefix.AncestorModule(parent.level + 1)
+                    else    -> RelativeModulePrefix.NotRelative
+                }
             }
-            val isFullyQualified = separator != null
-            if (isFullyQualified) {
-                return false
-            }
-            // `self` by itself is not a module prefix, it's and identifier.
-            // So for `self` we need to check that it is not the only segment of path.
-            return `super` != null || (self != null && nextSibling != null)
         }
+
+        val isFullyQualified = separator != null
+        if (isFullyQualified) {
+            return if (isSelf || isSuper)
+                RelativeModulePrefix.Invalid
+            else
+                RelativeModulePrefix.NotRelative
+        }
+
+        return when {
+            // `self` by itself is not a module prefix, it's an identifier.
+            // So for `self` we need to check that it's not the only segment of path.
+            isSelf && nextSibling != null -> RelativeModulePrefix.AncestorModule(0)
+            isSuper -> RelativeModulePrefix.AncestorModule(1)
+            else -> RelativeModulePrefix.NotRelative
+        }
+    }
 
     override val isSelf: Boolean
         get() = self != null
@@ -58,3 +80,4 @@ abstract class RustPathImplMixin(node: ASTNode) : RustNamedElementImpl(node)
         get() = findChildByType(RustTokenElementTypes.COLONCOLON)
 
 }
+

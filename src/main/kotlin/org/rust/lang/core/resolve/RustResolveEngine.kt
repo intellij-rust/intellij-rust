@@ -153,17 +153,20 @@ private class Resolver {
      * For more details check out `RustResolveEngine.resolve`
      */
     fun resolve(ref: RustQualifiedReferenceElement): RustResolveEngine.ResolveResult = resolvePreventingRecursion(ref) {
-        val qual = ref.qualifier
-        when {
-            ref.isAncestorModulePrefix -> resolveModulePrefix(ref).asResolveResult()
-            qual != null               -> {
-                val parent = resolve(qual).element
-                when (parent) {
-                    is RustResolveScope -> resolveIn(sequenceOf(parent), by(ref))
-                    else                -> RustResolveEngine.ResolveResult.Unresolved
+        val modulePrefix = ref.relativeModulePrefix
+        when (modulePrefix) {
+            is RelativeModulePrefix.Invalid        -> RustResolveEngine.ResolveResult.Unresolved
+            is RelativeModulePrefix.AncestorModule -> resolveAncestorModule(ref, modulePrefix).asResolveResult()
+            is RelativeModulePrefix.NotRelative    -> {
+                val qual = ref.qualifier
+                if (qual == null) {
+                    resolveIn(enumerateScopesFor(ref), by(ref))
+                } else {
+                    val parent = resolve(qual).element
+                    if (parent is RustResolveScope) resolveIn(sequenceOf(parent), by(ref))
+                    else RustResolveEngine.ResolveResult.Unresolved
                 }
             }
-            else                       -> resolveIn(enumerateScopesFor(ref), by(ref))
         }
     }
 
@@ -204,14 +207,15 @@ private class Resolver {
         }
     }
 
-    private fun resolveModulePrefix(ref: RustQualifiedReferenceElement): RustMod? {
-        return if (ref.isSelf) {
-            ref.containingMod
-        } else {
-            val qual = ref.qualifier
-            val mod = if (qual != null) resolveModulePrefix(qual) else ref.containingMod
-            mod?.`super`
+    private fun resolveAncestorModule(
+        ref: RustQualifiedReferenceElement,
+        modulePrefix: RelativeModulePrefix.AncestorModule
+    ): RustMod? {
+        var result: RustMod? = ref.containingMod
+        for (i in 0 until modulePrefix.level) {
+            result = result?.`super`
         }
+        return result
     }
 
     /**
