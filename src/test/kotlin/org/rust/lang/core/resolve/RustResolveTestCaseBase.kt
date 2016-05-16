@@ -36,7 +36,7 @@ abstract class RustResolveTestCaseBase : RustTestCaseBase() {
     }
 
     protected fun checkIsBound(atOffset: Int? = null) {
-        val usage = myFixture.getReferenceAtCaretPosition(fileName) as RustReference
+        val usage = getReference()
         assertThat(usage.resolve())
             .withFailMessage("Failed to resolve `${usage.element.text}`.")
             .isNotNull()
@@ -46,9 +46,13 @@ abstract class RustResolveTestCaseBase : RustTestCaseBase() {
     }
 
     protected fun checkIsUnbound() {
-        val usage = myFixture.getReferenceAtCaretPosition(fileName) as RustReference
-        val declaration = usage.resolve()
-
+        val declaration = getReference().resolve()
         assertThat(declaration).isNull()
+    }
+
+    private fun getReference(): RustReference {
+        return requireNotNull(myFixture.getReferenceAtCaretPosition(fileName)) {
+            "No reference at caret in `$fileName`"
+        } as RustReference
     }
 }
