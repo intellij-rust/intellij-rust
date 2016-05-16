@@ -625,11 +625,12 @@ private impl_member ::= impl_method_member <<bindDocComments>>
 
 impl_method_member ::= attrs_and_vis fn_header method_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
-  implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
+  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.psi.RustOuterAttributeOwner"
+                 "org.rust.lang.core.psi.RustInnerAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner"
                  "org.rust.lang.core.resolve.scope.RustResolveScope"
-                 "org.rust.lang.core.psi.RustGenericDeclaration"
-                 "org.rust.lang.core.psi.RustInnerAttributeOwner" ]
+                 "org.rust.lang.core.psi.RustGenericDeclaration" ]
 }
 
 impl_const_member ::= attrs_and_vis CONST static_decl ';' {
