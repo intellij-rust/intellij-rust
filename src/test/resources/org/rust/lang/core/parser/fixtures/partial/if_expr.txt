@@ -370,7 +370,7 @@ FILE
   PsiWhiteSpace('\n')
   PsiElement(if)('if')
   PsiWhiteSpace('\n')
-  PsiErrorElement:<restricted expr> expected, got '}'
+  PsiErrorElement:<expr> expected, got '}'
     PsiElement(})('}')
   PsiElement(DUMMY_BLOCK)
     PsiWhiteSpace('\n')

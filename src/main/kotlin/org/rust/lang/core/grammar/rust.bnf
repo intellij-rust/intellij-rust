@@ -249,7 +249,7 @@
     elementType ("(fn_type|foreign_fn)_parameters") = variadic_parameters
 
     extends     ("(if|while)_let_expr") = scoped_let_expr
-    extends     (".*_expr") = restricted_expr
+    extends     (".*_expr") = expr
     extends     ("(?!ret_type).*_type") = type
     extends     ("pat_.*")  = pat
     extends     (".*_attr") = attr
@@ -756,44 +756,38 @@ private meta qualified_path ::= '<' type [ AS trait_ref ] '>' '::' <<param>>
 // Expressions
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-//
-// NOTA BENE
-//
-//  That's a synthetic production solely designated to produce
-//  valid PSI hierarchy, to use the unrestricted version of expression check `unrestricted_expr`
-//
-expr ::=
-
 // https://doc.rust-lang.org/reference.html#operator-precedence
 // https://github.com/JetBrains/Grammar-Kit/blob/master/HOWTO.md#24-compact-expression-parsing-with-priorities
-restricted_expr ::= ret_expr
-                  | assign_bin_expr
-                  | block_expr
-                  | cont_expr
-                  | break_expr
-                  | lambda_expr
-                  | full_range_expr
-                  | open_range_expr
-                  | bool_or_bin_expr
-                  | bool_and_bin_expr
-                  | comp_bin_expr
-                  | rel_comp_bin_expr
-                  | bit_or_bin_expr
-                  | bit_xor_bin_expr
-                  | bit_and_bin_expr
-                  | bit_shift_bin_expr
-                  | add_bin_expr
-                  | mul_bin_expr
-                  | cast_expr
-                  | unary_expr
-                  | try_expr
-                  | atom_expr {
-  elementType = expr
-}
+//
+// Rust expression grammar allows or forbids struct literals depending on context.
+// There are `no_struct_lit_expr` and `any_expr` productions for this two cases.
+// `expr` production is an implementation detail. It passes the context information to the child expressions.
+expr ::= ret_expr
+       | assign_bin_expr
+       | block_expr
+       | cont_expr
+       | break_expr
+       | lambda_expr
+       | full_range_expr
+       | open_range_expr
+       | bool_or_bin_expr
+       | bool_and_bin_expr
+       | comp_bin_expr
+       | rel_comp_bin_expr
+       | bit_or_bin_expr
+       | bit_xor_bin_expr
+       | bit_and_bin_expr
+       | bit_shift_bin_expr
+       | add_bin_expr
+       | mul_bin_expr
+       | cast_expr
+       | unary_expr
+       | try_expr
+       | atom_expr
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
-private no_struct_lit_expr  ::= << withoutStructLiterals restricted_expr >> | never restricted_expr
-private any_expr            ::= << withStructLiterals restricted_expr >>    | never restricted_expr
+private no_struct_lit_expr  ::= << withoutStructLiterals expr >> | never expr
+private any_expr            ::= << withStructLiterals expr >>    | never expr
 private never ::= !()
 
 
@@ -821,14 +815,14 @@ private atom_expr ::= lit_expr
                     | tuple_or_paren_expr
 
 
-binary_expr ::= restricted_expr + {
+binary_expr ::= expr + {
   methods=[
     left="/expr[0]"
     right="/expr[1]"
   ]
 }
 
-assign_bin_expr ::= restricted_expr
+assign_bin_expr ::= expr
                   ( gtgteq
                   | ltlteq
                   | '|='
@@ -840,27 +834,27 @@ assign_bin_expr ::= restricted_expr
                   | '*='
                   | '/='
                   | '%='
-                  ) restricted_expr    { rightAssociative = true }
+                  ) expr    { rightAssociative = true }
 
-comp_bin_expr       ::= restricted_expr ('==' | '!=') restricted_expr
-rel_comp_bin_expr   ::= restricted_expr ('<' !('<' | '=') | '>' !('>' | '=') | lteq | gteq) restricted_expr
-bit_shift_bin_expr  ::= restricted_expr (ltlt | gtgt) restricted_expr
-add_bin_expr        ::= restricted_expr ('+' | '-') restricted_expr
-mul_bin_expr        ::= restricted_expr ('*' | '/' | '%') restricted_expr
+comp_bin_expr       ::= expr ('==' | '!=') expr
+rel_comp_bin_expr   ::= expr ('<' !('<' | '=') | '>' !('>' | '=') | lteq | gteq) expr
+bit_shift_bin_expr  ::= expr (ltlt | gtgt) expr
+add_bin_expr        ::= expr ('+' | '-') expr
+mul_bin_expr        ::= expr ('*' | '/' | '%') expr
 
 // <expr> | <expr> has higher priority than <expr> || <expr>
-bool_or_bin_expr    ::= restricted_expr oror restricted_expr
-bool_and_bin_expr   ::= restricted_expr '&&' restricted_expr
-bit_or_bin_expr     ::= restricted_expr '|' !'|' restricted_expr
-bit_xor_bin_expr    ::= restricted_expr '^' restricted_expr
-bit_and_bin_expr    ::= restricted_expr '&' restricted_expr
+bool_or_bin_expr    ::= expr oror expr
+bool_and_bin_expr   ::= expr '&&' expr
+bit_or_bin_expr     ::= expr '|' !'|' expr
+bit_xor_bin_expr    ::= expr '^' expr
+bit_and_bin_expr    ::= expr '&' expr
 
 
-cast_expr ::= restricted_expr AS type
+cast_expr ::= expr AS type
 
-try_expr ::= restricted_expr '?'
+try_expr ::= expr '?'
 
-unary_expr ::= (BOX | '-' | '*' | '!' | ('&' | '&&') MUT?) restricted_expr
+unary_expr ::= (BOX | '-' | '*' | '!' | ('&' | '&&') MUT?) expr
 
 lambda_expr ::= MOVE? lambda_parameters ret_type? any_expr
 
@@ -903,7 +897,7 @@ if_let_expr ::= IF scoped_let_decl block else_tail?
 
 while_let_expr ::= WHILE scoped_let_decl block
 
-ret_expr ::= RETURN restricted_expr?
+ret_expr ::= RETURN expr?
 
 unit_expr ::= '(' ')'
 
@@ -929,10 +923,10 @@ private array_elems ::= any_expr ';' any_expr
 //private range_expr_group ::= open_range_expr
 //                           | full_range_expr
 
-full_range_expr ::= restricted_expr '..' (&<<checkBraceAllowed>> restricted_expr)?
-open_range_expr ::=                 '..' (&<<checkBraceAllowed>> restricted_expr)?
+full_range_expr ::= expr '..' (&<<checkBraceAllowed>> expr)?
+open_range_expr ::=      '..' (&<<checkBraceAllowed>> expr)?
 
-range_expr ::= restricted_expr + {
+range_expr ::= expr + {
   methods=[
     from="/expr[0]"
     to="/expr[1]"
@@ -940,19 +934,19 @@ range_expr ::= restricted_expr + {
 }
 
 
-index_expr ::= restricted_expr index_arg
+index_expr ::= expr index_arg
+// Do not inline this rule, it breaks expression parsing
+private index_arg ::= '[' expr ']'
 
-private index_arg ::= '[' restricted_expr ']'
+call_expr ::= expr arg_list
 
-call_expr ::= restricted_expr arg_list
-
-method_call_expr ::= restricted_expr '.' IDENTIFIER [ '::' generic_args ] arg_list { pin = 2 }
+method_call_expr ::= expr '.' IDENTIFIER [ '::' generic_args ] arg_list { pin = 2 }
 
 arg_list ::= '(' expr_list? ')' { pin = 1 }
 
 private expr_list ::= <<comma_separated_list any_expr>>
 
-field_expr ::= restricted_expr '.' (IDENTIFIER | INTEGER_LITERAL) { pin(".*") = 2 }
+field_expr ::= expr '.' (IDENTIFIER | INTEGER_LITERAL) { pin(".*") = 2 }
 
 lit_expr ::= lit
 
