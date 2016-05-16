@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
 import javax.swing.Icon
 
-abstract class RustImplMethodImplMixinMember(node: ASTNode) : RustNamedElementImpl(node)
+abstract class RustImplMethodMemberImplMixin(node: ASTNode) : RustNamedElementImpl(node)
                                                             , RustImplMethodMember {
 
     override val declarations: Collection<RustDeclaringElement> get() {

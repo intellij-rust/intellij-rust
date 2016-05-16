@@ -140,7 +140,7 @@
     mixin       ("type_item") = "org.rust.lang.core.psi.impl.mixin.RustTypeItemImplMixin"
     mixin       ("use_item") = "org.rust.lang.core.psi.impl.mixin.RustUseItemImplMixin"
     mixin       ("enum_variant")    = "org.rust.lang.core.psi.impl.mixin.RustEnumVariantImplMixin"
-    mixin       ("impl_method_member") = "org.rust.lang.core.psi.impl.mixin.RustImplMethodImplMixinMember"
+    mixin       ("impl_method_member") = "org.rust.lang.core.psi.impl.mixin.RustImplMethodMemberImplMixin"
 
     //
     // References
