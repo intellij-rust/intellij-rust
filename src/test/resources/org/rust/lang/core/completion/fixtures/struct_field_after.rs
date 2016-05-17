@@ -3,5 +3,5 @@ struct S {
 }
 
 fn main() {
-    let _ = S { foobarbaz: 92 };
+    let _ = S { foobarbaz };
 }

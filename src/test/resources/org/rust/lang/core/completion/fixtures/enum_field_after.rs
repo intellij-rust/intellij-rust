@@ -5,7 +5,7 @@ enum E {
 }
 
 fn main() {
-    let _ = E::X { bazbarfoo: 92 }
+    let _ = E::X { bazbarfoo }
 }
 
 

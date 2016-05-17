@@ -862,10 +862,8 @@ lambda_expr ::= MOVE? lambda_parameters ret_type? any_expr
 
 struct_expr ::= << checkStructAllowed >> path_generic_args_with_colons struct_expr_body
 
-struct_expr_body ::= '{'
-                       [ <<comma_separated_list (field_name ':' any_expr)>> ]
-                       ('..'  any_expr)?
-                     '}'
+struct_expr_body ::= '{' [ <<comma_separated_list field_arg>> ] ('..'  any_expr)? '}'
+private field_arg ::= field_name ':' any_expr { pin = field_name }
 
 field_name ::= IDENTIFIER {
   implements = "org.rust.lang.core.psi.RustNamedElement"
