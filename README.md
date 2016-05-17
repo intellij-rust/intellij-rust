@@ -23,14 +23,6 @@ See the [quick start](doc/QuickStart.md) and [tips & tricks](doc/Tips.md) for tu
 
 As this is a preview release, something might go wrong. So, be brave to face some nasty bugs.
 
-## Recent changes
-
-We have completely reworked internal project representation to make plugin
-compatible with all IntelliJ based IDEs. To migrate your project please remove
-`.idea` and `*.iml` files and reopen it as described in the updated [quick
-start](doc/QuickStart.md). The old guide is available
-[here](https://github.com/intellij-rust/intellij-rust/blob/7caa46d2449935456a0e3e99154b6de0bede527d/doc/QuickStart.md).
-
 ## Contributing
 
 You're encouraged to contribute to the plugin in any form if you've found any issues or missing
