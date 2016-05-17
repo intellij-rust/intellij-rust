@@ -10,7 +10,7 @@ class RustFormatterTestCase : FormatterTestCase() {
 
     override fun getFileExtension() = "rs"
 
-    override fun getTestName(lowercaseFirstLetter: Boolean): String? {
+    override fun getTestName(lowercaseFirstLetter: Boolean): String {
         val camelCase = super.getTestName(lowercaseFirstLetter)
         return RustTestCaseBase.camelToSnake(camelCase)
     }
