@@ -40,6 +40,6 @@ class RustFileTreeElement(file: RustFile) : PsiTreeElementBase<RustFile>(file) {
                 result += RustModTreeElement(o)
             }
         })
-        return result;
+        return result
     }
 }

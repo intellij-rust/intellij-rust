@@ -16,17 +16,13 @@ class RustStructureViewModel(editor: Editor?, file: RustFile) : TextEditorBasedS
 
     override fun getPsiFile(): RustFile = super.getPsiFile() as RustFile
 
-    override fun isAlwaysShowsPlus(element: StructureViewTreeElement) =
-        when(element.value) {
-            is RustFile -> true
-            else        -> false
-        }
+    override fun isAlwaysShowsPlus(element: StructureViewTreeElement) = element.value is RustFile
 
     override fun isAlwaysLeaf(element: StructureViewTreeElement) =
-        when(element.value) {
-            is RustFnItem           -> true
-            is RustImplMethodMember -> true
-            is RustFieldDecl        -> true
-            else                    -> false
+        when (element.value) {
+            is RustFnItem,
+            is RustImplMethodMember,
+            is RustFieldDecl -> true
+            else             -> false
         }
 }

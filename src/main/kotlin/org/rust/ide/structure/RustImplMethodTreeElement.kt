@@ -17,7 +17,7 @@ class RustImplMethodTreeElement(element: RustImplMethodMember) : PsiTreeElementB
         if (retType != null)
             text += " ${retType.text}"
 
-        return text;
+        return text
     }
 
     override fun getChildrenBase() = arrayListOf<StructureViewTreeElement>()

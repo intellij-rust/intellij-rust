@@ -6,7 +6,7 @@ import org.rust.lang.core.psi.RustTraitMethodMember
 
 class RustTraitMethodTreeElement(element: RustTraitMethodMember) : PsiTreeElementBase<RustTraitMethodMember>(element) {
 
-    override fun getPresentableText(): String? {
+    override fun getPresentableText(): String {
         var text = element?.identifier?.text ?: return "<unknown>"
 
         element?.parameters?.parameterList?.let { params ->
@@ -17,7 +17,7 @@ class RustTraitMethodTreeElement(element: RustTraitMethodMember) : PsiTreeElemen
             text += " ${retType.text}"
         }
 
-        return text;
+        return text
     }
 
     override fun getChildrenBase() = arrayListOf<StructureViewTreeElement>()

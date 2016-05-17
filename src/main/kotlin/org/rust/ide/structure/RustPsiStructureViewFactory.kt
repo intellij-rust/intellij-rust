@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.impl.RustFile
 
 class RustPsiStructureViewFactory: PsiStructureViewFactory {
     override fun getStructureViewBuilder(psiFile: PsiFile?): StructureViewBuilder {
-        val rustFile = psiFile as RustFile;
+        val rustFile = psiFile as RustFile
         return object: TreeBasedStructureViewBuilder() {
             override fun createStructureViewModel(editor: Editor?): StructureViewModel {
                 return RustStructureViewModel(editor, rustFile)

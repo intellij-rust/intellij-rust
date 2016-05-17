@@ -6,7 +6,7 @@ import org.rust.lang.core.psi.RustTraitItem
 
 class RustTraitTreeElement(element: RustTraitItem) : PsiTreeElementBase<RustTraitItem>(element) {
 
-    override fun getPresentableText(): String? {
+    override fun getPresentableText(): String {
         var text = element?.identifier?.text ?: return "<unknown>"
 
         val generics = element?.genericParams?.text
@@ -21,8 +21,6 @@ class RustTraitTreeElement(element: RustTraitItem) : PsiTreeElementBase<RustTrai
     }
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> =
-        element?.traitBody?.traitMethodMemberList?.let { methods ->
-            methods.filterNotNull()
-                .map { RustTraitMethodTreeElement(it) }
-        }.orEmpty()
+        element?.traitBody?.traitMethodMemberList.orEmpty()
+            .map { RustTraitMethodTreeElement(it) }
 }

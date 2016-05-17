@@ -17,7 +17,7 @@ class RustFnTreeElement(element: RustFnItem) : PsiTreeElementBase<RustFnItem>(el
         if (retType != null)
             text += " ${retType.text}"
 
-        return text;
+        return text
     }
 
     override fun getChildrenBase() = arrayListOf<StructureViewTreeElement>()
