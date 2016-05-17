@@ -83,7 +83,7 @@ project** action.
 
 ## Updating
 
-In general, plugin updates should go smoth. Though, if you experience some weird behaviour, reimport your project (using **Refresh Cargo project** action) or/and rebuild indices (using **Invalidate caches/Restart** action), prior to reporting bugs.
+In general, plugin updates should go smoothly. Though, if you experience some weird behaviour, reimport your project (using **Refresh Cargo project** action) or/and rebuild indices (using **Invalidate caches/Restart** action), prior to reporting bugs.
 
 ## Tips
 
