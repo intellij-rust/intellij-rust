@@ -128,6 +128,7 @@
     // Mixins
     //
 
+    mixin       ("field_name") = "org.rust.lang.core.psi.impl.mixin.RustFieldNameImplMixin"
     mixin       ("trait_item") = "org.rust.lang.core.psi.impl.mixin.RustTraitItemImplMixin"
     mixin       ("impl_item") = "org.rust.lang.core.psi.impl.mixin.RustImplItemImplMixin"
     mixin       ("struct_item") = "org.rust.lang.core.psi.impl.mixin.RustStructItemImplMixin"
@@ -139,7 +140,7 @@
     mixin       ("static_item") = "org.rust.lang.core.psi.impl.mixin.RustStaticItemImplMixin"
     mixin       ("type_item") = "org.rust.lang.core.psi.impl.mixin.RustTypeItemImplMixin"
     mixin       ("use_item") = "org.rust.lang.core.psi.impl.mixin.RustUseItemImplMixin"
-    mixin       ("enum_variant")  = "org.rust.lang.core.psi.impl.mixin.RustEnumVariantImplMixin"
+    mixin       ("enum_variant") = "org.rust.lang.core.psi.impl.mixin.RustEnumVariantImplMixin"
     mixin       ("impl_method_member") = "org.rust.lang.core.psi.impl.mixin.RustImplMethodMemberImplMixin"
 
     //
@@ -862,9 +863,13 @@ lambda_expr ::= MOVE? lambda_parameters ret_type? any_expr
 struct_expr ::= << checkStructAllowed >> path_generic_args_with_colons struct_expr_body
 
 struct_expr_body ::= '{'
-                       [ <<comma_separated_list (IDENTIFIER ':' any_expr)>> ]
+                       [ <<comma_separated_list (field_name ':' any_expr)>> ]
                        ('..'  any_expr)?
                      '}'
+
+field_name ::= IDENTIFIER {
+  implements = "org.rust.lang.core.psi.RustNamedElement"
+}
 
 path_expr ::= path_generic_args_with_colons
 

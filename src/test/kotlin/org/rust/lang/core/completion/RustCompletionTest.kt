@@ -15,6 +15,8 @@ class RustCompletionTest : RustTestCaseBase() {
     fun testUseGlob() = checkSoleCompletion()
     fun testTypeParams() = checkSoleCompletion()
     fun testImplMethodType() = checkSoleCompletion()
+    fun testStructField() = checkSoleCompletion()
+    fun testEnumField() = checkSoleCompletion()
 
     fun testLocalScope() = checkNoCompletion()
     fun testWhileLet() = checkNoCompletion()
