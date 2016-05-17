@@ -91,7 +91,7 @@ FILE
         PsiElement(<IDENTIFIER>)('F')
         RustEnumTupleArgsImpl(ENUM_TUPLE_ARGS)
           PsiElement(()('(')
-          RustEnumTupleFieldImpl(ENUM_TUPLE_FIELD)
+          RustTupleFieldDeclImpl(TUPLE_FIELD_DECL)
             RustOuterAttrImpl(OUTER_ATTR)
               PsiElement(#)('#')
               PsiElement([)('[')

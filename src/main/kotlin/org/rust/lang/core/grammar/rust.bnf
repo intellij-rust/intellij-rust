@@ -129,9 +129,9 @@
     //
 
     mixin       ("trait_item") = "org.rust.lang.core.psi.impl.mixin.RustTraitItemImplMixin"
-    mixin       ("impl_item")  = "org.rust.lang.core.psi.impl.mixin.RustImplItemImplMixin"
+    mixin       ("impl_item") = "org.rust.lang.core.psi.impl.mixin.RustImplItemImplMixin"
     mixin       ("struct_item") = "org.rust.lang.core.psi.impl.mixin.RustStructItemImplMixin"
-    mixin       ("struct_decl_field") = "org.rust.lang.core.psi.impl.mixin.RustStructDeclFieldImplMixin"
+    mixin       ("field_decl") = "org.rust.lang.core.psi.impl.mixin.RustFieldDeclImplMixin"
     mixin       ("mod_decl_item") = "org.rust.lang.core.psi.impl.mixin.RustModDeclItemImplMixin"
     mixin       ("const_item") = "org.rust.lang.core.psi.impl.mixin.RustConstItemImplMixin"
     mixin       ("extern_crate_item") = "org.rust.lang.core.psi.impl.mixin.RustExternCrateItemImplMixin"
@@ -139,7 +139,7 @@
     mixin       ("static_item") = "org.rust.lang.core.psi.impl.mixin.RustStaticItemImplMixin"
     mixin       ("type_item") = "org.rust.lang.core.psi.impl.mixin.RustTypeItemImplMixin"
     mixin       ("use_item") = "org.rust.lang.core.psi.impl.mixin.RustUseItemImplMixin"
-    mixin       ("enum_variant")    = "org.rust.lang.core.psi.impl.mixin.RustEnumVariantImplMixin"
+    mixin       ("enum_variant")  = "org.rust.lang.core.psi.impl.mixin.RustEnumVariantImplMixin"
     mixin       ("impl_method_member") = "org.rust.lang.core.psi.impl.mixin.RustImplMethodMemberImplMixin"
 
     //
@@ -533,28 +533,12 @@ foreign_fn_decl ::= FN IDENTIFIER generic_params foreign_fn_parameters ret_type?
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Struct
+// Struct & Enums
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct_item ::= STRUCT IDENTIFIER generic_params (struct_tuple_args? where_clause? ';' | where_clause? struct_decl_args)
-
-struct_tuple_args ::= '(' <<comma_separated_list ( struct_tuple_field <<bindDocComments>> )>> ')' { pin = 1 }
-struct_tuple_field ::= attrs_and_vis type {
-  implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RustVisibilityOwner" ]
-}
-
-struct_decl_args ::= '{' [ <<comma_separated_list ( struct_decl_field <<bindDocComments>> )>> ] '}' { pin = 1 }
-struct_decl_field ::= attrs_and_vis IDENTIFIER type_ascription {
-  pin = 2
-  implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RustVisibilityOwner" ]
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Enum
-///////////////////////////////////////////////////////////////////////////////////////////////////
+struct_decl_args ::= <<struct_body ( field_decl <<bindDocComments>> )>>
+struct_tuple_args ::= <<tuple_body ( tuple_field_decl <<bindDocComments>> )>>
 
 enum_item ::= ENUM IDENTIFIER generic_params where_clause? enum_body
 
@@ -570,14 +554,30 @@ private enum_args ::= enum_struct_args
                     | enum_tuple_args
                     | enum_discriminant
 
-// unlike real structs, enum variants can't have `pub` visibility applied to fields
-enum_tuple_args ::= '(' <<comma_separated_list enum_tuple_field>> ')' { pin = 1 }
-enum_tuple_field ::= outer_attr* type
-
-enum_struct_args ::= '{' <<comma_separated_list enum_struct_field>> '}' { pin = 1 }
-enum_struct_field ::= outer_attr* IDENTIFIER type_ascription { pin = 2 }
-
+enum_struct_args ::= <<struct_body ( field_decl_in_enum <<bindDocComments>> )>>
+enum_tuple_args ::= <<tuple_body ( tuple_field_decl_in_enum <<bindDocComments>> )>>
 enum_discriminant ::= '=' any_expr { pin = 1 }
+
+field_decl ::= attrs_and_vis IDENTIFIER type_ascription {
+  pin = 2
+  implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
+                 "org.rust.lang.core.psi.RustVisibilityOwner"
+                 "org.rust.lang.core.psi.RustNamedElement" ]
+}
+// unlike structs, enum variants can't have `pub` visibility applied to fields
+field_decl_in_enum ::= outer_attr* IDENTIFIER type_ascription {
+  pin = 2
+  elementType = field_decl
+}
+
+tuple_field_decl ::= attrs_and_vis type {
+  implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
+                 "org.rust.lang.core.psi.RustVisibilityOwner" ]
+}
+tuple_field_decl_in_enum ::= outer_attr* type { elementType=tuple_field_decl }
+
+private meta struct_body ::= '{' [ <<comma_separated_list <<param>> >> ] '}' { pin = 1}
+private meta tuple_body ::= '(' <<comma_separated_list <<param>> >> ')' { pin = 1}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

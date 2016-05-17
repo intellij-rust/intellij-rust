@@ -7,7 +7,7 @@ class RustStructTreeElement(element: RustStructItem) : PsiTreeElementBase<RustSt
 
     override fun getPresentableText() = element?.name
 
-    override fun getChildrenBase() = getDeclFields().orEmpty().map { RustStructDeclFieldTreeElement(it) }
+    override fun getChildrenBase() = getFields().orEmpty().map { RustStructDeclFieldTreeElement(it) }
 
-    fun getDeclFields() = element?.structDeclArgs?.structDeclFieldList
+    private fun getFields() = element?.structDeclArgs?.fieldDeclList
 }

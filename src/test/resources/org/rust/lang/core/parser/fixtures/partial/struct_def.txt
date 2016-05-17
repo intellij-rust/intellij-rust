@@ -9,7 +9,7 @@ FILE
     RustStructDeclArgsImpl(STRUCT_DECL_ARGS)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      RustStructDeclFieldImpl(STRUCT_DECL_FIELD)
+      RustFieldDeclImpl(FIELD_DECL)
         PsiElement(<IDENTIFIER>)('f1')
         PsiElement(:)(':')
         PsiWhiteSpace(' ')
@@ -18,7 +18,7 @@ FILE
             PsiElement(<IDENTIFIER>)('i32')
       PsiElement(,)(',')
       PsiWhiteSpace('\n    ')
-      RustStructDeclFieldImpl(STRUCT_DECL_FIELD)
+      RustFieldDeclImpl(FIELD_DECL)
         PsiElement(<IDENTIFIER>)('f2')
         PsiErrorElement:':' expected, got '}'
           <empty list>

@@ -4,9 +4,9 @@ import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel
 import com.intellij.openapi.editor.Editor
+import org.rust.lang.core.psi.RustFieldDecl
 import org.rust.lang.core.psi.RustFnItem
 import org.rust.lang.core.psi.RustImplMethodMember
-import org.rust.lang.core.psi.RustStructDeclField
 import org.rust.lang.core.psi.impl.RustFile
 
 class RustStructureViewModel(editor: Editor?, file: RustFile) : TextEditorBasedStructureViewModel(editor, file)
@@ -26,7 +26,7 @@ class RustStructureViewModel(editor: Editor?, file: RustFile) : TextEditorBasedS
         when(element.value) {
             is RustFnItem           -> true
             is RustImplMethodMember -> true
-            is RustStructDeclField  -> true
+            is RustFieldDecl        -> true
             else                    -> false
         }
 }
