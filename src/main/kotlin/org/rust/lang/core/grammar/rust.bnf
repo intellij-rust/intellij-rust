@@ -241,7 +241,7 @@
     elementType (".*_bin_expr")   = binary_expr
     elementType (".*_range_expr") = range_expr
 
-    extends           ("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = item_
+    extends           ("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = item
     elementTypeFactory("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = "org.rust.lang.core.stubs.types.ElementFactoryKt.factory"
     stubClass         ("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = "org.rust.lang.core.stubs.RustItemStub"
 
@@ -303,23 +303,13 @@ private attrs_and_vis ::= outer_attr* vis?
 private item_inner ::= stmt_item_group
                      | macro_item
 
-//
-// TODO(kudinkin): That's a hack to force GK to generate accessors
-//                 for the items
-//
-// NOTA BENE: Naming is crucial
-//
-fake item_ ::= attrs_and_vis {
+upper item ::= << injectInto attrs_and_vis item_inner >> | never attrs_and_vis {
   implements  = [ "org.rust.lang.core.psi.RustDeclaringElement"
                   "org.rust.lang.core.psi.RustNamedElement"
                   "org.rust.lang.core.psi.RustVisibilityOwner"
                   "org.rust.lang.core.psi.RustOuterAttributeOwner" ]
   mixin       = "org.rust.lang.core.psi.impl.mixin.RustItemImplMixin"
   stubClass   = "org.rust.lang.core.stubs.RustItemStub"
-}
-
-upper item ::= << injectInto attrs_and_vis item_inner >> {
-  elementType = item_
 }
 
 private docs_and_item ::= item <<bindDocComments>>
