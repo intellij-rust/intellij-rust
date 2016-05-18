@@ -22,7 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil
  * fn foo() {}
  * ```
  */
-interface RustOuterAttributeOwner : RustCompositeElement {
+interface RustOuterAttributeOwner : RustDocAndAttributeOwner {
     val outerAttrList: List<RustOuterAttr>
 }
 

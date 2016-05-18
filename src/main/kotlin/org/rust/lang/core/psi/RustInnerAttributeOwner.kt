@@ -1,6 +1,6 @@
 package org.rust.lang.core.psi
 
-interface RustInnerAttributeOwner : RustCompositeElement {
+interface RustInnerAttributeOwner : RustDocAndAttributeOwner {
     /**
      * Outer attributes are always children of the owning node.
      * In contrast, inner attributes can be either direct

@@ -5,6 +5,7 @@ class RustQuickDocumentationTest : RustDocumentationProviderTest() {
 
     fun testFn() = checkDoc()
     fun testDifferentComments() = checkDoc()
+    fun testEnumVariant() = checkDoc()
 
     private fun checkDoc() = compareByHtml { element, originalElement ->
         RustDocumentationProvider().generateDoc(element, originalElement)
