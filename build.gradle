@@ -83,7 +83,6 @@ allprojects {
         compile "org.jetbrains.kotlin:kotlin-runtime:$kotlinVersion"
 
         gen 'de.jflex:jflex:1.6.0'
-        gen files('lib/gk/grammar-kit-patched.jar')
 
         testCompile "junit:junit:4.+"
         testCompile 'org.assertj:assertj-core:3.2.0'
@@ -145,7 +144,7 @@ task generateRustPsiAndParser(type: JavaExec) {
     inputs  .file   file(src)
     outputs .dir    fileTree(dir: dstRoot + '/org/rust/lang/core/', include: '**/*.java')
 
-    classpath configurations.gen
+    classpath (configurations.compile + files('lib/gk/grammar-kit-patched.jar'))
 }
 
 task generateLexers {
