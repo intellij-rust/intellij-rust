@@ -30,8 +30,7 @@ private val RustOuterAttributeOwner.outerDocs: List<String> get() {
         .takeWhile { it is RustOuterAttr || it is PsiComment || it is PsiWhiteSpace }
         .mapNotNull {
             when {
-                it is RustOuterAttr && it.metaItem.identifier.textMatches("doc") ->
-                    it.metaItem.litExpr?.stringLiteral?.text?.removeSurrounding("\"")?.trim()
+                it is RustOuterAttr -> it.metaItem.docAttr
                 it is PsiComment && it.tokenType == RustTokenElementTypes.OUTER_DOC_COMMENT ->
                     it.text.substringAfter("///").trim()
                 else -> null
@@ -53,11 +52,16 @@ private val RustInnerAttributeOwner.innerDocs: List<String> get() {
         .takeWhile { it is RustInnerAttr || it is PsiComment || it is PsiWhiteSpace }
         .mapNotNull {
             when {
-                it is RustInnerAttr && it.metaItem.identifier.textMatches("doc") ->
-                    it.metaItem.litExpr?.stringLiteral?.text?.removeSurrounding("\"")?.trim()
+                it is RustInnerAttr -> it.metaItem.docAttr
                 it is PsiComment && it.tokenType == RustTokenElementTypes.INNER_DOC_COMMENT ->
                     it.text.substringAfter("//!").trim()
                 else -> null
             }
         }.toList()
 }
+
+private val RustMetaItem.docAttr: String?
+    get() = if (identifier.text == "doc") litExpr?.stringLiteralValue else null
+
+private val RustLitExpr.stringLiteralValue: String?
+    get() = ((stringLiteral ?: rawStringLiteral) as? RustLiteral.Text)?.value
