@@ -16,10 +16,7 @@ additional plugin repository and paste the URL for the one you need:
     - Rust: https://plugins.jetbrains.com/plugins/nightly/8182
     - TOML: https://plugins.jetbrains.com/plugins/nightly/8195
 
-See the [quick start](doc/QuickStart.md) and [tips & tricks](doc/Tips.md) for tutorial and screenshots!
-
-*NOTA BENE*: To successfully import Cargo-backed project you will need Cargo
- from at least 1.8.0 toolchain.
+See the [**Quick Start**](doc/QuickStart.md) and [tips & tricks](doc/Tips.md) for tutorial and screenshots!
 
 As this is a preview release, something might go wrong. So, be brave to face some nasty bugs.
 

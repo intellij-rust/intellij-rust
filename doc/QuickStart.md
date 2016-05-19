@@ -17,7 +17,7 @@ Creating new project from within IDE is not supported yet, so you have to invoke
 
 After you have
 [installed](https://github.com/intellij-rust/intellij-rust#installation) the
-plugin into IntelliJ IDA you can **import** a project from source (if you use
+plugin into IntelliJ IDEA you can **import** a project from source (if you use
 other IDE, see [these instructions](#opening-project-all-ides)). You can import a project form
 the welcome screen:
 
@@ -72,7 +72,7 @@ You should be able to compile and **Run** (`Shift+f10`) your application from th
 ![running](https://cloud.githubusercontent.com/assets/1711539/14211917/33cb0c54-f839-11e5-8026-d4fd7a7b44fd.png)
 
 You can change toolchain in the **settings** (`Ctrl+Alt+S`), under `Languages &
-Frameworks > Rust` tab.
+Frameworks > Rust` tab. We need Cargo from at least 1.8.0 release.
 
 ![settings](https://cloud.githubusercontent.com/assets/1711539/14491097/85f717d0-017f-11e6-98d6-0f60ee0e2016.png)
 
