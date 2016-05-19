@@ -3,7 +3,6 @@ package org.rust.ide.documentation
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
-import org.assertj.core.api.Assertions.assertThat
 import org.rust.lang.RustTestCaseBase
 import java.io.File
 
@@ -17,6 +16,6 @@ abstract class RustDocumentationProviderTest : RustTestCaseBase() {
         val originalElement = myFixture.elementAtCaret
         val element = DocumentationManager.getInstance(project).findTargetElement(myFixture.editor, myFixture.file)
         val actual = block(element, originalElement)?.trim()
-        assertThat(actual).isEqualTo(expected)
+        assertSameLines(expected, actual)
     }
 }

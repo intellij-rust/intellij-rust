@@ -11,4 +11,3 @@ class RustQuickDocumentationTest : RustDocumentationProviderTest() {
         RustDocumentationProvider().generateDoc(element, originalElement)
     }
 }
-
