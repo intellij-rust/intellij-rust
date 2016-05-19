@@ -35,4 +35,7 @@ enum E {
 extern {
     /// Doc
     fn foo();
+
+    /// Doc
+    static errno: i32;
 }

@@ -512,15 +512,21 @@ mod_item ::= MOD IDENTIFIER '{' inner_attr* docs_and_item* '}' {
   pin(".*") = 3
 }
 
-foreign_mod_item ::= extern_abi '{' inner_attr* ( foreign_decl <<bindDocComments>> )* '}'
+foreign_mod_item ::= extern_abi '{' inner_attr* foreign_decl* '}'
 
-foreign_decl  ::= attrs_and_vis ( foreign_static_decl | foreign_fn_decl ) <<bindDocComments>> ';' {
+private foreign_decl ::= ( foreign_static_decl | foreign_fn_decl ) <<bindDocComments>>
+
+foreign_static_decl ::= attrs_and_vis STATIC MUT? IDENTIFIER type_ascription ';' {
+  pin = "STATIC"
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
 }
 
-foreign_static_decl ::= STATIC MUT? IDENTIFIER type_ascription
-foreign_fn_decl ::= FN IDENTIFIER generic_params foreign_fn_parameters ret_type? where_clause?
+foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params foreign_fn_parameters ret_type? where_clause? ';' {
+  pin = "FN"
+  implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
+                 "org.rust.lang.core.psi.RustVisibilityOwner" ]
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
