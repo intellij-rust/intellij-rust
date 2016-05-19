@@ -97,6 +97,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         // is also performed; see doc of #blockMustBeMultiLine() for details.
         .afterInside(LBRACE, BLOCK_LIKE).spacing(1, 1, 0, true, 0)
         .beforeInside(RBRACE, BLOCK_LIKE).spacing(1, 1, 0, true, 0)
+        .withinPairInside(LBRACE, RBRACE, PAT_STRUCT).spacing(1, 1, 0, true, 0)
 
         .betweenInside(IDENTIFIER, ALIAS, EXTERN_CRATE_ITEM).spaces(1)
 

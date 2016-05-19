@@ -35,6 +35,9 @@ fn foo(a: i32, b: str, c: i32, d: f32) -> () {
     }
     for &(sample, radiance) in samples.iter() {}
     map(|&s| moo());
+    match x {
+        S { foo } => 92
+    }
 }
 
 enum Message {

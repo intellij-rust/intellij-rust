@@ -5,7 +5,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.TokenType.WHITE_SPACE
 import org.rust.ide.formatter.impl.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.ARG_LIST
-import org.rust.lang.core.psi.RustTokenElementTypes.LBRACE
+import org.rust.lang.core.psi.RustCompositeElementTypes.PAT_ENUM
 
 class RustFmtBlock(
     node: ASTNode,
@@ -25,14 +25,14 @@ class RustFmtBlock(
             .filter { it.textLength > 0 && it.elementType != WHITE_SPACE }
             .map { buildChild(it, anchor) }
 
-        putUserData(INDENT_BETWEEN_FLAT_BLOCK_BRACES, null)
+        putUserData(INDENT_INSIDE_FLAT_BLOCK, null)
 
         return children
     }
 
     private fun buildChild(child: ASTNode, anchor: Alignment?): AbstractRustFmtBlock {
-        if (node.isFlatBlock && child.elementType == LBRACE) {
-            putUserDataIfAbsent(INDENT_BETWEEN_FLAT_BLOCK_BRACES, true)
+        if ((node.isFlatBlock || node.elementType == PAT_ENUM) && child.isBlockDelim(node)) {
+            putUserData(INDENT_INSIDE_FLAT_BLOCK, !(getUserData(INDENT_INSIDE_FLAT_BLOCK) ?: false))
         }
         return AbstractRustFmtBlock.createBlock(
             child,
