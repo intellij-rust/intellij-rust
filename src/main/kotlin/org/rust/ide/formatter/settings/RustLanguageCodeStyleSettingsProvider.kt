@@ -1,4 +1,4 @@
-package org.rust.ide.formatter
+package org.rust.ide.formatter.settings
 
 import com.intellij.application.options.IndentOptionsEditor
 import com.intellij.application.options.SmartIndentOptionsEditor
@@ -58,6 +58,6 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
         }
 
     private val CODE_SAMPLE: String by lazy {
-        loadCodeSampleResource("org/rust/ide/formatter/code_sample.rs")
+        loadCodeSampleResource("org/rust/ide/formatter/settings/code_sample.rs")
     }
 }

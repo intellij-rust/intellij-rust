@@ -97,8 +97,8 @@
 
         <!-- Code Style -->
 
-        <codeStyleSettingsProvider implementation="org.rust.ide.formatter.RustCodeStyleSettingsProvider"/>
-        <langCodeStyleSettingsProvider implementation="org.rust.ide.formatter.RustLanguageCodeStyleSettingsProvider"/>
+        <codeStyleSettingsProvider implementation="org.rust.ide.formatter.settings.RustCodeStyleSettingsProvider"/>
+        <langCodeStyleSettingsProvider implementation="org.rust.ide.formatter.settings.RustLanguageCodeStyleSettingsProvider"/>
 
         <!-- Color Settings -->
 

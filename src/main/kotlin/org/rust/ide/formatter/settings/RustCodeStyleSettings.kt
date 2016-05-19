@@ -1,7 +1,7 @@
-package org.rust.ide.formatter
+package org.rust.ide.formatter.settings
 
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings
 
 class RustCodeStyleSettings(container: CodeStyleSettings) :
-        CustomCodeStyleSettings(RustCodeStyleSettings::class.java.simpleName, container)
+    CustomCodeStyleSettings(RustCodeStyleSettings::class.java.simpleName, container)

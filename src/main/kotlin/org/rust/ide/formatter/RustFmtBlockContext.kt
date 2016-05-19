@@ -3,6 +3,8 @@ package org.rust.ide.formatter
 import com.intellij.formatting.SpacingBuilder
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import org.rust.ide.formatter.impl.createSpacingBuilder
+import org.rust.ide.formatter.settings.RustCodeStyleSettings
 import org.rust.lang.RustLanguage
 
 data class RustFmtBlockContext private constructor(

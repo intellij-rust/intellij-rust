@@ -1,4 +1,4 @@
-package org.rust.ide.formatter
+package org.rust.ide.formatter.settings
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable
 import com.intellij.application.options.TabbedLanguageCodeStylePanel

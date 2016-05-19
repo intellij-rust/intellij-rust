@@ -3,6 +3,7 @@ package org.rust.ide.formatter
 import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
 import com.intellij.psi.TokenType.WHITE_SPACE
+import org.rust.ide.formatter.impl.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.ARG_LIST
 import org.rust.lang.core.psi.RustTokenElementTypes.LBRACE
 

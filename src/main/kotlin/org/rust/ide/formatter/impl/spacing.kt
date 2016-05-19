@@ -1,4 +1,4 @@
-package org.rust.ide.formatter
+package org.rust.ide.formatter.impl
 
 import com.intellij.formatting.ASTBlock
 import com.intellij.formatting.Block
@@ -15,6 +15,8 @@ import com.intellij.psi.formatter.FormatterUtil
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import org.rust.ide.formatter.RustFmtBlockContext
+import org.rust.ide.formatter.settings.RustCodeStyleSettings
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustTokenElementTypes.*
