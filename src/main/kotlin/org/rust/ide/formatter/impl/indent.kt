@@ -9,7 +9,20 @@ import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustExpr
 import org.rust.lang.core.psi.RustTokenElementTypes.LBRACE
 
-val INDENT_INSIDE_FLAT_BLOCK: Key<Boolean> = Key.create("INDENT_BETWEEN_FLAT_BLOCK_BRACES")
+/**
+ * Determine whether we have spotted opening delimiter during
+ * construction of a _flat block_'s sub blocks list.
+ *
+ * A flat block is a Rust PSI element which does not denote separate PSI
+ * element for its _block_ part (e.g. `{...}`), for example [MOD_ITEM].
+ *
+ * We only care about opening delimiters (`(`, `[`, `{`, `<`, `|`) here,
+ * because none of flat blocks has any children after block part (apart
+ * from closing delimiter, which we have to handle separately anyways).
+ *
+ * @see isFlatBlock
+ */
+val INDENT_MET_LBRACE: Key<Boolean> = Key.create("INDENT_MET_LBRACE")
 
 fun ASTBlock.newChildIndent(childIndex: Int): Indent? {
     // MOD_ITEM and FOREIGN_MOD_ITEM do not have separate PSI node for contents
@@ -38,8 +51,7 @@ fun RustFmtBlock.computeIndent(child: ASTNode): Indent? {
     return when {
         node.isDelimitedBlock -> getIndentIfNotDelim(child, node)
 
-        (node.isFlatBlock || parentType == PAT_ENUM) && getUserData(INDENT_INSIDE_FLAT_BLOCK) == true ->
-            getIndentIfNotDelim(child, node)
+        node.isFlatBlock && getUserData(INDENT_MET_LBRACE) == true -> getIndentIfNotDelim(child, node)
 
         parentType == MATCH_ARM && childPsi is RustExpr -> Indent.getNormalIndent()
 

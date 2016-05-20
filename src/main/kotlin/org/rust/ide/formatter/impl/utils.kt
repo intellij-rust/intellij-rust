@@ -38,7 +38,7 @@ val MOD_ITEMS = ts(FOREIGN_MOD_ITEM, MOD_ITEM)
 
 val DELIMITED_BLOCKS = orSet(BRACE_DELIMITED_BLOCKS, BRACK_DELIMITED_BLOCKS,
     PAREN_DELIMITED_BLOCKS, ANGLE_DELIMITED_BLOCKS)
-val FLAT_BLOCKS = orSet(MOD_ITEMS, ts(PAT_STRUCT))
+val FLAT_BRACE_BLOCKS = orSet(MOD_ITEMS, ts(PAT_STRUCT))
 
 val TYPES = ts(VEC_TYPE, PTR_TYPE, REF_TYPE, BARE_FN_TYPE, TUPLE_TYPE, PATH_TYPE,
     TYPE_WITH_BOUNDS_TYPE, FOR_IN_TYPE, WILDCARD_TYPE)
@@ -59,8 +59,11 @@ val ASTNode.isDelimitedBlock: Boolean
 val ASTNode.isModItem: Boolean
     get() = MOD_ITEMS.contains(elementType)
 
+val ASTNode.isFlatBraceBlock: Boolean
+    get() = FLAT_BRACE_BLOCKS.contains(elementType)
+
 val ASTNode.isFlatBlock: Boolean
-    get() = FLAT_BLOCKS.contains(elementType)
+    get() = isFlatBraceBlock || elementType == PAT_ENUM
 
 val ASTNode.isBlockDelim: Boolean
     get() = isBlockDelim(treeParent)
@@ -69,7 +72,7 @@ fun ASTNode.isBlockDelim(parent: ASTNode?): Boolean {
     if (parent == null) return false
     val parentType = parent.elementType
     return when (elementType) {
-        LBRACE, RBRACE -> BRACE_DELIMITED_BLOCKS.contains(parentType) || parent.isFlatBlock
+        LBRACE, RBRACE -> BRACE_DELIMITED_BLOCKS.contains(parentType) || parent.isFlatBraceBlock
         LBRACK, RBRACK -> BRACK_LISTS.contains(parentType)
         LPAREN, RPAREN -> PAREN_LISTS.contains(parentType) || parentType == PAT_ENUM
         LT, GT -> ANGLE_LISTS.contains(parentType)

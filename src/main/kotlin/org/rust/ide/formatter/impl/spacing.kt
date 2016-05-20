@@ -77,7 +77,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .between(PARAMS_LIKE, RET_TYPE).spacing(1, 1, 0, true, 0)
         .before(WHERE_CLAUSE).spacing(1, 1, 0, true, 0)
         .applyForEach(BLOCK_LIKE) { before(it).spaces(1) }
-        .beforeInside(LBRACE, FLAT_BLOCKS).spaces(1)
+        .beforeInside(LBRACE, FLAT_BRACE_BLOCKS).spaces(1)
 
         .between(ts(IDENTIFIER, FN), PARAMS_LIKE).spaceIf(false)
         .between(IDENTIFIER, GENERIC_PARAMS).spaceIf(false)
