@@ -129,7 +129,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .around(KEYWORDS).spaces(1)
 }
 
-fun computeSpacing(parentBlock: Block, child1: Block?, child2: Block, ctx: RustFmtBlockContext): Spacing? {
+fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtBlockContext): Spacing? {
     if (child1 is ASTBlock && child2 is ASTBlock) SpacingContext.create(child1, child2).apply {
         when {
             psi1 is RustOuterAttr && psi2 is PsiComment
@@ -153,7 +153,7 @@ fun computeSpacing(parentBlock: Block, child1: Block?, child2: Block, ctx: RustF
                 keepBlankLines = ctx.commonSettings.KEEP_BLANK_LINES_IN_DECLARATIONS)
         }
     }
-    return ctx.spacingBuilder.getSpacing(parentBlock, child1, child2)
+    return ctx.spacingBuilder.getSpacing(this, child1, child2)
 }
 
 private data class SpacingContext(val node1: ASTNode,

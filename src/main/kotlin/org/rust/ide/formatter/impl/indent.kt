@@ -11,19 +11,19 @@ import org.rust.lang.core.psi.RustTokenElementTypes.LBRACE
 
 val INDENT_INSIDE_FLAT_BLOCK: Key<Boolean> = Key.create("INDENT_BETWEEN_FLAT_BLOCK_BRACES")
 
-fun newChildIndent(block: ASTBlock, childIndex: Int): Indent? {
+fun ASTBlock.newChildIndent(childIndex: Int): Indent? {
     // MOD_ITEM and FOREIGN_MOD_ITEM do not have separate PSI node for contents
     // blocks so we have to manually decide whether new child is before (no indent)
     // or after (normal indent) left brace node.
-    if (block.node.isModItem) {
-        val lbraceIndex = block.subBlocks.indexOfFirst { it is ASTBlock && it.node.elementType == LBRACE }
+    if (node.isModItem) {
+        val lbraceIndex = subBlocks.indexOfFirst { it is ASTBlock && it.node.elementType == LBRACE }
         if (lbraceIndex != -1 && lbraceIndex < childIndex) {
             return Indent.getNormalIndent()
         }
     }
 
     // We are inside some kind of {...}, [...], (...) or <...> block
-    if (block.node.isDelimitedBlock) {
+    if (node.isDelimitedBlock) {
         return Indent.getNormalIndent()
     }
 
@@ -31,15 +31,15 @@ fun newChildIndent(block: ASTBlock, childIndex: Int): Indent? {
     return Indent.getNoneIndent()
 }
 
-fun computeIndent(block: RustFmtBlock, child: ASTNode): Indent? {
-    val parentType = block.node.elementType
+fun RustFmtBlock.computeIndent(child: ASTNode): Indent? {
+    val parentType = node.elementType
     val childType = child.elementType
     val childPsi = child.psi
     return when {
-        block.node.isDelimitedBlock -> getIndentIfNotDelim(child, block.node)
+        node.isDelimitedBlock -> getIndentIfNotDelim(child, node)
 
-        (block.node.isFlatBlock || parentType == PAT_ENUM) && block.getUserData(INDENT_INSIDE_FLAT_BLOCK) == true ->
-            getIndentIfNotDelim(child, block.node)
+        (node.isFlatBlock || parentType == PAT_ENUM) && getUserData(INDENT_INSIDE_FLAT_BLOCK) == true ->
+            getIndentIfNotDelim(child, node)
 
         parentType == MATCH_ARM && childPsi is RustExpr -> Indent.getNormalIndent()
 

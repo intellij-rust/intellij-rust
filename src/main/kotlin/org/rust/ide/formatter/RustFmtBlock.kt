@@ -37,13 +37,13 @@ class RustFmtBlock(
         return AbstractRustFmtBlock.createBlock(
             child,
             calcAlignment(child, anchor),
-            computeIndent(this, child),
+            computeIndent(child),
             null,
             ctx)
     }
 
-    override fun getSpacing(child1: Block?, child2: Block): Spacing? = computeSpacing(this, child1, child2, ctx)
-    override fun getNewChildIndent(childIndex: Int): Indent? = newChildIndent(this, childIndex)
+    override fun getSpacing(child1: Block?, child2: Block): Spacing? = computeSpacing(child1, child2, ctx)
+    override fun getNewChildIndent(childIndex: Int): Indent? = newChildIndent(childIndex)
 
     private fun calcAlignment(child: ASTNode, anchor: Alignment?): Alignment? = when {
         child.isBlockDelim -> null
