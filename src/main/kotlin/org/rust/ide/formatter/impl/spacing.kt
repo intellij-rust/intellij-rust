@@ -1,4 +1,4 @@
-package org.rust.ide.formatter
+package org.rust.ide.formatter.impl
 
 import com.intellij.formatting.ASTBlock
 import com.intellij.formatting.Block
@@ -15,34 +15,15 @@ import com.intellij.psi.formatter.FormatterUtil
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import org.rust.ide.formatter.RustFmtBlockContext
+import org.rust.ide.formatter.settings.RustCodeStyleSettings
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustTokenElementTypes.*
-import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.util.containsEOL
 import org.rust.lang.core.psi.util.getNextNonCommentSibling
 import org.rust.lang.core.psi.util.getPrevNonCommentSibling
 import com.intellij.psi.tree.TokenSet.create as ts
-
-private val KEYWORDS = ts(*IElementType.enumerate { it is RustKeywordTokenType })
-private val NO_SPACE_AROUND_OPS = ts(COLONCOLON, DOT, DOTDOT)
-private val SPACE_AROUND_OPS = ts(AND, ANDAND, ANDEQ, ARROW, FAT_ARROW, DIV, DIVEQ, EQ, EQEQ,
-    EXCLEQ, GT, LT, MINUSEQ, MUL, MULEQ, OR, OREQ, OROR, PLUSEQ, REM, REMEQ, XOR, XOREQ, MINUS, PLUS,
-    GTGTEQ, GTGT, GTEQ, LTLTEQ, LTLT, LTEQ)
-private val UNARY_OPS = ts(MINUS, MUL, EXCL, AND, ANDAND)
-// PATH_PART because `Fn(A) -> R`
-private val PAREN_LIST_HOLDERS = ts(PAREN_EXPR, TUPLE_EXPR, TUPLE_TYPE, PARAMETERS, VARIADIC_PARAMETERS, ARG_LIST,
-    IMPL_METHOD_MEMBER, BARE_FN_TYPE, PATH, PAT_ENUM, PAT_TUP, ENUM_TUPLE_ARGS)
-private val BRACK_LIST_HOLDERS = ts(VEC_TYPE, ARRAY_EXPR, INDEX_EXPR)
-private val BRACE_LIST_HOLDERS = ts(USE_GLOB_LIST)
-private val ANGLE_LIST_HOLDERS = ts(GENERIC_PARAMS, GENERIC_ARGS, QUAL_PATH_EXPR)
-private val ATTRS = ts(OUTER_ATTR, INNER_ATTR)
-private val BLOCK_LIKE = ts(BLOCK, STRUCT_DECL_ARGS, STRUCT_EXPR_BODY, IMPL_BODY, MATCH_BODY, TRAIT_BODY, ENUM_BODY,
-    ENUM_STRUCT_ARGS)
-private val TYPES = ts(VEC_TYPE, PTR_TYPE, REF_TYPE, BARE_FN_TYPE, TUPLE_TYPE, PATH_TYPE,
-    TYPE_WITH_BOUNDS_TYPE, FOR_IN_TYPE, WILDCARD_TYPE)
-private val MACRO_ARGS = ts(MACRO_ARG, FORMAT_MACRO_ARGS, TRY_MACRO_ARGS)
-private val PARAMS_LIKE = ts(PARAMETERS, VARIADIC_PARAMETERS)
 
 fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
                          @Suppress("UNUSED_PARAMETER") rustSettings: RustCodeStyleSettings): SpacingBuilder {
@@ -81,14 +62,14 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         //== paren delimited lists
         // withinPairInside does not accept TokenSet as parent node set :(
         // and we cannot create our own, because RuleCondition stuff is private
-        .afterInside(LPAREN, PAREN_LIST_HOLDERS).spacing(0, 0, 0, true, 0)
-        .beforeInside(RPAREN, PAREN_LIST_HOLDERS).spacing(0, 0, 0, true, 0)
-        .afterInside(LBRACK, BRACK_LIST_HOLDERS).spacing(0, 0, 0, true, 0)
-        .beforeInside(RBRACK, BRACK_LIST_HOLDERS).spacing(0, 0, 0, true, 0)
-        .afterInside(LBRACE, BRACE_LIST_HOLDERS).spacing(0, 0, 0, true, 0)
-        .beforeInside(RBRACE, BRACE_LIST_HOLDERS).spacing(0, 0, 0, true, 0)
-        .afterInside(LT, ANGLE_LIST_HOLDERS).spacing(0, 0, 0, false, 0)
-        .beforeInside(GT, ANGLE_LIST_HOLDERS).spacing(0, 0, 0, false, 0)
+        .afterInside(LPAREN, PAREN_LISTS).spacing(0, 0, 0, true, 0)
+        .beforeInside(RPAREN, PAREN_LISTS).spacing(0, 0, 0, true, 0)
+        .afterInside(LBRACK, BRACK_LISTS).spacing(0, 0, 0, true, 0)
+        .beforeInside(RBRACK, BRACK_LISTS).spacing(0, 0, 0, true, 0)
+        .afterInside(LBRACE, BRACE_LISTS).spacing(0, 0, 0, true, 0)
+        .beforeInside(RBRACE, BRACE_LISTS).spacing(0, 0, 0, true, 0)
+        .afterInside(LT, ANGLE_LISTS).spacing(0, 0, 0, false, 0)
+        .beforeInside(GT, ANGLE_LISTS).spacing(0, 0, 0, false, 0)
         .aroundInside(OR, PARAMS_LIKE).spacing(0, 0, 0, false, 0)
 
     val sb2 = sb1
@@ -96,7 +77,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .between(PARAMS_LIKE, RET_TYPE).spacing(1, 1, 0, true, 0)
         .before(WHERE_CLAUSE).spacing(1, 1, 0, true, 0)
         .applyForEach(BLOCK_LIKE) { before(it).spaces(1) }
-        .beforeInside(LBRACE, ts(FOREIGN_MOD_ITEM, MOD_ITEM)).spaces(1)
+        .beforeInside(LBRACE, FLAT_BLOCKS).spaces(1)
 
         .between(ts(IDENTIFIER, FN), PARAMS_LIKE).spaceIf(false)
         .between(IDENTIFIER, GENERIC_PARAMS).spaceIf(false)
@@ -116,6 +97,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         // is also performed; see doc of #blockMustBeMultiLine() for details.
         .afterInside(LBRACE, BLOCK_LIKE).spacing(1, 1, 0, true, 0)
         .beforeInside(RBRACE, BLOCK_LIKE).spacing(1, 1, 0, true, 0)
+        .withinPairInside(LBRACE, RBRACE, PAT_STRUCT).spacing(1, 1, 0, true, 0)
 
         .betweenInside(IDENTIFIER, ALIAS, EXTERN_CRATE_ITEM).spaces(1)
 
@@ -231,12 +213,6 @@ private fun lineBreak(minLineFeeds: Int = 1,
                       keepLineBreaks: Boolean = true,
                       keepBlankLines: Int = 1): Spacing =
     createSpacing(0, Int.MAX_VALUE, minLineFeeds, keepLineBreaks, keepBlankLines)
-
-private val PsiElement.isTopLevelItem: Boolean
-    get() = (this is RustItem || this is RustAttr) && this.parent is RustFile
-
-private val PsiElement.isStmtOrExpr: Boolean
-    get() = this is RustStmt || this is RustExpr
 
 private fun ASTNode.hasLineBreakAfterInSameParent(): Boolean =
     treeNext != null && TreeUtil.findFirstLeaf(treeNext).isWhiteSpaceWithLineBreak()

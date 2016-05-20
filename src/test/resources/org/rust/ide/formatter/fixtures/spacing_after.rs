@@ -35,6 +35,9 @@ fn foo(a: i32, b: str, c: i32, d: f32) -> () {
     }
     for &(sample, radiance) in samples.iter() {}
     map(|&s| moo());
+    match x {
+        S { foo } => 92
+    }
 }
 
 enum Message {
@@ -347,10 +350,9 @@ macro_rules! vec {
 
 #[link(name = "objc")]
 extern {
-// FIXME: Indent
-fn foo(name: *const libc::c_uchar);
-fn bar(a: i32, ...) -> i32;
-fn baz(b: i64, );
+    fn foo(name: *const libc::c_uchar);
+    fn bar(a: i32, ...) -> i32;
+    fn baz(b: i64, );
 }
 
 mod math {

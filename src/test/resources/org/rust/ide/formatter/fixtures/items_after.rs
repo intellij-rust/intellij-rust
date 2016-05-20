@@ -1,16 +1,26 @@
-mod m {
+#[cfg(test)]
+#[foo]
+pub mod m {
     enum E {
         Foo,
         Bar,
     }
 
-    struct S {
-        foo: i32
+    pub struct S {
+        foo: i32,
+        pub bar: i32
     }
 
     impl S {
         fn foo() -> i32 {
             92
         }
+
+        pub fn new<S>(shape: S, material_idx: usize) -> Primitive
+            where S: Shape + 'static {}
+
+        pub fn new<S>(shape: S, material_idx: usize)
+            -> Primitive
+            where S: Shape + 'static {}
     }
 }

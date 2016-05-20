@@ -1,0 +1,2 @@
+mod<caret>
+foo {}
