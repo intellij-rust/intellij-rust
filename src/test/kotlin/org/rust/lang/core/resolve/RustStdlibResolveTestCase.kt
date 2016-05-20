@@ -6,9 +6,9 @@ import org.rust.cargo.util.findExternCrateByName
 
 class RustStdlibResolveTestCase : RustMultiFileResolveTestCaseBase() {
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor()
-
     override val dataPath = "org/rust/lang/core/resolve/fixtures/stdlib"
+
+    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor()
 
     fun testHasStdlibSources() {
         assertThat(myModule.findExternCrateByName("std"))
@@ -21,4 +21,5 @@ class RustStdlibResolveTestCase : RustMultiFileResolveTestCaseBase() {
     fun testResolveCollections() = doTestResolved("collections/main.rs")
     fun testResolveCore() = doTestResolved("core/main.rs")
     fun testResolvePrelude() = doTestResolved("prelude/main.rs")
+    fun testResolveBox() = doTestResolved("box/main.rs")
 }

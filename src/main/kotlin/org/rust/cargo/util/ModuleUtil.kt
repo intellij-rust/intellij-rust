@@ -130,7 +130,7 @@ private fun findSrcDir(sources: VirtualFile): VirtualFile? {
     return base.children.singleOrNull()?.findChild("src")
 }
 
-private val stdlibCrateNames = listOf("std", "core", "collections")
+private val stdlibCrateNames = listOf("std", "core", "collections", "alloc")
 
 private fun fillLibrary(library: Library, roots: Collection<VirtualFile>) {
     val model = library.modifiableModel
