@@ -12,7 +12,7 @@ import org.rust.lang.core.psi.impl.RustFile
 class RustStructureViewModel(editor: Editor?, file: RustFile) : TextEditorBasedStructureViewModel(editor, file)
                                                               , StructureViewModel.ElementInfoProvider {
 
-    override fun getRoot() = RustFileTreeElement(psiFile)
+    override fun getRoot() = RustModTreeElement(psiFile)
 
     override fun getPsiFile(): RustFile = super.getPsiFile() as RustFile
 

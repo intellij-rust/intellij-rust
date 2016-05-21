@@ -4,13 +4,11 @@ import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import org.rust.lang.core.psi.*
 
-open class RustModTreeElement(item: RustModItem) : PsiTreeElementBase<RustModItem>(item) {
+open class RustModTreeElement(item: RustMod) : PsiTreeElementBase<RustMod>(item) {
     override fun getPresentableText() = element?.name
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> =
-        element?.itemList?.let {
-            it.map { toTreeElement(it) }.filterNotNull()
-        }.orEmpty()
+        element?.items.orEmpty().mapNotNull { toTreeElement(it) }
 
     private fun toTreeElement(it: RustItem): StructureViewTreeElement? =
         when (it) {
