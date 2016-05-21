@@ -1,6 +1,7 @@
 {
     parserClass='org.rust.lang.core.parser.RustParser'
-    parserUtilClass="org.rust.lang.core.parser.RustParserUtil"
+    parserUtilClass='org.rust.lang.core.parser.RustParserUtil'
+    psiTreeUtilClass='org.rust.lang.core.parser.RustPsiTreeUtil'
 
     implements='org.rust.lang.core.psi.RustCompositeElement'
     extends='org.rust.lang.core.psi.impl.RustCompositeElementImpl'
@@ -271,7 +272,6 @@
 
     //recoverWhile = skip_until_eol_rec
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Root
@@ -684,14 +684,6 @@ type_qual_path ::= << qualified_path path_without_types >>
 // Paths
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-private full_path ::= path_leftish path*
-
-path_leftish ::= '::'? (IDENTIFIER | SELF | SUPER | CSELF) path_generics? {
-  elementType = path
-}
-
-//
 // TODO(kudinkin, matklad):
 //
 //    In rustc parser, self/super are treated as identifiers only if immediately followed by `::`
@@ -706,8 +698,14 @@ path_leftish ::= '::'? (IDENTIFIER | SELF | SUPER | CSELF) path_generics? {
 //      `self::super ::foo`
 //
 // We parse all the above paths as valid.
-//
-left path ::= '::' (IDENTIFIER | SELF | SUPER | CSELF) path_generics?
+
+private path_ident ::= IDENTIFIER | SELF | SUPER | CSELF
+fake path ::= (path '::')? path_ident path_generics?
+
+private full_path ::= path_start path_segment*
+
+path_start ::= '::'?  path_ident path_generics? { elementType = path }
+left path_segment ::= '::' path_ident path_generics? { elementType = path }
 
 private path_generics ::= <<isPathModeColons>> '::' generic_args
                         | <<isPathModeNoColons>> ( generic_args | path_parameters ret_type? ) // Fn(i32) -> i32 sugar

@@ -144,7 +144,7 @@ task generateRustPsiAndParser(type: JavaExec) {
     inputs  .file   file(src)
     outputs .dir    fileTree(dir: dstRoot + '/org/rust/lang/core/', include: '**/*.java')
 
-    classpath (configurations.compile + files('lib/gk/grammar-kit-patched.jar'))
+    classpath (configurations.compile + files('lib/grammar-kit.jar'))
 }
 
 task generateLexers {

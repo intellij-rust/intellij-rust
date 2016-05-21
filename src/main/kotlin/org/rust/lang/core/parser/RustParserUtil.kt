@@ -14,7 +14,7 @@ import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 
 @Suppress("UNUSED_PARAMETER")
-object RustParserUtil : GeneratedParserUtilBase() {
+object RustParserUtil : RustGeneratedParserUtilBase() {
     enum class PathParsingMode { COLONS, NO_COLONS, NO_TYPES_ALLOWED }
 
     private val STRUCT_ALLOWED: Key<Boolean> = Key("org.rust.STRUCT_ALLOWED")
@@ -70,10 +70,10 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return b.structAllowed || b.tokenType != LBRACE
     }
 
-    @JvmStatic fun withoutStructLiterals(b: PsiBuilder, level: Int, parser: GeneratedParserUtilBase.Parser): Boolean =
+    @JvmStatic fun withoutStructLiterals(b: PsiBuilder, level: Int, parser: Parser): Boolean =
         b.withContext(STRUCT_ALLOWED, false) { parser.parse(this, level) }
 
-    @JvmStatic fun withStructLiterals(b: PsiBuilder, level: Int, parser: GeneratedParserUtilBase.Parser): Boolean =
+    @JvmStatic fun withStructLiterals(b: PsiBuilder, level: Int, parser: Parser): Boolean =
         b.withContext(STRUCT_ALLOWED, true) { parser.parse(this, level) }
 
     @JvmStatic fun withPathModeNoColons(b: PsiBuilder, level: Int, parser: Parser): Boolean =
