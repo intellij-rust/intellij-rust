@@ -8,6 +8,7 @@ import org.rust.lang.core.psi.RustBlock
 import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.containingMod
 import org.rust.lang.core.psi.impl.RustItemImpl
+import org.rust.lang.core.psi.queryAttributes
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ref.RustModReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference

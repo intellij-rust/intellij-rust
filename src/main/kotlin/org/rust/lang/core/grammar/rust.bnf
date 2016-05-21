@@ -166,7 +166,7 @@
     mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
 
     implements  ("enum_item") = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
-                                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
+                                  "org.rust.lang.core.psi.RustStructOrEnum" ]
     mixin       ("enum_item") = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
 
     implements  ("trait_method_member") = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
@@ -221,7 +221,6 @@
     // GenericDeclarations
     //
 
-    implements ("struct_item") = "org.rust.lang.core.psi.RustGenericDeclaration"
     implements ("trait_item")  = "org.rust.lang.core.psi.RustGenericDeclaration"
     implements ("impl_item")   = "org.rust.lang.core.psi.RustGenericDeclaration"
 
@@ -550,6 +549,7 @@ foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params foreign_fn_parame
 
 struct_item ::= attrs_and_vis STRUCT IDENTIFIER generic_params (struct_tuple_args? where_clause? ';' | where_clause? struct_decl_args) {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RustStructOrEnum" ]
 }
 struct_decl_args ::= <<struct_body field_decl>>
 struct_tuple_args ::= <<tuple_body tuple_field_decl>>

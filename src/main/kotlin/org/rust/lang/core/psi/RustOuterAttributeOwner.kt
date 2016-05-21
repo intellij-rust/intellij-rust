@@ -1,8 +1,5 @@
 package org.rust.lang.core.psi
 
-import com.intellij.psi.PsiComment
-import com.intellij.psi.util.PsiTreeUtil
-
 
 /**
  * An element with attached outer attributes and documentation comments.
@@ -26,8 +23,8 @@ interface RustOuterAttributeOwner : RustDocAndAttributeOwner {
     val outerAttrList: List<RustOuterAttr>
 }
 
-val RustOuterAttributeOwner.outerDocComments: List<PsiComment>
-    get() = PsiTreeUtil.findChildrenOfType(this, PsiComment::class.java).filter {
-        it.tokenType == RustTokenElementTypes.OUTER_DOC_COMMENT
-    }
-
+/**
+ * Find the first outer attribute with the given identifier.
+ */
+fun RustOuterAttributeOwner.findOuterAttr(name: String): RustOuterAttr? =
+    outerAttrList.find { it.metaItem.identifier.textMatches(name) }

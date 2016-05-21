@@ -7,7 +7,6 @@ import com.intellij.psi.util.PsiTreeUtil
 
 interface RustDocAndAttributeOwner : RustCompositeElement
 
-
 val RustDocAndAttributeOwner.documentation: String? get() {
     val lines = mutableListOf<String>()
     if (this is RustOuterAttributeOwner) {
@@ -17,6 +16,29 @@ val RustDocAndAttributeOwner.documentation: String? get() {
         lines += innerDocs
     }
     return lines.joinToString("\n")
+}
+
+val RustDocAndAttributeOwner.queryAttributes: QueryAttributes get() = QueryAttributes(allAttributes)
+
+class QueryAttributes(private val attributes: List<RustAttr>) {
+    fun hasAtomAttribute(name: String): Boolean =
+        metaItems
+            .filter { it.eq == null && it.lparen == null }
+            .any { it.identifier.text == name }
+
+    fun lookupStringValueForKey(key: String): String? =
+        metaItems
+            .filter { it.identifier.text == key }
+            .mapNotNull { it.litExpr?.stringLiteralValue }
+            .singleOrNull()
+
+
+    private val metaItems: List<RustMetaItem> get() = attributes.mapNotNull { it.metaItem }
+}
+
+private val RustDocAndAttributeOwner.allAttributes: List<RustAttr> get() {
+    return (this as? RustOuterAttributeOwner)?.outerAttrList.orEmpty() +
+        (this as? RustInnerAttributeOwner)?.innerAttrList.orEmpty()
 }
 
 private val RustOuterAttributeOwner.outerDocs: List<String> get() {
@@ -65,3 +87,4 @@ private val RustMetaItem.docAttr: String?
 
 private val RustLitExpr.stringLiteralValue: String?
     get() = ((stringLiteral ?: rawStringLiteral) as? RustLiteral.Text)?.value
+

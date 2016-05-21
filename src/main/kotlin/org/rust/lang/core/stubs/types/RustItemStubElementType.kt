@@ -2,6 +2,7 @@ package org.rust.lang.core.stubs.types
 
 import com.intellij.psi.stubs.*
 import org.rust.lang.core.psi.RustItem
+import org.rust.lang.core.psi.RustStructOrEnum
 import org.rust.lang.core.stubs.RustItemStub
 import org.rust.lang.core.stubs.index.RustItemIndex
 
@@ -28,6 +29,6 @@ abstract class RustItemStubElementType<PsiT: RustItem>(debugName: String)
         }
     }
 
-    open val additionalIndexKeys: Array<StubIndexKey<String, RustItem>>
+    open protected val additionalIndexKeys: Array<StubIndexKey<String, RustStructOrEnum>>
         get() = emptyArray()
 }
