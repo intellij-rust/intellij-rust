@@ -261,10 +261,8 @@ private fun SpacingContext.blockMustBeMultiLine(): Boolean {
     }
 }
 
-/**
- * Assumes that left is before right and they are siblings, otherwise bad things will happen.
- */
 private fun countNonWhitespaceASTNodesBetween(left: ASTNode, right: ASTNode): Int {
+    require(left.treeParent == right.treeParent && left.startOffset < right.startOffset)
     var count = 0
     var next: ASTNode? = left
     while (next != null && next != right) {
