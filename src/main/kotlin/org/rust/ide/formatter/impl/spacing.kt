@@ -77,7 +77,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .between(PARAMS_LIKE, RET_TYPE).spacing(1, 1, 0, true, 0)
         .before(WHERE_CLAUSE).spacing(1, 1, 0, true, 0)
         .applyForEach(BLOCK_LIKE) { before(it).spaces(1) }
-        .beforeInside(LBRACE, FLAT_BLOCKS).spaces(1)
+        .beforeInside(LBRACE, FLAT_BRACE_BLOCKS).spaces(1)
 
         .between(ts(IDENTIFIER, FN), PARAMS_LIKE).spaceIf(false)
         .between(IDENTIFIER, GENERIC_PARAMS).spaceIf(false)
@@ -129,31 +129,36 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .around(KEYWORDS).spaces(1)
 }
 
-fun computeSpacing(parentBlock: Block, child1: Block?, child2: Block, ctx: RustFmtBlockContext): Spacing? {
+fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtBlockContext): Spacing? {
     if (child1 is ASTBlock && child2 is ASTBlock) SpacingContext.create(child1, child2).apply {
         when {
+            // #[attr]\n<comment>\n => #[attr] <comment>\n etc.
             psi1 is RustOuterAttr && psi2 is PsiComment
             -> return one()
 
+            // Ensure that each attribute is in separate line; comment aware
             psi1 is RustOuterAttr && (psi2 is RustOuterAttr || psi1.parent is RustItem)
                 || psi1 is PsiComment && (psi2 is RustOuterAttr || psi1.getPrevNonCommentSibling() is RustOuterAttr)
             -> return lineBreak(keepBlankLines = 0)
 
+            // { ... } => {\n ...\n }, see blockMustBeMultiLine docs for details
             blockMustBeMultiLine()
             -> return lineBreak(keepBlankLines = 0)
 
+            // Ensure there are blank lines between statements (or return expression)
             ncPsi1 is RustStmt && ncPsi2.isStmtOrExpr
             -> return lineBreak(
                 keepLineBreaks = ctx.commonSettings.KEEP_LINE_BREAKS,
                 keepBlankLines = ctx.commonSettings.KEEP_BLANK_LINES_IN_CODE)
 
+            // Ensure there are blank lines between top level items
             ncPsi1.isTopLevelItem && ncPsi2.isTopLevelItem
             -> return lineBreak(
                 keepLineBreaks = ctx.commonSettings.KEEP_LINE_BREAKS,
                 keepBlankLines = ctx.commonSettings.KEEP_BLANK_LINES_IN_DECLARATIONS)
         }
     }
-    return ctx.spacingBuilder.getSpacing(parentBlock, child1, child2)
+    return ctx.spacingBuilder.getSpacing(this, child1, child2)
 }
 
 private data class SpacingContext(val node1: ASTNode,
@@ -224,7 +229,7 @@ private fun ASTNode?.isWhiteSpaceWithLineBreak(): Boolean =
     this != null && elementType == WHITE_SPACE && containsEOL()
 
 /**
- * Ensure that blocks are laid out multi-line when:
+ * Check whether blocks must be laid out multi-line:
  *  1. one brace is placed as it's a single-line block while the other - multi-line
  *  2. there are 2 or more statements/expressions inside if it's a code block
  *  3. it's item's body block
@@ -254,8 +259,10 @@ private fun SpacingContext.blockMustBeMultiLine(): Boolean {
     }
 }
 
+/**
+ * Assumes that left is before right and they are siblings, otherwise bad things will happen.
+ */
 private fun countNonWhitespaceASTNodesBetween(left: ASTNode, right: ASTNode): Int {
-    // TODO(jajakobyly): assert that left is before right and they are siblings
     var count = 0
     var next: ASTNode? = left
     while (next != null && next != right) {
