@@ -55,6 +55,7 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
     override fun getDefaultCommonSettings(): CommonCodeStyleSettings =
         CommonCodeStyleSettings(language).apply {
             RIGHT_MARGIN = 99
+            initIndentOptions()
         }
 
     private val CODE_SAMPLE: String by lazy {
