@@ -26,6 +26,7 @@ fn test() -> u32 {
 
     f();            /* call */
     <T as Foo>::U::generic_method::<f64>();
+    S::<isize>::foo::<usize>();
 
     t = ();         /* unit */
 
