@@ -607,10 +607,9 @@ trait_ref ::= path_generic_args_without_colons
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl_item ::= UNSAFE? IMPL generic_params type where_clause? impl_body
-            | UNSAFE? IMPL generic_params '!'? trait_ref FOR (type where_clause? impl_body | '..' '{' '}') {
-  pin(".*") = "'{'"
-}
+impl_item ::= UNSAFE? IMPL generic_params ( bare_impl | for_impl ) { pin = "IMPL" }
+private bare_impl ::= type where_clause? impl_body
+private for_impl ::= '!'? trait_ref FOR (type where_clause? impl_body | '..' '{' '}')
 
 impl_body ::= '{' inner_attr* impl_member* '}' { pin = 1 }
 
