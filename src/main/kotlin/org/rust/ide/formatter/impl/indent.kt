@@ -13,9 +13,6 @@ import org.rust.lang.core.psi.RustTokenElementTypes.LBRACE
  * Determine whether we have spotted opening delimiter during
  * construction of a _flat block_'s sub blocks list.
  *
- * A flat block is a Rust PSI element which does not denote separate PSI
- * element for its _block_ part (e.g. `{...}`), for example [MOD_ITEM].
- *
  * We only care about opening delimiters (`(`, `[`, `{`, `<`, `|`) here,
  * because none of flat blocks has any children after block part (apart
  * from closing delimiter, which we have to handle separately anyways).
@@ -49,12 +46,27 @@ fun RustFmtBlock.computeIndent(child: ASTNode): Indent? {
     val childType = child.elementType
     val childPsi = child.psi
     return when {
+        // Indent blocks excluding braces
         node.isDelimitedBlock -> getIndentIfNotDelim(child, node)
 
+        // Indent flat block contents, excluding closing brace
         node.isFlatBlock && getUserData(INDENT_MET_LBRACE) == true -> getIndentIfNotDelim(child, node)
 
+        // In match expression:
+        //     Foo =>
+        //     92
+        // =>
+        //     Foo =>
+        //         92
         parentType == MATCH_ARM && childPsi is RustExpr -> Indent.getNormalIndent()
 
+        // fn moo(...)
+        // -> ...
+        // where ... {}
+        // =>
+        // fn moo(...)
+        //     -> ...
+        //     where ... {}
         childType == RET_TYPE || childType == WHERE_CLAUSE -> Indent.getNormalIndent()
 
         else -> Indent.getNoneIndent()

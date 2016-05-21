@@ -62,6 +62,10 @@ val ASTNode.isModItem: Boolean
 val ASTNode.isFlatBraceBlock: Boolean
     get() = FLAT_BRACE_BLOCKS.contains(elementType)
 
+/**
+ * A flat block is a Rust PSI element which does not denote separate PSI
+ * element for its _block_ part (e.g. `{...}`), for example [MOD_ITEM].
+ */
 val ASTNode.isFlatBlock: Boolean
     get() = isFlatBraceBlock || elementType == PAT_ENUM
 
