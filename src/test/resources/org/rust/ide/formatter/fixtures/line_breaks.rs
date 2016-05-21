@@ -177,7 +177,6 @@ fn closures() {
                                      arg2 * arg1 - temp }
 }
 
-// FIXME: Alignment
 fn reverse(pair: (i32, bool), a: i32,
 
 
@@ -192,7 +191,6 @@ fn reverse(pair: (i32, bool), a: i32,
 
     -> (bool, i32) {}
 
-// FIXME: Alignment
 fn boo(
 
 
@@ -204,7 +202,6 @@ a: i32
 ) {}
 
 fn misc() {
-    // FIXME: Alignment
     let long_tuple = (1u8, 2u16, 3u32, 4u64,
 
 

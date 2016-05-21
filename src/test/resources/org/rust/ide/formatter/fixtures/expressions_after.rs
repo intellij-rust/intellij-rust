@@ -7,6 +7,16 @@ fn main() {
         foo: true
     };
 
+    if foo && bar || (baz && bar)
+        && moo || boo && (foooooo
+        || baaaar) || meh
+        || beh {
+        return foo && bar || (baz && bar)
+            && moo || boo && (foooooo
+            || baaaar) || meh
+            || beh
+    }
+
     match x {
         S { foo } => {
             92;

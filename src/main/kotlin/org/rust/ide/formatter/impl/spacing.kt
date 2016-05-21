@@ -54,10 +54,10 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .aroundInside(ts(LPAREN, RPAREN), META_ITEM).spaces(0)
 
         //== empty parens
-        .between(LPAREN, RPAREN).spaceIf(false)
-        .between(LBRACK, RBRACK).spaceIf(false)
-        .between(LBRACE, RBRACE).spaceIf(false)
-        .betweenInside(OR, OR, LAMBDA_EXPR).spaceIf(false)
+        .between(LPAREN, RPAREN).spacing(0, 0, 0, false, 0)
+        .between(LBRACK, RBRACK).spacing(0, 0, 0, false, 0)
+        .between(LBRACE, RBRACE).spacing(0, 0, 0, false, 0)
+        .betweenInside(OR, OR, LAMBDA_EXPR).spacing(0, 0, 0, false, 0)
 
         //== paren delimited lists
         // withinPairInside does not accept TokenSet as parent node set :(
