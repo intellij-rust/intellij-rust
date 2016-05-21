@@ -310,7 +310,7 @@ fake item ::= attrs_and_vis {
   stubClass   = "org.rust.lang.core.stubs.RustItemStub"
 }
 
-private docs_and_item ::= ( stmt_item_group | macro_item ) <<bindDocComments>>
+private docs_and_item ::= ( stmt_item_group | macro_item )
 
 private stmt_item_group ::= static_item
                           | const_item
@@ -376,6 +376,7 @@ ret_type ::= '->' (type | '!') { pin = 1 }
 
 fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
 generic_params ::= generic_params_inner?
@@ -475,13 +476,20 @@ binding_mode ::= REF MUT? | MUT
 
 private static_decl ::= IDENTIFIER type_ascription '=' any_expr
 
-static_item ::= attrs_and_vis STATIC MUT? static_decl ';'
-const_item ::= attrs_and_vis CONST static_decl ';'
+static_item ::= attrs_and_vis STATIC MUT? static_decl ';' {
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+}
+const_item ::= attrs_and_vis CONST static_decl ';' {
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+}
 
 private view_item ::= use_item
                     | extern_crate_item
 
-use_item ::= attrs_and_vis USE use_path ';' { pin = "USE" }
+use_item ::= attrs_and_vis USE use_path ';' {
+  pin = "USE"
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+}
 
 private use_path ::=
 //  use ::{};
@@ -498,32 +506,41 @@ use_glob ::= (IDENTIFIER | SELF) alias?
 
 alias ::= AS IDENTIFIER
 
-extern_crate_item ::= attrs_and_vis EXTERN CRATE IDENTIFIER alias? ';'
+extern_crate_item ::= attrs_and_vis EXTERN CRATE IDENTIFIER alias? ';' {
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Mods
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-mod_decl_item ::= attrs_and_vis MOD IDENTIFIER ';'
+mod_decl_item ::= attrs_and_vis MOD IDENTIFIER ';' {
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+}
 
 mod_item ::= attrs_and_vis MOD IDENTIFIER '{' inner_attr* docs_and_item* '}' {
   pin = 4
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
-foreign_mod_item ::= attrs_and_vis extern_abi '{' inner_attr* foreign_decl* '}'
+foreign_mod_item ::= attrs_and_vis extern_abi '{' inner_attr* foreign_decl* '}' {
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+}
 
-private foreign_decl ::= ( foreign_static_decl | foreign_fn_decl ) <<bindDocComments>>
+private foreign_decl ::= foreign_static_decl | foreign_fn_decl
 
 foreign_static_decl ::= attrs_and_vis STATIC MUT? IDENTIFIER type_ascription ';' {
   pin = "STATIC"
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
 foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params foreign_fn_parameters ret_type? where_clause? ';' {
   pin = "FN"
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
 
@@ -531,26 +548,31 @@ foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params foreign_fn_parame
 // Struct & Enums
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct_item ::= attrs_and_vis STRUCT IDENTIFIER generic_params (struct_tuple_args? where_clause? ';' | where_clause? struct_decl_args)
-struct_decl_args ::= <<struct_body ( field_decl <<bindDocComments>> )>>
-struct_tuple_args ::= <<tuple_body ( tuple_field_decl <<bindDocComments>> )>>
+struct_item ::= attrs_and_vis STRUCT IDENTIFIER generic_params (struct_tuple_args? where_clause? ';' | where_clause? struct_decl_args) {
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+}
+struct_decl_args ::= <<struct_body field_decl>>
+struct_tuple_args ::= <<tuple_body tuple_field_decl>>
 
-enum_item ::= attrs_and_vis ENUM IDENTIFIER generic_params where_clause? enum_body
+enum_item ::= attrs_and_vis ENUM IDENTIFIER generic_params where_clause? enum_body {
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+}
 
-enum_body ::= '{' [ <<comma_separated_list ( enum_variant <<bindDocComments>> )>> ] '}' { pin = 1 }
+enum_body ::= '{' [ <<comma_separated_list enum_variant>> ] '}' { pin = 1 }
 enum_variant ::= outer_attr* IDENTIFIER enum_args? {
   pin = 2
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustDeclaringElement"
                  "org.rust.lang.core.psi.RustNamedElement" ]
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
 private enum_args ::= enum_struct_args
                     | enum_tuple_args
                     | enum_discriminant
 
-enum_struct_args ::= <<struct_body ( field_decl_in_enum <<bindDocComments>> )>>
-enum_tuple_args ::= <<tuple_body ( tuple_field_decl_in_enum <<bindDocComments>> )>>
+enum_struct_args ::= <<struct_body field_decl_in_enum>>
+enum_tuple_args ::= <<tuple_body tuple_field_decl_in_enum>>
 enum_discriminant ::= '=' any_expr { pin = 1 }
 
 field_decl ::= attrs_and_vis IDENTIFIER type_ascription {
@@ -558,6 +580,7 @@ field_decl ::= attrs_and_vis IDENTIFIER type_ascription {
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner"
                  "org.rust.lang.core.psi.RustNamedElement" ]
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 // unlike structs, enum variants can't have `pub` visibility applied to fields
 field_decl_in_enum ::= outer_attr* IDENTIFIER type_ascription {
@@ -568,6 +591,7 @@ field_decl_in_enum ::= outer_attr* IDENTIFIER type_ascription {
 tuple_field_decl ::= attrs_and_vis type {
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 tuple_field_decl_in_enum ::= outer_attr* type { elementType=tuple_field_decl }
 
@@ -579,7 +603,9 @@ private meta tuple_body ::= '(' <<comma_separated_list <<param>> >> ')' { pin = 
 // Trait
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER generic_params type_param_bounds? where_clause? trait_body
+trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER generic_params type_param_bounds? where_clause? trait_body {
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+}
 trait_body ::= '{' trait_member* '}' { pin = 1 }
 
 // TODO: use upper rules and inheritance here
@@ -587,14 +613,19 @@ private trait_member ::= trait_const_member
                        | trait_type_member
                        | trait_method_member
 
-trait_const_member ::= outer_attr* CONST IDENTIFIER type_ascription? const_default? ';'
+trait_const_member ::= outer_attr* CONST IDENTIFIER type_ascription? const_default? ';'{
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+}
 
 private const_default ::= '=' any_expr
 
-trait_type_member ::= outer_attr* TYPE_KW type_param ';'
+trait_type_member ::= outer_attr* TYPE_KW type_param ';' {
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+}
 
 trait_method_member ::= outer_attr* fn_header method_decl_parameters ret_type? where_clause? (';' | inner_attrs_and_block) {
   pin = fn_header
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
 
@@ -605,17 +636,20 @@ trait_ref ::= path_generic_args_without_colons
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl_item ::= attrs_and_vis UNSAFE? IMPL generic_params ( bare_impl | for_impl ) { pin = "IMPL" }
+impl_item ::= attrs_and_vis UNSAFE? IMPL generic_params ( bare_impl | for_impl ) {
+  pin = "IMPL"
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+}
 private bare_impl ::= type where_clause? impl_body
 private for_impl ::= '!'? trait_ref FOR (type where_clause? impl_body | '..' '{' '}')
 
 impl_body ::= '{' inner_attr* impl_member* '}' { pin = 1 }
 
 // TODO: unify with trait_member?
-private impl_member ::= impl_method_member <<bindDocComments>>
-                      | impl_const_member <<bindDocComments>>
-                      | impl_macro_member <<bindDocComments>>
-                      | impl_type_member <<bindDocComments>>
+private impl_member ::= impl_method_member
+                      | impl_const_member
+                      | impl_macro_member
+                      | impl_type_member
 
 impl_method_member ::= attrs_and_vis fn_header method_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
@@ -625,16 +659,19 @@ impl_method_member ::= attrs_and_vis fn_header method_parameters ret_type? where
                  "org.rust.lang.core.psi.RustVisibilityOwner"
                  "org.rust.lang.core.resolve.scope.RustResolveScope"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
 impl_const_member ::= attrs_and_vis CONST static_decl ';' {
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
 impl_type_member ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params '=' type ';' {
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
 
@@ -675,7 +712,9 @@ for_in_type ::= FOR '<' lifetimes? '>' (bare_fn_type | trait_ref)
 wildcard_type ::= '_'
 
 
-type_item ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params where_clause? '=' type ';'
+type_item ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params where_clause? '=' type ';' {
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+}
 
 type_qual_path ::= << qualified_path path_without_types >>
 
@@ -968,7 +1007,10 @@ private build_in_macro ::= try_macro
                          | format_like_macro
 
 private zz_macro_call ::= build_in_macro | expr_like_macro { pin(".*") = macro_invocation }
-private zz_macro_item ::= macro_definition | item_like_macro { pin(".*") = macro_invocation }
+private zz_macro_item ::= macro_definition | item_like_macro {
+  pin(".*") = macro_invocation
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+}
 
 // Invocations
 macro_invocation ::= IDENTIFIER '!'

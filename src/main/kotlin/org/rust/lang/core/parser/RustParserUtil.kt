@@ -3,7 +3,6 @@ package org.rust.lang.core.parser
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilderUtil
 import com.intellij.lang.WhitespacesBinders
-import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.openapi.util.Key
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
@@ -26,18 +25,13 @@ object RustParserUtil : RustGeneratedParserUtilBase() {
         "Path context is not set. Be sure to call one of `withParsingMode...` functions"
     }
 
-    private val docCommentBinder = WhitespacesBinders.leadingCommentsBinder(
+    @JvmField val DOC_COMMENT_BINDER = WhitespacesBinders.leadingCommentsBinder(
         TokenSet.create(RustTokenElementTypes.OUTER_DOC_COMMENT)
     )
 
     //
     // Helpers
     //
-
-    @JvmStatic fun bindDocComments(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int): Boolean {
-        (b.latestDoneMarker as PsiBuilder.Marker).setCustomEdgeTokenBinders(docCommentBinder, null)
-        return true
-    }
 
     // Parses either a paren_expr (92) or a tuple_expr (92, ) by postponing the decision of
     // what exactly is parsed until `,` is (not) seen.
