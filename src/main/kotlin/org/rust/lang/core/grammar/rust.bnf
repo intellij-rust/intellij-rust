@@ -300,10 +300,8 @@ meta_item ::= IDENTIFIER [ '=' lit_expr | '(' [ <<comma_separated_list meta_item
 vis ::= PUB
 
 private attrs_and_vis ::= outer_attr* vis?
-private item_inner ::= stmt_item_group
-                     | macro_item
 
-upper item ::= << injectInto attrs_and_vis item_inner >> | never attrs_and_vis {
+fake item ::= attrs_and_vis {
   implements  = [ "org.rust.lang.core.psi.RustDeclaringElement"
                   "org.rust.lang.core.psi.RustNamedElement"
                   "org.rust.lang.core.psi.RustVisibilityOwner"
@@ -312,7 +310,7 @@ upper item ::= << injectInto attrs_and_vis item_inner >> | never attrs_and_vis {
   stubClass   = "org.rust.lang.core.stubs.RustItemStub"
 }
 
-private docs_and_item ::= item <<bindDocComments>>
+private docs_and_item ::= ( stmt_item_group | macro_item ) <<bindDocComments>>
 
 private stmt_item_group ::= static_item
                           | const_item
@@ -321,9 +319,9 @@ private stmt_item_group ::= static_item
                           | view_item
 
 
-private block_item_group ::= &(CONST? UNSAFE? extern_abi? FN) fn_item
-                           | &(UNSAFE? TRAIT ) trait_item
-                           | &(UNSAFE? IMPL  ) impl_item
+private block_item_group ::= fn_item
+                           | trait_item
+                           | impl_item
                            | mod_decl_item
                            | mod_item
                            | foreign_mod_item
@@ -376,7 +374,7 @@ extern_abi ::= EXTERN STRING_LITERAL?
 
 ret_type ::= '->' (type | '!') { pin = 1 }
 
-fn_item ::= fn_header fn_parameters ret_type? where_clause? inner_attrs_and_block {
+fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
 }
 
@@ -477,13 +475,13 @@ binding_mode ::= REF MUT? | MUT
 
 private static_decl ::= IDENTIFIER type_ascription '=' any_expr
 
-static_item ::= STATIC MUT? static_decl ';'
-const_item ::= CONST static_decl ';'
+static_item ::= attrs_and_vis STATIC MUT? static_decl ';'
+const_item ::= attrs_and_vis CONST static_decl ';'
 
 private view_item ::= use_item
                     | extern_crate_item
 
-use_item ::= USE use_path ';' { pin = 1 }
+use_item ::= attrs_and_vis USE use_path ';' { pin = "USE" }
 
 private use_path ::=
 //  use ::{};
@@ -500,19 +498,19 @@ use_glob ::= (IDENTIFIER | SELF) alias?
 
 alias ::= AS IDENTIFIER
 
-extern_crate_item ::= EXTERN CRATE IDENTIFIER alias? ';'
+extern_crate_item ::= attrs_and_vis EXTERN CRATE IDENTIFIER alias? ';'
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Mods
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-mod_decl_item ::= MOD IDENTIFIER ';'
+mod_decl_item ::= attrs_and_vis MOD IDENTIFIER ';'
 
-mod_item ::= MOD IDENTIFIER '{' inner_attr* docs_and_item* '}' {
-  pin(".*") = 3
+mod_item ::= attrs_and_vis MOD IDENTIFIER '{' inner_attr* docs_and_item* '}' {
+  pin = 4
 }
 
-foreign_mod_item ::= extern_abi '{' inner_attr* foreign_decl* '}'
+foreign_mod_item ::= attrs_and_vis extern_abi '{' inner_attr* foreign_decl* '}'
 
 private foreign_decl ::= ( foreign_static_decl | foreign_fn_decl ) <<bindDocComments>>
 
@@ -533,11 +531,11 @@ foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params foreign_fn_parame
 // Struct & Enums
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct_item ::= STRUCT IDENTIFIER generic_params (struct_tuple_args? where_clause? ';' | where_clause? struct_decl_args)
+struct_item ::= attrs_and_vis STRUCT IDENTIFIER generic_params (struct_tuple_args? where_clause? ';' | where_clause? struct_decl_args)
 struct_decl_args ::= <<struct_body ( field_decl <<bindDocComments>> )>>
 struct_tuple_args ::= <<tuple_body ( tuple_field_decl <<bindDocComments>> )>>
 
-enum_item ::= ENUM IDENTIFIER generic_params where_clause? enum_body
+enum_item ::= attrs_and_vis ENUM IDENTIFIER generic_params where_clause? enum_body
 
 enum_body ::= '{' [ <<comma_separated_list ( enum_variant <<bindDocComments>> )>> ] '}' { pin = 1 }
 enum_variant ::= outer_attr* IDENTIFIER enum_args? {
@@ -581,7 +579,7 @@ private meta tuple_body ::= '(' <<comma_separated_list <<param>> >> ')' { pin = 
 // Trait
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params type_param_bounds? where_clause? trait_body
+trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER generic_params type_param_bounds? where_clause? trait_body
 trait_body ::= '{' trait_member* '}' { pin = 1 }
 
 // TODO: use upper rules and inheritance here
@@ -607,7 +605,7 @@ trait_ref ::= path_generic_args_without_colons
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl_item ::= UNSAFE? IMPL generic_params ( bare_impl | for_impl ) { pin = "IMPL" }
+impl_item ::= attrs_and_vis UNSAFE? IMPL generic_params ( bare_impl | for_impl ) { pin = "IMPL" }
 private bare_impl ::= type where_clause? impl_body
 private for_impl ::= '!'? trait_ref FOR (type where_clause? impl_body | '..' '{' '}')
 
@@ -677,7 +675,7 @@ for_in_type ::= FOR '<' lifetimes? '>' (bare_fn_type | trait_ref)
 wildcard_type ::= '_'
 
 
-type_item ::= TYPE_KW IDENTIFIER generic_params where_clause? '=' type ';'
+type_item ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params where_clause? '=' type ';'
 
 type_qual_path ::= << qualified_path path_without_types >>
 
@@ -1017,7 +1015,7 @@ private meta macro_args_delim ::= '(' <<param>> ')'
 macro_expr ::= zz_macro_call
 pat_macro  ::= zz_macro_call
 // TODO: Maybe implement item-related stuff for this production?
-macro_item ::= zz_macro_item
+macro_item ::= attrs_and_vis zz_macro_item
 impl_macro_member ::= zz_macro_item
 
 // Utils

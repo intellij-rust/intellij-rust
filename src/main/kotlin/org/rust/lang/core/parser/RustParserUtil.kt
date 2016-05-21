@@ -34,42 +34,6 @@ object RustParserUtil : GeneratedParserUtilBase() {
     // Helpers
     //
 
-    @JvmStatic fun injectInto(b: PsiBuilder, level: Int, s: Parser, t: Parser): Boolean {
-        fun done(m: PsiBuilder.Marker, tt: IElementType) {
-            m.done(tt)
-        }
-
-        fun drop(m: PsiBuilder.Marker) {
-            m.drop()
-        }
-
-        val m = b.mark()
-        var r: Boolean
-
-        try {
-
-            r = s.parse(b, level)
-            r = r && t.parse(b, level)
-
-        } catch (t: Throwable) {
-            drop(m)
-            throw t
-        }
-
-        if (r) {
-            // This is the one that should be done
-            // by `t`
-            b.latestDoneMarker?.let { p ->
-                done(m, p.tokenType)
-                drop(p as PsiBuilder.Marker)
-            }
-            return true
-        }
-
-        drop(m)
-        return false;
-    }
-
     @JvmStatic fun bindDocComments(b: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int): Boolean {
         (b.latestDoneMarker as PsiBuilder.Marker).setCustomEdgeTokenBinders(docCommentBinder, null)
         return true
