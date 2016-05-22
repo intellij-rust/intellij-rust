@@ -17,7 +17,7 @@ object RustCrateUtil
 val Module.crateRoots: Collection<VirtualFile>
     get() = cargoProject?.packages.orEmpty()
                 .flatMap    { it.targets }
-                .mapNotNull { it.virtualFile } + standardLibraryCrates.map { it.virtualFile }
+                .mapNotNull { it.crateRoot } + standardLibraryCrates.map { it.virtualFile }
 
 
 data class ExternCrate(
@@ -50,7 +50,7 @@ val Module.preludeModule: PsiFile? get() {
  */
 internal val Module.externCrates: Collection<ExternCrate> get() =
     cargoProject?.packages.orEmpty().mapNotNull { pkg ->
-        pkg.libTarget?.virtualFile?.let { ExternCrate(pkg.name, it) }
+        pkg.libTarget?.crateRoot?.let { ExternCrate(pkg.name, it) }
     } + standardLibraryCrates
 
 object AutoInjectedCrates {

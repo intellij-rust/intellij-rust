@@ -60,7 +60,7 @@ fun Module.getModuleAndLibraryRoots(): Collection<VirtualFile> {
  */
 fun Module.relativise(f: VirtualFile): Pair<String?, String>? =
     cargoProject?.let { project ->
-        (listOf(Pair(null, project.packages.orEmpty().firstOrNull()?.virtualFile ?: return null)) + externCrates.map { Pair(it.name, it.virtualFile.parent) })
+        (listOf(Pair(null, project.packages.orEmpty().firstOrNull()?.contentRoot ?: return null)) + externCrates.map { Pair(it.name, it.virtualFile.parent) })
             .find {
                 FileUtil.isAncestor(it.second.path, f.path, /* strict = */ false)
             }?.let {

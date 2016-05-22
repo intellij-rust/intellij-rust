@@ -17,7 +17,7 @@ class CargoProjectDescription private constructor(
 ) {
 
     class Package(
-        val contentRootUrl: String,
+        val contentRootPath: String,
         val name: String,
         val version: String,
         val targets: Collection<Target>,
@@ -27,19 +27,19 @@ class CargoProjectDescription private constructor(
         val isModule: Boolean get() = source == null
         val libTarget: Target? get() = targets.find { it.isLib }
 
-        val virtualFile: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
+        val contentRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootPath)
     }
 
     data class Target(
         /**
          * Absolute path to the crate root file
          */
-        val url: String,
+        val crateRootPath: String,
         val kind: TargetKind
     ) {
         val isLib: Boolean get() = kind == TargetKind.LIB
 
-        val virtualFile: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(url)
+        val crateRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(crateRootPath)
     }
 
     enum class TargetKind {

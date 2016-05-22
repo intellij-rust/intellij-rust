@@ -66,8 +66,9 @@ class RustModulesIndexExtension : FileBasedIndexExtension<RustCratePath, RustQua
         val dataIndexer =
             DataIndexer<RustCratePath, RustQualifiedName, FileContent> {
                 val map = HashMap<RustCratePath, RustQualifiedName>()
+                val file = it.file
 
-                PsiManager.getInstance(it.project).findFile(it.file)?.let {
+                PsiManager.getInstance(it.project).findFile(file)?.let {
                     for ((qualName, targets) in process(it)) {
                         targets.forEach {
                             map.put(RustCratePath.devise(it), qualName)

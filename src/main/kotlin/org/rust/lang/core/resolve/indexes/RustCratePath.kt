@@ -26,7 +26,7 @@ data class RustCratePath private constructor (private val crateName: String?, va
                 if (crateName == null)
                     it.cargoProject?.packages
                         .orEmpty()
-                        .firstOrNull()?.let { it.virtualFile }
+                        .firstOrNull()?.let { it.contentRoot }
                 else
                     it.findExternCrateRootByName(crateName)?.parent
             }?.let { p.getPsiFor(it.findFileByRelativePath(path)) }?.rustMod
