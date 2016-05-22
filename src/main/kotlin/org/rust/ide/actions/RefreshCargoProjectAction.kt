@@ -8,13 +8,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.containers.isNullOrEmpty
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.getComponentOrThrow
 import org.rust.cargo.util.modules
+import org.rust.ide.utils.isNullOrEmpty
 
 class RefreshCargoProjectAction : AnAction() {
     init {
