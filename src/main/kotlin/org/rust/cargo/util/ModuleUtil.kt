@@ -58,14 +58,15 @@ fun Module.getModuleAndLibraryRoots(): Collection<VirtualFile> {
  * Makes given path relative to the content-root of the module or
  * one of the respective's dependencies
  */
-fun Module.relativise(f: VirtualFile): String? =
-    getModuleAndLibraryRoots()
-        .find {
-            FileUtil.isAncestor(it.path, f.path, /* strict = */ false)
-        }
-        ?.let {
-            FileUtil.getRelativePath(it.canonicalPath!!, f.canonicalPath!!, '/')
-        }
+fun Module.relativise(f: VirtualFile): Pair<String?, String>? =
+    cargoProject?.let { project ->
+        (listOf(Pair(null, project.packages.orEmpty().firstOrNull()?.virtualFile ?: return null)) + externCrates.map { Pair(it.name, it.virtualFile.parent) })
+            .find {
+                FileUtil.isAncestor(it.second.path, f.path, /* strict = */ false)
+            }?.let {
+                Pair(it.first, FileUtil.getRelativePath(it.second.path, f.canonicalPath!!, '/')!!)
+            }
+    }
 
 /**
  * Creates an IDEA external library from an zip archive or a folder with rust.

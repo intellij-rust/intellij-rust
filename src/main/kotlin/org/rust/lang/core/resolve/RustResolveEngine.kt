@@ -6,10 +6,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.cargo.util.AutoInjectedCrates
-import org.rust.cargo.util.crateRoots
-import org.rust.cargo.util.findExternCrateByName
-import org.rust.cargo.util.preludeModule
+import org.rust.cargo.util.*
 import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
@@ -56,8 +53,7 @@ object RustResolveEngine {
               .asSequence()
               .mapNotNull { PsiManager.getInstance(module.project).findFile(it)?.rustMod }
               .map { Resolver().resolve(name, it) }
-              .firstOrNull { it.isValidResult }
-              ?: ResolveResult.Unresolved
+              .firstOrNull { it.isValidResult } ?: ResolveResult.Unresolved
 
     /**
      * Resolves `qualified-reference` bearing PSI-elements
@@ -118,7 +114,7 @@ object RustResolveEngine {
     fun resolveExternCrate(crate: RustExternCrateItem): ResolveResult {
         val name = crate.name ?: return ResolveResult.Unresolved
         val module = crate.module ?: return ResolveResult.Unresolved
-        return module.findExternCrateByName(name)?.rustMod.asResolveResult()
+        return module.project.getPsiFor(module.findExternCrateRootByName(name))?.rustMod.asResolveResult()
     }
 
 }
@@ -361,8 +357,10 @@ private class Resolver {
             // We inject both crates for simplicity for now.
             if (name == AutoInjectedCrates.std || name == AutoInjectedCrates.core) {
                 if (mod.isCrateRoot) {
-                    mod.module?.findExternCrateByName(name)?.rustMod?.let {
-                        found(it)
+                    mod.module?.let {
+                        it.project.getPsiFor(it.findExternCrateRootByName(name))?.rustMod?.let {
+                            found(it)
+                        }
                     }
                 }
             } else {

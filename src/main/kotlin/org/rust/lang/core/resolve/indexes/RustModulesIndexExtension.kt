@@ -15,40 +15,40 @@ import org.rust.lang.core.psi.impl.rustMod
 import java.io.DataInput
 import java.io.DataOutput
 
-class RustModulesIndexExtension : FileBasedIndexExtension<RustModulePath, RustQualifiedName>() {
+class RustModulesIndexExtension : FileBasedIndexExtension<RustCratePath, RustQualifiedName>() {
 
     override fun getVersion(): Int = 2
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getName(): ID<RustModulePath, RustQualifiedName> = RustModulesIndex.ID
+    override fun getName(): ID<RustCratePath, RustQualifiedName> = RustModulesIndex.ID
 
     override fun getInputFilter(): FileBasedIndex.InputFilter =
         DefaultFileTypeSpecificInputFilter(RustFileType)
 
-    override fun getKeyDescriptor(): KeyDescriptor<RustModulePath> = Companion.keyDescriptor
+    override fun getKeyDescriptor(): KeyDescriptor<RustCratePath> = Companion.keyDescriptor
 
     override fun getValueExternalizer(): DataExternalizer<RustQualifiedName> = Companion.valueExternalizer
 
-    override fun getIndexer(): DataIndexer<RustModulePath, RustQualifiedName, FileContent> = Companion.dataIndexer
+    override fun getIndexer(): DataIndexer<RustCratePath, RustQualifiedName, FileContent> = Companion.dataIndexer
 
     companion object {
 
-        val keyDescriptor = object: KeyDescriptor<RustModulePath> {
+        val keyDescriptor = object: KeyDescriptor<RustCratePath> {
 
-            override fun save(out: DataOutput, path: RustModulePath?) {
+            override fun save(out: DataOutput, path: RustCratePath?) {
                 path?.let {
-                    RustModulePath.writeTo(out, it)
+                    RustCratePath.writeTo(out, it)
                 }
             }
 
-            override fun read(`in`: DataInput): RustModulePath? =
-                RustModulePath.readFrom(`in`)
+            override fun read(`in`: DataInput): RustCratePath? =
+                RustCratePath.readFrom(`in`)
 
-            override fun isEqual(one: RustModulePath?, other: RustModulePath?): Boolean =
+            override fun isEqual(one: RustCratePath?, other: RustCratePath?): Boolean =
                 one?.equals(other) ?: false
 
-            override fun getHashCode(value: RustModulePath?): Int = value?.hashCode() ?: -1
+            override fun getHashCode(value: RustCratePath?): Int = value?.hashCode() ?: -1
         }
 
         val valueExternalizer = object: DataExternalizer<RustQualifiedName> {
@@ -64,13 +64,13 @@ class RustModulesIndexExtension : FileBasedIndexExtension<RustModulePath, RustQu
         }
 
         val dataIndexer =
-            DataIndexer<RustModulePath, RustQualifiedName, FileContent> {
-                val map = HashMap<RustModulePath, RustQualifiedName>()
+            DataIndexer<RustCratePath, RustQualifiedName, FileContent> {
+                val map = HashMap<RustCratePath, RustQualifiedName>()
 
                 PsiManager.getInstance(it.project).findFile(it.file)?.let {
                     for ((qualName, targets) in process(it)) {
                         targets.forEach {
-                            map.put(RustModulePath.devise(it), qualName)
+                            map.put(RustCratePath.devise(it), qualName)
                         }
                     }
                 }

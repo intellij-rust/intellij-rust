@@ -4,7 +4,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.toolchain.RustToolchain
@@ -13,7 +12,7 @@ object RustCrateUtil
 
 
 /**
- * Extracts paths ot the Crate's roots'
+ * Extracts paths to the Crate's roots'
  */
 val Module.crateRoots: Collection<VirtualFile>
     get() = cargoProject?.packages.orEmpty()
@@ -34,24 +33,22 @@ data class ExternCrate(
 )
 
 /**
- * Searches for the PsiFile of the root mod of the crate.
+ * Searches for the `PsiFile` of the root mod of the crate
  */
-fun Module.findExternCrateByName(crateName: String): PsiFile? =
-    externCrates.find { it.name == crateName }?.let {
-        PsiManager.getInstance(project).findFile(it.virtualFile)
-    }
+fun Module.findExternCrateRootByName(crateName: String): VirtualFile? =
+    externCrates.find { it.name == crateName } ?.let { it.virtualFile }
 
 val Module.preludeModule: PsiFile? get() {
-    val stdlib = findExternCrateByName(AutoInjectedCrates.std) ?: return null
-    val preludeFile = stdlib.virtualFile.findFileByRelativePath("../prelude/v1.rs") ?: return null
-    return PsiManager.getInstance(project).findFile(preludeFile)
+    val stdlib = findExternCrateRootByName(AutoInjectedCrates.std) ?: return null
+    val preludeFile = stdlib.findFileByRelativePath("../prelude/v1.rs") ?: return null
+    return project.getPsiFor(preludeFile)
 }
 
 /**
  * A set of external crates for the module. External crate can refer
  * to another module or a library or a crate form the SDK
  */
-private val Module.externCrates: Collection<ExternCrate> get() =
+internal val Module.externCrates: Collection<ExternCrate> get() =
     cargoProject?.packages.orEmpty().mapNotNull { pkg ->
         pkg.libTarget?.virtualFile?.let { ExternCrate(pkg.name, it) }
     } + standardLibraryCrates

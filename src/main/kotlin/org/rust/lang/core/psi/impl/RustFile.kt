@@ -15,7 +15,7 @@ import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.resolve.indexes.RustModulePath
+import org.rust.lang.core.resolve.indexes.RustCratePath
 import org.rust.lang.core.resolve.indexes.RustModulesIndex
 import org.rust.lang.core.resolve.ref.RustReference
 
@@ -47,7 +47,7 @@ class RustFile(
     override val isTopLevelInFile: Boolean = true
 
     override val canonicalNameInFile: RustQualifiedName?
-        get() = modulePath?.let { RustFileModuleId(it) }
+        get() = cratePath?.let { RustFileModuleId(it) }
 
     override val modDecls: Collection<RustModDeclItem>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
@@ -60,8 +60,8 @@ class RustFile(
 }
 
 
-val PsiFile.modulePath: RustModulePath?
-    get() = RustModulePath.devise(this)
+val PsiFile.cratePath: RustCratePath?
+    get() = RustCratePath.devise(this)
 
 
 /**

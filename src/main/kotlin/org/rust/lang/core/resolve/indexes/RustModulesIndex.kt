@@ -7,7 +7,7 @@ import com.intellij.util.indexing.ID
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.impl.RustFile
-import org.rust.lang.core.psi.impl.modulePath
+import org.rust.lang.core.psi.impl.cratePath
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.RustResolveEngine
 
@@ -15,13 +15,13 @@ interface RustModulesIndex {
 
     companion object {
 
-        val ID: ID<RustModulePath, RustQualifiedName> =
+        val ID: ID<RustCratePath, RustQualifiedName> =
             com.intellij.util.indexing.ID.create("org.rust.lang.indexes.RustModulesIndex")
 
         fun getSuperFor(mod: RustFile): RustMod? =
             mod.containingFile.originalFile.let { file ->
                 mod.module?.let { module ->
-                    file.modulePath?.let { path ->
+                    file.cratePath?.let { path ->
                         findByHeterogeneous(
                             FileBasedIndex.getInstance()
                                 .getValues(ID, path, GlobalSearchScope.allScope(module.project))

@@ -28,7 +28,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.attachStandardLibrary
-import org.rust.cargo.util.findExternCrateByName
+import org.rust.cargo.util.findExternCrateRootByName
 import org.rust.lang.core.psi.impl.isNotRustFile
 import java.awt.Component
 import java.io.IOException
@@ -178,6 +178,6 @@ class MissingToolchainNotificationProvider(
         private val KEY: Key<EditorNotificationPanel> = Key.create("Setup Rust toolchain")
         private val DO_NOT_SHOW_STDLIB_NOTIFICATION = "do.not.show.stdlib.notification"
 
-        private val Module.hasStandardLibrary: Boolean get() = findExternCrateByName(AutoInjectedCrates.std) != null
+        private val Module.hasStandardLibrary: Boolean get() = findExternCrateRootByName(AutoInjectedCrates.std) != null
     }
 }

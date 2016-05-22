@@ -49,13 +49,14 @@ class CargoProjectDescription private constructor(
     companion object {
         fun deserialize(data: CargoProjectDescriptionData): CargoProjectDescription? {
             val dependenciesMap = data.dependencies.associate { node ->
-                val pkd = data.packages.getOrNull(node.packageIndex) ?: return null
+                val pkg = data.packages.getOrNull(node.packageIndex) ?: return null
                 val deps = node.dependenciesIndexes.map { data.packages.getOrNull(it) ?: return null }
-                pkd to deps
+                pkg to deps
             }
 
             val alreadyDone = HashMap<CargoProjectDescriptionData.Package, Package>()
             val inProgress = HashSet<CargoProjectDescriptionData.Package>()
+
             /**
              * Recursively constructs a DAG of packages
              */

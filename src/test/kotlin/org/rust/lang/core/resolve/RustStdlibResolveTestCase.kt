@@ -2,7 +2,7 @@ package org.rust.lang.core.resolve
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.assertj.core.api.Assertions.assertThat
-import org.rust.cargo.util.findExternCrateByName
+import org.rust.cargo.util.findExternCrateRootByName
 
 class RustStdlibResolveTestCase : RustMultiFileResolveTestCaseBase() {
 
@@ -11,7 +11,7 @@ class RustStdlibResolveTestCase : RustMultiFileResolveTestCaseBase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor()
 
     fun testHasStdlibSources() {
-        assertThat(myModule.findExternCrateByName("std"))
+        assertThat(myModule.findExternCrateRootByName("std"))
             .overridingErrorMessage("No Rust SDK sources found during test.\n" +
                 "Have you run the gradle task to download them?")
             .isNotNull()

@@ -3,6 +3,9 @@ package org.rust.cargo.util
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 
 object ProjectUtil
 
@@ -11,6 +14,12 @@ object ProjectUtil
  */
 val Project.modules: Collection<Module>
     get() = ModuleManager.getInstance(this).modules.toList()
+
+/**
+ * Looks up `PsiFile` for the virtual-file supplied inside the given project
+ */
+fun Project.getPsiFor(file: VirtualFile?): PsiFile? =
+    file?.let { PsiManager.getInstance(this).findFile(it) }
 
 
 
