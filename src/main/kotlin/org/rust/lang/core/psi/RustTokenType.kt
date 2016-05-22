@@ -2,10 +2,10 @@ package org.rust.lang.core.psi
 
 import com.intellij.lang.ASTNode
 import com.intellij.lang.DefaultASTFactory
-import com.intellij.openapi.components.service
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.ILeafElementType
+import org.rust.ide.utils.service
 import org.rust.lang.RustLanguage
 
 private val defaultASTFactory by lazy { service<DefaultASTFactory>() }

@@ -2,9 +2,9 @@ package org.rust.cargo.runconfig
 
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.VirtualFile
 import org.assertj.core.api.Assertions.assertThat
+import org.rust.ide.utils.runWriteAction
 import org.rust.lang.RustTestCaseBase
 
 class RustConsoleFilterTest : RustTestCaseBase() {

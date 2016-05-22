@@ -5,7 +5,6 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleComponent
@@ -28,6 +27,7 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoLibraryName
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.updateLibrary
+import org.rust.ide.utils.runWriteAction
 
 
 /**

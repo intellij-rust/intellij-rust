@@ -3,8 +3,6 @@ package org.rust.ide.notifications
 import com.intellij.ProjectTopics
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileEditor
@@ -29,6 +27,8 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.attachStandardLibrary
 import org.rust.cargo.util.findExternCrateRootByName
+import org.rust.ide.utils.runWriteAction
+import org.rust.ide.utils.service
 import org.rust.lang.core.psi.impl.isNotRustFile
 import java.awt.Component
 import java.io.IOException

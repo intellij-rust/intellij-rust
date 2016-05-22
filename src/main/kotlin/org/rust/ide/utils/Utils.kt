@@ -2,6 +2,8 @@ package org.rust.ide.utils
 
 import com.intellij.openapi.util.io.StreamUtil
 
+fun List<*>?.isNullOrEmpty() = this == null || isEmpty()
+
 fun Any.loadCodeSampleResource(resource: String): String {
     val stream = javaClass.classLoader.getResourceAsStream(resource)
     // We need to convert line separators here, because IntelliJ always expects \n,

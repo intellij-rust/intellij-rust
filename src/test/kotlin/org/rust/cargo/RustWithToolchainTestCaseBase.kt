@@ -1,12 +1,12 @@
 package org.rust.cargo
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestCase
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.suggestToolchain
+import org.rust.ide.utils.service
 
 // This class allows to execute real Cargo during the tests.
 // Unlike `RustTestCaseBase` it does not use in-memory temporary VFS
