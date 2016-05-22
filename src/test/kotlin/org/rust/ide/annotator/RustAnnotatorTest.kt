@@ -16,6 +16,10 @@ class RustAnnotatorTest : RustTestCaseBase() {
     fun testLiteralUnclosedQuotes() = doTest()
 
     fun testUnnecessaryIfParens() = doTest()
+    fun testUnnecessaryForParens() = doTest()
+    fun testUnnecessaryMatchParens() = doTest()
+    fun testUnnecessaryReturnParens() = doTest()
+    fun testUnnecessaryWhileParens() = doTest()
     fun testRedundantParens() = doTest()
 
     fun testPaths() = doTest()
