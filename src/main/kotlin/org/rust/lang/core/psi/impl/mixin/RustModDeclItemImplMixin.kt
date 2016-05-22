@@ -4,16 +4,15 @@ package org.rust.lang.core.psi.impl.mixin
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiFile
 import com.intellij.psi.stubs.IStubElementType
-import org.rust.lang.core.psi.RustBlock
-import org.rust.lang.core.psi.RustModDeclItem
-import org.rust.lang.core.psi.containingMod
+import org.rust.ide.icons.RustIcons
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustItemImpl
-import org.rust.lang.core.psi.queryAttributes
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ref.RustModReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
 import org.rust.lang.core.stubs.RustItemStub
 import java.io.File
+import javax.swing.Icon
 
 abstract class RustModDeclItemImplMixin : RustItemImpl
                                         , RustModDeclItem {
@@ -22,6 +21,9 @@ abstract class RustModDeclItemImplMixin : RustItemImpl
 
     constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
+    override fun getIcon(flags: Int): Icon? {
+        return iconWithVisibility(flags, RustIcons.MODULE)
+    }
 
     override fun getReference(): RustReference = RustModReferenceImpl(this)
 }

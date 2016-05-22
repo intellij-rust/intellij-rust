@@ -17,12 +17,14 @@ object RustIcons {
 
     val TRAIT    = AllIcons.Nodes.Interface
     val STRUCT   = AllIcons.Nodes.Class
+    val TYPE     = AllIcons.Nodes.Class
     val IMPL     = AllIcons.Nodes.AbstractClass
     val ENUM     = AllIcons.Nodes.Enum
 
     val FIELD    = AllIcons.Nodes.Field
     val FUNCTION = AllIcons.Nodes.Function
     val METHOD   = AllIcons.Nodes.Method
+    val BINDING  = AllIcons.Nodes.Variable
 
     val ABSTRACT_METHOD = AllIcons.Nodes.AbstractMethod
 
