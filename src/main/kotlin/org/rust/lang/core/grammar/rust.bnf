@@ -169,10 +169,9 @@
                                   "org.rust.lang.core.psi.RustStructOrEnum" ]
     mixin       ("enum_item") = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
 
-    implements  ("trait_method_member") = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
-                                            "org.rust.lang.core.psi.RustGenericDeclaration"
-                                            "org.rust.lang.core.psi.RustInnerAttributeOwner" ]
     mixin       ("trait_method_member") = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodMemberImplMixin"
+    mixin       ("trait_const_member")  = "org.rust.lang.core.psi.impl.mixin.RustTraitConstMemberImplMixin"
+    mixin       ("trait_type_member")   = "org.rust.lang.core.psi.impl.mixin.RustTraitTypeMemberImplMixin"
 
     implements  ("lambda_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("lambda_expr") = "org.rust.lang.core.psi.impl.mixin.RustLambdaExprImplMixin"
@@ -614,17 +613,26 @@ private trait_member ::= trait_const_member
                        | trait_method_member
 
 trait_const_member ::= outer_attr* CONST IDENTIFIER type_ascription? const_default? ';'{
+  implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
+                 "org.rust.lang.core.psi.RustNamedElement" ]
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
 private const_default ::= '=' any_expr
 
-trait_type_member ::= outer_attr* TYPE_KW type_param ';' {
+trait_type_member ::= outer_attr* TYPE_KW IDENTIFIER type_param_bounds? ';' {
+  implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
+                 "org.rust.lang.core.psi.RustNamedElement" ]
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
 trait_method_member ::= outer_attr* fn_header method_decl_parameters ret_type? where_clause? (';' | inner_attrs_and_block) {
   pin = fn_header
+  implements = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
+                 "org.rust.lang.core.psi.RustGenericDeclaration"
+                 "org.rust.lang.core.psi.RustInnerAttributeOwner"
+                 "org.rust.lang.core.psi.RustOuterAttributeOwner"
+                 "org.rust.lang.core.psi.RustNamedElement" ]
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
