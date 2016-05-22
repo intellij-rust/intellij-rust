@@ -134,6 +134,9 @@ task generateRustLexer(type: JavaExec) {
 }
 
 task generateRustPsiAndParser(type: JavaExec) {
+    doFirst {
+        delete file("gen/org/rust/lang/core/psi/")
+    }
     ext.src     = "src/main/kotlin/org/rust/lang/core/grammar/rust.bnf"
     ext.dstRoot = "gen"
 
@@ -147,13 +150,12 @@ task generateRustPsiAndParser(type: JavaExec) {
     classpath (configurations.compile + files('lib/grammar-kit.jar'))
 }
 
-task generateLexers {
-    dependsOn generateRustLexer
+task generate {
+    dependsOn generateRustLexer, generateRustPsiAndParser
 }
 
-task generateParsers {
-    dependsOn generateRustPsiAndParser
-}
+compileKotlin.dependsOn generate
+compileTestKotlin.dependsOn generate
 
 task downloadRustSources(type: de.undercouch.gradle.tasks.download.Download) {
     overwrite false
@@ -161,10 +163,7 @@ task downloadRustSources(type: de.undercouch.gradle.tasks.download.Download) {
     dest new File(projectDir, "src/test/resources/rustc-src.zip")
 }
 
-
 test.dependsOn downloadRustSources
-
-apply from: "shared.gradle"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Misc
