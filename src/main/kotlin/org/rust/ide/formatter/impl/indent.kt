@@ -37,6 +37,11 @@ fun ASTBlock.newChildIndent(childIndex: Int): Indent? {
         return Indent.getNormalIndent()
     }
 
+    // Indent chain calls
+    if(node.elementType == METHOD_CALL_EXPR) {
+        return Indent.getContinuationWithoutFirstIndent()
+    }
+
     // Otherwise we don't want any indentation (null means continuation indent)
     return Indent.getNoneIndent()
 }
@@ -68,6 +73,9 @@ fun RustFmtBlock.computeIndent(child: ASTNode): Indent? {
         //     -> ...
         //     where ... {}
         childType == RET_TYPE || childType == WHERE_CLAUSE -> Indent.getNormalIndent()
+
+        // Indent chain calls
+        parentType == METHOD_CALL_EXPR -> Indent.getContinuationWithoutFirstIndent()
 
         else -> Indent.getNoneIndent()
     }

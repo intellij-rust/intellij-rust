@@ -11,18 +11,18 @@ import org.rust.lang.core.psi.RustCompositeElementTypes.MACRO_ARG
  * Inspired by [com.intellij.psi.formatter.common.AbstractBlock], but rewritten for better flexibility.
  */
 abstract class AbstractRustFmtBlock(
-    private val myNode: ASTNode,
-    private val myAlignment: Alignment?,
-    private val myIndent: Indent?,
-    private val myWrap: Wrap?,
+    private val node: ASTNode,
+    private val alignment: Alignment?,
+    private val indent: Indent?,
+    private val wrap: Wrap?,
     val ctx: RustFmtBlockContext
 ) : UserDataHolderBase(), ASTBlock {
 
-    override fun getNode(): ASTNode = myNode
+    override fun getNode(): ASTNode = node
     override fun getTextRange(): TextRange = node.textRange
-    override fun getAlignment(): Alignment? = myAlignment
-    override fun getIndent(): Indent? = myIndent
-    override fun getWrap(): Wrap? = myWrap
+    override fun getAlignment(): Alignment? = alignment
+    override fun getIndent(): Indent? = indent
+    override fun getWrap(): Wrap? = wrap
 
     override fun getSubBlocks(): List<Block> = mySubBlocks
     private val mySubBlocks: List<Block> by lazy { buildChildren() }
@@ -33,10 +33,7 @@ abstract class AbstractRustFmtBlock(
         ChildAttributes(getNewChildIndent(newChildIndex), getNewChildAlignment(newChildIndex))
 
     protected open fun getNewChildIndent(childIndex: Int): Indent? = null
-    protected open fun getNewChildAlignment(childIndex: Int): Alignment? =
-        subBlocks.asSequence()
-            .mapNotNull { it.alignment }
-            .firstOrNull()
+    protected open fun getNewChildAlignment(childIndex: Int): Alignment? = null
 
     override fun isLeaf(): Boolean = node.firstChildNode == null
 

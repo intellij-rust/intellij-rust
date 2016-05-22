@@ -55,7 +55,11 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
     override fun getDefaultCommonSettings(): CommonCodeStyleSettings =
         CommonCodeStyleSettings(language).apply {
             RIGHT_MARGIN = 99
-            initIndentOptions()
+            initIndentOptions().apply {
+                // FIXME(jajakobyly): It's a hack
+                // Nobody else does this and still somehow achieve similar effect
+                CONTINUATION_INDENT_SIZE = INDENT_SIZE
+            }
         }
 
     private val CODE_SAMPLE: String by lazy {

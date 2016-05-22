@@ -5,6 +5,8 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.TokenType.WHITE_SPACE
 import org.rust.ide.formatter.impl.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.ARG_LIST
+import org.rust.lang.core.psi.RustCompositeElementTypes.METHOD_CALL_EXPR
+import org.rust.lang.core.psi.RustTokenElementTypes.DOT
 
 class RustFmtBlock(
     node: ASTNode,
@@ -25,6 +27,22 @@ class RustFmtBlock(
             .map { buildChild(it, anchor) }
 
         putUserData(INDENT_MET_LBRACE, null)
+
+        // Create fake `.sth` block here, so child indentation will
+        // be relative to it when it starts from new line.
+        // In other words: foo().bar().baz() => foo().baz()[.baz()]
+        // Nearly copy-pasted idea from Kotlin's formatter.
+        if (node.elementType == METHOD_CALL_EXPR) {
+            val dotIndex = children.indexOfFirst { it is ASTBlock && it.node.elementType == DOT }
+            if (dotIndex != -1) {
+                val dotBlock = children[dotIndex]
+                val syntheticBlock = SyntheticRustFmtBlock(
+                    representative = dotBlock,
+                    subBlocks = children.subList(dotIndex, children.size),
+                    ctx = ctx)
+                return children.subList(0, dotIndex).plusElement(syntheticBlock)
+            }
+        }
 
         return children
     }
