@@ -7,7 +7,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.util.*
-import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.*
@@ -129,9 +128,7 @@ private class Resolver {
      * For more details check out `RustResolveEngine.resolve`
      */
     fun resolve(name: RustQualifiedName, root: RustMod): RustResolveEngine.ResolveResult {
-        if (name == RustAnonymousId) {
-            return RustResolveEngine.ResolveResult.Resolved(root)
-        } else if (name is RustFileModuleId) {
+        if (name is RustFileModuleId) {
             return name.path.findModuleIn(root.project).asResolveResult()
         }
 
