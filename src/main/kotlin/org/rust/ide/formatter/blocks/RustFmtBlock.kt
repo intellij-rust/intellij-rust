@@ -1,8 +1,9 @@
-package org.rust.ide.formatter
+package org.rust.ide.formatter.blocks
 
 import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
 import com.intellij.psi.TokenType.WHITE_SPACE
+import org.rust.ide.formatter.RustFmtContext
 import org.rust.ide.formatter.impl.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.ARG_LIST
 import org.rust.lang.core.psi.RustCompositeElementTypes.METHOD_CALL_EXPR
@@ -13,7 +14,7 @@ class RustFmtBlock(
     alignment: Alignment?,
     indent: Indent?,
     wrap: Wrap?,
-    ctx: RustFmtBlockContext
+    ctx: RustFmtContext
 ) : AbstractRustFmtBlock(node, alignment, indent, wrap, ctx) {
 
     override fun buildChildren(): List<Block> {
@@ -52,7 +53,7 @@ class RustFmtBlock(
             replace(INDENT_MET_LBRACE, null, true)
         }
 
-        return AbstractRustFmtBlock.createBlock(
+        return Companion.createBlock(
             child,
             calcAlignment(child, anchor),
             computeIndent(child),

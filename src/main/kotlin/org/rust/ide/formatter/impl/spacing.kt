@@ -15,7 +15,7 @@ import com.intellij.psi.formatter.FormatterUtil
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
-import org.rust.ide.formatter.RustFmtBlockContext
+import org.rust.ide.formatter.RustFmtContext
 import org.rust.ide.formatter.settings.RustCodeStyleSettings
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
@@ -129,7 +129,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .around(KEYWORDS).spaces(1)
 }
 
-fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtBlockContext): Spacing? {
+fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtContext): Spacing? {
     if (child1 is ASTBlock && child2 is ASTBlock) SpacingContext.create(child1, child2).apply {
         when {
             // #[attr]\n<comment>\n => #[attr] <comment>\n etc.

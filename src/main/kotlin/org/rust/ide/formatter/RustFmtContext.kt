@@ -7,16 +7,16 @@ import org.rust.ide.formatter.impl.createSpacingBuilder
 import org.rust.ide.formatter.settings.RustCodeStyleSettings
 import org.rust.lang.RustLanguage
 
-data class RustFmtBlockContext private constructor(
+data class RustFmtContext private constructor(
     val commonSettings: CommonCodeStyleSettings,
     val rustSettings: RustCodeStyleSettings,
     val spacingBuilder: SpacingBuilder
 ) {
     companion object {
-        fun create(settings: CodeStyleSettings): RustFmtBlockContext {
+        fun create(settings: CodeStyleSettings): RustFmtContext {
             val commonSettings = settings.getCommonSettings(RustLanguage)
             val rustSettings = settings.getCustomSettings(RustCodeStyleSettings::class.java)
-            return RustFmtBlockContext(commonSettings, rustSettings, createSpacingBuilder(commonSettings, rustSettings))
+            return RustFmtContext(commonSettings, rustSettings, createSpacingBuilder(commonSettings, rustSettings))
         }
     }
 }

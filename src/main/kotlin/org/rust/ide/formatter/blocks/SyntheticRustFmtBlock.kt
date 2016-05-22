@@ -1,8 +1,9 @@
-package org.rust.ide.formatter
+package org.rust.ide.formatter.blocks
 
 import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
+import org.rust.ide.formatter.RustFmtContext
 import org.rust.ide.formatter.impl.computeSpacing
 
 /**
@@ -15,7 +16,7 @@ class SyntheticRustFmtBlock(
     private val alignment: Alignment? = null,
     private val indent: Indent? = null,
     private val wrap: Wrap? = null,
-    val ctx: RustFmtBlockContext
+    val ctx: RustFmtContext
 ) : ASTBlock {
 
     init {

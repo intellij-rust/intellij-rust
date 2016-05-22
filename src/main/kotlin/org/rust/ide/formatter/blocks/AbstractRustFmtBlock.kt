@@ -1,10 +1,11 @@
-package org.rust.ide.formatter
+package org.rust.ide.formatter.blocks
 
 import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.formatter.FormatterUtil
+import org.rust.ide.formatter.RustFmtContext
 import org.rust.lang.core.psi.RustCompositeElementTypes.MACRO_ARG
 
 /**
@@ -15,7 +16,7 @@ abstract class AbstractRustFmtBlock(
     private val alignment: Alignment?,
     private val indent: Indent?,
     private val wrap: Wrap?,
-    val ctx: RustFmtBlockContext
+    val ctx: RustFmtContext
 ) : UserDataHolderBase(), ASTBlock {
 
     override fun getNode(): ASTNode = node
@@ -48,7 +49,7 @@ abstract class AbstractRustFmtBlock(
             alignment: Alignment?,
             indent: Indent?,
             wrap: Wrap?,
-            ctx: RustFmtBlockContext
+            ctx: RustFmtContext
         ): AbstractRustFmtBlock = when (node.elementType) {
             MACRO_ARG -> RustMacroArgFmtBlock(node, alignment, indent, wrap, ctx)
             else -> RustFmtBlock(node, alignment, indent, wrap, ctx)

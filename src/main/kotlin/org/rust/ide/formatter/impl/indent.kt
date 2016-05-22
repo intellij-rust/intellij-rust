@@ -4,7 +4,7 @@ import com.intellij.formatting.ASTBlock
 import com.intellij.formatting.Indent
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.Key
-import org.rust.ide.formatter.RustFmtBlock
+import org.rust.ide.formatter.blocks.RustFmtBlock
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustExprElement
 import org.rust.lang.core.psi.RustTokenElementTypes.LBRACE
