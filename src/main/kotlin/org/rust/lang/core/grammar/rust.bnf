@@ -418,7 +418,7 @@ pat ::= pat_wild
       | pat_qual_path
    /* | SHL ty_sum maybe_as_trait_ref '>' MOD_SEP ident maybe_as_trait_ref '>' MOD_SEP ident */
 
-pat_qual_path   ::= << qualified_path path_without_types >>
+pat_qual_path   ::= <<qualified_path path_without_types>>
 pat_uniq        ::= BOX pat
 
 // XXX(matklad): it is impossible to distinguish between nullary enum variants
@@ -529,16 +529,16 @@ private foreign_decl ::= foreign_static_decl | foreign_fn_decl
 
 foreign_static_decl ::= attrs_and_vis STATIC MUT? IDENTIFIER type_ascription ';' {
   pin = "STATIC"
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
 foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params foreign_fn_parameters ret_type? where_clause? ';' {
   pin = "FN"
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
 
@@ -560,10 +560,10 @@ enum_item ::= attrs_and_vis ENUM IDENTIFIER generic_params where_clause? enum_bo
 enum_body ::= '{' [ <<comma_separated_list enum_variant>> ] '}' { pin = 1 }
 enum_variant ::= outer_attr* IDENTIFIER enum_args? {
   pin = 2
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustDeclaringElement"
                  "org.rust.lang.core.psi.RustNamedElement" ]
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
 private enum_args ::= enum_struct_args
@@ -576,10 +576,10 @@ enum_discriminant ::= '=' any_expr { pin = 1 }
 
 field_decl ::= attrs_and_vis IDENTIFIER type_ascription {
   pin = 2
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner"
                  "org.rust.lang.core.psi.RustNamedElement" ]
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 // unlike structs, enum variants can't have `pub` visibility applied to fields
 field_decl_in_enum ::= outer_attr* IDENTIFIER type_ascription {
@@ -661,25 +661,25 @@ private impl_member ::= impl_method_member
 
 impl_method_member ::= attrs_and_vis fn_header method_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustInnerAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner"
                  "org.rust.lang.core.resolve.scope.RustResolveScope"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
 impl_const_member ::= attrs_and_vis CONST static_decl ';' {
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
 impl_type_member ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params '=' type ';' {
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
 
@@ -724,7 +724,7 @@ type_item ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params where_clause? '=' 
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
-type_qual_path ::= << qualified_path path_without_types >>
+type_qual_path ::= <<qualified_path path_without_types>>
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -826,8 +826,8 @@ expr ::= ret_expr
        | atom_expr
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
-private no_struct_lit_expr  ::= << withoutStructLiterals expr >> | never expr
-private any_expr            ::= << withStructLiterals expr >>    | never expr
+private no_struct_lit_expr  ::= <<withoutStructLiterals expr>> | never expr
+private any_expr            ::= <<withStructLiterals expr>>    | never expr
 private never ::= !()
 
 
@@ -898,7 +898,7 @@ unary_expr ::= (BOX | '-' | '*' | '!' | ('&' | '&&') MUT?) expr
 
 lambda_expr ::= MOVE? lambda_parameters ret_type? any_expr
 
-struct_expr ::= << checkStructAllowed >> path_generic_args_with_colons struct_expr_body
+struct_expr ::= <<checkStructAllowed>> path_generic_args_with_colons struct_expr_body
 
 struct_expr_body ::= '{' [ <<comma_separated_list field_arg>> ] ('..'  any_expr)? '}'
 private field_arg ::= field_name ':' any_expr { pin = field_name }
@@ -1137,5 +1137,3 @@ private oror   ::= <<collapse OROR   OR OR>>    | never OROR   { name = "||" }
 
 // Trailing commas are allowed
 private meta comma_separated_list ::= <<param>> ( ',' <<param>> )* ','?
-
-private skip_until_eol_rec ::= !(<< skipUntilEOL >>)

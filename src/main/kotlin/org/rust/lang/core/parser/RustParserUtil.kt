@@ -82,17 +82,6 @@ object RustParserUtil : RustGeneratedParserUtilBase() {
     @JvmStatic fun isPathModeColons(b: PsiBuilder, level: Int): Boolean = b.pathParsingMode == PathParsingMode.COLONS
     @JvmStatic fun isPathModeNoColons(b: PsiBuilder, level: Int): Boolean = b.pathParsingMode == PathParsingMode.NO_COLONS
 
-    @JvmStatic fun skipUntilEOL(b: PsiBuilder, level: Int): Boolean {
-        while (!b.eof()) {
-            if (b.tokenType == TokenType.WHITE_SPACE
-                || b.tokenText?.containsEOL() != null) return true;
-
-            b.advanceLexer();
-        }
-
-        return false;
-    }
-
     @JvmStatic fun unpairedToken(b: PsiBuilder, level: Int): Boolean =
         when (b.tokenType) {
             LBRACE, RBRACE -> false
