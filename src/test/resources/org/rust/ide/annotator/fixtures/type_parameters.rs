@@ -1,5 +1,5 @@
 trait MyTrait {
-    type <info>AssocType</info>;
+    type AssocType;
     fn <info>some_fn</info>(&self);
 }
 
