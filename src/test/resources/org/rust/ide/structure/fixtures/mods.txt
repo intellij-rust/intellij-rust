@@ -4,4 +4,5 @@
   function()
   -nested
    function()
+ moddecl
  main()

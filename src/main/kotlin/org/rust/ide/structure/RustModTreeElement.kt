@@ -18,6 +18,8 @@ open class RustModTreeElement(item: RustMod) : PsiTreeElementBase<RustMod>(item)
             is RustImplItem     -> RustImplTreeElement(it)
             is RustFnItem       -> RustFnTreeElement(it)
             is RustModItem      -> RustModTreeElement(it)
+            is RustModDeclItem  -> RustModDeclTreeElement(it)
+            is RustTypeItem     -> RustTypeTreeElement(it)
             else                -> null
         }
 }
