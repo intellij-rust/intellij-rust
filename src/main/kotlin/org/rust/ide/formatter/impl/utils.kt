@@ -45,6 +45,8 @@ val TYPES = ts(VEC_TYPE, PTR_TYPE, REF_TYPE, BARE_FN_TYPE, TUPLE_TYPE, PATH_TYPE
 
 val MACRO_ARGS = ts(MACRO_ARG, FORMAT_MACRO_ARGS, TRY_MACRO_ARGS)
 
+val FN_DECLS = ts(FN_ITEM, FOREIGN_FN_DECL, TRAIT_METHOD_MEMBER, IMPL_METHOD_MEMBER, BARE_FN_TYPE, LAMBDA_EXPR)
+
 
 val PsiElement.isTopLevelItem: Boolean
     get() = (this is RustItemElement || this is RustAttrElement) && this.parent is RustFile

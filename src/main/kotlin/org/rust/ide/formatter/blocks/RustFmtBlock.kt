@@ -8,6 +8,7 @@ import org.rust.ide.formatter.RustFmtContext
 import org.rust.ide.formatter.impl.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.METHOD_CALL_EXPR
 import org.rust.lang.core.psi.RustTokenElementTypes.DOT
+import org.rust.lang.core.psi.util.containsEOL
 
 class RustFmtBlock(
     node: ASTNode,
@@ -18,6 +19,13 @@ class RustFmtBlock(
 ) : AbstractRustFmtBlock(node, alignment, indent, wrap, ctx) {
 
     override fun buildChildren(): List<Block> {
+        // Create shared alignment object for function/method definitions,
+        // which parameter lists span multiple lines. This way we will be
+        // able to align return type and where clause properly.
+        if (node.elementType in FN_DECLS && node.findChildByType(PARAMS_LIKE)?.containsEOL() ?: false) {
+            putUserDataIfAbsent(PARAMETERS_ALIGNMENT, Alignment.createAlignment())
+        }
+
         val alignment = getAlignmentStrategy()
 
         val children = node.getChildren(null)
@@ -25,6 +33,7 @@ class RustFmtBlock(
             .map { buildChild(it, alignment) }
 
         putUserData(INDENT_MET_LBRACE, null)
+        putUserData(PARAMETERS_ALIGNMENT, null)
 
         // Create fake `.sth` block here, so child indentation will
         // be relative to it when it starts from new line.
@@ -47,10 +56,17 @@ class RustFmtBlock(
 
     private fun buildChild(child: ASTNode, alignment: RustAlignmentStrategy): AbstractRustFmtBlock {
         if (node.isFlatBlock && child.isBlockDelim(node)) {
-            replace(INDENT_MET_LBRACE, null, true)
+            putUserData(INDENT_MET_LBRACE, true)
         }
 
-        return createBlock(child, alignment.getAlignment(child, node), computeIndent(child), null, ctx)
+        val block = createBlock(child, alignment.getAlignment(child, node), computeIndent(child), null, ctx)
+
+        // Pass shared alignment object to parameter list
+        if (node.elementType in FN_DECLS && child.elementType in PARAMS_LIKE) {
+            block.putUserData(PARAMETERS_ALIGNMENT, getUserData(PARAMETERS_ALIGNMENT))
+        }
+
+        return block
     }
 
     override fun getSpacing(child1: Block?, child2: Block): Spacing? = computeSpacing(child1, child2, ctx)
