@@ -31,14 +31,6 @@ data class RustCratePath private constructor (private val crateName: String?, va
                     it.findExternCrateRootByName(crateName)?.parent
             }?.let { p.getPsiFor(it.findFileByRelativePath(path)) }?.rustMod
 
-    override fun hashCode(): Int =
-        Objects.hash(crateName, path)
-
-    override fun equals(other: Any?): Boolean =
-        (other as? RustCratePath)?.let {
-            it.crateName.equals(crateName) && it.path.equals(path)
-        } ?: false
-
     companion object {
 
         fun devise(f: PsiFile): RustCratePath? =
