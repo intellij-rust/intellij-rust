@@ -39,7 +39,7 @@ open class RustQualifiedName(open val part: RustNamePart, open val qualifier: Ru
             else -> RustQualifiedName(part, qualifier?.put(head))
         }
 
-    override fun equals(other: Any?): Boolean = other !is RustQualifiedName || other.qualifier == qualifier && other.part == part
+    override fun equals(other: Any?): Boolean = other is RustQualifiedName && other.qualifier == qualifier && other.part == part
 
     override fun hashCode(): Int = Objects.hash(qualifier, part)
 
