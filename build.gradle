@@ -33,6 +33,8 @@ allprojects {
     intellij {
         pluginName 'intellij-rust'
 
+        instrumentCode = false
+
         version ideaVersion
         downloadSources Boolean.valueOf(downloadIdeaSources)
         // FIXME: hack to support both IDEA 15 and IDEA 16.
