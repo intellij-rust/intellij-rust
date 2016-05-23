@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 /**
  * Wrapper util to run [runnable] under WL
  */
-inline fun <T> runWriteAction(runnable: () -> T): T {
+fun <T> runWriteAction(runnable: () -> T): T {
     val token = WriteAction.start()
     try {
         return runnable()
@@ -22,7 +22,7 @@ inline fun <T> runWriteAction(runnable: () -> T): T {
 /**
  * Wrapper util to run [runnable] under RL
  */
-inline fun <T> runReadAction(runnable: () -> T): T {
+fun <T> runReadAction(runnable: () -> T): T {
     val token = ReadAction.start()
     try {
         return runnable()
