@@ -107,12 +107,10 @@ object RustParserUtil : RustGeneratedParserUtilBase() {
 
     private fun<T> PsiBuilder.withContext(key: Key<T>, value: T, block: PsiBuilder.() -> Boolean): Boolean {
         val old = getUserData(key)
-        try {
-            putUserData(key, value)
-            return block()
-        } finally {
-            putUserData(key, old)
-        }
+        putUserData(key, value)
+        val result = block()
+        putUserData(key, old)
+        return result
     }
 
 }
