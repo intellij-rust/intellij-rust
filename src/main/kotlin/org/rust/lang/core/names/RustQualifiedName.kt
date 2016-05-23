@@ -2,6 +2,7 @@ package org.rust.lang.core.names
 
 import org.rust.lang.core.names.parts.RustNamePart
 import java.io.*
+import java.util.*
 
 /**
  * Abstract qualified-name representation serving purposes of
@@ -37,6 +38,10 @@ open class RustQualifiedName(open val part: RustNamePart, open val qualifier: Ru
             null -> RustQualifiedName(part, head)
             else -> RustQualifiedName(part, qualifier?.put(head))
         }
+
+    override fun equals(other: Any?): Boolean = other !is RustQualifiedName || other.qualifier == qualifier && other.part == part
+
+    override fun hashCode(): Int = Objects.hash(qualifier, part)
 
     companion object {
 
