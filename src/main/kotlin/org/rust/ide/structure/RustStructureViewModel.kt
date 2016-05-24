@@ -21,7 +21,7 @@ class RustStructureViewModel(editor: Editor?, file: RustFile) : TextEditorBasedS
             is RustFieldDecl,
             is RustFnItem,
             is RustImplMethodMember,
-            is RustModItem,
+            is RustModDeclItem,
             is RustTypeItem -> true
             else            -> false
         }
