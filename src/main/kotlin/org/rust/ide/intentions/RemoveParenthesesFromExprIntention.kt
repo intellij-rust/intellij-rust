@@ -21,6 +21,6 @@ class RemoveParenthesesFromExprIntention : PsiElementBaseIntentionAction() {
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         val parentExpr = element.parentOfType<RustParenExpr>() ?: return
-        parentExpr.replace(parentExpr.expr ?: return)
+        parentExpr.replace(parentExpr.expr)
     }
 }

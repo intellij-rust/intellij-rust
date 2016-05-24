@@ -760,26 +760,17 @@ private path_generics ::= <<isPathModeColons>> '::' generic_args
 
 // Paths (with `::` separating `generic_args` from actual name) used in expression contexts:
 //    a::b::<T,U>::c
-path_generic_args_without_colons ::= <<withPathModeNoColons full_path>> {
-  elementType = path
-  extends = path
-}
+path_generic_args_without_colons ::= <<withPathModeNoColons full_path>> { elementType = path }
 
 // Paths (w/o types and therefore `generic_args`, containing only identifiers, `self`, etc.):
 //    a::b::c
-path_without_types ::= <<withPathModeNoTypes full_path>> {
-  elementType = path
-  extends = path
-}
+path_without_types ::= <<withPathModeNoTypes full_path>> { elementType = path }
 
 // Paths (w/o `::` separating `generic_args` from actual name) used in type contexts:
 //    a::b<T,U>::c<V,W>
 //    a::b<T,U>::c(V) -> W
 //    a::b<T,U>::c(V)
-path_generic_args_with_colons ::= <<withPathModeColons full_path>> {
-  elementType = path
-  extends = path
-}
+path_generic_args_with_colons ::= <<withPathModeColons full_path>> { elementType = path }
 
 //
 // Qualified paths
@@ -826,9 +817,8 @@ expr ::= ret_expr
        | atom_expr
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
-private no_struct_lit_expr  ::= <<withoutStructLiterals expr>> | never expr
-private any_expr            ::= <<withStructLiterals expr>>    | never expr
-private never ::= !()
+no_struct_lit_expr ::= <<withoutStructLiterals expr>> { elementType = expr }
+any_expr ::= <<withStructLiterals expr>> { elementType = expr }
 
 
 block_expr ::= while_expr
@@ -1134,6 +1124,8 @@ private ltlteq ::= <<collapse LTLTEQ LT LT EQ>> | never LTLTEQ { name = "<<=" }
 private ltlt   ::= <<collapse LTLT   LT LT>>    | never LTLT   { name = "<<" }
 private lteq   ::= <<collapse LTEQ   LT EQ>>    | never LTEQ   { name = "<=" }
 private oror   ::= <<collapse OROR   OR OR>>    | never OROR   { name = "||" }
+
+private never ::= !()
 
 // Trailing commas are allowed
 private meta comma_separated_list ::= <<param>> ( ',' <<param>> )* ','?
