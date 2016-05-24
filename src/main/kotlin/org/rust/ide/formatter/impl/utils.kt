@@ -2,6 +2,7 @@ package org.rust.ide.formatter.impl
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet.orSet
 import org.rust.lang.core.psi.*
@@ -86,3 +87,5 @@ fun ASTNode.isBlockDelim(parent: ASTNode?): Boolean {
         else -> false
     }
 }
+
+fun ASTNode?.isWhitespaceOrEmpty() = this == null || textLength == 0 || elementType == WHITE_SPACE

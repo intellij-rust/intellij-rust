@@ -12,7 +12,9 @@ class RustMacroArgFmtBlock(
     ctx: RustFmtContext
 ) : AbstractRustFmtBlock(node, alignment, indent, wrap, ctx) {
 
-    override fun getSpacing(child1: Block?, child2: Block): Spacing? = Spacing.getReadOnlySpacing()
-
     override fun buildChildren(): List<Block> = emptyList()
+
+    override fun getSpacing(child1: Block?, child2: Block): Spacing? = Spacing.getReadOnlySpacing()
+    override fun getNewChildIndent(childIndex: Int): Indent? = null
+    override fun getNewChildAlignment(childIndex: Int): Alignment? = null
 }

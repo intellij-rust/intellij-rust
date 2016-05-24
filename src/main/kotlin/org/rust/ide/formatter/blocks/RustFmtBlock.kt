@@ -2,7 +2,6 @@ package org.rust.ide.formatter.blocks
 
 import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
-import com.intellij.psi.TokenType.WHITE_SPACE
 import org.rust.ide.formatter.RustAlignmentStrategy
 import org.rust.ide.formatter.RustFmtContext
 import org.rust.ide.formatter.impl.*
@@ -29,7 +28,7 @@ class RustFmtBlock(
         val alignment = getAlignmentStrategy()
 
         val children = node.getChildren(null)
-            .filter { it.textLength > 0 && it.elementType != WHITE_SPACE }
+            .filter { !it.isWhitespaceOrEmpty() }
             .map { buildChild(it, alignment) }
 
         putUserData(INDENT_MET_LBRACE, null)
@@ -38,7 +37,8 @@ class RustFmtBlock(
         // Create fake `.sth` block here, so child indentation will
         // be relative to it when it starts from new line.
         // In other words: foo().bar().baz() => foo().baz()[.baz()]
-        // Nearly copy-pasted idea from Kotlin's formatter.
+        // We are using dot as our representative.
+        // The idea is nearly copy-pasted from Kotlin's formatter.
         if (node.elementType == METHOD_CALL_EXPR) {
             val dotIndex = children.indexOfFirst { it is ASTBlock && it.node.elementType == DOT }
             if (dotIndex != -1) {
@@ -68,7 +68,4 @@ class RustFmtBlock(
 
         return block
     }
-
-    override fun getSpacing(child1: Block?, child2: Block): Spacing? = computeSpacing(child1, child2, ctx)
-    override fun getNewChildIndent(childIndex: Int): Indent? = newChildIndent(childIndex)
 }

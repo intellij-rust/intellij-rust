@@ -6,6 +6,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.formatter.FormatterUtil
 import org.rust.ide.formatter.RustFmtContext
+import org.rust.ide.formatter.impl.computeSpacing
+import org.rust.ide.formatter.impl.newChildIndent
 import org.rust.lang.core.psi.RustCompositeElementTypes.MACRO_ARG
 
 /**
@@ -30,11 +32,13 @@ abstract class AbstractRustFmtBlock(
 
     abstract fun buildChildren(): List<Block>
 
+    override fun getSpacing(child1: Block?, child2: Block): Spacing? = computeSpacing(child1, child2, ctx)
+
     override fun getChildAttributes(newChildIndex: Int): ChildAttributes =
         ChildAttributes(getNewChildIndent(newChildIndex), getNewChildAlignment(newChildIndex))
 
-    protected open fun getNewChildIndent(childIndex: Int): Indent? = null
-    protected open fun getNewChildAlignment(childIndex: Int): Alignment? = null
+    open fun getNewChildIndent(childIndex: Int): Indent? = newChildIndent(childIndex)
+    open fun getNewChildAlignment(childIndex: Int): Alignment? = null
 
     override fun isLeaf(): Boolean = node.firstChildNode == null
 
