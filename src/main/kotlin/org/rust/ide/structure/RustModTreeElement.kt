@@ -13,12 +13,12 @@ open class RustModTreeElement(item: RustMod) : PsiTreeElementBase<RustMod>(item)
     private fun toTreeElement(it: RustItem): StructureViewTreeElement? =
         when (it) {
             is RustEnumItem     -> RustEnumTreeElement(it)
-            is RustTraitItem    -> RustTraitTreeElement(it)
-            is RustStructItem   -> RustStructTreeElement(it)
-            is RustImplItem     -> RustImplTreeElement(it)
             is RustFnItem       -> RustFnTreeElement(it)
-            is RustModItem      -> RustModTreeElement(it)
+            is RustImplItem     -> RustImplTreeElement(it)
             is RustModDeclItem  -> RustModDeclTreeElement(it)
+            is RustModItem      -> RustModTreeElement(it)
+            is RustStructItem   -> RustStructTreeElement(it)
+            is RustTraitItem    -> RustTraitTreeElement(it)
             is RustTypeItem     -> RustTypeTreeElement(it)
             else                -> null
         }

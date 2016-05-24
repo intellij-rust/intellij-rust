@@ -12,11 +12,11 @@ class RustStructureViewTest : RustTestCaseBase() {
 
     fun testFunctions() = doFileTest()
 
-    fun testStructs()     = doFileTest()
-    fun testEnums()       = doFileTest()
-    fun testTraits()      = doFileTest()
-    fun testImpls()       = doFileTest()
-    fun testMods()        = doFileTest()
+    fun testEnums() = doFileTest()
+    fun testImpls() = doFileTest()
+    fun testMods() = doFileTest()
+    fun testStructs() = doFileTest()
+    fun testTraits() = doFileTest()
     fun testTypeAliases() = doFileTest()
 
     private fun doTest(expected: String) {
