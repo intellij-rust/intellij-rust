@@ -9,10 +9,7 @@ val RustExpr.inferredType: RustResolvedType by psiCached {
         is RustPathExpr -> {
             val target = path.reference.resolve()
             when (target) {
-                is RustSelfArgument -> {
-                    val impl = target.parentOfType<RustImplItem>()
-                    impl?.type?.resolvedType ?: RustUnknownType
-                }
+                is RustSelfArgument -> target.parentOfType<RustImplItem>()?.type?.resolvedType ?: RustUnknownType
                 else -> RustUnknownType
             }
         }
