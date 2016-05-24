@@ -19,6 +19,8 @@ mod my {
     }
 }
 
+mod moddecl;
+
 fn main() {
     function();
     // my::function();
