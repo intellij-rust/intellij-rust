@@ -8,7 +8,7 @@ import org.rust.ide.formatter.blocks.RustFmtBlock
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 
 /**
- * Stores common alignment object for function declarations's parameters, return type & where clause.
+ * Stores shared alignment object for function declarations's parameters, return type & where clause.
  */
 val PARAMETERS_ALIGNMENT: Key<Alignment> = Key.create("PARAMETERS_ALIGNMENT")
 

@@ -21,33 +21,32 @@ import org.rust.lang.core.psi.RustTokenElementTypes.LBRACE
  */
 val INDENT_MET_LBRACE: Key<Boolean> = Key.create("INDENT_MET_LBRACE")
 
-fun ASTBlock.newChildIndent(childIndex: Int): Indent? {
-    // MOD_ITEM and FOREIGN_MOD_ITEM do not have separate PSI node for contents
-    // blocks so we have to manually decide whether new child is before (no indent)
+fun ASTBlock.newChildIndent(childIndex: Int): Indent? = when {
+    // Flat brace blocks do not have separate PSI node for content blocks
+    // so we have to manually decide whether new child is before (no indent)
     // or after (normal indent) left brace node.
-    if (node.isModItem) {
+    node.isFlatBraceBlock -> {
         val lbraceIndex = subBlocks.indexOfFirst { it is ASTBlock && it.node.elementType == LBRACE }
         if (lbraceIndex != -1 && lbraceIndex < childIndex) {
-            return Indent.getNormalIndent()
+            Indent.getNormalIndent()
+        } else {
+            Indent.getNoneIndent()
         }
     }
 
     // We are inside some kind of {...}, [...], (...) or <...> block
-    if (node.isDelimitedBlock) {
-        return Indent.getNormalIndent()
-    }
+    node.isDelimitedBlock -> Indent.getNormalIndent()
 
-    // Indent chain calls
-    if(node.elementType == METHOD_CALL_EXPR) {
-        return Indent.getContinuationWithoutFirstIndent()
-    }
+    // Indent expressions (chain calls, binary exprs, ...)
+    node.psi is RustExpr -> Indent.getContinuationWithoutFirstIndent()
 
     // Otherwise we don't want any indentation (null means continuation indent)
-    return Indent.getNoneIndent()
+    else -> Indent.getNoneIndent()
 }
 
 fun RustFmtBlock.computeIndent(child: ASTNode): Indent? {
     val parentType = node.elementType
+    val parentPsi = node.psi
     val childType = child.elementType
     val childPsi = child.psi
     return when {
@@ -55,7 +54,12 @@ fun RustFmtBlock.computeIndent(child: ASTNode): Indent? {
         node.isDelimitedBlock -> getIndentIfNotDelim(child, node)
 
         // Indent flat block contents, excluding closing brace
-        node.isFlatBlock && getUserData(INDENT_MET_LBRACE) == true -> getIndentIfNotDelim(child, node)
+        node.isFlatBlock ->
+            if (getUserData(INDENT_MET_LBRACE) == true) {
+                getIndentIfNotDelim(child, node)
+            } else {
+                Indent.getNoneIndent()
+            }
 
         // In match expression:
         //     Foo =>
@@ -74,8 +78,8 @@ fun RustFmtBlock.computeIndent(child: ASTNode): Indent? {
         //     where ... {}
         childType == RET_TYPE || childType == WHERE_CLAUSE -> Indent.getNormalIndent()
 
-        // Indent chain calls
-        parentType == METHOD_CALL_EXPR -> Indent.getContinuationWithoutFirstIndent()
+        // Indent expressions (chain calls, binary exprs, ...)
+        parentPsi is RustExpr -> Indent.getContinuationWithoutFirstIndent()
 
         else -> Indent.getNoneIndent()
     }

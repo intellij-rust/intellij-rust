@@ -12,12 +12,14 @@ class RustAutoIndentTestCase : RustTestCaseBase() {
     fun testForeignModItem() = doTest()
     fun testForeignModItem2() = doTest()
     fun testPat() = doTest()
-    fun testPat2() = doTest()
     fun testChainCall() = doTest()
     fun testChainCall2() = doTest()
     fun testChainCall3() = doTest()
     fun testChainCall4() = doTest()
     fun testChainCall5() = doTest()
+    fun testExpr() = doTest()
+    fun testExpr2() = doTest()
+    fun testExpr3() = doTest()
 
     private fun doTest() = checkByFile {
         myFixture.type('\n')
