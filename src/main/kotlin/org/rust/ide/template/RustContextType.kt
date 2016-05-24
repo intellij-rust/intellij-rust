@@ -2,12 +2,15 @@ package org.rust.ide.template
 
 import com.intellij.codeInsight.template.EverywhereContextType
 import com.intellij.codeInsight.template.TemplateContextType
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.rust.lang.RustLanguage
+import org.rust.lang.core.psi.RustLiteral
 import org.rust.lang.core.psi.RustStructItem
+import org.rust.lang.core.psi.util.parentOfType
 
 
 sealed class RustContextType(id: String, presentableName: String, parentContext: Class<out TemplateContextType>)
@@ -18,8 +21,11 @@ sealed class RustContextType(id: String, presentableName: String, parentContext:
             return false
         }
         val element = file.findElementAt(offset)
+        if (element == null || element is PsiComment || element is RustLiteral) {
+            return false
+        }
 
-        return element != null && isInContextImpl(element)
+        return isInContextImpl(element)
     }
 
     abstract protected fun isInContextImpl(element: PsiElement): Boolean
@@ -32,6 +38,6 @@ sealed class RustContextType(id: String, presentableName: String, parentContext:
         override fun isInContextImpl(element: PsiElement): Boolean =
             // Structs can't be nested or contain other expressions,
             // so it is ok to look for any Struct ancestor.
-            PsiTreeUtil.getParentOfType(element, RustStructItem::class.java) != null
+            element.parentOfType<RustStructItem>() != null
     }
 }
