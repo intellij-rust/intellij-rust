@@ -1,7 +1,12 @@
 language: java
-jdk:
-  - oraclejdk8
 
+jdk: oraclejdk8
+env: 
+  global: ORG_GRADLE_PROJECT_downloadIdeaSources=false 
+  matrix:
+        - ORG_GRADLE_PROJECT_ideaVersion=LATEST-TRUNK-SNAPSHOT
+        - ORG_GRADLE_PROJECT_ideaVersion=15.0.4
+        
 before_script:
   - curl -L -O https://static.rust-lang.org/dist/rust-nightly-x86_64-unknown-linux-gnu.tar.gz
   - tar -xzf rust-nightly-x86_64-unknown-linux-gnu.tar.gz
@@ -17,5 +22,3 @@ cache:
   directories:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
-
-env: ORG_GRADLE_PROJECT_downloadIdeaSources=false
