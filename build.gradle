@@ -6,6 +6,7 @@
 buildscript {
     repositories {
         mavenCentral()
+        maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
     }
 
     dependencies {
@@ -14,7 +15,7 @@ buildscript {
 }
 
 plugins {
-    id 'org.jetbrains.intellij' version "0.0.42"
+    id 'org.jetbrains.intellij' version "0.1.4"
     id 'de.undercouch.download' version "2.1.0"
 }
 

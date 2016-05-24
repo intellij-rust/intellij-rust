@@ -1,36 +1,23 @@
 package org.rust.ide.utils
 
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
-
+import com.intellij.openapi.util.Computable
 
 /**
  * Wrapper util to run [runnable] under WL
+ *
+ * Copy pasted from IDEA for backwards compatibility with 15.0.4
  */
-fun <T> runWriteAction(runnable: () -> T): T {
-    val token = WriteAction.start()
-    try {
-        return runnable()
-    }
-    finally {
-        token.finish()
-    }
-}
+fun <T> runWriteAction(runnable: () -> T): T = ApplicationManager.getApplication().runWriteAction (Computable { runnable.invoke() })
 
 /**
  * Wrapper util to run [runnable] under RL
+ *
+ * Copy pasted from IDEA for backwards compatibility with 15.0.4
  */
-fun <T> runReadAction(runnable: () -> T): T {
-    val token = ReadAction.start()
-    try {
-        return runnable()
-    }
-    finally {
-        token.finish()
-    }
-}
+fun <T> runReadAction(runnable: () -> T): T = ApplicationManager.getApplication().runReadAction (Computable { runnable.invoke() })
 
 /**
  * Util to extract application-level services
