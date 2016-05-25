@@ -22,42 +22,14 @@ class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
 
     private val TIMEOUT: Long = 10 * 1000 /* millis */
 
-    fun testResolveExternalLibrary() = withProject("external_library") {
-        val f = bindToProjectUpdateEvent() {
-            val reference = extractReference("src/main.rs")
-            reference.resolve()
-        }
+    fun testResolveExternalLibrary() = resolveRefInFile("external_library", "src/main.rs")
+    fun testResolveLocalPackage() = resolveRefInFile("local_package", "src/main.rs")
+    fun testResolveLocalPackageMod() = resolveRefInFile("local_package_mod", "src/bar.rs")
+    fun testModuleRelations() = resolveRefInFile("mods", "src/foo.rs")
 
-        updateCargoProject()
-
-        assertThat(f.get(TIMEOUT, TimeUnit.MILLISECONDS)).isNotNull()
-    }
-
-    fun testResolveLocalPackage() = withProject("local_package") {
-        val f = bindToProjectUpdateEvent() {
-            val reference = extractReference("src/main.rs")
-            reference.resolve()
-        }
-
-        updateCargoProject()
-
-        assertThat(f.get(TIMEOUT, TimeUnit.MILLISECONDS)).isNotNull()
-    }
-
-    fun testResolveLocalPackageMod() = withProject("local_package_mod") {
-        val f = bindToProjectUpdateEvent() {
-            val reference = extractReference("src/bar.rs")
-            reference.resolve()
-        }
-
-        updateCargoProject()
-
-        assertThat(f.get(TIMEOUT, TimeUnit.MILLISECONDS)).isNotNull()
-    }
-
-    fun testModuleRelations() = withProject("mods") {
+    private fun resolveRefInFile(project: String, fileWithRef: String) = withProject(project) {
         val f = bindToProjectUpdateEvent {
-            val reference = extractReference("src/foo.rs")
+            val reference = extractReference(fileWithRef)
             reference.resolve()
         }
 
