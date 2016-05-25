@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.CargoProjectDescription
@@ -49,14 +48,10 @@ inline fun<reified T: Any> Module.getComponentOrThrow(): T =
  * Makes given path relative to the content-root of the module or
  * one of the respective's dependencies
  */
-fun Module.relativise(f: VirtualFile): Pair<String?, String>? =
-    cargoProject?.let { project ->
-        (listOf(Pair(null, project.packages.orEmpty().firstOrNull()?.contentRoot ?: return null)) + project.externCrates.map { Pair(it.name, it.virtualFile.parent) })
-            .find {
-                FileUtil.isAncestor(it.second.path, f.path, /* strict = */ false)
-            }?.let {
-                Pair(it.first, FileUtil.getRelativePath(it.second.path, f.canonicalPath!!, '/')!!)
-            }
+fun Module.relativise(f: VirtualFile): Pair<String, String>? =
+    cargoProject?.findPackageForFile(f)?.let {
+        val (pkg, relPath) = it
+        pkg.name to relPath
     }
 
 /**

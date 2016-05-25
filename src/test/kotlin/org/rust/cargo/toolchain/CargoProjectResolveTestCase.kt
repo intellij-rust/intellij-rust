@@ -44,6 +44,17 @@ class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
         assertThat(f.get(TIMEOUT, TimeUnit.MILLISECONDS)).isNotNull()
     }
 
+    fun testResolveLocalPackageMod() = withProject("local_package_mod") {
+        val f = bindToProjectUpdateEvent() {
+            val reference = extractReference("src/bar.rs")
+            reference.resolve()
+        }
+
+        updateCargoProject()
+
+        assertThat(f.get(TIMEOUT, TimeUnit.MILLISECONDS)).isNotNull()
+    }
+
     fun testModuleRelations() = withProject("mods") {
         val f = bindToProjectUpdateEvent {
             val reference = extractReference("src/foo.rs")
