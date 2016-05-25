@@ -3,7 +3,6 @@ package org.rust.cargo.util
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleServiceManager
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.OrderEntryUtil
@@ -12,6 +11,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import org.rust.cargo.project.CargoProjectDescription
 
 object RustModuleUtil
 
@@ -45,22 +45,13 @@ inline fun<reified T: Any> Module.getComponentOrThrow(): T =
     getComponent()!!
 
 
-
-/**
- * Extracts content- and library-(ordered)-entries for the given module
- */
-fun Module.getModuleAndLibraryRoots(): Collection<VirtualFile> {
-    val rootManager = ModuleRootManager.getInstance(this)
-    return rootManager.contentRoots.toList() + rootManager.orderEntries().classesRoots
-}
-
 /**
  * Makes given path relative to the content-root of the module or
  * one of the respective's dependencies
  */
 fun Module.relativise(f: VirtualFile): Pair<String?, String>? =
     cargoProject?.let { project ->
-        (listOf(Pair(null, project.packages.orEmpty().firstOrNull()?.contentRoot ?: return null)) + externCrates.map { Pair(it.name, it.virtualFile.parent) })
+        (listOf(Pair(null, project.packages.orEmpty().firstOrNull()?.contentRoot ?: return null)) + project.externCrates.map { Pair(it.name, it.virtualFile.parent) })
             .find {
                 FileUtil.isAncestor(it.second.path, f.path, /* strict = */ false)
             }?.let {
@@ -83,19 +74,22 @@ fun Module.attachStandardLibrary(sourcesArchive: VirtualFile) {
 }
 
 /**
- * Looks up standard Rust crates in the Rust external library.
+ * Combines information about project structure which we got form cargo and information
+ * about standard library which is stored as an IDEA external library
  */
-val Module.standardLibraryCrates: Collection<ExternCrate> get() {
+fun Module.extendProjectDescriptionWithStandardLibraryCrates(projectDescription: CargoProjectDescription) : CargoProjectDescription {
     val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(rustLibraryName)
-        ?: return emptyList()
+        ?: return projectDescription
 
     val roots: Map<String, VirtualFile> = lib.getFiles(OrderRootType.CLASSES).associateBy { it.name }
-    return stdlibCrateNames.mapNotNull { name ->
+    val stdlibPackages = stdlibCrateNames.mapNotNull { name ->
         roots["lib$name"]?.let { libDir ->
             val file = libDir.findFileByRelativePath("lib.rs") ?: return@let null
-            ExternCrate(name, file)
+            name to file
         }
     }
+
+    return projectDescription.withAdditionalPackages(stdlibPackages)
 }
 
 /**

@@ -17,41 +17,14 @@ object RustCrateUtil
 val Module.crateRoots: Collection<VirtualFile>
     get() = cargoProject?.packages.orEmpty()
                 .flatMap    { it.targets }
-                .mapNotNull { it.crateRoot } + standardLibraryCrates.map { it.virtualFile }
+                .mapNotNull { it.crateRoot }
 
-
-data class ExternCrate(
-    /**
-     * Name of a crate as appears in `extern crate foo;`
-     */
-    val name: String,
-
-    /**
-     * Root module file (typically `src/lib.rs`)
-     */
-    val virtualFile: VirtualFile
-)
-
-/**
- * Searches for the `PsiFile` of the root mod of the crate
- */
-fun Module.findExternCrateRootByName(crateName: String): VirtualFile? =
-    externCrates.find { it.name == crateName } ?.let { it.virtualFile }
 
 val Module.preludeModule: PsiFile? get() {
-    val stdlib = findExternCrateRootByName(AutoInjectedCrates.std) ?: return null
+    val stdlib = cargoProject?.findExternCrateRootByName(AutoInjectedCrates.std) ?: return null
     val preludeFile = stdlib.findFileByRelativePath("../prelude/v1.rs") ?: return null
     return project.getPsiFor(preludeFile)
 }
-
-/**
- * A set of external crates for the module. External crate can refer
- * to another module or a library or a crate form the SDK
- */
-internal val Module.externCrates: Collection<ExternCrate> get() =
-    cargoProject?.packages.orEmpty().mapNotNull { pkg ->
-        pkg.libTarget?.crateRoot?.let { ExternCrate(pkg.name, it) }
-    } + standardLibraryCrates
 
 object AutoInjectedCrates {
     const val std: String = "std"
@@ -70,4 +43,6 @@ val Module.cargoProjectRoot: VirtualFile?
  * Extracts Cargo project description out of `Cargo.toml`
  */
 val Module.cargoProject: CargoProjectDescription?
-    get() = getComponentOrThrow<CargoProjectWorkspace>().projectDescription
+    get() = getComponentOrThrow<CargoProjectWorkspace>().projectDescription?.let {
+        extendProjectDescriptionWithStandardLibraryCrates(it)
+    }

@@ -3,16 +3,16 @@ package org.rust.lang.core.resolve.indexes
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.util.io.IOUtil
-import org.rust.cargo.util.*
+import org.rust.cargo.util.cargoProject
+import org.rust.cargo.util.getPsiFor
+import org.rust.cargo.util.relativise
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.module
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.Serializable
-import java.util.*
 
 /**
  * URI for the particular module of the Crate
@@ -28,7 +28,7 @@ data class RustCratePath private constructor (private val crateName: String?, va
                         .orEmpty()
                         .firstOrNull()?.let { it.contentRoot }
                 else
-                    it.findExternCrateRootByName(crateName)?.parent
+                    it.cargoProject?.findExternCrateRootByName(crateName)?.parent
             }?.let { p.getPsiFor(it.findFileByRelativePath(path)) }?.rustMod
 
     companion object {

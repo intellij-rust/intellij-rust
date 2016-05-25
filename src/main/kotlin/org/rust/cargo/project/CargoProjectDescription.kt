@@ -46,6 +46,43 @@ class CargoProjectDescription private constructor(
         LIB, BIN, TEST, EXAMPLE, BENCH, UNKNOWN
     }
 
+    data class ExternCrate(
+        /**
+         * Name of a crate as appears in `extern crate foo;`
+         */
+        val name: String,
+
+        /**
+         * Root module file (typically `src/lib.rs`)
+         */
+        val virtualFile: VirtualFile
+    )
+
+    val externCrates: Collection<ExternCrate> get() = packages.mapNotNull { pkg ->
+        pkg.libTarget?.crateRoot?.let { ExternCrate(pkg.name, it) }
+    }
+
+    /**
+     * Searches for the `VirtualFile` of the root mod of the crate
+     */
+    fun findExternCrateRootByName(crateName: String): VirtualFile? =
+        externCrates.orEmpty().find { it.name == crateName }?.let { it.virtualFile }
+
+    fun withAdditionalPackages(additionalPackages: Collection<Pair<String, VirtualFile>>): CargoProjectDescription {
+        val stdlibPackages = additionalPackages.map {
+            val (crateName, crateRoot) = it
+            Package(
+                contentRootPath = crateRoot.parent.url,
+                name = crateName,
+                version = "",
+                targets = listOf(Target(crateRoot.url, kind = TargetKind.LIB)),
+                source = null,
+                dependencies = emptyList()
+            )
+        }
+        return CargoProjectDescription(packages + stdlibPackages)
+    }
+
     companion object {
         fun deserialize(data: CargoProjectDescriptionData): CargoProjectDescription? {
             val dependenciesMap = data.dependencies.associate { node ->
