@@ -156,8 +156,11 @@ private class Resolver {
                     resolveIn(enumerateScopesFor(ref), by(ref))
                 } else {
                     val parent = resolve(qual).element
-                    if (parent is RustResolveScope) resolveIn(sequenceOf(parent), by(ref))
-                    else RustResolveEngine.ResolveResult.Unresolved
+                    when (parent) {
+                        is RustMod -> resolveIn(sequenceOf(parent), by(ref))
+                        is RustEnumItem -> resolveIn(sequenceOf(parent), by(ref))
+                        else -> RustResolveEngine.ResolveResult.Unresolved
+                    }
                 }
             }
         }

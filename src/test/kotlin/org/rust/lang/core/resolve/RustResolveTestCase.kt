@@ -45,4 +45,5 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testWrongSuper()          = checkIsUnbound()
     fun testModItems3()           = checkIsUnbound()
     fun testModItems5()           = checkIsUnbound()
+    fun testFunctionIsNotModule() = checkIsUnbound()
 }
