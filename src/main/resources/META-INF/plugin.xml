@@ -181,7 +181,9 @@
     </extensions>
 
     <application-components>
-        <!-- Add your project components here -->
+        <component>
+            <implementation-class>org.rust.ide.update.UpdateComponent</implementation-class>
+        </component>
     </application-components>
 
     <project-components>

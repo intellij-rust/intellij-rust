@@ -76,4 +76,5 @@ val PsiFile.usefulName: String get() = when (name) {
 
 val PsiFile.rustMod: RustMod? get() = this as? RustFile
 
-val VirtualFile.isNotRustFile: Boolean get() = fileType != RustFileType
+val VirtualFile.isNotRustFile: Boolean get() = !isRustFile
+val VirtualFile.isRustFile: Boolean get() = fileType == RustFileType
