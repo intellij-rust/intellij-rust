@@ -21,7 +21,6 @@ class CargoRunState(environment: ExecutionEnvironment,
     override fun startProcess(): ProcessHandler {
         val cmd = toolchain.cargo(cargoProjectDirectory.path)
             .generalCommand(command, additionalArguments, environmentVariables)
-
         return OSProcessHandler(cmd)
     }
 }
