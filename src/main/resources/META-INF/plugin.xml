@@ -118,6 +118,9 @@
         <localInspection language="RUST" enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.UnresolvedModuleDeclarationInspection"/>
 
+        <localInspection language="RUST" enabledByDefault="false" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RustUnresolvedReferenceInspection"/>
+
         <!-- Surrounder -->
         <lang.surroundDescriptor language="RUST"
                                  implementationClass="org.rust.ide.surround.RustSurroundDescriptor"/>
