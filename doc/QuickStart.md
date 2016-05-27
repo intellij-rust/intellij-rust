@@ -87,4 +87,4 @@ In general, plugin updates should go smoothly. Though, if you experience some we
 
 ## Tips
 
-Check out [tips](Tips.md) for some neat tricks!
+Check out [features](Features.md) for some neat tricks!

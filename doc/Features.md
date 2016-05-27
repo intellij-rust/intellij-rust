@@ -6,36 +6,31 @@
 
 --------------------------------------------------------------------------------
 
-## Tips
-
-* Use hippie expand (aka dumb completion) for completion based solely on the
-  words from the file.
-
-* You can use run configuration to run different Rust tools. For example, you
-  can create a run configuration to launch `cargo fmt`.
 
 
 ## Features
 
-* **Goto Declaration** for local variables and items.
+* **Goto Declaration** for local variables and items (`Ctrl+B`, `Ctrl` + mouse click).
 * **Goto Class/Symbol** (`Ctrl+N`, `Ctrl+Shift+N`).
 * **Goto Super Module** (`Ctrl+U`).
-* **File Structure**, aka imenu (`Ctrl+F12`, `Alt+7`).
-* `Basic completion`.
+* **File Structure** (`Ctrl+F12`, `Alt+7`).
+* `Code completion`, thogh it is limited at the moment. You can use `Alt+/` completion as a workaround.
 * `Expand selection` (`Ctrl+W`).
 * `Live templates` aka snippets (`Ctrl+J`).
+* Initial formatter support (`Ctrl+Alt+l`).
 * Run configurations.
 
 ## Intentions
 
 Use `Alt+Enter` to invoke an intention.
 
-* **Expand Module**: inside `foo.rs` file invoke this action to get `foo/mod.rs`.
-* **Contract Module**: the opposite of **Expand Module**.
-* **Extract Inline Module**: move `mod foo { ... }` to a separate file.
-* **Create Module File**: if you have unresolved `mod foo;` this intention will create
+* **Expand module**: invoke this action inside `foo.rs` file to get `foo/mod.rs`.
+* **Contract module**: the opposite of **Expand Module**.
+* **Extract inline module**: move `mod foo { ... }` to a separate file.
+* **Create module file**: if you have unresolved `mod foo;` this intention will create
   `foo.rs`. It's a convenient way to add a new Rust file: just type `mod bar;` and
   press `Alt+Enter`.
+* **Add derive clause**: invoke this action inside struct or enum, to add traits to the `#[derive(..)]`.
 
 ## Live Templates
 
@@ -52,6 +47,14 @@ Use `Ctrl+J` to view the list of templates applicable in the current context.
   - `f` -- field name and type.
   - `pf` -- `pub` field.
 
+
+## Tips
+
+* Use hippie expand `Alt+/` (aka dumb completion) for completion based solely on the
+  words from the file.
+
+* You can use run configuration to run different Rust tools. For example, you
+  can create a run configuration to launch `cargo fmt`.
 
 ## Editors
 
