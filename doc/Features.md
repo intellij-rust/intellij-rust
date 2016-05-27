@@ -14,7 +14,7 @@
 * **Goto Class/Symbol** (`Ctrl+N`, `Ctrl+Shift+N`).
 * **Goto Super Module** (`Ctrl+U`).
 * **File Structure** (`Ctrl+F12`, `Alt+7`).
-* `Code completion`, thogh it is limited at the moment. You can use `Alt+/` completion as a workaround.
+* `Code completion`, though it is limited at the moment. You can use `Alt+/` completion as a workaround.
 * `Expand selection` (`Ctrl+W`).
 * `Live templates` aka snippets (`Ctrl+J`).
 * Initial formatter support (`Ctrl+Alt+l`).
