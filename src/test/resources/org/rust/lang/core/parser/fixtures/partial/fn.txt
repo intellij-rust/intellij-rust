@@ -109,7 +109,7 @@ FILE
             RustPathExprImpl(PATH_EXPR)
               RustPathImpl(PATH)
                 PsiElement(<IDENTIFIER>)('y')
-          PsiErrorElement:'!', '::', ';' or '}' expected, got 'fn'
+          PsiErrorElement:'!', ';' or '}' expected, got 'fn'
             <empty list>
       PsiWhiteSpace('\n\n')
       RustFnItemImpl(FN_ITEM)

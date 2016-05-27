@@ -33,6 +33,7 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testLocalFn()             = checkIsBound()
     fun testStructField()         = checkIsBound()
     fun testEnumField()           = checkIsBound()
+    fun testNonGlobalPathWithColons() = checkIsBound()
 
     fun testLetCycle1()           = checkIsUnbound()
     fun testLetCycle3()           = checkIsUnbound()
@@ -47,3 +48,4 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testModItems5()           = checkIsUnbound()
     fun testFunctionIsNotModule() = checkIsUnbound()
 }
+

@@ -448,9 +448,9 @@ pat_binding ::= binding_mode? IDENTIFIER !'...' !'::'
 
 private lit_or_path ::= path_expr | lit | '-' lit
 
-generic_args ::= '<' !('=') generic_values '>' {
-  pin = 2
-}
+generic_args ::= generic_args_innner
+colon_generic_args ::= '::' generic_args_innner { elementType = generic_args }
+private generic_args_innner ::= '<' !('=') generic_values '>' { pin = 2 }
 
 private generic_values ::= lifetimes [ ',' type_sums_and_or_bindings ] ','?
                          |                 type_sums_and_or_bindings?
@@ -752,7 +752,7 @@ private full_path ::= path_start path_segment*
 path_start ::= '::'?  path_ident path_generics? { elementType = path }
 left path_segment ::= '::' path_ident path_generics? { elementType = path }
 
-private path_generics ::= <<isPathModeColons>> '::' generic_args
+private path_generics ::= <<isPathModeColons>> colon_generic_args
                         | <<isPathModeNoColons>> ( generic_args | path_parameters ret_type? ) // Fn(i32) -> i32 sugar
 
 
@@ -970,7 +970,7 @@ private index_arg ::= '[' expr ']'
 
 call_expr ::= expr arg_list
 
-method_call_expr ::= expr '.' IDENTIFIER [ '::' generic_args ] arg_list { pin = 2 }
+method_call_expr ::= expr '.' IDENTIFIER colon_generic_args? arg_list { pin = 2 }
 
 arg_list ::= '(' expr_list? ')' { pin = 1 }
 

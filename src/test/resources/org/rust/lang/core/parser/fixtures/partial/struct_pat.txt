@@ -35,7 +35,7 @@ FILE
           PsiElement(<IDENTIFIER>)('S')
       PsiWhiteSpace(' ')
       RustExprStmtImpl(EXPR_STMT)
-        PsiErrorElement:'!', '(', ':', '::', ';' or '{' expected, got '{'
+        PsiErrorElement:'!', '(', ':', ';' or '{' expected, got '{'
           <empty list>
         RustBlockExprImpl(BLOCK_EXPR)
           RustBlockImpl(BLOCK)
