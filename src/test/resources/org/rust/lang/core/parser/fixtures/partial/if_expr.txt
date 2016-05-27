@@ -6,8 +6,6 @@ FILE
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('amp_sso')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustParametersImpl(PARAMETERS)
       PsiElement(()('(')
       RustParameterImpl(PARAMETER)

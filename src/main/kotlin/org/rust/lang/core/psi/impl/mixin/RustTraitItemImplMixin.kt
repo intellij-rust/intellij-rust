@@ -17,7 +17,7 @@ abstract class RustTraitItemImplMixin : RustItemImpl, RustTraitItem {
 
     constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val declarations: Collection<RustDeclaringElement> get() = genericParams.typeParamList
+    override val declarations: Collection<RustDeclaringElement> get() = genericParams?.typeParamList.orEmpty()
 
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RustIcons.TRAIT)

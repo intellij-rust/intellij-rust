@@ -3,8 +3,6 @@ FILE
     PsiElement(struct)('struct')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('S')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     PsiElement(;)(';')
   PsiWhiteSpace('\n\n')
   RustTraitItemImpl(TRAIT_ITEM)
@@ -12,8 +10,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('A')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustTraitBodyImpl(TRAIT_BODY)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
@@ -28,8 +24,6 @@ FILE
   RustImplItemImpl(IMPL_ITEM)
     PsiElement(impl)('impl')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustTraitRefImpl(TRAIT_REF)
       RustPathImpl(PATH)
         PsiElement(<IDENTIFIER>)('A')
@@ -48,8 +42,6 @@ FILE
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('B')
         PsiWhiteSpace(' ')
-        RustGenericParamsImpl(GENERIC_PARAMS)
-          <empty list>
         PsiElement(=)('=')
         PsiWhiteSpace(' ')
         RustPathTypeImpl(PATH_TYPE)
@@ -64,8 +56,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('T')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustTraitBodyImpl(TRAIT_BODY)
       PsiElement({)('{')
       PsiWhiteSpace(' ')
@@ -89,8 +79,6 @@ FILE
   RustImplItemImpl(IMPL_ITEM)
     PsiElement(impl)('impl')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustPathTypeImpl(PATH_TYPE)
       RustPathImpl(PATH)
         PsiElement(<IDENTIFIER>)('T')
@@ -103,8 +91,6 @@ FILE
   RustImplItemImpl(IMPL_ITEM)
     PsiElement(impl)('impl')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustTupleTypeImpl(TUPLE_TYPE)
       PsiElement(()('(')
       RustPathTypeImpl(PATH_TYPE)
@@ -120,8 +106,6 @@ FILE
   RustImplItemImpl(IMPL_ITEM)
     PsiElement(impl)('impl')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustTraitRefImpl(TRAIT_REF)
       RustPathImpl(PATH)
         PsiElement(<IDENTIFIER>)('T')
@@ -222,8 +206,6 @@ FILE
   RustImplItemImpl(IMPL_ITEM)
     PsiElement(impl)('impl')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustTraitRefImpl(TRAIT_REF)
       RustPathImpl(PATH)
         PsiElement(<IDENTIFIER>)('T')
@@ -257,8 +239,6 @@ FILE
   RustImplItemImpl(IMPL_ITEM)
     PsiElement(impl)('impl')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustTupleTypeImpl(TUPLE_TYPE)
       PsiElement(()('(')
       RustPathTypeImpl(PATH_TYPE)
@@ -330,8 +310,6 @@ FILE
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('Item')
         PsiWhiteSpace(' ')
-        RustGenericParamsImpl(GENERIC_PARAMS)
-          <empty list>
         PsiElement(=)('=')
         PsiWhiteSpace(' ')
         RustRefTypeImpl(REF_TYPE)
@@ -380,8 +358,6 @@ FILE
         PsiElement(fn)('fn')
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('value')
-        RustGenericParamsImpl(GENERIC_PARAMS)
-          <empty list>
         RustParametersImpl(PARAMETERS)
           PsiElement(()('(')
           RustSelfArgumentImpl(SELF_ARGUMENT)

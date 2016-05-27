@@ -5,8 +5,6 @@ FILE
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('documented_function')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustParametersImpl(PARAMETERS)
       PsiElement(()('(')
       PsiElement())(')')
@@ -20,8 +18,6 @@ FILE
         PsiElement(fn)('fn')
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('foo')
-        RustGenericParamsImpl(GENERIC_PARAMS)
-          <empty list>
         RustParametersImpl(PARAMETERS)
           PsiElement(()('(')
           PsiElement())(')')
@@ -46,8 +42,6 @@ FILE
       PsiElement(fn)('fn')
       PsiWhiteSpace(' ')
       PsiElement(<IDENTIFIER>)('undocumented_function')
-      RustGenericParamsImpl(GENERIC_PARAMS)
-        <empty list>
       RustParametersImpl(PARAMETERS)
         PsiElement(()('(')
         PsiElement())(')')
@@ -62,8 +56,6 @@ FILE
       PsiElement(fn)('fn')
       PsiWhiteSpace(' ')
       PsiElement(<IDENTIFIER>)('documented_function')
-      RustGenericParamsImpl(GENERIC_PARAMS)
-        <empty list>
       RustParametersImpl(PARAMETERS)
         PsiElement(()('(')
         PsiElement())(')')
@@ -94,8 +86,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('S')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustStructDeclArgsImpl(STRUCT_DECL_ARGS)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
@@ -120,8 +110,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('T')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustStructTupleArgsImpl(STRUCT_TUPLE_ARGS)
       PsiElement(()('(')
       PsiWhiteSpace('\n  ')
@@ -140,8 +128,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('E')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustEnumBodyImpl(ENUM_BODY)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
@@ -165,8 +151,6 @@ FILE
       PsiElement(fn)('fn')
       PsiWhiteSpace(' ')
       PsiElement(<IDENTIFIER>)('foo')
-      RustGenericParamsImpl(GENERIC_PARAMS)
-        <empty list>
       RustVariadicParametersImpl(VARIADIC_PARAMETERS)
         PsiElement(()('(')
         PsiElement())(')')

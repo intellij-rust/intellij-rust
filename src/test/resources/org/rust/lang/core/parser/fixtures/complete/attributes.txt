@@ -42,8 +42,6 @@ FILE
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('main')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustParametersImpl(PARAMETERS)
       PsiElement(()('(')
       PsiElement())(')')
@@ -71,8 +69,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('E')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustEnumBodyImpl(ENUM_BODY)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
@@ -139,8 +135,6 @@ FILE
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('attrs_on_statements')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustParametersImpl(PARAMETERS)
       PsiElement(()('(')
       PsiElement())(')')

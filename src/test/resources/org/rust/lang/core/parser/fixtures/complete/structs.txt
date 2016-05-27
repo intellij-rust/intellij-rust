@@ -3,8 +3,6 @@ FILE
     PsiElement(struct)('struct')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('S1')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     PsiElement(;)(';')
   PsiWhiteSpace('\n')
   RustStructItemImpl(STRUCT_ITEM)
@@ -12,8 +10,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('S2')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustStructDeclArgsImpl(STRUCT_DECL_ARGS)
       PsiElement({)('{')
       PsiElement(})('}')
@@ -23,8 +19,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('S3')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustStructDeclArgsImpl(STRUCT_DECL_ARGS)
       PsiElement({)('{')
       PsiWhiteSpace(' ')
@@ -43,8 +37,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('S3')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustStructDeclArgsImpl(STRUCT_DECL_ARGS)
       PsiElement({)('{')
       PsiWhiteSpace(' ')

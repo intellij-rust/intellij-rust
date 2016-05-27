@@ -3,8 +3,6 @@ FILE
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('expressions')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustParametersImpl(PARAMETERS)
       PsiElement(()('(')
       PsiElement())(')')
@@ -91,8 +89,6 @@ FILE
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('T')
         PsiWhiteSpace(' ')
-        RustGenericParamsImpl(GENERIC_PARAMS)
-          <empty list>
         PsiElement(=)('=')
         PsiWhiteSpace(' ')
         RustPathTypeImpl(PATH_TYPE)
@@ -196,8 +192,6 @@ FILE
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('U')
         PsiWhiteSpace(' ')
-        RustGenericParamsImpl(GENERIC_PARAMS)
-          <empty list>
         PsiElement(=)('=')
         PsiWhiteSpace(' ')
         RustPathTypeImpl(PATH_TYPE)

@@ -4,8 +4,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('FunType')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     RustPathTypeImpl(PATH_TYPE)
@@ -32,8 +30,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('FunTypeVoid')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     RustPathTypeImpl(PATH_TYPE)
@@ -49,8 +45,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('Sum')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     RustPathTypeImpl(PATH_TYPE)
@@ -77,8 +71,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('FunSum')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     RustPathTypeImpl(PATH_TYPE)
@@ -132,8 +124,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('Shl')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     RustPathTypeImpl(PATH_TYPE)
@@ -174,8 +164,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('Shr')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     RustPathTypeImpl(PATH_TYPE)
@@ -200,8 +188,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('Path')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     RustPathTypeImpl(PATH_TYPE)
@@ -223,8 +209,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('AssocType')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     RustPathTypeImpl(PATH_TYPE)
@@ -267,8 +251,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('GenericAssoc')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     RustPathTypeImpl(PATH_TYPE)
@@ -296,8 +278,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('Trailing1')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     RustPathTypeImpl(PATH_TYPE)
@@ -350,8 +330,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('TrailingCommaInFn')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     RustBareFnTypeImpl(BARE_FN_TYPE)

@@ -4,8 +4,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('Contains')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustTraitBodyImpl(TRAIT_BODY)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
@@ -19,8 +17,6 @@ FILE
         PsiElement(fn)('fn')
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('inner')
-        RustGenericParamsImpl(GENERIC_PARAMS)
-          <empty list>
         RustParametersImpl(PARAMETERS)
           PsiElement(()('(')
           RustSelfArgumentImpl(SELF_ARGUMENT)
@@ -43,8 +39,6 @@ FILE
         PsiElement(fn)('fn')
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('empty')
-        RustGenericParamsImpl(GENERIC_PARAMS)
-          <empty list>
         RustParametersImpl(PARAMETERS)
           PsiElement(()('(')
           PsiElement())(')')
@@ -54,8 +48,6 @@ FILE
         PsiElement(fn)('fn')
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('anon_param')
-        RustGenericParamsImpl(GENERIC_PARAMS)
-          <empty list>
         RustParametersImpl(PARAMETERS)
           PsiElement(()('(')
           RustParameterImpl(PARAMETER)
@@ -69,8 +61,6 @@ FILE
         PsiElement(fn)('fn')
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('self_type')
-        RustGenericParamsImpl(GENERIC_PARAMS)
-          <empty list>
         RustParametersImpl(PARAMETERS)
           PsiElement(()('(')
           RustParameterImpl(PARAMETER)
@@ -113,8 +103,6 @@ FILE
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('foo')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustParametersImpl(PARAMETERS)
       PsiElement(()('(')
       PsiElement())(')')
@@ -127,8 +115,6 @@ FILE
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('Inner')
         PsiWhiteSpace(' ')
-        RustGenericParamsImpl(GENERIC_PARAMS)
-          <empty list>
         RustTraitBodyImpl(TRAIT_BODY)
           PsiElement({)('{')
           PsiElement(})('}')
@@ -142,8 +128,6 @@ FILE
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('UnsafeInner')
         PsiWhiteSpace(' ')
-        RustGenericParamsImpl(GENERIC_PARAMS)
-          <empty list>
         RustTraitBodyImpl(TRAIT_BODY)
           PsiElement({)('{')
           PsiElement(})('}')
@@ -169,8 +153,6 @@ FILE
         PsiElement(fn)('fn')
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('baz')
-        RustGenericParamsImpl(GENERIC_PARAMS)
-          <empty list>
         RustParametersImpl(PARAMETERS)
           PsiElement(()('(')
           RustSelfArgumentImpl(SELF_ARGUMENT)

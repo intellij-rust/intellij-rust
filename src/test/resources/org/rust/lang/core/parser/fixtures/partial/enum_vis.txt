@@ -4,8 +4,6 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('E')
     PsiWhiteSpace(' ')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustEnumBodyImpl(ENUM_BODY)
       PsiElement({)('{')
       PsiErrorElement:'}' expected, got 'pub'

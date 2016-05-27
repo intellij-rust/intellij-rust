@@ -15,7 +15,7 @@ abstract class RustImplMethodMemberImplMixin(node: ASTNode) : RustNamedElementIm
 
     override val declarations: Collection<RustDeclaringElement> get() {
         val params = parameters ?: return emptyList()
-        return listOfNotNull(params.selfArgument) + params.parameterList.orEmpty() + genericParams.typeParamList
+        return listOfNotNull(params.selfArgument) + params.parameterList.orEmpty() + genericParams?.typeParamList.orEmpty()
     }
 
     override fun getIcon(flags: Int): Icon? {

@@ -366,7 +366,7 @@ private restricted_pattern ::= &( IDENTIFIER
                                 ) pat
 
 
-private fn_header ::= CONST? UNSAFE? extern_abi? FN IDENTIFIER generic_params
+private fn_header ::= CONST? UNSAFE? extern_abi? FN IDENTIFIER generic_params?
 
 extern_abi ::= EXTERN STRING_LITERAL?
 
@@ -377,11 +377,9 @@ fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
-generic_params ::= generic_params_inner?
-
-private generic_params_inner ::= '<' lifetimes [ ',' [ type_params ','? ] ] '>'
-                               | '<'                   type_params ','?     '>'
-                               | '<' '>'
+generic_params ::= '<' lifetimes [ ',' [ type_params ','? ] ] '>'
+                 | '<'                   type_params ','?     '>'
+                 | '<' '>'
 
 lifetimes ::= lifetime_and_bounds (',' lifetime_and_bounds)*
 
@@ -534,7 +532,7 @@ foreign_static_decl ::= attrs_and_vis STATIC MUT? IDENTIFIER type_ascription ';'
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
 }
 
-foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params foreign_fn_parameters ret_type? where_clause? ';' {
+foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params? foreign_fn_parameters ret_type? where_clause? ';' {
   pin = "FN"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
@@ -546,14 +544,14 @@ foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params foreign_fn_parame
 // Struct & Enums
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct_item ::= attrs_and_vis STRUCT IDENTIFIER generic_params (struct_tuple_args? where_clause? ';' | where_clause? struct_decl_args) {
+struct_item ::= attrs_and_vis STRUCT IDENTIFIER generic_params? (struct_tuple_args? where_clause? ';' | where_clause? struct_decl_args) {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustStructOrEnum" ]
 }
 struct_decl_args ::= <<struct_body field_decl>>
 struct_tuple_args ::= <<tuple_body tuple_field_decl>>
 
-enum_item ::= attrs_and_vis ENUM IDENTIFIER generic_params where_clause? enum_body {
+enum_item ::= attrs_and_vis ENUM IDENTIFIER generic_params? where_clause? enum_body {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
@@ -602,7 +600,7 @@ private meta tuple_body ::= '(' <<comma_separated_list <<param>> >> ')' { pin = 
 // Trait
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER generic_params type_param_bounds? where_clause? trait_body {
+trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER generic_params? type_param_bounds? where_clause? trait_body {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 trait_body ::= '{' trait_member* '}' { pin = 1 }
@@ -644,7 +642,7 @@ trait_ref ::= path_generic_args_without_colons
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl_item ::= attrs_and_vis UNSAFE? IMPL generic_params ( bare_impl | for_impl ) {
+impl_item ::= attrs_and_vis UNSAFE? IMPL generic_params? ( bare_impl | for_impl ) {
   pin = "IMPL"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
@@ -676,7 +674,7 @@ impl_const_member ::= attrs_and_vis CONST static_decl ';' {
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
 }
 
-impl_type_member ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params '=' type ';' {
+impl_type_member ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params? '=' type ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
@@ -720,7 +718,7 @@ for_in_type ::= FOR '<' lifetimes? '>' (bare_fn_type | trait_ref)
 wildcard_type ::= '_'
 
 
-type_item ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params where_clause? '=' type ';' {
+type_item ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params? where_clause? '=' type ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 

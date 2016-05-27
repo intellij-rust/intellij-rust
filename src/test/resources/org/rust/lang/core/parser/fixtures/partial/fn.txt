@@ -9,8 +9,6 @@ FILE
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('add')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustParametersImpl(PARAMETERS)
       PsiElement(()('(')
       RustParameterImpl(PARAMETER)
@@ -31,8 +29,6 @@ FILE
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('add')
-    RustGenericParamsImpl(GENERIC_PARAMS)
-      <empty list>
     RustParametersImpl(PARAMETERS)
       PsiElement(()('(')
       RustParameterImpl(PARAMETER)
@@ -71,8 +67,6 @@ FILE
         PsiElement(fn)('fn')
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('add0')
-        RustGenericParamsImpl(GENERIC_PARAMS)
-          <empty list>
         RustParametersImpl(PARAMETERS)
           PsiElement(()('(')
           RustParameterImpl(PARAMETER)
@@ -122,8 +116,6 @@ FILE
         PsiElement(fn)('fn')
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('wrong_comma')
-        RustGenericParamsImpl(GENERIC_PARAMS)
-          <empty list>
         RustParametersImpl(PARAMETERS)
           PsiElement(()('(')
         PsiErrorElement:'{' expected, got ','
