@@ -385,6 +385,7 @@ private class Resolver {
         override fun visitTraitMethodMember   (o: RustTraitMethodMember)  = visitResolveScope(o)
         override fun visitImplMethodMember    (o: RustImplMethodMember)   = visitResolveScope(o)
         override fun visitFnItem              (o: RustFnItem)             = visitResolveScope(o)
+        override fun visitTypeItem            (o: RustTypeItem)           = visitResolveScope(o)
         override fun visitResolveScope        (scope: RustResolveScope)   = seek(scope.declarations)
 
         override fun visitScopedLetExpr(o: RustScopedLetExpr) {
