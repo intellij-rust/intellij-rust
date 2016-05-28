@@ -14,7 +14,7 @@ abstract class RustPathImplMixin(node: ASTNode) : RustNamedElementImpl(node)
     override fun getReference(): RustReference = RustQualifiedReferenceImpl(this)
 
     override val nameElement: PsiElement?
-        get() = identifier ?: self ?: `super`
+        get() = identifier ?: self ?: `super` ?: cself
 
     override val qualifier: RustQualifiedReferenceElement? get() = path
 
