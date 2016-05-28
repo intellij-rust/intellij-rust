@@ -35,6 +35,8 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testEnumField()           = checkIsBound()
     fun testNonGlobalPathWithColons() = checkIsBound()
 
+    fun testSelfType()            = checkIsUnbound() // TODO: some form of resolve for Self should be implemented
+
     fun testLetCycle1()           = checkIsUnbound()
     fun testLetCycle3()           = checkIsUnbound()
     fun testUnbound()             = checkIsUnbound()
