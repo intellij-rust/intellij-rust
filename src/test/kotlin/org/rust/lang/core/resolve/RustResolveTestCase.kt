@@ -34,6 +34,7 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testStructField()         = checkIsBound()
     fun testEnumField()           = checkIsBound()
     fun testNonGlobalPathWithColons() = checkIsBound()
+    fun testTypeAlias()           = checkIsBound()
 
     fun testLetCycle1()           = checkIsUnbound()
     fun testLetCycle3()           = checkIsUnbound()
