@@ -1,13 +1,11 @@
 package org.rust.lang.core.resolve.ref
 
-import com.intellij.psi.PsiReferenceBase
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.psi.util.parentRelativeRange
 
 class RustFieldReferenceImpl(
     field: RustFieldName
-) : PsiReferenceBase<RustFieldName>(field, field.identifier.parentRelativeRange)
+) : RustReferenceBase<RustFieldName>(field, field.identifier)
   , RustReference {
 
     override fun getVariants(): Array<out Any> = visibleFields().filter { it.name != null }.toTypedArray()

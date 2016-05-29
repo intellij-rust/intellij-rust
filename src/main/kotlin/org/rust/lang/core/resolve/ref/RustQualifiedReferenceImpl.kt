@@ -1,8 +1,6 @@
 package org.rust.lang.core.resolve.ref
 
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiReferenceBase
 import org.rust.lang.core.completion.RustCompletionEngine
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustQualifiedReferenceElement
@@ -11,8 +9,8 @@ import org.rust.lang.core.psi.util.parentRelativeRange
 import org.rust.lang.core.resolve.RustResolveEngine
 
 
-class RustQualifiedReferenceImpl(element: RustQualifiedReferenceElement, soft: Boolean = false)
-    : PsiReferenceBase<RustQualifiedReferenceElement>(element, null, soft)
+class RustQualifiedReferenceImpl(element: RustQualifiedReferenceElement)
+    : RustReferenceBase<RustQualifiedReferenceElement>(element, element.nameElement)
     , RustReference {
 
     override fun resolve(): RustNamedElement? =
@@ -36,10 +34,4 @@ class RustQualifiedReferenceImpl(element: RustQualifiedReferenceElement, soft: B
 
             qual + qualRef.name
         }
-
-    override fun getRangeInElement(): TextRange? = element.nameElement?.parentRelativeRange
-
-    override fun bindToElement(element: PsiElement): PsiElement? {
-        throw UnsupportedOperationException()
-    }
 }

@@ -49,7 +49,7 @@ interface RustQualifiedReferenceElement : RustNamedElement {
      */
     val isSelf: Boolean
 
-    val nameElement: PsiElement?
+    val nameElement: PsiElement
 
     val qualifier: RustQualifiedReferenceElement?
 

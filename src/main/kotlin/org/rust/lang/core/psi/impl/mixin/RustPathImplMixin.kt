@@ -13,8 +13,10 @@ abstract class RustPathImplMixin(node: ASTNode) : RustNamedElementImpl(node)
 
     override fun getReference(): RustReference = RustQualifiedReferenceImpl(this)
 
-    override val nameElement: PsiElement?
-        get() = identifier ?: self ?: `super` ?: cself
+    override val nameElement: PsiElement
+        get() = checkNotNull(identifier ?: self ?: `super` ?: cself) {
+            "Path must contain identifier: $this ${this.text} at ${this.containingFile.virtualFile.path}"
+        }
 
     override val qualifier: RustQualifiedReferenceElement? get() = path
 
