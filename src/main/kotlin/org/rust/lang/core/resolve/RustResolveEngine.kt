@@ -298,7 +298,7 @@ private class Resolver {
         override fun visitImplItem(o: RustImplItem) = seek(o.declarations)
 
         private fun visitMod(mod: RustMod) {
-            seek(mod.items)
+            seek(mod.declarations)
             if (matched == null) {
                 seekInjectedItems(mod)
             }
