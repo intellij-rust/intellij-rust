@@ -619,7 +619,7 @@ trait_const_member ::= outer_attr* CONST IDENTIFIER type_ascription? const_defau
 
 private const_default ::= '=' any_expr
 
-trait_type_member ::= outer_attr* TYPE_KW IDENTIFIER type_param_bounds? ';' {
+trait_type_member ::= outer_attr* TYPE_KW IDENTIFIER type_param_bounds? [ '=' type ] ';' {
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustNamedElement" ]
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]

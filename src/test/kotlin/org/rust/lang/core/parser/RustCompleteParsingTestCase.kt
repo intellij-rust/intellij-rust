@@ -32,14 +32,15 @@ class RustCompleteParsingTestCase : RustParsingTestCaseBase("complete") {
     fun testMatch() = doTest(true)
     fun testOror() = doTest(true)
     fun testDocComments() = doTest(true)
+    fun testAssociatedTypes() = doTest(true)
 
     fun testIssue320() = doTest(true)
 
     override fun checkResult(targetDataName: String?, file: PsiFile?) {
+        super.checkResult(targetDataName, file)
         assertThat(hasError(file!!))
             .withFailMessage("Error in well formed file ${file.name}")
             .isFalse()
-        super.checkResult(targetDataName, file)
     }
 
 }
