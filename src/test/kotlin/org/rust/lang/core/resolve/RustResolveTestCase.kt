@@ -34,6 +34,8 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testStructField() = checkIsBound()
     fun testEnumField() = checkIsBound()
     fun testNonGlobalPathWithColons() = checkIsBound()
+    fun testTypeAlias() = checkIsBound()
+    fun testTrait() = checkIsBound()
     fun testTypeAliasGenerics() = checkIsBound()
 
     fun testSelfType() = checkIsUnbound() // TODO: some form of resolve for Self should be implemented
