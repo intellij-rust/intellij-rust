@@ -43,9 +43,6 @@ abstract class RustModItemImplMixin : RustItemImpl
     override val canonicalNameInFile: RustQualifiedName?
         get() = name?.let { RustQualifiedName(RustIdNamePart(it), `super`.canonicalNameInFile) }
 
-    override val modDecls: Collection<RustModDeclItem>
-        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
-
     override val innerAttrList: List<RustInnerAttr>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttr::class.java)
 

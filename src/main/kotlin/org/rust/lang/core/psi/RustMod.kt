@@ -27,10 +27,6 @@ interface RustMod : RustNamedElement, RustResolveScope {
 
     val canonicalNameInFile: RustQualifiedName?
 
-    //  Default implementation here causes https://youtrack.jetbrains.com/issue/KT-12114
-    val modDecls: Collection<RustModDeclItem>
-    //  get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustModDeclItem::class.java)
-
     override val declarations: Collection<RustDeclaringElement>
     //  get() = items
 
