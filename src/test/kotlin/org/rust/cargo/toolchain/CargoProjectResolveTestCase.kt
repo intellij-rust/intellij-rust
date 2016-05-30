@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
+import com.intellij.util.indexing.FileBasedIndex
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.RustWithToolchainTestCaseBase
 import org.rust.cargo.project.settings.toolchain
@@ -13,6 +14,7 @@ import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener.UpdateResult
 import org.rust.cargo.util.getComponentOrThrow
+import org.rust.lang.core.resolve.indexes.RustModulesIndex
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
@@ -33,9 +35,16 @@ class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
             reference.resolve()
         }
 
+        // make sure that indexes do not depend on cargo project
+        populateIndexes()
+
         updateCargoProject()
 
         assertThat(f.get(TIMEOUT, TimeUnit.MILLISECONDS)).isNotNull()
+    }
+
+    private fun populateIndexes() {
+        FileBasedIndex.getInstance().getAllKeys(RustModulesIndex.ID, myProject)
     }
 
     private fun <T> bindToProjectUpdateEvent(callback: (UpdateResult) -> T): Future<T> {

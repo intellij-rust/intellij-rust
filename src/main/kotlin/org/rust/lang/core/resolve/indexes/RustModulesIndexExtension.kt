@@ -1,119 +1,63 @@
 package org.rust.lang.core.resolve.indexes
 
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
-import com.intellij.util.containers.HashMap
+import com.intellij.psi.PsiElement
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.RustFileType
-import org.rust.lang.core.names.RustQualifiedName
-import org.rust.lang.core.psi.RustMod
-import org.rust.lang.core.psi.RustModItem
+import org.rust.lang.core.psi.RustModDeclItem
 import org.rust.lang.core.psi.RustVisitor
-import org.rust.lang.core.psi.impl.rustMod
 import java.io.DataInput
 import java.io.DataOutput
 
-class RustModulesIndexExtension : FileBasedIndexExtension<RustCratePath, RustQualifiedName>() {
+class RustModulesIndexExtension : FileBasedIndexExtension<
+    RustModulesIndexExtension.Key,
+    RustModulesIndexExtension.Value>() {
 
-    override fun getVersion(): Int = 3
+    data class Key(val fileOrDirName: String) {
+        object Descriptor : KeyDescriptor<Key> {
+            override fun getHashCode(key: Key): Int = key.hashCode()
+            override fun isEqual(key1: Key, key2: Key): Boolean = key1 == key2
+            override fun save(out: DataOutput, key: Key) = out.writeUTF(key.fileOrDirName)
+            override fun read(`in`: DataInput): Key = Key(`in`.readUTF())
+        }
+    }
+
+    data class Value(val referenceOffset: Int) {
+        object Externalizer : DataExternalizer<Value> {
+            override fun save(out: DataOutput, value: Value) = out.writeInt(value.referenceOffset)
+            override fun read(`in`: DataInput): Value = Value(`in`.readInt())
+        }
+    }
+
+    override fun getVersion(): Int = 4
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getName(): ID<RustCratePath, RustQualifiedName> = RustModulesIndex.ID
+    override fun getName(): ID<Key, Value> = RustModulesIndex.ID
 
-    override fun getInputFilter(): FileBasedIndex.InputFilter =
-        DefaultFileTypeSpecificInputFilter(RustFileType)
+    override fun getInputFilter(): FileBasedIndex.InputFilter = DefaultFileTypeSpecificInputFilter(RustFileType)
 
-    override fun getKeyDescriptor(): KeyDescriptor<RustCratePath> = Companion.keyDescriptor
+    override fun getKeyDescriptor(): KeyDescriptor<Key> = Key.Descriptor
 
-    override fun getValueExternalizer(): DataExternalizer<RustQualifiedName> = Companion.valueExternalizer
+    override fun getValueExternalizer(): DataExternalizer<Value> = Value.Externalizer
 
-    override fun getIndexer(): DataIndexer<RustCratePath, RustQualifiedName, FileContent> = Companion.dataIndexer
+    override fun getIndexer(): DataIndexer<Key, Value, FileContent> = Indexer
 
-    companion object {
+    object Indexer : DataIndexer<Key, Value, FileContent> {
+        override fun map(inputData: FileContent): Map<Key, Value> {
+            val result = mutableMapOf<Key, Value>()
 
-        val keyDescriptor = object: KeyDescriptor<RustCratePath> {
+            inputData.psiFile.accept(object : RustVisitor() {
+                override fun visitElement(element: PsiElement) = element.acceptChildren(this)
 
-            override fun save(out: DataOutput, path: RustCratePath?) {
-                path?.let {
-                    RustCratePath.writeTo(out, it)
-                }
-            }
-
-            override fun read(`in`: DataInput): RustCratePath? =
-                RustCratePath.readFrom(`in`)
-
-            override fun isEqual(one: RustCratePath?, other: RustCratePath?): Boolean =
-                one?.equals(other) ?: false
-
-            override fun getHashCode(value: RustCratePath?): Int = value?.hashCode() ?: -1
-        }
-
-        val valueExternalizer = object: DataExternalizer<RustQualifiedName> {
-
-            override fun save(out: DataOutput, name: RustQualifiedName?) {
-                name?.let { RustQualifiedName.writeTo(`out`, it) }
-            }
-
-            override fun read(`in`: DataInput): RustQualifiedName? {
-                return RustQualifiedName.readFrom(`in`)
-            }
-
-        }
-
-        val dataIndexer =
-            DataIndexer<RustCratePath, RustQualifiedName, FileContent> {
-                val map = HashMap<RustCratePath, RustQualifiedName>()
-                val file = it.file
-
-                PsiManager.getInstance(it.project).findFile(file)?.let {
-                    for ((qualName, targets) in process(it)) {
-                        targets.forEach {
-                            map.put(RustCratePath.devise(it), qualName)
-                        }
-                    }
-                }
-
-                map
-            }
-
-        private fun process(f: PsiFile): Map<RustQualifiedName, List<PsiFile>> {
-            val raw = HashMap<RustQualifiedName, List<PsiFile>>()
-
-            f.accept(object : RustVisitor() {
-
-                //
-                // TODO(kudinkin): move this to `RustVisitor`
-                //
-                override fun visitFile(file: PsiFile) {
-                    file.rustMod?.let { visitMod(it) }
-                }
-
-                override fun visitModItem(m: RustModItem) {
-                    visitMod(m)
-                }
-
-                private fun visitMod(m: RustMod) {
-                    val resolved = arrayListOf<PsiFile>()
-
-                    m.modDecls.forEach { decl ->
-                        decl.reference?.let { ref ->
-                            (ref.resolve() as RustMod?)?.let { mod ->
-                                resolved.add(mod.containingFile)
-                            }
-                        }
-                    }
-
-                    if (resolved.size > 0)
-                        m.canonicalNameInFile?.let { raw.put(it, resolved) }
-
-                    m.acceptChildren(this)
+                override fun visitModDeclItem(o: RustModDeclItem) {
+                    val name = o.name ?: return
+                    result += Key(name) to Value(o.textOffset)
                 }
             })
 
-            return raw
+            return result
         }
     }
 }
