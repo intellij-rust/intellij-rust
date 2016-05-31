@@ -2,11 +2,8 @@ package org.rust.lang.core.psi
 
 import com.intellij.psi.PsiDirectory
 import org.rust.lang.core.names.RustQualifiedName
-import org.rust.lang.core.resolve.scope.RustResolveScope
 
-interface RustMod : RustNamedElement, RustResolveScope {
-    val items: List<RustItem>
-
+interface RustMod : RustNamedElement, RustItemsOwner {
     /**
      *  Returns a parent module (`super::` in paths).
      *
@@ -26,9 +23,6 @@ interface RustMod : RustNamedElement, RustResolveScope {
     val isTopLevelInFile: Boolean
 
     val canonicalNameInFile: RustQualifiedName?
-
-    override val declarations: Collection<RustDeclaringElement>
-    //  get() = items
 
     companion object {
         val MOD_RS = "mod.rs"

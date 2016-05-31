@@ -20,8 +20,6 @@ abstract class RustModItemImplMixin : RustItemImpl
 
     constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val items: List<RustItem> get() = itemList
-
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RustIcons.MODULE)
 
@@ -47,5 +45,5 @@ abstract class RustModItemImplMixin : RustItemImpl
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttr::class.java)
 
     override val declarations: Collection<RustDeclaringElement>
-        get() = items
+        get() = itemList
 }

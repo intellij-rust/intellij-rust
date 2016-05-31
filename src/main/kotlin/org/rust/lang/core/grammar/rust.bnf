@@ -1087,6 +1087,7 @@ private bool_lit ::= FALSE | TRUE
 
 block ::= '{' (never inner_attr*)? block_tail '}' {
   pin = 1
+  implements = [ "org.rust.lang.core.psi.RustItemsOwner" ]
 }
 
 inner_attrs_and_block ::= '{' inner_attr* block_tail '}' {
