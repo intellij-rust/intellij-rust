@@ -262,27 +262,27 @@ private class Resolver {
             }
         }
 
-        protected fun seek(elem: RustDeclaringElement) = seek(listOf(elem))
+        protected fun seek(element: RustDeclaringElement) {
+            check(matched == null)
+
+            // Recursively step into `use foo::*`
+            if (element is RustUseItem && element.isStarImport) {
+                val pathPart = element.path ?: return
+                val mod = resolve(pathPart).element ?: return
+                RecursionManager.doPreventingRecursion(this to mod, false) {
+                    mod.accept(this)
+                }
+            } else {
+                element.boundElements.find { match(it) }?.let { found(it) }
+            }
+        }
 
         protected fun seek(declaringElements: Collection<RustDeclaringElement>) {
             for (element in declaringElements) {
-                check(matched == null)
-
-                // Recursively step into `use foo::*`
-                if (element is RustUseItem && element.isStarImport) {
-                    val pathPart = element.path ?: continue
-                    val mod = resolve(pathPart).element ?: continue
-                    RecursionManager.doPreventingRecursion(this to mod, false) {
-                        mod.accept(this)
-                    }
-                } else {
-                    element.boundElements.find { match(it) }?.let { found(it) }
-                }
+                seek(element)
 
                 // Check whether the match is already found
-                if (matched != null) {
-                    return
-                }
+                if (matched != null) return
             }
         }
 
