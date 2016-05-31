@@ -1,14 +1,13 @@
 package org.rust.lang.core.resolve
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.cargo.util.*
-import org.rust.lang.core.names.RustFileModuleId
-import org.rust.lang.core.names.RustQualifiedName
+import org.rust.cargo.util.AutoInjectedCrates
+import org.rust.cargo.util.cargoProject
+import org.rust.cargo.util.getPsiFor
+import org.rust.cargo.util.preludeModule
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.isStarImport
@@ -40,19 +39,6 @@ object RustResolveEngine {
          */
         class Resolved(resolved: RustNamedElement) : ResolveResult(resolved)
     }
-
-    /**
-     * Resolves abstract `qualified-names`
-     *
-     * NOTE: Those names are treated as implicitly _fully-qualified_ once
-     *       therefore none of them may contain `super`, `self` references
-     */
-    fun resolve(name: RustQualifiedName, module: Module): ResolveResult =
-        module.crateRoots
-              .asSequence()
-              .mapNotNull { PsiManager.getInstance(module.project).findFile(it)?.rustMod }
-              .map { Resolver().resolve(name, it) }
-              .firstOrNull { it.isValidResult } ?: ResolveResult.Unresolved
 
     /**
      * Resolves `qualified-reference` bearing PSI-elements
@@ -123,24 +109,6 @@ private class Resolver {
     private var visitedPrelude = false
 
     /**
-     * Resolves abstract qualified-names
-     *
-     * For more details check out `RustResolveEngine.resolve`
-     */
-    fun resolve(name: RustQualifiedName, root: RustMod): RustResolveEngine.ResolveResult {
-        if (name is RustFileModuleId) {
-            return name.path.findModuleIn(root.project).asResolveResult()
-        }
-
-        return resolve(name.qualifier!!, root).element?.let {
-            when (it) {
-                is RustResolveScope -> resolveIn(sequenceOf(it), by(name))
-                else                -> null
-            }
-        } ?: RustResolveEngine.ResolveResult.Unresolved
-    }
-
-    /**
      * Resolves `qualified-reference` bearing PSI-elements
      *
      * For more details check out `RustResolveEngine.resolve`
@@ -157,8 +125,8 @@ private class Resolver {
                 } else {
                     val parent = resolve(qual).element
                     when (parent) {
-                        is RustMod -> resolveIn(sequenceOf(parent), by(ref))
-                        is RustEnumItem -> resolveIn(sequenceOf(parent), by(ref))
+                        is RustMod -> parent.findByName(ref)
+                        is RustEnumItem -> parent.findByName(ref)
                         else -> RustResolveEngine.ResolveResult.Unresolved
                     }
                 }
@@ -197,7 +165,7 @@ private class Resolver {
             ref.self != null && baseItem != null -> RustResolveEngine.ResolveResult.Resolved(baseItem)
 
             // `use foo::{bar}`
-            baseItem is RustResolveScope         -> resolveIn(sequenceOf(baseItem), by(ref))
+            baseItem is RustResolveScope         -> baseItem.findByName(ref)
 
             else                                 -> RustResolveEngine.ResolveResult.Unresolved
         }
@@ -213,16 +181,6 @@ private class Resolver {
         }
         return result
     }
-
-    /**
-     * Hook to compose non-local resolving-context to resolve (ie module-level) _items_ in a
-     * context-free manner: it's essentially just scraping the whole scope seeking for the
-     * given name
-     *
-     * @name name to be sought after
-     */
-    private fun by(name: RustQualifiedName) =
-        ResolveContext.Companion.Trivial(ResolveNonLocalScopesVisitor(name.part.identifier))
 
     /**
      * Hook to compose _total_ (ie including both local & non-local) context to resolve
@@ -258,7 +216,7 @@ private class Resolver {
 
     private fun resolveIn(scopes: Sequence<RustResolveScope>, ctx: ResolveContext): RustResolveEngine.ResolveResult {
         for (s in scopes) {
-            s.resolveUsing(ctx)?.let {
+            ctx.accept(s)?.let {
                 return RustResolveEngine.ResolveResult.Resolved(it)
             }
         }
@@ -402,6 +360,9 @@ private class Resolver {
                 ?.let { found(it) }
         }
     }
+
+    private fun RustResolveScope.findByName(name: RustNamedElement): RustResolveEngine.ResolveResult =
+        resolveIn(sequenceOf(this), by(name))
 }
 
 
@@ -417,9 +378,6 @@ fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolve
         }
     }
 }
-
-
-private fun RustResolveScope.resolveUsing(c: Resolver.ResolveContext): RustNamedElement? = c.accept(this)
 
 
 private fun RustNamedElement?.asResolveResult(): RustResolveEngine.ResolveResult =
