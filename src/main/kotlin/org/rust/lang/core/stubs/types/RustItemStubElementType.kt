@@ -4,7 +4,7 @@ import com.intellij.psi.stubs.*
 import org.rust.lang.core.psi.RustItem
 import org.rust.lang.core.psi.RustStructOrEnum
 import org.rust.lang.core.stubs.RustItemStub
-import org.rust.lang.core.stubs.index.RustItemIndex
+import org.rust.lang.core.stubs.index.RustNamedElementIndex
 
 abstract class RustItemStubElementType<PsiT: RustItem>(debugName: String)
     : RustStubElementType<RustItemStub, PsiT>(debugName) {
@@ -22,7 +22,7 @@ abstract class RustItemStubElementType<PsiT: RustItem>(debugName: String)
         super.indexStub(stub, sink)
         val indexName = stub.name
         if (indexName != null && !indexName.isBlank()) {
-            sink.occurrence(RustItemIndex.KEY, indexName)
+            sink.occurrence(RustNamedElementIndex.KEY, indexName)
             for (key in additionalIndexKeys) {
                 sink.occurrence(key, indexName)
             }
