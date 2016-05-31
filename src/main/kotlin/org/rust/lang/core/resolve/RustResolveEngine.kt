@@ -302,16 +302,16 @@ private class Resolver {
         protected fun match(elem: RustNamedElement): Boolean = elem.name == name
 
         protected fun seekUseDeclarations(o: RustItemsOwner) {
-            for (element in o.useDeclarations) {
-                if (element.isStarImport) {
+            for (useDecl in o.useDeclarations) {
+                if (useDecl.isStarImport) {
                     // Recursively step into `use foo::*`
-                    val pathPart = element.path ?: continue
+                    val pathPart = useDecl.path ?: continue
                     val mod = resolve(pathPart).element ?: continue
                     RecursionManager.doPreventingRecursion(this to mod, false) {
                         mod.accept(this)
                     }
                 } else {
-                    seek(element)
+                    seek(useDecl)
                 }
                 if (matched != null) return
             }
