@@ -21,7 +21,7 @@ import org.rust.lang.core.resolve.ref.RustReference
 
 class RustFile(
     fileViewProvider: FileViewProvider
-) : PsiFileBase(fileViewProvider, RustLanguage) , RustMod, RustInnerAttributeOwner {
+) : PsiFileBase(fileViewProvider, RustLanguage), RustMod, RustInnerAttributeOwner {
 
     override fun getReference(): RustReference? = null
 
