@@ -257,24 +257,17 @@ private class Resolver {
 
         private fun visitMod(mod: RustMod) {
             seek(mod.declarations)
-            if (matched == null) {
-                seekInjectedItems(mod)
-            }
+            if (matched != null) return
+
+            seekUseDeclarations(mod)
+            if (matched != null) return
+
+            seekInjectedItems(mod)
         }
 
         protected fun seek(element: RustDeclaringElement) {
             check(matched == null)
-
-            // Recursively step into `use foo::*`
-            if (element is RustUseItem && element.isStarImport) {
-                val pathPart = element.path ?: return
-                val mod = resolve(pathPart).element ?: return
-                RecursionManager.doPreventingRecursion(this to mod, false) {
-                    mod.accept(this)
-                }
-            } else {
-                element.boundElements.find { match(it) }?.let { found(it) }
-            }
+            element.boundElements.find { match(it) }?.let { found(it) }
         }
 
         protected fun seek(declaringElements: Collection<RustDeclaringElement>) {
@@ -307,6 +300,22 @@ private class Resolver {
         }
 
         protected fun match(elem: RustNamedElement): Boolean = elem.name == name
+
+        private fun seekUseDeclarations(o: RustItemsOwner) {
+            for (element in o.useDeclarations) {
+                if (element.isStarImport) {
+                    // Recursively step into `use foo::*`
+                    val pathPart = element.path ?: continue
+                    val mod = resolve(pathPart).element ?: continue
+                    RecursionManager.doPreventingRecursion(this to mod, false) {
+                        mod.accept(this)
+                    }
+                } else {
+                    seek(element)
+                }
+                if (matched != null) return
+            }
+        }
 
         private fun seekInjectedItems(mod: RustMod) {
             // Rust injects implicit `extern crate std` in every crate root module unless it is
