@@ -301,7 +301,7 @@ private class Resolver {
 
         protected fun match(elem: RustNamedElement): Boolean = elem.name == name
 
-        private fun seekUseDeclarations(o: RustItemsOwner) {
+        protected fun seekUseDeclarations(o: RustItemsOwner) {
             for (element in o.useDeclarations) {
                 if (element.isStarImport) {
                     // Recursively step into `use foo::*`
@@ -365,8 +365,10 @@ private class Resolver {
             val letDeclarations = o.letDeclarationsVisibleAt(context).flatMap { it.boundElements.asSequence() }
             val candidates = letDeclarations + o.itemList
 
-            candidates.find { match(it) }
-                ?.let { found(it) }
+            candidates.find { match(it) }?.let { found(it) }
+            if (matched != null) return
+
+            seekUseDeclarations(o)
         }
     }
 
