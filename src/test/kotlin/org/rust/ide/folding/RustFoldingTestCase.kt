@@ -15,6 +15,7 @@ class RustFoldingTestCase : RustTestCaseBase() {
     fun testTraitMethod() = doTest()
     fun testEnum() = doTest()
     fun testEnumVariant() = doTest()
+    fun testMod() = doTest()
 
     private fun doTest() {
         myFixture.testFolding("$testDataPath/$fileName")
