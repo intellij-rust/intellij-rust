@@ -20,6 +20,13 @@ See the [**Quick Start**](doc/QuickStart.md) and [featues](doc/Features.md) for 
 
 As this is a preview release, something might go wrong. So, be brave to face some nasty bugs.
 
+## Compatible IDEs
+
+The plugin should be compatible with any Intellij based IDE starting from build
+143.2287.1. For example, the minimum supported IDEA version is 15.0.4, the
+minimum supported CLion version is 1.2. See `Help > About` menu in the IDE to
+learn the build version you are using.
+
 ## Contributing
 
 You're encouraged to contribute to the plugin in any form if you've found any issues or missing
