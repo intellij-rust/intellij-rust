@@ -26,33 +26,33 @@ fun RustFnItem.createLookupElement(): LookupElement {
     return LookupElementBuilder.createWithIcon(this)
         .withLookupString(name ?: "")
         .withTailText(parameters?.text ?: "()")
-        .withTypeText(retType?.type?.resolvedType?.toString() ?: "()")
+        .withTypeText(retType?.type?.text ?: "()")
 }
 
 fun RustImplMethodMember.createLookupElement(): LookupElement {
     return LookupElementBuilder.createWithIcon(this)
         .withLookupString(name ?: "")
         .withTailText(parameters?.text ?: "()")
-        .withTypeText(retType?.type?.resolvedType?.toString() ?: "()")
+        .withTypeText(retType?.type?.text ?: "()")
 }
 
 fun RustTraitMethodMember.createLookupElement(): LookupElement {
     return LookupElementBuilder.createWithIcon(this)
         .withLookupString(name ?: "")
         .withTailText(parameters?.text ?: "()")
-        .withTypeText(retType?.type?.resolvedType?.toString())
+        .withTypeText(retType?.type?.text ?: "()")
 }
 
 fun RustConstItem.createLookupElement(): LookupElement {
     return LookupElementBuilder.createWithIcon(this)
         .withLookupString(name ?: "")
-        .withTypeText(type.resolvedType.toString())
+        .withTypeText(type.text)
 }
 
 fun RustStaticItem.createLookupElement(): LookupElement {
     return LookupElementBuilder.createWithIcon(this)
         .withLookupString(name ?: "")
-        .withTypeText(type.resolvedType.toString())
+        .withTypeText(type.text)
 }
 
 fun RustTraitItem.createLookupElement(): LookupElement {
