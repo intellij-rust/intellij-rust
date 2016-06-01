@@ -8,6 +8,7 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.cargoProject
 import org.rust.cargo.util.getPsiFor
 import org.rust.cargo.util.preludeModule
+import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.isStarImport
@@ -19,6 +20,7 @@ import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
 
 object RustResolveEngine {
+
     open class ResolveResult private constructor(val resolved: RustNamedElement?) : com.intellij.psi.ResolveResult {
         override fun getElement():      RustNamedElement? = resolved
         override fun isValidResult():   Boolean           = resolved != null
@@ -113,7 +115,7 @@ private class Resolver {
      *
      * For more details check out `RustResolveEngine.resolve`
      */
-    fun resolve(ref: RustQualifiedReferenceElement): RustResolveEngine.ResolveResult = resolvePreventingRecursion(ref) {
+    fun resolve(ref: RustQualifiedReferenceElement): RustResolveEngine.ResolveResult = recursionGuard(ref) {
         val modulePrefix = ref.relativeModulePrefix
         when (modulePrefix) {
             is RelativeModulePrefix.Invalid        -> RustResolveEngine.ResolveResult.Unresolved
@@ -125,14 +127,14 @@ private class Resolver {
                 } else {
                     val parent = resolve(qual).element
                     when (parent) {
-                        is RustMod -> parent.findByName(ref)
-                        is RustEnumItem -> parent.findByName(ref)
-                        else -> RustResolveEngine.ResolveResult.Unresolved
+                        is RustMod      -> resolveIn(sequenceOf(parent), by(ref))
+                        is RustEnumItem -> resolveIn(sequenceOf(parent), by(ref))
+                        else            -> RustResolveEngine.ResolveResult.Unresolved
                     }
                 }
             }
         }
-    }
+    } ?: RustResolveEngine.ResolveResult.Unresolved
 
     /**
      * Resolves `use-glob`s, ie:
@@ -142,7 +144,7 @@ private class Resolver {
      *  use foo::*
      *  ```
      */
-    fun resolveUseGlob(ref: RustUseGlob): RustResolveEngine.ResolveResult = resolvePreventingRecursion(ref) {
+    fun resolveUseGlob(ref: RustUseGlob): RustResolveEngine.ResolveResult = recursionGuard(ref) {
         val basePath = ref.basePath
 
         // This is not necessarily a module, e.g.
@@ -165,11 +167,11 @@ private class Resolver {
             ref.self != null && baseItem != null -> RustResolveEngine.ResolveResult.Resolved(baseItem)
 
             // `use foo::{bar}`
-            baseItem is RustResolveScope         -> baseItem.findByName(ref)
+            baseItem is RustResolveScope -> resolveIn(sequenceOf(baseItem), by(ref))
 
-            else                                 -> RustResolveEngine.ResolveResult.Unresolved
+            else -> RustResolveEngine.ResolveResult.Unresolved
         }
-    }
+    } ?: RustResolveEngine.ResolveResult.Unresolved
 
     private fun resolveAncestorModule(
         ref: RustQualifiedReferenceElement,
@@ -189,7 +191,7 @@ private class Resolver {
      */
     private fun by(e: RustNamedElement) =
         e.name?.let {
-            ResolveContext.Companion.Trivial(ResolveLocalScopesVisitor(e))
+            ResolveContext.Companion.Trivial(ResolveScopesVisitor(e))
         } ?: ResolveContext.Companion.Empty
 
     /**
@@ -238,7 +240,7 @@ private class Resolver {
     /**
      * This particular visitor visits _non-local_ scopes only (!)
      */
-    open inner class ResolveNonLocalScopesVisitor(protected val name: String) : ResolveScopeVisitor() {
+    open inner class ResolveScopesVisitor(val ref: RustNamedElement) : ResolveScopeVisitor() {
 
         override var matched: RustNamedElement? = null
 
@@ -299,7 +301,7 @@ private class Resolver {
                 }
         }
 
-        protected fun match(elem: RustNamedElement): Boolean = elem.name == name
+        protected fun match(elem: RustNamedElement): Boolean = elem.name == ref.name
 
         protected fun seekUseDeclarations(o: RustItemsOwner) {
             for (useDecl in o.useDeclarations) {
@@ -318,6 +320,8 @@ private class Resolver {
         }
 
         private fun seekInjectedItems(mod: RustMod) {
+            val name = ref.name
+
             // Rust injects implicit `extern crate std` in every crate root module unless it is
             // a `#![no_std]` crate, in which case `extern crate core` is injected.
             // The stdlib lib itself is `#![no_std]`.
@@ -338,12 +342,6 @@ private class Resolver {
                 }
             }
         }
-    }
-
-    /**
-     * This particular visitor traverses both local & non-local scopes
-     */
-    inner class ResolveLocalScopesVisitor(ref: RustNamedElement) : ResolveNonLocalScopesVisitor(ref.name!!) {
 
         private val context: RustCompositeElement = ref
 
@@ -371,9 +369,6 @@ private class Resolver {
             seekUseDeclarations(o)
         }
     }
-
-    private fun RustResolveScope.findByName(name: RustNamedElement): RustResolveEngine.ResolveResult =
-        resolveIn(sequenceOf(this), by(name))
 }
 
 
@@ -409,17 +404,6 @@ private fun PsiDirectory.findFileByRelativePath(path: String): PsiFile? {
 
     return dir.findFile(fileName)
 }
-
-
-private fun resolvePreventingRecursion(
-    element: RustCompositeElement,
-    block: () -> RustResolveEngine.ResolveResult
-): RustResolveEngine.ResolveResult {
-
-    return RecursionManager.doPreventingRecursion(element, /* memoize = */ true, block)
-        ?: RustResolveEngine.ResolveResult.Unresolved
-}
-
 
 /**
  * Helper to debug complex iterator pipelines
