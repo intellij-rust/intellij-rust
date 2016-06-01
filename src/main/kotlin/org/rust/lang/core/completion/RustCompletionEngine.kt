@@ -10,7 +10,7 @@ import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.util.resolvedType
 
 object RustCompletionEngine {
-    fun complete(ref: RustQualifiedReferenceElement): Array<RustNamedElement> =
+    fun complete(ref: RustQualifiedReferenceElement): Array<out Any> =
         collectNamedElements(ref).toVariantsArray()
 
     fun completeFieldName(field: RustStructExprFieldElement): Array<RustNamedElement> =
@@ -26,7 +26,7 @@ object RustCompletionEngine {
         return fieldsAndMethods.toVariantsArray()
     }
 
-    fun completeUseGlob(glob: RustUseGlobElement): Array<RustNamedElement> =
+    fun completeUseGlob(glob: RustUseGlobElement): Array<out Any> =
         glob.basePath?.reference?.resolve()
             .completionsFromResolveScope()
             .toVariantsArray()
@@ -51,5 +51,5 @@ private fun RustNamedElement?.completionsFromResolveScope(): Collection<RustName
         else                -> emptyList()
     }
 
-private fun Collection<RustNamedElement>.toVariantsArray(): Array<RustNamedElement> =
-    filter { it.name != null }.toTypedArray()
+private fun Collection<RustNamedElement>.toVariantsArray(): Array<out Any> =
+    filter { it.name != null }.map { it.createLookupElement() }.toTypedArray()
