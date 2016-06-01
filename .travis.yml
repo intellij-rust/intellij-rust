@@ -4,7 +4,7 @@ jdk: oraclejdk8
 env: 
   global: ORG_GRADLE_PROJECT_downloadIdeaSources=false 
   matrix:
-        - ORG_GRADLE_PROJECT_ideaVersion=LATEST-TRUNK-SNAPSHOT
+        - ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT
         - ORG_GRADLE_PROJECT_ideaVersion=15.0.4
         
 before_script:
