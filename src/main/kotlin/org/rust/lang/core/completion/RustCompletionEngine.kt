@@ -6,6 +6,8 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
 import org.rust.lang.core.psi.impl.rustMod
+import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.util.visibleFields
 import org.rust.lang.core.resolve.enumerateScopesFor
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.scope.boundElements
@@ -15,7 +17,14 @@ object RustCompletionEngine {
     fun complete(ref: RustQualifiedReferenceElement): Array<RustNamedElement> =
         collectNamedElements(ref).toVariantsArray()
 
-    fun complete(glob: RustUseGlob): Array<RustNamedElement> =
+    fun completeFieldName(field: RustFieldName): Array<RustNamedElement> =
+        field.parentOfType<RustStructExpr>()
+                    ?.let { it.visibleFields() }
+                .orEmpty()
+                .filter { it.name != null }
+                .toTypedArray()
+
+    fun completeUseGlob(glob: RustUseGlob): Array<RustNamedElement> =
         glob.basePath?.reference?.resolve()
             .completionsFromResolveScope()
             .toVariantsArray()
@@ -35,7 +44,6 @@ object RustCompletionEngine {
         return visitor.completions
     }
 }
-
 
 private class CompletionScopeVisitor(private val context: RustQualifiedReferenceElement) : RustVisitor() {
 

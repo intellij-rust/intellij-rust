@@ -16,6 +16,8 @@ import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
 import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.module
+import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.util.visibleFields
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
 
@@ -49,6 +51,23 @@ object RustResolveEngine {
      */
     fun resolve(ref: RustQualifiedReferenceElement): ResolveResult =
         Resolver().resolve(ref)
+
+    /**
+     * Resolves Rust's field-references inside `struct-expr`s
+     */
+    fun resolveFieldName(ref: RustFieldName): ResolveResult {
+        val matching =
+            ref.parentOfType<RustStructExpr>()
+                    ?.let { it.visibleFields() }
+                    .orEmpty()
+                    .filter { it.name == ref.name }
+
+        return when (matching.count()) {
+            1       -> ResolveResult.Resolved(matching.first())
+            0       -> ResolveResult.Unresolved
+            else    -> ResolveResult.Ambiguous(matching)
+        }
+    }
 
     //
     // TODO(kudinkin): Unify following?
@@ -113,7 +132,7 @@ private class Resolver {
     /**
      * Resolves `qualified-reference` bearing PSI-elements
      *
-     * For more details check out `RustResolveEngine.resolve`
+     * For more details check out [RustResolveEngine.resolve]
      */
     fun resolve(ref: RustQualifiedReferenceElement): RustResolveEngine.ResolveResult = recursionGuard(ref) {
         val modulePrefix = ref.relativeModulePrefix
@@ -281,14 +300,16 @@ private class Resolver {
             }
         }
 
-        protected fun found(elem: RustNamedElement) {
+        protected fun found(elem: RustNamedElement): RustNamedElement? {
             matched =
                 // Check whether resolved element could be further resolved
                 when (elem) {
                     is RustModDeclItem, is RustExternCrateItem -> elem.reference?.resolve()
-                    is RustPath     -> resolve(elem).element
-                    is RustUseGlob  -> resolveUseGlob(elem).element
-                    is RustAlias    -> {
+
+                    is RustPath -> resolve(elem).element
+                    is RustUseGlob -> resolveUseGlob(elem).element
+
+                    is RustAlias -> {
                         val parent = elem.parent
                         when (parent) {
                             is RustUseItem         -> parent.path?.let { resolve(it).element }
@@ -297,8 +318,11 @@ private class Resolver {
                             else                   -> elem
                         }
                     }
-                    else            -> elem
+
+                    else -> elem
                 }
+
+            return matched
         }
 
         protected fun match(elem: RustNamedElement): Boolean = elem.name == ref.name

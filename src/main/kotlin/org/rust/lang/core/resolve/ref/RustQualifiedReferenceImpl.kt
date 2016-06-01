@@ -2,10 +2,8 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.completion.RustCompletionEngine
-import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustQualifiedReferenceElement
 import org.rust.lang.core.psi.RustTokenElementTypes
-import org.rust.lang.core.psi.util.parentRelativeRange
 import org.rust.lang.core.resolve.RustResolveEngine
 
 
@@ -13,8 +11,8 @@ class RustQualifiedReferenceImpl(element: RustQualifiedReferenceElement)
     : RustReferenceBase<RustQualifiedReferenceElement>(element, element.nameElement)
     , RustReference {
 
-    override fun resolve(): RustNamedElement? =
-        RustResolveEngine.resolve(element).element
+    override fun resolveImpl(): RustResolveEngine.ResolveResult =
+        RustResolveEngine.resolve(element)
 
     override fun getVariants(): Array<out Any> =
         RustCompletionEngine.complete(element)

@@ -8,8 +8,7 @@ class RustModReferenceImpl(modDecl: RustModDeclItem)
     : RustReferenceBase<RustModDeclItem>(modDecl, modDecl.identifier)
     , RustReference {
 
-    override fun resolve(): RustMod? =
-        RustResolveEngine.resolveModDecl(element).element as RustMod?
+    override fun resolveImpl(): RustResolveEngine.ResolveResult = RustResolveEngine.resolveModDecl(element)
 
     override fun getVariants(): Array<out Any> = EMPTY_ARRAY
 }

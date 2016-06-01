@@ -13,9 +13,9 @@ import org.rust.lang.core.psi.RustPat
 import org.rust.lang.core.psi.visitors.RecursiveRustVisitor
 
 
-//
-// Extension points
-//
+/**
+ * Common Rust's PSI-related extensions
+ */
 
 inline fun <reified T : PsiElement> PsiElement.parentOfType(strict: Boolean = true, minStartOffset: Int = -1): T? =
     PsiTreeUtil.getParentOfType(this, T::class.java, strict, minStartOffset)
