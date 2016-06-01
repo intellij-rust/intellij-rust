@@ -23,6 +23,9 @@ inline fun <reified T : PsiElement> PsiElement.parentOfType(strict: Boolean = tr
 inline fun <reified T : PsiElement> PsiElement.childOfType(strict: Boolean = true): T? =
     PsiTreeUtil.findChildOfType(this, T::class.java, strict)
 
+inline fun <reified T : PsiElement> PsiElement.descendentsOfType(): Collection<T> =
+    PsiTreeUtil.findChildrenOfType(this, T::class.java)
+
 /**
  * Finds first sibling that is neither comment, nor whitespace before given element.
  */

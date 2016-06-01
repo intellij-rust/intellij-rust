@@ -125,6 +125,8 @@
         <lang.surroundDescriptor language="RUST"
                                  implementationClass="org.rust.ide.surround.RustSurroundDescriptor"/>
 
+        <lang.foldingBuilder language="RUST" implementationClass="org.rust.ide.folding.RustFoldingBuilder"/>
+
         <!-- Live Templates -->
         <defaultLiveTemplatesProvider implementation="org.rust.ide.template.RustLiveTemplatesProvider"/>
         <liveTemplateContext implementation="org.rust.ide.template.RustContextType$Generic"/>
