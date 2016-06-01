@@ -18,16 +18,15 @@ abstract class RustReferenceBase<T : RustCompositeElement>(
         check(refAnchor.parent == element)
     }
 
-    abstract fun resolveImpl(): RustResolveEngine.ResolveResult
+    abstract fun resolveVerbose(): RustResolveEngine.ResolveResult
 
     final override fun resolve(): RustNamedElement? =
-        resolveImpl().let {
+        resolveVerbose().let {
             when (it) {
                 is RustResolveEngine.ResolveResult.Resolved -> it.element
                 else -> null
             }
         }
-
 
     // enforce not nullability
     final override fun getRangeInElement(): TextRange = super.getRangeInElement()

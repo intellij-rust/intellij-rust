@@ -9,5 +9,5 @@ class RustExternCrateReferenceImpl(externCrate: RustExternCrateItem)
 
     override fun getVariants(): Array<out Any> = emptyArray()
 
-    override fun resolveImpl(): RustResolveEngine.ResolveResult = RustResolveEngine.resolveExternCrate(element)
+    override fun resolveVerbose(): RustResolveEngine.ResolveResult = RustResolveEngine.resolveExternCrate(element)
 }

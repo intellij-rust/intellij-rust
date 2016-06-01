@@ -9,6 +9,7 @@ interface RustReference : PsiReference {
     override fun getElement(): RustCompositeElement
 
     override fun resolve(): RustNamedElement?
+
 }
 
 

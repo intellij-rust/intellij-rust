@@ -7,7 +7,9 @@ import org.rust.lang.core.resolve.ref.RustReference
 
 interface RustCompositeElement   : PsiElement
                                  , NavigatablePsiElement {
+
     override fun getReference(): RustReference?
+
 }
 
 val RustCompositeElement.containingMod: RustMod?

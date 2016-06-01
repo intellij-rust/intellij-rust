@@ -12,5 +12,5 @@ class RustFieldReferenceImpl(
 
     override fun getVariants(): Array<out Any> = RustCompletionEngine.completeFieldName(element)
 
-    override fun resolveImpl(): RustResolveEngine.ResolveResult = RustResolveEngine.resolveFieldName(element)
+    override fun resolveVerbose(): RustResolveEngine.ResolveResult = RustResolveEngine.resolveFieldName(element)
 }

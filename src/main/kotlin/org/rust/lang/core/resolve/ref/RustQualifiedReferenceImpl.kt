@@ -11,7 +11,7 @@ class RustQualifiedReferenceImpl(element: RustQualifiedReferenceElement)
     : RustReferenceBase<RustQualifiedReferenceElement>(element, element.nameElement)
     , RustReference {
 
-    override fun resolveImpl(): RustResolveEngine.ResolveResult =
+    override fun resolveVerbose(): RustResolveEngine.ResolveResult =
         RustResolveEngine.resolve(element)
 
     override fun getVariants(): Array<out Any> =

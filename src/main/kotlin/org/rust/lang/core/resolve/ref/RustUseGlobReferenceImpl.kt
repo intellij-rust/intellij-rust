@@ -12,7 +12,7 @@ class RustUseGlobReferenceImpl(useGlob: RustUseGlob)
     override fun getVariants(): Array<out Any> =
         RustCompletionEngine.completeUseGlob(element)
 
-    override fun resolveImpl(): RustResolveEngine.ResolveResult = RustResolveEngine.resolveUseGlob(element)
+    override fun resolveVerbose(): RustResolveEngine.ResolveResult = RustResolveEngine.resolveUseGlob(element)
 }
 
 
