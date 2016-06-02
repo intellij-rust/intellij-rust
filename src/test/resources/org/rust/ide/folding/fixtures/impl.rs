@@ -1,5 +1,5 @@
 struct A;
 
-impl A <fold>{
-    fn hi(self) { }
-}
+impl A <fold text='{...}'>{
+
+}</fold>

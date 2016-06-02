@@ -1,2 +1,2 @@
-fn main() <fold>{
-}
+fn main() <fold text='{...}'>{
+}</fold>

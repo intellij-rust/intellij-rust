@@ -1,5 +1,5 @@
-trait B {
-    fn test(self) <fold>{
+trait B <fold text='{...}'>{
+    fn test(self) <fold text='{...}'>{
 
-    }
-}
+    }</fold>
+}</fold>

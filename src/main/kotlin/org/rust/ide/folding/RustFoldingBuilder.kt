@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.lang.folding.FoldingBuilderEx
 import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
@@ -11,7 +12,7 @@ import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.util.descendentsOfType
 import java.util.*
 
-class RustFoldingBuilder() : FoldingBuilderEx() {
+class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
     override fun getPlaceholderText(node: ASTNode): String = "{...}"
 
     override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<out FoldingDescriptor> {
@@ -44,6 +45,10 @@ class RustFoldingBuilder() : FoldingBuilderEx() {
             val enumBody = it.enumBody
             descriptors += FoldingDescriptor(it.node, enumBody.textRange)
         }
+        root.descendentsOfType<RustTraitItem>().forEach {
+            val traitBody = it.traitBody
+            descriptors += FoldingDescriptor(it.node, traitBody.textRange)
+        }
         root.descendentsOfType<RustEnumVariant>().forEach {
             val structDeclArgs = it.enumStructArgs
             if (structDeclArgs != null) {
@@ -71,7 +76,7 @@ class RustFoldingBuilder() : FoldingBuilderEx() {
         root.descendentsOfType<RustModItem>().forEach {
             val rbrace = it.rbrace;
             if (rbrace != null) {
-                descriptors += FoldingDescriptor(it.node, TextRange(it.lbrace.textOffset, rbrace.textOffset))
+                descriptors += FoldingDescriptor(it.node, TextRange(it.lbrace.textOffset, rbrace.textOffset + 1))
             }
         }
         return descriptors.toTypedArray()

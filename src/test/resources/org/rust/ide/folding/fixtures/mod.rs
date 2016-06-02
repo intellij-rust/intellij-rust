@@ -1,3 +1,3 @@
-mod a <fold>{
-    fn test() { }
-}
+mod a <fold text='{...}'>{
+
+}</fold>

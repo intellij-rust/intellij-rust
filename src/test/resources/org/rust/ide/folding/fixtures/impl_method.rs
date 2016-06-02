@@ -1,7 +1,7 @@
 struct A;
 
-impl A {
-    fn test(self) <fold>{
+impl A <fold text='{...}'>{
+    fn test(self) <fold text='{...}'>{
 
-    }
-}
+    }</fold>
+}</fold>

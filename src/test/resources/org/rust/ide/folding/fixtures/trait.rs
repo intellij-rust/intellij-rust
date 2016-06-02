@@ -1,3 +1,3 @@
-trait B <fold>{
+trait B <fold text='{...}'>{
 
-}
+}</fold>
