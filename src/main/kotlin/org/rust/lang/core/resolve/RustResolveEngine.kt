@@ -247,7 +247,8 @@ private class Resolver {
     }
 
     /**
-     * Non recursively searchs for the element with [name] visible at [context].
+     * Searches for the element with [name] visible at [context] in a single scope.
+     * Does not walk the tree of scopes up, see [enumerateScopesFor].
      */
     inner class ResolveScopeVisitor(
         private val name: String,
