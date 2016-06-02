@@ -13,6 +13,7 @@
 * **Goto Declaration** for local variables and items (`Ctrl+B`, `Ctrl` + mouse click).
 * **Goto Class/Symbol** (`Ctrl+N`, `Ctrl+Shift+N`).
 * **Goto Super Module** (`Ctrl+U`).
+* **Quick Documentation** (`Ctrl+Q`).
 * **File Structure** (`Ctrl+F12`, `Alt+7`).
 * `Code completion`, though it is limited at the moment. You can use `Alt+/` completion as a workaround.
 * `Expand selection` (`Ctrl+W`).
