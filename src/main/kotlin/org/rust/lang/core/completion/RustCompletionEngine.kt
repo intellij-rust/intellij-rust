@@ -19,7 +19,7 @@ object RustCompletionEngine {
 
     fun completeFieldName(field: RustFieldName): Array<RustNamedElement> =
         field.parentOfType<RustStructExpr>()
-                    ?.let { it.visibleFields() }
+                    ?.let { it.visibleFields }
                 .orEmpty()
                 .filter { it.name != null }
                 .toTypedArray()

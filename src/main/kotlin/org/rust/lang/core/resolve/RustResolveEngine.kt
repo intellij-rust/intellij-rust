@@ -59,7 +59,7 @@ object RustResolveEngine {
     fun resolveFieldName(ref: RustFieldName): ResolveResult {
         val matching =
             ref.parentOfType<RustStructExpr>()
-                    ?.let { it.visibleFields() }
+                    ?.let { it.visibleFields }
                     .orEmpty()
                     .filter { it.name == ref.name }
 
