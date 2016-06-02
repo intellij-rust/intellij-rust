@@ -1,10 +1,7 @@
 package org.rust.lang.core.resolve
 
-import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.impl.PsiImplUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.cargoProject
@@ -20,7 +17,6 @@ import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.util.visibleFields
-import org.rust.lang.core.resolve.ref.RustReference
 import org.rust.lang.core.resolve.ref.RustReferenceBase
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
@@ -215,7 +211,7 @@ private class Resolver {
      */
     private fun by(e: RustNamedElement) =
         e.name?.let {
-            ResolveContext.Companion.Trivial(ResolveScopeVisitor(e))
+            ResolveContext.Companion.Trivial(ResolveScopeVisitor(it, e))
         } ?: ResolveContext.Companion.Empty
 
     /**
@@ -251,9 +247,12 @@ private class Resolver {
     }
 
     /**
-     * Abstract resolving-scope-visitor
+     * Non recursively searchs for the element with [name] visible at [context].
      */
-    inner class ResolveScopeVisitor(val ref: RustNamedElement) : RustVisitor() {
+    inner class ResolveScopeVisitor(
+        private val name: String,
+        private val context: RustCompositeElement
+    ) : RustVisitor() {
 
         var result: RustResolveEngine.ResolveResult = RustResolveEngine.ResolveResult.Unresolved
 
@@ -320,8 +319,7 @@ private class Resolver {
             return result
         }
 
-        private fun matching(elem: RustNamedElement): Boolean = elem.name == ref.name
-
+        private fun matching(elem: RustNamedElement): Boolean = elem.name == name
 
         private fun seekUseDeclarations(o: RustItemsOwner) {
             for (useDecl in o.useDeclarations) {
@@ -343,8 +341,6 @@ private class Resolver {
         }
 
         private fun seekInjectedItems(mod: RustMod) {
-            val name = ref.name
-
             // Rust injects implicit `extern crate std` in every crate root module unless it is
             // a `#![no_std]` crate, in which case `extern crate core` is injected.
             // The stdlib lib itself is `#![no_std]`.
@@ -364,8 +360,6 @@ private class Resolver {
                 }
             }
         }
-
-        private val context: RustCompositeElement = ref
 
         override fun visitForExpr             (o: RustForExpr)            { seek(o.scopedForDecl) }
         override fun visitLambdaExpr          (o: RustLambdaExpr)         { visitResolveScope(o) }
