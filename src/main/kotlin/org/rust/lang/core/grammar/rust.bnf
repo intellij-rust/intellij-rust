@@ -1098,7 +1098,7 @@ inner_attrs_and_block ::= '{' inner_attr* block_tail '}' {
 
 private block_tail ::= (stmt | docs_and_item)* any_expr?
 
-stmt ::= expr_stmt | let_decl | empty_stmt
+stmt ::= expr_stmt | let_decl | empty_stmt | never ';'
 
 expr_stmt ::= outer_attr? ( block_expr !('.' | '?') ';'? | any_expr ';' ) {
   extends = stmt
