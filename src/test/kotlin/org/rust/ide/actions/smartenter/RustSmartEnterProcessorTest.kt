@@ -40,4 +40,6 @@ class RustSmartEnterProcessorTest : RustTestCaseBase() {
     fun testFixWhitespaceAndSemicolon() = doTest()
     fun testFixSemicolonAfterDeclaration() = doTest()
     fun testFixDeclarationWithCall() = doTest()
+    fun testFixMatchInLet() = doTest()
+    fun testFixCallInStmt() = doTest()
 }
