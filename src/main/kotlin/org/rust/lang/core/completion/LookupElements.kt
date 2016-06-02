@@ -14,6 +14,7 @@ fun RustNamedElement.createLookupElement(): LookupElement {
         is RustConstItem         -> createLookupElement()
         is RustStaticItem        -> createLookupElement()
         is RustPath              -> createLookupElement()
+        is RustUseGlob           -> createLookupElement()
         is RustTraitItem         -> createLookupElement()
         is RustStructItem        -> createLookupElement()
         is RustEnumVariant       -> createLookupElement()
@@ -90,5 +91,11 @@ fun RustFieldDecl.createLookupElement(): LookupElement {
 fun RustPath.createLookupElement(): LookupElement {
     // re-export needs to be resolved
     val resolved = reference.resolve()
+    return resolved?.createLookupElement() ?: LookupElementBuilder.createWithIcon(this)
+}
+
+fun RustUseGlob.createLookupElement(): LookupElement {
+    // re-export needs to be resolved
+    val resolved = reference?.resolve()
     return resolved?.createLookupElement() ?: LookupElementBuilder.createWithIcon(this)
 }
