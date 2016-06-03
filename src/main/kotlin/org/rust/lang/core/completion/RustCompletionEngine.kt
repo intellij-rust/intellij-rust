@@ -43,11 +43,8 @@ object RustCompletionEngine {
         val visitor = CompletionScopeVisitor(ref)
         val scopes = enumerateScopesFor(ref).toMutableList()
 
-        val rootMod = RustResolveUtil.getCrateRootModFor(ref)
-        if (rootMod != null) {
-            val preludeMod = rootMod.module?.preludeModule
-            if (preludeMod != null && preludeMod is RustFile) scopes += preludeMod
-        }
+        val preludeMod = ref.module?.preludeModule
+        if (preludeMod != null && preludeMod is RustFile) scopes += preludeMod
 
         for (scope in scopes) {
             scope.accept(visitor)
