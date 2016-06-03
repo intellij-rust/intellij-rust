@@ -143,12 +143,12 @@ private class Resolver {
             is RelativeModulePrefix.NotRelative    -> {
                 val qual = ref.qualifier
                 if (qual == null) {
-                    resolveIn(enumerateScopesFor(ref), by(ref))
+                    resolveIn(enumerateScopesFor(ref), ref)
                 } else {
                     val parent = resolve(qual).element
                     when (parent) {
-                        is RustMod      -> resolveIn(sequenceOf(parent), by(ref))
-                        is RustEnumItem -> resolveIn(sequenceOf(parent), by(ref))
+                        is RustMod      -> resolveIn(sequenceOf(parent), ref)
+                        is RustEnumItem -> resolveIn(sequenceOf(parent), ref)
                         else            -> RustResolveEngine.ResolveResult.Unresolved
                     }
                 }
@@ -187,7 +187,7 @@ private class Resolver {
             ref.self != null && baseItem != null -> RustResolveEngine.ResolveResult.Resolved(baseItem)
 
             // `use foo::{bar}`
-            baseItem is RustResolveScope -> resolveIn(sequenceOf(baseItem), by(ref))
+            baseItem is RustResolveScope -> resolveIn(sequenceOf(baseItem), ref)
 
             else -> RustResolveEngine.ResolveResult.Unresolved
         }
@@ -204,42 +204,13 @@ private class Resolver {
         return result
     }
 
-    /**
-     * Hook to compose _total_ (ie including both local & non-local) context to resolve
-     * any items, taking into account what lexical point we're particularly looking that name up from,
-     * therefore effectively ignoring items being declared 'lexically-after' lookup-point
-     */
-    private fun by(e: RustNamedElement) =
-        e.name?.let {
-            ResolveContext.Companion.Trivial(ResolveScopeVisitor(it, e))
-        } ?: ResolveContext.Companion.Empty
-
-    /**
-     * Resolve-context wrapper
-     */
-    interface ResolveContext {
-        fun accept(scope: RustResolveScope): RustResolveEngine.ResolveResult
-
-        companion object {
-
-            class Trivial(val v: ResolveScopeVisitor) : ResolveContext {
-                override fun accept(scope: RustResolveScope): RustResolveEngine.ResolveResult {
-                    scope.accept(v)
-                    return v.result
-                }
-            }
-
-            object Empty : ResolveContext {
-                override fun accept(scope: RustResolveScope): RustResolveEngine.ResolveResult = RustResolveEngine.ResolveResult.Unresolved
-            }
-        }
-    }
-
-
-    private fun resolveIn(scopes: Sequence<RustResolveScope>, ctx: ResolveContext): RustResolveEngine.ResolveResult {
+    private fun resolveIn(scopes: Sequence<RustResolveScope>, ref: RustNamedElement): RustResolveEngine.ResolveResult {
+        val name = ref.name ?: return RustResolveEngine.ResolveResult.Unresolved
+        val visitor = ResolveScopeVisitor(name, ref)
         for (s in scopes) {
-            ctx.accept(s).let {
-                if (it is RustResolveEngine.ResolveResult.Resolved) return it
+            s.accept(visitor)
+            if (visitor.result is RustResolveEngine.ResolveResult.Resolved) {
+                return visitor.result
             }
         }
 
