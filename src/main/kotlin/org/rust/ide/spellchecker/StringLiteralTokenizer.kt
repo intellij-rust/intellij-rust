@@ -6,7 +6,7 @@ import com.intellij.spellchecker.tokenizer.EscapeSequenceTokenizer
 import com.intellij.spellchecker.tokenizer.TokenConsumer
 import org.rust.lang.utils.parseRustStringCharacters
 
-class StringLiteralTokenizer : EscapeSequenceTokenizer<LeafPsiElement>() {
+object StringLiteralTokenizer : EscapeSequenceTokenizer<LeafPsiElement>() {
 
     override fun tokenize(element: LeafPsiElement, consumer: TokenConsumer) {
         val text = element.text
@@ -18,12 +18,10 @@ class StringLiteralTokenizer : EscapeSequenceTokenizer<LeafPsiElement>() {
         }
     }
 
-    companion object {
-        fun processTextWithEscapeSequences(element: LeafPsiElement, text: String, consumer: TokenConsumer) {
-            val unescapedText = StringBuilder()
-            val offsets = IntArray(text.length + 1)
-            parseRustStringCharacters(text, unescapedText, offsets)
-            processTextWithOffsets(element, consumer, unescapedText, offsets, 0)
-        }
+    private fun processTextWithEscapeSequences(element: LeafPsiElement, text: String, consumer: TokenConsumer) {
+        val unescapedText = StringBuilder()
+        val offsets = IntArray(text.length + 1)
+        parseRustStringCharacters(text, unescapedText, offsets)
+        processTextWithOffsets(element, consumer, unescapedText, offsets, 0)
     }
 }
