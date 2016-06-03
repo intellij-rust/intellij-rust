@@ -2,9 +2,9 @@ package org.rust.ide.structure
 
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
-import org.rust.lang.core.psi.RustTraitItem
+import org.rust.lang.core.psi.RustTraitItemElement
 
-class RustTraitTreeElement(element: RustTraitItem) : PsiTreeElementBase<RustTraitItem>(element) {
+class RustTraitTreeElement(element: RustTraitItemElement) : PsiTreeElementBase<RustTraitItemElement>(element) {
 
     override fun getPresentableText(): String {
         var text = element?.identifier?.text ?: return "<unknown>"

@@ -10,18 +10,18 @@ object RustElementFactory {
     fun createFileFromText(project: Project, text: String): RustFile? =
         PsiFileFactory.getInstance(project).createFileFromText("DUMMY.rs", RustLanguage, text) as RustFile?
 
-    fun createExpression(project: Project, expression: String): RustExpr? {
+    fun createExpression(project: Project, expression: String): RustExprElement? {
         val file = createFileFromText(project, "fn main() {$expression;}")
-        return file?.childOfType<RustExpr>()
+        return file?.childOfType<RustExprElement>()
     }
 
-    fun createModDeclItem(project: Project, modName: String): RustModDeclItem? {
+    fun createModDeclItem(project: Project, modName: String): RustModDeclItemElement? {
         val file = createFileFromText(project, "mod $modName;")
-        return file?.childOfType<RustModDeclItem>()
+        return file?.childOfType<RustModDeclItemElement>()
     }
 
-    fun createOuterAttr(project: Project, attrContents: String): RustOuterAttr? {
+    fun createOuterAttr(project: Project, attrContents: String): RustOuterAttrElement? {
         val file = createFileFromText(project, "#[$attrContents] struct Dummy;")
-        return file?.childOfType<RustOuterAttr>()
+        return file?.childOfType<RustOuterAttrElement>()
     }
 }

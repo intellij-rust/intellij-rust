@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustElementFactory
-import org.rust.lang.core.psi.RustExpr
+import org.rust.lang.core.psi.RustExprElement
 
 class DelimiterSurrounder(private val left: String,
                           private val right: String,
@@ -14,7 +14,7 @@ class DelimiterSurrounder(private val left: String,
 
     override fun getTemplateDescription() = description
 
-    override fun isApplicable(elements: Array<out PsiElement>) = elements.all { it is RustExpr }
+    override fun isApplicable(elements: Array<out PsiElement>) = elements.all { it is RustExprElement }
 
     override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange? {
         var endOffset = 0

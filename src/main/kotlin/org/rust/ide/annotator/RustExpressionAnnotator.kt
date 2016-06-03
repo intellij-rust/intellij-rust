@@ -9,63 +9,63 @@ import org.rust.lang.core.psi.*
 class RustExpressionAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         when (element) {
-            is RustIfExpr    -> checkIfParentheses(element, holder)
-            is RustWhileExpr -> checkWhileParentheses(element, holder)
-            is RustRetExpr   -> checkReturnParentheses(element, holder)
-            is RustMatchExpr -> checkMatchParentheses(element, holder)
-            is RustForExpr   -> checkForParentheses(element, holder)
-            is RustParenExpr -> checkImmediateChildIsParen(element, holder)
+            is RustIfExprElement    -> checkIfParentheses(element, holder)
+            is RustWhileExprElement -> checkWhileParentheses(element, holder)
+            is RustRetExprElement   -> checkReturnParentheses(element, holder)
+            is RustMatchExprElement -> checkMatchParentheses(element, holder)
+            is RustForExprElement   -> checkForParentheses(element, holder)
+            is RustParenExprElement -> checkImmediateChildIsParen(element, holder)
         }
     }
 
-    private fun checkImmediateChildIsParen(element: RustParenExpr, holder: AnnotationHolder) {
+    private fun checkImmediateChildIsParen(element: RustParenExprElement, holder: AnnotationHolder) {
         val childExpr = element.expr
-        if (childExpr is RustParenExpr) {
+        if (childExpr is RustParenExprElement) {
             holder.createWeakWarningAnnotation(element, "Redundant parentheses in expression")
                 .registerFix(RemoveParenthesesFromExprIntention())
         }
     }
 
-    private fun checkIfParentheses(element: RustIfExpr, holder: AnnotationHolder) {
+    private fun checkIfParentheses(element: RustIfExprElement, holder: AnnotationHolder) {
         val expr = element.expr
-        if (expr is RustParenExpr) {
+        if (expr is RustParenExprElement) {
             holder.createWeakWarningAnnotation(expr, "Predicate expression has unnecessary parentheses")
                 .registerFix(RemoveParenthesesFromExprIntention())
         }
     }
 
-    private fun checkWhileParentheses(element: RustWhileExpr, holder: AnnotationHolder) {
+    private fun checkWhileParentheses(element: RustWhileExprElement, holder: AnnotationHolder) {
         val expr = element.expr
-        if (expr is RustParenExpr) {
+        if (expr is RustParenExprElement) {
             holder.createWeakWarningAnnotation(expr, "Predicate expression has unnecessary parentheses")
                 .registerFix(RemoveParenthesesFromExprIntention())
         }
     }
 
-    private fun checkMatchParentheses(element: RustMatchExpr, holder: AnnotationHolder) {
+    private fun checkMatchParentheses(element: RustMatchExprElement, holder: AnnotationHolder) {
         val expr = element.expr
-        if (expr is RustParenExpr) {
+        if (expr is RustParenExprElement) {
             holder.createWeakWarningAnnotation(expr, "Match expression has unnecessary parentheses")
                 .registerFix(RemoveParenthesesFromExprIntention())
         }
     }
 
-    private fun checkReturnParentheses(element: RustRetExpr, holder: AnnotationHolder) {
+    private fun checkReturnParentheses(element: RustRetExprElement, holder: AnnotationHolder) {
         val expr = element.expr
-        if (expr is RustParenExpr) {
+        if (expr is RustParenExprElement) {
             holder.createWeakWarningAnnotation(expr, "Return expression has unnecessary parentheses")
                 .registerFix(RemoveParenthesesFromExprIntention())
         }
     }
 
-    private fun checkForParentheses(element: RustForExpr, holder: AnnotationHolder) {
+    private fun checkForParentheses(element: RustForExprElement, holder: AnnotationHolder) {
         val expr = element.scopedForDecl.expr
-        if (expr is RustParenExpr) {
+        if (expr is RustParenExprElement) {
             holder.createWeakWarningAnnotation(expr, "For loop expression has unnecessary parentheses")
                 .registerFix(RemoveParenthesesFromExprIntention())
         }
     }
 
-    private val RustIfExpr.expr: RustExpr?
+    private val RustIfExprElement.expr: RustExprElement?
         get() = exprList.firstOrNull()
 }

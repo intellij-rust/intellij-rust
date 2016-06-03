@@ -5,8 +5,8 @@ import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.RustFileType
-import org.rust.lang.core.psi.RustModDeclItem
-import org.rust.lang.core.psi.RustVisitor
+import org.rust.lang.core.psi.RustModDeclItemElement
+import org.rust.lang.core.psi.RustElementVisitor
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -48,10 +48,10 @@ class RustModulesIndexExtension : FileBasedIndexExtension<
         override fun map(inputData: FileContent): Map<Key, Value> {
             val result = mutableMapOf<Key, Value>()
 
-            inputData.psiFile.accept(object : RustVisitor() {
+            inputData.psiFile.accept(object : RustElementVisitor() {
                 override fun visitElement(element: PsiElement) = element.acceptChildren(this)
 
-                override fun visitModDeclItem(o: RustModDeclItem) {
+                override fun visitModDeclItem(o: RustModDeclItemElement) {
                     val name = o.name ?: return
                     result += Key(name) to Value(o.textOffset)
                 }

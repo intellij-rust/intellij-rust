@@ -3,11 +3,11 @@ package org.rust.lang.core.psi.impl.mixin
 import com.intellij.lang.ASTNode
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustUseItem
-import org.rust.lang.core.psi.impl.RustItemImpl
+import org.rust.lang.core.psi.RustUseItemElement
+import org.rust.lang.core.psi.impl.RustItemElementImpl
 import org.rust.lang.core.stubs.RustItemStub
 
-abstract class RustUseItemImplMixin : RustItemImpl, RustUseItem {
+abstract class RustUseItemImplMixin : RustItemElementImpl, RustUseItemElement {
 
     constructor(node: ASTNode) : super(node)
 
@@ -26,4 +26,4 @@ abstract class RustUseItemImplMixin : RustItemImpl, RustUseItem {
         }
 }
 
-val RustUseItem.isStarImport: Boolean get() = mul != null
+val RustUseItemElement.isStarImport: Boolean get() = mul != null

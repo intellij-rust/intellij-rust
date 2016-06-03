@@ -20,7 +20,7 @@ val RustDocAndAttributeOwner.documentation: String? get() {
 
 val RustDocAndAttributeOwner.queryAttributes: QueryAttributes get() = QueryAttributes(allAttributes)
 
-class QueryAttributes(private val attributes: List<RustAttr>) {
+class QueryAttributes(private val attributes: List<RustAttrElement>) {
     fun hasAtomAttribute(name: String): Boolean =
         metaItems
             .filter { it.eq == null && it.lparen == null }
@@ -33,10 +33,10 @@ class QueryAttributes(private val attributes: List<RustAttr>) {
             .singleOrNull()
 
 
-    private val metaItems: List<RustMetaItem> get() = attributes.mapNotNull { it.metaItem }
+    private val metaItems: List<RustMetaItemElement> get() = attributes.mapNotNull { it.metaItem }
 }
 
-private val RustDocAndAttributeOwner.allAttributes: List<RustAttr> get() {
+private val RustDocAndAttributeOwner.allAttributes: List<RustAttrElement> get() {
     return (this as? RustOuterAttributeOwner)?.outerAttrList.orEmpty() +
         (this as? RustInnerAttributeOwner)?.innerAttrList.orEmpty()
 }
@@ -49,10 +49,10 @@ private val RustOuterAttributeOwner.outerDocs: List<String> get() {
     return childOuterIterator.asSequence()
         // All these outer elements have been edge bound; if we reach something that isn't one
         // of these, we have reached the actual parse children of this item.
-        .takeWhile { it is RustOuterAttr || it is PsiComment || it is PsiWhiteSpace }
+        .takeWhile { it is RustOuterAttrElement || it is PsiComment || it is PsiWhiteSpace }
         .mapNotNull {
             when {
-                it is RustOuterAttr -> it.metaItem.docAttr
+                it is RustOuterAttrElement -> it.metaItem.docAttr
                 it is PsiComment && it.tokenType == RustTokenElementTypes.OUTER_DOC_COMMENT ->
                     it.text.substringAfter("///").trim()
                 else -> null
@@ -63,7 +63,7 @@ private val RustOuterAttributeOwner.outerDocs: List<String> get() {
 private val RustInnerAttributeOwner.innerDocs: List<String> get() {
     // Next, we have to consider inner comments and meta. These, like the outer case, are appended in
     // lexical order, after the outer elements. This only applies to functions and modules.
-    val childBlock = PsiTreeUtil.findChildOfType(this, RustBlock::class.java)
+    val childBlock = PsiTreeUtil.findChildOfType(this, RustBlockElement::class.java)
         ?: return emptyList()
 
     val childInnerIterator = PsiTreeUtil.childIterator(childBlock, PsiElement::class.java)
@@ -71,10 +71,10 @@ private val RustInnerAttributeOwner.innerDocs: List<String> get() {
     return childInnerIterator.asSequence()
         // We only consider comments and attributes at the beginning.
         // Technically, anything else is a syntax error.
-        .takeWhile { it is RustInnerAttr || it is PsiComment || it is PsiWhiteSpace }
+        .takeWhile { it is RustInnerAttrElement || it is PsiComment || it is PsiWhiteSpace }
         .mapNotNull {
             when {
-                it is RustInnerAttr -> it.metaItem.docAttr
+                it is RustInnerAttrElement -> it.metaItem.docAttr
                 it is PsiComment && it.tokenType == RustTokenElementTypes.INNER_DOC_COMMENT ->
                     it.text.substringAfter("//!").trim()
                 else -> null
@@ -82,9 +82,9 @@ private val RustInnerAttributeOwner.innerDocs: List<String> get() {
         }.toList()
 }
 
-private val RustMetaItem.docAttr: String?
+private val RustMetaItemElement.docAttr: String?
     get() = if (identifier.text == "doc") litExpr?.stringLiteralValue else null
 
-private val RustLitExpr.stringLiteralValue: String?
+private val RustLitExprElement.stringLiteralValue: String?
     get() = ((stringLiteral ?: rawStringLiteral) as? RustLiteral.Text)?.value
 

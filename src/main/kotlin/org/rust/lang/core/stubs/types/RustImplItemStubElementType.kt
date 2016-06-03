@@ -1,13 +1,13 @@
 package org.rust.lang.core.stubs.types
 
-import org.rust.lang.core.psi.RustImplItem
-import org.rust.lang.core.psi.impl.RustImplItemImpl
+import org.rust.lang.core.psi.RustImplItemElement
+import org.rust.lang.core.psi.impl.RustImplItemElementImpl
 import org.rust.lang.core.stubs.RustItemStub
 
 class RustImplItemStubElementType(debugName: String)
-    : RustItemStubElementType<RustImplItem>(debugName) {
+    : RustItemStubElementType<RustImplItemElement>(debugName) {
 
-    override fun createPsi(stub: RustItemStub): RustImplItem =
-        RustImplItemImpl(stub, this)
+    override fun createPsi(stub: RustItemStub): RustImplItemElement =
+        RustImplItemElementImpl(stub, this)
 
 }

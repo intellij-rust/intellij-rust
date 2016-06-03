@@ -4,14 +4,14 @@ import com.intellij.lang.ASTNode
 import org.rust.ide.icons.RustIcons
 import org.rust.ide.icons.addStaticMark
 import org.rust.lang.core.psi.RustDeclaringElement
-import org.rust.lang.core.psi.RustInnerAttr
-import org.rust.lang.core.psi.RustTraitMethodMember
+import org.rust.lang.core.psi.RustInnerAttrElement
+import org.rust.lang.core.psi.RustTraitMethodMemberElement
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
 import javax.swing.Icon
 
 
 abstract class RustTraitMethodMemberImplMixin(node: ASTNode) : RustNamedElementImpl(node)
-                                                             , RustTraitMethodMember {
+                                                             , RustTraitMethodMemberElement {
     override val declarations: Collection<RustDeclaringElement> get() {
         val params = parameters ?: return emptyList()
         return listOfNotNull(params.selfArgument) + params.parameterList.orEmpty() + genericParams?.typeParamList.orEmpty()
@@ -25,7 +25,7 @@ abstract class RustTraitMethodMemberImplMixin(node: ASTNode) : RustNamedElementI
         return icon
     }
 
-    override val innerAttrList: List<RustInnerAttr>
+    override val innerAttrList: List<RustInnerAttrElement>
         get() = block?.innerAttrList.orEmpty()
 
     val isAbstract: Boolean
@@ -33,4 +33,4 @@ abstract class RustTraitMethodMemberImplMixin(node: ASTNode) : RustNamedElementI
 
 }
 
-val RustTraitMethodMember.isStatic: Boolean get() = parameters?.selfArgument == null
+val RustTraitMethodMemberElement.isStatic: Boolean get() = parameters?.selfArgument == null

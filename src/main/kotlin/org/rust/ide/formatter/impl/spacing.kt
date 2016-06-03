@@ -133,12 +133,12 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtBlockContext
     if (child1 is ASTBlock && child2 is ASTBlock) SpacingContext.create(child1, child2).apply {
         when {
             // #[attr]\n<comment>\n => #[attr] <comment>\n etc.
-            psi1 is RustOuterAttr && psi2 is PsiComment
+            psi1 is RustOuterAttrElement && psi2 is PsiComment
             -> return one()
 
             // Ensure that each attribute is in separate line; comment aware
-            psi1 is RustOuterAttr && (psi2 is RustOuterAttr || psi1.parent is RustItem)
-                || psi1 is PsiComment && (psi2 is RustOuterAttr || psi1.getPrevNonCommentSibling() is RustOuterAttr)
+            psi1 is RustOuterAttrElement && (psi2 is RustOuterAttrElement || psi1.parent is RustItemElement)
+                || psi1 is PsiComment && (psi2 is RustOuterAttrElement || psi1.getPrevNonCommentSibling() is RustOuterAttrElement)
             -> return lineBreak(keepBlankLines = 0)
 
             // { ... } => {\n ...\n }, see blockMustBeMultiLine docs for details
@@ -146,7 +146,7 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtBlockContext
             -> return lineBreak(keepBlankLines = 0)
 
             // Ensure there are blank lines between statements (or return expression)
-            ncPsi1 is RustStmt && ncPsi2.isStmtOrExpr
+            ncPsi1 is RustStmtElement && ncPsi2.isStmtOrExpr
             -> return lineBreak(
                 keepLineBreaks = ctx.commonSettings.KEEP_LINE_BREAKS,
                 keepBlankLines = ctx.commonSettings.KEEP_BLANK_LINES_IN_CODE)
@@ -249,13 +249,15 @@ private fun SpacingContext.blockMustBeMultiLine(): Boolean {
     val childrenCount = countNonWhitespaceASTNodesBetween(lbrace, rbrace)
 
     return when (parentPsi) {
-        is RustBlock          -> childrenCount != 0 && (childrenCount >= 2 || parentPsi.parent is RustItem) // 2
-        is RustStructDeclArgs,
-        is RustEnumBody,
-        is RustTraitBody,
-        is RustModItem,
-        is RustForeignModItem -> childrenCount != 0 // 3
-        else                  -> false
+        is RustBlockElement -> childrenCount != 0 && (childrenCount >= 2 || parentPsi.parent is RustItemElement) // 2
+
+        is RustStructDeclArgsElement,
+        is RustEnumBodyElement,
+        is RustTraitBodyElement,
+        is RustModItemElement,
+        is RustForeignModItemElement -> childrenCount != 0 // 3
+
+        else -> false
     }
 }
 

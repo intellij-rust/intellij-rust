@@ -4,7 +4,7 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustParenExpr
+import org.rust.lang.core.psi.RustParenExprElement
 import org.rust.lang.core.psi.util.parentOfType
 
 class RemoveParenthesesFromExprIntention : PsiElementBaseIntentionAction() {
@@ -15,12 +15,12 @@ class RemoveParenthesesFromExprIntention : PsiElementBaseIntentionAction() {
     override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
         if (!element.isWritable) return false
 
-        element.parentOfType<RustParenExpr>() ?: return false
+        element.parentOfType<RustParenExprElement>() ?: return false
         return true
     }
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
-        val parentExpr = element.parentOfType<RustParenExpr>() ?: return
+        val parentExpr = element.parentOfType<RustParenExprElement>() ?: return
         parentExpr.replace(parentExpr.expr)
     }
 }

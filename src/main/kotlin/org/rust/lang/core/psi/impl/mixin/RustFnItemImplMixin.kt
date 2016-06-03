@@ -5,12 +5,12 @@ import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
 import org.rust.ide.icons.addTestMark
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustItemImpl
+import org.rust.lang.core.psi.impl.RustItemElementImpl
 import org.rust.lang.core.stubs.RustItemStub
 import javax.swing.Icon
 
-abstract class RustFnItemImplMixin : RustItemImpl
-                                   , RustFnItem {
+abstract class RustFnItemImplMixin : RustItemElementImpl
+                                   , RustFnItemElement {
 
     constructor(node: ASTNode) : super(node)
 
@@ -30,7 +30,7 @@ abstract class RustFnItemImplMixin : RustItemImpl
 
     val isTest: Boolean get() = queryAttributes.hasAtomAttribute("test")
 
-    override val innerAttrList: List<RustInnerAttr>
+    override val innerAttrList: List<RustInnerAttrElement>
         get() = block?.innerAttrList.orEmpty()
 
 }

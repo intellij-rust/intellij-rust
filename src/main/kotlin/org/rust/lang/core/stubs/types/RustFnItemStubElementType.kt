@@ -1,12 +1,12 @@
 package org.rust.lang.core.stubs.types
 
-import org.rust.lang.core.psi.RustFnItem
-import org.rust.lang.core.psi.impl.RustFnItemImpl
+import org.rust.lang.core.psi.RustFnItemElement
+import org.rust.lang.core.psi.impl.RustFnItemElementImpl
 import org.rust.lang.core.stubs.RustItemStub
 
 class RustFnItemStubElementType(debugName: String)
-    : RustItemStubElementType<RustFnItem>(debugName) {
+    : RustItemStubElementType<RustFnItemElement>(debugName) {
 
-    override fun createPsi(stub: RustItemStub): RustFnItem =
-        RustFnItemImpl(stub, this)
+    override fun createPsi(stub: RustItemStub): RustFnItemElement =
+        RustFnItemElementImpl(stub, this)
 }

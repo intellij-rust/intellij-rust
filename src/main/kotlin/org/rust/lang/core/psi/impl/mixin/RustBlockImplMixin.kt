@@ -3,17 +3,17 @@ package org.rust.lang.core.psi.impl.mixin
 import com.intellij.lang.ASTNode
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
-import org.rust.lang.core.psi.RustBlock
+import org.rust.lang.core.psi.RustBlockElement
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustDeclaringElement
-import org.rust.lang.core.psi.RustLetDecl
+import org.rust.lang.core.psi.RustLetDeclElement
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
 
 abstract class RustBlockImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
-                                                 , RustBlock {
+                                                 , RustBlockElement {
 
     override val declarations: Collection<RustDeclaringElement>
-        get() = stmtList.filterIsInstance<RustLetDecl>()
+        get() = stmtList.filterIsInstance<RustLetDeclElement>()
 
 }
 
@@ -32,9 +32,9 @@ abstract class RustBlockImplMixin(node: ASTNode) : RustCompositeElementImpl(node
  *    }
  *    ```
  */
-fun RustBlock.letDeclarationsVisibleAt(element: RustCompositeElement): Sequence<RustLetDecl> =
+fun RustBlockElement.letDeclarationsVisibleAt(element: RustCompositeElement): Sequence<RustLetDeclElement> =
     stmtList.asReversed().asSequence()
-        .filterIsInstance<RustLetDecl>()
+        .filterIsInstance<RustLetDeclElement>()
         .dropWhile { PsiUtilCore.compareElementsByPosition(element, it) < 0 }
         // Drops at most one element
         .dropWhile { PsiTreeUtil.isAncestor(it, element, true) }

@@ -17,14 +17,14 @@ object RustCompletionEngine {
     fun complete(ref: RustQualifiedReferenceElement): Array<RustNamedElement> =
         collectNamedElements(ref).toVariantsArray()
 
-    fun completeFieldName(field: RustFieldName): Array<RustNamedElement> =
-        field.parentOfType<RustStructExpr>()
-                    ?.let { it.visibleFields }
-                .orEmpty()
-                .filter { it.name != null }
-                .toTypedArray()
+    fun completeFieldName(field: RustFieldNameElement): Array<RustNamedElement> =
+        field.parentOfType<RustStructExprElement>()
+                ?.let { it.visibleFields }
+                 .orEmpty()
+                 .filter { it.name != null }
+                 .toTypedArray()
 
-    fun completeUseGlob(glob: RustUseGlob): Array<RustNamedElement> =
+    fun completeUseGlob(glob: RustUseGlobElement): Array<RustNamedElement> =
         glob.basePath?.reference?.resolve()
             .completionsFromResolveScope()
             .toVariantsArray()
@@ -45,7 +45,7 @@ object RustCompletionEngine {
     }
 }
 
-private class CompletionScopeVisitor(private val context: RustQualifiedReferenceElement) : RustVisitor() {
+private class CompletionScopeVisitor(private val context: RustQualifiedReferenceElement) : RustElementVisitor() {
 
     val completions: MutableSet<RustNamedElement> = HashSet()
 
@@ -53,12 +53,12 @@ private class CompletionScopeVisitor(private val context: RustQualifiedReference
         o.rustMod?.let { visitResolveScope(it) }
     }
 
-    override fun visitModItem(o: RustModItem)                         = visitResolveScope(o)
-    override fun visitLambdaExpr(o: RustLambdaExpr)                   = visitResolveScope(o)
-    override fun visitTraitMethodMember(o: RustTraitMethodMember)     = visitResolveScope(o)
-    override fun visitFnItem(o: RustFnItem)                           = visitResolveScope(o)
+    override fun visitModItem(o: RustModItemElement)                         = visitResolveScope(o)
+    override fun visitLambdaExpr(o: RustLambdaExprElement)                   = visitResolveScope(o)
+    override fun visitTraitMethodMember(o: RustTraitMethodMemberElement)     = visitResolveScope(o)
+    override fun visitFnItem(o: RustFnItemElement)                           = visitResolveScope(o)
 
-    override fun visitScopedLetExpr(o: RustScopedLetExpr) {
+    override fun visitScopedLetExpr(o: RustScopedLetExprElement) {
         if (!PsiTreeUtil.isAncestor(o.scopedLetDecl, context, true)) {
             completions.addAll(o.scopedLetDecl.boundElements)
         }
@@ -68,11 +68,11 @@ private class CompletionScopeVisitor(private val context: RustQualifiedReference
         completions.addAll(scope.boundElements)
     }
 
-    override fun visitForExpr(o: RustForExpr) {
+    override fun visitForExpr(o: RustForExprElement) {
         completions.addAll(o.scopedForDecl.boundElements)
     }
 
-    override fun visitBlock(block: RustBlock) {
+    override fun visitBlock(block: RustBlockElement) {
         block.letDeclarationsVisibleAt(context)
             .flatMapTo(completions) { it.boundElements.asSequence() }
     }

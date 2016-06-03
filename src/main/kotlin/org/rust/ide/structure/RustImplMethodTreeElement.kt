@@ -2,9 +2,9 @@ package org.rust.ide.structure
 
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
-import org.rust.lang.core.psi.RustImplMethodMember
+import org.rust.lang.core.psi.RustImplMethodMemberElement
 
-class RustImplMethodTreeElement(element: RustImplMethodMember) : PsiTreeElementBase<RustImplMethodMember>(element) {
+class RustImplMethodTreeElement(element: RustImplMethodMemberElement) : PsiTreeElementBase<RustImplMethodMemberElement>(element) {
 
     override fun getPresentableText(): String? {
         var text = element?.name

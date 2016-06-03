@@ -2,9 +2,9 @@ package org.rust.ide.structure
 
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
-import org.rust.lang.core.psi.RustFnItem
+import org.rust.lang.core.psi.RustFnItemElement
 
-class RustFnTreeElement(element: RustFnItem) : PsiTreeElementBase<RustFnItem>(element) {
+class RustFnTreeElement(element: RustFnItemElement) : PsiTreeElementBase<RustFnItemElement>(element) {
 
     override fun getPresentableText(): String? {
         var text = element?.name

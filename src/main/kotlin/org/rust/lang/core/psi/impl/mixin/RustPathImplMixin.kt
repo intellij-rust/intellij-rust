@@ -9,7 +9,7 @@ import org.rust.lang.core.resolve.ref.RustReference
 
 abstract class RustPathImplMixin(node: ASTNode) : RustNamedElementImpl(node)
                                                 , RustQualifiedReferenceElement
-                                                , RustPath {
+                                                , RustPathElement {
 
     override fun getReference(): RustReference = RustQualifiedReferenceImpl(this)
 
@@ -22,7 +22,7 @@ abstract class RustPathImplMixin(node: ASTNode) : RustNamedElementImpl(node)
 
     private val isViewPath: Boolean get() {
         val parent = parent
-        return parent is RustUseItem || (parent is RustPathImplMixin && parent.isViewPath)
+        return parent is RustUseItemElement || (parent is RustPathImplMixin && parent.isViewPath)
     }
 
     override val isRelativeToCrateRoot: Boolean

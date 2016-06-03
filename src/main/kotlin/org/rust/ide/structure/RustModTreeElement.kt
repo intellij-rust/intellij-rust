@@ -10,16 +10,16 @@ open class RustModTreeElement(item: RustMod) : PsiTreeElementBase<RustMod>(item)
     override fun getChildrenBase(): Collection<StructureViewTreeElement> =
         element?.itemList.orEmpty().mapNotNull { toTreeElement(it) }
 
-    private fun toTreeElement(it: RustItem): StructureViewTreeElement? =
+    private fun toTreeElement(it: RustItemElement): StructureViewTreeElement? =
         when (it) {
-            is RustEnumItem     -> RustEnumTreeElement(it)
-            is RustFnItem       -> RustFnTreeElement(it)
-            is RustImplItem     -> RustImplTreeElement(it)
-            is RustModDeclItem  -> RustModDeclTreeElement(it)
-            is RustModItem      -> RustModTreeElement(it)
-            is RustStructItem   -> RustStructTreeElement(it)
-            is RustTraitItem    -> RustTraitTreeElement(it)
-            is RustTypeItem     -> RustTypeTreeElement(it)
-            else                -> null
+            is RustEnumItemElement      -> RustEnumTreeElement(it)
+            is RustFnItemElement        -> RustFnTreeElement(it)
+            is RustImplItemElement      -> RustImplTreeElement(it)
+            is RustModDeclItemElement   -> RustModDeclTreeElement(it)
+            is RustModItemElement       -> RustModTreeElement(it)
+            is RustStructItemElement    -> RustStructTreeElement(it)
+            is RustTraitItemElement     -> RustTraitTreeElement(it)
+            is RustTypeItemElement      -> RustTypeTreeElement(it)
+            else                        -> null
         }
 }
