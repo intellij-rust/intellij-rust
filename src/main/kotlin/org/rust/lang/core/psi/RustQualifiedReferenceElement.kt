@@ -44,11 +44,6 @@ interface RustQualifiedReferenceElement : RustNamedElement {
      */
     val relativeModulePrefix: RelativeModulePrefix
 
-    /**
-     * Returns true if this is a `self::` prefixed qualified-reference
-     */
-    val isSelf: Boolean
-
     val nameElement: PsiElement
 
     val qualifier: RustQualifiedReferenceElement?

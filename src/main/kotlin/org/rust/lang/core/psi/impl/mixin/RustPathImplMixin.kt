@@ -75,9 +75,6 @@ abstract class RustPathImplMixin(node: ASTNode) : RustNamedElementImpl(node)
         }
     }
 
-    override val isSelf: Boolean
-        get() = self != null
-
     private val separator: PsiElement?
         get() = findChildByType(RustTokenElementTypes.COLONCOLON)
 
