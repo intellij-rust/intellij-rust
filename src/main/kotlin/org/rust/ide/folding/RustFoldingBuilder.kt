@@ -20,60 +20,60 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
 
         val descriptors: MutableList<FoldingDescriptor> = ArrayList()
 
-        root.descendentsOfType<RustBlockExpr>().forEach {
+        root.descendentsOfType<RustBlockExprElement>().forEach {
             val block = it.block
             if (block != null) {
                 descriptors += FoldingDescriptor(it.node, block.textRange)
             }
         }
-        root.descendentsOfType<RustImplItem>().forEach {
+        root.descendentsOfType<RustImplItemElement>().forEach {
             val implBody = it.implBody
             if (implBody != null) {
                 descriptors += FoldingDescriptor(it.node, implBody.textRange)
             }
         }
-        root.descendentsOfType<RustStructItem>().forEach {
+        root.descendentsOfType<RustStructItemElement>().forEach {
             val structDeclArgs = it.structDeclArgs
             if (structDeclArgs != null) {
                 descriptors += FoldingDescriptor(it.node, structDeclArgs.textRange)
             }
         }
-        root.descendentsOfType<RustStructExpr>().forEach {
+        root.descendentsOfType<RustStructExprElement>().forEach {
             descriptors += FoldingDescriptor(it.node, it.structExprBody.textRange)
         }
-        root.descendentsOfType<RustEnumItem>().forEach {
+        root.descendentsOfType<RustEnumItemElement>().forEach {
             val enumBody = it.enumBody
             descriptors += FoldingDescriptor(it.node, enumBody.textRange)
         }
-        root.descendentsOfType<RustTraitItem>().forEach {
+        root.descendentsOfType<RustTraitItemElement>().forEach {
             val traitBody = it.traitBody
             descriptors += FoldingDescriptor(it.node, traitBody.textRange)
         }
-        root.descendentsOfType<RustEnumVariant>().forEach {
+        root.descendentsOfType<RustEnumVariantElement>().forEach {
             val structDeclArgs = it.enumStructArgs
             if (structDeclArgs != null) {
                 descriptors += FoldingDescriptor(it.node, structDeclArgs.textRange)
             }
         }
-        root.descendentsOfType<RustFnItem>().forEach {
+        root.descendentsOfType<RustFnItemElement>().forEach {
             val fnBody = it.block
             if (fnBody != null) {
                 descriptors += FoldingDescriptor(it.node, fnBody.textRange)
             }
         }
-        root.descendentsOfType<RustImplMethodMember>().forEach {
+        root.descendentsOfType<RustImplMethodMemberElement>().forEach {
             val methodBody = it.block
             if (methodBody != null) {
                 descriptors += FoldingDescriptor(it.node, methodBody.textRange)
             }
         }
-        root.descendentsOfType<RustTraitMethodMember>().forEach {
+        root.descendentsOfType<RustTraitMethodMemberElement>().forEach {
             val methodBody = it.block
             if (methodBody != null) {
                 descriptors += FoldingDescriptor(it.node, methodBody.textRange)
             }
         }
-        root.descendentsOfType<RustModItem>().forEach {
+        root.descendentsOfType<RustModItemElement>().forEach {
             val rbrace = it.rbrace;
             if (rbrace != null) {
                 descriptors += FoldingDescriptor(it.node, TextRange(it.lbrace.textOffset, rbrace.textOffset + 1))

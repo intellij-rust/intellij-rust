@@ -27,8 +27,8 @@ class RustFile(
 
     override fun getFileType(): FileType = RustFileType
 
-    override val itemList: List<RustItem>
-        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustItem::class.java)
+    override val itemList: List<RustItemElement>
+        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustItemElement::class.java)
 
     override val `super`: RustMod?
         get() = RustModulesIndex.getSuperFor(this)
@@ -52,8 +52,8 @@ class RustFile(
     override val declarations: Collection<RustDeclaringElement>
         get() = itemList
 
-    override val innerAttrList: List<RustInnerAttr>
-        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttr::class.java)
+    override val innerAttrList: List<RustInnerAttrElement>
+        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)
 }
 
 

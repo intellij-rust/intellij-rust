@@ -20,11 +20,11 @@ package org.rust.lang.core.psi
  * ```
  */
 interface RustOuterAttributeOwner : RustDocAndAttributeOwner {
-    val outerAttrList: List<RustOuterAttr>
+    val outerAttrList: List<RustOuterAttrElement>
 }
 
 /**
  * Find the first outer attribute with the given identifier.
  */
-fun RustOuterAttributeOwner.findOuterAttr(name: String): RustOuterAttr? =
+fun RustOuterAttributeOwner.findOuterAttr(name: String): RustOuterAttrElement? =
     outerAttrList.find { it.metaItem.identifier.textMatches(name) }

@@ -1,15 +1,15 @@
 package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiReferenceBase
-import org.rust.lang.core.psi.RustMethodCallExpr
+import org.rust.lang.core.psi.RustMethodCallExprElement
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.util.parentRelativeRange
 import org.rust.lang.core.type.RustResolvedType
 import org.rust.lang.core.type.inferredType
 
 class RustMethodCallReferenceImpl(
-    element: RustMethodCallExpr
-) : PsiReferenceBase<RustMethodCallExpr>(element, element.identifier?.parentRelativeRange)
+    element: RustMethodCallExprElement
+) : PsiReferenceBase<RustMethodCallExprElement>(element, element.identifier?.parentRelativeRange)
   , RustReference {
 
     override fun getVariants(): Array<out Any> =

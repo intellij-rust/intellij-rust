@@ -8,7 +8,7 @@ import com.intellij.usageView.UsageViewLongNameLocation
 import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewShortNameLocation
 import com.intellij.usageView.UsageViewTypeLocation
-import org.rust.lang.core.psi.RustPatBinding
+import org.rust.lang.core.psi.RustPatBindingElement
 
 class RustDescriptionProvider : ElementDescriptionProvider {
     override fun getElementDescription(element: PsiElement, location: ElementDescriptionLocation): String? {
@@ -24,29 +24,29 @@ class RustDescriptionProvider : ElementDescriptionProvider {
 
     private fun getNodeText(element: PsiElement): String? {
         return when (element) {
-            is RustPatBinding -> element.identifier.text
-            else              -> null
+            is RustPatBindingElement    -> element.identifier.text
+            else                        -> null
         }
     }
 
     private fun getShortName(element: PsiElement): String? {
         return when (element) {
-            is RustPatBinding -> element.identifier.text
-            else              -> null
+            is RustPatBindingElement    -> element.identifier.text
+            else                        -> null
         }
     }
 
     private fun getLongName(element: PsiElement): String? {
         return when (element) {
-            is RustPatBinding -> getShortName(element)
-            else              -> null
+            is RustPatBindingElement    -> getShortName(element)
+            else                        -> null
         }
     }
 
     private fun getType(element: PsiElement): String? {
         return when (element) {
-            is RustPatBinding -> "variable"
-            else              -> null
+            is RustPatBindingElement    -> "variable"
+            else                        -> null
         }
     }
 }

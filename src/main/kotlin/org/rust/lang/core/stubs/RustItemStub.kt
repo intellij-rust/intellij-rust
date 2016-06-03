@@ -3,9 +3,9 @@ package org.rust.lang.core.stubs
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
 import com.intellij.util.io.StringRef
-import org.rust.lang.core.psi.RustItem
+import org.rust.lang.core.psi.RustItemElement
 
-class RustItemStub : RustNamedElementStub<RustItem> {
+class RustItemStub : RustNamedElementStub<RustItemElement> {
     constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: StringRef)
     : super(parent, elementType, name)
 

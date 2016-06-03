@@ -6,8 +6,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustElementFactory
-import org.rust.lang.core.psi.RustModDeclItem
-import org.rust.lang.core.psi.RustModItem
+import org.rust.lang.core.psi.RustModDeclItemElement
+import org.rust.lang.core.psi.RustModItemElement
 import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
 import org.rust.lang.core.psi.util.parentOfType
 
@@ -17,10 +17,10 @@ class ExtractInlineModuleIntention : PsiElementBaseIntentionAction() {
     override fun startInWriteAction() = true
 
     override fun invoke(project: Project, editor: Editor, element: PsiElement) {
-        val mod = element.parentOfType<RustModItem>() ?: return
+        val mod = element.parentOfType<RustModItemElement>() ?: return
         val modName = mod.name ?: return
         var decl = RustElementFactory.createModDeclItem(project, modName) ?: return
-        decl = mod.parent?.addBefore(decl, mod) as? RustModDeclItem ?: return
+        decl = mod.parent?.addBefore(decl, mod) as? RustModDeclItemElement ?: return
         val modFile = decl.getOrCreateModuleFile() ?: return
 
         val startElement = mod.lbrace.nextSibling ?: return
@@ -33,7 +33,7 @@ class ExtractInlineModuleIntention : PsiElementBaseIntentionAction() {
     }
 
     override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
-        var mod = element.parentOfType<RustModItem>() ?: return false
+        var mod = element.parentOfType<RustModItemElement>() ?: return false
         return !mod.isTopLevelInFile && mod.`super`?.ownsDirectory ?: false
     }
 }

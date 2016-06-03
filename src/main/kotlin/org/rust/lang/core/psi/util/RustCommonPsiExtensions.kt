@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustPat
+import org.rust.lang.core.psi.RustPatElement
 import org.rust.lang.core.psi.visitors.RecursiveRustVisitor
 
 
@@ -64,7 +64,7 @@ val PsiElement.module: Module?
 // TODO(kudinkin): move
 //
 
-val RustPat.boundElements: List<RustNamedElement>
+val RustPatElement.boundElements: List<RustNamedElement>
     get() {
         val result = arrayListOf<RustNamedElement>()
 

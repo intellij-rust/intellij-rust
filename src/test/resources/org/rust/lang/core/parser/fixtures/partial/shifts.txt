@@ -1,16 +1,16 @@
 FILE
-  RustFnItemImpl(FN_ITEM)
+  RustFnItemElementImpl(FN_ITEM)
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('expressions')
-    RustParametersImpl(PARAMETERS)
+    RustParametersElementImpl(PARAMETERS)
       PsiElement(()('(')
       PsiElement())(')')
     PsiWhiteSpace(' ')
-    RustBlockImpl(BLOCK)
+    RustBlockElementImpl(BLOCK)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      RustLitExprImpl(LIT_EXPR)
+      RustLitExprElementImpl(LIT_EXPR)
         RustNumericLiteralImpl(<INTEGER>)('1')
       PsiErrorElement:';' or '}' expected, got '>'
         <empty list>

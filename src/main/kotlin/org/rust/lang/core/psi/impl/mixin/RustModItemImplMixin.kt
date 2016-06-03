@@ -8,13 +8,13 @@ import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.names.parts.RustIdNamePart
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustItemImpl
+import org.rust.lang.core.psi.impl.RustItemElementImpl
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.stubs.RustItemStub
 import javax.swing.Icon
 
-abstract class RustModItemImplMixin : RustItemImpl
-                                    , RustModItem {
+abstract class RustModItemImplMixin : RustItemElementImpl
+                                    , RustModItemElement {
 
     constructor(node: ASTNode) : super(node)
 
@@ -41,8 +41,8 @@ abstract class RustModItemImplMixin : RustItemImpl
     override val canonicalNameInFile: RustQualifiedName?
         get() = name?.let { RustQualifiedName(RustIdNamePart(it), `super`.canonicalNameInFile) }
 
-    override val innerAttrList: List<RustInnerAttr>
-        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttr::class.java)
+    override val innerAttrList: List<RustInnerAttrElement>
+        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)
 
     override val declarations: Collection<RustDeclaringElement>
         get() = itemList

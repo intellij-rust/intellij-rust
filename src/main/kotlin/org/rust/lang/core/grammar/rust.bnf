@@ -11,7 +11,7 @@
     elementTypeClass='org.rust.lang.core.psi.RustCompositeElementType'
     tokenTypeClass='org.rust.lang.core.psi.RustTokenType'
 
-    psiClassPrefix='Rust'
+    psiClassPrefix='Rust/Element'
     psiImplClassSuffix='Impl'
     psiPackage='org.rust.lang.core.psi'
     psiImplPackage='org.rust.lang.core.psi.impl'

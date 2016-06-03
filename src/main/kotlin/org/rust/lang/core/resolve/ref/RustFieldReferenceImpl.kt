@@ -6,8 +6,8 @@ import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.RustResolveEngine
 
 class RustFieldReferenceImpl(
-    field: RustFieldName
-) : RustReferenceBase<RustFieldName>(field, field.identifier)
+    field: RustFieldNameElement
+) : RustReferenceBase<RustFieldNameElement>(field, field.identifier)
   , RustReference {
 
     override fun getVariants(): Array<out Any> = RustCompletionEngine.completeFieldName(element)

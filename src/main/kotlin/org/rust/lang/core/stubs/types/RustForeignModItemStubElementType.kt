@@ -1,13 +1,13 @@
 package org.rust.lang.core.stubs.types
 
-import org.rust.lang.core.psi.RustForeignModItem
-import org.rust.lang.core.psi.impl.RustForeignModItemImpl
+import org.rust.lang.core.psi.RustForeignModItemElement
+import org.rust.lang.core.psi.impl.RustForeignModItemElementImpl
 import org.rust.lang.core.stubs.RustItemStub
 
 class RustForeignModItemStubElementType(debugName: String)
-    : RustItemStubElementType<RustForeignModItem>(debugName) {
+    : RustItemStubElementType<RustForeignModItemElement>(debugName) {
 
-    override fun createPsi(stub: RustItemStub): RustForeignModItem =
-        RustForeignModItemImpl(stub, this)
+    override fun createPsi(stub: RustItemStub): RustForeignModItemElement =
+        RustForeignModItemElementImpl(stub, this)
 
 }

@@ -4,12 +4,12 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.utils.psiCached
 
-val RustExpr.inferredType: RustResolvedType by psiCached {
+val RustExprElement.inferredType: RustResolvedType by psiCached {
     when (this) {
-        is RustPathExpr -> {
+        is RustPathExprElement -> {
             val target = path.reference.resolve()
             when (target) {
-                is RustSelfArgument -> target.parentOfType<RustImplItem>()?.type?.resolvedType ?: RustUnknownType
+                is RustSelfArgumentElement -> target.parentOfType<RustImplItemElement>()?.type?.resolvedType ?: RustUnknownType
                 else -> RustUnknownType
             }
         }
@@ -17,12 +17,12 @@ val RustExpr.inferredType: RustResolvedType by psiCached {
     }
 }
 
-val RustType.resolvedType: RustResolvedType by psiCached {
+val RustTypeElement.resolvedType: RustResolvedType by psiCached {
     when (this) {
-        is RustPathType -> {
+        is RustPathTypeElement -> {
             val target = path?.reference?.resolve()
             when (target) {
-                is RustStructItem -> RustStructType(target)
+                is RustStructItemElement -> RustStructType(target)
                 else -> RustUnknownType
             }
         }

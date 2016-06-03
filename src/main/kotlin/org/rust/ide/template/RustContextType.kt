@@ -9,7 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.RustLiteral
-import org.rust.lang.core.psi.RustStructItem
+import org.rust.lang.core.psi.RustStructItemElement
 import org.rust.lang.core.psi.util.parentOfType
 
 
@@ -38,6 +38,6 @@ sealed class RustContextType(id: String, presentableName: String, parentContext:
         override fun isInContextImpl(element: PsiElement): Boolean =
             // Structs can't be nested or contain other expressions,
             // so it is ok to look for any Struct ancestor.
-            element.parentOfType<RustStructItem>() != null
+            element.parentOfType<RustStructItemElement>() != null
     }
 }

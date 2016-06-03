@@ -47,10 +47,10 @@ val MACRO_ARGS = ts(MACRO_ARG, FORMAT_MACRO_ARGS, TRY_MACRO_ARGS)
 
 
 val PsiElement.isTopLevelItem: Boolean
-    get() = (this is RustItem || this is RustAttr) && this.parent is RustFile
+    get() = (this is RustItemElement || this is RustAttrElement) && this.parent is RustFile
 
 val PsiElement.isStmtOrExpr: Boolean
-    get() = this is RustStmt || this is RustExpr
+    get() = this is RustStmtElement || this is RustExprElement
 
 
 val ASTNode.isDelimitedBlock: Boolean

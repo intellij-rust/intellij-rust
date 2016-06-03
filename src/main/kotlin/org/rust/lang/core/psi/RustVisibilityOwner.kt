@@ -5,7 +5,7 @@ import org.rust.ide.icons.addVisibilityIcon
 import javax.swing.Icon
 
 interface RustVisibilityOwner : RustCompositeElement {
-    val vis: RustVis?
+    val vis: RustVisElement?
 }
 
 val RustVisibilityOwner.isPublic: Boolean get() = vis != null

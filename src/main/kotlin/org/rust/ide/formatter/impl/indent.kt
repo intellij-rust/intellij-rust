@@ -6,7 +6,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.Key
 import org.rust.ide.formatter.RustFmtBlock
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
-import org.rust.lang.core.psi.RustExpr
+import org.rust.lang.core.psi.RustExprElement
 import org.rust.lang.core.psi.RustTokenElementTypes.LBRACE
 
 /**
@@ -58,7 +58,7 @@ fun RustFmtBlock.computeIndent(child: ASTNode): Indent? {
         // =>
         //     Foo =>
         //         92
-        parentType == MATCH_ARM && childPsi is RustExpr -> Indent.getNormalIndent()
+        parentType == MATCH_ARM && childPsi is RustExprElement -> Indent.getNormalIndent()
 
         // fn moo(...)
         // -> ...

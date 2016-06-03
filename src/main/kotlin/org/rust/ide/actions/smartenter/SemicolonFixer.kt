@@ -16,13 +16,13 @@ class SemicolonFixer : SmartEnterProcessorWithFixers.Fixer<RustSmartEnterProcess
 
     private fun fixLastExprInBlock(editor: Editor, element: PsiElement) {
         val parent = element.parent
-        if (parent is RustBlock && element == parent.expr) {
+        if (parent is RustBlockElement && element == parent.expr) {
             editor.document.insertString(element.textRange.endOffset, ";")
         }
     }
 
     private fun fixStatement(editor: Editor, element: PsiElement) {
-        if (element is RustStmt && element.semicolon == null) {
+        if (element is RustStmtElement && element.semicolon == null) {
             editor.document.insertString(element.textRange.endOffset, ";")
         }
     }

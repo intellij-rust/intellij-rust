@@ -1,12 +1,12 @@
 package org.rust.lang.core.stubs.types
 
 import com.intellij.psi.stubs.*
-import org.rust.lang.core.psi.RustItem
+import org.rust.lang.core.psi.RustItemElement
 import org.rust.lang.core.psi.RustStructOrEnum
 import org.rust.lang.core.stubs.RustItemStub
 import org.rust.lang.core.stubs.index.RustNamedElementIndex
 
-abstract class RustItemStubElementType<PsiT: RustItem>(debugName: String)
+abstract class RustItemStubElementType<PsiT: RustItemElement>(debugName: String)
     : RustStubElementType<RustItemStub, PsiT>(debugName) {
 
     override fun serialize(stub: RustItemStub, dataStream: StubOutputStream) =

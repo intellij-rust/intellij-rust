@@ -27,31 +27,31 @@ class AddDeriveIntention : PsiElementBaseIntentionAction() {
     private fun getTarget(element: PsiElement): Pair<RustStructOrEnum, PsiElement>? {
         val item = element.parentOfType<RustStructOrEnum>() ?: return null
         val keyword = when (item) {
-            is RustStructItem -> item.vis ?: item.struct
-            is RustEnumItem -> item.vis ?: item.enum
+            is RustStructItemElement -> item.vis ?: item.struct
+            is RustEnumItemElement -> item.vis ?: item.enum
             else -> null
         } ?: return null
         return item to keyword
     }
 
-    private fun findOrCreateDeriveAttr(project: Project, item: RustStructOrEnum, keyword: PsiElement): RustOuterAttr? {
+    private fun findOrCreateDeriveAttr(project: Project, item: RustStructOrEnum, keyword: PsiElement): RustOuterAttrElement? {
         val existingDeriveAttr = item.findOuterAttr("derive")
         if (existingDeriveAttr != null) {
             return existingDeriveAttr
         }
 
         val attr = RustElementFactory.createOuterAttr(project, "derive()") ?: return null
-        return item.addBefore(attr, keyword) as RustOuterAttr
+        return item.addBefore(attr, keyword) as RustOuterAttrElement
     }
 
-    private fun reformat(project: Project, item: RustStructOrEnum, deriveAttr: RustOuterAttr): RustOuterAttr {
+    private fun reformat(project: Project, item: RustStructOrEnum, deriveAttr: RustOuterAttrElement): RustOuterAttrElement {
         val marker = Object()
         PsiTreeUtil.mark(deriveAttr, marker)
         val reformattedItem = CodeStyleManager.getInstance(project).reformat(item)
-        return PsiTreeUtil.releaseMark(reformattedItem, marker) as RustOuterAttr
+        return PsiTreeUtil.releaseMark(reformattedItem, marker) as RustOuterAttrElement
     }
 
-    private fun moveCaret(editor: Editor, deriveAttr: RustOuterAttr) {
+    private fun moveCaret(editor: Editor, deriveAttr: RustOuterAttrElement) {
         val offset = deriveAttr.metaItem.rparen?.textOffset ?:
             deriveAttr.rbrack.textOffset ?:
             deriveAttr.textOffset

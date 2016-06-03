@@ -3,22 +3,22 @@ package org.rust.lang.core.psi.impl.mixin
 import com.intellij.lang.ASTNode
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustQualifiedReferenceElement
-import org.rust.lang.core.psi.RustUseGlob
-import org.rust.lang.core.psi.RustUseItem
+import org.rust.lang.core.psi.RustUseGlobElement
+import org.rust.lang.core.psi.RustUseItemElement
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ref.RustReference
 import org.rust.lang.core.resolve.ref.RustUseGlobReferenceImpl
 
-abstract class RustUseGlobImplMixin(node: ASTNode) : RustNamedElementImpl(node), RustUseGlob {
+abstract class RustUseGlobImplMixin(node: ASTNode) : RustNamedElementImpl(node), RustUseGlobElement {
     override fun getReference(): RustReference =
             RustUseGlobReferenceImpl(this)
 }
 
-val RustUseGlob.basePath: RustQualifiedReferenceElement?
-    get() = parentOfType<RustUseItem>()?.let { it.path }
+val RustUseGlobElement.basePath: RustQualifiedReferenceElement?
+    get() = parentOfType<RustUseItemElement>()?.let { it.path }
 
-val RustUseGlob.boundElement: RustNamedElement?
+val RustUseGlobElement.boundElement: RustNamedElement?
     get() = when {
         alias != null      -> alias
         identifier != null -> this

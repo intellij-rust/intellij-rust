@@ -5,8 +5,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.text.MarkdownUtil
 import com.petebevin.markdown.MarkdownProcessor
 import org.rust.lang.core.psi.RustDocAndAttributeOwner
-import org.rust.lang.core.psi.RustFnItem
-import org.rust.lang.core.psi.RustPatBinding
+import org.rust.lang.core.psi.RustFnItemElement
+import org.rust.lang.core.psi.RustPatBindingElement
 import org.rust.lang.core.psi.documentation
 import org.rust.lang.core.psi.impl.mixin.isMut
 
@@ -20,8 +20,8 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
     }
 
     override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?) = when (element) {
-        is RustPatBinding -> getQuickNavigateInfo(element)
-        is RustFnItem     -> getQuickNavigateInfo(element)
+        is RustPatBindingElement -> getQuickNavigateInfo(element)
+        is RustFnItemElement     -> getQuickNavigateInfo(element)
         else              -> null
     }
 
@@ -34,20 +34,20 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
         return "<pre>$name</pre>\n$md"
     }
 
-    private fun getQuickNavigateInfo(element: RustPatBinding): String {
+    private fun getQuickNavigateInfo(element: RustPatBindingElement): String {
         val location = element.locationString
         val bindingMode = if (element.isMut) "mut " else ""
 
         return "let $bindingMode<b>${element.identifier.text}</b>$location"
     }
 
-    private fun getQuickNavigateInfo(element: RustFnItem): String {
+    private fun getQuickNavigateInfo(element: RustFnItemElement): String {
         val signature = element.formatSignature()
         val location = element.locationString
         return "$signature$location"
     }
 
-    private fun RustFnItem.formatSignature(): String {
+    private fun RustFnItemElement.formatSignature(): String {
         // fn item looks like this:
         // ```
         //     ///doc comment

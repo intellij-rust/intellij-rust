@@ -3,16 +3,16 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import org.rust.lang.core.psi.RustImplMethodMember
-import org.rust.lang.core.psi.RustVisitor
+import org.rust.lang.core.psi.RustImplMethodMemberElement
+import org.rust.lang.core.psi.RustElementVisitor
 
 class SelfConventionInspection : RustLocalInspectionTool() {
 
     override fun getDisplayName() = "Self Convention"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return object : RustVisitor() {
-            override fun visitImplMethodMember(m: RustImplMethodMember) {
+        return object : RustElementVisitor() {
+            override fun visitImplMethodMember(m: RustImplMethodMemberElement) {
                 val convention = SELF_CONVENTIONS.find { m.identifier.text.startsWith(it.prefix) } ?: return
                 if (m.selfType !in convention.selfTypes) {
                     holder.registerProblem(m.parameters?.selfArgument ?: m.identifier, convention)
@@ -39,7 +39,7 @@ enum class SelfType(val description: String) {
     REF_MUT_SELF("self by mutable reference");
 }
 
-private val RustImplMethodMember.selfType: SelfType get() {
+private val RustImplMethodMemberElement.selfType: SelfType get() {
     val self = parameters?.selfArgument
     return when {
         self == null -> SelfType.NO_SELF
