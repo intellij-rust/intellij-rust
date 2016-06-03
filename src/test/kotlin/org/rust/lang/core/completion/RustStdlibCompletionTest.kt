@@ -10,13 +10,6 @@ class RustStdlibCompletionTest : RustMultiFileResolveTestCaseBase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor()
 
-    fun testHasStdlibSources() {
-        Assertions.assertThat(myModule.cargoProject?.findExternCrateRootByName("std"))
-            .overridingErrorMessage("No Rust SDK sources found during test.\n" +
-                "Have you run the gradle task to download them?")
-            .isNotNull()
-    }
-
     fun testStdPrelude() = checkSoleCompletion()
 
     private fun checkSoleCompletion() = checkByFile {
