@@ -8,94 +8,56 @@ import org.rust.lang.core.type.resolvedType
 
 fun RustNamedElement.createLookupElement(): LookupElement {
     return when (this) {
-        is RustFnItem            -> createLookupElement()
-        is RustImplMethodMember  -> createLookupElement()
-        is RustTraitMethodMember -> createLookupElement()
-        is RustConstItem         -> createLookupElement()
-        is RustStaticItem        -> createLookupElement()
-        is RustPath              -> createLookupElement()
-        is RustUseGlob           -> createLookupElement()
-        is RustTraitItem         -> createLookupElement()
-        is RustStructItem        -> createLookupElement()
-        is RustEnumVariant       -> createLookupElement()
-        is RustFieldDecl         -> createLookupElement()
-        else                     -> LookupElementBuilder.createWithIcon(this).withLookupString(name ?: "")
+        is RustFnItem -> LookupElementBuilder.createWithIcon(this)
+            .withLookupString(name ?: "")
+            .withTailText(parameters?.text ?: "()")
+            .withTypeText(retType?.type?.text ?: "()")
+        is RustImplMethodMember -> LookupElementBuilder.createWithIcon(this)
+            .withLookupString(name ?: "")
+            .withTailText(parameters?.text ?: "()")
+            .withTypeText(retType?.type?.text ?: "()")
+        is RustTraitMethodMember -> LookupElementBuilder.createWithIcon(this)
+            .withLookupString(name ?: "")
+            .withTailText(parameters?.text ?: "()")
+            .withTypeText(retType?.type?.text ?: "()")
+        is RustConstItem -> LookupElementBuilder.createWithIcon(this)
+            .withLookupString(name ?: "")
+            .withTypeText(type.text)
+        is RustStaticItem -> LookupElementBuilder.createWithIcon(this)
+            .withLookupString(name ?: "")
+            .withTypeText(type.text)
+        is RustPath -> {
+            // re-export needs to be resolved
+            val resolved = reference.resolve()
+            resolved?.createLookupElement() ?: LookupElementBuilder.createWithIcon(this)
+        }
+        is RustUseGlob -> {
+            // re-export needs to be resolved
+            val resolved = reference?.resolve()
+            resolved?.createLookupElement() ?: LookupElementBuilder.createWithIcon(this)
+        }
+        is RustStructItem -> {
+            val tailText =
+                if (structDeclArgs != null) " { ... }"
+                else if (structTupleArgs != null) structTupleArgs?.text ?: ""
+                else ""
+            LookupElementBuilder.createWithIcon(this)
+                .withLookupString(name ?: "")
+                .withTailText(tailText)
+        }
+        is RustEnumVariant -> {
+            val tailText =
+                if (enumStructArgs != null) " { ... }"
+                else if (enumTupleArgs != null) enumTupleArgs?.tupleFieldDeclList?.map { it.type.text }?.joinToString(prefix = "(", postfix = ")") ?: ""
+                else ""
+            LookupElementBuilder.createWithIcon(this)
+                .withLookupString(name ?: "")
+                .withTypeText(parentOfType<RustEnumItem>()?.name?.toString() ?: "")
+                .withTailText(tailText)
+        }
+        is RustFieldDecl -> LookupElementBuilder.createWithIcon(this)
+            .withLookupString(name ?: "")
+            .withTypeText(type?.text ?: "")
+        else -> LookupElementBuilder.createWithIcon(this).withLookupString(name ?: "")
     }
-}
-
-fun RustFnItem.createLookupElement(): LookupElement {
-    return LookupElementBuilder.createWithIcon(this)
-        .withLookupString(name ?: "")
-        .withTailText(parameters?.text ?: "()")
-        .withTypeText(retType?.type?.text ?: "()")
-}
-
-fun RustImplMethodMember.createLookupElement(): LookupElement {
-    return LookupElementBuilder.createWithIcon(this)
-        .withLookupString(name ?: "")
-        .withTailText(parameters?.text ?: "()")
-        .withTypeText(retType?.type?.text ?: "()")
-}
-
-fun RustTraitMethodMember.createLookupElement(): LookupElement {
-    return LookupElementBuilder.createWithIcon(this)
-        .withLookupString(name ?: "")
-        .withTailText(parameters?.text ?: "()")
-        .withTypeText(retType?.type?.text ?: "()")
-}
-
-fun RustConstItem.createLookupElement(): LookupElement {
-    return LookupElementBuilder.createWithIcon(this)
-        .withLookupString(name ?: "")
-        .withTypeText(type.text)
-}
-
-fun RustStaticItem.createLookupElement(): LookupElement {
-    return LookupElementBuilder.createWithIcon(this)
-        .withLookupString(name ?: "")
-        .withTypeText(type.text)
-}
-
-fun RustTraitItem.createLookupElement(): LookupElement {
-    return LookupElementBuilder.createWithIcon(this)
-        .withLookupString(name ?: "")
-}
-
-fun RustStructItem.createLookupElement(): LookupElement {
-    val tailText =
-        if (structDeclArgs != null) " { ... }"
-        else if (structTupleArgs != null) structTupleArgs?.text ?: ""
-        else ""
-    return LookupElementBuilder.createWithIcon(this)
-        .withLookupString(name ?: "")
-        .withTailText(tailText)
-}
-
-fun RustEnumVariant.createLookupElement(): LookupElement {
-    val tailText =
-        if (enumStructArgs != null) " { ... }"
-        else if (enumTupleArgs != null) enumTupleArgs?.tupleFieldDeclList?.map { it.type.text }?.joinToString(prefix = "(", postfix = ")") ?: ""
-        else ""
-    return LookupElementBuilder.createWithIcon(this)
-        .withLookupString(name ?: "")
-        .withTypeText(parentOfType<RustEnumItem>()?.name?.toString() ?: "")
-        .withTailText(tailText)
-}
-
-fun RustFieldDecl.createLookupElement(): LookupElement {
-    return LookupElementBuilder.createWithIcon(this)
-        .withLookupString(name ?: "")
-        .withTypeText(type?.text ?: "")
-}
-
-fun RustPath.createLookupElement(): LookupElement {
-    // re-export needs to be resolved
-    val resolved = reference.resolve()
-    return resolved?.createLookupElement() ?: LookupElementBuilder.createWithIcon(this)
-}
-
-fun RustUseGlob.createLookupElement(): LookupElement {
-    // re-export needs to be resolved
-    val resolved = reference?.resolve()
-    return resolved?.createLookupElement() ?: LookupElementBuilder.createWithIcon(this)
 }

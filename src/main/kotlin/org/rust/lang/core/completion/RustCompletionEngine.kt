@@ -1,5 +1,8 @@
 package org.rust.lang.core.completion
 
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.util.fields
@@ -13,7 +16,7 @@ object RustCompletionEngine {
     fun complete(ref: RustQualifiedReferenceElement): Array<out Any> =
         collectNamedElements(ref).toVariantsArray()
 
-    fun completeFieldName(field: RustStructExprFieldElement): Array<RustNamedElement> =
+    fun completeFieldName(field: RustStructExprFieldElement): Array<out LookupElement> =
         field.parentOfType<RustStructExprElement>()
                 ?.let       { it.fields }
                  .orEmpty()
@@ -51,5 +54,5 @@ private fun RustNamedElement?.completionsFromResolveScope(): Collection<RustName
         else                -> emptyList()
     }
 
-private fun Collection<RustNamedElement>.toVariantsArray(): Array<out Any> =
+private fun Collection<RustNamedElement>.toVariantsArray(): Array<out LookupElement> =
     filter { it.name != null }.map { it.createLookupElement() }.toTypedArray()
