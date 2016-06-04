@@ -5,7 +5,7 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import org.rust.lang.core.psi.RustImplItemElement
 import org.rust.lang.core.psi.RustImplMethodMemberElement
 import org.rust.lang.core.psi.RustTypeElement
-import org.rust.lang.core.psi.visitors.RecursiveRustVisitor
+import org.rust.lang.core.psi.visitors.RustRecursiveElementVisitor
 
 class RustImplTreeElement(element: RustImplItemElement) : PsiTreeElementBase<RustImplItemElement>(element) {
 
@@ -19,7 +19,7 @@ class RustImplTreeElement(element: RustImplItemElement) : PsiTreeElementBase<Rus
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {
         val result = arrayListOf<StructureViewTreeElement>()
-        element?.accept(object : RecursiveRustVisitor() {
+        element?.accept(object : RustRecursiveElementVisitor() {
             override fun visitImplMethodMember(o: RustImplMethodMemberElement) {
                 result += RustImplMethodTreeElement(o)
             }

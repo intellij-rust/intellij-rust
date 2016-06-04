@@ -10,7 +10,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustPatElement
-import org.rust.lang.core.psi.visitors.RecursiveRustVisitor
+import org.rust.lang.core.psi.visitors.RustRecursiveElementVisitor
 
 
 /**
@@ -68,7 +68,7 @@ val RustPatElement.boundElements: List<RustNamedElement>
     get() {
         val result = arrayListOf<RustNamedElement>()
 
-        accept(object : RecursiveRustVisitor() {
+        accept(object : RustRecursiveElementVisitor() {
             override fun visitElement(element: PsiElement?) {
                 if (element is RustNamedElement)
                     result.add(element)
