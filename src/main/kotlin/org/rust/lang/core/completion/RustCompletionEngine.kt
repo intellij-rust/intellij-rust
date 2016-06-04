@@ -1,8 +1,6 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.util.fields
@@ -22,7 +20,7 @@ object RustCompletionEngine {
                  .orEmpty()
                  .toVariantsArray()
 
-    fun completeFieldOrMethod(field: RustFieldExprElement): Array<RustNamedElement> {
+    fun completeFieldOrMethod(field: RustFieldExprElement): Array<out LookupElement> {
         val structType = (field.expr.resolvedType as? RustStructType) ?: return emptyArray()
         // Needs type ascription to please Kotlin's type checker, https://youtrack.jetbrains.com/issue/KT-12696.
         val fieldsAndMethods: List<RustNamedElement> = (structType.struct.fields + structType.nonStaticMethods)

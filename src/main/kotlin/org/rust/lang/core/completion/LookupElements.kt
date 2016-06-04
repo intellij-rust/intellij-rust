@@ -3,40 +3,44 @@ package org.rust.lang.core.completion
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.RustPathElementImpl
+import org.rust.lang.core.psi.impl.RustUseGlobElementImpl
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.type.resolvedType
 
 fun RustNamedElement.createLookupElement(): LookupElement {
     return when (this) {
-        is RustFnItem -> LookupElementBuilder.createWithIcon(this)
+        is RustFnItemElement -> LookupElementBuilder.createWithIcon(this)
             .withLookupString(name ?: "")
             .withTailText(parameters?.text ?: "()")
             .withTypeText(retType?.type?.text ?: "()")
-        is RustImplMethodMember -> LookupElementBuilder.createWithIcon(this)
+        is RustImplMethodMemberElement -> LookupElementBuilder.createWithIcon(this)
             .withLookupString(name ?: "")
             .withTailText(parameters?.text ?: "()")
             .withTypeText(retType?.type?.text ?: "()")
-        is RustTraitMethodMember -> LookupElementBuilder.createWithIcon(this)
+        is RustTraitMethodMemberElement -> LookupElementBuilder.createWithIcon(this)
             .withLookupString(name ?: "")
             .withTailText(parameters?.text ?: "()")
             .withTypeText(retType?.type?.text ?: "()")
-        is RustConstItem -> LookupElementBuilder.createWithIcon(this)
+        is RustConstItemElement -> LookupElementBuilder.createWithIcon(this)
             .withLookupString(name ?: "")
             .withTypeText(type.text)
-        is RustStaticItem -> LookupElementBuilder.createWithIcon(this)
+        is RustStaticItemElement -> LookupElementBuilder.createWithIcon(this)
             .withLookupString(name ?: "")
             .withTypeText(type.text)
-        is RustPath -> {
+        is RustPathElementImpl -> {
             // re-export needs to be resolved
             val resolved = reference.resolve()
             resolved?.createLookupElement() ?: LookupElementBuilder.createWithIcon(this)
         }
-        is RustUseGlob -> {
+        is RustUseGlobElement -> {
+            // There is a problem here with ambiguous getReference(): RustReference.
+            // Completely possible this is a compiler issue. Not sure why though.
+            val that = this as RustNamedElement
             // re-export needs to be resolved
-            val resolved = reference?.resolve()
+            val resolved = that.reference?.resolve()
             resolved?.createLookupElement() ?: LookupElementBuilder.createWithIcon(this)
         }
-        is RustStructItem -> {
+        is RustStructItemElement -> {
             val tailText =
                 if (structDeclArgs != null) " { ... }"
                 else if (structTupleArgs != null) structTupleArgs?.text ?: ""
@@ -45,17 +49,17 @@ fun RustNamedElement.createLookupElement(): LookupElement {
                 .withLookupString(name ?: "")
                 .withTailText(tailText)
         }
-        is RustEnumVariant -> {
+        is RustEnumVariantElement -> {
             val tailText =
                 if (enumStructArgs != null) " { ... }"
                 else if (enumTupleArgs != null) enumTupleArgs?.tupleFieldDeclList?.map { it.type.text }?.joinToString(prefix = "(", postfix = ")") ?: ""
                 else ""
             LookupElementBuilder.createWithIcon(this)
                 .withLookupString(name ?: "")
-                .withTypeText(parentOfType<RustEnumItem>()?.name?.toString() ?: "")
+                .withTypeText(parentOfType<RustEnumItemElement>()?.name?.toString() ?: "")
                 .withTailText(tailText)
         }
-        is RustFieldDecl -> LookupElementBuilder.createWithIcon(this)
+        is RustFieldDeclElement -> LookupElementBuilder.createWithIcon(this)
             .withLookupString(name ?: "")
             .withTypeText(type?.text ?: "")
         else -> LookupElementBuilder.createWithIcon(this).withLookupString(name ?: "")
