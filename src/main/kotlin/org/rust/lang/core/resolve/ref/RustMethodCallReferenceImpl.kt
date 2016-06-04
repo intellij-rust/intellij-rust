@@ -16,18 +16,15 @@ class RustMethodCallReferenceImpl(
     override fun resolve(): RustNamedElement? {
         val recType = receiverType
         return when (recType) {
-            is RustStructType -> findNonStaticMemberInImpls(recType)
+            is RustStructType -> recType.nonStaticMethods.find { it.name == referenceName }
 
             is RustTraitImplType -> recType.trait.traitBody.traitMethodMemberList.find { it.name == referenceName }
 
             is RustImplType -> recType.type .let { it as? RustStructType }
-                                           ?.let { findNonStaticMemberInImpls(it) }
+                                           ?.let { it.nonStaticMethods.find { it.name == referenceName } }
             else -> null
         }
     }
-
-    private fun findNonStaticMemberInImpls(type: RustStructType): RustNamedElement? =
-        type.nonStaticMethods.find { it.name == referenceName }
 
     private val referenceName: String?
         get () = element.identifier?.text
