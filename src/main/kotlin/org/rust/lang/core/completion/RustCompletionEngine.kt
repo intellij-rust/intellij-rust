@@ -2,15 +2,19 @@ package org.rust.lang.core.completion
 
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.cargo.util.preludeModule
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
 import org.rust.lang.core.psi.impl.rustMod
+import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.util.visibleFields
 import org.rust.lang.core.resolve.enumerateScopesFor
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.scope.boundElements
+import org.rust.lang.core.resolve.util.RustResolveUtil
 import java.util.*
 
 object RustCompletionEngine {
@@ -37,7 +41,12 @@ object RustCompletionEngine {
         }
 
         val visitor = CompletionScopeVisitor(ref)
-        for (scope in enumerateScopesFor(ref)) {
+        val scopes = enumerateScopesFor(ref).toMutableList()
+
+        val preludeMod = ref.module?.preludeModule
+        if (preludeMod != null && preludeMod is RustFile) scopes += preludeMod
+
+        for (scope in scopes) {
             scope.accept(visitor)
         }
 
