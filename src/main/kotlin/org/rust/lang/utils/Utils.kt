@@ -39,13 +39,10 @@ fun <D: Disposable, T> usingWith(d: D, block: (D) -> T): T {
 /**
  * Cached value invalidated on any PSI modification
  */
-fun<E : PsiElement, T> psiCached(block: E.() -> T): PsiCacheDelegate<E, T> = PsiCacheDelegate(block)
+fun<E : PsiElement, T> psiCached(provider: E.() -> CachedValueProvider<T>): PsiCacheDelegate<E, T> = PsiCacheDelegate(provider)
 
-class PsiCacheDelegate<E : PsiElement, T>(val block: E.() -> T) {
+class PsiCacheDelegate<E : PsiElement, T>(val provider: E.() -> CachedValueProvider<T>) {
     operator fun getValue(element: E, property: KProperty<*>): T {
-        return CachedValuesManager.getCachedValue(element, CachedValueProvider {
-            CachedValueProvider.Result.create(element.block(), PsiModificationTracker.MODIFICATION_COUNT)
-        })
+        return CachedValuesManager.getCachedValue(element, element.provider())
     }
-
 }

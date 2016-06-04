@@ -20,6 +20,9 @@ import org.rust.lang.core.psi.util.visibleFields
 import org.rust.lang.core.resolve.ref.RustReferenceBase
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
+import org.rust.lang.core.type.RustType
+import org.rust.lang.core.type.unresolved.RustUnresolvedType
+import org.rust.lang.core.type.visitors.RustTypeResolvingVisitor
 
 
 object RustResolveEngine {
@@ -44,6 +47,10 @@ object RustResolveEngine {
          */
         class Resolved(resolved: RustNamedElement) : ResolveResult(resolved)
     }
+
+    fun resolve(type: RustUnresolvedType): RustType =
+        type.accept(RustTypeResolvingVisitor())
+
 
     /**
      * Resolves `qualified-reference` bearing PSI-elements
