@@ -9,12 +9,12 @@ import org.rust.lang.core.psi.RustStructItemElement
  *  `RustExprElement` related extensions
  */
 
-val RustStructExprElement.visibleFields: List<RustNamedElement> get() {
+val RustStructExprElement.fields: Iterable<RustNamedElement> get() {
     val structOrEnum = path.reference.resolve() ?: return emptyList()
     return when (structOrEnum) {
-        is RustStructItemElement  -> structOrEnum.structDeclArgs?.fieldDeclList
-        is RustEnumVariantElement -> structOrEnum.enumStructArgs?.fieldDeclList
-        else -> null
-    }.orEmpty()
+        is RustStructItemElement  -> structOrEnum.fields
+        is RustEnumVariantElement -> structOrEnum.enumStructArgs?.fieldDeclList ?: emptyList()
+        else -> emptyList()
+    }
 }
 
