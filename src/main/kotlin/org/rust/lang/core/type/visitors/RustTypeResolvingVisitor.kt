@@ -41,15 +41,6 @@ open class RustTypeResolvingVisitor : RustUnresolvedTypeVisitor<RustType> {
      * Devises type for the given (implicit) self-argument
      */
     private fun deviseSelfType(self: RustSelfArgumentElement): RustType =
-        self.parentOfType<RustImplItemElement>()?.let { impl ->
-            val type  = impl.type
-            val trait = impl.traitRef
-
-            if (type != null && trait != null)
-                trait.path.reference.resolve()
-                    .let { RustTraitImplType(it as RustTraitItemElement, type.resolvedType) }
-            else
-                type?.resolvedType
-        } ?: RustUnknownType
+        self.parentOfType<RustImplItemElement>()?.type?.resolvedType ?: RustUnknownType
 }
 

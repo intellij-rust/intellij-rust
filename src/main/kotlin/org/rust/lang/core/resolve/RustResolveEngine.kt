@@ -116,10 +116,6 @@ object RustResolveEngine {
                 when (receiverType) {
                     is RustStructType -> receiverType.nonStaticMethods.filter { it.name == name }
 
-                    is RustTraitImplType -> receiverType.trait.traitBody.traitMethodMemberList.filter { it.name == name }
-
-                    is RustImplType -> receiverType.type .let { it as? RustStructType }
-                                                        ?.let { it.nonStaticMethods.filter { it.name == name } } ?: emptyList()
                     else -> emptyList()
                 }
 
