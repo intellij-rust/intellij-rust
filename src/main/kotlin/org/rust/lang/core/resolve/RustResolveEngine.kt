@@ -28,6 +28,17 @@ import org.rust.lang.core.type.visitors.RustTypeResolvingVisitor
 object RustResolveEngine {
 
     open class ResolveResult private constructor(val resolved: RustNamedElement?) : com.intellij.psi.ResolveResult {
+
+        companion object {
+            fun buildFrom(candidates: Iterable<RustNamedElement>): ResolveResult {
+                return when (candidates.count()) {
+                    1       -> ResolveResult.Resolved(candidates.first())
+                    0       -> ResolveResult.Unresolved
+                    else    -> ResolveResult.Ambiguous(candidates)
+                }
+            }
+        }
+
         override fun getElement():      RustNamedElement? = resolved
         override fun isValidResult():   Boolean           = resolved != null
 
@@ -75,6 +86,28 @@ object RustResolveEngine {
             0       -> ResolveResult.Unresolved
             else    -> ResolveResult.Ambiguous(matching)
         }
+
+    /**
+     * Resolves method-call expressions
+     */
+    fun resolveMethodCallExpr(call: RustMethodCallExprElement): ResolveResult {
+        val receiverType = call.expr.resolvedType
+
+        return call.identifier?.let {
+            val name = it.text
+            val matching: Iterable<RustNamedElement> =
+                when (receiverType) {
+                    is RustStructType -> receiverType.nonStaticMethods.filter { it.name == name }
+
+                    is RustTraitImplType -> receiverType.trait.traitBody.traitMethodMemberList.filter { it.name == name }
+
+                    is RustImplType -> receiverType.type .let { it as? RustStructType }
+                                                        ?.let { it.nonStaticMethods.filter { it.name == name } } ?: emptyList()
+                    else -> emptyList()
+                }
+
+            ResolveResult.buildFrom(matching)
+        } ?: ResolveResult.Unresolved
     }
 
     //
