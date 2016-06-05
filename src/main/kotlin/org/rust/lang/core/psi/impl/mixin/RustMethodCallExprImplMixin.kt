@@ -7,5 +7,7 @@ import org.rust.lang.core.resolve.ref.RustMethodCallReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
 
 abstract class RustMethodCallExprImplMixin(node: ASTNode?) : RustExprElementImpl(node), RustMethodCallExprElement {
-    override fun getReference(): RustReference = RustMethodCallReferenceImpl(this)
+
+    override fun getReference(): RustReference? = identifier?.let { RustMethodCallReferenceImpl(this) }
+
 }

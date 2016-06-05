@@ -30,7 +30,6 @@ class RustStructType(val struct: RustStructItemElement) : RustType {
     val nonStaticMethods: Collection<RustImplMethodMemberElement>
         get() = allMethods.filter { !it.isStatic }
 
-
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitStruct(this)
 
     override fun toString(): String = "<struct type $struct>"
