@@ -82,6 +82,27 @@ object RustResolveEngine {
         return ResolveResult.buildFrom(matching)
     }
 
+    /**
+     * Resolves references to struct's fields inside [RustFieldExprElement]
+     */
+    fun resolveFieldExpr(field: RustFieldExprElement): ResolveResult {
+        val receiverType = field.expr.resolvedType
+
+        return (field.identifier ?: field.integerLiteral)?.let { field ->
+            val matching = when (field.elementType) {
+                IDENTIFIER -> {
+                    val name = field.text
+                    when (receiverType) {
+                        is RustStructType -> receiverType.struct.fields.filter { it.name == name }
+                        else -> emptyList()
+                    }
+                }
+                else -> emptyList()
+            }
+
+            ResolveResult.buildFrom(matching)
+        } ?: ResolveResult.Unresolved
+    }
 
     /**
      * Resolves method-call expressions
@@ -159,7 +180,6 @@ object RustResolveEngine {
         val module = crate.module ?: return ResolveResult.Unresolved
         return module.project.getPsiFor(module.cargoProject?.findExternCrateRootByName(name))?.rustMod.asResolveResult()
     }
-
 }
 
 private class Resolver {
