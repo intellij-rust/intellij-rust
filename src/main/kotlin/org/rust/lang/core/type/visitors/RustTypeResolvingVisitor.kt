@@ -1,9 +1,6 @@
 package org.rust.lang.core.type.visitors
 
-import org.rust.lang.core.psi.RustImplItemElement
-import org.rust.lang.core.psi.RustSelfArgumentElement
-import org.rust.lang.core.psi.RustStructItemElement
-import org.rust.lang.core.psi.RustTraitItemElement
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.type.*
 import org.rust.lang.core.type.unresolved.RustUnresolvedPathType
@@ -20,10 +17,24 @@ open class RustTypeResolvingVisitor : RustUnresolvedTypeVisitor<RustType> {
 
                 is RustSelfArgumentElement -> deviseSelfType(it)
 
+                is RustPatBindingElement -> deviseBoundPatType(it)
+
                 else -> RustUnknownType
 
             }
         }
+    }
+
+    /**
+     * NOTA BENE: That's far from complete
+     */
+    private fun deviseBoundPatType(pat: RustPatBindingElement): RustType {
+        val letDecl = pat.parentOfType<RustLetDeclElement>()
+        if (letDecl != null) {
+            letDecl.type?.let { return it.resolvedType }
+        }
+
+        return RustUnknownType
     }
 
     /**
