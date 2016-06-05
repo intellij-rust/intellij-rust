@@ -1,11 +1,12 @@
 package org.rust.lang.core.psi
 
+import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 
-interface RustDocAndAttributeOwner : RustCompositeElement
+interface RustDocAndAttributeOwner : RustCompositeElement, NavigatablePsiElement
 
 val RustDocAndAttributeOwner.documentation: String? get() {
     val lines = mutableListOf<String>()

@@ -22,7 +22,7 @@ abstract class RustResolveTestCaseBase : RustTestCaseBase() {
         if (expectedOffset != null) {
             assertThat(declaration.textOffset).isEqualTo(expectedOffset)
         } else {
-            assertThat(declaration.name).isEqualTo(usage.element.name)
+            assertThat(declaration.name).isEqualTo(usage.element.text)
         }
     }
 

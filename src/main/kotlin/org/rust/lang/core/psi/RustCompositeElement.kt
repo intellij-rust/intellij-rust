@@ -5,8 +5,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ref.RustReference
 
-interface RustCompositeElement   : PsiElement
-                                 , NavigatablePsiElement {
+interface RustCompositeElement   : PsiElement {
 
     override fun getReference(): RustReference?
 
