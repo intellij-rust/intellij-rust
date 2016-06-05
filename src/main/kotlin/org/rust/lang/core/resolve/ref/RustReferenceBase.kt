@@ -15,7 +15,7 @@ abstract class RustReferenceBase<T : RustCompositeElement>(
   , RustReference {
 
     constructor(element: T, refAnchor: PsiElement) : this(element, refAnchor.parentRelativeRange) {
-        check(refAnchor.parent == element)
+        check(refAnchor == element || refAnchor.parent == element)
     }
 
     abstract fun resolveVerbose(): RustResolveEngine.ResolveResult
