@@ -129,21 +129,22 @@
     // Mixins
     //
 
-    mixin       ("field_name") = "org.rust.lang.core.psi.impl.mixin.RustFieldNameImplMixin"
-    mixin       ("trait_item") = "org.rust.lang.core.psi.impl.mixin.RustTraitItemImplMixin"
-    mixin       ("impl_item") = "org.rust.lang.core.psi.impl.mixin.RustImplItemImplMixin"
-    mixin       ("struct_item") = "org.rust.lang.core.psi.impl.mixin.RustStructItemImplMixin"
-    mixin       ("field_decl") = "org.rust.lang.core.psi.impl.mixin.RustFieldDeclImplMixin"
-    mixin       ("mod_decl_item") = "org.rust.lang.core.psi.impl.mixin.RustModDeclItemImplMixin"
-    mixin       ("const_item") = "org.rust.lang.core.psi.impl.mixin.RustConstItemImplMixin"
-    mixin       ("extern_crate_item") = "org.rust.lang.core.psi.impl.mixin.RustExternCrateItemImplMixin"
-    mixin       ("foreign_mod_item") = "org.rust.lang.core.psi.impl.mixin.RustForeignModItemImplMixin"
-    mixin       ("static_item") = "org.rust.lang.core.psi.impl.mixin.RustStaticItemImplMixin"
-    mixin       ("type_item") = "org.rust.lang.core.psi.impl.mixin.RustTypeItemImplMixin"
-    mixin       ("use_item") = "org.rust.lang.core.psi.impl.mixin.RustUseItemImplMixin"
-    mixin       ("enum_variant") = "org.rust.lang.core.psi.impl.mixin.RustEnumVariantImplMixin"
-    mixin       ("impl_method_member") = "org.rust.lang.core.psi.impl.mixin.RustImplMethodMemberImplMixin"
-    mixin       ("method_call_expr") = "org.rust.lang.core.psi.impl.mixin.RustMethodCallExprImplMixin"
+    mixin       ("field_name")          = "org.rust.lang.core.psi.impl.mixin.RustFieldNameImplMixin"
+    mixin       ("trait_item")          = "org.rust.lang.core.psi.impl.mixin.RustTraitItemImplMixin"
+    mixin       ("impl_item")           = "org.rust.lang.core.psi.impl.mixin.RustImplItemImplMixin"
+    mixin       ("struct_item")         = "org.rust.lang.core.psi.impl.mixin.RustStructItemImplMixin"
+    mixin       ("field_decl")          = "org.rust.lang.core.psi.impl.mixin.RustFieldDeclImplMixin"
+    mixin       ("mod_decl_item")       = "org.rust.lang.core.psi.impl.mixin.RustModDeclItemImplMixin"
+    mixin       ("const_item")          = "org.rust.lang.core.psi.impl.mixin.RustConstItemImplMixin"
+    mixin       ("extern_crate_item")   = "org.rust.lang.core.psi.impl.mixin.RustExternCrateItemImplMixin"
+    mixin       ("foreign_mod_item")    = "org.rust.lang.core.psi.impl.mixin.RustForeignModItemImplMixin"
+    mixin       ("static_item")         = "org.rust.lang.core.psi.impl.mixin.RustStaticItemImplMixin"
+    mixin       ("type_item")           = "org.rust.lang.core.psi.impl.mixin.RustTypeItemImplMixin"
+    mixin       ("use_item")            = "org.rust.lang.core.psi.impl.mixin.RustUseItemImplMixin"
+    mixin       ("enum_variant")        = "org.rust.lang.core.psi.impl.mixin.RustEnumVariantImplMixin"
+    mixin       ("impl_method_member")  = "org.rust.lang.core.psi.impl.mixin.RustImplMethodMemberImplMixin"
+    mixin       ("method_call_expr")    = "org.rust.lang.core.psi.impl.mixin.RustMethodCallExprImplMixin"
+    mixin       ("field_expr")          = "org.rust.lang.core.psi.impl.mixin.RustFieldExprImplMixin"
 
     //
     // References
