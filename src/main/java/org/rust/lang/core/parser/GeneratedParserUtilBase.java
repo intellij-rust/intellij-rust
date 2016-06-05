@@ -52,7 +52,7 @@ import java.util.LinkedList;
 /**
  * Temporary copy GeneratedParserUtilBase for backwards compatibility
  */
-public class RustGeneratedParserUtilBase {
+public class GeneratedParserUtilBase {
 
     private static final Logger LOG = Logger.getInstance("org.intellij.grammar.parser.GeneratedParserUtilBase");
 

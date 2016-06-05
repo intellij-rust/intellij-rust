@@ -13,7 +13,7 @@ import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 
 @Suppress("UNUSED_PARAMETER")
-object RustParserUtil : RustGeneratedParserUtilBase() {
+object RustParserUtil : GeneratedParserUtilBase() {
     enum class PathParsingMode { COLONS, NO_COLONS, NO_TYPES_ALLOWED }
 
     private val STRUCT_ALLOWED: Key<Boolean> = Key("org.rust.STRUCT_ALLOWED")
