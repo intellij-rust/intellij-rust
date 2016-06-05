@@ -6,16 +6,17 @@ import com.intellij.psi.PsiReferenceBase
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.util.parentRelativeRange
+import org.rust.lang.core.psi.util.rangeRelativeTo
 import org.rust.lang.core.resolve.RustResolveEngine
 
 abstract class RustReferenceBase<T : RustCompositeElement>(
     element: T,
-    refAnchorTextRange: TextRange
-) : PsiReferenceBase<T>(element, refAnchorTextRange)
+    referenceAnchorTextRange: TextRange
+) : PsiReferenceBase<T>(element, referenceAnchorTextRange)
   , RustReference {
 
-    constructor(element: T, refAnchor: PsiElement) : this(element, refAnchor.parentRelativeRange) {
-        check(refAnchor == element || refAnchor.parent == element)
+    constructor(element: T, referenceAnchor: PsiElement) : this(element, referenceAnchor.rangeRelativeTo(element)) {
+        check(referenceAnchor === element || referenceAnchor.parent === element)
     }
 
     abstract fun resolveVerbose(): RustResolveEngine.ResolveResult

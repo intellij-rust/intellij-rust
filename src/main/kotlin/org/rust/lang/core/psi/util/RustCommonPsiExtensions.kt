@@ -39,8 +39,21 @@ fun PsiElement?.getPrevNonCommentSibling(): PsiElement? =
 fun PsiElement?.getNextNonCommentSibling(): PsiElement? =
     PsiTreeUtil.skipSiblingsForward(this, PsiWhiteSpace::class.java, PsiComment::class.java)
 
+
+/**
+ * Accounts for text-range relative to some ancestor (or the node itself) of the
+ * given node
+ */
+fun PsiElement.rangeRelativeTo(ancestor: PsiElement): TextRange {
+    check(ancestor.textRange.contains(textRange))
+    return textRange.shiftRight(-ancestor.textRange.startOffset)
+}
+
+/**
+ * Accounts for text-range relative to the parent of the element
+ */
 val PsiElement.parentRelativeRange: TextRange
-    get() = TextRange.from(startOffsetInParent, textLength)
+    get() = rangeRelativeTo(parent)
 
 fun ASTNode.containsEOL(): Boolean = textContains('\r') || textContains('\n')
 fun PsiElement.containsEOL(): Boolean = textContains('\r') || textContains('\n')
