@@ -34,4 +34,7 @@ class RustStructType(val struct: RustStructItemElement) : RustType {
 
     override fun toString(): String = "<struct type $struct>"
 
+    override fun equals(other: Any?): Boolean = other is RustStructType && other.struct === struct
+
+    override fun hashCode(): Int = struct.hashCode() * 10067 + 9631
 }

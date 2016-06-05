@@ -9,4 +9,8 @@ object RustUnknownType : RustType {
     override fun <T> accept(visitor: RustTypeVisitor<T>): T {
         throw UnsupportedOperationException()
     }
+
+    override fun equals(other: Any?): Boolean = this === other
+
+    override fun hashCode(): Int = 10499
 }
