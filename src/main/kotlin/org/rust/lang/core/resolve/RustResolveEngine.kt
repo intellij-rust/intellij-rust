@@ -85,13 +85,14 @@ object RustResolveEngine {
     /**
      * Resolves references to struct's fields inside [RustFieldExprElement]
      */
-    fun resolveFieldExpr(field: RustFieldExprElement): ResolveResult {
-        val receiverType = field.expr.resolvedType
+    fun resolveFieldExpr(fieldExpr: RustFieldExprElement): ResolveResult {
+        val receiverType = fieldExpr.expr.resolvedType
 
-        return (field.identifier ?: field.integerLiteral)?.let { field ->
-            val matching = when (field.elementType) {
+        return fieldExpr.fieldId?.let {
+            val id = (it.identifier ?: it.integerLiteral)!!
+            val matching = when (id.elementType) {
                 IDENTIFIER -> {
-                    val name = field.text
+                    val name = id.text
                     when (receiverType) {
                         is RustStructType -> receiverType.struct.fields.filter { it.name == name }
                         else -> emptyList()

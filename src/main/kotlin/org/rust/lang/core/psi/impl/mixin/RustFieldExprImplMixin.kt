@@ -8,6 +8,6 @@ import org.rust.lang.core.resolve.ref.RustReference
 
 abstract class RustFieldExprImplMixin(node: ASTNode?) : RustExprElementImpl(node), RustFieldExprElement {
 
-    override fun getReference(): RustReference? = (identifier ?: integerLiteral)?.let { RustFieldExprReferenceImpl(this) }
+    override fun getReference(): RustReference? = fieldId?.let { RustFieldExprReferenceImpl(this) }
 
 }
