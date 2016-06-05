@@ -5,6 +5,7 @@ import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.type.*
 import org.rust.lang.core.type.unresolved.RustUnresolvedPathType
 import org.rust.lang.core.type.unresolved.RustUnresolvedType
+import org.rust.lang.core.type.util.resolvedType
 
 open class RustTypeResolvingVisitor : RustUnresolvedTypeVisitor<RustType> {
 

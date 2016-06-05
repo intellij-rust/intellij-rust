@@ -23,6 +23,7 @@ import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
 import org.rust.lang.core.type.*
 import org.rust.lang.core.type.unresolved.RustUnresolvedType
+import org.rust.lang.core.type.util.resolvedType
 import org.rust.lang.core.type.visitors.RustTypeResolvingVisitor
 
 

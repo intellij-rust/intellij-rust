@@ -6,6 +6,7 @@ import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.RustStructItemElement
 import org.rust.lang.core.psi.impl.mixin.isStatic
 import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.type.util.resolvedType
 import org.rust.lang.core.type.visitors.RustTypeVisitor
 
 class RustStructType(val struct: RustStructItemElement) : RustType {
