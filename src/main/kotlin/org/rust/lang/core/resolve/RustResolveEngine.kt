@@ -9,18 +9,19 @@ import org.rust.cargo.util.getPsiFor
 import org.rust.cargo.util.preludeModule
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.isStarImport
 import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
 import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
+import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.psi.util.visibleFields
+import org.rust.lang.core.psi.util.fields
 import org.rust.lang.core.resolve.ref.RustReferenceBase
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
-import org.rust.lang.core.type.RustType
+import org.rust.lang.core.type.*
 import org.rust.lang.core.type.unresolved.RustUnresolvedType
 import org.rust.lang.core.type.visitors.RustTypeResolvingVisitor
 
@@ -51,7 +52,7 @@ object RustResolveEngine {
          * Designates resolve-engine failure to properly recognise target item
          * among the possible candidates
          */
-        class Ambiguous(val candidates: Collection<RustNamedElement>) : ResolveResult(null)
+        class Ambiguous(val candidates: Iterable<RustNamedElement>) : ResolveResult(null)
 
         /**
          * Designates resolve-engine successfully resolved given target
@@ -72,20 +73,15 @@ object RustResolveEngine {
         Resolver().resolve(ref)
 
     /**
-     * Resolves Rust's field-references inside `struct-expr`s
+     * Resolves references to struct's fields inside destructuring [RustStructExprElement]
      */
-    fun resolveFieldName(ref: RustFieldNameElement): ResolveResult {
-        val matching =
-            ref.parentOfType<RustStructExprElement>()
-                    ?.let { it.visibleFields }
-                    .orEmpty()
-                    .filter { it.name == ref.name }
+    fun resolveStructExprField(structExpr: RustStructExprElement, fieldName: String): ResolveResult {
+        val matching = structExpr   .fields
+                                    .filter { it.name == fieldName }
 
-        return when (matching.count()) {
-            1       -> ResolveResult.Resolved(matching.first())
-            0       -> ResolveResult.Unresolved
-            else    -> ResolveResult.Ambiguous(matching)
-        }
+        return ResolveResult.buildFrom(matching)
+    }
+
 
     /**
      * Resolves method-call expressions
