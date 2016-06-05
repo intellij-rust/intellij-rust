@@ -19,12 +19,6 @@ sealed class RustLiteral(type: IElementType, text: CharSequence) : LeafPsiElemen
     val offsets: Offsets by lazy { computeOffsets() }
 
     /**
-     * Literal token type.
-     */
-    val tokenType: IElementType
-        get() = node.elementType
-
-    /**
      * Get a fragment of the source which denotes the value of the literal as-is (without any escaping etc).
      */
     val valueString: String?

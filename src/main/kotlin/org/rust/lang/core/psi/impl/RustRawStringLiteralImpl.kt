@@ -7,7 +7,7 @@ class RustRawStringLiteralImpl(type: IElementType, text: CharSequence) : RustTex
     override val value: String?
         get() = valueString
 
-    override fun toString(): String = "RustRawStringLiteralImpl($tokenType)"
+    override fun toString(): String = "RustRawStringLiteralImpl($elementType)"
 
     override fun computeOffsets(): Offsets {
         val prefixEnd = locatePrefix()

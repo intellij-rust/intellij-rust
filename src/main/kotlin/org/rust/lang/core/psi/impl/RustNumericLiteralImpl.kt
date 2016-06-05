@@ -43,19 +43,19 @@ class RustNumericLiteralImpl(type: IElementType, text: CharSequence) : RustLiter
             }
 
     override val possibleSuffixes: Collection<String>
-        get() = when (tokenType) {
+        get() = when (elementType) {
             INTEGER_LITERAL -> VALID_INTEGER_SUFFIXES
             FLOAT_LITERAL   -> VALID_FLOAT_SUFFIXES
             else            -> error("unreachable")
         }
 
     override val isInt: Boolean
-        get() = tokenType == INTEGER_LITERAL
+        get() = elementType == INTEGER_LITERAL
 
     override val isFloat: Boolean
-        get() = tokenType == FLOAT_LITERAL
+        get() = elementType == FLOAT_LITERAL
 
-    override fun toString(): String = "RustNumericLiteralImpl($tokenType)"
+    override fun toString(): String = "RustNumericLiteralImpl($elementType)"
 
     override fun computeOffsets(): Offsets {
         val (start, digits) = when (text.take(2)) {

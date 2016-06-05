@@ -9,12 +9,12 @@ import org.rust.lang.utils.unescapeRust
 
 class RustStringLiteralImpl(type: IElementType, text: CharSequence) : RustTextLiteralImplBase(type, text) {
     override val value: String?
-        get() = valueString?.unescapeRust(RustEscapesLexer.of(tokenType))
+        get() = valueString?.unescapeRust(RustEscapesLexer.of(elementType))
 
-    override fun toString(): String = "RustStringLiteralImpl($tokenType)"
+    override fun toString(): String = "RustStringLiteralImpl($elementType)"
 
     override fun computeOffsets(): Offsets {
-        val quote = when (tokenType) {
+        val quote = when (elementType) {
             BYTE_LITERAL, CHAR_LITERAL -> '\''
             else                       -> '"'
         }

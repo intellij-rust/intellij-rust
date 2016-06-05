@@ -33,7 +33,7 @@ class RustLiteralAnnotator : Annotator {
 
         override fun visitTextLiteral(literal: RustLiteral.Text) {
             // Check char literal length
-            when (literal.tokenType) {
+            when (literal.elementType) {
                 BYTE_LITERAL, CHAR_LITERAL -> {
                     val value = literal.value
                     when {

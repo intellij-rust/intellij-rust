@@ -7,6 +7,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustPatElement
@@ -58,6 +59,12 @@ val PsiElement.module: Module?
         // elements in libraries.
         return ModuleUtilCore.findModuleForPsiElement(containingFile)
     }
+
+/**
+ * Extracts node's element type
+ */
+val PsiElement.elementType: IElementType
+    get() = node.elementType
 
 
 //
