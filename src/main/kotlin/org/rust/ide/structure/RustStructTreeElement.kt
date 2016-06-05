@@ -2,12 +2,12 @@ package org.rust.ide.structure
 
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import org.rust.lang.core.psi.RustStructItemElement
+import org.rust.lang.core.psi.util.fields
 
 class RustStructTreeElement(element: RustStructItemElement) : PsiTreeElementBase<RustStructItemElement>(element) {
 
     override fun getPresentableText() = element?.name
 
-    override fun getChildrenBase() = getFields().orEmpty().map { RustStructDeclFieldTreeElement(it) }
+    override fun getChildrenBase() = (element?.fields ?: emptyList()).map { RustStructDeclFieldTreeElement(it) }
 
-    private fun getFields() = element?.structDeclArgs?.fieldDeclList
 }

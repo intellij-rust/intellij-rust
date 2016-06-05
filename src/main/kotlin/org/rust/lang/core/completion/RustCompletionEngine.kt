@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.psi.util.visibleFields
+import org.rust.lang.core.psi.util.fields
 import org.rust.lang.core.resolve.enumerateScopesFor
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.scope.boundElements
@@ -19,9 +19,9 @@ object RustCompletionEngine {
 
     fun completeFieldName(field: RustFieldNameElement): Array<RustNamedElement> =
         field.parentOfType<RustStructExprElement>()
-                ?.let { it.visibleFields }
+                ?.let       { it.fields }
+                ?.filter    { it.name != null }
                  .orEmpty()
-                 .filter { it.name != null }
                  .toTypedArray()
 
     fun completeUseGlob(glob: RustUseGlobElement): Array<RustNamedElement> =
