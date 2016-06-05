@@ -22,7 +22,7 @@ class RustQualifiedReferenceImpl(element: RustQualifiedReferenceElement)
         return element.manager.areElementsEquivalent(target, element)
     }
 
-    override fun getCanonicalText(): String =
+    override fun toString(): String =
         element.let { qualRef ->
             var qual = qualRef.qualifier?.reference?.canonicalText
                               .orEmpty()
