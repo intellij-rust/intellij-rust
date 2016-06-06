@@ -219,7 +219,7 @@
     mixin       ("type_param") = "org.rust.lang.core.psi.impl.mixin.RustTypeParamImplMixin"
 
     //
-    // GenericDeclarations
+    // Generic declarations
     //
 
     implements ("trait_item")  = "org.rust.lang.core.psi.RustGenericDeclaration"
@@ -433,15 +433,15 @@ pat_ident       ::= pat_binding [ '@' pat ]
 
 
 pat_struct      ::= path_expr '{' pat_struct_fields '}'
-pat_enum        ::= path_expr '(' ( '..' | patterns ) ')'
+pat_enum        ::= path_expr '(' ( '..' | pats ) ')'
 
 pat_range ::= lit_or_path [ '...' lit_or_path ]
 
-pat_tup ::= '(' patterns? ')'
+pat_tup ::= '(' pats? ')'
 pat_vec ::= '[' pat_vec_elts ']'
 
-private patterns ::= <<comma_separated_list pat>>
-private pat_vec_elts ::= patterns? [ '..' [ ',' patterns ] ]
+private pats ::= <<comma_separated_list pat>>
+private pat_vec_elts ::= pats? [ '..' [ ',' pats ] ]
 
 pat_reg ::= '&' MUT? pat
           | '&&' pat
