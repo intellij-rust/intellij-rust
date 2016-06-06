@@ -74,26 +74,51 @@ val PsiElement.module: Module?
     }
 
 /**
+ * Checks whether this node contains [descendant] one
+ */
+fun PsiElement.contains(descendant: PsiElement?): Boolean {
+    var p = descendant
+    while (p != null) {
+        if (p === this)
+            return true
+
+        p = p.parent
+    }
+
+    return false
+}
+
+
+/**
+ * Composes tree-path from `this` node to the [other] (inclusive)
+ */
+fun PsiElement.pathTo(other: PsiElement): Iterable<PsiElement> {
+    check(contains(other) || other.contains(this))
+
+    // Check whether we're walking the tree up or down
+    return if (other.contains(this))
+        walkUp(this, other)
+    else
+        walkUp(other, this).reversed()
+}
+
+private fun walkUp(descendant: PsiElement, ancestor: PsiElement): Iterable<PsiElement> {
+    val path = arrayListOf<PsiElement>()
+
+    var p: PsiElement? = descendant
+    while (p != null && p !== ancestor) {
+        path.add(p)
+        p = p.parent
+    }
+
+    path.add(ancestor)
+
+    return path
+}
+
+
+/**
  * Extracts node's element type
  */
 val PsiElement.elementType: IElementType
     get() = node.elementType
-
-
-//
-// TODO(kudinkin): move
-//
-
-val RustPatElement.boundElements: List<RustNamedElement>
-    get() {
-        val result = arrayListOf<RustNamedElement>()
-
-        accept(object : RustRecursiveElementVisitor() {
-            override fun visitElement(element: PsiElement?) {
-                if (element is RustNamedElement)
-                    result.add(element)
-                super.visitElement(element)
-            }
-        })
-        return result
-    }
