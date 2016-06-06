@@ -90,21 +90,19 @@ object RustResolveEngine {
     fun resolveFieldExpr(fieldExpr: RustFieldExprElement): ResolveResult {
         val receiverType = fieldExpr.expr.resolvedType
 
-        return fieldExpr.fieldId?.let {
-            val id = (it.identifier ?: it.integerLiteral)!!
-            val matching = when (id.elementType) {
-                IDENTIFIER -> {
-                    val name = id.text
-                    when (receiverType) {
-                        is RustStructType -> receiverType.struct.fields.filter { it.name == name }
-                        else -> emptyList()
-                    }
+        val id = (fieldExpr.fieldId.identifier ?: fieldExpr.fieldId.integerLiteral)!!
+        val matching = when (id.elementType) {
+            IDENTIFIER -> {
+                val name = id.text
+                when (receiverType) {
+                    is RustStructType -> receiverType.struct.fields.filter { it.name == name }
+                    else -> emptyList()
                 }
-                else -> emptyList()
             }
+            else -> emptyList()
+        }
 
-            ResolveResult.buildFrom(matching)
-        } ?: ResolveResult.Unresolved
+        return ResolveResult.buildFrom(matching)
     }
 
     /**

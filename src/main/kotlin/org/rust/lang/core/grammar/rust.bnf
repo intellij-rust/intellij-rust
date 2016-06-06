@@ -981,7 +981,7 @@ arg_list ::= '(' expr_list? ')' { pin = 1 }
 private expr_list ::= <<comma_separated_list any_expr>>
 
 field_id ::= IDENTIFIER | INTEGER_LITERAL
-field_expr ::= expr '.' field_id { pin(".*") = 2 }
+field_expr ::= expr '.' field_id
 
 lit_expr ::= lit
 

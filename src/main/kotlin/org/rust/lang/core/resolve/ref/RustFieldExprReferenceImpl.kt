@@ -5,7 +5,7 @@ import org.rust.lang.core.resolve.RustResolveEngine
 
 class RustFieldExprReferenceImpl(
     fieldExpr: RustFieldExprElement
-) : RustReferenceBase<RustFieldExprElement>(fieldExpr, fieldExpr.fieldId!!)
+) : RustReferenceBase<RustFieldExprElement>(fieldExpr, fieldExpr.fieldId)
   , RustReference {
 
     override fun getVariants(): Array<out Any> = emptyArray()
