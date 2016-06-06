@@ -5,6 +5,6 @@ import org.rust.lang.core.type.visitors.RustUnresolvedTypeVisitor
 
 class RustUnresolvedPathType(val path: RustPathElement) : RustUnresolvedType {
 
-    override fun <T> accept(visitor: RustUnresolvedTypeVisitor<T>): T = visitor.visit(this)
+    override fun <T> accept(visitor: RustUnresolvedTypeVisitor<T>): T = visitor.visitPathType(this)
 
 }
