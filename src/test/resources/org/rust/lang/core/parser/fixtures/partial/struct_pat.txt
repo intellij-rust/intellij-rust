@@ -31,8 +31,9 @@ FILE
       RustLetDeclElementImpl(LET_DECL)
         PsiElement(let)('let')
         PsiWhiteSpace(' ')
-        RustPatBindingElementImpl(PAT_BINDING)
-          PsiElement(<IDENTIFIER>)('S')
+        RustPatIdentElementImpl(PAT_IDENT)
+          RustPatBindingElementImpl(PAT_BINDING)
+            PsiElement(<IDENTIFIER>)('S')
       PsiWhiteSpace(' ')
       RustExprStmtElementImpl(EXPR_STMT)
         PsiErrorElement:'!', '(', ':', ';' or '{' expected, got '{'
