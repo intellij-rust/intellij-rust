@@ -1,9 +1,6 @@
 package org.rust.lang.core.psi
 
-import com.intellij.psi.PsiElement
-import org.rust.lang.core.resolve.ref.RustReference
-
-interface RustQualifiedReferenceElement : RustNamedElement {
+interface RustQualifiedReferenceElement : RustReferenceElement {
 
     /**
      *  Returns `true` if this is a path starting at the crate root.
@@ -44,11 +41,7 @@ interface RustQualifiedReferenceElement : RustNamedElement {
      */
     val relativeModulePrefix: RelativeModulePrefix
 
-    val nameElement: PsiElement
-
     val qualifier: RustQualifiedReferenceElement?
-
-    override fun getReference(): RustReference
 }
 
 sealed class RelativeModulePrefix {
