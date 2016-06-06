@@ -12,6 +12,8 @@ open class RustTypeResolvingVisitor : RustUnresolvedTypeVisitor<RustType> {
 
     private fun visit(type: RustUnresolvedType): RustType = type.accept(this)
 
+    override fun visitUnknown(type: RustUnknownType): RustType = RustUnknownType
+
     override fun visitUnitType(type: RustUnitType): RustType = RustUnitType
 
     override fun visitTupleType(type: RustUnresolvedTupleType): RustType =

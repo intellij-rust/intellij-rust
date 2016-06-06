@@ -6,13 +6,9 @@ import org.rust.lang.core.type.visitors.RustUnresolvedTypeVisitor
 
 object RustUnknownType : RustType, RustUnresolvedType {
 
-    override fun <T> accept(visitor: RustUnresolvedTypeVisitor<T>): T {
-        throw UnsupportedOperationException()
-    }
+    override fun <T> accept(visitor: RustUnresolvedTypeVisitor<T>): T = visitor.visitUnknown(this)
 
-    override fun <T> accept(visitor: RustTypeVisitor<T>): T {
-        throw UnsupportedOperationException()
-    }
+    override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitUnknown(this)
 
     override fun toString(): String = "<unknown type>"
 
