@@ -2,10 +2,7 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
-import org.rust.lang.core.psi.RustEnumItemElement
-import org.rust.lang.core.psi.RustMod
-import org.rust.lang.core.psi.RustPathElement
-import org.rust.lang.core.psi.RustElementVisitor
+import org.rust.lang.core.psi.*
 
 class RustUnresolvedReferenceInspection : RustLocalInspectionTool() {
     override fun getDisplayName(): String = "Unresolved reference"
@@ -26,7 +23,7 @@ class RustUnresolvedReferenceInspection : RustLocalInspectionTool() {
     }
 }
 
-private val RustPathElement.isPrimitive: Boolean get() = path == null && name in primitives
+private val RustPathElement.isPrimitive: Boolean get() = path == null && referenceName in primitives
 
 private val primitives = setOf(
     "i8", "i16", "i32", "i64", "isize",

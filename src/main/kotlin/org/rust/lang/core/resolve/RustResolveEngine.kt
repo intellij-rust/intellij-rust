@@ -10,7 +10,10 @@ import org.rust.cargo.util.preludeModule
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustTokenElementTypes.IDENTIFIER
-import org.rust.lang.core.psi.impl.mixin.*
+import org.rust.lang.core.psi.impl.mixin.basePath
+import org.rust.lang.core.psi.impl.mixin.isStarImport
+import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
+import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.fields
@@ -256,9 +259,8 @@ private class Resolver {
         return result
     }
 
-    private fun resolveIn(scopes: Sequence<RustResolveScope>, ref: RustNamedElement): RustResolveEngine.ResolveResult {
-        val name = ref.name ?: return RustResolveEngine.ResolveResult.Unresolved
-        val visitor = ResolveScopeVisitor(name, ref)
+    private fun resolveIn(scopes: Sequence<RustResolveScope>, ref: RustReferenceElement): RustResolveEngine.ResolveResult {
+        val visitor = ResolveScopeVisitor(ref.referenceName, ref)
         for (s in scopes) {
             s.accept(visitor)
             if (visitor.result is RustResolveEngine.ResolveResult.Resolved) {
@@ -372,7 +374,14 @@ private class Resolver {
                 return
             }
 
-            globList.useGlobList.find { matching(it.boundElement?.name) }?.let {
+            globList.useGlobList.find { glob ->
+                val name = listOfNotNull(
+                    glob.alias?.name, // {foo as bar};
+                    glob.self?.let { glob.basePath?.referenceName }, // {self}
+                    glob.referenceName // {foo}
+                ).firstOrNull()
+                matching(name)
+            }?.let {
                 result = resolveUseGlob(it)
             }
         }

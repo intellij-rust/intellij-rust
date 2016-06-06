@@ -4,11 +4,12 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.completion.RustCompletionEngine
 import org.rust.lang.core.psi.RustQualifiedReferenceElement
 import org.rust.lang.core.psi.RustTokenElementTypes
+import org.rust.lang.core.psi.referenceName
 import org.rust.lang.core.resolve.RustResolveEngine
 
 
 class RustQualifiedReferenceImpl(element: RustQualifiedReferenceElement)
-    : RustReferenceBase<RustQualifiedReferenceElement>(element, element.nameElement)
+    : RustReferenceBase<RustQualifiedReferenceElement>(element, element.referenceNameElement)
     , RustReference {
 
     override fun resolveVerbose(): RustResolveEngine.ResolveResult =
@@ -30,6 +31,6 @@ class RustQualifiedReferenceImpl(element: RustQualifiedReferenceElement)
             if (qual.isNotEmpty())
                 qual += RustTokenElementTypes.COLONCOLON.toString();
 
-            qual + qualRef.name
+            qual + qualRef.referenceName
         }
 }

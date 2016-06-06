@@ -1,27 +1,24 @@
 package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
-import org.rust.lang.core.psi.RustNamedElement
+import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustQualifiedReferenceElement
 import org.rust.lang.core.psi.RustUseGlobElement
 import org.rust.lang.core.psi.RustUseItemElement
-import org.rust.lang.core.psi.impl.RustNamedElementImpl
+import org.rust.lang.core.psi.impl.RustCompositeElementImpl
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ref.RustReference
 import org.rust.lang.core.resolve.ref.RustUseGlobReferenceImpl
 
-abstract class RustUseGlobImplMixin(node: ASTNode) : RustNamedElementImpl(node), RustUseGlobElement {
+abstract class RustUseGlobImplMixin(node: ASTNode) : RustCompositeElementImpl(node), RustUseGlobElement {
     override fun getReference(): RustReference =
-            RustUseGlobReferenceImpl(this)
+        RustUseGlobReferenceImpl(this)
+
+    override val referenceNameElement: PsiElement
+        get() = requireNotNull(identifier ?: self) {
+            "Use glob must have an identifier: $this ${this.text} at ${this.containingFile.virtualFile.path}"
+        }
 }
 
 val RustUseGlobElement.basePath: RustQualifiedReferenceElement?
     get() = parentOfType<RustUseItemElement>()?.let { it.path }
-
-val RustUseGlobElement.boundElement: RustNamedElement?
-    get() = when {
-        alias != null      -> alias
-        identifier != null -> this
-        self != null       -> basePath
-        else               -> null
-    }

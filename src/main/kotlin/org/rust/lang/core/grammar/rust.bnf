@@ -237,7 +237,6 @@
                                       "org.rust.lang.core.psi.RustDeclaringElement" ]
     mixin       ("self_argument") = "org.rust.lang.core.psi.impl.mixin.RustSelfArgumentImplMixin"
 
-    implements  ("use_glob") = "org.rust.lang.core.psi.RustNamedElement"
     mixin       ("use_glob") = "org.rust.lang.core.psi.impl.mixin.RustUseGlobImplMixin"
 
     elementType (".*_bin_expr")   = binary_expr
@@ -501,7 +500,9 @@ private use_path ::=
 | path_without_types ( alias | '::' ( use_glob_list | '*' ) )?
 
 use_glob_list ::= '{' [ <<comma_separated_list use_glob>> ] '}'
-use_glob ::= (IDENTIFIER | SELF) alias?
+use_glob ::= (IDENTIFIER | SELF) alias? {
+  implements = [ "org.rust.lang.core.psi.RustReferenceElement" ]
+}
 
 alias ::= AS IDENTIFIER
 
