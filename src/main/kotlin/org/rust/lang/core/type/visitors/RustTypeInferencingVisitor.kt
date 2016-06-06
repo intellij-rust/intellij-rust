@@ -51,7 +51,7 @@ private class RustTypeInferencingVisitor(
         val tip = path.firstOrNull() ?: return RustUnknownType
         if (tip is RustPatIdentElement) {
             if (tip.patBinding === binding) {
-                return type
+                return if (path.size == 2) type else RustUnknownType
             } else {
                 return tip.pat?.let { pat ->
                     RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, pat, type)
