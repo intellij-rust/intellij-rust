@@ -317,8 +317,8 @@ private class Resolver {
             result =
                 // Check whether resolved element could be further resolved
                 when (elem) {
-                    is RustModDeclItemElement, is RustExternCrateItemElement -> elem.reference.let            { it as RustReferenceBase<*> }
-                                                                                .orUnresolved   { it.resolveVerbose() }
+                    is RustModDeclItemElement, is RustExternCrateItemElement -> elem.reference.let { it as RustReferenceBase<*> }
+                                                                                    .resolveVerbose()
 
                     is RustPathElement -> resolve(elem)
                     is RustUseGlobElement -> resolveUseGlob(elem)
@@ -326,8 +326,8 @@ private class Resolver {
                     is RustAliasElement -> {
                         val parent = elem.parent
                         when (parent) {
-                            is RustExternCrateItemElement -> parent.reference  .let            { it as RustReferenceBase<*> }
-                                                                        .orUnresolved   { it.resolveVerbose() }
+                            is RustExternCrateItemElement -> parent.reference.let { it as RustReferenceBase<*> }
+                                                                   .resolveVerbose()
 
                             else -> RustResolveEngine.ResolveResult.Resolved(elem)
                         }
@@ -430,9 +430,6 @@ private class Resolver {
 
             seekUseDeclarations(o)
         }
-
-        private fun <T> T?.orUnresolved(block: (T) -> RustResolveEngine.ResolveResult): RustResolveEngine.ResolveResult =
-            this?.let { block(it) } ?: RustResolveEngine.ResolveResult.Unresolved
     }
 }
 
