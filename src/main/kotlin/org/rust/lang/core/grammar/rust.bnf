@@ -129,7 +129,7 @@
     // Mixins
     //
 
-    mixin       ("field_name")          = "org.rust.lang.core.psi.impl.mixin.RustFieldNameImplMixin"
+    mixin       ("struct_expr_field")   = "org.rust.lang.core.psi.impl.mixin.RustStructExprFieldImplMixin"
     mixin       ("trait_item")          = "org.rust.lang.core.psi.impl.mixin.RustTraitItemImplMixin"
     mixin       ("impl_item")           = "org.rust.lang.core.psi.impl.mixin.RustImplItemImplMixin"
     mixin       ("struct_item")         = "org.rust.lang.core.psi.impl.mixin.RustStructItemImplMixin"
@@ -892,11 +892,11 @@ lambda_expr ::= MOVE? lambda_parameters ret_type? any_expr
 
 struct_expr ::= <<checkStructAllowed>> path_generic_args_with_colons struct_expr_body
 
-struct_expr_body ::= '{' [ <<comma_separated_list field_arg>> ] ('..'  any_expr)? '}'
-private field_arg ::= field_name ':' any_expr { pin = field_name }
+struct_expr_body ::= '{' [ <<comma_separated_list struct_expr_field>> ] ('..'  any_expr)? '}'
 
-field_name ::= IDENTIFIER {
-  implements = "org.rust.lang.core.psi.RustNamedElement"
+struct_expr_field ::= IDENTIFIER ':' any_expr {
+  pin = 1
+  implements = [ "org.rust.lang.core.psi.RustReferenceElement" ]
 }
 
 path_expr ::= path_generic_args_with_colons

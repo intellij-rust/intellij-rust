@@ -1,13 +1,15 @@
 package org.rust.lang.core.resolve.ref
 
 import org.rust.lang.core.completion.RustCompletionEngine
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RustStructExprElement
+import org.rust.lang.core.psi.RustStructExprFieldElement
+import org.rust.lang.core.psi.referenceName
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.RustResolveEngine
 
 class RustStructExprFieldReferenceImpl(
-    field: RustFieldNameElement
-) : RustReferenceBase<RustFieldNameElement>(field, field.identifier)
+    field: RustStructExprFieldElement
+) : RustReferenceBase<RustStructExprFieldElement>(field, field.referenceNameElement)
   , RustReference {
 
     override fun getVariants(): Array<out Any> =
@@ -16,10 +18,9 @@ class RustStructExprFieldReferenceImpl(
 
     override fun resolveVerbose(): RustResolveEngine.ResolveResult {
         val structExpr  = element.parentOfType<RustStructExprElement>()
-        val fieldName   = element.name
 
-        return if (structExpr != null && fieldName != null)
-            RustResolveEngine.resolveStructExprField(structExpr, fieldName)
+        return if (structExpr != null)
+            RustResolveEngine.resolveStructExprField(structExpr, element.referenceName)
         else
             RustResolveEngine.ResolveResult.Unresolved
     }
