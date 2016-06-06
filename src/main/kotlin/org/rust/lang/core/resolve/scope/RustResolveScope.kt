@@ -7,6 +7,3 @@ interface RustResolveScope : RustCompositeElement {
     val declarations: Collection<RustNamedElement>
 }
 
-//val RustResolveScope.boundElements: Collection<RustNamedElement>
-//    get() = declarations.flatMap { it.boundElements }
-
