@@ -322,7 +322,7 @@ fake parameter  ::= pat? type?
 
 fn_parameter ::= pat type_ascription
 lambda_parameter ::= pat type_ascription?
-anon_parameter ::= [ restricted_pattern ':' ] type
+anon_parameter ::= [ restricted_pat ':' ] type
 path_parameter ::= type !'='
 
 fake parameters          ::= self_argument? parameter*
@@ -338,17 +338,17 @@ foreign_fn_parameters  ::= <<variadic_params_impl fn_parameter>>
 fn_type_parameters     ::= <<variadic_params_impl anon_parameter>>
 path_parameters        ::= '(' [ <<comma_separated_list path_parameter>> ] ')' { pin = 1 }
 
-private meta variadic_params_impl ::= '(' [ <<param>> (',' <<param>>)*  [',' '...'? ] ] ')' { pin = 1 }
+private meta variadic_params_impl ::= '(' [ <<param>> (',' <<param>>)*  [ ',' '...'? ] ] ')' { pin = 1 }
 private meta method_params_impl ::= '(' ( self_argument [ ',' [ <<comma_separated_list <<param>>>> ] ]
                                         | [ <<comma_separated_list <<param>>>> ] ) ')' { pin = 1 }
 
 self_argument ::= [ '&' LIFETIME? ] MUT? SELF type_ascription?
-private restricted_pattern ::= &( IDENTIFIER
-                                | '_'
-                                | '&' (IDENTIFIER | '_')
-                                | '&&' (IDENTIFIER | '_')
-                                | MUT IDENTIFIER
-                                ) pat
+private restricted_pat ::= &( IDENTIFIER
+                            | '_'
+                            | '&' (IDENTIFIER | '_')
+                            | '&&' (IDENTIFIER | '_')
+                            | MUT IDENTIFIER
+                            ) pat
 
 
 private fn_header ::= CONST? UNSAFE? extern_abi? FN IDENTIFIER generic_params?
