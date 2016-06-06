@@ -9,19 +9,17 @@ import org.rust.cargo.util.getPsiFor
 import org.rust.cargo.util.preludeModule
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RustTokenElementTypes.*
-import org.rust.lang.core.psi.impl.mixin.basePath
-import org.rust.lang.core.psi.impl.mixin.isStarImport
-import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
-import org.rust.lang.core.psi.impl.mixin.possiblePaths
+import org.rust.lang.core.psi.RustTokenElementTypes.IDENTIFIER
+import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.elementType
-import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.fields
+import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.ref.RustReferenceBase
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
-import org.rust.lang.core.type.*
+import org.rust.lang.core.type.RustStructType
+import org.rust.lang.core.type.RustType
 import org.rust.lang.core.type.unresolved.RustUnresolvedType
 import org.rust.lang.core.type.util.resolvedType
 import org.rust.lang.core.type.visitors.RustTypeResolvingVisitor
@@ -331,10 +329,6 @@ private class Resolver {
                             is RustExternCrateItemElement -> parent.reference  .let            { it as RustReferenceBase<*> }
                                                                         .orUnresolved   { it.resolveVerbose() }
 
-                            is RustUseItemElement -> parent.path.orUnresolved { resolve(it) }
-
-                            is RustUseGlobElement -> resolveUseGlob(parent)
-
                             else -> RustResolveEngine.ResolveResult.Resolved(elem)
                         }
                     }
@@ -345,24 +339,41 @@ private class Resolver {
             return result
         }
 
-        private fun matching(elem: RustNamedElement): Boolean = elem.name == name
+        private fun matching(elem: RustNamedElement): Boolean = matching(elem.name)
+        private fun matching(elemName: String?): Boolean = elemName == name
 
         private fun seekUseDeclarations(o: RustItemsOwner) {
             for (useDecl in o.useDeclarations) {
-                if (useDecl.isStarImport) {
-                    // Recursively step into `use foo::*`
-                    val pathPart = useDecl.path ?: continue
-                    val mod = resolve(pathPart).element ?: continue
+                seekUseDeclaration(useDecl)
+                if (ok(result)) return
+            }
+        }
 
-                    recursionGuard(this to mod, memoize = false) {
-                        mod.accept(this)
-                    }
+        private fun seekUseDeclaration(useDecl: RustUseItemElement) {
+            if (useDecl.isStarImport) {
+                // Recursively step into `use foo::*`
+                val pathPart = useDecl.path ?: return
+                val mod = resolve(pathPart).element ?: return
 
-                    if (ok(result))
-                        return
-                } else {
-                    seek(useDecl).let { if (ok(result)) return }
+                recursionGuard(this to mod, memoize = false) {
+                    mod.accept(this)
                 }
+
+                return
+            }
+
+            val globList = useDecl.useGlobList
+            if (globList == null) {
+                val path = useDecl.path ?: return
+                // use foo::bar [as baz];
+                if (matching(useDecl.alias?.name ?: path.referenceName)) {
+                    result = resolve(path)
+                }
+                return
+            }
+
+            globList.useGlobList.find { matching(it.boundElement?.name) }?.let {
+                result = resolveUseGlob(it)
             }
         }
 

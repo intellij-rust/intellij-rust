@@ -8,3 +8,5 @@ interface RustReferenceElement : RustNamedElement {
 
     override fun getReference(): RustReference
 }
+
+val RustReferenceElement.referenceName: String get() = nameElement.text

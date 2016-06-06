@@ -2,7 +2,6 @@ package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.stubs.IStubElementType
-import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustUseItemElement
 import org.rust.lang.core.psi.impl.RustItemElementImpl
 import org.rust.lang.core.stubs.RustItemStub
@@ -13,17 +12,6 @@ abstract class RustUseItemImplMixin : RustItemElementImpl, RustUseItemElement {
 
     constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val boundElements: Collection<RustNamedElement>
-        get() {
-            val globs = useGlobList
-            return if (globs == null) {
-                // use foo::bar;
-                listOfNotNull(alias ?: path)
-            } else {
-                // use foo::bar::{...};
-                globs.useGlobList.mapNotNull { it.boundElement }
-            }
-        }
 }
 
 val RustUseItemElement.isStarImport: Boolean get() = mul != null
