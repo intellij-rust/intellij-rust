@@ -7,4 +7,9 @@ class RustTypeResolveTestCase : RustResolveTestCaseBase() {
     fun testMethodCallExpr() = checkIsBound(atOffset = 27)
     fun testSelfFieldExpr() = checkIsBound()
     fun testFieldExpr() = checkIsBound()
+
+    fun testLetDeclPatIdentExpr() = checkIsBound()
+    fun testLetDeclPatTupExpr() = checkIsBound()
+    fun testLetDeclPatStructExpr() = checkIsBound()
+    fun testLetDeclPatStructExprComplex() = checkIsBound()
 }
