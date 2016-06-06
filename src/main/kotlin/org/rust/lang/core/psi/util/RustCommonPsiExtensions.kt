@@ -9,9 +9,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustPatElement
-import org.rust.lang.core.psi.visitors.RustRecursiveElementVisitor
 
 
 /**
@@ -77,15 +74,8 @@ val PsiElement.module: Module?
  * Checks whether this node contains [descendant] one
  */
 fun PsiElement.contains(descendant: PsiElement?): Boolean {
-    var p = descendant
-    while (p != null) {
-        if (p === this)
-            return true
-
-        p = p.parent
-    }
-
-    return false
+    if (descendant == null) return false
+    return descendant.ancestors.any { it === this }
 }
 
 
@@ -97,28 +87,19 @@ fun PsiElement.pathTo(other: PsiElement): Iterable<PsiElement> {
 
     // Check whether we're walking the tree up or down
     return if (other.contains(this))
-        walkUp(this, other)
+        walkUp(this, other).toList()
     else
-        walkUp(other, this).reversed()
+        walkUp(other, this).toList().reversed()
 }
-
-private fun walkUp(descendant: PsiElement, ancestor: PsiElement): Iterable<PsiElement> {
-    val path = arrayListOf<PsiElement>()
-
-    var p: PsiElement? = descendant
-    while (p != null && p !== ancestor) {
-        path.add(p)
-        p = p.parent
-    }
-
-    path.add(ancestor)
-
-    return path
-}
-
 
 /**
  * Extracts node's element type
  */
 val PsiElement.elementType: IElementType
     get() = node.elementType
+
+private val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) { it.parent }
+
+private fun walkUp(descendant: PsiElement, ancestor: PsiElement): Sequence<PsiElement> =
+    descendant.ancestors.takeWhile { it !== ancestor } + ancestor
+
