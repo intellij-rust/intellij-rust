@@ -210,13 +210,8 @@
     implements  ("match_pat")   = "org.rust.lang.core.psi.RustDeclaringElement"
     mixin       ("match_pat")   = "org.rust.lang.core.psi.impl.mixin.RustMatchPatImplMixin"
 
-    implements  ("pat_binding") = [ "org.rust.lang.core.psi.RustDeclaringElement"
-                                    "org.rust.lang.core.psi.RustNamedElement" ]
+    implements  ("pat_binding") = [ "org.rust.lang.core.psi.RustNamedElement" ]
     mixin       ("pat_binding") = "org.rust.lang.core.psi.impl.mixin.RustPatBindingImplMixin"
-
-    implements  ("type_param") = [ "org.rust.lang.core.psi.RustDeclaringElement"
-                                   "org.rust.lang.core.psi.RustNamedElement" ]
-    mixin       ("type_param") = "org.rust.lang.core.psi.impl.mixin.RustTypeParamImplMixin"
 
     //
     // Generic declarations
@@ -233,8 +228,7 @@
     implements  ("alias") = "org.rust.lang.core.psi.RustNamedElement"
     extends     ("alias") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
 
-    implements  ("self_argument") = [ "org.rust.lang.core.psi.RustNamedElement"
-                                      "org.rust.lang.core.psi.RustDeclaringElement" ]
+    implements  ("self_argument") = [ "org.rust.lang.core.psi.RustNamedElement" ]
     mixin       ("self_argument") = "org.rust.lang.core.psi.impl.mixin.RustSelfArgumentImplMixin"
 
     mixin       ("use_glob") = "org.rust.lang.core.psi.impl.mixin.RustUseGlobImplMixin"
@@ -302,8 +296,7 @@ vis ::= PUB
 private attrs_and_vis ::= outer_attr* vis?
 
 fake item ::= attrs_and_vis {
-  implements  = [ "org.rust.lang.core.psi.RustDeclaringElement"
-                  "org.rust.lang.core.psi.RustNamedElement"
+  implements  = [ "org.rust.lang.core.psi.RustNamedElement"
                   "org.rust.lang.core.psi.RustVisibilityOwner"
                   "org.rust.lang.core.psi.RustOuterAttributeOwner" ]
   mixin       = "org.rust.lang.core.psi.impl.mixin.RustItemImplMixin"
@@ -390,7 +383,10 @@ private lifetime_bounds     ::= ':' LIFETIME ('+' LIFETIME)*
 
 private type_params ::= type_param (',' type_param)*
 
-type_param ::= IDENTIFIER type_param_bounds? [ '=' type ]
+type_param ::= IDENTIFIER type_param_bounds? [ '=' type ] {
+  implements = [ "org.rust.lang.core.psi.RustNamedElement" ]
+  extends = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
+}
 
 type_param_bounds ::= ':' [ type_param_bound_seq ]
 
@@ -564,7 +560,6 @@ enum_variant ::= outer_attr* IDENTIFIER enum_args? {
   pin = 2
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RustDeclaringElement"
                  "org.rust.lang.core.psi.RustNamedElement" ]
 }
 

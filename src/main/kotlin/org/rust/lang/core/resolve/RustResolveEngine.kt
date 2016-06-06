@@ -303,14 +303,12 @@ private class Resolver {
         }
 
         private fun seek(element: RustDeclaringElement) {
-            check(result is RustResolveEngine.ResolveResult.Unresolved)
             element.boundElements.find { matching(it) }?.let { assign(it) }
         }
 
-        private fun seek(declaringElements: Collection<RustDeclaringElement>) {
-            for (element in declaringElements) {
-                seek(element).let { if (ok(result)) return }
-            }
+        private fun seek(elements: Collection<RustNamedElement>) {
+            check(result is RustResolveEngine.ResolveResult.Unresolved)
+            elements.find { matching(it) }?.let { assign(it) }
         }
 
         private fun assign(elem: RustNamedElement): RustResolveEngine.ResolveResult {

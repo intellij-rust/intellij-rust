@@ -3,7 +3,7 @@ package org.rust.lang.core.psi.impl.mixin
 import com.intellij.lang.ASTNode
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
-import org.rust.lang.core.psi.RustDeclaringElement
+import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustTypeItemElement
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustItemElementImpl
@@ -16,7 +16,7 @@ abstract class RustTypeItemImplMixin : RustItemElementImpl, RustTypeItemElement 
 
     constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val declarations: Collection<RustDeclaringElement> get() = genericParams?.typeParamList.orEmpty()
+    override val declarations: Collection<RustNamedElement> get() = genericParams?.typeParamList.orEmpty()
 
     override fun getIcon(flags: Int): Icon? {
         return iconWithVisibility(flags, RustIcons.TYPE)

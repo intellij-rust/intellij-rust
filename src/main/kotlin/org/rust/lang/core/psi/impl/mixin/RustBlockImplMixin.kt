@@ -5,15 +5,15 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.rust.lang.core.psi.RustBlockElement
 import org.rust.lang.core.psi.RustCompositeElement
-import org.rust.lang.core.psi.RustDeclaringElement
 import org.rust.lang.core.psi.RustLetDeclElement
+import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
 
 abstract class RustBlockImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
                                                  , RustBlockElement {
 
-    override val declarations: Collection<RustDeclaringElement>
-        get() = stmtList.filterIsInstance<RustLetDeclElement>()
+    override val declarations: Collection<RustNamedElement>
+        get() = stmtList.filterIsInstance<RustLetDeclElement>().flatMap { it.boundElements }
 
 }
 

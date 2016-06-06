@@ -10,7 +10,6 @@ import org.rust.lang.core.psi.util.fields
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.enumerateScopesFor
 import org.rust.lang.core.resolve.scope.RustResolveScope
-import org.rust.lang.core.resolve.scope.boundElements
 import java.util.*
 
 object RustCompletionEngine {
@@ -65,7 +64,7 @@ private class CompletionScopeVisitor(private val context: RustQualifiedReference
     }
 
     override fun visitResolveScope(scope: RustResolveScope) {
-        completions.addAll(scope.boundElements)
+        completions.addAll(scope.declarations)
     }
 
     override fun visitForExpr(o: RustForExprElement) {
@@ -80,7 +79,7 @@ private class CompletionScopeVisitor(private val context: RustQualifiedReference
 
 private fun RustNamedElement?.completionsFromResolveScope(): Collection<RustNamedElement> =
     when (this) {
-        is RustResolveScope -> boundElements
+        is RustResolveScope -> declarations
         else                -> emptyList()
     }
 
