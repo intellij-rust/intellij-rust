@@ -1,14 +1,20 @@
 package org.rust.lang.core.type
 
+import org.rust.lang.core.type.unresolved.RustUnresolvedType
 import org.rust.lang.core.type.visitors.RustTypeVisitor
+import org.rust.lang.core.type.visitors.RustUnresolvedTypeVisitor
 
-object RustUnknownType : RustType {
+object RustUnknownType : RustType, RustUnresolvedType {
 
-    override fun toString(): String = "<unknown type>"
+    override fun <T> accept(visitor: RustUnresolvedTypeVisitor<T>): T {
+        throw UnsupportedOperationException()
+    }
 
     override fun <T> accept(visitor: RustTypeVisitor<T>): T {
         throw UnsupportedOperationException()
     }
+
+    override fun toString(): String = "<unknown type>"
 
     override fun equals(other: Any?): Boolean = this === other
 
