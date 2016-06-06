@@ -145,6 +145,11 @@
     mixin       ("impl_method_member")  = "org.rust.lang.core.psi.impl.mixin.RustImplMethodMemberImplMixin"
     mixin       ("method_call_expr")    = "org.rust.lang.core.psi.impl.mixin.RustMethodCallExprImplMixin"
     mixin       ("field_expr")          = "org.rust.lang.core.psi.impl.mixin.RustFieldExprImplMixin"
+    mixin       ("mod_item")            = "org.rust.lang.core.psi.impl.mixin.RustModItemImplMixin"
+    mixin       ("fn_item")             = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
+    mixin       ("trait_method_member") = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodMemberImplMixin"
+    mixin       ("trait_const_member")  = "org.rust.lang.core.psi.impl.mixin.RustTraitConstMemberImplMixin"
+    mixin       ("trait_type_member")   = "org.rust.lang.core.psi.impl.mixin.RustTraitTypeMemberImplMixin"
 
     //
     // References
@@ -157,23 +162,10 @@
     // Resolve scopes
     //
 
-    implements  ("mod_item") = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
-                                 "org.rust.lang.core.psi.RustMod"
-                                 "org.rust.lang.core.psi.RustInnerAttributeOwner" ]
-    mixin       ("mod_item") = "org.rust.lang.core.psi.impl.mixin.RustModItemImplMixin"
-
-    implements  ("fn_item") = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
-                                "org.rust.lang.core.psi.RustGenericDeclaration"
-                                "org.rust.lang.core.psi.RustInnerAttributeOwner" ]
-    mixin       ("fn_item") = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
-
     implements  ("enum_item") = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
                                   "org.rust.lang.core.psi.RustStructOrEnum" ]
     mixin       ("enum_item") = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
 
-    mixin       ("trait_method_member") = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodMemberImplMixin"
-    mixin       ("trait_const_member")  = "org.rust.lang.core.psi.impl.mixin.RustTraitConstMemberImplMixin"
-    mixin       ("trait_type_member")   = "org.rust.lang.core.psi.impl.mixin.RustTraitTypeMemberImplMixin"
 
     implements  ("lambda_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     mixin       ("lambda_expr") = "org.rust.lang.core.psi.impl.mixin.RustLambdaExprImplMixin"
@@ -217,9 +209,7 @@
     // Generic declarations
     //
 
-    implements ("trait_item")  = "org.rust.lang.core.psi.RustGenericDeclaration"
     implements ("impl_item")   = "org.rust.lang.core.psi.RustGenericDeclaration"
-    implements ("type_item")   = "org.rust.lang.core.psi.RustGenericDeclaration"
 
     //
     //  Misc
@@ -370,6 +360,11 @@ ret_type ::= '->' (type | '!') { pin = 1 }
 fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.resolve.scope.RustResolveScope"
+                 "org.rust.lang.core.psi.RustGenericDeclaration"
+                 "org.rust.lang.core.psi.RustInnerAttributeOwner" ]
+
 }
 
 generic_params ::= '<' lifetimes [ ',' [ type_params ','? ] ] '>'
@@ -472,9 +467,11 @@ private static_decl ::= IDENTIFIER type_ascription '=' any_expr
 
 static_item ::= attrs_and_vis STATIC MUT? static_decl ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RustNamedElement" ]
 }
 const_item ::= attrs_and_vis CONST static_decl ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RustNamedElement" ]
 }
 
 private view_item ::= use_item
@@ -504,6 +501,7 @@ alias ::= AS IDENTIFIER
 
 extern_crate_item ::= attrs_and_vis EXTERN CRATE IDENTIFIER alias? ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RustNamedElement" ]
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -512,11 +510,17 @@ extern_crate_item ::= attrs_and_vis EXTERN CRATE IDENTIFIER alias? ';' {
 
 mod_decl_item ::= attrs_and_vis MOD IDENTIFIER ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RustNamedElement" ]
 }
 
 mod_item ::= attrs_and_vis MOD IDENTIFIER '{' inner_attr* docs_and_item* '}' {
   pin = 4
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.resolve.scope.RustResolveScope"
+                 "org.rust.lang.core.psi.RustMod"
+                 "org.rust.lang.core.psi.RustInnerAttributeOwner" ]
+
 }
 
 foreign_mod_item ::= attrs_and_vis extern_abi '{' inner_attr* foreign_decl* '}' {
@@ -601,6 +605,8 @@ private meta tuple_body ::= '(' <<comma_separated_list <<param>> >> ')' { pin = 
 
 trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER generic_params? type_param_bounds? where_clause? trait_body {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.psi.RustGenericDeclaration" ]
 }
 trait_body ::= '{' trait_member* '}' { pin = 1 }
 
@@ -716,9 +722,10 @@ for_in_type ::= FOR '<' lifetimes? '>' (bare_fn_type | trait_ref)
 
 wildcard_type ::= '_'
 
-
 type_item ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params? where_clause? '=' type ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.psi.RustGenericDeclaration" ]
 }
 
 type_qual_path ::= <<qualified_path path_without_types>>
