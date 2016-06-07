@@ -1,7 +1,7 @@
-package org.rust.ide.documentation
+package org.rust.ide.docs
 
 class RustQuickDocumentationTest : RustDocumentationProviderTest() {
-    override val dataPath = "org/rust/ide/documentation/fixtures/doc"
+    override val dataPath = "org/rust/ide/docs/fixtures/doc"
 
     fun testFn() = checkDoc()
     fun testDifferentComments() = checkDoc()

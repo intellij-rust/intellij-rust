@@ -1,4 +1,4 @@
-package org.rust.ide.actions.smartenter
+package org.rust.ide.typing.assist
 
 import com.intellij.lang.SmartEnterProcessorWithFixers
 import com.intellij.openapi.editor.Editor

@@ -1,4 +1,4 @@
-package org.rust.ide.documentation
+package org.rust.ide.docs
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.psi.PsiElement

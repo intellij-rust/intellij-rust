@@ -3,7 +3,7 @@ package org.rust.ide.annotator
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.psi.PsiElement
-import org.rust.ide.colorscheme.RustColor
+import org.rust.ide.colorScheme.RustColor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.isMut
 import org.rust.lang.core.psi.impl.mixin.isStatic

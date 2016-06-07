@@ -55,7 +55,7 @@
 
         <!-- Doc-Provider -->
 
-        <lang.documentationProvider language="RUST" implementationClass="org.rust.ide.documentation.RustDocumentationProvider"/>
+        <lang.documentationProvider language="RUST" implementationClass="org.rust.ide.docs.RustDocumentationProvider"/>
 
         <!-- Structure View -->
 
@@ -68,7 +68,7 @@
 
         <!-- Smart Enter Processor -->
         <lang.smartEnterProcessor language="RUST"
-                                  implementationClass="org.rust.ide.actions.smartenter.RustSmartEnterProcessor"/>
+                                  implementationClass="org.rust.ide.typing.assist.RustSmartEnterProcessor"/>
 
         <!-- Navigation -->
 
@@ -89,7 +89,7 @@
 
         <!-- Spell-checker -->
 
-        <spellchecker.support language="RUST" implementationClass="org.rust.ide.spellchecker.RustSpellcheckingStrategy"/>
+        <spellchecker.support language="RUST" implementationClass="org.rust.ide.spellChecker.RustSpellcheckingStrategy"/>
 
         <!-- Handlers -->
 
@@ -102,10 +102,10 @@
 
         <!-- Color Settings -->
 
-        <colorSettingsPage implementation="org.rust.ide.colorscheme.RustColorSettingsPage"/>
+        <colorSettingsPage implementation="org.rust.ide.colorScheme.RustColorSettingsPage"/>
 
-        <additionalTextAttributes scheme="Default" file="org/rust/ide/colorscheme/RustDefault.xml"/>
-        <additionalTextAttributes scheme="Darcula" file="org/rust/ide/colorscheme/RustDarcula.xml"/>
+        <additionalTextAttributes scheme="Default" file="org/rust/ide/colorScheme/RustDefault.xml"/>
+        <additionalTextAttributes scheme="Darcula" file="org/rust/ide/colorScheme/RustDarcula.xml"/>
 
         <!-- Inspections -->
 

@@ -1,4 +1,4 @@
-package org.rust.ide.actions.smartenter
+package org.rust.ide.typing.assist
 
 import com.intellij.lang.SmartEnterProcessorWithFixers
 import com.intellij.openapi.editor.Editor
@@ -30,7 +30,7 @@ class RustSmartEnterProcessor : SmartEnterProcessorWithFixers() {
         return PsiTreeUtil.getParentOfType(atCaret, RustStmtElement::class.java, RustBlockElement::class.java)
     }
 
-    private inner class PlainEnterProcessor : SmartEnterProcessorWithFixers.FixEnterProcessor() {
+    private inner class PlainEnterProcessor : FixEnterProcessor() {
         override fun doEnter(atCaret: PsiElement, file: PsiFile, editor: Editor, modified: Boolean): Boolean {
             plainEnter(editor)
             return true

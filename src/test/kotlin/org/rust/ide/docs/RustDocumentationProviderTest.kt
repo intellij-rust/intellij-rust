@@ -1,4 +1,4 @@
-package org.rust.ide.documentation
+package org.rust.ide.docs
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.util.io.FileUtil

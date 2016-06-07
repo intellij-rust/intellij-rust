@@ -1,4 +1,4 @@
-package org.rust.ide.spellchecker
+package org.rust.ide.spellChecker
 
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import org.rust.lang.RustTestCaseBase

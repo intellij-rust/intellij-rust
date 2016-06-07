@@ -1,9 +1,10 @@
-package org.rust.ide.actions.smartenter
+package org.rust.ide.typing.assist
 
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors
 import com.intellij.lang.Language
 import com.intellij.openapi.application.Result
 import com.intellij.openapi.command.WriteCommandAction
+import org.rust.ide.typing.assist.RustSmartEnterProcessor
 import org.rust.lang.RustLanguage
 import org.rust.lang.RustTestCaseBase
 
@@ -12,7 +13,7 @@ import org.rust.lang.RustTestCaseBase
  */
 class RustSmartEnterProcessorTest : RustTestCaseBase() {
 
-    override val dataPath = "org/rust/ide/actions/smartenter/fixtures"
+    override val dataPath = "org/rust/ide/typing/assist/fixtures"
 
     fun getSmartProcessors(language: Language) = SmartEnterProcessors.INSTANCE.forKey(language)
 

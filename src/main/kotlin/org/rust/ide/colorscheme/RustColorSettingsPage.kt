@@ -1,4 +1,4 @@
-package org.rust.ide.colorscheme
+package org.rust.ide.colorScheme
 
 import com.intellij.openapi.options.colors.ColorDescriptor
 import com.intellij.openapi.options.colors.ColorSettingsPage
@@ -19,7 +19,7 @@ class RustColorSettingsPage : ColorSettingsPage {
         "instance-method-decl" to RustColor.INSTANCE_METHOD,
         "static-method-decl" to RustColor.STATIC_METHOD
     ).mapValues { it.value.textAttributesKey }
-    
+
     private val DEMO_TEXT by lazy {
         loadCodeSampleResource("org/rust/ide/colorscheme/highlighterDemoText.rs")
     }

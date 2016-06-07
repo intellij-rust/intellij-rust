@@ -1,4 +1,4 @@
-package org.rust.ide.spellchecker
+package org.rust.ide.spellChecker
 
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.spellchecker.inspections.PlainTextSplitter

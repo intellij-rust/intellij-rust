@@ -4,7 +4,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
-import org.rust.ide.colorscheme.RustColor
+import org.rust.ide.colorScheme.RustColor
 import org.rust.lang.core.lexer.RustHighlightingLexer
 import org.rust.lang.core.psi.RustKeywordTokenType
 import org.rust.lang.core.psi.RustTokenElementTypes.*
