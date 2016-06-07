@@ -28,10 +28,10 @@ interface RustResolveScope : RustCompositeElement {
     }
 }
 
-fun RustResolveScope.declarations(context: RustResolveScope.Context): Sequence<RustResolveScope.Entry> {
+fun RustResolveScope.declarations(context: RustResolveScope.Context): Sequence<RustResolveScope.Entry> = Sequence {
     val visitor = RustScopeVisitor(context)
     accept(visitor)
-    return visitor.result
+    visitor.result.iterator()
 }
 
 private class ScopeEntryImpl private constructor(
