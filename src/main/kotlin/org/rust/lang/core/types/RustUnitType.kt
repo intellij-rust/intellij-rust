@@ -13,5 +13,7 @@ object RustUnitType : RustType, RustUnresolvedType {
     override fun equals(other: Any?): Boolean = this === other
 
     override fun hashCode(): Int = 9049
+
+    override fun toString(): String = "()"
 }
 

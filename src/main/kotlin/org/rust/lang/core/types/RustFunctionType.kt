@@ -15,4 +15,8 @@ class RustFunctionType(val paramTypes: List<RustType>, val retType: RustType) : 
     override fun hashCode(): Int =
         sequenceOf(*paramTypes.toTypedArray(), retType).fold(0, { h, ty -> h * 11173 + ty.hashCode() }) + 8929
 
+    override fun toString(): String {
+        val params = "fn (${paramTypes.fold("", { s, ty -> "$s, " + ty })})"
+        return if (retType === RustUnitType) params else "$params -> $retType"
+    }
 }

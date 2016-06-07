@@ -10,4 +10,6 @@ interface RustType {
 
     override fun hashCode(): Int
 
+    override fun toString(): String
+
 }

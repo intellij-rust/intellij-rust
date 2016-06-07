@@ -10,7 +10,7 @@ object RustUnknownType : RustType, RustUnresolvedType {
 
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitUnknown(this)
 
-    override fun toString(): String = "<unknown type>"
+    override fun toString(): String = "<unknown>"
 
     override fun equals(other: Any?): Boolean = this === other
 

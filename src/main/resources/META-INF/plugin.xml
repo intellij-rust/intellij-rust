@@ -76,6 +76,10 @@
         <gotoSymbolContributor implementation="org.rust.ide.navigation.goto.RustSymbolNavigationContributor"/>
         <codeInsight.gotoSuper language="RUST" implementationClass="org.rust.ide.navigation.goto.RustGotoSuperHandler"/>
 
+        <!-- Hints -->
+
+        <codeInsight.typeInfo language="RUST" implementationClass="org.rust.ide.hints.RustExpressionTypeProvider"/>
+
         <!-- Annotator -->
 
         <annotator language="RUST" implementationClass="org.rust.ide.annotator.RustHighlightingAnnotator"/>
