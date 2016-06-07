@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.util.parentRelativeRange
 import org.rust.lang.core.psi.util.rangeRelativeTo
 import org.rust.lang.core.resolve.RustResolveEngine
 

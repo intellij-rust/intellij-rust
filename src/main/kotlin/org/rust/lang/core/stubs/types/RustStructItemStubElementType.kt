@@ -1,7 +1,6 @@
 package org.rust.lang.core.stubs.types
 
 import com.intellij.psi.stubs.StubIndexKey
-import org.rust.lang.core.psi.RustItemElement
 import org.rust.lang.core.psi.RustStructItemElement
 import org.rust.lang.core.psi.RustStructOrEnum
 import org.rust.lang.core.psi.impl.RustStructItemElementImpl

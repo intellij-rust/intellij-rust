@@ -1,9 +1,7 @@
 package org.rust.lang.core.psi.visitors
 
-import com.intellij.psi.PsiFile
-import org.rust.lang.core.psi.RustLiteral
 import org.rust.lang.core.psi.RustElementVisitor
-import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.RustLiteral
 
 open class RustVisitorEx : RustElementVisitor() {
     open fun visitLiteral(literal: RustLiteral) = visitElement(literal)

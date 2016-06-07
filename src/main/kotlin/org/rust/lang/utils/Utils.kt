@@ -4,7 +4,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import kotlin.reflect.KProperty
 
 

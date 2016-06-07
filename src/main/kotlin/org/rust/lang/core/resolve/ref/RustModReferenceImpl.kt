@@ -1,6 +1,5 @@
 package org.rust.lang.core.resolve.ref
 
-import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.RustModDeclItemElement
 import org.rust.lang.core.resolve.RustResolveEngine
 

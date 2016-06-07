@@ -4,10 +4,8 @@ import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilderUtil
 import com.intellij.lang.WhitespacesBinders
 import com.intellij.openapi.util.Key
-import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
-import org.rust.lang.core.lexer.containsEOL
 import org.rust.lang.core.psi.RustCompositeElementTypes
 import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustTokenElementTypes.*
