@@ -1,13 +1,13 @@
-package org.rust.lang.core.type.visitors
+package org.rust.lang.core.types.visitors
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustRecursiveElementVisitor
-import org.rust.lang.core.type.*
-import org.rust.lang.core.type.unresolved.RustUnresolvedPathType
-import org.rust.lang.core.type.unresolved.RustUnresolvedType
-import org.rust.lang.core.type.util.resolvedType
+import org.rust.lang.core.types.*
+import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
+import org.rust.lang.core.types.unresolved.RustUnresolvedType
+import org.rust.lang.core.types.util.resolvedType
 
 object RustTypificationEngine {
 

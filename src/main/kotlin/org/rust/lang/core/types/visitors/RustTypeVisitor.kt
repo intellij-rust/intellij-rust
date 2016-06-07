@@ -1,6 +1,6 @@
-package org.rust.lang.core.type.visitors
+package org.rust.lang.core.types.visitors
 
-import org.rust.lang.core.type.*
+import org.rust.lang.core.types.*
 
 
 /**

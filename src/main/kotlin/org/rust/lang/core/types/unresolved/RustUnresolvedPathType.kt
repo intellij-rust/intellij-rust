@@ -1,7 +1,7 @@
-package org.rust.lang.core.type.unresolved
+package org.rust.lang.core.types.unresolved
 
 import org.rust.lang.core.psi.RustPathElement
-import org.rust.lang.core.type.visitors.RustUnresolvedTypeVisitor
+import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 
 class RustUnresolvedPathType(val path: RustPathElement) : RustUnresolvedType {
 

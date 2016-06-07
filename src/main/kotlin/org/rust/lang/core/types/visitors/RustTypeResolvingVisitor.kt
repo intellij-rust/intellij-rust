@@ -1,10 +1,10 @@
-package org.rust.lang.core.type.visitors
+package org.rust.lang.core.types.visitors
 
-import org.rust.lang.core.type.*
-import org.rust.lang.core.type.unresolved.RustUnresolvedFunctionType
-import org.rust.lang.core.type.unresolved.RustUnresolvedPathType
-import org.rust.lang.core.type.unresolved.RustUnresolvedTupleType
-import org.rust.lang.core.type.unresolved.RustUnresolvedType
+import org.rust.lang.core.types.*
+import org.rust.lang.core.types.unresolved.RustUnresolvedFunctionType
+import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
+import org.rust.lang.core.types.unresolved.RustUnresolvedTupleType
+import org.rust.lang.core.types.unresolved.RustUnresolvedType
 
 open class RustTypeResolvingVisitor : RustUnresolvedTypeVisitor<RustType> {
 

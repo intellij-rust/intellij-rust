@@ -21,11 +21,11 @@ import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.ref.RustReferenceBase
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
-import org.rust.lang.core.type.RustStructType
-import org.rust.lang.core.type.RustType
-import org.rust.lang.core.type.unresolved.RustUnresolvedType
-import org.rust.lang.core.type.util.resolvedType
-import org.rust.lang.core.type.visitors.RustTypeResolvingVisitor
+import org.rust.lang.core.types.RustStructType
+import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.unresolved.RustUnresolvedType
+import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.visitors.RustTypeResolvingVisitor
 
 
 object RustResolveEngine {

@@ -1,10 +1,10 @@
-package org.rust.lang.core.type.visitors
+package org.rust.lang.core.types.visitors
 
-import org.rust.lang.core.type.RustUnitType
-import org.rust.lang.core.type.RustUnknownType
-import org.rust.lang.core.type.unresolved.RustUnresolvedFunctionType
-import org.rust.lang.core.type.unresolved.RustUnresolvedTupleType
-import org.rust.lang.core.type.unresolved.RustUnresolvedPathType
+import org.rust.lang.core.types.RustUnitType
+import org.rust.lang.core.types.RustUnknownType
+import org.rust.lang.core.types.unresolved.RustUnresolvedFunctionType
+import org.rust.lang.core.types.unresolved.RustUnresolvedTupleType
+import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
 
 /**
  * Unresolved types visitor trait

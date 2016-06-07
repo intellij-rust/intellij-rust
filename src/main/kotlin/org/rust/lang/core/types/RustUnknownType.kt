@@ -1,8 +1,8 @@
-package org.rust.lang.core.type
+package org.rust.lang.core.types
 
-import org.rust.lang.core.type.unresolved.RustUnresolvedType
-import org.rust.lang.core.type.visitors.RustTypeVisitor
-import org.rust.lang.core.type.visitors.RustUnresolvedTypeVisitor
+import org.rust.lang.core.types.unresolved.RustUnresolvedType
+import org.rust.lang.core.types.visitors.RustTypeVisitor
+import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 
 object RustUnknownType : RustType, RustUnresolvedType {
 

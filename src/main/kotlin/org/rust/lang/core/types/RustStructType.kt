@@ -1,4 +1,4 @@
-package org.rust.lang.core.type
+package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.RustImplItemElement
 import org.rust.lang.core.psi.RustImplMethodMemberElement
@@ -6,8 +6,8 @@ import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.RustStructItemElement
 import org.rust.lang.core.psi.impl.mixin.isStatic
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.type.util.resolvedType
-import org.rust.lang.core.type.visitors.RustTypeVisitor
+import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.visitors.RustTypeVisitor
 
 class RustStructType(val struct: RustStructItemElement) : RustType {
 

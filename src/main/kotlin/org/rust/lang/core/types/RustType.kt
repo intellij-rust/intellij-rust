@@ -1,6 +1,6 @@
-package org.rust.lang.core.type
+package org.rust.lang.core.types
 
-import org.rust.lang.core.type.visitors.RustTypeVisitor
+import org.rust.lang.core.types.visitors.RustTypeVisitor
 
 interface RustType {
 

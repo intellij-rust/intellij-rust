@@ -1,12 +1,12 @@
-package org.rust.lang.core.type.visitors
+package org.rust.lang.core.types.visitors
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.contains
 import org.rust.lang.core.psi.util.fields
 import org.rust.lang.core.psi.util.indexOf
 import org.rust.lang.core.psi.util.pathTo
-import org.rust.lang.core.type.*
-import org.rust.lang.core.type.util.resolvedType
+import org.rust.lang.core.types.*
+import org.rust.lang.core.types.util.resolvedType
 import java.util.*
 
 
