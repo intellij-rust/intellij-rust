@@ -1,12 +1,12 @@
 package org.rust.lang.core.type.visitors
 
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.type.*
-import org.rust.lang.core.type.unresolved.RustUnresolvedTupleType
+import org.rust.lang.core.type.RustTupleType
+import org.rust.lang.core.type.RustType
+import org.rust.lang.core.type.RustUnitType
+import org.rust.lang.core.type.RustUnknownType
 import org.rust.lang.core.type.unresolved.RustUnresolvedPathType
+import org.rust.lang.core.type.unresolved.RustUnresolvedTupleType
 import org.rust.lang.core.type.unresolved.RustUnresolvedType
-import org.rust.lang.core.type.util.resolvedType
 
 open class RustTypeResolvingVisitor : RustUnresolvedTypeVisitor<RustType> {
 
@@ -19,43 +19,8 @@ open class RustTypeResolvingVisitor : RustUnresolvedTypeVisitor<RustType> {
     override fun visitTupleType(type: RustUnresolvedTupleType): RustType =
         RustTupleType(type.elements.map { visit(it)})
 
-    override fun visitPathType(type: RustUnresolvedPathType): RustType {
-        type.path.reference.resolve().let {
-            return when (it) {
-                is RustStructItemElement -> RustStructType(it)
+    override fun visitPathType(type: RustUnresolvedPathType): RustType =
+        type.path.reference.resolve()?.let { RustTypificationEngine.typify(it) } ?: RustUnknownType
 
-                is RustSelfArgumentElement -> deviseSelfType(it)
-
-                is RustPatBindingElement -> deviseBoundPatType(it)
-
-                else -> RustUnknownType
-
-            }
-        }
-    }
-
-    /**
-     * NOTA BENE: That's far from complete
-     */
-    private fun deviseBoundPatType(pat: RustPatBindingElement): RustType {
-        val letDecl = pat.parentOfType<RustLetDeclElement>()
-        if (letDecl != null) {
-            val typeAsc = letDecl.type
-            if (typeAsc != null)
-                return typeAsc.resolvedType
-
-            val initExpr = letDecl.expr
-            if (initExpr != null)
-                return RustTypeInferenceEngine.inferPatBindingTypeFrom(pat, letDecl.pat!!, initExpr.resolvedType)
-        }
-
-        return RustUnknownType
-    }
-
-    /**
-     * Devises type for the given (implicit) self-argument
-     */
-    private fun deviseSelfType(self: RustSelfArgumentElement): RustType =
-        self.parentOfType<RustImplItemElement>()?.type?.resolvedType ?: RustUnknownType
 }
 
