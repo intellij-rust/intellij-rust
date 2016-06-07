@@ -1,9 +1,6 @@
 package org.rust.lang.core.type.visitors
 
-import org.rust.lang.core.type.RustStructType
-import org.rust.lang.core.type.RustTupleType
-import org.rust.lang.core.type.RustUnitType
-import org.rust.lang.core.type.RustUnknownType
+import org.rust.lang.core.type.*
 
 
 /**
@@ -18,6 +15,8 @@ interface RustTypeVisitor<T> {
     fun visitUnknown(type: RustUnknownType): T
 
     fun visitUnitType(type: RustUnitType): T
+
+    fun visitFunctionType(type: RustFunctionType): T
 
 }
 

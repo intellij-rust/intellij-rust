@@ -8,6 +8,8 @@ class RustTypeResolveTestCase : RustResolveTestCaseBase() {
     fun testSelfFieldExpr() = checkIsBound()
     fun testFieldExpr() = checkIsBound()
 
+    fun testLetDeclCallExpr() = checkIsBound()
+    fun testLetDeclMethodCallExpr() = checkIsBound()
     fun testLetDeclPatIdentExpr() = checkIsBound()
     fun testLetDeclPatTupExpr() = checkIsBound()
     fun testLetDeclPatStructExpr() = checkIsBound()

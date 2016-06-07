@@ -84,6 +84,16 @@ private class RustTypeInferencingVisitor(
         return RustUnknownType
     }
 
+    override fun visitFunctionType(type: RustFunctionType): RustType {
+        val tip = path.firstOrNull() ?: return RustUnknownType
+        if (tip is RustPatIdentElement) {
+            if (tip.patBinding === binding)
+                return if (path.size == 2) type else RustUnknownType
+        }
+
+        return RustUnknownType
+    }
+
     override fun visitUnknown(type: RustUnknownType): RustType {
         return RustUnknownType
     }

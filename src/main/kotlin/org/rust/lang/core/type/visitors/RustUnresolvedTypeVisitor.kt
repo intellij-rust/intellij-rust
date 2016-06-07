@@ -2,6 +2,7 @@ package org.rust.lang.core.type.visitors
 
 import org.rust.lang.core.type.RustUnitType
 import org.rust.lang.core.type.RustUnknownType
+import org.rust.lang.core.type.unresolved.RustUnresolvedFunctionType
 import org.rust.lang.core.type.unresolved.RustUnresolvedTupleType
 import org.rust.lang.core.type.unresolved.RustUnresolvedPathType
 
@@ -17,5 +18,7 @@ interface RustUnresolvedTypeVisitor<T> {
     fun visitUnitType(type: RustUnitType): T
 
     fun visitUnknown(type: RustUnknownType): T
+
+    fun visitFunctionType(type: RustUnresolvedFunctionType): T
 
 }

@@ -105,6 +105,27 @@ private class RustExprTypificationVisitor : RustTypificationVisitorBase<RustType
         cur = RustUnitType
     }
 
+    override fun visitCallExpr(o: RustCallExprElement) {
+        val calleeType = o.expr.resolvedType
+        if (calleeType is RustFunctionType) {
+            cur = calleeType.retType
+            return
+        }
+
+        cur = RustUnknownType
+    }
+
+    override fun visitMethodCallExpr(o: RustMethodCallExprElement) {
+        val ref = o.reference!!
+        val method = ref.resolve()
+        if (method is RustImplMethodMemberElement)
+            method.retType?.type?.let {
+                cur = it.resolvedType
+                return
+            }
+
+        cur = RustUnknownType
+    }
 }
 
 private class RustItemTypificationVisitor : RustTypificationVisitorBase<RustType>() {
@@ -119,6 +140,15 @@ private class RustItemTypificationVisitor : RustTypificationVisitorBase<RustType
 
     override fun visitStructItem(o: RustStructItemElement) {
         cur = RustStructType(o)
+    }
+
+    override fun visitFnItem(o: RustFnItemElement) {
+        cur = RustFunctionType(
+            o.parameters?.let { params ->
+                params.parameterList.map { it.type?.resolvedType ?: RustUnknownType }
+            } ?: emptyList(),
+            o.retType?.let { it.type?.resolvedType ?: RustUnitType } ?: RustUnknownType
+        )
     }
 }
 
