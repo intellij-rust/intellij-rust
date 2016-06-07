@@ -7,3 +7,9 @@ interface RustItemsOwner : RustResolveScope {
 }
 
 val RustItemsOwner.useDeclarations: List<RustUseItemElement> get() = itemList.filterIsInstance<RustUseItemElement>()
+
+val RustItemsOwner.externalCrates: Collection<RustExternCrateItemElement>
+    get() = itemList.filterIsInstance<RustExternCrateItemElement>()
+
+val RustItemsOwner.modDecls: Collection<RustModDeclItemElement>
+    get() = itemList.filterIsInstance<RustModDeclItemElement>()

@@ -13,7 +13,10 @@ import org.rust.lang.RustFileType
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RustInnerAttrElement
+import org.rust.lang.core.psi.RustInnerAttributeOwner
+import org.rust.lang.core.psi.RustItemElement
+import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.indexes.RustCratePath
 import org.rust.lang.core.resolve.indexes.RustModulesIndex
@@ -48,9 +51,6 @@ class RustFile(
 
     override val canonicalNameInFile: RustQualifiedName?
         get() = cratePath?.let { RustFileModuleId(it) }
-
-    override val declarations: Collection<RustNamedElement>
-        get() = itemList + itemList.filterIsInstance<RustExternCrateItemElement>().mapNotNull { it.alias }
 
     override val innerAttrList: List<RustInnerAttrElement>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)

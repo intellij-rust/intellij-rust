@@ -8,7 +8,5 @@ import org.rust.lang.core.psi.impl.RustNamedElementImpl
 abstract class RustLambdaExprImplMixin(node: ASTNode)    : RustNamedElementImpl(node)
                                                          , RustLambdaExprElement {
 
-    override val declarations: List<RustNamedElement>
-        get() = parameters.parameterList.orEmpty().flatMap { it.boundElements }
 }
 

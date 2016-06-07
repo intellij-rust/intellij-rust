@@ -16,8 +16,6 @@ abstract class RustStructItemImplMixin : RustItemElementImpl, RustStructItemElem
 
     constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val declarations: Collection<RustNamedElement> get() = genericParams?.typeParamList.orEmpty()
-
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RustIcons.STRUCT)
 }

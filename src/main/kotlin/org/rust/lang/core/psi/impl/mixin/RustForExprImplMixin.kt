@@ -6,9 +6,5 @@ import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
 
 abstract class RustForExprImplMixin(node: ASTNode)   : RustCompositeElementImpl(node)
-                                                     , RustForExprElement {
-
-    override val declarations: Collection<RustNamedElement>
-        get() = scopedForDecl.boundElements
-}
+                                                     , RustForExprElement
 

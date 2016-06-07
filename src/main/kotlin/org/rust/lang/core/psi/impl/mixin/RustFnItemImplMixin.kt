@@ -17,9 +17,6 @@ abstract class RustFnItemImplMixin : RustItemElementImpl
     constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
 
-    override val declarations: Collection<RustNamedElement>
-        get() = parameters?.parameterList.orEmpty().flatMap { it.boundElements } + genericParams?.typeParamList.orEmpty()
-
     override fun getIcon(flags: Int): Icon {
         var icon = RustIcons.FUNCTION
         if (isTest) {

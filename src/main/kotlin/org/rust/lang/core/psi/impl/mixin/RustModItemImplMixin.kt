@@ -44,6 +44,4 @@ abstract class RustModItemImplMixin : RustItemElementImpl
     override val innerAttrList: List<RustInnerAttrElement>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)
 
-    override val declarations: Collection<RustNamedElement> get() =
-        itemList + itemList.filterIsInstance<RustExternCrateItemElement>().mapNotNull { it.alias }
 }

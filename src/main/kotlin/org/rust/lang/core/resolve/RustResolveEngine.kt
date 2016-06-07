@@ -2,24 +2,19 @@ package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiTreeUtil
-import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.cargoProject
 import org.rust.cargo.util.getPsiFor
-import org.rust.cargo.util.preludeModule
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustTokenElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.impl.mixin.basePath
-import org.rust.lang.core.psi.impl.mixin.isStarImport
-import org.rust.lang.core.psi.impl.mixin.letDeclarationsVisibleAt
 import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.fields
 import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.resolve.ref.RustReferenceBase
 import org.rust.lang.core.resolve.scope.RustResolveScope
+import org.rust.lang.core.resolve.scope.declarations
 import org.rust.lang.core.resolve.util.RustResolveUtil
 import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.RustType
@@ -72,7 +67,7 @@ object RustResolveEngine {
      * NOTE: This operate on PSI to extract all the necessary (yet implicit) resolving-context
      */
     fun resolve(ref: RustQualifiedReferenceElement): ResolveResult =
-        Resolver().resolve(ref)
+        Resolver.resolve(ref)
 
     /**
      * Resolves references to struct's fields inside destructuring [RustStructExprElement]
@@ -129,7 +124,7 @@ object RustResolveEngine {
     //
 
     fun resolveUseGlob(ref: RustUseGlobElement): ResolveResult =
-        Resolver().resolveUseGlob(ref)
+        Resolver.resolveUseGlob(ref)
 
     /**
      * Looks-up file corresponding to particular module designated by `mod-declaration-item`:
@@ -179,9 +174,7 @@ object RustResolveEngine {
     }
 }
 
-private class Resolver {
-
-    private var visitedPrelude = false
+private object Resolver {
 
     /**
      * Resolves `qualified-reference` bearing PSI-elements
@@ -258,177 +251,13 @@ private class Resolver {
     }
 
     private fun resolveIn(scopes: Sequence<RustResolveScope>, ref: RustReferenceElement): RustResolveEngine.ResolveResult {
-        val visitor = ResolveScopeVisitor(ref.referenceName, ref)
-        for (s in scopes) {
-            s.accept(visitor)
-            if (visitor.result is RustResolveEngine.ResolveResult.Resolved) {
-                return visitor.result
-            }
-        }
-
-        return RustResolveEngine.ResolveResult.Unresolved
+        return scopes
+            .flatMap { it.declarations(RustResolveScope.Context(place = ref)) }
+            .find { it.name == ref.referenceName }
+            ?.let { it.element }
+            .asResolveResult()
     }
 
-    /**
-     * Searches for the element with [name] visible at [context] in a single scope.
-     * Does not walk the tree of scopes up, see [enumerateScopesFor].
-     */
-    inner class ResolveScopeVisitor(
-        private val name: String,
-        private val context: RustCompositeElement
-    ) : RustElementVisitor() {
-
-        var result: RustResolveEngine.ResolveResult = RustResolveEngine.ResolveResult.Unresolved
-
-        private fun ok(result: RustResolveEngine.ResolveResult): Boolean =
-            result !is RustResolveEngine.ResolveResult.Unresolved
-
-        override fun visitFile(file: PsiFile) {
-            file.rustMod?.let { visitMod(it) }
-        }
-
-        override fun visitModItem(o: RustModItemElement) {
-            visitMod(o)
-        }
-
-        override fun visitEnumItem      (o: RustEnumItemElement)   { seek(o.declarations) }
-        override fun visitTraitItem     (o: RustTraitItemElement)  { seek(o.declarations) }
-        override fun visitStructItem    (o: RustStructItemElement) { seek(o.declarations) }
-        override fun visitImplItem      (o: RustImplItemElement)   { seek(o.declarations) }
-
-        private fun visitMod(mod: RustMod) {
-            seek(mod.declarations)      .let { if (ok(result)) return }
-            seekUseDeclarations(mod)    .let { if (ok(result)) return }
-            seekInjectedItems(mod)      .let { if (ok(result)) return }
-        }
-
-        private fun seek(element: RustDeclaringElement) {
-            element.boundElements.find { matching(it) }?.let { assign(it) }
-        }
-
-        private fun seek(elements: Collection<RustNamedElement>) {
-            check(result is RustResolveEngine.ResolveResult.Unresolved)
-            elements.find { matching(it) }?.let { assign(it) }
-        }
-
-        private fun assign(elem: RustNamedElement): RustResolveEngine.ResolveResult {
-            result =
-                // Check whether resolved element could be further resolved
-                when (elem) {
-                    is RustModDeclItemElement, is RustExternCrateItemElement -> elem.reference.let { it as RustReferenceBase<*> }
-                                                                                    .resolveVerbose()
-
-                    is RustPathElement -> resolve(elem)
-                    is RustUseGlobElement -> resolveUseGlob(elem)
-
-                    is RustAliasElement -> {
-                        val parent = elem.parent
-                        when (parent) {
-                            is RustExternCrateItemElement -> parent.reference.let { it as RustReferenceBase<*> }
-                                                                   .resolveVerbose()
-
-                            else -> RustResolveEngine.ResolveResult.Resolved(elem)
-                        }
-                    }
-
-                    else -> RustResolveEngine.ResolveResult.Resolved(elem)
-                }
-
-            return result
-        }
-
-        private fun matching(elem: RustNamedElement): Boolean = matching(elem.name)
-        private fun matching(elemName: String?): Boolean = elemName == name
-
-        private fun seekUseDeclarations(o: RustItemsOwner) {
-            for (useDecl in o.useDeclarations) {
-                seekUseDeclaration(useDecl)
-                if (ok(result)) return
-            }
-        }
-
-        private fun seekUseDeclaration(useDecl: RustUseItemElement) {
-            if (useDecl.isStarImport) {
-                // Recursively step into `use foo::*`
-                val pathPart = useDecl.path ?: return
-                val mod = resolve(pathPart).element ?: return
-
-                recursionGuard(this to mod, memoize = false) {
-                    mod.accept(this)
-                }
-
-                return
-            }
-
-            val globList = useDecl.useGlobList
-            if (globList == null) {
-                val path = useDecl.path ?: return
-                // use foo::bar [as baz];
-                if (matching(useDecl.alias?.name ?: path.referenceName)) {
-                    result = resolve(path)
-                }
-                return
-            }
-
-            globList.useGlobList.find { glob ->
-                val name = listOfNotNull(
-                    glob.alias?.name, // {foo as bar};
-                    glob.self?.let { glob.basePath?.referenceName }, // {self}
-                    glob.referenceName // {foo}
-                ).firstOrNull()
-                matching(name)
-            }?.let {
-                result = resolveUseGlob(it)
-            }
-        }
-
-        private fun seekInjectedItems(mod: RustMod) {
-            // Rust injects implicit `extern crate std` in every crate root module unless it is
-            // a `#![no_std]` crate, in which case `extern crate core` is injected.
-            // The stdlib lib itself is `#![no_std]`.
-            // We inject both crates for simplicity for now.
-            if (name == AutoInjectedCrates.std || name == AutoInjectedCrates.core) {
-                if (mod.isCrateRoot) {
-                    mod.module?.let {
-                        it.project.getPsiFor(it.cargoProject?.findExternCrateRootByName(name))?.rustMod
-                            ?.let { assign(it) }
-                    }
-                }
-            } else {
-                // Rust injects implicit `use std::prelude::v1::*` into every module.
-                if (!visitedPrelude) {
-                    visitedPrelude = true
-                    mod.module?.preludeModule?.accept(this)
-                }
-            }
-        }
-
-        override fun visitForExpr             (o: RustForExprElement)            { seek(o.scopedForDecl) }
-        override fun visitLambdaExpr          (o: RustLambdaExprElement)         { visitResolveScope(o) }
-        override fun visitTraitMethodMember   (o: RustTraitMethodMemberElement)  { visitResolveScope(o) }
-        override fun visitImplMethodMember    (o: RustImplMethodMemberElement)   { visitResolveScope(o) }
-        override fun visitFnItem              (o: RustFnItemElement)             { visitResolveScope(o) }
-        override fun visitTypeItem            (o: RustTypeItemElement)           { visitResolveScope(o) }
-        override fun visitResolveScope        (scope: RustResolveScope)   { seek(scope.declarations) }
-
-        override fun visitScopedLetExpr(o: RustScopedLetExprElement) {
-            if (!PsiTreeUtil.isAncestor(o.scopedLetDecl, context, true)) {
-                seek(o.scopedLetDecl)
-            }
-        }
-
-        override fun visitBlock(o: RustBlockElement) {
-            val letDeclarations = o.letDeclarationsVisibleAt(context).flatMap { it.boundElements.asSequence() }
-            val candidates = letDeclarations + o.itemList
-
-            candidates
-                .find   { matching(it) }
-                ?.let   { assign(it) }
-                .let    { if (ok(result)) return }
-
-            seekUseDeclarations(o)
-        }
-    }
 }
 
 
