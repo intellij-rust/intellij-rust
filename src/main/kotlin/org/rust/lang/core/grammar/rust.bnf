@@ -135,10 +135,7 @@
     mixin       ("struct_item")         = "org.rust.lang.core.psi.impl.mixin.RustStructItemImplMixin"
     mixin       ("field_decl")          = "org.rust.lang.core.psi.impl.mixin.RustFieldDeclImplMixin"
     mixin       ("mod_decl_item")       = "org.rust.lang.core.psi.impl.mixin.RustModDeclItemImplMixin"
-    mixin       ("const_item")          = "org.rust.lang.core.psi.impl.mixin.RustConstItemImplMixin"
     mixin       ("extern_crate_item")   = "org.rust.lang.core.psi.impl.mixin.RustExternCrateItemImplMixin"
-    mixin       ("foreign_mod_item")    = "org.rust.lang.core.psi.impl.mixin.RustForeignModItemImplMixin"
-    mixin       ("static_item")         = "org.rust.lang.core.psi.impl.mixin.RustStaticItemImplMixin"
     mixin       ("type_item")           = "org.rust.lang.core.psi.impl.mixin.RustTypeItemImplMixin"
     mixin       ("use_item")            = "org.rust.lang.core.psi.impl.mixin.RustUseItemImplMixin"
     mixin       ("enum_variant")        = "org.rust.lang.core.psi.impl.mixin.RustEnumVariantImplMixin"
@@ -148,8 +145,7 @@
     mixin       ("mod_item")            = "org.rust.lang.core.psi.impl.mixin.RustModItemImplMixin"
     mixin       ("fn_item")             = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
     mixin       ("trait_method_member") = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodMemberImplMixin"
-    mixin       ("trait_const_member")  = "org.rust.lang.core.psi.impl.mixin.RustTraitConstMemberImplMixin"
-    mixin       ("trait_type_member")   = "org.rust.lang.core.psi.impl.mixin.RustTraitTypeMemberImplMixin"
+    mixin       ("enum_item")           = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
 
     //
     // References
@@ -162,25 +158,13 @@
     // Resolve scopes
     //
 
-    implements  ("enum_item") = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
-                                  "org.rust.lang.core.psi.RustStructOrEnum" ]
-    mixin       ("enum_item") = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
-
-
-    implements  ("lambda_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    mixin       ("lambda_expr") = "org.rust.lang.core.psi.impl.mixin.RustLambdaExprImplMixin"
-
-    implements  ("block") =  "org.rust.lang.core.resolve.scope.RustResolveScope"
-    mixin       ("block") =  "org.rust.lang.core.psi.impl.mixin.RustBlockImplMixin"
-
+    implements  ("enum_item")       = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
+                                        "org.rust.lang.core.psi.RustStructOrEnum" ]
+    implements  ("lambda_expr")     = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    implements  ("block")           =  "org.rust.lang.core.resolve.scope.RustResolveScope"
     implements  ("scoped_let_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    mixin       ("scoped_let_expr") = "org.rust.lang.core.psi.impl.mixin.RustScopedLetExprImplMixin"
-
-    implements  ("for_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    mixin       ("for_expr") = "org.rust.lang.core.psi.impl.mixin.RustForExprImplMixin"
-
-    implements  ("match_arm") = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    mixin       ("match_arm") = "org.rust.lang.core.psi.impl.mixin.RustMatchArmImplMixin"
+    implements  ("for_expr")        = "org.rust.lang.core.resolve.scope.RustResolveScope"
+    implements  ("match_arm")       = "org.rust.lang.core.resolve.scope.RustResolveScope"
 
 
     //
@@ -618,6 +602,7 @@ private trait_member ::= trait_const_member
 trait_const_member ::= outer_attr* CONST IDENTIFIER type_ascription? const_default? ';'{
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustNamedElement" ]
+  extends = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
@@ -626,6 +611,7 @@ private const_default ::= '=' any_expr
 trait_type_member ::= outer_attr* TYPE_KW IDENTIFIER type_param_bounds? [ '=' type ] ';' {
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustNamedElement" ]
+  extends = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
