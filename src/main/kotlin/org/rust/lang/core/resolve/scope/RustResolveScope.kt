@@ -171,8 +171,10 @@ private fun RustItemsOwner.itemDeclarations(context: RustResolveScope.Context): 
         importedDeclarations(context)
     ).flatten()
 
-private fun RustItemsOwner.importedDeclarations(context: RustResolveScope.Context): Sequence<RustResolveScope.Entry> =
-    useDeclarations.asSequence().flatMap { it.importedEntries(context) }
+private fun RustItemsOwner.importedDeclarations(context: RustResolveScope.Context): Sequence<RustResolveScope.Entry> {
+    val (wildCardImports, usualImports) = useDeclarations.partition { it.isStarImport }
+    return (usualImports + wildCardImports).asSequence().flatMap { it.importedEntries(context) }
+}
 
 private fun RustMod.injectedDeclarations(context: RustResolveScope.Context): Sequence<RustResolveScope.Entry> {
     val module = module ?: return emptySequence()
