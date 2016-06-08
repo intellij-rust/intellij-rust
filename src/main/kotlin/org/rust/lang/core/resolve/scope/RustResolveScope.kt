@@ -16,11 +16,24 @@ import org.rust.lang.core.psi.util.module
 
 interface RustResolveScope : RustCompositeElement {
     interface Entry {
+        /**
+         * A name under which the element is know in the scope.
+         * It may be different from `element.name` if [element] is imported with an alias.
+         */
         val name: String
+
+        /**
+         * The element associated with the [name] in this scope.
+         * Null if the name points to a non-existing element (`use no_such_module::foo as bar`)
+         */
         val element: RustNamedElement?
     }
 }
 
+/**
+ * Lazily retrieves all elements visible in the particular [RustResolveScope] at the [place], or just all
+ * visible elements if [place] is null.
+ */
 fun RustResolveScope.declarations(place: RustCompositeElement? = null): Sequence<RustResolveScope.Entry> =
     declarations(Context(place))
 
