@@ -6,4 +6,8 @@ object CargoConstants {
 
     const val MANIFEST_FILE = "Cargo.toml"
     const val LOCK_FILE     = "Cargo.lock"
+
+    object Commands {
+        val RUN = "run"
+    }
 }

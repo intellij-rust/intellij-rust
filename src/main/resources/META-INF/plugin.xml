@@ -163,6 +163,8 @@
 
         <programRunner implementation="org.rust.cargo.runconfig.RustRunner"/>
         <configurationType implementation="org.rust.cargo.runconfig.CargoCommandRunConfigurationType" />
+        <runConfigurationProducer
+            implementation="org.rust.cargo.runconfig.producers.CargoExecutableRunConfigurationProducer"/>
 
         <!-- Cargo -->
 

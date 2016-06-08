@@ -40,6 +40,7 @@ class CargoProjectDescription private constructor(
         val kind: TargetKind
     ) {
         val isLib: Boolean get() = kind == TargetKind.LIB
+        val isBin: Boolean get() = kind == TargetKind.BIN
 
         val crateRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(crateRootPath)
     }

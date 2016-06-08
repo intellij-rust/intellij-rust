@@ -10,9 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
+import org.rust.cargo.CargoConstants
+import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.forms.CargoRunConfigurationEditorForm
 import org.rust.cargo.util.cargoProjectRoot
-import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.util.modules
 
 class CargoCommandConfiguration(project: Project,
@@ -23,7 +24,7 @@ class CargoCommandConfiguration(project: Project,
                                                            RustRunConfigurationModule(project),
                                                            configurationType.configurationFactories[0]) {
 
-    var command: String = "run"
+    var command: String = CargoConstants.Commands.RUN
     var additionalArguments: String = ""
     var environmentVariables: Map<String, String> = mutableMapOf()
 

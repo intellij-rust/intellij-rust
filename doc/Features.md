@@ -19,7 +19,7 @@
 * `Expand selection` (`Ctrl+W`).
 * `Live templates` aka snippets (`Ctrl+J`).
 * Initial formatter support (`Ctrl+Alt+l`).
-* Run configurations.
+* Run configurations, with initial support for contexts (`Ctrl+Shift+F10` inside a file with `fn main()`)
 
 ## Intentions
 
