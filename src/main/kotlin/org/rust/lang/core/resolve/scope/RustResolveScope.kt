@@ -1,6 +1,5 @@
 package org.rust.lang.core.resolve.scope
 
-import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
@@ -82,11 +81,25 @@ private class RustScopeVisitor(
     }
 
     override fun visitBlock(o: RustBlockElement) {
-        val letDecls = if (context.place == null) o.letDeclarations else o.letDeclarationsVisibleAt(context.place)
-        result = sequenceOf(
-            letDecls.flatMap { it.boundElements.scopeEntries },
-            o.itemDeclarations(context)
-        ).flatten()
+        // If place is specified in context, we want to filter out
+        // all non strictly preceding let declarations.
+        //
+        // ```
+        // let x = 92; // visible
+        // let x = x;  // not visible
+        //         ^ context.place
+        // let x = 62; // not visible
+        // ```
+        val allLetDecls = o.stmtList.asReversed().asSequence().filterIsInstance<RustLetDeclElement>()
+        val visibleLetDecls = if (context.place == null)
+            allLetDecls
+        else
+            allLetDecls
+                .dropWhile { PsiUtilCore.compareElementsByPosition(context.place, it) < 0 }
+                // Drops at most one element
+                .dropWhile { PsiTreeUtil.isAncestor(it, context.place, true) }
+
+        result = visibleLetDecls.flatMap { it.boundElements.scopeEntries } + o.itemEntries(context)
     }
 
     override fun visitStructItem(o: RustStructItemElement) {
@@ -139,9 +152,30 @@ private class RustScopeVisitor(
     }
 
     fun visitMod(mod: RustMod) {
+        val module = mod.module
+        // Rust injects implicit `extern crate std` in every crate root module unless it is
+        // a `#![no_std]` crate, in which case `extern crate core` is injected.
+        // The stdlib lib itself is `#![no_std]`.
+        // We inject both crates for simplicity for now.
+        val injectedCrates = if (module == null || !mod.isCrateRoot)
+            emptySequence()
+        else
+            sequenceOf(AutoInjectedCrates.std, AutoInjectedCrates.core).mapNotNull { crateName ->
+                ScopeEntryImpl.lazy(crateName) {
+                    module.project.getPsiFor(module.cargoProject?.findExternCrateRootByName(crateName))?.rustMod
+                }
+            }
+
+        // Rust injects implicit `use std::prelude::v1::*` into every module.
+        val preludeSymbols = if (module == null || context.inPrelude)
+            emptySequence()
+        else
+            module.preludeModule?.rustMod?.declarations(context.copy(inPrelude = true)) ?: emptySequence()
+
         result = sequenceOf(
-            mod.itemDeclarations(context),
-            mod.injectedDeclarations(context)
+            mod.itemEntries(context),
+            injectedCrates,
+            preludeSymbols
         ).flatten()
     }
 
@@ -152,8 +186,12 @@ private class RustScopeVisitor(
     }
 }
 
-private fun RustItemsOwner.itemDeclarations(context: RustResolveScope.Context): Sequence<RustResolveScope.Entry> =
-    sequenceOf (
+private fun RustItemsOwner.itemEntries(context: RustResolveScope.Context): Sequence<RustResolveScope.Entry> {
+    // wildcard imports have low priority
+    val (wildCardImports, usualImports) = useDeclarations.partition { it.isStarImport }
+    val imports = (usualImports + wildCardImports).asSequence().flatMap { it.importedEntries(context) }
+
+    return sequenceOf (
         // XXX: this must come before itemList to resolve `Box` from prelude. We need to handle cfg attributes to
         // fix this properly
         modDecls.asSequence().mapNotNull {
@@ -168,36 +206,9 @@ private fun RustItemsOwner.itemDeclarations(context: RustResolveScope.Context): 
             ScopeEntryImpl.lazy(externCrate.alias?.name ?: externCrate.name) { externCrate.reference?.resolve() }
         },
 
-        importedDeclarations(context)
+        imports
     ).flatten()
-
-private fun RustItemsOwner.importedDeclarations(context: RustResolveScope.Context): Sequence<RustResolveScope.Entry> {
-    val (wildCardImports, usualImports) = useDeclarations.partition { it.isStarImport }
-    return (usualImports + wildCardImports).asSequence().flatMap { it.importedEntries(context) }
 }
-
-private fun RustMod.injectedDeclarations(context: RustResolveScope.Context): Sequence<RustResolveScope.Entry> {
-    val module = module ?: return emptySequence()
-    // Rust injects implicit `extern crate std` in every crate root module unless it is
-    // a `#![no_std]` crate, in which case `extern crate core` is injected.
-    // The stdlib lib itself is `#![no_std]`.
-    // We inject both crates for simplicity for now.
-    val injectedCrates = if (isCrateRoot) {
-        sequenceOf(AutoInjectedCrates.std, AutoInjectedCrates.core).mapNotNull { crateName ->
-            ScopeEntryImpl.lazy(crateName) {
-                module.project.getPsiFor(module.cargoProject?.findExternCrateRootByName(crateName))?.rustMod
-            }
-        }
-    } else emptySequence<RustResolveScope.Entry>()
-
-    // Rust injects implicit `use std::prelude::v1::*` into every module.
-    val preludeSymbols = if (context.inPrelude) emptySequence() else module.preludeDeclarations(context)
-
-    return injectedCrates + preludeSymbols
-}
-
-private fun Module.preludeDeclarations(context: RustResolveScope.Context): Sequence<RustResolveScope.Entry> =
-    preludeModule?.rustMod?.declarations(context.copy(inPrelude = true)) ?: emptySequence()
 
 private fun RustUseItemElement.importedEntries(context: RustResolveScope.Context): Sequence<RustResolveScope.Entry> {
     if (isStarImport) {
@@ -226,30 +237,6 @@ private fun RustUseItemElement.importedEntries(context: RustResolveScope.Context
         ScopeEntryImpl.lazy(name) { glob.reference.resolve() }
     }
 }
-
-/**
- *  Let declarations visible at the `element` according to Rust scoping rules.
- *  More recent declarations come first.
- *
- *  Example:
- *
- *    ```
- *    {
- *        let x = 92; // visible
- *        let x = x;  // not visible
- *                ^ element
- *        let x = 62; // not visible
- *    }
- *    ```
- */
-private fun RustBlockElement.letDeclarationsVisibleAt(element: RustCompositeElement): Sequence<RustLetDeclElement> =
-    letDeclarations
-        .dropWhile { PsiUtilCore.compareElementsByPosition(element, it) < 0 }
-        // Drops at most one element
-        .dropWhile { PsiTreeUtil.isAncestor(it, element, true) }
-
-private val RustBlockElement.letDeclarations: Sequence<RustLetDeclElement>
-    get() = stmtList.asReversed().asSequence().filterIsInstance<RustLetDeclElement>()
 
 private val Collection<RustNamedElement>.scopeEntries: Sequence<RustResolveScope.Entry>
     get() = asSequence().mapNotNull { ScopeEntryImpl.of(it) }
