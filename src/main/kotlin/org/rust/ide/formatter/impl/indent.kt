@@ -38,7 +38,7 @@ fun ASTBlock.newChildIndent(childIndex: Int): Indent? = when {
     node.isDelimitedBlock -> Indent.getNormalIndent()
 
     // Indent expressions (chain calls, binary exprs, ...)
-    node.psi is RustExpr -> Indent.getContinuationWithoutFirstIndent()
+    node.psi is RustExprElement -> Indent.getContinuationWithoutFirstIndent()
 
     // Otherwise we don't want any indentation (null means continuation indent)
     else -> Indent.getNoneIndent()
@@ -79,7 +79,7 @@ fun RustFmtBlock.computeIndent(child: ASTNode): Indent? {
         childType == RET_TYPE || childType == WHERE_CLAUSE -> Indent.getNormalIndent()
 
         // Indent expressions (chain calls, binary exprs, ...)
-        parentPsi is RustExpr -> Indent.getContinuationWithoutFirstIndent()
+        parentPsi is RustExprElement -> Indent.getContinuationWithoutFirstIndent()
 
         else -> Indent.getNoneIndent()
     }
