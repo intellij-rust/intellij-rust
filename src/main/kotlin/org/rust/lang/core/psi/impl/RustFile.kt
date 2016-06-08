@@ -8,7 +8,7 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.cargo.util.crateRoots
+import org.rust.cargo.util.cargoProject
 import org.rust.lang.RustFileType
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.names.RustFileModuleId
@@ -41,7 +41,7 @@ class RustFile(
 
     override val isCrateRoot: Boolean get() {
         val file = originalFile.virtualFile ?: return false
-        return file in (module?.crateRoots ?: emptyList())
+        return module?.cargoProject?.isCrateRoot(file) ?: false
     }
 
     override val isTopLevelInFile: Boolean = true

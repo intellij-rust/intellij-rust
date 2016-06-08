@@ -11,15 +11,6 @@ import org.rust.cargo.toolchain.RustToolchain
 object RustCrateUtil
 
 
-/**
- * Extracts paths to the Crate's roots'
- */
-val Module.crateRoots: Collection<VirtualFile>
-    get() = cargoProject?.packages.orEmpty()
-                .flatMap    { it.targets }
-                .mapNotNull { it.crateRoot }
-
-
 val Module.preludeModule: PsiFile? get() {
     val stdlib = cargoProject?.findExternCrateRootByName(AutoInjectedCrates.std) ?: return null
     val preludeFile = stdlib.findFileByRelativePath("../prelude/v1.rs") ?: return null

@@ -78,6 +78,16 @@ class CargoProjectDescription private constructor(
         pkg to relPath
     }.firstOrNull()
 
+    /**
+     * If the [file] is a crate root, returns the corresponding [Target]
+     */
+    fun findTargetForFile(file: VirtualFile): Target? =
+        packages.asSequence()
+            .flatMap { it.targets.asSequence() }
+            .find { it.crateRoot == file }
+
+    fun isCrateRoot(file: VirtualFile): Boolean = findTargetForFile(file) != null
+
     fun findFileInPackage(packageName: String, relPath: String): VirtualFile? =
         packages.find { it.name == packageName }?.let {
             it.contentRoot?.findFileByRelativePath(relPath)
