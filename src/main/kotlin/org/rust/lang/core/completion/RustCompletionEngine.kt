@@ -41,7 +41,7 @@ object RustCompletionEngine {
         }
 
         return enumerateScopesFor(ref)
-            .flatMap { it.declarations(RustResolveScope.Context(place = ref)) }
+            .flatMap { it.declarations(place = ref) }
             .mapNotNull { it.element }
             .toList()
     }
@@ -49,7 +49,7 @@ object RustCompletionEngine {
 
 private fun RustNamedElement?.completionsFromResolveScope(): Collection<RustNamedElement> =
     when (this) {
-        is RustResolveScope -> declarations(RustResolveScope.Context(place = null)).mapNotNull { it.element }.toList()
+        is RustResolveScope -> declarations().mapNotNull { it.element }.toList()
         else                -> emptyList()
     }
 

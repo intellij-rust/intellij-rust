@@ -15,23 +15,26 @@ import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.module
 
 interface RustResolveScope : RustCompositeElement {
-    data class Context(
-        val place: RustCompositeElement?,
-        val inPrelude: Boolean = false,
-        val visitedStarImports: Set<RustUseItemElement> = emptySet()
-    )
-
     interface Entry {
         val name: String
         val element: RustNamedElement?
     }
 }
 
-fun RustResolveScope.declarations(context: RustResolveScope.Context): Sequence<RustResolveScope.Entry> = Sequence {
+fun RustResolveScope.declarations(place: RustCompositeElement? = null): Sequence<RustResolveScope.Entry> =
+    declarations(Context(place))
+
+private fun RustResolveScope.declarations(context: Context): Sequence<RustResolveScope.Entry> = Sequence {
     val visitor = RustScopeVisitor(context)
     accept(visitor)
     visitor.result.iterator()
 }
+
+private data class Context(
+    val place: RustCompositeElement?,
+    val inPrelude: Boolean = false,
+    val visitedStarImports: Set<RustUseItemElement> = emptySet()
+)
 
 private class ScopeEntryImpl private constructor(
     override val name: String,
@@ -55,7 +58,7 @@ private class ScopeEntryImpl private constructor(
 }
 
 private class RustScopeVisitor(
-    val context: RustResolveScope.Context
+    val context: Context
 ) : RustElementVisitor() {
     lateinit var result: Sequence<RustResolveScope.Entry>
 
@@ -186,7 +189,7 @@ private class RustScopeVisitor(
     }
 }
 
-private fun RustItemsOwner.itemEntries(context: RustResolveScope.Context): Sequence<RustResolveScope.Entry> {
+private fun RustItemsOwner.itemEntries(context: Context): Sequence<RustResolveScope.Entry> {
     // wildcard imports have low priority
     val (wildCardImports, usualImports) = useDeclarations.partition { it.isStarImport }
     val imports = (usualImports + wildCardImports).asSequence().flatMap { it.importedEntries(context) }
@@ -210,7 +213,7 @@ private fun RustItemsOwner.itemEntries(context: RustResolveScope.Context): Seque
     ).flatten()
 }
 
-private fun RustUseItemElement.importedEntries(context: RustResolveScope.Context): Sequence<RustResolveScope.Entry> {
+private fun RustUseItemElement.importedEntries(context: Context): Sequence<RustResolveScope.Entry> {
     if (isStarImport) {
         if (this in context.visitedStarImports) return emptySequence()
         // Recursively step into `use foo::*`

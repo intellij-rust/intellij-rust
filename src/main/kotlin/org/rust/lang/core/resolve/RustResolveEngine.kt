@@ -252,7 +252,7 @@ private object Resolver {
 
     private fun resolveIn(scopes: Sequence<RustResolveScope>, ref: RustReferenceElement): RustResolveEngine.ResolveResult {
         return scopes
-            .flatMap { it.declarations(RustResolveScope.Context(place = ref)) }
+            .flatMap { it.declarations(place = ref) }
             .find { it.name == ref.referenceName }
             ?.let { it.element }
             .asResolveResult()
