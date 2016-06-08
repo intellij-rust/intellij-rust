@@ -93,7 +93,7 @@
 
         <!-- Spell-checker -->
 
-        <spellchecker.support language="RUST" implementationClass="org.rust.ide.spellChecker.RustSpellcheckingStrategy"/>
+        <spellchecker.support language="RUST" implementationClass="org.rust.ide.spelling.RustSpellcheckingStrategy"/>
 
         <!-- Handlers -->
 
@@ -106,10 +106,10 @@
 
         <!-- Color Settings -->
 
-        <colorSettingsPage implementation="org.rust.ide.colorScheme.RustColorSettingsPage"/>
+        <colorSettingsPage implementation="org.rust.ide.colors.RustColorSettingsPage"/>
 
-        <additionalTextAttributes scheme="Default" file="org/rust/ide/colorScheme/RustDefault.xml"/>
-        <additionalTextAttributes scheme="Darcula" file="org/rust/ide/colorScheme/RustDarcula.xml"/>
+        <additionalTextAttributes scheme="Default" file="org/rust/ide/colors/RustDefault.xml"/>
+        <additionalTextAttributes scheme="Darcula" file="org/rust/ide/colors/RustDarcula.xml"/>
 
         <!-- Inspections -->
 

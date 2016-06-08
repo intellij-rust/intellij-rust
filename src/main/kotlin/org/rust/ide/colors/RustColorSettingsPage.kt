@@ -1,4 +1,4 @@
-package org.rust.ide.colorScheme
+package org.rust.ide.colors
 
 import com.intellij.openapi.options.colors.ColorDescriptor
 import com.intellij.openapi.options.colors.ColorSettingsPage
@@ -21,7 +21,7 @@ class RustColorSettingsPage : ColorSettingsPage {
     ).mapValues { it.value.textAttributesKey }
 
     private val DEMO_TEXT by lazy {
-        loadCodeSampleResource("org/rust/ide/colorscheme/highlighterDemoText.rs")
+        loadCodeSampleResource("org/rust/ide/colors/highlighterDemoText.rs")
     }
 
     override fun getDisplayName() = "Rust"

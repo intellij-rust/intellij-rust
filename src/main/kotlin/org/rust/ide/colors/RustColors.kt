@@ -1,4 +1,4 @@
-package org.rust.ide.colorScheme
+package org.rust.ide.colors
 
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.options.colors.AttributesDescriptor
