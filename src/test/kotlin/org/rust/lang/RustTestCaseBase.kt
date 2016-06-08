@@ -97,8 +97,8 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             name = name,
             version = "0.0.1",
             targets = listOf(
-                CargoProjectDescriptionData.Target("$contentRoot/main.rs", CargoProjectDescription.TargetKind.BIN),
-                CargoProjectDescriptionData.Target("$contentRoot/lib.rs", CargoProjectDescription.TargetKind.LIB)
+                CargoProjectDescriptionData.Target("$contentRoot/main.rs", name, CargoProjectDescription.TargetKind.BIN),
+                CargoProjectDescriptionData.Target("$contentRoot/lib.rs", name, CargoProjectDescription.TargetKind.LIB)
             ),
             source = null
         )

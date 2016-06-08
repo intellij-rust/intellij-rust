@@ -161,6 +161,6 @@ object CargoMetadata {
                     CargoProjectDescription.TargetKind.UNKNOWN
         }
 
-        return CargoProjectDescriptionData.Target(VfsUtilCore.pathToUrl(path), kind)
+        return CargoProjectDescriptionData.Target(VfsUtilCore.pathToUrl(path), name, kind)
     }
 }

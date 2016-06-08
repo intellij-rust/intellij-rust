@@ -27,6 +27,7 @@ data class CargoProjectDescriptionData(
 
     data class Target(
         val url: String,
+        val name: String,
         val kind: CargoProjectDescription.TargetKind
     )
 }

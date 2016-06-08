@@ -36,6 +36,7 @@ class CargoProjectDescription private constructor(
          * Absolute path to the crate root file
          */
         val crateRootPath: String,
+        val name: String,
         val kind: TargetKind
     ) {
         val isLib: Boolean get() = kind == TargetKind.LIB
@@ -100,7 +101,7 @@ class CargoProjectDescription private constructor(
                 contentRootPath = crateRoot.parent.url,
                 name = crateName,
                 version = "",
-                targets = listOf(Target(crateRoot.url, kind = TargetKind.LIB)),
+                targets = listOf(Target(crateRoot.url, name = crateName, kind = TargetKind.LIB)),
                 source = null,
                 dependencies = emptyList()
             )
@@ -132,7 +133,7 @@ class CargoProjectDescription private constructor(
                         pkg.contentRootUrl,
                         pkg.name,
                         pkg.version,
-                        pkg.targets.map { CargoProjectDescription.Target(it.url, it.kind) },
+                        pkg.targets.map { CargoProjectDescription.Target(it.url, it.name, it.kind) },
                         pkg.source,
                         dependenciesMap[pkg].orEmpty().map { build(it) ?: return null }
                     )
