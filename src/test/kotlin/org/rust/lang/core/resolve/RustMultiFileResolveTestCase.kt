@@ -8,6 +8,7 @@ class RustMultiFileResolveTestCase : RustMultiFileResolveTestCaseBase() {
     fun testModDecl()           = doTestResolved("mod_decl/main.rs", "mod_decl/foo.rs")
     fun testModDecl2()          = doTestResolved("mod_decl2/foo/mod.rs", "mod_decl2/main.rs", "mod_decl2/bar.rs")
     fun testModDeclPath()       = doTestResolved("mod_decl_path/main.rs", "mod_decl_path/bar/baz/foo.rs")
+    fun testModDeclPathSuper()  = doTestResolved("mod_decl_path_super/bar/baz/quux.rs", "mod_decl_path_super/main.rs")
     fun testUseFromChild()      = doTestResolved("use_from_child/main.rs", "use_from_child/child.rs")
     fun testGlobalPath()        = doTestResolved("global_path/foo.rs", "global_path/lib.rs", "global_path/bar.rs")
     fun testUseViewPath()       = doTestResolved("global_path/foo.rs", "global_path/lib.rs", "global_path/bar.rs")
