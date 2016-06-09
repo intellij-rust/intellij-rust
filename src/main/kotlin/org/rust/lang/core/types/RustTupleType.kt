@@ -14,6 +14,6 @@ class RustTupleType(val elements: Iterable<RustType>) : RustType {
         throw UnsupportedOperationException()
     }
 
-    override fun toString(): String = "(${elements.fold("", { s, ty -> "$s, " + ty })})"
+    override fun toString(): String = elements.joinToString(", ", "(", ")")
 }
 
