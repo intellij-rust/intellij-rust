@@ -11,7 +11,7 @@ import java.io.File
 class RustConsoleFilter(
     private val project: Project,
     private val cargoProjectDirectory: VirtualFile
-) : RegexpFilter(project, "${RegexpFilter.FILE_PATH_MACROS}:${RegexpFilter.LINE_MACROS}:${RegexpFilter.COLUMN_MACROS}") {
+) : RegexpFilter(project, "(?: --> )?${RegexpFilter.FILE_PATH_MACROS}:${RegexpFilter.LINE_MACROS}:${RegexpFilter.COLUMN_MACROS}") {
 
     override fun createOpenFileHyperlink(fileName: String, line: Int, column: Int): HyperlinkInfo? {
         val platformNeutralName = fileName.replace(File.separatorChar, '/')

@@ -31,8 +31,18 @@ src/main.rs:25:26: 25:40 error: no method named `read_to_string` found for type 
         doTest(line, text.length, 129, 140)
     }
 
-    fun doTest(line: String, entireLength: Int, highlightingStartOffset: Int, highlightingEndOffset: Int) {
-        val result = checkNotNull(filter.applyFilter(line, entireLength))
+    fun testNewErrorFormat() {
+        val text = """error: the trait bound `std::string::String: std::ops::Index<_>` is not satisfied [--explain E0277]
+ --> src/main.rs:4:5
+ """
+        val line = text.split('\n')[1]
+        doTest(line, text.length, 107, 118)
+    }
+
+    private fun doTest(line: String, entireLength: Int, highlightingStartOffset: Int, highlightingEndOffset: Int) {
+        val result = checkNotNull(filter.applyFilter(line, entireLength)) {
+            "No match in $line"
+        }
 
         val item = result.resultItems.single()
         assertThat(item.getHighlightStartOffset()).isEqualTo(highlightingStartOffset)
