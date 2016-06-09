@@ -38,7 +38,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
 
     private fun findBinaryTarget(context: ConfigurationContext): CargoProjectDescription.Target? {
         val file = context.location?.virtualFile ?: return null
-        val target = context.module.cargoProject?.findTargetForFile(file) ?: return null
+        val target = context.module?.cargoProject?.findTargetForFile(file) ?: return null
         if (!target.isBin) return null
         return target
     }
