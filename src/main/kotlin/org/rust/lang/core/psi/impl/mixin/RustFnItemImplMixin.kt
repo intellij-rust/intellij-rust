@@ -28,10 +28,9 @@ abstract class RustFnItemImplMixin : RustItemElementImpl
         return iconWithVisibility(flags, icon)
     }
 
-    val isTest: Boolean get() = queryAttributes.hasAtomAttribute("test")
-
     override val innerAttrList: List<RustInnerAttrElement>
         get() = block?.innerAttrList.orEmpty()
 
 }
 
+val RustFnItemElement.isTest: Boolean get() = queryAttributes.hasAtomAttribute("test")

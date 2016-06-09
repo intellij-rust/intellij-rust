@@ -1,0 +1,10 @@
+<configurations>
+  <configuration name="Test test_foo" class="CargoCommandConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
+    <option name="additionalArguments" value="test_foo" />
+    <option name="command" value="test" />
+    <option name="environmentVariables">
+      <map />
+    </option>
+    <module name="light_idea_test_case" />
+  </configuration>
+</configurations>

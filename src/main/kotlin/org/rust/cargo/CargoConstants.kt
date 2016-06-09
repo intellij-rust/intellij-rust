@@ -9,5 +9,6 @@ object CargoConstants {
 
     object Commands {
         val RUN = "run"
+        val TEST = "test"
     }
 }
