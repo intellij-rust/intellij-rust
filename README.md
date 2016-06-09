@@ -16,7 +16,7 @@ additional plugin repository and paste the URL for the one you need:
     - Rust: https://plugins.jetbrains.com/plugins/nightly/8182
     - TOML: https://plugins.jetbrains.com/plugins/nightly/8195
 
-See the [**Quick Start**](doc/QuickStart.md) and [featues](doc/Features.md) for tutorial and screenshots!
+See the [**Quick Start**](doc/QuickStart.md) and [features](doc/Features.md) for tutorial and screenshots!
 
 As this is a preview release, something might go wrong. So, be brave to face some nasty bugs.
 
