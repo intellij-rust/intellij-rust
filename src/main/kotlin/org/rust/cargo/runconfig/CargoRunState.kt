@@ -1,8 +1,9 @@
 package org.rust.cargo.runconfig
 
 import com.intellij.execution.configurations.CommandLineState
-import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.toolchain.RustToolchain
@@ -22,6 +23,8 @@ class CargoRunState(environment: ExecutionEnvironment,
         val cmd = toolchain.cargo(cargoProjectDirectory.path)
             .generalCommand(command, additionalArguments, environmentVariables)
 
-        return OSProcessHandler(cmd)
+        val handler = KillableColoredProcessHandler(cmd)
+        ProcessTerminatedListener.attach(handler) // shows exit code upon termination
+        return handler
     }
 }
