@@ -15,18 +15,18 @@ class CargoConfigurationWizardStep(
     private val projectDescriptor: ProjectDescriptor
 ) : ModuleWizardStep() {
 
-    private val cargoSettingsPanel = RustProjectSettingsPanel()
-    private val component = cargoSettingsPanel.createComponent()
+    private lateinit var root: JComponent
+    private lateinit var rustProjectSettings: RustProjectSettingsPanel
 
-    override fun getComponent(): JComponent = component
+    override fun getComponent(): JComponent = root
 
-    override fun disposeUIResources() = cargoSettingsPanel.disposeUIResources()
+    override fun disposeUIResources() = rustProjectSettings.disposeUIResources()
 
     override fun updateDataModel() {
         val oldDescriptor = projectDescriptor.modules.single()
 
         val newDescriptor = ModuleDescriptor(oldDescriptor.contentRoots.single(), oldDescriptor.moduleType, emptyList())
-        val updater = createConfigurationUpdater(cargoSettingsPanel.data)
+        val updater = createConfigurationUpdater(rustProjectSettings.data)
         newDescriptor.addConfigurationUpdater(updater)
 
         projectDescriptor.modules = listOf(newDescriptor)
@@ -34,7 +34,7 @@ class CargoConfigurationWizardStep(
 
     @Throws(ConfigurationException::class)
     override fun validate(): Boolean {
-        cargoSettingsPanel.validate()
+        rustProjectSettings.validateSettings()
         return true
     }
 

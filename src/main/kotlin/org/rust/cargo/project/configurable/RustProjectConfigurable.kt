@@ -13,9 +13,10 @@ class RustProjectConfigurable(
     private val project: Project
 ) : Configurable {
 
-    private val rustProjectSettings = RustProjectSettingsPanel()
+    private lateinit var root: JComponent
+    private lateinit var rustProjectSettings: RustProjectSettingsPanel
 
-    override fun createComponent(): JComponent = rustProjectSettings.createComponent()
+    override fun createComponent(): JComponent = root
 
     override fun disposeUIResources() = rustProjectSettings.disposeUIResources()
 
@@ -31,7 +32,7 @@ class RustProjectConfigurable(
 
     @Throws(ConfigurationException::class)
     override fun apply() {
-        rustProjectSettings.validate()
+        rustProjectSettings.validateSettings()
         val settings = project.rustSettings
         rustProjectSettings.data.applyTo(settings)
     }

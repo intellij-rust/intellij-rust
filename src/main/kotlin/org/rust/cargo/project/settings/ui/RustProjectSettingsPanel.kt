@@ -16,7 +16,7 @@ import org.rust.cargo.toolchain.suggestToolchain
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 
-class RustProjectSettingsPanel {
+class RustProjectSettingsPanel : JPanel() {
     data class Data(
         val toolchain: RustToolchain?,
         val autoUpdateEnabled: Boolean
@@ -28,7 +28,8 @@ class RustProjectSettingsPanel {
     }
 
     private val disposable = Disposer.newDisposable()
-    private lateinit var component: JPanel
+    @Suppress("unused") // required by GUI designer to use this form as an element of other forms
+    private lateinit var root: JPanel
     private lateinit var toolchainLocationField: TextFieldWithBrowseButton
 
     private lateinit var autoUpdateEnabled: JCheckBox
@@ -37,7 +38,17 @@ class RustProjectSettingsPanel {
 
     private val versionUpdateDelayMillis = 200
 
-    fun createComponent(): JComponent {
+    var data: Data
+        get() = Data(
+            RustToolchain(toolchainLocationField.text),
+            autoUpdateEnabled.isSelected
+        )
+        set(value) {
+            toolchainLocationField.text = value.toolchain?.location
+            autoUpdateEnabled.isSelected = value.autoUpdateEnabled
+        }
+
+    init {
         toolchainLocationField.addBrowseFolderListener(
             "",
             "Cargo location",
@@ -55,26 +66,14 @@ class RustProjectSettingsPanel {
             suggestToolchain(),
             autoUpdateEnabled = true
         )
-
-        return component
     }
 
     fun disposeUIResources() {
         Disposer.dispose(disposable)
     }
 
-    var data: Data
-        get() = Data(
-            RustToolchain(toolchainLocationField.text),
-            autoUpdateEnabled.isSelected
-        )
-        set(value) {
-            toolchainLocationField.text = value.toolchain?.location
-            autoUpdateEnabled.isSelected = value.autoUpdateEnabled
-        }
-
     @Throws(ConfigurationException::class)
-    fun validate() {
+    fun validateSettings() {
         val toolchain = data.toolchain ?: return
         if (!toolchain.looksLikeValidToolchain()) {
             throw ConfigurationException("Invalid toolchain location: can't find cargo in ${toolchain.location}")
