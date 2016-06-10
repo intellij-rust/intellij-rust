@@ -7,5 +7,5 @@ import org.rust.lang.core.psi.RustStructItemElement
  *  `RustItemElement` related extensions
  */
 
-val RustStructItemElement.fields: Iterable<RustFieldDeclElement>
+val RustStructItemElement.fields: List<RustFieldDeclElement>
     get() = structDeclArgs?.fieldDeclList.orEmpty()

@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.RustStructItemElement
  *  `RustExprElement` related extensions
  */
 
-val RustStructExprElement.fields: Iterable<RustNamedElement> get() {
+val RustStructExprElement.fields: List<RustNamedElement> get() {
     val structOrEnum = path.reference.resolve() ?: return emptyList()
     return when (structOrEnum) {
         is RustStructItemElement  -> structOrEnum.fields

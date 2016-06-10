@@ -10,6 +10,8 @@ import org.rust.lang.core.psi.util.fields
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.enumerateScopesFor
 import org.rust.lang.core.resolve.scope.RustResolveScope
+import org.rust.lang.core.types.RustStructType
+import org.rust.lang.core.types.util.resolvedType
 import java.util.*
 
 object RustCompletionEngine {
@@ -19,9 +21,15 @@ object RustCompletionEngine {
     fun completeFieldName(field: RustStructExprFieldElement): Array<RustNamedElement> =
         field.parentOfType<RustStructExprElement>()
                 ?.let       { it.fields }
-                ?.filter    { it.name != null }
                  .orEmpty()
-                 .toTypedArray()
+                 .toVariantsArray()
+
+    fun completeFieldOrMethod(field: RustFieldExprElement): Array<RustNamedElement> {
+        val structType = (field.expr.resolvedType as? RustStructType) ?: return emptyArray()
+        // Needs type ascription to please Kotlin's type checker, https://youtrack.jetbrains.com/issue/KT-12696.
+        val fieldsAndMethods: List<RustNamedElement> = (structType.struct.fields + structType.nonStaticMethods)
+        return fieldsAndMethods.toVariantsArray()
+    }
 
     fun completeUseGlob(glob: RustUseGlobElement): Array<RustNamedElement> =
         glob.basePath?.reference?.resolve()
