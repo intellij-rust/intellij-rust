@@ -88,7 +88,7 @@ object CargoMetadata {
 
 
     /**
-     * A rooted DAG of dependencies, represented as adjacency list
+     * A rooted graph of dependencies, represented as adjacency list
      */
     data class Resolve(
         /**

@@ -3,8 +3,7 @@ package org.rust.cargo.project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.util.containers.HashMap
-import com.intellij.util.containers.HashSet
+import java.util.*
 
 
 /**
@@ -76,7 +75,7 @@ class CargoProjectDescription private constructor(
      */
     fun findPackageForFile(file: VirtualFile): Pair<Package, String>? = packages.asSequence().mapNotNull { pkg ->
         val base = pkg.contentRoot ?: return@mapNotNull null
-        val relPath = VfsUtil.getRelativePath(file, base)  ?: return@mapNotNull null
+        val relPath = VfsUtil.getRelativePath(file, base) ?: return@mapNotNull null
         pkg to relPath
     }.firstOrNull()
 
@@ -112,41 +111,32 @@ class CargoProjectDescription private constructor(
 
     companion object {
         fun deserialize(data: CargoProjectDescriptionData): CargoProjectDescription? {
-            val dependenciesMap = data.dependencies.associate { node ->
-                val pkg = data.packages.getOrNull(node.packageIndex) ?: return null
-                val deps = node.dependenciesIndexes.map { data.packages.getOrNull(it) ?: return null }
-                pkg to deps
-            }
+            // Packages form mostly a DAG. "Why mostly?", you say.
+            // Well, a dev-dependency `X` of package `P` can depend on the `P` itself.
+            // This is ok, because cargo can compile `P` (without `X`, because dev-deps
+            // are used only for tests), then `X`, and then `P`s tests. So we need to
+            // handle cycles here, and it is the justification for the trick with `mutableDeps`.
 
-            val alreadyDone = HashMap<CargoProjectDescriptionData.Package, Package>()
-            val inProgress = HashSet<CargoProjectDescriptionData.Package>()
+            val (packages, mutableDeps) = data.packages.map { pkg ->
+                val deps: MutableList<Package> = ArrayList()
+                Package(
+                    pkg.contentRootUrl,
+                    pkg.name,
+                    pkg.version,
+                    pkg.targets.map { Target(it.url, it.name, it.kind) },
+                    pkg.source,
+                    deps
+                ) to deps
+            }.unzip()
 
-            /**
-             * Recursively constructs a DAG of packages
-             */
-            fun build(pkg: CargoProjectDescriptionData.Package): Package? {
-                if (pkg !in alreadyDone) {
-                    check(pkg !in inProgress) {
-                        "Circular dependency in package: $pkg"
-                    }
-                    inProgress += pkg
-                    alreadyDone[pkg] = Package(
-                        pkg.contentRootUrl,
-                        pkg.name,
-                        pkg.version,
-                        pkg.targets.map { CargoProjectDescription.Target(it.url, it.name, it.kind) },
-                        pkg.source,
-                        dependenciesMap[pkg].orEmpty().map { build(it) ?: return null }
-                    )
+            for (node in data.dependencies) {
+                val deps = mutableDeps.getOrNull(node.packageIndex) ?: return null
+                node.dependenciesIndexes.mapTo(deps) {
+                    packages.getOrNull(it) ?: return null
                 }
-                return alreadyDone[pkg]!!
             }
 
-            for (pkg in data.packages) {
-                build(pkg)
-            }
-
-            return CargoProjectDescription(alreadyDone.values)
+            return CargoProjectDescription(packages)
         }
     }
 }
