@@ -10,7 +10,7 @@ pub fn new<S>(shape: S,
                 where S: Shape + 'static {}
 
 fn main() {
-    foo(1,
+    fooooo(1,
     2,
                    3)
 }
