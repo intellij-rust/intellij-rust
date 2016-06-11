@@ -29,14 +29,18 @@ class RustFmtBlock(
     private val mySubBlocks: List<Block> by lazy { buildChildren() }
 
     private fun buildChildren(): List<Block> {
-        // Create shared alignment object for function/method definitions,
-        // which parameter lists span multiple lines. This way we will be
-        // able to align return type and where clause properly.
-        val sharedAlignment = when {
-            node.elementType in FN_DECLS && node.findChildByType(PARAMS_LIKE)?.containsEOL() ?: false ->
-                Alignment.createAlignment()
-
-            node.elementType in PARAMS_LIKE -> ctx.sharedAlignment
+        val sharedAlignment = when (node.elementType) {
+            in FN_DECLS ->
+                // Do not align single-line parameter lists in order to avoid producing this:
+                // foo(......) -> ret
+                //             where ... {}
+                if (node.findChildByType(PARAMS_LIKE)?.containsEOL() ?: false) {
+                    Alignment.createAlignment()
+                } else {
+                    null
+                }
+            in PARAMS_LIKE -> ctx.sharedAlignment
+            METHOD_CALL_EXPR -> ctx.sharedAlignment ?: Alignment.createAlignment()
             else -> null
         }
         var metLBrace = false
@@ -73,7 +77,7 @@ class RustFmtBlock(
         // We are using dot as our representative.
         // The idea is nearly copy-pasted from Kotlin's formatter.
         if (node.elementType == METHOD_CALL_EXPR) {
-            val dotIndex = children.indexOfFirst { it is ASTBlock && it.node.elementType == DOT }
+            val dotIndex = children.indexOfFirst { it.node.elementType == DOT }
             if (dotIndex != -1) {
                 val dotBlock = children[dotIndex]
                 val syntheticBlock = SyntheticRustFmtBlock(
