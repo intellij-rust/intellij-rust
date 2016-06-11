@@ -1,2 +1,1 @@
-pub struct Te<caret>st {
-}
+pub struct Te<caret>st {}
