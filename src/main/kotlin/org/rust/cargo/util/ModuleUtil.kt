@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.CargoProjectDescription
 
@@ -71,6 +72,9 @@ class StandardLibraryRoots private constructor(
     }
 
     companion object {
+        fun fromPath(path: String): StandardLibraryRoots? =
+            LocalFileSystem.getInstance().findFileByPath(path)?.let { fromFile(it) }
+
         fun fromFile(sources: VirtualFile): StandardLibraryRoots? {
             // sources may be either a zip archive downloaded from github,
             // or a root directory with rust sources, or its src subdirectory.

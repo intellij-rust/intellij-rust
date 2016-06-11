@@ -1,13 +1,19 @@
 package org.rust.cargo.project.configurable
 
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.suggestToolchain
+import org.rust.cargo.util.StandardLibraryRoots
+import org.rust.cargo.util.cargoProject
+import org.rust.cargo.util.modulesWithCargoProject
 import javax.swing.JComponent
-
 
 class RustProjectConfigurable(
     private val project: Project
@@ -15,8 +21,18 @@ class RustProjectConfigurable(
 
     private lateinit var root: JComponent
     private lateinit var rustProjectSettings: RustProjectSettingsPanel
+    private lateinit var stdlibLocation: TextFieldWithBrowseButton
 
-    override fun createComponent(): JComponent = root
+    override fun createComponent(): JComponent {
+        val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        stdlibLocation.addBrowseFolderListener(
+            "Attach Rust sources",
+            "Select the folder with Rust standard library source code",
+            project,
+            descriptor
+        )
+        return root
+    }
 
     override fun disposeUIResources() = rustProjectSettings.disposeUIResources()
 
@@ -28,6 +44,8 @@ class RustProjectConfigurable(
             toolchain,
             settings.autoUpdateEnabled
         )
+
+        stdlibLocation.text = currentStdlibLocation
     }
 
     @Throws(ConfigurationException::class)
@@ -35,6 +53,15 @@ class RustProjectConfigurable(
         rustProjectSettings.validateSettings()
         val settings = project.rustSettings
         rustProjectSettings.data.applyTo(settings)
+        val module = rustModule
+        val newStdlibLocation = stdlibLocation.text
+        if (module != null && newStdlibLocation != currentStdlibLocation && !newStdlibLocation.isNullOrBlank()) {
+            val roots = StandardLibraryRoots.fromPath(newStdlibLocation)
+                ?: throw ConfigurationException("Invalid standard library location: `$newStdlibLocation`")
+
+            runWriteAction { roots.attachTo(module) }
+        }
+
     }
 
     override fun isModified(): Boolean {
@@ -42,10 +69,16 @@ class RustProjectConfigurable(
         val data = rustProjectSettings.data
         return data.toolchain?.location != settings.toolchain?.location
             || data.autoUpdateEnabled != settings.autoUpdateEnabled
+            || stdlibLocation.text != currentStdlibLocation
     }
 
     override fun getDisplayName(): String = "Rust" // sync me with plugin.xml
 
     override fun getHelpTopic(): String? = null
+
+    private val currentStdlibLocation: String? get() =
+        rustModule?.cargoProject?.packages?.find { it.name == "std" }?.contentRoot?.parent?.path
+
+    private val rustModule: Module? get() = project.modulesWithCargoProject.firstOrNull()
 }
 
