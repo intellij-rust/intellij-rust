@@ -53,16 +53,10 @@ class RustFmtBlock(
                     metLBrace = true
                 }
 
-                childNode to ctx.copy(
+                val childCtx = ctx.copy(
                     metLBrace = metLBrace,
-                    sharedAlignment = when {
-                        // Pass shared alignment only to PARAMS_LIKE, RET_TYPE and WHERE_CLAUSE
-                        node.elementType in FN_DECLS && childNode.elementType !in FN_SHARED_ALIGN_OWNERS -> null
-                        else -> sharedAlignment
-                    })
-            }
-            .map {
-                val (childNode, childCtx) = it
+                    sharedAlignment = sharedAlignment)
+
                 RustFormattingModelBuilder.createBlock(
                     node = childNode,
                     alignment = alignment.getAlignment(childNode, node, childCtx),
