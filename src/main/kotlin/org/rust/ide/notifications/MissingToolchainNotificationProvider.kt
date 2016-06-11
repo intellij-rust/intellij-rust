@@ -69,12 +69,12 @@ class MissingToolchainNotificationProvider(
 
     override fun createNotificationPanel(file: VirtualFile, editor: FileEditor): EditorNotificationPanel? {
         if (file.isNotRustFile) return null
-        val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
-        val toolchain = module.toolchain ?: return createBadToolchainPanel()
+        val toolchain = project.toolchain ?: return createBadToolchainPanel()
         if (!toolchain.looksLikeValidToolchain()) {
             return createBadToolchainPanel()
         }
 
+        val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
         if (!isStdlibNotificationDisabled() && !module.hasStandardLibrary) {
             return createAttachLibraryPanel(module, toolchain)
         }

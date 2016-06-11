@@ -66,7 +66,7 @@ class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
     }
 
     private fun updateCargoProject() {
-        module.getComponentOrThrow<CargoProjectWorkspace>().requestUpdateUsing(module.toolchain!!, immediately = true)
+        module.getComponentOrThrow<CargoProjectWorkspace>().requestUpdateUsing(project.toolchain!!, immediately = true)
     }
 
     private fun extractReference(path: String): PsiReference {

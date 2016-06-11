@@ -75,7 +75,8 @@ class CargoCommandConfiguration(
         val module = configurationModule.module
             ?: return ConfigurationResult.error(ExecutionBundle.message("module.not.specified.error.text"))
         return ConfigurationResult.Ok(
-            module.toolchain ?: return ConfigurationResult.error("No Rust toolchain specified"),
+            project.toolchain ?: return ConfigurationResult.error("No Rust toolchain specified"),
+
             module.cargoProjectRoot ?: return ConfigurationResult.error("No Cargo.toml at the root of the module")
         )
     }

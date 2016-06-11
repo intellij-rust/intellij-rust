@@ -16,6 +16,12 @@ val Project.modules: Collection<Module>
     get() = ModuleManager.getInstance(this).modules.toList()
 
 /**
+ * Extracts modules with `Cargo.toml` present at the root.
+ */
+val Project.modulesWithCargoProject: Collection<Module>
+    get() = modules.filter { it.cargoProjectRoot != null }
+
+/**
  * Looks up `PsiFile` for the virtual-file supplied inside the given project
  */
 fun Project.getPsiFor(file: VirtualFile?): PsiFile? =

@@ -1,6 +1,5 @@
 package org.rust.cargo.project.settings
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
 import org.rust.cargo.toolchain.RustToolchain
@@ -28,6 +27,5 @@ interface RustProjectSettingsService {
 }
 
 val Project.rustSettings: RustProjectSettingsService get() = service()
-
-val Module.toolchain: RustToolchain? get() = project.rustSettings.toolchain
+val Project.toolchain: RustToolchain? get() = rustSettings.toolchain
 

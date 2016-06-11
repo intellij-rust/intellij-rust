@@ -69,7 +69,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     override fun projectOpened() { /* NOP */ }
 
     override fun moduleAdded() {
-        module.toolchain?.let { requestUpdateUsing(it, immediately = true) }
+        module.project.toolchain?.let { requestUpdateUsing(it, immediately = true) }
     }
 
     /**
@@ -187,7 +187,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
 
         override fun after(events: MutableList<out VFileEvent>) {
             if (!module.project.rustSettings.autoUpdateEnabled) return
-            val toolchain = module.toolchain ?: return
+            val toolchain = module.project.toolchain ?: return
 
             val needsUpdate = events.any {
                 val file = it.file ?: return@any false
