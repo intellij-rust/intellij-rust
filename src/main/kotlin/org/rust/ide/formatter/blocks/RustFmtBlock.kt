@@ -5,8 +5,8 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.formatter.FormatterUtil
 import org.rust.ide.formatter.RustFmtContext
+import org.rust.ide.formatter.RustFormattingModelBuilder
 import org.rust.ide.formatter.impl.*
-import org.rust.lang.core.psi.RustCompositeElementTypes.MACRO_ARG
 import org.rust.lang.core.psi.RustCompositeElementTypes.METHOD_CALL_EXPR
 import org.rust.lang.core.psi.RustTokenElementTypes.DOT
 import org.rust.lang.core.psi.util.containsEOL
@@ -59,7 +59,7 @@ class RustFmtBlock(
             }
             .map {
                 val (childNode, childCtx) = it
-                createBlock(
+                RustFormattingModelBuilder.createBlock(
                     node = childNode,
                     alignment = alignment.getAlignment(childNode, node, childCtx),
                     indent = computeIndent(childNode, childCtx),
@@ -98,17 +98,4 @@ class RustFmtBlock(
     private val myIsIncomplete: Boolean by lazy { FormatterUtil.isIncomplete(node) }
 
     override fun toString() = "${node.text} $textRange"
-
-    companion object {
-        fun createBlock(
-            node: ASTNode,
-            alignment: Alignment?,
-            indent: Indent?,
-            wrap: Wrap?,
-            ctx: RustFmtContext
-        ): ASTBlock = when (node.elementType) {
-            MACRO_ARG -> RustMacroArgFmtBlock(node, alignment, indent, wrap, ctx)
-            else -> RustFmtBlock(node, alignment, indent, wrap, ctx)
-        }
-    }
 }
