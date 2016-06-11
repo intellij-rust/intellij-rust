@@ -23,7 +23,7 @@ val Module.cargoLibraryName: String get() = "Cargo <$name>"
 /**
  * Established Rust's 'stdlib' library name
  */
-val Module.rustLibraryName: String get() = "Rust <$name>"
+private val Module.rustLibraryName: String get() = "Rust <$name>"
 
 /**
  * Helper extracting generic service for the particular module
@@ -55,17 +55,39 @@ fun Module.relativise(f: VirtualFile): Pair<String, String>? =
     }
 
 /**
- * Creates an IDEA external library from an zip archive or a folder with rust.
- * The crates can be extracted with [standardLibraryCrates].
- * Hopefully this function will go away when a standard way to get rust sources appears.
+ * Rust standard library crates source roots extracted from a zip archive or a folder with rust.
+ * Hopefully this class will go away when a standard way to get rust sources appears.
  */
-fun Module.attachStandardLibrary(sourcesArchive: VirtualFile) {
-    val srcDir = findSrcDir(sourcesArchive) ?: return
-    val libraryRoots = stdlibCrateNames.mapNotNull {
-        srcDir.findFileByRelativePath("lib$it")
+class StandardLibraryRoots private constructor(
+    private val roots: List<VirtualFile>
+) {
+
+    /**
+     * Creates an module level IDEA external library from [roots].
+     * The crates can be extracted with [extendProjectDescriptionWithStandardLibraryCrates].
+     */
+    fun attachTo(module: Module) {
+        module.updateLibrary(module.rustLibraryName, roots)
     }
 
-    updateLibrary(rustLibraryName, libraryRoots)
+    companion object {
+        fun fromFile(sources: VirtualFile): StandardLibraryRoots? {
+            // sources may be either a zip archive downloaded from github,
+            // or a root directory with rust sources, or its src subdirectory.
+            // In any case, we want to find the src subdir
+            val srcDir = if (sources.isDirectory) {
+                if (sources.name == "src") sources else sources.findChild("src")
+            } else {
+                JarFileSystem.getInstance().getJarRootForLocalFile(sources)
+                    ?.children?.singleOrNull()
+                    ?.findChild("src")
+            } ?: return null
+
+            return StandardLibraryRoots(stdlibCrateNames.map {
+                srcDir.findFileByRelativePath("lib$it") ?: return null
+            })
+        }
+    }
 }
 
 /**
@@ -107,17 +129,6 @@ fun Module.updateLibrary(libraryName: String, roots: Collection<VirtualFile>) {
 
         model.addLibraryEntry(library)
     }
-}
-
-private fun findSrcDir(sources: VirtualFile): VirtualFile? {
-    // sources may be either a zip archive downloaded from github,
-    // or a root directory with rust sources, or its src subdirectory.
-    // In any case, we want to find the src subdir
-    if (sources.isDirectory) {
-        return if (sources.name == "src") sources else sources.findChild("src")
-    }
-    val base = JarFileSystem.getInstance().getJarRootForLocalFile(sources) ?: return null
-    return base.children.singleOrNull()?.findChild("src")
 }
 
 private val stdlibCrateNames = listOf("std", "core", "collections", "alloc")

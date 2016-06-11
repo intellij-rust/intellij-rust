@@ -13,6 +13,8 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -25,7 +27,7 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.AutoInjectedCrates
-import org.rust.cargo.util.attachStandardLibrary
+import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.cargoProject
 import org.rust.ide.utils.runWriteAction
 import org.rust.ide.utils.service
@@ -98,9 +100,15 @@ class MissingToolchainNotificationProvider(
 
             createActionLabel("Attach") {
                 val stdlib = chooseStdlibLocation(this) ?: return@createActionLabel
-                runWriteAction {
-                    module.attachStandardLibrary(stdlib)
+                val roots = StandardLibraryRoots.fromFile(stdlib)
+                if (roots == null) {
+                    PopupUtil.showBalloonForActiveFrame(
+                        "Invalid sources Rust standard library source path: `${stdlib.path}`",
+                        MessageType.ERROR
+                    )
+                    return@createActionLabel
                 }
+                runWriteAction { roots.attachTo(module) }
             }
 
             createActionLabel("Do not show again") {
@@ -149,9 +157,8 @@ class MissingToolchainNotificationProvider(
         override fun onSuccess() {
             if (module.isDisposed) return
             val stdlib = library ?: return
-            runWriteAction {
-                module.attachStandardLibrary(stdlib)
-            }
+            val roots = StandardLibraryRoots.fromFile(stdlib) ?: return
+            runWriteAction { roots.attachTo(module) }
         }
 
         companion object {

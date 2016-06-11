@@ -13,7 +13,7 @@ import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.CargoProjectDescriptionData
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
-import org.rust.cargo.util.attachStandardLibrary
+import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.getComponentOrThrow
 import java.util.*
 
@@ -111,7 +111,10 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
                "Rust sources archive not found. Run `./gradlew test` to download the archive."
             }
 
-            module.attachStandardLibrary(sourcesArchive)
+            checkNotNull(StandardLibraryRoots.fromFile(sourcesArchive)) {
+                "Invalid Rust source: $sourcesArchive"
+            }.attachTo(module)
+
             val packages = listOf(testCargoPackage(contentRoot))
 
             return CargoProjectDescriptionData(0, packages, emptyList()).let {
