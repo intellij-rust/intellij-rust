@@ -1,4 +1,4 @@
 fn main() {
     let moo = foo().bar()
-                   <caret>.baz()
+        <caret>.baz()
 }
