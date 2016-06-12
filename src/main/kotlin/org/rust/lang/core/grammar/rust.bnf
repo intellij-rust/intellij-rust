@@ -1101,7 +1101,11 @@ inner_attrs_and_block ::= '{' inner_attr* block_tail '}' {
   pin = 1
 }
 
-private block_tail ::= (stmt | docs_and_item)* any_expr?
+private block_tail ::= (stmt | docs_and_item)* any_expr? {
+  recoverWhile = block_recover
+}
+
+private block_recover ::= !('}')
 
 stmt ::= expr_stmt | let_decl | empty_stmt | never ';'
 
