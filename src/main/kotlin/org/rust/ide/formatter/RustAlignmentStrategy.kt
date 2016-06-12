@@ -20,25 +20,16 @@ interface RustAlignmentStrategy {
 
     /**
      * Apply this strategy only when child element is in [tt].
-     *
-     * @param isBlackList   denotes how filter set is interpreted. If set to `false`, the filter is a white list:
-     *                      only children which element types are in filter set will get wrapped alignment;
-     *                      otherwise, the filter works as a black list: these children will be ignored.
      */
-    fun filter(vararg tt: IElementType, isBlackList: Boolean = false): RustAlignmentStrategy =
-        filter(TokenSet.create(*tt), isBlackList)
+    fun alignIf(vararg tt: IElementType): RustAlignmentStrategy = alignIf(TokenSet.create(*tt))
 
     /**
      * Apply this strategy only when child element type matches [filterSet].
-     *
-     * @param isBlackList   denotes how [filterSet] is interpreted. If set to `false`, the filter is a white list:
-     *                      only children which element types are in [filterSet] will get wrapped alignment;
-     *                      otherwise, the filter works as a black list: these children will be ignored.
      */
-    fun filter(filterSet: TokenSet, isBlackList: Boolean = false): RustAlignmentStrategy =
+    fun alignIf(filterSet: TokenSet): RustAlignmentStrategy =
         object : RustAlignmentStrategy {
             override fun getAlignment(child: ASTNode, parent: ASTNode?, childCtx: RustFmtContext): Alignment? =
-                if ((child.elementType in filterSet) xor isBlackList) {
+                if (child.elementType in filterSet) {
                     this@RustAlignmentStrategy.getAlignment(child, parent, childCtx)
                 } else {
                     null
@@ -48,7 +39,7 @@ interface RustAlignmentStrategy {
     /**
      * Apply this strategy only when [predicate] passes.
      */
-    fun cond(predicate: (child: ASTNode, parent: ASTNode?, ctx: RustFmtContext) -> Boolean): RustAlignmentStrategy =
+    fun alignIf(predicate: (child: ASTNode, parent: ASTNode?, ctx: RustFmtContext) -> Boolean): RustAlignmentStrategy =
         object : RustAlignmentStrategy {
             override fun getAlignment(child: ASTNode, parent: ASTNode?, childCtx: RustFmtContext): Alignment? =
                 if (predicate(child, parent, childCtx)) {
@@ -61,7 +52,7 @@ interface RustAlignmentStrategy {
     /**
      * Returns [NullStrategy] if [condition] is `false`. Useful for making strategies configurable.
      */
-    fun cfg(condition: Boolean): RustAlignmentStrategy =
+    fun alignIf(condition: Boolean): RustAlignmentStrategy =
         if (condition) {
             this
         } else {
