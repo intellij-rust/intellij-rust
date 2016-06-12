@@ -135,7 +135,8 @@ are
 You can think of PSI as an AST, but it is more general. For one thing, it
 includes things which are usually omitted from an AST: whitespace, comments and
 parenthesis. PSI is a facade for program structure, which can have several
-implementations.
+implementations. Use **View PSI Structure of Current File** action to explore PSI,
+or install the PSI viewer plugin.
 
 The main implementation is the AST of a file with the Rust source code. The
 grammar is specified in the `rust.bnf` file. Grammar Kit uses it to generate PSI
