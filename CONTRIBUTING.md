@@ -36,7 +36,7 @@ Import the plugin project as you would do with any other gradle based project.
 For example, `Ctrl + Shift + A`, `Import project` and select `build.gradle` from
 the root directory of the plugin.
 
-To run or deug plugin from within the IDE use "gradle task" run configuration
+To run or debug plugin from within the IDE use "gradle task" run configuration
 for `runIdea` task. Another important task is `generate`. Use it if you change
 `.flex` or `.bnf` files to generate the lexer and the parser.
 
