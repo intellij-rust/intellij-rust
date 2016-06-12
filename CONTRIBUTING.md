@@ -29,13 +29,19 @@ If you're using any other particular stack feel free to contribute to that list.
 
 ### IDEA
 
-For development you'd need IDEA with Kotlin plugin (which is shipped by default starting from 14.1)
-
 You can get the latest Intellij IDEA Community Edition [here](https://www.jetbrains.com/idea/download/).
 You can also get the version from EAP channel [here](https://confluence.jetbrains.com/display/IDEADEV/EAP).
 
-To import the project just: `Ctrl + Shift + A`, `Import project` or `File`, `New`, `Project from existing
-sources`, and select `build.gradle` from the root directory of the plugin.
+Import the plugin project as you would do with any other gradle based project.
+For example, `Ctrl + Shift + A`, `Import project` and select `build.gradle` from
+the root directory of the plugin.
+
+To run or deug plugin from within the IDE use "gradle task" run configuration
+for `runIdea` task. Another important task is `generate`. Use it if you change
+`.flex` or `.bnf` files to generate the lexer and the parser.
+
+To run test, execute "test" gradle task, or navigate to the interesting test
+method, class or package and press `Ctrl+Shift+F10`.
 
 
 # Contributing
@@ -67,20 +73,18 @@ please do it.
 
 # Testing
 
-It is much easier to understand code changes if they are accompanied with
-tests. Test classes are placed in the `src/test/kotlin` directory, `src/test/resources` holds rust files
-which are used as fixtures. We also include
-[CTRS](https://github.com/brson/ctrs) as a submodule and use it to test the
-parser.
+It is much easier to understand code changes if they are accompanied with tests.
+Test classes are placed in the `src/test/kotlin` directory, `src/test/resources`
+holds rust files which are used as fixtures. Most tests are fixture driven: they
+read the rust file named as the test itself, execute some action and check result.
+
+We also include [CTRS](https://github.com/brson/ctrs) as a submodule and use it
+to test the parser. We also download source code of the Rust standard library to
+check that it is resolved correctly.
 
 The test suite can be run by launching:
 
     ./gradlew test
-
-You can execute specific test from within IDE. To do so, navigate to the tests
-and press `Ctrl+Shift+F10`. Note that IDEA test runner may not run gradle code
-generation tasks, so if you are modifying `rust.bnf` or `RustLexer.flex`, you
-may want to use the gradle runner instead.
 
 # Plugin architecture
 
