@@ -15,7 +15,7 @@ import com.intellij.psi.formatter.FormatterUtil
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
-import org.rust.ide.formatter.RustFmtBlockContext
+import org.rust.ide.formatter.RustFmtContext
 import org.rust.ide.formatter.settings.RustCodeStyleSettings
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
@@ -54,10 +54,10 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .aroundInside(ts(LPAREN, RPAREN), META_ITEM).spaces(0)
 
         //== empty parens
-        .between(LPAREN, RPAREN).spaceIf(false)
-        .between(LBRACK, RBRACK).spaceIf(false)
-        .between(LBRACE, RBRACE).spaceIf(false)
-        .betweenInside(OR, OR, LAMBDA_EXPR).spaceIf(false)
+        .between(LPAREN, RPAREN).spacing(0, 0, 0, false, 0)
+        .between(LBRACK, RBRACK).spacing(0, 0, 0, false, 0)
+        .between(LBRACE, RBRACE).spacing(0, 0, 0, false, 0)
+        .betweenInside(OR, OR, LAMBDA_EXPR).spacing(0, 0, 0, false, 0)
 
         //== paren delimited lists
         // withinPairInside does not accept TokenSet as parent node set :(
@@ -129,7 +129,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .around(KEYWORDS).spaces(1)
 }
 
-fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtBlockContext): Spacing? {
+fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtContext): Spacing? {
     if (child1 is ASTBlock && child2 is ASTBlock) SpacingContext.create(child1, child2).apply {
         when {
             // #[attr]\n<comment>\n => #[attr] <comment>\n etc.
@@ -261,10 +261,8 @@ private fun SpacingContext.blockMustBeMultiLine(): Boolean {
     }
 }
 
-/**
- * Assumes that left is before right and they are siblings, otherwise bad things will happen.
- */
 private fun countNonWhitespaceASTNodesBetween(left: ASTNode, right: ASTNode): Int {
+    require(left.treeParent == right.treeParent && left.startOffset < right.startOffset)
     var count = 0
     var next: ASTNode? = left
     while (next != null && next != right) {

@@ -207,8 +207,7 @@ impl<T: PartialEq> Vec<T> {
     }
 }
 
-pub fn from_elem<T: Clone>(elem: T, n: usize) -> Vec<T> {
-}
+pub fn from_elem<T: Clone>(elem: T, n: usize) -> Vec<T> {}
 
 impl<T: Clone> Clone for Vec<T> {
     fn clone(&self) -> Vec<T> {

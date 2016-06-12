@@ -1,3 +1,2 @@
 #[derive(<caret>)]
-struct Test {
-}
+struct Test {}

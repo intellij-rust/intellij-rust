@@ -1,3 +1,2 @@
 #[derive(<caret>)]
-pub struct Test {
-}
+pub struct Test {}

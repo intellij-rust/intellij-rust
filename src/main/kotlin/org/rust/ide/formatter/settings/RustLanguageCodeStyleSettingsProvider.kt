@@ -17,36 +17,25 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
         // TODO Provide more suitable code samples for specific settings types
         when (settingsType) {
             BLANK_LINES_SETTINGS,
-            SPACING_SETTINGS,
             WRAPPING_AND_BRACES_SETTINGS,
             INDENT_SETTINGS -> CODE_SAMPLE
 
-            else            -> ""
+            else -> ""
         }
 
     override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType) {
+        @Suppress("NON_EXHAUSTIVE_WHEN")
         when (settingsType) {
-            BLANK_LINES_SETTINGS         -> {
+            BLANK_LINES_SETTINGS ->
                 consumer.showStandardOptions(
                     "KEEP_LINE_BREAKS",
                     "KEEP_BLANK_LINES_IN_DECLARATIONS",
                     "KEEP_BLANK_LINES_IN_CODE")
-            }
 
-            SPACING_SETTINGS             -> {
-                // TODO Implement this.
-            }
-
-            WRAPPING_AND_BRACES_SETTINGS -> {
-                consumer.showStandardOptions("RIGHT_MARGIN");
-            }
-
-            INDENT_SETTINGS              -> {
-                // TODO Implement this.
-            }
-
-            else                         -> {
-            }
+            WRAPPING_AND_BRACES_SETTINGS ->
+                consumer.showStandardOptions(
+                    "RIGHT_MARGIN",
+                    "ALIGN_MULTILINE_CHAINED_METHODS");
         }
     }
 
@@ -55,7 +44,11 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
     override fun getDefaultCommonSettings(): CommonCodeStyleSettings =
         CommonCodeStyleSettings(language).apply {
             RIGHT_MARGIN = 99
-            initIndentOptions()
+            initIndentOptions().apply {
+                // FIXME(jajakobyly): It's a hack
+                // Nobody else does this and still somehow achieve similar effect
+                CONTINUATION_INDENT_SIZE = INDENT_SIZE
+            }
         }
 
     private val CODE_SAMPLE: String by lazy {

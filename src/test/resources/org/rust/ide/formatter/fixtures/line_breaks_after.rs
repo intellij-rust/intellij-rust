@@ -167,23 +167,20 @@ fn closures() {
     }
 }
 
-// FIXME: Alignment
 fn reverse(pair: (i32, bool), a: i32,
-    b: i32, c: i32,
-    d: i32)
-    -> (bool, i32) {}
+           b: i32, c: i32,
+           d: i32)
+           -> (bool, i32) {}
 
-// FIXME: Alignment
 fn boo(
     a: i32
 ) {}
 
 fn misc() {
-    // FIXME: Alignment
     let long_tuple = (1u8, 2u16, 3u32, 4u64,
-        -1i8, -2i16, -3i32, -4i64,
-        0.1f32, 0.2f64,
-        'a', true);
+                      -1i8, -2i16, -3i32, -4i64,
+                      0.1f32, 0.2f64,
+                      'a', true);
 
     let point: Point = Point { x: 0.3, y: 0.4 };
 
