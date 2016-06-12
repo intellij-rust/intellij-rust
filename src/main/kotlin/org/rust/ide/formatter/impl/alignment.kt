@@ -25,6 +25,7 @@ fun RustFmtBlock.getAlignmentStrategy(): RustAlignmentStrategy = when (node.elem
     METHOD_CALL_EXPR ->
         RustAlignmentStrategy.shared()
             .filter(DOT) // DOT is synthetic's block representative
+            .cfg(ctx.commonSettings.ALIGN_MULTILINE_CHAINED_METHODS)
 
     else -> RustAlignmentStrategy.NullStrategy
 }

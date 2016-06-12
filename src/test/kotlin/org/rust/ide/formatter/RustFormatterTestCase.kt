@@ -1,6 +1,7 @@
 package org.rust.ide.formatter
 
 import com.intellij.psi.formatter.FormatterTestCase
+import org.rust.lang.RustLanguage
 import org.rust.lang.RustTestCaseBase
 
 class RustFormatterTestCase : FormatterTestCase() {
@@ -22,7 +23,11 @@ class RustFormatterTestCase : FormatterTestCase() {
     fun testArgumentIndent() = doTest()
     fun testTraits() = doTest()
     fun testTupleAlignment() = doTest()
-    fun testChainCallAlignment() = doTest()
+    fun testChainCallAlignment() {
+        getSettings(RustLanguage).ALIGN_MULTILINE_CHAINED_METHODS = true
+        doTest()
+    }
+    fun testChainCallAlignmentOff() = doTest()
     fun testChainCallIndent() = doTest()
 
     // FIXME: these two guys are way too big

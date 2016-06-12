@@ -58,6 +58,16 @@ interface RustAlignmentStrategy {
                 }
         }
 
+    /**
+     * Returns [NullStrategy] if [condition] is `false`. Useful for making strategies configurable.
+     */
+    fun cfg(condition: Boolean): RustAlignmentStrategy =
+        if (condition) {
+            this
+        } else {
+            NullStrategy
+        }
+
     companion object {
         /**
          * Always returns [alignment].

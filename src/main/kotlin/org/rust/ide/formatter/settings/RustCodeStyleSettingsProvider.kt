@@ -18,5 +18,12 @@ class RustCodeStyleSettingsProvider : CodeStyleSettingsProvider() {
         }
 
     private class RustCodeStyleMainPanel(currentSettings: CodeStyleSettings, settings: CodeStyleSettings) :
-        TabbedLanguageCodeStylePanel(RustLanguage, currentSettings, settings)
+        TabbedLanguageCodeStylePanel(RustLanguage, currentSettings, settings) {
+
+        override fun initTabs(settings: CodeStyleSettings?) {
+            addIndentOptionsTab(settings)
+            addWrappingAndBracesTab(settings)
+            addBlankLinesTab(settings)
+        }
+    }
 }
