@@ -32,6 +32,14 @@ enum E {
     Foo,
 }
 
+enum ES {
+    /// doc
+    Foo {
+        /// field doc
+        field: usize
+    },
+}
+
 extern {
     /// Doc
     fn foo();
