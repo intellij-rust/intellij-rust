@@ -69,13 +69,14 @@ class MissingToolchainNotificationProvider(
 
     override fun createNotificationPanel(file: VirtualFile, editor: FileEditor): EditorNotificationPanel? {
         if (file.isNotRustFile) return null
+        if (isNotificationDisabled()) return null
         val toolchain = project.toolchain ?: return createBadToolchainPanel()
         if (!toolchain.looksLikeValidToolchain()) {
             return createBadToolchainPanel()
         }
 
         val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
-        if (!isStdlibNotificationDisabled() && !module.hasStandardLibrary) {
+        if (!module.hasStandardLibrary) {
             return createAttachLibraryPanel(module, toolchain)
         }
 
@@ -87,6 +88,10 @@ class MissingToolchainNotificationProvider(
             setText("No Rust toolchain configured")
             createActionLabel("Setup toolchain") {
                 project.service<RustProjectSettingsService>().configureToolchain()
+            }
+            createActionLabel("Do not show again") {
+                disableNotification()
+                notifications.updateAllNotifications()
             }
         }
 
@@ -112,7 +117,7 @@ class MissingToolchainNotificationProvider(
             }
 
             createActionLabel("Do not show again") {
-                disableStdlibNotification()
+                disableNotification()
                 notifications.updateAllNotifications()
             }
         }
@@ -132,12 +137,12 @@ class MissingToolchainNotificationProvider(
         return FileChooser.chooseFile(descriptor, parent, project, null)
     }
 
-    private fun disableStdlibNotification() {
-        PropertiesComponent.getInstance(project).setValue(DO_NOT_SHOW_STDLIB_NOTIFICATION, true)
+    private fun disableNotification() {
+        PropertiesComponent.getInstance(project).setValue(DO_NOT_SHOW_TOOLCHAIN_NOTIFICATION, true)
     }
 
-    private fun isStdlibNotificationDisabled(): Boolean {
-        return PropertiesComponent.getInstance(project).getBoolean(DO_NOT_SHOW_STDLIB_NOTIFICATION)
+    private fun isNotificationDisabled(): Boolean {
+        return PropertiesComponent.getInstance(project).getBoolean(DO_NOT_SHOW_TOOLCHAIN_NOTIFICATION)
     }
 
     class DownloadTask(
@@ -183,7 +188,7 @@ class MissingToolchainNotificationProvider(
 
     companion object {
         private val KEY: Key<EditorNotificationPanel> = Key.create("Setup Rust toolchain")
-        private val DO_NOT_SHOW_STDLIB_NOTIFICATION = "do.not.show.stdlib.notification"
+        private val DO_NOT_SHOW_TOOLCHAIN_NOTIFICATION = "do.not.show.toolchain.notification"
 
         private val Module.hasStandardLibrary: Boolean get() = cargoProject?.findExternCrateRootByName(AutoInjectedCrates.std) != null
     }
