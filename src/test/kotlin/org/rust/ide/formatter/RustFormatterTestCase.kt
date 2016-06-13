@@ -30,6 +30,16 @@ class RustFormatterTestCase : FormatterTestCase() {
     fun testChainCallAlignmentOff() = doTest()
     fun testChainCallIndent() = doTest()
 
+    fun testAlignParamsOff() {
+        getSettings(RustLanguage).ALIGN_MULTILINE_PARAMETERS = false
+        doTest()
+    }
+
+    fun testAlignParamsInCallsOff() {
+        getSettings(RustLanguage).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false
+        doTest()
+    }
+
     // FIXME: these two guys are way too big
     fun testSpacing() = doTest()
     fun testLineBreaks() = doTest()

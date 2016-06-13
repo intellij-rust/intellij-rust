@@ -35,7 +35,9 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
             WRAPPING_AND_BRACES_SETTINGS ->
                 consumer.showStandardOptions(
                     "RIGHT_MARGIN",
-                    "ALIGN_MULTILINE_CHAINED_METHODS");
+                    "ALIGN_MULTILINE_CHAINED_METHODS",
+                    "ALIGN_MULTILINE_PARAMETERS",
+                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS");
         }
     }
 
@@ -44,6 +46,7 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
     override fun getDefaultCommonSettings(): CommonCodeStyleSettings =
         CommonCodeStyleSettings(language).apply {
             RIGHT_MARGIN = 100
+            ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
             initIndentOptions().apply {
                 // FIXME(jajakobyly): It's a hack
                 // Nobody else does this and still somehow achieve similar effect
