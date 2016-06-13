@@ -6,21 +6,30 @@ import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustTokenElementTypes.DOT
 
 fun RustFmtBlock.getAlignmentStrategy(): RustAlignmentStrategy = when (node.elementType) {
-    TUPLE_EXPR, TUPLE_TYPE, ARG_LIST, ENUM_TUPLE_ARGS, FORMAT_MACRO_ARGS, TRY_MACRO_ARGS ->
+    TUPLE_EXPR, ARG_LIST, FORMAT_MACRO_ARGS, TRY_MACRO_ARGS ->
         RustAlignmentStrategy.wrap()
-            .alignIf { c, p, x -> !c.isBlockDelim(p) }
+            .alignUnlessBlockDelim()
+            .alignIf(ctx.commonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS)
+
+    TUPLE_TYPE, ENUM_TUPLE_ARGS ->
+        RustAlignmentStrategy.wrap()
+            .alignUnlessBlockDelim()
+            .alignIf(ctx.commonSettings.ALIGN_MULTILINE_PARAMETERS)
 
     in PARAMS_LIKE ->
         RustAlignmentStrategy.shared()
-            .alignIf { c, p, x -> !c.isBlockDelim(p) }
+            .alignUnlessBlockDelim()
+            .alignIf(ctx.commonSettings.ALIGN_MULTILINE_PARAMETERS)
 
     in FN_DECLS ->
         RustAlignmentStrategy.shared()
             .alignIf(RET_TYPE, WHERE_CLAUSE)
+            .alignIf(ctx.rustSettings.ALIGN_RET_TYPE_AND_WHERE_CLAUSE)
 
     PAT_ENUM ->
         RustAlignmentStrategy.wrap()
             .alignIf { c, p, x -> x.metLBrace && !c.isBlockDelim(p) }
+            .alignIf(ctx.commonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS)
 
     METHOD_CALL_EXPR ->
         RustAlignmentStrategy.shared()
@@ -29,3 +38,5 @@ fun RustFmtBlock.getAlignmentStrategy(): RustAlignmentStrategy = when (node.elem
 
     else -> RustAlignmentStrategy.NullStrategy
 }
+
+fun RustAlignmentStrategy.alignUnlessBlockDelim(): RustAlignmentStrategy = alignIf { c, p, x -> !c.isBlockDelim(p) }

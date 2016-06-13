@@ -32,10 +32,18 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
                     "KEEP_BLANK_LINES_IN_DECLARATIONS",
                     "KEEP_BLANK_LINES_IN_CODE")
 
-            WRAPPING_AND_BRACES_SETTINGS ->
+            WRAPPING_AND_BRACES_SETTINGS -> {
                 consumer.showStandardOptions(
                     "RIGHT_MARGIN",
-                    "ALIGN_MULTILINE_CHAINED_METHODS");
+                    "ALIGN_MULTILINE_CHAINED_METHODS",
+                    "ALIGN_MULTILINE_PARAMETERS",
+                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS")
+
+                consumer.showCustomOption(RustCodeStyleSettings::class.java,
+                    "ALIGN_RET_TYPE_AND_WHERE_CLAUSE",
+                    "Align return type and where clause",
+                    CodeStyleSettingsCustomizable.WRAPPING_METHOD_PARAMETERS)
+            }
         }
     }
 
@@ -43,7 +51,8 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
 
     override fun getDefaultCommonSettings(): CommonCodeStyleSettings =
         CommonCodeStyleSettings(language).apply {
-            RIGHT_MARGIN = 99
+            RIGHT_MARGIN = 100
+            ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
             initIndentOptions().apply {
                 // FIXME(jajakobyly): It's a hack
                 // Nobody else does this and still somehow achieve similar effect
