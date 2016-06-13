@@ -6,7 +6,7 @@ import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustTokenElementTypes.DOT
 
 fun RustFmtBlock.getAlignmentStrategy(): RustAlignmentStrategy = when (node.elementType) {
-    TUPLE_EXPR, TUPLE_TYPE, ARG_LIST, ENUM_TUPLE_ARGS ->
+    TUPLE_EXPR, TUPLE_TYPE, ARG_LIST, ENUM_TUPLE_ARGS, FORMAT_MACRO_ARGS, TRY_MACRO_ARGS ->
         RustAlignmentStrategy.wrap()
             .alignIf { c, p, x -> !c.isBlockDelim(p) }
 
