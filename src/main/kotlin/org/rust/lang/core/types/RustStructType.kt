@@ -18,7 +18,7 @@ class RustStructType(val struct: RustStructItemElement) : RustType {
      * There may be several `impl` blocks for the same type and they may
      * be spread across different files and modules (we don't handle this yet)
      */
-    val inheritedImpls: Collection<RustImplItemElement> by lazy {
+    val inherentImpls: Collection<RustImplItemElement> by lazy {
         struct.parentOfType<RustMod>()
             ?.itemList.orEmpty()
                 .filterIsInstance<RustImplItemElement>()
@@ -26,7 +26,7 @@ class RustStructType(val struct: RustStructItemElement) : RustType {
     }
 
     val allMethods: Collection<RustImplMethodMemberElement>
-        get() = inheritedImpls.flatMap { it.implBody?.implMethodMemberList.orEmpty() }
+        get() = inherentImpls.flatMap { it.implBody?.implMethodMemberList.orEmpty() }
 
     val nonStaticMethods: Collection<RustImplMethodMemberElement>
         get() = allMethods.filter { !it.isStatic }
