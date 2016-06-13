@@ -36,6 +36,11 @@ fun RustFmtBlock.getAlignmentStrategy(): RustAlignmentStrategy = when (node.elem
             .alignIf(DOT) // DOT is synthetic's block representative
             .alignIf(ctx.commonSettings.ALIGN_MULTILINE_CHAINED_METHODS)
 
+    WHERE_CLAUSE ->
+        RustAlignmentStrategy.wrap()
+            .alignIf(WHERE_PRED)
+            .alignIf(ctx.rustSettings.ALIGN_WHERE_BOUNDS)
+
     else -> RustAlignmentStrategy.NullStrategy
 }
 

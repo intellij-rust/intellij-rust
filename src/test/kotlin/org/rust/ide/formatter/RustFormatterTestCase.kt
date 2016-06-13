@@ -47,6 +47,11 @@ class RustFormatterTestCase : FormatterTestCase() {
         doTest()
     }
 
+    fun testAlignWhereBoundsOff() {
+        custom().ALIGN_WHERE_BOUNDS = false
+        doTest()
+    }
+
     // FIXME: these two guys are way too big
     fun testSpacing() = doTest()
     fun testLineBreaks() = doTest()
