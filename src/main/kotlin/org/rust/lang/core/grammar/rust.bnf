@@ -585,6 +585,7 @@ field_decl ::= attrs_and_vis IDENTIFIER type_ascription {
 // unlike structs, enum variants can't have `pub` visibility applied to fields
 field_decl_in_enum ::= outer_attr* IDENTIFIER type_ascription {
   pin = 2
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   elementType = field_decl
 }
 
