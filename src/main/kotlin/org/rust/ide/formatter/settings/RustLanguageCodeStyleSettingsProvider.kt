@@ -43,7 +43,7 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
 
     override fun getDefaultCommonSettings(): CommonCodeStyleSettings =
         CommonCodeStyleSettings(language).apply {
-            RIGHT_MARGIN = 99
+            RIGHT_MARGIN = 100
             initIndentOptions().apply {
                 // FIXME(jajakobyly): It's a hack
                 // Nobody else does this and still somehow achieve similar effect
