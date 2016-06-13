@@ -1,6 +1,7 @@
 package org.rust.ide.formatter
 
 import com.intellij.psi.formatter.FormatterTestCase
+import org.rust.ide.formatter.settings.RustCodeStyleSettings
 import org.rust.lang.RustLanguage
 import org.rust.lang.RustTestCaseBase
 
@@ -23,20 +24,26 @@ class RustFormatterTestCase : FormatterTestCase() {
     fun testArgumentIndent() = doTest()
     fun testTraits() = doTest()
     fun testTupleAlignment() = doTest()
-    fun testChainCallAlignment() {
-        getSettings(RustLanguage).ALIGN_MULTILINE_CHAINED_METHODS = true
-        doTest()
-    }
     fun testChainCallAlignmentOff() = doTest()
     fun testChainCallIndent() = doTest()
 
+    fun testChainCallAlignment() {
+        common().ALIGN_MULTILINE_CHAINED_METHODS = true
+        doTest()
+    }
+
     fun testAlignParamsOff() {
-        getSettings(RustLanguage).ALIGN_MULTILINE_PARAMETERS = false
+        common().ALIGN_MULTILINE_PARAMETERS = false
         doTest()
     }
 
     fun testAlignParamsInCallsOff() {
-        getSettings(RustLanguage).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false
+        common().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false
+        doTest()
+    }
+
+    fun testAlignRetWhereOff() {
+        custom().ALIGN_RET_TYPE_AND_WHERE_CLAUSE = false
         doTest()
     }
 
@@ -45,4 +52,7 @@ class RustFormatterTestCase : FormatterTestCase() {
     fun testLineBreaks() = doTest()
 
     fun testIssue451() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/451
+
+    private fun common() = getSettings(RustLanguage)
+    private fun custom() = settings.getCustomSettings(RustCodeStyleSettings::class.java)
 }

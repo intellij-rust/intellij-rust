@@ -32,12 +32,18 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
                     "KEEP_BLANK_LINES_IN_DECLARATIONS",
                     "KEEP_BLANK_LINES_IN_CODE")
 
-            WRAPPING_AND_BRACES_SETTINGS ->
+            WRAPPING_AND_BRACES_SETTINGS -> {
                 consumer.showStandardOptions(
                     "RIGHT_MARGIN",
                     "ALIGN_MULTILINE_CHAINED_METHODS",
                     "ALIGN_MULTILINE_PARAMETERS",
-                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS");
+                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS")
+
+                consumer.showCustomOption(RustCodeStyleSettings::class.java,
+                    "ALIGN_RET_TYPE_AND_WHERE_CLAUSE",
+                    "Align return type and where clause",
+                    CodeStyleSettingsCustomizable.WRAPPING_METHOD_PARAMETERS)
+            }
         }
     }
 
