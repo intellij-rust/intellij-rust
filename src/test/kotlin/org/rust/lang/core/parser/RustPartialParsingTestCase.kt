@@ -3,6 +3,10 @@ package org.rust.lang.core.parser
 import com.intellij.psi.PsiFile
 import org.assertj.core.api.Assertions.assertThat
 
+/**
+ * Tests parser recovery (`pin` and `recoverWhile` attributes from `rust.bnf`)
+ * by constructing PSI trees from syntactically invalid files.
+ */
 class RustPartialParsingTestCase : RustParsingTestCaseBase("partial") {
 
     fun testFn() = doTest(true)
