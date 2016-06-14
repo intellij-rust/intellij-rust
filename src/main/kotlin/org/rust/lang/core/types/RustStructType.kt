@@ -2,10 +2,9 @@ package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.RustImplItemElement
 import org.rust.lang.core.psi.RustImplMethodMemberElement
-import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.RustStructItemElement
+import org.rust.lang.core.psi.containingMod
 import org.rust.lang.core.psi.impl.mixin.isStatic
-import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 
@@ -19,7 +18,7 @@ class RustStructType(val struct: RustStructItemElement) : RustType {
      * be spread across different files and modules (we don't handle this yet)
      */
     val inherentImpls: Collection<RustImplItemElement> by lazy {
-        struct.parentOfType<RustMod>()
+        struct.containingMod
             ?.itemList.orEmpty()
                 .filterIsInstance<RustImplItemElement>()
                 .filter { it.traitRef == null && (it.type?.resolvedType == this) }

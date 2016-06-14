@@ -33,7 +33,7 @@ class ExtractInlineModuleIntention : PsiElementBaseIntentionAction() {
     }
 
     override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
-        var mod = element.parentOfType<RustModItemElement>() ?: return false
+        val mod = element.parentOfType<RustModItemElement>() ?: return false
         return !mod.isTopLevelInFile && mod.`super`?.ownsDirectory ?: false
     }
 }
