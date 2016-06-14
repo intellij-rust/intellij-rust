@@ -54,6 +54,8 @@ class RustFile(
 
     override val innerAttrList: List<RustInnerAttrElement>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)
+
+    val fileModName: String? = if (name != RustMod.MOD_RS) FileUtil.getNameWithoutExtension(name) else parent?.name
 }
 
 

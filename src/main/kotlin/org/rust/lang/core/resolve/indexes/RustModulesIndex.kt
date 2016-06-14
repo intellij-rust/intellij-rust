@@ -1,6 +1,5 @@
 package org.rust.lang.core.resolve.indexes
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.ID
@@ -15,7 +14,7 @@ object RustModulesIndex {
 
     fun getSuperFor(mod: RustFile): RustMod? {
         val project = mod.project
-        val key = getKey(mod) ?: return null
+        val key = mod.fileModName?.let { RustModulesIndexExtension.Key(it) } ?: return null
 
         var result: RustMod? = null
         FileBasedIndex.getInstance().processValues(ID, key, null, { file, value ->
@@ -31,16 +30,5 @@ object RustModulesIndex {
         }, GlobalSearchScope.allScope(project) )
 
         return result
-    }
-
-    private fun getKey(file: RustFile): RustModulesIndexExtension.Key? {
-        val name = if (file.name != RustMod.MOD_RS)
-            FileUtil.getNameWithoutExtension(file.name)
-        else
-            file.parent?.name
-
-        return name?.let {
-            RustModulesIndexExtension.Key(it)
-        }
     }
 }
