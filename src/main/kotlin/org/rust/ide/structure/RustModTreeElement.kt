@@ -8,7 +8,7 @@ open class RustModTreeElement(item: RustMod) : PsiTreeElementBase<RustMod>(item)
     override fun getPresentableText() = element?.name
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> =
-        element?.itemList.orEmpty().mapNotNull { toTreeElement(it) }
+        element?.allItems.orEmpty().mapNotNull { toTreeElement(it) }
 
     private fun toTreeElement(it: RustItemElement): StructureViewTreeElement? =
         when (it) {

@@ -8,17 +8,17 @@ import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.names.parts.RustIdNamePart
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustItemElementImpl
+import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.stubs.RustItemStub
+import org.rust.lang.core.stubs.elements.RustModItemStub
 import javax.swing.Icon
 
-abstract class RustModItemImplMixin : RustItemElementImpl
+abstract class RustModItemImplMixin : RustStubbedNamedElementImpl<RustModItemStub>
                                     , RustModItemElement {
 
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RustModItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RustIcons.MODULE)
@@ -45,5 +45,8 @@ abstract class RustModItemImplMixin : RustItemElementImpl
 
     override val innerAttrList: List<RustInnerAttrElement>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)
+
+    override val outerAttrList: List<RustOuterAttrElement>
+        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustOuterAttrElement::class.java)
 
 }

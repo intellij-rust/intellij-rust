@@ -6,20 +6,20 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustItemElementImpl
+import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ref.RustModReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
-import org.rust.lang.core.stubs.RustItemStub
+import org.rust.lang.core.stubs.elements.RustModDeclItemStub
 import java.io.File
 import javax.swing.Icon
 
-abstract class RustModDeclItemImplMixin : RustItemElementImpl
+abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RustModDeclItemStub>
                                         , RustModDeclItemElement {
 
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RustItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RustModDeclItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int): Icon? {
         return iconWithVisibility(flags, RustIcons.MODULE)

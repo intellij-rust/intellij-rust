@@ -486,12 +486,10 @@ private fun RustItemsOwner.itemEntries(context: Context): Sequence<ScopeEntry> {
             ScopeEntry.lazy(it.name) { it.reference?.resolve() }
         },
 
-        itemList.filter {
-            !(it is RustExternCrateItemElement || it is RustUseItemElement || it is RustModDeclItemElement)
-        }.scopeEntries,
+        allItemDefinitions.scopeEntries,
 
-        externalCrates.asSequence().mapNotNull { externCrate ->
-            ScopeEntry.lazy(externCrate.alias?.name ?: externCrate.name) { externCrate.reference?.resolve() }
+        externCrates.asSequence().mapNotNull {
+            ScopeEntry.lazy(it.alias?.name ?: it.name) { it.reference?.resolve() }
         },
 
         usualImports.asSequence().flatMap { it.nonWildcardEntries() },

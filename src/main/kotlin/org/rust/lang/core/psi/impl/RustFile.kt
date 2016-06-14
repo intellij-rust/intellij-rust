@@ -15,7 +15,6 @@ import org.rust.lang.core.names.RustFileModuleId
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.RustInnerAttrElement
 import org.rust.lang.core.psi.RustInnerAttributeOwner
-import org.rust.lang.core.psi.RustItemElement
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.indexes.RustCratePath
@@ -29,9 +28,6 @@ class RustFile(
     override fun getReference(): RustReference? = null
 
     override fun getFileType(): FileType = RustFileType
-
-    override val itemList: List<RustItemElement>
-        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustItemElement::class.java)
 
     override val `super`: RustMod?
         get() = RustModulesIndex.getSuperFor(this)

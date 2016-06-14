@@ -9,7 +9,7 @@ class RustStructOrEnumIndex : StringStubIndexExtension<RustStructOrEnum>() {
         val KEY: StubIndexKey<String, RustStructOrEnum> = StubIndexKey.createIndexKey("rust.structOrEnum")
     }
 
-    override fun getVersion(): Int = 1
+    override fun getVersion(): Int = 2
 
     override fun getKey(): StubIndexKey<String, RustStructOrEnum> = KEY
 }

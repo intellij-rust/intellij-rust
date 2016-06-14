@@ -145,6 +145,7 @@
     mixin       ("fn_item")             = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
     mixin       ("trait_method_member") = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodMemberImplMixin"
     mixin       ("enum_item")           = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
+    mixin       ("foreign_mod_item")    = "org.rust.lang.core.psi.impl.mixin.RustForeignModItemImplMixin"
 
     //
     // References
@@ -188,11 +189,6 @@
     implements  ("pat_binding") = [ "org.rust.lang.core.psi.RustNamedElement" ]
     mixin       ("pat_binding") = "org.rust.lang.core.psi.impl.mixin.RustPatBindingImplMixin"
 
-    //
-    // Generic declarations
-    //
-
-    implements ("impl_item")   = "org.rust.lang.core.psi.RustGenericDeclaration"
 
     //
     //  Misc
@@ -208,10 +204,6 @@
 
     elementType (".*_bin_expr")   = binary_expr
     elementType (".*_range_expr") = range_expr
-
-    extends           ("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = item
-    elementTypeFactory("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = "org.rust.lang.core.stubs.types.ElementFactoryKt.factory"
-    stubClass         ("(?!meta_item)(?!foreign_item)(?!macro_item).*_item") = "org.rust.lang.core.stubs.RustItemStub"
 
     elementType ("(fn|anon|lambda|path)_parameter") = parameter
     elementType ("(fn|lambda|path)_parameters|method_parameters|method_decl_parameters") = parameters
@@ -267,14 +259,6 @@ meta_item ::= IDENTIFIER [ '=' lit_expr | '(' [ <<comma_separated_list meta_item
 vis ::= PUB
 
 private attrs_and_vis ::= outer_attr* vis?
-
-fake item ::= attrs_and_vis {
-  implements  = [ "org.rust.lang.core.psi.RustNamedElement"
-                  "org.rust.lang.core.psi.RustVisibilityOwner"
-                  "org.rust.lang.core.psi.RustOuterAttributeOwner" ]
-  mixin       = "org.rust.lang.core.psi.impl.mixin.RustItemImplMixin"
-  stubClass   = "org.rust.lang.core.stubs.RustItemStub"
-}
 
 private docs_and_item ::= ( stmt_item_group | macro_item )
 
@@ -344,10 +328,12 @@ fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_
   pin = fn_header
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.psi.RustItemElement"
                  "org.rust.lang.core.resolve.scope.RustResolveScope"
                  "org.rust.lang.core.psi.RustGenericDeclaration"
                  "org.rust.lang.core.psi.RustInnerAttributeOwner" ]
-
+  stubClass = "org.rust.lang.core.stubs.elements.RustFnItemStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
 generic_params ::= '<' lifetimes [ ',' [ type_params ','? ] ] '>'
@@ -449,11 +435,20 @@ private static_decl ::= IDENTIFIER type_ascription '=' any_expr
 
 static_item ::= attrs_and_vis STATIC MUT? static_decl ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement" ]
+  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.psi.RustItemElement" ]
+  extends = "org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.elements.RustStaticItemStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
+
 const_item ::= attrs_and_vis CONST static_decl ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement" ]
+  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.psi.RustItemElement" ]
+  extends = "org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.elements.RustConstItemStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
 private view_item ::= use_item
@@ -462,6 +457,7 @@ private view_item ::= use_item
 use_item ::= attrs_and_vis USE use_path ';' {
   pin = "USE"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RustItemElement" ]
 }
 
 private use_path ::=
@@ -483,7 +479,8 @@ alias ::= AS IDENTIFIER
 
 extern_crate_item ::= attrs_and_vis EXTERN CRATE IDENTIFIER alias? ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement" ]
+  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.psi.RustItemElement" ]
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -492,21 +489,27 @@ extern_crate_item ::= attrs_and_vis EXTERN CRATE IDENTIFIER alias? ';' {
 
 mod_decl_item ::= attrs_and_vis MOD IDENTIFIER ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement" ]
+  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.psi.RustItemElement" ]
+  stubClass = "org.rust.lang.core.stubs.elements.RustModDeclItemStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
 mod_item ::= attrs_and_vis MOD IDENTIFIER '{' inner_attr* docs_and_item* '}' {
   pin = 4
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.psi.RustItemElement"
                  "org.rust.lang.core.resolve.scope.RustResolveScope"
                  "org.rust.lang.core.psi.RustMod"
                  "org.rust.lang.core.psi.RustInnerAttributeOwner" ]
-
+  stubClass = "org.rust.lang.core.stubs.elements.RustModItemStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
 foreign_mod_item ::= attrs_and_vis extern_abi '{' inner_attr* foreign_decl* '}' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RustItemElement" ]
 }
 
 private foreign_decl ::= foreign_static_decl | foreign_fn_decl
@@ -533,12 +536,18 @@ foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params? foreign_fn_param
 struct_item ::= attrs_and_vis STRUCT IDENTIFIER generic_params? (struct_tuple_args? where_clause? ';' | where_clause? struct_decl_args) {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustStructOrEnum" ]
+  stubClass = "org.rust.lang.core.stubs.elements.RustStructItemStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 struct_decl_args ::= <<struct_body field_decl>>
 struct_tuple_args ::= <<tuple_body tuple_field_decl>>
 
 enum_item ::= attrs_and_vis ENUM IDENTIFIER generic_params? where_clause? enum_body {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
+                 "org.rust.lang.core.psi.RustStructOrEnum" ]
+  stubClass = "org.rust.lang.core.stubs.elements.RustEnumItemStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
 enum_body ::= '{' [ <<comma_separated_list enum_variant>> ] '}' { pin = 1 }
@@ -589,8 +598,12 @@ private meta tuple_body ::= '(' <<comma_separated_list <<param>> >> ')' { pin = 
 trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER generic_params? type_param_bounds? where_clause? trait_body {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.psi.RustItemElement"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
+  stubClass = "org.rust.lang.core.stubs.elements.RustTraitItemStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
+
 trait_body ::= '{' trait_member* '}' { pin = 1 }
 
 // TODO: use upper rules and inheritance here
@@ -635,7 +648,10 @@ trait_ref ::= path_generic_args_without_colons
 impl_item ::= attrs_and_vis UNSAFE? IMPL generic_params? ( bare_impl | for_impl ) {
   pin = "IMPL"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RustItemElement"
+                 "org.rust.lang.core.psi.RustGenericDeclaration" ]
 }
+
 private bare_impl ::= type where_clause? impl_body
 private for_impl ::= '!'? trait_ref FOR (type where_clause? impl_body | '..' '{' '}')
 
@@ -710,7 +726,10 @@ wildcard_type ::= '_'
 type_item ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params? where_clause? '=' type ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.psi.RustItemElement"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
+  stubClass = "org.rust.lang.core.stubs.elements.RustTypeItemStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
 type_qual_path ::= <<qualified_path path_without_types>>
