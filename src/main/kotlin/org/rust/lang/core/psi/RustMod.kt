@@ -14,6 +14,8 @@ interface RustMod : RustNamedElement, RustItemsOwner {
      */
     val `super`: RustMod?
 
+    val modName: String?
+
     val ownsDirectory: Boolean
 
     val ownedDirectory: PsiDirectory?
@@ -27,4 +29,17 @@ interface RustMod : RustNamedElement, RustItemsOwner {
     companion object {
         val MOD_RS = "mod.rs"
     }
+}
+
+/**
+ * Returns a string representing a path to this module from the crate root, like `foo::bar::baz`.
+ * There is no leading `::`. Returns empty string for the crate root.
+ *
+ * This name is not guaranteed to be unique: modules from different crates
+ * can have the same path within the crate.
+ */
+val RustMod.canonicalCratePath: String? get() {
+    if (isCrateRoot) return ""
+    val parentPath = `super`?.canonicalCratePath ?: return null
+    return if (parentPath == "") modName else "$parentPath::$modName"
 }

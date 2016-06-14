@@ -78,6 +78,35 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
         doTestRemembersContext(CargoTestRunConfigurationProducer(), ctx1, ctx2)
     }
 
+    fun testTestProducerWorksForModules() {
+        testProject {
+            lib("foo", "src/lib.rs", """
+                mod foo {
+                    #[test] fn bar() {}
+
+                    #[test] fn baz() {}
+
+                    fn quux() {<caret>}
+                }
+            """).open()
+        }
+        doTestProducedConfigurations()
+    }
+
+    fun testMeaningfulConfigurationName() {
+        testProject {
+            lib("foo", "src/lib.rs", "mod bar;")
+            file("src/bar/mod.rs", """
+                mod tests {
+                    fn quux() <caret>{}
+
+                    #[test] fn baz() {}
+                }
+            """).open()
+        }
+        doTestProducedConfigurations()
+    }
+
     private fun doTestProducedConfigurations() {
         val configurationContext = ConfigurationContext(myFixture.file.findElementAt(myFixture.caretOffset))
 
@@ -119,37 +148,47 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
     }
 
     private inner class TestProjectBuilder {
-        private inner class Target(
-            val name: String,
+        private inner class File(
             val path: String,
             val code: String,
-            val caretOffset: Int?,
+            val caretOffset: Int?
+        )
+
+        private inner class Target(
+            val name: String,
+            val file: File,
             val kind: CargoProjectDescription.TargetKind
         )
 
         private var targets = arrayListOf<Target>()
-        private var toOpen: Target? = null
+        private var files = arrayListOf<File>()
+        private var toOpen: File? = null
         private val hello_world = """fn main() { println!("Hello, World!") }"""
         private val hello = """pub fn hello() -> String { return "Hello, World!".to_string() }"""
 
         fun bin(name: String, path: String, code: String = hello_world): TestProjectBuilder {
-            addTarget(code, name, path, CargoProjectDescription.TargetKind.BIN)
+            addTarget(name, CargoProjectDescription.TargetKind.BIN, path, code)
             return this
         }
 
         fun lib(name: String, path: String, code: String = hello): TestProjectBuilder {
-            addTarget(code, name, path, CargoProjectDescription.TargetKind.LIB)
+            addTarget(name, CargoProjectDescription.TargetKind.LIB, path, code)
+            return this
+        }
+
+        fun file(path: String, code: String): TestProjectBuilder {
+            addFile(path, code)
             return this
         }
 
         fun open(): TestProjectBuilder {
             require(toOpen == null)
-            toOpen = targets.last()
+            toOpen = files.last()
             return this
         }
 
         fun build() {
-            targets.forEach { myFixture.addFileToProject(it.path, it.code) }
+            files.forEach { myFixture.addFileToProject(it.path, it.code) }
             toOpen?.let { toOpen ->
                 openFileInEditor(toOpen.path)
                 if (toOpen.caretOffset != null) {
@@ -169,7 +208,7 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
                             version = "0.0.1",
                             targets = targets.map {
                                 CargoProjectDescriptionData.Target(
-                                    myFixture.tempDirFixture.getFile(it.path)!!.url,
+                                    myFixture.tempDirFixture.getFile(it.file.path)!!.url,
                                     it.name,
                                     it.kind
                                 )
@@ -184,11 +223,18 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
             metadataService.setState(projectDescription!!)
         }
 
-        private fun addTarget(code: String, name: String, path: String, kind: CargoProjectDescription.TargetKind) {
+        private fun addTarget(name: String, kind: CargoProjectDescription.TargetKind, path: String, code: String) {
+            val file = addFile(path, code)
+            targets.add(Target(name, file, kind))
+        }
+
+        private fun addFile(path: String, code: String): File {
             val caret = code.indexOf("<caret>")
             val offset = if (caret == -1) null else caret
             val cleanedCode = code.replace("<caret>", "")
-            targets.add(Target(name, path, cleanedCode, offset, kind))
+            val file = File(path, cleanedCode, offset)
+            files.add(file)
+            return file
         }
     }
 }

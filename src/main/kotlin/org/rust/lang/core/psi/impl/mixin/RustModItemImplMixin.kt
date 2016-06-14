@@ -27,6 +27,8 @@ abstract class RustModItemImplMixin : RustItemElementImpl
         "No parent mod for non-file mod at ${containingFile.virtualFile.path}:\n$text"
     }
 
+    override val modName: String? get() = name
+
     override val ownsDirectory: Boolean = true // Any inline nested mod owns a directory
 
     override val ownedDirectory: PsiDirectory? get() {

@@ -14,7 +14,7 @@ object RustModulesIndex {
 
     fun getSuperFor(mod: RustFile): RustMod? {
         val project = mod.project
-        val key = mod.fileModName?.let { RustModulesIndexExtension.Key(it) } ?: return null
+        val key = mod.modName?.let { RustModulesIndexExtension.Key(it) } ?: return null
 
         var result: RustMod? = null
         FileBasedIndex.getInstance().processValues(ID, key, null, { file, value ->

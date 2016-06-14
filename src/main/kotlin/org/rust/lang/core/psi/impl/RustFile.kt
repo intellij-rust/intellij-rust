@@ -33,6 +33,8 @@ class RustFile(
     override val `super`: RustMod?
         get() = RustModulesIndex.getSuperFor(this)
 
+    override val modName: String? = if (name != RustMod.MOD_RS) FileUtil.getNameWithoutExtension(name) else parent?.name
+
     override val ownsDirectory: Boolean
         get() = name == RustMod.MOD_RS || isCrateRoot
 
@@ -55,7 +57,6 @@ class RustFile(
     override val innerAttrList: List<RustInnerAttrElement>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)
 
-    val fileModName: String? = if (name != RustMod.MOD_RS) FileUtil.getNameWithoutExtension(name) else parent?.name
 }
 
 
