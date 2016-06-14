@@ -157,7 +157,6 @@ STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
   "-"                             { return MINUS; }
   "#"                             { return SHA; }
   "|="                            { return OREQ; }
-  "&&"                            { return ANDAND; }
   "&="                            { return ANDEQ; }
   "&"                             { return AND; }
   "|"                             { return OR; }

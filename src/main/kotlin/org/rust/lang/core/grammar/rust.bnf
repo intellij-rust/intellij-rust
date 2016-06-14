@@ -346,7 +346,7 @@ self_argument ::= [ '&' LIFETIME? ] MUT? SELF type_ascription?
 private restricted_pat ::= &( IDENTIFIER
                             | '_'
                             | '&' (IDENTIFIER | '_')
-                            | '&&' (IDENTIFIER | '_')
+                            | '&' '&' (IDENTIFIER | '_')
                             | MUT IDENTIFIER
                             ) pat
 
@@ -434,7 +434,6 @@ private pats ::= <<comma_separated_list pat>>
 private pat_vec_elts ::= pats? [ '..' [ ',' pats ] ]
 
 pat_reg ::= '&' MUT? pat
-          | '&&' pat
 
 pat_wild ::= '_'
 pat_binding ::= binding_mode? IDENTIFIER !'...' !'::'
@@ -707,7 +706,7 @@ vec_type ::= '[' type [';' any_expr] ']'
 
 ptr_type ::= '*' [ MUT | CONST ] type
 
-ref_type ::= ( '&' | '&&' ) [ LIFETIME? MUT? ] type
+ref_type ::= '&' [ LIFETIME? MUT? ] type
 
 bare_fn_type ::= [ UNSAFE? extern_abi? ] FN fn_type_parameters ret_type?
 
@@ -879,17 +878,17 @@ mul_bin_expr        ::= expr ('*' | '/' | '%') expr
 
 // <expr> | <expr> has higher priority than <expr> || <expr>
 bool_or_bin_expr    ::= expr oror expr
-bool_and_bin_expr   ::= expr '&&' expr
+bool_and_bin_expr   ::= expr andand expr
 bit_or_bin_expr     ::= expr '|' !'|' expr
+bit_and_bin_expr    ::= expr '&' expr // `&a & &b` is possible
 bit_xor_bin_expr    ::= expr '^' expr
-bit_and_bin_expr    ::= expr '&' expr
 
 
 cast_expr ::= expr AS type
 
 try_expr ::= expr '?'
 
-unary_expr ::= (BOX | '-' | '*' | '!' | ('&' | '&&') MUT?) expr
+unary_expr ::= (BOX | '-' | '*' | '!' | '&' MUT?) expr
 
 lambda_expr ::= MOVE? lambda_parameters ret_type? any_expr
 
@@ -1135,6 +1134,7 @@ private ltlteq ::= <<collapse LTLTEQ LT LT EQ>> | never LTLTEQ { name = "<<=" }
 private ltlt   ::= <<collapse LTLT   LT LT>>    | never LTLT   { name = "<<" }
 private lteq   ::= <<collapse LTEQ   LT EQ>>    | never LTEQ   { name = "<=" }
 private oror   ::= <<collapse OROR   OR OR>>    | never OROR   { name = "||" }
+private andand ::= <<collapse ANDAND AND AND>>  | never ANDAND { name = "&&" }
 
 private never ::= !()
 
