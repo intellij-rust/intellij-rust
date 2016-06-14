@@ -4,9 +4,9 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.util.fields
 import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.resolve.RustResolveEngine
 import org.rust.lang.core.resolve.enumerateScopesFor
 import org.rust.lang.core.resolve.scope.RustResolveScope
-import org.rust.lang.core.resolve.scope.declarations
 import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.util.resolvedType
 
@@ -41,15 +41,14 @@ object RustCompletionEngine {
         }
 
         return enumerateScopesFor(ref)
-            .flatMap { it.declarations(place = ref) }
-            .mapNotNull { it.element }
+            .flatMap { RustResolveEngine.declarations(it, place = ref) }
             .toList()
     }
 }
 
 private fun RustNamedElement?.completionsFromResolveScope(): Collection<RustNamedElement> =
     when (this) {
-        is RustResolveScope -> declarations().mapNotNull { it.element }.toList()
+        is RustResolveScope -> RustResolveEngine.declarations(this).toList()
         else                -> emptyList()
     }
 
