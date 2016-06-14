@@ -1,7 +1,5 @@
 package org.rust.lang.core.completion
 
-import org.rust.lang.RustTestCaseBase
-
 class RustCompletionTest : RustCompletionTestBase() {
 
     override val dataPath = "org/rust/lang/core/completion/fixtures"
@@ -18,6 +16,7 @@ class RustCompletionTest : RustCompletionTestBase() {
     fun testEnumField() = checkSoleCompletion()
     fun testFieldExpr() = checkSoleCompletion()
     fun testMethodCallExpr() = checkSoleCompletion()
+    fun testWildcardImports() = checkSoleCompletion()
 
     fun testLocalScope() = checkNoCompletion()
     fun testWhileLet() = checkNoCompletion()
