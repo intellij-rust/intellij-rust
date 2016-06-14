@@ -14,7 +14,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustTokenElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.basePath
-import org.rust.lang.core.psi.impl.mixin.isStarImport
 import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.elementType
@@ -478,9 +477,7 @@ private class RustScopeVisitor(
 
 
 private fun RustItemsOwner.itemEntries(context: Context): Sequence<ScopeEntry> {
-    // wildcard imports have low priority
-    val (wildCardImports, usualImports) = useDeclarations.partition { it.isStarImport }
-    val imports = (usualImports + wildCardImports).asSequence().flatMap { it.importedEntries(context) }
+    val (wildCardImports, usualImports) = useDeclarations.partition { it.mul != null }
 
     return sequenceOf (
         // XXX: this must come before itemList to resolve `Box` from prelude. We need to handle cfg attributes to
@@ -497,20 +494,23 @@ private fun RustItemsOwner.itemEntries(context: Context): Sequence<ScopeEntry> {
             ScopeEntry.lazy(externCrate.alias?.name ?: externCrate.name) { externCrate.reference?.resolve() }
         },
 
-        imports
+        usualImports.asSequence().flatMap { it.nonWildcardEntries() },
+
+        // wildcard imports have low priority
+        wildCardImports.asSequence().flatMap { it.wildcardEntries(context) }
     ).flatten()
 }
 
 
-private fun RustUseItemElement.importedEntries(context: Context): Sequence<ScopeEntry> {
-    if (isStarImport) {
-        if (this in context.visitedStarImports) return emptySequence()
-        // Recursively step into `use foo::*`
-        val pathPart = path ?: return emptySequence()
-        val mod = pathPart.reference.resolve() as? RustResolveScope ?: return emptySequence()
-        return declarations(mod, context.copy(visitedStarImports = context.visitedStarImports + this))
-    }
+private fun RustUseItemElement.wildcardEntries(context: Context): Sequence<ScopeEntry> {
+    if (this in context.visitedStarImports) return emptySequence()
+    // Recursively step into `use foo::*`
+    val mod = path?.reference?.resolve() as? RustResolveScope ?: return emptySequence()
+    return declarations(mod, context.copy(visitedStarImports = context.visitedStarImports + this))
+}
 
+
+private fun RustUseItemElement.nonWildcardEntries(): Sequence<ScopeEntry> {
     val globList = useGlobList
     if (globList == null) {
         val path = path ?: return emptySequence()

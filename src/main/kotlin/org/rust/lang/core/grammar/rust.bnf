@@ -137,7 +137,6 @@
     mixin       ("mod_decl_item")       = "org.rust.lang.core.psi.impl.mixin.RustModDeclItemImplMixin"
     mixin       ("extern_crate_item")   = "org.rust.lang.core.psi.impl.mixin.RustExternCrateItemImplMixin"
     mixin       ("type_item")           = "org.rust.lang.core.psi.impl.mixin.RustTypeItemImplMixin"
-    mixin       ("use_item")            = "org.rust.lang.core.psi.impl.mixin.RustUseItemImplMixin"
     mixin       ("enum_variant")        = "org.rust.lang.core.psi.impl.mixin.RustEnumVariantImplMixin"
     mixin       ("impl_method_member")  = "org.rust.lang.core.psi.impl.mixin.RustImplMethodMemberImplMixin"
     mixin       ("method_call_expr")    = "org.rust.lang.core.psi.impl.mixin.RustMethodCallExprImplMixin"
