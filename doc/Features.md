@@ -63,20 +63,21 @@ Use `Ctrl+J` to view the list of templates applicable in the current context.
 
 ### Formatter
 
-`Ctrl+Alt+l` reformats the file. Formatter is not fully implemented. It should
-correctly add/remove spaces around operators, but it might mess up the
-indentation. We don't support `rustfmt` yet but the support is planned. You can
-use Run Configuration to execute `cargo fmt`.
+`Ctrl+Alt+l` reformats the file. We don't support `rustfmt` yet but we plan to.
+At the moment you can use Run Configuration to execute `cargo fmt`.
 
 ### Run configurations
 
 Use **Edit Configurations** action to add `Cargo Command` run configuration.
+`Ctrl+Shift+F10` automatically creates a run configuration in the following
+contexts:
 
-Use `Ctrl+Shift+F10` in the file with `fn main() {}` to execute
-the corresponding binary target with `cargo run`.
+* In the file with `fn main() {}` to execute the corresponding binary target
+  with `cargo run`.
 
-Use `Ctrl+Shift+F10` when the caret is over a test function to execute a
-specific test.
+* Inside the function with a `#[test]` attribute to execute a single test.
+
+* Inside a module with test functions to run all the tests from the module.
 
 ## Intentions
 
