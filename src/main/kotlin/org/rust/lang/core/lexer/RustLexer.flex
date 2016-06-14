@@ -241,9 +241,10 @@ STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
   // Match 1f32 and 1f64 as floats, not integers (kinda hack)
   {DEC_LITERAL} {FLT_SUFFIX}      { return FLOAT_LITERAL; }
 
-  {INT_LITERAL}                   { return INTEGER_LITERAL; }
-
+  // Floats must come first, to parse 1e1 as a float and not as an integer with a suffix
   {FLT_LITERAL}                   { return FLOAT_LITERAL; }
+
+  {INT_LITERAL}                   { return INTEGER_LITERAL; }
 
   // Correctly handle 1.f32 and 0..9
   {FLT_TDOT} / [^.\p{xidstart}]   { return FLOAT_LITERAL; }
