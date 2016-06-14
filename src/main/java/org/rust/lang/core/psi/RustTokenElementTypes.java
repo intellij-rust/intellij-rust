@@ -93,7 +93,6 @@ public interface RustTokenElementTypes {
     // Operators
 
     RustTokenType AND = new RustTokenType("&");
-    RustTokenType ANDAND = new RustTokenType("&&");
     RustTokenType ANDEQ = new RustTokenType("&=");
     RustTokenType ARROW = new RustTokenType("->");
     RustTokenType FAT_ARROW = new RustTokenType("=>");
@@ -147,6 +146,7 @@ public interface RustTokenElementTypes {
     RustTokenType LTLT = new RustTokenType("<<");
     RustTokenType LTEQ = new RustTokenType("<=");
     RustTokenType OROR = new RustTokenType("||");
+    RustTokenType ANDAND = new RustTokenType("&&");
 
     //
     // Token Sets
