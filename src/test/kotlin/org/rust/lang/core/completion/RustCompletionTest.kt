@@ -1,9 +1,6 @@
 package org.rust.lang.core.completion
 
-import org.assertj.core.api.Assertions.assertThat
-import org.rust.lang.RustTestCaseBase
-
-class RustCompletionTest : RustTestCaseBase() {
+class RustCompletionTest : RustCompletionTestBase() {
 
     override val dataPath = "org/rust/lang/core/completion/fixtures"
 
@@ -19,6 +16,7 @@ class RustCompletionTest : RustTestCaseBase() {
     fun testEnumField() = checkSoleCompletion()
     fun testFieldExpr() = checkSoleCompletion()
     fun testMethodCallExpr() = checkSoleCompletion()
+    fun testWildcardImports() = checkSoleCompletion()
 
     fun testLocalScope() = checkNoCompletion()
     fun testWhileLet() = checkNoCompletion()
@@ -33,21 +31,4 @@ class RustCompletionTest : RustTestCaseBase() {
         executeSoloCompletion()
     }
 
-    private fun checkSoleCompletion() = checkByFile {
-        executeSoloCompletion()
-    }
-
-    private fun checkNoCompletion() {
-        myFixture.configureByFile(fileName)
-        val variants = myFixture.completeBasic()
-        assertThat(variants).isNotNull()
-        assertThat(variants.size).isZero()
-    }
-
-    private fun executeSoloCompletion() {
-        val variants = myFixture.completeBasic()
-        assertThat(variants)
-            .withFailMessage("Expected a single completion, but got ${variants?.size}")
-            .isNull()
-    }
 }

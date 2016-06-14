@@ -12,12 +12,6 @@ import javax.swing.Icon
 
 abstract class RustTraitMethodMemberImplMixin(node: ASTNode) : RustNamedElementImpl(node)
                                                              , RustTraitMethodMemberElement {
-    override val declarations: Collection<RustNamedElement> get() {
-        val params = parameters ?: return emptyList()
-        return listOfNotNull(params.selfArgument) +
-            params.parameterList.orEmpty().flatMap { it.boundElements } +
-            genericParams?.typeParamList.orEmpty()
-    }
 
     override fun getIcon(flags: Int): Icon {
         var icon = if (isAbstract) RustIcons.ABSTRACT_METHOD else RustIcons.METHOD

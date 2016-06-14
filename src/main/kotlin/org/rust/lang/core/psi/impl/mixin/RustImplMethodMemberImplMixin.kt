@@ -13,13 +13,6 @@ import javax.swing.Icon
 abstract class RustImplMethodMemberImplMixin(node: ASTNode) : RustNamedElementImpl(node)
                                                             , RustImplMethodMemberElement {
 
-    override val declarations: Collection<RustNamedElement> get() {
-        val params = parameters ?: return emptyList()
-        return listOfNotNull(params.selfArgument) +
-            params.parameterList.orEmpty().flatMap { it.boundElements } +
-            genericParams?.typeParamList.orEmpty()
-    }
-
     override fun getIcon(flags: Int): Icon? {
         var icon = RustIcons.METHOD
         if (isStatic) {

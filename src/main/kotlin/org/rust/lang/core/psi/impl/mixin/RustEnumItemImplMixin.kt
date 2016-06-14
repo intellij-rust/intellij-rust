@@ -20,6 +20,4 @@ abstract class RustEnumItemImplMixin : RustItemElementImpl, RustEnumItemElement 
     override fun getIcon(flags: Int): Icon? =
         iconWithVisibility(flags, RustIcons.ENUM)
 
-    override val declarations: Collection<RustNamedElement>
-        get() = enumBody.enumVariantList + genericParams?.typeParamList.orEmpty()
 }
