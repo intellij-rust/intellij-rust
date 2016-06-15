@@ -20,9 +20,10 @@ abstract class RustStubbedNamedElementImpl<StubT> : RustStubbedElementImpl<StubT
     protected open val nameElement: PsiElement?
         get() = findChildByType(RustTokenElementTypes.IDENTIFIER)
 
-    override fun getName(): String? = stub?.let { stub ->
-        stub.name
-    } ?: nameElement?.text
+    override fun getName(): String? {
+        val stub = stub
+        return if (stub != null) stub.name else nameElement?.text
+    }
 
     override fun setName(name: String): PsiElement? {
         // sic!

@@ -9,7 +9,7 @@ class RustNamedElementIndex : StringStubIndexExtension<RustNamedElement>() {
         val KEY: StubIndexKey<String, RustNamedElement> = StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustNamedElementIndex")
     }
 
-    override fun getVersion(): Int = 1
+    override fun getVersion(): Int = 2
 
     override fun getKey(): StubIndexKey<String, RustNamedElement> = KEY
 }

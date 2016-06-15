@@ -626,8 +626,10 @@ trait_type_member ::= outer_attr* TYPE_KW IDENTIFIER type_param_bounds? [ '=' ty
 
 trait_method_member ::= outer_attr* fn_header method_decl_parameters ret_type? where_clause? (';' | inner_attrs_and_block) {
   pin = fn_header
-  implements = [ "org.rust.lang.core.psi.RustFnElement" ]
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RustFnElement" ]
+  stubClass = "org.rust.lang.core.stubs.elements.RustTraitMethodMemberStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
 
@@ -661,6 +663,8 @@ impl_method_member ::= attrs_and_vis fn_header method_parameters ret_type? where
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustFnElement"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
+  stubClass = "org.rust.lang.core.stubs.elements.RustImplMethodMemberStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
 impl_const_member ::= attrs_and_vis CONST static_decl ';' {
