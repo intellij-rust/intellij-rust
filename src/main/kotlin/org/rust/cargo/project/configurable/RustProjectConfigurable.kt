@@ -7,6 +7,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.vfs.JarFileSystem
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.suggestToolchain
@@ -24,7 +25,7 @@ class RustProjectConfigurable(
     private lateinit var stdlibLocation: TextFieldWithBrowseButton
 
     override fun createComponent(): JComponent {
-        val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        val descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
         stdlibLocation.addBrowseFolderListener(
             "Attach Rust sources",
             "Select the folder with Rust standard library source code",
@@ -76,8 +77,11 @@ class RustProjectConfigurable(
 
     override fun getHelpTopic(): String? = null
 
-    private val currentStdlibLocation: String? get() =
-        rustModule?.cargoProject?.packages?.find { it.name == "std" }?.contentRoot?.parent?.path
+    private val currentStdlibLocation: String? get() {
+        val libRoot = rustModule?.cargoProject?.packages?.find { it.name == "std" }?.contentRoot?.parent ?: return null
+        // If libRoot is inside a zip file, we want to show the path to the zip itself
+        return (JarFileSystem.getInstance().getLocalByEntry(libRoot) ?: libRoot).presentableUrl
+    }
 
     private val rustModule: Module? get() = project.modulesWithCargoProject.firstOrNull()
 }
