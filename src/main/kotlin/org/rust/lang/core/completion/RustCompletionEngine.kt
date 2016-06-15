@@ -5,7 +5,6 @@ import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.util.fields
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.RustResolveEngine
-import org.rust.lang.core.resolve.enumerateScopesFor
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.util.resolvedType
@@ -40,7 +39,7 @@ object RustCompletionEngine {
                 .completionsFromResolveScope()
         }
 
-        return enumerateScopesFor(ref)
+        return RustResolveEngine.enumerateScopesFor(ref)
             .flatMap { RustResolveEngine.declarations(it, place = ref) }
             .toList()
     }

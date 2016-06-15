@@ -71,8 +71,26 @@ object RustResolveEngine {
      *
      * NOTE: This operate on PSI to extract all the necessary (yet implicit) resolving-context
      */
-    fun resolve(ref: RustQualifiedReferenceElement): ResolveResult =
-        Resolver.resolve(ref)
+    fun resolve(ref: RustQualifiedReferenceElement): ResolveResult = recursionGuard(ref) {
+        val modulePrefix = ref.relativeModulePrefix
+        when (modulePrefix) {
+            is RelativeModulePrefix.Invalid        -> RustResolveEngine.ResolveResult.Unresolved
+            is RelativeModulePrefix.AncestorModule -> resolveAncestorModule(ref, modulePrefix).asResolveResult()
+            is RelativeModulePrefix.NotRelative    -> {
+                val qual = ref.qualifier
+                if (qual == null) {
+                    resolveIn(RustResolveEngine.enumerateScopesFor(ref), ref)
+                } else {
+                    val parent = resolve(qual).element
+                    when (parent) {
+                        is RustMod      -> resolveIn(sequenceOf(parent), ref)
+                        is RustEnumItemElement -> resolveIn(sequenceOf(parent), ref)
+                        else            -> RustResolveEngine.ResolveResult.Unresolved
+                    }
+                }
+            }
+        }
+    } ?: RustResolveEngine.ResolveResult.Unresolved
 
     /**
      * Resolves references to struct's fields inside destructuring [RustStructExprElement]
@@ -128,8 +146,34 @@ object RustResolveEngine {
     // TODO(kudinkin): Unify following?
     //
 
-    fun resolveUseGlob(ref: RustUseGlobElement): ResolveResult =
-        Resolver.resolveUseGlob(ref)
+    fun resolveUseGlob(ref: RustUseGlobElement): ResolveResult = recursionGuard(ref) {
+        val basePath = ref.basePath
+
+        // This is not necessarily a module, e.g.
+        //
+        //   ```
+        //   fn foo() {}
+        //
+        //   mod inner {
+        //       use foo::{self};
+        //   }
+        //   ```
+        val baseItem = if (basePath != null)
+            basePath.reference.resolve()
+        else
+        // `use ::{foo, bar}`
+            RustResolveUtil.getCrateRootModFor(ref)
+
+        when {
+        // `use foo::{self}`
+            ref.self != null && baseItem != null -> RustResolveEngine.ResolveResult.Resolved(baseItem)
+
+        // `use foo::{bar}`
+            baseItem is RustResolveScope -> resolveIn(sequenceOf(baseItem), ref)
+
+            else -> RustResolveEngine.ResolveResult.Unresolved
+        }
+    } ?: ResolveResult.Unresolved
 
     /**
      * Looks-up file corresponding to particular module designated by `mod-declaration-item`:
@@ -184,127 +228,40 @@ object RustResolveEngine {
      */
     fun declarations(scope: RustResolveScope, place: RustCompositeElement? = null): Sequence<RustNamedElement> =
         declarations(scope, Context(place)).mapNotNull { it.element }
-}
 
-private object Resolver {
+    fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolveScope> {
+        if (ref.isRelativeToCrateRoot) {
+            return listOfNotNull(RustResolveUtil.getCrateRootModFor(ref)).asSequence()
+        }
 
-    /**
-     * Resolves `qualified-reference` bearing PSI-elements
-     *
-     * For more details check out [RustResolveEngine.resolve]
-     */
-    fun resolve(ref: RustQualifiedReferenceElement): RustResolveEngine.ResolveResult = recursionGuard(ref) {
-        val modulePrefix = ref.relativeModulePrefix
-        when (modulePrefix) {
-            is RelativeModulePrefix.Invalid        -> RustResolveEngine.ResolveResult.Unresolved
-            is RelativeModulePrefix.AncestorModule -> resolveAncestorModule(ref, modulePrefix).asResolveResult()
-            is RelativeModulePrefix.NotRelative    -> {
-                val qual = ref.qualifier
-                if (qual == null) {
-                    resolveIn(enumerateScopesFor(ref), ref)
-                } else {
-                    val parent = resolve(qual).element
-                    when (parent) {
-                        is RustMod      -> resolveIn(sequenceOf(parent), ref)
-                        is RustEnumItemElement -> resolveIn(sequenceOf(parent), ref)
-                        else            -> RustResolveEngine.ResolveResult.Unresolved
-                    }
-                }
+        return generateSequence(RustResolveUtil.getResolveScopeFor(ref)) { parent ->
+            when (parent) {
+                is RustModItemElement  -> null
+                else            -> RustResolveUtil.getResolveScopeFor(parent)
             }
         }
-    } ?: RustResolveEngine.ResolveResult.Unresolved
-
-    /**
-     * Resolves `use-glob`s, ie:
-     *
-     *  ```
-     *  use foo::bar::{baz as boo}
-     *  use foo::*
-     *  ```
-     */
-    fun resolveUseGlob(ref: RustUseGlobElement): RustResolveEngine.ResolveResult = recursionGuard(ref) {
-        val basePath = ref.basePath
-
-        // This is not necessarily a module, e.g.
-        //
-        //   ```
-        //   fn foo() {}
-        //
-        //   mod inner {
-        //       use foo::{self};
-        //   }
-        //   ```
-        val baseItem = if (basePath != null)
-            resolve(basePath).element
-        else
-            // `use ::{foo, bar}`
-            RustResolveUtil.getCrateRootModFor(ref)
-
-        when {
-            // `use foo::{self}`
-            ref.self != null && baseItem != null -> RustResolveEngine.ResolveResult.Resolved(baseItem)
-
-            // `use foo::{bar}`
-            baseItem is RustResolveScope -> resolveIn(sequenceOf(baseItem), ref)
-
-            else -> RustResolveEngine.ResolveResult.Unresolved
-        }
-    } ?: RustResolveEngine.ResolveResult.Unresolved
-
-    private fun resolveAncestorModule(
-        ref: RustQualifiedReferenceElement,
-        modulePrefix: RelativeModulePrefix.AncestorModule
-    ): RustMod? {
-        var result: RustMod? = ref.containingMod
-        for (i in 0 until modulePrefix.level) {
-            result = result?.`super`
-        }
-        return result
-    }
-
-    private fun resolveIn(scopes: Sequence<RustResolveScope>, ref: RustReferenceElement): RustResolveEngine.ResolveResult {
-        return scopes
-            .flatMap { declarations(it, Context(place = ref)) }
-            .find { it.name == ref.referenceName }
-            ?.let { it.element }
-            .asResolveResult()
-    }
-
-}
-
-
-fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolveScope> {
-    if (ref.isRelativeToCrateRoot) {
-        return listOfNotNull(RustResolveUtil.getCrateRootModFor(ref)).asSequence()
-    }
-
-    return generateSequence(RustResolveUtil.getResolveScopeFor(ref)) { parent ->
-        when (parent) {
-            is RustModItemElement  -> null
-            else            -> RustResolveUtil.getResolveScopeFor(parent)
-        }
     }
 }
 
 
-private fun RustNamedElement?.asResolveResult(): RustResolveEngine.ResolveResult =
-    if (this == null)
-        RustResolveEngine.ResolveResult.Unresolved
-    else
-        RustResolveEngine.ResolveResult.Resolved(this)
-
-
-private fun PsiDirectory.findFileByRelativePath(path: String): PsiFile? {
-    val parts = path.split("/")
-    val fileName = parts.lastOrNull() ?: return null
-
-    var dir = this
-    for (part in parts.dropLast(1)) {
-        dir = dir.findSubdirectory(part) ?: return null
+private fun resolveAncestorModule(
+    ref: RustQualifiedReferenceElement,
+    modulePrefix: RelativeModulePrefix.AncestorModule
+): RustMod? {
+    var result: RustMod? = ref.containingMod
+    for (i in 0 until modulePrefix.level) {
+        result = result?.`super`
     }
-
-    return dir.findFile(fileName)
+    return result
 }
+
+
+private fun resolveIn(scopes: Sequence<RustResolveScope>, ref: RustReferenceElement): RustResolveEngine.ResolveResult =
+    scopes
+        .flatMap { declarations(it, Context(place = ref)) }
+        .find { it.name == ref.referenceName }
+        ?.let { it.element }
+        .asResolveResult()
 
 
 private fun declarations(scope: RustResolveScope, context: Context): Sequence<ScopeEntry> = Sequence {
@@ -535,6 +492,26 @@ private val Collection<RustNamedElement>.scopeEntries: Sequence<ScopeEntry>
 
 private val RustGenericDeclaration.typeParamEntries: Sequence<ScopeEntry>
     get() = genericParams?.typeParamList.orEmpty().scopeEntries
+
+
+private fun RustNamedElement?.asResolveResult(): RustResolveEngine.ResolveResult =
+    if (this == null)
+        RustResolveEngine.ResolveResult.Unresolved
+    else
+        RustResolveEngine.ResolveResult.Resolved(this)
+
+
+private fun PsiDirectory.findFileByRelativePath(path: String): PsiFile? {
+    val parts = path.split("/")
+    val fileName = parts.lastOrNull() ?: return null
+
+    var dir = this
+    for (part in parts.dropLast(1)) {
+        dir = dir.findSubdirectory(part) ?: return null
+    }
+
+    return dir.findFile(fileName)
+}
 
 
 /**
