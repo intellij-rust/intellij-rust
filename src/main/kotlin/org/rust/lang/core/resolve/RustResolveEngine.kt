@@ -365,15 +365,15 @@ private class RustScopeVisitor(
     }
 
     override fun visitFnItem(o: RustFnItemElement) {
-        visitFunctionLike(o.parameters, o)
+        visitFunction(o)
     }
 
     override fun visitTraitMethodMember(o: RustTraitMethodMemberElement) {
-        visitFunctionLike(o.parameters, o)
+        visitFunction(o)
     }
 
     override fun visitImplMethodMember(o: RustImplMethodMemberElement) {
-        visitFunctionLike(o.parameters, o)
+        visitFunction(o)
     }
 
     override fun visitImplItem(o: RustImplItemElement) {
@@ -425,9 +425,9 @@ private class RustScopeVisitor(
         ).flatten()
     }
 
-    fun visitFunctionLike(params: RustParametersElement?, fn: RustGenericDeclaration) {
-        result = listOfNotNull(params?.selfArgument?.let { ScopeEntry.of(it) }).asSequence() +
-            params?.parameterList.orEmpty().asSequence().flatMap { it.boundElements.scopeEntries } +
+    fun visitFunction(fn: RustFnElement) {
+        result = listOfNotNull(fn.parameters?.selfArgument?.let { ScopeEntry.of(it) }).asSequence() +
+            fn.parameters?.parameterList.orEmpty().asSequence().flatMap { it.boundElements.scopeEntries } +
             fn.typeParamEntries
     }
 }

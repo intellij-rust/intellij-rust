@@ -327,11 +327,8 @@ ret_type ::= '->' (type | '!') { pin = 1 }
 fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement"
-                 "org.rust.lang.core.psi.RustItemElement"
-                 "org.rust.lang.core.resolve.scope.RustResolveScope"
-                 "org.rust.lang.core.psi.RustGenericDeclaration"
-                 "org.rust.lang.core.psi.RustInnerAttributeOwner" ]
+  implements = [ "org.rust.lang.core.psi.RustFnElement"
+                 "org.rust.lang.core.psi.RustItemElement" ]
   stubClass = "org.rust.lang.core.stubs.elements.RustFnItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
@@ -629,11 +626,7 @@ trait_type_member ::= outer_attr* TYPE_KW IDENTIFIER type_param_bounds? [ '=' ty
 
 trait_method_member ::= outer_attr* fn_header method_decl_parameters ret_type? where_clause? (';' | inner_attrs_and_block) {
   pin = fn_header
-  implements = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
-                 "org.rust.lang.core.psi.RustGenericDeclaration"
-                 "org.rust.lang.core.psi.RustInnerAttributeOwner"
-                 "org.rust.lang.core.psi.RustOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RustNamedElement" ]
+  implements = [ "org.rust.lang.core.psi.RustFnElement" ]
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
@@ -666,12 +659,8 @@ private impl_member ::= impl_method_member
 impl_method_member ::= attrs_and_vis fn_header method_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement"
-                 "org.rust.lang.core.psi.RustOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RustInnerAttributeOwner"
-                 "org.rust.lang.core.psi.RustVisibilityOwner"
-                 "org.rust.lang.core.resolve.scope.RustResolveScope"
-                 "org.rust.lang.core.psi.RustGenericDeclaration" ]
+  implements = [ "org.rust.lang.core.psi.RustFnElement"
+                 "org.rust.lang.core.psi.RustVisibilityOwner" ]
 }
 
 impl_const_member ::= attrs_and_vis CONST static_decl ';' {

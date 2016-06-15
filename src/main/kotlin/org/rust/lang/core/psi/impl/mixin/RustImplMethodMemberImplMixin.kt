@@ -5,9 +5,9 @@ import org.rust.ide.icons.RustIcons
 import org.rust.ide.icons.addStaticMark
 import org.rust.lang.core.psi.RustImplMethodMemberElement
 import org.rust.lang.core.psi.RustInnerAttrElement
-import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
+import org.rust.lang.core.psi.isStatic
 import javax.swing.Icon
 
 abstract class RustImplMethodMemberImplMixin(node: ASTNode) : RustNamedElementImpl(node)
@@ -25,4 +25,3 @@ abstract class RustImplMethodMemberImplMixin(node: ASTNode) : RustNamedElementIm
         get() = block?.innerAttrList.orEmpty()
 }
 
-val RustImplMethodMemberElement.isStatic: Boolean get() = parameters?.selfArgument == null

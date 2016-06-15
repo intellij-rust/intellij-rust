@@ -4,9 +4,9 @@ import com.intellij.lang.ASTNode
 import org.rust.ide.icons.RustIcons
 import org.rust.ide.icons.addStaticMark
 import org.rust.lang.core.psi.RustInnerAttrElement
-import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustTraitMethodMemberElement
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
+import org.rust.lang.core.psi.isStatic
 import javax.swing.Icon
 
 
@@ -29,4 +29,3 @@ abstract class RustTraitMethodMemberImplMixin(node: ASTNode) : RustNamedElementI
 
 }
 
-val RustTraitMethodMemberElement.isStatic: Boolean get() = parameters?.selfArgument == null

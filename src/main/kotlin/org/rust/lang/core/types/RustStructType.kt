@@ -1,7 +1,6 @@
 package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.isStatic
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 
