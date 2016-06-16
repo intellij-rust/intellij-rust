@@ -24,6 +24,8 @@ class RustAnnotatorTest : RustTestCaseBase() {
 
     fun testPaths() = doTest()
 
+    fun testInvalidPub() = doTest()
+
     private fun doTest() {
         myFixture.testHighlighting(fileName)
     }
