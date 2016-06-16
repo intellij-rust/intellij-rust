@@ -25,7 +25,7 @@ abstract class RustFnItemImplMixin : RustFnImplMixin<RustFnItemStub>
         return iconWithVisibility(flags, icon)
     }
 
-    override val isPublic: Boolean get() = vis != null
+    override val isPublic: Boolean get() = stub?.isPublic ?: vis != null
 
 }
 

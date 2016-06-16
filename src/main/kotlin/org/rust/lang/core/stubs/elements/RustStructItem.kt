@@ -12,16 +12,17 @@ import org.rust.lang.core.stubs.index.RustStructOrEnumIndex
 
 object RustStructItemStubElementType : RustNamedStubElementType<RustStructItemStub, RustStructItemElement>("STRUCT_ITEM") {
     override fun createStub(psi: RustStructItemElement, parentStub: StubElement<*>?): RustStructItemStub =
-        RustStructItemStub(parentStub, this, psi.name)
+        RustStructItemStub(parentStub, this, psi.name, psi.isPublic)
 
     override fun createPsi(stub: RustStructItemStub): RustStructItemElement =
         RustStructItemElementImpl(stub, this)
 
     override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustStructItemStub =
-        RustStructItemStub(parentStub, this, dataStream.readName())
+        RustStructItemStub(parentStub, this, dataStream.readName(), dataStream.readBoolean())
 
     override fun serialize(stub: RustStructItemStub, dataStream: StubOutputStream) = with(dataStream) {
         writeName(stub.name)
+        writeBoolean(stub.isPublic)
     }
 
     override val additionalIndexingKeys: Collection<StubIndexKey<String, RustStructOrEnum>> =
@@ -31,9 +32,9 @@ object RustStructItemStubElementType : RustNamedStubElementType<RustStructItemSt
 
 
 class RustStructItemStub : RustNamedElementStub<RustStructItemElement> {
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: StringRef?)
-    : super(parent, elementType, name ?: StringRef.fromNullableString(""))
+    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: StringRef?, isPublic: Boolean)
+    : super(parent, elementType, name ?: StringRef.fromNullableString(""), isPublic)
 
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: String?)
-    : super(parent, elementType, name ?: "")
+    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: String?, isPublic: Boolean)
+    : super(parent, elementType, name ?: "", isPublic)
 }

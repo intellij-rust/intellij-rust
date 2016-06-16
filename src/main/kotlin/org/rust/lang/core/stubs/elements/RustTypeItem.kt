@@ -13,25 +13,26 @@ import org.rust.lang.core.stubs.RustNamedStubElementType
 
 object RustTypeItemStubElementType : RustNamedStubElementType<RustTypeItemStub, RustTypeItemElement>("TYPE_ITEM") {
     override fun createStub(psi: RustTypeItemElement, parentStub: StubElement<*>?): RustTypeItemStub =
-        RustTypeItemStub(parentStub, this, psi.name)
+        RustTypeItemStub(parentStub, this, psi.name, psi.isPublic)
 
     override fun createPsi(stub: RustTypeItemStub): RustTypeItemElement =
         RustTypeItemElementImpl(stub, this)
 
     override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustTypeItemStub =
-        RustTypeItemStub(parentStub, this, dataStream.readName())
+        RustTypeItemStub(parentStub, this, dataStream.readName(), dataStream.readBoolean())
 
     override fun serialize(stub: RustTypeItemStub, dataStream: StubOutputStream) = with(dataStream) {
         writeName(stub.name)
+        writeBoolean(stub.isPublic)
     }
 
 }
 
 
 class RustTypeItemStub : RustNamedElementStub<RustTypeItemElement> {
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: StringRef?)
-    : super(parent, elementType, name ?: StringRef.fromNullableString(""))
+    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: StringRef?, isPublic: Boolean)
+    : super(parent, elementType, name ?: StringRef.fromNullableString(""), isPublic)
 
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: String?)
-    : super(parent, elementType, name ?: "")
+    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: String?, isPublic: Boolean)
+    : super(parent, elementType, name ?: "", isPublic)
 }

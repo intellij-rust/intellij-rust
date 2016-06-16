@@ -28,10 +28,11 @@ object RustTraitMethodMemberStubElementType : RustNamedStubElementType<RustTrait
 
 
 class RustTraitMethodMemberStub : RustNamedElementStub<RustTraitMethodMemberElement> {
+    // no visibility is allowed for trait members, so always store `false` here
     constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: StringRef?)
-    : super(parent, elementType, name ?: StringRef.fromNullableString(""))
+    : super(parent, elementType, name ?: StringRef.fromNullableString(""), false)
 
     constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: String?)
-    : super(parent, elementType, name ?: "")
+    : super(parent, elementType, name ?: "", false)
 }
 

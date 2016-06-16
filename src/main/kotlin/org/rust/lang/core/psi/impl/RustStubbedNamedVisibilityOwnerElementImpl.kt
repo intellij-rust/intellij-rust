@@ -13,5 +13,5 @@ abstract class RustStubbedNamedVisibilityOwnerElementImpl<StubT: RustNamedElemen
 
     constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val isPublic: Boolean get() = vis != null
+    override val isPublic: Boolean get() = stub?.isPublic ?: vis != null
 }
