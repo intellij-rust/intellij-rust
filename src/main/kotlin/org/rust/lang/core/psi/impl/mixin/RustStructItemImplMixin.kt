@@ -5,11 +5,11 @@ import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.RustStructItemElement
 import org.rust.lang.core.psi.iconWithVisibility
-import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
+import org.rust.lang.core.psi.impl.RustStubbedNamedVisibilityOwnerElementImpl
 import org.rust.lang.core.stubs.elements.RustStructItemStub
 import javax.swing.Icon
 
-abstract class RustStructItemImplMixin : RustStubbedNamedElementImpl<RustStructItemStub>, RustStructItemElement {
+abstract class RustStructItemImplMixin : RustStubbedNamedVisibilityOwnerElementImpl<RustStructItemStub>, RustStructItemElement {
 
     constructor(node: ASTNode) : super(node)
 

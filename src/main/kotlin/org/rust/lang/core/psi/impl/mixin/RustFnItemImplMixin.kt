@@ -25,6 +25,8 @@ abstract class RustFnItemImplMixin : RustFnImplMixin<RustFnItemStub>
         return iconWithVisibility(flags, icon)
     }
 
+    override val isPublic: Boolean get() = vis != null
+
 }
 
 val RustFnItemElement.isTest: Boolean get() = queryAttributes.hasAtomAttribute("test")

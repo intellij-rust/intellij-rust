@@ -7,6 +7,7 @@ import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
+import org.rust.lang.core.psi.impl.RustStubbedNamedVisibilityOwnerElementImpl
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ref.RustModReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
@@ -14,7 +15,7 @@ import org.rust.lang.core.stubs.elements.RustModDeclItemStub
 import java.io.File
 import javax.swing.Icon
 
-abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RustModDeclItemStub>
+abstract class RustModDeclItemImplMixin : RustStubbedNamedVisibilityOwnerElementImpl<RustModDeclItemStub>
                                         , RustModDeclItemElement {
 
     constructor(node: ASTNode) : super(node)

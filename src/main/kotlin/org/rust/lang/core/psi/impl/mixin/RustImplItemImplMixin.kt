@@ -9,4 +9,6 @@ import javax.swing.Icon
 abstract class RustImplItemImplMixin(node: ASTNode) : RustCompositeElementImpl(node), RustImplItemElement {
 
     override fun getIcon(flags: Int): Icon = RustIcons.IMPL
+
+    override val isPublic: Boolean get() = false // pub does not affect imls at all
 }

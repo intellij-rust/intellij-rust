@@ -24,5 +24,7 @@ abstract class RustImplMethodMemberImplMixin : RustFnImplMixin<RustImplMethodMem
         }
         return iconWithVisibility(flags, icon)
     }
+
+    override val isPublic: Boolean get() = vis != null
 }
 

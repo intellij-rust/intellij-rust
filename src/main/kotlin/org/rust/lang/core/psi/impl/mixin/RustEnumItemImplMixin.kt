@@ -5,12 +5,12 @@ import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.RustEnumItemElement
 import org.rust.lang.core.psi.iconWithVisibility
-import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
+import org.rust.lang.core.psi.impl.RustStubbedNamedVisibilityOwnerElementImpl
 import org.rust.lang.core.stubs.elements.RustEnumItemStub
 import javax.swing.Icon
 
 
-abstract class RustEnumItemImplMixin : RustStubbedNamedElementImpl<RustEnumItemStub>, RustEnumItemElement {
+abstract class RustEnumItemImplMixin : RustStubbedNamedVisibilityOwnerElementImpl<RustEnumItemStub>, RustEnumItemElement {
 
     constructor(node: ASTNode) : super(node)
 

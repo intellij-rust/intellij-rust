@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustTokenElementTypes
+import org.rust.lang.core.psi.RustVisibilityOwner
 import org.rust.lang.core.stubs.RustNamedElementStub
 import javax.swing.Icon
 

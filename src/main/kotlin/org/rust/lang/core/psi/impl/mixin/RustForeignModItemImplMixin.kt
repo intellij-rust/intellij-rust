@@ -9,4 +9,6 @@ import org.rust.lang.core.psi.impl.RustCompositeElementImpl
 abstract class RustForeignModItemImplMixin(node: ASTNode) : RustCompositeElementImpl(node), RustForeignModItemElement {
     override val outerAttrList: List<RustOuterAttrElement>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustOuterAttrElement::class.java)
+
+    override val isPublic: Boolean get() = false // visibility does not affect foreign mods
 }

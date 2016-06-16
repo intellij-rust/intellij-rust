@@ -8,12 +8,12 @@ import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.names.parts.RustIdNamePart
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
+import org.rust.lang.core.psi.impl.RustStubbedNamedVisibilityOwnerElementImpl
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.stubs.elements.RustModItemStub
 import javax.swing.Icon
 
-abstract class RustModItemImplMixin : RustStubbedNamedElementImpl<RustModItemStub>
+abstract class RustModItemImplMixin : RustStubbedNamedVisibilityOwnerElementImpl<RustModItemStub>
                                     , RustModItemElement {
 
     constructor(node: ASTNode) : super(node)
