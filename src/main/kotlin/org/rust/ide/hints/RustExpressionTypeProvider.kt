@@ -1,6 +1,7 @@
 package org.rust.ide.hints
 
 import com.intellij.lang.ExpressionTypeProvider
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
 import org.rust.lang.core.psi.RustExprElement
@@ -14,11 +15,11 @@ class RustExpressionTypeProvider : ExpressionTypeProvider<RustExprElement>() {
 
     override fun getExpressionsAt(pivot: PsiElement): MutableList<RustExprElement> =
         SyntaxTraverser.psiApi().parents(pivot)
-                                .takeWhile  { x -> x is RustItemElement }
+                                .takeWhile  { it !is RustItemElement }
                                 .filter(RustExprElement::class.java)
                                 .toList()
 
     override fun getInformationHint(element: RustExprElement): String =
-        element.resolvedType.toString()
+        StringUtil.escapeXml(element.resolvedType.toString())
 
 }
