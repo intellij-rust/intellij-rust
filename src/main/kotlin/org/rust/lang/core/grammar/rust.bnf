@@ -514,14 +514,18 @@ private foreign_decl ::= foreign_static_decl | foreign_fn_decl
 foreign_static_decl ::= attrs_and_vis STATIC MUT? IDENTIFIER type_ascription ';' {
   pin = "STATIC"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
+  extends = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
+  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
 }
 
 foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params? foreign_fn_parameters ret_type? where_clause? ';' {
   pin = "FN"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
+  extends = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
+  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
 }
 

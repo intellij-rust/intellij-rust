@@ -26,5 +26,6 @@ val RustItemsOwner.impls: List<RustImplItemElement> get() = items()
 val RustItemsOwner.functions: List<RustFnItemElement> get() = items()
 val RustItemsOwner.useDeclarations: List<RustUseItemElement> get() = items()
 val RustItemsOwner.modDecls: List<RustModDeclItemElement> get() = items()
+val RustItemsOwner.foreignMods: List<RustForeignModItemElement> get() = items()
 val RustItemsOwner.externCrates: List<RustExternCrateItemElement> get() = items()
 

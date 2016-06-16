@@ -37,6 +37,8 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testTypeAlias() = checkIsBound()
     fun testTrait() = checkIsBound()
     fun testTypeAliasGenerics() = checkIsBound()
+    fun testForeignFn() = checkIsBound()
+    fun testForeignStatic() = checkIsBound()
 
     fun testSelfType() = checkIsUnbound() // TODO: some form of resolve for Self should be implemented
 

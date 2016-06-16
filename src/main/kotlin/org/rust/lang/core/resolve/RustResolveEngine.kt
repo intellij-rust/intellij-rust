@@ -445,6 +445,10 @@ private fun RustItemsOwner.itemEntries(context: Context): Sequence<ScopeEntry> {
 
         allItemDefinitions.scopeEntries,
 
+        foreignMods.asSequence().flatMap {
+            it.foreignFnDeclList.scopeEntries + it.foreignStaticDeclList.scopeEntries
+        },
+
         externCrates.asSequence().mapNotNull {
             ScopeEntry.lazy(it.alias?.name ?: it.name) { it.reference?.resolve() }
         },
