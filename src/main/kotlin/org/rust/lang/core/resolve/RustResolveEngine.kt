@@ -16,10 +16,7 @@ import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
-import org.rust.lang.core.psi.util.contains
-import org.rust.lang.core.psi.util.elementType
-import org.rust.lang.core.psi.util.fields
-import org.rust.lang.core.psi.util.module
+import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
 import org.rust.lang.core.types.RustStructType
@@ -27,6 +24,7 @@ import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.visitors.RustTypeResolvingVisitor
+import org.rust.utils.sequenceOfNotNull
 
 
 object RustResolveEngine {
@@ -350,19 +348,26 @@ private class RustScopeVisitor(
     }
 
     override fun visitStructItem(o: RustStructItemElement) {
-        result = extractGenericParamsEntriesIfApplicable(o)
+        if (isContextLocalTo(o))
+            result = o.typeParams.scopeEntries
+
     }
 
     override fun visitEnumItem(o: RustEnumItemElement) {
-        result = o.enumBody.enumVariantList.scopeEntries + extractGenericParamsEntriesIfApplicable(o)
+        if (isContextLocalTo(o))
+            result = o.typeParams.scopeEntries
+        else
+            result = o.enumBody.enumVariantList.scopeEntries
     }
 
     override fun visitTraitItem(o: RustTraitItemElement) {
-        result = extractGenericParamsEntriesIfApplicable(o)
+        if (isContextLocalTo(o))
+            result = o.typeParams.scopeEntries
     }
 
     override fun visitTypeItem(o: RustTypeItemElement) {
-        result = extractGenericParamsEntriesIfApplicable(o)
+        if (isContextLocalTo(o))
+            result = o.typeParams.scopeEntries
     }
 
     override fun visitFnItem(o: RustFnItemElement) {
@@ -378,12 +383,15 @@ private class RustScopeVisitor(
     }
 
     override fun visitImplItem(o: RustImplItemElement) {
-        result = extractGenericParamsEntriesIfApplicable(o)
+        if (isContextLocalTo(o))
+            result = o.typeParams.scopeEntries
     }
 
     override fun visitLambdaExpr(o: RustLambdaExprElement) {
-        result = o.parameters.parameterList.orEmpty().asSequence()
-            .flatMap { it.boundElements.scopeEntries }
+        result =
+            o.parameters.parameterList.orEmpty()
+                .asSequence()
+                .flatMap { it.boundElements.scopeEntries }
     }
 
     override fun visitMatchArm(o: RustMatchArmElement) {
@@ -427,14 +435,15 @@ private class RustScopeVisitor(
     }
 
     fun visitFunction(o: RustFnElement) {
-        result = listOfNotNull(o.parameters?.selfArgument?.let { ScopeEntry.of(it) }).asSequence() +
-            o.parameters?.parameterList.orEmpty().asSequence().flatMap { it.boundElements.scopeEntries } +
-            extractGenericParamsEntriesIfApplicable(o)
+        result =
+            sequenceOfNotNull(o.parameters?.selfArgument?.let { ScopeEntry.of(it) }) +
+            o.parameters?.parameterList.orEmpty().asSequence().flatMap { it.boundElements.scopeEntries }
+
+        if (isContextLocalTo(o))
+            result += o.typeParams.scopeEntries
     }
 
-    private fun extractGenericParamsEntriesIfApplicable(o: RustGenericDeclaration): Sequence<ScopeEntry> =
-        if (o.contains(context.pivot))  o.genericParams?.typeParamList.orEmpty().scopeEntries
-        else                            emptySequence()
+    private fun isContextLocalTo(o: RustCompositeElement) = o.contains(context.pivot)
 }
 
 

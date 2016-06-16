@@ -1,4 +1,4 @@
-package org.rust.lang.utils
+package org.rust.utils
 
 import com.intellij.openapi.Disposable
 import com.intellij.psi.PsiElement
@@ -38,10 +38,17 @@ fun <D: Disposable, T> usingWith(d: D, block: (D) -> T): T {
 /**
  * Cached value invalidated on any PSI modification
  */
-fun<E : PsiElement, T> psiCached(provider: E.() -> CachedValueProvider<T>): PsiCacheDelegate<E, T> = PsiCacheDelegate(provider)
+fun <E : PsiElement, T> psiCached(provider: E.() -> CachedValueProvider<T>): PsiCacheDelegate<E, T> = PsiCacheDelegate(provider)
 
 class PsiCacheDelegate<E : PsiElement, T>(val provider: E.() -> CachedValueProvider<T>) {
     operator fun getValue(element: E, property: KProperty<*>): T {
         return CachedValuesManager.getCachedValue(element, element.provider())
     }
 }
+
+/**
+ * Extramarital son of `sequenceOf` & `listOfNotNull`
+ */
+fun <T : Any> sequenceOfNotNull(vararg elements: T): Sequence<T> = listOfNotNull(*elements).asSequence()
+
+fun <T : Any> sequenceOfNotNull(element: T?): Sequence<T> = if (element != null) sequenceOf(element) else emptySequence()

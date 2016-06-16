@@ -1,7 +1,9 @@
 package org.rust.lang.core.psi.util
 
 import org.rust.lang.core.psi.RustFieldDeclElement
+import org.rust.lang.core.psi.RustGenericDeclaration
 import org.rust.lang.core.psi.RustStructItemElement
+import org.rust.lang.core.psi.RustTypeParamElement
 
 /**
  *  `RustItemElement` related extensions
@@ -9,3 +11,6 @@ import org.rust.lang.core.psi.RustStructItemElement
 
 val RustStructItemElement.fields: List<RustFieldDeclElement>
     get() = structDeclArgs?.fieldDeclList.orEmpty()
+
+val RustGenericDeclaration.typeParams: List<RustTypeParamElement>
+    get() = genericParams?.typeParamList.orEmpty()
