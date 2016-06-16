@@ -16,6 +16,7 @@ import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
+import org.rust.lang.core.psi.util.contains
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.fields
 import org.rust.lang.core.psi.util.module
@@ -349,19 +350,19 @@ private class RustScopeVisitor(
     }
 
     override fun visitStructItem(o: RustStructItemElement) {
-        result = o.typeParamEntries
+        result = extractGenericParamsEntriesIfApplicable(o)
     }
 
     override fun visitEnumItem(o: RustEnumItemElement) {
-        result = o.enumBody.enumVariantList.scopeEntries + o.typeParamEntries
+        result = o.enumBody.enumVariantList.scopeEntries + extractGenericParamsEntriesIfApplicable(o)
     }
 
     override fun visitTraitItem(o: RustTraitItemElement) {
-        result = o.typeParamEntries
+        result = extractGenericParamsEntriesIfApplicable(o)
     }
 
     override fun visitTypeItem(o: RustTypeItemElement) {
-        result = o.typeParamEntries
+        result = extractGenericParamsEntriesIfApplicable(o)
     }
 
     override fun visitFnItem(o: RustFnItemElement) {
@@ -377,7 +378,7 @@ private class RustScopeVisitor(
     }
 
     override fun visitImplItem(o: RustImplItemElement) {
-        result = o.typeParamEntries
+        result = extractGenericParamsEntriesIfApplicable(o)
     }
 
     override fun visitLambdaExpr(o: RustLambdaExprElement) {
@@ -425,11 +426,15 @@ private class RustScopeVisitor(
         ).flatten()
     }
 
-    fun visitFunction(fn: RustFnElement) {
-        result = listOfNotNull(fn.parameters?.selfArgument?.let { ScopeEntry.of(it) }).asSequence() +
-            fn.parameters?.parameterList.orEmpty().asSequence().flatMap { it.boundElements.scopeEntries } +
-            fn.typeParamEntries
+    fun visitFunction(o: RustFnElement) {
+        result = listOfNotNull(o.parameters?.selfArgument?.let { ScopeEntry.of(it) }).asSequence() +
+            o.parameters?.parameterList.orEmpty().asSequence().flatMap { it.boundElements.scopeEntries } +
+            extractGenericParamsEntriesIfApplicable(o)
     }
+
+    private fun extractGenericParamsEntriesIfApplicable(o: RustGenericDeclaration): Sequence<ScopeEntry> =
+        if (o.contains(context.pivot))  o.genericParams?.typeParamList.orEmpty().scopeEntries
+        else                            emptySequence()
 }
 
 
@@ -492,10 +497,6 @@ private fun RustUseItemElement.nonWildcardEntries(): Sequence<ScopeEntry> {
 
 private val Collection<RustNamedElement>.scopeEntries: Sequence<ScopeEntry>
     get() = asSequence().mapNotNull { ScopeEntry.of(it) }
-
-
-private val RustGenericDeclaration.typeParamEntries: Sequence<ScopeEntry>
-    get() = genericParams?.typeParamList.orEmpty().scopeEntries
 
 
 private fun RustNamedElement?.asResolveResult(): RustResolveEngine.ResolveResult =
