@@ -31,6 +31,7 @@ class RustCompleteParsingTestCase : RustParsingTestCaseBase("complete") {
     fun testTryOperator() = doTest(true)
     fun testMatch() = doTest(true)
     fun testOror() = doTest(true)
+    fun testAndand() = doTest(true)
     fun testDocComments() = doTest(true)
     fun testAssociatedTypes() = doTest(true)
 
