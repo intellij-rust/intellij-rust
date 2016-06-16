@@ -17,12 +17,15 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testImplMethodArgument() = checkIsBound()
     fun testStructPatterns1() = checkIsBound(atOffset = 69)
     fun testStructPatterns2() = checkIsBound()
-    fun testModItems() = checkIsBound()
+
+    fun testModItems1() = checkIsBound()
     fun testModItems2() = checkIsBound()
+    fun testModItems3() = checkIsUnbound()
     fun testModItems4() = checkIsBound()
+    fun testModItems5() = checkIsUnbound()
+
     fun testCrateItems() = checkIsBound()
     fun testNestedModule() = checkIsBound(atOffset = 55)
-    fun testLetCycle2() = checkIsBound(atOffset = 20)
     fun testSelf() = checkIsBound()
     fun testSelfIdentifier() = checkIsBound(atOffset = 32)
     fun testSuper() = checkIsBound()
@@ -43,7 +46,9 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testSelfType() = checkIsUnbound() // TODO: some form of resolve for Self should be implemented
 
     fun testLetCycle1() = checkIsUnbound()
+    fun testLetCycle2() = checkIsBound(atOffset = 20)
     fun testLetCycle3() = checkIsUnbound()
+
     fun testUnbound() = checkIsUnbound()
     fun testOrdering() = checkIsUnbound()
     fun testModBoundary() = checkIsUnbound()
@@ -51,8 +56,7 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testWrongSelf() = checkIsUnbound()
     fun testSelfInStatic() = checkIsUnbound()
     fun testWrongSuper() = checkIsUnbound()
-    fun testModItems3() = checkIsUnbound()
-    fun testModItems5() = checkIsUnbound()
+
     fun testFunctionIsNotModule() = checkIsUnbound()
 }
 
