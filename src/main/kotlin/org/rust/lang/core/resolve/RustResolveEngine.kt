@@ -223,11 +223,11 @@ object RustResolveEngine {
     }
 
     /**
-     * Lazily retrieves all elements visible in the particular [scope] at the [place], or just all
-     * visible elements if [place] is null.
+     * Lazily retrieves all elements visible in the particular [scope] at the [pivot], or just all
+     * visible elements if [pivot] is null.
      */
-    fun declarations(scope: RustResolveScope, place: RustCompositeElement? = null): Sequence<RustNamedElement> =
-        declarations(scope, Context(place)).mapNotNull { it.element }
+    fun declarations(scope: RustResolveScope, pivot: RustCompositeElement? = null): Sequence<RustNamedElement> =
+        declarations(scope, Context(pivot)).mapNotNull { it.element }
 
     fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolveScope> {
         if (ref.isRelativeToCrateRoot) {
@@ -258,7 +258,7 @@ private fun resolveAncestorModule(
 
 private fun resolveIn(scopes: Sequence<RustResolveScope>, ref: RustReferenceElement): RustResolveEngine.ResolveResult =
     scopes
-        .flatMap { declarations(it, Context(place = ref)) }
+        .flatMap { declarations(it, Context(pivot = ref)) }
         .find { it.name == ref.referenceName }
         ?.let { it.element }
         .asResolveResult()
@@ -272,7 +272,7 @@ private fun declarations(scope: RustResolveScope, context: Context): Sequence<Sc
 
 
 private data class Context(
-    val place: RustCompositeElement?,
+    val pivot: RustCompositeElement?,
     val inPrelude: Boolean = false,
     val visitedStarImports: Set<RustUseItemElement> = emptySet()
 )
@@ -321,7 +321,7 @@ private class RustScopeVisitor(
     }
 
     override fun visitScopedLetDecl(o: RustScopedLetDeclElement) {
-        result = if (context.place == null || !PsiTreeUtil.isAncestor(o, context.place, true)) {
+        result = if (context.pivot == null || !PsiTreeUtil.isAncestor(o, context.pivot, true)) {
             o.boundElements.scopeEntries
         } else emptySequence()
     }
@@ -337,13 +337,13 @@ private class RustScopeVisitor(
         // let x = 62; // not visible
         // ```
         val allLetDecls = o.stmtList.asReversed().asSequence().filterIsInstance<RustLetDeclElement>()
-        val visibleLetDecls = if (context.place == null)
+        val visibleLetDecls = if (context.pivot == null)
             allLetDecls
         else
             allLetDecls
-                .dropWhile { PsiUtilCore.compareElementsByPosition(context.place, it) < 0 }
+                .dropWhile { PsiUtilCore.compareElementsByPosition(context.pivot, it) < 0 }
                 // Drops at most one element
-                .dropWhile { PsiTreeUtil.isAncestor(it, context.place, true) }
+                .dropWhile { PsiTreeUtil.isAncestor(it, context.pivot, true) }
 
         result = visibleLetDecls.flatMap { it.boundElements.scopeEntries } + o.itemEntries(context)
     }

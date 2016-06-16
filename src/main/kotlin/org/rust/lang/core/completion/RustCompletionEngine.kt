@@ -40,7 +40,7 @@ object RustCompletionEngine {
         }
 
         return RustResolveEngine.enumerateScopesFor(ref)
-            .flatMap { RustResolveEngine.declarations(it, place = ref) }
+            .flatMap { RustResolveEngine.declarations(it, pivot = ref) }
             .toList()
     }
 }
