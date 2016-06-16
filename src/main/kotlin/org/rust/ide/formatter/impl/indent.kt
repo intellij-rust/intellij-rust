@@ -69,6 +69,9 @@ fun RustFmtBlock.computeIndent(child: ASTNode, childCtx: RustFmtContext): Indent
         // Indent expressions (chain calls, binary expressions, ...)
         parentPsi is RustExprElement -> Indent.getContinuationWithoutFirstIndent()
 
+        // Where clause bounds
+        childType == WHERE_PRED -> Indent.getContinuationWithoutFirstIndent()
+
         else -> Indent.getNoneIndent()
     }
 }

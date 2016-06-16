@@ -3,6 +3,7 @@ package org.rust.ide.formatter.settings
 import com.intellij.application.options.IndentOptionsEditor
 import com.intellij.application.options.SmartIndentOptionsEditor
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
@@ -43,6 +44,11 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
                     "ALIGN_RET_TYPE_AND_WHERE_CLAUSE",
                     "Align return type and where clause",
                     CodeStyleSettingsCustomizable.WRAPPING_METHOD_PARAMETERS)
+
+                consumer.showCustomOption(RustCodeStyleSettings::class.java,
+                    "ALIGN_WHERE_BOUNDS",
+                    ApplicationBundle.message("wrapping.align.when.multiline"),
+                    "Where clause bounds")
             }
         }
     }
