@@ -81,11 +81,10 @@ object RustResolveEngine {
                     resolveIn(RustResolveEngine.enumerateScopesFor(ref), ref)
                 } else {
                     val parent = resolve(qual).element
-                    when (parent) {
-                        is RustMod      -> resolveIn(sequenceOf(parent), ref)
-                        is RustEnumItemElement -> resolveIn(sequenceOf(parent), ref)
-                        else            -> RustResolveEngine.ResolveResult.Unresolved
-                    }
+                    if (parent is RustResolveScope)
+                        resolveIn(sequenceOf(parent), ref)
+                    else
+                        ResolveResult.Unresolved
                 }
             }
         }
@@ -442,12 +441,14 @@ private class RustScopeVisitor(
     }
 
     fun visitFunction(o: RustFnElement) {
-        result =
-            sequenceOfNotNull(o.parameters?.selfArgument?.let { ScopeEntry.of(it) }) +
-            o.parameters?.parameterList.orEmpty().asSequence().flatMap { it.boundElements.scopeEntries }
-
-        if (isContextLocalTo(o))
-            result += o.typeParams.scopeEntries
+        result = if (isContextLocalTo(o))
+            sequenceOf(
+                sequenceOfNotNull(o.parameters?.selfArgument?.let { ScopeEntry.of(it) }),
+                o.parameters?.parameterList.orEmpty().asSequence().flatMap { it.boundElements.scopeEntries },
+                o.typeParams.scopeEntries
+            ).flatten()
+        else
+            emptySequence()
     }
 
     private fun isContextLocalTo(o: RustCompositeElement) = o.contains(context.pivot)
