@@ -16,5 +16,5 @@ abstract class RustStubbedElementImpl<StubT : StubBase<*>> : StubBasedPsiElement
 
     override fun getReference(): RustReference? = null
 
-    override fun toString(): String = "${javaClass.simpleName}(${node.elementType})"
+    override fun toString(): String = "${javaClass.simpleName}($elementType)"
 }
