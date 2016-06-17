@@ -6,6 +6,7 @@ import org.rust.ide.icons.RustIcons
 import org.rust.ide.icons.addTestMark
 import org.rust.lang.core.psi.RustFnItemElement
 import org.rust.lang.core.psi.iconWithVisibility
+import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.queryAttributes
 import org.rust.lang.core.stubs.elements.RustFnItemElementStub
 import javax.swing.Icon
@@ -25,7 +26,7 @@ abstract class RustFnItemImplMixin : RustFnImplMixin<RustFnItemElementStub>
         return iconWithVisibility(flags, icon)
     }
 
-    override val isPublic: Boolean get() = stub?.isPublic ?: vis != null
+    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
 
 }
 

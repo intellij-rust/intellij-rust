@@ -150,7 +150,10 @@
     mixin       ("tuple_field_decl")    = "org.rust.lang.core.psi.impl.mixin.RustTupleFieldDeclImplMixin"
     mixin       ("static_item")         = "org.rust.lang.core.psi.impl.mixin.RustStaticItemImplMixin"
     mixin       ("const_item")          = "org.rust.lang.core.psi.impl.mixin.RustConstItemImplMixin"
-
+    mixin       ("foreign_fn_decl")     = "org.rust.lang.core.psi.impl.mixin.RustForeignFnDeclImplMixin"
+    mixin       ("foreign_static_decl") = "org.rust.lang.core.psi.impl.mixin.RustForeignStaticDeclImplMixin"
+    mixin       ("impl_const_member")   = "org.rust.lang.core.psi.impl.mixin.RustImplConstMemberImplMixin"
+    mixin       ("impl_type_member")    = "org.rust.lang.core.psi.impl.mixin.RustImplTypeMemberImplMixin"
     //
     // References
     //
@@ -518,7 +521,6 @@ private foreign_decl ::= foreign_static_decl | foreign_fn_decl
 foreign_static_decl ::= attrs_and_vis STATIC MUT? IDENTIFIER type_ascription ';' {
   pin = "STATIC"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  extends = "org.rust.lang.core.psi.RustNamedVisibilityOwnerElementImpl"
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
@@ -527,7 +529,6 @@ foreign_static_decl ::= attrs_and_vis STATIC MUT? IDENTIFIER type_ascription ';'
 foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params? foreign_fn_parameters ret_type? where_clause? ';' {
   pin = "FN"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  extends = "org.rust.lang.core.psi.RustNamedVisibilityOwnerElementImpl"
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
@@ -677,7 +678,6 @@ impl_method_member ::= attrs_and_vis fn_header method_parameters ret_type? where
 
 impl_const_member ::= attrs_and_vis CONST static_decl ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  extends = "org.rust.lang.core.psi.RustNamedVisibilityOwnerElementImpl"
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
@@ -685,7 +685,6 @@ impl_const_member ::= attrs_and_vis CONST static_decl ';' {
 
 impl_type_member ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params? '=' type ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  extends = "org.rust.lang.core.psi.RustNamedVisibilityOwnerElementImpl"
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
