@@ -348,26 +348,31 @@ private class RustScopeVisitor(
     }
 
     override fun visitStructItem(o: RustStructItemElement) {
-        if (isContextLocalTo(o))
-            result = o.typeParams.scopeEntries
-
+        result = if (isContextLocalTo(o))
+            o.typeParams.scopeEntries
+        else
+            emptySequence()
     }
 
     override fun visitEnumItem(o: RustEnumItemElement) {
-        if (isContextLocalTo(o))
-            result = o.typeParams.scopeEntries
+        result = if (isContextLocalTo(o))
+            o.typeParams.scopeEntries
         else
-            result = o.enumBody.enumVariantList.scopeEntries
+            o.enumBody.enumVariantList.scopeEntries
     }
 
     override fun visitTraitItem(o: RustTraitItemElement) {
-        if (isContextLocalTo(o))
-            result = o.typeParams.scopeEntries
+        result = if (isContextLocalTo(o))
+            o.typeParams.scopeEntries
+        else
+            emptySequence()
     }
 
     override fun visitTypeItem(o: RustTypeItemElement) {
-        if (isContextLocalTo(o))
-            result = o.typeParams.scopeEntries
+        result = if (isContextLocalTo(o))
+            o.typeParams.scopeEntries
+        else
+            emptySequence()
     }
 
     override fun visitFnItem(o: RustFnItemElement) {
@@ -383,8 +388,10 @@ private class RustScopeVisitor(
     }
 
     override fun visitImplItem(o: RustImplItemElement) {
-        if (isContextLocalTo(o))
-            result = o.typeParams.scopeEntries
+        result = if (isContextLocalTo(o))
+            o.typeParams.scopeEntries
+        else
+            emptySequence()
     }
 
     override fun visitLambdaExpr(o: RustLambdaExprElement) {
