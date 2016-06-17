@@ -63,5 +63,6 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testFunctionIsNotModule() = checkIsUnbound()
 
     fun testEnumGenerics() = checkIsUnbound()
+    fun testStructGenerics() = checkIsUnbound()
 }
 
