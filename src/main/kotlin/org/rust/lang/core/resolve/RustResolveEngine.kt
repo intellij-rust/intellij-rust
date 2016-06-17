@@ -73,12 +73,12 @@ object RustResolveEngine {
     fun resolve(ref: RustQualifiedReferenceElement): ResolveResult = recursionGuard(ref) {
         val modulePrefix = ref.relativeModulePrefix
         when (modulePrefix) {
-            is RelativeModulePrefix.Invalid        -> RustResolveEngine.ResolveResult.Unresolved
+            is RelativeModulePrefix.Invalid        -> ResolveResult.Unresolved
             is RelativeModulePrefix.AncestorModule -> resolveAncestorModule(ref, modulePrefix).asResolveResult()
             is RelativeModulePrefix.NotRelative    -> {
                 val qual = ref.qualifier
                 if (qual == null) {
-                    resolveIn(RustResolveEngine.enumerateScopesFor(ref), ref)
+                    resolveIn(enumerateScopesFor(ref), ref)
                 } else {
                     val parent = resolve(qual).element
                     if (parent is RustResolveScope)
@@ -88,7 +88,7 @@ object RustResolveEngine {
                 }
             }
         }
-    } ?: RustResolveEngine.ResolveResult.Unresolved
+    } ?: ResolveResult.Unresolved
 
     /**
      * Resolves references to struct's fields inside destructuring [RustStructExprElement]
@@ -164,12 +164,12 @@ object RustResolveEngine {
 
         when {
         // `use foo::{self}`
-            ref.self != null && baseItem != null -> RustResolveEngine.ResolveResult.Resolved(baseItem)
+            ref.self != null && baseItem != null -> ResolveResult.Resolved(baseItem)
 
         // `use foo::{bar}`
             baseItem is RustResolveScope -> resolveIn(sequenceOf(baseItem), ref)
 
-            else -> RustResolveEngine.ResolveResult.Unresolved
+            else -> ResolveResult.Unresolved
         }
     } ?: ResolveResult.Unresolved
 
@@ -198,7 +198,7 @@ object RustResolveEngine {
         val name    = ref.name
 
         if (parent == null || name == null) {
-            return RustResolveEngine.ResolveResult.Unresolved
+            return ResolveResult.Unresolved
         }
 
         val dir = parent.ownedDirectory
@@ -208,9 +208,9 @@ object RustResolveEngine {
         }
 
         return when (resolved.size) {
-            0    -> RustResolveEngine.ResolveResult.Unresolved
-            1    -> RustResolveEngine.ResolveResult.Resolved    (resolved.single())
-            else -> RustResolveEngine.ResolveResult.Ambiguous   (resolved)
+            0    -> ResolveResult.Unresolved
+            1    -> ResolveResult.Resolved    (resolved.single())
+            else -> ResolveResult.Ambiguous   (resolved)
         }
     }
 
@@ -233,10 +233,10 @@ object RustResolveEngine {
         }
 
         return generateSequence(RustResolveUtil.getResolveScopeFor(ref)) { parent ->
-            when (parent) {
-                is RustModItemElement  -> null
-                else            -> RustResolveUtil.getResolveScopeFor(parent)
-            }
+            if (parent is RustModItemElement)
+                null
+            else
+                RustResolveUtil.getResolveScopeFor(parent)
         }
     }
 }
