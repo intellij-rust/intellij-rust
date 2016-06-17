@@ -15,7 +15,7 @@ val RustPatElement.boundElements: List<RustNamedElement>
         val result = arrayListOf<RustNamedElement>()
 
         accept(object : RustRecursiveElementVisitor() {
-            override fun visitElement(element: PsiElement?) {
+            override fun visitElement(element: PsiElement) {
                 if (element is RustNamedElement)
                     result.add(element)
                 super.visitElement(element)

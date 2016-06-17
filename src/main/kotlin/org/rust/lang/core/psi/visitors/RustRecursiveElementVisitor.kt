@@ -5,9 +5,9 @@ import org.rust.lang.core.psi.RustElementVisitor
 
 abstract class RustRecursiveElementVisitor : RustElementVisitor() {
 
-    override fun visitElement(element: PsiElement?) {
+    override fun visitElement(element: PsiElement) {
         super.visitElement(element)
-        element?.acceptChildren(this)
+        element.acceptChildren(this)
     }
 
 }

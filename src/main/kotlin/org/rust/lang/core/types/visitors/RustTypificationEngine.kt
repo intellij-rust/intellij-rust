@@ -77,7 +77,7 @@ private open class RustTypificationVisitorBase<T: Any> : RustRecursiveElementVis
 
 private class RustExprTypificationVisitor : RustTypificationVisitorBase<RustType>() {
 
-    override fun visitElement(element: PsiElement?) {
+    override fun visitElement(element: PsiElement) {
         throw UnsupportedOperationException("Panic! Should not be used with anything except the inheritors of `RustExprElement` hierarchy!")
     }
 
@@ -130,7 +130,7 @@ private class RustExprTypificationVisitor : RustTypificationVisitorBase<RustType
 
 private class RustItemTypificationVisitor : RustTypificationVisitorBase<RustType>() {
 
-    override fun visitElement(element: PsiElement?) {
+    override fun visitElement(element: PsiElement) {
         throw UnsupportedOperationException("Panic! Should not be used with anything except the inheritors of `RustExprElement` hierarchy!")
     }
 
@@ -154,7 +154,7 @@ private class RustItemTypificationVisitor : RustTypificationVisitorBase<RustType
 
 private class RustTypeTypificationVisitor : RustTypificationVisitorBase<RustUnresolvedType>() {
 
-    override fun visitElement(element: PsiElement?) {
+    override fun visitElement(element: PsiElement) {
         throw UnsupportedOperationException("Panic! Should not be used with anything except the inheritors of `RustTypeElement` hierarchy!")
     }
 
