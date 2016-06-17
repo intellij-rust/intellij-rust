@@ -131,10 +131,10 @@ private class RustExprTypificationVisitor : RustTypificationVisitorBase<RustType
 private class RustItemTypificationVisitor : RustTypificationVisitorBase<RustType>() {
 
     override fun visitElement(element: PsiElement) {
-        throw UnsupportedOperationException("Panic! Should not be used with anything except the inheritors of `RustExprElement` hierarchy!")
-    }
+        check(element is RustItemElement) {
+           "Panic! Should not be used with anything except the inheritors of `RustItemElement` hierarchy!"
+        }
 
-    override fun visitItem(o: RustItemElement) {
         cur = RustUnknownType
     }
 

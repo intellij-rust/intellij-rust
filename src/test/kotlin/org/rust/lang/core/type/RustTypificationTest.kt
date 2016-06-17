@@ -41,6 +41,16 @@ class RustTypificationTest: RustTestCaseBase() {
         }
     """)
 
+    fun testEnum() = testType("<unknown>",
+        //language=RUST
+        """
+        enum E { X }
+
+        fn main() {
+            let _: E = E::X;
+                 //^
+        }
+    """)
 
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.
