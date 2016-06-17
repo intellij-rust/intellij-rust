@@ -163,9 +163,7 @@ private class RustTypeTypificationVisitor : RustTypificationVisitorBase<RustUnre
     }
 
     override fun visitPathType(o: RustPathTypeElement) {
-        o.path?.let {
-            cur = RustUnresolvedPathType(it)
-        }
+        cur = o.path?.let { RustUnresolvedPathType(it) } ?: RustUnknownType
     }
 
 }
