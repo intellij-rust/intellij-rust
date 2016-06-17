@@ -7,15 +7,15 @@ import org.rust.ide.icons.addTestMark
 import org.rust.lang.core.psi.RustFnItemElement
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.queryAttributes
-import org.rust.lang.core.stubs.elements.RustFnItemStub
+import org.rust.lang.core.stubs.elements.RustFnItemElementStub
 import javax.swing.Icon
 
-abstract class RustFnItemImplMixin : RustFnImplMixin<RustFnItemStub>
+abstract class RustFnItemImplMixin : RustFnImplMixin<RustFnItemElementStub>
                                    , RustFnItemElement {
 
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RustFnItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RustFnItemElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int): Icon {
         var icon = RustIcons.FUNCTION

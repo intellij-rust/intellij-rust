@@ -11,24 +11,24 @@ import org.rust.lang.core.psi.impl.RustConstItemElementImpl
 import org.rust.lang.core.stubs.RustNamedElementStub
 import org.rust.lang.core.stubs.RustNamedStubElementType
 
-object RustConstItemStubElementType : RustNamedStubElementType<RustConstItemStub, RustConstItemElement>("CONST_ITEM") {
-    override fun createStub(psi: RustConstItemElement, parentStub: StubElement<*>?): RustConstItemStub =
-        RustConstItemStub(parentStub, this, psi.name, psi.isPublic)
+object RustConstItemStubElementType : RustNamedStubElementType<RustConstItemElementStub, RustConstItemElement>("CONST_ITEM") {
+    override fun createStub(psi: RustConstItemElement, parentStub: StubElement<*>?): RustConstItemElementStub =
+        RustConstItemElementStub(parentStub, this, psi.name, psi.isPublic)
 
-    override fun createPsi(stub: RustConstItemStub): RustConstItemElement =
+    override fun createPsi(stub: RustConstItemElementStub): RustConstItemElement =
         RustConstItemElementImpl(stub, this)
 
-    override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustConstItemStub =
-        RustConstItemStub(parentStub, this, dataStream.readName(), dataStream.readBoolean())
+    override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustConstItemElementStub =
+        RustConstItemElementStub(parentStub, this, dataStream.readName(), dataStream.readBoolean())
 
-    override fun serialize(stub: RustConstItemStub, dataStream: StubOutputStream) = with(dataStream) {
+    override fun serialize(stub: RustConstItemElementStub, dataStream: StubOutputStream) = with(dataStream) {
         writeName(stub.name)
         writeBoolean(stub.isPublic)
     }
 }
 
 
-class RustConstItemStub : RustNamedElementStub<RustConstItemElement> {
+class RustConstItemElementStub : RustNamedElementStub<RustConstItemElement> {
     constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: StringRef?, isPublic: Boolean)
     : super(parent, elementType, name ?: StringRef.fromNullableString(""), isPublic)
 

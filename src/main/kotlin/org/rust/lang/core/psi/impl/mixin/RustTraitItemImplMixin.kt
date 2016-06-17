@@ -6,15 +6,15 @@ import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.RustTraitItemElement
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustStubbedNamedVisibilityOwnerElementImpl
-import org.rust.lang.core.stubs.elements.RustTraitItemStub
+import org.rust.lang.core.stubs.elements.RustTraitItemElementStub
 import javax.swing.Icon
 
 
-abstract class RustTraitItemImplMixin : RustStubbedNamedVisibilityOwnerElementImpl<RustTraitItemStub>, RustTraitItemElement {
+abstract class RustTraitItemImplMixin : RustStubbedNamedVisibilityOwnerElementImpl<RustTraitItemElementStub>, RustTraitItemElement {
 
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RustTraitItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RustTraitItemElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RustIcons.TRAIT)

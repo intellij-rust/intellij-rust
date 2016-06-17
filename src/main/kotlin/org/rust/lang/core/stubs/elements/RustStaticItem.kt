@@ -11,24 +11,24 @@ import org.rust.lang.core.psi.impl.RustStaticItemElementImpl
 import org.rust.lang.core.stubs.RustNamedElementStub
 import org.rust.lang.core.stubs.RustNamedStubElementType
 
-object RustStaticItemStubElementType : RustNamedStubElementType<RustStaticItemStub, RustStaticItemElement>("STATIC_ITEM") {
-    override fun createStub(psi: RustStaticItemElement, parentStub: StubElement<*>?): RustStaticItemStub =
-        RustStaticItemStub(parentStub, this, psi.name, psi.isPublic)
+object RustStaticItemStubElementType : RustNamedStubElementType<RustStaticItemElementStub, RustStaticItemElement>("STATIC_ITEM") {
+    override fun createStub(psi: RustStaticItemElement, parentStub: StubElement<*>?): RustStaticItemElementStub =
+        RustStaticItemElementStub(parentStub, this, psi.name, psi.isPublic)
 
-    override fun createPsi(stub: RustStaticItemStub): RustStaticItemElement =
+    override fun createPsi(stub: RustStaticItemElementStub): RustStaticItemElement =
         RustStaticItemElementImpl(stub, this)
 
-    override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustStaticItemStub =
-        RustStaticItemStub(parentStub, this, dataStream.readName(), dataStream.readBoolean())
+    override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustStaticItemElementStub =
+        RustStaticItemElementStub(parentStub, this, dataStream.readName(), dataStream.readBoolean())
 
-    override fun serialize(stub: RustStaticItemStub, dataStream: StubOutputStream) = with(dataStream) {
+    override fun serialize(stub: RustStaticItemElementStub, dataStream: StubOutputStream) = with(dataStream) {
         writeName(stub.name)
         writeBoolean(stub.isPublic)
     }
 }
 
 
-class RustStaticItemStub : RustNamedElementStub<RustStaticItemElement> {
+class RustStaticItemElementStub : RustNamedElementStub<RustStaticItemElement> {
     constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: StringRef?, isPublic: Boolean)
     : super(parent, elementType, name ?: StringRef.fromNullableString(""), isPublic)
 

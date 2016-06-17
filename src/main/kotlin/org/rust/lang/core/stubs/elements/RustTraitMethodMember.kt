@@ -11,23 +11,23 @@ import org.rust.lang.core.psi.impl.RustTraitMethodMemberElementImpl
 import org.rust.lang.core.stubs.RustNamedElementStub
 import org.rust.lang.core.stubs.RustNamedStubElementType
 
-object RustTraitMethodMemberStubElementType : RustNamedStubElementType<RustTraitMethodMemberStub, RustTraitMethodMemberElement>("TRAIT_METHOD_MEMBER") {
-    override fun createStub(psi: RustTraitMethodMemberElement, parentStub: StubElement<*>?): RustTraitMethodMemberStub =
-        RustTraitMethodMemberStub(parentStub, this, psi.name)
+object RustTraitMethodMemberStubElementType : RustNamedStubElementType<RustTraitMethodMemberElementStub, RustTraitMethodMemberElement>("TRAIT_METHOD_MEMBER") {
+    override fun createStub(psi: RustTraitMethodMemberElement, parentStub: StubElement<*>?): RustTraitMethodMemberElementStub =
+        RustTraitMethodMemberElementStub(parentStub, this, psi.name)
 
-    override fun createPsi(stub: RustTraitMethodMemberStub): RustTraitMethodMemberElement =
+    override fun createPsi(stub: RustTraitMethodMemberElementStub): RustTraitMethodMemberElement =
         RustTraitMethodMemberElementImpl(stub, this)
 
-    override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustTraitMethodMemberStub =
-        RustTraitMethodMemberStub(parentStub, this, dataStream.readName())
+    override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustTraitMethodMemberElementStub =
+        RustTraitMethodMemberElementStub(parentStub, this, dataStream.readName())
 
-    override fun serialize(stub: RustTraitMethodMemberStub, dataStream: StubOutputStream) = with(dataStream) {
+    override fun serialize(stub: RustTraitMethodMemberElementStub, dataStream: StubOutputStream) = with(dataStream) {
         writeName(stub.name)
     }
 }
 
 
-class RustTraitMethodMemberStub : RustNamedElementStub<RustTraitMethodMemberElement> {
+class RustTraitMethodMemberElementStub : RustNamedElementStub<RustTraitMethodMemberElement> {
     // no visibility is allowed for trait members, so always store `false` here
     constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: StringRef?)
     : super(parent, elementType, name ?: StringRef.fromNullableString(""), false)

@@ -10,17 +10,17 @@ import org.rust.lang.core.stubs.RustNamedElementStub
 import org.rust.lang.core.stubs.RustNamedStubElementType
 import org.rust.lang.core.stubs.index.RustStructOrEnumIndex
 
-object RustEnumItemStubElementType : RustNamedStubElementType<RustEnumItemStub, RustEnumItemElement>("ENUM_ITEM") {
-    override fun createStub(psi: RustEnumItemElement, parentStub: StubElement<*>?): RustEnumItemStub =
-        RustEnumItemStub(parentStub, this, psi.name, psi.isPublic)
+object RustEnumItemStubElementType : RustNamedStubElementType<RustEnumItemElementStub, RustEnumItemElement>("ENUM_ITEM") {
+    override fun createStub(psi: RustEnumItemElement, parentStub: StubElement<*>?): RustEnumItemElementStub =
+        RustEnumItemElementStub(parentStub, this, psi.name, psi.isPublic)
 
-    override fun createPsi(stub: RustEnumItemStub): RustEnumItemElement =
+    override fun createPsi(stub: RustEnumItemElementStub): RustEnumItemElement =
         RustEnumItemElementImpl(stub, this)
 
-    override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustEnumItemStub =
-        RustEnumItemStub(parentStub, this, dataStream.readName(), dataStream.readBoolean())
+    override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustEnumItemElementStub =
+        RustEnumItemElementStub(parentStub, this, dataStream.readName(), dataStream.readBoolean())
 
-    override fun serialize(stub: RustEnumItemStub, dataStream: StubOutputStream) = with(dataStream) {
+    override fun serialize(stub: RustEnumItemElementStub, dataStream: StubOutputStream) = with(dataStream) {
         writeName(stub.name)
         writeBoolean(stub.isPublic)
     }
@@ -31,7 +31,7 @@ object RustEnumItemStubElementType : RustNamedStubElementType<RustEnumItemStub, 
 }
 
 
-class RustEnumItemStub : RustNamedElementStub<RustEnumItemElement> {
+class RustEnumItemElementStub : RustNamedElementStub<RustEnumItemElement> {
     constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: StringRef?, isPublic: Boolean)
     : super(parent, elementType, name ?: StringRef.fromNullableString(""), isPublic)
 

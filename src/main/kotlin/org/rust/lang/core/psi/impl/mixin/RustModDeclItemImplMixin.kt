@@ -11,16 +11,16 @@ import org.rust.lang.core.psi.impl.RustStubbedNamedVisibilityOwnerElementImpl
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ref.RustModReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
-import org.rust.lang.core.stubs.elements.RustModDeclItemStub
+import org.rust.lang.core.stubs.elements.RustModDeclElementItemStub
 import java.io.File
 import javax.swing.Icon
 
-abstract class RustModDeclItemImplMixin : RustStubbedNamedVisibilityOwnerElementImpl<RustModDeclItemStub>
+abstract class RustModDeclItemImplMixin : RustStubbedNamedVisibilityOwnerElementImpl<RustModDeclElementItemStub>
                                         , RustModDeclItemElement {
 
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RustModDeclItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RustModDeclElementItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int): Icon? {
         return iconWithVisibility(flags, RustIcons.MODULE)

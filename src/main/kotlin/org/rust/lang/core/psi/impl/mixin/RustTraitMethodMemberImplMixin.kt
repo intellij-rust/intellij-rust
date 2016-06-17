@@ -6,16 +6,16 @@ import org.rust.ide.icons.RustIcons
 import org.rust.ide.icons.addStaticMark
 import org.rust.lang.core.psi.RustTraitMethodMemberElement
 import org.rust.lang.core.psi.isStatic
-import org.rust.lang.core.stubs.elements.RustTraitMethodMemberStub
+import org.rust.lang.core.stubs.elements.RustTraitMethodMemberElementStub
 import javax.swing.Icon
 
 
-abstract class RustTraitMethodMemberImplMixin : RustFnImplMixin<RustTraitMethodMemberStub>
+abstract class RustTraitMethodMemberImplMixin : RustFnImplMixin<RustTraitMethodMemberElementStub>
                                               , RustTraitMethodMemberElement {
 
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RustTraitMethodMemberStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RustTraitMethodMemberElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int): Icon {
         var icon = if (block == null) RustIcons.ABSTRACT_METHOD else RustIcons.METHOD

@@ -7,15 +7,15 @@ import org.rust.ide.icons.addStaticMark
 import org.rust.lang.core.psi.RustImplMethodMemberElement
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.isStatic
-import org.rust.lang.core.stubs.elements.RustImplMethodMemberStub
+import org.rust.lang.core.stubs.elements.RustImplMethodMemberElementStub
 import javax.swing.Icon
 
-abstract class RustImplMethodMemberImplMixin : RustFnImplMixin<RustImplMethodMemberStub>
+abstract class RustImplMethodMemberImplMixin : RustFnImplMixin<RustImplMethodMemberElementStub>
                                              , RustImplMethodMemberElement {
 
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RustImplMethodMemberStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RustImplMethodMemberElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int): Icon? {
         var icon = RustIcons.METHOD
