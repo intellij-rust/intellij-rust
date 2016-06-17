@@ -6,8 +6,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
-import org.rust.lang.core.psi.impl.RustStubbedNamedVisibilityOwnerElementImpl
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ref.RustModReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
@@ -15,18 +15,19 @@ import org.rust.lang.core.stubs.elements.RustModDeclElementItemStub
 import java.io.File
 import javax.swing.Icon
 
-abstract class RustModDeclItemImplMixin : RustStubbedNamedVisibilityOwnerElementImpl<RustModDeclElementItemStub>
+abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RustModDeclElementItemStub>
                                         , RustModDeclItemElement {
 
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: RustModDeclElementItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getIcon(flags: Int): Icon? {
-        return iconWithVisibility(flags, RustIcons.MODULE)
-    }
-
     override fun getReference(): RustReference = RustModReferenceImpl(this)
+
+    override fun getIcon(flags: Int): Icon? = iconWithVisibility(flags, RustIcons.MODULE)
+
+    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
+
 }
 
 fun RustModDeclItemElement.getOrCreateModuleFile(): PsiFile? {

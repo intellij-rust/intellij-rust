@@ -148,6 +148,8 @@
     mixin       ("foreign_mod_item")    = "org.rust.lang.core.psi.impl.mixin.RustForeignModItemImplMixin"
     mixin       ("use_item")            = "org.rust.lang.core.psi.impl.mixin.RustUseItemImplMixin"
     mixin       ("tuple_field_decl")    = "org.rust.lang.core.psi.impl.mixin.RustTupleFieldDeclImplMixin"
+    mixin       ("static_item")         = "org.rust.lang.core.psi.impl.mixin.RustStaticItemImplMixin"
+    mixin       ("const_item")          = "org.rust.lang.core.psi.impl.mixin.RustConstItemImplMixin"
 
     //
     // References
@@ -436,7 +438,7 @@ static_item ::= attrs_and_vis STATIC MUT? static_decl ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustItemElement" ]
-  extends = "org.rust.lang.core.psi.impl.RustStubbedNamedVisibilityOwnerElementImpl<?>"
+  extends = "org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.elements.RustStaticItemElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
@@ -445,7 +447,7 @@ const_item ::= attrs_and_vis CONST static_decl ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustItemElement" ]
-  extends = "org.rust.lang.core.psi.impl.RustStubbedNamedVisibilityOwnerElementImpl<?>"
+  extends = "org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.elements.RustConstItemElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }

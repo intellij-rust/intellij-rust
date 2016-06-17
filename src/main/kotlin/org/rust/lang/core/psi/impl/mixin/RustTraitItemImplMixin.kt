@@ -5,12 +5,13 @@ import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.RustTraitItemElement
 import org.rust.lang.core.psi.iconWithVisibility
-import org.rust.lang.core.psi.impl.RustStubbedNamedVisibilityOwnerElementImpl
+import org.rust.lang.core.psi.impl.RustPsiImplUtil
+import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
 import org.rust.lang.core.stubs.elements.RustTraitItemElementStub
 import javax.swing.Icon
 
 
-abstract class RustTraitItemImplMixin : RustStubbedNamedVisibilityOwnerElementImpl<RustTraitItemElementStub>, RustTraitItemElement {
+abstract class RustTraitItemImplMixin : RustStubbedNamedElementImpl<RustTraitItemElementStub>, RustTraitItemElement {
 
     constructor(node: ASTNode) : super(node)
 
@@ -18,4 +19,6 @@ abstract class RustTraitItemImplMixin : RustStubbedNamedVisibilityOwnerElementIm
 
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RustIcons.TRAIT)
+
+    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
 }
