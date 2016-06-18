@@ -3,11 +3,11 @@ package org.rust.lang.core.psi.impl.mixin
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustNamedElementImpl
+import org.rust.lang.core.psi.impl.RustCompositeElementImpl
 import org.rust.lang.core.resolve.ref.RustQualifiedReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
 
-abstract class RustPathImplMixin(node: ASTNode) : RustNamedElementImpl(node)
+abstract class RustPathImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
                                                 , RustQualifiedReferenceElement
                                                 , RustPathElement {
 
