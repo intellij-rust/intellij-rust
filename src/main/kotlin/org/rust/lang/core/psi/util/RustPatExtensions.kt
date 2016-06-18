@@ -1,9 +1,7 @@
 package org.rust.lang.core.psi.util
 
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustPatElement
-import org.rust.lang.core.psi.RustPatTupElement
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.visitors.RustRecursiveElementVisitor
 
 
@@ -16,11 +14,68 @@ val RustPatElement.boundElements: List<RustNamedElement>
 
         accept(object : RustRecursiveElementVisitor() {
             override fun visitElement(element: PsiElement) {
-                if (element is RustNamedElement)
-                    result.add(element)
-                super.visitElement(element)
+                throw UnsupportedOperationException("Visiting un-handled type of the `pat`! Please handle me properly [ ${element.elementType} ]")
+            }
+
+            fun visit(o: RustPatElement?) = o?.accept(this)
+            fun visit(o: List<RustPatElement>) = o.forEach { visit(it) }
+
+            override fun visitPatBinding(o: RustPatBindingElement) {
+                result.add(o)
+            }
+
+            override fun visitPatEnum(o: RustPatEnumElement) {
+                visit(o.patList)
+            }
+
+            override fun visitPatField(o: RustPatFieldElement) {
+                visit(o.pat)
+            }
+
+            override fun visitPatIdent(o: RustPatIdentElement) {
+                result.add(o.patBinding)
+                visit(o.pat)
+            }
+
+            override fun visitPatReg(o: RustPatRegElement) {
+                visit(o.pat)
+            }
+
+            override fun visitPatStruct(o: RustPatStructElement) {
+                o.patFieldList.forEach { field ->
+                    field.patBinding?.let { result.add(it) } ?: visit(field.pat)
+                }
+            }
+
+            override fun visitPatTup(o: RustPatTupElement) {
+                visit(o.patList)
+            }
+
+            override fun visitPatUniq(o: RustPatUniqElement) {
+                visit(o.pat)
+            }
+
+            override fun visitPatVec(o: RustPatVecElement) {
+                visit(o.patList)
+            }
+
+            override fun visitPatQualPath(o: RustPatQualPathElement) {
+                // NOP
+            }
+
+            override fun visitPatRange(o: RustPatRangeElement) {
+                // NOP
+            }
+
+            override fun visitPatWild(o: RustPatWildElement) {
+                // NOP
+            }
+
+            override fun visitPatMacro(o: RustPatMacroElement) {
+                // TODO(xxx): Fix me
             }
         })
+
         return result
     }
 

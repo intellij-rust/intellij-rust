@@ -9,6 +9,7 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testClosure() = checkIsBound()
     fun testMatch() = checkIsBound()
 
+    fun testLet() = checkIsBound()
     fun testLetCycle1() = checkIsUnbound()
     fun testLetCycle2() = checkIsBound(atOffset = 20)
     fun testLetCycle3() = checkIsUnbound()
