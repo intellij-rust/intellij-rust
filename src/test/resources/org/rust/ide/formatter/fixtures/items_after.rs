@@ -25,3 +25,7 @@ pub mod m {
             where S: Shape + 'static {}
     }
 }
+
+struct Foo<
+    T: A + B + 'c,
+    K: X + Y + 'z> {}

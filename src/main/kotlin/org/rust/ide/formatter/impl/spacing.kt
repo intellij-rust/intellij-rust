@@ -68,8 +68,8 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .beforeInside(RBRACK, BRACK_LISTS).spacing(0, 0, 0, true, 0)
         .afterInside(LBRACE, BRACE_LISTS).spacing(0, 0, 0, true, 0)
         .beforeInside(RBRACE, BRACE_LISTS).spacing(0, 0, 0, true, 0)
-        .afterInside(LT, ANGLE_LISTS).spacing(0, 0, 0, false, 0)
-        .beforeInside(GT, ANGLE_LISTS).spacing(0, 0, 0, false, 0)
+        .afterInside(LT, ANGLE_LISTS).spacing(0, 0, 0, true, 0)
+        .beforeInside(GT, ANGLE_LISTS).spacing(0, 0, 0, true, 0)
         .aroundInside(OR, PARAMS_LIKE).spacing(0, 0, 0, false, 0)
 
     val sb2 = sb1

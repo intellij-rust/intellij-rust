@@ -44,9 +44,14 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
                     CodeStyleSettingsCustomizable.WRAPPING_METHOD_PARAMETERS)
 
                 consumer.showCustomOption(RustCodeStyleSettings::class.java,
-                    "ALIGN_WHERE_BOUNDS",
+                    "ALIGN_TYPE_PARAMS",
                     ApplicationBundle.message("wrapping.align.when.multiline"),
-                    "Where clause bounds")
+                    "Type parameters")
+
+                consumer.showCustomOption(RustCodeStyleSettings::class.java,
+                    "ALIGN_WHERE_BOUNDS",
+                    "Align where clause bounds",
+                    "Type parameters")
             }
         }
     }
