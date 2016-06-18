@@ -193,13 +193,12 @@
     implements  ("match_pat")   = "org.rust.lang.core.psi.RustDeclaringElement"
     mixin       ("match_pat")   = "org.rust.lang.core.psi.impl.mixin.RustMatchPatImplMixin"
 
-    implements  ("pat_binding") = [ "org.rust.lang.core.psi.RustNamedElement" ]
-    mixin       ("pat_binding") = "org.rust.lang.core.psi.impl.mixin.RustPatBindingImplMixin"
-
-
     //
     //  Misc
     //
+
+    implements  ("pat_binding") = [ "org.rust.lang.core.psi.RustNamedElement" ]
+    mixin       ("pat_binding") = "org.rust.lang.core.psi.impl.mixin.RustPatBindingImplMixin"
 
     implements  ("alias") = "org.rust.lang.core.psi.RustNamedElement"
     extends     ("alias") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
