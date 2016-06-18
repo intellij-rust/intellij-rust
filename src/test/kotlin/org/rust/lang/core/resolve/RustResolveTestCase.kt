@@ -8,10 +8,15 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testNestedPatterns() = checkIsBound()
     fun testClosure() = checkIsBound()
     fun testMatch() = checkIsBound()
-    fun testIfLet() = checkIsBound()
-    fun testIfLetX() = checkIsUnbound()
-    fun testWhileLet() = checkIsBound()
-    fun testWhileLetX() = checkIsUnbound()
+
+    fun testLetCycle1() = checkIsUnbound()
+    fun testLetCycle2() = checkIsBound(atOffset = 20)
+    fun testLetCycle3() = checkIsUnbound()
+    fun testIfLet1() = checkIsBound()
+    fun testIfLet2() = checkIsUnbound()
+    fun testWhileLet1() = checkIsBound()
+    fun testWhileLet2() = checkIsUnbound()
+
     fun testFor() = checkIsBound()
     fun testTraitMethodArgument() = checkIsBound()
     fun testImplMethodArgument() = checkIsBound()
@@ -47,10 +52,6 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testForeignStatic() = checkIsBound()
 
     fun testSelfType() = checkIsUnbound() // TODO: some form of resolve for Self should be implemented
-
-    fun testLetCycle1() = checkIsUnbound()
-    fun testLetCycle2() = checkIsBound(atOffset = 20)
-    fun testLetCycle3() = checkIsUnbound()
 
     fun testUnbound() = checkIsUnbound()
     fun testOrdering() = checkIsUnbound()
