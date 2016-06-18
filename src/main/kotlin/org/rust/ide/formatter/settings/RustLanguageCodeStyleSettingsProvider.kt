@@ -15,12 +15,10 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
     override fun getLanguage(): Language = RustLanguage
 
     override fun getCodeSample(settingsType: SettingsType): String =
-        // TODO Provide more suitable code samples for specific settings types
         when (settingsType) {
-            BLANK_LINES_SETTINGS,
-            WRAPPING_AND_BRACES_SETTINGS,
-            INDENT_SETTINGS -> CODE_SAMPLE
-
+            INDENT_SETTINGS -> INDENT_SAMPLE
+            WRAPPING_AND_BRACES_SETTINGS -> WRAP_SAMPLE
+            BLANK_LINES_SETTINGS -> BLANK_LINES_SAMPLE
             else -> ""
         }
 
@@ -66,7 +64,15 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
             }
         }
 
-    private val CODE_SAMPLE: String by lazy {
-        loadCodeSampleResource("org/rust/ide/formatter/settings/code_sample.rs")
+    private val INDENT_SAMPLE: String by lazy {
+        loadCodeSampleResource("org/rust/ide/formatter/settings/indent_sample.rs")
+    }
+
+    private val WRAP_SAMPLE: String by lazy {
+        loadCodeSampleResource("org/rust/ide/formatter/settings/wrap_sample.rs")
+    }
+
+    private val BLANK_LINES_SAMPLE: String by lazy {
+        loadCodeSampleResource("org/rust/ide/formatter/settings/blank_lines_sample.rs")
     }
 }
