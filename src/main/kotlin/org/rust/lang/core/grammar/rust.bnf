@@ -218,7 +218,7 @@
     extends     ("(if|while)_let_expr") = scoped_let_expr
     extends     (".*_expr") = expr
     extends     ("(?!ret_type).*_type") = type
-    extends     ("pat_(wild|tup|vec|macro|struct|enum|ident|range|uniq|qual_path)")  = pat
+    extends     ("pat_(wild|ref|tup|vec|macro|struct|enum|ident|range|uniq|qual_path)")  = pat
     extends     (".*_attr") = attr
 
     elementType ("expr_like_macro|item_like_macro") = macro
@@ -369,7 +369,7 @@ where_pred ::= for_lifetimes? (LIFETIME ':' [ LIFETIME ( '+' LIFETIME )* ] | typ
 for_lifetimes ::= FOR '<' lifetimes '>'
 
 pat ::= pat_wild
-      | pat_reg
+      | pat_ref
       | pat_tup
       | pat_vec
       | pat_macro
@@ -405,7 +405,7 @@ pat_vec ::= '[' pat_vec_elts ']'
 private pats ::= <<comma_separated_list pat>>
 private pat_vec_elts ::= pats? [ '..' [ ',' pats ] ]
 
-pat_reg ::= '&' MUT? pat
+pat_ref ::= '&' MUT? pat
 
 pat_wild ::= '_'
 pat_binding ::= binding_mode? IDENTIFIER !'...' !'::'

@@ -2,7 +2,6 @@ package org.rust.lang.core.psi.util
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.visitors.RustRecursiveElementVisitor
 
 
 /**
@@ -12,7 +11,7 @@ val RustPatElement.boundElements: List<RustNamedElement>
     get() {
         val result = arrayListOf<RustNamedElement>()
 
-        accept(object : RustRecursiveElementVisitor() {
+        accept(object : RustElementVisitor() {
             override fun visitElement(element: PsiElement) {
                 throw UnsupportedOperationException("Visiting un-handled type of the `pat`! Please handle me properly [ ${element.elementType} ]")
             }
@@ -37,7 +36,7 @@ val RustPatElement.boundElements: List<RustNamedElement>
                 visit(o.pat)
             }
 
-            override fun visitPatReg(o: RustPatRegElement) {
+            override fun visitPatRef(o: RustPatRefElement) {
                 visit(o.pat)
             }
 

@@ -6,6 +6,7 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testLocals() = checkIsBound(atOffset = 19)
     fun testShadowing() = checkIsBound(atOffset = 35)
     fun testNestedPatterns() = checkIsBound()
+    fun testRefPattern() = checkIsBound()
     fun testClosure() = checkIsBound()
     fun testMatch() = checkIsBound()
 
