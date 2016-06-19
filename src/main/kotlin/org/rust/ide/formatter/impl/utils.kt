@@ -47,8 +47,6 @@ val MACRO_ARGS = ts(MACRO_ARG, FORMAT_MACRO_ARGS, TRY_MACRO_ARGS)
 
 val FN_DECLS = ts(FN_ITEM, FOREIGN_FN_DECL, TRAIT_METHOD_MEMBER, IMPL_METHOD_MEMBER, BARE_FN_TYPE, LAMBDA_EXPR)
 
-val FN_SHARED_ALIGN_OWNERS = orSet(PARAMS_LIKE, ts(RET_TYPE, WHERE_CLAUSE))
-
 
 val PsiElement.isTopLevelItem: Boolean
     get() = (this is RustItemElement || this is RustAttrElement) && parent is RustMod
@@ -61,13 +59,10 @@ val PsiElement.isBlockDelim: Boolean
 
 
 val ASTNode.isDelimitedBlock: Boolean
-    get() = DELIMITED_BLOCKS.contains(elementType)
-
-val ASTNode.isModItem: Boolean
-    get() = MOD_ITEMS.contains(elementType)
+    get() = elementType in DELIMITED_BLOCKS
 
 val ASTNode.isFlatBraceBlock: Boolean
-    get() = FLAT_BRACE_BLOCKS.contains(elementType)
+    get() = elementType in FLAT_BRACE_BLOCKS
 
 /**
  * A flat block is a Rust PSI element which does not denote separate PSI
@@ -83,10 +78,10 @@ fun ASTNode.isBlockDelim(parent: ASTNode?): Boolean {
     if (parent == null) return false
     val parentType = parent.elementType
     return when (elementType) {
-        LBRACE, RBRACE -> BRACE_DELIMITED_BLOCKS.contains(parentType) || parent.isFlatBraceBlock
-        LBRACK, RBRACK -> BRACK_LISTS.contains(parentType)
-        LPAREN, RPAREN -> PAREN_LISTS.contains(parentType) || parentType == PAT_ENUM
-        LT, GT -> ANGLE_LISTS.contains(parentType)
+        LBRACE, RBRACE -> parentType in BRACE_DELIMITED_BLOCKS || parent.isFlatBraceBlock
+        LBRACK, RBRACK -> parentType in BRACK_LISTS
+        LPAREN, RPAREN -> parentType in PAREN_LISTS || parentType == PAT_ENUM
+        LT, GT -> parentType in ANGLE_LISTS
         OR -> parentType == PARAMETERS && parent.treeParent?.elementType == LAMBDA_EXPR
         else -> false
     }
