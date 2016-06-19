@@ -87,6 +87,9 @@
         <annotator language="RUST" implementationClass="org.rust.ide.annotator.RustExpressionAnnotator"/>
         <annotator language="RUST" implementationClass="org.rust.ide.annotator.RustInvalidSyntaxAnnotator"/>
 
+        <!-- Completion -->
+        <completion.contributor language="RUST" implementationClass="org.rust.ide.completion.RustCompletionContributor"/>
+
         <!-- Description Provider -->
 
         <elementDescriptionProvider implementation="org.rust.ide.RustDescriptionProvider"/>

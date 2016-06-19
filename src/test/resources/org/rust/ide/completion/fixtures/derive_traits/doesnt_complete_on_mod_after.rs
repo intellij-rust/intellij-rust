@@ -1,0 +1,3 @@
+#[foo(PartialE)]
+mod foo() {
+}
