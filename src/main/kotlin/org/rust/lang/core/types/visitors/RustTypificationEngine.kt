@@ -2,6 +2,7 @@ package org.rust.lang.core.types.visitors
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.mixin.rootPattern
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustRecursiveElementVisitor
 import org.rust.lang.core.types.*
@@ -44,16 +45,16 @@ object RustTypificationEngine {
     /**
      * NOTA BENE: That's far from complete
      */
-    private fun deviseBoundPatType(pat: RustPatBindingElement): RustType {
-        val letDecl = pat.parentOfType<RustLetDeclElement>()
-        if (letDecl != null) {
-            val typeAsc = letDecl.type
-            if (typeAsc != null)
-                return typeAsc.resolvedType
-
-            val initExpr = letDecl.expr
-            if (initExpr != null)
-                return RustTypeInferenceEngine.inferPatBindingTypeFrom(pat, letDecl.pat!!, initExpr.resolvedType)
+    private fun deviseBoundPatType(binding: RustPatBindingElement): RustType {
+        val pattern = binding.rootPattern ?: return RustUnknownType
+        val parent = pattern.parent
+        when (parent) {
+            is RustLetDeclElement -> {
+                val type = parent.type?.resolvedType // use type ascription, if present
+                    ?: parent.expr?.resolvedType     // or fallback to the type of initialize expression
+                    ?: return RustUnknownType
+                return RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, pattern, type)
+            }
         }
 
         return RustUnknownType

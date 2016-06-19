@@ -15,6 +15,30 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
+    fun testLetTypeAscription() = testExpr("S",
+        //language=RUST
+        """
+        struct S;
+
+        fn main() {
+            let x: S = unimplemented!();
+            x;
+          //^
+        }
+    """)
+
+    fun testLetInitExpr() = testExpr("S",
+        //language=RUST
+        """
+        struct S;
+
+        fn main() {
+            let x = S;
+            x;
+          //^
+        }
+    """)
+
     private fun testExpr(expectedType: String, code: String) {
         val elementAtCaret = configureAndFindElement(code)
         val typeAtCaret = requireNotNull(elementAtCaret.parentOfType<RustExprElement>()) {
