@@ -17,6 +17,17 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
         }
     """)
 
+    fun testUnit() = testType("(S, T)",
+        //language=RUST
+        """
+        struct S;
+        struct T;
+        fn main() {
+            let _: (S, T) = (S, T);
+                 //^
+        }
+    """)
+
     fun testQualifiedPath() = testType("<unknown>",
         //language=RUST
         """

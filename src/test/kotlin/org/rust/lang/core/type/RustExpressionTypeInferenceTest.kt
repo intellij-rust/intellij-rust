@@ -19,21 +19,23 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         //language=RUST
         """
         struct S;
+        struct T;
 
         fn main() {
-            let x: S = unimplemented!();
+            let (x, _): (S, T) = unimplemented!();
             x;
           //^
         }
     """)
 
-    fun testLetInitExpr() = testExpr("S",
+    fun testLetInitExpr() = testExpr("T",
         //language=RUST
         """
         struct S;
+        struct T;
 
         fn main() {
-            let x = S;
+            let (_, x) = (S, T);
             x;
           //^
         }

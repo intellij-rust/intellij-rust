@@ -7,8 +7,10 @@ import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustRecursiveElementVisitor
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
+import org.rust.lang.core.types.unresolved.RustUnresolvedTupleType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
 import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.util.type
 
 object RustTypificationEngine {
 
@@ -161,6 +163,10 @@ private class RustTypeTypificationVisitor : RustTypificationVisitorBase<RustUnre
 
     override fun visitType(o: RustTypeElement) {
         cur = RustUnknownType
+    }
+
+    override fun visitTupleType(o: RustTupleTypeElement) {
+        cur = RustUnresolvedTupleType(o.typeList.map { it.type })
     }
 
     override fun visitPathType(o: RustPathTypeElement) {
