@@ -1,8 +1,8 @@
 package org.rust.lang.core.types.visitors
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.rootPattern
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustRecursiveElementVisitor
 import org.rust.lang.core.types.*
@@ -48,12 +48,13 @@ object RustTypificationEngine {
      * NOTA BENE: That's far from complete
      */
     private fun deviseBoundPatType(binding: RustPatBindingElement): RustType {
-        val pattern = binding.rootPattern ?: return RustUnknownType
+        //TODO: probably want something more precise than `getTopmostParentOfType` here
+        val pattern = PsiTreeUtil.getTopmostParentOfType(binding, RustPatElement::class.java) ?: return RustUnknownType
         val parent = pattern.parent
         when (parent) {
             is RustLetDeclElement -> {
                 val type = parent.type?.resolvedType // use type ascription, if present
-                    ?: parent.expr?.resolvedType     // or fallback to the type of initialize expression
+                    ?: parent.expr?.resolvedType     // or fallback to the type of the initializer expression
                     ?: return RustUnknownType
                 return RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, pattern, type)
             }
