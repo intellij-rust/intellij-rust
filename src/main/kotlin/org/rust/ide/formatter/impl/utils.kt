@@ -8,7 +8,6 @@ import com.intellij.psi.tree.TokenSet.orSet
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustTokenElementTypes.*
-import org.rust.lang.core.psi.impl.RustFile
 import com.intellij.psi.tree.TokenSet.create as ts
 
 val KEYWORDS = ts(*IElementType.enumerate { it is RustKeywordTokenType })
@@ -52,10 +51,13 @@ val FN_SHARED_ALIGN_OWNERS = orSet(PARAMS_LIKE, ts(RET_TYPE, WHERE_CLAUSE))
 
 
 val PsiElement.isTopLevelItem: Boolean
-    get() = (this is RustItemElement || this is RustAttrElement) && this.parent is RustFile
+    get() = (this is RustItemElement || this is RustAttrElement) && parent is RustMod
 
 val PsiElement.isStmtOrExpr: Boolean
     get() = this is RustStmtElement || this is RustExprElement
+
+val PsiElement.isBlockDelim: Boolean
+    get() = node.isBlockDelim
 
 
 val ASTNode.isDelimitedBlock: Boolean

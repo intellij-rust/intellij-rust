@@ -202,3 +202,24 @@ fn misc() {
         },
     }
 }
+
+impl Foo {
+    fn a() {}
+
+
+    fn b() {}
+}
+
+mod moo {
+    fn a() {}
+
+
+    fn b() {}
+}
+
+trait Bar {
+    fn a();
+
+
+    fn b();
+}

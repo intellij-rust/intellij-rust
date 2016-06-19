@@ -145,13 +145,20 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtContext): Sp
             blockMustBeMultiLine()
             -> return lineBreak(keepBlankLines = 0)
 
-            // Ensure there are blank lines between statements (or return expression)
+            // Format blank lines between statements (or return expression)
             ncPsi1 is RustStmtElement && ncPsi2.isStmtOrExpr
             -> return lineBreak(
                 keepLineBreaks = ctx.commonSettings.KEEP_LINE_BREAKS,
                 keepBlankLines = ctx.commonSettings.KEEP_BLANK_LINES_IN_CODE)
 
-            // Ensure there are blank lines between top level items
+            // Format blank lines between impl & trait members
+            parentPsi is RustImplBodyElement || parentPsi is RustTraitBodyElement
+                && !ncPsi1.isBlockDelim && !ncPsi2.isBlockDelim
+            -> return lineBreak(
+                keepLineBreaks = ctx.commonSettings.KEEP_LINE_BREAKS,
+                keepBlankLines = ctx.commonSettings.KEEP_BLANK_LINES_IN_DECLARATIONS)
+
+            // Format blank lines between top level items
             ncPsi1.isTopLevelItem && ncPsi2.isTopLevelItem
             -> return lineBreak(
                 keepLineBreaks = ctx.commonSettings.KEEP_LINE_BREAKS,
