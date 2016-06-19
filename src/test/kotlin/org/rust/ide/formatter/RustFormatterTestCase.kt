@@ -52,6 +52,11 @@ class RustFormatterTestCase : FormatterTestCase() {
         doTest()
     }
 
+    fun testAlignTypeParamsOn() {
+        custom().ALIGN_TYPE_PARAMS = true
+        doTest()
+    }
+
     // FIXME: these two guys are way too big
     fun testSpacing() = doTest()
     fun testLineBreaks() = doTest()
