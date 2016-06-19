@@ -1,16 +1,11 @@
 package org.rust.lang.core.type
 
-import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.assertj.core.api.Assertions.assertThat
-import org.rust.lang.RustTestCaseBase
 import org.rust.lang.core.psi.RustTypeElement
 import org.rust.lang.core.types.util.resolvedType
 
-class RustTypificationTest: RustTestCaseBase() {
-    override val dataPath: String get() = ""
-
+class RustTypeResolvingTest: RustTypificationTestBase() {
     fun testPath() = testType("Spam",
         //language=RUST
         """
@@ -63,17 +58,6 @@ class RustTypificationTest: RustTestCaseBase() {
 
         assertThat(typeAtCaret.resolvedType.toString())
             .isEqualTo(expectedType)
-    }
-
-    private fun configureAndFindElement(code: String): PsiElement {
-        val caretMarker = "//^"
-        val markerOffset = code.indexOf(caretMarker)
-        check(markerOffset != -1)
-        myFixture.configureByText("main.rs", code)
-        val markerPosition = myFixture.editor.offsetToLogicalPosition(markerOffset + caretMarker.length - 1)
-        val previousLine = LogicalPosition(markerPosition.line - 1, markerPosition.column)
-        val elementOffset = myFixture.editor.logicalPositionToOffset(previousLine)
-        return myFixture.file.findElementAt(elementOffset)!!
     }
 }
 
