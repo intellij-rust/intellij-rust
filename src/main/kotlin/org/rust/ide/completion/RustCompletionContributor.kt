@@ -6,6 +6,6 @@ import com.intellij.codeInsight.completion.CompletionType
 class RustCompletionContributor : CompletionContributor() {
 
     init {
-        extend(CompletionType.BASIC, DeriveCompletionProvider.elementPattern, DeriveCompletionProvider())
+        extend(CompletionType.BASIC, DeriveCompletionProvider.elementPattern, DeriveCompletionProvider)
     }
 }

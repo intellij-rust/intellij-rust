@@ -1,43 +1,21 @@
 package org.rust.completion
 
-import com.intellij.codeInsight.completion.CompletionType
-import org.rust.lang.RustTestCaseBase
+import org.rust.lang.core.completion.RustCompletionTestBase
 
-class RustDeriveCompletionTest : RustTestCaseBase() {
+class RustDeriveCompletionTest : RustCompletionTestBase() {
     override val dataPath = "org/rust/ide/completion/fixtures/derive_traits/"
 
-    fun testCompleteOnStruct() = checkByFile {
-        openFileInEditor("complete_on_struct.rs")
-        myFixture.complete(CompletionType.BASIC)
-    }
+    fun testCompleteOnStruct() = checkSoleCompletion()
 
-    fun testCompleteOnEnum() = checkByFile {
-        openFileInEditor("complete_on_enum.rs")
-        myFixture.complete(CompletionType.BASIC)
-    }
+    fun testCompleteOnEnum() = checkSoleCompletion()
 
-    fun testDoesntCompleteOnFn() = checkByFile {
-        openFileInEditor("doesnt_complete_on_fn.rs")
-        myFixture.complete(CompletionType.BASIC)
-    }
+    fun testDoesntCompleteOnFn() = checkNoCompletion()
 
-    fun testDoesntCompleteOnMod() = checkByFile {
-        openFileInEditor("doesnt_complete_on_mod.rs")
-        myFixture.complete(CompletionType.BASIC)
-    }
+    fun testDoesntCompleteOnMod() = checkNoCompletion()
 
-    fun testDoesntCompleteNonDeriveAttr() = checkByFile {
-        openFileInEditor("doesnt_complete_non_derive_attr.rs")
-        myFixture.complete(CompletionType.BASIC)
-    }
+    fun testDoesntCompleteNonDeriveAttr() = checkNoCompletion()
 
-    fun testDoesntCompleteInnerAttr() = checkByFile {
-        openFileInEditor("doesnt_complete_inner_attr.rs")
-        myFixture.complete(CompletionType.BASIC)
-    }
+    fun testDoesntCompleteInnerAttr() = checkNoCompletion()
 
-    fun testDoesntCompleteAlreadyDerived() = checkByFile {
-        openFileInEditor("doesnt_complete_already_derived.rs")
-        myFixture.complete(CompletionType.BASIC)
-    }
+    fun testDoesntCompleteAlreadyDerived() = checkNoCompletion()
 }

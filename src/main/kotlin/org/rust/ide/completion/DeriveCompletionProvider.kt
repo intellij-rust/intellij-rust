@@ -12,10 +12,11 @@ import org.rust.lang.RustLanguage
 import org.rust.lang.core.parser.RustPsiTreeUtil
 import org.rust.lang.core.psi.RustCompositeElementTypes
 import org.rust.lang.core.psi.RustMetaItemElement
+import org.rust.lang.core.psi.RustOuterAttrElement
 import org.rust.lang.core.psi.RustTokenElementTypes
-import org.rust.lang.core.resolve.util.RustResolveUtil
+import org.rust.lang.core.psi.util.parentOfType
 
-class DeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
+object DeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
 
     private val DERIVABLE_TRAITS = listOf("Eq", "PartialEq", "Ord", "PartialOrd", "Copy", "Clone", "Hash", "Default",
         "Debug")
@@ -24,40 +25,30 @@ class DeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
                                 context: ProcessingContext?,
                                 result: CompletionResultSet) {
 
-        val outerAttrElem = RustResolveUtil.getResolveScopeFor(parameters.position)?.firstChild
+        val outerAttrElem = parameters.position.parentOfType<RustOuterAttrElement>()
         val deriveMetaItem = RustPsiTreeUtil.getChildOfType(outerAttrElem, RustMetaItemElement::class.java)
         val alreadyDerived = RustPsiTreeUtil.getChildrenOfType(deriveMetaItem, RustMetaItemElement::class.java)
             ?.mapNotNull { it.firstChild.text }.orEmpty()
-        val lookupElements = DERIVABLE_TRAITS.filter { !alreadyDerived.contains(it) }
+        val lookupElements = DERIVABLE_TRAITS.filter { it !in alreadyDerived }
             .map { LookupElementBuilder.create(it) }
         result.addAllElements(lookupElements)
     }
 
-    companion object ElementPatternFactory {
-        val elementPattern: ElementPattern<PsiElement> get() {
+    val elementPattern: ElementPattern<PsiElement> get() {
 
-            val deriveIdentifier = psiElement()
-                .withElementType(RustTokenElementTypes.IDENTIFIER)
-                .withText("derive")
+        val deriveIdentifier = psiElement(RustTokenElementTypes.IDENTIFIER)
+            .withText("derive")
 
-            val outerAttr = psiElement()
-                .withElementType(RustCompositeElementTypes.OUTER_ATTR)
+        val traitEntry = psiElement(RustCompositeElementTypes.META_ITEM)
+            .afterLeafSkipping(psiElement(RustTokenElementTypes.LPAREN), deriveIdentifier)
 
-            val openParen = psiElement().withElementType(RustTokenElementTypes.LPAREN)
+        val deriveMetaItem = psiElement(RustCompositeElementTypes.META_ITEM)
+            .withFirstChild(traitEntry)
+            .withParent(psiElement(RustCompositeElementTypes.OUTER_ATTR))
 
-            val traitEntry = psiElement(RustCompositeElementTypes.META_ITEM)
-                .afterLeafSkipping(openParen, deriveIdentifier)
+        val traitMetaItem = psiElement(RustCompositeElementTypes.META_ITEM)
+            .withParent(deriveMetaItem)
 
-            val deriveMetaItem = psiElement()
-                .withElementType(RustCompositeElementTypes.META_ITEM)
-                .withFirstChild(traitEntry)
-                .withParent(outerAttr)
-
-            val traitMetaItem = psiElement()
-                .withElementType(RustCompositeElementTypes.META_ITEM)
-                .withParent(deriveMetaItem)
-
-            return psiElement().inside(traitMetaItem).withLanguage(RustLanguage);
-        }
+        return psiElement().inside(traitMetaItem).withLanguage(RustLanguage);
     }
 }
