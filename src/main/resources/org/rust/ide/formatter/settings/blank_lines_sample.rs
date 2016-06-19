@@ -2,80 +2,34 @@
 
 
 
-
-use std::fmt;
+use std::cmp::{max, min};
 
 
 
 struct Rectangle {
-    p1: Point,
-    p2: Point,
+    p1: (i32, i32),
 
 
 
-    p4: Point,
+    p2: (i32, i32),
 }
 
 
 
-
-enum Person {
-    Skinny,
-    Fat,
-
-
-
-    Age(i32),
+impl Rectangle {
+    fn dimensions(&self) -> (i32, i32) {
+        let (x1, y1) = self.p1;
+        let (x2, y2) = self.p2;
 
 
 
-    Info {
-        name: String,
-
-
-        height: i32,
+        ((x1 - x2).abs(), (y1 - y2).abs())
     }
-}
 
 
 
-
-impl fmt::Display for List {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let List(ref vec) = *self;
-
-
-
-
-        try!(write!(f, "["));
-
-
-
-
-        // Iterate over `vec` in `v` while enumerating the iteration
-        // count in `count`.
-
-
-
-
-        for (count, v) in vec.iter().enumerate() {
-
-
-
-            if count != 0 { try!(write!(f, ", ")); } /* bar */
-
-
-
-            try!(write!(f, "{}", v));
-
-
-
-        }
-
-
-
-
-        // Close the opened bracket and return a fmt::Result value
-        write!(f, "]")
+    fn area(&self) -> i32 {
+        let (a, b) = self.dimensions();
+        a * b
     }
 }
