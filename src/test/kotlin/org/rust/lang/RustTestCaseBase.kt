@@ -61,14 +61,6 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
     protected fun getVirtualFileByName(path: String): VirtualFile? =
         LocalFileSystem.getInstance().findFileByPath(path)
 
-    companion object {
-        @JvmStatic
-        fun camelToSnake(camelCaseName: String): String =
-            camelCaseName.split("(?=[A-Z])".toRegex())
-                .map { it.toLowerCase() }
-                .joinToString("_")
-    }
-
     open class RustProjectDescriptor : LightProjectDescriptor() {
 
         final override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
@@ -102,17 +94,14 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             ),
             source = null
         )
+
     }
 
     class WithStdlibRustProjectDescriptor : RustProjectDescriptor() {
-        override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
-            val sourcesArchive = checkNotNull(LocalFileSystem.getInstance()
-                .findFileByPath("${RustTestCase.testResourcesPath}/rustc-src.zip")) {
-               "Rust sources archive not found. Run `./gradlew test` to download the archive."
-            }
 
-            checkNotNull(StandardLibraryRoots.fromFile(sourcesArchive)) {
-                "Invalid Rust source: $sourcesArchive"
+        override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
+            checkNotNull(StandardLibraryRoots.fromFile(rustSourcesArchive())) {
+                "Corrupted invalid Rust sources"
             }.attachTo(module)
 
             val packages = listOf(testCargoPackage(contentRoot))
@@ -122,4 +111,20 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             }
         }
     }
+
+    companion object {
+        @JvmStatic
+        fun camelToSnake(camelCaseName: String): String =
+            camelCaseName.split("(?=[A-Z])".toRegex())
+                .map { it.toLowerCase() }
+                .joinToString("_")
+
+        @JvmStatic
+        fun rustSourcesArchive(): VirtualFile =
+            checkNotNull(LocalFileSystem.getInstance()
+                .findFileByPath("${RustTestCase.testResourcesPath}/rustc-src.zip")) {
+                "Rust sources archive not found. Run `./gradlew test` to download the archive."
+            }
+    }
 }
+
