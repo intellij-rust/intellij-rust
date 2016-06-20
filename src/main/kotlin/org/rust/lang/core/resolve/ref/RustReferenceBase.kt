@@ -5,18 +5,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.util.rangeRelativeTo
+import org.rust.lang.core.psi.util.parentRelativeRange
 import org.rust.lang.core.resolve.RustResolveEngine
 
 abstract class RustReferenceBase<T : RustCompositeElement>(
-    element: T,
-    referenceAnchorTextRange: TextRange
-) : PsiReferenceBase<T>(element, referenceAnchorTextRange)
+    element: T
+) : PsiReferenceBase<T>(element)
   , RustReference {
 
-    constructor(element: T, referenceAnchor: PsiElement) : this(element, referenceAnchor.rangeRelativeTo(element)) {
-        check(referenceAnchor === element || referenceAnchor.parent === element)
-    }
+    abstract val T.referenceAnchor: PsiElement
 
     abstract fun resolveVerbose(): RustResolveEngine.ResolveResult
 
@@ -30,4 +27,9 @@ abstract class RustReferenceBase<T : RustCompositeElement>(
 
     // enforce not nullability
     final override fun getRangeInElement(): TextRange = super.getRangeInElement()
+
+    final override fun calculateDefaultRangeInElement(): TextRange {
+        check(element.referenceAnchor.parent === element)
+        return element.referenceAnchor.parentRelativeRange
+    }
 }

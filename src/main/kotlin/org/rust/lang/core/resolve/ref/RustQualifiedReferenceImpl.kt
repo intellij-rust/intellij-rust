@@ -9,8 +9,10 @@ import org.rust.lang.core.resolve.RustResolveEngine
 
 
 class RustQualifiedReferenceImpl(element: RustQualifiedReferenceElement)
-    : RustReferenceBase<RustQualifiedReferenceElement>(element, element.referenceNameElement)
+    : RustReferenceBase<RustQualifiedReferenceElement>(element)
     , RustReference {
+
+    override val RustQualifiedReferenceElement.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun resolveVerbose(): RustResolveEngine.ResolveResult =
         RustResolveEngine.resolve(element)

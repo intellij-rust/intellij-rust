@@ -1,5 +1,6 @@
 package org.rust.lang.core.resolve.ref
 
+import com.intellij.psi.PsiElement
 import org.rust.lang.core.completion.RustCompletionEngine
 import org.rust.lang.core.psi.RustStructExprElement
 import org.rust.lang.core.psi.RustStructExprFieldElement
@@ -9,8 +10,10 @@ import org.rust.lang.core.resolve.RustResolveEngine
 
 class RustStructExprFieldReferenceImpl(
     field: RustStructExprFieldElement
-) : RustReferenceBase<RustStructExprFieldElement>(field, field.referenceNameElement)
+) : RustReferenceBase<RustStructExprFieldElement>(field)
   , RustReference {
+
+    override val RustStructExprFieldElement.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun getVariants(): Array<out Any> =
         // TODO(kudinkin): Fix in the similar way
