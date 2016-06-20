@@ -22,7 +22,7 @@ already implemented, but there is definitely a lot more to do. Here are some
 examples of what works and what does not work (as of June 20).
 
 
-```
+```Rust
 use std::collections::HashMap;
                         //^ completes to HashMap or HashSet
 
