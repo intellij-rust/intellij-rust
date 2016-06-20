@@ -44,7 +44,7 @@ fn main() {
 
 Remember, if the smart completion does not work for your particular case,
 you can always invoke "dumb completion" via `Alt+/`. It merely suggests
-identifiers already present in the file, but works surprisingly good.
+identifiers already present in the file, but works surprisingly well.
 
 ### Goto Class/Symbol
 
