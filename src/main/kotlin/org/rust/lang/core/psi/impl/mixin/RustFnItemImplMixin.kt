@@ -7,7 +7,6 @@ import org.rust.ide.icons.addTestMark
 import org.rust.lang.core.psi.RustFnItemElement
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
-import org.rust.lang.core.psi.queryAttributes
 import org.rust.lang.core.stubs.elements.RustFnItemElementStub
 import javax.swing.Icon
 
@@ -30,4 +29,3 @@ abstract class RustFnItemImplMixin : RustFnImplMixin<RustFnItemElementStub>
 
 }
 
-val RustFnItemElement.isTest: Boolean get() = queryAttributes.hasAtomAttribute("test")

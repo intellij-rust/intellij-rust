@@ -7,7 +7,6 @@ import org.rust.ide.icons.addStaticMark
 import org.rust.lang.core.psi.RustImplMethodMemberElement
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
-import org.rust.lang.core.psi.isStatic
 import org.rust.lang.core.stubs.elements.RustImplMethodMemberElementStub
 import javax.swing.Icon
 

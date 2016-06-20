@@ -6,6 +6,9 @@ interface RustFnElement: RustNamedElement, RustGenericDeclaration, RustResolveSc
     val parameters: RustParametersElement?
     val block: RustBlockElement?
     val retType: RustRetTypeElement?
+
+    val isAbstract: Boolean
+    val isStatic: Boolean
+    val isTest: Boolean
 }
 
-val RustFnElement.isStatic: Boolean get() = parameters?.selfArgument == null

@@ -12,7 +12,6 @@ import org.rust.lang.core.psi.RustFnItemElement
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.canonicalCratePath
 import org.rust.lang.core.psi.functions
-import org.rust.lang.core.psi.impl.mixin.isTest
 import org.rust.lang.core.psi.util.parentOfType
 
 class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandRunConfigurationType()) {
