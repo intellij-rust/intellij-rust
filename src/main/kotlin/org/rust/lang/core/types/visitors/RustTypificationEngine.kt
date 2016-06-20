@@ -51,16 +51,16 @@ object RustTypificationEngine {
         //TODO: probably want something more precise than `getTopmostParentOfType` here
         val pattern = PsiTreeUtil.getTopmostParentOfType(binding, RustPatElement::class.java) ?: return RustUnknownType
         val parent = pattern.parent
-        when (parent) {
-            is RustLetDeclElement -> {
-                val type = parent.type?.resolvedType // use type ascription, if present
-                    ?: parent.expr?.resolvedType     // or fallback to the type of the initializer expression
-                    ?: return RustUnknownType
-                return RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, pattern, type)
-            }
-        }
+        val type = when (parent) {
+            is RustLetDeclElement ->
+                // use type ascription, if present or fallback to the type of the initializer expression
+                parent.type?.resolvedType ?: parent.expr?.resolvedType
 
-        return RustUnknownType
+            is RustParameterElement -> parent.type?.resolvedType
+            else -> null
+        } ?: return RustUnknownType
+
+        return RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, pattern, type)
     }
 
     /**
