@@ -21,7 +21,9 @@ class RustAutoIndentTestCase : RustTestCaseBase() {
     fun testExpr2() = doTest()
     fun testExpr3() = doTest()
 
-    private fun doTest() = checkByFile {
-        myFixture.type('\n')
+    fun testIssue475() = doTest('(')    // https://github.com/intellij-rust/intellij-rust/issues/475
+
+    private fun doTest(c: Char = '\n') = checkByFile {
+        myFixture.type(c)
     }
 }
