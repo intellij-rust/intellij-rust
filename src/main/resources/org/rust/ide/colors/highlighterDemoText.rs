@@ -22,7 +22,7 @@ fn <function-decl>main</function-decl>() {
 }
 
 /// Some documentation
-<attribute>#[cfg(target_os="linux")]</attribute>
+<attribute>#[cfg(target_os=</attribute>"linux"<attribute>)]</attribute>
 unsafe fn <function-decl>a_function</function-decl><<type-parameter>T</type-parameter>: 'lifetime>() {
     'label: loop {
         println!("Hello\x20W\u{f3}rld!\u{abcdef}");
