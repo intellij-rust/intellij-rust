@@ -9,7 +9,7 @@ import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.RustFileType
 import org.rust.lang.core.psi.RustElementVisitor
 import org.rust.lang.core.psi.RustModDeclItemElement
-import org.rust.lang.core.psi.impl.mixin.explicitPath
+import org.rust.lang.core.psi.impl.mixin.pathAttribute
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -55,7 +55,7 @@ class RustModulesIndexExtension : FileBasedIndexExtension<
                 override fun visitElement(element: PsiElement) = element.acceptChildren(this)
 
                 override fun visitModDeclItem(o: RustModDeclItemElement) {
-                    val name = o.explicitPath?.let { FileUtil.getNameWithoutExtension(PathUtil.getFileName(it)) }
+                    val name = o.pathAttribute?.let { FileUtil.getNameWithoutExtension(PathUtil.getFileName(it)) }
                         ?: o.name
                         ?: return
 

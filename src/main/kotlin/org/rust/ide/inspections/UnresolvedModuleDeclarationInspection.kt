@@ -9,7 +9,7 @@ import org.rust.cargo.util.cargoProject
 import org.rust.lang.core.psi.RustModDeclItemElement
 import org.rust.lang.core.psi.RustElementVisitor
 import org.rust.lang.core.psi.containingMod
-import org.rust.lang.core.psi.impl.mixin.explicitPath
+import org.rust.lang.core.psi.impl.mixin.pathAttribute
 import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
 import org.rust.lang.core.psi.impl.mixin.isPathAttributeRequired
 import org.rust.lang.core.psi.util.module
@@ -21,7 +21,7 @@ class UnresolvedModuleDeclarationInspection : RustLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RustElementVisitor() {
             override fun visitModDeclItem(modDecl: RustModDeclItemElement) {
-                if (modDecl.isPathAttributeRequired && modDecl.explicitPath == null ) {
+                if (modDecl.isPathAttributeRequired && modDecl.pathAttribute == null ) {
                     val message = "Cannot declare a non-inline module inside a block unless it has a path attribute"
                     holder.registerProblem(modDecl, message)
                     return

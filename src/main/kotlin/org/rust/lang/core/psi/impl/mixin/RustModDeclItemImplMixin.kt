@@ -43,8 +43,11 @@ fun RustModDeclItemElement.getOrCreateModuleFile(): PsiFile? {
  * Can be of length 0, 1 or 2.
  */
 val RustModDeclItemElement.possiblePaths: List<String> get() {
-    explicitPath?.let { return listOf(it) }
-    return implicitPaths
+    val path = pathAttribute
+    return if (path != null)
+        if (!File(path).isAbsolute) listOf(path) else emptyList()
+    else
+        implicitPaths
 }
 
 /*
@@ -69,10 +72,10 @@ private val RustModDeclItemElement.implicitPaths: List<String> get() {
 }
 
 
-val RustModDeclItemElement.explicitPath: String? get() {
-    val pathAttr = queryAttributes.lookupStringValueForKey("path") ?: return null
-    return if (!File(pathAttr).isAbsolute)
-        pathAttr
+val RustModDeclItemElement.pathAttribute: String? get() {
+    val stub = stub
+    return if (stub != null)
+        stub.pathAttribute
     else
-        null
+        queryAttributes.lookupStringValueForKey("path")
 }
