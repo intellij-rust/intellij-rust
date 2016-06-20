@@ -577,6 +577,8 @@ field_decl ::= attrs_and_vis IDENTIFIER type_ascription {
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner"
                  "org.rust.lang.core.psi.RustNamedElement" ]
+  stubClass = "org.rust.lang.core.stubs.elements.RustFieldDeclElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 // unlike structs, enum variants can't have `pub` visibility applied to fields
 field_decl_in_enum ::= outer_attr* IDENTIFIER type_ascription {

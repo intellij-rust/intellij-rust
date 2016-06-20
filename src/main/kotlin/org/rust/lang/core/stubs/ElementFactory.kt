@@ -5,6 +5,7 @@ import org.rust.lang.core.stubs.elements.*
 fun factory(name: String): RustNamedStubElementType<*, *> = when (name) {
     "CONST_ITEM"          -> RustConstItemStubElementType
     "ENUM_ITEM"           -> RustEnumItemStubElementType
+    "FIELD_DECL"          -> RustFieldDeclStubElementType
     "FN_ITEM"             -> RustFnItemStubElementType
     "IMPL_METHOD_MEMBER"  -> RustImplMethodMemberStubElementType
     "MOD_DECL_ITEM"       -> RustModDeclItemStubElementType
