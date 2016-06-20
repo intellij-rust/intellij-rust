@@ -18,8 +18,8 @@ import org.rust.lang.core.psi.RustInnerAttributeOwner
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.indexes.RustCratePath
-import org.rust.lang.core.resolve.indexes.RustModulesIndex
 import org.rust.lang.core.resolve.ref.RustReference
+import org.rust.lang.core.stubs.index.RustModulesIndex
 
 class RustFile(
     fileViewProvider: FileViewProvider

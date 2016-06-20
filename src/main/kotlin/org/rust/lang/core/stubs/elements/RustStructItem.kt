@@ -4,7 +4,6 @@ package org.rust.lang.core.stubs.elements
 import com.intellij.psi.stubs.*
 import com.intellij.util.io.StringRef
 import org.rust.lang.core.psi.RustStructItemElement
-import org.rust.lang.core.psi.RustStructOrEnum
 import org.rust.lang.core.psi.impl.RustStructItemElementImpl
 import org.rust.lang.core.stubs.RustNamedElementStub
 import org.rust.lang.core.stubs.RustNamedStubElementType
@@ -25,8 +24,9 @@ object RustStructItemStubElementType : RustNamedStubElementType<RustStructItemEl
         writeBoolean(stub.isPublic)
     }
 
-    override val additionalIndexingKeys: Collection<StubIndexKey<String, RustStructOrEnum>> =
-        listOf(RustStructOrEnumIndex.KEY)
+    override fun additionalIndexing(stub: RustStructItemElementStub, sink: IndexSink) {
+        stub.name?.let { sink.occurrence(RustStructOrEnumIndex.KEY, it) }
+    }
 
 }
 

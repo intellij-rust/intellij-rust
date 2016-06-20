@@ -1,11 +1,10 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiElement
-import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.psi.stubs.StubIndex
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.lang.RustTestCaseBase
 import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.resolve.indexes.RustModulesIndex
 import org.rust.lang.core.resolve.ref.RustReference
 
 abstract class RustResolveTestCaseBase : RustTestCaseBase() {
@@ -30,9 +29,9 @@ abstract class RustResolveTestCaseBase : RustTestCaseBase() {
         super.setUp()
 
         // Invalidate cache for every run
-        FileBasedIndex
+        StubIndex
             .getInstance()
-            .requestRebuild(RustModulesIndex.ID)
+            .forceRebuild(Exception())
     }
 
     protected fun checkIsBound(atOffset: Int? = null) {

@@ -1,7 +1,7 @@
 package org.rust.lang.core.psi
 
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.util.parentOfType
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.resolve.ref.RustReference
 
 interface RustCompositeElement   : PsiElement {
@@ -11,4 +11,4 @@ interface RustCompositeElement   : PsiElement {
 }
 
 val RustCompositeElement.containingMod: RustMod?
-    get() = parentOfType()
+    get() = PsiTreeUtil.getStubOrPsiParentOfType(this, RustMod::class.java)

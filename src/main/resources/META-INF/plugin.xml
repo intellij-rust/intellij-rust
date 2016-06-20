@@ -186,7 +186,7 @@
 
         <!-- Indices -->
 
-        <fileBasedIndex implementation="org.rust.lang.core.resolve.indexes.RustModulesIndexExtension"/>
+        <stubIndex implementation="org.rust.lang.core.stubs.index.RustModulesIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RustNamedElementIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RustStructOrEnumIndex"/>
 
