@@ -15,40 +15,42 @@ class RustHighlighter : SyntaxHighlighterBase() {
 
     override fun getTokenHighlights(tokenType: IElementType?) = pack(map(tokenType))
 
-    private fun map(tokenType: IElementType?): TextAttributesKey? = when (tokenType) {
-        is RustKeywordTokenType        -> RustColor.KEYWORD
+    companion object {
+        fun map(tokenType: IElementType?): TextAttributesKey? = when (tokenType) {
+            is RustKeywordTokenType        -> RustColor.KEYWORD
 
-        IDENTIFIER                     -> RustColor.IDENTIFIER
+            IDENTIFIER                     -> RustColor.IDENTIFIER
 
-        LIFETIME                       -> RustColor.LIFETIME
+            LIFETIME                       -> RustColor.LIFETIME
 
-        CHAR_LITERAL                   -> RustColor.CHAR
-        BYTE_LITERAL                   -> RustColor.CHAR
-        STRING_LITERAL                 -> RustColor.STRING
-        BYTE_STRING_LITERAL            -> RustColor.STRING
-        RAW_STRING_LITERAL             -> RustColor.STRING
-        RAW_BYTE_STRING_LITERAL        -> RustColor.STRING
-        INTEGER_LITERAL                -> RustColor.NUMBER
-        FLOAT_LITERAL                  -> RustColor.NUMBER
+            CHAR_LITERAL                   -> RustColor.CHAR
+            BYTE_LITERAL                   -> RustColor.CHAR
+            STRING_LITERAL                 -> RustColor.STRING
+            BYTE_STRING_LITERAL            -> RustColor.STRING
+            RAW_STRING_LITERAL             -> RustColor.STRING
+            RAW_BYTE_STRING_LITERAL        -> RustColor.STRING
+            INTEGER_LITERAL                -> RustColor.NUMBER
+            FLOAT_LITERAL                  -> RustColor.NUMBER
 
-        BLOCK_COMMENT                  -> RustColor.BLOCK_COMMENT
-        EOL_COMMENT                    -> RustColor.EOL_COMMENT
+            BLOCK_COMMENT                  -> RustColor.BLOCK_COMMENT
+            EOL_COMMENT                    -> RustColor.EOL_COMMENT
 
-        INNER_DOC_COMMENT              -> RustColor.DOC_COMMENT
-        OUTER_DOC_COMMENT              -> RustColor.DOC_COMMENT
+            INNER_DOC_COMMENT              -> RustColor.DOC_COMMENT
+            OUTER_DOC_COMMENT              -> RustColor.DOC_COMMENT
 
-        LPAREN, RPAREN                 -> RustColor.PARENTHESIS
-        LBRACE, RBRACE                 -> RustColor.BRACES
-        LBRACK, RBRACK                 -> RustColor.BRACKETS
+            LPAREN, RPAREN                 -> RustColor.PARENTHESIS
+            LBRACE, RBRACE                 -> RustColor.BRACES
+            LBRACK, RBRACK                 -> RustColor.BRACKETS
 
-        SEMICOLON                      -> RustColor.SEMICOLON
-        DOT                            -> RustColor.DOT
-        COMMA                          -> RustColor.COMMA
+            SEMICOLON                      -> RustColor.SEMICOLON
+            DOT                            -> RustColor.DOT
+            COMMA                          -> RustColor.COMMA
 
-        VALID_STRING_ESCAPE_TOKEN      -> RustColor.VALID_STRING_ESCAPE
-        INVALID_CHARACTER_ESCAPE_TOKEN -> RustColor.INVALID_STRING_ESCAPE
-        INVALID_UNICODE_ESCAPE_TOKEN   -> RustColor.INVALID_STRING_ESCAPE
+            VALID_STRING_ESCAPE_TOKEN      -> RustColor.VALID_STRING_ESCAPE
+            INVALID_CHARACTER_ESCAPE_TOKEN -> RustColor.INVALID_STRING_ESCAPE
+            INVALID_UNICODE_ESCAPE_TOKEN   -> RustColor.INVALID_STRING_ESCAPE
 
-        else                           -> null
-    }?.textAttributesKey
+            else                           -> null
+        }?.textAttributesKey
+    }
 }
