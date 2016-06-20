@@ -17,15 +17,40 @@ types and modules are fully supported.
 
 ### Code completion
 
-`Ctrl+space` invokes completion. It is limited at the moment because type
-inference is not yet implemented. You can use `Alt+/` as a workaround. It
-completes based on the words present in the file.
+`Ctrl+space` invokes completion. A decent amount of completion intelligence is
+already implemented, but there is definitely a lot more to do. Here are some
+examples of what works and what does not work (as of June 20).
+
+
+```
+use std::collections::HashMap;
+                        //^ completes to HashMap or HashSet
+
+struct S {
+    mapping: HashMap<i32, i32>
+            //^ knows that HashMap is in scope, so completes
+}
+
+fn main() {
+    let mut thing = S { mapping: HashMap::default() };
+                                          //^ no completion here yet :(
+
+    //v completes `thing`
+    thing.mapping.insert(92, 92);
+          //^ completes `mapping`
+                  //^ but does not know about `insert` yet :(
+}
+```
+
+Remember, if the smart completion does not work for your particular case,
+you can always invoke "dumb completion" via `Alt+/`. It merely suggests
+identifiers already present in the file, but works surprisingly good.
 
 ### Goto Class/Symbol
 
-`Ctrl+N` finds any `struct` or `enum` by name. `Ctrl+Shift+N` finds any item
-(functions, traits, modules) by name. This works for items in your crate, your
-crate's dependencies or the standard library.
+`Ctrl+N` finds any `struct` or `enum` by name. `Ctrl+Shift+N` finds any symbol
+(functions, traits, modules, methods, fields) by name. This works for items in
+your crate, your crate's dependencies or the standard library.
 
 ### Goto Super Module
 
