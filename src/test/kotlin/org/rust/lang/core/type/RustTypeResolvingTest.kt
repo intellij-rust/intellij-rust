@@ -17,7 +17,16 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
         }
     """)
 
-    fun testUnit() = testType("(S, T)",
+    fun testUnit() = testType("()",
+        //language=RUST
+        """
+        fn main() {
+            let _: () = ();
+                 //^
+        }
+    """)
+
+    fun testTuple() = testType("(S, T)",
         //language=RUST
         """
         struct S;

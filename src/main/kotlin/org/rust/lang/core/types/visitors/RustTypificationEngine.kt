@@ -167,7 +167,11 @@ private class RustTypeTypificationVisitor : RustTypificationVisitorBase<RustUnre
     }
 
     override fun visitTupleType(o: RustTupleTypeElement) {
-        cur = RustUnresolvedTupleType(o.typeList.map { it.type })
+        // Perhaps introduce tuple_type to PSI?
+        cur = if (o.typeList.size > 0)
+            RustUnresolvedTupleType(o.typeList.map { it.type })
+        else
+            RustUnitType
     }
 
     override fun visitPathType(o: RustPathTypeElement) {
