@@ -49,7 +49,6 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testNonGlobalPathWithColons() = checkIsBound()
     fun testTypeAlias() = checkIsBound()
     fun testTrait() = checkIsBound()
-    fun testTypeAliasGenerics() = checkIsBound()
     fun testForeignFn() = checkIsBound()
     fun testForeignStatic() = checkIsBound()
 

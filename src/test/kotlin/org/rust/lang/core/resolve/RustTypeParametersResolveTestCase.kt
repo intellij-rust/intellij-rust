@@ -10,4 +10,5 @@ class RustTypeParametersResolveTestCase : RustResolveTestCaseBase() {
     fun testEnum() = checkIsBound()
     fun testTrait() = checkIsBound()
     fun testImpl() = checkIsBound(atOffset = 31)
+    fun testTypeAlias() = checkIsBound()
 }
