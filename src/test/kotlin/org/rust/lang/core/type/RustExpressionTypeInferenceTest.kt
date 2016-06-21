@@ -1,9 +1,9 @@
 package org.rust.lang.core.type
 
+import org.assertj.core.api.Assertions.assertThat
 import org.rust.lang.core.psi.RustExprElement
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.types.util.resolvedType
-import org.assertj.core.api.Assertions.*
 
 class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
     fun testIfLetPattern() = testExpr("<unknown>",
@@ -65,6 +65,17 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         fn main((x, _): (S, T)) {
             x;
           //^
+        }
+    """)
+
+    fun testClosureArgument() = testExpr("()",
+        //language=RUST
+        """
+        fn main() {
+            let _ = |x: ()| {
+                x
+              //^
+            };
         }
     """)
 

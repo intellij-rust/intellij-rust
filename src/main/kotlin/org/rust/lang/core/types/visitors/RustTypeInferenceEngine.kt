@@ -29,7 +29,11 @@ private class RustTypeInferencingVisitor(
     var path = LinkedList(pat.pathTo(binding).toList()) // sic!
 
     override fun visitUnitType(type: RustUnitType): RustType {
-        return if (path.size == 1) RustUnitType else RustUnknownType
+        val tip = path.firstOrNull() ?: return RustUnknownType
+        return if (tip is RustPatIdentElement && tip.patBinding === binding && path.size == 2)
+            RustUnitType
+        else
+            RustUnknownType
     }
 
     override fun visitTupleType(type: RustTupleType): RustType {
