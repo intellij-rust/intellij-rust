@@ -48,7 +48,7 @@ identifiers already present in the file, but works surprisingly well.
 
 ### Goto Class/Symbol
 
-`Ctrl+N` finds any `struct` or `enum` by name. `Ctrl+Shift+N` finds any symbol
+`Ctrl+N` finds any `struct` or `enum` by name. `Ctrl+Alt+Shift+N` finds any symbol
 (functions, traits, modules, methods, fields) by name. This works for items in
 your crate, your crate's dependencies or the standard library.
 
