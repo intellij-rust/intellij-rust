@@ -11,4 +11,7 @@ class RustTypeParametersResolveTestCase : RustResolveTestCaseBase() {
     fun testTrait() = checkIsBound()
     fun testImpl() = checkIsBound(atOffset = 31)
     fun testTypeAlias() = checkIsBound()
+
+    fun testNoLeakInEnum() = checkIsUnbound()
+    fun testNoLeakInStruct() = checkIsUnbound()
 }
