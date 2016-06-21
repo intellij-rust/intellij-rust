@@ -148,10 +148,8 @@ private class RustItemTypificationVisitor : RustTypificationVisitorBase<RustType
 
     override fun visitFnItem(o: RustFnItemElement) {
         cur = RustFunctionType(
-            o.parameters?.let { params ->
-                params.parameterList.map { it.type?.resolvedType ?: RustUnknownType }
-            } ?: emptyList(),
-            o.retType?.let { it.type?.resolvedType ?: RustUnitType } ?: RustUnknownType
+            o.parameters?.parameterList.orEmpty().map { it.type?.resolvedType ?: RustUnknownType },
+            o.retType?.type?.resolvedType ?: RustUnitType
         )
     }
 }
