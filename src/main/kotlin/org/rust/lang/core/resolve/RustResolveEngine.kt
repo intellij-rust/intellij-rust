@@ -81,10 +81,24 @@ object RustResolveEngine {
                     resolveIn(enumerateScopesFor(ref), ref)
                 } else {
                     val parent = resolve(qual).element
-                    if (parent is RustResolveScope)
+                    val scopeResult = if (parent is RustResolveScope)
                         resolveIn(sequenceOf(parent), ref)
                     else
                         ResolveResult.Unresolved
+
+                    when {
+                        scopeResult != ResolveResult.Unresolved -> scopeResult
+
+                        parent is RustNamedElement ->
+                            ResolveResult.buildFrom(parent
+                                .resolvedType
+                                .staticMethods
+                                .filter { it.name == ref.referenceName }
+                            )
+
+                        else -> ResolveResult.Unresolved
+                    }
+
                 }
             }
         }

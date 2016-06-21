@@ -14,4 +14,7 @@ class RustTypeResolveTestCase : RustResolveTestCaseBase() {
     fun testLetDeclPatTupExpr() = checkIsBound()
     fun testLetDeclPatStructExpr() = checkIsBound()
     fun testLetDeclPatStructExprComplex() = checkIsBound()
+
+    fun testStaticFnFromInherentImpl() = checkIsBound()
+    fun testNonStaticFnFromInherentImpl() = checkIsUnbound()
 }
