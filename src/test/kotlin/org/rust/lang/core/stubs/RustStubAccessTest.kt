@@ -10,6 +10,7 @@ import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.stubs.StubElement
 import org.rust.lang.RustTestCaseBase
+import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustNamedElement
 import java.util.*
 
@@ -34,6 +35,10 @@ class RustStubAccessTest : RustTestCaseBase() {
         }
     }
 
+    fun testGettingReferenceDoesNotNeedAst() {
+        processStubsWithoutAstAccess<RustCompositeElement> { it.reference }
+    }
+
     private inline fun <reified T : PsiElement> processStubsWithoutAstAccess(block: (T) -> Unit) {
         (psiManager as PsiManagerImpl).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, myTestRootDisposable)
 
@@ -50,9 +55,11 @@ class RustStubAccessTest : RustTestCaseBase() {
         })
 
         var processed = 0
+        var visited = 0
         while (work.isNotEmpty()) {
             val stub = work.pop()
             val psi = stub.psi
+            visited += 1
             if (psi is T) {
                 block(psi)
                 processed += 1
@@ -60,7 +67,8 @@ class RustStubAccessTest : RustTestCaseBase() {
             work += stub.childrenStubs
         }
 
-        check(processed > 10)
+        check(visited > 10)
+        check(processed > 0)
     }
 }
 

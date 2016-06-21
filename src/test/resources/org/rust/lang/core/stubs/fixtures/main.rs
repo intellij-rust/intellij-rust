@@ -19,3 +19,6 @@ impl T for S {
 }
 
 pub mod bar;
+
+#[path="quux.rs"]
+pub mod baz;
