@@ -412,9 +412,9 @@ pat_binding ::= binding_mode? IDENTIFIER !'...' !'::'
 
 private lit_or_path ::= path_expr | lit | '-' lit
 
-generic_args ::= generic_args_innner
-colon_generic_args ::= '::' generic_args_innner { elementType = generic_args }
-private generic_args_innner ::= '<' !('=') generic_values '>' { pin = 2 }
+generic_args ::= generic_args_inner
+colon_generic_args ::= '::' generic_args_inner { elementType = generic_args }
+private generic_args_inner ::= '<' !('=') generic_values '>' { pin = 2 }
 
 private generic_values ::= lifetimes [ ',' type_sums_and_or_bindings ] ','?
                          |                 type_sums_and_or_bindings?
