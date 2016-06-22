@@ -157,6 +157,10 @@ private class RustItemTypificationVisitor : RustTypificationVisitorBase<RustType
         cur = RustEnumType(o)
     }
 
+    override fun visitTypeItem(o: RustTypeItemElement) {
+        cur = o.type.resolvedType
+    }
+
     override fun visitFnItem(o: RustFnItemElement) {
         cur = typifyFn(o)
     }

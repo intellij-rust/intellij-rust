@@ -62,6 +62,19 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
         }
     """)
 
+    //language=RUST
+    fun testTypeItem() = testType("""
+        enum E { X }
+
+        type A = E;
+
+        fn main() {
+            let _: E = A::X;
+                 //^ E
+        }
+    """)
+
+
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */
