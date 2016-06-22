@@ -6,4 +6,5 @@ class RustTypeAwareCompletionTestCase: RustCompletionTestBase() {
 
     fun testMethodCallExpr() = checkSoleCompletion()
     fun testFieldExpr() = checkSoleCompletion()
+    fun testStaticMethod() = checkSoleCompletion()
 }

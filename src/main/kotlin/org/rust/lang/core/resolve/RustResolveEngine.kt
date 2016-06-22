@@ -81,24 +81,10 @@ object RustResolveEngine {
                     resolveIn(enumerateScopesFor(ref), ref)
                 } else {
                     val parent = resolve(qual).element
-                    val scopeResult = if (parent is RustResolveScope)
+                    if (parent is RustResolveScope)
                         resolveIn(sequenceOf(parent), ref)
                     else
                         ResolveResult.Unresolved
-
-                    when {
-                        scopeResult != ResolveResult.Unresolved -> scopeResult
-
-                        parent is RustNamedElement ->
-                            ResolveResult.buildFrom(parent
-                                .resolvedType
-                                .staticMethods
-                                .filter { it.name == ref.referenceName }
-                            )
-
-                        else -> ResolveResult.Unresolved
-                    }
-
                 }
             }
         }
@@ -361,10 +347,10 @@ private class RustScopeVisitor(
     }
 
     override fun visitStructItem(o: RustStructItemElement) {
-        result = if (isContextLocalTo(o))
-            o.typeParams.scopeEntries
-        else
-            emptySequence()
+        result = sequenceOf(
+            if (isContextLocalTo(o)) o.typeParams.scopeEntries else emptySequence(),
+            Sequence { o.resolvedType.staticMethods.scopeEntries.iterator() }
+        ).flatten()
     }
 
     override fun visitEnumItem(o: RustEnumItemElement) {

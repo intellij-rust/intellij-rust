@@ -4,7 +4,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import org.rust.lang.core.psi.RustExprElement
-import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustStructItemElement
 import org.rust.lang.core.psi.RustTypeElement
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
@@ -38,7 +38,7 @@ val RustTypeElement.resolvedType: RustType
             }
         )
 
-val RustNamedElement.resolvedType: RustType
+val RustStructItemElement.resolvedType: RustType
     get() =
         CachedValuesManager.getCachedValue(this,
             CachedValueProvider {
