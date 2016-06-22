@@ -58,7 +58,7 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
 
         fn main() {
             let _: E = E::X;
-                 //^ <unknown>
+                 //^ E
         }
     """)
 
