@@ -1,7 +1,7 @@
 package org.rust.lang.core.resolve
 
-class RustTypeResolveTestCase : RustResolveTestCaseBase() {
-    override val dataPath = "org/rust/lang/core/resolve/fixtures/type"
+class RustTypeAwareResolveTestCase : RustResolveTestCaseBase() {
+    override val dataPath = "org/rust/lang/core/resolve/fixtures/type_aware"
 
     fun testSelfMethodCallExpr() = checkIsBound(atOffset = 27)
     fun testMethodCallExpr() = checkIsBound(atOffset = 27)
