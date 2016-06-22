@@ -154,6 +154,7 @@
     mixin       ("foreign_static_decl") = "org.rust.lang.core.psi.impl.mixin.RustForeignStaticDeclImplMixin"
     mixin       ("impl_const_member")   = "org.rust.lang.core.psi.impl.mixin.RustImplConstMemberImplMixin"
     mixin       ("impl_type_member")    = "org.rust.lang.core.psi.impl.mixin.RustImplTypeMemberImplMixin"
+
     //
     // References
     //
