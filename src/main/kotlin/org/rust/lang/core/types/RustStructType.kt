@@ -1,14 +1,9 @@
 package org.rust.lang.core.types
 
-import org.rust.lang.core.psi.RustImplItemElement
 import org.rust.lang.core.psi.RustStructItemElement
-import org.rust.lang.core.psi.containingMod
-import org.rust.lang.core.psi.impls
-import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 
-class RustStructType(val struct: RustStructItemElement) : RustType {
-
+class RustStructType(val struct: RustStructItemElement) : RustStructOrEnumTypeBase(struct) {
 
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitStruct(this)
 
@@ -17,10 +12,4 @@ class RustStructType(val struct: RustStructItemElement) : RustType {
     override fun hashCode(): Int = struct.hashCode() * 10067 + 9631
 
     override fun toString(): String = struct.name ?: "<anonymous>"
-
-    override val inherentImpls: Collection<RustImplItemElement> by lazy {
-        struct.containingMod
-            ?.impls.orEmpty()
-            .filter { it.traitRef == null && (it.type?.resolvedType == this) }
-    }
 }

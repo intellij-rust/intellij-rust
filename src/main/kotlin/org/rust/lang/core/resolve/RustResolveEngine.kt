@@ -347,18 +347,28 @@ private class RustScopeVisitor(
         result = visibleLetDecls.flatMap { it.boundElements.scopeEntries } + o.itemEntries(context)
     }
 
+    private fun visitTypeBearingItem(o: RustTypeBearingItemElement) = Sequence { o.resolvedType.staticMethods.scopeEntries.iterator() }
+
     override fun visitStructItem(o: RustStructItemElement) {
         result = sequenceOf(
-            if (isContextLocalTo(o)) o.typeParams.scopeEntries else emptySequence(),
-            Sequence { o.resolvedType.staticMethods.scopeEntries.iterator() }
+            visitTypeBearingItem(o),
+
+            if (isContextLocalTo(o))
+                o.typeParams.scopeEntries
+            else
+                emptySequence()
         ).flatten()
     }
 
     override fun visitEnumItem(o: RustEnumItemElement) {
-        result = if (isContextLocalTo(o))
-            o.typeParams.scopeEntries
-        else
-            o.enumBody.enumVariantList.scopeEntries
+        result = sequenceOf(
+            visitTypeBearingItem(o),
+
+            if (isContextLocalTo(o))
+                o.typeParams.scopeEntries
+            else
+                o.enumBody.enumVariantList.scopeEntries
+        ).flatten()
     }
 
     override fun visitTraitItem(o: RustTraitItemElement) {

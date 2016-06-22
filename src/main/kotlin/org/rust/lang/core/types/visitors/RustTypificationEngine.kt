@@ -40,6 +40,8 @@ object RustTypificationEngine {
 
             is RustPatBindingElement -> deviseBoundPatType(named)
 
+            is RustEnumVariantElement -> deviseEnumType(named)
+
             is RustFnElement -> typifyFn(named)
 
             else -> RustUnknownType
@@ -70,6 +72,9 @@ object RustTypificationEngine {
      */
     private fun deviseSelfType(self: RustSelfArgumentElement): RustType =
         self.parentOfType<RustImplItemElement>()?.type?.resolvedType ?: RustUnknownType
+
+    private fun deviseEnumType(variant: RustEnumVariantElement): RustType =
+        typifyItem((variant.parent as RustEnumBodyElement).parent as RustEnumItemElement)
 }
 
 private open class RustTypificationVisitorBase<T: Any> : RustRecursiveElementVisitor() {
@@ -146,6 +151,10 @@ private class RustItemTypificationVisitor : RustTypificationVisitorBase<RustType
 
     override fun visitStructItem(o: RustStructItemElement) {
         cur = RustStructType(o)
+    }
+
+    override fun visitEnumItem(o: RustEnumItemElement) {
+        cur = RustEnumType(o)
     }
 
     override fun visitFnItem(o: RustFnItemElement) {

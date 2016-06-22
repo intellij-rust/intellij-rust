@@ -7,7 +7,6 @@ import org.rust.lang.core.types.unresolved.RustUnresolvedTupleType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
 
 open class RustTypeResolvingVisitor : RustUnresolvedTypeVisitor<RustType> {
-
     private fun visit(type: RustUnresolvedType): RustType = type.accept(this)
 
     override fun visitUnknown(type: RustUnknownType): RustType = RustUnknownType

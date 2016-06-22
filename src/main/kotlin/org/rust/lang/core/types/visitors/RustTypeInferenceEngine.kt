@@ -54,13 +54,7 @@ private class RustTypeInferencingVisitor(
     override fun visitStruct(type: RustStructType): RustType {
         val tip = path.firstOrNull() ?: return RustUnknownType
         if (tip is RustPatIdentElement) {
-            if (tip.patBinding === binding) {
-                return if (path.size == 2) type else RustUnknownType
-            } else {
-                return tip.pat?.let { pat ->
-                    RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, pat, type)
-                } ?: RustUnknownType
-            }
+            return inferForRustPatIdent(tip, type)
         } else if (tip is RustPatStructElement) {
             path.pop()
 
@@ -88,6 +82,37 @@ private class RustTypeInferencingVisitor(
         return RustUnknownType
     }
 
+    override fun visitEnum(type: RustEnumType): RustType {
+        val tip = path.firstOrNull() ?: return RustUnknownType
+        if (tip is RustPatIdentElement) {
+            return inferForRustPatIdent(tip, type)
+        } else if (tip is RustPatEnumElement) {
+            if (tip.pathExpr.resolvedType != type)
+                return RustUnknownType
+
+            if (tip.patList.size > 0) {
+                path.pop()
+
+                val variant = tip.pathExpr.path.reference.resolve() as? RustEnumVariantElement
+                return variant?.let {
+                    val next = path.firstOrNull() as RustPatElement
+
+                    val fieldDecls = variant.enumStructArgs?.fieldDeclList ?: variant.enumTupleArgs?.tupleFieldDeclList
+                    if (fieldDecls == null)
+                        return RustUnknownType
+
+                    val i = tip.patList.indexOf(next)
+
+                    RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, next, fieldDecls[i].type.resolvedType)
+                } ?: RustUnknownType
+            } else {
+                return if (path.size == 2) type else RustUnknownType
+            }
+        }
+
+        return RustUnknownType
+    }
+
     override fun visitFunctionType(type: RustFunctionType): RustType {
         val tip = path.firstOrNull() ?: return RustUnknownType
         if (tip is RustPatIdentElement) {
@@ -109,6 +134,15 @@ private class RustTypeInferencingVisitor(
     override fun visitUnknown(type: RustUnknownType): RustType {
         return RustUnknownType
     }
+
+    private fun inferForRustPatIdent(patId: RustPatIdentElement, type: RustType): RustType =
+        if (patId.patBinding === binding) {
+            if (path.size == 2) type else RustUnknownType
+        } else {
+            patId.pat?.let { pat ->
+                RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, pat, type)
+            } ?: RustUnknownType
+        }
 
 }
 

@@ -18,6 +18,8 @@ interface RustTypeVisitor<T> {
 
     fun visitFunctionType(type: RustFunctionType): T
 
+    fun visitEnum(type: RustEnumType): T
+
     fun visitInteger(type: RustIntegerType): T
 
 }
