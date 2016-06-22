@@ -24,8 +24,8 @@ class AddDeriveIntention : PsiElementBaseIntentionAction() {
     override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean =
         element.isWritable && getTarget(element) != null
 
-    private fun getTarget(element: PsiElement): Pair<RustStructOrEnum, PsiElement>? {
-        val item = element.parentOfType<RustStructOrEnum>() ?: return null
+    private fun getTarget(element: PsiElement): Pair<RustStructOrEnumItemElement, PsiElement>? {
+        val item = element.parentOfType<RustStructOrEnumItemElement>() ?: return null
         val keyword = when (item) {
             is RustStructItemElement -> item.vis ?: item.struct
             is RustEnumItemElement -> item.vis ?: item.enum
@@ -34,7 +34,7 @@ class AddDeriveIntention : PsiElementBaseIntentionAction() {
         return item to keyword
     }
 
-    private fun findOrCreateDeriveAttr(project: Project, item: RustStructOrEnum, keyword: PsiElement): RustOuterAttrElement? {
+    private fun findOrCreateDeriveAttr(project: Project, item: RustStructOrEnumItemElement, keyword: PsiElement): RustOuterAttrElement? {
         val existingDeriveAttr = item.findOuterAttr("derive")
         if (existingDeriveAttr != null) {
             return existingDeriveAttr
@@ -44,7 +44,7 @@ class AddDeriveIntention : PsiElementBaseIntentionAction() {
         return item.addBefore(attr, keyword) as RustOuterAttrElement
     }
 
-    private fun reformat(project: Project, item: RustStructOrEnum, deriveAttr: RustOuterAttrElement): RustOuterAttrElement {
+    private fun reformat(project: Project, item: RustStructOrEnumItemElement, deriveAttr: RustOuterAttrElement): RustOuterAttrElement {
         val marker = Object()
         PsiTreeUtil.mark(deriveAttr, marker)
         val reformattedItem = CodeStyleManager.getInstance(project).reformat(item)
