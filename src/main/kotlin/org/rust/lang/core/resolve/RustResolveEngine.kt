@@ -1,6 +1,5 @@
 package org.rust.lang.core.resolve
 
-import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -10,6 +9,7 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.cargoProject
 import org.rust.cargo.util.getPsiFor
 import org.rust.cargo.util.preludeModule
+import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustTokenElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.impl.RustFile
@@ -70,7 +70,7 @@ object RustResolveEngine {
      *
      * NOTE: This operate on PSI to extract all the necessary (yet implicit) resolving-context
      */
-    fun resolve(ref: RustQualifiedReferenceElement): ResolveResult = RecursionManager.doPreventingRecursion(ref, /* memoize = */ true) {
+    fun resolve(ref: RustQualifiedReferenceElement): ResolveResult = recursionGuard(ref) {
         val modulePrefix = ref.relativeModulePrefix
         when (modulePrefix) {
             is RelativeModulePrefix.Invalid        -> ResolveResult.Unresolved
@@ -144,7 +144,7 @@ object RustResolveEngine {
     // TODO(kudinkin): Unify following?
     //
 
-    fun resolveUseGlob(ref: RustUseGlobElement): ResolveResult = RecursionManager.doPreventingRecursion(ref, /* memoize = */ true) {
+    fun resolveUseGlob(ref: RustUseGlobElement): ResolveResult = recursionGuard(ref) {
         val basePath = ref.basePath
 
         // This is not necessarily a module, e.g.
