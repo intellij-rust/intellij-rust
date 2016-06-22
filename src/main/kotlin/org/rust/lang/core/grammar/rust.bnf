@@ -925,7 +925,7 @@ scoped_for_decl ::= pat IN no_struct_lit_expr
 
 for_expr ::= [ LIFETIME ':' ] FOR scoped_for_decl block { pin = "IN" }
 
-match_expr ::= MATCH no_struct_lit_expr match_body
+match_expr ::= MATCH no_struct_lit_expr match_body { pin = no_struct_lit_expr }
 match_body ::= '{' match_arm* '}' { pin = 1 }
 match_arm ::= outer_attr* match_pat '=>' (block_expr !('.' | '?') ','? | any_expr (',' | &'}'))
 match_pat ::= pat ('|' pat)* (IF any_expr)?
@@ -938,9 +938,9 @@ fake scoped_let_expr ::= scoped_let_decl block
 
 scoped_let_decl ::= LET pat '=' no_struct_lit_expr
 
-if_let_expr ::= IF scoped_let_decl block else_tail?
+if_let_expr ::= IF scoped_let_decl block else_tail? { pin = scoped_let_decl }
 
-while_let_expr ::= WHILE scoped_let_decl block
+while_let_expr ::= WHILE scoped_let_decl block { pin = scoped_let_decl }
 
 ret_expr ::= RETURN expr?
 
