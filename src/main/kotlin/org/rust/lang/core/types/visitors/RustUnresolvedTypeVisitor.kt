@@ -4,8 +4,9 @@ import org.rust.lang.core.types.RustIntegerType
 import org.rust.lang.core.types.RustUnitType
 import org.rust.lang.core.types.RustUnknownType
 import org.rust.lang.core.types.unresolved.RustUnresolvedFunctionType
-import org.rust.lang.core.types.unresolved.RustUnresolvedTupleType
 import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
+import org.rust.lang.core.types.unresolved.RustUnresolvedReferenceType
+import org.rust.lang.core.types.unresolved.RustUnresolvedTupleType
 
 /**
  * Unresolved types visitor trait
@@ -23,5 +24,7 @@ interface RustUnresolvedTypeVisitor<T> {
     fun visitFunctionType(type: RustUnresolvedFunctionType): T
 
     fun visitInteger(type: RustIntegerType): T
+
+    fun visitReference(type: RustUnresolvedReferenceType): T
 
 }

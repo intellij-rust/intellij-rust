@@ -22,5 +22,7 @@ interface RustTypeVisitor<T> {
 
     fun visitInteger(type: RustIntegerType): T
 
+    fun visitReference(type: RustReferenceType): T
+
 }
 

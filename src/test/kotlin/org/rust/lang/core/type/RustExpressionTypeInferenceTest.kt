@@ -150,6 +150,27 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
+    //language=RUST
+    fun testRefPattern() = testExpr("""
+        struct Vec;
+
+        fn bar(vr: &Vec) {
+            let &v = vr;
+            v;
+          //^ Vec
+        }
+    """)
+
+    //language=RUST
+    fun testMutRefPattern() = testExpr("""
+        struct Vec;
+
+        fn bar(vr: &mut Vec) {
+            let &v = vr;
+            v;
+          //^ <unknown>
+        }
+    """)
 
     private fun testExpr(code: String) {
         val (elementAtCaret, expectedType) = configureAndFindElement(code)

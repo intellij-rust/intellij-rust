@@ -7,6 +7,7 @@ import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustRecursiveElementVisitor
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
+import org.rust.lang.core.types.unresolved.RustUnresolvedReferenceType
 import org.rust.lang.core.types.unresolved.RustUnresolvedTupleType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
 import org.rust.lang.core.types.util.resolvedType
@@ -188,6 +189,9 @@ private class RustTypeTypificationVisitor : RustTypificationVisitorBase<RustUnre
         cur = o.path?.let { RustIntegerType.from(it.text) ?: RustUnresolvedPathType(it) } ?: RustUnknownType
     }
 
+    override fun visitRefType(o: RustRefTypeElement) {
+        cur = o.type?.let { RustUnresolvedReferenceType(it.type , o.mut != null) } ?: RustUnknownType
+    }
 }
 
 private fun typifyFn(fn: RustFnElement): RustType {

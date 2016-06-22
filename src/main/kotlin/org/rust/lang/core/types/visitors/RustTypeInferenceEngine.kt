@@ -131,6 +131,21 @@ private class RustTypeInferencingVisitor(
             RustUnknownType
     }
 
+    override fun visitReference(type: RustReferenceType): RustType {
+        val tip = path.firstOrNull() ?: return RustUnknownType
+        if (tip is RustPatIdentElement) {
+            if (tip.patBinding === binding)
+                return if (path.size == 2) type else RustUnknownType
+        } else if (tip is RustPatRefElement) {
+            if ((tip.mut != null) != type.mutable)
+                return RustUnknownType
+
+            return RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, tip.pat, type.referenced)
+        }
+
+        return RustUnknownType
+    }
+
     override fun visitUnknown(type: RustUnknownType): RustType {
         return RustUnknownType
     }

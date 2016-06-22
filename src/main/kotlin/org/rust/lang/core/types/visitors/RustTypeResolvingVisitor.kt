@@ -1,12 +1,10 @@
 package org.rust.lang.core.types.visitors
 
 import org.rust.lang.core.types.*
-import org.rust.lang.core.types.unresolved.RustUnresolvedFunctionType
-import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
-import org.rust.lang.core.types.unresolved.RustUnresolvedTupleType
-import org.rust.lang.core.types.unresolved.RustUnresolvedType
+import org.rust.lang.core.types.unresolved.*
 
 open class RustTypeResolvingVisitor : RustUnresolvedTypeVisitor<RustType> {
+
     private fun visit(type: RustUnresolvedType): RustType = type.accept(this)
 
     override fun visitUnknown(type: RustUnknownType): RustType = RustUnknownType
@@ -24,5 +22,6 @@ open class RustTypeResolvingVisitor : RustUnresolvedTypeVisitor<RustType> {
 
     override fun visitInteger(type: RustIntegerType): RustType = type
 
+    override fun visitReference(type: RustUnresolvedReferenceType): RustType = RustReferenceType(visit(type.referenced), type.mutable)
 }
 
