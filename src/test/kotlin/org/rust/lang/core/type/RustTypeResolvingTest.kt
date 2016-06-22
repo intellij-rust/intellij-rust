@@ -6,40 +6,36 @@ import org.rust.lang.core.psi.RustTypeElement
 import org.rust.lang.core.types.util.resolvedType
 
 class RustTypeResolvingTest: RustTypificationTestBase() {
-    fun testPath() = testType("Spam",
-        //language=RUST
-        """
+    //language=RUST
+    fun testPath() = testType("""
         struct Spam;
 
         fn main() {
             let _: Spam = Spam;
-                 //^
+                 //^ Spam
         }
     """)
 
-    fun testUnit() = testType("()",
-        //language=RUST
-        """
+    //language=RUST
+    fun testUnit() = testType("""
         fn main() {
             let _: () = ();
-                 //^
+                 //^ ()
         }
     """)
 
-    fun testTuple() = testType("(S, T)",
-        //language=RUST
-        """
+    //language=RUST
+    fun testTuple() = testType("""
         struct S;
         struct T;
         fn main() {
             let _: (S, T) = (S, T);
-                 //^
+                 //^ (S, T)
         }
     """)
 
-    fun testQualifiedPath() = testType("<unknown>",
-        //language=RUST
-        """
+    //language=RUST
+    fun testQualifiedPath() = testType("""
         trait T {
             type Assoc;
         }
@@ -52,26 +48,25 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
 
         fn main() {
             let _: <S as T>::Assoc = S;
-                 //^
+                 //^ <unknown>
         }
     """)
 
-    fun testEnum() = testType("<unknown>",
-        //language=RUST
-        """
+    //language=RUST
+    fun testEnum() = testType("""
         enum E { X }
 
         fn main() {
             let _: E = E::X;
-                 //^
+                 //^ <unknown>
         }
     """)
 
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */
-    private fun testType(expectedType: String, code: String) {
-        val elementAtCaret = configureAndFindElement(code)
+    private fun testType(code: String) {
+        val (elementAtCaret, expectedType) = configureAndFindElement(code)
         val typeAtCaret = requireNotNull(
             PsiTreeUtil.getTopmostParentOfType(elementAtCaret, RustTypeElement::class.java)
         ) { "No type at caret:\n$code" }

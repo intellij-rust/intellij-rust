@@ -6,44 +6,40 @@ import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.types.util.resolvedType
 
 class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
-    fun testIfLetPattern() = testExpr("<unknown>",
-        //language=RUST
-        """
+    //language=RUST
+    fun testIfLetPattern() = testExpr("""
         fn main() {
             let _ = if let Some(x) = Some(92i32) { x } else { x };
-                                                 //^
+                                                 //^ <unknown>
         }
     """)
 
-    fun testLetTypeAscription() = testExpr("S",
-        //language=RUST
-        """
+    //language=RUST
+    fun testLetTypeAscription() = testExpr("""
         struct S;
         struct T;
 
         fn main() {
             let (x, _): (S, T) = unimplemented!();
             x;
-          //^
+          //^ S
         }
     """)
 
-    fun testLetInitExpr() = testExpr("T",
-        //language=RUST
-        """
+    //language=RUST
+    fun testLetInitExpr() = testExpr("""
         struct S;
         struct T;
 
         fn main() {
             let (_, x) = (S, T);
             x;
-          //^
+          //^ T
         }
     """)
 
-    fun testNestedStructPattern() = testExpr("S",
-        //language=RUST
-        """
+    //language=RUST
+    fun testNestedStructPattern() = testExpr("""
         struct S;
         struct T {
             s: S
@@ -52,36 +48,33 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         fn main() {
             let T { s: x } = T { s: S };
             x;
-          //^
+          //^ S
         }
     """)
 
-    fun testFnArgumentPattern() = testExpr("S",
-        //language=RUST
-        """
+    //language=RUST
+    fun testFnArgumentPattern() = testExpr("""
         struct S;
         struct T;
 
         fn main((x, _): (S, T)) {
             x;
-          //^
+          //^ S
         }
     """)
 
-    fun testClosureArgument() = testExpr("()",
-        //language=RUST
-        """
+    //language=RUST
+    fun testClosureArgument() = testExpr( """
         fn main() {
             let _ = |x: ()| {
                 x
-              //^
+              //^ ()
             };
         }
     """)
 
-    fun testFunctionCall() = testExpr("S",
-        //language=RUST
-        """
+    //language=RUST
+    fun testFunctionCall() = testExpr("""
         struct S;
 
         fn new() -> S { S }
@@ -89,24 +82,22 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         fn main() {
             let x = new();
             x;
-          //^
+          //^ S
         }
     """)
 
-    fun testUnitFunctionCall() = testExpr("()",
-        //language=RUST
-        """
+    //language=RUST
+    fun testUnitFunctionCall() = testExpr("""
         fn foo() {}
         fn main() {
             let x = foo();
             x;
-          //^
+          //^ ()
         }
     """)
 
-    fun testStaticMethodCall() = testExpr("T",
-        //language=RUST
-        """
+    //language=RUST
+    fun testStaticMethodCall() = testExpr("""
         struct S;
         struct T;
         impl S { fn new() -> T { T } }
@@ -114,12 +105,12 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         fn main() {
             let x = S::new();
             x;
-          //^
+          //^ T
         }
     """)
 
-    private fun testExpr(expectedType: String, code: String) {
-        val elementAtCaret = configureAndFindElement(code)
+    private fun testExpr(code: String) {
+        val (elementAtCaret, expectedType) = configureAndFindElement(code)
         val typeAtCaret = requireNotNull(elementAtCaret.parentOfType<RustExprElement>()) {
             "No expr at caret:\n$code"
         }
