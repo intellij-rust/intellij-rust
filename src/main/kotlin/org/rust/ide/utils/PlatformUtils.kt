@@ -4,13 +4,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.RecursionManager
-
-/**
- * Recursion guard
- */
-fun <T> recursionGuard(key: Any, memoize: Boolean = true, block: () -> T): T? =
-    RecursionManager.doPreventingRecursion(key, memoize, block)
 
 /**
  * Wrapper util to run [runnable] under WL
