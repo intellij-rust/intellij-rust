@@ -96,23 +96,31 @@ fn many_stmts() {
 }
 
 trait Name {}
+
 struct Foo {}
+
 enum Moo {}
+
 mod Bar {}
+
 extern {}
 
 trait NameC {
     /* comment */
 }
+
 struct FooC {
     /* comment */
 }
+
 enum MooC {
     /* comment */
 }
+
 mod BarC {
     /* comment */
 }
+
 extern {
     /* comment */
 }
@@ -120,17 +128,21 @@ extern {
 trait Name2 {
     fn moo(self);
 }
+
 struct Foo2 {
     x: i32
 }
+
 enum Moo2 {
     Mmm(i32)
 }
+
 mod Bar2 {
     fn moo() -> i32 {
         45
     }
 }
+
 extern {
     fn snappy_max_compressed_length(source_length: size_t) -> size_t;
 }

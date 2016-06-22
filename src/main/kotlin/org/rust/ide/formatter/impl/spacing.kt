@@ -21,6 +21,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.core.psi.util.containsEOL
+import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.getNextNonCommentSibling
 import org.rust.lang.core.psi.util.getPrevNonCommentSibling
 import com.intellij.psi.tree.TokenSet.create as ts
@@ -161,6 +162,10 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtContext): Sp
             // Format blank lines between top level items
             ncPsi1.isTopLevelItem && ncPsi2.isTopLevelItem
             -> return lineBreak(
+                minLineFeeds = 1 +
+                    if (!needsBlankLineBetweenItems()) 0
+                    else ctx.rustSettings.MIN_NUMBER_OF_BLANKS_BETWEEN_ITEMS,
+
                 keepLineBreaks = ctx.commonSettings.KEEP_LINE_BREAKS,
                 keepBlankLines = ctx.commonSettings.KEEP_BLANK_LINES_IN_DECLARATIONS)
         }
@@ -266,6 +271,14 @@ private fun SpacingContext.blockMustBeMultiLine(): Boolean {
 
         else -> false
     }
+}
+
+private fun SpacingContext.needsBlankLineBetweenItems(): Boolean {
+    // Allow to keep consecutive runs of `use`, `const` or `static` items without blank lines
+    if (elementType1 in COMMENTS_TOKEN_SET || elementType2 in COMMENTS_TOKEN_SET)
+        return false
+
+    return !(elementType1 == elementType2 && elementType1 in ONE_LINE_ITEMS)
 }
 
 private fun countNonWhitespaceASTNodesBetween(left: ASTNode, right: ASTNode): Int {

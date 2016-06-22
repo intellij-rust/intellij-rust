@@ -61,6 +61,11 @@ class RustFormatterTestCase : FormatterTestCase() {
     fun testSpacing() = doTest()
     fun testLineBreaks() = doTest()
 
+    fun testMinNumberOfBlankLines() {
+        custom().MIN_NUMBER_OF_BLANKS_BETWEEN_ITEMS = 2
+        doTest()
+    }
+
     fun testIssue451() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/451
 
     private fun common() = getSettings(RustLanguage)
