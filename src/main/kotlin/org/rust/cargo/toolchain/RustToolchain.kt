@@ -10,14 +10,34 @@ import com.intellij.openapi.util.io.FileUtil
 import org.rust.cargo.commands.Cargo
 import java.io.File
 
-data class RustToolchain(
-    val location: String
-) {
+data class RustToolchain(val location: String) {
 
     fun looksLikeValidToolchain(): Boolean =
         File(pathToExecutable(CARGO)).canExecute()
 
-    fun queryRustcVersion(): RustcVersion? {
+    fun containsMetadataCommand(): Boolean =
+        queryCargoVersion()?.let { it >= RustToolchain.CARGO_LEAST_COMPATIBLE_VERSION } ?: false
+
+    fun queryCargoVersion(): Version? {
+        val cmd = GeneralCommandLine()
+            .withExePath(pathToExecutable(CARGO))
+            .withParameters("--version")
+
+        val procOut = try {
+            CapturingProcessHandler(cmd.createProcess(), Charsets.UTF_8, cmd.commandLineString).runProcess(10 * 1000)
+        } catch (e: ExecutionException) {
+            log.warn("Failed to detect `rustc` version!", e)
+            return null
+        }
+
+        if (procOut.exitCode != 0 || procOut.isCancelled || procOut.isTimeout) {
+            return null
+        }
+
+        return parseCargoVersion(procOut.stdoutLines)
+    }
+
+    fun queryRustcVersion(): Version? {
         check(!ApplicationManager.getApplication().isDispatchThread)
 
         if (!looksLikeValidToolchain()) return null
@@ -37,7 +57,7 @@ data class RustToolchain(
             return null
         }
 
-        return parseVersion(procOut.stdoutLines)
+        return parseRustcVersion(procOut.stdoutLines)
     }
 
     fun cargo(cargoProjectDirectory: String): Cargo =
@@ -49,62 +69,98 @@ data class RustToolchain(
     }
 
     companion object {
-        private val log = Logger.getInstance(RustcVersion::class.java)
+
+        private val log = Logger.getInstance(UnstableVersion::class.java)
 
         private val RUSTC = "rustc"
         private val CARGO = "cargo"
 
         val CARGO_TOML = "Cargo.toml"
+
+        val CARGO_LEAST_COMPATIBLE_VERSION = Version(0, 9, 0)
     }
 }
 
-/* Parsed result of `rustc -vV` output, which looks like this
- *
- * ```
- *
- * rustc 1.8.0-beta.1 (facbfdd71 2016-03-02)
- * binary: rustc
- * commit-hash: facbfdd71cb6ed0aeaeb06b6b8428f333de4072b
- * commit-date: 2016-03-02
- * host: x86_64-unknown-linux-gnu
- * release: 1.8.0-beta.1
- * ```
- */
-data class RustcVersion(
+class UnstableVersion(
     val commitHash: String,
-    val release: String,
-    val isStable: Boolean
-) {
-    val sourcesArchiveUrl: String get() {
-        // We download sources from github and not from rust-lang.org, because we want zip archives. rust-lang.org
-        // hosts only .tar.gz.
-        val tag = if (isStable) release else commitHash
-        return "https://github.com/rust-lang/rust/archive/$tag.zip"
+    major: Int,
+    minor: Int,
+    build: Int
+) : Version(major, minor, build)
+
+open class Version(val major: Int, val minor: Int, val build: Int) : Comparable<Version> {
+    val release: String = "$major.$minor.$build"
+
+    /**
+     * NOTA BENE: It only compares the release (!) part of the version
+     */
+    override fun compareTo(other: Version): Int {
+        if (major != other.major)
+            return major - other.major
+
+        if (minor != other.minor)
+            return minor - other.minor
+
+        return build - other.build
+    }
+
+    override fun toString(): String = release
+}
+
+private fun parseCargoVersion(lines: List<String>): Version? {
+    // We want to parse following
+    //
+    //  ```
+    //  cargo 0.9.0-nightly (c4c6f39 2016-01-30)
+    //  ```
+    val releaseRe = """cargo (\d+)\.(\d+)\.(\d+)-(stable|nightly \(([a-zA-Z0-9]+) .*\))""".toRegex()
+
+    val match = lines.mapNotNull { releaseRe.matchEntire(it) }.firstOrNull() ?: return null
+
+    val major = match.groups[1]!!.value.toInt()
+    val minor = match.groups[2]!!.value.toInt()
+    val build = match.groups[3]!!.value.toInt()
+
+    val isStable = match.groups[4]!!.value.isEmpty()
+
+    return if (isStable) {
+        Version(major, minor, build)
+    } else {
+        val commitHash = match.groups[5]!!.value
+        UnstableVersion(commitHash, major, minor, build)
     }
 }
 
-private fun parseVersion(lines: List<String>): RustcVersion? {
-    // We want to parse here
-    // rustc 1.8.0-beta.1 (facbfdd71 2016-03-02)
-    // binary: rustc
-    // commit-hash: facbfdd71cb6ed0aeaeb06b6b8428f333de4072b
-    // commit-date: 2016-03-02
-    // host: x86_64-unknown-linux-gnu
-    // release: 1.8.0-beta.1
+
+private fun parseRustcVersion(lines: List<String>): Version? {
+    // We want to parse following
+    //
+    //  ```
+    //  rustc 1.8.0-beta.1 (facbfdd71 2016-03-02)
+    //  binary: rustc
+    //  commit-hash: facbfdd71cb6ed0aeaeb06b6b8428f333de4072b
+    //  commit-date: 2016-03-02
+    //  host: x86_64-unknown-linux-gnu
+    //  release: 1.8.0-beta.1
+    //  ```
     val commitHashRe = "commit-hash: (.*)".toRegex()
-    val releaseRe = """release: (\d+\.\d+\.\d+)(.*)""".toRegex()
+    val releaseRe = """release: (\d+)\.(\d+)\.(\d+)(.*)""".toRegex()
     val find = { re: Regex -> lines.mapNotNull { re.matchEntire(it) }.firstOrNull() }
 
     val commitHash = find(commitHashRe)?.let { it.groups[1]!!.value } ?: return null
-    val releaseMatch = find(releaseRe) ?: return null
-    val release = releaseMatch.groups[1]!!.value
-    val isStable = releaseMatch.groups[2]!!.value.isEmpty()
 
-    return RustcVersion(
-        commitHash,
-        release,
-        isStable
-    )
+    val releaseMatch = find(releaseRe) ?: return null
+
+    val major = releaseMatch.groups[1]!!.value.toInt()
+    val minor = releaseMatch.groups[2]!!.value.toInt()
+    val build = releaseMatch.groups[3]!!.value.toInt()
+
+    val isStable = releaseMatch.groups[4]!!.value.isEmpty()
+
+    return if (isStable)
+        Version(major, minor, build)
+    else
+        UnstableVersion(commitHash, major, minor, build)
 }
 
 fun suggestToolchain(): RustToolchain? = Suggestions.all().mapNotNull {
