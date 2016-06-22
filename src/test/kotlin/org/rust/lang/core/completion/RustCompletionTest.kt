@@ -14,8 +14,6 @@ class RustCompletionTest : RustCompletionTestBase() {
     fun testImplMethodType() = checkSoleCompletion()
     fun testStructField() = checkSoleCompletion()
     fun testEnumField() = checkSoleCompletion()
-    fun testFieldExpr() = checkSoleCompletion()
-    fun testMethodCallExpr() = checkSoleCompletion()
     fun testWildcardImports() = checkSoleCompletion()
 
     fun testLocalScope() = checkNoCompletion()
