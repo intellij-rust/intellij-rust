@@ -7,5 +7,6 @@ class RustCompletionContributor : CompletionContributor() {
 
     init {
         extend(CompletionType.BASIC, DeriveCompletionProvider.elementPattern, DeriveCompletionProvider)
+        extend(CompletionType.BASIC, AttributeCompletionProvider.elementPattern, AttributeCompletionProvider)
     }
 }
