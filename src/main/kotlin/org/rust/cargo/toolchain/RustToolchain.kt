@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import org.rust.cargo.commands.Cargo
+import org.rust.utils.seconds
 import java.io.File
 
 data class RustToolchain(val location: String) {
@@ -19,22 +20,13 @@ data class RustToolchain(val location: String) {
         queryCargoVersion()?.let { it >= RustToolchain.CARGO_LEAST_COMPATIBLE_VERSION } ?: false
 
     fun queryCargoVersion(): Version? {
+        check(!ApplicationManager.getApplication().isDispatchThread)
+
         val cmd = GeneralCommandLine()
             .withExePath(pathToExecutable(CARGO))
             .withParameters("--version")
 
-        val procOut = try {
-            CapturingProcessHandler(cmd.createProcess(), Charsets.UTF_8, cmd.commandLineString).runProcess(10 * 1000)
-        } catch (e: ExecutionException) {
-            log.warn("Failed to detect `rustc` version!", e)
-            return null
-        }
-
-        if (procOut.exitCode != 0 || procOut.isCancelled || procOut.isTimeout) {
-            return null
-        }
-
-        return parseCargoVersion(procOut.stdoutLines)
+        return runExecutableAndProcessStdout(cmd) { parseCargoVersion(it) }
     }
 
     fun queryRustcVersion(): Version? {
@@ -46,18 +38,21 @@ data class RustToolchain(val location: String) {
             .withExePath(pathToExecutable(RUSTC))
             .withParameters("--version", "--verbose")
 
+        return runExecutableAndProcessStdout(cmd) { parseRustcVersion(it) }
+    }
+
+    private fun <T> runExecutableAndProcessStdout(cmd: GeneralCommandLine, extractor: (List<String>) -> T): T? {
         val procOut = try {
-            CapturingProcessHandler(cmd.createProcess(), Charsets.UTF_8, cmd.commandLineString).runProcess(10 * 1000)
+            CapturingProcessHandler(cmd.createProcess(), Charsets.UTF_8, cmd.commandLineString).runProcess(1.seconds)
         } catch (e: ExecutionException) {
-            log.warn("Failed to detect `rustc` version!", e)
+            log.warn("Failed to run executable!", e)
             return null
         }
 
-        if (procOut.exitCode != 0 || procOut.isCancelled || procOut.isTimeout) {
+        if (procOut.exitCode != 0 || procOut.isCancelled || procOut.isTimeout)
             return null
-        }
 
-        return parseRustcVersion(procOut.stdoutLines)
+        return extractor(procOut.stdoutLines)
     }
 
     fun cargo(cargoProjectDirectory: String): Cargo =

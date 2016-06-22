@@ -35,6 +35,7 @@ class RustProjectSettingsPanel : JPanel() {
 
     private lateinit var autoUpdateEnabled: JCheckBox
     private lateinit var rustVersion: JLabel
+    private lateinit var cargoVersion: JLabel
     private lateinit var versionUpdateAlarm: Alarm
 
     private val versionUpdateDelayMillis = 200
@@ -78,8 +79,6 @@ class RustProjectSettingsPanel : JPanel() {
         val toolchain = data.toolchain ?: return
         if (!toolchain.looksLikeValidToolchain()) {
             throw ConfigurationException("Invalid toolchain location: can't find Cargo in ${toolchain.location}")
-        } else if (!toolchain.containsMetadataCommand()) {
-            throw ConfigurationException("Configured toolchain is Incompatible with the plugin: required at least ${RustToolchain.CARGO_LEAST_COMPATIBLE_VERSION}, found ${toolchain.queryCargoVersion()}")
         }
     }
 
@@ -100,17 +99,34 @@ class RustProjectSettingsPanel : JPanel() {
     private fun scheduleVersionUpdate(toolchainLocation: String) {
         versionUpdateAlarm.cancelAllRequests()
         versionUpdateAlarm.addRequest({
-            val version = RustToolchain(toolchainLocation).queryRustcVersion()
-            updateVersion(version?.release)
+            val toolchain = RustToolchain(toolchainLocation)
+
+            val rustc = toolchain.queryRustcVersion()
+            val cargo = toolchain.queryCargoVersion()
+
+            updateVersion(rustc, cargo)
+
         }, versionUpdateDelayMillis)
     }
 
-    private fun updateVersion(newVersion: String?) {
+    private fun updateVersion(rustc: Version?, cargo: Version?) {
         ApplicationManager.getApplication().invokeLater({
             if (!Disposer.isDisposed(disposable)) {
-                val isInvalid = newVersion == null
-                rustVersion.text = if (isInvalid) "N/A" else newVersion
-                rustVersion.foreground = if (isInvalid) JBColor.RED else JBColor.foreground()
+                if (rustc != null) {
+                    rustVersion.text        = rustc.release
+                    rustVersion.foreground  = JBColor.foreground()
+                } else {
+                    rustVersion.text        = "N/A"
+                    rustVersion.foreground  = JBColor.RED
+                }
+
+                if (cargo != null) {
+                    cargoVersion.text       = cargo.release
+                    cargoVersion.foreground = if (cargo >= RustToolchain.CARGO_LEAST_COMPATIBLE_VERSION) JBColor.foreground() else JBColor.RED
+                } else {
+                    cargoVersion.text       = "N/A"
+                    cargoVersion.foreground = JBColor.RED
+                }
             }
         }, ModalityState.any())
     }
