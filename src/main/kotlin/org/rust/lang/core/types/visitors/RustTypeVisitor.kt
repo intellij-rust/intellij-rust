@@ -18,5 +18,7 @@ interface RustTypeVisitor<T> {
 
     fun visitFunctionType(type: RustFunctionType): T
 
+    fun visitInteger(type: RustIntegerType): T
+
 }
 

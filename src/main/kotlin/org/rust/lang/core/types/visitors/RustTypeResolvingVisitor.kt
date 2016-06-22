@@ -23,5 +23,7 @@ open class RustTypeResolvingVisitor : RustUnresolvedTypeVisitor<RustType> {
     override fun visitFunctionType(type: RustUnresolvedFunctionType): RustType =
         RustFunctionType(type.paramTypes.map { visit(it) }, visit(type.retType))
 
+    override fun visitInteger(type: RustIntegerType): RustType = type
+
 }
 

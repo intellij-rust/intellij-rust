@@ -1,5 +1,6 @@
 package org.rust.lang.core.types.visitors
 
+import org.rust.lang.core.types.RustIntegerType
 import org.rust.lang.core.types.RustUnitType
 import org.rust.lang.core.types.RustUnknownType
 import org.rust.lang.core.types.unresolved.RustUnresolvedFunctionType
@@ -20,5 +21,7 @@ interface RustUnresolvedTypeVisitor<T> {
     fun visitUnknown(type: RustUnknownType): T
 
     fun visitFunctionType(type: RustUnresolvedFunctionType): T
+
+    fun visitInteger(type: RustIntegerType): T
 
 }
