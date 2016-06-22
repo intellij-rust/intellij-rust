@@ -1,5 +1,6 @@
 package org.rust.lang.core.resolve
 
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -70,12 +71,12 @@ object RustResolveEngine {
      *
      * NOTE: This operate on PSI to extract all the necessary (yet implicit) resolving-context
      */
-    fun resolve(ref: RustQualifiedReferenceElement): ResolveResult = recursionGuard(ref) {
+    fun resolve(ref: RustQualifiedReferenceElement): ResolveResult = recursionGuard(ref, Computable {
         val modulePrefix = ref.relativeModulePrefix
         when (modulePrefix) {
-            is RelativeModulePrefix.Invalid        -> ResolveResult.Unresolved
+            is RelativeModulePrefix.Invalid -> ResolveResult.Unresolved
             is RelativeModulePrefix.AncestorModule -> resolveAncestorModule(ref, modulePrefix).asResolveResult()
-            is RelativeModulePrefix.NotRelative    -> {
+            is RelativeModulePrefix.NotRelative -> {
                 val qual = ref.qualifier
                 if (qual == null) {
                     resolveIn(enumerateScopesFor(ref), ref)
@@ -88,7 +89,7 @@ object RustResolveEngine {
                 }
             }
         }
-    } ?: ResolveResult.Unresolved
+    }) ?: ResolveResult.Unresolved
 
     /**
      * Resolves references to struct's fields inside destructuring [RustStructExprElement]
@@ -144,7 +145,7 @@ object RustResolveEngine {
     // TODO(kudinkin): Unify following?
     //
 
-    fun resolveUseGlob(ref: RustUseGlobElement): ResolveResult = recursionGuard(ref) {
+    fun resolveUseGlob(ref: RustUseGlobElement): ResolveResult = recursionGuard(ref, Computable {
         val basePath = ref.basePath
 
         // This is not necessarily a module, e.g.
@@ -171,7 +172,7 @@ object RustResolveEngine {
 
             else -> ResolveResult.Unresolved
         }
-    } ?: ResolveResult.Unresolved
+    }) ?: ResolveResult.Unresolved
 
     /**
      * Looks-up file corresponding to particular module designated by `mod-declaration-item`:
