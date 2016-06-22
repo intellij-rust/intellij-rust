@@ -1,12 +1,13 @@
 package org.rust.lang.core.type
 
 import org.assertj.core.api.Assertions.assertThat
+import org.intellij.lang.annotations.Language
 import org.rust.lang.core.psi.RustExprElement
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.types.util.resolvedType
 
 class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
-    //language=RUST
+    //language=Rust
     fun testIfLetPattern() = testExpr("""
         fn main() {
             let _ = if let Some(x) = Some(92i32) { x } else { x };
@@ -14,7 +15,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testLetTypeAscription() = testExpr("""
         struct S;
         struct T;
@@ -26,7 +27,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testLetInitExpr() = testExpr("""
         struct S;
         struct T;
@@ -38,7 +39,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testNestedStructPattern() = testExpr("""
         struct S;
         struct T {
@@ -52,7 +53,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testFnArgumentPattern() = testExpr("""
         struct S;
         struct T;
@@ -63,7 +64,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testClosureArgument() = testExpr( """
         fn main() {
             let _ = |x: ()| {
@@ -73,7 +74,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testFunctionCall() = testExpr("""
         struct S;
 
@@ -86,7 +87,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testUnitFunctionCall() = testExpr("""
         fn foo() {}
         fn main() {
@@ -96,7 +97,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testStaticMethodCall() = testExpr("""
         struct S;
         struct T;
@@ -109,7 +110,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testEnumPattern() = testExpr("""
         enum E {
             X
@@ -121,7 +122,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testEnumPatternWithUnnamedArgs() = testExpr("""
         enum E {
             X(i32, i16)
@@ -135,7 +136,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testEnumPatternWithNamedArgs() = testExpr("""
         enum E {
             X { _1: i32, _2: i64 }
