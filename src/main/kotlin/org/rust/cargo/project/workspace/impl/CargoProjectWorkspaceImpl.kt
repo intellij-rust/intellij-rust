@@ -11,6 +11,8 @@ import com.intellij.openapi.module.ModuleComponent
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -23,6 +25,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener.UpdateResult
+import org.rust.cargo.project.workspace.CargoProjectWorkspaceTransientListener
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoLibraryName
 import org.rust.cargo.util.cargoProjectRoot
@@ -47,6 +50,8 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
 
     /**
      * Cached instance of the latest [CargoProjectDescription] instance synced with `Cargo.toml`
+     *
+     * NOTA BENE: It inherently may be null, since there may be no `Cargo.toml` present at all
      */
     private var cached: CargoProjectDescription? = null
 
@@ -69,8 +74,27 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     override fun projectOpened() { /* NOP */ }
 
     override fun moduleAdded() {
-        module.project.toolchain?.let { requestUpdateUsing(it, immediately = true) }
+        module.project.toolchain?.let { toolchain ->
+            CargoProjectWorkspaceTransientListener
+                .create {
+                    when (it) {
+                        is CargoProjectWorkspaceListener.UpdateResult.Err -> showBalloon("Project '${module.project.name}' update failed: ${it.error.message}", MessageType.ERROR)
+                    }
+                }
+                .let {
+                    module.messageBus
+                        .connect(it.connectionDisposer)
+                        .subscribe(CargoProjectWorkspaceListener.Topics.UPDATES, it)
+
+                    requestUpdateUsing(toolchain, immediately = true)
+                }
+        }
     }
+
+    private fun showBalloon(message: String, type: MessageType) {
+        PopupUtil.showBalloonForActiveComponent(message, type)
+    }
+
 
     /**
      * Requests to updates Rust libraries asynchronously. Consecutive requests are coalesced.
@@ -119,7 +143,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
         notifyCargoProjectUpdate(r)
 
         when (r) {
-            is UpdateResult.Ok -> LOG.info("Project '${module.project.name}' successfully updated")
+            is UpdateResult.Ok  -> LOG.info("Project '${module.project.name}' successfully updated")
             is UpdateResult.Err -> LOG.info("Project '${module.project.name}' update failed", r.error)
         }
     }
