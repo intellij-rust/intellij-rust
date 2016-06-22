@@ -104,6 +104,20 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
+    fun testStaticMethodCall() = testExpr("T",
+        //language=RUST
+        """
+        struct S;
+        struct T;
+        impl S { fn new() -> T { T } }
+
+        fn main() {
+            let x = S::new();
+            x;
+          //^
+        }
+    """)
+
     private fun testExpr(expectedType: String, code: String) {
         val elementAtCaret = configureAndFindElement(code)
         val typeAtCaret = requireNotNull(elementAtCaret.parentOfType<RustExprElement>()) {

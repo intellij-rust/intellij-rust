@@ -40,6 +40,8 @@ object RustTypificationEngine {
 
             is RustPatBindingElement -> deviseBoundPatType(named)
 
+            is RustFnElement -> typifyFn(named)
+
             else -> RustUnknownType
         }
     }
@@ -147,10 +149,7 @@ private class RustItemTypificationVisitor : RustTypificationVisitorBase<RustType
     }
 
     override fun visitFnItem(o: RustFnItemElement) {
-        cur = RustFunctionType(
-            o.parameters?.parameterList.orEmpty().map { it.type?.resolvedType ?: RustUnknownType },
-            o.retType?.type?.resolvedType ?: RustUnitType
-        )
+        cur = typifyFn(o)
     }
 }
 
@@ -176,4 +175,13 @@ private class RustTypeTypificationVisitor : RustTypificationVisitorBase<RustUnre
         cur = o.path?.let { RustUnresolvedPathType(it) } ?: RustUnknownType
     }
 
+}
+
+private fun typifyFn(fn: RustFnElement): RustType {
+    if (!fn.isStatic) return RustUnknownType
+
+    return RustFunctionType(
+        fn.parameters?.parameterList.orEmpty().map { it.type?.resolvedType ?: RustUnknownType },
+        fn.retType?.type?.resolvedType ?: RustUnitType
+    )
 }
