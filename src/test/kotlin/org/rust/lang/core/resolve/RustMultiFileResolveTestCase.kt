@@ -21,4 +21,6 @@ class RustMultiFileResolveTestCase : RustMultiFileResolveTestCaseBase() {
     // Check whether resolving-procedure (presumably) fails
 
     fun testModDeclWrongPath() = doTestUnresolved("mod_decl_wrong_path/main.rs")
+
+    fun testModDeclCycle()     = doTestUnresolved("mod_decl_cycle/foo.rs", "mod_decl_cycle/bar.rs", "mod_decl_cycle/baz.rs")
 }
