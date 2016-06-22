@@ -54,7 +54,7 @@ class Cargo(
             .withParameters(additionalArguments)
             .withEnvironment(environmentVariables)
 
-    private val metadataCommandline: GeneralCommandLine get() = generalCommand("metadata", emptyList())
+    private val metadataCommandline: GeneralCommandLine get() = generalCommand("metadata", listOf("--verbose"))
 
     private fun GeneralCommandLine.execute(listener: ProcessListener? = null): ProcessOutput {
         val process = createProcess()

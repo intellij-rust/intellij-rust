@@ -12,6 +12,7 @@ import com.intellij.ui.JBColor
 import com.intellij.util.Alarm
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.Version
 import org.rust.cargo.toolchain.suggestToolchain
 import javax.swing.*
 import javax.swing.event.DocumentEvent
@@ -76,7 +77,9 @@ class RustProjectSettingsPanel : JPanel() {
     fun validateSettings() {
         val toolchain = data.toolchain ?: return
         if (!toolchain.looksLikeValidToolchain()) {
-            throw ConfigurationException("Invalid toolchain location: can't find cargo in ${toolchain.location}")
+            throw ConfigurationException("Invalid toolchain location: can't find Cargo in ${toolchain.location}")
+        } else if (!toolchain.containsMetadataCommand()) {
+            throw ConfigurationException("Configured toolchain is Incompatible with the plugin: required at least ${RustToolchain.CARGO_LEAST_COMPATIBLE_VERSION}, found ${toolchain.queryCargoVersion()}")
         }
     }
 

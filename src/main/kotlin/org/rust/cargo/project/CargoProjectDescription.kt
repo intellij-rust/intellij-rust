@@ -3,6 +3,7 @@ package org.rust.cargo.project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import org.rust.cargo.util.AutoInjectedCrates
 import java.util.*
 
 
@@ -108,6 +109,8 @@ class CargoProjectDescription private constructor(
         }
         return CargoProjectDescription(packages + stdlibPackages)
     }
+
+    val hasStandardLibrary: Boolean get() = findExternCrateRootByName(AutoInjectedCrates.std) != null
 
     companion object {
         fun deserialize(data: CargoProjectDescriptionData): CargoProjectDescription? {

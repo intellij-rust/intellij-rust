@@ -16,28 +16,25 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
-import com.intellij.util.download.DownloadableFileService
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.util.AutoInjectedCrates
+import org.rust.cargo.toolchain.UnstableVersion
+import org.rust.cargo.toolchain.Version
 import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.cargoProject
 import org.rust.ide.utils.runWriteAction
 import org.rust.ide.utils.service
 import org.rust.lang.core.psi.impl.isNotRustFile
+import org.rust.utils.download
 import java.awt.Component
-import java.io.IOException
 
-/*
+/**
  * Warn user if rust toolchain is not properly configured. Suggest to download stdlib.
- *
  */
 class MissingToolchainNotificationProvider(
     private val project: Project,
@@ -65,27 +62,35 @@ class MissingToolchainNotificationProvider(
         }
     }
 
-    override fun getKey(): Key<EditorNotificationPanel> = KEY
+    override fun getKey(): Key<EditorNotificationPanel> = PROVIDER_KEY
 
     override fun createNotificationPanel(file: VirtualFile, editor: FileEditor): EditorNotificationPanel? {
-        if (file.isNotRustFile) return null
-        if (isNotificationDisabled()) return null
-        val toolchain = project.toolchain ?: return createBadToolchainPanel()
-        if (!toolchain.looksLikeValidToolchain()) {
-            return createBadToolchainPanel()
+        if (file.isNotRustFile || isNotificationDisabled())
+            return null
+
+        val toolchain = project.toolchain
+        if (toolchain == null || !toolchain.looksLikeValidToolchain() || !toolchain.containsMetadataCommand()) {
+            var title = "No Rust toolchain configured"
+            if (toolchain == null || !toolchain.looksLikeValidToolchain())
+                // NOP
+            else if (!toolchain.containsMetadataCommand())
+                title = "Configured Rust toolchain is incompatible with the plugin: required at least ${RustToolchain.CARGO_LEAST_COMPATIBLE_VERSION}, found ${toolchain.queryCargoVersion()}"
+
+            return createBadToolchainPanel(title)
         }
 
         val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
-        if (!module.hasStandardLibrary) {
-            return createAttachLibraryPanel(module, toolchain)
+        return module.cargoProject?.let {
+            if (!it.hasStandardLibrary)
+                createLibraryAttachingPanel(module, toolchain)
+            else
+                null
         }
-
-        return null
     }
 
-    private fun createBadToolchainPanel(): EditorNotificationPanel =
+    private fun createBadToolchainPanel(title: String): EditorNotificationPanel =
         EditorNotificationPanel().apply {
-            setText("No Rust toolchain configured")
+            setText(title)
             createActionLabel("Setup toolchain") {
                 project.service<RustProjectSettingsService>().configureToolchain()
             }
@@ -95,25 +100,45 @@ class MissingToolchainNotificationProvider(
             }
         }
 
-    private fun createAttachLibraryPanel(module: Module, toolchain: RustToolchain): EditorNotificationPanel =
+    private fun createLibraryAttachingPanel(module: Module, toolchain: RustToolchain): EditorNotificationPanel =
         EditorNotificationPanel().apply {
             setText("No standard library sources found, some code insight will not work")
+
             createActionLabel("Download") {
                 val destination = chooseDownloadLocation(this) ?: return@createActionLabel
-                DownloadTask(module, toolchain, destination).queue()
+
+                val task = object: Task.Backgroundable(module.project, "stdlib download") {
+
+                    private var library: VirtualFile? = null
+
+                    override fun run(indicator: ProgressIndicator) {
+                        val version = toolchain.queryRustcVersion() ?: return
+                        val url = sourcesArchiveUrlFromVersion(version)
+                        library = download(url, "rust-${version.release}-src.zip", destination)
+                    }
+
+                    private fun sourcesArchiveUrlFromVersion(v: Version): String {
+                        // We download sources from github and not from rust-lang.org, because we want zip archives. rust-lang.org
+                        // hosts only .tar.gz.
+                        val tag = if (v is UnstableVersion) v.commitHash else v.release
+                        return "https://github.com/rust-lang/rust/archive/$tag.zip"
+                    }
+
+                    override fun onSuccess() {
+                        if (module.isDisposed)
+                            return
+
+                        attachStdlibToModule(module, library!!)
+                        notifications.updateAllNotifications()
+                    }
+                }
+
+                task.queue()
             }
 
             createActionLabel("Attach") {
-                val stdlib = chooseStdlibLocation(this) ?: return@createActionLabel
-                val roots = StandardLibraryRoots.fromFile(stdlib)
-                if (roots == null) {
-                    PopupUtil.showBalloonForActiveFrame(
-                        "Invalid sources Rust standard library source path: `${stdlib.path}`",
-                        MessageType.ERROR
-                    )
-                    return@createActionLabel
-                }
-                runWriteAction { roots.attachTo(module) }
+                attachStdlibToModule(module, chooseStdlibLocation(this) ?: return@createActionLabel)
+                notifications.updateAllNotifications()
             }
 
             createActionLabel("Do not show again") {
@@ -121,6 +146,19 @@ class MissingToolchainNotificationProvider(
                 notifications.updateAllNotifications()
             }
         }
+
+    private fun attachStdlibToModule(module: Module, stdlib: VirtualFile) {
+        val roots = StandardLibraryRoots.fromFile(stdlib)
+        if (roots == null) {
+            PopupUtil.showBalloonForActiveFrame(
+                "Invalid sources Rust standard library source path: `${stdlib.path}`",
+                MessageType.ERROR
+            )
+            return
+        }
+
+        runWriteAction { roots.attachTo(module) }
+    }
 
     private fun chooseDownloadLocation(parent: Component): VirtualFile? {
         val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
@@ -138,58 +176,16 @@ class MissingToolchainNotificationProvider(
     }
 
     private fun disableNotification() {
-        PropertiesComponent.getInstance(project).setValue(DO_NOT_SHOW_TOOLCHAIN_NOTIFICATION, true)
+        PropertiesComponent.getInstance(project).setValue(NOTIFICATION_STATUS_KEY, true)
     }
 
     private fun isNotificationDisabled(): Boolean {
-        return PropertiesComponent.getInstance(project).getBoolean(DO_NOT_SHOW_TOOLCHAIN_NOTIFICATION)
-    }
-
-    class DownloadTask(
-        private val module: Module,
-        private val toolchain: RustToolchain,
-        private val destination: VirtualFile
-    ) : Task.Backgroundable(module.project, "Stdlib download") {
-
-        private var library: VirtualFile? = null
-
-        override fun run(indicator: ProgressIndicator) {
-            val version = toolchain.queryRustcVersion() ?: return
-            val url = version.sourcesArchiveUrl
-            library = download(url, "rust-${version.release}-src.zip", destination)
-        }
-
-        override fun onSuccess() {
-            if (module.isDisposed) return
-            val stdlib = library ?: return
-            val roots = StandardLibraryRoots.fromFile(stdlib) ?: return
-            runWriteAction { roots.attachTo(module) }
-        }
-
-        companion object {
-            private fun download(url: String, fileName: String, destination: VirtualFile): VirtualFile? {
-                val downloadService = DownloadableFileService.getInstance()
-                val fileDescription = downloadService.createFileDescription(url, fileName)
-                val downloader = downloadService.createDownloader(listOf(fileDescription), "rust")
-
-                val downloadTo = VfsUtilCore.virtualToIoFile(destination)
-                val file = try {
-                    downloader.download(downloadTo).singleOrNull()?.first
-                } catch (e: IOException) {
-                    // TODO: probably should use IOExceptionDialog.showErrorDialog here,
-                    // but let's ignore this for now and hope that a better way to get stdlib appears
-                    null
-                }
-
-                return file?.let { LocalFileSystem.getInstance().refreshAndFindFileByIoFile(it) }
-            }
-        }
+        return PropertiesComponent.getInstance(project).getBoolean(NOTIFICATION_STATUS_KEY)
     }
 
     companion object {
-        private val KEY: Key<EditorNotificationPanel> = Key.create("Setup Rust toolchain")
-        private val DO_NOT_SHOW_TOOLCHAIN_NOTIFICATION = "do.not.show.toolchain.notification"
+        private val NOTIFICATION_STATUS_KEY = "org.rust.hideToolchainNotifications"
 
-        private val Module.hasStandardLibrary: Boolean get() = cargoProject?.findExternCrateRootByName(AutoInjectedCrates.std) != null
+        private val PROVIDER_KEY: Key<EditorNotificationPanel> = Key.create("Setup Rust toolchain")
     }
 }
