@@ -20,6 +20,7 @@ import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
+import org.rust.lang.core.types.RustEnumType
 import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
@@ -130,12 +131,7 @@ object RustResolveEngine {
 
         return call.identifier?.let {
             val name = it.text
-            val matching: Iterable<RustNamedElement> =
-                when (receiverType) {
-                    is RustStructType -> receiverType.nonStaticMethods.filter { it.name == name }
-
-                    else -> emptyList()
-                }
+            val matching = receiverType.nonStaticMethods.filter { it.name == name }
 
             ResolveResult.buildFrom(matching)
         } ?: ResolveResult.Unresolved

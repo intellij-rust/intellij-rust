@@ -4,7 +4,10 @@ class RustTypeAwareResolveTestCase : RustResolveTestCaseBase() {
     override val dataPath = "org/rust/lang/core/resolve/fixtures/type_aware"
 
     fun testSelfMethodCallExpr() = checkIsBound(atOffset = 27)
-    fun testMethodCallExpr() = checkIsBound(atOffset = 27)
+
+    fun testMethodCallExpr1() = checkIsBound(atOffset = 27)
+    fun testMethodCallExpr2() = checkIsBound(atOffset = 27)
+
     fun testSelfFieldExpr() = checkIsBound()
     fun testFieldExpr() = checkIsBound()
 
