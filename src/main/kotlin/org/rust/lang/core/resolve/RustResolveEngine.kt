@@ -2,7 +2,6 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
@@ -18,9 +17,9 @@ import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.*
+import org.rust.lang.core.psi.visitors.RustComputingVisitor
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
-import org.rust.lang.core.types.RustEnumType
 import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
@@ -260,9 +259,7 @@ private fun resolveIn(scopes: Sequence<RustResolveScope>, ref: RustReferenceElem
 
 
 private fun declarations(scope: RustResolveScope, context: Context): Sequence<ScopeEntry> = Sequence {
-    val visitor = RustScopeVisitor(context)
-    scope.accept(visitor)
-    visitor.result.iterator()
+    RustScopeVisitor(context).compute(scope).iterator()
 }
 
 
@@ -297,31 +294,23 @@ private class ScopeEntry private constructor(
 
 private class RustScopeVisitor(
     val context: Context
-) : RustElementVisitor() {
-    lateinit var result: Sequence<ScopeEntry>
+) : RustComputingVisitor<Sequence<ScopeEntry>>() {
 
-    override fun visitElement(element: PsiElement): Unit =
-        throw IllegalStateException("Unhandled RustResolveScope: $element")
+    override fun visitModItem(o: RustModItemElement) = visitMod(o)
 
-    override fun visitModItem(o: RustModItemElement) {
-        visitMod(o)
+    override fun visitFile(file: PsiFile) = visitMod(file as RustFile)
+
+    override fun visitForExpr(o: RustForExprElement) = set {
+        o.scopedForDecl.boundElements.scopeEntries
     }
 
-    override fun visitFile(file: PsiFile) {
-        visitMod(file as RustFile)
-    }
-
-    override fun visitForExpr(o: RustForExprElement) {
-        result = o.scopedForDecl.boundElements.scopeEntries
-    }
-
-    override fun visitScopedLetDecl(o: RustScopedLetDeclElement) {
-        result = if (context.pivot == null || !PsiTreeUtil.isAncestor(o, context.pivot, true)) {
+    override fun visitScopedLetDecl(o: RustScopedLetDeclElement) = set {
+        if (context.pivot == null || !PsiTreeUtil.isAncestor(o, context.pivot, true)) {
             o.boundElements.scopeEntries
         } else emptySequence()
     }
 
-    override fun visitBlock(o: RustBlockElement) {
+    override fun visitBlock(o: RustBlockElement) = set {
         // If place is specified in context, we want to filter out
         // all non strictly preceding let declarations.
         //
@@ -340,14 +329,12 @@ private class RustScopeVisitor(
                 // Drops at most one element
                 .dropWhile { PsiTreeUtil.isAncestor(it, context.pivot, true) }
 
-        result = visibleLetDecls.flatMap { it.boundElements.scopeEntries } + o.itemEntries(context)
+        visibleLetDecls.flatMap { it.boundElements.scopeEntries } + o.itemEntries(context)
     }
 
-    private fun visitTypeBearingItem(o: RustTypeBearingItemElement) = Sequence { o.resolvedType.staticMethods.scopeEntries.iterator() }
-
-    override fun visitStructItem(o: RustStructItemElement) {
-        result = sequenceOf(
-            visitTypeBearingItem(o),
+    override fun visitStructItem(o: RustStructItemElement) = set {
+        sequenceOf(
+            staticMethods(o),
 
             if (isContextLocalTo(o))
                 o.typeParams.scopeEntries
@@ -356,9 +343,9 @@ private class RustScopeVisitor(
         ).flatten()
     }
 
-    override fun visitEnumItem(o: RustEnumItemElement) {
-        result = sequenceOf(
-            visitTypeBearingItem(o),
+    override fun visitEnumItem(o: RustEnumItemElement) = set {
+        sequenceOf(
+            staticMethods(o),
 
             if (isContextLocalTo(o))
                 o.typeParams.scopeEntries
@@ -367,59 +354,48 @@ private class RustScopeVisitor(
         ).flatten()
     }
 
-    override fun visitTraitItem(o: RustTraitItemElement) {
-        result = if (isContextLocalTo(o))
+    override fun visitTraitItem(o: RustTraitItemElement) = set {
+        if (isContextLocalTo(o))
             o.typeParams.scopeEntries
         else
             emptySequence()
     }
 
-    override fun visitTypeItem(o: RustTypeItemElement) {
-        result = if (isContextLocalTo(o))
+    override fun visitTypeItem(o: RustTypeItemElement) = set {
+        if (isContextLocalTo(o))
             o.typeParams.scopeEntries
         else
             emptySequence()
     }
 
-    override fun visitFnItem(o: RustFnItemElement) {
-        visitFunction(o)
-    }
+    override fun visitFnItem(o: RustFnItemElement) = visitFunction(o)
 
-    override fun visitTraitMethodMember(o: RustTraitMethodMemberElement) {
-        visitFunction(o)
-    }
+    override fun visitTraitMethodMember(o: RustTraitMethodMemberElement) = visitFunction(o)
 
-    override fun visitImplMethodMember(o: RustImplMethodMemberElement) {
-        visitFunction(o)
-    }
+    override fun visitImplMethodMember(o: RustImplMethodMemberElement) = visitFunction(o)
 
-    override fun visitImplItem(o: RustImplItemElement) {
-        result = if (isContextLocalTo(o))
+    override fun visitImplItem(o: RustImplItemElement) = set {
+        if (isContextLocalTo(o))
             o.typeParams.scopeEntries
         else
             emptySequence()
     }
 
-    override fun visitLambdaExpr(o: RustLambdaExprElement) {
-        result =
-            o.parameters.parameterList.orEmpty()
-                .asSequence()
-                .flatMap { it.boundElements.scopeEntries }
+    override fun visitLambdaExpr(o: RustLambdaExprElement) = set {
+        o.parameters.parameterList.orEmpty()
+            .asSequence()
+            .flatMap { it.boundElements.scopeEntries }
     }
 
-    override fun visitMatchArm(o: RustMatchArmElement) {
-        result = o.matchPat.boundElements.scopeEntries
+    override fun visitMatchArm(o: RustMatchArmElement) = set {
+        o.matchPat.boundElements.scopeEntries
     }
 
-    override fun visitWhileLetExpr(o: RustWhileLetExprElement) {
-        visitScopedLetDecl(o.scopedLetDecl)
-    }
+    override fun visitWhileLetExpr(o: RustWhileLetExprElement) = visitScopedLetDecl(o.scopedLetDecl)
 
-    override fun visitIfLetExpr(o: RustIfLetExprElement) {
-        visitScopedLetDecl(o.scopedLetDecl)
-    }
+    override fun visitIfLetExpr(o: RustIfLetExprElement) = visitScopedLetDecl(o.scopedLetDecl)
 
-    fun visitMod(mod: RustMod) {
+    private fun visitMod(mod: RustMod) = set {
         val module = mod.module
         // Rust injects implicit `extern crate std` in every crate root module unless it is
         // a `#![no_std]` crate, in which case `extern crate core` is injected.
@@ -440,15 +416,15 @@ private class RustScopeVisitor(
         else
             module.preludeModule?.rustMod?.let { declarations(it, context.copy(inPrelude = true)) } ?: emptySequence()
 
-        result = sequenceOf(
+        sequenceOf(
             mod.itemEntries(context),
             injectedCrates,
             preludeSymbols
         ).flatten()
     }
 
-    fun visitFunction(o: RustFnElement) {
-        result = if (isContextLocalTo(o))
+    private fun visitFunction(o: RustFnElement) = set {
+        if (isContextLocalTo(o))
             sequenceOf(
                 sequenceOfNotNull(o.parameters?.selfArgument?.let { ScopeEntry.of(it) }),
                 o.parameters?.parameterList.orEmpty().asSequence().flatMap { it.boundElements.scopeEntries },
@@ -459,6 +435,10 @@ private class RustScopeVisitor(
     }
 
     private fun isContextLocalTo(o: RustCompositeElement) = o.contains(context.pivot)
+
+    private fun staticMethods(o: RustTypeBearingItemElement): Sequence<ScopeEntry> =
+        o.resolvedType.staticMethods.scopeEntries
+
 }
 
 
