@@ -274,10 +274,10 @@ private fun SpacingContext.blockMustBeMultiLine(): Boolean {
 }
 
 private fun SpacingContext.needsBlankLineBetweenItems(): Boolean {
-    // Allow to keep consecutive runs of `use`, `const` or `static` items without blank lines
     if (elementType1 in COMMENTS_TOKEN_SET || elementType2 in COMMENTS_TOKEN_SET)
         return false
 
+    // Allow to keep consecutive runs of `use`, `const` or other "one line" items without blank lines
     return !(elementType1 == elementType2 && elementType1 in ONE_LINE_ITEMS)
 }
 
