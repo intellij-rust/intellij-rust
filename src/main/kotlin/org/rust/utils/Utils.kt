@@ -69,7 +69,7 @@ fun download(url: String, fileName: String, destination: VirtualFile): VirtualFi
     val downloader      = downloadService.createDownloader(listOf(downloadService.createFileDescription(url, fileName)), fileName)
 
     val downloadTo = VfsUtilCore.virtualToIoFile(destination)
-    val (file, d) = downloader.download(downloadTo).single()
+    val (file, @Suppress("UNUSED_VARIABLE") d) = downloader.download(downloadTo).single()
 
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
 }

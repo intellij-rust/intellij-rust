@@ -21,7 +21,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.core.psi.util.containsEOL
-import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.getNextNonCommentSibling
 import org.rust.lang.core.psi.util.getPrevNonCommentSibling
 import com.intellij.psi.tree.TokenSet.create as ts
