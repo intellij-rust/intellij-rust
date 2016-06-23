@@ -1,6 +1,6 @@
 package org.rust.lang.core.completion
 
-class RustTypeAwareCompletionTestCase: RustCompletionTestBase() {
+class RustTypeAwareCompletionTest : RustCompletionTestBase() {
 
     override val dataPath = "org/rust/lang/core/completion/fixtures/type_aware"
 

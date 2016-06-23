@@ -19,9 +19,6 @@ class RustCompletionTest : RustCompletionTestBase() {
     fun testLocalScope() = checkNoCompletion()
     fun testWhileLet() = checkNoCompletion()
 
-    fun testMatchRecovery() = checkSoleCompletion()
-    fun testIfLetRecovery() = checkSoleCompletion()
-    fun testWhileLetRecovery() = checkSoleCompletion()
 
     fun testChildFile() = checkByDirectory {
         openFileInEditor("main.rs")
