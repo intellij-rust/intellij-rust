@@ -25,11 +25,17 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
     override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType) {
         @Suppress("NON_EXHAUSTIVE_WHEN")
         when (settingsType) {
-            BLANK_LINES_SETTINGS ->
+            BLANK_LINES_SETTINGS -> {
                 consumer.showStandardOptions(
                     "KEEP_LINE_BREAKS",
                     "KEEP_BLANK_LINES_IN_DECLARATIONS",
                     "KEEP_BLANK_LINES_IN_CODE")
+
+                consumer.showCustomOption(RustCodeStyleSettings::class.java,
+                    "MIN_NUMBER_OF_BLANKS_BETWEEN_ITEMS",
+                    "Between declarations:",
+                    CodeStyleSettingsCustomizable.BLANK_LINES)
+            }
 
             WRAPPING_AND_BRACES_SETTINGS -> {
                 consumer.showStandardOptions(
