@@ -988,7 +988,7 @@ private index_arg ::= '[' expr ']'
 
 call_expr ::= expr arg_list
 
-method_call_expr ::= expr '.' IDENTIFIER colon_generic_args? arg_list { pin = 2 }
+method_call_expr ::= expr '.' IDENTIFIER colon_generic_args? arg_list
 
 arg_list ::= '(' expr_list? ')' { pin = 1 }
 
