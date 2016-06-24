@@ -44,7 +44,7 @@ private class RustTypeInferencingVisitor(
             val next = path.firstOrNull() as? RustPatElement
             if (next != null) {
                 val i = tip.indexOf(next)
-                return type.elements.elementAt(i).accept(this)
+                return type[i].accept(this)
             }
         }
 

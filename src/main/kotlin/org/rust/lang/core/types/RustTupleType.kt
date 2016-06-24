@@ -2,18 +2,19 @@ package org.rust.lang.core.types
 
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 
-class RustTupleType(val elements: Iterable<RustType>) : RustType {
+class RustTupleType(private val elements: List<RustType>) : RustType {
 
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitTupleType(this)
 
-    override fun equals(other: Any?): Boolean {
-        throw UnsupportedOperationException()
-    }
+    override fun equals(other: Any?): Boolean = other is RustTupleType && other.elements == elements
 
-    override fun hashCode(): Int {
-        throw UnsupportedOperationException()
-    }
+    override fun hashCode(): Int = elements.hashCode()
 
     override fun toString(): String = elements.joinToString(", ", "(", ")")
+
+    operator fun get(i: Int): RustType {
+        require(i >= 0)
+        return elements.getOrElse(i, { RustUnknownType })
+    }
 }
 

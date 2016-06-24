@@ -1,7 +1,6 @@
 package org.rust.lang.core.type
 
 import org.assertj.core.api.Assertions.assertThat
-import org.intellij.lang.annotations.Language
 import org.rust.lang.core.psi.RustExprElement
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.types.util.resolvedType
@@ -171,6 +170,16 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
           //^ <unknown>
         }
     """)
+
+    //language=RUST
+    fun testTupleOutOfBounds() = testExpr("""
+        fn main() {
+            let (_, _, x) = (1, 2);
+            x
+          //^ <unknown>
+        }
+    """)
+
 
     private fun testExpr(code: String) {
         val (elementAtCaret, expectedType) = configureAndFindElement(code)
