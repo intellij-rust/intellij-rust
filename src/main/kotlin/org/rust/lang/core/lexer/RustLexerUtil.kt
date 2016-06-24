@@ -12,20 +12,24 @@ fun CharSequence.tokenize(lexer: Lexer): Sequence<Pair<IElementType, String>> =
         lexer.tokenType?.to(lexer.tokenText)
     })
 
+inline fun <T> Lexer.peekingFrame(action: () -> T): T {
+    val pos = currentPosition
+    val result = action()
+    restore(pos)
+    return result
+}
+
 //
 // String extensions
 //
 
-fun String.isEOL(): Boolean {
-    // TODO(kudinkin): Sync with flex
-    return equals("\r")
-        || equals("\n")
-        || equals("\r\n")
-}
+// TODO(kudinkin): Sync with flex
+fun String.isEOL(): Boolean =
+    equals("\r") || equals("\n") || equals("\r\n")
 
-fun String.containsEOL(): Boolean {
-    // TODO(kudinkin): Sync with flex
-    return contains("\r")
-        || contains("\n")
-        || contains("\r\n")
-}
+// TODO(kudinkin): Sync with flex
+fun String.containsEOL(): Boolean =
+    contains("\r") || contains("\n") || contains("\r\n")
+
+fun CharSequence.softSubSequence(startIndex: Int, endIndex: Int): CharSequence =
+    subSequence(startIndex, Math.min(endIndex, length))

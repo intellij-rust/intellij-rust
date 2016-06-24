@@ -1,6 +1,6 @@
 FILE
   RustFnItemElementImpl(FN_ITEM)
-    PsiComment(<OUTER_DOC_COMMENT>)('/// Does useful things')
+    PsiComment(<OUTER_DOC_COMMENT>)('/// Does useful things\n/// Really useful')
     PsiWhiteSpace('\n')
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')

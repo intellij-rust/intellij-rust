@@ -1,4 +1,5 @@
 /// Does useful things
+/// Really useful
 fn documented_function() {
     /// inner items can have docs too!
     fn foo() { }
