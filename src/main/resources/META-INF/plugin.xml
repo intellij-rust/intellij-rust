@@ -33,62 +33,62 @@
 
         <!-- Parser -->
 
-        <lang.parserDefinition language="RUST" implementationClass="org.rust.lang.core.RustParserDefinition"/>
+        <lang.parserDefinition language="Rust" implementationClass="org.rust.lang.core.RustParserDefinition"/>
         <stubElementTypeHolder class="org.rust.lang.core.psi.RustCompositeElementTypes"/>
 
         <!-- Syntax Highlighter -->
 
-        <lang.syntaxHighlighterFactory language="RUST" implementationClass="org.rust.ide.highlight.syntax.RustHighlighterFactory"/>
+        <lang.syntaxHighlighterFactory language="Rust" implementationClass="org.rust.ide.highlight.syntax.RustHighlighterFactory"/>
 
         <!-- Formatter -->
 
-        <lang.formatter language="RUST" implementationClass="org.rust.ide.formatter.RustFormattingModelBuilder"/>
+        <lang.formatter language="Rust" implementationClass="org.rust.ide.formatter.RustFormattingModelBuilder"/>
 
         <!-- Commenter -->
 
-        <lang.commenter language="RUST" implementationClass="org.rust.ide.commenter.RustCommenter"/>
+        <lang.commenter language="Rust" implementationClass="org.rust.ide.commenter.RustCommenter"/>
 
         <!-- Matchers -->
 
-        <lang.braceMatcher language="RUST" implementationClass="org.rust.ide.highlight.matcher.RustBraceMatcher"/>
-        <lang.quoteHandler language="RUST" implementationClass="org.rust.ide.highlight.RustQuoteHandler"/>
+        <lang.braceMatcher language="Rust" implementationClass="org.rust.ide.highlight.matcher.RustBraceMatcher"/>
+        <lang.quoteHandler language="Rust" implementationClass="org.rust.ide.highlight.RustQuoteHandler"/>
 
         <!-- Doc-Provider -->
 
-        <lang.documentationProvider language="RUST" implementationClass="org.rust.ide.docs.RustDocumentationProvider"/>
+        <lang.documentationProvider language="Rust" implementationClass="org.rust.ide.docs.RustDocumentationProvider"/>
 
         <!-- Structure View -->
 
-        <lang.psiStructureViewFactory language="RUST"
+        <lang.psiStructureViewFactory language="Rust"
                                       implementationClass="org.rust.ide.structure.RustPsiStructureViewFactory"/>
 
         <!-- Usages Provider -->
 
-        <lang.findUsagesProvider language="RUST" implementationClass="org.rust.ide.search.RustFindUsagesProvider"/>
+        <lang.findUsagesProvider language="Rust" implementationClass="org.rust.ide.search.RustFindUsagesProvider"/>
 
         <!-- Smart Enter Processor -->
-        <lang.smartEnterProcessor language="RUST"
+        <lang.smartEnterProcessor language="Rust"
                                   implementationClass="org.rust.ide.typing.assist.RustSmartEnterProcessor"/>
 
         <!-- Navigation -->
 
         <gotoClassContributor implementation="org.rust.ide.navigation.goto.RustClassNavigationContributor"/>
         <gotoSymbolContributor implementation="org.rust.ide.navigation.goto.RustSymbolNavigationContributor"/>
-        <codeInsight.gotoSuper language="RUST" implementationClass="org.rust.ide.navigation.goto.RustGotoSuperHandler"/>
+        <codeInsight.gotoSuper language="Rust" implementationClass="org.rust.ide.navigation.goto.RustGotoSuperHandler"/>
 
         <!-- Hints -->
 
-        <codeInsight.typeInfo language="RUST" implementationClass="org.rust.ide.hints.RustExpressionTypeProvider"/>
+        <codeInsight.typeInfo language="Rust" implementationClass="org.rust.ide.hints.RustExpressionTypeProvider"/>
 
         <!-- Annotator -->
 
-        <annotator language="RUST" implementationClass="org.rust.ide.annotator.RustHighlightingAnnotator"/>
-        <annotator language="RUST" implementationClass="org.rust.ide.annotator.RustLiteralAnnotator"/>
-        <annotator language="RUST" implementationClass="org.rust.ide.annotator.RustExpressionAnnotator"/>
-        <annotator language="RUST" implementationClass="org.rust.ide.annotator.RustInvalidSyntaxAnnotator"/>
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RustHighlightingAnnotator"/>
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RustLiteralAnnotator"/>
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RustExpressionAnnotator"/>
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RustInvalidSyntaxAnnotator"/>
 
         <!-- Completion -->
-        <completion.contributor language="RUST" implementationClass="org.rust.ide.completion.RustCompletionContributor"/>
+        <completion.contributor language="Rust" implementationClass="org.rust.ide.completion.RustCompletionContributor"/>
 
         <!-- Description Provider -->
 
@@ -96,7 +96,7 @@
 
         <!-- Spell-checker -->
 
-        <spellchecker.support language="RUST" implementationClass="org.rust.ide.spelling.RustSpellcheckingStrategy"/>
+        <spellchecker.support language="Rust" implementationClass="org.rust.ide.spelling.RustSpellcheckingStrategy"/>
 
         <!-- Handlers -->
 
@@ -116,23 +116,23 @@
 
         <!-- Inspections -->
 
-        <localInspection language="RUST" enabledByDefault="true" level="WARNING"
+        <localInspection language="Rust" enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.ApproxConstantInspection"/>
 
-        <localInspection language="RUST" enabledByDefault="true" level="WARNING"
+        <localInspection language="Rust" enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.SelfConventionInspection"/>
 
-        <localInspection language="RUST" enabledByDefault="true" level="ERROR"
+        <localInspection language="Rust" enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.UnresolvedModuleDeclarationInspection"/>
 
-        <localInspection language="RUST" enabledByDefault="false" level="ERROR"
+        <localInspection language="Rust" enabledByDefault="false" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RustUnresolvedReferenceInspection"/>
 
         <!-- Surrounder -->
-        <lang.surroundDescriptor language="RUST"
+        <lang.surroundDescriptor language="Rust"
                                  implementationClass="org.rust.ide.surround.RustSurroundDescriptor"/>
 
-        <lang.foldingBuilder language="RUST" implementationClass="org.rust.ide.folding.RustFoldingBuilder"/>
+        <lang.foldingBuilder language="Rust" implementationClass="org.rust.ide.folding.RustFoldingBuilder"/>
 
         <!-- Live Templates -->
         <defaultLiveTemplatesProvider implementation="org.rust.ide.template.RustLiveTemplatesProvider"/>

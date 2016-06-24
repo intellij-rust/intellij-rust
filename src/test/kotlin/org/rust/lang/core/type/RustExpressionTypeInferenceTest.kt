@@ -1,7 +1,7 @@
 package org.rust.lang.core.type
 
 class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
-    //language=RUST
+    //language=Rust
     fun testIfLetPattern() = testExpr("""
         fn main() {
             let _ = if let Some(x) = Some(92i32) { x } else { x };
@@ -9,7 +9,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testLetTypeAscription() = testExpr("""
         struct S;
         struct T;
@@ -21,7 +21,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testLetInitExpr() = testExpr("""
         struct S;
         struct T;
@@ -33,7 +33,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testNestedStructPattern() = testExpr("""
         struct S;
         struct T {
@@ -47,7 +47,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testFnArgumentPattern() = testExpr("""
         struct S;
         struct T;
@@ -58,7 +58,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testClosureArgument() = testExpr( """
         fn main() {
             let _ = |x: ()| {
@@ -68,7 +68,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testFunctionCall() = testExpr("""
         struct S;
 
@@ -81,7 +81,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testUnitFunctionCall() = testExpr("""
         fn foo() {}
         fn main() {
@@ -91,7 +91,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testStaticMethodCall() = testExpr("""
         struct S;
         struct T;
@@ -104,7 +104,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testRefPattern() = testExpr("""
         struct Vec;
 
@@ -115,7 +115,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testMutRefPattern() = testExpr("""
         struct Vec;
 
@@ -126,7 +126,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testTupleOutOfBounds() = testExpr("""
         fn main() {
             let (_, _, x) = (1, 2);

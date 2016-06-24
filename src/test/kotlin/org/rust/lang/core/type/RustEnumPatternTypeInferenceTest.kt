@@ -1,7 +1,7 @@
 package org.rust.lang.core.type
 
 class RustEnumPatternTypeInferenceTest: RustTypificationTestBase() {
-    //language=RUST
+    //language=Rust
     fun testEnumPattern() = testExpr("""
         enum E {
             X
@@ -13,7 +13,7 @@ class RustEnumPatternTypeInferenceTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testEnumPatternWithUnnamedArgs() = testExpr("""
         enum E {
             X(i32, i16)
@@ -27,7 +27,7 @@ class RustEnumPatternTypeInferenceTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testEnumPatternWithNamedArgs() = testExpr("""
         enum E {
             X { _1: i32, _2: i64 }
@@ -41,7 +41,7 @@ class RustEnumPatternTypeInferenceTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testEnumTupleOutOfBounds() = testExpr("""
         enum E {
             V(i32, i32)
