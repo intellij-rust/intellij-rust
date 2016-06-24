@@ -6,7 +6,7 @@ import org.rust.lang.core.psi.RustTypeElement
 import org.rust.lang.core.types.util.resolvedType
 
 class RustTypeResolvingTest: RustTypificationTestBase() {
-    //language=Rust
+    //language=RUST
     fun testPath() = testType("""
         struct Spam;
 
@@ -16,7 +16,7 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
+    //language=RUST
     fun testUnit() = testType("""
         fn main() {
             let _: () = ();
@@ -24,7 +24,7 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
+    //language=RUST
     fun testTuple() = testType("""
         struct S;
         struct T;
@@ -34,7 +34,7 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
+    //language=RUST
     fun testQualifiedPath() = testType("""
         trait T {
             type Assoc;
@@ -52,7 +52,7 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
+    //language=RUST
     fun testEnum() = testType("""
         enum E { X }
 
@@ -62,7 +62,7 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
+    //language=RUST
     fun testTypeItem() = testType("""
         enum E { X }
 

@@ -1,7 +1,7 @@
 package org.rust.lang.core.type
 
 class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
-    //language=Rust
+    //language=RUST
     fun testIfLetPattern() = testExpr("""
         fn main() {
             let _ = if let Some(x) = Some(92i32) { x } else { x };
@@ -9,7 +9,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
+    //language=RUST
     fun testLetTypeAscription() = testExpr("""
         struct S;
         struct T;
@@ -21,7 +21,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
+    //language=RUST
     fun testLetInitExpr() = testExpr("""
         struct S;
         struct T;
@@ -33,7 +33,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
+    //language=RUST
     fun testNestedStructPattern() = testExpr("""
         struct S;
         struct T {
@@ -47,7 +47,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
+    //language=RUST
     fun testFnArgumentPattern() = testExpr("""
         struct S;
         struct T;
@@ -58,7 +58,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
+    //language=RUST
     fun testClosureArgument() = testExpr( """
         fn main() {
             let _ = |x: ()| {
@@ -68,7 +68,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
+    //language=RUST
     fun testFunctionCall() = testExpr("""
         struct S;
 
@@ -81,7 +81,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
+    //language=RUST
     fun testUnitFunctionCall() = testExpr("""
         fn foo() {}
         fn main() {
@@ -91,7 +91,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
+    //language=RUST
     fun testStaticMethodCall() = testExpr("""
         struct S;
         struct T;
