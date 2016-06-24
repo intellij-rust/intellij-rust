@@ -1,7 +1,9 @@
 package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.resolve.ResolveCache
 import org.rust.lang.core.completion.RustCompletionEngine
+import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustQualifiedReferenceElement
 import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.referenceName
