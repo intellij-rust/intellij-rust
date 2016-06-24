@@ -28,6 +28,7 @@ interface RustMod : RustNamedElement, RustItemsOwner {
 
     companion object {
         val MOD_RS = "mod.rs"
+        val LIB_RS = "lib.rs"
     }
 }
 
