@@ -97,13 +97,16 @@ private class RustTypeInferencingVisitor(
                 return variant?.let {
                     val next = path.firstOrNull() as RustPatElement
 
+                    //FIXME: don't handle struct variant fields based on order
                     val fieldDecls = variant.enumStructArgs?.fieldDeclList ?: variant.enumTupleArgs?.tupleFieldDeclList
                     if (fieldDecls == null)
                         return RustUnknownType
 
                     val i = tip.patList.indexOf(next)
+                    check(i != -1)
 
-                    RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, next, fieldDecls[i].type.resolvedType)
+                    val fieldType = fieldDecls.getOrNull(i)?.type?.resolvedType ?: RustUnknownType
+                    RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, next, fieldType)
                 } ?: RustUnknownType
             } else {
                 return if (path.size == 2) type else RustUnknownType

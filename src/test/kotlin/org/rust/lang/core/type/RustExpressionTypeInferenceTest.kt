@@ -180,6 +180,18 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
+    //language=RUST
+    fun testEnumTupleOutOfBounds() = testExpr("""
+        enum E {
+            V(i32, i32)
+        }
+
+        fn main() {
+            let E::V(_, _, x): E = unimplemented!();
+            x
+          //^ <unknown>
+        }
+    """)
 
     private fun testExpr(code: String) {
         val (elementAtCaret, expectedType) = configureAndFindElement(code)
