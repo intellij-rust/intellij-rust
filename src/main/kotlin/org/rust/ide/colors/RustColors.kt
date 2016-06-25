@@ -26,6 +26,7 @@ enum class RustColor(val humanName: String, externalName: String, fallback: Text
 
     DOC_COMMENT           ("Rustdoc comment", "org.rust.DOC_COMMENT", Default.DOC_COMMENT),
     DOC_HEADING           ("Rustdoc heading", "org.rust.DOC_HEADING", Default.DOC_COMMENT_TAG),
+    DOC_LINK              ("Rustdoc link", "org.rust.DOC_LINK", Default.DOC_COMMENT_TAG_VALUE),
 
     PARENTHESIS           ("Parenthesis", "org.rust.PARENTHESIS", Default.PARENTHESES),
     BRACKETS              ("Brackets", "org.rust.BRACKETS", Default.BRACKETS),
