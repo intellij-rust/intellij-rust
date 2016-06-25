@@ -50,6 +50,7 @@ import static com.intellij.psi.TokenType.*;
 
 %s IN_BLOCK
 %s IN_EOL
+
 %s IN_DOC_DATA
 %s IN_DOC_DATA_DEEP
 
@@ -70,18 +71,21 @@ WHITE_SPACE_CHAR = {EOL_WS} | {LINE_WS}
 HEADING_HASH = "#"{1,6}
 
 // http://spec.commonmark.org/0.25/#links
-LINK_TEXT   = "[" ( [^\]\r\n] | "\\]" )* "]"
-LINK_DEST   = ( "<" ( [^>\ \t\r\n] | "\\>" )* ">" )
-            | ( [^\(\)\ \t\r\n] | "\\(" | "\\)" )*
-LINK_TITLE  = ( \" ( [^\"\r\n] | \\\" )* \" )
-            | ( \' ( [^\'\r\n] | \\\' )* \' )
-            | ( "(" ( [^\)\r\n] | "\\)" )* ")" )
-LINK_LABEL  = "[" ( [^\]\ \t\r\n] | "\\]" ) ( [^\]\r\n] | "\\]" )* "]"
+LINK_TEXT    = "[" ( [^\]\r\n] | "\\]" )* "]"
+LINK_DEST    = ( "<" ( [^>\ \t\r\n] | "\\>" )* ">" )
+             | ( [^\(\)\ \t\r\n] | "\\(" | "\\)" )*
+LINK_TITLE   = ( \" ( [^\"\r\n] | \\\" )* \" )
+             | ( \' ( [^\'\r\n] | \\\' )* \' )
+             | ( "(" ( [^\)\r\n] | "\\)" )* ")" )
+LINK_LABEL   = "[" ( [^\]\ \t\r\n] | "\\]" ) ( [^\]\r\n] | "\\]" )* "]"
 
-INLINE_LINK     = {LINK_TEXT} "(" {LINE_WS}* ( {LINK_DEST} ( {LINE_WS}+ {LINK_TITLE} )? )? {LINE_WS}* ")"
-REF_LINK        = ( {LINK_TEXT} {LINK_LABEL} )
-                | ( {LINK_LABEL} "[]"? )
-LINK_REF_DEF    = {LINK_LABEL} ":" [^\r\n]*
+INLINE_LINK  = {LINK_TEXT} "(" {LINE_WS}* ( {LINK_DEST} ( {LINE_WS}+ {LINK_TITLE} )? )? {LINE_WS}* ")"
+REF_LINK     = ( {LINK_TEXT} {LINK_LABEL} )
+             | ( {LINK_LABEL} "[]"? )
+LINK_REF_DEF = {LINK_LABEL} ":" [^\r\n]*
+
+// http://spec.commonmark.org/0.25/#code-spans
+CODE_SPAN    = "`" ( [^`\r\n] | "`" "`"+ )* "`"
 
 %%
 
@@ -115,7 +119,7 @@ LINK_REF_DEF    = {LINK_LABEL} ":" [^\r\n]*
     //== http://spec.commonmark.org/0.25/#atx-headings
     {HEADING_HASH} " " [^\r\n]+     { yybegin(IN_DOC_DATA_DEEP); docHeadingTrimRight(); return DOC_HEADING; }
     {HEADING_HASH} [\ \r\n]         { yybegin(IN_DOC_DATA_DEEP); yypushback(1); return DOC_HEADING; }
-    {HEADING_HASH}                  { if(isLastToken()) { return DOC_HEADING; }
+    {HEADING_HASH}                  { if (isLastToken()) { return DOC_HEADING; }
                                       else { yybegin(IN_DOC_DATA_DEEP); return DOC_TEXT; } }
 
     {LINE_WS}+                      { return WHITE_SPACE; }
@@ -124,13 +128,14 @@ LINK_REF_DEF    = {LINK_LABEL} ":" [^\r\n]*
 
 <IN_DOC_DATA_DEEP> {
     "*"+ "/"            {
-        if(MAIN_STATE == IN_BLOCK && isLastToken()) { yybegin(MAIN_STATE); yypushback(yylength()); }
+        if (MAIN_STATE == IN_BLOCK && isLastToken()) { yybegin(MAIN_STATE); yypushback(yylength()); }
         else { return DOC_TEXT; }
     }
 
     {INLINE_LINK}       { return DOC_INLINE_LINK; }
     {REF_LINK}          { return DOC_REF_LINK; }
     {LINK_REF_DEF}      { return DOC_LINK_REF_DEF; }
+    {CODE_SPAN}         { return DOC_CODE_SPAN; }
 
     {EOL_WS}            { yybegin(MAIN_STATE); return WHITE_SPACE;}
     {LINE_WS}+          { return WHITE_SPACE; }

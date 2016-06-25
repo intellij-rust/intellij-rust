@@ -21,7 +21,7 @@ fn <function-decl>main</function-decl>() {
              program, <mut-binding>accumulator</mut-binding>);
 }
 
-/// Some documentation
+/// Some documentation `with code`
 /// # Heading
 /// [Rust](https://www.rust-lang.org/)
 <attribute>#[cfg(target_os=</attribute>"linux"<attribute>)]</attribute>
