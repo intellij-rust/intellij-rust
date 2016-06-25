@@ -17,17 +17,14 @@ fun RustNamedElement.createLookupElement(): LookupElement {
             .withLookupString(name ?: "")
             .withTailText(parameters?.text ?: "()")
             .withTypeText(retType?.type?.text ?: "()")
-            .withInsertHandler(ParenthesesInsertHandler.getInstance((this.parameters?.parameterList?.isNotEmpty() ?: false)))
         is RustImplMethodMemberElement -> LookupElementBuilder.createWithIcon(this)
             .withLookupString(name ?: "")
             .withTailText(parameters?.text ?: "()")
             .withTypeText(retType?.type?.text ?: "()")
-            .withInsertHandler(ParenthesesInsertHandler.getInstance((this.parameters?.parameterList?.isNotEmpty() ?: false)))
         is RustTraitMethodMemberElement -> LookupElementBuilder.createWithIcon(this)
             .withLookupString(name ?: "")
             .withTailText(parameters?.text ?: "()")
             .withTypeText(retType?.type?.text ?: "()")
-            .withInsertHandler(ParenthesesInsertHandler.getInstance((this.parameters?.parameterList?.isNotEmpty() ?: false)))
         is RustConstItemElement -> LookupElementBuilder.createWithIcon(this)
             .withLookupString(name ?: "")
             .withTypeText(type.text)
@@ -65,29 +62,12 @@ fun RustNamedElement.createLookupElement(): LookupElement {
 
                 LookupElementBuilder.create(this, externCrateName ?: modName ?: name)
                     .withIcon(getIcon(0))
-                    .withInsertHandler(ModInsertHandler)
             } else {
                 val name = modName ?: name ?: "<anonymous>"
                 LookupElementBuilder.create(this, name)
                     .withIcon(getIcon(0))
-                    .withInsertHandler(ModInsertHandler)
             }
         }
         else -> LookupElementBuilder.createWithIcon(this).withLookupString(name ?: "")
-    }
-}
-
-object ModInsertHandler : InsertHandler<LookupElement> {
-    override fun handleInsert(context: InsertionContext?, item: LookupElement?) {
-        if (context == null) return
-        if (item == null) return
-
-        val editor = context.editor
-        val doc = context.document
-        context.commitDocument()
-        if (context.completionChar == '\t') {
-            doc.insertString(editor.caretModel.offset, "::")
-            editor.caretModel.moveToOffset(editor.caretModel.offset + 2)
-        }
     }
 }
