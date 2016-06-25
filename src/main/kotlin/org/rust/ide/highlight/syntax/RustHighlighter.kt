@@ -6,6 +6,8 @@ import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
 import org.rust.ide.colors.RustColor
 import org.rust.lang.core.lexer.RustHighlightingLexer
+import org.rust.lang.core.psi.RustDocElementTypes.DOC_DECO
+import org.rust.lang.core.psi.RustDocElementTypes.DOC_TEXT
 import org.rust.lang.core.psi.RustKeywordTokenType
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 
@@ -35,8 +37,7 @@ class RustHighlighter : SyntaxHighlighterBase() {
             BLOCK_COMMENT                  -> RustColor.BLOCK_COMMENT
             EOL_COMMENT                    -> RustColor.EOL_COMMENT
 
-            INNER_DOC_COMMENT              -> RustColor.DOC_COMMENT
-            OUTER_DOC_COMMENT              -> RustColor.DOC_COMMENT
+            DOC_TEXT, DOC_DECO             -> RustColor.DOC_COMMENT
 
             LPAREN, RPAREN                 -> RustColor.PARENTHESIS
             LBRACE, RBRACE                 -> RustColor.BRACES

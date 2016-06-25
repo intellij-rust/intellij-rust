@@ -9,4 +9,7 @@ class RustHighlightingLexingTestCase : RustLexingTestCaseBase() {
 
     fun testEol() = doTest()
     fun testRawLiterals() = doTest()
+
+    fun testLineDoc() = doTest()
+    fun testBlockDoc() = doTest()
 }

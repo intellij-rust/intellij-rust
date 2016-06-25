@@ -26,3 +26,5 @@ class RustLiteralTokenType(
 ) : RustTokenType(debugName) {
     override fun createLeafNode(leafText: CharSequence): ASTNode = implConstructor(this, leafText)
 }
+
+class RustDocTokenType(debugName: String) : RustTokenType(debugName)
