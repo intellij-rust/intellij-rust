@@ -8,7 +8,6 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.cargo.util.cargoLibraryName
 import org.rust.cargo.util.cargoProject
 import org.rust.lang.RustFileType
 import org.rust.lang.RustLanguage
@@ -17,7 +16,6 @@ import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.RustInnerAttrElement
 import org.rust.lang.core.psi.RustInnerAttributeOwner
 import org.rust.lang.core.psi.RustMod
-import org.rust.lang.core.psi.canonicalCratePath
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.indexes.RustCratePath
 import org.rust.lang.core.resolve.ref.RustReference
@@ -34,12 +32,7 @@ class RustFile(
     override val `super`: RustMod?
         get() = RustModulesIndex.getSuperFor(this)
 
-    override val modName: String? = when {
-        name == RustMod.MOD_RS -> parent?.name
-        name == RustMod.LIB_RS && isCrateRoot -> module?.cargoProject?.findPackageForFile(this.virtualFile)?.first?.name
-        // TODO this does not account for the "path" attribute
-        else -> FileUtil.getNameWithoutExtension(name)
-    }
+    override val modName: String? = if (name != RustMod.MOD_RS) FileUtil.getNameWithoutExtension(name) else parent?.name
 
     override val ownsDirectory: Boolean
         get() = name == RustMod.MOD_RS || isCrateRoot
