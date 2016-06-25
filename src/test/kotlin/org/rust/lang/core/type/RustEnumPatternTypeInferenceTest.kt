@@ -37,7 +37,7 @@ class RustEnumPatternTypeInferenceTest: RustTypificationTestBase() {
         fn main() {
             let E::X(_, i) = bar();
             i;
-          //^ i64
+          //^ <unknown>
         }
     """)
 

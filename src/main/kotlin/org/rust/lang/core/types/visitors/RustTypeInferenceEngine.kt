@@ -1,12 +1,14 @@
 package org.rust.lang.core.types.visitors
 
+import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.contains
 import org.rust.lang.core.psi.util.fields
-import org.rust.lang.core.psi.util.indexOf
 import org.rust.lang.core.psi.util.pathTo
+import org.rust.lang.core.psi.visitors.RustComputingVisitor
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.util.resolvedType
+import org.rust.utils.cast
 import java.util.*
 
 
@@ -15,152 +17,117 @@ object RustTypeInferenceEngine {
     fun inferPatBindingTypeFrom(binding: RustPatBindingElement, pat: RustPatElement, patType: RustType): RustType {
         check(pat.contains(binding))
 
-        return patType.accept(RustTypeInferencingVisitor(binding, pat))
+        return RustTypeInferencingVisitor.runFrom(binding, pat, patType)
     }
 
 }
 
 @Suppress("IfNullToElvis")
-private class RustTypeInferencingVisitor(
-    val binding: RustPatBindingElement,
-    val pat: RustPatElement
-) : RustTypeVisitor<RustType> {
+private class RustTypeInferencingVisitor(val next: RustCompositeElement?, val type: RustType) : RustComputingVisitor<RustType>() {
 
-    var path = LinkedList(pat.pathTo(binding).toList()) // sic!
+    companion object {
+        fun runFrom(binding: RustPatBindingElement, pat: RustPatElement, type: RustType): RustType {
+            var curType = type
 
-    override fun visitUnitType(type: RustUnitType): RustType {
-        val tip = path.firstOrNull() ?: return RustUnknownType
-        return if (tip is RustPatIdentElement && tip.patBinding === binding && path.size == 2)
-            RustUnitType
-        else
-            RustUnknownType
+            val path = LinkedList(pat.pathTo(binding).cast(RustCompositeElement::class.java).toList()) // sic!
+
+            while (path.size >   1) {
+                val cur     = path.pop()
+                val next    = path.pop()
+
+                curType = RustTypeInferencingVisitor(next, curType).compute(cur)
+
+                // Bail-out
+                if (curType is RustUnknownType) break
+            }
+
+            return curType
+        }
     }
 
-    override fun visitTupleType(type: RustTupleType): RustType {
-        val tip = path.firstOrNull()
-        if (tip != null && tip is RustPatTupElement) {
-            path.pop()
+    override fun visitElement(element: PsiElement?) {
+        throw UnsupportedOperationException("Panic! Unhandled pattern detected!")
+    }
 
-            val next = path.firstOrNull() as? RustPatElement
-            if (next != null) {
-                val i = tip.indexOf(next)
-                return type[i].accept(this)
+    override fun visitPatIdent(o: RustPatIdentElement) = set {
+        if (o.patBinding === next) type else RustUnknownType
+    }
+
+    override fun visitPatTup(o: RustPatTupElement) = set(fun(): RustType {
+        val i = o.patList.indexOf(next)
+
+        check(i != -1)
+
+        return set@ if (type is RustTupleType) type[i] else RustUnknownType
+    })
+
+    private fun getEnumByVariant(e: RustEnumVariantElement): RustEnumItemElement? =
+        (e.parent as RustEnumBodyElement).parent as? RustEnumItemElement
+
+    override fun visitPatEnum(o: RustPatEnumElement) = set(fun(): RustType {
+        val variant = o.pathExpr.path.reference.resolve() as? RustEnumVariantElement
+        if (variant == null)
+            return set@RustUnknownType
+
+        if (type !is RustEnumType || type.enum !== getEnumByVariant(variant))
+            return set@RustUnknownType
+
+        if (o.patList.size > 0) {
+            val tupleFields = variant.enumTupleArgs?.tupleFieldDeclList
+            if (tupleFields != null) {
+                val i = o.patList.indexOf(next)
+
+                check(i != -1)
+
+                return set@ if (i < tupleFields.size) tupleFields[i].type.resolvedType else RustUnknownType
             }
+
+            val structFields = variant.enumStructArgs?.fieldDeclList
+            if (structFields != null) {
+                // FIXME
+            }
+
+            return RustUnknownType
         }
 
-        return RustUnknownType
-    }
+        // If pat-list is empty report type as the enum's itself
+        return type
+    })
 
-    override fun visitStruct(type: RustStructType): RustType {
-        val tip = path.firstOrNull() ?: return RustUnknownType
-        if (tip is RustPatIdentElement) {
-            return inferForRustPatIdent(tip, type)
-        } else if (tip is RustPatStructElement) {
-            path.pop()
+    override fun visitPatStruct(o: RustPatStructElement) = set(fun(): RustType {
+        if (type !is RustStructType || type.struct !== o.pathExpr.path.reference.resolve())
+            return RustUnknownType
 
-            if (tip.pathExpr.resolvedType != type)
+        if (next is RustPatFieldElement) {
+            val id = next.identifier?.text
+            if (id == null)
+                return set@RustUnknownType
+
+            val fieldDecl = type.struct.fields.find { it.name == id }
+            if (fieldDecl == null)
                 return RustUnknownType
 
-            val next = path.firstOrNull() as? RustPatFieldElement
-            if (next != null) {
-                val id = next.identifier?.text
-                if (id == null)
-                    return RustUnknownType
-
-                val fieldDecl = type.struct.fields.find { it.name == id }
-                if (fieldDecl == null)
-                    return RustUnknownType
-
-                return fieldDecl.type?.let { ty ->
-                    next.pat?.let { pat ->
-                        RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, pat, ty.resolvedType)
-                    }
-                } ?: RustUnknownType
-            }
+            return fieldDecl.type?.let { it.resolvedType } ?: RustUnknownType
         }
 
         return RustUnknownType
-    }
+    })
 
-    override fun visitEnum(type: RustEnumType): RustType {
-        val tip = path.firstOrNull() ?: return RustUnknownType
-        if (tip is RustPatIdentElement) {
-            return inferForRustPatIdent(tip, type)
-        } else if (tip is RustPatEnumElement) {
-            if (tip.pathExpr.resolvedType != type)
-                return RustUnknownType
+    override fun visitPatRef(o: RustPatRefElement) = set(fun(): RustType {
+        return set@
+            if (type is RustReferenceType && type.mutable == (o.mut != null))
+                type.referenced
+            else
+                RustUnknownType
+    })
 
-            if (tip.patList.size > 0) {
-                path.pop()
+    override fun visitPatUniq(o: RustPatUniqElement) = set(fun(): RustType {
+        // TODO(XXX): Fix me
+        return set@ RustUnknownType
+    })
 
-                val variant = tip.pathExpr.path.reference.resolve() as? RustEnumVariantElement
-                return variant?.let {
-                    val next = path.firstOrNull() as RustPatElement
-
-                    //FIXME: don't handle struct variant fields based on order
-                    val fieldDecls = variant.enumStructArgs?.fieldDeclList ?: variant.enumTupleArgs?.tupleFieldDeclList
-                    if (fieldDecls == null)
-                        return RustUnknownType
-
-                    val i = tip.patList.indexOf(next)
-                    check(i != -1)
-
-                    val fieldType = fieldDecls.getOrNull(i)?.type?.resolvedType ?: RustUnknownType
-                    RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, next, fieldType)
-                } ?: RustUnknownType
-            } else {
-                return if (path.size == 2) type else RustUnknownType
-            }
-        }
-
-        return RustUnknownType
-    }
-
-    override fun visitFunctionType(type: RustFunctionType): RustType {
-        val tip = path.firstOrNull() ?: return RustUnknownType
-        if (tip is RustPatIdentElement) {
-            if (tip.patBinding === binding)
-                return if (path.size == 2) type else RustUnknownType
-        }
-
-        return RustUnknownType
-    }
-
-    override fun visitInteger(type: RustIntegerType): RustType {
-        val tip = path.firstOrNull() ?: return RustUnknownType
-        return if (tip is RustPatIdentElement && tip.patBinding === binding && path.size == 2)
-            type
-        else
-            RustUnknownType
-    }
-
-    override fun visitReference(type: RustReferenceType): RustType {
-        val tip = path.firstOrNull() ?: return RustUnknownType
-        if (tip is RustPatIdentElement) {
-            if (tip.patBinding === binding)
-                return if (path.size == 2) type else RustUnknownType
-        } else if (tip is RustPatRefElement) {
-            if ((tip.mut != null) != type.mutable)
-                return RustUnknownType
-
-            return RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, tip.pat, type.referenced)
-        }
-
-        return RustUnknownType
-    }
-
-    override fun visitUnknown(type: RustUnknownType): RustType {
-        return RustUnknownType
-    }
-
-    private fun inferForRustPatIdent(patId: RustPatIdentElement, type: RustType): RustType =
-        if (patId.patBinding === binding) {
-            if (path.size == 2) type else RustUnknownType
-        } else {
-            patId.pat?.let { pat ->
-                RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, pat, type)
-            } ?: RustUnknownType
-        }
-
+    override fun visitPatVec(o: RustPatVecElement) = set(fun(): RustType {
+        // TODO(XXX): Fix me
+        return set@ RustUnknownType
+    })
 }
-
