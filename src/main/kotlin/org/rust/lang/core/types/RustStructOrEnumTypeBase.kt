@@ -8,7 +8,7 @@ abstract class RustStructOrEnumTypeBase(struct: RustStructOrEnumItemElement) : R
     override val inherentImpls: Collection<RustImplItemElement> by lazy {
         struct.containingMod
             ?.impls.orEmpty()
-            .filter { it.traitRef == null && (it.type?.resolvedType == this) }
+            .filter { it.type?.resolvedType == this }
     }
 
 }
