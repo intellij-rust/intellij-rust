@@ -1,6 +1,6 @@
 <DOC_DECO> ('/*!')
 WHITE_SPACE (' ')
-<DOC_TEXT> ('# Options and pointers ("nullable" pointers)')
+<DOC_HEADING> ('# Options and pointers ("nullable" pointers)')
 WHITE_SPACE ('\n ')
 <DOC_DECO> ('*')
 WHITE_SPACE ('\n ')

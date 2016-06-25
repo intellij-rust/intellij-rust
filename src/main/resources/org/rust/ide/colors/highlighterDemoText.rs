@@ -21,6 +21,7 @@ fn <function-decl>main</function-decl>() {
              program, <mut-binding>accumulator</mut-binding>);
 }
 
+/// # Heading
 /// Some documentation
 <attribute>#[cfg(target_os=</attribute>"linux"<attribute>)]</attribute>
 unsafe fn <function-decl>a_function</function-decl><<type-parameter>T</type-parameter>: 'lifetime>() {
