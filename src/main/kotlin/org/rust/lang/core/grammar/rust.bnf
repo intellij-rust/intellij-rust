@@ -222,7 +222,6 @@
     extends     ("pat_(wild|ref|tup|vec|macro|struct|enum|ident|range|uniq|qual_path)")  = pat
     extends     (".*_attr") = attr
 
-    implements  ("macro_item") = [ "org.rust.lang.core.psi.RustOuterAttributeOwner" "org.rust.lang.core.psi.RustCompositeElement" ]
     elementType ("expr_like_macro|item_like_macro") = macro
     extends     ("(try|format_like)_macro") = macro
     elementType (".*_macro_invocation|macro_rules_invocation") = macro_invocation
@@ -1071,7 +1070,9 @@ private meta macro_args_delim ::= '(' <<param>> ')'
 macro_expr ::= zz_macro_call
 pat_macro  ::= zz_macro_call
 // TODO: Maybe implement item-related stuff for this production?
-macro_item ::= attrs_and_vis zz_macro_item
+macro_item ::= attrs_and_vis zz_macro_item {
+    implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner" ]
+}
 impl_macro_member ::= zz_macro_item
 
 // Utils
