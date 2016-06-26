@@ -15,4 +15,5 @@ class RustHighlightingLexingTestCase : RustLexingTestCaseBase() {
     fun testDocHeading() = doTest()
     fun testDocLink() = doTest()
     fun testDocCodeSpan() = doTest()
+    fun testDocCodeFence() = doTest()
 }

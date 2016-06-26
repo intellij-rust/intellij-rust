@@ -42,6 +42,7 @@ class RustHighlighter : SyntaxHighlighterBase() {
             DOC_REF_LINK                   -> RustColor.DOC_LINK
             DOC_LINK_REF_DEF               -> RustColor.DOC_LINK
             DOC_CODE_SPAN                  -> RustColor.DOC_CODE
+            DOC_CODE_FENCE                 -> RustColor.DOC_CODE
 
             LPAREN, RPAREN                 -> RustColor.PARENTHESIS
             LBRACE, RBRACE                 -> RustColor.BRACES

@@ -15,6 +15,7 @@ import static com.intellij.psi.TokenType.*;
 
   private int MAIN_STATE = YYINITIAL;
   private int DATA_STATE = IN_DOC_DATA;
+  private char CODE_FENCE_DELIM = '\0';
 
   private boolean isLastToken() {
     return zzMarkedPos == zzEndRead;
@@ -53,6 +54,7 @@ import static com.intellij.psi.TokenType.*;
 
 %s IN_DOC_DATA
 %s IN_DOC_DATA_DEEP
+%s IN_CODE_FENCE
 
 %unicode
 
@@ -86,6 +88,9 @@ LINK_REF_DEF = {LINK_LABEL} ":" [^\r\n]*
 
 // http://spec.commonmark.org/0.25/#code-spans
 CODE_SPAN    = "`" ( [^`\r\n] | "`" "`"+ )* "`"
+
+CODE_FENCE_START = ( "```" | "~~~" ) [^\r\n]*
+CODE_FENCE_END   = ( "```" | "~~~" )
 
 %%
 
@@ -137,10 +142,25 @@ CODE_SPAN    = "`" ( [^`\r\n] | "`" "`"+ )* "`"
     {LINK_REF_DEF}      { return DOC_LINK_REF_DEF; }
     {CODE_SPAN}         { return DOC_CODE_SPAN; }
 
+    {CODE_FENCE_START}  { CODE_FENCE_DELIM = yycharat(0);
+                          DATA_STATE = IN_CODE_FENCE;
+                          yybegin(DATA_STATE);
+                          return DOC_CODE_FENCE; }
+
     {EOL_WS}            { yybegin(MAIN_STATE); return WHITE_SPACE;}
     {LINE_WS}+          { return WHITE_SPACE; }
 
     [^]                 { return DOC_TEXT; }
+}
+
+<IN_CODE_FENCE> {
+    {CODE_FENCE_END}    {
+        if (yycharat(0) == CODE_FENCE_DELIM) { DATA_STATE = IN_DOC_DATA; yybegin(DATA_STATE); }
+        return DOC_CODE_FENCE;
+    }
+    
+    {EOL_WS}            { yybegin(MAIN_STATE); return WHITE_SPACE;}
+    [^]                 { return DOC_CODE_FENCE; }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
