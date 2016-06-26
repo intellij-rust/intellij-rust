@@ -15,6 +15,57 @@ import org.rust.lang.core.psi.*
 
 object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() {
 
+    private data class RustAttribute(val name: String, val appliesTo: ElementPattern<PsiElement>)
+
+    private val onStruct: ElementPattern<PsiElement> = onItem<RustStructItemElement>()
+
+    private val onEnum: ElementPattern<PsiElement> = onItem<RustEnumItemElement>()
+
+    private val onFn: ElementPattern<PsiElement> = onItem<RustFnItemElement>()
+
+    private val onMod: ElementPattern<PsiElement> = onItem<RustModItemElement>()
+
+    private val onStatic: ElementPattern<PsiElement> = onItem<RustStaticItemElement>()
+
+    // TODO
+    private val onStaticMut: ElementPattern<PsiElement> = onStatic
+
+    private val onMacro: ElementPattern<PsiElement> = onCItem<RustMacroItemElement>()
+
+    private val onTupleStruct: ElementPattern<PsiElement> = psiElement()
+        .withSuperParent(2, psiElement().withChild(psiElement<RustStructTupleArgsElement>()))
+
+    private val onCrate: ElementPattern<PsiElement> get() {
+        val inMain = virtualFile().withName("main.rs")
+        val inLib = virtualFile().withName("lib.rs")
+
+        return psiElement()
+            .withSuperParent<PsiFile>(3)
+            .and(psiElement().inVirtualFile(inMain) or psiElement().inVirtualFile(inLib))
+    }
+
+    private val onExternBlock: ElementPattern<PsiElement> = onItem<RustForeignModItemElement>()
+
+    private val onExternBlockDecl: ElementPattern<PsiElement> =
+        onCItem<RustForeignFnDeclElement>() or
+        onItem<RustForeignStaticDeclElement>() or
+        onItem<RustForeignModItemElement>()
+
+    private val onAnyItem: ElementPattern<PsiElement> = psiElement().withSuperParent<RustOuterAttrElement>(2)
+
+    private val onExternCrate: ElementPattern<PsiElement> = onItem<RustExternCrateItemElement>()
+
+    private val onTrait: ElementPattern<PsiElement> = onItem<RustTraitItemElement>()
+
+    private val onDropFn: ElementPattern<PsiElement> get() {
+        val dropTraitRef = psiElement<RustTraitRefElement>().withText("Drop")
+        val implBlock = psiElement<RustImplItemElement>().withChild(dropTraitRef)
+        return psiElement().withSuperParent(5, implBlock)
+    }
+
+    private val onTestFn: ElementPattern<PsiElement> = onItem(psiElement<RustFnItemElement>()
+        .withChild(psiElement<RustOuterAttrElement>().withText("#[test]")))
+
     private val attributes = listOf(
         RustAttribute("crate_name", onCrate),
         RustAttribute("crate_type", onCrate),
@@ -73,92 +124,23 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
     }
 
     val elementPattern: ElementPattern<PsiElement> get() {
-        val outerAttrElem = psiElement(RustCompositeElementTypes.OUTER_ATTR)
-        val innerAttrElem = psiElement(RustCompositeElementTypes.INNER_ATTR)
-        val metaItemElem = psiElement(RustCompositeElementTypes.META_ITEM)
-            .andOr(psiElement().withParent(outerAttrElem), psiElement().withParent(innerAttrElem))
+        val outerAttrElem = psiElement<RustOuterAttrElement>()
+        val innerAttrElem = psiElement<RustInnerAttrElement>()
+        val metaItemElem = psiElement<RustMetaItemElement>()
+            .and(psiElement().withParent(outerAttrElem) or psiElement().withParent(innerAttrElem))
         return psiElement().withParent(metaItemElem).withLanguage(RustLanguage);
     }
 
-    private data class RustAttribute(val name: String, val appliesTo: ElementPattern<PsiElement>)
-
-    private val onStruct: ElementPattern<PsiElement> get() {
-        return psiElement().withSuperParent(3, RustStructItemElement::class.java)
+    inline fun <reified I: RustOuterAttributeOwner> onItem(): ElementPattern<PsiElement> {
+        return psiElement().withSuperParent<I>(3)
     }
 
-    private val onEnum: ElementPattern<PsiElement> get() {
-        return psiElement().withSuperParent(3, RustEnumItemElement::class.java)
+    // TODO: remove once https://github.com/intellij-rust/intellij-rust/issues/492 is fixed
+    inline fun <reified I: RustCompositeElement> onCItem(): ElementPattern<PsiElement> {
+        return psiElement().withSuperParent<I>(3)
     }
 
-    private val onFn: ElementPattern<PsiElement> get() {
-        return psiElement().withSuperParent(3, RustFnItemElement::class.java)
-    }
-
-    private val onMod: ElementPattern<PsiElement> get() {
-        return psiElement().withSuperParent(3, RustModItemElement::class.java)
-    }
-
-    private val onStatic: ElementPattern<PsiElement> get() {
-        return psiElement().withSuperParent(3, RustStaticItemElement::class.java)
-    }
-
-    private val onStaticMut: ElementPattern<PsiElement> get() {
-        // TODO
-        return onStatic
-    }
-
-    private val onMacro: ElementPattern<PsiElement> get() {
-        return psiElement().withSuperParent(3, RustMacroItemElement::class.java)
-    }
-
-    private val onTupleStruct: ElementPattern<PsiElement> get() {
-        return psiElement().withSuperParent(2, psiElement().withChild(psiElement(RustStructTupleArgsElement::class.java)))
-    }
-
-    private val onCrate: ElementPattern<PsiElement> get() {
-        val inMain = virtualFile().withName("main.rs")
-        val inLib = virtualFile().withName("lib.rs")
-
-        return psiElement()
-            .withSuperParent(3, PsiFile::class.java)
-            .andOr(psiElement().inVirtualFile(inMain), psiElement().inVirtualFile(inLib))
-    }
-
-    private val onExternBlock: ElementPattern<PsiElement> get() {
-        return psiElement().withSuperParent(3, RustForeignModItemElement::class.java)
-    }
-
-    private val onExternBlockDecl: ElementPattern<PsiElement> get() {
-        return psiElement().andOr(
-            psiElement().withSuperParent(3, RustForeignFnDeclElement::class.java),
-            psiElement().withSuperParent(3, RustForeignStaticDeclElement::class.java),
-            psiElement().withSuperParent(3, RustForeignModItemElement::class.java))
-    }
-
-    private val onAnyItem: ElementPattern<PsiElement> get() {
-        return psiElement().withSuperParent(2, RustOuterAttrElement::class.java)
-    }
-
-    private val onExternCrate: ElementPattern<PsiElement> get() {
-        return psiElement().withSuperParent(3, RustExternCrateItemElement::class.java)
-    }
-
-    private val onTrait: ElementPattern<PsiElement> get() {
-        return psiElement().withSuperParent(3, RustTraitItemElement::class.java)
-    }
-
-    private val onDropFn: ElementPattern<PsiElement> get() {
-        val dropTraitRef = psiElement(RustTraitRefElement::class.java).withText("Drop")
-        val implBlock = psiElement(RustImplItemElement::class.java).withChild(dropTraitRef)
-        return psiElement().withSuperParent(5, implBlock)
-    }
-
-    private val onTestFn: ElementPattern<PsiElement> get() {
-        return psiElement().withSuperParent(3, psiElement(RustFnItemElement::class.java)
-            .withChild(psiElement(RustOuterAttrElement::class.java).withText("#[test]")))
-    }
-
-    private infix fun ElementPattern<PsiElement>.or(pattern: ElementPattern<PsiElement>): ElementPattern<PsiElement> {
-       return psiElement().andOr(this, pattern)
+    private fun onItem(pattern: ElementPattern<out RustOuterAttributeOwner>): ElementPattern<PsiElement> {
+        return psiElement().withSuperParent(3, pattern)
     }
 }
