@@ -31,4 +31,6 @@ fn main() {
             .moo().boo()
             .bar().baz())
         .baz().moo();
+
+    let x = match func() { Ok(v) => v.unwrap_or(0), Err(_) => ()};
 }
