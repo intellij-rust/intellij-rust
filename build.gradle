@@ -136,6 +136,20 @@ task generateRustLexer(type: JavaExec) {
     classpath configurations.gen
 }
 
+task generateRustDocLexer(type: JavaExec) {
+    ext.src = "src/main/kotlin/org/rust/lang/core/lexer/RustDocLexer.flex"
+    ext.dst = "gen/org/rust/lang/core/lexer/"
+
+    main = "jflex.Main"
+
+    args = jflexArgs(src, dst)
+
+    inputs  .file   file(src)
+    outputs .dir    file(dst + "_RustDocLexer.java")
+
+    classpath configurations.gen
+}
+
 task generateRustPsiAndParser(type: JavaExec) {
     doFirst {
         delete file("gen/org/rust/lang/core/psi/")
@@ -154,7 +168,7 @@ task generateRustPsiAndParser(type: JavaExec) {
 }
 
 task generate {
-    dependsOn generateRustLexer, generateRustPsiAndParser
+    dependsOn generateRustLexer, generateRustDocLexer, generateRustPsiAndParser
 }
 
 compileKotlin.dependsOn generate
