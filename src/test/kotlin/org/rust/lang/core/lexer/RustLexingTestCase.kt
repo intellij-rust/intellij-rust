@@ -19,4 +19,5 @@ class RustLexingTestCase : RustLexingTestCaseBase() {
     fun testStringLiterals() = doTest()
     fun testByteLiterals() = doTest()
     fun testInvalidEscape() = doTest()
+    fun testDocCommentMerging() = doTest()
 }
