@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.psi.RustCompositeElementTypes
-import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 
 @Suppress("UNUSED_PARAMETER")
@@ -24,8 +23,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
     }
 
     @JvmField val DOC_COMMENT_BINDER = WhitespacesBinders.leadingCommentsBinder(
-        TokenSet.create(RustTokenElementTypes.OUTER_DOC_COMMENT)
-    )
+        TokenSet.create(OUTER_BLOCK_DOC_COMMENT, OUTER_EOL_DOC_COMMENT))
 
     //
     // Helpers

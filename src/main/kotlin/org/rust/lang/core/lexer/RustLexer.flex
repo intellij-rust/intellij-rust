@@ -42,9 +42,9 @@ import static com.intellij.psi.TokenType.*;
 
       if (yylength() >= 3) {
           if (yycharat(2) == '!') {
-              return INNER_DOC_COMMENT;
+              return INNER_BLOCK_DOC_COMMENT;
           } else if (yycharat(2) == '*' && (yylength() == 3 || yycharat(3) != '*' && yycharat(3) != '/')) {
-              return OUTER_DOC_COMMENT;
+              return OUTER_BLOCK_DOC_COMMENT;
           }
       }
 
@@ -313,9 +313,9 @@ STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
 
     if (yylength() >= 3) {
         if (yycharat(2) == '!') {
-            return INNER_DOC_COMMENT;
+            return INNER_EOL_DOC_COMMENT;
         } else if (yycharat(2) == '/' && (yylength() == 3 || yycharat(3) != '/')) {
-            return OUTER_DOC_COMMENT;
+            return OUTER_EOL_DOC_COMMENT;
         }
     }
     return EOL_COMMENT;

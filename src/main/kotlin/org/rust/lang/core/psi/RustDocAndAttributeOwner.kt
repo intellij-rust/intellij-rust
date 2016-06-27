@@ -5,6 +5,8 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.lang.core.psi.RustTokenElementTypes.INNER_EOL_DOC_COMMENT
+import org.rust.lang.core.psi.RustTokenElementTypes.OUTER_EOL_DOC_COMMENT
 
 interface RustDocAndAttributeOwner : RustCompositeElement, NavigatablePsiElement
 
@@ -54,8 +56,8 @@ private val RustOuterAttributeOwner.outerDocs: List<String> get() {
         .mapNotNull {
             when {
                 it is RustOuterAttrElement -> it.metaItem.docAttr
-                it is PsiComment && it.tokenType == RustTokenElementTypes.OUTER_DOC_COMMENT ->
-                    it.text.substringAfter("///").trim()
+                it is PsiComment && it.tokenType == OUTER_EOL_DOC_COMMENT -> it.text.substringAfter("///").trim()
+                // FIXME Missing block comments
                 else -> null
             }
         }.toList()
@@ -76,8 +78,8 @@ private val RustInnerAttributeOwner.innerDocs: List<String> get() {
         .mapNotNull {
             when {
                 it is RustInnerAttrElement -> it.metaItem.docAttr
-                it is PsiComment && it.tokenType == RustTokenElementTypes.INNER_DOC_COMMENT ->
-                    it.text.substringAfter("//!").trim()
+                it is PsiComment && it.tokenType == INNER_EOL_DOC_COMMENT -> it.text.substringAfter("//!").trim()
+                // FIXME Missing block comments
                 else -> null
             }
         }.toList()

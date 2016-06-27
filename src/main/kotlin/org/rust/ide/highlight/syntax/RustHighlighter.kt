@@ -35,8 +35,10 @@ class RustHighlighter : SyntaxHighlighterBase() {
             BLOCK_COMMENT                  -> RustColor.BLOCK_COMMENT
             EOL_COMMENT                    -> RustColor.EOL_COMMENT
 
-            INNER_DOC_COMMENT              -> RustColor.DOC_COMMENT
-            OUTER_DOC_COMMENT              -> RustColor.DOC_COMMENT
+            INNER_BLOCK_DOC_COMMENT        -> RustColor.DOC_COMMENT
+            OUTER_BLOCK_DOC_COMMENT        -> RustColor.DOC_COMMENT
+            INNER_EOL_DOC_COMMENT          -> RustColor.DOC_COMMENT
+            OUTER_EOL_DOC_COMMENT          -> RustColor.DOC_COMMENT
 
             LPAREN, RPAREN                 -> RustColor.PARENTHESIS
             LBRACE, RBRACE                 -> RustColor.BRACES
