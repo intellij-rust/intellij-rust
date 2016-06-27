@@ -10,15 +10,7 @@ import org.rust.lang.core.psi.util.parentOfType
 
 fun RustNamedElement.createLookupElement(): LookupElement {
     return when (this) {
-        is RustFnItemElement -> LookupElementBuilder.createWithIcon(this)
-            .withLookupString(name ?: "")
-            .withTailText(parameters?.text ?: "()")
-            .withTypeText(retType?.type?.text ?: "()")
-        is RustImplMethodMemberElement -> LookupElementBuilder.createWithIcon(this)
-            .withLookupString(name ?: "")
-            .withTailText(parameters?.text ?: "()")
-            .withTypeText(retType?.type?.text ?: "()")
-        is RustTraitMethodMemberElement -> LookupElementBuilder.createWithIcon(this)
+        is RustFnElement -> LookupElementBuilder.createWithIcon(this)
             .withLookupString(name ?: "")
             .withTailText(parameters?.text ?: "()")
             .withTypeText(retType?.type?.text ?: "()")
