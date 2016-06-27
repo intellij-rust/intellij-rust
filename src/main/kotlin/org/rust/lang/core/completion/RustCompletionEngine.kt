@@ -11,16 +11,8 @@ import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.util.resolvedType
 
 object RustCompletionEngine {
-    fun complete(ref: RustQualifiedReferenceElement): Array<out Any> {
-        return collectNamedElements(ref).toVariantsArray()
-//        val qual = ref.qualifier
-//        if (qual != null) {
-//            val completionsFromResolveScope = (qual.reference.resolve() as? RustResolveScope)?.let {
-//                RustResolveEngine.declarations(it)
-//            } ?: emptySequence()
-//        }
-//        return emptyArray()
-    }
+    fun complete(ref: RustQualifiedReferenceElement): Array<out Any> =
+        collectNamedElements(ref).toVariantsArray()
 
     fun completeFieldName(field: RustStructExprFieldElement): Array<out LookupElement> =
         field.parentOfType<RustStructExprElement>()
@@ -53,12 +45,6 @@ object RustCompletionEngine {
             .toList()
     }
 
-//    private fun collectLookupElements(ref: RustQualifiedReferenceElement): Collection<LookupElement> {
-//        val qual = ref.qualifier
-//        if (qual != null) {
-//            return qual.reference.resolve().completionsFromResolveScope()
-//        }
-//    }
 }
 
 private fun RustNamedElement?.completionsFromResolveScope(): Collection<RustNamedElement> =
