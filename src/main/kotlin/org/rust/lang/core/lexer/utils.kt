@@ -12,6 +12,18 @@ fun CharSequence.tokenize(lexer: Lexer): Sequence<Pair<IElementType, String>> =
         lexer.tokenType?.to(lexer.tokenText)
     })
 
+/**
+ * Save state of the [Lexer], perform [action] on it, and then restore saved state.
+ */
+inline fun <T> Lexer.peekingFrame(action: Lexer.() -> T): T {
+    val pos = currentPosition
+    try {
+        return action(this)
+    } finally {
+        restore(pos)
+    }
+}
+
 //
 // String extensions
 //
