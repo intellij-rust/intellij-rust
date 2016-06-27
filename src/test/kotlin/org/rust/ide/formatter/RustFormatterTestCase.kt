@@ -26,6 +26,8 @@ class RustFormatterTestCase : FormatterTestCase() {
     fun testTupleAlignment() = doTest()
     fun testChainCallAlignmentOff() = doTest()
     fun testChainCallIndent() = doTest()
+    fun testLineBreaksInBlocks() = doTest()
+    fun testLineBreaksInBlocks2() = doTest()
 
     fun testChainCallAlignment() {
         common().ALIGN_MULTILINE_CHAINED_METHODS = true
@@ -57,14 +59,20 @@ class RustFormatterTestCase : FormatterTestCase() {
         doTest()
     }
 
-    // FIXME: these two guys are way too big
-    fun testSpacing() = doTest()
-    fun testLineBreaks() = doTest()
-
     fun testMinNumberOfBlankLines() {
         custom().MIN_NUMBER_OF_BLANKS_BETWEEN_ITEMS = 2
         doTest()
     }
+
+    fun testAllowOneLineMatchOff() = doTest()
+    fun testAllowOneLineMatch() {
+        custom().ALLOW_ONE_LINE_MATCH = true
+        doTest()
+    }
+
+    // FIXME: these two guys are way too big
+    fun testSpacing() = doTest()
+    fun testLineBreaks() = doTest()
 
     fun testIssue451() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/451
 
