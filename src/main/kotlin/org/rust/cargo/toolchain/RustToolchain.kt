@@ -107,6 +107,7 @@ private fun parseCargoVersion(lines: List<String>): Version? {
     //
     //  ```
     //  cargo 0.9.0-nightly (c4c6f39 2016-01-30)
+    //  cargo 0.10.0 (10ddd7d 2016-04-08)
     //  ```
     val releaseRe = """cargo (\d+)\.(\d+)\.(\d+)-?(stable|nightly)? \(([a-zA-Z0-9]+) .*\)""".toRegex()
 
