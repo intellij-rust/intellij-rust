@@ -9,7 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
-import org.rust.lang.core.psi.util.descendentsOfType
+import org.rust.lang.core.psi.visitors.RustRecursiveElementVisitor
 import java.util.*
 
 class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
@@ -20,65 +20,82 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
 
         val descriptors: MutableList<FoldingDescriptor> = ArrayList()
 
-        root.descendentsOfType<RustBlockExprElement>().forEach {
-            val block = it.block
-            if (block != null) {
-                descriptors += FoldingDescriptor(it.node, block.textRange)
+        root.accept(object : RustRecursiveElementVisitor() {
+            override fun visitBlockExpr(o: RustBlockExprElement) {
+                super.visitBlockExpr(o)
+
+                val block = o.block
+                if (block != null) {
+                    descriptors += FoldingDescriptor(o.node, block.textRange)
+                }
             }
-        }
-        root.descendentsOfType<RustImplItemElement>().forEach {
-            val implBody = it.implBody
-            if (implBody != null) {
-                descriptors += FoldingDescriptor(it.node, implBody.textRange)
+
+            override fun visitImplItem(o: RustImplItemElement) {
+                super.visitImplItem(o)
+
+                val implBody = o.implBody
+                if (implBody != null) {
+                    descriptors += FoldingDescriptor(o.node, implBody.textRange)
+                }
             }
-        }
-        root.descendentsOfType<RustStructItemElement>().forEach {
-            val structDeclArgs = it.structDeclArgs
-            if (structDeclArgs != null) {
-                descriptors += FoldingDescriptor(it.node, structDeclArgs.textRange)
+
+            override fun visitStructItem(o: RustStructItemElement) {
+                super.visitStructItem(o)
+
+                val structDeclArgs = o.structDeclArgs
+                if (structDeclArgs != null) {
+                    descriptors += FoldingDescriptor(o.node, structDeclArgs.textRange)
+                }
             }
-        }
-        root.descendentsOfType<RustStructExprElement>().forEach {
-            descriptors += FoldingDescriptor(it.node, it.structExprBody.textRange)
-        }
-        root.descendentsOfType<RustEnumItemElement>().forEach {
-            val enumBody = it.enumBody
-            descriptors += FoldingDescriptor(it.node, enumBody.textRange)
-        }
-        root.descendentsOfType<RustTraitItemElement>().forEach {
-            val traitBody = it.traitBody
-            descriptors += FoldingDescriptor(it.node, traitBody.textRange)
-        }
-        root.descendentsOfType<RustEnumVariantElement>().forEach {
-            val structDeclArgs = it.enumStructArgs
-            if (structDeclArgs != null) {
-                descriptors += FoldingDescriptor(it.node, structDeclArgs.textRange)
+
+            override fun visitStructExpr(o: RustStructExprElement) {
+                super.visitStructExpr(o)
+
+                descriptors += FoldingDescriptor(o.node, o.structExprBody.textRange)
             }
-        }
-        root.descendentsOfType<RustFnItemElement>().forEach {
-            val fnBody = it.block
-            if (fnBody != null) {
-                descriptors += FoldingDescriptor(it.node, fnBody.textRange)
+
+            override fun visitEnumItem(o: RustEnumItemElement) {
+                super.visitEnumItem(o)
+
+                val enumBody = o.enumBody
+                descriptors += FoldingDescriptor(o.node, enumBody.textRange)
             }
-        }
-        root.descendentsOfType<RustImplMethodMemberElement>().forEach {
-            val methodBody = it.block
-            if (methodBody != null) {
-                descriptors += FoldingDescriptor(it.node, methodBody.textRange)
+
+            override fun visitTraitItem(o: RustTraitItemElement) {
+                super.visitTraitItem(o)
+
+                val traitBody = o.traitBody
+                descriptors += FoldingDescriptor(o.node, traitBody.textRange)
             }
-        }
-        root.descendentsOfType<RustTraitMethodMemberElement>().forEach {
-            val methodBody = it.block
-            if (methodBody != null) {
-                descriptors += FoldingDescriptor(it.node, methodBody.textRange)
+
+            override fun visitEnumVariant(o: RustEnumVariantElement) {
+                super.visitEnumVariant(o)
+
+                val structDeclArgs = o.enumStructArgs
+                if (structDeclArgs != null) {
+                    descriptors += FoldingDescriptor(o.node, structDeclArgs.textRange)
+                }
             }
-        }
-        root.descendentsOfType<RustModItemElement>().forEach {
-            val rbrace = it.rbrace;
-            if (rbrace != null) {
-                descriptors += FoldingDescriptor(it.node, TextRange(it.lbrace.textOffset, rbrace.textOffset + 1))
+
+            override fun visitFn(o: RustFnElement) {
+                super.visitFn(o)
+
+                val fnBody = o.block
+                if (fnBody != null) {
+                    descriptors += FoldingDescriptor(o.node, fnBody.textRange)
+                }
             }
-        }
+
+            override fun visitModItem(o: RustModItemElement) {
+                super.visitModItem(o)
+
+                val rbrace = o.rbrace;
+                if (rbrace != null) {
+                    descriptors += FoldingDescriptor(o.node, TextRange(o.lbrace.textOffset, rbrace.textOffset + 1))
+                }
+            }
+        })
+
         return descriptors.toTypedArray()
     }
 
