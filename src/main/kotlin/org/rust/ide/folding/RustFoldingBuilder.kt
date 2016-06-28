@@ -14,12 +14,7 @@ import org.rust.lang.core.psi.visitors.RustRecursiveElementVisitor
 import java.util.*
 
 class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
-    override fun getPlaceholderText(node: ASTNode): String {
-        when {
-            node.psi is PsiComment -> return "/* ... */"
-            else -> return "{...}"
-        }
-    }
+    override fun getPlaceholderText(node: ASTNode): String = if (node.psi is PsiComment) "/* ... */" else "{...}"
 
     override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<out FoldingDescriptor> {
         if (root !is RustFile) return emptyArray()
@@ -127,14 +122,11 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
                 descriptors += FoldingDescriptor(o.node, o.textRange)
             }
 
-            override fun visitComment(comment: PsiComment?) {
+            override fun visitComment(comment: PsiComment) {
                 super.visitComment(comment)
 
-                if (comment != null) {
-                    when (comment.tokenType) {
-                        RustTokenElementTypes.BLOCK_COMMENT ->
-                            descriptors += FoldingDescriptor(comment.node, comment.textRange)
-                    }
+                if (comment.tokenType == RustTokenElementTypes.BLOCK_COMMENT) {
+                    descriptors += FoldingDescriptor(comment.node, comment.textRange)
                 }
             }
         })
