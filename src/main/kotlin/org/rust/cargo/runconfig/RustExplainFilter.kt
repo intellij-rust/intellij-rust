@@ -14,9 +14,9 @@ import java.util.regex.Pattern
 class RustExplainFilter : Filter
                         , DumbAware {
     private val link_length: Int = 15
-    private val pattern: Pattern = Pattern.compile("--explain E(\\d\\d\\d\\d)")
+    private val pattern: Pattern = Pattern.compile("--explain E(\\d{4})")
 
-    override fun applyFilter(line: String?, entireLength: Int): Result? {
+    override fun applyFilter(line: String, entireLength: Int): Result? {
         val matcher = pattern.matcher(line)
         if (!matcher.find()) {
             return null
@@ -26,7 +26,7 @@ class RustExplainFilter : Filter
         val url = "https://doc.rust-lang.org/error-index.html#E$eNumber"
         val info = OpenUrlHyperlinkInfo(url)
 
-        val highlightStartOffset = entireLength - line!!.length + matcher.start()
+        val highlightStartOffset = entireLength - line.length + matcher.start()
         val highlightEndOffset = highlightStartOffset + link_length
 
         return Result(highlightStartOffset, highlightEndOffset, info)
