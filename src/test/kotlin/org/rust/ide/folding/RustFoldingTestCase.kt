@@ -19,6 +19,7 @@ class RustFoldingTestCase : RustTestCaseBase() {
     fun testMatchExpr() = doTest()
     fun testMacroBraceArg() = doTest()
     fun testUseGlobList() = doTest()
+    fun testBlockComment() = doTest()
 
     private fun doTest() {
         myFixture.testFolding("$testDataPath/$fileName")
