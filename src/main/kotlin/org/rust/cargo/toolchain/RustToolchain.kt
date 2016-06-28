@@ -108,7 +108,7 @@ private fun parseCargoVersion(lines: List<String>): Version? {
     //  ```
     //  cargo 0.9.0-nightly (c4c6f39 2016-01-30)
     //  ```
-    val releaseRe = """cargo (\d+)\.(\d+)\.(\d+)-(stable|nightly \(([a-zA-Z0-9]+) .*\))""".toRegex()
+    val releaseRe = """cargo (\d+)\.(\d+)\.(\d+)-?(stable|nightly)? \(([a-zA-Z0-9]+) .*\)""".toRegex()
 
     val match = lines.mapNotNull { releaseRe.matchEntire(it) }.firstOrNull() ?: return null
 
@@ -116,7 +116,7 @@ private fun parseCargoVersion(lines: List<String>): Version? {
     val minor = match.groups[2]!!.value.toInt()
     val build = match.groups[3]!!.value.toInt()
 
-    val isStable = match.groups[4]!!.value.isEmpty()
+    val isStable = "stable" == match.groups[4]?.value?: "stable"
 
     return if (isStable) {
         Version(major, minor, build)
