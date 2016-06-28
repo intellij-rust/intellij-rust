@@ -16,6 +16,9 @@ class RustFoldingTestCase : RustTestCaseBase() {
     fun testEnum() = doTest()
     fun testEnumVariant() = doTest()
     fun testMod() = doTest()
+    fun testMatchExpr() = doTest()
+    fun testMacroBraceArg() = doTest()
+    fun testUseGlobList() = doTest()
 
     private fun doTest() {
         myFixture.testFolding("$testDataPath/$fileName")

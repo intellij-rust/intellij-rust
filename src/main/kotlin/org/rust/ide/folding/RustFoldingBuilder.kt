@@ -94,6 +94,32 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
                     descriptors += FoldingDescriptor(o.node, TextRange(o.lbrace.textOffset, rbrace.textOffset + 1))
                 }
             }
+
+            override fun visitMatchExpr(o: RustMatchExprElement) {
+                super.visitMatchExpr(o)
+
+                val body = o.matchBody
+                if (body != null) {
+                    descriptors += FoldingDescriptor(o.node, body.textRange)
+                }
+            }
+
+            override fun visitMacroArg(o: RustMacroArgElement) {
+                super.visitMacroArg(o)
+
+                val lbrace = o.lbrace
+                val rbrace = o.rbrace
+
+                if (lbrace != null && rbrace != null) {
+                    descriptors += FoldingDescriptor(o.node, TextRange(lbrace.textOffset, rbrace.textOffset + 1))
+                }
+            }
+
+            override fun visitUseGlobList(o: RustUseGlobListElement) {
+                super.visitUseGlobList(o)
+
+                descriptors += FoldingDescriptor(o.node, o.textRange)
+            }
         })
 
         return descriptors.toTypedArray()
