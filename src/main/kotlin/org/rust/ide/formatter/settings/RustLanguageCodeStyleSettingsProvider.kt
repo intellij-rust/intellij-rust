@@ -45,6 +45,11 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
                     "ALIGN_MULTILINE_PARAMETERS_IN_CALLS")
 
                 consumer.showCustomOption(RustCodeStyleSettings::class.java,
+                    "ALLOW_ONE_LINE_MATCH",
+                    "Match expressions in one line",
+                    CodeStyleSettingsCustomizable.WRAPPING_KEEP)
+
+                consumer.showCustomOption(RustCodeStyleSettings::class.java,
                     "ALIGN_RET_TYPE_AND_WHERE_CLAUSE",
                     "Align return type and where clause",
                     CodeStyleSettingsCustomizable.WRAPPING_METHOD_PARAMETERS)

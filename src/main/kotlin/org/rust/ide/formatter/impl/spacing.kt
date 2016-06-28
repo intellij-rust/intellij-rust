@@ -25,8 +25,7 @@ import org.rust.lang.core.psi.util.getNextNonCommentSibling
 import org.rust.lang.core.psi.util.getPrevNonCommentSibling
 import com.intellij.psi.tree.TokenSet.create as ts
 
-fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
-                         @Suppress("UNUSED_PARAMETER") rustSettings: RustCodeStyleSettings): SpacingBuilder {
+fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: RustCodeStyleSettings): SpacingBuilder {
 
     // Use `sbX` temporaries to work around
     // https://youtrack.jetbrains.com/issue/KT-12239
@@ -115,7 +114,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
         .beforeInside(LPAREN, PAT_ENUM).spaces(0)
         .beforeInside(LBRACK, INDEX_EXPR).spaces(0)
         .afterInside(PARAMS_LIKE, LAMBDA_EXPR).spacing(1, 1, 0, true, 1)
-        .between(MATCH_ARM, MATCH_ARM).spacing(0, 0, 1, true, 1)
+        .between(MATCH_ARM, MATCH_ARM).spacing(1, 1, if (rustSettings.ALLOW_ONE_LINE_MATCH) 0 else 1, true, 1)
 
         //== macros
         .betweenInside(IDENTIFIER, EXCL, MACRO_INVOCATION).spaces(0)
@@ -130,7 +129,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings,
 }
 
 fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtContext): Spacing? {
-    if (child1 is ASTBlock && child2 is ASTBlock) SpacingContext.create(child1, child2).apply {
+    if (child1 is ASTBlock && child2 is ASTBlock) SpacingContext.create(child1, child2, ctx).apply {
         when {
             // #[attr]\n<comment>\n => #[attr] <comment>\n etc.
             psi1 is RustOuterAttrElement && psi2 is PsiComment
@@ -178,20 +177,24 @@ private data class SpacingContext(val node1: ASTNode,
                                   val psi2: PsiElement,
                                   val elementType1: IElementType,
                                   val elementType2: IElementType,
+                                  val parentType: IElementType?,
                                   val parentPsi: PsiElement?,
                                   val ncPsi1: PsiElement,
-                                  val ncPsi2: PsiElement) {
+                                  val ncPsi2: PsiElement,
+                                  val ctx: RustFmtContext) {
     companion object {
-        fun create(child1: ASTBlock, child2: ASTBlock): SpacingContext {
+        fun create(child1: ASTBlock, child2: ASTBlock, ctx: RustFmtContext): SpacingContext {
             val node1 = child1.node
             val node2 = child2.node
             val psi1 = node1.psi
             val psi2 = node2.psi
             val elementType1 = psi1.node.elementType
             val elementType2 = psi2.node.elementType
+            val parentType = node1.treeParent.elementType
             val parentPsi = psi1.parent
             val (ncPsi1, ncPsi2) = omitCommentBlocks(node1, psi1, node2, psi2)
-            return SpacingContext(node1, node2, psi1, psi2, elementType1, elementType2, parentPsi, ncPsi1, ncPsi2)
+            return SpacingContext(node1, node2, psi1, psi2, elementType1, elementType2,
+                parentType, parentPsi, ncPsi1, ncPsi2, ctx)
         }
 
         /**
@@ -241,7 +244,8 @@ private fun ASTNode?.isWhiteSpaceWithLineBreak(): Boolean =
 
 /**
  * Check whether blocks must be laid out multi-line:
- *  1. one brace is placed as it's a single-line block while the other - multi-line
+ *  1. a) if block is a brace list - one brace is placed as it's a single-line block while the other - multi-line
+ *     b) otherwise - it contains a line break and non-whitespace children
  *  2. there are 2 or more statements/expressions inside if it's a code block
  *  3. it's item's body block
  */
@@ -250,14 +254,19 @@ private fun SpacingContext.blockMustBeMultiLine(): Boolean {
 
     val lbrace = (if (elementType1 == LBRACE) node1 else TreeUtil.findSiblingBackward(node2, LBRACE)) ?: return false
     val rbrace = (if (elementType2 == RBRACE) node2 else TreeUtil.findSibling(node1, RBRACE)) ?: return false
-
-    val lbraceIsNewline = lbrace.hasWhitespaceAfterIgnoringComments()
-    val rbraceIsNewline = rbrace.hasWhitespaceBeforeIgnoringComments()
-    if (lbraceIsNewline xor rbraceIsNewline) {
-        return true // 1
-    }
-
     val childrenCount = countNonWhitespaceASTNodesBetween(lbrace, rbrace)
+
+    if (parentType in BRACE_LISTS) {
+        val lbraceIsNewline = lbrace.hasWhitespaceAfterIgnoringComments()
+        val rbraceIsNewline = rbrace.hasWhitespaceBeforeIgnoringComments()
+        if (lbraceIsNewline xor rbraceIsNewline) {
+            return true // 1a
+        }
+    } else {
+        if (!onSameLine(lbrace, rbrace) && childrenCount > 0) {
+            return true // 1b
+        }
+    }
 
     return when (parentPsi) {
         is RustBlockElement -> childrenCount != 0 && (childrenCount >= 2 || parentPsi.parent is RustItemElement) // 2
@@ -267,6 +276,8 @@ private fun SpacingContext.blockMustBeMultiLine(): Boolean {
         is RustTraitBodyElement,
         is RustModItemElement,
         is RustForeignModItemElement -> childrenCount != 0 // 3
+
+        is RustMatchBodyElement -> childrenCount != 0 && !ctx.rustSettings.ALLOW_ONE_LINE_MATCH
 
         else -> false
     }

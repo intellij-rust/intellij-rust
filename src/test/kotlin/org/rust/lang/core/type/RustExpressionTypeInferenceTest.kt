@@ -1,11 +1,5 @@
 package org.rust.lang.core.type
 
-import org.assertj.core.api.Assertions.assertThat
-import org.intellij.lang.annotations.Language
-import org.rust.lang.core.psi.RustExprElement
-import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.types.util.resolvedType
-
 class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
     //language=Rust
     fun testIfLetPattern() = testExpr("""
@@ -111,46 +105,6 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
     """)
 
     //language=Rust
-    fun testEnumPattern() = testExpr("""
-        enum E {
-            X
-        }
-        fn main() {
-            let x = E::X;
-            x;
-          //^ E
-        }
-    """)
-
-    //language=Rust
-    fun testEnumPatternWithUnnamedArgs() = testExpr("""
-        enum E {
-            X(i32, i16)
-        }
-        fn bar() -> E {}
-
-        fn main() {
-            let E::X(_, i) = bar();
-            i;
-          //^ i16
-        }
-    """)
-
-    //language=Rust
-    fun testEnumPatternWithNamedArgs() = testExpr("""
-        enum E {
-            X { _1: i32, _2: i64 }
-        }
-        fn bar() -> E {}
-
-        fn main() {
-            let E::X(_, i) = bar();
-            i;
-          //^ i64
-        }
-    """)
-
-    //language=RUST
     fun testRefPattern() = testExpr("""
         struct Vec;
 
@@ -161,7 +115,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    //language=RUST
+    //language=Rust
     fun testMutRefPattern() = testExpr("""
         struct Vec;
 
@@ -172,14 +126,14 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    private fun testExpr(code: String) {
-        val (elementAtCaret, expectedType) = configureAndFindElement(code)
-        val typeAtCaret = requireNotNull(elementAtCaret.parentOfType<RustExprElement>()) {
-            "No expr at caret:\n$code"
+    //language=Rust
+    fun testTupleOutOfBounds() = testExpr("""
+        fn main() {
+            let (_, _, x) = (1, 2);
+            x
+          //^ <unknown>
         }
+    """)
 
-        assertThat(typeAtCaret.resolvedType.toString())
-            .isEqualTo(expectedType)
-    }
 }
 

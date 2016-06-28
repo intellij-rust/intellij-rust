@@ -1,11 +1,13 @@
 package org.rust.lang
 
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
@@ -60,6 +62,18 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
     protected fun getVirtualFileByName(path: String): VirtualFile? =
         LocalFileSystem.getInstance().findFileByPath(path)
+
+    protected fun configureAndFindElement(code: String): Pair<PsiElement, String> {
+        val caretMarker = "//^"
+        val markerOffset = code.indexOf(caretMarker)
+        val data = code.drop(markerOffset).removePrefix(caretMarker).takeWhile { it != '\n' }.trim()
+        check(markerOffset != -1)
+        myFixture.configureByText("main.rs", code)
+        val markerPosition = myFixture.editor.offsetToLogicalPosition(markerOffset + caretMarker.length - 1)
+        val previousLine = LogicalPosition(markerPosition.line - 1, markerPosition.column)
+        val elementOffset = myFixture.editor.logicalPositionToOffset(previousLine)
+        return myFixture.file.findElementAt(elementOffset)!! to data
+    }
 
     open class RustProjectDescriptor : LightProjectDescriptor() {
 

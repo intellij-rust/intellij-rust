@@ -14,9 +14,14 @@ class RustInvalidSyntaxAnnotator : Annotator {
         }
 
         override fun visitVis(o: RustVisElement) {
-            if (o.parent is RustImplItemElement || o.parent is RustForeignModItemElement) {
+            if (o.parent is RustImplItemElement || o.parent is RustForeignModItemElement || isInTraitImpl(o)) {
                 holder.createErrorAnnotation(o, "Visibility modifier is not allowed here")
             }
         }
     })
+
+    private fun isInTraitImpl(o: RustVisElement): Boolean {
+        val impl = o.parent?.parent?.parent
+        return impl is RustImplItemElement && impl.traitRef != null
+    }
 }

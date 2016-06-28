@@ -1,5 +1,6 @@
 package org.rust.lang.core.completion
 
+import com.intellij.codeInsight.lookup.LookupElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.util.fields
@@ -10,23 +11,23 @@ import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.util.resolvedType
 
 object RustCompletionEngine {
-    fun complete(ref: RustQualifiedReferenceElement): Array<RustNamedElement> =
+    fun complete(ref: RustQualifiedReferenceElement): Array<out Any> =
         collectNamedElements(ref).toVariantsArray()
 
-    fun completeFieldName(field: RustStructExprFieldElement): Array<RustNamedElement> =
+    fun completeFieldName(field: RustStructExprFieldElement): Array<out LookupElement> =
         field.parentOfType<RustStructExprElement>()
                 ?.let       { it.fields }
                  .orEmpty()
                  .toVariantsArray()
 
-    fun completeFieldOrMethod(field: RustFieldExprElement): Array<RustNamedElement> {
+    fun completeFieldOrMethod(field: RustFieldExprElement): Array<out LookupElement> {
         val structType = (field.expr.resolvedType as? RustStructType) ?: return emptyArray()
         // Needs type ascription to please Kotlin's type checker, https://youtrack.jetbrains.com/issue/KT-12696.
         val fieldsAndMethods: List<RustNamedElement> = (structType.struct.fields + structType.nonStaticMethods)
         return fieldsAndMethods.toVariantsArray()
     }
 
-    fun completeUseGlob(glob: RustUseGlobElement): Array<RustNamedElement> =
+    fun completeUseGlob(glob: RustUseGlobElement): Array<out Any> =
         glob.basePath?.reference?.resolve()
             .completionsFromResolveScope()
             .toVariantsArray()
@@ -43,6 +44,7 @@ object RustCompletionEngine {
             .flatMap { RustResolveEngine.declarations(it, pivot = ref) }
             .toList()
     }
+
 }
 
 private fun RustNamedElement?.completionsFromResolveScope(): Collection<RustNamedElement> =
@@ -51,5 +53,5 @@ private fun RustNamedElement?.completionsFromResolveScope(): Collection<RustName
         else                -> emptyList()
     }
 
-private fun Collection<RustNamedElement>.toVariantsArray(): Array<RustNamedElement> =
-    filter { it.name != null }.toTypedArray()
+private fun Collection<RustNamedElement>.toVariantsArray(): Array<out LookupElement> =
+    filter { it.name != null }.map { it.createLookupElement() }.toTypedArray()

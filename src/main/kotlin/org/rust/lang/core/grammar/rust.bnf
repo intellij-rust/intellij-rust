@@ -1070,7 +1070,9 @@ private meta macro_args_delim ::= '(' <<param>> ')'
 macro_expr ::= zz_macro_call
 pat_macro  ::= zz_macro_call
 // TODO: Maybe implement item-related stuff for this production?
-macro_item ::= attrs_and_vis zz_macro_item
+macro_item ::= attrs_and_vis zz_macro_item {
+    implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner" ]
+}
 impl_macro_member ::= zz_macro_item
 
 // Utils
