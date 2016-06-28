@@ -24,6 +24,7 @@ import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
 import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.util.stripRefIfAny
 import org.rust.lang.core.types.visitors.RustTypeResolvingVisitor
 import org.rust.utils.sequenceOfNotNull
 
@@ -105,7 +106,7 @@ object RustResolveEngine {
      * Resolves references to struct's fields inside [RustFieldExprElement]
      */
     fun resolveFieldExpr(fieldExpr: RustFieldExprElement): ResolveResult {
-        val receiverType = fieldExpr.expr.resolvedType
+        val receiverType = fieldExpr.expr.resolvedType.stripRefIfAny()
 
         val id = (fieldExpr.fieldId.identifier ?: fieldExpr.fieldId.integerLiteral)!!
         val matching = when (id.elementType) {
