@@ -6,6 +6,7 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.ui.RawCommandLineEditor
 import org.rust.cargo.runconfig.CargoCommandConfiguration
+import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JTextField
 
@@ -17,6 +18,7 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
     private lateinit var comboModules: ModulesComboBox
     private lateinit var additionalArguments: RawCommandLineEditor
     private lateinit var environmentVariables: EnvironmentVariablesComponent
+    private lateinit var printBacktrace: JCheckBox
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         command.text = configuration.command
@@ -26,6 +28,7 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
 
         additionalArguments.text = configuration.additionalArguments
         environmentVariables.envs = configuration.environmentVariables
+        printBacktrace.isSelected = configuration.printBacktrace
     }
 
     @Throws(ConfigurationException::class)
@@ -34,6 +37,7 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
         configuration.setModule(comboModules.selectedModule)
         configuration.additionalArguments = additionalArguments.text
         configuration.environmentVariables = environmentVariables.envs
+        configuration.printBacktrace = printBacktrace.isSelected
     }
 
     override fun createEditor(): JComponent = root
