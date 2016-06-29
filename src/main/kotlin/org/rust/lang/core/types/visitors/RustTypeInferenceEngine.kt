@@ -154,6 +154,10 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
                 it.fieldDeclList.map { it.name to it }.toMap()
             } ?: emptyMap()
 
+        // `..` allows to match for the struct's fields not to be exhaustive
+        if (o.patFieldList.size != fieldDecls.size && o.dotdot == null)
+            return false
+
         for (patField in o.patFieldList) {
             val patBinding = patField.patBinding
             if (patBinding != null) {
