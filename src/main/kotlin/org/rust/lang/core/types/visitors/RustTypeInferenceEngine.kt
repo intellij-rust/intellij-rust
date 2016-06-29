@@ -29,7 +29,7 @@ private class RustTypeInferencingVisitor(val next: RustCompositeElement?, val ty
         fun runFrom(binding: RustPatBindingElement, pat: RustPatElement, type: RustType): RustType {
             var curType = type
 
-            val path = LinkedList(pat.pathTo(binding).cast(RustCompositeElement::class.java).toList()) // sic!
+            val path = LinkedList(pat.pathTo(binding).cast<RustCompositeElement>().toList()) // sic!
 
             while (path.size >   1) {
                 val cur     = path.pop()
