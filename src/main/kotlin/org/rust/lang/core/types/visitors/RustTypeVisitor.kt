@@ -26,5 +26,7 @@ interface RustTypeVisitor<T> {
 
     fun visitFloat(type: RustFloatType): T
 
+    fun visitString(type: RustStringType): T
+
 }
 
