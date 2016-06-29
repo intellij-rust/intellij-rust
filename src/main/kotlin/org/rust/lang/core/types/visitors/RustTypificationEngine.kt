@@ -121,6 +121,9 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
             o.stringLiteral     != null -> RustStringType
             o.charLiteral       != null -> RustCharacterType
 
+            o.`true`            != null ||
+            o.`false`           != null -> RustBooleanType
+
             else -> RustUnknownType
         }
     }

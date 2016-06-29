@@ -31,4 +31,6 @@ interface RustUnresolvedTypeVisitor<T> {
 
     fun visitChar(type: RustCharacterType): T
 
+    fun visitBoolean(type: RustBooleanType): T
+
 }
