@@ -3,45 +3,47 @@ package org.rust.lang.core.types.visitors
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.contains
-import org.rust.lang.core.psi.util.fields
-import org.rust.lang.core.psi.util.pathTo
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.util.resolvedType
-import org.rust.utils.cast
-import java.util.*
+import org.rust.utils.Result
 
 
 object RustTypeInferenceEngine {
 
-    fun inferPatBindingTypeFrom(binding: RustPatBindingElement, pat: RustPatElement, patType: RustType): RustType {
+    fun inferPatBindingTypeFrom(binding: RustPatBindingElement, pat: RustPatElement, type: RustType): RustType {
         check(pat.contains(binding))
 
-        return RustTypeInferencingVisitor.runFrom(binding, pat, patType)
+        return run(pat, type).let {
+            if (it is Result.Ok)
+                it.result.getOrElse(binding, { error("Panic! Successful match should imbue all the bindings!") })
+            else
+                RustUnknownType
+        }
     }
 
+    fun matches(pat: RustPatElement, type: RustType): Boolean =
+        run(pat, type).let { it is Result.Ok }
+
+    private fun run(pat: RustPatElement, type: RustType): Result<Map<RustPatBindingElement, RustType>> =
+        RustTypeInferencingVisitor(type).let {
+            if (it.compute(pat)) Result.Ok(it.bindings) else Result.Failure
+        }
 }
 
 @Suppress("IfNullToElvis")
-private class RustTypeInferencingVisitor(val next: RustCompositeElement?, val type: RustType) : RustComputingVisitor<RustType>() {
+private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisitor<Boolean>() {
 
-    companion object {
-        fun runFrom(binding: RustPatBindingElement, pat: RustPatElement, type: RustType): RustType {
-            var curType = type
+    var bindings: Map<RustPatBindingElement, RustType> = hashMapOf()
 
-            val path = LinkedList(pat.pathTo(binding).cast<RustCompositeElement>().toList()) // sic!
+    private fun match(pat: RustPatElement, type: RustType): Boolean {
+        val prev = this.type
 
-            while (path.size >   1) {
-                val cur     = path.pop()
-                val next    = path.firstOrNull()
-
-                curType = RustTypeInferencingVisitor(next, curType).compute(cur)
-
-                // Bail-out
-                if (curType is RustUnknownType) break
-            }
-
-            return curType
+        this.type = type
+        try {
+            return compute(pat)
+        } finally {
+            this.type = prev
         }
     }
 
@@ -49,22 +51,39 @@ private class RustTypeInferencingVisitor(val next: RustCompositeElement?, val ty
         throw UnsupportedOperationException("Panic! Unhandled pattern detected!")
     }
 
-    override fun visitPatIdent(o: RustPatIdentElement) = set {
-        if (o.patBinding === next) type else RustUnknownType
-    }
+    override fun visitPatIdent(o: RustPatIdentElement) = set(fun(): Boolean {
+        val pat = o.pat
+        if (pat == null || match(pat, type)) {
+            bindings += o.patBinding to type
+            return true
+        }
 
-    override fun visitPatTup(o: RustPatTupElement) = set(fun(): RustType {
-        val i = o.patList.indexOf(next)
+        return false
+    })
 
-        check(i != -1)
+    override fun visitPatWild(o: RustPatWildElement) = set({ true })
 
-        return set@ if (type is RustTupleType) type[i] else RustUnknownType
+    override fun visitPatTup(o: RustPatTupElement) = set(fun(): Boolean {
+        val type = type
+        if (type !is RustTupleType)
+            return false
+
+        val pats = o.patList
+        if (pats.size != type.size)
+            return false
+
+        for (i in 0 .. type.size - 1) {
+            if (!match(pats[i], type[i]))
+                return false
+        }
+
+        return true
     })
 
     private fun getEnumByVariant(e: RustEnumVariantElement): RustEnumItemElement? =
         (e.parent as RustEnumBodyElement).parent as? RustEnumItemElement
 
-    override fun visitPatEnum(o: RustPatEnumElement) = set(fun(): RustType {
+    override fun visitPatEnum(o: RustPatEnumElement) = set(fun(): Boolean {
         //
         // `pat_enum` perfectly covers 2 following destructuring scenarios:
         //
@@ -88,84 +107,93 @@ private class RustTypeInferencingVisitor(val next: RustCompositeElement?, val ty
         //      ```
         //
 
-        var tupleFields: List<RustTupleFieldDeclElement>? = null
+        val type = type
+
+        var tupleFields = emptyList<RustTupleFieldDeclElement>()
 
         val e = o.pathExpr.path.reference.resolve()
         if (e is RustStructItemElement) {
             val struct = e
 
             if (type !is RustStructType || type.struct !== struct)
-                return set@RustUnknownType
+                return false
 
-            if (o.patList.size == 0) {
-                // If pat-list is empty report type as the enum's itself
-                return set@ type
+            struct.structTupleArgs?.tupleFieldDeclList?.let {
+                tupleFields = it
             }
-
-            tupleFields = struct.structTupleArgs?.tupleFieldDeclList
 
         } else if (e is RustEnumVariantElement) {
             val variant = e
 
             if (type !is RustEnumType || type.enum !== getEnumByVariant(variant))
-                return set@RustUnknownType
+                return false
 
-            if (o.patList.size == 0) {
-                // If pat-list is empty report type as the enum's itself
-                return set@ type
+            variant.enumTupleArgs?.tupleFieldDeclList?.let {
+                tupleFields = it
             }
-
-            tupleFields = variant.enumTupleArgs?.tupleFieldDeclList
         }
 
-        if (tupleFields != null) {
-            val i = o.patList.indexOf(next)
+        if (tupleFields.size != o.patList.size)
+            return false
 
-            check(i != -1)
-
-            return set@ if (i < tupleFields.size) tupleFields[i].type.resolvedType else RustUnknownType
+        for (i in 0 .. tupleFields.size - 1) {
+            if (!match(o.patList[i], tupleFields[i].type.resolvedType))
+                return false
         }
 
-        return set@RustUnknownType
+        return true
     })
 
-    override fun visitPatStruct(o: RustPatStructElement) = set(fun(): RustType {
+    override fun visitPatStruct(o: RustPatStructElement) = set(fun(): Boolean {
+        val type = type
         if (type !is RustStructType || type.struct !== o.pathExpr.path.reference.resolve())
-            return set@RustUnknownType
+            return false
 
-        return set@ type
+        val fieldDecls =
+            type.struct.structDeclArgs?.let {
+                it.fieldDeclList.map { it.name to it }.toMap()
+            } ?: emptyMap()
+
+        for (patField in o.patFieldList) {
+            val patBinding = patField.patBinding
+            if (patBinding != null) {
+                val fieldDecl = fieldDecls[patBinding.identifier.text]
+                if (fieldDecl == null)
+                    return false
+
+                bindings += patBinding to fieldDecl.type.resolvedType
+            } else {
+                val id = patField.identifier
+                if (id == null)
+                    error("Panic! `pat_field` may be either `pat_binding` or should contain identifier!")
+
+                val patFieldPat = patField.pat
+                if (patFieldPat == null)
+                    return false
+
+                val fieldDecl = fieldDecls[id.text]
+                if (fieldDecl == null || !match(patFieldPat, fieldDecl.type.resolvedType))
+                    return false
+            }
+        }
+
+        return true
     })
 
-    override fun visitPatField(o: RustPatFieldElement) = set (fun(): RustType {
-        val id = o.identifier?.text
-        if (id == null)
-            return set@RustUnknownType
-
-        if (type !is RustStructType)
-            return set@RustUnknownType
-
-        val fieldDecl = type.struct.fields.find { it.name == id }
-        if (fieldDecl == null)
-            return RustUnknownType
-
-        return fieldDecl.type.resolvedType
+    override fun visitPatRef(o: RustPatRefElement) = set(fun(): Boolean {
+        val type = type
+        return type is RustReferenceType
+            && type.mutable == (o.mut != null)
+            && match(o.pat, type.referenced)
     })
 
-    override fun visitPatRef(o: RustPatRefElement) = set(fun(): RustType {
-        return set@
-            if (type is RustReferenceType && type.mutable == (o.mut != null))
-                type.referenced
-            else
-                RustUnknownType
+    override fun visitPatUniq(o: RustPatUniqElement) = set(fun(): Boolean {
+        // FIXME
+        return false
     })
 
-    override fun visitPatUniq(o: RustPatUniqElement) = set(fun(): RustType {
-        // TODO(XXX): Fix me
-        return set@ RustUnknownType
-    })
-
-    override fun visitPatVec(o: RustPatVecElement) = set(fun(): RustType {
-        // TODO(XXX): Fix me
-        return set@ RustUnknownType
+    override fun visitPatVec(o: RustPatVecElement) = set(fun(): Boolean {
+        // FIXME
+        return false
     })
 }
