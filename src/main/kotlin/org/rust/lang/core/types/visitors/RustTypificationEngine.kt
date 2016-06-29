@@ -62,8 +62,14 @@ object RustTypificationEngine {
     /**
      * Devises type for the given (implicit) self-argument
      */
-    private fun deviseSelfType(self: RustSelfArgumentElement): RustType =
-        self.parentOfType<RustImplItemElement>()?.type?.resolvedType ?: RustUnknownType
+    private fun deviseSelfType(self: RustSelfArgumentElement): RustType {
+        var Self = self.parentOfType<RustImplItemElement>()?.type?.resolvedType ?: return RustUnknownType
+
+        if (self.and != null)
+            Self = RustReferenceType(Self, mutable = self.mut != null)
+
+        return Self
+    }
 
     private fun deviseEnumType(variant: RustEnumVariantElement): RustType =
         typifyItem((variant.parent as RustEnumBodyElement).parent as RustEnumItemElement)

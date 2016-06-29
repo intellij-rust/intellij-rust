@@ -53,5 +53,25 @@ class RustEnumPatternTypeInferenceTest: RustTypificationTestBase() {
           //^ <unknown>
         }
     """)
+
+    //language=Rust
+    fun testStructTuple() = testExpr("""
+        #[derive(PartialEq, PartialOrd)]
+        struct Centimeters(f64);
+
+        // `Inches`, a tuple struct that can be printed
+        #[derive(Debug)]
+        struct Inches(i32);
+
+        impl Inches {
+
+            fn to_centimeters(&self) -> Centimeters {
+                let &Inches(inches) = self;
+
+                inches;
+              //^ i32
+            }
+        }
+    """)
 }
 
