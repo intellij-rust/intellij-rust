@@ -1,0 +1,3 @@
+<fold text='/* ... */'>/*
+hello
+*/</fold>
