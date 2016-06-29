@@ -28,6 +28,8 @@ open class RustTypeResolvingVisitor : RustUnresolvedTypeVisitor<RustType> {
 
     override fun visitChar(type: RustCharacterType): RustType = type
 
+    override fun visitBoolean(type: RustBooleanType): RustType = type
+
     override fun visitReference(type: RustUnresolvedReferenceType): RustType = RustReferenceType(visit(type.referenced), type.mutable)
 }
 
