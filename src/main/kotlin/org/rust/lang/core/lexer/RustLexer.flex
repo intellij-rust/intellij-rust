@@ -101,7 +101,7 @@ SUFFIX     = {IDENTIFIER}
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 EXPONENT      = [eE] [-+]? [0-9_]+
-FLT_SUFFIX    = f32 | f64
+FLT_SUFFIX    = "f32" | "f64"
 FLT_LITERAL   = ( {DEC_LITERAL} \. {DEC_LITERAL} {EXPONENT}? {SUFFIX}? )
               | ( {DEC_LITERAL} {EXPONENT} {SUFFIX}? )
 FLT_TDOT      = {DEC_LITERAL} \.
