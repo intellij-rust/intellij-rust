@@ -131,21 +131,24 @@ private class RustTypeInferencingVisitor(val next: RustCompositeElement?, val ty
 
     override fun visitPatStruct(o: RustPatStructElement) = set(fun(): RustType {
         if (type !is RustStructType || type.struct !== o.pathExpr.path.reference.resolve())
+            return set@RustUnknownType
+
+        return set@ type
+    })
+
+    override fun visitPatField(o: RustPatFieldElement) = set (fun(): RustType {
+        val id = o.identifier?.text
+        if (id == null)
+            return set@RustUnknownType
+
+        if (type !is RustStructType)
+            return set@RustUnknownType
+
+        val fieldDecl = type.struct.fields.find { it.name == id }
+        if (fieldDecl == null)
             return RustUnknownType
 
-        if (next is RustPatFieldElement) {
-            val id = next.identifier?.text
-            if (id == null)
-                return set@RustUnknownType
-
-            val fieldDecl = type.struct.fields.find { it.name == id }
-            if (fieldDecl == null)
-                return RustUnknownType
-
-            return fieldDecl.type?.let { it.resolvedType } ?: RustUnknownType
-        }
-
-        return RustUnknownType
+        return fieldDecl.type.resolvedType
     })
 
     override fun visitPatRef(o: RustPatRefElement) = set(fun(): RustType {
