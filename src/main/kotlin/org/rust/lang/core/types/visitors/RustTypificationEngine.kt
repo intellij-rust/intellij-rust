@@ -116,7 +116,8 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
 
     override fun visitLitExpr(o: RustLitExprElement) = set {
         when {
-            o.integerLiteral != null -> RustIntegerType.deduceBySuffix(o.text) ?: RustIntegerType.deduceUnsuffixed(o)
+            o.integerLiteral    != null -> RustIntegerType.deduceBySuffix(o.text)   ?: RustIntegerType.deduceUnsuffixed(o)
+            o.floatLiteral      != null -> RustFloatType.deduceBySuffix(o.text)     ?: RustFloatType.deduceUnsuffixed(o)
 
             else -> RustUnknownType
         }

@@ -22,6 +22,8 @@ open class RustTypeResolvingVisitor : RustUnresolvedTypeVisitor<RustType> {
 
     override fun visitInteger(type: RustIntegerType): RustType = type
 
+    override fun visitFloat(type: RustFloatType): RustType = type
+
     override fun visitReference(type: RustUnresolvedReferenceType): RustType = RustReferenceType(visit(type.referenced), type.mutable)
 }
 
