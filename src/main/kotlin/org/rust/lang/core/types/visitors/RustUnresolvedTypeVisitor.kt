@@ -29,4 +29,6 @@ interface RustUnresolvedTypeVisitor<T> {
 
     fun visitString(type: RustStringType): T
 
+    fun visitChar(type: RustCharacterType): T
+
 }

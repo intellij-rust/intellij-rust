@@ -119,6 +119,7 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
             o.integerLiteral    != null -> RustIntegerType.deduceBySuffix(o.text)   ?: RustIntegerType.deduceUnsuffixed(o)
             o.floatLiteral      != null -> RustFloatType.deduceBySuffix(o.text)     ?: RustFloatType.deduceUnsuffixed(o)
             o.stringLiteral     != null -> RustStringType
+            o.charLiteral       != null -> RustCharacterType
 
             else -> RustUnknownType
         }
