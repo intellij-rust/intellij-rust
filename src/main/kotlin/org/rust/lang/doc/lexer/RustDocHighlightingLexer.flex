@@ -74,17 +74,10 @@ HEADING_HASH = "#"{1,6}
 
 // http://spec.commonmark.org/0.25/#links
 LINK_TEXT    = "[" ( [^\]\r\n] | "\\]" )* "]"
-LINK_DEST    = ( "<" ( [^>\ \t\r\n] | "\\>" )* ">" )
-             | ( [^\(\)\ \t\r\n] | "\\(" | "\\)" )*
-LINK_TITLE   = ( \" ( [^\"\r\n] | \\\" )* \" )
-             | ( \' ( [^\'\r\n] | \\\' )* \' )
-             | ( "(" ( [^\)\r\n] | "\\)" )* ")" )
-LINK_LABEL   = "[" ( [^\]\ \t\r\n] | "\\]" ) ( [^\]\r\n] | "\\]" )* "]"
 
-INLINE_LINK  = {LINK_TEXT} "(" {LINE_WS}* ( {LINK_DEST} ( {LINE_WS}+ {LINK_TITLE} )? )? {LINE_WS}* ")"
-REF_LINK     = ( {LINK_TEXT} {LINK_LABEL} )
-             | ( {LINK_LABEL} "[]"? )
-LINK_REF_DEF = {LINK_LABEL} ":" [^\r\n]*
+INLINE_LINK  = {LINK_TEXT} "(" ( [^\(\)\r\n] | "\\(" | "\\)" )* ")"
+REF_LINK     = {LINK_TEXT} {LINK_TEXT}?
+LINK_REF_DEF = {LINK_TEXT} ":" [^\r\n]*
 
 // http://spec.commonmark.org/0.25/#code-spans
 CODE_SPAN    = "`" ( [^`\r\n] | "`" "`"+ )* "`"
