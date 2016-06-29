@@ -16,5 +16,7 @@ class RustTupleType(private val elements: List<RustType>) : RustType {
         require(i >= 0)
         return elements.getOrElse(i, { RustUnknownType })
     }
+
+    val size: Int = elements.size
 }
 
