@@ -23,7 +23,11 @@ enum class RustColor(val humanName: String, externalName: String, fallback: Text
 
     BLOCK_COMMENT         ("Block comment", "org.rust.BLOCK_COMMENT", Default.BLOCK_COMMENT),
     EOL_COMMENT           ("Line comment", "org.rust.EOL_COMMENT", Default.LINE_COMMENT),
-    DOC_COMMENT           ("Documentation comment", "org.rust.DOC_COMMENT", Default.DOC_COMMENT),
+
+    DOC_COMMENT           ("Rustdoc comment", "org.rust.DOC_COMMENT", Default.DOC_COMMENT),
+    DOC_HEADING           ("Rustdoc heading", "org.rust.DOC_HEADING", Default.DOC_COMMENT_TAG),
+    DOC_LINK              ("Rustdoc link", "org.rust.DOC_LINK", Default.DOC_COMMENT_TAG_VALUE),
+    DOC_CODE              ("Rustdoc code", "org.rust.DOC_CODE", Default.DOC_COMMENT_MARKUP),
 
     PARENTHESIS           ("Parenthesis", "org.rust.PARENTHESIS", Default.PARENTHESES),
     BRACKETS              ("Brackets", "org.rust.BRACKETS", Default.BRACKETS),
