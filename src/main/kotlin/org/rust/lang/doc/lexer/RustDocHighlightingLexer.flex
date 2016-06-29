@@ -9,12 +9,14 @@ import static com.intellij.psi.TokenType.*;
 %%
 
 %{
-  public _RustDocHighlightingLexer() {
+  private int MAIN_STATE = YYINITIAL;
+
+  public _RustDocHighlightingLexer(boolean isBlock) {
     this((java.io.Reader)null);
+    MAIN_STATE = isBlock ? IN_BLOCK : IN_EOL;
   }
 
-  private int MAIN_STATE = YYINITIAL;
-  private int DATA_STATE = IN_DOC_DATA;
+  // FIXME(jajakobyly): I think it is possible this will break, though I couldn't make it do so :-)
   private char CODE_FENCE_DELIM = '\0';
 
   private boolean isLastToken() {
@@ -54,7 +56,10 @@ import static com.intellij.psi.TokenType.*;
 
 %s IN_DOC_DATA
 %s IN_DOC_DATA_DEEP
+
 %s IN_CODE_FENCE
+%s IN_CODE_FENCE_DECO_BLOCK
+%s IN_CODE_FENCE_DECO_EOL
 
 %unicode
 
@@ -82,14 +87,11 @@ LINK_REF_DEF = {LINK_TEXT} ":" [^\r\n]*
 // http://spec.commonmark.org/0.25/#code-spans
 CODE_SPAN    = "`" ( [^`\r\n] | "`" "`"+ )* "`"
 
-CODE_FENCE_START = ( "```" | "~~~" ) [^\r\n]*
-CODE_FENCE_END   = ( "```" | "~~~" )
-
 %%
 
 <YYINITIAL> {
-    "/*"    { MAIN_STATE = IN_BLOCK; yybegin(IN_BLOCK); yypushback(2); }
-    "//"    { MAIN_STATE = IN_EOL;   yybegin(IN_EOL);   yypushback(2); }
+    "/*"    { assert MAIN_STATE == IN_BLOCK; yybegin(IN_BLOCK); yypushback(2); }
+    "//"    { assert MAIN_STATE == IN_EOL;   yybegin(IN_EOL);   yypushback(2); }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -97,16 +99,16 @@ CODE_FENCE_END   = ( "```" | "~~~" )
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 <IN_BLOCK> {
-    "/*"[*!]    { yybegin(DATA_STATE); return DOC_DECO; }
+    "/*"[*!]    { yybegin(IN_DOC_DATA); return DOC_DECO; }
     "*"+ "/"    { return (isLastToken() ? DOC_DECO : DOC_TEXT); }
-    "*"         { yybegin(DATA_STATE); return DOC_DECO; }
+    "*"         { yybegin(IN_DOC_DATA); return DOC_DECO; }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // EOL docs
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-<IN_EOL> "//"[/!]   { yybegin(DATA_STATE); return DOC_DECO; }
+<IN_EOL> "//"[/!]   { yybegin(IN_DOC_DATA); return DOC_DECO; }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Doc contents
@@ -135,9 +137,8 @@ CODE_FENCE_END   = ( "```" | "~~~" )
     {LINK_REF_DEF}      { return DOC_LINK_REF_DEF; }
     {CODE_SPAN}         { return DOC_CODE_SPAN; }
 
-    {CODE_FENCE_START}  { CODE_FENCE_DELIM = yycharat(0);
-                          DATA_STATE = IN_CODE_FENCE;
-                          yybegin(DATA_STATE);
+    "```" | "~~~"       { CODE_FENCE_DELIM = yycharat(0);
+                          yybegin(IN_CODE_FENCE);
                           return DOC_CODE_FENCE; }
 
     {EOL_WS}            { yybegin(MAIN_STATE); return WHITE_SPACE;}
@@ -146,13 +147,25 @@ CODE_FENCE_END   = ( "```" | "~~~" )
     [^]                 { return DOC_TEXT; }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Code fences
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+<IN_CODE_FENCE_DECO_BLOCK> {
+    "*"+ "/"    { return (isLastToken() ? DOC_DECO : DOC_CODE_FENCE); }
+    "*"         { yybegin(IN_CODE_FENCE); return DOC_DECO; }
+}
+
+<IN_CODE_FENCE_DECO_EOL> "//"[/!]   { yybegin(IN_CODE_FENCE); return DOC_DECO; }
+
 <IN_CODE_FENCE> {
-    {CODE_FENCE_END}    {
-        if (yycharat(0) == CODE_FENCE_DELIM) { DATA_STATE = IN_DOC_DATA; yybegin(DATA_STATE); }
+    "```" | "~~~"       {
+        if (yycharat(0) == CODE_FENCE_DELIM) { yybegin(IN_DOC_DATA_DEEP); }
         return DOC_CODE_FENCE;
     }
 
-    {EOL_WS}            { yybegin(MAIN_STATE); return WHITE_SPACE;}
+    {EOL_WS}            { yybegin(MAIN_STATE == IN_BLOCK ? IN_CODE_FENCE_DECO_BLOCK : IN_CODE_FENCE_DECO_EOL);
+                          return WHITE_SPACE;}
     [^]                 { return DOC_CODE_FENCE; }
 }
 
