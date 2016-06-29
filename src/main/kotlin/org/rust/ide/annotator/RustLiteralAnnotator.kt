@@ -63,7 +63,7 @@ private val PsiElement.displayName: String
 // TODO: Make this more generic
 private val IElementType.displayName: String
     get() = when (this) {
-        INTEGER_LITERAL         -> "numeric literal"
+        INTEGER_LITERAL         -> "integer literal"
         FLOAT_LITERAL           -> "float literal"
 
         CHAR_LITERAL            -> "char literal"
