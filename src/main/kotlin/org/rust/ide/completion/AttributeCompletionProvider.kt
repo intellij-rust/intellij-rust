@@ -5,13 +5,14 @@ import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
-import com.intellij.patterns.PlatformPatterns.virtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.util.ProcessingContext
+import org.rust.cargo.util.cargoProjectRoot
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.util.module
 
 object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() {
 
@@ -30,24 +31,24 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
     // TODO
     private val onStaticMut: ElementPattern<PsiElement> = onStatic
 
-    private val onMacro: ElementPattern<PsiElement> = onCItem<RustMacroItemElement>()
+    private val onMacro: ElementPattern<PsiElement> = onItem<RustMacroItemElement>()
 
     private val onTupleStruct: ElementPattern<PsiElement> = psiElement()
         .withSuperParent(2, psiElement().withChild(psiElement<RustStructTupleArgsElement>()))
 
-    private val onCrate: ElementPattern<PsiElement> get() {
-        val inMain = virtualFile().withName("main.rs")
-        val inLib = virtualFile().withName("lib.rs")
-
-        return psiElement()
-            .withSuperParent<PsiFile>(3)
-            .and(psiElement().inVirtualFile(inMain) or psiElement().inVirtualFile(inLib))
-    }
+    private val onCrate: ElementPattern<PsiElement> = psiElement().with(
+        object: PatternCondition<PsiElement>("onCrateCondition") {
+            override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
+                val file = t.containingFile.originalFile.virtualFile
+                val crateFile = "${t.module?.cargoProjectRoot?.path}/src/lib.rs"
+                return file.path.equals(crateFile)
+            }
+        })
 
     private val onExternBlock: ElementPattern<PsiElement> = onItem<RustForeignModItemElement>()
 
     private val onExternBlockDecl: ElementPattern<PsiElement> =
-        onCItem<RustForeignFnDeclElement>() or
+        onItem<RustForeignFnDeclElement>() or
         onItem<RustForeignStaticDeclElement>() or
         onItem<RustForeignModItemElement>()
 
@@ -66,53 +67,24 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
     private val onTestFn: ElementPattern<PsiElement> = onItem(psiElement<RustFnItemElement>()
         .withChild(psiElement<RustOuterAttrElement>().withText("#[test]")))
 
-    private val attributes = listOf(
-        RustAttribute("crate_name", onCrate),
-        RustAttribute("crate_type", onCrate),
-        RustAttribute("feature", onCrate),
-        RustAttribute("no_builtins", onCrate),
-        RustAttribute("no_main", onCrate),
-        RustAttribute("no_start", onCrate),
-        RustAttribute("no_std", onCrate),
-        RustAttribute("plugin", onCrate), // Feature gated as of 1.9
-        RustAttribute("recursion_limit", onCrate),
-        RustAttribute("no_implicit_prelude", onMod),
-        RustAttribute("path", onMod),
-        RustAttribute("main", onFn),
-        RustAttribute("plugin_registrar", onFn),
-        RustAttribute("start", onFn),
-        RustAttribute("test", onFn),
-        RustAttribute("should_panic", onTestFn),
-        RustAttribute("cold", onFn),
-        RustAttribute("naked", onFn),
-        RustAttribute("thread_local", onStaticMut),
-        RustAttribute("link_args", onExternBlock), // Feature gated as of 1.9
-        RustAttribute("link", onExternBlock),
-        RustAttribute("linked_from", onExternBlock), // Feature gated as of 1.9
-        RustAttribute("link_name", onExternBlockDecl),
-        RustAttribute("linkage", onExternBlockDecl),
-        RustAttribute("repr", onStruct or onEnum),
-        RustAttribute("macro_use", onMod or onExternCrate),
-        RustAttribute("macro_reexport", onExternCrate),
-        RustAttribute("macro_export", onMacro),
-        RustAttribute("no_link", onExternCrate),
-        RustAttribute("export_name", onStatic or onFn),
-        RustAttribute("link_section", onStatic or onFn),
-        RustAttribute("no_mangle", onAnyItem),
-        RustAttribute("simd", onTupleStruct), // Feature gated as of 1.9
-        RustAttribute("unsafe_destructor_blind_to_params", onDropFn), // Feature gated as of 1.9
-        RustAttribute("unsafe_no_drop_flag", onStruct), // Feature gated as of 1.9
-        RustAttribute("doc", onAnyItem),
-        RustAttribute("rustc_on_unimplemented", onTrait), // Feature gated as of 1.9
-        RustAttribute("cfg", onFn),
-        RustAttribute("cfg_attr", onAnyItem),
-        RustAttribute("allow", onAnyItem),
-        RustAttribute("warn", onAnyItem),
-        RustAttribute("forbid", onAnyItem),
-        RustAttribute("deny", onAnyItem),
-        RustAttribute("lang", onFn),
-        RustAttribute("inline", onFn),
-        RustAttribute("derive", onStruct or onEnum))
+    private val attributes = mapOf(
+        onCrate to "crate_name crate_type feature no_builtins no_main no_start no_std plugin recursion_limit",
+        onExternCrate to "macro_use macro_reexport no_link",
+        onMod to "no_implicit_prelude path macro_use",
+        onFn to "main plugin_registrar start test cold naked export_name link_section cfg lang inline",
+        onTestFn to "should_panic",
+        onStaticMut to "thread_local",
+        onExternBlock to "link_args link linked_from",
+        onExternBlockDecl to "link_name linkage",
+        onStruct to "repr unsafe_no_drop_flags derive",
+        onEnum to "repr derive",
+        onTrait to "rustc_on_unimplemented",
+        onMacro to "macro_export",
+        onStatic to "export_name link_section",
+        onAnyItem to "no_mangle doc cfg_attr allow warn forbid deny",
+        onTupleStruct to "simd",
+        onDropFn to "unsafe_destructor_blind_to_params"
+    ).flatMap { entry -> entry.value.split(' ').map { attrName -> RustAttribute(attrName, entry.key) }}
 
     override fun addCompletions(parameters: CompletionParameters,
                                 context: ProcessingContext?,
@@ -132,11 +104,6 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
     }
 
     inline fun <reified I: RustOuterAttributeOwner> onItem(): ElementPattern<PsiElement> {
-        return psiElement().withSuperParent<I>(3)
-    }
-
-    // TODO: remove once https://github.com/intellij-rust/intellij-rust/issues/492 is fixed
-    inline fun <reified I: RustCompositeElement> onCItem(): ElementPattern<PsiElement> {
         return psiElement().withSuperParent<I>(3)
     }
 
