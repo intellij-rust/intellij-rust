@@ -113,6 +113,14 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
         //FIXME: handle unit returning methods here, use `typifyFn` perhaps?
         (method as? RustImplMethodMemberElement)?.retType?.type?.resolvedType ?: RustUnknownType
     }
+
+    override fun visitLitExpr(o: RustLitExprElement) = set {
+        when {
+            o.integerLiteral != null -> RustIntegerType.deduceBySuffix(o.text) ?: RustIntegerType.deduceUnsuffixed(o)
+
+            else -> RustUnknownType
+        }
+    }
 }
 
 private class RustItemTypificationVisitor : RustComputingVisitor<RustType>() {
@@ -157,7 +165,7 @@ private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedT
     }
 
     override fun visitPathType(o: RustPathTypeElement) = set {
-        o.path?.let { RustIntegerType.from(it.text) ?: RustUnresolvedPathType(it) } ?: RustUnknownType
+        o.path?.let { RustIntegerType.deduceBySuffix(it.text) ?: RustUnresolvedPathType(it) } ?: RustUnknownType
     }
 
     override fun visitRefType(o: RustRefTypeElement) = set {

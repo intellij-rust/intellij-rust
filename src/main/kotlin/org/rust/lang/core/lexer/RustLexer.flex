@@ -106,11 +106,12 @@ FLT_LITERAL   = ( {DEC_LITERAL} \. {DEC_LITERAL} {EXPONENT}? {SUFFIX}? )
               | ( {DEC_LITERAL} {EXPONENT} {SUFFIX}? )
 FLT_TDOT      = {DEC_LITERAL} \.
 
-
 INT_LITERAL = ( {DEC_LITERAL}
               | {HEX_LITERAL}
               | {OCT_LITERAL}
-              | {BIN_LITERAL} ) {SUFFIX}?
+              | {BIN_LITERAL} ) {INT_SUFFIX}?
+
+INT_SUFFIX = "u8" | "i8" | "u16" | "i16" | "u32" | "i32" | "u64" | "i64" | "usize" | "isize"
 
 DEC_LITERAL = [0-9] [0-9_]*
 HEX_LITERAL = "0x" [a-fA-F0-9_]*
