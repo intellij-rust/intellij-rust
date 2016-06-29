@@ -33,7 +33,7 @@ private class RustTypeInferencingVisitor(val next: RustCompositeElement?, val ty
 
             while (path.size >   1) {
                 val cur     = path.pop()
-                val next    = path.pop()
+                val next    = path.firstOrNull()
 
                 curType = RustTypeInferencingVisitor(next, curType).compute(cur)
 
@@ -65,33 +65,68 @@ private class RustTypeInferencingVisitor(val next: RustCompositeElement?, val ty
         (e.parent as RustEnumBodyElement).parent as? RustEnumItemElement
 
     override fun visitPatEnum(o: RustPatEnumElement) = set(fun(): RustType {
-        val variant = o.pathExpr.path.reference.resolve() as? RustEnumVariantElement
-        if (variant == null)
-            return set@RustUnknownType
+        //
+        // `pat_enum` perfectly covers 2 following destructuring scenarios:
+        //
+        //      > Named-tuple structs       [1]
+        //      > Named-tuple enum-variants [2]
+        //
+        //
+        //      ```
+        //      // [1]
+        //      struct S(i32);
+        //
+        //      // [2]
+        //      enum E {
+        //          X(i32)
+        //      }
+        //
+        //      fn foo(x: E::X, s: S) {
+        //          let E::X(i) = x     // Both of those `pat`s are `pat_enum`s
+        //          let S(j) = s;       //
+        //      }
+        //      ```
+        //
 
-        if (type !is RustEnumType || type.enum !== getEnumByVariant(variant))
-            return set@RustUnknownType
+        var tupleFields: List<RustTupleFieldDeclElement>? = null
 
-        if (o.patList.size > 0) {
-            val tupleFields = variant.enumTupleArgs?.tupleFieldDeclList
-            if (tupleFields != null) {
-                val i = o.patList.indexOf(next)
+        val e = o.pathExpr.path.reference.resolve()
+        if (e is RustStructItemElement) {
+            val struct = e
 
-                check(i != -1)
+            if (type !is RustStructType || type.struct !== struct)
+                return set@RustUnknownType
 
-                return set@ if (i < tupleFields.size) tupleFields[i].type.resolvedType else RustUnknownType
+            if (o.patList.size == 0) {
+                // If pat-list is empty report type as the enum's itself
+                return set@ type
             }
 
-            val structFields = variant.enumStructArgs?.fieldDeclList
-            if (structFields != null) {
-                // FIXME
+            tupleFields = struct.structTupleArgs?.tupleFieldDeclList
+
+        } else if (e is RustEnumVariantElement) {
+            val variant = e
+
+            if (type !is RustEnumType || type.enum !== getEnumByVariant(variant))
+                return set@RustUnknownType
+
+            if (o.patList.size == 0) {
+                // If pat-list is empty report type as the enum's itself
+                return set@ type
             }
 
-            return RustUnknownType
+            tupleFields = variant.enumTupleArgs?.tupleFieldDeclList
         }
 
-        // If pat-list is empty report type as the enum's itself
-        return type
+        if (tupleFields != null) {
+            val i = o.patList.indexOf(next)
+
+            check(i != -1)
+
+            return set@ if (i < tupleFields.size) tupleFields[i].type.resolvedType else RustUnknownType
+        }
+
+        return set@RustUnknownType
     })
 
     override fun visitPatStruct(o: RustPatStructElement) = set(fun(): RustType {
