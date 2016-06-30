@@ -9,6 +9,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.lang.core.psi.RustLitExprElement
+import org.rust.lang.core.psi.RustLiteral
 
 
 /**
@@ -98,8 +100,10 @@ fun PsiElement.pathTo(other: PsiElement): Iterable<PsiElement> {
 val PsiElement.elementType: IElementType
     get() = node.elementType
 
+val RustLitExprElement.stringLiteralValue: String?
+    get() = ((stringLiteral ?: rawStringLiteral) as? RustLiteral.Text)?.value
+
 private val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) { it.parent }
 
 private fun walkUp(descendant: PsiElement, ancestor: PsiElement): Sequence<PsiElement> =
     descendant.ancestors.takeWhile { it !== ancestor } + ancestor
-
