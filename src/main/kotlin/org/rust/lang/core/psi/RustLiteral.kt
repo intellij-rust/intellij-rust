@@ -30,11 +30,6 @@ sealed class RustLiteral(type: IElementType, text: CharSequence) : LeafPsiElemen
     val suffix: String?
         get() = offsets.suffix?.substring(text)
 
-    override fun accept(visitor: PsiElementVisitor) = when (visitor) {
-        is RustVisitorEx -> visitor.visitLiteral(this)
-        else             -> super.accept(visitor)
-    }
-
     /**
      * Base class for numeric literals: integers and floats.
      */

@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.visitors.RustVisitorEx
 
 class RustLiteralAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) = element.accept(object : RustVisitorEx() {
-        override fun visitLiteral(literal: RustLiteral) {
+        fun visit(literal: RustLiteral) {
             // Check suffix
             val suffix = literal.suffix
             val possibleSuffixes = literal.possibleSuffixes
@@ -28,7 +28,7 @@ class RustLiteralAnnotator : Annotator {
 
         override fun visitNumericLiteral(literal: RustLiteral.Number) {
             // TODO: Check numeric literals boundaries
-            super.visitNumericLiteral(literal)
+            visit(literal)
         }
 
         override fun visitTextLiteral(literal: RustLiteral.Text) {
@@ -49,7 +49,7 @@ class RustLiteralAnnotator : Annotator {
                 holder.literalError(literal, "unclosed ${literal.displayName}")
             }
 
-            super.visitTextLiteral(literal)
+            visit(literal)
         }
     })
 }
