@@ -6,9 +6,7 @@ import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.RustLiteral
 import org.rust.lang.core.psi.visitors.RustVisitorEx
 
-class ApproxConstantInspection : RustLocalInspectionTool() {
-    override fun getDisplayName() = "Approximate Constants"
-
+class RustApproxConstantInspection : RustLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RustVisitorEx() {
             override fun visitNumericLiteral(literal: RustLiteral.Number) {

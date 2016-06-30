@@ -6,22 +6,20 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.rust.cargo.util.cargoProject
-import org.rust.lang.core.psi.RustModDeclItemElement
 import org.rust.lang.core.psi.RustElementVisitor
+import org.rust.lang.core.psi.RustModDeclItemElement
 import org.rust.lang.core.psi.containingMod
-import org.rust.lang.core.psi.impl.mixin.pathAttribute
 import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
 import org.rust.lang.core.psi.impl.mixin.isPathAttributeRequired
+import org.rust.lang.core.psi.impl.mixin.pathAttribute
 import org.rust.lang.core.psi.util.module
 
-class UnresolvedModuleDeclarationInspection : RustLocalInspectionTool() {
-
-    override fun getDisplayName(): String = "Unresolved module declaration"
+class RustUnresolvedModuleDeclarationInspection : RustLocalInspectionTool() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RustElementVisitor() {
             override fun visitModDeclItem(modDecl: RustModDeclItemElement) {
-                if (modDecl.isPathAttributeRequired && modDecl.pathAttribute == null ) {
+                if (modDecl.isPathAttributeRequired && modDecl.pathAttribute == null) {
                     val message = "Cannot declare a non-inline module inside a block unless it has a path attribute"
                     holder.registerProblem(modDecl, message)
                     return

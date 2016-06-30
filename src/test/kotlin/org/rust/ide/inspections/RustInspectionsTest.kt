@@ -7,17 +7,17 @@ class RustInspectionsTest : RustTestCaseBase() {
 
     override val dataPath = "org/rust/ide/inspections/fixtures"
 
-    fun testApproxConstant() = doTest<ApproxConstantInspection>()
-    fun testSelfConvention() = doTest<SelfConventionInspection>()
-    fun testUnresolvedModuleDeclaration() = doTest<UnresolvedModuleDeclarationInspection>()
+    fun testApproxConstant() = doTest<RustApproxConstantInspection>()
+    fun testSelfConvention() = doTest<RustSelfConventionInspection>()
+    fun testUnresolvedModuleDeclaration() = doTest<RustUnresolvedModuleDeclarationInspection>()
 
     fun testUnresolvedModuleDeclarationQuickFix() = checkByDirectory {
-        enableInspection<UnresolvedModuleDeclarationInspection>()
+        enableInspection<RustUnresolvedModuleDeclarationInspection>()
         openFileInEditor("mod.rs")
         applyQuickFix("Create module file")
     }
 
-    fun testUnresolvedLocalModuleDeclaration() = doTest<UnresolvedModuleDeclarationInspection>()
+    fun testUnresolvedLocalModuleDeclaration() = doTest<RustUnresolvedModuleDeclarationInspection>()
 
     private inline fun<reified T: LocalInspectionTool>enableInspection() {
         myFixture.enableInspections(T::class.java)

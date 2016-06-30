@@ -116,16 +116,24 @@
 
         <!-- Inspections -->
 
-        <localInspection language="Rust" enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.ApproxConstantInspection"/>
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Approximate Constants"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustApproxConstantInspection"/>
 
-        <localInspection language="Rust" enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.SelfConventionInspection"/>
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Self Convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustSelfConventionInspection"/>
 
-        <localInspection language="Rust" enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.UnresolvedModuleDeclarationInspection"/>
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Unresolved module declaration"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RustUnresolvedModuleDeclarationInspection"/>
 
-        <localInspection language="Rust" enabledByDefault="false" level="ERROR"
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Unresolved reference"
+                         enabledByDefault="false" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RustUnresolvedReferenceInspection"/>
 
         <!-- Surrounder -->
