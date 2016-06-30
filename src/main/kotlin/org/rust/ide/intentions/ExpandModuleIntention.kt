@@ -1,6 +1,7 @@
 package org.rust.ide.intentions
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -11,7 +12,7 @@ import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.rustMod
 
-class ExpandModuleIntention : IntentionAction {
+class ExpandModuleIntention : IntentionAction, LowPriorityAction {
 
     override fun getFamilyName()        = "Expand module structure"
     override fun getText()              = "Expand module"
