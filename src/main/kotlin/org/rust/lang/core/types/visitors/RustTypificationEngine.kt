@@ -34,45 +34,11 @@ object RustTypificationEngine {
 
             is RustEnumVariantElement -> deviseEnumType(named)
 
-            is RustFnElement -> typifyFn(named)
+            is RustFnElement -> deviseFunctionType(named)
 
             else -> RustUnknownType
         }
     }
-
-    /**
-     * NOTA BENE: That's far from complete
-     */
-    private fun deviseBoundPatType(binding: RustPatBindingElement): RustType {
-        //TODO: probably want something more precise than `getTopmostParentOfType` here
-        val pattern = PsiTreeUtil.getTopmostParentOfType(binding, RustPatElement::class.java) ?: return RustUnknownType
-        val parent = pattern.parent
-        val type = when (parent) {
-            is RustLetDeclElement ->
-                // use type ascription, if present or fallback to the type of the initializer expression
-                parent.type?.resolvedType ?: parent.expr?.resolvedType
-
-            is RustParameterElement -> parent.type?.resolvedType
-            else -> null
-        } ?: return RustUnknownType
-
-        return RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, pattern, type)
-    }
-
-    /**
-     * Devises type for the given (implicit) self-argument
-     */
-    private fun deviseSelfType(self: RustSelfArgumentElement): RustType {
-        var Self = self.parentOfType<RustImplItemElement>()?.type?.resolvedType ?: return RustUnknownType
-
-        if (self.and != null)
-            Self = RustReferenceType(Self, mutable = self.mut != null)
-
-        return Self
-    }
-
-    private fun deviseEnumType(variant: RustEnumVariantElement): RustType =
-        typifyItem((variant.parent as RustEnumBodyElement).parent as RustEnumItemElement)
 }
 
 private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
@@ -108,10 +74,8 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 
     override fun visitMethodCallExpr(o: RustMethodCallExprElement) = set {
-        val ref = o.reference!!
-        val method = ref.resolve()
-        //FIXME: handle unit returning methods here, use `typifyFn` perhaps?
-        (method as? RustImplMethodMemberElement)?.retType?.type?.resolvedType ?: RustUnknownType
+        val method = o.reference!!.resolve() as? RustFnElement
+        method?.let { deviseFunctionType(it).retType } ?: RustUnknownType
     }
 
     override fun visitLitExpr(o: RustLitExprElement) = set {
@@ -158,7 +122,7 @@ private class RustItemTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 
     override fun visitFnItem(o: RustFnItemElement) = set {
-        typifyFn(o)
+        deviseFunctionType(o)
     }
 }
 
@@ -185,11 +149,54 @@ private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedT
     }
 }
 
-private fun typifyFn(fn: RustFnElement): RustType {
-    if (!fn.isStatic) return RustUnknownType
+/**
+ * NOTA BENE: That's far from complete
+ */
+private fun deviseBoundPatType(binding: RustPatBindingElement): RustType {
+    //TODO: probably want something more precise than `getTopmostParentOfType` here
+    val pattern = PsiTreeUtil.getTopmostParentOfType(binding, RustPatElement::class.java) ?: return RustUnknownType
+    val parent = pattern.parent
+    val type = when (parent) {
+        is RustLetDeclElement ->
+            // use type ascription, if present or fallback to the type of the initializer expression
+            parent.type?.resolvedType ?: parent.expr?.resolvedType
+
+        is RustParameterElement -> parent.type?.resolvedType
+        else -> null
+    } ?: return RustUnknownType
+
+    return RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, pattern, type)
+}
+
+/**
+ * Devises type for the given (implicit) self-argument
+ */
+private fun deviseSelfType(self: RustSelfArgumentElement): RustType {
+    var Self = self.parentOfType<RustImplItemElement>()?.type?.resolvedType ?: return RustUnknownType
+
+    if (self.and != null)
+        Self = RustReferenceType(Self, mutable = self.mut != null)
+
+    return Self
+}
+
+private fun deviseEnumType(variant: RustEnumVariantElement): RustType =
+    RustTypificationEngine.typifyItem((variant.parent as RustEnumBodyElement).parent as RustEnumItemElement)
+
+private fun deviseFunctionType(fn: RustFnElement): RustFunctionType {
+    var paramTypes = emptyList<RustType>()
+
+    val params = fn.parameters
+    if (params != null) {
+        val self = params.selfArgument
+        if (self != null)
+            paramTypes += deviseSelfType(self)
+
+        paramTypes += params.parameterList.orEmpty().map { it.type?.resolvedType ?: RustUnknownType }
+    }
 
     return RustFunctionType(
-        fn.parameters?.parameterList.orEmpty().map { it.type?.resolvedType ?: RustUnknownType },
-        fn.retType?.type?.resolvedType ?: RustUnitType
+        paramTypes  = paramTypes,
+        retType     = fn.retType?.type?.resolvedType ?: RustUnitType
     )
 }
