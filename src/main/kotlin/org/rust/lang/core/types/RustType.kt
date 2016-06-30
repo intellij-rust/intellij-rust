@@ -31,4 +31,6 @@ interface RustType {
 
     val staticMethods: Sequence<RustImplMethodMemberElement>
         get() = allMethods.filter { it.isStatic }
+
+    val baseTypeName: String? get() = null
 }

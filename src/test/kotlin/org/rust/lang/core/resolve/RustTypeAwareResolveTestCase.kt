@@ -21,4 +21,6 @@ class RustTypeAwareResolveTestCase : RustResolveTestCaseBase() {
 
     fun testStaticFnFromInherentImpl() = checkIsBound()
     fun testNonStaticFnFromInherentImpl() = checkIsUnbound()
+
+    fun testHiddenInherentImpl() = checkIsBound()
 }

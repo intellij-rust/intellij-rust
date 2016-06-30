@@ -1,13 +1,15 @@
 package org.rust.lang.core.types
 
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.psi.RustImplItemElement
+import org.rust.lang.core.psi.RustStructOrEnumItemElement
+import org.rust.lang.core.stubs.index.RustInherentImplIndex
 
 abstract class RustStructOrEnumTypeBase(struct: RustStructOrEnumItemElement) : RustType {
 
     override val inherentImpls: Sequence<RustImplItemElement> by lazy {
-        struct.containingMod?.impls.orEmpty().asSequence()
-            .filter { it.type?.resolvedType == this }
+        RustInherentImplIndex.getInherentImpls(struct.project, this).asSequence()
     }
+
+    override val baseTypeName: String? = struct.name
 
 }
