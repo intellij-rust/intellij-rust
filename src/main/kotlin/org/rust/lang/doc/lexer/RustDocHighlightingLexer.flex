@@ -23,20 +23,31 @@ import static com.intellij.psi.TokenType.*;
     return zzMarkedPos == zzEndRead;
   }
 
-  private void docHeadingTrimRight() {
+  private void trimTrailingAsterisks() {
     int i = yylength() - 1;
     char ch = yycharat(i);
 
     // Trim trailing *****/ if we are at the end of block doc comment
     if (i >= 1 && MAIN_STATE == IN_BLOCK && isLastToken() && ch == '/' && yycharat(i - 1) == '*') {
-      i -= 2;
+      i--; // consume '/'
       ch = yycharat(i);
-      while (ch == '*') {
+      while (i > 0 && ch == '*') {
         ch = yycharat(--i);
       }
     }
 
+    yypushback(yylength() - i - 1);
+  }
+
+  private void docHeadingTrimRight() {
+    trimTrailingAsterisks();
+
+    int i = yylength() - 1;
+    char ch = yycharat(i);
+
     // Trim trailing whitespace
+    // We don't have to check whether i underflows over 0,
+    // because we have guarantee that there is at least one '#'
     while (ch == ' ' || ch == '\t') {
       ch = yycharat(--i);
     }
