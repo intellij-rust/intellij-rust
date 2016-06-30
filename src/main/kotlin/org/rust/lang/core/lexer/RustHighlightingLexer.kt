@@ -1,8 +1,10 @@
 package org.rust.lang.core.lexer
 
 import com.intellij.lexer.LayeredLexer
-import org.rust.lang.core.psi.RustTokenElementTypes.*
+import org.rust.lang.core.psi.RustTokenElementTypes.DOC_COMMENTS_TOKEN_SET
+import org.rust.lang.core.psi.RustTokenElementTypes.ESCAPABLE_LITERALS_TOKEN_SET
 import org.rust.lang.doc.lexer.RustDocHighlightingLexer
+import org.rust.lang.doc.psi.RustDocKind
 
 class RustHighlightingLexer : LayeredLexer(RustLexer()) {
     init {
@@ -10,7 +12,8 @@ class RustHighlightingLexer : LayeredLexer(RustLexer()) {
             registerLayer(RustEscapesLexer.of(it), it)
         }
 
-        registerLayer(RustDocHighlightingLexer(isBlock = true), INNER_BLOCK_DOC_COMMENT, OUTER_BLOCK_DOC_COMMENT)
-        registerLayer(RustDocHighlightingLexer(isBlock = false), INNER_EOL_DOC_COMMENT, OUTER_EOL_DOC_COMMENT)
+        DOC_COMMENTS_TOKEN_SET.types.forEach {
+            registerLayer(RustDocHighlightingLexer(RustDocKind.of(it)), it)
+        }
     }
 }

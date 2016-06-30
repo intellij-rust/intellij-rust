@@ -8,10 +8,11 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.doc.psi.RustDocElementTypes.*
+import org.rust.lang.doc.psi.RustDocKind
 
-class RustDocHighlightingLexer(isBlock: Boolean) :
+class RustDocHighlightingLexer(kind: RustDocKind) :
     MergingLexerAdapter(
-        FlexAdapter(_RustDocHighlightingLexer(isBlock)),
+        FlexAdapter(_RustDocHighlightingLexer(kind.isBlock)),
         TOKENS_TO_MERGE) {
 
     override fun getMergeFunction() = MergeFunction { type, lexer ->
