@@ -5,15 +5,12 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.DebugUtil
 import org.junit.experimental.categories.Category
 import org.rust.Performance
 import org.rust.lang.RustFileType
 import org.rust.lang.RustTestCaseBase
-import org.rust.lang.core.psi.RustReferenceElement
-import org.rust.lang.core.psi.visitors.RustRecursiveElementVisitor
 import java.util.*
 import kotlin.system.measureTimeMillis
 
@@ -61,19 +58,6 @@ class RustParserPerformanceTest : RustTestCaseBase() {
 
                     val time = measureTimeMillis {
                         val psi = PsiFileFactory.getInstance(project).createFileFromText(file.name, file.fileType, fileContent)
-                        try {
-                            psi.accept(object : RustRecursiveElementVisitor() {
-                                override fun visitElement(element: PsiElement) {
-                                    super.visitElement(element)
-                                    if (element is RustReferenceElement) {
-                                        element.reference.resolve()
-                                    }
-                                }
-                            })
-                        } catch(e: Throwable) {
-                            println(file.path)
-                            throw e
-                        }
                         val psiString = DebugUtil.psiToString(psi, /* skipWhitespace = */ true)
 
                         if (checkForErrors) {
@@ -107,4 +91,3 @@ class RustParserPerformanceTest : RustTestCaseBase() {
             ?.children?.singleOrNull()
             ?.findChild("src")!!
 }
-
