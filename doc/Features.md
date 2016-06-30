@@ -11,7 +11,7 @@
 
 ### Goto Declaration
 
-Use `Ctrl+B` or `Ctlr + mouse click` to jump to definition. We don't do type
+Use `Ctrl+B` or `Ctrl + mouse click` to jump to definition. We don't do type
 inference yet, so this will not work for fields and methods. Plain functions,
 types and modules are fully supported.
 
