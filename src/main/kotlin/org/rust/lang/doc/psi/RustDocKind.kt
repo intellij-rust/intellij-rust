@@ -4,11 +4,33 @@ import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 
 enum class RustDocKind {
-    Attr,
-    InnerBlock,
-    OuterBlock,
-    InnerEol,
-    OuterEol;
+    Attr {
+        override val prefix: String = ""
+        override val infix: String = ""
+    },
+
+    InnerBlock {
+        override val prefix: String = "/*!"
+        override val infix: String = "*"
+    },
+
+    OuterBlock {
+        override val prefix: String = "/**"
+        override val infix: String = "*"
+    },
+
+    InnerEol {
+        override val infix: String = "//!"
+        override val prefix: String = infix
+    },
+
+    OuterEol {
+        override val infix: String = "///"
+        override val prefix: String = infix
+    };
+
+    abstract val prefix: String
+    abstract val infix: String
 
     val isEol: Boolean
         get() = this == InnerEol || this == OuterEol
@@ -20,7 +42,7 @@ enum class RustDocKind {
         /**
          * Get [RustDocKind] of given doc comment token [IElementType].
          *
-         * For the set of supported token types see [].
+         * For the set of supported token types see [DOC_COMMENTS_TOKEN_SET].
          *
          * @throws IllegalArgumentException when given token type is unsupported
          */

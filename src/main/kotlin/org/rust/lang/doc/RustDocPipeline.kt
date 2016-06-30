@@ -74,10 +74,7 @@ private fun Pair<RustDocKind, String>.lines(): Sequence<Pair<RustDocKind, String
 // FIXME: Asterisk handling in block comments is just wrong
 private fun Pair<RustDocKind, String>.removeDecoration(): String = when (first) {
     RustDocKind.Attr -> second
-    RustDocKind.InnerBlock,
-    RustDocKind.OuterBlock -> second.substringAfter("*").trim()
-    RustDocKind.InnerEol -> second.substringAfter("//!").trim()
-    RustDocKind.OuterEol -> second.substringAfter("///").trim()
+    else -> second.substringAfter(first.infix).trim()
 }
 
 private val RustMetaItemElement.docAttr: String?

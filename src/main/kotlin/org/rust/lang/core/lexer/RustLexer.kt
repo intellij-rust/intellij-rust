@@ -9,6 +9,7 @@ import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RustTokenElementTypes.INNER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.RustTokenElementTypes.OUTER_EOL_DOC_COMMENT
+import org.rust.lang.doc.psi.RustDocKind
 
 class RustLexer : MergingLexerAdapterBase(FlexAdapter(_RustLexer())) {
     /**
@@ -16,7 +17,7 @@ class RustLexer : MergingLexerAdapterBase(FlexAdapter(_RustLexer())) {
      */
     override fun getMergeFunction() = MergeFunction { type, lexer ->
         if (type == INNER_EOL_DOC_COMMENT || type == OUTER_EOL_DOC_COMMENT) {
-            val prefix = if (type == INNER_EOL_DOC_COMMENT) "//!" else "///"
+            val prefix = RustDocKind.of(type).infix
             while (isOnMergeableComment(lexer, type, prefix) || isOnWSBetweenComments(lexer, type, prefix)) {
                 lexer.advance()
             }
