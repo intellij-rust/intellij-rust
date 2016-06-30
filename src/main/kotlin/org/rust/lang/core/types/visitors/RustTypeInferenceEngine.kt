@@ -34,7 +34,7 @@ object RustTypeInferenceEngine {
 @Suppress("IfNullToElvis")
 private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisitor<Boolean>() {
 
-    var bindings: Map<RustPatBindingElement, RustType> = hashMapOf()
+    val bindings: MutableMap<RustPatBindingElement, RustType> = hashMapOf()
 
     private fun match(pat: RustPatElement, type: RustType): Boolean {
         val prev = this.type
