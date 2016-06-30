@@ -41,7 +41,6 @@ class RustEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
 
         // check if the element at the caret is a line comment
         // and extract the comment token (//, /// or //!) from the comment text
-        // FIXME Missing block doc comments
         val commentToken = when (elementAtCaret.node?.elementType) {
             OUTER_EOL_DOC_COMMENT -> "/// "
             INNER_EOL_DOC_COMMENT -> "//! "

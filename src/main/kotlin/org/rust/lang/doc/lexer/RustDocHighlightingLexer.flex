@@ -102,6 +102,7 @@ CODE_SPAN    = "`" ( [^`\r\n] | "`" "`"+ )* "`"
     "/*"[*!]    { yybegin(IN_DOC_DATA); return DOC_DECO; }
     "*"+ "/"    { return (isLastToken() ? DOC_DECO : DOC_TEXT); }
     "*"         { yybegin(IN_DOC_DATA); return DOC_DECO; }
+    [^\ \t]     { yybegin(IN_DOC_DATA); yypushback(1); }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,6 +155,7 @@ CODE_SPAN    = "`" ( [^`\r\n] | "`" "`"+ )* "`"
 <IN_CODE_FENCE_DECO_BLOCK> {
     "*"+ "/"    { return (isLastToken() ? DOC_DECO : DOC_CODE_FENCE); }
     "*"         { yybegin(IN_CODE_FENCE); return DOC_DECO; }
+    [^\ \t]     { yybegin(IN_CODE_FENCE); yypushback(1); }
 }
 
 <IN_CODE_FENCE_DECO_EOL> "//"[/!]   { yybegin(IN_CODE_FENCE); return DOC_DECO; }
