@@ -658,7 +658,8 @@ impl_item ::= attrs_and_vis UNSAFE? IMPL generic_params? ( bare_impl | for_impl 
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustItemElement"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
-}
+  stubClass = "org.rust.lang.core.stubs.elements.RustImplItemElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"}
 
 private bare_impl ::= type where_clause? impl_body
 private for_impl ::= '!'? trait_ref FOR (type where_clause? impl_body | '..' '{' '}')
