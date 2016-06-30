@@ -39,8 +39,11 @@ abstract class RustLiteralOffsetsTestCase(
 }
 
 @RunWith(Parameterized::class)
-class RustNumericLiteralOffsetsTest(type: IElementType, text: String) :
-    RustLiteralOffsetsTestCase(type, text, ::RustNumericLiteralImpl) {
+class RustNumericLiteralOffsetsTest(
+    type: IElementType,
+    text: String
+) : RustLiteralOffsetsTestCase(type, text, ::RustNumericLiteralImpl) {
+
     @Test
     fun test() = doTest()
 
