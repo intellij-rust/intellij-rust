@@ -74,7 +74,9 @@ class MissingToolchainNotificationProvider(
             if (toolchain == null || !toolchain.looksLikeValidToolchain())
                 // NOP
             else if (!toolchain.containsMetadataCommand())
-                title = "Configured Rust toolchain is incompatible with the plugin: required at least ${RustToolchain.CARGO_LEAST_COMPATIBLE_VERSION}, found ${toolchain.queryCargoVersion()}"
+                title = "Configured Rust toolchain is incompatible with the plugin: " +
+                    "required at least Cargo ${RustToolchain.CARGO_LEAST_COMPATIBLE_VERSION}, " +
+                    "found ${toolchain.queryCargoVersion()}"
 
             return createBadToolchainPanel(title)
         }
