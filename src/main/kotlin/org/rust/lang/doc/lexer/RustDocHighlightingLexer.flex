@@ -16,7 +16,7 @@ import static com.intellij.psi.TokenType.*;
     MAIN_STATE = isBlock ? IN_BLOCK : IN_EOL;
   }
 
-  // FIXME(jajakobyly): I think it is possible this will break, though I couldn't make it do so :-)
+  private int DATA_STATE = IN_DOC_DATA;
   private char CODE_FENCE_DELIM = '\0';
 
   private boolean isLastToken() {
@@ -67,10 +67,7 @@ import static com.intellij.psi.TokenType.*;
 
 %s IN_DOC_DATA
 %s IN_DOC_DATA_DEEP
-
 %s IN_CODE_FENCE
-%s IN_CODE_FENCE_DECO_BLOCK
-%s IN_CODE_FENCE_DECO_EOL
 
 %unicode
 
@@ -110,17 +107,17 @@ CODE_SPAN    = "`" ( [^`\r\n] | "`" "`"+ )* "`"
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 <IN_BLOCK> {
-    "/*"[*!]    { yybegin(IN_DOC_DATA); return DOC_DECO; }
+    "/*"[*!]    { yybegin(DATA_STATE); return DOC_DECO; }
     "*"+ "/"    { return (isLastToken() ? DOC_DECO : DOC_TEXT); }
-    "*"         { yybegin(IN_DOC_DATA); return DOC_DECO; }
-    [^\ \t]     { yybegin(IN_DOC_DATA); yypushback(1); }
+    "*"         { yybegin(DATA_STATE); return DOC_DECO; }
+    [^\ \t]     { yybegin(DATA_STATE); yypushback(1); }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // EOL docs
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-<IN_EOL> "//"[/!]   { yybegin(IN_DOC_DATA); return DOC_DECO; }
+<IN_EOL> "//"[/!]   { yybegin(DATA_STATE); return DOC_DECO; }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Doc contents
@@ -150,35 +147,23 @@ CODE_SPAN    = "`" ( [^`\r\n] | "`" "`"+ )* "`"
     {CODE_SPAN}         { return DOC_CODE_SPAN; }
 
     "```" | "~~~"       { CODE_FENCE_DELIM = yycharat(0);
+                          DATA_STATE = IN_CODE_FENCE;
                           yybegin(IN_CODE_FENCE);
                           return DOC_CODE_FENCE; }
 
-    {EOL_WS}            { yybegin(MAIN_STATE); return WHITE_SPACE;}
+    {EOL_WS}            { yybegin(MAIN_STATE); return WHITE_SPACE; }
     {LINE_WS}+          { return WHITE_SPACE; }
 
     [^]                 { return DOC_TEXT; }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Code fences
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-<IN_CODE_FENCE_DECO_BLOCK> {
-    "*"+ "/"    { return (isLastToken() ? DOC_DECO : DOC_CODE_FENCE); }
-    "*"         { yybegin(IN_CODE_FENCE); return DOC_DECO; }
-    [^\ \t]     { yybegin(IN_CODE_FENCE); yypushback(1); }
-}
-
-<IN_CODE_FENCE_DECO_EOL> "//"[/!]   { yybegin(IN_CODE_FENCE); return DOC_DECO; }
-
 <IN_CODE_FENCE> {
     "```" | "~~~"       {
-        if (yycharat(0) == CODE_FENCE_DELIM) { yybegin(IN_DOC_DATA_DEEP); }
+        if (yycharat(0) == CODE_FENCE_DELIM) { DATA_STATE = IN_DOC_DATA_DEEP; yybegin(DATA_STATE); }
         return DOC_CODE_FENCE;
     }
 
-    {EOL_WS}            { yybegin(MAIN_STATE == IN_BLOCK ? IN_CODE_FENCE_DECO_BLOCK : IN_CODE_FENCE_DECO_EOL);
-                          return WHITE_SPACE;}
+    {EOL_WS}            { yybegin(MAIN_STATE); return WHITE_SPACE; }
     [^]                 { return DOC_CODE_FENCE; }
 }
 
@@ -188,3 +173,4 @@ CODE_SPAN    = "`" ( [^`\r\n] | "`" "`"+ )* "`"
 
 {WHITE_SPACE_CHAR}  { return WHITE_SPACE; }
 [^]                 { return BAD_CHARACTER; }
+<<EOF>>             { DATA_STATE = IN_DOC_DATA; CODE_FENCE_DELIM = '\0'; return null; }
