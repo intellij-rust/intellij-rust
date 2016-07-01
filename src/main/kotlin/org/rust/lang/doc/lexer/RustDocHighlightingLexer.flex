@@ -159,7 +159,7 @@ CODE_SPAN    = "`" ( [^`\r\n] | "`" "`"+ )* "`"
 
 <IN_CODE_FENCE> {
     "```" | "~~~"       {
-        if (yycharat(0) == CODE_FENCE_DELIM) { DATA_STATE = IN_DOC_DATA_DEEP; yybegin(DATA_STATE); }
+        if (yycharat(0) == CODE_FENCE_DELIM) { DATA_STATE = IN_DOC_DATA; yybegin(IN_DOC_DATA_DEEP); }
         return DOC_CODE_FENCE;
     }
 
