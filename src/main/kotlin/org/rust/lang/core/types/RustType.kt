@@ -32,5 +32,11 @@ interface RustType {
     val staticMethods: Sequence<RustImplMethodMemberElement>
         get() = allMethods.filter { it.isStatic }
 
+    /**
+     * Strips all the references and returns the name of the resulting nominal type,
+     * if it is indeed nominal.
+     *
+     * See `RustUnresolvedType#nominalTypeName`
+     */
     val baseTypeName: String? get() = null
 }
