@@ -8,41 +8,40 @@ enum class RustDocKind {
         override val prefix: String = ""
         override val infix: String = ""
 
-        override fun removeLineDecoration(line: String): String = line
+        override fun removeDecoration(lines: Sequence<String>): Sequence<String> =
+            lines // nothing to do here
     },
 
     InnerBlock {
         override val prefix: String = "/*!"
         override val infix: String = "*"
 
-        // FIXME: This trimming is devastating
-        // FIXME: Asterisk handling in block comments is just wrong
-        override fun removeLineDecoration(line: String): String = line.substringAfter(infix).trim()
+        override fun removeDecoration(lines: Sequence<String>): Sequence<String> =
+            removeBlockDecoration(lines)
     },
 
     OuterBlock {
         override val prefix: String = "/**"
         override val infix: String = "*"
 
-        // FIXME: This trimming is devastating
-        // FIXME: Asterisk handling in block comments is just wrong
-        override fun removeLineDecoration(line: String): String = line.substringAfter(infix).trim()
+        override fun removeDecoration(lines: Sequence<String>): Sequence<String> =
+            removeBlockDecoration(lines)
     },
 
     InnerEol {
         override val infix: String = "//!"
         override val prefix: String = infix
 
-        // FIXME: This trimming is devastating
-        override fun removeLineDecoration(line: String): String = line.substringAfter(infix).trim()
+        override fun removeDecoration(lines: Sequence<String>): Sequence<String> =
+            removeEolDecoration(lines)
     },
 
     OuterEol {
         override val infix: String = "///"
         override val prefix: String = infix
 
-        // FIXME: This trimming is devastating
-        override fun removeLineDecoration(line: String): String = line.substringAfter(infix).trim()
+        override fun removeDecoration(lines: Sequence<String>): Sequence<String> =
+            removeEolDecoration(lines)
     };
 
     abstract val prefix: String
@@ -51,7 +50,34 @@ enum class RustDocKind {
     val isBlock: Boolean
         get() = this == InnerBlock || this == OuterBlock
 
-    abstract fun removeLineDecoration(line: String): String
+    /**
+     * Removes doc comment decoration from a sequence of token's lines.
+     *
+     * This method expects non-empty line sequences of valid doc comment tokens.
+     * It does **not** perform any validation!
+     */
+    abstract fun removeDecoration(lines: Sequence<String>): Sequence<String>
+
+    protected fun removeEolDecoration(lines: Sequence<String>, infix: String = this.infix): Sequence<String> =
+        lines.map { it.substringAfter(infix) }
+            .let { lines ->
+                // detect content indentation
+                val firstLineIndented = lines.first()
+                val firstLine = firstLineIndented.trimStart()
+                val indent = firstLineIndented.length - firstLine.length
+
+                sequenceOf(firstLine) + lines.drop(1).map {
+                    it.dropWhileAtMost(indent) { it == ' ' }
+                }
+            }
+
+    protected fun removeBlockDecoration(lines: Sequence<String>): Sequence<String> {
+        // Doing some patches we can "convert" block comment into eol one
+        val ll = lines.toMutableList()
+        ll[0] = ll[0].replaceFirst(prefix, " $infix ")
+        ll[ll.lastIndex] = ll[ll.lastIndex].trimTrailingAsterisks()
+        return removeEolDecoration(ll.asSequence(), infix)
+    }
 
     companion object {
         /**
@@ -67,6 +93,30 @@ enum class RustDocKind {
             INNER_EOL_DOC_COMMENT   -> InnerEol
             OUTER_EOL_DOC_COMMENT   -> OuterEol
             else                    -> throw IllegalArgumentException("unsupported token type")
+        }
+
+        private inline fun String.dropWhileAtMost(n: Int, predicate: (Char) -> Boolean): String {
+            var i = n
+            for (index in this.indices)
+                if (i-- <= 0 || !predicate(this[index]))
+                    return substring(index)
+            return ""
+        }
+
+        /**
+         * Get rid of trailing (pseudo-regexp): [ ]+ [*]* * /
+         */
+        private fun String.trimTrailingAsterisks(): String {
+            if(length < 2) return this
+
+            var i = lastIndex
+            if(get(i-1) == '*' && get(i) == '/') {
+                i -= 2
+                while(i >= 0 && get(i) == '*') i--;
+                while(i >= 0 && get(i) == ' ') i--;
+            }
+
+            return substring(0, i + 1)
         }
     }
 }

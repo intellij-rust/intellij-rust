@@ -11,12 +11,10 @@ import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.core.psi.util.stringLiteralValue
 import org.rust.lang.doc.psi.RustDocKind
 
-// TODO Better tests?
-
 fun RustDocAndAttributeOwner.documentation(): String? =
     (outerDocs() + innerDocs())
-        .flatMap { it.lines() }
-        .map { it.first.removeLineDecoration(it.second) }
+        .map { it.first to it.second.splitToSequence("\r\n", "\r", "\n") }
+        .flatMap { it.first.removeDecoration(it.second) }
         .joinToString("\n")
 
 fun RustDocAndAttributeOwner.documentationAsHtml(): String? {
@@ -66,9 +64,6 @@ private fun RustDocAndAttributeOwner.innerDocs(): Sequence<Pair<RustDocKind, Str
             }
         }
 }
-
-private fun Pair<RustDocKind, String>.lines(): Sequence<Pair<RustDocKind, String>> =
-    second.splitToSequence("\r\n", "\r", "\n").map { first to it }
 
 private val RustMetaItemElement.docAttr: String?
     get() = if (identifier.text == "doc") litExpr?.stringLiteralValue else null
