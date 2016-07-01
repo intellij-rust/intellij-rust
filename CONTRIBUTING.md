@@ -51,12 +51,14 @@ To contribute to the code of the project check out the the latest version and fo
 If you feel yourself new to the field or don't know what you should start coping with check out issue-tracker for the
 [up-for-grab](https://github.com/intellij-rust/intellij-rust/labels/up%20for%20grab) tasks as these may be greatest entry points to the project source code.
 
+It's also very useful to submit fixes for the problems you face yourself when
+using the plugin. It helps to prioritize the most important issues and is fun!
+
 If you want to contribute to the project in any of the numerous other ways, first of all consider joining our [Gitter](https://gitter.im/alexeykudinkin/intellij-rust?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) therefore
 being on par with the current development efforts.
 
-**NOTA BENE**
-
-Please, make sure that all tests pass and Travis reports build as green prior to making a pull request.
+Feel free to submit a work-in-progress pull request to collect early feedback.
+When you are done with the PR, please make sure that all tests pass.
 
 
 ## Code style
@@ -64,12 +66,6 @@ Please, make sure that all tests pass and Travis reports build as green prior to
 Please, consider our [code-style](STYLE.md) prior to submitting the pull request. We love PRs, but much more than just PRs we love PRs that are 'on style'.
 
 For the Java sources we're stuck to the Google's [one](https://google.github.io/styleguide/javaguide.html).
-
-## PR style
-
-It's much easier to review small, focused pull requests. So if you can split your changes into several chunks then
-please do it.
-
 
 # Testing
 
@@ -89,6 +85,100 @@ The test suite can be run by launching:
 To launch parser performance tests, use
 
     ./gradlew performanceTest
+
+
+# Pull requests best practices
+
+It's much easier to review small, focused pull requests. So if you can split
+your changes into several chunks then please do it. There is no such thing as a
+too small pull request.
+
+Here is my typical workflow for submitting a pull request, but you don't need to
+follow it exactly.
+
+First, I press the fork button on the GitHub website to fork
+`https://github.com/intellij-rust/intellij-rust` to
+`https://github.com/matklad/intellij-rust`. Then I clone my fork:
+
+```
+$ git clone git://github.com/matklad/intellij-rust && cd intellij-rust
+```
+
+The next thing is usually creating a branch:
+
+```
+$ git checkout -b "useful-fix"
+```
+
+I can work directly on my fork's master branch, but having a dedicated PR branch
+helps if I want to synchronize my work with upstream repository or if I want to
+submit several pull requests.
+
+Usually I try to keep my PRs one commit long:
+
+```
+$ hack hack hack
+$ git commit -am"(INSP): add a useful inspection"
+$ ./gradlew test && git push -u origin useful-fix
+```
+
+Now I am ready to press "create pull request" button on the GitHub website!
+
+## Incorporating code review suggestions
+
+If my pull request consists of a single commit then to address the review I just
+push additional commits to the pull request branch:
+
+```
+$ more hacking
+$ git commit -am"Fix code style issues"
+$ ./gradlew test && git push
+```
+
+I don't pay much attention to the commit messages, because after everything is
+fine the PR will be squash merged as a single good commit.
+
+
+If my PR consists of several commits, then the situation is a bit tricky. I like
+to keep the history clean, so I do some form of the rebasing:
+
+```
+$ more hacking
+$ git add .
+$ git commit --fixup aef92cc
+$ git rebase --autosquash -i HEAD~3
+```
+
+And then I force push the branch
+
+```
+$ ./gradlew test && git push --force-with-lease
+```
+
+## Updating the pull request to solve merge conflicts
+
+If my PR starts to conflict with the upstream changes, I need to update it.
+First, I add the original repository as a remote, so that I can pull changes
+from it.
+
+```
+$ git remote add upstream https://github.com/intellij-rust/intellij-rust
+$ git fetch upstream
+$ git merge upstream/master master  # The dedicated PR branch helps a lot here.
+```
+
+Then I rebase my work on top of the updated master:
+
+```
+$ git rebase master useful-fix
+```
+
+And now I need to force push the PR branch:
+
+```
+$ ./gradlew test && git push --force-with-lease
+```
+
 
 # Plugin architecture
 
