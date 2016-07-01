@@ -36,7 +36,7 @@ class RustHighlighter : SyntaxHighlighterBase() {
             BLOCK_COMMENT                  -> RustColor.BLOCK_COMMENT
             EOL_COMMENT                    -> RustColor.EOL_COMMENT
 
-            DOC_TEXT, DOC_DECO             -> RustColor.DOC_COMMENT
+            DOC_TEXT                       -> RustColor.DOC_COMMENT
             DOC_HEADING                    -> RustColor.DOC_HEADING
             DOC_INLINE_LINK                -> RustColor.DOC_LINK
             DOC_REF_LINK                   -> RustColor.DOC_LINK

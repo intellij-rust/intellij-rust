@@ -107,9 +107,9 @@ CODE_SPAN    = "`" ( [^`\r\n] | "`" "`"+ )* "`"
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 <IN_BLOCK> {
-    "/*"[*!]    { yybegin(DATA_STATE); return DOC_DECO; }
-    "*"+ "/"    { return (isLastToken() ? DOC_DECO : DOC_TEXT); }
-    "*"         { yybegin(DATA_STATE); return DOC_DECO; }
+    "/*"[*!]    { yybegin(DATA_STATE); return DOC_TEXT; }
+    "*"+ "/"    { return DOC_TEXT; }
+    "*"         { yybegin(DATA_STATE); return DOC_TEXT; }
     [^\ \t]     { yybegin(DATA_STATE); yypushback(1); }
 }
 
@@ -117,7 +117,7 @@ CODE_SPAN    = "`" ( [^`\r\n] | "`" "`"+ )* "`"
 // EOL docs
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-<IN_EOL> "//"[/!]   { yybegin(DATA_STATE); return DOC_DECO; }
+<IN_EOL> "//"[/!]   { yybegin(DATA_STATE); return DOC_TEXT; }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Doc contents
