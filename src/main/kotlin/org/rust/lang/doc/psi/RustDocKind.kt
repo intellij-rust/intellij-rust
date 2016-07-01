@@ -7,36 +7,51 @@ enum class RustDocKind {
     Attr {
         override val prefix: String = ""
         override val infix: String = ""
+
+        override fun removeLineDecoration(line: String): String = line
     },
 
     InnerBlock {
         override val prefix: String = "/*!"
         override val infix: String = "*"
+
+        // FIXME: This trimming is devastating
+        // FIXME: Asterisk handling in block comments is just wrong
+        override fun removeLineDecoration(line: String): String = line.substringAfter(infix).trim()
     },
 
     OuterBlock {
         override val prefix: String = "/**"
         override val infix: String = "*"
+
+        // FIXME: This trimming is devastating
+        // FIXME: Asterisk handling in block comments is just wrong
+        override fun removeLineDecoration(line: String): String = line.substringAfter(infix).trim()
     },
 
     InnerEol {
         override val infix: String = "//!"
         override val prefix: String = infix
+
+        // FIXME: This trimming is devastating
+        override fun removeLineDecoration(line: String): String = line.substringAfter(infix).trim()
     },
 
     OuterEol {
         override val infix: String = "///"
         override val prefix: String = infix
+
+        // FIXME: This trimming is devastating
+        override fun removeLineDecoration(line: String): String = line.substringAfter(infix).trim()
     };
 
     abstract val prefix: String
     abstract val infix: String
 
-    val isEol: Boolean
-        get() = this == InnerEol || this == OuterEol
-
     val isBlock: Boolean
         get() = this == InnerBlock || this == OuterBlock
+
+    abstract fun removeLineDecoration(line: String): String
 
     companion object {
         /**

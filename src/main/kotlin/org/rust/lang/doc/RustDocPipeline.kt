@@ -16,10 +16,10 @@ import org.rust.lang.doc.psi.RustDocKind
 fun RustDocAndAttributeOwner.documentation(): String? =
     (outerDocs() + innerDocs())
         .flatMap { it.lines() }
-        .map { it.removeDecoration() }
+        .map { it.first.removeLineDecoration(it.second) }
         .joinToString("\n")
 
-fun RustDocAndAttributeOwner.documentationFormatted(): String? {
+fun RustDocAndAttributeOwner.documentationAsHtml(): String? {
     val raw = documentation() ?: return null
     val lines = raw.split("\n").toMutableList()
     MarkdownUtil.replaceHeaders(lines)
@@ -69,13 +69,6 @@ private fun RustDocAndAttributeOwner.innerDocs(): Sequence<Pair<RustDocKind, Str
 
 private fun Pair<RustDocKind, String>.lines(): Sequence<Pair<RustDocKind, String>> =
     second.splitToSequence("\r\n", "\r", "\n").map { first to it }
-
-// FIXME: This trimming is devastating
-// FIXME: Asterisk handling in block comments is just wrong
-private fun Pair<RustDocKind, String>.removeDecoration(): String = when (first) {
-    RustDocKind.Attr -> second
-    else -> second.substringAfter(first.infix).trim()
-}
 
 private val RustMetaItemElement.docAttr: String?
     get() = if (identifier.text == "doc") litExpr?.stringLiteralValue else null

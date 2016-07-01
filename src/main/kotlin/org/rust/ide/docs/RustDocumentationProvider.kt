@@ -6,13 +6,13 @@ import org.rust.lang.core.psi.RustDocAndAttributeOwner
 import org.rust.lang.core.psi.RustFnItemElement
 import org.rust.lang.core.psi.RustPatBindingElement
 import org.rust.lang.core.psi.impl.mixin.isMut
-import org.rust.lang.doc.documentationFormatted
+import org.rust.lang.doc.documentationAsHtml
 
 class RustDocumentationProvider : AbstractDocumentationProvider() {
 
     override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? =
         if (element is RustDocAndAttributeOwner) {
-            element.documentationFormatted().let {
+            element.documentationAsHtml().let {
                 if (element.name != null) {
                     "<pre>${element.name}</pre>\n$it"
                 } else {
