@@ -89,9 +89,9 @@ To launch parser performance tests, use
 
 # Pull requests best practices
 
-It's much easier to review small, focused pull requests. So if you can split
-your changes into several chunks then please do it. There is no such thing as a
-too small pull request.
+It's much easier to review small, focused pull requests. If you can split your
+changes into several pull requests then please do it. There is no such thing as
+a "too small" pull request.
 
 Here is my typical workflow for submitting a pull request, but you don't need to
 follow it exactly.
