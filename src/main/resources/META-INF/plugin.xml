@@ -150,10 +150,6 @@
         <!-- Intentions -->
 
         <intentionAction>
-            <className>org.rust.ide.intentions.ExpandModuleIntention</className>
-            <category>Rust</category>
-        </intentionAction>
-        <intentionAction>
             <className>org.rust.ide.intentions.ContractModuleIntention</className>
             <category>Rust</category>
         </intentionAction>
