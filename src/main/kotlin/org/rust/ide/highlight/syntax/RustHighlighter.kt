@@ -1,6 +1,5 @@
 package org.rust.ide.highlight.syntax
 
-import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
@@ -14,10 +13,10 @@ class RustHighlighter : SyntaxHighlighterBase() {
 
     override fun getHighlightingLexer() = RustHighlightingLexer()
 
-    override fun getTokenHighlights(tokenType: IElementType?) = pack(map(tokenType))
+    override fun getTokenHighlights(tokenType: IElementType?) = pack(map(tokenType)?.textAttributesKey)
 
     companion object {
-        fun map(tokenType: IElementType?): TextAttributesKey? = when (tokenType) {
+        fun map(tokenType: IElementType?): RustColor? = when (tokenType) {
             is RustKeywordTokenType        -> RustColor.KEYWORD
 
             IDENTIFIER                     -> RustColor.IDENTIFIER
@@ -57,6 +56,6 @@ class RustHighlighter : SyntaxHighlighterBase() {
             INVALID_UNICODE_ESCAPE_TOKEN   -> RustColor.INVALID_STRING_ESCAPE
 
             else                           -> null
-        }?.textAttributesKey
+        }
     }
 }

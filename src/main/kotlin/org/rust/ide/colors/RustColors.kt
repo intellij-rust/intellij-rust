@@ -7,50 +7,62 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Default
 /**
  * See [RustColorSettingsPage] and [org.rust.ide.highlight.syntax.RustHighlighter]
  */
-enum class RustColor(val humanName: String, externalName: String, fallback: TextAttributesKey) {
-    IDENTIFIER            ("Identifier", "org.rust.IDENTIFIER", Default.IDENTIFIER),
-    FUNCTION_DECLARATION  ("Function declaration", "org.rust.FUNCTION_DECLARATION", Default.FUNCTION_DECLARATION),
-    INSTANCE_METHOD       ("Instance method declaration", "org.rust.INSTANCE_METHOD", Default.INSTANCE_METHOD),
-    STATIC_METHOD         ("Static method declaration", "org.rust.STATIC_METHOD", Default.STATIC_METHOD),
+enum class RustColor(val humanName: String, val default: TextAttributesKey) {
+    IDENTIFIER            ("Identifier",                  Default.IDENTIFIER),
+    FUNCTION_DECLARATION  ("Function declaration",        Default.FUNCTION_DECLARATION),
+    INSTANCE_METHOD       ("Instance method declaration", Default.INSTANCE_METHOD),
+    STATIC_METHOD         ("Static method declaration",   Default.STATIC_METHOD),
 
-    LIFETIME              ("Lifetime", "org.rust.LIFETIME", Default.IDENTIFIER),
+    LIFETIME              ("Lifetime",                    Default.IDENTIFIER),
 
-    CHAR                  ("Char", "org.rust.CHAR", Default.STRING),
-    STRING                ("String", "org.rust.STRING", Default.STRING),
-    NUMBER                ("Number", "org.rust.NUMBER", Default.NUMBER),
+    CHAR                  ("Char",                        Default.STRING),
+    STRING                ("String",                      Default.STRING),
+    NUMBER                ("Number",                      Default.NUMBER),
 
-    KEYWORD               ("Keyword", "org.rust.KEYWORD", Default.KEYWORD),
+    PRIMITIVE_TYPE        ("Primitive Type",              Default.KEYWORD),
 
-    BLOCK_COMMENT         ("Block comment", "org.rust.BLOCK_COMMENT", Default.BLOCK_COMMENT),
-    EOL_COMMENT           ("Line comment", "org.rust.EOL_COMMENT", Default.LINE_COMMENT),
+    CRATE                 ("Crate",                       Default.IDENTIFIER),
+    STRUCT                ("Struct",                      Default.CLASS_NAME),
+    TRAIT                 ("Trait",                       Default.INTERFACE_NAME),
+    MODULE                ("Module",                      Default.IDENTIFIER),
+    ENUM                  ("Enum",                        Default.CLASS_NAME),
+    ENUM_VARIANT          ("Enum Variant",                Default.STATIC_FIELD),
 
-    DOC_COMMENT           ("Rustdoc comment", "org.rust.DOC_COMMENT", Default.DOC_COMMENT),
-    DOC_HEADING           ("Rustdoc heading", "org.rust.DOC_HEADING", Default.DOC_COMMENT_TAG),
-    DOC_LINK              ("Rustdoc link", "org.rust.DOC_LINK", Default.DOC_COMMENT_TAG_VALUE),
-    DOC_CODE              ("Rustdoc code", "org.rust.DOC_CODE", Default.DOC_COMMENT_MARKUP),
+    FIELD                 ("Field",                       Default.INSTANCE_FIELD),
 
-    PARENTHESIS           ("Parenthesis", "org.rust.PARENTHESIS", Default.PARENTHESES),
-    BRACKETS              ("Brackets", "org.rust.BRACKETS", Default.BRACKETS),
-    BRACES                ("Braces", "org.rust.BRACES", Default.BRACES),
+    KEYWORD               ("Keyword",                     Default.KEYWORD),
 
-    OPERATORS             ("Operator sign", "org.rust.OPERATORS", Default.OPERATION_SIGN),
+    BLOCK_COMMENT         ("Block comment",               Default.BLOCK_COMMENT),
+    EOL_COMMENT           ("Line comment",                Default.LINE_COMMENT),
 
-    SEMICOLON             ("Semicolon", "org.rust.SEMICOLON", Default.SEMICOLON),
-    DOT                   ("Dot", "org.rust.DOT", Default.DOT),
-    COMMA                 ("Comma", "org.rust.COMMA", Default.COMMA),
+    DOC_COMMENT           ("Rustdoc comment",             Default.DOC_COMMENT),
+    DOC_HEADING           ("Rustdoc heading",             Default.DOC_COMMENT_TAG),
+    DOC_LINK              ("Rustdoc link",                Default.DOC_COMMENT_TAG_VALUE),
+    DOC_CODE              ("Rustdoc code",                Default.DOC_COMMENT_MARKUP),
 
-    ATTRIBUTE             ("Attribute", "org.rust.ATTRIBUTE", Default.METADATA),
+    PARENTHESIS           ("Parenthesis",                 Default.PARENTHESES),
+    BRACKETS              ("Brackets",                    Default.BRACKETS),
+    BRACES                ("Braces",                      Default.BRACES),
 
-    MACRO                 ("Macro", "org.rust.MACRO", Default.IDENTIFIER),
+    OPERATORS             ("Operator sign",               Default.OPERATION_SIGN),
 
-    TYPE_PARAMETER        ("Type parameter", "org.rust.TYPE_PARAMETER", Default.IDENTIFIER),
+    SEMICOLON             ("Semicolon",                   Default.SEMICOLON),
+    DOT                   ("Dot",                         Default.DOT),
+    COMMA                 ("Comma",                       Default.COMMA),
 
-    MUT_BINDING           ("Mutable binding", "org.rust.MUT_BINDING", Default.IDENTIFIER),
+    ATTRIBUTE             ("Attribute",                   Default.METADATA),
 
-    VALID_STRING_ESCAPE   ("Valid escape sequence", "org.rust.VALID_STRING_ESCAPE", Default.VALID_STRING_ESCAPE),
-    INVALID_STRING_ESCAPE ("Invalid excape sequence", "org.rust.INVALID_STRING_ESCAPE", Default.INVALID_STRING_ESCAPE);
+    MACRO                 ("Macro",                       Default.IDENTIFIER),
 
-    val textAttributesKey = TextAttributesKey.createTextAttributesKey(externalName, fallback)
+    TYPE_PARAMETER        ("Type parameter",              Default.IDENTIFIER),
+
+    MUT_BINDING           ("Mutable binding",             Default.IDENTIFIER),
+
+    VALID_STRING_ESCAPE   ("Valid escape sequence",       Default.VALID_STRING_ESCAPE),
+    INVALID_STRING_ESCAPE ("Invalid escape sequence",     Default.INVALID_STRING_ESCAPE),
+    ;
+
+    val textAttributesKey = TextAttributesKey.createTextAttributesKey("org.rust.${this.name}", default)
     val attributesDescriptor = AttributesDescriptor(humanName, textAttributesKey)
 }
 
