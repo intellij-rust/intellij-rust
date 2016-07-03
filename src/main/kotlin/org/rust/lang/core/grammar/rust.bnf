@@ -972,8 +972,8 @@ private array_elems ::= any_expr ';' any_expr
 //private range_expr_group ::= open_range_expr
 //                           | full_range_expr
 
-full_range_expr ::= expr '..' (&<<checkBraceAllowed>> expr)?
-open_range_expr ::=      '..' (&<<checkBraceAllowed>> expr)?
+full_range_expr ::= expr ( '..' (&<<checkBraceAllowed>> expr)? | '...' (&<<checkBraceAllowed>> expr) )
+open_range_expr ::=      ( '..' (&<<checkBraceAllowed>> expr)? | '...' (&<<checkBraceAllowed>> expr) )
 
 range_expr ::= expr + {
   methods=[
