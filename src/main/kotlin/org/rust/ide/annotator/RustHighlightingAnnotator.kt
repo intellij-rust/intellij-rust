@@ -25,10 +25,10 @@ class RustHighlightingAnnotator : Annotator {
             }
             val ref = element.reference.resolve() ?: return
             // Highlight the element dependent on what it's referencing.
-            val color = highlightingVisitor().computeNullable(ref)?.second
+            val color = HighlightingVisitor().computeNullable(ref)?.second
             holder.highlight(text, color)
         } else {
-            val (text, color) = highlightingVisitor().computeNullable(element) ?: return
+            val (text, color) = HighlightingVisitor().computeNullable(element) ?: return
             holder.highlight(text, color)
         }
     }
@@ -40,7 +40,7 @@ class RustHighlightingAnnotator : Annotator {
         }
     }
 
-    fun highlightingVisitor() = object : RustComputingVisitor<Pair<PsiElement?, RustColor?>>() {
+    private class HighlightingVisitor : RustComputingVisitor<Pair<PsiElement?, RustColor?>>() {
 
         fun highlight(element: PsiElement?, color: RustColor?) = set { Pair(element, color) }
 
@@ -76,7 +76,6 @@ class RustHighlightingAnnotator : Annotator {
 
         override fun visitExternCrateItem(o: RustExternCrateItemElement) = highlight(o.identifier, RustColor.CRATE)
 
-        //TODO: When are element and element.identifier different?
         override fun visitMacroInvocation(m: RustMacroInvocationElement) = highlight(m, RustColor.MACRO)
         override fun visitMethodCallExpr(o: RustMethodCallExprElement)   = highlight(o.identifier, RustColor.INSTANCE_METHOD)
         override fun visitFnItem(o: RustFnItemElement)                   = highlight(o.identifier, RustColor.FUNCTION_DECLARATION)
