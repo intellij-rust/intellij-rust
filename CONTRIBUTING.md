@@ -52,7 +52,7 @@ If you feel yourself new to the field or don't know what you should start coping
 [up-for-grab](https://github.com/intellij-rust/intellij-rust/labels/up%20for%20grab) tasks as these may be greatest entry points to the project source code.
 
 It's also very useful to submit fixes for the problems you face yourself when
-using the plugin. It helps to prioritize the most important issues and is fun!
+using the plugin.
 
 If you want to contribute to the project in any of the numerous other ways, first of all consider joining our [Gitter](https://gitter.im/alexeykudinkin/intellij-rust?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) therefore
 being on par with the current development efforts.
@@ -93,8 +93,9 @@ It's much easier to review small, focused pull requests. If you can split your
 changes into several pull requests then please do it. There is no such thing as
 a "too small" pull request.
 
-Here is my typical workflow for submitting a pull request, but you don't need to
-follow it exactly.
+Here is my typical workflow for submitting a pull request. You don't need to
+follow it exactly. I will show command line commands, but you can use any git
+client of your choice.
 
 First, I press the fork button on the GitHub website to fork
 `https://github.com/intellij-rust/intellij-rust` to
