@@ -15,18 +15,16 @@ class RustHighlightingAnnotator : Annotator {
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         if (element is RustReferenceElement) {
-            if (element is RustPathElement && element.isPrimitive) {
-                holder.highlight(element, RustColor.PRIMITIVE_TYPE)
-                return
+            val name = element.referenceNameElement
+            val color = if (element is RustPathElement && element.isPrimitive) {
+                RustColor.PRIMITIVE_TYPE
+            } else {
+                val ref = element.reference.resolve() ?: return
+                // Highlight the element dependent on what it's referencing.
+                HighlightingVisitor().computeNullable(ref)?.second
             }
-            val text = when (element) {
-                is RustPathElement -> element.identifier
-                else -> element
-            }
-            val ref = element.reference.resolve() ?: return
-            // Highlight the element dependent on what it's referencing.
-            val color = HighlightingVisitor().computeNullable(ref)?.second
-            holder.highlight(text, color)
+
+            holder.highlight(name, color)
         } else {
             val (text, color) = HighlightingVisitor().computeNullable(element) ?: return
             holder.highlight(text, color)
