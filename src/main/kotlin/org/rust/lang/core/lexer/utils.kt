@@ -12,20 +12,14 @@ fun CharSequence.tokenize(lexer: Lexer): Sequence<Pair<IElementType, String>> =
         lexer.tokenType?.to(lexer.tokenText)
     })
 
-//
-// String extensions
-//
-
-fun String.isEOL(): Boolean {
-    // TODO(kudinkin): Sync with flex
-    return equals("\r")
-        || equals("\n")
-        || equals("\r\n")
-}
-
-fun String.containsEOL(): Boolean {
-    // TODO(kudinkin): Sync with flex
-    return contains("\r")
-        || contains("\n")
-        || contains("\r\n")
+/**
+ * Save state of the [Lexer], perform [action] on it, and then restore saved state.
+ */
+inline fun <T> Lexer.peekingFrame(action: Lexer.() -> T): T {
+    val pos = currentPosition
+    try {
+        return action(this)
+    } finally {
+        restore(pos)
+    }
 }

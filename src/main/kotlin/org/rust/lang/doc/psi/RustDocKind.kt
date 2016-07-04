@@ -1,0 +1,122 @@
+package org.rust.lang.doc.psi
+
+import com.intellij.psi.tree.IElementType
+import org.rust.lang.core.psi.RustTokenElementTypes.*
+
+enum class RustDocKind {
+    Attr {
+        override val prefix: String = ""
+        override val infix: String = ""
+
+        override fun removeDecoration(lines: Sequence<String>): Sequence<String> =
+            lines // nothing to do here
+    },
+
+    InnerBlock {
+        override val prefix: String = "/*!"
+        override val infix: String = "*"
+
+        override fun removeDecoration(lines: Sequence<String>): Sequence<String> =
+            removeBlockDecoration(lines)
+    },
+
+    OuterBlock {
+        override val prefix: String = "/**"
+        override val infix: String = "*"
+
+        override fun removeDecoration(lines: Sequence<String>): Sequence<String> =
+            removeBlockDecoration(lines)
+    },
+
+    InnerEol {
+        override val infix: String = "//!"
+        override val prefix: String = infix
+
+        override fun removeDecoration(lines: Sequence<String>): Sequence<String> =
+            removeEolDecoration(lines)
+    },
+
+    OuterEol {
+        override val infix: String = "///"
+        override val prefix: String = infix
+
+        override fun removeDecoration(lines: Sequence<String>): Sequence<String> =
+            removeEolDecoration(lines)
+    };
+
+    abstract val prefix: String
+    abstract val infix: String
+
+    val isBlock: Boolean
+        get() = this == InnerBlock || this == OuterBlock
+
+    /**
+     * Removes doc comment decoration from a sequence of token's lines.
+     *
+     * This method expects non-empty line sequences of valid doc comment tokens.
+     * It does **not** perform any validation!
+     */
+    abstract fun removeDecoration(lines: Sequence<String>): Sequence<String>
+
+    protected fun removeEolDecoration(lines: Sequence<String>, infix: String = this.infix): Sequence<String> =
+        lines.map { it.substringAfter(infix) }
+            .let { lines ->
+                // detect content indentation
+                val firstLineIndented = lines.first()
+                val firstLine = firstLineIndented.trimStart()
+                val indent = firstLineIndented.length - firstLine.length
+
+                sequenceOf(firstLine) + lines.drop(1).map {
+                    it.dropWhileAtMost(indent) { it == ' ' }
+                }
+            }
+
+    protected fun removeBlockDecoration(lines: Sequence<String>): Sequence<String> {
+        // Doing some patches we can "convert" block comment into eol one
+        val ll = lines.toMutableList()
+        ll[0] = ll[0].replaceFirst(prefix, " $infix ")
+        ll[ll.lastIndex] = ll[ll.lastIndex].trimTrailingAsterisks()
+        return removeEolDecoration(ll.asSequence(), infix)
+    }
+
+    companion object {
+        /**
+         * Get [RustDocKind] of given doc comment token [IElementType].
+         *
+         * For the set of supported token types see [DOC_COMMENTS_TOKEN_SET].
+         *
+         * @throws IllegalArgumentException when given token type is unsupported
+         */
+        fun of(tokenType: IElementType): RustDocKind = when (tokenType) {
+            INNER_BLOCK_DOC_COMMENT -> InnerBlock
+            OUTER_BLOCK_DOC_COMMENT -> OuterBlock
+            INNER_EOL_DOC_COMMENT   -> InnerEol
+            OUTER_EOL_DOC_COMMENT   -> OuterEol
+            else                    -> throw IllegalArgumentException("unsupported token type")
+        }
+
+        private inline fun String.dropWhileAtMost(n: Int, predicate: (Char) -> Boolean): String {
+            var i = n
+            for (index in this.indices)
+                if (i-- <= 0 || !predicate(this[index]))
+                    return substring(index)
+            return ""
+        }
+
+        /**
+         * Get rid of trailing (pseudo-regexp): [ ]+ [*]* * /
+         */
+        private fun String.trimTrailingAsterisks(): String {
+            if(length < 2) return this
+
+            var i = lastIndex
+            if(get(i-1) == '*' && get(i) == '/') {
+                i -= 2
+                while(i >= 0 && get(i) == '*') i--;
+                while(i >= 0 && get(i) == ' ') i--;
+            }
+
+            return substring(0, i + 1)
+        }
+    }
+}

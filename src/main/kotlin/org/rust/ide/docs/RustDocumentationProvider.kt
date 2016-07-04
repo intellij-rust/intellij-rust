@@ -2,36 +2,31 @@ package org.rust.ide.docs
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.psi.PsiElement
-import com.intellij.util.text.MarkdownUtil
-import com.petebevin.markdown.MarkdownProcessor
 import org.rust.lang.core.psi.RustDocAndAttributeOwner
 import org.rust.lang.core.psi.RustFnItemElement
 import org.rust.lang.core.psi.RustPatBindingElement
-import org.rust.lang.core.psi.documentation
 import org.rust.lang.core.psi.impl.mixin.isMut
+import org.rust.lang.doc.documentationAsHtml
 
 class RustDocumentationProvider : AbstractDocumentationProvider() {
 
-    override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? {
+    override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? =
         if (element is RustDocAndAttributeOwner) {
-            return element.documentation?.let { formatDoc(element.name ?: "", it) }
+            element.documentationAsHtml().let {
+                if (element.name != null) {
+                    "<pre>${element.name}</pre>\n$it"
+                } else {
+                    it
+                }
+            }
+        } else {
+            null
         }
-        return null
-    }
 
     override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?) = when (element) {
         is RustPatBindingElement -> getQuickNavigateInfo(element)
         is RustFnItemElement     -> getQuickNavigateInfo(element)
-        else              -> null
-    }
-
-    private fun formatDoc(name: String, docString: String): String {
-        val lines = docString.split("\n").toMutableList()
-        MarkdownUtil.replaceHeaders(lines)
-        MarkdownUtil.replaceCodeBlock(lines)
-        val mdp = MarkdownProcessor()
-        val md = mdp.markdown(lines.joinToString("\n"))
-        return "<pre>$name</pre>\n$md"
+        else                     -> null
     }
 
     private fun getQuickNavigateInfo(element: RustPatBindingElement): String {

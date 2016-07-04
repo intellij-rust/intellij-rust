@@ -21,7 +21,9 @@ fn <function-decl>main</function-decl>() {
              program, <mut-binding>accumulator</mut-binding>);
 }
 
-/// Some documentation
+/// Some documentation `with code`
+/// # Heading
+/// [Rust](https://www.rust-lang.org/)
 <attribute>#[cfg(target_os=</attribute>"linux"<attribute>)]</attribute>
 unsafe fn <function-decl>a_function</function-decl><<type-parameter>T</type-parameter>: 'lifetime>() {
     'label: loop {
