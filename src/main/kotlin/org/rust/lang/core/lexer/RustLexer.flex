@@ -123,6 +123,9 @@ CHAR_LITERAL   = ( \' ( [^\\\'\r\n] | \\[^\r\n] | "\\x" [a-fA-F0-9]+ | "\\u{" [a
                | ( \' [\p{xidcontinue}]* \' {SUFFIX}? )
 STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
 
+INNER_EOL_DOC = ("//!".*\n)*("//!".*)
+OUTER_EOL_DOC = ("///".*\n)*("///".*)
+
 %%
 
 <YYINITIAL> {
@@ -232,7 +235,10 @@ STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
   "yield"                         { return YIELD; }
 
   "/*"                            { yybegin(IN_BLOCK_COMMENT); yypushback(2); }
-  "//"                            { yybegin(IN_EOL_COMMENT);   yypushback(2); }
+
+  {INNER_EOL_DOC}                 { return INNER_EOL_DOC_COMMENT; }
+  {OUTER_EOL_DOC}                 { return OUTER_EOL_DOC_COMMENT; }
+  "//" .*                         { return EOL_COMMENT; }
 
   {IDENTIFIER}                    { return IDENTIFIER; }
 
