@@ -24,4 +24,9 @@ object RustElementFactory {
         val file = createFileFromText(project, "#[$attrContents] struct Dummy;")
         return file?.childOfType<RustOuterAttrElement>()
     }
+
+    fun createUseItem(project: Project, path: String): RustUseItemElement? {
+        val file = createFileFromText(project, "use $path;")
+        return file?.childOfType<RustUseItemElement>()
+    }
 }

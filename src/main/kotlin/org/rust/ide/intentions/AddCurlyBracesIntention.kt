@@ -1,4 +1,4 @@
-package org.rust.ide.intentions;
+package org.rust.ide.intentions
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
@@ -26,27 +26,24 @@ class AddCurlyBracesIntention : PsiElementBaseIntentionAction() {
     override fun getFamilyName() = getText()
     override fun startInWriteAction() = true
 
-    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
+    override fun invoke(project: Project, editor: Editor, element: PsiElement) {
         // Get our hands on the pieces:
         val useItem = element.parentOfType<RustUseItemElement>() ?: return
         val path = useItem.path ?: return
-        val identifier = path.identifier ?: return;
-        val alias = useItem.alias;
+        val identifier = path.identifier ?: return
+        val alias = useItem.alias
 
         // Remember the caret position, adjusting by the new curly braces
-        val caret = editor?.caretModel?.offset ?: 0
-        val newOffset =
-            if (caret < identifier.textOffset)
-                caret
-            else if (caret < identifier.textOffset + identifier.textLength)
-                caret + 1
-            else
-                caret + 2
+        val caret = editor.caretModel.offset
+        val newOffset = when {
+            caret < identifier.textOffset -> caret
+            caret < identifier.textOffset + identifier.textLength -> caret + 1
+            else -> caret + 2
+        }
 
         // Create a new use item that contains a glob list that we can use.
         // Then extract from it the glob list and the double colon.
-        val newUseItem = RustElementFactory.createFileFromText(project,
-            "use foo::{" + identifier.text + "};")?.children?.get(0) as RustUseItemElement
+        val newUseItem = RustElementFactory.createUseItem(project, "dummy::{${identifier.text}}") ?: return
         val newGlobList = newUseItem.useGlobList ?: return
         val newColonColon = newUseItem.coloncolon ?: return
 
@@ -64,7 +61,7 @@ class AddCurlyBracesIntention : PsiElementBaseIntentionAction() {
         useItem.addBefore(newColonColon, useItem.semicolon)
         useItem.addBefore(newGlobList, useItem.semicolon)
 
-        editor?.caretModel?.moveToOffset(newOffset)
+        editor.caretModel.moveToOffset(newOffset)
     }
 
     override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
