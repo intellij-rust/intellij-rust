@@ -8,6 +8,7 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.util.ProcessingContext
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.lang.RustLanguage
@@ -36,7 +37,7 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
     private val onTupleStruct: ElementPattern<PsiElement> = psiElement()
         .withSuperParent(2, psiElement().withChild(psiElement<RustStructTupleArgsElement>()))
 
-    private val onCrate: ElementPattern<PsiElement> = psiElement().with(
+    private val onCrate: ElementPattern<PsiElement> = psiElement().withSuperParent<PsiFile>(3).with(
         object: PatternCondition<PsiElement>("onCrateCondition") {
             override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
                 val file = t.containingFile.originalFile.virtualFile
@@ -90,7 +91,15 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
                                 context: ProcessingContext?,
                                 result: CompletionResultSet) {
 
-        val suggestions = attributes.filter { it.appliesTo.accepts(parameters.position)}
+        val elem = parameters.position.parent?.parent?.parent
+
+        val existing = if (elem is RustDocAndAttributeOwner) {
+            elem.queryAttributes.metaItems.map { it.identifier.text }
+        } else {
+            emptyList<String>()
+        }
+
+        val suggestions = attributes.filter { it.appliesTo.accepts(parameters.position) && it.name !in existing }
             .map { LookupElementBuilder.create(it.name) }
         result.addAllElements(suggestions)
     }
@@ -103,11 +112,11 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
         return psiElement().withParent(metaItemElem).withLanguage(RustLanguage);
     }
 
-    inline fun <reified I: RustOuterAttributeOwner> onItem(): ElementPattern<PsiElement> {
+    inline fun <reified I: RustDocAndAttributeOwner> onItem(): ElementPattern<PsiElement> {
         return psiElement().withSuperParent<I>(3)
     }
 
-    private fun onItem(pattern: ElementPattern<out RustOuterAttributeOwner>): ElementPattern<PsiElement> {
+    private fun onItem(pattern: ElementPattern<out RustDocAndAttributeOwner>): ElementPattern<PsiElement> {
         return psiElement().withSuperParent(3, pattern)
     }
 }

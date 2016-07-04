@@ -35,6 +35,6 @@ class QueryAttributes(private val attributes: List<RustAttrElement>) {
             .mapNotNull { it.litExpr?.stringLiteralValue }
             .singleOrNull()
 
-    private val metaItems: List<RustMetaItemElement>
+    val metaItems: List<RustMetaItemElement>
         get() = attributes.mapNotNull { it.metaItem }
 }
