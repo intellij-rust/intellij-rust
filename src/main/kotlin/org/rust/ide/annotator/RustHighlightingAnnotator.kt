@@ -14,33 +14,34 @@ import org.rust.lang.core.psi.visitors.RustComputingVisitor
 class RustHighlightingAnnotator : Annotator {
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-        if (element is RustReferenceElement) {
-            val name = element.referenceNameElement
+        val highlightingInfo = if (element is RustReferenceElement) {
             val color = if (element is RustPathElement && element.isPrimitive) {
                 RustColor.PRIMITIVE_TYPE
             } else {
                 val ref = element.reference.resolve() ?: return
                 // Highlight the element dependent on what it's referencing.
-                HighlightingVisitor().computeNullable(ref)?.second
+                HighlightingVisitor().compute(ref).color
             }
 
-            holder.highlight(name, color)
+            HighlightingInfo(element.referenceNameElement, color)
         } else {
-            val (text, color) = HighlightingVisitor().computeNullable(element) ?: return
-            holder.highlight(text, color)
+            HighlightingVisitor().compute(element)
+        }
+
+        highlightingInfo.apply(holder)
+    }
+
+    private data class HighlightingInfo(val element: PsiElement?, val color: RustColor?) {
+        fun apply(holder: AnnotationHolder) {
+            if (element != null && color != null) {
+                holder.createInfoAnnotation(element, null).textAttributes = color.textAttributesKey
+            }
         }
     }
 
-    fun AnnotationHolder.highlight(element: PsiElement?, color: RustColor?) {
-        val textAttributesKey = color?.textAttributesKey
-        if (element != null && textAttributesKey != null) {
-            createInfoAnnotation(element, null).textAttributes = textAttributesKey
-        }
-    }
+    private class HighlightingVisitor : RustComputingVisitor<HighlightingInfo>(default = HighlightingInfo(null, null)) {
 
-    private class HighlightingVisitor : RustComputingVisitor<Pair<PsiElement?, RustColor?>>() {
-
-        fun highlight(element: PsiElement?, color: RustColor?) = set { Pair(element, color) }
+        fun highlight(element: PsiElement?, color: RustColor?) = set { HighlightingInfo(element, color) }
 
         override fun visitLitExpr(o: RustLitExprElement) {
             // Re-highlight literals in attributes
