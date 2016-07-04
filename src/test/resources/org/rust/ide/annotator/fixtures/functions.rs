@@ -1,16 +1,16 @@
 fn <info>main</info>() {}
 
-struct S;
+struct <info>S</info>;
 
-impl S {
+impl <info>S</info> {
     fn <info>foo</info>() {}
 }
 
-trait T {
+trait <info>T</info> {
     fn <info>foo</info>();
     fn <info>bar</info>() {}
 }
 
-impl T for S {
+impl <info>T</info> for <info>S</info> {
     fn <info>foo</info>() {}
 }

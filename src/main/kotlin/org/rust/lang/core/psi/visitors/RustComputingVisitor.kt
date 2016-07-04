@@ -32,6 +32,11 @@ abstract class RustComputingVisitor<R: Any>: RustElementVisitor() {
         }
     }
 
+    fun computeNullable(element: PsiElement): R? {
+        element.accept(this)
+        return result;
+    }
+
     protected fun set(block: () -> R) {
         result = block()
     }
