@@ -84,7 +84,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
             LPAREN, RPAREN -> false
             LBRACK, RBRACK -> false
             else           -> {
-                b.advanceLexer();
+                b.advanceLexer()
                 true
             }
         }

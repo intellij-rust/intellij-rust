@@ -13,7 +13,7 @@ class RustFnTreeElement(element: RustFnItemElement) : PsiTreeElementBase<RustFnI
         if (params != null)
             text += "($params)"
 
-        val retType = element?.retType;
+        val retType = element?.retType
         if (retType != null)
             text += " ${retType.text}"
 

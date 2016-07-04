@@ -31,6 +31,6 @@ class RustExplainFilterTest : RustTestCaseBase() {
         val item = result.resultItems.single()
         assertThat(item.getHighlightStartOffset()).isEqualTo(highlightingStartOffset)
         assertThat(item.getHighlightEndOffset()).isEqualTo(highlightingEndOffset)
-        assertThat(item.getHyperlinkInfo()).isNotNull();
+        assertThat(item.getHyperlinkInfo()).isNotNull()
     }
 }

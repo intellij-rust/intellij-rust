@@ -8,7 +8,7 @@ import javax.swing.Icon
 object RustFileType : LanguageFileType(RustLanguage) {
 
     object DEFAULTS {
-        val EXTENSION: String = "rs";
+        val EXTENSION: String = "rs"
     }
 
     override fun getName(): String = "Rust"

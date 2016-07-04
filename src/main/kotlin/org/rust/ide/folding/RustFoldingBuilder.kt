@@ -90,7 +90,7 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
             override fun visitModItem(o: RustModItemElement) {
                 super.visitModItem(o)
 
-                val rbrace = o.rbrace;
+                val rbrace = o.rbrace
                 if (rbrace != null) {
                     descriptors += FoldingDescriptor(o.node, TextRange(o.lbrace.textOffset, rbrace.textOffset + 1))
                 }

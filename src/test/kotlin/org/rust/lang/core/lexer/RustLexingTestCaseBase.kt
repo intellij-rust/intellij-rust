@@ -21,12 +21,12 @@ abstract class RustLexingTestCaseBase : LexerTestCase(), RustTestCase {
         val filePath = pathToSourceTestFile(getTestName(true))
         var text = ""
         try {
-            val fileText = FileUtil.loadFile(filePath.toFile(), CharsetToolkit.UTF8);
-            text = StringUtil.convertLineSeparators(if (shouldTrim()) fileText.trim() else fileText);
+            val fileText = FileUtil.loadFile(filePath.toFile(), CharsetToolkit.UTF8)
+            text = StringUtil.convertLineSeparators(if (shouldTrim()) fileText.trim() else fileText)
         } catch (e: IOException) {
-            fail("can't load file " + filePath + ": " + e.message);
+            fail("can't load file " + filePath + ": " + e.message)
         }
-        doTest(text, null, lexer);
+        doTest(text, null, lexer)
     }
 
     override fun doTest(@NonNls text: String, expected: String?, lexer: Lexer) {

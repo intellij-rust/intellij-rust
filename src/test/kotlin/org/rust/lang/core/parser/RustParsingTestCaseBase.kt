@@ -36,7 +36,7 @@ abstract class RustParsingTestCaseBase(@NonNls dataPath: String)
 
     override fun getTestName(lowercaseFirstLetter: Boolean): String {
         val camelCase = super.getTestName(lowercaseFirstLetter)
-        return RustTestCaseBase.camelToSnake(camelCase);
+        return RustTestCaseBase.camelToSnake(camelCase)
     }
 
     override fun setUp() {

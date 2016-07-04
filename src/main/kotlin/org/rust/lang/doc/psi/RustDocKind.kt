@@ -112,8 +112,8 @@ enum class RustDocKind {
             var i = lastIndex
             if(get(i-1) == '*' && get(i) == '/') {
                 i -= 2
-                while(i >= 0 && get(i) == '*') i--;
-                while(i >= 0 && get(i) == ' ') i--;
+                while(i >= 0 && get(i) == '*') i--
+                while(i >= 0 && get(i) == ' ') i--
             }
 
             return substring(0, i + 1)

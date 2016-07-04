@@ -17,7 +17,7 @@ abstract class RustNamedElementImpl(node: ASTNode)   : RustCompositeElementImpl(
      * NOTE: This is orphaned purposefully
      */
     override fun setName(name: String): PsiElement? {
-        throw UnsupportedOperationException();
+        throw UnsupportedOperationException()
     }
 
     override fun getNavigationElement(): PsiElement = nameElement ?: this

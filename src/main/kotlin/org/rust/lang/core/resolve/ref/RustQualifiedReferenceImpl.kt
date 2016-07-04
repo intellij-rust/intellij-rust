@@ -33,7 +33,7 @@ class RustQualifiedReferenceImpl(element: RustQualifiedReferenceElement)
                               .orEmpty()
 
             if (qual.isNotEmpty())
-                qual += RustTokenElementTypes.COLONCOLON.toString();
+                qual += RustTokenElementTypes.COLONCOLON.toString()
 
             qual + qualRef.referenceName
         }

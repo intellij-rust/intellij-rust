@@ -49,6 +49,6 @@ object DeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
         val traitMetaItem = psiElement(RustCompositeElementTypes.META_ITEM)
             .withParent(deriveMetaItem)
 
-        return psiElement().inside(traitMetaItem).withLanguage(RustLanguage);
+        return psiElement().inside(traitMetaItem).withLanguage(RustLanguage)
     }
 }
