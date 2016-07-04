@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustElementFactory
+import org.rust.lang.core.psi.RustUseGlobElement
 import org.rust.lang.core.psi.RustUseItemElement
 import org.rust.lang.core.psi.util.parentOfType
 
@@ -67,6 +68,13 @@ class RemoveCurlyBracesIntention : PsiElementBaseIntentionAction() {
 
         val useItem = element.parentOfType<RustUseItemElement>() ?: return false
         val list = useItem.useGlobList ?: return false
-        return list.children.size == 1
+        if (list.children.size != 1) return false
+
+        val listItem = list.children[0]
+        if (listItem is RustUseGlobElement) {
+            return listItem.self == null
+        } else {
+            return false
+        }
     }
 }
