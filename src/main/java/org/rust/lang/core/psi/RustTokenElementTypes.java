@@ -85,8 +85,10 @@ public interface RustTokenElementTypes {
     RustTokenType BLOCK_COMMENT = new RustCommentTokenType("<BLOCK_COMMENT>");
     RustTokenType EOL_COMMENT = new RustCommentTokenType("<EOL_COMMENT>");
 
-    RustTokenType INNER_DOC_COMMENT = new RustCommentTokenType("<INNER_DOC_COMMENT>");
-    RustTokenType OUTER_DOC_COMMENT = new RustCommentTokenType("<OUTER_DOC_COMMENT>");
+    RustTokenType INNER_BLOCK_DOC_COMMENT = new RustCommentTokenType("<INNER_BLOCK_DOC_COMMENT>");
+    RustTokenType OUTER_BLOCK_DOC_COMMENT = new RustCommentTokenType("<OUTER_BLOCK_DOC_COMMENT>");
+    RustTokenType INNER_EOL_DOC_COMMENT = new RustCommentTokenType("<INNER_EOL_DOC_COMMENT>");
+    RustTokenType OUTER_EOL_DOC_COMMENT = new RustCommentTokenType("<OUTER_EOL_DOC_COMMENT>");
 
     RustTokenType SHEBANG_LINE = new RustTokenType("<SHEBANG_LINE>");
 
@@ -152,12 +154,15 @@ public interface RustTokenElementTypes {
     // Token Sets
     //
 
-    TokenSet COMMENTS_TOKEN_SET = TokenSet.create(
-        BLOCK_COMMENT,
-        EOL_COMMENT,
-        INNER_DOC_COMMENT,
-        OUTER_DOC_COMMENT
-    );
+    TokenSet DOC_COMMENTS_TOKEN_SET = TokenSet.create(
+        INNER_BLOCK_DOC_COMMENT,
+        OUTER_BLOCK_DOC_COMMENT,
+        INNER_EOL_DOC_COMMENT,
+        OUTER_EOL_DOC_COMMENT);
+
+    TokenSet COMMENTS_TOKEN_SET = TokenSet.orSet(
+        TokenSet.create(BLOCK_COMMENT, EOL_COMMENT),
+        DOC_COMMENTS_TOKEN_SET);
 
     /**
      * Set of possible arguments for {@link RustEscapesLexer.Companion#of(IElementType)}

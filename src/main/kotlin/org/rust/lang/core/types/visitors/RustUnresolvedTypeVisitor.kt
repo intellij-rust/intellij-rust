@@ -1,8 +1,6 @@
 package org.rust.lang.core.types.visitors
 
-import org.rust.lang.core.types.RustIntegerType
-import org.rust.lang.core.types.RustUnitType
-import org.rust.lang.core.types.RustUnknownType
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.unresolved.RustUnresolvedFunctionType
 import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
 import org.rust.lang.core.types.unresolved.RustUnresolvedReferenceType
@@ -26,5 +24,13 @@ interface RustUnresolvedTypeVisitor<T> {
     fun visitInteger(type: RustIntegerType): T
 
     fun visitReference(type: RustUnresolvedReferenceType): T
+
+    fun visitFloat(type: RustFloatType): T
+
+    fun visitString(type: RustStringType): T
+
+    fun visitChar(type: RustCharacterType): T
+
+    fun visitBoolean(type: RustBooleanType): T
 
 }

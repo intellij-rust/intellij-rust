@@ -1,3 +1,29 @@
+# 2016-07-4
+
+## New Features
+
+* Richer lookup info in completions (by @Furyhunter).
+* `--explain` hyperlinks links in console output (by @tov).
+* Backtrace option in run configurations (by @tov).
+* Better typification for primitives, self, structs and enums.
+* Highlighting of markdown doc comments (by @jajakobyly).
+* Expand modules is now a quick fix instead of always applicable and annoying intention.
+* Better highlighting of references (by @mfarrugi).
+
+
+## Fixes
+
+* Don't fail if `cargo --version` does not explicitly include `stable` (by @oistein).
+* Parse inclusive range `1 ... 3`.
+
+
+## Refactorings
+
+* Stubs for impl items.
+* Initial implementation of impl index.
+
+
+
 # 2016-06-27
 
 ## New Features

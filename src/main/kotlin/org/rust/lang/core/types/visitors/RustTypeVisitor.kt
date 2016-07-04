@@ -24,5 +24,13 @@ interface RustTypeVisitor<T> {
 
     fun visitReference(type: RustReferenceType): T
 
+    fun visitFloat(type: RustFloatType): T
+
+    fun visitString(type: RustStringType): T
+
+    fun visitChar(type: RustCharacterType): T
+
+    fun visitBoolean(type: RustBooleanType): T
+
 }
 

@@ -20,8 +20,8 @@ import org.rust.lang.core.psi.RustElementVisitor
  * ```
  *
  */
-abstract class RustComputingVisitor<R: Any>: RustElementVisitor() {
-    private var result: R? = null
+abstract class RustComputingVisitor<R: Any>(default: R? = null): RustElementVisitor() {
+    private var result: R? = default
 
     fun compute(element: PsiElement): R {
         element.accept(this)

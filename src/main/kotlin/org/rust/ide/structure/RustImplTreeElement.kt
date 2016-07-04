@@ -12,7 +12,7 @@ class RustImplTreeElement(element: RustImplItemElement) : PsiTreeElementBase<Rus
     override fun getPresentableText(): String? {
         val type: RustTypeElement = element?.type ?: return "<unknown>"
 
-        val traitRef = element?.traitRef ?: return type.text;
+        val traitRef = element?.traitRef ?: return type.text
 
         return "${traitRef.text} for ${type.text}"
     }

@@ -30,9 +30,8 @@ abstract class LexerBaseEx : LexerBase() {
         bufferEnd = endOffset
         state = initialState
 
-        tokenStart = startOffset
-        tokenEnd = locateToken(tokenStart)
-        tokenType = determineTokenType()
+        tokenEnd = startOffset
+        advance()
     }
 
     override fun advance() {

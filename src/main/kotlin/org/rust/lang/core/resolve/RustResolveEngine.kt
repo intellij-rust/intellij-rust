@@ -24,6 +24,7 @@ import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
 import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.util.stripAllRefsIfAny
 import org.rust.lang.core.types.visitors.RustTypeResolvingVisitor
 import org.rust.utils.sequenceOfNotNull
 
@@ -105,7 +106,7 @@ object RustResolveEngine {
      * Resolves references to struct's fields inside [RustFieldExprElement]
      */
     fun resolveFieldExpr(fieldExpr: RustFieldExprElement): ResolveResult {
-        val receiverType = fieldExpr.expr.resolvedType
+        val receiverType = fieldExpr.expr.resolvedType.stripAllRefsIfAny()
 
         val id = (fieldExpr.fieldId.identifier ?: fieldExpr.fieldId.integerLiteral)!!
         val matching = when (id.elementType) {
@@ -129,7 +130,7 @@ object RustResolveEngine {
         val receiverType = call.expr.resolvedType
         val name = call.identifier.text
         val matching = receiverType.nonStaticMethods.filter { it.name == name }
-        return ResolveResult.buildFrom(matching)
+        return ResolveResult.buildFrom(matching.asIterable())
     }
 
     //
@@ -496,7 +497,10 @@ private fun RustUseItemElement.nonWildcardEntries(): Sequence<ScopeEntry> {
 
 
 private val Collection<RustNamedElement>.scopeEntries: Sequence<ScopeEntry>
-    get() = asSequence().mapNotNull { ScopeEntry.of(it) }
+    get() = asSequence().scopeEntries
+
+private val Sequence<RustNamedElement>.scopeEntries: Sequence<ScopeEntry>
+    get() = mapNotNull { ScopeEntry.of(it) }
 
 
 private fun RustNamedElement?.asResolveResult(): RustResolveEngine.ResolveResult =

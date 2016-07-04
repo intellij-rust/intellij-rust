@@ -9,9 +9,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.util.text.CharArrayUtil
-import org.rust.lang.core.psi.RustTokenElementTypes.INNER_DOC_COMMENT
-import org.rust.lang.core.psi.RustTokenElementTypes.OUTER_DOC_COMMENT
-import org.rust.lang.core.psi.RustTokenElementTypes.EOL_COMMENT
+import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.core.psi.impl.RustFile
 
 class RustEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
@@ -44,8 +42,8 @@ class RustEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
         // check if the element at the caret is a line comment
         // and extract the comment token (//, /// or //!) from the comment text
         val commentToken = when (elementAtCaret.node?.elementType) {
-            OUTER_DOC_COMMENT -> "/// "
-            INNER_DOC_COMMENT -> "//! "
+            OUTER_EOL_DOC_COMMENT -> "/// "
+            INNER_EOL_DOC_COMMENT -> "//! "
             EOL_COMMENT -> {
                 // return if caret is at end of line for a non-documentation comment
                 if (isEOL) {

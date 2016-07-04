@@ -12,7 +12,7 @@ class RustCTRSTestCase : RustParsingTestCaseBase("ctrs/test") {
         var nFilesVisited = 0
         FileUtil.visitFiles(File(myFullDataPath), { file ->
             if (file.isFile && file.extension == myFileExt.trimStart('.')) {
-                nFilesVisited++;
+                nFilesVisited++
                 val text = FileUtil.loadFile(file, CharsetToolkit.UTF8)
                 val psi = createPsiFile(file.name, text)
                 val expectedError = expectedErrors.any { file.path.endsWith(it) }

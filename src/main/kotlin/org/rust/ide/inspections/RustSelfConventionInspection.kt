@@ -3,12 +3,10 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import org.rust.lang.core.psi.RustImplMethodMemberElement
 import org.rust.lang.core.psi.RustElementVisitor
+import org.rust.lang.core.psi.RustImplMethodMemberElement
 
-class SelfConventionInspection : RustLocalInspectionTool() {
-
-    override fun getDisplayName() = "Self Convention"
+class RustSelfConventionInspection : RustLocalInspectionTool() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : RustElementVisitor() {

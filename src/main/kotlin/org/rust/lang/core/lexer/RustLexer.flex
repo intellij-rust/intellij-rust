@@ -42,9 +42,9 @@ import static com.intellij.psi.TokenType.*;
 
       if (yylength() >= 3) {
           if (yycharat(2) == '!') {
-              return INNER_DOC_COMMENT;
+              return INNER_BLOCK_DOC_COMMENT;
           } else if (yycharat(2) == '*' && (yylength() == 3 || yycharat(3) != '*' && yycharat(3) != '/')) {
-              return OUTER_DOC_COMMENT;
+              return OUTER_BLOCK_DOC_COMMENT;
           }
       }
 
@@ -101,11 +101,12 @@ SUFFIX     = {IDENTIFIER}
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 EXPONENT      = [eE] [-+]? [0-9_]+
-FLT_SUFFIX    = f32 | f64
+
 FLT_LITERAL   = ( {DEC_LITERAL} \. {DEC_LITERAL} {EXPONENT}? {SUFFIX}? )
               | ( {DEC_LITERAL} {EXPONENT} {SUFFIX}? )
-FLT_TDOT      = {DEC_LITERAL} \.
+              | ( {DEC_LITERAL} "f" [\p{xidcontinue}]* )
 
+FLT_LITERAL_TDOT = {DEC_LITERAL} \.
 
 INT_LITERAL = ( {DEC_LITERAL}
               | {HEX_LITERAL}
@@ -122,9 +123,12 @@ CHAR_LITERAL   = ( \' ( [^\\\'\r\n] | \\[^\r\n] | "\\x" [a-fA-F0-9]+ | "\\u{" [a
                | ( \' [\p{xidcontinue}]* \' {SUFFIX}? )
 STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
 
+INNER_EOL_DOC = ("//!".*\n)*("//!".*)
+OUTER_EOL_DOC = ("///".*\n)*("///".*)
+
 %%
 
-<YYINITIAL>                     {
+<YYINITIAL> {
   "#!" [\r\n]                     { yybegin(INITIAL); yypushback(1); return SHEBANG_LINE; }
   "#!" [^\[\r\n] [^\r\n]*         { yybegin(INITIAL); return SHEBANG_LINE; }
   [^]                             { yybegin(INITIAL); yypushback(1); }
@@ -231,14 +235,14 @@ STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
   "yield"                         { return YIELD; }
 
   "/*"                            { yybegin(IN_BLOCK_COMMENT); yypushback(2); }
-  "//"                            { yybegin(IN_EOL_COMMENT);   yypushback(2); }
+
+  {INNER_EOL_DOC}                 { return INNER_EOL_DOC_COMMENT; }
+  {OUTER_EOL_DOC}                 { return OUTER_EOL_DOC_COMMENT; }
+  "//" .*                         { return EOL_COMMENT; }
 
   {IDENTIFIER}                    { return IDENTIFIER; }
 
   /* LITERALS */
-
-  // Match 1f32 and 1f64 as floats, not integers (kinda hack)
-  {DEC_LITERAL} {FLT_SUFFIX}      { return FLOAT_LITERAL; }
 
   // Floats must come first, to parse 1e1 as a float and not as an integer with a suffix
   {FLT_LITERAL}                   { return FLOAT_LITERAL; }
@@ -246,7 +250,7 @@ STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
   {INT_LITERAL}                   { return INTEGER_LITERAL; }
 
   // Correctly handle 1.f32 and 0..9
-  {FLT_TDOT} / [^.\p{xidstart}]   { return FLOAT_LITERAL; }
+  {FLT_LITERAL_TDOT} / [^.\p{xidstart}] { return FLOAT_LITERAL; }
 
   "b" {CHAR_LITERAL}              { return BYTE_LITERAL; }
 
@@ -315,9 +319,9 @@ STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
 
     if (yylength() >= 3) {
         if (yycharat(2) == '!') {
-            return INNER_DOC_COMMENT;
+            return INNER_EOL_DOC_COMMENT;
         } else if (yycharat(2) == '/' && (yylength() == 3 || yycharat(3) != '/')) {
-            return OUTER_DOC_COMMENT;
+            return OUTER_EOL_DOC_COMMENT;
         }
     }
     return EOL_COMMENT;

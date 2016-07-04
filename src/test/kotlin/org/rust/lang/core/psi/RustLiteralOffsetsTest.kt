@@ -29,7 +29,7 @@ abstract class RustLiteralOffsetsTestCase(
     private fun makeOffsets(text: String): RustLiteral.Offsets {
         val parts = text.split('|')
         assert(parts.size == 5)
-        val prefixEnd = parts[0].length;
+        val prefixEnd = parts[0].length
         val openDelimEnd = prefixEnd + parts[1].length
         val valueEnd = openDelimEnd + parts[2].length
         val closeDelimEnd = valueEnd + parts[3].length
@@ -39,8 +39,11 @@ abstract class RustLiteralOffsetsTestCase(
 }
 
 @RunWith(Parameterized::class)
-class RustNumericLiteralOffsetsTest(type: IElementType, text: String) :
-    RustLiteralOffsetsTestCase(type, text, ::RustNumericLiteralImpl) {
+class RustNumericLiteralOffsetsTest(
+    type: IElementType,
+    text: String
+) : RustLiteralOffsetsTestCase(type, text, ::RustNumericLiteralImpl) {
+
     @Test
     fun test() = doTest()
 

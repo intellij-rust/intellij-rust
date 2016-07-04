@@ -135,5 +135,46 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
+    //language=Rust
+    fun testBlockExpr() = testExpr("""
+        struct S;
+
+        fn foo() -> S {}
+        fn main() {
+            let x = {
+                foo()
+            };
+
+            x
+          //^ S
+        }
+    """)
+
+
+    //language=Rust
+    fun testUnitBlockExpr() = testExpr("""
+        struct S;
+
+        fn foo() -> S {}
+        fn main() {
+            let x = {
+                foo();
+            };
+
+            x
+          //^ ()
+        }
+    """)
+
+    //language=Rust
+    fun testEmptyBlockExpr() = testExpr("""
+        fn main() {
+            let x = {};
+            x
+          //^ ()
+        }
+    """)
+
+
 }
 

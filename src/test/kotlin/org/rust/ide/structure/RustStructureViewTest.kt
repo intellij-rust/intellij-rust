@@ -20,7 +20,7 @@ class RustStructureViewTest : RustTestCaseBase() {
     fun testTypeAliases() = doFileTest()
 
     private fun doTest(expected: String) {
-        myFixture.configureByFile(fileName);
+        myFixture.configureByFile(fileName)
         myFixture.testStructureView {
             TreeUtil.expandAll(it.tree)
             assertTreeEqual(it.tree, expected)

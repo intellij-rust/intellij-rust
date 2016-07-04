@@ -21,14 +21,14 @@ interface RustType {
      * There may be several `impl` blocks for the same type and they may
      * be spread across different files and modules (we don't handle this yet)
      */
-    val inherentImpls: Collection<RustImplItemElement> get() = emptyList()
+    val inherentImpls: Sequence<RustImplItemElement> get() = emptySequence()
 
-    val allMethods: Collection<RustImplMethodMemberElement>
-        get() = inherentImpls.flatMap { it.implBody?.implMethodMemberList.orEmpty() }
+    val allMethods: Sequence<RustImplMethodMemberElement>
+        get() = inherentImpls.flatMap { it.implBody?.implMethodMemberList.orEmpty().asSequence() }
 
-    val nonStaticMethods: Collection<RustImplMethodMemberElement>
+    val nonStaticMethods: Sequence<RustImplMethodMemberElement>
         get() = allMethods.filter { !it.isStatic }
 
-    val staticMethods: Collection<RustImplMethodMemberElement>
+    val staticMethods: Sequence<RustImplMethodMemberElement>
         get() = allMethods.filter { it.isStatic }
 }

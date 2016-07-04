@@ -53,5 +53,68 @@ class RustEnumPatternTypeInferenceTest: RustTypificationTestBase() {
           //^ <unknown>
         }
     """)
+
+    //language=Rust
+    fun testStructTuple() = testExpr("""
+        struct Centimeters(f64);
+        struct Inches(i32);
+
+        impl Inches {
+            fn to_centimeters(&self) -> Centimeters {
+                let &Inches(inches) = self;
+
+                inches;
+              //^ i32
+            }
+        }
+    """)
+
+    //language=Rust
+    fun testBindingWithPat() = testExpr("""
+        struct S { x: i32, y: i32 }
+
+        enum Result {
+            Ok(S),
+            Failure
+        }
+
+        fn foo(r: Result) {
+            let Result::Ok(s @ S { x, .. }) = r;
+            s
+          //^ S
+        }
+    """)
+
+    //language=Rust
+    fun testBindingWithPatFailure1() = testExpr("""
+        struct S { x: i32, y: i32 }
+
+        enum Result {
+            Ok(S),
+            Failure
+        }
+
+        fn foo(r: Result) {
+            let Result::Ok(s @ S { j /* non-existing field */ }) = r;
+            s
+          //^ <unknown>
+        }
+    """)
+
+    //language=Rust
+    fun testBindingWithPatFailure2() = testExpr("""
+        struct S { x: i32, y: i32 }
+
+        enum Result {
+            Ok(S),
+            Failure
+        }
+
+        fn foo(r: Result) {
+            let Result::Ok(s @ S { x /* missing fields */ }) = r;
+            s
+          //^ <unknown>
+        }
+    """)
 }
 

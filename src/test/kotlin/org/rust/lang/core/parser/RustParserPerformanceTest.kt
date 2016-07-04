@@ -91,4 +91,3 @@ class RustParserPerformanceTest : RustTestCaseBase() {
             ?.children?.singleOrNull()
             ?.findChild("src")!!
 }
-
