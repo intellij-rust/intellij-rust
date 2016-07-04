@@ -12,7 +12,7 @@ import org.rust.lang.doc.psi.RustDocKind
 
 class RustDocHighlightingLexer(kind: RustDocKind) :
     MergingLexerAdapter(
-        FlexAdapter(_RustDocHighlightingLexer(kind.isBlock)),
+        FlexAdapter(_RustDocHighlightingLexer(null, kind.isBlock)),
         TOKENS_TO_MERGE) {
 
     override fun getMergeFunction() = MergeFunction { type, lexer ->

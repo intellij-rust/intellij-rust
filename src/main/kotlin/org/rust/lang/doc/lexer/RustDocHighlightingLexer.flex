@@ -9,13 +9,16 @@ import static com.intellij.psi.TokenType.*;
 %%
 
 %{
-  private int MAIN_STATE = YYINITIAL;
+  private final int MAIN_STATE;
+%}
 
-  public _RustDocHighlightingLexer(boolean isBlock) {
-    this((java.io.Reader)null);
-    MAIN_STATE = isBlock ? IN_BLOCK : IN_EOL;
-  }
+%ctorarg boolean isBlock
 
+%init{
+  MAIN_STATE = isBlock ? IN_BLOCK : IN_EOL;
+%init}
+
+%{
   private int DATA_STATE = IN_DOC_DATA;
   private char CODE_FENCE_DELIM = '\0';
 
