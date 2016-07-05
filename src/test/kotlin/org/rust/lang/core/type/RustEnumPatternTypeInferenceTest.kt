@@ -1,7 +1,6 @@
 package org.rust.lang.core.type
 
 class RustEnumPatternTypeInferenceTest: RustTypificationTestBase() {
-    //language=Rust
     fun testEnumPattern() = testExpr("""
         enum E {
             X
@@ -13,7 +12,6 @@ class RustEnumPatternTypeInferenceTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
     fun testEnumPatternWithUnnamedArgs() = testExpr("""
         enum E {
             X(i32, i16)
@@ -27,7 +25,6 @@ class RustEnumPatternTypeInferenceTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
     fun testEnumPatternWithNamedArgs() = testExpr("""
         enum E {
             X { _1: i32, _2: i64 }
@@ -41,7 +38,6 @@ class RustEnumPatternTypeInferenceTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
     fun testEnumTupleOutOfBounds() = testExpr("""
         enum E {
             V(i32, i32)
@@ -54,7 +50,6 @@ class RustEnumPatternTypeInferenceTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
     fun testStructTuple() = testExpr("""
         struct Centimeters(f64);
         struct Inches(i32);
@@ -69,7 +64,6 @@ class RustEnumPatternTypeInferenceTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
     fun testBindingWithPat() = testExpr("""
         struct S { x: i32, y: i32 }
 
@@ -85,7 +79,6 @@ class RustEnumPatternTypeInferenceTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
     fun testBindingWithPatFailure1() = testExpr("""
         struct S { x: i32, y: i32 }
 
@@ -101,7 +94,6 @@ class RustEnumPatternTypeInferenceTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
     fun testBindingWithPatFailure2() = testExpr("""
         struct S { x: i32, y: i32 }
 

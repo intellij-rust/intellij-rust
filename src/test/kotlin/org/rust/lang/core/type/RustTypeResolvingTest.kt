@@ -2,11 +2,11 @@ package org.rust.lang.core.type
 
 import com.intellij.psi.util.PsiTreeUtil
 import org.assertj.core.api.Assertions.assertThat
+import org.intellij.lang.annotations.Language
 import org.rust.lang.core.psi.RustTypeElement
 import org.rust.lang.core.types.util.resolvedType
 
 class RustTypeResolvingTest: RustTypificationTestBase() {
-    //language=Rust
     fun testPath() = testType("""
         struct Spam;
 
@@ -16,7 +16,6 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
     fun testUnit() = testType("""
         fn main() {
             let _: () = ();
@@ -24,7 +23,6 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
     fun testTuple() = testType("""
         struct S;
         struct T;
@@ -34,7 +32,6 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
     fun testQualifiedPath() = testType("""
         trait T {
             type Assoc;
@@ -52,7 +49,6 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
     fun testEnum() = testType("""
         enum E { X }
 
@@ -62,7 +58,6 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
         }
     """)
 
-    //language=Rust
     fun testTypeItem() = testType("""
         enum E { X }
 
@@ -78,7 +73,7 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */
-    private fun testType(code: String) {
+    private fun testType(@Language("Rust") code: String) {
         val (elementAtCaret, expectedType) = configureAndFindElement(code)
         val typeAtCaret = requireNotNull(
             PsiTreeUtil.getTopmostParentOfType(elementAtCaret, RustTypeElement::class.java)
