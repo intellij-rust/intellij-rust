@@ -75,6 +75,8 @@ class RustParserPerformanceTest : RustTestCaseBase() {
         }
         check(processed.size > expectedNumberOfFiles)
 
+        reportTeamCityMetric("$name totalTime", totalTime)
+
         println("\n$name " +
             "\nTotal: ${totalTime}ms" +
             "\nFiles: ${processed.size}")
