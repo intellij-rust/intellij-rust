@@ -122,8 +122,8 @@ CHAR_LITERAL   = ( \' ( [^\\\'\r\n] | \\[^\r\n] | "\\x" [a-fA-F0-9]+ | "\\u{" [a
                | ( \' [\p{xidcontinue}]* \' {SUFFIX}? )
 STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
 
-INNER_EOL_DOC = ("//!".*\n)*("//!".*)
-OUTER_EOL_DOC = ("///".*\n)*("///".*)
+INNER_EOL_DOC = ({LINE_WS}*"//!".*{EOL_WS})*({LINE_WS}*"//!".*)
+OUTER_EOL_DOC = ({LINE_WS}*"///".*{EOL_WS})*({LINE_WS}*"///".*)
 
 %%
 
