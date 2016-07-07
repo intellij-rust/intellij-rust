@@ -54,8 +54,8 @@ class Cargo(
             .withWorkDirectory(projectDirectory)
             .withParameters(command)
             .withParameters(additionalArguments)
-            .withEnvironment(environmentVariables)
             .withEnvironment(CargoConstants.RUSTC_ENV_VAR, pathToRustExecutable)
+            .withEnvironment(environmentVariables)
 
     private val metadataCommandline: GeneralCommandLine get() = generalCommand("metadata", listOf("--verbose"))
 
