@@ -20,12 +20,14 @@ import java.io.File
  */
 class Cargo(
     private val pathToCargoExecutable: String,
+    private val pathToRustExecutable: String,
     // It's more convenient to use project directory rather then path to `Cargo.toml`
     // because some commands don't accept `--manifest-path` argument
     private val projectDirectory: String
 ) {
     init {
         require(File(pathToCargoExecutable).canExecute()) { "Invalid path to cargo $pathToCargoExecutable" }
+        require(File(pathToRustExecutable).canExecute()) { "Invalid path to rustc $pathToRustExecutable" }
         require(File(projectDirectory, CargoConstants.MANIFEST_FILE).exists()) {
             "No Cargo.toml in $projectDirectory"
         }
@@ -53,6 +55,7 @@ class Cargo(
             .withParameters(command)
             .withParameters(additionalArguments)
             .withEnvironment(environmentVariables)
+            .withEnvironment(CargoConstants.RUSTC_ENV_VAR, pathToRustExecutable)
 
     private val metadataCommandline: GeneralCommandLine get() = generalCommand("metadata", listOf("--verbose"))
 
