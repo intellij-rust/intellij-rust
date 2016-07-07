@@ -71,7 +71,6 @@ import static com.intellij.psi.TokenType.*;
 %s INITIAL
 
 %s IN_BLOCK_COMMENT
-%s IN_EOL_COMMENT
 
 %s IN_LIFETIME_OR_CHAR
 
@@ -313,20 +312,6 @@ OUTER_EOL_DOC = ("///".*\n)*("///".*)
 
   [^]     { }
 }
-
-<IN_EOL_COMMENT>.* {
-    yybegin(INITIAL);
-
-    if (yylength() >= 3) {
-        if (yycharat(2) == '!') {
-            return INNER_EOL_DOC_COMMENT;
-        } else if (yycharat(2) == '/' && (yylength() == 3 || yycharat(3) != '/')) {
-            return OUTER_EOL_DOC_COMMENT;
-        }
-    }
-    return EOL_COMMENT;
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Lifetimes & Literals
