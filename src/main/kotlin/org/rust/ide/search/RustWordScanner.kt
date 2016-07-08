@@ -5,7 +5,9 @@ import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.lexer.RustLexer
 import org.rust.lang.core.psi.RustTokenElementTypes
 
-class RustWordScanner : DefaultWordsScanner(RustLexer(),
+object RustWordScanner : DefaultWordsScanner(
+    RustLexer(),
     TokenSet.create(RustTokenElementTypes.IDENTIFIER),
     RustTokenElementTypes.COMMENTS_TOKEN_SET,
-    TokenSet.create(RustTokenElementTypes.STRING_LITERAL))
+    TokenSet.create(RustTokenElementTypes.STRING_LITERAL)
+)

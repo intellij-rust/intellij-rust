@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustPatBindingElement
 
 class RustFindUsagesProvider : FindUsagesProvider {
-    override fun getWordsScanner() = RustWordScanner()
+    override fun getWordsScanner() = RustWordScanner
 
     override fun canFindUsagesFor(element: PsiElement) =
         element is RustPatBindingElement
