@@ -989,14 +989,19 @@ private index_arg ::= '[' expr ']'
 
 call_expr ::= expr arg_list
 
-method_call_expr ::= expr '.' IDENTIFIER colon_generic_args? arg_list
+method_call_expr ::= expr '.' IDENTIFIER colon_generic_args? arg_list {
+  implements = [ "org.rust.lang.core.psi.RustReferenceElement" ]
+}
 
 arg_list ::= '(' expr_list? ')' { pin = 1 }
 
 private expr_list ::= <<comma_separated_list any_expr>>
 
 field_id ::= IDENTIFIER | INTEGER_LITERAL
-field_expr ::= expr '.' field_id
+
+field_expr ::= expr '.' field_id {
+  implements = [ "org.rust.lang.core.psi.RustReferenceElement" ]
+}
 
 lit_expr ::= lit
 
