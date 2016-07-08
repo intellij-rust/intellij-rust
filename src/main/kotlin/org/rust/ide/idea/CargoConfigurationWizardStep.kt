@@ -1,6 +1,5 @@
 package org.rust.ide.idea
 
-import com.intellij.ide.util.importProject.ModuleDescriptor
 import com.intellij.ide.util.importProject.ProjectDescriptor
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
@@ -23,13 +22,10 @@ class CargoConfigurationWizardStep(
     override fun disposeUIResources() = rustProjectSettings.disposeUIResources()
 
     override fun updateDataModel() {
-        val oldDescriptor = projectDescriptor.modules.single()
-
-        val newDescriptor = ModuleDescriptor(oldDescriptor.contentRoots.single(), oldDescriptor.moduleType, emptyList())
-        val updater = createConfigurationUpdater(rustProjectSettings.data)
-        newDescriptor.addConfigurationUpdater(updater)
-
-        projectDescriptor.modules = listOf(newDescriptor)
+        // XXX: this method may be called several times if user switches back and forth between wizard steps,
+        // so we need to make `ConfigurationUpdater` idempotent.
+        ConfigurationUpdater.data = rustProjectSettings.data
+        projectDescriptor.modules.firstOrNull()?.addConfigurationUpdater(ConfigurationUpdater)
     }
 
     @Throws(ConfigurationException::class)
@@ -38,15 +34,16 @@ class CargoConfigurationWizardStep(
         return true
     }
 
-    companion object {
-        private fun createConfigurationUpdater(data: RustProjectSettingsPanel.Data): ModuleConfigurationUpdater =
-            object : ModuleConfigurationUpdater() {
-                override fun update(module: Module, rootModel: ModifiableRootModel) {
-                    val project = module.project
-                    val settings = project.rustSettings
-                    data.applyTo(settings)
-                }
-            }
+    private object ConfigurationUpdater : ModuleConfigurationUpdater() {
+        var data: RustProjectSettingsPanel.Data? = null
+
+        override fun update(module: Module, rootModel: ModifiableRootModel) {
+            val latestData = data ?: return
+            val project = module.project
+            val settings = project.rustSettings
+            latestData.applyTo(settings)
+            data = null
+        }
     }
 
 }
