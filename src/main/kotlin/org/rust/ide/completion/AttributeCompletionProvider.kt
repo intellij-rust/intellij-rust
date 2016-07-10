@@ -11,10 +11,9 @@ import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.ProcessingContext
-import org.rust.cargo.util.cargoProjectRoot
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.util.module
+import org.rust.lang.core.psi.impl.RustFile
 
 object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() {
 
@@ -46,10 +45,8 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
     val onCrate: PsiElementPattern.Capture<PsiElement> = psiElement().withSuperParent<PsiFile>(3).with(
         object : PatternCondition<PsiElement>("onCrateCondition") {
             override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
-                val file = t.containingFile.originalFile.virtualFile
-                val crateSourceRoot = "${t.module?.cargoProjectRoot ?: "temp://"}/src"
-                val crateFile = listOf("$crateSourceRoot/lib.rs", "$crateSourceRoot/main.rs")
-                return crateFile.contains(file.toString())
+                val file = t.containingFile.originalFile as RustFile
+                return file.isCrateRoot
             }
         })
 

@@ -4,14 +4,12 @@ import org.rust.ide.completion.AttributeCompletionProvider
 import org.rust.lang.core.pattern.RustPatternTestBase
 
 class RustAttributeCompletionPatternTest : RustPatternTestBase() {
-    //language=Rust
     fun testOnStruct() = testPattern("""
         #[foo]
         //^
         struct Bar;
     """, AttributeCompletionProvider.onStruct)
 
-    //language=Rust
     fun testOnFn() = testPattern("""
         #[foo]
         //^
@@ -19,14 +17,12 @@ class RustAttributeCompletionPatternTest : RustPatternTestBase() {
         }
     """, AttributeCompletionProvider.onFn)
 
-    //language=Rust
     fun testOnTupleStruct() = testPattern("""
         #[foo]
         //^
         struct Bar(u8, u8);
     """, AttributeCompletionProvider.onTupleStruct)
 
-    //language=Rust
     fun testOnAnyItemStruct() = testPattern("""
         #[foo]
         //^
@@ -35,14 +31,12 @@ class RustAttributeCompletionPatternTest : RustPatternTestBase() {
         }
     """, AttributeCompletionProvider.onAnyItem)
 
-    //language=Rust
     fun testOnAnyItemStatic() = testPattern("""
         #[foo]
         //^
         static bar: u8 = 1;
     """, AttributeCompletionProvider.onAnyItem)
 
-    //language=Rust
     fun testOnAnyItemEnum() = testPattern("""
         #[foo]
         //^
@@ -52,7 +46,6 @@ class RustAttributeCompletionPatternTest : RustPatternTestBase() {
         }
     """, AttributeCompletionProvider.onAnyItem)
 
-    //language=Rust
     fun testOnAnyItemFn() = testPattern("""
         #[foo]
         //^
@@ -60,7 +53,6 @@ class RustAttributeCompletionPatternTest : RustPatternTestBase() {
         }
     """, AttributeCompletionProvider.onAnyItem)
 
-    //language=Rust
     fun testOnAnyItemMod() = testPattern("""
         #[foo]
         //^
@@ -68,7 +60,6 @@ class RustAttributeCompletionPatternTest : RustPatternTestBase() {
         }
     """, AttributeCompletionProvider.onAnyItem)
 
-    //language=Rust
     fun testOnAnyItemTrait() = testPattern("""
         #[foo]
         //^
@@ -76,20 +67,17 @@ class RustAttributeCompletionPatternTest : RustPatternTestBase() {
         }
     """, AttributeCompletionProvider.onAnyItem)
 
-    //language=Rust
     fun testOnAnyItemCrate() = testPattern("""
         #![foo]
          //^
     """, AttributeCompletionProvider.onAnyItem)
 
-    //language=Rust
     fun testOnCrate() = testPattern("""
         #![foo]
          //^
         struct Foo(u8, u8);
     """, AttributeCompletionProvider.onCrate)
 
-    //language=Rust
     fun testOnDropFn() = testPattern("""
         struct HasDrop;
 
@@ -102,7 +90,6 @@ class RustAttributeCompletionPatternTest : RustPatternTestBase() {
         }
     """, AttributeCompletionProvider.onDropFn)
 
-    //language=Rust
     fun testOnEnum() = testPattern("""
         #[foo]
         //^
@@ -112,7 +99,6 @@ class RustAttributeCompletionPatternTest : RustPatternTestBase() {
         }
     """, AttributeCompletionProvider.onEnum)
 
-    //language=Rust
     fun testOnExternBlock() = testPattern("""
         #[foo]
         //^
@@ -121,7 +107,6 @@ class RustAttributeCompletionPatternTest : RustPatternTestBase() {
         }
     """, AttributeCompletionProvider.onExternBlock)
 
-    //language=Rust
     fun testOnExternBlockDecl() = testPattern("""
         extern {
             #[foo]
@@ -130,14 +115,12 @@ class RustAttributeCompletionPatternTest : RustPatternTestBase() {
         }
     """, AttributeCompletionProvider.onExternBlockDecl)
 
-    //language=Rust
     fun testOnExternCrate() = testPattern("""
         #[foo]
         //^
         extern crate bar;
     """, AttributeCompletionProvider.onExternCrate)
 
-    //language=Rust
     fun testOnMacro() = testPattern("""
         #[foo]
         //^
@@ -145,7 +128,6 @@ class RustAttributeCompletionPatternTest : RustPatternTestBase() {
         }
     """, AttributeCompletionProvider.onMacro)
 
-    //language=Rust
     fun testOnMod() = testPattern("""
         #[foo]
         //^
@@ -153,21 +135,18 @@ class RustAttributeCompletionPatternTest : RustPatternTestBase() {
         }
     """, AttributeCompletionProvider.onMod)
 
-    //language=Rust
     fun testOnStatic() = testPattern("""
         #[foo]
         //^
         static bar: u8 = 5;
     """, AttributeCompletionProvider.onStatic)
 
-    //language=Rust
     fun testOnStaticMut() = testPattern("""
         #[foo]
         //^
         static mut bar: u8 = 5;
     """, AttributeCompletionProvider.onStaticMut)
 
-    //language=Rust
     fun testOnTestFn() = testPattern("""
         #[test]
         #[foo]
