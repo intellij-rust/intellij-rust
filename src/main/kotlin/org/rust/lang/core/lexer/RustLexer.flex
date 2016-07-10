@@ -71,7 +71,6 @@ import static com.intellij.psi.TokenType.*;
 %s INITIAL
 
 %s IN_BLOCK_COMMENT
-%s IN_EOL_COMMENT
 
 %s IN_LIFETIME_OR_CHAR
 
@@ -123,8 +122,8 @@ CHAR_LITERAL   = ( \' ( [^\\\'\r\n] | \\[^\r\n] | "\\x" [a-fA-F0-9]+ | "\\u{" [a
                | ( \' [\p{xidcontinue}]* \' {SUFFIX}? )
 STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
 
-INNER_EOL_DOC = ("//!".*\n)*("//!".*)
-OUTER_EOL_DOC = ("///".*\n)*("///".*)
+INNER_EOL_DOC = ({LINE_WS}*"//!".*{EOL_WS})*({LINE_WS}*"//!".*)
+OUTER_EOL_DOC = ({LINE_WS}*"///".*{EOL_WS})*({LINE_WS}*"///".*)
 
 %%
 
@@ -313,20 +312,6 @@ OUTER_EOL_DOC = ("///".*\n)*("///".*)
 
   [^]     { }
 }
-
-<IN_EOL_COMMENT>.* {
-    yybegin(INITIAL);
-
-    if (yylength() >= 3) {
-        if (yycharat(2) == '!') {
-            return INNER_EOL_DOC_COMMENT;
-        } else if (yycharat(2) == '/' && (yylength() == 3 || yycharat(3) != '/')) {
-            return OUTER_EOL_DOC_COMMENT;
-        }
-    }
-    return EOL_COMMENT;
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Lifetimes & Literals

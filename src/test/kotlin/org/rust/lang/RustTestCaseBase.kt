@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.CargoProjectDescriptionData
@@ -73,6 +74,13 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         val previousLine = LogicalPosition(markerPosition.line - 1, markerPosition.column)
         val elementOffset = myFixture.editor.logicalPositionToOffset(previousLine)
         return myFixture.file.findElementAt(elementOffset)!! to data
+    }
+
+    protected fun reportTeamCityMetric(name: String, value: Long) {
+        //https://confluence.jetbrains.com/display/TCD10/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingBuildStatistics
+        if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+            println("##teamcity[buildStatisticValue key='$name' value='$value']")
+        }
     }
 
     open class RustProjectDescriptor : LightProjectDescriptor() {

@@ -10,7 +10,7 @@ class RustFieldExprReferenceImpl(
 ) : RustReferenceBase<RustFieldExprElement>(fieldExpr)
   , RustReference {
 
-    override val RustFieldExprElement.referenceAnchor: PsiElement get() = fieldId
+    override val RustFieldExprElement.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun getVariants(): Array<out Any> = RustCompletionEngine.completeFieldOrMethod(element)
 

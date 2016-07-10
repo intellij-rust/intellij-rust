@@ -71,12 +71,6 @@ allprojects {
         }
     }
 
-    // Configurations
-
-    configurations {
-        gen
-    }
-
     repositories {
         mavenCentral()
     }
@@ -84,8 +78,6 @@ allprojects {
     dependencies {
         compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
         compile "org.jetbrains.kotlin:kotlin-runtime:$kotlinVersion"
-
-        gen 'de.jflex:jflex:1.6.0'
 
         testCompile "junit:junit:4.+"
         testCompile 'org.assertj:assertj-core:3.2.0'
@@ -115,39 +107,55 @@ idea {
 // Tasks
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-def jflexArgs(srcFlex, targetDir) {
-    return [    "--skel",   "src/main/kotlin/org/rust/lang/core/lexer/RustLexer.skeleton",
-                "-d",       targetDir,
-                srcFlex
-    ]
+task downloadJetBrainsJflex(type: de.undercouch.gradle.tasks.download.Download) {
+    overwrite false
+
+    src([
+        // This is a patched version of Jflex which is used together with GrammarKit.
+        'https://raw.github.com/JetBrains/intellij-community/idea/162.1145/tools/lexer/jflex-1.7.0-SNAPSHOT.jar',
+        'https://raw.github.com/JetBrains/intellij-community/idea/162.1145/tools/lexer/idea-flex.skeleton'
+    ])
+
+    def jflexDir = new File(projectDir, 'lib/jflex')
+    if (!jflexDir.exists()) {
+        jflexDir.mkdirs()
+
+    }
+
+    dest(jflexDir)
+}
+
+def lexerConfig(src, dst, lexerFileName) {
+    return {
+        dependsOn downloadJetBrainsJflex
+
+        classpath = files('lib/jflex/jflex-1.7.0-SNAPSHOT.jar')
+        main = "jflex.Main"
+
+        args = ["--skel",   'lib/jflex/idea-flex.skeleton',
+                "-d",       dst,
+                src
+        ]
+
+        inputs  .file   file(src)
+        outputs .dir    file(dst + lexerFileName)
+    }
 }
 
 task generateRustLexer(type: JavaExec) {
-    ext.src = "src/main/kotlin/org/rust/lang/core/lexer/RustLexer.flex"
-    ext.dst = "gen/org/rust/lang/core/lexer/"
-
-    main = "jflex.Main"
-
-    args = jflexArgs(src, dst)
-
-    inputs  .file   file(src)
-    outputs .dir    file(dst + "_RustLexer.java")
-
-    classpath configurations.gen
+    configure lexerConfig(
+        "src/main/kotlin/org/rust/lang/core/lexer/RustLexer.flex",
+        "gen/org/rust/lang/core/lexer/",
+        "_RustLexer.java"
+    )
 }
 
 task generateRustDocHighlightingLexer(type: JavaExec) {
-    ext.src = "src/main/kotlin/org/rust/lang/doc/lexer/RustDocHighlightingLexer.flex"
-    ext.dst = "gen/org/rust/lang/doc/lexer/"
-
-    main = "jflex.Main"
-
-    args = jflexArgs(src, dst)
-
-    inputs  .file   file(src)
-    outputs .dir    file(dst + "_RustDocHighlightingLexer.java")
-
-    classpath configurations.gen
+    configure lexerConfig(
+        "src/main/kotlin/org/rust/lang/doc/lexer/RustDocHighlightingLexer.flex",
+        "gen/org/rust/lang/doc/lexer/",
+        "_RustDocHighlightingLexer.java"
+    )
 }
 
 task generateRustPsiAndParser(type: JavaExec) {

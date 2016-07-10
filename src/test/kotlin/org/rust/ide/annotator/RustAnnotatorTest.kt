@@ -6,6 +6,7 @@ class RustAnnotatorTest : RustTestCaseBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures"
 
     fun testAttributes() = doTestInfo()
+    fun testFieldsAndMethods() = doTestInfo()
     fun testMacro() = doTestInfo()
     fun testTypeParameters() = doTestInfo()
     fun testMutBinding() = doTestInfo()

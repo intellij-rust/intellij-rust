@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustPatBindingElement
 
 class RustFindUsagesProvider : FindUsagesProvider {
+    // XXX: must return new instance of WordScanner here, because it is not thread safe
     override fun getWordsScanner() = RustWordScanner()
 
     override fun canFindUsagesFor(element: PsiElement) =

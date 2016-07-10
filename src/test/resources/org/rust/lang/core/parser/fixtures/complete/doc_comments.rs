@@ -7,6 +7,8 @@ fn documented_function() {
 
 mod m {
     //! This is module docs
+    //! It can span more the one line,
+    //! like this.
     fn undocumented_function() {}
 
     /// Does other things
@@ -17,7 +19,8 @@ mod m {
 #[cfg(test)]
 /// foo
 struct S {
-    /// Fields can have docs
+    /// Fields can have docs,
+    /// sometimes long ones.
     field: f32
 }
 
