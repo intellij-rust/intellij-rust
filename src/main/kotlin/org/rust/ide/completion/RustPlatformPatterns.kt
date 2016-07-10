@@ -13,7 +13,7 @@ inline fun <reified I: PsiElement> PsiElementPattern.Capture<PsiElement>.withSup
     return this.withSuperParent(level, I::class.java)
 }
 
-infix inline fun <reified I: PsiElement> ElementPattern<I>.or(pattern: ElementPattern<I>): ElementPattern<PsiElement> {
+infix inline fun <reified I: PsiElement> ElementPattern<I>.or(pattern: ElementPattern<I>): PsiElementPattern.Capture<PsiElement> {
     return psiElement().andOr(this, pattern)
 }
 
