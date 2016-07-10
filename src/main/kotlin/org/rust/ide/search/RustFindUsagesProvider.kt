@@ -3,6 +3,7 @@ package org.rust.ide.search
 import com.intellij.lang.HelpID
 import com.intellij.lang.findUsages.FindUsagesProvider
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustPatBindingElement
 
 class RustFindUsagesProvider : FindUsagesProvider {
@@ -10,7 +11,7 @@ class RustFindUsagesProvider : FindUsagesProvider {
     override fun getWordsScanner() = RustWordScanner()
 
     override fun canFindUsagesFor(element: PsiElement) =
-        element is RustPatBindingElement
+        element is RustNamedElement
 
     override fun getHelpId(element: PsiElement) = HelpID.FIND_OTHER_USAGES
 
