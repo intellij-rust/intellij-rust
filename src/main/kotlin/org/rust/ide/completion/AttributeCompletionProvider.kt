@@ -20,25 +20,30 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
 
     private data class RustAttribute(val name: String, val appliesTo: ElementPattern<PsiElement>)
 
-    val onStruct: ElementPattern<PsiElement> = onItem<RustStructItemElement>()
+    val onStruct: PsiElementPattern.Capture<PsiElement> = onItem<RustStructItemElement>()
 
-    val onEnum: ElementPattern<PsiElement> = onItem<RustEnumItemElement>()
+    val onEnum: PsiElementPattern.Capture<PsiElement> = onItem<RustEnumItemElement>()
 
-    val onFn: ElementPattern<PsiElement> = onItem<RustFnItemElement>()
+    val onFn: PsiElementPattern.Capture<PsiElement> = onItem<RustFnItemElement>()
 
-    val onMod: ElementPattern<PsiElement> = onItem<RustModItemElement>()
+    val onMod: PsiElementPattern.Capture<PsiElement> = onItem<RustModItemElement>()
 
-    val onStatic: ElementPattern<PsiElement> = onItem<RustStaticItemElement>()
+    val onStatic: PsiElementPattern.Capture<PsiElement> = onItem<RustStaticItemElement>()
 
-    // TODO
-    val onStaticMut: ElementPattern<PsiElement> = onStatic
+    val onStaticMut: PsiElementPattern.Capture<PsiElement> = psiElement().with(
+        object : PatternCondition<PsiElement>("onStaticMutCondition") {
+            override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
+                val elem = t.parent?.parent?.parent
+                return (elem is RustStaticItemElement) && elem.mut != null
+            }
+        })
 
-    val onMacro: ElementPattern<PsiElement> = onItem<RustMacroItemElement>()
+    val onMacro: PsiElementPattern.Capture<PsiElement> = onItem<RustMacroItemElement>()
 
-    val onTupleStruct: ElementPattern<PsiElement> = psiElement()
+    val onTupleStruct: PsiElementPattern.Capture<PsiElement> = psiElement()
         .withSuperParent(3, psiElement().withChild(psiElement<RustStructTupleArgsElement>()))
 
-    val onCrate: ElementPattern<PsiElement> = psiElement().withSuperParent<PsiFile>(3).with(
+    val onCrate: PsiElementPattern.Capture<PsiElement> = psiElement().withSuperParent<PsiFile>(3).with(
         object : PatternCondition<PsiElement>("onCrateCondition") {
             override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
                 val file = t.containingFile.originalFile.virtualFile
@@ -48,26 +53,26 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
             }
         })
 
-    val onExternBlock: ElementPattern<PsiElement> = onItem<RustForeignModItemElement>()
+    val onExternBlock: PsiElementPattern.Capture<PsiElement> = onItem<RustForeignModItemElement>()
 
-    val onExternBlockDecl: ElementPattern<PsiElement> =
+    val onExternBlockDecl: PsiElementPattern.Capture<PsiElement> =
         onItem<RustForeignFnDeclElement>() or
             onItem<RustForeignStaticDeclElement>() or
             onItem<RustForeignModItemElement>()
 
-    val onAnyItem: ElementPattern<PsiElement> = onItem<RustDocAndAttributeOwner>()
+    val onAnyItem: PsiElementPattern.Capture<PsiElement> = onItem<RustDocAndAttributeOwner>()
 
-    val onExternCrate: ElementPattern<PsiElement> = onItem<RustExternCrateItemElement>()
+    val onExternCrate: PsiElementPattern.Capture<PsiElement> = onItem<RustExternCrateItemElement>()
 
-    val onTrait: ElementPattern<PsiElement> = onItem<RustTraitItemElement>()
+    val onTrait: PsiElementPattern.Capture<PsiElement> = onItem<RustTraitItemElement>()
 
-    val onDropFn: ElementPattern<PsiElement> get() {
+    val onDropFn: PsiElementPattern.Capture<PsiElement> get() {
         val dropTraitRef = psiElement<RustTraitRefElement>().withText("Drop")
         val implBlock = psiElement<RustImplItemElement>().withChild(dropTraitRef)
         return psiElement().withSuperParent(5, implBlock)
     }
 
-    val onTestFn: ElementPattern<PsiElement> = onItem(psiElement<RustFnItemElement>()
+    val onTestFn: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RustFnItemElement>()
         .withChild(psiElement<RustOuterAttrElement>().withText("#[test]")))
 
     private val attributes = mapOf(
@@ -111,7 +116,7 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
         val innerAttrElem = psiElement<RustInnerAttrElement>()
         val metaItemElem = psiElement<RustMetaItemElement>()
             .and(psiElement().withParent(outerAttrElem) or psiElement().withParent(innerAttrElem))
-        return psiElement().withParent(metaItemElem).withLanguage(RustLanguage);
+        return psiElement().withParent(metaItemElem).withLanguage(RustLanguage)
     }
 
     inline fun <reified I : RustDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
