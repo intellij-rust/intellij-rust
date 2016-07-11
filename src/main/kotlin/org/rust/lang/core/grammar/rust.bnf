@@ -907,12 +907,16 @@ lambda_expr ::= MOVE? lambda_parameters ret_type? any_expr
 
 struct_expr ::= <<checkStructAllowed>> path_generic_args_with_colons struct_expr_body
 
-struct_expr_body ::= '{' [ <<comma_separated_list struct_expr_field>> ] ('..'  any_expr)? '}'
+struct_expr_body ::= '{' [ <<comma_separated_list struct_expr_field>> ] ('..'  any_expr)? '}' {
+  pin = 1
+}
 
 struct_expr_field ::= IDENTIFIER ':' any_expr {
   pin = 1
+  recoverWhile = struct_expr_field_recover
   implements = [ "org.rust.lang.core.psi.RustReferenceElement" ]
 }
+struct_expr_field_recover ::= !(IDENTIFIER | ',' | '}' | '..')
 
 path_expr ::= path_generic_args_with_colons
 

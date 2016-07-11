@@ -13,6 +13,7 @@ class RustCompletionTest : RustCompletionTestBase() {
     fun testTypeParams() = checkSoleCompletion()
     fun testImplMethodType() = checkSoleCompletion()
     fun testStructField() = checkSoleCompletion()
+    fun testIncompleteStructField() = checkSoleCompletion()
     fun testEnumField() = checkSoleCompletion()
     fun testWildcardImports() = checkSoleCompletion()
 

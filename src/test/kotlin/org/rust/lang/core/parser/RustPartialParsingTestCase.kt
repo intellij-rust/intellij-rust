@@ -18,6 +18,7 @@ class RustPartialParsingTestCase : RustParsingTestCaseBase("partial") {
     fun testEnumVis() = doTest(true)
     fun testImplBody() = doTest(true)
     fun testMatchExpr() = doTest(true)
+    fun testStructExprFields() = doTest(true)
 
     override fun checkResult(targetDataName: String?, file: PsiFile?) {
         checkHasError(file)
