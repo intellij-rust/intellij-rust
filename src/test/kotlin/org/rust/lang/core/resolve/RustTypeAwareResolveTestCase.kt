@@ -10,6 +10,7 @@ class RustTypeAwareResolveTestCase : RustResolveTestCaseBase() {
 
     fun testSelfFieldExpr() = checkIsBound()
     fun testFieldExpr() = checkIsBound()
+    fun testNestedFieldExpr() = checkIsBound()
 
     fun testLetDeclCallExpr() = checkIsBound()
     fun testLetDeclMethodCallExpr() = checkIsBound()

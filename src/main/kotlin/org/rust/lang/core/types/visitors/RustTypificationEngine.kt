@@ -74,8 +74,13 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 
     override fun visitMethodCallExpr(o: RustMethodCallExprElement) = set {
-        val method = o.reference!!.resolve() as? RustFnElement
+        val method = o.reference.resolve() as? RustFnElement
         method?.let { deviseFunctionType(it).retType } ?: RustUnknownType
+    }
+
+    override fun visitFieldExpr(o: RustFieldExprElement) = set {
+        val field = o.reference.resolve() as? RustFieldDeclElement
+        field?.type?.resolvedType ?: RustUnknownType
     }
 
     override fun visitLitExpr(o: RustLitExprElement) = set {
