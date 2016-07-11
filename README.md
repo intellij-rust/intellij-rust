@@ -6,19 +6,8 @@
 
 This is a work in progress and (as may be assumed reasonably enough) may be highly *unstable* just yet.
 
-## Installation
-
-At the moment we ship pre-release builds in the nightly channel _only_.
-
-To use them you need to follow the [instructions](https://www.jetbrains.com/idea/help/managing-enterprise-plugin-repositories.html) of adding
-additional plugin repository and paste the URL for the one you need:
-
-    - Rust: https://plugins.jetbrains.com/plugins/nightly/8182
-    - TOML: https://plugins.jetbrains.com/plugins/nightly/8195
-
-See the [**Quick Start**](doc/QuickStart.md) and [features](doc/Features.md) for tutorial and screenshots!
-
-As this is a preview release, something might go wrong. So, be brave to face some nasty bugs.
+For [changelog](https://intellij-rust.github.io/thisweek/), [quick start](https://intellij-rust.github.io/docs/quick-start.html),
+[feature list](https://intellij-rust.github.io/), information [how to set up nightly builds](https://intellij-rust.github.io/docs/nightly.html) and more, please check out our [**website**](https://intellij-rust.github.io/).
 
 ## Compatible IDEs
 
