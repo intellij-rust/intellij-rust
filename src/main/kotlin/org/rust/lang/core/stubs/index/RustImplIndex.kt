@@ -9,12 +9,12 @@ import org.rust.lang.core.psi.RustImplItemElement
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.util.resolvedType
 
-class RustInherentImplIndex : StringStubIndexExtension<RustImplItemElement>() {
+class RustImplIndex : StringStubIndexExtension<RustImplItemElement>() {
     override fun getKey(): StubIndexKey<String, RustImplItemElement> = KEY
 
     companion object {
         val KEY: StubIndexKey<String, RustImplItemElement> =
-            StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustInherentImplIndex")
+            StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex")
 
         fun getInherentImpls(project: Project, type: RustType): Collection<RustImplItemElement> {
             val baseTypeName = type.baseTypeName ?: return emptyList()

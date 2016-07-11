@@ -6,7 +6,7 @@ import org.rust.lang.core.psi.RustImplItemElement
 import org.rust.lang.core.psi.impl.RustImplItemElementImpl
 import org.rust.lang.core.stubs.RustElementStub
 import org.rust.lang.core.stubs.RustStubElementType
-import org.rust.lang.core.stubs.index.RustInherentImplIndex
+import org.rust.lang.core.stubs.index.RustImplIndex
 import org.rust.lang.core.types.util.type
 
 
@@ -26,7 +26,7 @@ object RustImplItemStubElementType : RustStubElementType<RustImplItemElementStub
 
     override fun indexStub(stub: RustImplItemElementStub, sink: IndexSink) {
         stub.implNominalTypeName?.let {
-            sink.occurrence(RustInherentImplIndex.KEY, it)
+            sink.occurrence(RustImplIndex.KEY, it)
         }
     }
 
