@@ -211,8 +211,9 @@ The plugin is composed of three packages: `org.rust.lang`, `org.rust.ide` and `o
 The `lang` package is the heart of the plugin. It includes Rust Program
 Structure Interface classes (PSI) which describe a contents of a Rust program.
 The `lang` package is responsible for the semantic analysis of PSI.
-`lang.resolve` package maps variables and paths to their definitions,
-`lang.completion` package provides semantic completion.
+`lang.core.resolve` package maps variables and paths to their definitions,
+`lang.core.completion` package provides semantic completion, and
+`lang.core.types` implements type inference.
 
 The `cargo` package is used for integration with Cargo build tool. Path to Cargo
 is configured via `RustProjectSettingsService`. `CargoProjectWorkspace` invokes
