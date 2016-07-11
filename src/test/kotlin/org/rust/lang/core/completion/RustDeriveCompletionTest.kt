@@ -1,9 +1,7 @@
-package org.rust.completion
-
-import org.rust.lang.core.completion.RustCompletionTestBase
+package org.rust.lang.core.completion
 
 class RustDeriveCompletionTest : RustCompletionTestBase() {
-    override val dataPath = "org/rust/ide/completion/fixtures/derive_traits/"
+    override val dataPath = "org/rust/lang/core/completion/fixtures/derive_traits/"
 
     fun testCompleteOnStruct() = checkSoleCompletion()
 

@@ -1,4 +1,4 @@
-package org.rust.ide.completion
+package org.rust.lang.core.completion
 
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns.psiElement

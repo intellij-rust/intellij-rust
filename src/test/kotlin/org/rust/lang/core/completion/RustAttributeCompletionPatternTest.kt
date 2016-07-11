@@ -1,7 +1,6 @@
 package org.rust.lang.core.completion
 
-import org.rust.ide.completion.AttributeCompletionProvider
-import org.rust.lang.core.pattern.RustPatternTestBase
+import org.rust.lang.core.completion.RustPatternTestBase
 
 class RustAttributeCompletionPatternTest : RustPatternTestBase() {
     fun testOnStruct() = testPattern("""

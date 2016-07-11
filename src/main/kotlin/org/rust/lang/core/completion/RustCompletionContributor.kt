@@ -1,4 +1,4 @@
-package org.rust.ide.completion
+package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionType
