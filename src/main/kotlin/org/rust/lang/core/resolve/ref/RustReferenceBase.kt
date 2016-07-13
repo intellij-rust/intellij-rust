@@ -14,6 +14,10 @@ abstract class RustReferenceBase<T : RustCompositeElement>(
 ) : PsiReferenceBase<T>(element)
   , RustReference {
 
+    override fun equals(other: Any?): Boolean = other is RustReferenceBase<*> && element === other.element
+
+    override fun hashCode(): Int = element.hashCode()
+
     abstract val T.referenceAnchor: PsiElement
 
     abstract fun resolveVerbose(): RustResolveEngine.ResolveResult
