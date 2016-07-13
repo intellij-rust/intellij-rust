@@ -18,6 +18,14 @@ import kotlin.system.measureTimeMillis
 class RustParserPerformanceTest : RustTestCaseBase() {
     override val dataPath: String = ""
 
+    fun testHighlightingPerformance() {
+        val file = rustSrcDir().findFileByRelativePath("libsyntax/parse/parser.rs")!!
+        val fileContents = String(file.contentsToByteArray())
+        myFixture.configureByText("parser.rs", fileContents)
+        val elapsed = myFixture.checkHighlighting()
+        reportTeamCityMetric("$name", elapsed)
+    }
+
     fun testParsingCompilerSources() {
         val sources = rustSrcDir()
         parseRustFiles(
