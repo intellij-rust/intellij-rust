@@ -1,7 +1,6 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.stubs.StubIndex
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.lang.RustTestCaseBase
 import org.rust.lang.core.psi.RustNamedElement
@@ -23,15 +22,6 @@ abstract class RustResolveTestCaseBase : RustTestCaseBase() {
         } else {
             assertThat(declaration.name).isEqualTo(usage.canonicalText)
         }
-    }
-
-    override fun setUp() {
-        super.setUp()
-
-        // Invalidate cache for every run
-        StubIndex
-            .getInstance()
-            .forceRebuild(Exception())
     }
 
     protected fun checkIsBound(atOffset: Int? = null) {
