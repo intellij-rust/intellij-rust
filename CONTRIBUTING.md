@@ -88,7 +88,7 @@ To launch parser performance tests, use
 
 There is a special TeamCity configuration for tracking of [performance metrics].
 
-[performance metrics]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_PerfrormanceTestsRust&tab=buildTypeStatistics&branch_IntellijIdeaPlugins_Rust=__all_branches__
+[performance metrics]: https://teamcity.jetbrains.com/project.html?projectId=IntellijIdeaPlugins_Rust&tab=stats
 
 
 # Pull requests best practices
