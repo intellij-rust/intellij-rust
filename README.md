@@ -29,6 +29,6 @@ issues or missing functionality that you'd want to see. In order to get started
 and to learn about plugin architecture check out [CONTRIBUTING.md] guide. Good
 first bugs are tagged with [up-for-grab].
 
-intellij-rust.github.io: https://intellij-rust.github.io/docs/
-up-for-grab: https://github.com/intellij-rust/intellij-rust/labels/up%20for%20grab
-CONTRIBUTING.md: CONTRIBUTING.md
+[intellij-rust.github.io]: https://intellij-rust.github.io/docs/
+[up-for-grab]: https://github.com/intellij-rust/intellij-rust/labels/up%20for%20grab
+[CONTRIBUTING.md]: CONTRIBUTING.md
