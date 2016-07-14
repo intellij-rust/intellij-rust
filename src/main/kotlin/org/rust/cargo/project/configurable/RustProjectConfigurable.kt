@@ -22,7 +22,7 @@ import javax.swing.JLabel
 
 class RustProjectConfigurable(
     private val project: Project
-) : Configurable {
+) : Configurable, Configurable.NoScroll {
 
     private lateinit var root: JComponent
     private lateinit var rustProjectSettings: RustProjectSettingsPanel
