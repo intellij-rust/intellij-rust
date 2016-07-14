@@ -1038,7 +1038,7 @@ private zz_macro_item ::= macro_definition | item_like_macro {
 }
 
 // Invocations
-macro_invocation ::= IDENTIFIER '!'
+macro_invocation ::= IDENTIFIER '!' IDENTIFIER?
 try_macro_invocation ::= "try" '!'
 macro_rules_invocation ::= "macro_rules" '!'
 

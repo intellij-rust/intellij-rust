@@ -1,3 +1,6 @@
+peg! parser_definition(r#"
+"#);
+
 macro_rules! vec {
     ( $( $x:expr ),* ) => {
         {
