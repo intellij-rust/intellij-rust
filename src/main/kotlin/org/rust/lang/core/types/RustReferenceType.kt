@@ -17,4 +17,6 @@ class RustReferenceType(val referenced: RustType, val mutable: Boolean = false) 
         referenced.hashCode() * 13577 + (if (mutable) 3331 else 0) + 9901
 
     override fun toString(): String = "${if (mutable) "&mut" else "&"} $referenced"
+
+    override val baseTypeName: String? get() = referenced.baseTypeName
 }
