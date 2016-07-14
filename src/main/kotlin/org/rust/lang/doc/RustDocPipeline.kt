@@ -4,12 +4,17 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.text.MarkdownUtil
-import com.petebevin.markdown.MarkdownProcessor
+import org.intellij.markdown.MarkdownElementTypes
+import org.intellij.markdown.flavours.MarkdownFlavourDescriptor
+import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
+import org.intellij.markdown.html.HtmlGenerator
+import org.intellij.markdown.parser.LinkMap
+import org.intellij.markdown.parser.MarkdownParser
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.core.psi.util.stringLiteralValue
 import org.rust.lang.doc.psi.RustDocKind
+import java.net.URI
 
 fun RustDocAndAttributeOwner.documentation(): String? =
     (outerDocs() + innerDocs())
@@ -18,11 +23,10 @@ fun RustDocAndAttributeOwner.documentation(): String? =
         .joinToString("\n")
 
 fun RustDocAndAttributeOwner.documentationAsHtml(): String? {
-    val raw = documentation() ?: return null
-    val lines = raw.split("\n").toMutableList()
-    MarkdownUtil.replaceHeaders(lines)
-    MarkdownUtil.replaceCodeBlock(lines)
-    return MarkdownProcessor().markdown(lines.joinToString("\n"))
+    val text = documentation() ?: return null
+    val flavour = RustDocMarkdownFlavourDescriptor()
+    val root = MarkdownParser(flavour).buildMarkdownTreeFromString(text)
+    return HtmlGenerator(text, root, flavour).generateHtml()
 }
 
 private fun RustDocAndAttributeOwner.outerDocs(): Sequence<Pair<RustDocKind, String>> {
@@ -67,3 +71,13 @@ private fun RustDocAndAttributeOwner.innerDocs(): Sequence<Pair<RustDocKind, Str
 
 private val RustMetaItemElement.docAttr: String?
     get() = if (identifier.text == "doc") litExpr?.stringLiteralValue else null
+
+private class RustDocMarkdownFlavourDescriptor(
+    private val gfm: MarkdownFlavourDescriptor = GFMFlavourDescriptor()
+) : MarkdownFlavourDescriptor by gfm {
+
+    override fun createHtmlGeneratingProviders(linkMap: LinkMap, baseURI: URI?) =
+        gfm.createHtmlGeneratingProviders(linkMap, baseURI)
+            // Filter out MARKDOWN_FILE to avoid producing unnecessary <body> tags
+            .filterKeys { it != MarkdownElementTypes.MARKDOWN_FILE }
+}

@@ -11,6 +11,8 @@ class RustQuickDocumentationTest : RustDocumentationProviderTest() {
     fun testTraitMethod() = checkDoc()
     fun testTraitMethodProvided() = checkDoc()
 
+    fun testIssue495() = checkDoc()     // https://github.com/intellij-rust/intellij-rust/issues/495
+
     private fun checkDoc() = compareByHtml { element, originalElement ->
         RustDocumentationProvider().generateDoc(element, originalElement)
     }
