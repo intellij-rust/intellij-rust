@@ -73,11 +73,13 @@ allprojects {
 
     repositories {
         mavenCentral()
+        maven { url 'http://dl.bintray.com/jetbrains/markdown' }
     }
 
     dependencies {
         compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
         compile "org.jetbrains.kotlin:kotlin-runtime:$kotlinVersion"
+        compile "org.jetbrains:markdown:0.1.12"
 
         testCompile "junit:junit:4.+"
         testCompile 'org.assertj:assertj-core:3.2.0'
