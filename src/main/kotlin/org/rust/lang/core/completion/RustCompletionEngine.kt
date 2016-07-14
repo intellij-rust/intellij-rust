@@ -22,10 +22,11 @@ object RustCompletionEngine {
                  .toVariantsArray()
 
     fun completeFieldOrMethod(field: RustFieldExprElement): Array<out LookupElement> {
-        val structType = (field.expr.resolvedType.stripAllRefsIfAny() as? RustStructType) ?: return emptyArray()
+        val dispatchType = field.expr.resolvedType.stripAllRefsIfAny()
+        val methods = dispatchType.nonStaticMethods
         // Needs type ascription to please Kotlin's type checker, https://youtrack.jetbrains.com/issue/KT-12696.
-        val fieldsAndMethods: List<RustNamedElement> = (structType.struct.fields + structType.nonStaticMethods)
-        return fieldsAndMethods.toVariantsArray()
+        val fields: List<RustNamedElement> = (dispatchType as? RustStructType)?.struct?.fields.orEmpty()
+        return (fields + methods.toList()).toVariantsArray()
     }
 
     fun completeUseGlob(glob: RustUseGlobElement): Array<out Any> =
