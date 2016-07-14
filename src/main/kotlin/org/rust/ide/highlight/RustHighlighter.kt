@@ -1,4 +1,4 @@
-package org.rust.ide.highlight.syntax
+package org.rust.ide.highlight
 
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.StringEscapesTokenTypes.*
@@ -17,7 +17,7 @@ class RustHighlighter : SyntaxHighlighterBase() {
 
     companion object {
         fun map(tokenType: IElementType?): RustColor? = when (tokenType) {
-            is RustKeywordTokenType        -> RustColor.KEYWORD
+            is RustKeywordTokenType -> RustColor.KEYWORD
 
             IDENTIFIER                     -> RustColor.IDENTIFIER
 

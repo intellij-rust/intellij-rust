@@ -1,4 +1,4 @@
-package org.rust.ide.highlight
+package org.rust.ide.typing
 
 import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler
 import com.intellij.openapi.editor.Editor

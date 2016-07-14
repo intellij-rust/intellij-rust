@@ -2,7 +2,7 @@ package org.rust.ide.colors
 
 import com.intellij.openapi.options.colors.ColorDescriptor
 import com.intellij.openapi.options.colors.ColorSettingsPage
-import org.rust.ide.highlight.syntax.RustHighlighter
+import org.rust.ide.highlight.RustHighlighter
 import org.rust.ide.icons.RustIcons
 import org.rust.ide.utils.loadCodeSampleResource
 

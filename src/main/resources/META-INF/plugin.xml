@@ -15,7 +15,7 @@
     <!--</change-notes>-->
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-    <idea-version since-build="143.2287.1" until-build="162.9999"/>
+    <idea-version since-build="143.2287.1" until-build="162.*"/>
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
          on how to target different products -->
@@ -38,7 +38,7 @@
 
         <!-- Syntax Highlighter -->
 
-        <lang.syntaxHighlighterFactory language="Rust" implementationClass="org.rust.ide.highlight.syntax.RustHighlighterFactory"/>
+        <lang.syntaxHighlighterFactory language="Rust" implementationClass="org.rust.ide.highlight.RustHighlighterFactory"/>
 
         <!-- Formatter -->
 
@@ -50,8 +50,8 @@
 
         <!-- Matchers -->
 
-        <lang.braceMatcher language="Rust" implementationClass="org.rust.ide.highlight.matcher.RustBraceMatcher"/>
-        <lang.quoteHandler language="Rust" implementationClass="org.rust.ide.highlight.RustQuoteHandler"/>
+        <lang.braceMatcher language="Rust" implementationClass="org.rust.ide.typing.RustBraceMatcher"/>
+        <lang.quoteHandler language="Rust" implementationClass="org.rust.ide.typing.RustQuoteHandler"/>
 
         <!-- Doc-Provider -->
 

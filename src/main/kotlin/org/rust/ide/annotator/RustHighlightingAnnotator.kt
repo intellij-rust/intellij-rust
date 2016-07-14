@@ -4,7 +4,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RustColor
-import org.rust.ide.highlight.syntax.RustHighlighter
+import org.rust.ide.highlight.RustHighlighter
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.isMut
 import org.rust.lang.core.psi.util.elementType

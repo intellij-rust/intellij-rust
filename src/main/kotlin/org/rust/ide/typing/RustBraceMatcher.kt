@@ -1,4 +1,4 @@
-package org.rust.ide.highlight.matcher
+package org.rust.ide.typing
 
 import com.intellij.lang.BracePair
 import com.intellij.lang.PairedBraceMatcher

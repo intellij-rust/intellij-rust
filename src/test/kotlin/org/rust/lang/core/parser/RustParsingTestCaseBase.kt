@@ -7,7 +7,7 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ParsingTestCase
 import org.jetbrains.annotations.NonNls
-import org.rust.ide.highlight.matcher.RustBraceMatcher
+import org.rust.ide.typing.RustBraceMatcher
 import org.rust.lang.RustLanguage
 import org.rust.lang.RustTestCase
 import org.rust.lang.RustTestCaseBase
