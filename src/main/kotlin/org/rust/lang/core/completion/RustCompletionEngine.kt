@@ -9,6 +9,7 @@ import org.rust.lang.core.resolve.RustResolveEngine
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.util.stripAllRefsIfAny
 
 object RustCompletionEngine {
     fun complete(ref: RustQualifiedReferenceElement): Array<out Any> =
@@ -21,7 +22,7 @@ object RustCompletionEngine {
                  .toVariantsArray()
 
     fun completeFieldOrMethod(field: RustFieldExprElement): Array<out LookupElement> {
-        val structType = (field.expr.resolvedType as? RustStructType) ?: return emptyArray()
+        val structType = (field.expr.resolvedType.stripAllRefsIfAny() as? RustStructType) ?: return emptyArray()
         // Needs type ascription to please Kotlin's type checker, https://youtrack.jetbrains.com/issue/KT-12696.
         val fieldsAndMethods: List<RustNamedElement> = (structType.struct.fields + structType.nonStaticMethods)
         return fieldsAndMethods.toVariantsArray()
