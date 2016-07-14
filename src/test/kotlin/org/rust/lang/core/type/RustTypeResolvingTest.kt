@@ -69,6 +69,13 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
         }
     """)
 
+    fun testSelfType() = testType("""
+        struct S;
+        trait T { fn new() -> Self; }
+
+        impl T for S { fn new() -> Self { S } }
+                                  //^ S
+    """)
 
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.

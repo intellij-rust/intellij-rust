@@ -42,6 +42,10 @@ interface RustQualifiedReferenceElement : RustReferenceElement {
     val relativeModulePrefix: RelativeModulePrefix
 
     val qualifier: RustQualifiedReferenceElement?
+
+    companion object {
+        val SELF_TYPE_NAME = "Self"
+    }
 }
 
 sealed class RelativeModulePrefix {

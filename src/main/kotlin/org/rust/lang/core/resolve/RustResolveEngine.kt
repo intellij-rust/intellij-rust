@@ -274,9 +274,9 @@ private class ScopeEntry private constructor(
     val element: RustNamedElement? by thunk
 
     companion object {
-        fun of(element: RustNamedElement): ScopeEntry? = element.name?.let {
-            ScopeEntry(it, lazyOf(element))
-        }
+        fun of(name: String, element: RustNamedElement): ScopeEntry = ScopeEntry(name, lazyOf(element))
+
+        fun of(element: RustNamedElement): ScopeEntry? = element.name?.let { ScopeEntry.of(it, element) }
 
         fun lazy(name: String?, thunk: () -> RustNamedElement?): ScopeEntry? = name?.let {
             ScopeEntry(name, lazy(thunk))
@@ -352,8 +352,10 @@ private class RustScopeVisitor(
     }
 
     override fun visitTraitItem(o: RustTraitItemElement) = set {
-        if (isContextLocalTo(o))
-            o.typeParams.scopeEntries
+        if (isContextLocalTo(o)) {
+            o.typeParams.scopeEntries + ScopeEntry.of(RustQualifiedReferenceElement.SELF_TYPE_NAME, o)
+        }
+
         else
             emptySequence()
     }
@@ -372,9 +374,12 @@ private class RustScopeVisitor(
     override fun visitImplMethodMember(o: RustImplMethodMemberElement) = visitFunction(o)
 
     override fun visitImplItem(o: RustImplItemElement) = set {
-        if (isContextLocalTo(o))
-            o.typeParams.scopeEntries
-        else
+        if (isContextLocalTo(o)) {
+            o.typeParams.scopeEntries + sequenceOfNotNull(ScopeEntry.lazy(RustQualifiedReferenceElement.SELF_TYPE_NAME) {
+                //TODO: handle types which are not `NamedElements` (e.g. tuples)
+                (o.type as? RustPathTypeElement)?.path?.reference?.resolve()
+            })
+        } else
             emptySequence()
     }
 

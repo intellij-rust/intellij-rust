@@ -52,7 +52,8 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testForeignFn() = checkIsBound()
     fun testForeignStatic() = checkIsBound()
 
-    fun testSelfType() = checkIsUnbound() // TODO: some form of resolve for Self should be implemented
+    fun testImplSelfType() = checkIsBound(atOffset = 7)
+    fun testTraitSelfType() = checkIsBound(atOffset = 6)
 
     fun testUnbound() = checkIsUnbound()
     fun testOrdering() = checkIsUnbound()
