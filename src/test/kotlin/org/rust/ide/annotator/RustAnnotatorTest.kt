@@ -23,6 +23,8 @@ class RustAnnotatorTest : RustTestCaseBase() {
     fun testUnnecessaryWhileParens() = doTest()
     fun testRedundantParens() = doTest()
 
+    fun testStructExpr() = doTest()
+
     fun testPaths() = doTest()
 
     fun testInvalidPub() = doTest()
