@@ -69,16 +69,12 @@ class MissingToolchainNotificationProvider(
             return null
 
         val toolchain = project.toolchain
-        if (toolchain == null || !toolchain.looksLikeValidToolchain() || !toolchain.containsMetadataCommand()) {
-            var title = "No Rust toolchain configured"
-            if (toolchain == null || !toolchain.looksLikeValidToolchain())
-                // NOP
-            else if (!toolchain.containsMetadataCommand())
-                title = "Configured Rust toolchain is incompatible with the plugin: " +
-                    "required at least Cargo ${RustToolchain.CARGO_LEAST_COMPATIBLE_VERSION}, " +
-                    "found ${toolchain.queryCargoVersion()}"
-
-            return createBadToolchainPanel(title)
+        if (toolchain == null || !toolchain.looksLikeValidToolchain()) {
+            return createBadToolchainPanel("No Rust toolchain configured")
+        } else if (!toolchain.containsMetadataCommand()) {
+            return createBadToolchainPanel("Configured Rust toolchain is incompatible with the plugin: " +
+                "required at least Cargo ${RustToolchain.CARGO_LEAST_COMPATIBLE_VERSION}, " +
+                "found ${toolchain.queryCargoVersion()}")
         }
 
         val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
