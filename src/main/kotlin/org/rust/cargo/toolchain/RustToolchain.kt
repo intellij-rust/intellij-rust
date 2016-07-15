@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.commands.Cargo
+import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.utils.seconds
 import java.io.File
 
@@ -75,6 +76,11 @@ data class RustToolchain(val location: String) {
         val CARGO_TOML = "Cargo.toml"
 
         val CARGO_LEAST_COMPATIBLE_VERSION = Version(0, 9, 0)
+
+        fun suggest(): RustToolchain? = Suggestions.all().mapNotNull {
+            val candidate = RustToolchain(it.absolutePath)
+            if (candidate.looksLikeValidToolchain()) candidate else null
+        }.firstOrNull()
     }
 }
 
@@ -160,11 +166,6 @@ private fun parseRustcVersion(lines: List<String>): Version? {
     else
         UnstableVersion(commitHash, major, minor, build)
 }
-
-fun suggestToolchain(): RustToolchain? = Suggestions.all().mapNotNull {
-    val candidate = RustToolchain(it.absolutePath)
-    if (candidate.looksLikeValidToolchain()) candidate else null
-}.firstOrNull()
 
 private object Suggestions {
     fun all() = sequenceOf(

@@ -12,7 +12,6 @@ import com.intellij.ui.JBColor
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.toolchain.suggestToolchain
 import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.cargoProject
 import org.rust.cargo.util.cargoProjectRoot
@@ -44,7 +43,7 @@ class RustProjectConfigurable(
 
     override fun reset() {
         val settings = project.rustSettings
-        val toolchain = settings.toolchain ?: suggestToolchain()
+        val toolchain = settings.toolchain ?: RustToolchain.suggest()
 
         rustProjectSettings.data = RustProjectSettingsPanel.Data(
             toolchain,

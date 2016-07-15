@@ -13,8 +13,10 @@ import com.intellij.util.Alarm
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Version
-import org.rust.cargo.toolchain.suggestToolchain
-import javax.swing.*
+import javax.swing.JCheckBox
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
 class RustProjectSettingsPanel : JPanel() {
@@ -65,7 +67,7 @@ class RustProjectSettingsPanel : JPanel() {
 
 
         data = Data(
-            suggestToolchain(),
+            RustToolchain.suggest(),
             autoUpdateEnabled = true
         )
     }

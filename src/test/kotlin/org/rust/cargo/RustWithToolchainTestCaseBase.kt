@@ -5,7 +5,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestCase
 import org.rust.cargo.project.settings.RustProjectSettingsService
-import org.rust.cargo.toolchain.suggestToolchain
+import org.rust.cargo.toolchain.RustToolchain
 import org.rust.ide.utils.service
 
 // This class allows to execute real Cargo during the tests.
@@ -14,7 +14,7 @@ import org.rust.ide.utils.service
 abstract class RustWithToolchainTestCaseBase : PlatformTestCase() {
     abstract val dataPath: String
 
-    private val toolchain = suggestToolchain()
+    private val toolchain = RustToolchain.suggest()
 
     protected fun withProject(projectName: String, action: () -> Unit) {
         val projectDirectory = "$dataPath/$projectName"
