@@ -7,9 +7,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.PathUtil
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.commands.Cargo
-import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.utils.seconds
 import java.io.File
 
@@ -60,6 +60,8 @@ data class RustToolchain(val location: String) {
 
     fun cargo(cargoProjectDirectory: String): Cargo =
         Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), cargoProjectDirectory)
+
+    val presentableLocation: String = PathUtil.toPresentableUrl(pathToExecutable(CARGO))
 
     private fun pathToExecutable(toolName: String): String {
         val exeName = if (SystemInfo.isWindows) "$toolName.exe" else toolName

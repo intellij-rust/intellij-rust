@@ -3,6 +3,7 @@ package org.rust.ide.notifications
 import com.intellij.ProjectTopics
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileEditor
@@ -21,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import org.rust.cargo.project.settings.RustProjectSettingsService
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.UnstableVersion
@@ -70,6 +72,18 @@ class MissingToolchainNotificationProvider(
 
         val toolchain = project.toolchain
         if (toolchain == null || !toolchain.looksLikeValidToolchain()) {
+            // Try to setup default toolchain without showing notification panel,
+            // but only once per project
+            val properties = PropertiesComponent.getInstance(project)
+            if (!properties.getBoolean(TOOLCHAIN_DISCOVERY_KEY)) {
+                properties.setValue(TOOLCHAIN_DISCOVERY_KEY, true)
+                val suggestedToolchain = RustToolchain.suggest()
+                if (suggestedToolchain != null) {
+                    setSuggestedToolchainAsync(suggestedToolchain)
+                    return null
+                }
+            }
+
             return createBadToolchainPanel("No Rust toolchain configured")
         } else if (!toolchain.containsMetadataCommand()) {
             return createBadToolchainPanel("Configured Rust toolchain is incompatible with the plugin: " +
@@ -84,6 +98,26 @@ class MissingToolchainNotificationProvider(
             else
                 null
         }
+    }
+
+    private fun setSuggestedToolchainAsync(toolchain: RustToolchain) = ApplicationManager.getApplication().invokeLater {
+        if (project.isDisposed) return@invokeLater
+
+        val oldToolchain = project.rustSettings.toolchain
+        if (oldToolchain != null && oldToolchain.looksLikeValidToolchain()) {
+            return@invokeLater
+        }
+
+        runWriteAction {
+            project.rustSettings.toolchain = toolchain
+        }
+
+        PopupUtil.showBalloonForActiveFrame(
+            "Using Cargo at ${toolchain.presentableLocation}",
+            MessageType.INFO
+        )
+
+        notifications.updateAllNotifications()
     }
 
     private fun createBadToolchainPanel(title: String): EditorNotificationPanel =
@@ -183,6 +217,7 @@ class MissingToolchainNotificationProvider(
 
     companion object {
         private val NOTIFICATION_STATUS_KEY = "org.rust.hideToolchainNotifications"
+        private val TOOLCHAIN_DISCOVERY_KEY = "org.rust.alreadyTriedAutoDiscovery"
 
         private val PROVIDER_KEY: Key<EditorNotificationPanel> = Key.create("Setup Rust toolchain")
     }
