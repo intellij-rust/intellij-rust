@@ -24,6 +24,7 @@ class RustAnnotatorTest : RustTestCaseBase() {
     fun testRedundantParens() = doTest()
 
     fun testStructExpr() = doTest()
+    fun testStructExprQuickFix() = checkByFile { applyQuickFix("Add missing fields") }
 
     fun testPaths() = doTest()
 

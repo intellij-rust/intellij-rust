@@ -83,6 +83,11 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         }
     }
 
+    protected fun applyQuickFix(name: String) {
+        val action = myFixture.findSingleIntention(name)
+        myFixture.launchAction(action)
+    }
+
     open class RustProjectDescriptor : LightProjectDescriptor() {
 
         final override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {

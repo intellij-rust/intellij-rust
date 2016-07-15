@@ -13,9 +13,4 @@ abstract class RustInspectionsTestBase : RustTestCaseBase() {
         myFixture.testHighlighting(true, false, true, fileName)
     }
 
-    protected fun applyQuickFix(name: String) {
-        val action = myFixture.getAvailableIntention(name)!!
-        myFixture.launchAction(action)
-    }
-
 }

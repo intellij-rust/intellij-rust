@@ -29,4 +29,10 @@ object RustElementFactory {
         val file = createFileFromText(project, "use $path;")
         return file?.childOfType<RustUseItemElement>()
     }
+
+    fun createStructExprBody(project: Project, fieldNames: List<String>): RustStructExprBodyElement? {
+        val fields = fieldNames.map { "$it: ()," }.joinToString("\n")
+        val file = createFileFromText(project, "fn main() { S { $fields }; }")
+        return file?.childOfType<RustStructExprBodyElement>()
+    }
 }

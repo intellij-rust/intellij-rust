@@ -1,8 +1,12 @@
 package org.rust.ide.annotator
 
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.rust.ide.intentions.RemoveParenthesesFromExprIntention
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.fields
@@ -43,9 +47,32 @@ class RustExpressionAnnotator : Annotator {
         val requiredFields = struct.fields.mapNotNull { it.name }.toSet()
 
         if (!declaredFields.containsAll(requiredFields)) {
-            holder.createErrorAnnotation(expr.rbrace ?: expr, "Some fields are missing")
+            val annotation = holder.createErrorAnnotation(expr.rbrace ?: expr, "Some fields are missing")
+            if (declaredFields.isEmpty()) { // only the simplest case of every field missing for now
+                annotation.registerFix(AddStructFieldsQuickFix(struct, expr), expr.textRange)
+            }
         }
+    }
+}
 
+private class AddStructFieldsQuickFix(
+    val struct: RustStructItemElement,
+    expr: RustStructExprBodyElement
+) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
+    override fun getText(): String = "Add missing fields"
+
+    override fun getFamilyName(): String = text
+
+    override fun invoke(
+        project: Project,
+        file: PsiFile,
+        editor: Editor?,
+        startElement: PsiElement,
+        endElement: PsiElement
+    ) {
+        if (startElement !is RustStructExprBodyElement) return
+        val newBody = RustElementFactory.createStructExprBody(project, struct.fields.mapNotNull { it.name }) ?: return
+        startElement.replace(newBody)
     }
 }
 
