@@ -7,6 +7,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.util.cargoProject
 import org.rust.lang.RustFileType
@@ -29,8 +32,12 @@ class RustFile(
 
     override fun getFileType(): FileType = RustFileType
 
-    override val `super`: RustMod?
-        get() = RustModulesIndex.getSuperFor(this)
+    override val `super`: RustMod? get() = CachedValuesManager.getCachedValue(this, CachedValueProvider {
+        CachedValueProvider.Result.create(
+            RustModulesIndex.getSuperFor(this),
+            PsiModificationTracker.MODIFICATION_COUNT
+        )
+    })
 
     override val modName: String? = if (name != RustMod.MOD_RS) FileUtil.getNameWithoutExtension(name) else parent?.name
 
