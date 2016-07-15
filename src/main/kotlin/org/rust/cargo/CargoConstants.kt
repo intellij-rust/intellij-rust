@@ -13,4 +13,10 @@ object CargoConstants {
         val RUN = "run"
         val TEST = "test"
     }
+
+    object ProjectLayout {
+        val sources = listOf("src", "examples")
+        val tests = listOf("tests", "benches")
+        val target = "target"
+    }
 }

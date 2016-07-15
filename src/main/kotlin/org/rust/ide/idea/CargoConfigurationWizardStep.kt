@@ -6,6 +6,8 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.util.io.FileUtil
+import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import javax.swing.JComponent
@@ -35,14 +37,28 @@ class CargoConfigurationWizardStep(
     }
 
     private object ConfigurationUpdater : ModuleConfigurationUpdater() {
+        private var alreadyExecuted = false
         var data: RustProjectSettingsPanel.Data? = null
 
         override fun update(module: Module, rootModel: ModifiableRootModel) {
+            if (alreadyExecuted) return
+            alreadyExecuted = true
+
             val latestData = data ?: return
-            val project = module.project
-            val settings = project.rustSettings
-            latestData.applyTo(settings)
-            data = null
+            latestData.applyTo(module.project.rustSettings)
+
+            val contentEntry = rootModel.contentEntries.singleOrNull()
+            if (contentEntry != null) {
+                val projectRoot = contentEntry.file ?: return
+                val makeVfsUrl = { dirName: String -> FileUtil.join(projectRoot.url, dirName) }
+                CargoConstants.ProjectLayout.sources.map(makeVfsUrl).forEach {
+                    contentEntry.addSourceFolder(it, /* test = */ false)
+                }
+                CargoConstants.ProjectLayout.tests.map(makeVfsUrl).forEach {
+                    contentEntry.addSourceFolder(it, /* test = */ true)
+                }
+                contentEntry.addExcludeFolder(makeVfsUrl(CargoConstants.ProjectLayout.target))
+            }
         }
     }
 
