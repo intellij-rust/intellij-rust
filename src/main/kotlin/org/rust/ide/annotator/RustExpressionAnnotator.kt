@@ -8,14 +8,15 @@ import org.rust.lang.core.psi.*
 
 class RustExpressionAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-        when (element) {
-            is RustIfExprElement    -> checkIfParentheses(element, holder)
-            is RustWhileExprElement -> checkWhileParentheses(element, holder)
-            is RustRetExprElement   -> checkReturnParentheses(element, holder)
-            is RustMatchExprElement -> checkMatchParentheses(element, holder)
-            is RustForExprElement   -> checkForParentheses(element, holder)
-            is RustParenExprElement -> checkImmediateChildIsParen(element, holder)
+        val visitor = object : RustElementVisitor() {
+            override fun visitIfExpr(o: RustIfExprElement) = checkIfParentheses(o, holder)
+            override fun visitWhileExpr(o: RustWhileExprElement) = checkWhileParentheses(o, holder)
+            override fun visitRetExpr(o: RustRetExprElement) = checkReturnParentheses(o, holder)
+            override fun visitMatchExpr(o: RustMatchExprElement) = checkMatchParentheses(o, holder)
+            override fun visitForExpr(o: RustForExprElement) = checkForParentheses(o, holder)
+            override fun visitParenExpr(o: RustParenExprElement) = checkImmediateChildIsParen(o, holder)
         }
+        element.accept(visitor)
     }
 
     private fun checkImmediateChildIsParen(element: RustParenExprElement, holder: AnnotationHolder) {
