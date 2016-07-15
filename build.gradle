@@ -186,7 +186,7 @@ compileTestKotlin.dependsOn generate
 
 task downloadRustSources(type: de.undercouch.gradle.tasks.download.Download) {
     overwrite false
-    src 'https://github.com/rust-lang/rust/archive/1.7.0.zip'
+    src 'https://github.com/rust-lang/rust/archive/1.10.0.zip'
     dest new File(projectDir, "src/test/resources/rustc-src.zip")
 }
 

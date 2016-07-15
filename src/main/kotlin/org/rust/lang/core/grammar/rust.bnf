@@ -267,6 +267,9 @@ vis ::= PUB
 
 private attrs_and_vis ::= outer_attr* vis?
 
+defaulted ::= "default" // contextual keyword
+private attrs_default_vis ::= outer_attr* defaulted? vis?
+
 private docs_and_item ::= ( stmt_item_group | macro_item )
 
 private stmt_item_group ::= static_item
@@ -672,7 +675,7 @@ private impl_member ::= impl_method_member
                       | impl_macro_member
                       | impl_type_member
 
-impl_method_member ::= attrs_and_vis fn_header method_parameters ret_type? where_clause? inner_attrs_and_block {
+impl_method_member ::= attrs_default_vis fn_header method_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustFnElement"
@@ -681,14 +684,14 @@ impl_method_member ::= attrs_and_vis fn_header method_parameters ret_type? where
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
-impl_const_member ::= attrs_and_vis CONST static_decl ';' {
+impl_const_member ::= attrs_default_vis CONST static_decl ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
 }
 
-impl_type_member ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params? '=' type ';' {
+impl_type_member ::= attrs_default_vis TYPE_KW IDENTIFIER generic_params? '=' type ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"

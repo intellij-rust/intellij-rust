@@ -37,3 +37,8 @@ impl<T> GenVal<T> {
     fn value(&self) -> &T {}
     fn foo<A, B>(&mut self, a: i32, b: i32) -> &A {}
 }
+
+impl<T: fmt::Display + ?Sized> ToString for T {
+    #[inline]
+    default fn to_string(&self) -> String { }
+}
