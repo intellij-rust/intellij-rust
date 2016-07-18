@@ -13,10 +13,10 @@ class RustUnresolvedModuleDeclarationTest : RustInspectionsTestBase() {
         applyQuickFix("Create module file")
     }
 
-    fun testMoveFileToDirectoryQuickFix() = checkByDirectory {
+    fun testCreateFileAndExpandModuleQuickFix() = checkByDirectory {
         enableInspection<RustUnresolvedModuleDeclarationInspection>()
         openFileInEditor("foo.rs")
-        applyQuickFix("Move parent module to a dedicated directory")
+        applyQuickFix("Create module file")
     }
 
 }

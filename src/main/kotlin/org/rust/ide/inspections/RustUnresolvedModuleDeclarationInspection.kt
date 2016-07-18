@@ -4,13 +4,10 @@ import com.intellij.codeInspection.LocalQuickFixBase
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.impl.file.PsiFileImplUtil
-import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import org.rust.cargo.util.cargoProject
+import org.rust.ide.actions.RustExpandModuleAction
 import org.rust.lang.core.psi.RustElementVisitor
-import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.RustModDeclItemElement
 import org.rust.lang.core.psi.containingMod
 import org.rust.lang.core.psi.impl.RustFile
@@ -37,35 +34,29 @@ class RustUnresolvedModuleDeclarationInspection : RustLocalInspectionTool() {
                     // sure that a mod is not a directory owner.
                     if (modDecl.module?.cargoProject != null) {
                         holder.registerProblem(modDecl, "Cannot declare a new module at this location",
-                            MoveModuleToDedicatedDirectoryQuickFix())
+                            AddModuleFile(expandModuleFirst = true))
 
                     }
                     return
                 }
 
                 if (modDecl.reference?.resolve() == null) {
-                    holder.registerProblem(modDecl, "Unresolved module", AddModuleFile)
+                    holder.registerProblem(modDecl, "Unresolved module", AddModuleFile(expandModuleFirst = false))
                 }
             }
         }
 
-    object AddModuleFile : LocalQuickFixBase("Create module file") {
+    private class AddModuleFile(private val expandModuleFirst: Boolean): LocalQuickFixBase("Create module file") {
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val mod = descriptor.psiElement as RustModDeclItemElement
+            if (expandModuleFirst) {
+                val containingFile = mod.containingFile as RustFile
+                RustExpandModuleAction.expandModule(containingFile)
+            }
             val file = mod.getOrCreateModuleFile() ?: return
             file.navigate(true)
         }
 
     }
 
-    class MoveModuleToDedicatedDirectoryQuickFix : LocalQuickFixBase("Move parent module to a dedicated directory") {
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val file = descriptor.psiElement.containingFile as RustFile
-            val dirName = FileUtil.getNameWithoutExtension(file.name)
-            val directory = file.parent?.createSubdirectory(dirName)
-            MoveFilesOrDirectoriesUtil.doMoveFile(file, directory)
-            PsiFileImplUtil.setName(file, RustMod.MOD_RS)
-        }
-
-    }
 }

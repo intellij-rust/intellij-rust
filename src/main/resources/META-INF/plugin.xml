@@ -235,6 +235,13 @@
         <action id="Rust.RefreshCargoProject"
                 class="org.rust.ide.actions.RefreshCargoProjectAction"
                 icon="AllIcons.Actions.Refresh"/>
+
+        <action id="Rust.RustExpandModuleAction"
+                class="org.rust.ide.actions.RustExpandModuleAction"
+                text="Expand module"
+                description="Move this module to a dedicated directory">
+            <add-to-group group-id="RefactoringMenu"/>
+        </action>
     </actions>
 
 </idea-plugin>
