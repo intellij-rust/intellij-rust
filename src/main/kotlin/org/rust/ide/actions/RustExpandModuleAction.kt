@@ -14,7 +14,15 @@ import org.rust.lang.core.psi.impl.RustFile
 class RustExpandModuleAction : AnAction() {
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = e.rustFile != null
+        val file = e.rustFile
+        if (file == null) {
+            e.presentation.isEnabledAndVisible = false
+        } else {
+            e.presentation.isVisible = true
+            // This method must be fast, so approximate `ownsDirectory` with name check.
+            // TODO: properly handle all edge cases in `actionPerformed`.
+            e.presentation.isEnabled = file.name != RustMod.MOD_RS
+        }
     }
 
     override fun actionPerformed(e: AnActionEvent) {
