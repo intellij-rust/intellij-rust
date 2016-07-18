@@ -22,7 +22,21 @@ FILE
         RustParametersElementImpl(PARAMETERS)
           PsiElement(()('(')
           PsiElement())(')')
-        PsiErrorElement:'{' expected, got '}'
+        PsiErrorElement:'{' expected, got 'bar'
           <empty list>
+      PsiWhiteSpace('\n    ')
+      PsiElement(<IDENTIFIER>)('bar')
+      PsiWhiteSpace('\n    ')
+      RustImplMethodMemberElementImpl(IMPL_METHOD_MEMBER)
+        PsiElement(fn)('fn')
+        PsiWhiteSpace(' ')
+        PsiElement(<IDENTIFIER>)('baz')
+        RustParametersElementImpl(PARAMETERS)
+          PsiElement(()('(')
+          PsiElement())(')')
+        PsiWhiteSpace(' ')
+        RustBlockElementImpl(BLOCK)
+          PsiElement({)('{')
+          PsiElement(})('}')
       PsiWhiteSpace('\n')
       PsiElement(})('}')
