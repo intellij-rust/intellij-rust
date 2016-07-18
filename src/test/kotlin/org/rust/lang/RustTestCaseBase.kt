@@ -80,6 +80,8 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         //https://confluence.jetbrains.com/display/TCD10/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingBuildStatistics
         if (UsefulTestCase.IS_UNDER_TEAMCITY) {
             println("##teamcity[buildStatisticValue key='$name' value='$value']")
+        } else {
+            println("$name: $value")
         }
     }
 
