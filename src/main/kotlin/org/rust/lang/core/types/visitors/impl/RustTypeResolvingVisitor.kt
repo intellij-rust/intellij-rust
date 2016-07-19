@@ -1,9 +1,11 @@
-package org.rust.lang.core.types.visitors
+package org.rust.lang.core.types.visitors.impl
 
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.resolve.RustResolveEngine
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.unresolved.*
+import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
+import org.rust.lang.core.types.visitors.impl.RustTypificationEngine
 
 open class RustTypeResolvingVisitor(private val pivot: RustCompositeElement) : RustUnresolvedTypeVisitor<RustType> {
 

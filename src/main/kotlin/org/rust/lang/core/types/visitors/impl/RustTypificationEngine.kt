@@ -1,4 +1,4 @@
-package org.rust.lang.core.types.visitors
+package org.rust.lang.core.types.visitors.impl
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -13,6 +13,7 @@ import org.rust.lang.core.types.unresolved.RustUnresolvedTupleType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.util.type
+import org.rust.lang.core.types.visitors.impl.RustTypeInferenceEngine
 
 object RustTypificationEngine {
 

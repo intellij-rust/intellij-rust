@@ -26,7 +26,7 @@ import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.util.stripAllRefsIfAny
-import org.rust.lang.core.types.visitors.RustTypeResolvingVisitor
+import org.rust.lang.core.types.visitors.impl.RustTypeResolvingVisitor
 import org.rust.utils.sequenceOfNotNull
 import java.util.*
 

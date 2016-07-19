@@ -12,5 +12,4 @@ class RustReferenceType(val referenced: RustType, val mutable: Boolean = false) 
 
     override fun toString(): String = "${if (mutable) "&mut" else "&"} $referenced"
 
-    override val baseTypeName: String? get() = referenced.baseTypeName
 }

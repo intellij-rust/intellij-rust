@@ -1,4 +1,4 @@
-package org.rust.lang.core.types.visitors
+package org.rust.lang.core.types.visitors.impl
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
