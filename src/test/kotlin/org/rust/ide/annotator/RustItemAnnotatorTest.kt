@@ -15,4 +15,6 @@ class RustItemAnnotatorTest : RustAnnotatorTestBase() {
         applyQuickFix("Create module file")
     }
 
+    fun testInvalidTraitImpl() = doTest()
+
 }

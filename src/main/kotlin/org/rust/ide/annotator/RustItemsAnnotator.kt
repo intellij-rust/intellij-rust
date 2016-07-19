@@ -5,13 +5,12 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.cargo.util.cargoProject
 import org.rust.ide.actions.RustExpandModuleAction
-import org.rust.lang.core.psi.RustElementVisitor
-import org.rust.lang.core.psi.RustModDeclItemElement
-import org.rust.lang.core.psi.containingMod
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
 import org.rust.lang.core.psi.impl.mixin.isPathAttributeRequired
@@ -22,6 +21,7 @@ class RustItemsAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val visitor = object : RustElementVisitor() {
             override fun visitModDeclItem(o: RustModDeclItemElement) = checkModDecl(holder, o)
+            override fun visitImplItem(o: RustImplItemElement) = checkImpl(holder, o)
         }
 
         element.accept(visitor)
@@ -49,6 +49,24 @@ class RustItemsAnnotator : Annotator {
         if (modDecl.reference?.resolve() == null) {
             holder.createErrorAnnotation(modDecl, "Unresolved module")
                 .registerFix(AddModuleFile(modDecl, expandModuleFirst = false))
+        }
+    }
+
+    private fun checkImpl(holder: AnnotationHolder, impl: RustImplItemElement) {
+        val trait = impl.traitRef?.path?.reference?.resolve() as? RustTraitItemElement ?: return
+        val implBody = impl.implBody ?: return
+        val implHeaderTextRange = TextRange.create(
+            impl.textRange.startOffset,
+            impl.type?.textRange?.endOffset ?: implBody.textRange.startOffset
+        )
+
+        val needsToImplement = trait.traitBody.traitMethodMemberList.filter { it.isAbstract }.associateBy { it.name }
+        val implemented = implBody.implMethodMemberList.associateBy { it.name }
+
+        val notImplemented = needsToImplement.keys - implemented.keys
+        if (!notImplemented.isEmpty()) {
+            holder.createErrorAnnotation(implHeaderTextRange,
+                "Not all trait items implemented, missing: `${notImplemented.first()}`")
         }
     }
 }
