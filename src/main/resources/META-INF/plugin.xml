@@ -85,6 +85,7 @@
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RustHighlightingAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RustLiteralAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RustExpressionAnnotator"/>
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RustItemsAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RustInvalidSyntaxAnnotator"/>
 
         <!-- Completion -->
@@ -125,11 +126,6 @@
                          displayName="Self Convention"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RustSelfConventionInspection"/>
-
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Unresolved module declaration"
-                         enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RustUnresolvedModuleDeclarationInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Unresolved reference"
