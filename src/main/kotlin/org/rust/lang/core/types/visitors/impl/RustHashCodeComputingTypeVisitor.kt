@@ -1,30 +1,30 @@
 package org.rust.lang.core.types.visitors.impl
 
 import org.rust.lang.core.types.*
-import org.rust.lang.core.types.unresolved.RustUnresolvedFunctionType
-import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
-import org.rust.lang.core.types.unresolved.RustUnresolvedReferenceType
-import org.rust.lang.core.types.unresolved.RustUnresolvedTupleType
+import org.rust.lang.core.types.unresolved.*
 import org.rust.lang.core.types.visitors.RustInvariantTypeVisitor
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 
 
-class RustHashCodeComputingTypeVisitor
+open class RustHashCodeComputingTypeVisitor
     : RustHashCodeComputingTypeVisitorBase()
     , RustTypeVisitor<Int> {
+
+    protected fun visit(type: RustType): Int = type.accept(this)
 
     override fun visitStruct(type: RustStructType): Int = type.struct.hashCode() * 10067 + 9631
 
     override fun visitEnum(type: RustEnumType): Int = type.enum.hashCode() * 12289 + 9293
 
-    override fun visitTupleType(type: RustTupleType): Int = type.types.hashCode()
+    override fun visitTupleType(type: RustTupleType): Int =
+        type.types.fold(0, { h, ty -> h * 8741 + visit(ty) }) + 17387
 
     override fun visitFunctionType(type: RustFunctionType): Int =
-        sequenceOf(*type.paramTypes.toTypedArray(), type.retType).fold(0, { h, ty -> h * 11173 + ty.hashCode() }) + 8929
+        sequenceOf(*type.paramTypes.toTypedArray(), type.retType).fold(0, { h, ty -> h * 11173 + visit(ty) }) + 8929
 
     override fun visitReference(type: RustReferenceType): Int =
-        type.referenced.hashCode() * 13577 + (if (type.mutable) 3331 else 0) + 9901
+        visit(type.referenced) * 13577 + (if (type.mutable) 3331 else 0) + 9901
 
 }
 
@@ -33,15 +33,18 @@ open class RustHashCodeComputingUnresolvedTypeVisitor
     : RustHashCodeComputingTypeVisitorBase()
     , RustUnresolvedTypeVisitor<Int> {
 
+    protected fun visit(type: RustUnresolvedType): Int = type.accept(this)
+
     override fun visitPathType(type: RustUnresolvedPathType): Int = type.path.hashCode()
 
-    override fun visitTupleType(type: RustUnresolvedTupleType): Int = type.types.hashCode()
+    override fun visitTupleType(type: RustUnresolvedTupleType): Int =
+        type.types.fold(0, { h, ty -> h * 7927 + visit(ty) }) + 16823
 
     override fun visitFunctionType(type: RustUnresolvedFunctionType): Int =
-        sequenceOf(*type.paramTypes.toTypedArray(), type.retType).fold(0, { h, ty -> h * 13591 + ty.hashCode() }) + 9187
+        sequenceOf(*type.paramTypes.toTypedArray(), type.retType).fold(0, { h, ty -> h * 13591 + visit(ty) }) + 9187
 
     override fun visitReference(type: RustUnresolvedReferenceType): Int =
-        type.referenced.hashCode() * 10103 + (if (type.mutable) 5953 else 0) + 11159
+        visit(type.referenced) * 10103 + (if (type.mutable) 5953 else 0) + 11159
 
 }
 

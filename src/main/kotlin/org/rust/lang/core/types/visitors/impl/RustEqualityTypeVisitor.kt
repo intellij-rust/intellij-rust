@@ -7,11 +7,11 @@ import org.rust.lang.core.types.visitors.RustTypeVisitor
 import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 import org.rust.utils.safely
 
-class RustEqualityTypeVisitor(override var lop: RustType)
+open class RustEqualityTypeVisitor(override var lop: RustType)
     : RustEqualityTypeVisitorBase<RustType>()
     , RustTypeVisitor<Boolean> {
 
-    fun visit(lop: RustType, rop: RustType): Boolean {
+    protected fun visit(lop: RustType, rop: RustType): Boolean {
         val prev = this.lop
         this.lop = lop
 
@@ -20,7 +20,7 @@ class RustEqualityTypeVisitor(override var lop: RustType)
         }
     }
 
-    fun visit(lop: Iterable<RustType>, rop: Iterable<RustType>): Boolean =
+    protected fun visitTypeList(lop: Iterable<RustType>, rop: Iterable<RustType>): Boolean =
         lop.zip(rop).fold(true, { r, p -> r && visit(p.first, p.second) })
 
     override fun visitStruct(type: RustStructType): Boolean {
@@ -44,7 +44,7 @@ class RustEqualityTypeVisitor(override var lop: RustType)
         if (lop !is RustTupleType || lop.size != type.size)
             return false
 
-        return visit(lop.types, type.types)
+        return visitTypeList(lop.types, type.types)
     }
 
     override fun visitFunctionType(type: RustFunctionType): Boolean {
@@ -52,7 +52,7 @@ class RustEqualityTypeVisitor(override var lop: RustType)
         if (lop !is RustFunctionType)
             return false
 
-        return visit(lop.retType, type.retType) && visit(lop.paramTypes, type.paramTypes)
+        return visit(lop.retType, type.retType) && visitTypeList(lop.paramTypes, type.paramTypes)
     }
 
     override fun visitReference(type: RustReferenceType): Boolean {
@@ -78,7 +78,7 @@ open class RustEqualityUnresolvedTypeVisitor(override var lop: RustUnresolvedTyp
         }
     }
 
-    fun visit(lop: Iterable<RustUnresolvedType>, rop: Iterable<RustUnresolvedType>): Boolean =
+    fun visitTypeList(lop: Iterable<RustUnresolvedType>, rop: Iterable<RustUnresolvedType>): Boolean =
         lop.zip(rop).fold(true, { r, p -> r && visit(p.first, p.second) })
 
     override fun visitPathType(type: RustUnresolvedPathType): Boolean {
@@ -86,7 +86,7 @@ open class RustEqualityUnresolvedTypeVisitor(override var lop: RustUnresolvedTyp
         if (lop !is RustUnresolvedPathType)
             return false
 
-        return lop.path.equals(type.path)
+        return lop.path == type.path
     }
 
     override fun visitTupleType(type: RustUnresolvedTupleType): Boolean {
@@ -94,7 +94,7 @@ open class RustEqualityUnresolvedTypeVisitor(override var lop: RustUnresolvedTyp
         if (lop !is RustUnresolvedTupleType)
             return false
 
-        return visit(lop.types, type.types)
+        return visitTypeList(lop.types, type.types)
     }
 
     override fun visitFunctionType(type: RustUnresolvedFunctionType): Boolean {
@@ -102,7 +102,7 @@ open class RustEqualityUnresolvedTypeVisitor(override var lop: RustUnresolvedTyp
         if (lop !is RustUnresolvedFunctionType)
             return false
 
-        return visit(lop.retType, type.retType) && visit(lop.paramTypes, type.paramTypes)
+        return visit(lop.retType, type.retType) && visitTypeList(lop.paramTypes, type.paramTypes)
     }
 
     override fun visitReference(type: RustUnresolvedReferenceType): Boolean {
@@ -118,14 +118,6 @@ abstract class RustEqualityTypeVisitorBase<T>() : RustInvariantTypeVisitor<Boole
 
     protected abstract var lop: T
 
-    override fun visitUnknown(type: RustUnknownType): Boolean {
-        return lop === type
-    }
-
-    override fun visitUnitType(type: RustUnitType): Boolean {
-        return lop === type
-    }
-
     override fun visitInteger(type: RustIntegerType): Boolean {
         val lop = lop
         return lop is RustIntegerType && lop.kind === type.kind
@@ -134,6 +126,14 @@ abstract class RustEqualityTypeVisitorBase<T>() : RustInvariantTypeVisitor<Boole
     override fun visitFloat(type: RustFloatType): Boolean {
         val lop = lop
         return lop is RustFloatType && lop.kind == type.kind
+    }
+
+    override fun visitUnknown(type: RustUnknownType): Boolean {
+        return lop === type
+    }
+
+    override fun visitUnitType(type: RustUnitType): Boolean {
+        return lop === type
     }
 
     override fun visitString(type: RustStringType): Boolean {

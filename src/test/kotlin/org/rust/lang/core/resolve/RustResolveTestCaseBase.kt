@@ -13,11 +13,11 @@ abstract class RustResolveTestCaseBase : RustTestCaseBase() {
 
     override val dataPath = "org/rust/lang/core/resolve/fixtures"
 
-//    override fun setUp() {
-//        super.setUp()
-//
-//        FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID)
-//    }
+    override fun setUp() {
+        super.setUp()
+
+        FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID)
+    }
 
     private fun assertIsValidDeclaration(declaration: PsiElement, usage: RustReference,
                                          expectedOffset: Int?) {

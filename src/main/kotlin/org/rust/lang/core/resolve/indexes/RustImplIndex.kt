@@ -37,9 +37,10 @@ class RustImplIndex : AbstractStubIndex<RustImplIndex.Key, RustImplItemElement>(
                     /**
                      * Compare hole-containing types
                      */
-                    override fun visitPathType(type: RustUnresolvedPathType): Boolean = true
+                    override fun visitPathType(type: RustUnresolvedPathType): Boolean =
+                        lop is RustUnresolvedPathType
                 }
-            )
+            ) && (hashCode() == other.hashCode() || throw Exception("WTF"))
 
         override fun hashCode(): Int =
             type.accept(
