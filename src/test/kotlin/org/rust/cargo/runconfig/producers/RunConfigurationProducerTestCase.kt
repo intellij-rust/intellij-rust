@@ -188,6 +188,11 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
         }
 
         fun build() {
+            myFixture.addFileToProject("Cargo.toml", """
+                [project]
+                name = "test"
+                version = 0.0.1
+            """)
             files.forEach { myFixture.addFileToProject(it.path, it.code) }
             toOpen?.let { toOpen ->
                 openFileInEditor(toOpen.path)

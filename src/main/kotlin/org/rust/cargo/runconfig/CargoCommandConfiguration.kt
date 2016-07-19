@@ -17,6 +17,7 @@ import org.rust.cargo.runconfig.forms.CargoRunConfigurationEditorForm
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modules
+import org.rust.cargo.util.modulesWithCargoProject
 
 class CargoCommandConfiguration(
     project: Project,
@@ -30,7 +31,7 @@ class CargoCommandConfiguration(
     var printBacktrace: Boolean = false
 
     init {
-        configurationModule.module = project.modules.firstOrNull()
+        configurationModule.module = project.modulesWithCargoProject.firstOrNull()
     }
 
     override fun getValidModules(): Collection<Module> = project.modules
