@@ -66,8 +66,12 @@ class RustItemsAnnotator : Annotator {
 
         val notImplemented = mustImplement.keys - implemented.keys
         if (!notImplemented.isEmpty()) {
+            val toImplement = trait.traitBody.traitMethodMemberList.filter { it.name in notImplemented }
+
             holder.createErrorAnnotation(implHeaderTextRange,
-                "Not all trait items implemented, missing: `${notImplemented.first()}`")
+                "Not all trait items implemented, missing: `${notImplemented.first()}`"
+            ).registerFix(ImplementMethods(impl, toImplement))
+
         }
 
         val notMembers = implemented.filterKeys { it !in canImplement }
@@ -86,7 +90,6 @@ private class AddModuleFile(
 
     override fun getFamilyName(): String = text
 
-
     override fun invoke(
         project: Project,
         file: PsiFile,
@@ -100,6 +103,37 @@ private class AddModuleFile(
             RustExpandModuleAction.expandModule(containingFile)
         }
         modDecl.getOrCreateModuleFile()?.let { it.navigate(true) }
+    }
+
+}
+
+private class ImplementMethods(
+    implBody: RustImplItemElement,
+    private val methods: List<RustTraitMethodMemberElement>
+) : LocalQuickFixAndIntentionActionOnPsiElement(implBody) {
+    init {
+        check(methods.isNotEmpty())
+    }
+
+    override fun getText(): String = "Implement methods"
+
+    override fun getFamilyName(): String = text
+
+    override fun invoke(
+        project: Project,
+        file: PsiFile,
+        editor: Editor?,
+        startElement: PsiElement,
+        endElement: PsiElement
+    ) {
+        val implBody = (startElement as RustImplItemElement).implBody ?: return
+
+        val templateImpl = RustElementFactory.createImplBody(project, methods) ?: return
+        val firstToAdd = templateImpl.implMethodMemberList.firstOrNull() ?: return
+        val lastToAdd = templateImpl.implMethodMemberList.lastOrNull() ?: return
+
+        val lastMethodOrBrace = implBody.implMethodMemberList.lastOrNull() ?: implBody.lbrace
+        implBody.addRangeAfter(firstToAdd, lastToAdd, lastMethodOrBrace)
     }
 
 }

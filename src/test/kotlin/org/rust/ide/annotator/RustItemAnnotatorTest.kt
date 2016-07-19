@@ -16,5 +16,6 @@ class RustItemAnnotatorTest : RustAnnotatorTestBase() {
     }
 
     fun testInvalidTraitImpl() = doTest()
+    fun testInvalidTraitImplFix() = checkQuickFix("Implement methods")
 
 }

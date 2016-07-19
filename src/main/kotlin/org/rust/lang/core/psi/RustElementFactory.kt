@@ -23,8 +23,34 @@ object RustElementFactory {
         return createFromText(project, "fn main() { S { $fields }; }")
     }
 
+    fun createImplBody(project: Project, traitMethods: List<RustTraitMethodMemberElement>): RustImplBodyElement? {
+        val m = traitMethods.first()
+        m.copy()
+        val methods = traitMethods
+            .mapNotNull { " ${it.signatureText} {\nunimplemented!()\n}" }
+            .joinToString("\n\n")
+        return createFromText(project, "impl T for S { $methods }")
+    }
+
     private inline fun <reified T : RustCompositeElement> createFromText(project: Project, code: String): T? =
         PsiFileFactory.getInstance(project)
             .createFileFromText("DUMMY.rs", RustLanguage, code)
             ?.childOfType<T>()
+
+    private val RustTraitMethodMemberElement.signatureText: String? get() {
+        // We can't simply take a substring of original method declaration
+        // because of anonymous parameters.
+        val name = name ?: return null
+        val generics = genericParams?.text ?: ""
+
+        val parameters = parameters ?: return null
+        val allArguments = listOfNotNull(parameters.selfArgument?.text) + parameters.parameterList.map {
+            // fix possible anon parameter
+            "${it.pat?.text ?: "_"}: ${it.type?.text ?: "()"}"
+        }
+
+        val ret = retType?.text ?: ""
+        val where = whereClause?.text ?: ""
+        return "fn $name $generics (${allArguments.joinToString(",")}) $ret $where"
+    }
 }
