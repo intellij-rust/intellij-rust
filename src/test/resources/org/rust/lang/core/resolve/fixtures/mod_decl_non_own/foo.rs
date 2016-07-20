@@ -1,5 +1,5 @@
 pub mod bar;
 
 mod foo {
-    pub use bar::b<caret>az;
+    pub use super::bar::b<caret>az;
 }

@@ -37,7 +37,11 @@ object RustResolveUtil {
             null
         else {
             val superMod = mod.`super`
-            if (superMod == null) mod else getCrateRootModFor(superMod)
+            if (superMod == null) {
+                if (mod.isCrateRoot) mod else null
+            } else {
+                getCrateRootModFor(superMod)
+            }
         }
     }, memoize = false)
 }

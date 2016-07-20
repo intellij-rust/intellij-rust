@@ -11,6 +11,7 @@ class RustMultiFileResolveTestCase : RustMultiFileResolveTestCaseBase() {
     fun testModDeclPathSuper()  = doTestResolved("mod_decl_path_super/bar/baz/quux.rs", "mod_decl_path_super/main.rs")
     fun testUseFromChild()      = doTestResolved("use_from_child/main.rs", "use_from_child/child.rs")
     fun testGlobalPath()        = doTestResolved("global_path/foo.rs", "global_path/lib.rs", "global_path/bar.rs")
+    fun testGlobalPathInline()  = doTestResolved("global_path_inline/main.rs")
 
     // We resolve mod_decls even if the parent module does not own a directory and mod_decl should not be allowed.
     // This way, we don't need to know the set of crate roots for resolve, which helps indexing.

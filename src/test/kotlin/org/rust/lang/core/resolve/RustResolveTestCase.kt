@@ -31,7 +31,6 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
     fun testModItems4() = checkIsBound()
     fun testModItems5() = checkIsUnbound()
 
-    fun testCrateItems() = checkIsBound()
     fun testNestedModule() = checkIsBound(atOffset = 55)
     fun testSelf() = checkIsBound()
     fun testSelfIdentifier() = checkIsBound(atOffset = 32)

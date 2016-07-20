@@ -3,7 +3,7 @@ mod foo {
 }
 
 fn main() {
-    use foo::*;
+    use self::foo::*;
 
     trans<caret>
 }

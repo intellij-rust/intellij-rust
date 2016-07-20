@@ -2,6 +2,6 @@ mod foo {
     pub fn quux() {}
 }
 
-use foo::{q<caret>};
+use self::foo::{q<caret>};
 
 fn main() {}
