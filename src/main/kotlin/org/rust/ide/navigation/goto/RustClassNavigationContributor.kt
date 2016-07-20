@@ -1,8 +1,8 @@
 package org.rust.ide.navigation.goto
 
-import org.rust.lang.core.psi.RustStructOrEnumItemElement
-import org.rust.lang.core.stubs.index.RustStructOrEnumIndex
+import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.stubs.index.RustGotoClassIndex
 
 class RustClassNavigationContributor
-    : RustNavigationContributorBase<RustStructOrEnumItemElement>(RustStructOrEnumIndex.KEY, RustStructOrEnumItemElement::class.java)
+    : RustNavigationContributorBase<RustNamedElement>(RustGotoClassIndex.KEY, RustNamedElement::class.java)
 

@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.RustStructItemElement
 import org.rust.lang.core.psi.impl.RustStructItemElementImpl
 import org.rust.lang.core.stubs.RustNamedElementStub
 import org.rust.lang.core.stubs.RustNamedStubElementType
-import org.rust.lang.core.stubs.index.RustStructOrEnumIndex
+import org.rust.lang.core.stubs.index.RustGotoClassIndex
 
 object RustStructItemStubElementType : RustNamedStubElementType<RustStructItemElementStub, RustStructItemElement>("STRUCT_ITEM") {
     override fun createStub(psi: RustStructItemElement, parentStub: StubElement<*>?): RustStructItemElementStub =
@@ -26,7 +26,7 @@ object RustStructItemStubElementType : RustNamedStubElementType<RustStructItemEl
 
     override fun indexStub(stub: RustStructItemElementStub, sink: IndexSink) {
         super.indexStub(stub, sink)
-        stub.name?.let { sink.occurrence(RustStructOrEnumIndex.KEY, it) }
+        stub.name?.let { sink.occurrence(RustGotoClassIndex.KEY, it) }
     }
 
 }

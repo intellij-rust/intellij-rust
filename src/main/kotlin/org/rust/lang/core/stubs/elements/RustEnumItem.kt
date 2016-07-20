@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.RustEnumItemElement
 import org.rust.lang.core.psi.impl.RustEnumItemElementImpl
 import org.rust.lang.core.stubs.RustNamedElementStub
 import org.rust.lang.core.stubs.RustNamedStubElementType
-import org.rust.lang.core.stubs.index.RustStructOrEnumIndex
+import org.rust.lang.core.stubs.index.RustGotoClassIndex
 
 object RustEnumItemStubElementType : RustNamedStubElementType<RustEnumItemElementStub, RustEnumItemElement>("ENUM_ITEM") {
     override fun createStub(psi: RustEnumItemElement, parentStub: StubElement<*>?): RustEnumItemElementStub =
@@ -26,7 +26,7 @@ object RustEnumItemStubElementType : RustNamedStubElementType<RustEnumItemElemen
 
     override fun indexStub(stub: RustEnumItemElementStub, sink: IndexSink) {
         super.indexStub(stub, sink)
-        stub.name?.let { sink.occurrence(RustStructOrEnumIndex.KEY, it) }
+        stub.name?.let { sink.occurrence(RustGotoClassIndex.KEY, it) }
     }
 
 }

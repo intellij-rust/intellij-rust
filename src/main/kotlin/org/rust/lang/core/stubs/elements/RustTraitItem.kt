@@ -1,15 +1,13 @@
 package org.rust.lang.core.stubs.elements
 
 
-import com.intellij.psi.stubs.IStubElementType
-import com.intellij.psi.stubs.StubElement
-import com.intellij.psi.stubs.StubInputStream
-import com.intellij.psi.stubs.StubOutputStream
+import com.intellij.psi.stubs.*
 import com.intellij.util.io.StringRef
 import org.rust.lang.core.psi.RustTraitItemElement
 import org.rust.lang.core.psi.impl.RustTraitItemElementImpl
 import org.rust.lang.core.stubs.RustNamedElementStub
 import org.rust.lang.core.stubs.RustNamedStubElementType
+import org.rust.lang.core.stubs.index.RustGotoClassIndex
 
 object RustTraitItemStubElementType : RustNamedStubElementType<RustTraitItemElementStub, RustTraitItemElement>("TRAIT_ITEM") {
     override fun createStub(psi: RustTraitItemElement, parentStub: StubElement<*>?): RustTraitItemElementStub =
@@ -24,6 +22,11 @@ object RustTraitItemStubElementType : RustNamedStubElementType<RustTraitItemElem
     override fun serialize(stub: RustTraitItemElementStub, dataStream: StubOutputStream) = with(dataStream) {
         writeName(stub.name)
         writeBoolean(stub.isPublic)
+    }
+
+    override fun indexStub(stub: RustTraitItemElementStub, sink: IndexSink) {
+        super.indexStub(stub, sink)
+        stub.name?.let { sink.occurrence(RustGotoClassIndex.KEY, it) }
     }
 
 }
