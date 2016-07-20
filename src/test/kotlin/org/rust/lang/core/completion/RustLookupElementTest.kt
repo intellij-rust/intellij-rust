@@ -6,7 +6,6 @@ import org.intellij.lang.annotations.Language
 import org.rust.lang.RustTestCaseBase
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.impl.RustFile
-import org.rust.lang.core.psi.util.parentOfType
 
 class RustLookupElementTest : RustTestCaseBase() {
     override val dataPath: String get() = ""
@@ -74,8 +73,7 @@ class RustLookupElementTest : RustTestCaseBase() {
     }
 
     private fun check(@Language("Rust") code: String, tailText: String? = null, typeText: String? = null) {
-        val (element, @Suppress("UNUSED_VARIABLE") data) = configureAndFindElement(code)
-        val lookup = (element.parentOfType<RustNamedElement>()!!).createLookupElement()
+        val lookup = InlineFile(code).elementAtCaret<RustNamedElement>().createLookupElement()
         val presentation = LookupElementPresentation()
 
         lookup.renderElement(presentation)

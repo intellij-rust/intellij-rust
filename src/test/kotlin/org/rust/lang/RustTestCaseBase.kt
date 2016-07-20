@@ -12,12 +12,14 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import org.intellij.lang.annotations.Language
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.CargoProjectDescriptionData
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
 import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.getComponentOrThrow
+import org.rust.lang.core.psi.util.parentOfType
 import java.util.*
 
 abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), RustTestCase {
@@ -64,16 +66,38 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
     protected fun getVirtualFileByName(path: String): VirtualFile? =
         LocalFileSystem.getInstance().findFileByPath(path)
 
-    protected fun configureAndFindElement(code: String): Pair<PsiElement, String> {
-        val caretMarker = "//^"
-        val markerOffset = code.indexOf(caretMarker)
-        val data = code.drop(markerOffset).removePrefix(caretMarker).takeWhile { it != '\n' }.trim()
-        check(markerOffset != -1)
-        myFixture.configureByText("main.rs", code)
-        val markerPosition = myFixture.editor.offsetToLogicalPosition(markerOffset + caretMarker.length - 1)
-        val previousLine = LogicalPosition(markerPosition.line - 1, markerPosition.column)
-        val elementOffset = myFixture.editor.logicalPositionToOffset(previousLine)
-        return myFixture.file.findElementAt(elementOffset)!! to data
+
+    inner class InlineFile(private @Language("Rust") val code: String) {
+        init {
+            myFixture.configureByText("main.rs", code)
+        }
+
+        inline fun<reified T: PsiElement> elementAtCaret(marker: String = "^"): T {
+            val (element, data) = elementAndData<T>(marker)
+            check(data.isEmpty()) { "Did not expect marker data" }
+            return element
+        }
+
+        inline fun<reified T: PsiElement> elementAndData(marker: String = "^"): Pair<T, String> {
+            val (element, data) = extract(marker)
+            return checkNotNull(element.parentOfType<T>(strict = false)) {
+                "No ${T::class.java.simpleName} at ${element.text}"
+            } to data
+        }
+
+        fun extract(marker: String): Pair<PsiElement, String> {
+            val caretMarker = "//$marker"
+            val markerOffset = code.indexOf(caretMarker)
+            check(markerOffset != -1) { "No `$marker` marker:\n$code" }
+
+            val data = code.drop(markerOffset).removePrefix(caretMarker).takeWhile { it != '\n' }.trim()
+            val markerPosition = myFixture.editor.offsetToLogicalPosition(markerOffset + caretMarker.length - 1)
+            val previousLine = LogicalPosition(markerPosition.line - 1, markerPosition.column)
+            val elementOffset = myFixture.editor.logicalPositionToOffset(previousLine)
+
+            return myFixture.file.findElementAt(elementOffset)!! to data
+        }
+
     }
 
     protected fun reportTeamCityMetric(name: String, value: Long) {

@@ -1,6 +1,5 @@
 package org.rust.lang.core.type
 
-import com.intellij.psi.util.PsiTreeUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.core.psi.RustTypeElement
@@ -81,10 +80,7 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */
     private fun testType(@Language("Rust") code: String) {
-        val (elementAtCaret, expectedType) = configureAndFindElement(code)
-        val typeAtCaret = requireNotNull(
-            PsiTreeUtil.getTopmostParentOfType(elementAtCaret, RustTypeElement::class.java)
-        ) { "No type at caret:\n$code" }
+        val (typeAtCaret, expectedType) = InlineFile(code).elementAndData<RustTypeElement>()
 
         assertThat(typeAtCaret.resolvedType.toString())
             .isEqualTo(expectedType)

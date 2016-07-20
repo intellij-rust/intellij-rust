@@ -1,10 +1,9 @@
 package org.rust.ide.search
 
+import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RustTestCaseBase
-import org.assertj.core.api.Assertions.*
 import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.util.parentOfType
 
 class RustFindUsagesTest : RustTestCaseBase() {
     override val dataPath: String get() = ""
@@ -37,8 +36,7 @@ class RustFindUsagesTest : RustTestCaseBase() {
     """, 3)
 
     private fun doTest(@Language("Rust") code: String, expectedUsages: Int) {
-        val (element, @Suppress("UNUSED_VARIABLE") data) = configureAndFindElement(code)
-        val source = element.parentOfType<RustNamedElement>()!!
+        val source = InlineFile(code).elementAtCaret<RustNamedElement>()
 
         val usages = myFixture.findUsages(source)
 
