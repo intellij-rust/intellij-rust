@@ -24,7 +24,8 @@ object RustStructItemStubElementType : RustNamedStubElementType<RustStructItemEl
         writeBoolean(stub.isPublic)
     }
 
-    override fun additionalIndexing(stub: RustStructItemElementStub, sink: IndexSink) {
+    override fun indexStub(stub: RustStructItemElementStub, sink: IndexSink) {
+        super.indexStub(stub, sink)
         stub.name?.let { sink.occurrence(RustStructOrEnumIndex.KEY, it) }
     }
 

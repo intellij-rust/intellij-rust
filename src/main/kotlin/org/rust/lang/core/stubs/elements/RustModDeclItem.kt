@@ -29,7 +29,8 @@ object RustModDeclItemStubElementType : RustNamedStubElementType<RustModDeclElem
         writeUTFFast(stub.pathAttribute ?: "")
     }
 
-    override fun additionalIndexing(stub: RustModDeclElementItemStub, sink: IndexSink) {
+    override fun indexStub(stub: RustModDeclElementItemStub, sink: IndexSink) {
+        super.indexStub(stub, sink)
         val key = stub.pathAttribute?.let { FileUtil.getNameWithoutExtension(PathUtil.getFileName(it)) }
             ?: stub.name
             ?: return

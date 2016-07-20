@@ -8,10 +8,8 @@ abstract class RustNamedStubElementType<StubT, PsiT>(debugName: String) : RustSt
     where StubT : RustNamedElementStub<PsiT>,
           PsiT  : RustNamedElement {
 
-    final override fun indexStub(stub: StubT, sink: IndexSink) {
+    override fun indexStub(stub: StubT, sink: IndexSink) {
         stub.name?.let { sink.occurrence(RustNamedElementIndex.KEY, it) }
-        additionalIndexing(stub, sink)
     }
 
-    protected open fun additionalIndexing(stub: StubT, sink: IndexSink) {}
 }
