@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.ide.inspections.duplicates.findDuplicateReferences
 import org.rust.ide.intentions.RemoveParenthesesFromExprIntention
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.fields
@@ -33,17 +34,13 @@ class RustExpressionAnnotator : Annotator {
             }
         }
 
-        val declaredFields = expr.structExprFieldList.map { it.referenceName }.toSet()
-        if (declaredFields.size < expr.structExprFieldList.size) {
-            for (field in expr.structExprFieldList) {
-                if (expr.structExprFieldList.filter { it.referenceName == field.referenceName }.size > 1) {
-                    holder.createErrorAnnotation(field.identifier, "Duplicate field")
-                }
-            }
+        for (field in expr.structExprFieldList.findDuplicateReferences()) {
+            holder.createErrorAnnotation(field.identifier, "Duplicate field")
         }
 
         if (expr.dotdot != null) return  // functional update, no need to declare all the fields.
 
+        val declaredFields = expr.structExprFieldList.map { it.referenceName }.toSet()
         val missingFields = struct.fields.filter { it.name !in declaredFields }
 
         if (missingFields.isNotEmpty()) {

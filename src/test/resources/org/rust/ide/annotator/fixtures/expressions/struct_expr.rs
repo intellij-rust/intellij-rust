@@ -24,12 +24,12 @@ fn main() {
     <error descr="Some fields are missing">}</error>;
 
     let _ = S {
-        <error descr="Duplicate field">foo</error>: 1,
-        <error>foo</error>: 2
+        foo: 1,
+        <error descr="Duplicate field">foo</error>: 2,
     <error descr="Some fields are missing">}</error>;
 
     let _ = S {
-        <error>foo</error>: 1,
+        foo: 1,
         <error>foo</error>: 2,
         ..S::default()
     };
