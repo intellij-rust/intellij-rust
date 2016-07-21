@@ -44,19 +44,17 @@ class RustExpressionAnnotator : Annotator {
 
         if (expr.dotdot != null) return  // functional update, no need to declare all the fields.
 
-        val requiredFields = struct.fields.mapNotNull { it.name }.toSet()
+        val missingFields = struct.fields.filter { it.name !in declaredFields }
 
-        if (!declaredFields.containsAll(requiredFields)) {
-            val annotation = holder.createErrorAnnotation(expr.rbrace ?: expr, "Some fields are missing")
-            if (declaredFields.isEmpty()) { // only the simplest case of every field missing for now
-                annotation.registerFix(AddStructFieldsQuickFix(struct, expr), expr.textRange)
-            }
+        if (missingFields.isNotEmpty()) {
+            holder.createErrorAnnotation(expr.rbrace ?: expr, "Some fields are missing")
+                .registerFix(AddStructFieldsQuickFix(missingFields, expr), expr.textRange)
         }
     }
 }
 
 private class AddStructFieldsQuickFix(
-    val struct: RustStructItemElement,
+    val fieldsToAdd: List<RustFieldDeclElement>,
     expr: RustStructExprBodyElement
 ) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
     override fun getText(): String = "Add missing fields"
@@ -70,9 +68,11 @@ private class AddStructFieldsQuickFix(
         startElement: PsiElement,
         endElement: PsiElement
     ) {
-        if (startElement !is RustStructExprBodyElement) return
-        val newBody = RustElementFactory.createStructExprBody(project, struct.fields.mapNotNull { it.name }) ?: return
-        startElement.replace(newBody)
+        val expr = startElement as RustStructExprBodyElement
+        val newBody = RustElementFactory.createStructExprBody(project, fieldsToAdd.mapNotNull { it.name }) ?: return
+        val firstNewField = newBody.lbrace.nextSibling ?: return
+        val lastNewField = newBody.rbrace?.prevSibling ?: return
+        expr.addRangeAfter(firstNewField, lastNewField, expr.lbrace)
     }
 }
 

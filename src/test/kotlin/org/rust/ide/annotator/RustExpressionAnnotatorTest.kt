@@ -13,4 +13,5 @@ class RustExpressionAnnotatorTest : RustAnnotatorTestBase() {
 
     fun testStructExpr() = doTest()
     fun testStructExprQuickFix() = checkQuickFix("Add missing fields")
+    fun testStructExprQuickFix2() = checkQuickFix("Add missing fields")
 }
