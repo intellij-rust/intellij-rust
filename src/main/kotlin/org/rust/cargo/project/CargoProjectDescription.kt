@@ -31,7 +31,7 @@ class CargoProjectDescription private constructor(
         val contentRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootPath)
     }
 
-    data class Target(
+    class Target(
         /**
          * Absolute path to the crate root file
          */
@@ -42,7 +42,14 @@ class CargoProjectDescription private constructor(
         val isLib: Boolean get() = kind == TargetKind.LIB
         val isBin: Boolean get() = kind == TargetKind.BIN
 
-        val crateRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(crateRootPath)
+        val crateRoot: VirtualFile? get() {
+            val root = crateRootCache
+            return if (root != null && root.isValid) root else null
+        }
+
+        private val crateRootCache by lazy {
+           VirtualFileManager.getInstance().findFileByUrl(crateRootPath)
+        }
     }
 
     enum class TargetKind {
@@ -60,6 +67,8 @@ class CargoProjectDescription private constructor(
          */
         val virtualFile: VirtualFile
     )
+
+    private val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootPath }
 
     val externCrates: Collection<ExternCrate> get() = packages.mapNotNull { pkg ->
         pkg.libTarget?.crateRoot?.let { ExternCrate(pkg.name, it) }
@@ -83,10 +92,7 @@ class CargoProjectDescription private constructor(
     /**
      * If the [file] is a crate root, returns the corresponding [Target]
      */
-    fun findTargetForFile(file: VirtualFile): Target? =
-        packages.asSequence()
-            .flatMap { it.targets.asSequence() }
-            .find { it.crateRoot == file }
+    fun findTargetForFile(file: VirtualFile): Target? = targetByCrateRootUrl[file.url]
 
     fun isCrateRoot(file: VirtualFile): Boolean = findTargetForFile(file) != null
 
