@@ -1,5 +1,7 @@
 fn main(param: i32) {}
 
+pub use bar::nested::hello;
+
 #[test]
 fn bar() {}
 
