@@ -132,6 +132,11 @@
                          enabledByDefault="false" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RustUnresolvedReferenceInspection"/>
 
+        <localInspection language="Rust" groupName="Redeclared symbols"
+                         displayName="Duplicate field"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.duplicates.RustDuplicateStructFieldInspection"/>
+
         <!-- Surrounder -->
         <lang.surroundDescriptor language="Rust"
                                  implementationClass="org.rust.ide.surround.RustSurroundDescriptor"/>
