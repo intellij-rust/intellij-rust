@@ -3,7 +3,7 @@
 ## Clone
 
 ```
-git clone --recursive https://github.com/intellij-rust/intellij-rust.git
+git clone https://github.com/intellij-rust/intellij-rust.git
 cd intellij-rust
 ```
 
@@ -74,9 +74,8 @@ Test classes are placed in the `src/test/kotlin` directory, `src/test/resources`
 holds rust files which are used as fixtures. Most tests are fixture driven: they
 read the rust file named as the test itself, execute some action and check result.
 
-We also include [CTRS](https://github.com/brson/ctrs) as a submodule and use it
-to test the parser. We also download source code of the Rust standard library to
-check that it is resolved correctly.
+We also use Rust compiler and standard library as data in our test suite. They
+are downloaded automatically by gradle.
 
 The test suite can be run by launching:
 

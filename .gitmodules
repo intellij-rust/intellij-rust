@@ -1,3 +1,0 @@
-[submodule "testData/ctrs"]
-	path = src/test/resources/org/rust/lang/core/parser/fixtures/ctrs
-	url = https://github.com/brson/ctrs.git
