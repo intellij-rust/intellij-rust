@@ -43,9 +43,9 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
             override fun visitStructItem(o: RustStructItemElement) {
                 super.visitStructItem(o)
 
-                val structDeclArgs = o.structDeclArgs
-                if (structDeclArgs != null) {
-                    descriptors += FoldingDescriptor(o.node, structDeclArgs.textRange)
+                val blockFields = o.blockFields
+                if (blockFields != null) {
+                    descriptors += FoldingDescriptor(o.node, blockFields.textRange)
                 }
             }
 
@@ -72,9 +72,9 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
             override fun visitEnumVariant(o: RustEnumVariantElement) {
                 super.visitEnumVariant(o)
 
-                val structDeclArgs = o.enumStructArgs
-                if (structDeclArgs != null) {
-                    descriptors += FoldingDescriptor(o.node, structDeclArgs.textRange)
+                val blockFields = o.blockFields
+                if (blockFields != null) {
+                    descriptors += FoldingDescriptor(o.node, blockFields.textRange)
                 }
             }
 

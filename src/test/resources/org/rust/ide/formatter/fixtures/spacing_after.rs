@@ -43,7 +43,10 @@ fn foo(a: i32, b: str, c: i32, d: f32) -> () {
 enum Message {
     Quit,
     ChangeColor(i32, i32, i32),
-    Move { x: i32, y: i32 },
+    Move {
+        x: i32,
+        y: i32
+    },
     Write(String),
 }
 

@@ -4,7 +4,7 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('S')
     PsiWhiteSpace(' ')
-    RustStructDeclArgsElementImpl(STRUCT_DECL_ARGS)
+    RustBlockFieldsElementImpl(BLOCK_FIELDS)
       PsiElement({)('{')
       PsiWhiteSpace(' ')
       RustFieldDeclElementImpl(FIELD_DECL)

@@ -118,7 +118,7 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
             if (type !is RustStructType || type.struct !== struct)
                 return false
 
-            struct.structTupleArgs?.tupleFieldDeclList?.let {
+            struct.tupleFields?.tupleFieldDeclList?.let {
                 tupleFields = it
             }
 
@@ -128,7 +128,7 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
             if (type !is RustEnumType || type.enum !== getEnumByVariant(variant))
                 return false
 
-            variant.enumTupleArgs?.tupleFieldDeclList?.let {
+            variant.tupleFields?.tupleFieldDeclList?.let {
                 tupleFields = it
             }
         }
@@ -150,7 +150,7 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
             return false
 
         val fieldDecls =
-            type.struct.structDeclArgs?.let {
+            type.struct.blockFields?.let {
                 it.fieldDeclList.map { it.name to it }.toMap()
             } ?: emptyMap()
 

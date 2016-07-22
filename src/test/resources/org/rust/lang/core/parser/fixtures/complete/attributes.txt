@@ -85,7 +85,7 @@ FILE
           PsiElement(])(']')
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('F')
-        RustEnumTupleArgsElementImpl(ENUM_TUPLE_ARGS)
+        RustTupleFieldsElementImpl(TUPLE_FIELDS)
           PsiElement(()('(')
           RustTupleFieldDeclElementImpl(TUPLE_FIELD_DECL)
             RustOuterAttrElementImpl(OUTER_ATTR)

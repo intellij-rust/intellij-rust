@@ -11,7 +11,7 @@ fun RustFmtBlock.getAlignmentStrategy(): RustAlignmentStrategy = when (node.elem
             .alignUnlessBlockDelim()
             .alignIf(ctx.commonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS)
 
-    TUPLE_TYPE, ENUM_TUPLE_ARGS ->
+    TUPLE_TYPE, TUPLE_FIELDS ->
         RustAlignmentStrategy.wrap()
             .alignUnlessBlockDelim()
             .alignIf(ctx.commonSettings.ALIGN_MULTILINE_PARAMETERS)

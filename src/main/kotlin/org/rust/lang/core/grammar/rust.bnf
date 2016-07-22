@@ -542,14 +542,12 @@ foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params? foreign_fn_param
 // Struct & Enums
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct_item ::= attrs_and_vis STRUCT IDENTIFIER generic_params? (struct_tuple_args? where_clause? ';' | where_clause? struct_decl_args) {
+struct_item ::= attrs_and_vis STRUCT IDENTIFIER generic_params? (tuple_fields? where_clause? ';' | where_clause? block_fields) {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustStructOrEnumItemElement" ]
   stubClass = "org.rust.lang.core.stubs.elements.RustStructItemElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
-struct_decl_args ::= <<struct_body field_decl>>
-struct_tuple_args ::= <<tuple_body tuple_field_decl>>
 
 enum_item ::= attrs_and_vis ENUM IDENTIFIER generic_params? where_clause? enum_body {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
@@ -560,20 +558,24 @@ enum_item ::= attrs_and_vis ENUM IDENTIFIER generic_params? where_clause? enum_b
 }
 
 enum_body ::= '{' [ <<comma_separated_list enum_variant>> ] '}' { pin = 1 }
-enum_variant ::= outer_attr* IDENTIFIER enum_args? {
+enum_variant ::= outer_attr* IDENTIFIER variant_args? {
   pin = 2
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustNamedElement" ]
 }
 
-private enum_args ::= enum_struct_args
-                    | enum_tuple_args
-                    | enum_discriminant
+private variant_args ::= variant_block_fields
+                       | variant_tuple_fields
+                       | variant_discriminant
 
-enum_struct_args ::= <<struct_body field_decl_in_enum>>
-enum_tuple_args ::= <<tuple_body tuple_field_decl_in_enum>>
-enum_discriminant ::= '=' any_expr { pin = 1 }
+block_fields ::= <<mk_block_fileds field_decl>>
+tuple_fields ::= <<mk_tuple_fields tuple_field_decl>>
+
+variant_block_fields ::= <<mk_block_fileds variant_field_decl>> { elementType = block_fields }
+variant_tuple_fields ::= <<mk_tuple_fields variant_tuple_field_decl>> { elementType = tuple_fields }
+
+variant_discriminant ::= '=' any_expr { pin = 1 }
 
 field_decl ::= attrs_and_vis IDENTIFIER type_ascription {
   pin = 2
@@ -586,7 +588,7 @@ field_decl ::= attrs_and_vis IDENTIFIER type_ascription {
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 // unlike structs, enum variants can't have `pub` visibility applied to fields
-field_decl_in_enum ::= outer_attr* IDENTIFIER type_ascription {
+variant_field_decl ::= outer_attr* IDENTIFIER type_ascription {
   pin = 2
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   elementType = field_decl
@@ -598,10 +600,13 @@ tuple_field_decl ::= attrs_and_vis type {
                  "org.rust.lang.core.psi.RustTupleOrStructFieldDeclElement" ]
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
-tuple_field_decl_in_enum ::= outer_attr* type { elementType=tuple_field_decl }
+variant_tuple_field_decl ::= outer_attr* type {
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  elementType = tuple_field_decl
+}
 
-private meta struct_body ::= '{' [ <<comma_separated_list <<param>> >> ] '}' { pin = 1}
-private meta tuple_body ::= '(' <<comma_separated_list <<param>> >> ')' { pin = 1}
+private meta mk_block_fileds ::= '{' [ <<comma_separated_list <<param>> >> ] '}' { pin = 1}
+private meta mk_tuple_fields ::= '(' <<comma_separated_list <<param>> >> ')' { pin = 1}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

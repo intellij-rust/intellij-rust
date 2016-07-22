@@ -40,7 +40,7 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
     val onMacro: PsiElementPattern.Capture<PsiElement> = onItem<RustMacroItemElement>()
 
     val onTupleStruct: PsiElementPattern.Capture<PsiElement> = psiElement()
-        .withSuperParent(3, psiElement().withChild(psiElement<RustStructTupleArgsElement>()))
+        .withSuperParent(3, psiElement().withChild(psiElement<RustTupleFieldsElement>()))
 
     val onCrate: PsiElementPattern.Capture<PsiElement> = psiElement().withSuperParent<PsiFile>(3).with(
         object : PatternCondition<PsiElement>("onCrateCondition") {

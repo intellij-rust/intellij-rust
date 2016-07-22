@@ -36,8 +36,8 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
 
         //== some special operators
         // FIXME(jajakobyly): Doesn't work well with comments
-        .afterInside(COMMA, ts(STRUCT_DECL_ARGS, ENUM_BODY)).spacing(1, 1, 1, true, 1)
-        .afterInside(COMMA, ts(ENUM_STRUCT_ARGS, STRUCT_EXPR_BODY)).spacing(1, 1, 0, true, 1)
+        .afterInside(COMMA, ts(BLOCK_FIELDS, ENUM_BODY)).spacing(1, 1, 1, true, 1)
+        .afterInside(COMMA, ts(BLOCK_FIELDS, STRUCT_EXPR_BODY)).spacing(1, 1, 0, true, 1)
         .after(COMMA).spacing(1, 1, 0, true, 0)
         .before(COMMA).spaceIf(false)
         .after(COLON).spaceIf(true)
@@ -98,8 +98,8 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
 
         .betweenInside(IDENTIFIER, ALIAS, EXTERN_CRATE_ITEM).spaces(1)
 
-        .betweenInside(IDENTIFIER, ENUM_TUPLE_ARGS, ENUM_VARIANT).spaces(0)
-        .betweenInside(IDENTIFIER, ENUM_DISCRIMINANT, ENUM_VARIANT).spaces(1)
+        .betweenInside(IDENTIFIER, TUPLE_FIELDS, ENUM_VARIANT).spaces(0)
+        .betweenInside(IDENTIFIER, VARIANT_DISCRIMINANT, ENUM_VARIANT).spaces(1)
 
     return sb2
         //== types
@@ -269,7 +269,7 @@ private fun SpacingContext.blockMustBeMultiLine(): Boolean {
     return when (parentPsi) {
         is RustBlockElement -> childrenCount != 0 && (childrenCount >= 2 || parentPsi.parent is RustItemElement) // 2
 
-        is RustStructDeclArgsElement,
+        is RustBlockFieldsElement,
         is RustEnumBodyElement,
         is RustTraitBodyElement,
         is RustModItemElement,

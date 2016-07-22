@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.RustTypeParamElement
  */
 
 val RustStructItemElement.fields: List<RustFieldDeclElement>
-    get() = structDeclArgs?.fieldDeclList.orEmpty()
+    get() = blockFields?.fieldDeclList.orEmpty()
 
 val RustGenericDeclaration.typeParams: List<RustTypeParamElement>
     get() = genericParams?.typeParamList.orEmpty()

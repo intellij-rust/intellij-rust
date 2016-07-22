@@ -22,8 +22,8 @@ fun RustNamedElement.createLookupElement(): LookupElement {
             .withTypeText(type.text)
         is RustStructItemElement -> {
             val tailText =
-                if (structDeclArgs != null) " { ... }"
-                else if (structTupleArgs != null) structTupleArgs?.text ?: ""
+                if (blockFields != null) " { ... }"
+                else if (tupleFields != null) tupleFields?.text ?: ""
                 else ""
             LookupElementBuilder.createWithIcon(this)
                 .withLookupString(name ?: "")
@@ -31,8 +31,8 @@ fun RustNamedElement.createLookupElement(): LookupElement {
         }
         is RustEnumVariantElement -> {
             val tailText =
-                if (enumStructArgs != null) " { ... }"
-                else if (enumTupleArgs != null) enumTupleArgs?.tupleFieldDeclList?.map { it.type.text }?.joinToString(prefix = "(", postfix = ")") ?: ""
+                if (blockFields != null) " { ... }"
+                else if (tupleFields != null) tupleFields?.tupleFieldDeclList?.map { it.type.text }?.joinToString(prefix = "(", postfix = ")") ?: ""
                 else ""
             LookupElementBuilder.createWithIcon(this)
                 .withLookupString(name ?: "")
