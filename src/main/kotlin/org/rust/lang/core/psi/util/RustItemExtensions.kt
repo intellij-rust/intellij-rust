@@ -9,8 +9,6 @@ import org.rust.lang.core.psi.RustTypeParamElement
  *  `RustItemElement` related extensions
  */
 
-val RustStructItemElement.fields: List<RustFieldDeclElement>
-    get() = blockFields?.fieldDeclList.orEmpty()
 
 val RustGenericDeclaration.typeParams: List<RustTypeParamElement>
     get() = genericParams?.typeParamList.orEmpty()

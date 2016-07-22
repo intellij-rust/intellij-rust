@@ -10,22 +10,21 @@ import com.intellij.psi.PsiFile
 import org.rust.ide.inspections.duplicates.findDuplicateReferences
 import org.rust.ide.intentions.RemoveParenthesesFromExprIntention
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.util.fields
 
 class RustExpressionAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         element.accept(RedundantParenthesisVisitor(holder))
         if (element is RustStructExprElement) {
-            val struct = element.path.reference.resolve() as? RustStructItemElement
-            if (struct != null) {
-                checkStructExpr(holder, struct, element.structExprBody)
+            val decl = element.path.reference.resolve() as? RustFieldsOwner
+            if (decl != null) {
+                checkStructExpr(holder, decl, element.structExprBody)
             }
         }
     }
 
     private fun checkStructExpr(
         holder: AnnotationHolder,
-        struct: RustStructItemElement,
+        decl: RustFieldsOwner,
         expr: RustStructExprBodyElement
     ) {
         for (field in expr.structExprFieldList) {
@@ -41,7 +40,7 @@ class RustExpressionAnnotator : Annotator {
         if (expr.dotdot != null) return  // functional update, no need to declare all the fields.
 
         val declaredFields = expr.structExprFieldList.map { it.referenceName }.toSet()
-        val missingFields = struct.fields.filter { it.name !in declaredFields }
+        val missingFields = decl.fields.filter { it.name !in declaredFields }
 
         if (missingFields.isNotEmpty()) {
             holder.createErrorAnnotation(expr.rbrace ?: expr, "Some fields are missing")

@@ -2,7 +2,7 @@ package org.rust.ide.structure
 
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import org.rust.lang.core.psi.RustStructItemElement
-import org.rust.lang.core.psi.util.fields
+import org.rust.lang.core.psi.fields
 
 class RustStructTreeElement(element: RustStructItemElement) : PsiTreeElementBase<RustStructItemElement>(element) {
 

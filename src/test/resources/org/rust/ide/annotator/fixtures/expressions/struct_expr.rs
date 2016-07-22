@@ -4,8 +4,13 @@ struct S {
     bar: i32
 }
 
-struct E {}
+struct Empty {}
 
+enum E {
+    V {
+        foo: i32
+    }
+}
 
 fn main() {
     let _ = S {
@@ -34,5 +39,9 @@ fn main() {
         ..S::default()
     };
 
-    let _ = E { };
+    let _ = Empty { };
+
+    let _ = E::V {
+        <error>bar</error>: 92
+    <error>}</error>;
 }
