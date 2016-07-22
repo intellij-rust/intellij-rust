@@ -1,18 +1,16 @@
 package org.rust.ide.actions
 
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.ui.popup.util.PopupUtil
-import com.intellij.openapi.util.Disposer
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener
-import org.rust.cargo.project.workspace.CargoProjectWorkspaceTransientListener
+import org.rust.ide.notifications.subscribeForOneMessage
 import org.rust.cargo.util.getComponentOrThrow
 import org.rust.cargo.util.modulesWithCargoProject
+import org.rust.ide.notifications.showBalloon
 import org.rust.ide.utils.isNullOrEmpty
 
 class RefreshCargoProjectAction : AnAction() {
@@ -37,24 +35,22 @@ class RefreshCargoProjectAction : AnAction() {
         for (module in modules) {
             val workspace = module.getComponentOrThrow<CargoProjectWorkspace>()
 
-            CargoProjectWorkspaceTransientListener
-                .create {
-                    when (it) {
-                        is CargoProjectWorkspaceListener.UpdateResult.Ok  -> showBalloon("Project '${project.name}' successfully updated!", MessageType.INFO)
-                        is CargoProjectWorkspaceListener.UpdateResult.Err -> showBalloon("Project '${project.name}' update failed: ${it.error.message}", MessageType.ERROR)
+            subscribeForOneMessage(module.messageBus, CargoProjectWorkspaceListener.Topics.UPDATES, object : CargoProjectWorkspaceListener {
+                override fun onWorkspaceUpdateCompleted(r: CargoProjectWorkspaceListener.UpdateResult) {
+                    val (type, content) = when (r) {
+                        is CargoProjectWorkspaceListener.UpdateResult.Ok ->
+                            NotificationType.INFORMATION to "Project '${module.name}' successfully updated!"
+
+                        is CargoProjectWorkspaceListener.UpdateResult.Err ->
+                            NotificationType.ERROR to "Project '${module.name}' failed to update.<br> ${r.error.message}"
                     }
-                }
-                .let {
-                    module.messageBus
-                        .connect(it.connectionDisposer)
-                        .subscribe(CargoProjectWorkspaceListener.Topics.UPDATES, it)
 
-                    workspace.requestUpdateUsing(toolchain, immediately = true)
+                    project.showBalloon(content, type)
                 }
+
+            })
+
+            workspace.requestUpdateUsing(toolchain)
         }
-    }
-
-    private fun showBalloon(message: String, type: MessageType) {
-        PopupUtil.showBalloonForActiveComponent(message, type)
     }
 }

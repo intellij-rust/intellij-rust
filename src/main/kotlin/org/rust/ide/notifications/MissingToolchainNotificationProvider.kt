@@ -3,6 +3,7 @@ package org.rust.ide.notifications
 import com.intellij.ProjectTopics
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -14,8 +15,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -112,11 +111,7 @@ class MissingToolchainNotificationProvider(
             project.rustSettings.toolchain = toolchain
         }
 
-        PopupUtil.showBalloonForActiveFrame(
-            "Using Cargo at ${toolchain.presentableLocation}",
-            MessageType.INFO
-        )
-
+        project.showBalloon("Using Cargo at ${toolchain.presentableLocation}", NotificationType.INFORMATION)
         notifications.updateAllNotifications()
     }
 
@@ -182,9 +177,9 @@ class MissingToolchainNotificationProvider(
     private fun attachStdlibToModule(module: Module, stdlib: VirtualFile) {
         val roots = StandardLibraryRoots.fromFile(stdlib)
         if (roots == null) {
-            PopupUtil.showBalloonForActiveFrame(
-                "Invalid sources Rust standard library source path: `${stdlib.path}`",
-                MessageType.ERROR
+            project.showBalloon(
+                "Invalid Rust standard library source path: `${stdlib.presentableUrl}`",
+                NotificationType.ERROR
             )
             return
         }
