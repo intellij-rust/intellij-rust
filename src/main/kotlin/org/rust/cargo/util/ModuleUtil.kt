@@ -135,7 +135,7 @@ fun Module.updateLibrary(libraryName: String, roots: Collection<VirtualFile>) {
     }
 }
 
-private val stdlibCrateNames = listOf("std", "core", "collections", "alloc")
+private val stdlibCrateNames = listOf("std", "core", "collections", "alloc", "rustc_unicode")
 
 private fun fillLibrary(library: Library, roots: Collection<VirtualFile>) {
     val model = library.modifiableModel
