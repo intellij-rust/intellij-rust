@@ -77,6 +77,11 @@ class RustFormatterTestCase : FormatterTestCase() {
     fun testIssue451() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/451
     fun testIssue526() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/526
 
+    // https://github.com/intellij-rust/intellij-rust/issues/543
+    fun testIssue543a() = doTest()
+    fun testIssue543b() = doTest()
+    fun testIssue543c() = doTest()
+
     private fun common() = getSettings(RustLanguage)
     private fun custom() = settings.getCustomSettings(RustCodeStyleSettings::class.java)
 }
