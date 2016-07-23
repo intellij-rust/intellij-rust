@@ -102,3 +102,19 @@ fun ASTNode.isBlockDelim(parent: ASTNode?): Boolean {
 fun ASTNode?.isWhitespaceOrEmpty() = this == null || textLength == 0 || elementType == WHITE_SPACE
 
 fun onSameLine(e1: ASTNode, e2: ASTNode): Boolean = onSameLine(e1.psi, e2.psi)
+
+fun ASTNode.treeNonWSPrev(): ASTNode? {
+    var current = this.treePrev
+    while (current?.elementType == WHITE_SPACE) {
+        current = current?.treePrev
+    }
+    return current
+}
+
+fun ASTNode.treeNonWSNext(): ASTNode? {
+    var current = this.treeNext
+    while (current?.elementType == WHITE_SPACE) {
+        current = current?.treeNext
+    }
+    return current
+}
