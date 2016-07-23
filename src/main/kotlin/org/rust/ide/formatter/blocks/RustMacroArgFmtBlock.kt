@@ -4,6 +4,7 @@ import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import org.rust.ide.formatter.RustFmtContext
+import org.rust.lang.core.psi.RustTokenElementTypes
 
 class RustMacroArgFmtBlock(
     private val node: ASTNode,
@@ -25,4 +26,7 @@ class RustMacroArgFmtBlock(
 
     override fun isLeaf(): Boolean = node.firstChildNode == null
     override fun isIncomplete(): Boolean = false
+
+    val isBraced: Boolean =
+        node.firstChildNode.elementType == RustTokenElementTypes.LBRACE
 }

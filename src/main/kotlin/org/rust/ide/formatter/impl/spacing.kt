@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.rust.ide.formatter.RustFmtContext
+import org.rust.ide.formatter.blocks.RustMacroArgFmtBlock
 import org.rust.ide.formatter.settings.RustCodeStyleSettings
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
@@ -79,8 +80,10 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         .beforeInside(LBRACE, FLAT_BRACE_BLOCKS).spaces(1)
 
         .between(ts(IDENTIFIER, FN), PARAMS_LIKE).spaceIf(false)
-        .afterInside(GENERIC_PARAMS, IMPL_ITEM).spaceIf(true)
-        .around(ts(GENERIC_PARAMS, GENERIC_ARGS)).spaceIf(false)
+        .between(IDENTIFIER, GENERIC_PARAMS).spaceIf(false)
+        .between(IDENTIFIER, GENERIC_ARGS).spaceIf(false)
+        .between(IDENTIFIER, ARG_LIST).spaceIf(false)
+        .between(GENERIC_PARAMS, PARAMS_LIKE).spaceIf(false)
         .before(ARG_LIST).spaceIf(false)
 
         .between(BINDING_MODE, IDENTIFIER).spaces(1)
@@ -116,7 +119,6 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
 
         //== macros
         .betweenInside(IDENTIFIER, EXCL, MACRO_INVOCATION).spaces(0)
-        .between(MACRO_INVOCATION, MACRO_ARGS).spaces(0)
         .betweenInside(MACRO_INVOCATION, IDENTIFIER, MACRO_DEFINITION).spaces(1)
         .betweenInside(IDENTIFIER, MACRO_ARG, MACRO_DEFINITION).spaces(1)
 
@@ -132,6 +134,10 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtContext): Sp
             // #[attr]\n<comment>\n => #[attr] <comment>\n etc.
             psi1 is RustOuterAttrElement && psi2 is PsiComment
             -> return one()
+
+            // Determine spacing between macro invocation and it's arguments
+            psi1 is RustMacroInvocationElement && child2 is RustMacroArgFmtBlock
+            -> return if (child2.isBraced) one() else none()
 
             // Ensure that each attribute is in separate line; comment aware
             psi1 is RustOuterAttrElement && (psi2 is RustOuterAttrElement || psi1.parent is RustItemElement)
@@ -224,6 +230,7 @@ private inline fun SpacingBuilder.applyForEach(
     return self
 }
 
+private fun none(): Spacing = createSpacing(0, 0, 0, false, 0)
 private fun one(): Spacing = createSpacing(1, 1, 0, false, 0)
 
 private fun lineBreak(minLineFeeds: Int = 1,
