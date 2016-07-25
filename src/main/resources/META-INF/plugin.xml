@@ -8,11 +8,10 @@
       Rust language support
     ]]></description>
 
-    <!--<change-notes><![CDATA[-->
-    <!--Add change notes here.<br>-->
-    <!--<em>most HTML tags may be used</em>-->
-    <!--]]>-->
-    <!--</change-notes>-->
+    <change-notes><![CDATA[
+        <a href="https://intellij-rust.github.io/thisweek/">intellij-rust.github.io/thisweek</a>
+    ]]>
+    </change-notes>
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
     <idea-version since-build="143.2287.1" until-build="162.*"/>
