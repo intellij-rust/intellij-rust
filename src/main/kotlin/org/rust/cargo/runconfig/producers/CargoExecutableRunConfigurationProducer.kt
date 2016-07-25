@@ -5,7 +5,6 @@ import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.runconfig.CargoCommandRunConfigurationType
 import org.rust.cargo.util.cargoProject
@@ -18,9 +17,9 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
     ): Boolean {
         val target = findBinaryTarget(context) ?: return false
 
-        return configuration.name == configurationName(target) &&
+        return configuration.name == target.configurationName &&
             configuration.command == CargoConstants.Commands.RUN &&
-            configuration.additionalArguments == "--bin ${target.name}"
+            configuration.additionalArguments == target.additionalArguments
     }
 
     override fun setupConfigurationFromContext(
@@ -30,18 +29,28 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
     ): Boolean {
         val target = findBinaryTarget(context) ?: return false
 
-        configuration.name = configurationName(target)
+        configuration.name = target.configurationName
         configuration.command = CargoConstants.Commands.RUN
-        configuration.additionalArguments = "--bin ${target.name}"
+        configuration.additionalArguments = target.additionalArguments
         return true
     }
 
-    private fun findBinaryTarget(context: ConfigurationContext): CargoProjectDescription.Target? {
+    private fun findBinaryTarget(context: ConfigurationContext): ExecutableTarget? {
         val file = context.location?.virtualFile ?: return null
         val target = context.module?.cargoProject?.findTargetForFile(file) ?: return null
-        if (!target.isBin) return null
-        return target
+        return when {
+            target.isBin -> ExecutableTarget(target.name, "bin")
+            target.isExample -> ExecutableTarget(target.name, "example")
+            else -> null
+        }
     }
 
-    private fun configurationName(target: CargoProjectDescription.Target) = "Run ${target.name}"
+    private class ExecutableTarget(
+        private val name: String,
+        private val kind: String
+    ) {
+        val configurationName: String = "Run $name"
+        val additionalArguments: String = "--$kind $name"
+    }
+
 }

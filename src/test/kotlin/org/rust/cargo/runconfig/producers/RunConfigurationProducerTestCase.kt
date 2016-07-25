@@ -24,6 +24,13 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
         doTestProducedConfigurations()
     }
 
+    fun testExecutableProducerWorksForExample() {
+        testProject {
+            example("hello", "example/hello.rs").open()
+        }
+        doTestProducedConfigurations()
+    }
+
     fun testExecutableProducerDisabledForLib() {
         testProject {
             lib("hello", "src/lib.rs").open()
@@ -168,6 +175,11 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
 
         fun bin(name: String, path: String, code: String = hello_world): TestProjectBuilder {
             addTarget(name, CargoProjectDescription.TargetKind.BIN, path, code)
+            return this
+        }
+
+        fun example(name: String, path: String, code: String = hello_world): TestProjectBuilder {
+            addTarget(name, CargoProjectDescription.TargetKind.EXAMPLE, path, code)
             return this
         }
 
