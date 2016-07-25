@@ -123,7 +123,9 @@ CHAR_LITERAL   = ( \' ( [^\\\'\r\n] | \\[^\r\n] | "\\x" [a-fA-F0-9]+ | "\\u{" [a
 STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
 
 INNER_EOL_DOC = ({LINE_WS}*"//!".*{EOL_WS})*({LINE_WS}*"//!".*)
-OUTER_EOL_DOC = ({LINE_WS}*"///".*{EOL_WS})*({LINE_WS}*"///".*)
+// !(!a|b) is a (set) difference between a and b.
+EOL_DOC_LINE  = {LINE_WS}*!(!("///".*)|("////".*))
+OUTER_EOL_DOC = ({EOL_DOC_LINE}{EOL_WS})*{EOL_DOC_LINE}
 
 %%
 
