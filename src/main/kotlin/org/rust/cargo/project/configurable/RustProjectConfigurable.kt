@@ -1,6 +1,5 @@
 package org.rust.cargo.project.configurable
 
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
@@ -16,6 +15,7 @@ import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.cargoProject
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
+import org.rust.ide.utils.runWriteAction
 import javax.swing.JComponent
 import javax.swing.JLabel
 
