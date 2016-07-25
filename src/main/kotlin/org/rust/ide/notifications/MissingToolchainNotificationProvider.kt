@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import org.rust.cargo.project.settings.RustProjectSettingsService
@@ -35,7 +36,10 @@ import org.rust.utils.download
 import java.awt.Component
 
 /**
- * Warn user if rust toolchain is not properly configured. Suggest to download stdlib.
+ * Warn user if rust toolchain or standard library is not properly configured.
+ *
+ * Try to fix this automatically (toolchain from PATH, standard library from the last project)
+ * and if not successful show the actual notification to the user.
  */
 class MissingToolchainNotificationProvider(
     private val project: Project,
@@ -71,48 +75,69 @@ class MissingToolchainNotificationProvider(
 
         val toolchain = project.toolchain
         if (toolchain == null || !toolchain.looksLikeValidToolchain()) {
-            // Try to setup default toolchain without showing notification panel,
-            // but only once per project
-            val properties = PropertiesComponent.getInstance(project)
-            if (!properties.getBoolean(TOOLCHAIN_DISCOVERY_KEY)) {
-                properties.setValue(TOOLCHAIN_DISCOVERY_KEY, true)
-                val suggestedToolchain = RustToolchain.suggest()
-                if (suggestedToolchain != null) {
-                    setSuggestedToolchainAsync(suggestedToolchain)
-                    return null
-                }
-            }
+            return if (trySetupToolchainAutomatically())
+                null
+            else
+                createBadToolchainPanel("No Rust toolchain configured")
+        }
 
-            return createBadToolchainPanel("No Rust toolchain configured")
-        } else if (!toolchain.containsMetadataCommand()) {
+        if (!toolchain.containsMetadataCommand()) {
             return createBadToolchainPanel("Configured Rust toolchain is incompatible with the plugin: " +
                 "required at least Cargo ${RustToolchain.CARGO_LEAST_COMPATIBLE_VERSION}, " +
                 "found ${toolchain.queryCargoVersion()}")
         }
 
         val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
-        return module.cargoProject?.let {
-            if (!it.hasStandardLibrary)
-                createLibraryAttachingPanel(module, toolchain)
-            else
+        if (module.cargoProject?.hasStandardLibrary == false) {
+            return if (trySetupLibraryAutomatically(module)) {
                 null
+            } else {
+                createLibraryAttachingPanel(module, toolchain)
+            }
         }
+
+        return null
     }
 
-    private fun setSuggestedToolchainAsync(toolchain: RustToolchain) = ApplicationManager.getApplication().invokeLater {
-        if (project.isDisposed) return@invokeLater
+    private fun trySetupToolchainAutomatically(): Boolean {
+        if (alreadyTriedForThisProject(TOOLCHAIN_DISCOVERY_KEY)) return false
 
-        val oldToolchain = project.rustSettings.toolchain
-        if (oldToolchain != null && oldToolchain.looksLikeValidToolchain()) {
-            return@invokeLater
+        val toolchain = RustToolchain.suggest() ?: return false
+
+        ApplicationManager.getApplication().invokeLater {
+            if (project.isDisposed) return@invokeLater
+
+            val oldToolchain = project.rustSettings.toolchain
+            if (oldToolchain != null && oldToolchain.looksLikeValidToolchain()) {
+                return@invokeLater
+            }
+
+            runWriteAction {
+                project.rustSettings.toolchain = toolchain
+            }
+
+            project.showBalloon("Using Cargo at ${toolchain.presentableLocation}", NotificationType.INFORMATION)
+            notifications.updateAllNotifications()
         }
 
-        runWriteAction {
-            project.rustSettings.toolchain = toolchain
+        return true
+    }
+
+    private fun trySetupLibraryAutomatically(module: Module): Boolean {
+        if (alreadyTriedForThisProject(LIBRARY_DISCOVERY_KEY)) return false
+
+        val previousLocation = PropertiesComponent.getInstance().getValue(LIBRARY_LOCATION_KEY) ?: return false
+        val stdlib = VirtualFileManager.getInstance().findFileByUrl(previousLocation) ?: return false
+
+        ApplicationManager.getApplication().invokeLater {
+            if (module.isDisposed) return@invokeLater
+            if (tryAttachStdlibToModule(module, stdlib)) {
+                project.showBalloon("Using rust standard library at ${stdlib.presentableUrl}", NotificationType.INFORMATION)
+            }
+            notifications.updateAllNotifications()
         }
 
-        project.showBalloon("Using Cargo at ${toolchain.presentableLocation}", NotificationType.INFORMATION)
-        notifications.updateAllNotifications()
+        return true
     }
 
     private fun createBadToolchainPanel(title: String): EditorNotificationPanel =
@@ -155,7 +180,9 @@ class MissingToolchainNotificationProvider(
                         if (module.isDisposed)
                             return
 
-                        attachStdlibToModule(module, library!!)
+                        if (!tryAttachStdlibToModule(module, library!!)) {
+                            showWrongStdlibBalloon(library!!)
+                        }
                         notifications.updateAllNotifications()
                     }
                 }
@@ -164,7 +191,10 @@ class MissingToolchainNotificationProvider(
             }
 
             createActionLabel("Attach") {
-                attachStdlibToModule(module, chooseStdlibLocation(this) ?: return@createActionLabel)
+                val stdlib = chooseStdlibLocation(this) ?: return@createActionLabel
+                if(!tryAttachStdlibToModule(module, stdlib)) {
+                    showWrongStdlibBalloon(stdlib)
+                }
                 notifications.updateAllNotifications()
             }
 
@@ -174,17 +204,20 @@ class MissingToolchainNotificationProvider(
             }
         }
 
-    private fun attachStdlibToModule(module: Module, stdlib: VirtualFile) {
+    private fun tryAttachStdlibToModule(module: Module, stdlib: VirtualFile): Boolean {
         val roots = StandardLibraryRoots.fromFile(stdlib)
-        if (roots == null) {
-            project.showBalloon(
-                "Invalid Rust standard library source path: `${stdlib.presentableUrl}`",
-                NotificationType.ERROR
-            )
-            return
-        }
+            ?: return false
 
         runWriteAction { roots.attachTo(module) }
+        PropertiesComponent.getInstance().setValue(LIBRARY_LOCATION_KEY, stdlib.url)
+        return true
+    }
+
+    private fun showWrongStdlibBalloon(stdlib: VirtualFile)  {
+        project.showBalloon(
+            "Invalid Rust standard library source path: `${stdlib.presentableUrl}`",
+            NotificationType.ERROR
+        )
     }
 
     private fun chooseDownloadLocation(parent: Component): VirtualFile? {
@@ -210,9 +243,19 @@ class MissingToolchainNotificationProvider(
         return PropertiesComponent.getInstance(project).getBoolean(NOTIFICATION_STATUS_KEY)
     }
 
+    private fun alreadyTriedForThisProject(key: String): Boolean {
+        val properties = PropertiesComponent.getInstance(project)
+        val result = properties.getBoolean(key)
+        properties.setValue(key, true)
+
+        return result
+    }
+
     companion object {
         private val NOTIFICATION_STATUS_KEY = "org.rust.hideToolchainNotifications"
-        private val TOOLCHAIN_DISCOVERY_KEY = "org.rust.alreadyTriedAutoDiscovery"
+        private val TOOLCHAIN_DISCOVERY_KEY = "org.rust.alreadyTriedToolchainAutoDiscovery"
+        private val LIBRARY_DISCOVERY_KEY = "org.rust.alreadyTriedLibraryAutoDiscovery"
+        private val LIBRARY_LOCATION_KEY = "org.rust.previousLibraryLocation"
 
         private val PROVIDER_KEY: Key<EditorNotificationPanel> = Key.create("Setup Rust toolchain")
     }
