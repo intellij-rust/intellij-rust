@@ -187,7 +187,7 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtContext): Sp
  * Attribute name -> parent PSI classes in which this attribute should be placed in-line.
  */
 private val INLINE_ATTRS = mapOf(
-    "macro_use" to arrayOf(RustExternCrateItemElement::class, RustModDeclItemElement::class)
+    "macro_use" to (arrayOf(RustExternCrateItemElement::class, RustModDeclItemElement::class) to "INLINE_MACRO_USE_ATTR")
 )
 
 private data class SpacingContext(val node1: ASTNode,
@@ -308,8 +308,9 @@ private fun SpacingContext.isInlineAttr(): Boolean {
     if (psi1 != ncPsi1 || psi2 != ncPsi2) return false
 
     val meta = psi1.metaItem.identifier.text
-    val parentClasses = INLINE_ATTRS[meta] ?: return false
-    return parentClasses.any { it.java.isInstance(parentPsi) }
+    val (parentClasses, configName) = INLINE_ATTRS[meta] ?: return false
+    val isOn = RustCodeStyleSettings::class.java.getField(configName).getBoolean(ctx.rustSettings)
+    return isOn && parentClasses.any { it.java.isInstance(parentPsi) }
 }
 
 private fun SpacingContext.needsBlankLineBetweenItems(): Boolean {

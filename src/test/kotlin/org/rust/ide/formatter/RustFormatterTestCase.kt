@@ -28,7 +28,6 @@ class RustFormatterTestCase : FormatterTestCase() {
     fun testChainCallIndent() = doTest()
     fun testLineBreaksInBlocks() = doTest()
     fun testLineBreaksInBlocks2() = doTest()
-    fun testMacroUse() = doTest()
 
     fun testChainCallAlignment() {
         common().ALIGN_MULTILINE_CHAINED_METHODS = true
@@ -68,6 +67,12 @@ class RustFormatterTestCase : FormatterTestCase() {
     fun testAllowOneLineMatchOff() = doTest()
     fun testAllowOneLineMatch() {
         custom().ALLOW_ONE_LINE_MATCH = true
+        doTest()
+    }
+
+    fun testMacroUse() = doTest()
+    fun testMacroUseOff() {
+        custom().INLINE_MACRO_USE_ATTR = false
         doTest()
     }
 
