@@ -1,6 +1,7 @@
 package org.rust.ide.docs
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustDocAndAttributeOwner
 import org.rust.lang.core.psi.RustFnItemElement
@@ -58,12 +59,14 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
         val identStart = identifier.startOffsetInParent
         val identEnd = identStart + identifier.textLength
 
-        val beforeIdent = text.subSequence(sigtatureStart, identStart)
-        val afterIdent = text.subSequence(identEnd, signatureEnd).toString().trimEnd()
+        val beforeIdent = text.substring(sigtatureStart, identStart).escaped
+        val afterIdent = text.substring(identEnd, signatureEnd).trimEnd().escaped
 
         return "$beforeIdent<b>$name</b>$afterIdent"
     }
 
     private val PsiElement.locationString: String
         get() = containingFile?.let { " [${it.name}]" }.orEmpty()
+
+    private val String.escaped: String get() = StringUtil.escapeXml(this)
 }
