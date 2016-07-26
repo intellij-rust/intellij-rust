@@ -16,7 +16,7 @@ class RustImplIndex : StringStubIndexExtension<RustImplItemElement>() {
         val KEY: StubIndexKey<String, RustImplItemElement> =
             StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex")
 
-        fun getInherentImpls(project: Project, type: RustType): Collection<RustImplItemElement> {
+        fun getImpls(project: Project, type: RustType): Collection<RustImplItemElement> {
             val baseTypeName = type.baseTypeName ?: return emptyList()
             // XXX: can't use more effective `processElements` here, because it is impossible to
             // process several indexes simultaneously, and we process `RustModulesIndex`
