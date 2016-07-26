@@ -70,6 +70,12 @@ class RustFormatterTestCase : FormatterTestCase() {
         doTest()
     }
 
+    fun testMacroUse() = doTest()
+    fun testMacroUseOff() {
+        custom().INLINE_MACRO_USE_ATTR = false
+        doTest()
+    }
+
     // FIXME: these two guys are way too big
     fun testSpacing() = doTest()
     fun testLineBreaks() = doTest()

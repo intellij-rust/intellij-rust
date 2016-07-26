@@ -1,3 +1,5 @@
+#[macro_use] extern crate foo;
+
 enum Foo<T: A + B + 'c,
     K: X + Y + 'z> {
     Some(T, i32, f32,

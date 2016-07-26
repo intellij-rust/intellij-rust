@@ -10,5 +10,6 @@ class RustCodeStyleSettings(container: CodeStyleSettings) :
     @JvmField var ALIGN_TYPE_PARAMS = false
     @JvmField var ALIGN_WHERE_BOUNDS = true
     @JvmField var ALLOW_ONE_LINE_MATCH = false
+    @JvmField var INLINE_MACRO_USE_ATTR = true
     @JvmField var MIN_NUMBER_OF_BLANKS_BETWEEN_ITEMS = 1
 }

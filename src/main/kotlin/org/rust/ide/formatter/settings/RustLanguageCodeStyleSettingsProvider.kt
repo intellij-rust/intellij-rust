@@ -63,6 +63,11 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
                     "ALIGN_WHERE_BOUNDS",
                     "Align where clause bounds",
                     "Type parameters")
+
+                consumer.showCustomOption(RustCodeStyleSettings::class.java,
+                    "INLINE_MACRO_USE_ATTR",
+                    "Place #[macro_use] in-line",
+                    "Attributes")
             }
         }
     }
