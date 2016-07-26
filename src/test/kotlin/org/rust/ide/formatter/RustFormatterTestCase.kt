@@ -28,6 +28,7 @@ class RustFormatterTestCase : FormatterTestCase() {
     fun testChainCallIndent() = doTest()
     fun testLineBreaksInBlocks() = doTest()
     fun testLineBreaksInBlocks2() = doTest()
+    fun testMacroUse() = doTest()
 
     fun testChainCallAlignment() {
         common().ALIGN_MULTILINE_CHAINED_METHODS = true
