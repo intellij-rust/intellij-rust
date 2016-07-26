@@ -159,5 +159,29 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
+    // Ideally these two should be handled by separate type/value namespaces
+    fun testNoStackOverflow1() = testExpr("""
+        pub struct P<T: ?Sized> { ptr: Box<T> }
+
+        #[allow(non_snake_case)]
+        pub fn P<T: 'static>(value: T) -> P<T> {
+            P { ptr: Box::new(value) }
+        }
+
+        fn main() {
+            let x = P(92);
+            x
+          //^ fn(<unknown>) -> <unknown>
+        }
+    """)
+
+    fun testNoStackOverflow2() = testExpr("""
+        fn foo(S: S){
+            let x = S;
+            x.foo()
+              //^ <unknown>
+        }
+    """)
+
 }
 
