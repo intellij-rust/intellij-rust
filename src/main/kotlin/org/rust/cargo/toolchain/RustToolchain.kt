@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
-import org.rust.cargo.CargoConstants
 import org.rust.cargo.commands.Cargo
 import org.rust.utils.seconds
 import java.io.File
@@ -18,17 +17,22 @@ data class RustToolchain(val location: String) {
     fun looksLikeValidToolchain(): Boolean =
         File(pathToExecutable(CARGO)).canExecute()
 
-    fun containsMetadataCommand(): Boolean =
-        queryCargoVersion()?.let { it >= RustToolchain.CARGO_LEAST_COMPATIBLE_VERSION } ?: false
+    fun containsMetadataCommand(): Boolean {
+        check(!ApplicationManager.getApplication().isDispatchThread)
+
+        val cmd = nonProjectCargo().generalCommand("metadata", listOf("--help"))
+        val procOut = try {
+            CapturingProcessHandler(cmd.createProcess(), Charsets.UTF_8, cmd.commandLineString).runProcess(1.seconds)
+        } catch (e: ExecutionException) {
+            return false
+        }
+        return procOut.exitCode == 0
+    }
 
     fun queryCargoVersion(): Version? {
         check(!ApplicationManager.getApplication().isDispatchThread)
 
-        val cmd = GeneralCommandLine()
-            .withExePath(pathToExecutable(CARGO))
-            .withEnvironment(CargoConstants.RUSTC_ENV_VAR, pathToExecutable(RUSTC))
-            .withParameters("--version")
-
+        val cmd = nonProjectCargo().generalCommand("version")
         return runExecutableAndProcessStdout(cmd) { parseCargoVersion(it) }
     }
 
@@ -60,6 +64,9 @@ data class RustToolchain(val location: String) {
 
     fun cargo(cargoProjectDirectory: String): Cargo =
         Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), cargoProjectDirectory)
+
+    private fun nonProjectCargo(): Cargo =
+        Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), null)
 
     val presentableLocation: String = PathUtil.toPresentableUrl(pathToExecutable(CARGO))
 

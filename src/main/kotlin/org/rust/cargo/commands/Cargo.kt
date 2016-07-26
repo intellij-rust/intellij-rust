@@ -23,12 +23,12 @@ class Cargo(
     private val pathToRustExecutable: String,
     // It's more convenient to use project directory rather then path to `Cargo.toml`
     // because some commands don't accept `--manifest-path` argument
-    private val projectDirectory: String
+    private val projectDirectory: String?
 ) {
     init {
         require(File(pathToCargoExecutable).canExecute()) { "Invalid path to cargo $pathToCargoExecutable" }
         require(File(pathToRustExecutable).canExecute()) { "Invalid path to rustc $pathToRustExecutable" }
-        require(File(projectDirectory, CargoConstants.MANIFEST_FILE).exists()) {
+        require(projectDirectory == null || File(projectDirectory, CargoConstants.MANIFEST_FILE).exists()) {
             "No Cargo.toml in $projectDirectory"
         }
     }
