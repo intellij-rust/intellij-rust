@@ -1,6 +1,14 @@
 # Rust IDE built using the IntelliJ Platform
 
-[![Build Status](https://teamcity.jetbrains.com/app/rest/builds/buildType:(id:IntellijIdeaPlugins_Rust_Idea16_TestsRust_2)/statusIcon.svg)](https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_Idea16_TestsRust_2&guest=1) [![Build Status](https://img.shields.io/travis/intellij-rust/intellij-rust/master.svg)](https://travis-ci.org/intellij-rust/intellij-rust) [![Join the chat at https://gitter.im/intellij-rust/intellij-rust](https://img.shields.io/badge/Gitter-Join%20Chat-blue.svg)](https://gitter.im/intellij-rust/intellij-rust?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+| Build Status |                                                                              |
+|--------------|------------------------------------------------------------------------------|
+| TeamCity     | [![TeamCity Build Status][teamcity-build-status-svg]][teamcity-build-status] |
+| Travis       | [![Travis Build Status][travis-build-status-svg]][travis-build-status]       |
+| AppVeyor     | [![AppVeyor Build Status][appveyor-build-status-svg]][appveyor-build-status] |
+|              | [Performance][Performance metrics]                                           |
+
+[![Join the chat at https://gitter.im/intellij-rust/intellij-rust][gitter-chat-svg]][gitter-chat]
 
 ## Status
 
@@ -32,3 +40,18 @@ first bugs are tagged with [up-for-grab].
 [intellij-rust.github.io]: https://intellij-rust.github.io/docs/
 [up-for-grab]: https://github.com/intellij-rust/intellij-rust/labels/up%20for%20grab
 [CONTRIBUTING.md]: CONTRIBUTING.md
+
+<!-- Badges -->
+[gitter-chat]: https://gitter.im/intellij-rust/intellij-rust
+[gitter-chat-svg]: https://img.shields.io/badge/Gitter-Join%20Chat-blue.svg?style=flat-square
+
+[travis-build-status]: https://travis-ci.org/intellij-rust/intellij-rust
+[travis-build-status-svg]: https://img.shields.io/travis/intellij-rust/intellij-rust.svg?style=flat-square
+
+[appveyor-build-status]: https://ci.appveyor.com/project/matklad/intellij-rust
+[appveyor-build-status-svg]: https://img.shields.io/appveyor/ci/matklad/intellij-rust.svg?style=flat-square
+
+[teamcity-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_Idea16_TestsRust_2&guest=1
+[teamcity-build-status-svg]: https://img.shields.io/teamcity/http/teamcity.jetbrains.com/s/IntellijIdeaPlugins_Rust_Idea16_TestsRust_2.svg?style=flat-square
+
+[Performance metrics]: https://teamcity.jetbrains.com/project.html?projectId=IntellijIdeaPlugins_Rust&tab=stats&guest=1
