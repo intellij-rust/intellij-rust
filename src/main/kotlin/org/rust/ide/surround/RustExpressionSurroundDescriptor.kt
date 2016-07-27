@@ -19,9 +19,6 @@ class RustExpressionSurroundDescriptor : SurroundDescriptor {
     override fun isExclusive() = false
 
     companion object {
-        private val SURROUNDERS = arrayOf(
-            RustDelimiterSurrounder("(", ")", "Surround with ()"),
-            RustDelimiterSurrounder("{", "}", "Surround with {}")
-        )
+        private val SURROUNDERS = arrayOf<Surrounder>()
     }
 }
