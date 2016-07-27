@@ -8,9 +8,9 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustExprElement
 
-class DelimiterSurrounder(private val left: String,
-                          private val right: String,
-                          private val description: String) : Surrounder {
+class RustDelimiterSurrounder(private val left: String,
+                              private val right: String,
+                              private val description: String) : Surrounder {
 
     override fun getTemplateDescription() = description
 

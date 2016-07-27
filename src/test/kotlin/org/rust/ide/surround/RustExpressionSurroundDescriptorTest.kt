@@ -6,10 +6,10 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiDocumentManager
 import org.rust.lang.RustTestCaseBase
 
-class RustSurroundDescriptorTest : RustTestCaseBase() {
+class RustExpressionSurroundDescriptorTest : RustTestCaseBase() {
 
-    val parenthesisSurrounder = DelimiterSurrounder("(", ")", "Surround with ()")
-    val bracesSurrounder = DelimiterSurrounder("{", "}", "Surround with {}")
+    val parenthesisSurrounder = RustDelimiterSurrounder("(", ")", "Surround with ()")
+    val bracesSurrounder = RustDelimiterSurrounder("{", "}", "Surround with {}")
 
     override val dataPath = ""
 
