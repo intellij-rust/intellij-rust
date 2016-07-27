@@ -4,9 +4,9 @@
 | Build Status |                                                                              |
 |--------------|------------------------------------------------------------------------------|
 | TeamCity     | [![TeamCity Build Status][teamcity-build-status-svg]][teamcity-build-status] |
+|              | [![Performance][performance-svg]][performance]                               |
 | Travis       | [![Travis Build Status][travis-build-status-svg]][travis-build-status]       |
 | AppVeyor     | [![AppVeyor Build Status][appveyor-build-status-svg]][appveyor-build-status] |
-|              | [Performance][Performance metrics]                                           |
 
 [![Join the chat at https://gitter.im/intellij-rust/intellij-rust][gitter-chat-svg]][gitter-chat]
 
@@ -54,4 +54,5 @@ first bugs are tagged with [up-for-grab].
 [teamcity-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_Idea16_TestsRust_2&guest=1
 [teamcity-build-status-svg]: https://img.shields.io/teamcity/http/teamcity.jetbrains.com/s/IntellijIdeaPlugins_Rust_Idea16_TestsRust_2.svg?style=flat-square
 
-[Performance metrics]: https://teamcity.jetbrains.com/project.html?projectId=IntellijIdeaPlugins_Rust&tab=stats&guest=1
+[performance]: https://teamcity.jetbrains.com/project.html?projectId=IntellijIdeaPlugins_Rust&tab=stats&guest=1
+[performance-svg]: https://img.shields.io/badge/build-performance-blue.svg?style=flat-square
