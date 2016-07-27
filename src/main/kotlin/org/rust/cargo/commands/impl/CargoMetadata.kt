@@ -164,7 +164,7 @@ object CargoMetadata {
         // Must be the same string as returned by VirtualFile#getUrl.
         // We don't want to construct virtual file itself here because
         // the physical file might not exist yet.
-        val url = VfsUtilCore.pathToUrl(PathUtil.toSystemIndependentName(path))
+        val url = VfsUtilCore.pathToUrl((path))
         return CargoProjectDescriptionData.Target(url, name, kind)
     }
 }
