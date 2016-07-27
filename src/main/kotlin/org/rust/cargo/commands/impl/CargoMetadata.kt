@@ -161,6 +161,10 @@ object CargoMetadata {
                     CargoProjectDescription.TargetKind.UNKNOWN
         }
 
-        return CargoProjectDescriptionData.Target(VfsUtilCore.pathToUrl(path), name, kind)
+        // Must be the same string as returned by VirtualFile#getUrl.
+        // We don't want to construct virtual file itself here because
+        // the physical file might not exist yet.
+        val url = VfsUtilCore.pathToUrl(PathUtil.toSystemIndependentName(path))
+        return CargoProjectDescriptionData.Target(url, name, kind)
     }
 }
