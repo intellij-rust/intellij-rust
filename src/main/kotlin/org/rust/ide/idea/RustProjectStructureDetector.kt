@@ -35,6 +35,6 @@ class RustProjectStructureDetector : ProjectStructureDetector() {
     override fun createWizardSteps(builder: ProjectFromSourcesBuilder,
                                    projectDescriptor: ProjectDescriptor,
                                    stepIcon: Icon?): List<ModuleWizardStep> =
-        listOf(CargoConfigurationWizardStep(projectDescriptor))
+        listOf(CargoConfigurationWizardStep(builder.context, projectDescriptor))
 }
 

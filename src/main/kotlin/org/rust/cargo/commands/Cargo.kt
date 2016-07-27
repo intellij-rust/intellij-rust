@@ -49,6 +49,11 @@ class Cargo(
             ?: throw ExecutionException("Failed to understand cargo output")
     }
 
+    @Throws(ExecutionException::class)
+    fun init(path: String) {
+        generalCommand("init", listOf("--bin", path)).execute()
+    }
+
     fun generalCommand(command: String, additionalArguments: List<String> = emptyList(), environmentVariables: Map<String, String> = emptyMap()): GeneralCommandLine =
         GeneralCommandLine(pathToCargoExecutable)
             .withWorkDirectory(projectDirectory)

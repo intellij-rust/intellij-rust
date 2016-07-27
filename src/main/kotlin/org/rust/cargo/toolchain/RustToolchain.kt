@@ -65,7 +65,7 @@ data class RustToolchain(val location: String) {
     fun cargo(cargoProjectDirectory: String): Cargo =
         Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), cargoProjectDirectory)
 
-    private fun nonProjectCargo(): Cargo =
+    fun nonProjectCargo(): Cargo =
         Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), null)
 
     val presentableLocation: String = PathUtil.toPresentableUrl(pathToExecutable(CARGO))

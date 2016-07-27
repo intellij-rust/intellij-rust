@@ -3,6 +3,8 @@ package org.rust.ide.idea
 import com.intellij.ide.util.importProject.ProjectDescriptor
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
+import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -13,8 +15,9 @@ import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import javax.swing.JComponent
 
 class CargoConfigurationWizardStep(
-    private val projectDescriptor: ProjectDescriptor
-) : ModuleWizardStep() {
+    private val context: WizardContext,
+    private val projectDescriptor: ProjectDescriptor? = null
+) : ModuleWizardStep(), Disposable {
 
     private lateinit var root: JComponent
     private lateinit var rustProjectSettings: RustProjectSettingsPanel
@@ -27,13 +30,24 @@ class CargoConfigurationWizardStep(
         // XXX: this method may be called several times if user switches back and forth between wizard steps,
         // so we need to make `ConfigurationUpdater` idempotent.
         ConfigurationUpdater.data = rustProjectSettings.data
-        projectDescriptor.modules.firstOrNull()?.addConfigurationUpdater(ConfigurationUpdater)
+
+        val projectBuilder = context.projectBuilder
+        if (projectBuilder is RustModuleBuilder) {
+            projectBuilder.rustProjectData = rustProjectSettings.data
+            projectBuilder.addModuleConfigurationUpdater(ConfigurationUpdater)
+        } else {
+            projectDescriptor?.modules?.firstOrNull()?.addConfigurationUpdater(ConfigurationUpdater)
+        }
     }
 
     @Throws(ConfigurationException::class)
     override fun validate(): Boolean {
         rustProjectSettings.validateSettings()
         return true
+    }
+
+    override fun dispose() {
+        rustProjectSettings.disposeUIResources()
     }
 
     private object ConfigurationUpdater : ModuleConfigurationUpdater() {
