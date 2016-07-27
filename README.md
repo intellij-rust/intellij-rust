@@ -1,12 +1,11 @@
 # Rust IDE built using the IntelliJ Platform
 
 
-| Build Status |                                                                              |
-|--------------|------------------------------------------------------------------------------|
-| TeamCity     | [![TeamCity Build Status][teamcity-build-status-svg]][teamcity-build-status] |
-|              | [![Performance][performance-svg]][performance]                               |
-| Travis       | [![Travis Build Status][travis-build-status-svg]][travis-build-status]       |
-| AppVeyor     | [![AppVeyor Build Status][appveyor-build-status-svg]][appveyor-build-status] |
+| Build Status |                                                                                                                            |
+|--------------|----------------------------------------------------------------------------------------------------------------------------|
+| TeamCity     | [![TeamCity Build Status][teamcity-build-status-svg]][teamcity-build-status] [![Performance][performance-svg]][performance]|
+| Travis       | [![Travis Build Status][travis-build-status-svg]][travis-build-status]                                                     |
+| AppVeyor     | [![AppVeyor Build Status][appveyor-build-status-svg]][appveyor-build-status]                                               |
 
 [![Join the chat at https://gitter.im/intellij-rust/intellij-rust][gitter-chat-svg]][gitter-chat]
 
