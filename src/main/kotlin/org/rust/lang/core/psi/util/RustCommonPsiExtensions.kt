@@ -17,27 +17,6 @@ import org.rust.lang.core.psi.RustLiteral
  * Common Rust's PSI-related extensions
  */
 
-inline fun <reified T : PsiElement> PsiElement.parentOfType(strict: Boolean = true, minStartOffset: Int = -1): T? =
-    PsiTreeUtil.getParentOfType(this, T::class.java, strict, minStartOffset)
-
-inline fun <reified T : PsiElement> PsiElement.childOfType(strict: Boolean = true): T? =
-    PsiTreeUtil.findChildOfType(this, T::class.java, strict)
-
-inline fun <reified T : PsiElement> PsiElement.descendentsOfType(): Collection<T> =
-    PsiTreeUtil.findChildrenOfType(this, T::class.java)
-
-/**
- * Finds first sibling that is neither comment, nor whitespace before given element.
- */
-fun PsiElement?.getPrevNonCommentSibling(): PsiElement? =
-    PsiTreeUtil.skipSiblingsBackward(this, PsiWhiteSpace::class.java, PsiComment::class.java)
-
-/**
- * Finds first sibling that is neither comment, nor whitespace after given element.
- */
-fun PsiElement?.getNextNonCommentSibling(): PsiElement? =
-    PsiTreeUtil.skipSiblingsForward(this, PsiWhiteSpace::class.java, PsiComment::class.java)
-
 
 /**
  * Accounts for text-range relative to some ancestor (or the node itself) of the

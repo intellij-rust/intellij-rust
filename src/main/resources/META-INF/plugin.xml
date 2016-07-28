@@ -140,7 +140,7 @@
 
         <!-- Surrounder -->
         <lang.surroundDescriptor language="Rust"
-                                 implementationClass="org.rust.ide.surround.RustExpressionSurroundDescriptor"/>
+                                 implementationClass="org.rust.ide.surroundWith.RustExpressionSurroundDescriptor"/>
 
         <lang.foldingBuilder language="Rust" implementationClass="org.rust.ide.folding.RustFoldingBuilder"/>
 

@@ -1,16 +1,16 @@
-package org.rust.ide.surround
+package org.rust.ide.surroundWith
 
+import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.lang.surroundWith.SurroundDescriptor
 import com.intellij.lang.surroundWith.Surrounder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiTreeUtil
-import org.rust.lang.core.psi.RustExprElement
+import org.rust.lang.core.psi.util.findExpressionInRange
 
 class RustExpressionSurroundDescriptor : SurroundDescriptor {
     override fun getElementsToSurround(file: PsiFile, startOffset: Int, endOffset: Int): Array<out PsiElement> {
-        val expr = PsiTreeUtil.findElementOfClassAtRange(file, startOffset, endOffset, RustExprElement::class.java)
-            ?: return PsiElement.EMPTY_ARRAY
+        val expr = findExpressionInRange(file, startOffset, endOffset) ?: return emptyArray()
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.surroundwith.expression")
         return arrayOf(expr)
     }
 
@@ -19,6 +19,8 @@ class RustExpressionSurroundDescriptor : SurroundDescriptor {
     override fun isExclusive() = false
 
     companion object {
-        private val SURROUNDERS = arrayOf<Surrounder>()
+        private val SURROUNDERS = arrayOf(
+            RustWithParenthesesSurrounder()
+        )
     }
 }
