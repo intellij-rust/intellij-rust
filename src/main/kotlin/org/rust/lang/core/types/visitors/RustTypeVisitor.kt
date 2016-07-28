@@ -32,5 +32,7 @@ interface RustTypeVisitor<T> {
 
     fun visitBoolean(type: RustBooleanType): T
 
+    fun visitTypeParameter(type: RustTypeParameterType): T
+
 }
 

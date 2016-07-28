@@ -159,6 +159,14 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
+    fun testTypeParameters() = testExpr("""
+        fn foo<FOO>(foo: FOO) {
+            let bar = foo;
+            bar
+          //^ FOO
+        }
+    """)
+
     // Ideally these two should be handled by separate type/value namespaces
     fun testNoStackOverflow1() = testExpr("""
         pub struct P<T: ?Sized> { ptr: Box<T> }
@@ -171,7 +179,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         fn main() {
             let x = P(92);
             x
-          //^ fn(<unknown>) -> <unknown>
+          //^ fn(T) -> <unknown>
         }
     """)
 

@@ -36,6 +36,8 @@ object RustTypificationEngine {
 
             is RustFnElement -> deviseFunctionType(named)
 
+            is RustTypeParamElement -> RustTypeParameterType(named)
+
             else -> RustUnknownType
         }
     }
