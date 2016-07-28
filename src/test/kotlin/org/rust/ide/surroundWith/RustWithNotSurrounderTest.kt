@@ -5,6 +5,6 @@ class RustWithNotSurrounderTest : RustSurrounderTestCaseBase(RustWithNotSurround
     // FIXME: Broken because of #371: https://github.com/intellij-rust/intellij-rust/issues/371
 //    fun testCall() = doTest()
 
-    fun testNumber() = doTest(isApplicable = false)
-    fun testNumberCall() = doTest(isApplicable = false)
+    fun testNumber() = doTestNotApplicable()
+    fun testNumberCall() = doTestNotApplicable()
 }

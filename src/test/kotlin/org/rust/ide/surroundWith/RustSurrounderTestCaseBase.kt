@@ -4,23 +4,34 @@ import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler
 import com.intellij.lang.LanguageSurrounders
 import com.intellij.lang.surroundWith.Surrounder
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.util.readText
+import com.intellij.openapi.util.io.FileUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.lang.RustLanguage
 import org.rust.lang.RustTestCaseBase
-import java.nio.file.Paths
+import java.io.File
 import java.util.*
 
 abstract class RustSurrounderTestCaseBase(val surrounder: Surrounder) : RustTestCaseBase() {
     override val dataPath: String get() = "org/rust/ide/surroundWith/fixtures/$testClassName"
 
     protected val testClassName: String =
-        surrounder.javaClass.simpleName.replace(Regex("^RustWith(\\w+)Surrounder$"), "$1").decapitalize()
+        surrounder.javaClass.simpleName.replace("^RustWith(\\w+)Surrounder$".toRegex(), "$1").decapitalize()
 
-    protected fun doTest(isApplicable: Boolean = true) {
-        val before = if (isApplicable) fileName else "notApplicable/$fileName"
-        myFixture.configureByFile(before)
+    protected fun doTest() = checkByFile {
+        checkApplicability(fileName, true)
 
+        WriteCommandAction.runWriteCommandAction(myFixture.project) {
+            SurroundWithHandler.invoke(myFixture.project, myFixture.editor, myFixture.file, surrounder)
+        }
+    }
+
+    protected fun doTestNotApplicable() {
+        val fileName = "notApplicable/$fileName"
+        myFixture.configureByFile(fileName)
+        checkApplicability(fileName, false)
+    }
+
+    private fun checkApplicability(fileName: String, isApplicable: Boolean) {
         val descriptor = LanguageSurrounders.INSTANCE.allForLanguage(RustLanguage)
             .first { descriptor ->
                 descriptor.surrounders.any { surrounder ->
@@ -36,18 +47,9 @@ abstract class RustSurrounderTestCaseBase(val surrounder: Surrounder) : RustTest
             .withFailMessage(
                 "surrounder %s be applicable to given selection:\n\n%s\nElements: %s",
                 if (isApplicable) "should" else "shouldn't",
-                Paths.get("$testDataPath/$before").readText(),
+                FileUtil.loadFile(File("$testDataPath/$fileName")),
                 Arrays.toString(elements)
             )
             .isEqualTo(isApplicable)
-
-        if (isApplicable) {
-            WriteCommandAction.runWriteCommandAction(myFixture.project) {
-                SurroundWithHandler.invoke(myFixture.project, myFixture.editor, myFixture.file, surrounder)
-            }
-
-            val after = before.replace(".rs", "_after.rs")
-            myFixture.checkResultByFile(after, true)
-        }
     }
 }

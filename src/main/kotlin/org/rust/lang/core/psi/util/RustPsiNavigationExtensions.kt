@@ -43,9 +43,7 @@ fun findExpressionInRange(file: PsiFile, startOffset: Int, endOffset: Int): Rust
 
     // Get common expression parent.
     var parent = PsiTreeUtil.findCommonParent(element1, element2) ?: return null
-    if (parent !is RustExprElement) {
-        parent = parent.parentOfType<RustExprElement>() ?: return null
-    }
+    parent = parent.parentOfType<RustExprElement>(strict = false) ?: return null
 
     // If our parent's deepest first child is element1 and deepest last - element 2,
     // then is is completely within selection, so this is our sought expression.

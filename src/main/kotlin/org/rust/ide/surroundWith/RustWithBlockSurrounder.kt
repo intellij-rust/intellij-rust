@@ -8,7 +8,7 @@ import org.rust.lang.core.psi.RustBlockExprElement
 import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustExprStmtElement
 
-class RustWithBlockSurrounder : RustStatementsSurrounder() {
+class RustWithBlockSurrounder : RustStatementsSurrounderBase() {
     override fun getTemplateDescription(): String = "{ }"
 
     override fun surroundStatements(

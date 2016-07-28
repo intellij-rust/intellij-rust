@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 
-abstract class RustStatementsSurrounder : Surrounder {
+abstract class RustStatementsSurrounderBase : Surrounder {
     abstract fun surroundStatements(
         project: Project,
         editor: Editor,
@@ -14,11 +14,11 @@ abstract class RustStatementsSurrounder : Surrounder {
         statements: Array<out PsiElement>
     ): TextRange?
 
-    override fun isApplicable(elements: Array<out PsiElement>): Boolean = elements.size > 0
+    final override fun isApplicable(elements: Array<out PsiElement>): Boolean = elements.isNotEmpty()
 
-    override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange? {
-        require(elements.size > 0)
-        val container = elements[0].parent ?: throw IllegalStateException()
+    final override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange? {
+        require(elements.isNotEmpty())
+        val container = requireNotNull(elements[0].parent)
         return surroundStatements(project, editor, container, elements)
     }
 }

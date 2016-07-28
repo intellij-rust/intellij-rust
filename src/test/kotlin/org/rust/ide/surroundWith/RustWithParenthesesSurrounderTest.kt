@@ -8,7 +8,7 @@ class RustWithParenthesesSurrounderTest : RustSurrounderTestCaseBase(RustWithPar
     fun testIdent1() = doTest()
     fun testIdent2() = doTest()
 
-    fun testSelectPartOfExpression() = doTest(isApplicable = false)
-    fun testSelectStatement() = doTest(isApplicable = false)
+    fun testSelectPartOfExpression() = doTestNotApplicable()
+    fun testSelectStatement() = doTestNotApplicable()
 }
 

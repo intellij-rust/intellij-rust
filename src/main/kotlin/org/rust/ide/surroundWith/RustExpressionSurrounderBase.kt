@@ -13,11 +13,7 @@ abstract class RustExpressionSurrounderBase : Surrounder {
     abstract fun surroundExpression(project: Project, editor: Editor, expression: RustExprElement): TextRange?
 
     final override fun isApplicable(elements: Array<out PsiElement>): Boolean {
-        if (elements.size != 1 || elements[0] !is RustExprElement) {
-            return false
-        }
-
-        val expression = elements[0] as RustExprElement
+        val expression = targetExpr(elements) ?: return false
 
         // TODO: Some additional filtering may be required.
 
@@ -25,10 +21,8 @@ abstract class RustExpressionSurrounderBase : Surrounder {
     }
 
     final override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange? {
-        require(elements.size == 1 && elements[0] is RustExprElement) {
-            "RustExpressionSurrounder should be applicable only for 1 expression: ${Arrays.toString(elements)}"
-        }
-
-        return surroundExpression(project, editor, elements[0] as RustExprElement)
+        return surroundExpression(project, editor, requireNotNull(targetExpr(elements)))
     }
+
+    private fun targetExpr(elements: Array<out PsiElement>) = elements.singleOrNull() as? RustExprElement
 }

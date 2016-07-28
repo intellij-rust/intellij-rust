@@ -6,6 +6,6 @@ class RustWithBlockSurrounderTest : RustSurrounderTestCaseBase(RustWithBlockSurr
     fun testSimple3() = doTest()
     fun testComments() = doTest()
 
-    fun testAttrs() = doTest(isApplicable = false)
-    fun testSimple4() = doTest(isApplicable = false)
+    fun testAttrs() = doTestNotApplicable()
+    fun testSimple4() = doTestNotApplicable()
 }
