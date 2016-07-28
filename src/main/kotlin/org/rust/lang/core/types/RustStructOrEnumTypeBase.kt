@@ -6,7 +6,7 @@ import org.rust.lang.core.stubs.index.RustImplIndex
 
 abstract class RustStructOrEnumTypeBase(struct: RustStructOrEnumItemElement) : RustType {
 
-    override val impl: Sequence<RustImplItemElement> by lazy {
+    override val impls: Sequence<RustImplItemElement> by lazy {
         RustImplIndex.getImpls(struct.project, this).asSequence()
     }
 

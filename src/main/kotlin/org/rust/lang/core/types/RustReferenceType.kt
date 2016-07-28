@@ -5,8 +5,8 @@ import org.rust.lang.core.types.visitors.RustTypeVisitor
 
 class RustReferenceType(val referenced: RustType, val mutable: Boolean = false) : RustType {
 
-    override val impl: Sequence<RustImplItemElement>
-        get() = referenced.impl + super.impl
+    override val impls: Sequence<RustImplItemElement>
+        get() = referenced.impls + super.impls
 
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitReference(this)
 

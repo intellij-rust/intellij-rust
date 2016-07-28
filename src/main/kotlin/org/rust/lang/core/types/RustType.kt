@@ -19,10 +19,10 @@ interface RustType {
      *
      * TODO: separate two kinds of impls and filter by visible traits
      */
-    val impl: Sequence<RustImplItemElement> get() = emptySequence()
+    val impls: Sequence<RustImplItemElement> get() = emptySequence()
 
     val allMethods: Sequence<RustImplMethodMemberElement>
-        get() = impl.flatMap { it.implBody?.implMethodMemberList.orEmpty().asSequence() }
+        get() = impls.flatMap { it.implBody?.implMethodMemberList.orEmpty().asSequence() }
 
     val nonStaticMethods: Sequence<RustImplMethodMemberElement>
         get() = allMethods.filter { !it.isStatic }
