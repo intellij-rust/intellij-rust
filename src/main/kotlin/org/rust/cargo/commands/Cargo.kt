@@ -78,19 +78,11 @@ class Cargo(
 
         val output =  handler.runProcess()
         if (output.exitCode != 0) {
-            // We need at least `0.9.0-nightly (6c05bcb 2016-01-29)` cargo
-            // Remove this when `cargo metadata` hits stable
-            val noSubcommand = output.stderr.toLowerCase().contains("no such subcommand")
-            val message = if (noSubcommand) {
-                "No ${parametersList[0]} subcommand, please update cargo"
-            } else {
-                "Cargo execution failed." +
-                    "\ncommand: $commandLineString" +
-                    "\ncode : ${output.exitCode}" +
-                    "\nstdout: ${output.stdout}" +
-                    "\nstderr: ${output.stderr}"
-            }
-            throw ExecutionException(message)
+            throw ExecutionException("""
+            Cargo execution failed (exit code ${output.exitCode}).
+            $commandLineString
+            stdout : ${output.stdout}
+            stderr : ${output.stderr}""".trimIndent())
         }
         return output
     }
