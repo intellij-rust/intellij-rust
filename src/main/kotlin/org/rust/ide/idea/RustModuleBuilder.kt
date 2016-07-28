@@ -5,12 +5,14 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
+import org.rust.cargo.toolchain.RustToolchain
 
 /**
  * Builder which is used when a new project or module is created and not imported from source.
@@ -27,17 +29,24 @@ class RustModuleBuilder : ModuleBuilder() {
         }
 
     override fun setupRootModel(modifiableRootModel: ModifiableRootModel) {
-        doAddContentEntry(modifiableRootModel)
+        val root = doAddContentEntry(modifiableRootModel)?.file ?: return
         val toolchain = rustProjectData?.toolchain
-        val contentEntryPath = contentEntryPath
-        if (toolchain != null && contentEntryPath != null) {
+        root.refresh(/* async = */ false, /* recursive = */ true)
+
+        // Just work if user "creates new project" over an existing one.
+        if (toolchain != null && root.findChild(RustToolchain.CARGO_TOML) == null) {
             try {
-                toolchain.nonProjectCargo().init(contentEntryPath)
+                toolchain.nonProjectCargo().init(root)
             } catch (e: ExecutionException) {
-                throw ConfigurationException("Failed to execute `cargo init`")
+                LOG.error(e)
+                throw ConfigurationException(e.message)
             }
         }
     }
 
     var rustProjectData: RustProjectSettingsPanel.Data? = null
+
+    companion object {
+        private val LOG = Logger.getInstance(RustModuleBuilder::class.java)
+    }
 }

@@ -27,8 +27,6 @@ class CargoConfigurationWizardStep(
     override fun disposeUIResources() = rustProjectSettings.disposeUIResources()
 
     override fun updateDataModel() {
-        // XXX: this method may be called several times if user switches back and forth between wizard steps,
-        // so we need to make `ConfigurationUpdater` idempotent.
         ConfigurationUpdater.data = rustProjectSettings.data
 
         val projectBuilder = context.projectBuilder
@@ -51,15 +49,10 @@ class CargoConfigurationWizardStep(
     }
 
     private object ConfigurationUpdater : ModuleConfigurationUpdater() {
-        private var alreadyExecuted = false
         var data: RustProjectSettingsPanel.Data? = null
 
         override fun update(module: Module, rootModel: ModifiableRootModel) {
-            if (alreadyExecuted) return
-            alreadyExecuted = true
-
-            val latestData = data ?: return
-            latestData.applyTo(module.project.rustSettings)
+            data?.applyTo(module.project.rustSettings)
 
             val contentEntry = rootModel.contentEntries.singleOrNull()
             if (contentEntry != null) {

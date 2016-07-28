@@ -7,9 +7,12 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PathUtil
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.commands.impl.CargoMetadata
 import org.rust.cargo.project.CargoProjectDescription
+import org.rust.cargo.toolchain.RustToolchain
 import java.io.File
 
 /**
@@ -50,8 +53,11 @@ class Cargo(
     }
 
     @Throws(ExecutionException::class)
-    fun init(path: String) {
+    fun init(directory: VirtualFile) {
+        val path = PathUtil.toSystemDependentName(directory.path)
         generalCommand("init", listOf("--bin", path)).execute()
+        check(File(directory.path, RustToolchain.CARGO_TOML).exists())
+        directory.refresh(/* async = */ false, /* recursive = */ true)
     }
 
     fun generalCommand(command: String, additionalArguments: List<String> = emptyList(), environmentVariables: Map<String, String> = emptyMap()): GeneralCommandLine =
