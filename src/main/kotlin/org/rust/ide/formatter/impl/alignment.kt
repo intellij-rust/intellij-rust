@@ -21,15 +21,15 @@ fun RustFmtBlock.getAlignmentStrategy(): RustAlignmentStrategy = when (node.elem
                 //          ))
                 // because due to applied alignment, closing paren has to be
                 // at least in the same column as the opening one.
+                var result = true
                 if (parent != null) {
                     val lBrace = parent.firstChildNode
                     val rBrace = parent.lastChildNode
-                    assert(lBrace.isBlockDelim(parent))
-                    assert(rBrace.isBlockDelim(parent))
-                    child.treeNonWSPrev() != lBrace || child.treeNonWSNext() != rBrace
-                } else {
-                    true
+                    if (lBrace.isBlockDelim(parent) && rBrace.isBlockDelim(parent)) {
+                        result = child.treeNonWSPrev() != lBrace || child.treeNonWSNext() != rBrace
+                    }
                 }
+                result
             }
             .alignUnlessBlockDelim()
             .alignIf(ctx.commonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS)
