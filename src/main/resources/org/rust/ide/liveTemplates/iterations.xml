@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<templateSet group="Rust">
+    <template name="loop" description="Infinite loop" toReformat="true" toShortenFQNames="true"
+              value="loop {&#10;    $SELECTION$&#10;}$END$">
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="while" description="Conditional loop" toReformat="true" toShortenFQNames="true"
+              value="while $CONDITION$ {&#10;    $SELECTION$&#10;}$END$">
+        <variable name="CONDITION" expression="" defaultValue="&quot;true&quot;" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+
+    <template name="for" description="Iterator loop" toReformat="true" toShortenFQNames="true"
+              value="for $VARIABLE$ in $EXPRESSION$ {&#10;    $SELECTION$&#10;}$END$">
+        <variable name="VARIABLE" expression="" defaultValue="&quot;x&quot;" alwaysStopAt="true" />
+        <variable name="EXPRESSION" expression="" defaultValue="&quot;0..10&quot;" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_FILE" value="true" />
+        </context>
+    </template>
+</templateSet>
