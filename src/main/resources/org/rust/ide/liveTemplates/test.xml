@@ -4,7 +4,7 @@
     <template name="a" description="assert" toReformat="true" toShortenFQNames="true"
               value="assert!($END$);">
         <context>
-            <option name="RUST_FILE" value="true"/>
+            <option name="RUST_STATEMENT" value="true"/>
         </context>
     </template>
 
@@ -13,7 +13,7 @@
         <variable name="LEFT" expression="" defaultValue="" alwaysStopAt="true"/>
         <variable name="RIGHT" expression="" defaultValue="" alwaysStopAt="true"/>
         <context>
-            <option name="RUST_FILE" value="true"/>
+            <option name="RUST_STATEMENT" value="true"/>
         </context>
     </template>
 
@@ -23,6 +23,9 @@
         <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="RUST_FILE" value="true"/>
+            <option name="RUST_STATEMENT" value="false"/>
+            <option name="RUST_ITEM" value="false"/>
+            <option name="RUST_MOD" value="true"/>
         </context>
     </template>
 
@@ -31,6 +34,9 @@
               value="#[cfg(test)]&#10;mod tests {&#10;    use super::*;&#10;    &#10;    $END$&#10;}">
         <context>
             <option name="RUST_FILE" value="true"/>
+            <option name="RUST_STATEMENT" value="false"/>
+            <option name="RUST_ITEM" value="false"/>
+            <option name="RUST_MOD" value="true"/>
         </context>
     </template>
 </templateSet>

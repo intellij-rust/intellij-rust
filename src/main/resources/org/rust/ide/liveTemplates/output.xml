@@ -4,21 +4,21 @@
     <template name="p" description="print" toReformat="true" toShortenFQNames="true"
               value="println!(&quot;$END$&quot;);">
         <context>
-            <option name="RUST_FILE" value="true"/>
+            <option name="RUST_STATEMENT" value="true"/>
         </context>
     </template>
 
     <template name="pd" description="debug print" toReformat="true" toShortenFQNames="true"
               value="println!(&quot;{:?}&quot;, $END$);">
         <context>
-            <option name="RUST_FILE" value="true"/>
+            <option name="RUST_STATEMENT" value="true"/>
         </context>
     </template>
 
     <template name="ppd" description="debug pretty print" toReformat="true" toShortenFQNames="true"
               value="println!(&quot;{:#?}&quot;, $END$);">
         <context>
-            <option name="RUST_FILE" value="true"/>
+            <option name="RUST_STATEMENT" value="true"/>
         </context>
     </template>
 </templateSet>

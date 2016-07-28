@@ -4,7 +4,7 @@
     <template name="loop" description="Infinite loop" toReformat="true" toShortenFQNames="true"
               value="loop {&#10;    $SELECTION$&#10;}$END$">
         <context>
-            <option name="RUST_FILE" value="true" />
+            <option name="RUST_STATEMENT" value="true" />
         </context>
     </template>
 
@@ -12,7 +12,7 @@
               value="while $CONDITION$ {&#10;    $SELECTION$&#10;}$END$">
         <variable name="CONDITION" expression="" defaultValue="&quot;true&quot;" alwaysStopAt="true" />
         <context>
-            <option name="RUST_FILE" value="true" />
+            <option name="RUST_STATEMENT" value="true" />
         </context>
     </template>
 
@@ -21,7 +21,7 @@
         <variable name="VARIABLE" expression="" defaultValue="&quot;x&quot;" alwaysStopAt="true" />
         <variable name="EXPRESSION" expression="" defaultValue="&quot;0..10&quot;" alwaysStopAt="true" />
         <context>
-            <option name="RUST_FILE" value="true" />
+            <option name="RUST_STATEMENT" value="true" />
         </context>
     </template>
 </templateSet>
