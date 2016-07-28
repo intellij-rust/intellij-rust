@@ -10,7 +10,7 @@ import java.util.*
 
 abstract class RustExpressionSurrounderBase : Surrounder {
     abstract fun isApplicable(expression: RustExprElement): Boolean
-    abstract fun surroundExpression(project: Project, editor: Editor, expression: RustExprElement): TextRange
+    abstract fun surroundExpression(project: Project, editor: Editor, expression: RustExprElement): TextRange?
 
     final override fun isApplicable(elements: Array<out PsiElement>): Boolean {
         if (elements.size != 1 || elements[0] !is RustExprElement) {
@@ -24,7 +24,7 @@ abstract class RustExpressionSurrounderBase : Surrounder {
         return isApplicable(expression)
     }
 
-    final override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange {
+    final override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange? {
         require(elements.size == 1 && elements[0] is RustExprElement) {
             "RustExpressionSurrounder should be applicable only for 1 expression: ${Arrays.toString(elements)}"
         }
