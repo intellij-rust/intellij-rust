@@ -20,7 +20,8 @@ class RustExpressionSurroundDescriptor : SurroundDescriptor {
 
     companion object {
         private val SURROUNDERS = arrayOf(
-            RustWithParenthesesSurrounder()
+            RustWithParenthesesSurrounder(),
+            RustWithNotSurrounder()
         )
     }
 }
