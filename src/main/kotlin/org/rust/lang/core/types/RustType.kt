@@ -1,7 +1,8 @@
 package org.rust.lang.core.types
 
+import org.rust.lang.core.psi.RustFnElement
 import org.rust.lang.core.psi.RustImplItemElement
-import org.rust.lang.core.psi.RustImplMethodMemberElement
+import org.rust.lang.core.psi.RustTraitItemElement
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 
 interface RustType {
@@ -21,13 +22,19 @@ interface RustType {
      */
     val impls: Sequence<RustImplItemElement> get() = emptySequence()
 
-    val allMethods: Sequence<RustImplMethodMemberElement>
-        get() = impls.flatMap { it.implBody?.implMethodMemberList.orEmpty().asSequence() }
+    /**
+     * Traits implemented by this type, for which there are now impls (e.g., derived traits or generic bounds)
+     */
+    val traits: Sequence<RustTraitItemElement> get() = emptySequence()
 
-    val nonStaticMethods: Sequence<RustImplMethodMemberElement>
+    val allMethods: Sequence<RustFnElement>
+        get() = impls.flatMap { it.implBody?.implMethodMemberList.orEmpty().asSequence() } +
+            traits.flatMap { it.traitBody.traitMethodMemberList.orEmpty().asSequence()  }
+
+    val nonStaticMethods: Sequence<RustFnElement>
         get() = allMethods.filter { !it.isStatic }
 
-    val staticMethods: Sequence<RustImplMethodMemberElement>
+    val staticMethods: Sequence<RustFnElement>
         get() = allMethods.filter { it.isStatic }
 
     /**

@@ -26,4 +26,7 @@ class RustTypeAwareResolveTestCase : RustResolveTestCaseBase() {
     fun testWrongInherentImpl() = checkIsUnbound()
     fun testNonInherentImpl() = checkIsBound()
     fun testImplGenericsStripped() = checkIsBound()
+
+    fun testGenericParamMethodCall() = checkIsBound()
+    fun testGenericParamMethodCallWhere() = checkIsBound()
 }
