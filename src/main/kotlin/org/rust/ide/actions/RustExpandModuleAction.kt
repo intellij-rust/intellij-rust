@@ -2,7 +2,6 @@ package org.rust.ide.actions
 
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -12,6 +11,7 @@ import com.intellij.psi.impl.file.PsiFileImplUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.actions.BaseRefactoringAction
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
+import org.rust.ide.utils.checkWriteAccessAllowed
 import org.rust.ide.utils.runWriteAction
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.RustMod
@@ -47,7 +47,7 @@ class RustExpandModuleAction : BaseRefactoringAction() {
 
     companion object {
         fun expandModule(file: RustFile) {
-            check(ApplicationManager.getApplication().isWriteAccessAllowed)
+            checkWriteAccessAllowed()
 
             val dirName = FileUtil.getNameWithoutExtension(file.name)
             val directory = file.parent?.createSubdirectory(dirName)

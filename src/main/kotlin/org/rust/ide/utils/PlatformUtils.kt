@@ -35,3 +35,10 @@ inline fun <reified T : Any> service(): T = ServiceManager.getService(T::class.j
  * Util to extract project-level services
  */
 inline fun <reified T : Any> Project.service(): T = ServiceManager.getService(this, T::class.java)
+
+
+fun checkWriteAccessAllowed() {
+    check(ApplicationManager.getApplication().isWriteAccessAllowed) {
+        "Needs write action"
+    }
+}

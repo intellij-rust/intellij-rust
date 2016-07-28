@@ -1,6 +1,5 @@
 package org.rust.cargo.util
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleServiceManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -12,6 +11,7 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.CargoProjectDescription
+import org.rust.ide.utils.checkWriteAccessAllowed
 
 object RustModuleUtil
 
@@ -117,7 +117,7 @@ fun Module.extendProjectDescriptionWithStandardLibraryCrates(projectDescription:
  * Updates `CLASS` order-entries for the supplied module's library (referred to with `libraryName`)
  */
 fun Module.updateLibrary(libraryName: String, roots: Collection<VirtualFile>) {
-    check(ApplicationManager.getApplication().isWriteAccessAllowed)
+    checkWriteAccessAllowed()
 
     val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
     val library = libraryTable.getLibraryByName(libraryName)
