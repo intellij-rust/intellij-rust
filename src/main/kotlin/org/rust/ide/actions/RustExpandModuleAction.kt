@@ -1,40 +1,51 @@
 package org.rust.ide.actions
 
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.file.PsiFileImplUtil
+import com.intellij.refactoring.RefactoringActionHandler
+import com.intellij.refactoring.actions.BaseRefactoringAction
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import org.rust.ide.utils.runWriteAction
+import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.impl.RustFile
 
-class RustExpandModuleAction : AnAction() {
+class RustExpandModuleAction : BaseRefactoringAction() {
+    override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean = elements.all { it is RustFile }
 
-    override fun update(e: AnActionEvent) {
-        val file = e.rustFile
-        if (file == null) {
-            e.presentation.isEnabledAndVisible = false
-        } else {
-            e.presentation.isVisible = true
-            // This method must be fast, so approximate `ownsDirectory` with name check.
-            // TODO: properly handle all edge cases in `actionPerformed`.
-            e.presentation.isEnabled = file.name != RustMod.MOD_RS
+    override fun getHandler(dataContext: DataContext): RefactoringActionHandler = Handler
+
+    override fun isAvailableInEditorOnly(): Boolean = false
+
+    override fun isAvailableForLanguage(language: Language): Boolean = language.`is`(RustLanguage)
+
+
+    private object Handler : RefactoringActionHandler {
+        override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
+            if (file is RustFile) {
+                runWriteAction {
+                    expandModule(file)
+                }
+            }
         }
-    }
 
-    override fun actionPerformed(e: AnActionEvent) {
-        val file = e.rustFile ?: return
-        runWriteAction {
-            expandModule(file)
+        override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
+            runWriteAction {
+                for (element in elements.filterIsInstance<RustFile>()) {
+                    expandModule(element)
+                }
+            }
         }
     }
 
     companion object {
-        private val AnActionEvent.rustFile: RustFile? get() = getData(CommonDataKeys.PSI_FILE) as? RustFile
-
         fun expandModule(file: RustFile) {
             check(ApplicationManager.getApplication().isWriteAccessAllowed)
 
