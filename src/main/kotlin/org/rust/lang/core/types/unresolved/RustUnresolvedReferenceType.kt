@@ -6,4 +6,6 @@ class RustUnresolvedReferenceType(val referenced: RustUnresolvedType, val mutabl
 
     override fun <T> accept(visitor: RustUnresolvedTypeVisitor<T>): T = visitor.visitReference(this)
 
+    override fun toString(): String = "${if (mutable) "&mut" else "&"} $referenced"
+
 }

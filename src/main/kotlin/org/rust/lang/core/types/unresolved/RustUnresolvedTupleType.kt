@@ -6,7 +6,8 @@ class RustUnresolvedTupleType(val elements: Iterable<RustUnresolvedType>) : Rust
 
     override fun <T> accept(visitor: RustUnresolvedTypeVisitor<T>): T = visitor.visitTupleType(this)
 
+    override fun toString(): String = elements.joinToString(", ", "(", ")")
+
     val types: Iterable<RustUnresolvedType>
         get() = elements
-
 }

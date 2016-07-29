@@ -16,6 +16,7 @@ class RustUnresolvedPathType(val path: RustQualifiedPath) : RustUnresolvedTypeBa
 
     override fun <T> accept(visitor: RustUnresolvedTypeVisitor<T>): T = visitor.visitPathType(this)
 
+    override fun toString(): String = "[U] $path"
 }
 
 val RustQualifiedReferenceElement.decay: RustQualifiedPath

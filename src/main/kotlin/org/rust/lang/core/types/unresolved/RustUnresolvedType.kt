@@ -25,5 +25,7 @@ interface RustUnresolvedType {
 
     override fun hashCode(): Int
 
+    override fun toString(): String
+
 }
 
