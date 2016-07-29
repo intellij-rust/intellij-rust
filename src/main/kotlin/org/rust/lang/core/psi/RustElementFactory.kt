@@ -7,7 +7,10 @@ import org.rust.lang.core.psi.util.childOfType
 
 object RustElementFactory {
     fun createExpression(project: Project, expression: String): RustExprElement? =
-        createFromText(project, "fn main() {$expression;}")
+        createFromText(project, "fn main() { $expression; }")
+
+    fun createStatement(project: Project, statement: String): RustStmtElement? =
+        createFromText(project, "fn main() { $statement }")
 
     fun createModDeclItem(project: Project, modName: String): RustModDeclItemElement? =
         createFromText(project, "mod $modName;")

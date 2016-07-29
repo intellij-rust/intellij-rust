@@ -3,7 +3,6 @@
 <templateSet group="Rust">
     <template name="p" description="print" toReformat="true" toShortenFQNames="true"
               value="println!(&quot;$END$&quot;);">
-
         <context>
             <option name="RUST_FILE" value="true"/>
         </context>
@@ -11,7 +10,6 @@
 
     <template name="pd" description="debug print" toReformat="true" toShortenFQNames="true"
               value="println!(&quot;{:?}&quot;, $END$);">
-
         <context>
             <option name="RUST_FILE" value="true"/>
         </context>
@@ -19,7 +17,6 @@
 
     <template name="ppd" description="debug pretty print" toReformat="true" toShortenFQNames="true"
               value="println!(&quot;{:#?}&quot;, $END$);">
-
         <context>
             <option name="RUST_FILE" value="true"/>
         </context>
@@ -27,7 +24,6 @@
 
     <template name="a" description="assert" toReformat="true" toShortenFQNames="true"
               value="assert!($END$);">
-
         <context>
             <option name="RUST_FILE" value="true"/>
         </context>
@@ -35,14 +31,13 @@
 
     <template name="ae" description="assert equals" toReformat="true" toShortenFQNames="true"
               value="assert_eq!($LEFT$, $RIGHT$);">
-
         <variable name="LEFT" expression="" defaultValue="" alwaysStopAt="true"/>
         <variable name="RIGHT" expression="" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="RUST_FILE" value="true"/>
         </context>
     </template>
-    
+
     <template name="tfn" description="test function" toReformat="false" toShortenFQNames="true"
               value="#[test]&#10;fn $NAME$() {&#10;    $END$&#10;}">
         <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true"/>
@@ -60,7 +55,6 @@
 
     <template name="f" description="field" toReformat="true" toShortenFQNames="true"
               value="$IDENT$: $TYPE$,">
-
         <variable name="IDENT" expression="" defaultValue="&quot;foo&quot;" alwaysStopAt="true"/>
         <variable name="TYPE" expression="" defaultValue="&quot;u32&quot;" alwaysStopAt="true"/>
         <context>
@@ -70,7 +64,6 @@
 
     <template name="pf" description="pub field" toReformat="true" toShortenFQNames="true"
               value="pub $IDENT$: $TYPE$,">
-
         <variable name="IDENT" expression="" defaultValue="&quot;foo&quot;" alwaysStopAt="true"/>
         <variable name="TYPE" expression="" defaultValue="&quot;u32&quot;" alwaysStopAt="true"/>
         <context>
@@ -101,5 +94,4 @@
             <option name="RUST_FILE" value="true" />
         </context>
     </template>
-
 </templateSet>

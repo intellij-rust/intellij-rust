@@ -138,9 +138,11 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.duplicates.RustDuplicateStructFieldInspection"/>
 
-        <!-- Surrounder -->
+        <!-- Surrounders -->
         <lang.surroundDescriptor language="Rust"
-                                 implementationClass="org.rust.ide.surround.RustSurroundDescriptor"/>
+                                 implementationClass="org.rust.ide.surroundWith.RustExpressionSurroundDescriptor"/>
+        <lang.surroundDescriptor language="Rust"
+                                 implementationClass="org.rust.ide.surroundWith.RustStatementsSurroundDescriptor"/>
 
         <lang.foldingBuilder language="Rust" implementationClass="org.rust.ide.folding.RustFoldingBuilder"/>
 
