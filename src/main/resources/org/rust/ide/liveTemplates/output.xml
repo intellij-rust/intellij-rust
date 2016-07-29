@@ -1,22 +1,54 @@
 <?xml version='1.0' encoding='UTF-8'?>
 
 <templateSet group="Rust">
-    <template name="p" description="print" toReformat="true" toShortenFQNames="true"
+    <template name="p" description="println!" toReformat="true" toShortenFQNames="true"
               value="println!(&quot;$END$&quot;);">
         <context>
             <option name="RUST_STATEMENT" value="true"/>
         </context>
     </template>
 
-    <template name="pd" description="debug print" toReformat="true" toShortenFQNames="true"
-              value="println!(&quot;{:?}&quot;, $END$);">
+    <template name="pr" description="print!" toReformat="true" toShortenFQNames="true"
+              value="print!(&quot;$END$&quot;);">
         <context>
             <option name="RUST_STATEMENT" value="true"/>
         </context>
     </template>
 
-    <template name="ppd" description="debug pretty print" toReformat="true" toShortenFQNames="true"
-              value="println!(&quot;{:#?}&quot;, $END$);">
+    <template name="pd" description="debug println!" toReformat="true" toShortenFQNames="true"
+              value="println!(&quot;$FORMAT$&quot;, $END$);">
+        <variable name="FORMAT" expression="" defaultValue="&quot;{:?}&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
+    <template name="ppd" description="debug pretty println!" toReformat="true" toShortenFQNames="true"
+              value="println!(&quot;$FORMAT$&quot;, $END$);">
+        <variable name="FORMAT" expression="" defaultValue="&quot;{:#?}&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
+    <template name="fmt" description="print!" toReformat="true" toShortenFQNames="true"
+              value="format!(&quot;$END$&quot;);">
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
+    <template name="wrt" description="write! to buffer" toReformat="true" toShortenFQNames="true"
+              value="write!($BUFFER$, &quot;$END$&quot;);">
+        <variable name="BUFFER" expression="" defaultValue="&quot;buffer&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
+    <template name="wrtn" description="writeln! to buffer" toReformat="true" toShortenFQNames="true"
+              value="writeln!($BUFFER$, &quot;$END$&quot;);">
+        <variable name="BUFFER" expression="" defaultValue="&quot;buffer&quot;" alwaysStopAt="true"/>
         <context>
             <option name="RUST_STATEMENT" value="true"/>
         </context>
