@@ -44,4 +44,17 @@ interface RustType {
      * See `RustUnresolvedType#nominalTypeName`
      */
     val baseTypeName: String? get() = null
+
+
+    companion object {
+        val PRIMITIVE_TYPES: Map<String, RustType> = listOf<Map<String, RustType>>(
+            RustIntegerType.Kind.values().associate { it.name to RustIntegerType(it) },
+            RustFloatType.Kind.values().associate { it.name to RustFloatType(it) },
+            mapOf(
+                "bool" to RustBooleanType,
+                "char" to RustCharacterType,
+                "str" to RustUnknownType
+            )
+        ).reduce { a, b -> a + b }
+    }
 }

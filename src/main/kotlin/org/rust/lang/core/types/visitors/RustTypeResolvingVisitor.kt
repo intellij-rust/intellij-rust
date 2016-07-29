@@ -1,5 +1,6 @@
 package org.rust.lang.core.types.visitors
 
+import org.rust.lang.core.psi.referenceName
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.unresolved.*
 
@@ -12,10 +13,14 @@ open class RustTypeResolvingVisitor : RustUnresolvedTypeVisitor<RustType> {
     override fun visitUnitType(type: RustUnitType): RustType = RustUnitType
 
     override fun visitTupleType(type: RustUnresolvedTupleType): RustType =
-        RustTupleType(type.elements.map { visit(it)})
+        RustTupleType(type.elements.map { visit(it) })
 
-    override fun visitPathType(type: RustUnresolvedPathType): RustType =
-        type.path.reference.resolve()?.let { RustTypificationEngine.typify(it) } ?: RustUnknownType
+    override fun visitPathType(type: RustUnresolvedPathType): RustType {
+        if (type.path.qualifier == null) {
+            RustType.PRIMITIVE_TYPES[type.path.referenceName]?.let { return it }
+        }
+        return type.path.reference.resolve()?.let { RustTypificationEngine.typify(it) } ?: RustUnknownType
+    }
 
     override fun visitFunctionType(type: RustUnresolvedFunctionType): RustType =
         RustFunctionType(type.paramTypes.map { visit(it) }, visit(type.retType))

@@ -76,6 +76,11 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
                                   //^ S
     """)
 
+    fun testPrimitiveBool() = testType("""
+        type T = bool;
+                 //^ bool
+    """)
+
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */
