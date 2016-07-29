@@ -22,6 +22,7 @@ import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
 import org.rust.lang.core.symbols.RustQualifiedPath
+import org.rust.lang.core.types.RustReferenceType
 import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
@@ -142,8 +143,17 @@ object RustResolveEngine {
         val receiverType = call.expr.resolvedType
         val name = call.identifier.text
 
-        val matching = RustImplIndex.findNonStaticMethodsFor(receiverType, call.project)
-                                    .filter { it.name == name }
+        val matching =
+            RustImplIndex
+                .findNonStaticMethodsFor(receiverType, call.project)
+                .filter { it.name == name } +
+
+            if (receiverType is RustReferenceType)
+                RustImplIndex
+                    .findNonStaticMethodsFor(receiverType.stripAllRefsIfAny(), call.project)
+                    .filter { it.name == name }
+            else
+                emptySequence()
 
         return ResolveResult.buildFrom(matching.asIterable())
     }
@@ -265,9 +275,8 @@ private fun resolveIn(scopes: Sequence<RustResolveScope>, name: String, pivot: R
         .asResolveResult()
 
 
-private fun declarations(scope: RustResolveScope, context: Context): Sequence<ScopeEntry> = Sequence {
-    RustScopeVisitor(context).compute(scope).iterator()
-}
+private fun declarations(scope: RustResolveScope, context: Context): Sequence<ScopeEntry> =
+    Sequence { RustScopeVisitor(context).compute(scope).iterator() }
 
 
 private data class Context(
