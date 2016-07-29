@@ -148,6 +148,7 @@
 
         <!-- Live Templates -->
         <defaultLiveTemplatesProvider implementation="org.rust.ide.template.RustLiveTemplatesProvider"/>
+
         <liveTemplateContext implementation="org.rust.ide.template.RustContextType$Generic"/>
         <liveTemplateContext implementation="org.rust.ide.template.RustContextType$Statement"/>
         <liveTemplateContext implementation="org.rust.ide.template.RustContextType$Item"/>

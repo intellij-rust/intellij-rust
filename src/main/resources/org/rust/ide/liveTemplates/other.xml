@@ -38,4 +38,22 @@
             <option name="RUST_FILE" value="true"/>
         </context>
     </template>
+
+        <template name="ifl" description="if let ... statement" toReformat="true" toShortenFQNames="true"
+              value="if let $PATTERN$ = $EXPRESSION$ {&#10;    $END$&#10;}">
+        <variable name="EXPRESSION" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="PATTERN" expression="" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
+    <template name="ifls" description="if let Some(...) statement" toReformat="true" toShortenFQNames="true"
+              value="if let Some($VAR$) = $EXPRESSION$ {&#10;    $END$&#10;}">
+        <variable name="EXPRESSION" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="VAR" expression="" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
 </templateSet>
