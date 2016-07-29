@@ -212,4 +212,4 @@ check.dependsOn performanceTest
 // Misc
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-version = "${version}.$buildNumber"
+version = "$version.$buildNumber" + (publishChannel?.trim() ? "-$publishChannel" : "")
