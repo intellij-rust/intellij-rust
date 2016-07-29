@@ -155,6 +155,8 @@
         <liveTemplateContext implementation="org.rust.ide.template.RustContextType$Struct"/>
         <liveTemplateContext implementation="org.rust.ide.template.RustContextType$Mod"/>
 
+        <liveTemplateMacro implementation="org.rust.ide.template.macros.RustSuggestIndexNameMacro"/>
+
         <!-- Intentions -->
 
         <intentionAction>

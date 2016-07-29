@@ -46,8 +46,8 @@
     <template name="fori" description="iterate over range (for ... in range)" toReformat="true" toShortenFQNames="true"
               value="for $INDEX$ in $START$..$STOP$ {&#10;    $END$&#10;}">
         <variable name="START" expression="" defaultValue="&quot;0&quot;" alwaysStopAt="true"/>
-        <variable name="STOP" expression="" defaultValue="&quot;10&quot;" alwaysStopAt="true"/>
-        <variable name="INDEX" expression="" defaultValue="&quot;i&quot;" alwaysStopAt="true"/>
+        <variable name="STOP" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="INDEX" expression="rustSuggestIndexName()" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="RUST_STATEMENT" value="true"/>
         </context>

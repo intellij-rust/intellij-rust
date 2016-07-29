@@ -2,6 +2,7 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
@@ -220,18 +221,21 @@ object RustResolveEngine {
     fun declarations(scope: RustResolveScope, pivot: RustCompositeElement? = null): Sequence<RustNamedElement> =
         declarations(scope, Context(pivot)).mapNotNull { it.element }
 
-    fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolveScope> {
+    fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolveScope> =
         if (ref.isRelativeToCrateRoot) {
-            return listOfNotNull(RustResolveUtil.getCrateRootModFor(ref)).asSequence()
+            listOfNotNull(RustResolveUtil.getCrateRootModFor(ref)).asSequence()
+        } else {
+            enumerateScopesFor(ref as PsiElement)
         }
 
-        return generateSequence(RustResolveUtil.getResolveScopeFor(ref)) { parent ->
-            if (parent is RustModItemElement)
+    fun enumerateScopesFor(element: PsiElement): Sequence<RustResolveScope> =
+        generateSequence(RustResolveUtil.getResolveScopeFor(element)) { parent ->
+            if (parent is RustModItemElement) {
                 null
-            else
+            } else {
                 RustResolveUtil.getResolveScopeFor(parent)
+            }
         }
-    }
 }
 
 
