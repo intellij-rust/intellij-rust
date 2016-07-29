@@ -629,7 +629,8 @@ trait_body ::= '{' trait_member* '}' { pin = 1 }
 // TODO: use upper rules and inheritance here
 private trait_member ::= trait_const_member
                        | trait_type_member
-                       | trait_method_member
+                       | trait_method_member { recoverWhile = trait_member_recover }
+private trait_member_recover ::= !('#' | vis | EXTERN | CONST | UNSAFE | FN | TYPE_KW | '}')
 
 trait_const_member ::= outer_attr* CONST IDENTIFIER type_ascription? const_default? ';'{
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
