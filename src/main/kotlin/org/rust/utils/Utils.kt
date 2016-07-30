@@ -73,3 +73,9 @@ fun download(url: String, fileName: String, destination: VirtualFile): VirtualFi
 
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
 }
+
+
+/**
+ * XXX
+ */
+fun <T> safely(run: () -> T, finally: () -> Unit): T = usingWith(Disposable { finally() }) { run() }
