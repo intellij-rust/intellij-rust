@@ -5,9 +5,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import org.rust.ide.utils.recursionGuard
-import org.rust.lang.core.psi.RustExprElement
-import org.rust.lang.core.psi.RustTypeBearingItemElement
-import org.rust.lang.core.psi.RustTypeElement
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustUnknownType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
@@ -50,3 +48,17 @@ val RustTypeBearingItemElement.resolvedType: RustType
                 CachedValueProvider.Result.create(RustTypificationEngine.typify(this), PsiModificationTracker.MODIFICATION_COUNT)
             })
 
+/**
+ * Helper property to extract (type-)bounds imposed onto this particular type-parameter
+ */
+val RustTypeParamElement.bounds: Sequence<RustPolyboundElement>
+    get() {
+        val owner = parent?.parent as? RustGenericDeclaration
+        val whereBounds =
+            owner?.whereClause?.wherePredList.orEmpty()
+                .asSequence()
+                .filter     { (it.type as? RustPathTypeElement)?.path?.reference?.resolve() == this }
+                .flatMap    { it.typeParamBounds?.polyboundList.orEmpty().asSequence() }
+
+        return typeParamBounds?.polyboundList.orEmpty().asSequence() + whereBounds
+    }

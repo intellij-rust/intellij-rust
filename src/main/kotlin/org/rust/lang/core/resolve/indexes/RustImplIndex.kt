@@ -9,12 +9,10 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.RustFileElementType
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.types.RustEnumType
-import org.rust.lang.core.types.RustStructOrEnumTypeBase
-import org.rust.lang.core.types.RustStructType
-import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
+import org.rust.lang.core.types.util.bounds
 import org.rust.lang.core.types.util.decay
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.visitors.impl.RustEqualityUnresolvedTypeVisitor
@@ -25,17 +23,32 @@ import java.io.DataOutput
 
 object RustImplIndex  {
 
-    fun findNonStaticMethodsFor(target: RustType, project: Project): Sequence<RustImplMethodMemberElement> =
+    fun findNonStaticMethodsFor(target: RustType, project: Project): Sequence<RustFnElement> =
         findMethodsFor(target, project)
             .filter { !it.isStatic }
 
-    fun findStaticMethodsFor(target: RustType, project: Project): Sequence<RustImplMethodMemberElement> =
+    fun findStaticMethodsFor(target: RustType, project: Project): Sequence<RustFnElement> =
         findMethodsFor(target, project)
             .filter { it.isStatic }
 
-    fun findMethodsFor(target: RustType, project: Project): Sequence<RustImplMethodMemberElement> =
+    fun findMethodsFor(target: RustType, project: Project): Sequence<RustFnElement> =
         findImplsFor(target, project)
-            .flatMap { it.implBody?.implMethodMemberList.orEmpty().asSequence() }
+            .flatMap { it.implBody?.implMethodMemberList.orEmpty().asSequence() } +
+
+        findTraitsImplementedFor(target, project)
+            .flatMap { it.traitBody.traitMethodMemberList.orEmpty().asSequence() }
+
+    fun findTraitsImplementedFor(target: RustType, project: Project): Sequence<RustTraitItemElement> {
+        var traitRefs = emptySequence<RustTraitRefElement>()
+
+        if (target is RustTypeParameterType)
+            traitRefs += target.parameter.bounds.mapNotNull { it.bound.traitRef }
+        else
+            traitRefs += findImplsFor(target, project).mapNotNull { it.traitRef}
+
+        return traitRefs.mapNotNull { it.path.reference.resolve() as? RustTraitItemElement }
+    }
+
 
     fun findImplsFor(target: RustType, project: Project): Sequence<RustImplItemElement> {
         var inherentImpls = emptySequence<RustImplItemElement>()
@@ -44,11 +57,9 @@ object RustImplIndex  {
 
         return findNonInherentImplsForInternal(target.decay, project)
                     .filter {
-                        impl ->
-                        impl.type?.let { it.resolvedType == target } ?: false
+                        impl -> impl.type?.let { it.resolvedType == target } ?: false
                     } + inherentImpls
     }
-
 
     private fun findInherentImplsForInternal(target: RustStructOrEnumItemElement): Sequence<RustImplItemElement> {
         val found = arrayListOf<RustImplItemElement>()
@@ -121,7 +132,7 @@ object RustImplIndex  {
     }
 
 
-    class ByType : AbstractStubIndex<RustImplIndex.ByType.Key, RustImplItemElement>() {
+    class ByType : AbstractStubIndex<ByType.Key, RustImplItemElement>() {
         /**
          * This wrapper is required due to a subtle bug in the [com.intellij.util.indexing.MemoryIndexStorage], involving
          * use of the object's `hashCode`, while [com.intellij.util.indexing.MapIndexStorage] being using the one
