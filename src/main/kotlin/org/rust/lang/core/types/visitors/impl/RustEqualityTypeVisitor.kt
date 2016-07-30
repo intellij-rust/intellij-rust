@@ -55,6 +55,14 @@ open class RustEqualityTypeVisitor(override var lop: RustType)
         return visit(lop.retType, type.retType) && visitTypeList(lop.paramTypes, type.paramTypes)
     }
 
+    override fun visitTypeParameter(type: RustTypeParameterType): Boolean {
+        val lop = lop
+        if (lop !is RustTypeParameterType)
+            return false
+
+        return lop.parameter === type.parameter
+    }
+
     override fun visitReference(type: RustReferenceType): Boolean {
         val lop = lop
         if (lop !is RustReferenceType)

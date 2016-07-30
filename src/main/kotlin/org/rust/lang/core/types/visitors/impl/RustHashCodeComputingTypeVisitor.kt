@@ -17,6 +17,8 @@ open class RustHashCodeComputingTypeVisitor
 
     override fun visitEnum(type: RustEnumType): Int = type.enum.hashCode() * 12289 + 9293
 
+    override fun visitTypeParameter(type: RustTypeParameterType): Int = type.parameter.hashCode() * 13859 + 9419
+
     override fun visitTupleType(type: RustTupleType): Int =
         type.types.fold(0, { h, ty -> h * 8741 + visit(ty) }) + 17387
 
