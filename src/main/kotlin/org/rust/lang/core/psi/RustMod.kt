@@ -1,7 +1,6 @@
 package org.rust.lang.core.psi
 
 import com.intellij.psi.PsiDirectory
-import org.rust.lang.core.names.RustQualifiedName
 
 interface RustMod : RustNamedElement, RustItemsOwner {
     /**
@@ -23,8 +22,6 @@ interface RustMod : RustNamedElement, RustItemsOwner {
     val isCrateRoot: Boolean
 
     val isTopLevelInFile: Boolean
-
-    val canonicalNameInFile: RustQualifiedName?
 
     companion object {
         val MOD_RS = "mod.rs"
