@@ -2,7 +2,6 @@ package org.rust.ide.template.macros
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustBlockElement
-import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustItemElement
 import org.rust.lang.core.psi.RustPatBindingElement
 import org.rust.lang.core.psi.impl.RustFile
@@ -11,8 +10,6 @@ import org.rust.lang.core.resolve.RustResolveEngine
 fun getPatBindingNamesVisibleAt(place: PsiElement?): Set<String> {
     if (place == null) return emptySet()
     return RustResolveEngine.enumerateScopesFor(place)
-        // skip scope in which "place" is defined
-        .drop(1)
         .takeWhile {
             // we are only interested in local scopes
             if (it is RustItemElement) {
