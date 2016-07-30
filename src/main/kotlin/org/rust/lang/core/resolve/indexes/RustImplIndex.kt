@@ -1,5 +1,6 @@
 package org.rust.lang.core.resolve.indexes
 
+import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.AbstractStubIndex
 import com.intellij.psi.stubs.StringStubIndexExtension
@@ -8,117 +9,188 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.RustFileElementType
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.resolve.RustResolveEngine
-import org.rust.lang.core.symbols.RustQualifiedPath
-import org.rust.lang.core.symbols.RustQualifiedPathPart
+import org.rust.lang.core.types.RustEnumType
+import org.rust.lang.core.types.RustStructOrEnumTypeBase
+import org.rust.lang.core.types.RustStructType
+import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
+import org.rust.lang.core.types.util.decay
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.visitors.impl.RustEqualityUnresolvedTypeVisitor
 import org.rust.lang.core.types.visitors.impl.RustHashCodeComputingUnresolvedTypeVisitor
-import org.rust.utils.Either
 import java.io.DataInput
 import java.io.DataOutput
 
 
-class RustImplIndex : AbstractStubIndex<RustImplIndex.Key, RustImplItemElement>() {
+object RustImplIndex  {
 
-    /**
-     * This wrapper is required due to a subtle bug in the [com.intellij.util.indexing.MemoryIndexStorage], involving
-     * use of the object's `hashCode`, while [com.intellij.util.indexing.MapIndexStorage] being using the one
-     * impose by the [KeyDescriptor]
-     */
-    data class Key(val type: RustUnresolvedType) {
+    fun findNonStaticMethodsFor(target: RustType, project: Project): Sequence<RustImplMethodMemberElement> =
+        findMethodsFor(target, project)
+            .filter { !it.isStatic }
 
-        override fun equals(other: Any?): Boolean =
-            other is Key &&
-            other.type.accept(
-                object : RustEqualityUnresolvedTypeVisitor(type) {
-                    /**
-                     * Compare hole-containing types
-                     */
-                    override fun visitPathType(type: RustUnresolvedPathType): Boolean =
-                        lop is RustUnresolvedPathType
-                }
-            ) && (hashCode() == other.hashCode() || throw Exception("WTF"))
+    fun findStaticMethodsFor(target: RustType, project: Project): Sequence<RustImplMethodMemberElement> =
+        findMethodsFor(target, project)
+            .filter { it.isStatic }
 
-        override fun hashCode(): Int =
-            type.accept(
-                object: RustHashCodeComputingUnresolvedTypeVisitor() {
-                    override fun visitPathType(type: RustUnresolvedPathType): Int = 0xDEADBAE
-                }
-            )
+    fun findMethodsFor(target: RustType, project: Project): Sequence<RustImplMethodMemberElement> =
+        findImplsFor(target, project)
+            .flatMap { it.implBody?.implMethodMemberList.orEmpty().asSequence() }
 
+    fun findImplsFor(target: RustType, project: Project): Sequence<RustImplItemElement> {
+        var inherentImpls = emptySequence<RustImplItemElement>()
+        if (target is RustStructOrEnumTypeBase)
+            inherentImpls = findInherentImplsForInternal(target.item)
+
+        return findNonInherentImplsForInternal(target.decay, project)
+                    .filter {
+                        impl ->
+                        impl.type?.let { it.resolvedType == target } ?: false
+                    } + inherentImpls
     }
 
-    companion object {
 
-        fun findImplsFor(target: RustStructOrEnumItemElement): Sequence<RustImplItemElement> =
-            findImplsByRefInternal(Either.left(target))
+    private fun findInherentImplsForInternal(target: RustStructOrEnumItemElement): Sequence<RustImplItemElement> {
+        val found = arrayListOf<RustImplItemElement>()
 
-        fun findImplsFor(target: RustTraitItemElement): Sequence<RustImplItemElement> =
-            findImplsByRefInternal(Either.right(target))
+        val aliases = arrayListOf(target.name!!)
 
-        private fun findImplsByRefInternal(target: Either<RustStructOrEnumItemElement, RustTraitItemElement>): Sequence<RustImplItemElement> {
-            val item = Either.apply(target) { item: RustItemElement -> item }
+        StubIndex
+            .getInstance()
+            .processElements(
+                RustAliasIndex.KEY,
+                target.name!!,
+                target.project,
+                GlobalSearchScope.allScope(target.project),
+                RustUseItemElement::class.java,
+                {
+                    it.name?.let {
+                        aliases.add(it)
+                    }
 
-            // TODO(XXX): Rollback
-            //val type = RustUnresolvedPathType(item.canonicalCratePath!!)
-            val type = RustUnresolvedPathType(RustQualifiedPath.create(RustQualifiedPathPart.from(item.name!!)))
+                    true /* continue */
+                })
 
-            return findImplsForInternal(type, item)
-        }
 
-        private fun findImplsForInternal(target: RustUnresolvedType, pivot: RustCompositeElement): Sequence<RustImplItemElement> {
-            val found: MutableList<RustImplItemElement> = arrayListOf()
-
-            val project = pivot.project
-
+        aliases.forEach { alias ->
             StubIndex
                 .getInstance()
                 .processElements(
-                    KEY,
-                    Key(target),
-                    project,
-                    GlobalSearchScope.allScope(project),
+                    ByName.KEY,
+                    alias,
+                    target.project,
+                    GlobalSearchScope.allScope(target.project),
                     RustImplItemElement::class.java,
                     {
                         found.add(it)
                         true /* continue */
                     })
-
-            val resolved = lazy { RustResolveEngine.resolve(target, pivot) }
-
-            return found.asSequence()
-                        .filter { impl -> impl.type?.let { it.resolvedType == resolved.value } ?: false }
         }
 
-        val KEY: StubIndexKey<Key, RustImplItemElement> =
-            StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex")
+        return found.asSequence()
+                    .filter { impl ->
+                        impl.type?.let {
+                            it.resolvedType.let { ty ->
+                                ty is RustStructOrEnumTypeBase &&
+
+                                // TODO(XXX): Revisit
+                                ty.item.canonicalCratePath == target.canonicalCratePath
+                            }
+                        } ?: false
+                    }
+    }
+
+    private fun findNonInherentImplsForInternal(target: RustUnresolvedType, project: Project): Sequence<RustImplItemElement> {
+        val found = arrayListOf<RustImplItemElement>()
+
+        StubIndex
+            .getInstance()
+            .processElements(
+                ByType.KEY,
+                ByType.Key(target),
+                project,
+                GlobalSearchScope.allScope(project),
+                RustImplItemElement::class.java,
+                {
+                    found.add(it)
+                    true /* continue */
+                })
+
+        return found.asSequence()
 
     }
 
-    override fun getVersion(): Int = RustFileElementType.stubVersion
 
-    override fun getKey(): StubIndexKey<Key, RustImplItemElement> = KEY
+    class ByType : AbstractStubIndex<RustImplIndex.ByType.Key, RustImplItemElement>() {
+        /**
+         * This wrapper is required due to a subtle bug in the [com.intellij.util.indexing.MemoryIndexStorage], involving
+         * use of the object's `hashCode`, while [com.intellij.util.indexing.MapIndexStorage] being using the one
+         * impose by the [KeyDescriptor]
+         */
+        data class Key(val type: RustUnresolvedType) {
 
-    override fun getKeyDescriptor(): KeyDescriptor<Key> =
-        object: KeyDescriptor<Key> {
+            override fun equals(other: Any?): Boolean =
+                other is Key &&
+                    other.type.accept(
+                        object : RustEqualityUnresolvedTypeVisitor(type) {
+                            /**
+                             * Compare hole-containing types
+                             */
+                            override fun visitPathType(type: RustUnresolvedPathType): Boolean =
+                                lop is RustUnresolvedPathType
+                        }
+                    ) && (hashCode() == other.hashCode() || throw Exception("WTF"))
 
-            override fun isEqual(lop: Key?, rop: Key?): Boolean =
-                lop === rop || lop?.equals(rop) ?: false
+            override fun hashCode(): Int =
+                type.accept(
+                    object : RustHashCodeComputingUnresolvedTypeVisitor() {
+                        override fun visitPathType(type: RustUnresolvedPathType): Int = 0xDEADBAE
+                    }
+                )
 
-            override fun getHashCode(value: Key?): Int =
-                value?.hashCode() ?: -1
-
-            override fun read(`in`: DataInput): Key? {
-                return RustUnresolvedType.deserialize(`in`)?.let { Key(it) }
-            }
-
-            override fun save(out: DataOutput, value: Key?) {
-                RustUnresolvedType.serialize(value?.type, out)
-            }
         }
+
+        companion object {
+
+            val KEY: StubIndexKey<Key, RustImplItemElement> =
+                StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.ByType")
+
+        }
+
+        override fun getVersion(): Int = RustFileElementType.stubVersion
+
+        override fun getKey(): StubIndexKey<Key, RustImplItemElement> = KEY
+
+        override fun getKeyDescriptor(): KeyDescriptor<Key> =
+            object : KeyDescriptor<Key> {
+
+                override fun isEqual(lop: Key?, rop: Key?): Boolean =
+                    lop === rop || lop?.equals(rop) ?: false
+
+                override fun getHashCode(value: Key?): Int =
+                    value?.hashCode() ?: -1
+
+                override fun read(`in`: DataInput): Key? {
+                    return RustUnresolvedType.deserialize(`in`)?.let { Key(it) }
+                }
+
+                override fun save(out: DataOutput, value: Key?) {
+                    RustUnresolvedType.serialize(value?.type, out)
+                }
+            }
+    }
+
+
+    class ByName : StringStubIndexExtension<RustImplItemElement>() {
+
+        companion object {
+            val KEY: StubIndexKey<String, RustImplItemElement> =
+                StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.ByName")
+        }
+
+        override fun getKey(): StubIndexKey<String, RustImplItemElement> = KEY
+
+    }
 }
 
 
