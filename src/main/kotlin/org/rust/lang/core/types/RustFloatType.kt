@@ -28,10 +28,6 @@ class RustFloatType(val kind: Kind) : RustUnresolvedTypeBase(), RustType {
 
     override fun <T> accept(visitor: RustUnresolvedTypeVisitor<T>): T = visitor.visitFloat(this)
 
-//    override fun equals(other: Any?): Boolean = other is RustFloatType && other.kind === kind
-//
-//    override fun hashCode(): Int = kind.hashCode()
-
     override fun toString(): String = kind.toString()
 
 }

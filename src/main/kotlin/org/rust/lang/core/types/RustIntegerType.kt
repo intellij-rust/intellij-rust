@@ -31,10 +31,6 @@ class RustIntegerType(val kind: Kind): RustUnresolvedTypeBase(), RustType {
 
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitInteger(this)
 
-//    override fun equals(other: Any?): Boolean = other is RustIntegerType && other.kind === kind
-//
-//    override fun hashCode(): Int = kind.hashCode()
-
     override fun toString(): String = kind.toString()
 
 }
