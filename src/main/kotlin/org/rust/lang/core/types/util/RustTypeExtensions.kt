@@ -28,7 +28,12 @@ val RustType.decay: RustUnresolvedType
 val RustUnresolvedType.isPrimitive: Boolean
     get() =
         when (this) {
-            is RustFloatType, is RustIntegerType, is RustCharacterType, is RustStringType -> true
+            is RustFloatType,
+            is RustIntegerType,
+            is RustBooleanType,
+            is RustCharacterType,
+            is RustStringType -> true
+
             else -> false
         }
 
