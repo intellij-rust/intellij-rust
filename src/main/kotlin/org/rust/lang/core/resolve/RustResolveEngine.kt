@@ -18,6 +18,7 @@ import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
+import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
 import org.rust.lang.core.symbols.RustQualifiedPath
@@ -140,7 +141,10 @@ object RustResolveEngine {
     fun resolveMethodCallExpr(call: RustMethodCallExprElement): ResolveResult {
         val receiverType = call.expr.resolvedType
         val name = call.identifier.text
-        val matching = receiverType.nonStaticMethods.filter { it.name == name }
+
+        val matching = RustImplIndex.findNonStaticMethodsFor(receiverType, call.project)
+                                    .filter { it.name == name }
+
         return ResolveResult.buildFrom(matching.asIterable())
     }
 
@@ -459,7 +463,9 @@ private class RustScopeVisitor(
     private fun isContextLocalTo(o: RustCompositeElement) = o.contains(context.pivot)
 
     private fun staticMethods(o: RustTypeBearingItemElement): Sequence<ScopeEntry> =
-        o.resolvedType.staticMethods.scopeEntries
+        RustImplIndex
+            .findStaticMethodsFor(o.resolvedType, o.project)
+            .scopeEntries
 
 }
 

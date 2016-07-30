@@ -12,7 +12,7 @@ interface RustItemElement : RustVisibilityOwner, RustOuterAttributeOwner
  * This path is NOT guaranteed to be unique: items from different crates
  * can have the same path within respective crates.
  */
-val RustItemElement.canonicalCratePath: RustQualifiedPath?
+val RustItemElement.canonicalCratePath: RustQualifiedPath
     get() =
         RustQualifiedPath.create(
             RustQualifiedPathPart.from(name),
