@@ -120,9 +120,9 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             super.configureModule(module, model, contentEntry)
 
             val moduleBaseDir = contentEntry.file!!.url
-            val metadataService = module.getComponentOrThrow<CargoProjectWorkspace>() as CargoProjectWorkspaceImpl
+            val projectWorkspace = module.getComponentOrThrow<CargoProjectWorkspace>() as CargoProjectWorkspaceImpl
 
-            metadataService.setState(testCargoProject(module, moduleBaseDir))
+            projectWorkspace.setState(testCargoProject(module, moduleBaseDir))
 
             // XXX: for whatever reason libraries created by `updateLibrary` are not indexed in tests.
             // this seems to fix the issue
