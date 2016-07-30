@@ -35,7 +35,6 @@ abstract class RustReferenceBase<T : RustReferenceElement>(
             }
         }
 
-    // enforce not nullability
     final override fun getRangeInElement(): TextRange = super.getRangeInElement()
 
     final override fun calculateDefaultRangeInElement(): TextRange {
