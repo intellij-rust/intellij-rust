@@ -1,9 +1,6 @@
 package org.rust.lang.core.stubs
 
-import com.intellij.psi.stubs.IStubElementType
-import com.intellij.psi.stubs.StubElement
-import com.intellij.psi.stubs.StubInputStream
-import com.intellij.psi.stubs.StubOutputStream
+import com.intellij.psi.stubs.*
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustFnElement
@@ -11,6 +8,7 @@ import org.rust.lang.core.psi.RustFnElement
 abstract class RustStubElementType<StubT, PsiT>(
     debugName: String
 ) : IStubElementType<StubT, PsiT>(debugName, RustLanguage)
+
     where StubT : StubElement<PsiT>,
           PsiT  : RustCompositeElement {
 
