@@ -114,6 +114,13 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
         doTestProducedConfigurations()
     }
 
+    fun testTestProducerAddsBinName() {
+        testProject {
+            bin("foo", "src/bin/foo.rs", "#[test]\nfn test_foo() { as<caret>sert!(true); }").open()
+        }
+        doTestProducedConfigurations()
+    }
+
     private fun doTestProducedConfigurations() {
         val configurationContext = ConfigurationContext(myFixture.file.findElementAt(myFixture.caretOffset))
 

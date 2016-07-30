@@ -1,6 +1,6 @@
 <configurations>
-  <configuration name="Test bar::tests" class="CargoCommandConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
-    <option name="additionalArguments" value="--lib bar::tests" />
+  <configuration name="Test test_foo" class="CargoCommandConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
+    <option name="additionalArguments" value="--bin foo test_foo" />
     <option name="command" value="test" />
     <option name="environmentVariables">
       <map />

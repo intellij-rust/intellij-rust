@@ -52,10 +52,10 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         val commandLineParameters: String get() {
             val targetKind = when (target.kind) {
                 CargoProjectDescription.TargetKind.BIN     -> "bin"
-                CargoProjectDescription.TargetKind.LIB     -> "lib"
                 CargoProjectDescription.TargetKind.TEST    -> "test"
                 CargoProjectDescription.TargetKind.EXAMPLE -> "example"
                 CargoProjectDescription.TargetKind.BENCH   -> "bench"
+                CargoProjectDescription.TargetKind.LIB     -> return "--lib $testPath"
                 CargoProjectDescription.TargetKind.UNKNOWN -> return testPath
             }
 
