@@ -24,10 +24,7 @@ internal class RustQualifiedPath(
         val lop = unfold().toList()
         val rop = other.unfold().toList()
 
-        if (lop.size != rop.size)
-            return false
-
-        return lop.zip(rop).fold(true) { r, p -> r && p.first == p.second }
+        return lop == rop
     }
 
     override fun hashCode(): Int =
