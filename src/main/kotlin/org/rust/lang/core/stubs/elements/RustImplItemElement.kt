@@ -14,7 +14,10 @@ import org.rust.lang.core.symbols.impl.RustNamedQualifiedPathPart
 import org.rust.lang.core.symbols.impl.RustSelfQualifiedPathPart
 import org.rust.lang.core.symbols.impl.RustSuperQualifiedPathPart
 import org.rust.lang.core.symbols.unfold
+import org.rust.lang.core.types.RustStructOrEnumTypeBase
+import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
+import org.rust.lang.core.types.unresolved.decay
 import org.rust.lang.core.types.util.type
 import sun.plugin.dom.exception.InvalidStateException
 
@@ -22,22 +25,32 @@ import sun.plugin.dom.exception.InvalidStateException
 object RustImplItemStubElementType : RustStubElementType<RustImplItemElementStub, RustImplItemElement>("IMPL_ITEM") {
 
     override fun createStub(psi: RustImplItemElement, parentStub: StubElement<*>?): RustImplItemElementStub =
-        RustImplItemElementStub(parentStub, this, psi.type?.type)
+        RustImplItemElementStub(parentStub, this, psi.type?.type, psi.traitRef?.let { it.path.decay })
 
     override fun createPsi(stub: RustImplItemElementStub): RustImplItemElement =
         RustImplItemElementImpl(stub, this)
 
     override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustImplItemElementStub {
-        return RustImplItemElementStub(parentStub, this, RustUnresolvedType.deserialize(dataStream))
+        val type        = RustUnresolvedType.deserialize(dataStream)
+        val traitRef    = RustQualifiedPath.deserialize(dataStream)
+
+        return RustImplItemElementStub(parentStub, this, type, traitRef)
     }
 
     override fun serialize(stub: RustImplItemElementStub, dataStream: StubOutputStream) {
-        RustUnresolvedType.serialize(stub.type, dataStream)
+        RustUnresolvedType  .serialize(stub.type,       dataStream)
+        RustQualifiedPath   .serialize(stub.traitRef,   dataStream)
     }
 
     override fun indexStub(stub: RustImplItemElementStub, sink: IndexSink) {
-        stub.type?.let {
-            sink.occurrence(RustImplIndex.KEY, RustImplIndex.Key(it))
+        stub.type?.let { ty ->
+            if (stub.traitRef != null) {
+                sink.occurrence(RustImplIndex.ByType.KEY, RustImplIndex.ByType.Key(ty))
+            } else {
+                (ty as? RustUnresolvedPathType)?.let {
+                    sink.occurrence(RustImplIndex.ByName.KEY, it.path.part.name)
+                }
+            }
         }
     }
 
@@ -46,5 +59,6 @@ object RustImplItemStubElementType : RustStubElementType<RustImplItemElementStub
 class RustImplItemElementStub(
     parent: StubElement<*>?,
     elementType: IStubElementType<*, *>,
-    val type: RustUnresolvedType?
+    val type: RustUnresolvedType?,
+    val traitRef: RustQualifiedPath?
 ) : RustElementStub<RustImplItemElement>(parent, elementType)
