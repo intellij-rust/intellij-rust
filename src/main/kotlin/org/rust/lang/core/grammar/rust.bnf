@@ -494,17 +494,19 @@ use_item ::= attrs_and_vis USE use_path ';' {
   pin = "USE"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustItemElement" ]
+  stubClass = "org.rust.lang.core.stubs.elements.RustUseItemElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
 private use_path ::=
-//  use ::{};
-//  use {foo, bar};
-  '::'? use_glob_list
-//  use foo::bar as baz;
-//  use foo::bar::{self, foo};
-//  use foo::{};
-//  use ::foo::*;
-| path_without_types ( alias | '::' ( use_glob_list | '*' ) )?
+                  //  use ::{};
+                  //  use {foo, bar};
+                    '::'? use_glob_list
+                  //  use foo::bar as baz;
+                  //  use foo::bar::{self, foo};
+                  //  use foo::{};
+                  //  use ::foo::*;
+                  | path_without_types ( alias | '::' ( use_glob_list | '*' ) )?
 
 use_glob_list ::= '{' [ <<comma_separated_list use_glob>> ] '}'
 use_glob ::= (IDENTIFIER | SELF) alias? {
@@ -706,7 +708,8 @@ impl_item ::= attrs_and_vis UNSAFE? IMPL generic_params? ( bare_impl | for_impl 
   implements = [ "org.rust.lang.core.psi.RustItemElement"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
   stubClass = "org.rust.lang.core.stubs.elements.RustImplItemElementStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"}
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
+}
 
 private bare_impl ::= type where_clause? impl_body
 private for_impl ::= '!'? trait_ref FOR (type where_clause? impl_body | '..' '{' '}')
