@@ -2,8 +2,9 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
-import org.rust.lang.core.psi.isPrimitive
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.types.util.isPrimitive
+import org.rust.lang.core.types.visitors.impl.RustTypificationEngine
 
 class RustUnresolvedReferenceInspection : RustLocalInspectionTool() {
     override fun getDisplayName(): String = "Unresolved reference"
@@ -11,9 +12,19 @@ class RustUnresolvedReferenceInspection : RustLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : RustElementVisitor() {
             override fun visitPath(o: RustPathElement) {
-                if (o.isPrimitive) return
+                val p = o.parent
+                val isPrimitiveType =
+                    o is RustPathElement &&
+                    p is RustPathTypeElement &&
+                    RustTypificationEngine.typifyType(p).isPrimitive
+
+                if (isPrimitiveType)
+                    return
+
                 val resolved = o.reference.resolve()
-                if (resolved != null) return
+                if (resolved != null)
+                    return
+
                 val parent = o.path
                 val parentRes = parent?.reference?.resolve()
                 if (parent == null || parentRes is RustMod || parentRes is RustEnumItemElement) {

@@ -1,7 +1,6 @@
 package org.rust.lang.core.types.util
 
-import org.rust.lang.core.types.RustReferenceType
-import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
 import org.rust.lang.core.types.visitors.impl.RustDecayTypeVisitor
 
@@ -21,3 +20,17 @@ fun RustType.stripAllRefsIfAny(): RustType =
  */
 val RustType.decay: RustUnresolvedType
     get() = accept(RustDecayTypeVisitor())
+
+
+/**
+ * Checks whether this particular type is a primitive one
+ */
+val RustUnresolvedType.isPrimitive: Boolean
+    get() =
+        when (this) {
+            is RustFloatType, is RustIntegerType, is RustCharacterType, is RustStringType -> true
+            else -> false
+        }
+
+val RustType.isPrimitive: Boolean
+    get() = this is RustUnresolvedType && (this as RustUnresolvedType).isPrimitive
