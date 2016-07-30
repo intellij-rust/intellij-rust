@@ -156,6 +156,7 @@
         <liveTemplateContext implementation="org.rust.ide.template.RustContextType$Mod"/>
 
         <liveTemplateMacro implementation="org.rust.ide.template.macros.RustSuggestIndexNameMacro"/>
+        <liveTemplateMacro implementation="org.rust.ide.template.macros.RustCollectionElementNameMacro"/>
 
         <!-- Intentions -->
 

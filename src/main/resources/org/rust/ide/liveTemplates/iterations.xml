@@ -26,9 +26,9 @@
     </template>
 
     <template name="whilels" description="while let Some(...) loop" toReformat="true" toShortenFQNames="true"
-              value="while let Some($VAR$) = $EXPRESSION$ {&#10;    $END$&#10;}">
-        <variable name="EXPRESSION" expression="" defaultValue="" alwaysStopAt="true"/>
-        <variable name="VAR" expression="" defaultValue="" alwaysStopAt="true"/>
+              value="while let Some($VAR$) = $ITERABLE$ {&#10;    $END$&#10;}">
+        <variable name="ITERABLE" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="VAR" expression="rustCollectionElementName(ITERABLE)" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="RUST_STATEMENT" value="true"/>
         </context>
@@ -37,7 +37,7 @@
     <template name="for" description="iterate (for ... in ...)" toReformat="true" toShortenFQNames="true"
               value="for $VAR$ in $ITERABLE$ {&#10;    $END$&#10;}">
         <variable name="ITERABLE" expression="" defaultValue="" alwaysStopAt="true"/>
-        <variable name="VAR" expression="" defaultValue="&quot;x&quot;" alwaysStopAt="true"/>
+        <variable name="VAR" expression="rustCollectionElementName(ITERABLE)" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="RUST_STATEMENT" value="true"/>
         </context>
