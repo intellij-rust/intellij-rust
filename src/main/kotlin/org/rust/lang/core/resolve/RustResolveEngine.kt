@@ -2,7 +2,6 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
@@ -21,6 +20,7 @@ import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
+import org.rust.lang.core.symbols.RustQualifiedPath
 import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
@@ -65,34 +65,43 @@ object RustResolveEngine {
         class Resolved(resolved: RustNamedElement) : ResolveResult(resolved)
     }
 
-    fun resolve(type: RustUnresolvedType): RustType =
-        type.accept(RustTypeResolvingVisitor())
+    fun resolve(type: RustUnresolvedType, pivot: RustCompositeElement): RustType =
+        type.accept(RustTypeResolvingVisitor(pivot))
 
+    /**
+     * ???
+     */
+    fun resolve(ref: RustQualifiedPath, pivot: RustCompositeElement): ResolveResult =
+        resolveInternal(ref, pivot, prefixed = false)
+
+    private fun resolveInternal(ref: RustQualifiedPath, pivot: RustCompositeElement, prefixed: Boolean): ResolveResult {
+        return recursionGuard(ref, Computable {
+            val modulePrefix = ref.seekRelativeModulePrefixInternal(hasSuffix = prefixed)
+            when (modulePrefix) {
+                is RelativeModulePrefix.Invalid -> ResolveResult.Unresolved
+                is RelativeModulePrefix.AncestorModule -> resolveAncestorModule(pivot.containingMod, modulePrefix).asResolveResult()
+                is RelativeModulePrefix.NotRelative -> {
+                    val qual = ref.qualifier
+                    if (qual == null) {
+                        resolveIn(enumerateScopesFor(ref, pivot), name = ref.part.name, pivot = pivot)
+                    } else {
+                        val parent = resolveInternal(qual, pivot, prefixed = true).element
+                        if (parent is RustResolveScope)
+                            resolveIn(sequenceOf(parent), name = ref.part.name, pivot = pivot)
+                        else
+                            ResolveResult.Unresolved
+                    }
+                }
+            }
+        }) ?: ResolveResult.Unresolved
+    }
 
     /**
      * Resolves `qualified-reference` bearing PSI-elements
      *
      * NOTE: This operate on PSI to extract all the necessary (yet implicit) resolving-context
      */
-    fun resolve(ref: RustQualifiedReferenceElement): ResolveResult = recursionGuard(ref, Computable {
-        val modulePrefix = ref.relativeModulePrefix
-        when (modulePrefix) {
-            is RelativeModulePrefix.Invalid -> ResolveResult.Unresolved
-            is RelativeModulePrefix.AncestorModule -> resolveAncestorModule(ref, modulePrefix).asResolveResult()
-            is RelativeModulePrefix.NotRelative -> {
-                val qual = ref.qualifier
-                if (qual == null) {
-                    resolveIn(enumerateScopesFor(ref), ref)
-                } else {
-                    val parent = resolve(qual).element
-                    if (parent is RustResolveScope)
-                        resolveIn(sequenceOf(parent), ref)
-                    else
-                        ResolveResult.Unresolved
-                }
-            }
-        }
-    }) ?: ResolveResult.Unresolved
+    fun resolve(ref: RustQualifiedReferenceElement): ResolveResult = resolve(ref, pivot = ref)
 
     /**
      * Resolves references to struct's fields inside destructuring [RustStructExprElement]
@@ -131,7 +140,7 @@ object RustResolveEngine {
     fun resolveMethodCallExpr(call: RustMethodCallExprElement): ResolveResult {
         val receiverType = call.expr.resolvedType
         val name = call.identifier.text
-        val matching = receiverType.stripAllRefsIfAny().nonStaticMethods.filter { it.name == name }
+        val matching = receiverType.nonStaticMethods.filter { it.name == name }
         return ResolveResult.buildFrom(matching.asIterable())
     }
 
@@ -219,43 +228,35 @@ object RustResolveEngine {
      * Lazily retrieves all elements visible in the particular [scope] at the [pivot], or just all
      * visible elements if [pivot] is null.
      */
-    fun declarations(scope: RustResolveScope, pivot: PsiElement? = null): Sequence<RustNamedElement> =
+    fun declarations(scope: RustResolveScope, pivot: RustCompositeElement? = null): Sequence<RustNamedElement> =
         declarations(scope, Context(pivot)).mapNotNull { it.element }
 
-    fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolveScope> =
+    fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolveScope> {
         if (ref.isRelativeToCrateRoot) {
-            listOfNotNull(RustResolveUtil.getCrateRootModFor(ref)).asSequence()
-        } else {
-            enumerateScopesFor(ref as PsiElement)
+            return listOfNotNull(RustResolveUtil.getCrateRootModFor(ref)).asSequence()
         }
 
-    fun enumerateScopesFor(element: PsiElement): Sequence<RustResolveScope> =
-        generateSequence(RustResolveUtil.getResolveScopeFor(element)) { parent ->
-            if (parent is RustModItemElement) {
+        return generateSequence(RustResolveUtil.getResolveScopeFor(ref)) { parent ->
+            if (parent is RustModItemElement)
                 null
-            } else {
+            else
                 RustResolveUtil.getResolveScopeFor(parent)
-            }
         }
-}
-
-
-private fun resolveAncestorModule(
-    ref: RustQualifiedReferenceElement,
-    modulePrefix: RelativeModulePrefix.AncestorModule
-): RustMod? {
-    var result: RustMod? = ref.containingMod
-    for (i in 0 until modulePrefix.level) {
-        result = result?.`super`
     }
-    return result
 }
+
+
+private fun resolveAncestorModule(pivot: RustMod?, modulePrefix: RelativeModulePrefix.AncestorModule): RustMod? =
+    (0 until modulePrefix.level).fold(pivot, { mod, i -> mod?.`super` })
 
 
 private fun resolveIn(scopes: Sequence<RustResolveScope>, ref: RustReferenceElement): RustResolveEngine.ResolveResult =
+    resolveIn(scopes, name = ref.referenceName, pivot = ref)
+
+private fun resolveIn(scopes: Sequence<RustResolveScope>, name: String, pivot: RustCompositeElement): RustResolveEngine.ResolveResult =
     scopes
-        .flatMap { declarations(it, Context(pivot = ref)) }
-        .find { it.name == ref.referenceName }
+        .flatMap { declarations(it, Context(pivot = pivot)) }
+        .find { it.name == name }
         ?.let { it.element }
         .asResolveResult()
 
@@ -266,7 +267,7 @@ private fun declarations(scope: RustResolveScope, context: Context): Sequence<Sc
 
 
 private data class Context(
-    val pivot: PsiElement?,
+    val pivot: RustCompositeElement?,
     val inPrelude: Boolean = false,
     val visitedStarImports: Set<RustUseItemElement> = emptySet()
 )
@@ -334,12 +335,13 @@ private class RustScopeVisitor(
         val allBoundElements = visibleLetDecls.flatMap { it.pat.scopeEntries }
 
         // TODO: handle shadowing between blocks
+        // `toList` to make it safe to iterate the sequence twice
         val declaredNames = HashSet<String>()
         val nonShadowed = allBoundElements.filter {
             val result = it.name !in declaredNames
             declaredNames += it.name
             result
-        }.toList() // Call to list to make it safe to iterate the sequence twice
+        }.toList()
 
         nonShadowed.asSequence() + o.itemEntries(context)
     }
@@ -390,7 +392,7 @@ private class RustScopeVisitor(
 
     override fun visitImplItem(o: RustImplItemElement) = set {
         if (isContextLocalTo(o)) {
-            o.typeParams.scopeEntries + sequenceOfNotNull(ScopeEntry.lazy(RustQualifiedReferenceElement.SELF_TYPE_NAME) {
+            o.typeParams.scopeEntries + sequenceOfNotNull(ScopeEntry.lazy(RustQualifiedReferenceElement.SELF_TYPE_REF) {
                 //TODO: handle types which are not `NamedElements` (e.g. tuples)
                 (o.type as? RustPathTypeElement)?.path?.reference?.resolve()
             })

@@ -6,10 +6,18 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
 import org.rust.lang.core.resolve.ref.RustQualifiedReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
+import org.rust.lang.core.symbols.RustQualifiedPath
+import org.rust.lang.core.symbols.RustQualifiedPathPart
+import org.rust.lang.core.symbols.impl.RustCSelfQualifiedPathPart
+import org.rust.lang.core.symbols.impl.RustNamedQualifiedPathPart
+import org.rust.lang.core.symbols.impl.RustSelfQualifiedPathPart
+import org.rust.lang.core.symbols.impl.RustSuperQualifiedPathPart
+import sun.plugin.dom.exception.InvalidStateException
 
 abstract class RustPathImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
-                                                , RustQualifiedReferenceElement
-                                                , RustPathElement {
+                                                  , RustQualifiedReferenceElement
+                                                  , RustPathElement
+                                                  , RustQualifiedPath {
 
     override fun getReference(): RustReference = RustQualifiedReferenceImpl(this)
 
@@ -18,65 +26,41 @@ abstract class RustPathImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
             "Path must contain identifier: $this ${this.text} at ${this.containingFile.virtualFile.path}"
         }
 
-    override val qualifier: RustQualifiedReferenceElement? get() = path
+    override val qualifier: RustQualifiedReferenceElement?
+        get() = path
 
+    override val part: RustQualifiedPathPart
+        get() =
+            identifier  ?.let { RustNamedQualifiedPathPart(it.text) }   ?:
+            self        ?.let { RustSelfQualifiedPathPart }             ?:
+            cself       ?.let { RustCSelfQualifiedPathPart }            ?:
+            `super`     ?.let { RustSuperQualifiedPathPart }            ?: throw InvalidStateException("Panic at the disco!")
+
+
+    override val fullyQualified: Boolean
+        get() = qualifier?.fullyQualified ?: separator != null || isViewPath && self == null && `super` == null
+
+    private val separator: PsiElement?
+        get() = findChildByType(RustTokenElementTypes.COLONCOLON)
+
+    /**
+     *  Checks if this path references ancestor module via `self` and `super` chain.
+     *
+     *  Paths can contain any combination of identifiers and self and super keywords.
+     *  However, a path is "well formed" only if it starts with `(self::)? (super::)*`.
+     *
+     *  So there are three possible outcomes:
+     *    + this is not a relative module reference at all (`::foo::bar`)
+     *    + this is an invalid path (`foo::self`)
+     *    + this is a path to nth ancestor (`self::super`)
+     *
+     *  Reference:
+     *    https://doc.rust-lang.org/reference.html#paths
+     */
     private val isViewPath: Boolean get() {
         val parent = parent
         return parent is RustUseItemElement || (parent is RustPathImplMixin && parent.isViewPath)
     }
-
-    override val isRelativeToCrateRoot: Boolean
-        get() {
-            val qual = qualifier
-            return if (qual == null) {
-                separator != null || (isViewPath && self == null && `super` == null)
-            } else {
-                qual.isRelativeToCrateRoot
-            }
-        }
-
-    override val relativeModulePrefix: RelativeModulePrefix get() {
-        val qual = qualifier
-        val isSelf = self != null
-        val isSuper = `super` != null
-        check(!(isSelf && isSuper))
-
-        if (qual != null) {
-            if (isSelf) return RelativeModulePrefix.Invalid
-
-            val parent = qual.relativeModulePrefix
-            return when (parent) {
-                is RelativeModulePrefix.Invalid        -> RelativeModulePrefix.Invalid
-                is RelativeModulePrefix.NotRelative    -> when {
-                    isSuper -> RelativeModulePrefix.Invalid
-                    else    -> RelativeModulePrefix.NotRelative
-                }
-                is RelativeModulePrefix.AncestorModule -> when {
-                    isSuper -> RelativeModulePrefix.AncestorModule(parent.level + 1)
-                    else    -> RelativeModulePrefix.NotRelative
-                }
-            }
-        }
-
-        val isFullyQualified = separator != null
-        if (isFullyQualified) {
-            return if (isSelf || isSuper)
-                RelativeModulePrefix.Invalid
-            else
-                RelativeModulePrefix.NotRelative
-        }
-
-        return when {
-            // `self` by itself is not a module prefix, it's an identifier.
-            // So for `self` we need to check that it's not the only segment of path.
-            isSelf && nextSibling != null -> RelativeModulePrefix.AncestorModule(0)
-            isSuper -> RelativeModulePrefix.AncestorModule(1)
-            else -> RelativeModulePrefix.NotRelative
-        }
-    }
-
-    private val separator: PsiElement?
-        get() = findChildByType(RustTokenElementTypes.COLONCOLON)
 
 }
 

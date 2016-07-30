@@ -1,6 +1,8 @@
 package org.rust.lang.core.psi
 
 import com.intellij.psi.PsiDirectory
+import org.rust.lang.core.symbols.RustQualifiedPath
+import org.rust.lang.core.symbols.RustQualifiedPathPart
 
 interface RustMod : RustNamedElement, RustItemsOwner {
     /**
@@ -28,15 +30,14 @@ interface RustMod : RustNamedElement, RustItemsOwner {
     }
 }
 
-/**
- * Returns a string representing a path to this module from the crate root, like `foo::bar::baz`.
- * There is no leading `::`. Returns empty string for the crate root.
- *
- * This name is not guaranteed to be unique: modules from different crates
- * can have the same path within the crate.
- */
-val RustMod.canonicalCratePath: String? get() {
-    if (isCrateRoot) return ""
-    val parentPath = `super`?.canonicalCratePath ?: return null
-    return if (parentPath == "") modName else "$parentPath::$modName"
-}
+val RustMod.canonicalCratePath: RustQualifiedPath?
+    get() {
+        if (isCrateRoot)
+            return null
+
+        return RustQualifiedPath.create(
+            RustQualifiedPathPart.from(modName),
+            qualifier = `super`?.canonicalCratePath,
+            fullyQualified = true
+        )
+    }
