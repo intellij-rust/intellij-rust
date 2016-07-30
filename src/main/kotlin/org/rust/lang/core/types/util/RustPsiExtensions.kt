@@ -37,10 +37,9 @@ val RustTypeElement.resolvedType: RustType
     get() =
         CachedValuesManager.getCachedValue(this,
             CachedValueProvider {
-                val result = recursionGuard(this,  Computable {
-                   type.accept(RustTypeResolvingVisitor())
-                }) ?: RustUnknownType
-                CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT)
+                CachedValueProvider.Result.create(recursionGuard(this,  Computable {
+                    type.accept(RustTypeResolvingVisitor(this))
+                }) ?: RustUnknownType, PsiModificationTracker.MODIFICATION_COUNT)
             }
         )
 
