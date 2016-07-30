@@ -218,7 +218,7 @@ object RustResolveEngine {
      * Lazily retrieves all elements visible in the particular [scope] at the [pivot], or just all
      * visible elements if [pivot] is null.
      */
-    fun declarations(scope: RustResolveScope, pivot: RustCompositeElement? = null): Sequence<RustNamedElement> =
+    fun declarations(scope: RustResolveScope, pivot: PsiElement? = null): Sequence<RustNamedElement> =
         declarations(scope, Context(pivot)).mapNotNull { it.element }
 
     fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolveScope> =
@@ -265,7 +265,7 @@ private fun declarations(scope: RustResolveScope, context: Context): Sequence<Sc
 
 
 private data class Context(
-    val pivot: RustCompositeElement?,
+    val pivot: PsiElement?,
     val inPrelude: Boolean = false,
     val visitedStarImports: Set<RustUseItemElement> = emptySet()
 )
