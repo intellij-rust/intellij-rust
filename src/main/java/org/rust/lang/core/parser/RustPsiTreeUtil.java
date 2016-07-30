@@ -2,6 +2,7 @@ package org.rust.lang.core.parser;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
@@ -36,7 +37,14 @@ public class RustPsiTreeUtil extends PsiTreeUtil {
     @NotNull
     public static <T extends PsiElement> List<T> getStubChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<T> aClass) {
         if (element == null) return Collections.emptyList();
-        StubElement<?> stub = element instanceof StubBasedPsiElement ? ((StubBasedPsiElement)element).getStub() : null;
+
+        StubElement<?> stub = null;
+
+        if (element instanceof PsiFileImpl)
+            stub = ((PsiFileImpl) element).getStub();
+        else if (element instanceof StubBasedPsiElement)
+            stub = ((StubBasedPsiElement)element).getStub();
+
         if (stub == null) {
             return getChildrenOfTypeAsList(element, aClass);
         }
