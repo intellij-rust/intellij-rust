@@ -103,9 +103,7 @@ object RustImplIndex  {
                         impl.type?.let {
                             it.resolvedType.let { ty ->
                                 ty is RustStructOrEnumTypeBase &&
-
-                                // TODO(XXX): Revisit
-                                ty.item.canonicalCratePath == target.canonicalCratePath
+                                ty.item == target
                             }
                         } ?: false
                     }
