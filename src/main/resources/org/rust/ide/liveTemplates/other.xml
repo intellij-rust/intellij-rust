@@ -1,0 +1,67 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<templateSet group="Rust">
+    <template name="f" description="field" toReformat="true" toShortenFQNames="true"
+              value="$IDENT$: $TYPE$,">
+        <variable name="IDENT" expression="" defaultValue="&quot;foo&quot;" alwaysStopAt="true"/>
+        <variable name="TYPE" expression="" defaultValue="&quot;u32&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STRUCT" value="true"/>
+        </context>
+    </template>
+
+    <template name="pf" description="pub field" toReformat="true" toShortenFQNames="true"
+              value="pub $IDENT$: $TYPE$,">
+        <variable name="IDENT" expression="" defaultValue="&quot;foo&quot;" alwaysStopAt="true"/>
+        <variable name="TYPE" expression="" defaultValue="&quot;u32&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STRUCT" value="true"/>
+        </context>
+    </template>
+
+    <template name="main" description="main() function declaration" toReformat="true" toShortenFQNames="true"
+              value="fn main() {&#10;    $END$&#10;}">
+        <context>
+            <option name="RUST_FILE" value="true"/>
+            <option name="RUST_STATEMENT" value="false"/>
+            <option name="RUST_ITEM" value="false"/>
+        </context>
+    </template>
+
+    <template name="macro" description="macro_rules! declaration" toReformat="true" toShortenFQNames="true"
+              value="macro_rules! $NAME$ {&#10;    ($MATCHER$) => ($TRANSCRIBER$);$END$&#10;}">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="MATCHER" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="TRANSCRIBER" expression="" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_FILE" value="true"/>
+        </context>
+    </template>
+
+        <template name="ifl" description="if let ... statement" toReformat="true" toShortenFQNames="true"
+              value="if let $PATTERN$ = $EXPRESSION$ {&#10;    $END$&#10;}">
+        <variable name="EXPRESSION" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="PATTERN" expression="" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
+    <template name="ifls" description="if let Some(...) statement" toReformat="true" toShortenFQNames="true"
+              value="if let Some($VAR$) = $EXPRESSION$ {&#10;    $END$&#10;}">
+        <variable name="EXPRESSION" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="VAR" expression="" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
+    <template name="closure" description="closure" toReformat="true" toShortenFQNames="true"
+              value="|$PARAM$| $PARAM_COPY$">
+        <variable name="PARAM" expression="" defaultValue="&quot;x&quot;" alwaysStopAt="true"/>
+        <variable name="PARAM_COPY" expression="PARAM" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+</templateSet>

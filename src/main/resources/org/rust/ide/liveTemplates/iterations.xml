@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<templateSet group="Rust">
+    <template name="loop" description="infinite loop" toReformat="true" toShortenFQNames="true"
+              value="loop {&#10;    $END$&#10;}">
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
+    <template name="while" description="while loop" toReformat="true" toShortenFQNames="true"
+              value="while $CONDITION$ {&#10;    $END$&#10;}">
+        <variable name="CONDITION" expression="" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
+    <template name="whilel" description="while let ... loop" toReformat="true" toShortenFQNames="true"
+              value="while let $PATTERN$ = $EXPRESSION$ {&#10;    $END$&#10;}">
+        <variable name="EXPRESSION" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="PATTERN" expression="" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
+    <template name="whilels" description="while let Some(...) loop" toReformat="true" toShortenFQNames="true"
+              value="while let Some($VAR$) = $ITERABLE$ {&#10;    $END$&#10;}">
+        <variable name="ITERABLE" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="VAR" expression="rustCollectionElementName(ITERABLE)" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
+    <template name="for" description="iterate (for ... in ...)" toReformat="true" toShortenFQNames="true"
+              value="for $VAR$ in $ITERABLE$ {&#10;    $END$&#10;}">
+        <variable name="ITERABLE" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="VAR" expression="rustCollectionElementName(ITERABLE)" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
+    <template name="fori" description="iterate over range (for ... in range)" toReformat="true" toShortenFQNames="true"
+              value="for $INDEX$ in $START$..$STOP$ {&#10;    $END$&#10;}">
+        <variable name="START" expression="" defaultValue="&quot;0&quot;" alwaysStopAt="true"/>
+        <variable name="STOP" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="INDEX" expression="rustSuggestIndexName()" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+</templateSet>

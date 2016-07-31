@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<templateSet group="Rust">
+    <template name="a" description="assert" toReformat="true" toShortenFQNames="true"
+              value="assert!($END$);">
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
+    <template name="ae" description="assert equals" toReformat="true" toShortenFQNames="true"
+              value="assert_eq!($LEFT$, $RIGHT$);">
+        <variable name="LEFT" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="RIGHT" expression="" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
+    <!-- TODO: Convert this to Generate... action -->
+    <template name="tfn" description="test function" toReformat="false" toShortenFQNames="true"
+              value="#[test]&#10;fn $NAME$() {&#10;    $END$&#10;}">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_FILE" value="true"/>
+            <option name="RUST_STATEMENT" value="false"/>
+            <option name="RUST_ITEM" value="false"/>
+            <option name="RUST_MOD" value="true"/>
+        </context>
+    </template>
+
+    <!-- TODO: Convert this to Generate... action -->
+    <template name="tmod" description="test module" toReformat="false" toShortenFQNames="true"
+              value="#[cfg(test)]&#10;mod tests {&#10;    use super::*;&#10;    &#10;    $END$&#10;}">
+        <context>
+            <option name="RUST_FILE" value="true"/>
+            <option name="RUST_STATEMENT" value="false"/>
+            <option name="RUST_ITEM" value="false"/>
+            <option name="RUST_MOD" value="true"/>
+        </context>
+    </template>
+</templateSet>
