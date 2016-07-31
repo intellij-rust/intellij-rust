@@ -115,7 +115,7 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
         if (e is RustStructItemElement) {
             val struct = e
 
-            if (type !is RustStructType || type.struct !== struct)
+            if (type !is RustStructType || type.item !== struct)
                 return false
 
             struct.tupleFields?.tupleFieldDeclList?.let {
@@ -125,7 +125,7 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
         } else if (e is RustEnumVariantElement) {
             val variant = e
 
-            if (type !is RustEnumType || type.enum !== getEnumByVariant(variant))
+            if (type !is RustEnumType || type.item !== getEnumByVariant(variant))
                 return false
 
             variant.tupleFields?.tupleFieldDeclList?.let {
@@ -146,11 +146,11 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
 
     override fun visitPatStruct(o: RustPatStructElement) = set(fun(): Boolean {
         val type = type
-        if (type !is RustStructType || type.struct !== o.pathExpr.path.reference.resolve())
+        if (type !is RustStructType || type.item !== o.pathExpr.path.reference.resolve())
             return false
 
         val fieldDecls =
-            type.struct.blockFields?.let {
+            type.item.blockFields?.let {
                 it.fieldDeclList.map { it.name to it }.toMap()
             } ?: emptyMap()
 

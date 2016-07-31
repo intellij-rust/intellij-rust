@@ -28,7 +28,7 @@ open class RustEqualityTypeVisitor(override var lop: RustType)
         if (lop !is RustStructType)
             return false
 
-        return lop.struct == type.struct
+        return lop.item == type.item
     }
 
     override fun visitEnum(type: RustEnumType): Boolean {
@@ -36,7 +36,7 @@ open class RustEqualityTypeVisitor(override var lop: RustType)
         if (lop !is RustEnumType)
             return false
 
-        return lop.enum == type.enum
+        return lop.item == type.item
     }
 
     override fun visitTupleType(type: RustTupleType): Boolean {

@@ -13,9 +13,9 @@ open class RustHashCodeComputingTypeVisitor
 
     protected fun visit(type: RustType): Int = type.accept(this)
 
-    override fun visitStruct(type: RustStructType): Int = type.struct.hashCode() * 10067 + 9631
+    override fun visitStruct(type: RustStructType): Int = type.item.hashCode() * 10067 + 9631
 
-    override fun visitEnum(type: RustEnumType): Int = type.enum.hashCode() * 12289 + 9293
+    override fun visitEnum(type: RustEnumType): Int = type.item.hashCode() * 12289 + 9293
 
     override fun visitTypeParameter(type: RustTypeParameterType): Int = type.parameter.hashCode() * 13859 + 9419
 

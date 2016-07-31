@@ -15,9 +15,9 @@ class RustDecayTypeVisitor : RustTypeVisitor<RustUnresolvedType> {
     private fun visitTypeList(types: Iterable<RustType>): Iterable<RustUnresolvedType> =
         types.map { visit(it) }
 
-    override fun visitStruct(type: RustStructType): RustUnresolvedType = RustUnresolvedPathType(type.struct.canonicalCratePath)
+    override fun visitStruct(type: RustStructType): RustUnresolvedType = RustUnresolvedPathType(type.item.canonicalCratePath)
 
-    override fun visitEnum(type: RustEnumType): RustUnresolvedType = RustUnresolvedPathType(type.enum.canonicalCratePath)
+    override fun visitEnum(type: RustEnumType): RustUnresolvedType = RustUnresolvedPathType(type.item.canonicalCratePath)
 
     override fun visitTypeParameter(type: RustTypeParameterType): RustUnresolvedType =
         RustUnresolvedPathType(RustQualifiedPath.create(RustQualifiedPathPart.from(type.parameter.name)))

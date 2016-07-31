@@ -127,7 +127,7 @@ object RustResolveEngine {
             IDENTIFIER -> {
                 val name = id.text
                 when (receiverType) {
-                    is RustStructType -> receiverType.struct.fields.filter { it.name == name }
+                    is RustStructType -> receiverType.item.fields.filter { it.name == name }
                     else -> emptyList()
                 }
             }

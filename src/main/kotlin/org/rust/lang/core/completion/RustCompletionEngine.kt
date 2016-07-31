@@ -26,7 +26,7 @@ object RustCompletionEngine {
         val dispatchType = field.expr.resolvedType.stripAllRefsIfAny()
 
         // Needs type ascription to please Kotlin's type checker, https://youtrack.jetbrains.com/issue/KT-12696.
-        val fields: List<RustNamedElement> = (dispatchType as? RustStructType)?.struct?.fields.orEmpty()
+        val fields: List<RustNamedElement> = (dispatchType as? RustStructType)?.item?.fields.orEmpty()
 
         val methods = RustImplIndex.findNonStaticMethodsFor(dispatchType, field.project)
 
