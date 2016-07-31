@@ -8,7 +8,7 @@ import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.codeInsight.template.macro.MacroBase
 import com.intellij.openapi.util.text.StringUtil
-import org.rust.lang.utils.isRustIdentifier
+import org.rust.lang.refactoring.RustNamesValidator
 
 class RustCollectionElementNameMacro : MacroBase("rustCollectionElementName", "rustCollectionElementName()") {
     override fun calculateResult(params: Array<out Expression>, context: ExpressionContext, quick: Boolean): Result? {
@@ -32,7 +32,11 @@ class RustCollectionElementNameMacro : MacroBase("rustCollectionElementName", "r
         }
 
         val name = unpluralize(param) ?: return null
-        return if (name.isRustIdentifier()) TextResult(name) else null
+        if (RustNamesValidator().isIdentifier(name, context.project)) {
+            return TextResult(name)
+        } else {
+            return null
+        }
     }
 
     override fun calculateLookupItems(params: Array<out Expression>, context: ExpressionContext): Array<out LookupElement>? {

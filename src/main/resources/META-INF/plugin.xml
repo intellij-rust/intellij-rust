@@ -139,14 +139,18 @@
                          implementationClass="org.rust.ide.inspections.duplicates.RustDuplicateStructFieldInspection"/>
 
         <!-- Surrounders -->
+
         <lang.surroundDescriptor language="Rust"
                                  implementationClass="org.rust.ide.surroundWith.RustExpressionSurroundDescriptor"/>
         <lang.surroundDescriptor language="Rust"
                                  implementationClass="org.rust.ide.surroundWith.RustStatementsSurroundDescriptor"/>
 
+        <!-- Folding -->
+
         <lang.foldingBuilder language="Rust" implementationClass="org.rust.ide.folding.RustFoldingBuilder"/>
 
         <!-- Live Templates -->
+
         <defaultLiveTemplatesProvider implementation="org.rust.ide.template.RustLiveTemplatesProvider"/>
 
         <liveTemplateContext implementation="org.rust.ide.template.RustContextType$Generic"/>
@@ -217,6 +221,10 @@
         <!-- Notification Providers -->
 
         <editorNotificationProvider implementation="org.rust.ide.notifications.MissingToolchainNotificationProvider" />
+
+        <!-- Refactoring -->
+
+        <lang.namesValidator language="Rust" implementationClass="org.rust.lang.refactoring.RustNamesValidator"/>
 
     </extensions>
 
