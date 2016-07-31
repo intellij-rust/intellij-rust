@@ -31,6 +31,24 @@
         </context>
     </template>
 
+    <template name="pdv" description="debug println! value" toReformat="true" toShortenFQNames="true"
+              value="println!(&quot;$EXPRESSION_COPY$ = {:?}&quot;, $EXPRESSION$);">
+        <variable name="EXPRESSION" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="EXPRESSION_COPY" expression="EXPRESSION" defaultValue="" alwaysStopAt="false"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
+    <template name="ppdv" description="debug pretty println! value" toReformat="true" toShortenFQNames="true"
+              value="println!(&quot;$EXPRESSION_COPY$ = {:#?}&quot;, $EXPRESSION$);">
+        <variable name="EXPRESSION" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="EXPRESSION_COPY" expression="EXPRESSION" defaultValue="" alwaysStopAt="false"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
     <template name="fmt" description="format!" toReformat="true" toShortenFQNames="true"
               value="format!(&quot;$END$&quot;);">
         <context>

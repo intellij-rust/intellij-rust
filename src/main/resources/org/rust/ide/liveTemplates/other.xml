@@ -55,4 +55,13 @@
             <option name="RUST_STATEMENT" value="true"/>
         </context>
     </template>
+
+    <template name="closure" description="closure" toReformat="true" toShortenFQNames="true"
+              value="|$PARAM$| $PARAM_COPY$">
+        <variable name="PARAM" expression="" defaultValue="&quot;x&quot;" alwaysStopAt="true"/>
+        <variable name="PARAM_COPY" expression="PARAM" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
 </templateSet>
