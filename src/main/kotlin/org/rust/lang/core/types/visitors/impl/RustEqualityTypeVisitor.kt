@@ -21,7 +21,7 @@ open class RustEqualityTypeVisitor(override var lop: RustType)
     }
 
     protected fun visitTypeList(lop: Iterable<RustType>, rop: Iterable<RustType>): Boolean =
-        lop.zip(rop).fold(true, { r, p -> r && visit(p.first, p.second) })
+        lop.zip(rop).all({ visit(it.first, it.second) })
 
     override fun visitStruct(type: RustStructType): Boolean {
         val lop = lop
@@ -87,7 +87,7 @@ open class RustEqualityUnresolvedTypeVisitor(override var lop: RustUnresolvedTyp
     }
 
     fun visitTypeList(lop: Iterable<RustUnresolvedType>, rop: Iterable<RustUnresolvedType>): Boolean =
-        lop.count() == rop.count() && lop.zip(rop).fold(true, { r, p -> r && visit(p.first, p.second) })
+        lop.count() == rop.count() && lop.zip(rop).all({ visit(it.first, it.second) })
 
     override fun visitPathType(type: RustUnresolvedPathType): Boolean {
         val lop = lop
