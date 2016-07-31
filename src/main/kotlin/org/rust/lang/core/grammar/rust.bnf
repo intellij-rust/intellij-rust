@@ -627,9 +627,11 @@ trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER generic_params? type_param
 trait_body ::= '{' trait_member* '}' { pin = 1 }
 
 // TODO: use upper rules and inheritance here
-private trait_member ::= trait_const_member
-                       | trait_type_member
-                       | trait_method_member { recoverWhile = trait_member_recover }
+private trait_member ::= !'}' ( trait_const_member | trait_type_member | trait_method_member ) {
+  pin = 1
+  recoverWhile = trait_member_recover
+}
+
 private trait_member_recover ::= !('#' | vis | EXTERN | CONST | UNSAFE | FN | TYPE_KW | '}')
 
 trait_const_member ::= outer_attr* CONST IDENTIFIER type_ascription? const_default? ';'{
