@@ -15,35 +15,19 @@
         </context>
     </template>
 
-    <template name="pd" description="debug println!" toReformat="true" toShortenFQNames="true"
-              value="println!(&quot;$FORMAT$&quot;, $END$);">
-        <variable name="FORMAT" expression="" defaultValue="&quot;{:?}&quot;" alwaysStopAt="true"/>
-        <context>
-            <option name="RUST_STATEMENT" value="true"/>
-        </context>
-    </template>
-
-    <template name="ppd" description="debug pretty println!" toReformat="true" toShortenFQNames="true"
-              value="println!(&quot;$FORMAT$&quot;, $END$);">
-        <variable name="FORMAT" expression="" defaultValue="&quot;{:#?}&quot;" alwaysStopAt="true"/>
-        <context>
-            <option name="RUST_STATEMENT" value="true"/>
-        </context>
-    </template>
-
-    <template name="pdv" description="debug println! value" toReformat="true" toShortenFQNames="true"
+    <template name="pd" description="debug println! value" toReformat="true" toShortenFQNames="true"
               value="println!(&quot;$EXPRESSION_COPY$ = {:?}&quot;, $EXPRESSION$);">
         <variable name="EXPRESSION" expression="" defaultValue="" alwaysStopAt="true"/>
-        <variable name="EXPRESSION_COPY" expression="EXPRESSION" defaultValue="" alwaysStopAt="false"/>
+        <variable name="EXPRESSION_COPY" expression="EXPRESSION" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="RUST_STATEMENT" value="true"/>
         </context>
     </template>
 
-    <template name="ppdv" description="debug pretty println! value" toReformat="true" toShortenFQNames="true"
+    <template name="ppd" description="debug pretty println! value" toReformat="true" toShortenFQNames="true"
               value="println!(&quot;$EXPRESSION_COPY$ = {:#?}&quot;, $EXPRESSION$);">
         <variable name="EXPRESSION" expression="" defaultValue="" alwaysStopAt="true"/>
-        <variable name="EXPRESSION_COPY" expression="EXPRESSION" defaultValue="" alwaysStopAt="false"/>
+        <variable name="EXPRESSION_COPY" expression="EXPRESSION" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="RUST_STATEMENT" value="true"/>
         </context>
