@@ -23,7 +23,7 @@ class RustRunLineMarkerContributor : RunLineMarkerContributor() {
             )
 
             fn.isTest -> Info(
-                AllIcons.RunConfigurations.TestState.Run_run,
+                AllIcons.RunConfigurations.TestState.Green2,
                 Function<PsiElement, String> { "Run Test" },
                 *ExecutorAction.getActions(0)
             )
