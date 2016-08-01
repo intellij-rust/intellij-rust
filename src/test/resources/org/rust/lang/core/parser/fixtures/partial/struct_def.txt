@@ -38,13 +38,15 @@ FILE
         RustPathTypeElementImpl(PATH_TYPE)
           RustPathElementImpl(PATH)
             PsiElement(<IDENTIFIER>)('i32')
-      PsiErrorElement:'}' expected, got 'f2'
+      PsiErrorElement:'f2' unexpected
         <empty list>
-  PsiWhiteSpace('\n    ')
-  PsiElement(<IDENTIFIER>)('f2')
-  PsiElement(:)(':')
-  PsiWhiteSpace(' ')
-  PsiElement(<IDENTIFIER>)('i32')
-  PsiWhiteSpace('\n')
-  PsiErrorElement:'}' unexpected
-    PsiElement(})('}')
+      PsiWhiteSpace('\n    ')
+      RustFieldDeclElementImpl(FIELD_DECL)
+        PsiElement(<IDENTIFIER>)('f2')
+        PsiElement(:)(':')
+        PsiWhiteSpace(' ')
+        RustPathTypeElementImpl(PATH_TYPE)
+          RustPathElementImpl(PATH)
+            PsiElement(<IDENTIFIER>)('i32')
+      PsiWhiteSpace('\n')
+      PsiElement(})('}')

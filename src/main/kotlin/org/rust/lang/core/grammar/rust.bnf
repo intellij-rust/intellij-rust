@@ -612,7 +612,13 @@ variant_tuple_field_decl ::= outer_attr* type {
   elementType = tuple_field_decl
 }
 
-private meta mk_block_fileds ::= '{' [ <<comma_separated_list <<param>> >> ] '}' { pin = 1}
+private meta mk_block_fileds ::= '{' <<field_with_recover <<param>> >>* '}' { pin = 1}
+private meta field_with_recover ::= !'}' <<param>> (',' | &'}') {
+  pin = 1
+  recoverWhile = field_recover
+}
+field_recover ::= !('}' | '#' | PUB | IDENTIFIER)
+
 private meta mk_tuple_fields ::= '(' <<comma_separated_list <<param>> >> ')' { pin = 1}
 
 
