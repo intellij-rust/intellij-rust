@@ -28,6 +28,7 @@ import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.util.stripAllRefsIfAny
 import org.rust.lang.core.types.visitors.RustTypeResolvingVisitor
 import org.rust.utils.sequenceOfNotNull
+import java.util.*
 
 
 object RustResolveEngine {
@@ -330,7 +331,22 @@ private class RustScopeVisitor(
                 // Drops at most one element
                 .dropWhile { PsiTreeUtil.isAncestor(it, context.pivot, true) }
 
-        visibleLetDecls.flatMap { it.boundElements.scopeEntries } + o.itemEntries(context)
+        val allBoundElements = visibleLetDecls.flatMap { it.boundElements.asSequence() }
+
+        // TODO: handle shadowing between blocks
+        val declaredNames = HashSet<String>()
+        val nonShadowed = allBoundElements.filter {
+            val name = it.name
+            if (name == null) {
+                false
+            } else {
+                val result = it.name !in declaredNames
+                declaredNames += name
+                result
+            }
+        }.toList() // Call to list to make it safe to iterate the sequence twice
+
+        nonShadowed.scopeEntries + o.itemEntries(context)
     }
 
     override fun visitStructItem(o: RustStructItemElement) = set {

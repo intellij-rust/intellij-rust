@@ -16,6 +16,7 @@ class RustCompletionTest : RustCompletionTestBase() {
     fun testIncompleteStructField() = checkSoleCompletion()
     fun testEnumField() = checkSoleCompletion()
     fun testWildcardImports() = checkSoleCompletion()
+    fun testShadowing() = checkSoleCompletion()
 
     fun testLocalScope() = checkNoCompletion()
     fun testWhileLet() = checkNoCompletion()
