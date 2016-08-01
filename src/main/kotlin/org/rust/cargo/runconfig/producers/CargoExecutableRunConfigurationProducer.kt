@@ -2,12 +2,16 @@ package org.rust.cargo.runconfig.producers
 
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.runconfig.CargoCommandRunConfigurationType
 import org.rust.cargo.util.cargoProject
+import org.rust.lang.core.psi.RustFnElement
+import org.rust.lang.core.psi.util.module
 
 class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandRunConfigurationType()) {
 
@@ -35,22 +39,34 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         return true
     }
 
-    private fun findBinaryTarget(context: ConfigurationContext): ExecutableTarget? {
-        val file = context.location?.virtualFile ?: return null
-        val target = context.module?.cargoProject?.findTargetForFile(file) ?: return null
-        return when {
-            target.isBin -> ExecutableTarget(target.name, "bin")
-            target.isExample -> ExecutableTarget(target.name, "example")
-            else -> null
-        }
-    }
-
     private class ExecutableTarget(
-        private val name: String,
-        private val kind: String
+        name: String,
+        kind: String
     ) {
         val configurationName: String = "Run $name"
         val additionalArguments: String = "--$kind $name"
+    }
+
+    companion object {
+        fun isMainFunction(fn: RustFnElement): Boolean {
+            val module = fn.module ?: return false
+            return fn.name == "main" && findBinaryTarget(module, fn.containingFile.virtualFile) != null
+        }
+
+        private fun findBinaryTarget(context: ConfigurationContext): ExecutableTarget? {
+            val module = context.module ?: return null
+            val file = context.location?.virtualFile ?: return null
+            return findBinaryTarget(module, file)
+        }
+
+        private fun findBinaryTarget(module: Module, file: VirtualFile): ExecutableTarget? {
+            val target = module.cargoProject?.findTargetForFile(file) ?: return null
+            return when {
+                target.isBin -> ExecutableTarget(target.name, "bin")
+                target.isExample -> ExecutableTarget(target.name, "example")
+                else -> null
+            }
+        }
     }
 
 }

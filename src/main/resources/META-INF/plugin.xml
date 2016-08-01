@@ -198,6 +198,9 @@
         <runConfigurationProducer
             implementation="org.rust.cargo.runconfig.producers.CargoTestRunConfigurationProducer"/>
 
+        <runLineMarkerContributor language="Rust"
+                                  implementationClass="org.rust.cargo.runconfig.RustRunLineMarkerContributor"/>
+
         <!-- Cargo -->
 
         <projectConfigurable instance="org.rust.cargo.project.configurable.RustProjectConfigurable"
