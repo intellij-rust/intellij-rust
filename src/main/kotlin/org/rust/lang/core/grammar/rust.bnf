@@ -680,10 +680,10 @@ private for_impl ::= '!'? trait_ref FOR (type where_clause? impl_body | '..' '{'
 impl_body ::= '{' inner_attr* impl_member* '}' { pin = 1 }
 
 // TODO: unify with trait_member?
-private impl_member ::= impl_method_member
-                      | impl_const_member
-                      | impl_macro_member
-                      | impl_type_member { recoverWhile = impl_member_recover }
+private impl_member ::= !'}' ( impl_method_member | impl_const_member | impl_macro_member | impl_type_member ) {
+  pin = 1
+  recoverWhile = impl_member_recover
+}
 private impl_member_recover ::= !('#' | defaulted | vis | EXTERN | CONST | UNSAFE | FN | (IDENTIFIER '!') | TYPE_KW | '}')
 
 impl_method_member ::= attrs_default_vis fn_header method_parameters ret_type? where_clause? inner_attrs_and_block {
