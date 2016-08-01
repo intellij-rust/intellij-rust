@@ -243,7 +243,7 @@
 // Root
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-file ::= [ SHEBANG_LINE ] inner_attr* docs_and_item*
+file ::= [ SHEBANG_LINE ] inner_attr* item*
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -265,28 +265,26 @@ meta_item ::= IDENTIFIER [ '=' lit_expr | '(' [ <<comma_separated_list meta_item
 
 vis ::= PUB
 
-private attrs_and_vis ::= outer_attr* vis?
 
 defaulted ::= "default" // contextual keyword
+
+private attrs_and_vis ::= outer_attr* vis?
 private attrs_default_vis ::= outer_attr* defaulted? vis?
 
-private docs_and_item ::= ( stmt_item_group | macro_item )
+private item ::=  static_item
+               | const_item
+               | type_item
+               | fn_item
+               | trait_item
+               | impl_item
+               | mod_decl_item
+               | mod_item
+               | foreign_mod_item
+               | struct_item
+               | enum_item
+               | view_item
+               | macro_item
 
-private stmt_item_group ::= static_item
-                          | const_item
-                          | type_item
-                          | block_item_group
-                          | view_item
-
-
-private block_item_group ::= fn_item
-                           | trait_item
-                           | impl_item
-                           | mod_decl_item
-                           | mod_item
-                           | foreign_mod_item
-                           | struct_item
-                           | enum_item
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -502,7 +500,7 @@ mod_decl_item ::= attrs_and_vis MOD IDENTIFIER ';' {
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
-mod_item ::= attrs_and_vis MOD IDENTIFIER '{' inner_attr* docs_and_item* '}' {
+mod_item ::= attrs_and_vis MOD IDENTIFIER '{' inner_attr* item* '}' {
   pin = 4
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
@@ -1139,7 +1137,7 @@ inner_attrs_and_block ::= '{' inner_attr* block_tail '}' {
   pin = 1
 }
 
-private block_tail ::= (stmt | docs_and_item)* any_expr? {
+private block_tail ::= (stmt | item)* any_expr? {
   recoverWhile = block_recover
 }
 
