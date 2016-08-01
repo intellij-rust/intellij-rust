@@ -12,6 +12,8 @@ FILE
   PsiElement(pub)('pub')
   PsiWhiteSpace(' ')
   PsiElement(<IDENTIFIER>)('F')
+  PsiErrorElement:'!' expected, got '}'
+    <empty list>
   PsiWhiteSpace(' ')
   PsiComment(<EOL_COMMENT>)('// Enum variants are always implicitly public, and `pub` keyword is forbidden here')
   PsiWhiteSpace('\n')

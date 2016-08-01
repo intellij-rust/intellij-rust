@@ -243,7 +243,7 @@
 // Root
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-file ::= [ SHEBANG_LINE ] inner_attr* item*
+file ::= [ SHEBANG_LINE ] inner_attr* items
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -271,7 +271,7 @@ defaulted ::= "default" // contextual keyword
 private attrs_and_vis ::= outer_attr* vis?
 private attrs_default_vis ::= outer_attr* defaulted? vis?
 
-private item ::=  static_item
+private item ::= static_item
                | const_item
                | type_item
                | fn_item
@@ -285,6 +285,13 @@ private item ::=  static_item
                | view_item
                | macro_item
 
+private item_with_recover ::= !('}' | <<eof>>) item {
+  pin = 1
+  recoverWhile = item_recover
+}
+private item_recover ::= !('}' | '#' | PUB | FN | CONST | EXTERN | UNSAFE | STRUCT | ENUM | USE | IDENTIFIER '!' | MOD | TRAIT | STATIC | TYPE_KW | IMPL)
+
+private items ::= item_with_recover*
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -500,7 +507,7 @@ mod_decl_item ::= attrs_and_vis MOD IDENTIFIER ';' {
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
-mod_item ::= attrs_and_vis MOD IDENTIFIER '{' inner_attr* item* '}' {
+mod_item ::= attrs_and_vis MOD IDENTIFIER '{' inner_attr* items '}' {
   pin = 4
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
