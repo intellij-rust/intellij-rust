@@ -2,6 +2,7 @@ package org.rust.lang.core.psi;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 import org.rust.lang.core.lexer.RustEscapesLexer;
 import org.rust.lang.core.psi.impl.RustNumericLiteralImpl;
 import org.rust.lang.core.psi.impl.RustRawStringLiteralImpl;
@@ -154,19 +155,25 @@ public interface RustTokenElementTypes {
     // Token Sets
     //
 
+    @NotNull
     TokenSet DOC_COMMENTS_TOKEN_SET = TokenSet.create(
         INNER_BLOCK_DOC_COMMENT,
         OUTER_BLOCK_DOC_COMMENT,
         INNER_EOL_DOC_COMMENT,
         OUTER_EOL_DOC_COMMENT);
 
+    @NotNull
     TokenSet COMMENTS_TOKEN_SET = TokenSet.orSet(
         TokenSet.create(BLOCK_COMMENT, EOL_COMMENT),
         DOC_COMMENTS_TOKEN_SET);
 
+    @NotNull
+    TokenSet EOL_COMMENTS_TOKEN_SET = TokenSet.create(EOL_COMMENT, INNER_EOL_DOC_COMMENT, OUTER_EOL_DOC_COMMENT);
+
     /**
      * Set of possible arguments for {@link RustEscapesLexer.Companion#of(IElementType)}
      */
+    @NotNull
     TokenSet ESCAPABLE_LITERALS_TOKEN_SET = TokenSet.create(
         BYTE_LITERAL,
         CHAR_LITERAL,
