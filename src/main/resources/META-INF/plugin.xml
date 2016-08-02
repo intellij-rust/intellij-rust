@@ -118,6 +118,8 @@
 
         <!-- Inspections -->
 
+        <lang.inspectionSuppressor language="Rust" implementationClass="org.rust.ide.inspections.RustInspectionSuppressor"/>
+
         <localInspection language="Rust" groupName="Rust"
                          displayName="Approximate Constants"
                          enabledByDefault="true" level="WARNING"

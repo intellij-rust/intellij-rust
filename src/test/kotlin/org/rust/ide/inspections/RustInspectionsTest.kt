@@ -10,4 +10,11 @@ class RustInspectionsTest : RustInspectionsTestBase() {
     fun testSelfConvention() = doTest<RustSelfConventionInspection>()
 
     fun testDuplicateField() = doTest<RustDuplicateStructFieldInspection>()
+
+    fun testSuppression() = checkByFile {
+        enableInspection<RustSelfConventionInspection>()
+        myFixture.checkHighlighting(true, false, true)
+        applyQuickFix("Suppress for item")
+        myFixture.testHighlighting(true, false, true, fileName.replace(".rs", "_after.rs"))
+    }
 }
