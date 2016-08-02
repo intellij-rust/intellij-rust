@@ -1,6 +1,9 @@
 package org.rust.ide.inspections
 
 import org.rust.ide.inspections.duplicates.RustDuplicateStructFieldInspection
+import org.rust.ide.inspections.duplicates.RustDuplicateTraitConstantInspection
+import org.rust.ide.inspections.duplicates.RustDuplicateTraitMethodInspection
+import org.rust.ide.inspections.duplicates.RustDuplicateTraitTypeInspection
 
 class RustInspectionsTest : RustInspectionsTestBase() {
 
@@ -10,6 +13,10 @@ class RustInspectionsTest : RustInspectionsTestBase() {
     fun testSelfConvention() = doTest<RustSelfConventionInspection>()
 
     fun testDuplicateField() = doTest<RustDuplicateStructFieldInspection>()
+
+    fun testDuplicateTraitConstant() = doTest<RustDuplicateTraitConstantInspection>()
+    fun testDuplicateTraitMethod() = doTest<RustDuplicateTraitMethodInspection>()
+    fun testDuplicateTraitType() = doTest<RustDuplicateTraitTypeInspection>()
 
     fun testSuppression() = checkByFile {
         enableInspection<RustSelfConventionInspection>()
