@@ -66,7 +66,12 @@ fun RustFmtBlock.getAlignmentStrategy(): RustAlignmentStrategy = when (node.elem
 
     GENERIC_PARAMS ->
         RustAlignmentStrategy.wrap()
-            .alignIf(TYPE_PARAM)
+            .alignIf(TYPE_PARAM, LIFETIME_PARAM)
+            .alignIf(ctx.rustSettings.ALIGN_TYPE_PARAMS)
+
+    FOR_LIFETIMES ->
+        RustAlignmentStrategy.wrap()
+            .alignIf(LIFETIME_PARAM)
             .alignIf(ctx.rustSettings.ALIGN_TYPE_PARAMS)
 
     else -> RustAlignmentStrategy.NullStrategy
