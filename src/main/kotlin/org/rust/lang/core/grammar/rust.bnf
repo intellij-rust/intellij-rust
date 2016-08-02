@@ -348,34 +348,26 @@ fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
-generic_params ::= '<' lifetimes [ ',' [ type_params ','? ] ] '>'
-                 | '<'                   type_params ','?     '>'
-                 | '<' '>'
+generic_params ::= '<' lifetimes_params type_params '>'
 
-lifetimes ::= lifetime_and_bounds (',' lifetime_and_bounds)*
+private lifetimes_params ::= ( lifetime_param (',' | &'>') )*
+private type_params      ::= ( type_param     (',' | &'>') )*
 
-private lifetime_and_bounds ::= LIFETIME lifetime_bounds?
-private lifetime_bounds     ::= ':' LIFETIME ('+' LIFETIME)*
-
-private type_params ::= type_param (',' type_param)*
+lifetime_param ::= LIFETIME lifetime_param_bounds?
+lifetime_param_bounds ::= ':' LIFETIME ('+' LIFETIME)*
 
 type_param ::= IDENTIFIER type_param_bounds? [ '=' type ] {
   implements = [ "org.rust.lang.core.psi.RustNamedElement" ]
   extends = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
 }
-
-type_param_bounds ::= ':' [ type_param_bound_seq ]
-
-private type_param_bound_seq        ::= polybound type_param_bound_seq_right
-private type_param_bound_seq_right  ::= [ '+' polybound type_param_bound_seq_right ]
-
+type_param_bounds ::= ':' polybound ('+' polybound)*
 polybound ::= [ for_lifetimes | '?' ] bound
 
 where_clause ::= WHERE <<comma_separated_list where_pred>>
 
-where_pred ::= for_lifetimes? (LIFETIME ':' [ LIFETIME ( '+' LIFETIME )* ] | type type_param_bounds)
+where_pred ::= LIFETIME lifetime_param_bounds | for_lifetimes? type type_param_bounds
 
-for_lifetimes ::= FOR '<' lifetimes? '>'
+for_lifetimes ::= FOR '<' lifetimes_params '>'
 
 pat ::= pat_wild
       | pat_ref
@@ -425,8 +417,7 @@ generic_args ::= generic_args_inner
 colon_generic_args ::= '::' generic_args_inner { elementType = generic_args }
 private generic_args_inner ::= '<' !('=') generic_values '>' { pin = 2 }
 
-private generic_values ::= lifetimes [ ',' type_sums_and_or_bindings ] ','?
-                         |                 type_sums_and_or_bindings?
+private generic_values ::= lifetimes_params type_sums_and_or_bindings?
 
 private type_sums_and_or_bindings ::=                                  bindings   ','?
                                     | type !'=' (',' type !'=')* [ ',' bindings ] ','?
