@@ -10,7 +10,6 @@ class RustCompletionTest : RustCompletionTestBase() {
     fun testAnonymousItem() = checkSoleCompletion()
     fun testIncompleteLet() = checkSoleCompletion()
     fun testUseGlob() = checkSoleCompletion()
-    fun testTypeParams() = checkSoleCompletion()
     fun testImplMethodType() = checkSoleCompletion()
     fun testStructField() = checkSoleCompletion()
     fun testIncompleteStructField() = checkSoleCompletion()

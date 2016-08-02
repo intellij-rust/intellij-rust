@@ -350,8 +350,8 @@ fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_
 
 generic_params ::= '<' lifetimes_params type_params '>'
 
-private lifetimes_params ::= ( lifetime_param (',' | &'>') )*
-private type_params      ::= ( type_param     (',' | &'>') )*
+private lifetimes_params ::= <<list_element lifetime_param>>*
+private type_params      ::= <<list_element type_param>>*
 
 lifetime_param ::= LIFETIME lifetime_param_bounds?
 lifetime_param_bounds ::= ':' LIFETIME ('+' LIFETIME)*
@@ -415,15 +415,12 @@ private lit_or_path ::= path_expr | lit | '-' lit
 
 generic_args ::= generic_args_inner
 colon_generic_args ::= '::' generic_args_inner { elementType = generic_args }
-private generic_args_inner ::= '<' !('=') generic_values '>' { pin = 2 }
 
-private generic_values ::= lifetimes_params type_sums_and_or_bindings?
+private generic_args_inner ::= '<' !'=' ( <<list_element (LIFETIME)>>*
+                                          <<list_element (!(IDENTIFIER '=') type)>>*
+                                          <<list_element assoc_type_binding>>*) '>' { pin = 2 }
 
-private type_sums_and_or_bindings ::=                                  bindings   ','?
-                                    | type !'=' (',' type !'=')* [ ',' bindings ] ','?
-
-bindings ::= binding (',' binding)*
-binding  ::= IDENTIFIER '=' type
+assoc_type_binding  ::= IDENTIFIER '=' type
 
 private pat_struct_fields ::= (pat_field ',') + '..'
                             | <<comma_separated_list pat_field>>
@@ -741,7 +738,7 @@ tuple_type ::= '(' [ <<comma_separated_list type>> ] ')'
 path_type ::= !'<' path_generic_args_without_colons
             | &'<' type_qual_path
 
-type_with_bounds_type ::= type '+' bound ('+' bound)*
+type_with_bounds_type ::= type ('+' bound) +
 bound ::= LIFETIME | trait_ref
 
 for_in_type ::= for_lifetimes (bare_fn_type | trait_ref)
@@ -1180,3 +1177,4 @@ private never ::= !()
 
 // Trailing commas are allowed
 private meta comma_separated_list ::= <<param>> ( ',' <<param>> )* ','?
+private meta list_element ::= <<param>> (',' | &'>') { pin = 1 }

@@ -21,6 +21,7 @@ class RustPartialParsingTestCase : RustParsingTestCaseBase("partial") {
     fun testMatchExpr() = doTest(true)
     fun testStructExprFields() = doTest(true)
     fun testHrtbForLifetimes() = doTest(true)
+    fun testNoLifetimeBoundsInGenericArgs() = doTest(true)
 
     override fun checkResult(targetDataName: String?, file: PsiFile?) {
         checkHasError(file)

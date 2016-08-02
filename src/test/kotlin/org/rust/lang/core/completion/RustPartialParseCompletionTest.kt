@@ -8,5 +8,6 @@ class RustPartialParseCompletionTest: RustCompletionTestBase() {
     fun testWhileLet() = checkSoleCompletion()
     fun testIf() = checkSoleCompletion()
     fun testWhile() = checkSoleCompletion()
+    fun testTypeParams() = checkSoleCompletion()
 }
 
