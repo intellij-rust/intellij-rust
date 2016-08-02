@@ -21,3 +21,5 @@ fn main() {
     bar::<>();
     let _: i32<>;
 }
+
+fn foo() where for<> for<> T: T {}

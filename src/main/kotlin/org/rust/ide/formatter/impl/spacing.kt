@@ -110,8 +110,9 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         .betweenInside(ts(MUL), ts(CONST, MUT), PTR_TYPE).spaces(0)
         .before(TYPE_PARAM_BOUNDS).spaces(0)
         .beforeInside(LPAREN, PATH).spaces(0)
-        .aroundInside(LT, POLYBOUND).spacing(0, 0, 0, true, 0)
-        .beforeInside(GT, POLYBOUND).spacing(0, 0, 0, true, 0)
+        .aroundInside(LT, FOR_LIFETIMES).spacing(0, 0, 0, true, 0)
+        .beforeInside(GT, FOR_LIFETIMES).spacing(0, 0, 0, true, 0)
+        .around(FOR_LIFETIMES).spacing(1, 1, 0, true, 0)
 
         //== expressions
         .beforeInside(LPAREN, PAT_ENUM).spaces(0)
