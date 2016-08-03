@@ -124,6 +124,8 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         .betweenInside(IDENTIFIER, EXCL, MACRO_INVOCATION).spaces(0)
         .betweenInside(MACRO_INVOCATION, IDENTIFIER, MACRO_DEFINITION).spaces(1)
         .betweenInside(IDENTIFIER, MACRO_ARG, MACRO_DEFINITION).spaces(1)
+        .before(ELSE_BRANCH).spacing(1, 1, 0, false, 0)
+        .betweenInside(ELSE, BLOCK, ELSE_BRANCH).spacing(1, 1, 0, false, 0)
 
         //== rules with very large area of application
         .around(NO_SPACE_AROUND_OPS).spaces(0)
