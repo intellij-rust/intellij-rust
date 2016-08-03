@@ -2,9 +2,20 @@ package org.rust.lang.core.type
 
 class RustPatternMatchingTest : RustTypificationTestBase() {
     fun testIfLetPattern() = testExpr("""
+        enum E { L(i32), R(bool) }
         fn main() {
-            let _ = if let Some(x) = Some(92i32) { x } else { x };
-                                                 //^ <unknown>
+            let _ = if let E::L(x) = E::R(false) { x } else { x };
+                                                 //^ i32
+        }
+    """)
+
+    fun testWhileLetPattern() = testExpr("""
+        enum E { L(i32), R(bool) }
+        fn main() {
+            let e = E::L(92);
+            while let E::R(x) = e {
+                x
+            } //^ bool
         }
     """)
 

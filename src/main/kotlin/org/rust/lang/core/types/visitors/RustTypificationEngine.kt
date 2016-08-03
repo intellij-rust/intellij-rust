@@ -194,6 +194,7 @@ private fun deviseBoundPatType(binding: RustPatBindingElement): RustType {
             parent.type?.resolvedType ?: parent.expr?.resolvedType
 
         is RustParameterElement -> parent.type?.resolvedType
+        is RustScopedLetDeclElement -> parent.expr.resolvedType
         else -> null
     } ?: return RustUnknownType
 
