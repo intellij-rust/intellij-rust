@@ -199,6 +199,13 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
+    fun testParenthesis() = testExpr("""
+        fn main() {
+            (false);
+          //^ bool
+        }
+    """)
+
     // Ideally these two should be handled by separate type/value namespaces
     fun testNoStackOverflow1() = testExpr("""
         pub struct P<T: ?Sized> { ptr: Box<T> }

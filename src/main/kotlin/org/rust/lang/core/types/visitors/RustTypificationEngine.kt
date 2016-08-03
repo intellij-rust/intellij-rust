@@ -113,6 +113,8 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     override fun visitWhileExpr(o: RustWhileExprElement) = set { RustUnitType }
     override fun visitLoopExpr(o: RustLoopExprElement) = set { RustUnitType }
 
+    override fun visitParenExpr(o: RustParenExprElement) = set { o.expr.resolvedType }
+
     private val RustBlockElement.resolvedType: RustType get() = expr?.resolvedType ?: RustUnitType
 }
 
