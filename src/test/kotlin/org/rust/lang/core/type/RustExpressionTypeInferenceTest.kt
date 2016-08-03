@@ -175,11 +175,27 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
-    fun testIfExpression() = testExpr("""
+    fun testIf() = testExpr("""
         fn main() {
             let x = if true { 92 } else { 62 };
             x
           //^ i32
+        }
+    """)
+
+    fun testLoop() = testExpr("""
+        fn main() {
+            let x = loop { break; };
+            x
+          //^ ()
+        }
+    """)
+
+    fun testWhile() = testExpr("""
+        fn main() {
+            let x = while false { 92 };
+            x
+          //^ ()
         }
     """)
 
