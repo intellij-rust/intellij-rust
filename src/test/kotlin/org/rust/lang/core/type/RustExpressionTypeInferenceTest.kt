@@ -167,6 +167,22 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
+    fun testUnitIf() = testExpr("""
+        fn main() {
+            let x = if true { 92 };
+            x
+          //^ ()
+        }
+    """)
+
+    fun testIfExpression() = testExpr("""
+        fn main() {
+            let x = if true { 92 } else { 62 };
+            x
+          //^ i32
+        }
+    """)
+
     // Ideally these two should be handled by separate type/value namespaces
     fun testNoStackOverflow1() = testExpr("""
         pub struct P<T: ?Sized> { ptr: Box<T> }

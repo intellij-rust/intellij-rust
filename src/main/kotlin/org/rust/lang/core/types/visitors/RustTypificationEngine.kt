@@ -100,10 +100,17 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 
     override fun visitBlockExpr(o: RustBlockExprElement) = set {
-        o.block?.let {
-            it.expr?.let { it.resolvedType } ?: RustUnitType
-        } ?: RustUnknownType
+        o.block?.resolvedType ?: RustUnknownType
     }
+
+    override fun visitIfExpr(o: RustIfExprElement) = set {
+        if (o.elseBranch == null)
+            RustUnitType
+        else
+            o.block?.resolvedType ?: RustUnknownType
+    }
+
+    private val RustBlockElement.resolvedType: RustType get() = expr?.resolvedType ?: RustUnitType
 }
 
 private class RustItemTypificationVisitor : RustComputingVisitor<RustType>() {
