@@ -125,6 +125,7 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
 
     override fun visitWhileExpr(o: RustWhileExprElement) = set { RustUnitType }
     override fun visitLoopExpr(o: RustLoopExprElement) = set { RustUnitType }
+    override fun visitForExpr(o: RustForExprElement) = set { RustUnitType }
 
     override fun visitParenExpr(o: RustParenExprElement) = set { o.expr.resolvedType }
 

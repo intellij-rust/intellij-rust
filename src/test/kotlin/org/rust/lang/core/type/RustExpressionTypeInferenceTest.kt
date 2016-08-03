@@ -110,6 +110,14 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
+    fun testFor() = testExpr("""
+        fn main() {
+            let x = for _ in 62..92 {};
+            x
+          //^ ()
+        }
+    """)
+
     fun testParenthesis() = testExpr("""
         fn main() {
             (false);
@@ -132,7 +140,7 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
           //^ E
         }
     """)
-    
+
     fun testEnumVariantC() = testExpr("""
         enum E { A(i32), B { val: bool }, C }
         fn main() {
