@@ -34,5 +34,7 @@ interface RustTypeVisitor<T> {
 
     fun visitTypeParameter(type: RustTypeParameterType): T
 
+    fun visitTraitObject(type: RustTraitObjectType): T
+
 }
 

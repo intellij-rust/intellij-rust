@@ -161,6 +161,10 @@ private class RustItemTypificationVisitor : RustComputingVisitor<RustType>() {
     override fun visitFnItem(o: RustFnItemElement) = set {
         deviseFunctionType(o)
     }
+
+    override fun visitTraitItem(o: RustTraitItemElement) = set {
+        RustTraitObjectType(o)
+    }
 }
 
 private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedType>() {

@@ -131,7 +131,7 @@ object RustResolveEngine {
     fun resolveMethodCallExpr(call: RustMethodCallExprElement): ResolveResult {
         val receiverType = call.expr.resolvedType
         val name = call.identifier.text
-        val matching = receiverType.nonStaticMethods.filter { it.name == name }
+        val matching = receiverType.stripAllRefsIfAny().nonStaticMethods.filter { it.name == name }
         return ResolveResult.buildFrom(matching.asIterable())
     }
 

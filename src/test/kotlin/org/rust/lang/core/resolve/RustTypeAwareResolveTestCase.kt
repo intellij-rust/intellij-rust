@@ -7,6 +7,7 @@ class RustTypeAwareResolveTestCase : RustResolveTestCaseBase() {
 
     fun testMethodCallExpr1() = checkIsBound(atOffset = 27)
     fun testMethodCallExpr2() = checkIsBound(atOffset = 30)
+    fun testMethodCallOnTraitObject() = checkIsBound()
 
     fun testSelfFieldExpr() = checkIsBound()
     fun testFieldExpr() = checkIsBound()
