@@ -946,15 +946,15 @@ match_body ::= '{' match_arm* '}' { pin = 1 }
 match_arm ::= outer_attr* match_pat '=>' (block_expr !('.' | '?') ','? | any_expr (',' | &'}')) { pin = 2 }
 match_pat ::= pat ('|' pat)* (IF any_expr)?
 
-if_expr ::= IF no_struct_lit_expr block else_tail? { pin = no_struct_lit_expr }
+if_expr ::= IF no_struct_lit_expr block else_branch? { pin = no_struct_lit_expr }
 
-private else_tail ::= ELSE (if_expr | if_let_expr | block )
+else_branch ::= ELSE ( if_expr | if_let_expr | block )
 
 fake scoped_let_expr ::= scoped_let_decl block
 
 scoped_let_decl ::= LET pat '=' no_struct_lit_expr
 
-if_let_expr ::= IF scoped_let_decl block else_tail? { pin = scoped_let_decl }
+if_let_expr ::= IF scoped_let_decl block else_branch? { pin = scoped_let_decl }
 
 while_let_expr ::= WHILE scoped_let_decl block { pin = scoped_let_decl }
 

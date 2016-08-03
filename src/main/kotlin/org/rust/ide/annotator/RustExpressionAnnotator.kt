@@ -93,9 +93,6 @@ private class RedundantParenthesisVisitor(private val holder: AnnotationHolder) 
     override fun visitParenExpr(o: RustParenExprElement) =
         o.expr.warnIfParens("Redundant parentheses in expression")
 
-    private val RustIfExprElement.expr: RustExprElement?
-        get() = exprList.firstOrNull()
-
     private fun RustExprElement?.warnIfParens(message: String) {
         if (this is RustParenExprElement) {
             holder.createWeakWarningAnnotation(this, message)
