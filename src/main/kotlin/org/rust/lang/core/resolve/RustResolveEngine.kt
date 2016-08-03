@@ -303,12 +303,12 @@ private class RustScopeVisitor(
     override fun visitFile(file: PsiFile) = visitMod(file as RustFile)
 
     override fun visitForExpr(o: RustForExprElement) = set {
-        o.scopedForDecl.boundElements.scopeEntries
+        o.scopedForDecl.pat.scopeEntries
     }
 
     override fun visitScopedLetDecl(o: RustScopedLetDeclElement) = set {
         if (context.pivot == null || !PsiTreeUtil.isAncestor(o, context.pivot, true)) {
-            o.boundElements.scopeEntries
+            o.pat.scopeEntries
         } else emptySequence()
     }
 
@@ -331,22 +331,17 @@ private class RustScopeVisitor(
                 // Drops at most one element
                 .dropWhile { PsiTreeUtil.isAncestor(it, context.pivot, true) }
 
-        val allBoundElements = visibleLetDecls.flatMap { it.boundElements.asSequence() }
+        val allBoundElements = visibleLetDecls.flatMap { it.pat.scopeEntries }
 
         // TODO: handle shadowing between blocks
         val declaredNames = HashSet<String>()
         val nonShadowed = allBoundElements.filter {
-            val name = it.name
-            if (name == null) {
-                false
-            } else {
-                val result = it.name !in declaredNames
-                declaredNames += name
-                result
-            }
+            val result = it.name !in declaredNames
+            declaredNames += it.name
+            result
         }.toList() // Call to list to make it safe to iterate the sequence twice
 
-        nonShadowed.scopeEntries + o.itemEntries(context)
+        nonShadowed.asSequence() + o.itemEntries(context)
     }
 
     override fun visitStructItem(o: RustStructItemElement) = set {
@@ -406,11 +401,14 @@ private class RustScopeVisitor(
     override fun visitLambdaExpr(o: RustLambdaExprElement) = set {
         o.parameters.parameterList.orEmpty()
             .asSequence()
-            .flatMap { it.boundElements.scopeEntries }
+            .flatMap { it.pat.scopeEntries }
     }
 
     override fun visitMatchArm(o: RustMatchArmElement) = set {
-        o.matchPat.boundElements.scopeEntries
+        // Rust allows to defined several patterns in the single match arm,
+        // but they all must bind the same variables, hence we can inspect
+        // only the first one.
+        o.matchPat.patList.firstOrNull().scopeEntries
     }
 
     override fun visitWhileLetExpr(o: RustWhileLetExprElement) = visitScopedLetDecl(o.scopedLetDecl)
@@ -449,7 +447,7 @@ private class RustScopeVisitor(
         if (isContextLocalTo(o))
             sequenceOf(
                 sequenceOfNotNull(o.parameters?.selfArgument?.let { ScopeEntry.of(it) }),
-                o.parameters?.parameterList.orEmpty().asSequence().flatMap { it.boundElements.scopeEntries },
+                o.parameters?.parameterList.orEmpty().asSequence().flatMap { it.pat.scopeEntries },
                 o.typeParams.scopeEntries
             ).flatten()
         else
@@ -523,6 +521,9 @@ private fun RustUseItemElement.nonWildcardEntries(): Sequence<ScopeEntry> {
 
 private val Collection<RustNamedElement>.scopeEntries: Sequence<ScopeEntry>
     get() = asSequence().scopeEntries
+
+private val RustPatElement?.scopeEntries: Sequence<ScopeEntry>
+    get() = PsiTreeUtil.findChildrenOfType(this, RustPatBindingElement::class.java).scopeEntries
 
 private val Sequence<RustNamedElement>.scopeEntries: Sequence<ScopeEntry>
     get() = mapNotNull { ScopeEntry.of(it) }

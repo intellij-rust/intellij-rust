@@ -129,6 +129,10 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
 
     override fun visitParenExpr(o: RustParenExprElement) = set { o.expr.resolvedType }
 
+    override fun visitBinaryExpr(o: RustBinaryExprElement) {
+        super.visitBinaryExpr(o)
+    }
+
     private val RustBlockElement.resolvedType: RustType get() = expr?.resolvedType ?: RustUnitType
 }
 

@@ -176,25 +176,6 @@
 
 
     //
-    // Declaring elements
-    //
-
-    implements  ("let_decl")    = "org.rust.lang.core.psi.RustDeclaringElement"
-    mixin       ("let_decl")    = "org.rust.lang.core.psi.impl.mixin.RustLetDeclImplMixin"
-
-    implements  ("scoped_let_decl") = "org.rust.lang.core.psi.RustDeclaringElement"
-    mixin       ("scoped_let_decl") = "org.rust.lang.core.psi.impl.mixin.RustScopedLetDeclImplMixin"
-
-    implements  ("scoped_for_decl") = "org.rust.lang.core.psi.RustDeclaringElement"
-    mixin       ("scoped_for_decl") = "org.rust.lang.core.psi.impl.mixin.RustScopedForDeclImplMixin"
-
-    implements  ("parameter")       = "org.rust.lang.core.psi.RustDeclaringElement"
-    mixin       ("parameter")       = "org.rust.lang.core.psi.impl.mixin.RustParameterImplMixin"
-
-    implements  ("match_pat")   = "org.rust.lang.core.psi.RustDeclaringElement"
-    mixin       ("match_pat")   = "org.rust.lang.core.psi.impl.mixin.RustMatchPatImplMixin"
-
-    //
     //  Misc
     //
 
