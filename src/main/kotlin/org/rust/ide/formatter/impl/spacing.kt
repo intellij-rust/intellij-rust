@@ -76,7 +76,6 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         //== items
         .between(PARAMS_LIKE, RET_TYPE).spacing(1, 1, 0, true, 0)
         .before(WHERE_CLAUSE).spacing(1, 1, 0, true, 0)
-        .applyForEach(BLOCK_LIKE) { before(it).spaces(1) }
         .beforeInside(LBRACE, FLAT_BRACE_BLOCKS).spaces(1)
 
         .between(ts(IDENTIFIER, FN), PARAMS_LIKE).spaceIf(false)
@@ -124,11 +123,14 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         .betweenInside(IDENTIFIER, EXCL, MACRO_INVOCATION).spaces(0)
         .betweenInside(MACRO_INVOCATION, IDENTIFIER, MACRO_DEFINITION).spaces(1)
         .betweenInside(IDENTIFIER, MACRO_ARG, MACRO_DEFINITION).spaces(1)
+        .before(ELSE_BRANCH).spacing(1, 1, 0, false, 0)
+        .betweenInside(ELSE, BLOCK, ELSE_BRANCH).spacing(1, 1, 0, false, 0)
 
         //== rules with very large area of application
         .around(NO_SPACE_AROUND_OPS).spaces(0)
         .around(SPACE_AROUND_OPS).spaces(1)
         .around(KEYWORDS).spaces(1)
+        .applyForEach(BLOCK_LIKE) { before(it).spaces(1) }
 }
 
 fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtContext): Spacing? {
