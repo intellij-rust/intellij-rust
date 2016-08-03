@@ -117,6 +117,30 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
+    fun testEnumVariantA() = testExpr("""
+        enum E { A(i32), B { val: bool }, C }
+        fn main() {
+            (E::A(92))
+          //^ E
+        }
+    """)
+
+    fun testEnumVariantB() = testExpr("""
+        enum E { A(i32), B { val: bool }, C }
+        fn main() {
+            (E::B { val: 92 })
+          //^ E
+        }
+    """)
+    
+    fun testEnumVariantC() = testExpr("""
+        enum E { A(i32), B { val: bool }, C }
+        fn main() {
+            (E::C)
+          //^ E
+        }
+    """)
+
     // Ideally these two should be handled by separate type/value namespaces
     fun testNoStackOverflow1() = testExpr("""
         pub struct P<T: ?Sized> { ptr: Box<T> }

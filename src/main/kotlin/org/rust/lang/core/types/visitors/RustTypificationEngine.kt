@@ -3,6 +3,7 @@ package org.rust.lang.core.types.visitors
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.mixin.parentEnum
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
 import org.rust.lang.core.types.*
@@ -55,8 +56,12 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 
     override fun visitStructExpr(o: RustStructExprElement) = set {
-        o.path.reference.resolve() .let { it as? RustStructItemElement }
-                                  ?.let { RustStructType(it) } ?: RustUnknownType
+        val base = o.path.reference.resolve()
+        when (base) {
+            is RustStructItemElement -> base.resolvedType
+            is RustEnumVariantElement -> base.parentEnum.resolvedType
+            else -> RustUnknownType
+        }
     }
 
     override fun visitTupleExpr(o: RustTupleExprElement) = set {
@@ -68,7 +73,15 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 
     override fun visitCallExpr(o: RustCallExprElement) = set {
-        val calleeType = o.expr.resolvedType
+        val fn = o.expr
+        if (fn is RustPathExprElement) {
+            val variant = fn.path.reference.resolve()
+            if (variant is RustEnumVariantElement) {
+                return@set variant.parentEnum.resolvedType
+            }
+        }
+
+        val calleeType = fn.resolvedType
         if (calleeType is RustFunctionType)
             calleeType.retType
         else
