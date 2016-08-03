@@ -260,6 +260,72 @@ meta_item ::= IDENTIFIER [ '=' lit_expr | '(' [ <<comma_separated_list meta_item
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// Paths
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+// TODO(kudinkin, matklad):
+//
+//    In rustc parser, self/super are treated as identifiers only if immediately followed by `::`
+//    Thus, these are valid paths:
+//
+//      `foo :: bar ::baz`
+//      `self:: super::foo ::baz`
+//
+//  and these are invalid ones
+//
+//      `self ::foo::bar`
+//      `self::super ::foo`
+//
+// We parse all the above paths as valid.
+
+private path_ident ::= IDENTIFIER | SELF | SUPER | CSELF
+fake path ::= (path '::')? path_ident path_generics?
+
+private path_impl ::= path_start path_segment*
+
+path_start ::= '::'?  path_ident path_generics? { elementType = path }
+left path_segment ::= '::' path_ident path_generics? { elementType = path }
+
+private path_generics ::= <<isPathModeColons>> colon_generic_args
+                        | <<isPathModeNoColons>> ( generic_args | path_parameters ret_type? ) // Fn(i32) -> i32 sugar
+
+generic_args ::= generic_args_impl
+colon_generic_args ::= '::' generic_args_impl { elementType = generic_args }
+
+private generic_args_impl ::= '<' !'=' ( <<list_element (LIFETIME)>>*
+                                         <<list_element (!(IDENTIFIER '=') type)>>*
+                                         <<list_element assoc_type_binding>>*) '>' { pin = 2 }
+
+assoc_type_binding ::= IDENTIFIER '=' type
+
+
+// Paths (with `::` separating `generic_args` from actual name) used in expression contexts:
+//    a::b::<T,U>::c
+path_generic_args_without_colons ::= <<withPathModeNoColons path_impl>> { elementType = path }
+
+// Paths (w/o types and therefore `generic_args`, containing only identifiers, `self`, etc.):
+//    a::b::c
+path_without_types ::= <<withPathModeNoTypes path_impl>> { elementType = path }
+
+// Paths (w/o `::` separating `generic_args` from actual name) used in type contexts:
+//    a::b<T,U>::c<V,W>
+//    a::b<T,U>::c(V) -> W
+//    a::b<T,U>::c(V)
+path_generic_args_with_colons ::= <<withPathModeColons path_impl>> { elementType = path }
+
+// Qualified paths
+//
+//    <TYPE [as TRAIT_REF]> :: (path_without_types | path_generic_args_with_colons)
+//
+//    <T>::c<V,W>
+//    <T as Foo>::c(V) -> W
+private meta qualified_path ::= '<' type [ AS trait_ref ] '>' '::' <<param>>
+
+// Path semantically constrained to resolve to a trait
+trait_ref ::= path_generic_args_without_colons
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // Items
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -380,7 +446,6 @@ pat ::= pat_wild
       | pat_range
       | pat_uniq
       | pat_qual_path
-   /* | SHL ty_sum maybe_as_trait_ref '>' MOD_SEP ident maybe_as_trait_ref '>' MOD_SEP ident */
 
 pat_qual_path   ::= <<qualified_path path_without_types>>
 pat_uniq        ::= BOX pat
@@ -399,6 +464,7 @@ pat_struct      ::= path_expr '{' pat_struct_fields '}'
 pat_enum        ::= path_expr '(' ( '..' | pats ) ')'
 
 pat_range ::= lit_or_path [ '...' lit_or_path ]
+private lit_or_path ::= '-'? lit | path_expr
 
 pat_tup ::= '(' pats? ')'
 pat_vec ::= '[' pat_vec_elts ']'
@@ -410,17 +476,6 @@ pat_ref ::= '&' MUT? pat
 
 pat_wild ::= '_'
 pat_binding ::= binding_mode? IDENTIFIER !'...' !'::'
-
-private lit_or_path ::= path_expr | lit | '-' lit
-
-generic_args ::= generic_args_inner
-colon_generic_args ::= '::' generic_args_inner { elementType = generic_args }
-
-private generic_args_inner ::= '<' !'=' ( <<list_element (LIFETIME)>>*
-                                          <<list_element (!(IDENTIFIER '=') type)>>*
-                                          <<list_element assoc_type_binding>>*) '>' { pin = 2 }
-
-assoc_type_binding  ::= IDENTIFIER '=' type
 
 private pat_struct_fields ::= (pat_field ',') + '..'
                             | <<comma_separated_list pat_field>>
@@ -658,9 +713,6 @@ trait_method_member ::= outer_attr* fn_header method_decl_parameters ret_type? w
 }
 
 
-trait_ref ::= path_generic_args_without_colons
-
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -755,63 +807,6 @@ type_item ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params? where_clause? '='
 }
 
 type_qual_path ::= <<qualified_path path_without_types>>
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Paths
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-// TODO(kudinkin, matklad):
-//
-//    In rustc parser, self/super are treated as identifiers only if immediately followed by `::`
-//    Thus, these are valid paths:
-//
-//      `foo :: bar ::baz`
-//      `self:: super::foo ::baz`
-//
-//  and these are invalid ones
-//
-//      `self ::foo::bar`
-//      `self::super ::foo`
-//
-// We parse all the above paths as valid.
-
-private path_ident ::= IDENTIFIER | SELF | SUPER | CSELF
-fake path ::= (path '::')? path_ident path_generics?
-
-private full_path ::= path_start path_segment*
-
-path_start ::= '::'?  path_ident path_generics? { elementType = path }
-left path_segment ::= '::' path_ident path_generics? { elementType = path }
-
-private path_generics ::= <<isPathModeColons>> colon_generic_args
-                        | <<isPathModeNoColons>> ( generic_args | path_parameters ret_type? ) // Fn(i32) -> i32 sugar
-
-
-// Paths (with `::` separating `generic_args` from actual name) used in expression contexts:
-//    a::b::<T,U>::c
-path_generic_args_without_colons ::= <<withPathModeNoColons full_path>> { elementType = path }
-
-// Paths (w/o types and therefore `generic_args`, containing only identifiers, `self`, etc.):
-//    a::b::c
-path_without_types ::= <<withPathModeNoTypes full_path>> { elementType = path }
-
-// Paths (w/o `::` separating `generic_args` from actual name) used in type contexts:
-//    a::b<T,U>::c<V,W>
-//    a::b<T,U>::c(V) -> W
-//    a::b<T,U>::c(V)
-path_generic_args_with_colons ::= <<withPathModeColons full_path>> { elementType = path }
-
-//
-// Qualified paths
-//
-//    <TYPE [as TRAIT_REF]> :: (path_without_types | path_generic_args_without_colons | path_generic_args_with_colons)
-//
-//    <T>::c<V,W>
-//    <T as Foo>::c(V) -> W
-//
-private meta qualified_path ::= '<' type [ AS trait_ref ] '>' '::' <<param>>
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Expressions
@@ -1119,9 +1114,7 @@ private lit ::= ( STRING_LITERAL
                 | RAW_BYTE_STRING_LITERAL
                 | INTEGER_LITERAL
                 | FLOAT_LITERAL
-                | bool_lit )
-
-private bool_lit ::= FALSE | TRUE
+                | FALSE | TRUE )
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
