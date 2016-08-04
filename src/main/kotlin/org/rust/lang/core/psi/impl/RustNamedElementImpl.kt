@@ -2,6 +2,7 @@ package org.rust.lang.core.psi.impl
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustTokenElementTypes
 
@@ -13,11 +14,9 @@ abstract class RustNamedElementImpl(node: ASTNode)   : RustCompositeElementImpl(
 
     override fun getName(): String? = nameElement?.text
 
-    /**
-     * NOTE: This is orphaned purposefully
-     */
     override fun setName(name: String): PsiElement? {
-        throw UnsupportedOperationException()
+        nameElement?.replace(RustElementFactory.createIdentifier(project, name))
+        return this
     }
 
     override fun getNavigationElement(): PsiElement = nameElement ?: this

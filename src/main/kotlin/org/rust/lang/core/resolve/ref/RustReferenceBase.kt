@@ -4,12 +4,15 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.impl.source.resolve.ResolveCache
-import org.rust.lang.core.psi.RustCompositeElement
+import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustReferenceElement
+import org.rust.lang.core.psi.RustTokenElementTypes
+import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.parentRelativeRange
 import org.rust.lang.core.resolve.RustResolveEngine
 
-abstract class RustReferenceBase<T : RustCompositeElement>(
+abstract class RustReferenceBase<T : RustReferenceElement>(
     element: T
 ) : PsiReferenceBase<T>(element)
   , RustReference {
@@ -40,6 +43,11 @@ abstract class RustReferenceBase<T : RustCompositeElement>(
         return element.referenceAnchor.parentRelativeRange
     }
 
+    override fun handleElementRename(newName: String): PsiElement {
+        doRename(element.referenceNameElement, newName)
+        return element
+    }
+
     val cache = ResolveCache.getInstance(element.project)
 
     private fun cache(block: (RustReferenceBase<T>, Boolean) -> RustResolveEngine.ResolveResult): RustResolveEngine.ResolveResult =
@@ -49,4 +57,11 @@ abstract class RustReferenceBase<T : RustCompositeElement>(
             false /* needToPreventRecursion = */ ,
             false /* incompleteCode = */
         ) ?: RustResolveEngine.ResolveResult.Unresolved
+
+    companion object {
+        @JvmStatic protected fun doRename(identifier: PsiElement, newName: String) {
+            check(identifier.elementType == RustTokenElementTypes.IDENTIFIER)
+            identifier.replace(RustElementFactory.createIdentifier(identifier.project, newName))
+        }
+    }
 }

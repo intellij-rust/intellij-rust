@@ -1,6 +1,7 @@
 package org.rust.lang.core.psi
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.util.childOfType
@@ -34,6 +35,9 @@ object RustElementFactory {
             .joinToString("\n\n")
         return createFromText(project, "impl T for S { $methods }")
     }
+
+    fun createIdentifier(project: Project, name: String): PsiElement =
+        createFromText<RustModDeclItemElement>(project, "mod $name;")!!.identifier
 
     private inline fun <reified T : RustCompositeElement> createFromText(project: Project, code: String): T? =
         PsiFileFactory.getInstance(project)

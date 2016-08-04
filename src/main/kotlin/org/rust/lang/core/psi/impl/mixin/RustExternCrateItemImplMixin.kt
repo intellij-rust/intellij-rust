@@ -1,6 +1,7 @@
 package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustExternCrateItemElement
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
@@ -11,6 +12,8 @@ abstract class RustExternCrateItemImplMixin(node: ASTNode) : RustNamedElementImp
                                                            , RustExternCrateItemElement {
 
     override fun getReference(): RustReference = RustExternCrateReferenceImpl(this)
+
+    override val referenceNameElement: PsiElement get() = identifier
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublicNonStubbed(this)
 }

@@ -2,6 +2,7 @@ package org.rust.lang.core.psi.impl.mixin
 
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
@@ -24,6 +25,8 @@ abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RustModDec
 
     override fun getReference(): RustReference = RustModReferenceImpl(this)
 
+    override val referenceNameElement: PsiElement get() = identifier
+
     override fun getIcon(flags: Int): Icon? = iconWithVisibility(flags, RustIcons.MODULE)
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
@@ -31,7 +34,7 @@ abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RustModDec
 }
 
 fun RustModDeclItemElement.getOrCreateModuleFile(): PsiFile? {
-    return  reference!!.resolve()?.let { it.containingFile } ?:
+    return  reference.resolve()?.containingFile ?:
             containingMod?.ownedDirectory?.createFile(suggestChildFileName ?: return null)
 }
 

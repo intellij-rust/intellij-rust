@@ -16,4 +16,9 @@ class RustFieldExprReferenceImpl(
 
     override fun resolveVerbose(): RustResolveEngine.ResolveResult =
         RustResolveEngine.resolveFieldExpr(element)
+
+    override fun handleElementRename(newName: String): PsiElement {
+        element.fieldId.identifier?.let { doRename(it, newName) }
+        return element
+    }
 }

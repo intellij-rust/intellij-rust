@@ -515,7 +515,8 @@ alias ::= AS IDENTIFIER
 
 extern_crate_item ::= attrs_and_vis EXTERN CRATE IDENTIFIER alias? ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+  implements = [ "org.rust.lang.core.psi.RustReferenceElement"
+                 "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustItemElement" ]
 }
 
@@ -525,7 +526,8 @@ extern_crate_item ::= attrs_and_vis EXTERN CRATE IDENTIFIER alias? ';' {
 
 mod_decl_item ::= attrs_and_vis MOD IDENTIFIER ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+  implements = [ "org.rust.lang.core.psi.RustReferenceElement"
+                 "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustItemElement" ]
   stubClass = "org.rust.lang.core.stubs.elements.RustModDeclElementItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
