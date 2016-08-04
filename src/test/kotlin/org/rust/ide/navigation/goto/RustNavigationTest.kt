@@ -5,7 +5,7 @@ import org.rust.lang.RustLanguage
 import org.rust.lang.RustTestCaseBase
 
 class RustNavigationTest : RustTestCaseBase() {
-    override val dataPath = "org/rust/ide/navigation/fixtures"
+    override val dataPath = "org/rust/ide/navigation/goto/fixtures"
 
     fun testGotoSuper() = checkByFile {
         val handler = CodeInsightActions.GOTO_SUPER.forLanguage(RustLanguage)
