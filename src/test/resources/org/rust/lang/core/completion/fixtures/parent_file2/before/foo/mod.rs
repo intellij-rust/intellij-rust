@@ -1,0 +1,2 @@
+use Spam::Qu<caret>;
+

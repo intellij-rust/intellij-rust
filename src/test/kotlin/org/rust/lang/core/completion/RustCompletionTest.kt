@@ -31,4 +31,8 @@ class RustCompletionTest : RustCompletionTestBase() {
         executeSoloCompletion()
     }
 
+    fun testParentFile2() = checkByDirectory {
+        openFileInEditor("foo/mod.rs")
+        executeSoloCompletion()
+    }
 }

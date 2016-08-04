@@ -28,7 +28,7 @@ class RustModulesIndex : StringStubIndexExtension<RustModDeclItemElement>() {
             StubIndex.getInstance().processElements(
                 KEY, key, project, GlobalSearchScope.allScope(project), RustModDeclItemElement::class.java
             ) { modDecl ->
-                if (modDecl.reference?.resolve() == mod.originalFile) {
+                if (modDecl.reference?.resolve() == mod) {
                     result = modDecl.containingMod
                     false
                 } else {

@@ -32,12 +32,15 @@ class RustFile(
 
     override fun getFileType(): FileType = RustFileType
 
-    override val `super`: RustMod? get() = CachedValuesManager.getCachedValue(this, CachedValueProvider {
-        CachedValueProvider.Result.create(
-            RustModulesIndex.getSuperFor(this),
-            PsiModificationTracker.MODIFICATION_COUNT
-        )
-    })
+    override val `super`: RustMod? get() {
+        val original = this.originalFile as RustFile
+        return CachedValuesManager.getCachedValue(original, CachedValueProvider {
+            CachedValueProvider.Result.create(
+                RustModulesIndex.getSuperFor(original),
+                PsiModificationTracker.MODIFICATION_COUNT
+            )
+        })
+    }
 
     override val modName: String? = if (name != RustMod.MOD_RS) FileUtil.getNameWithoutExtension(name) else parent?.name
 
