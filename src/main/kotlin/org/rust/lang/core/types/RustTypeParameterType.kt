@@ -1,12 +1,13 @@
 package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.util.trait
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 
 class RustTypeParameterType(val parameter: RustTypeParamElement) : RustType {
 
     override val traits: Sequence<RustTraitItemElement>
-        get() = parameter.bounds.mapNotNull { it.bound.traitRef?.path?.reference?.resolve() as? RustTraitItemElement }
+        get() = parameter.bounds.mapNotNull { it.bound.traitRef?.trait }
 
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitTypeParameter(this)
 

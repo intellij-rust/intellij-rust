@@ -16,6 +16,7 @@ import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
 import org.rust.lang.core.psi.impl.mixin.isPathAttributeRequired
 import org.rust.lang.core.psi.impl.mixin.pathAttribute
 import org.rust.lang.core.psi.util.module
+import org.rust.lang.core.psi.util.trait
 
 class RustItemsAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
@@ -53,7 +54,7 @@ class RustItemsAnnotator : Annotator {
     }
 
     private fun checkImpl(holder: AnnotationHolder, impl: RustImplItemElement) {
-        val trait = impl.traitRef?.path?.reference?.resolve() as? RustTraitItemElement ?: return
+        val trait = impl.traitRef?.trait ?: return
         val implBody = impl.implBody ?: return
         val implHeaderTextRange = TextRange.create(
             impl.textRange.startOffset,
