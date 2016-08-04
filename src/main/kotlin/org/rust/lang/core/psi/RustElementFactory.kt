@@ -26,6 +26,9 @@ object RustElementFactory {
         return createFromText(project, "fn main() { S { $fields }; }")
     }
 
+    fun createBlockExpr(project: Project, body: String): RustBlockExprElement? =
+        createFromText(project, "fn main() { { $body } }")
+
     fun createImplBody(project: Project, traitMethods: List<RustTraitMethodMemberElement>): RustImplBodyElement? {
         val m = traitMethods.first()
         m.copy()
