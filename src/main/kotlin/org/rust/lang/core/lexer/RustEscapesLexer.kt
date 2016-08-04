@@ -97,7 +97,7 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
             testCodepointRange(start + 2, end, if (extended) 0xff else 0x7f)
 
     private fun isValidUnicodeEscape(start: Int, end: Int): Boolean =
-        // FIXME(jajakobyly): I'm not sure if this max codepoint is correct.
+        // FIXME(mkaput): I'm not sure if this max codepoint is correct.
         // I've found it by playing with Rust Playground, so it matches rustc behaviour, but it has
         // nothing to do with the Rust Reference (I've expected 0x7fffff or something similar).
         end - start in UNICODE_ESCAPE_MIN_LENGTH..UNICODE_ESCAPE_MAX_LENGTH &&

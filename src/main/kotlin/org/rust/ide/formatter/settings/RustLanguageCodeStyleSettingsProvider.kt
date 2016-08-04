@@ -79,7 +79,7 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
             RIGHT_MARGIN = 100
             ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
             initIndentOptions().apply {
-                // FIXME(jajakobyly): It's a hack
+                // FIXME(mkaput): It's a hack
                 // Nobody else does this and still somehow achieve similar effect
                 CONTINUATION_INDENT_SIZE = INDENT_SIZE
             }

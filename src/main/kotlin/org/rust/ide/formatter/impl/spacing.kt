@@ -36,7 +36,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         // Beware of comments between blocks!
 
         //== some special operators
-        // FIXME(jajakobyly): Doesn't work well with comments
+        // FIXME(mkaput): Doesn't work well with comments
         .afterInside(COMMA, ts(BLOCK_FIELDS, ENUM_BODY)).spacing(1, 1, 1, true, 1)
         .afterInside(COMMA, ts(BLOCK_FIELDS, STRUCT_EXPR_BODY)).spacing(1, 1, 0, true, 1)
         .after(COMMA).spacing(1, 1, 0, true, 0)

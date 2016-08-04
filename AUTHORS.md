@@ -11,7 +11,7 @@ IntelliJ would never see support for the Rust programming language without these
   * [Jihui Zheng](https://github.com/zjhmale)
   * [Justin Graham](https://github.com/Falkenfighter)
   * [Marco](https://github.com/mfarrugi)
-  * [Marek Kaput](https://github.com/jajakobyly)
+  * [Marek Kaput](https://github.com/mkaput)
   * [Nikita Ofitserov](https://github.com/himikof)
   * [Pavel Chernykh](https://github.com/pavel-v-chernykh)
   * [Ronald Kinard](https://github.com/Furyhunter)
