@@ -277,6 +277,11 @@
                 description="Move this module to a dedicated directory">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
+
+        <action class="org.rust.ide.actions.RustFmtFileAction" id="Rust.CargoFmtFile"  text="Reformat file with rustfmt"
+                description="Reformat current file with rustfmt">
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+        </action>
     </actions>
 
 </idea-plugin>

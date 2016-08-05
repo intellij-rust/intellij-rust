@@ -4,8 +4,9 @@ environment:
 install:
   - curl -sSf -o rustup-init.exe https://dev-static.rust-lang.org/rustup/dist/i686-pc-windows-gnu/rustup-init.exe
   - rustup-init.exe -y
-  - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin 
+  - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - rustup default stable-x86_64-pc-windows-msvc
+  - cargo install rustfmt
 
 build_script:
   - gradlew.bat assemble testClasses --no-daemon

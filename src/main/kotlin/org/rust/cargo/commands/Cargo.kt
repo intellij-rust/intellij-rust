@@ -60,6 +60,8 @@ class Cargo(
         directory.refresh(/* async = */ false, /* recursive = */ true)
     }
 
+    fun reformatFile(filePath: String, listener: ProcessListener? = null) = rustfmtCommandline(filePath).execute(listener)
+
     fun generalCommand(command: String, additionalArguments: List<String> = emptyList(), environmentVariables: Map<String, String> = emptyMap()): GeneralCommandLine =
         GeneralCommandLine(pathToCargoExecutable)
             .withWorkDirectory(projectDirectory)
@@ -70,13 +72,16 @@ class Cargo(
 
     private val metadataCommandline: GeneralCommandLine get() = generalCommand("metadata", listOf("--verbose"))
 
+    private fun rustfmtCommandline(filePath: String) =
+        generalCommand("fmt").withParameters("--", "--write-mode=overwrite", "--skip-children", filePath)
+
     private fun GeneralCommandLine.execute(listener: ProcessListener? = null): ProcessOutput {
         val process = createProcess()
         val handler = CapturingProcessHandler(process, Charsets.UTF_8, commandLineString)
 
         listener?.let { handler.addProcessListener(it) }
 
-        val output =  handler.runProcess()
+        val output = handler.runProcess()
         if (output.exitCode != 0) {
             throw ExecutionException("""
             Cargo execution failed (exit code ${output.exitCode}).
