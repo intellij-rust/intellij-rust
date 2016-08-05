@@ -9,7 +9,10 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.RustFileElementType
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.types.*
+import org.rust.lang.core.types.RustStructOrEnumTypeBase
+import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.RustTypeParameterType
+import org.rust.lang.core.types.RustUnknownType
 import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
 import org.rust.lang.core.types.util.bounds
@@ -110,6 +113,9 @@ object RustImplIndex  {
     }
 
     private fun findNonInherentImplsForInternal(target: RustUnresolvedType, project: Project): Sequence<RustImplItemElement> {
+        if (target is RustUnknownType)
+            return emptySequence()
+
         val found = arrayListOf<RustImplItemElement>()
 
         StubIndex
