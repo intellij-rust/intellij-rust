@@ -145,15 +145,17 @@ object RustImplIndex  {
                             /**
                              * Compare hole-containing types
                              */
-                            override fun visitPathType(type: RustUnresolvedPathType): Boolean =
-                                lop is RustUnresolvedPathType
+                            override fun visitPathType(type: RustUnresolvedPathType): Boolean {
+                                val lop = lop
+                                return lop is RustUnresolvedPathType && lop.path.part == type.path.part
+                            }
                         }
                     ) && (hashCode() == other.hashCode() || throw Exception("WTF"))
 
             override fun hashCode(): Int =
                 type.accept(
                     object : RustHashCodeComputingUnresolvedTypeVisitor() {
-                        override fun visitPathType(type: RustUnresolvedPathType): Int = 0xDEADBAE
+                        override fun visitPathType(type: RustUnresolvedPathType): Int = type.path.part.hashCode()
                     }
                 )
 
