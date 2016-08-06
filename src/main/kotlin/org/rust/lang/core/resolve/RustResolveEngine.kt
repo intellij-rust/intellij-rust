@@ -298,9 +298,10 @@ private class ScopeEntry private constructor(
 
         fun of(element: RustNamedElement): ScopeEntry? = element.name?.let { ScopeEntry.of(it, element) }
 
-        fun lazy(name: String?, thunk: () -> RustNamedElement?): ScopeEntry? = name?.let {
-            ScopeEntry(name, lazy(thunk))
-        }
+        fun lazy(name: String?, thunk: () -> RustNamedElement?): ScopeEntry? =
+            name?.let {
+                ScopeEntry(name, lazy(thunk))
+            }
     }
 
     override fun toString(): String {
