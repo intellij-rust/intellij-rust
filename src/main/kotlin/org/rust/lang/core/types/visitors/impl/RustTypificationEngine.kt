@@ -186,6 +186,7 @@ private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedT
         o.path?.let {
             (   RustIntegerType.deduceBySuffix(it.text) ?:
                 RustFloatType.deduceBySuffix(it.text)   ?:
+                RustBooleanType.deduce(it.text)         ?:
                 RustUnresolvedPathType(it)
                 ) as RustUnresolvedType
         } ?: RustUnknownType
