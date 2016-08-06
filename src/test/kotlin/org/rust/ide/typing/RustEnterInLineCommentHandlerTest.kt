@@ -2,7 +2,7 @@ package org.rust.ide.typing
 
 import org.rust.lang.RustTestCaseBase
 
-class RustEnterHandlerTest : RustTestCaseBase() {
+class RustEnterInLineCommentHandlerTest : RustTestCaseBase() {
 
     override val dataPath = "org/rust/ide/typing/fixtures"
 
