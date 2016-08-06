@@ -59,7 +59,7 @@ class RustCollectionElementNameMacro : MacroBase("rustCollectionElementName", "r
             params.singleOrNull()?.calculateResult(context)?.toString()
 
         private fun unpluralize(name: String): String? {
-            for (prefix in PREFIXES) {
+            for (prefix in SUFFIXES) {
                 if (name.endsWith(prefix)) {
                     return name.substring(0, name.length - prefix.length)
                 }
@@ -67,6 +67,6 @@ class RustCollectionElementNameMacro : MacroBase("rustCollectionElementName", "r
             return StringUtil.unpluralize(name)
         }
 
-        private val PREFIXES = arrayOf("_list", "_set")
+        private val SUFFIXES = arrayOf("_list", "_set")
     }
 }

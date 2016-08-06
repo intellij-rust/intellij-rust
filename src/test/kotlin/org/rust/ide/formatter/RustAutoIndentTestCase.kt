@@ -1,8 +1,8 @@
 package org.rust.ide.formatter
 
-import org.rust.lang.RustTestCaseBase
+import org.rust.ide.typing.RustTypingTestCaseBase
 
-class RustAutoIndentTestCase : RustTestCaseBase() {
+class RustAutoIndentTestCase : RustTypingTestCaseBase() {
     override val dataPath = "org/rust/ide/formatter/fixtures/auto_indent"
 
     fun testFn() = doTest()
@@ -22,8 +22,4 @@ class RustAutoIndentTestCase : RustTestCaseBase() {
     fun testExpr3() = doTest()
 
     fun testIssue475() = doTest('(')    // https://github.com/intellij-rust/intellij-rust/issues/475
-
-    private fun doTest(c: Char = '\n') = checkByFile {
-        myFixture.type(c)
-    }
 }

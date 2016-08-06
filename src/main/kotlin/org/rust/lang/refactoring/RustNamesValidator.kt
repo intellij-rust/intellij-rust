@@ -11,13 +11,13 @@ class RustNamesValidator : NamesValidator {
     override fun isKeyword(name: String, project: Project?): Boolean =
         isKeyword(name, project, true)
 
-    fun isKeyword(name: String, project: Project?, withPrimitives: Boolean): Boolean =
+    fun isKeyword(name: String, @Suppress("UNUSED_PARAMETER") project: Project?, withPrimitives: Boolean): Boolean =
         getLexerType(name) is RustKeywordTokenType || (withPrimitives && name in PrimitiveTypes)
 
     override fun isIdentifier(name: String, project: Project?): Boolean =
         isIdentifier(name, project, true)
 
-    fun isIdentifier(name: String, project: Project?, withPrimitives: Boolean): Boolean =
+    fun isIdentifier(name: String, @Suppress("UNUSED_PARAMETER") project: Project?, withPrimitives: Boolean): Boolean =
         if (withPrimitives) {
             getLexerType(name) == IDENTIFIER && name !in PrimitiveTypes
         } else {

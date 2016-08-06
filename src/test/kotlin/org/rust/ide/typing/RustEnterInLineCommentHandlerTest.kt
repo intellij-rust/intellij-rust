@@ -1,16 +1,7 @@
 package org.rust.ide.typing
 
-import org.rust.lang.RustTestCaseBase
-
-class RustEnterHandlerTest : RustTestCaseBase() {
-
+class RustEnterInLineCommentHandlerTest : RustTypingTestCaseBase() {
     override val dataPath = "org/rust/ide/typing/fixtures"
-
-    private fun doTest() {
-        myFixture.configureByFile(fileName)
-        myFixture.type('\n')
-        myFixture.checkResultByFile(fileName.replace(".rs", "_after.rs"), true)
-    }
 
     fun testBeforeLineComment() = doTest()
     fun testInLineComment() = doTest()
@@ -24,6 +15,11 @@ class RustEnterHandlerTest : RustTestCaseBase() {
     fun testDirectlyAfterToken() = doTest()
     fun testInsideToken() = doTest()
 
+    fun testInsideCommentDirectlyBeforeNextToken() = doTest()
+    fun testInsideCommentInsideToken() = doTest()
+
     fun testAtFileBeginning() = doTest()
     fun testInsideStringLiteral() = doTest()
+
+    fun testIssue578() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/578
 }
