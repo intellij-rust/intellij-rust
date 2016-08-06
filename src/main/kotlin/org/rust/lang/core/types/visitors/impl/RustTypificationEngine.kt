@@ -164,7 +164,7 @@ private class RustItemTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 
     override fun visitTraitItem(o: RustTraitItemElement) = set {
-        RustTraitObjectType(o)
+        RustTraitType(o)
     }
 }
 

@@ -18,7 +18,7 @@ open class RustHashCodeComputingTypeVisitor
 
     override fun visitTypeParameter(type: RustTypeParameterType): Int = type.parameter.hashCode() * 13859 + 9419
 
-    override fun visitTraitObject(type: RustTraitObjectType): Int = type.trait.hashCode() * 12757 + 10061
+    override fun visitTrait(type: RustTraitType): Int = type.trait.hashCode() * 12757 + 10061
 
     override fun visitTupleType(type: RustTupleType): Int =
         type.types.fold(0, { h, ty -> h * 8741 + visit(ty) }) + 17387

@@ -9,9 +9,9 @@ import org.rust.lang.core.types.visitors.RustTypeVisitor
  * Though you use the same path to denote both traits and trait objects,
  * only the latter are types.
  */
-class RustTraitObjectType(val trait: RustTraitItemElement) : RustTypeBase() {
+class RustTraitType(val trait: RustTraitItemElement) : RustTypeBase() {
 
-    override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitTraitObject(this)
+    override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitTrait(this)
 
     override fun toString(): String = trait.name ?: "<anonymous>"
 }

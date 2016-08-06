@@ -63,9 +63,9 @@ open class RustEqualityTypeVisitor(override var lop: RustType)
         return lop.parameter === type.parameter
     }
 
-    override fun visitTraitObject(type: RustTraitObjectType): Boolean {
+    override fun visitTrait(type: RustTraitType): Boolean {
         val lop = lop
-        if (lop !is RustTraitObjectType)
+        if (lop !is RustTraitType)
             return false
 
         return lop.trait == type.trait

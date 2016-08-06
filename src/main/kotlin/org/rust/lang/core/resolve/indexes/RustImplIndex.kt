@@ -9,10 +9,8 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.RustFileElementType
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.types.RustStructOrEnumTypeBase
-import org.rust.lang.core.types.RustType
-import org.rust.lang.core.types.RustTypeParameterType
-import org.rust.lang.core.types.RustUnknownType
+import org.rust.lang.core.psi.util.trait
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
 import org.rust.lang.core.types.util.bounds
@@ -42,14 +40,16 @@ object RustImplIndex  {
             .flatMap { it.traitBody.traitMethodMemberList.orEmpty().asSequence() }
 
     fun findTraitsImplementedFor(target: RustType, project: Project): Sequence<RustTraitItemElement> {
-        var traitRefs = emptySequence<RustTraitRefElement>()
+        var traits = emptySequence<RustTraitItemElement>()
 
         if (target is RustTypeParameterType)
-            traitRefs += target.parameter.bounds.mapNotNull { it.bound.traitRef }
+            traits += target.parameter.bounds.mapNotNull { it.bound.traitRef?.trait }
+        else if (target is RustTraitType)
+            traits += sequenceOf(target.trait)
         else
-            traitRefs += findImplsFor(target, project).mapNotNull { it.traitRef}
+            traits += findImplsFor(target, project).mapNotNull { it.traitRef?.trait }
 
-        return traitRefs.mapNotNull { it.path.reference.resolve() as? RustTraitItemElement }
+        return traits
     }
 
 
