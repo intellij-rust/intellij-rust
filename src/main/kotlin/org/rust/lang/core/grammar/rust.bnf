@@ -494,6 +494,9 @@ extern_crate_item ::= attrs_and_vis EXTERN CRATE IDENTIFIER alias? ';' {
   implements = [ "org.rust.lang.core.psi.RustReferenceElement"
                  "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustItemElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustExternCrateItemImplMixin"
+  stubClass = "org.rust.lang.core.stubs.elements.RustExternCrateItemElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -526,6 +529,9 @@ mod_item ::= attrs_and_vis MOD IDENTIFIER '{' inner_attr* items '}' {
 foreign_mod_item ::= attrs_and_vis extern_abi '{' inner_attr* foreign_decl* '}' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustItemElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustForeignModItemImplMixin"
+  stubClass = "org.rust.lang.core.stubs.elements.RustForeignModItemElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
 private foreign_decl ::= foreign_static_decl | foreign_fn_decl
