@@ -24,6 +24,11 @@ class RustEnterHandlerTest : RustTestCaseBase() {
     fun testDirectlyAfterToken() = doTest()
     fun testInsideToken() = doTest()
 
+    fun testInsideCommentDirectlyBeforeNextToken() = doTest()
+    fun testInsideCommentInsideToken() = doTest()
+
     fun testAtFileBeginning() = doTest()
     fun testInsideStringLiteral() = doTest()
+
+    fun testIssue578() = doTest()
 }
