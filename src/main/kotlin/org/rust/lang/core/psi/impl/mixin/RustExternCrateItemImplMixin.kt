@@ -1,6 +1,7 @@
 package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RustExternCrateItemElement
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
@@ -20,6 +21,5 @@ abstract class RustExternCrateItemImplMixin : RustStubbedNamedElementImpl<RustEx
 
     override val referenceNameElement: PsiElement get() = identifier
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublicNonStubbed(this)
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
 }

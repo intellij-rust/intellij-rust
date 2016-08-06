@@ -31,6 +31,9 @@ class RustDecayTypeVisitor : RustTypeVisitor<RustUnresolvedType> {
     override fun visitFunctionType(type: RustFunctionType): RustUnresolvedType =
         RustUnresolvedFunctionType(visitTypeList(type.paramTypes).toList(), visit(type.retType))
 
+    override fun visitTraitObject(type: RustTraitObjectType): RustUnresolvedType =
+        RustUnresolvedPathType(type.trait.canonicalCratePath)
+
     override fun visitUnknown(type: RustUnknownType): RustUnresolvedType = type
 
     override fun visitUnitType(type: RustUnitType): RustUnresolvedType = type

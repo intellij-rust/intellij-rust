@@ -246,18 +246,20 @@ object RustResolveEngine {
     fun declarations(scope: RustResolveScope, pivot: RustCompositeElement? = null): Sequence<RustNamedElement> =
         declarations(scope, Context(pivot)).mapNotNull { it.element }
 
-    fun enumerateScopesFor(ref: RustQualifiedReferenceElement): Sequence<RustResolveScope> {
-        if (ref.isRelativeToCrateRoot) {
-            return listOfNotNull(RustResolveUtil.getCrateRootModFor(ref)).asSequence()
+    fun enumerateScopesFor(ref: RustQualifiedPath, pivot: RustCompositeElement): Sequence<RustResolveScope> =
+        if (ref.fullyQualified) {
+            listOfNotNull(RustResolveUtil.getCrateRootModFor(pivot)).asSequence()
+        } else {
+            enumerateScopesFor(pivot)
         }
 
-        return generateSequence(RustResolveUtil.getResolveScopeFor(ref)) { parent ->
+    fun enumerateScopesFor(pivot: RustCompositeElement): Sequence<RustResolveScope> =
+        generateSequence(RustResolveUtil.getResolveScopeFor(pivot)) { parent ->
             if (parent is RustModItemElement)
                 null
             else
                 RustResolveUtil.getResolveScopeFor(parent)
         }
-    }
 }
 
 
@@ -385,7 +387,7 @@ private class RustScopeVisitor(
 
     override fun visitTraitItem(o: RustTraitItemElement) = set {
         if (isContextLocalTo(o)) {
-            o.typeParams.scopeEntries + ScopeEntry.of(RustQualifiedReferenceElement.SELF_TYPE_NAME, o)
+            o.typeParams.scopeEntries + ScopeEntry.of(RustQualifiedReferenceElement.SELF_TYPE_REF, o)
         }
 
         else

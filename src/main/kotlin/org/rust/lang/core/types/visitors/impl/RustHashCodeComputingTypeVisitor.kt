@@ -10,7 +10,6 @@ import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 open class RustHashCodeComputingTypeVisitor
     : RustHashCodeComputingTypeVisitorBase()
     , RustTypeVisitor<Int> {
-
     protected fun visit(type: RustType): Int = type.accept(this)
 
     override fun visitStruct(type: RustStructType): Int = type.item.hashCode() * 10067 + 9631
@@ -18,6 +17,8 @@ open class RustHashCodeComputingTypeVisitor
     override fun visitEnum(type: RustEnumType): Int = type.item.hashCode() * 12289 + 9293
 
     override fun visitTypeParameter(type: RustTypeParameterType): Int = type.parameter.hashCode() * 13859 + 9419
+
+    override fun visitTraitObject(type: RustTraitObjectType): Int = type.trait.hashCode() * 12757 + 10061
 
     override fun visitTupleType(type: RustTupleType): Int =
         type.types.fold(0, { h, ty -> h * 8741 + visit(ty) }) + 17387
