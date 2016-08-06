@@ -4,7 +4,7 @@ import org.rust.lang.core.types.unresolved.RustUnresolvedTypeBase
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 
-object RustCharacterType : RustUnresolvedTypeBase(), RustType {
+object RustCharacterType : RustPrimitiveTypeBase() {
 
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitChar(this)
 

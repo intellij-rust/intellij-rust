@@ -36,22 +36,8 @@ object RustImplIndex  {
         findImplsFor(target, project)
             .flatMap { it.implBody?.implMethodMemberList.orEmpty().asSequence() } +
 
-        findTraitsImplementedFor(target, project)
+        target.getTraitsImplementedIn(project)
             .flatMap { it.traitBody.traitMethodMemberList.orEmpty().asSequence() }
-
-    fun findTraitsImplementedFor(target: RustType, project: Project): Sequence<RustTraitItemElement> {
-        var traits = emptySequence<RustTraitItemElement>()
-
-        if (target is RustTypeParameterType)
-            traits += target.parameter.bounds.mapNotNull { it.bound.traitRef?.trait }
-        else if (target is RustTraitType)
-            traits += sequenceOf(target.trait)
-        else
-            traits += findImplsFor(target, project).mapNotNull { it.traitRef?.trait }
-
-        return traits
-    }
-
 
     fun findImplsFor(target: RustType, project: Project): Sequence<RustImplItemElement> {
         var inherentImpls = emptySequence<RustImplItemElement>()

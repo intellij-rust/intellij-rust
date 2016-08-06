@@ -6,7 +6,7 @@ import org.rust.lang.core.types.unresolved.RustUnresolvedTypeBase
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 
-class RustFloatType(val kind: Kind) : RustUnresolvedTypeBase(), RustType {
+class RustFloatType(val kind: Kind) : RustPrimitiveTypeBase() {
 
     companion object {
         fun deduceBySuffix(text: String): RustFloatType? =

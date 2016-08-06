@@ -1,10 +1,19 @@
 package org.rust.lang.core.types
 
+import com.intellij.openapi.project.Project
+import org.rust.lang.core.psi.RustFnElement
+import org.rust.lang.core.psi.RustTraitItemElement
 import org.rust.lang.core.types.unresolved.RustUnresolvedTypeBase
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 
 object RustUnitType : RustUnresolvedTypeBase(), RustType {
+
+    override fun getTraitsImplementedIn(project: Project): Sequence<RustTraitItemElement> =
+        emptySequence()
+
+    override fun getNonStaticMethodsIn(project: Project): Sequence<RustFnElement> =
+        emptySequence()
 
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitUnitType(this)
 

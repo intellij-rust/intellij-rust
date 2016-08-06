@@ -144,19 +144,11 @@ object RustResolveEngine {
         val receiverType = call.expr.resolvedType
         val name = call.identifier.text
 
-        val methods =
-            RustImplIndex
-                .findNonStaticMethodsFor(receiverType, call.project) +
-
-            if (receiverType is RustReferenceType)
-                RustImplIndex
-                    .findNonStaticMethodsFor(receiverType.stripAllRefsIfAny(), call.project)
-            else
-                emptySequence()
-
-        val matching = methods.filter { it.name == name }
-
-        return ResolveResult.buildFrom(matching.asIterable())
+        return ResolveResult.buildFrom(
+            receiverType.getNonStaticMethodsIn(call.project)
+                .filter { it.name == name }
+                .asIterable()
+        )
     }
 
     //
