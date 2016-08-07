@@ -14,9 +14,12 @@ interface RustItemElement : RustVisibilityOwner, RustOuterAttributeOwner
  */
 val RustItemElement.canonicalCratePath: RustQualifiedPath
     get() =
-        RustQualifiedPath.create(
-            RustQualifiedPathPart.from(name),
-            qualifier = containingMod?.canonicalCratePath,
-            fullyQualified = true
-        )
+        if (this is RustMod)
+            (this as RustMod).canonicalCratePath!!
+        else
+            RustQualifiedPath.create(
+                RustQualifiedPathPart.from(name),
+                qualifier = containingMod?.canonicalCratePath,
+                fullyQualified = true
+            )
 
