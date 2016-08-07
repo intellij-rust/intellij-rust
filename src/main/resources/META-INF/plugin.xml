@@ -102,7 +102,8 @@
 
         <!-- Handlers -->
 
-        <enterHandlerDelegate implementation="org.rust.ide.typing.RustEnterInLineCommentHandler" id="RustEnterInComments"/>
+        <enterHandlerDelegate implementation="org.rust.ide.typing.RustEnterInLineCommentHandler" id="RustEnterInLineComments"/>
+        <enterHandlerDelegate implementation="org.rust.ide.typing.RustEnterInStringLiteralHandler" id="RustEnterInStringLiterals"/>
 
         <!-- Code Style -->
 
