@@ -136,13 +136,3 @@ interface RustQualifiedPath {
 
 fun RustQualifiedPath.unfold(): Sequence<RustQualifiedPathPart> =
     (qualifier?.unfold() ?: emptySequence()) + sequenceOf(part)
-
-
-
-fun RustQualifiedPath.stringize(): String {
-    val qualifier = qualifier
-    return if (qualifier == null)
-        if (fullyQualified) "::${part.name}" else "${part.name}"
-    else
-        "${qualifier.stringize()}::${part.name}"
-}

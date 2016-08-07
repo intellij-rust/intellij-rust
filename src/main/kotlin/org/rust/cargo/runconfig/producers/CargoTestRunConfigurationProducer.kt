@@ -13,7 +13,6 @@ import org.rust.cargo.util.cargoProject
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.symbols.stringize
 import org.rust.lang.core.resolve.util.RustResolveUtil
 
 class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandRunConfigurationType()) {
@@ -83,7 +82,9 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         else
             "Test ${mod.modName}"
 
-        val testPath = mod.canonicalCratePath?.stringize() ?: return null
+        // We need to chop off heading colon `::`, since `canonicalCratePath`
+        // always returns fully-qualified path
+        val testPath = mod.canonicalCratePath.toString().let { it.removePrefix("::") }
         val target = cargoTargetForElement(mod) ?: return null
         return if (mod.functions.any { it.isTest }) TestConfig(testName, testPath, target) else null
     }
