@@ -52,6 +52,15 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
         RustUnknownType
     }
 
+    override fun visitUnaryExpr(o: RustUnaryExprElement) = set {
+        if (o.box != null || o.mut != null)
+            RustUnknownType
+        else
+            o.expr?.let {
+                it.resolvedType.let { if (o.and != null) RustReferenceType(it) else it }
+            } ?: RustUnknownType
+    }
+
     override fun visitPathExpr(o: RustPathExprElement) = set {
         o.path.reference.resolve()?.let { RustTypificationEngine.typify(it) } ?: RustUnknownType
     }
