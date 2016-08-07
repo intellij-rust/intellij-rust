@@ -1,7 +1,7 @@
 package org.rust.ide.typing
 
 class RustEnterInLineCommentHandlerTest : RustTypingTestCaseBase() {
-    override val dataPath = "org/rust/ide/typing/fixtures"
+    override val dataPath = "org/rust/ide/typing/lineComment/fixtures"
 
     fun testBeforeLineComment() = doTest()
     fun testInLineComment() = doTest()
