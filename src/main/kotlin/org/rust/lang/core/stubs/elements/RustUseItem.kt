@@ -30,14 +30,5 @@ object RustUseItemStubElementType : RustStubElementType<RustUseItemElementStub, 
 
 }
 
-class RustUseItemElementStub : RustElementStub<RustUseItemElement> {
-
-    val alias: String?
-
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, aliased: String?)
-        : super(parent, elementType) {
-
-        alias = aliased
-    }
-
-}
+class RustUseItemElementStub(parent: StubElement<*>?, elementType: IStubElementType<*, *>, val alias: String?)
+    : RustElementStub<RustUseItemElement>(parent, elementType)
