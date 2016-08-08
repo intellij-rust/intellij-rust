@@ -55,10 +55,7 @@ class RustEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
                 return Result.DefaultSkipIndent
             }
 
-            else -> {
-                assert(false) { "unreachable, ${elementAtCaret.elementType}" }
-                return Result.Continue
-            }
+            else -> return Result.Continue
         }
     }
 
@@ -67,7 +64,7 @@ class RustEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
         val quotedHandler = RustQuoteHandler()
         val highlighter = (editor as EditorEx).highlighter
         val iterator = highlighter.createIterator(offset - 1)
-        return quotedHandler.isInsideLiteral(iterator)
+        return quotedHandler.isDeepInsideLiteral(iterator, offset)
             || iterator.tokenType in StringEscapesTokenTypes.STRING_LITERAL_ESCAPES
     }
 }

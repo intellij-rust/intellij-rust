@@ -4,6 +4,15 @@ import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RustLiteralTokenType
 
 class RustRawStringLiteralImpl(type: IElementType, text: CharSequence) : RustTextLiteralImplBase(type, text) {
+    private var _hashes: Int = 0
+
+    val hashes: Int
+        get() {
+            @Suppress("UNUSED_VARIABLE")
+            val o = offsets // ensure #computeOffsets() has been called
+            return _hashes
+        }
+
     override val value: String?
         get() = valueString
 
@@ -12,18 +21,18 @@ class RustRawStringLiteralImpl(type: IElementType, text: CharSequence) : RustTex
     override fun computeOffsets(): Offsets {
         val prefixEnd = locatePrefix()
 
-        val hashes = countHashes(prefixEnd)
+        _hashes = countHashes(prefixEnd)
 
         val openDelimEnd = doLocate(prefixEnd) {
-            assert(textLength - it >= 1 + hashes && text[it] == '#' || text[it] == '"') { "expected open delim" }
-            it + 1 + hashes
+            assert(textLength - it >= 1 + _hashes && text[it] == '#' || text[it] == '"') { "expected open delim" }
+            it + 1 + _hashes
         }
 
-        val valueEnd = doLocate(openDelimEnd) { locateValue(it, hashes) }
+        val valueEnd = doLocate(openDelimEnd) { locateValue(it, _hashes) }
 
         val closeDelimEnd = doLocate(valueEnd) {
-            assert(textLength - it >= 1 + hashes && text[it] == '"') { "expected close delim" }
-            it + 1 + hashes
+            assert(textLength - it >= 1 + _hashes && text[it] == '"') { "expected close delim" }
+            it + 1 + _hashes
         }
 
         return Offsets.fromEndOffsets(prefixEnd, openDelimEnd, valueEnd, closeDelimEnd, textLength)
