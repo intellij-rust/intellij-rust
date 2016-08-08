@@ -9,24 +9,36 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.isMut
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
+import org.rust.lang.core.types.util.isPrimitive
+import org.rust.lang.core.types.visitors.impl.RustTypificationEngine
 
 // Highlighting logic here should be kept in sync with tags in RustColorSettingsPage
 class RustHighlightingAnnotator : Annotator {
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-        val highlightingInfo = if (element is RustReferenceElement) {
-            val color = if (element is RustPathElement && element.isPrimitive) {
-                RustColor.PRIMITIVE_TYPE
-            } else {
-                val ref = element.reference.resolve() ?: return
-                // Highlight the element dependent on what it's referencing.
-                HighlightingVisitor().compute(ref).color
-            }
+        val highlightingInfo =
+                // TODO(XXX): Much better would be to incorporate
+                //            that behaviour into visitor
+                if (element is RustReferenceElement) {
+                    val parent = element.parent
+                    val isPrimitiveType =
+                        element is RustPathElement &&
+                        parent is RustPathTypeElement &&
+                        RustTypificationEngine.typifyType(parent).isPrimitive
 
-            HighlightingInfo(element.referenceNameElement, color)
-        } else {
-            HighlightingVisitor().compute(element)
-        }
+                    val color =
+                        if (isPrimitiveType) {
+                            RustColor.PRIMITIVE_TYPE
+                        } else {
+                            val ref = element.reference.resolve() ?: return
+                            // Highlight the element dependent on what it's referencing.
+                            HighlightingVisitor().compute(ref).color
+                        }
+
+                    HighlightingInfo(element.referenceNameElement, color)
+                } else {
+                    HighlightingVisitor().compute(element)
+                }
 
         highlightingInfo.apply(holder)
     }

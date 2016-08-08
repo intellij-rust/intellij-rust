@@ -2,6 +2,7 @@ package org.rust.lang.core.psi.impl
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubBase
 import org.rust.lang.core.psi.RustCompositeElement
@@ -13,6 +14,8 @@ abstract class RustStubbedElementImpl<StubT : StubBase<*>> : StubBasedPsiElement
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+
+    override fun getParent(): PsiElement = parentByStub
 
     override fun getReference(): RustReference? = null
 

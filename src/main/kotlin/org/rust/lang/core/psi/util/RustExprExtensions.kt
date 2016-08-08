@@ -1,9 +1,6 @@
 package org.rust.lang.core.psi.util
 
-import org.rust.lang.core.psi.RustFieldsOwner
-import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustStructExprElement
-import org.rust.lang.core.psi.fields
+import org.rust.lang.core.psi.*
 
 /**
  *  `RustExprElement` related extensions
@@ -12,3 +9,9 @@ import org.rust.lang.core.psi.fields
 val RustStructExprElement.fields: List<RustNamedElement> get() =
     (path.reference.resolve() as? RustFieldsOwner)?.fields.orEmpty()
 
+
+/**
+ * Extracts [RustLitExprElement] raw value
+ */
+val RustLitExprElement.stringLiteralValue: String?
+    get() = ((stringLiteral ?: rawStringLiteral) as? RustLiteral.Text)?.value

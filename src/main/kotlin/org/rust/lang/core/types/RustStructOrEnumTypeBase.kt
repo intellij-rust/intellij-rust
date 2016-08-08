@@ -1,15 +1,9 @@
 package org.rust.lang.core.types
 
-import org.rust.lang.core.psi.RustImplItemElement
-import org.rust.lang.core.psi.RustStructOrEnumItemElement
-import org.rust.lang.core.stubs.index.RustImplIndex
+import org.rust.lang.core.psi.*
 
-abstract class RustStructOrEnumTypeBase(struct: RustStructOrEnumItemElement) : RustType {
+abstract class RustStructOrEnumTypeBase : RustTypeBase() {
 
-    override val impls: Sequence<RustImplItemElement> by lazy {
-        RustImplIndex.getImpls(struct.project, this).asSequence()
-    }
-
-    override val baseTypeName: String? = struct.name
+    abstract val item: RustStructOrEnumItemElement
 
 }

@@ -1,7 +1,7 @@
 package org.rust.lang.core.types
 
+import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RustFnElement
-import org.rust.lang.core.psi.RustImplItemElement
 import org.rust.lang.core.psi.RustTraitItemElement
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 
@@ -16,45 +16,13 @@ interface RustType {
     override fun toString(): String
 
     /**
-     * Inherent and non inherent impl.
-     *
-     * TODO: separate two kinds of impls and filter by visible traits
+     * Traits explicitly (or implicitly) implemented for this particular type
      */
-    val impls: Sequence<RustImplItemElement> get() = emptySequence()
+    fun getTraitsImplementedIn(project: Project): Sequence<RustTraitItemElement>
 
     /**
-     * Traits implemented by this type, for which there are now impls (e.g., derived traits or generic bounds)
+     * Non-static methods accessible for this particular type
      */
-    val traits: Sequence<RustTraitItemElement> get() = emptySequence()
+    fun getNonStaticMethodsIn(project: Project): Sequence<RustFnElement>
 
-    val allMethods: Sequence<RustFnElement>
-        get() = impls.flatMap { it.implBody?.implMethodMemberList.orEmpty().asSequence() } +
-            traits.flatMap { it.traitBody.traitMethodMemberList.orEmpty().asSequence()  }
-
-    val nonStaticMethods: Sequence<RustFnElement>
-        get() = allMethods.filter { !it.isStatic }
-
-    val staticMethods: Sequence<RustFnElement>
-        get() = allMethods.filter { it.isStatic }
-
-    /**
-     * Strips all the references and returns the name of the resulting nominal type,
-     * if it is indeed nominal.
-     *
-     * See `RustUnresolvedType#nominalTypeName`
-     */
-    val baseTypeName: String? get() = null
-
-
-    companion object {
-        val PRIMITIVE_TYPES: Map<String, RustType> = listOf<Map<String, RustType>>(
-            RustIntegerType.Kind.values().associate { it.name to RustIntegerType(it) },
-            RustFloatType.Kind.values().associate { it.name to RustFloatType(it) },
-            mapOf(
-                "bool" to RustBooleanType,
-                "char" to RustCharacterType,
-                "str" to RustUnknownType
-            )
-        ).reduce { a, b -> a + b }
-    }
 }

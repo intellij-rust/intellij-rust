@@ -109,28 +109,8 @@ idea {
 // Tasks
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-task downloadJetBrainsJflex(type: de.undercouch.gradle.tasks.download.Download) {
-    overwrite false
-
-    src([
-        // This is a patched version of Jflex which is used together with GrammarKit.
-        'https://raw.github.com/JetBrains/intellij-community/idea/162.1145/tools/lexer/jflex-1.7.0-SNAPSHOT.jar',
-        'https://raw.github.com/JetBrains/intellij-community/idea/162.1145/tools/lexer/idea-flex.skeleton'
-    ])
-
-    def jflexDir = new File(projectDir, 'lib/jflex')
-    if (!jflexDir.exists()) {
-        jflexDir.mkdirs()
-
-    }
-
-    dest(jflexDir)
-}
-
 def lexerConfig(src, dst, lexerFileName) {
     return {
-        dependsOn downloadJetBrainsJflex
-
         classpath = files('lib/jflex/jflex-1.7.0-SNAPSHOT.jar')
         main = "jflex.Main"
 
@@ -206,6 +186,7 @@ task performanceTest(type: Test, group: 'Verification', dependsOn: [classes, tes
 
     outputs.upToDateWhen { false } // always execute task, even if already executed.
 }
+
 check.dependsOn performanceTest
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -2,10 +2,11 @@ package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.RustLitExprElement
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
+import org.rust.lang.core.types.unresolved.RustUnresolvedTypeBase
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 
-class RustFloatType(val kind: Kind) : RustType, RustUnresolvedType {
+class RustFloatType(val kind: Kind) : RustPrimitiveTypeBase() {
 
     companion object {
         fun deduceBySuffix(text: String): RustFloatType? =
@@ -26,10 +27,6 @@ class RustFloatType(val kind: Kind) : RustType, RustUnresolvedType {
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitFloat(this)
 
     override fun <T> accept(visitor: RustUnresolvedTypeVisitor<T>): T = visitor.visitFloat(this)
-
-    override fun equals(other: Any?): Boolean = other is RustFloatType && other.kind === kind
-
-    override fun hashCode(): Int = kind.hashCode()
 
     override fun toString(): String = kind.toString()
 

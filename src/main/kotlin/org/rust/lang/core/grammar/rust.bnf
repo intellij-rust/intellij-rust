@@ -126,36 +126,6 @@
     ]
 
     //
-    // Mixins
-    //
-
-    mixin       ("struct_expr_field")   = "org.rust.lang.core.psi.impl.mixin.RustStructExprFieldImplMixin"
-    mixin       ("trait_item")          = "org.rust.lang.core.psi.impl.mixin.RustTraitItemImplMixin"
-    mixin       ("impl_item")           = "org.rust.lang.core.psi.impl.mixin.RustImplItemImplMixin"
-    mixin       ("struct_item")         = "org.rust.lang.core.psi.impl.mixin.RustStructItemImplMixin"
-    mixin       ("field_decl")          = "org.rust.lang.core.psi.impl.mixin.RustFieldDeclImplMixin"
-    mixin       ("mod_decl_item")       = "org.rust.lang.core.psi.impl.mixin.RustModDeclItemImplMixin"
-    mixin       ("extern_crate_item")   = "org.rust.lang.core.psi.impl.mixin.RustExternCrateItemImplMixin"
-    mixin       ("type_item")           = "org.rust.lang.core.psi.impl.mixin.RustTypeItemImplMixin"
-    mixin       ("enum_variant")        = "org.rust.lang.core.psi.impl.mixin.RustEnumVariantImplMixin"
-    mixin       ("impl_method_member")  = "org.rust.lang.core.psi.impl.mixin.RustImplMethodMemberImplMixin"
-    mixin       ("method_call_expr")    = "org.rust.lang.core.psi.impl.mixin.RustMethodCallExprImplMixin"
-    mixin       ("field_expr")          = "org.rust.lang.core.psi.impl.mixin.RustFieldExprImplMixin"
-    mixin       ("mod_item")            = "org.rust.lang.core.psi.impl.mixin.RustModItemImplMixin"
-    mixin       ("fn_item")             = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
-    mixin       ("trait_method_member") = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodMemberImplMixin"
-    mixin       ("enum_item")           = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
-    mixin       ("foreign_mod_item")    = "org.rust.lang.core.psi.impl.mixin.RustForeignModItemImplMixin"
-    mixin       ("use_item")            = "org.rust.lang.core.psi.impl.mixin.RustUseItemImplMixin"
-    mixin       ("tuple_field_decl")    = "org.rust.lang.core.psi.impl.mixin.RustTupleFieldDeclImplMixin"
-    mixin       ("static_item")         = "org.rust.lang.core.psi.impl.mixin.RustStaticItemImplMixin"
-    mixin       ("const_item")          = "org.rust.lang.core.psi.impl.mixin.RustConstItemImplMixin"
-    mixin       ("foreign_fn_decl")     = "org.rust.lang.core.psi.impl.mixin.RustForeignFnDeclImplMixin"
-    mixin       ("foreign_static_decl") = "org.rust.lang.core.psi.impl.mixin.RustForeignStaticDeclImplMixin"
-    mixin       ("impl_const_member")   = "org.rust.lang.core.psi.impl.mixin.RustImplConstMemberImplMixin"
-    mixin       ("impl_type_member")    = "org.rust.lang.core.psi.impl.mixin.RustImplTypeMemberImplMixin"
-
-    //
     // References
     //
 
@@ -391,6 +361,7 @@ fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustFnElement"
                  "org.rust.lang.core.psi.RustTypeBearingItemElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.elements.RustFnItemElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
@@ -474,6 +445,7 @@ static_item ::= attrs_and_vis STATIC MUT? static_decl ';' {
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustItemElement" ]
   extends = "org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl<?>"
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustStaticItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.elements.RustStaticItemElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
@@ -483,6 +455,7 @@ const_item ::= attrs_and_vis CONST static_decl ';' {
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustItemElement" ]
   extends = "org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl<?>"
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustConstItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.elements.RustConstItemElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
@@ -494,17 +467,20 @@ use_item ::= attrs_and_vis USE use_path ';' {
   pin = "USE"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustItemElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustUseItemImplMixin"
+  stubClass = "org.rust.lang.core.stubs.elements.RustUseItemElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
 private use_path ::=
-//  use ::{};
-//  use {foo, bar};
-  '::'? use_glob_list
-//  use foo::bar as baz;
-//  use foo::bar::{self, foo};
-//  use foo::{};
-//  use ::foo::*;
-| path_without_types ( alias | '::' ( use_glob_list | '*' ) )?
+                  //  use ::{};
+                  //  use {foo, bar};
+                    '::'? use_glob_list
+                  //  use foo::bar as baz;
+                  //  use foo::bar::{self, foo};
+                  //  use foo::{};
+                  //  use ::foo::*;
+                  | path_without_types ( alias | '::' ( use_glob_list | '*' ) )?
 
 use_glob_list ::= '{' [ <<comma_separated_list use_glob>> ] '}'
 use_glob ::= (IDENTIFIER | SELF) alias? {
@@ -518,6 +494,9 @@ extern_crate_item ::= attrs_and_vis EXTERN CRATE IDENTIFIER alias? ';' {
   implements = [ "org.rust.lang.core.psi.RustReferenceElement"
                  "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustItemElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustExternCrateItemImplMixin"
+  stubClass = "org.rust.lang.core.stubs.elements.RustExternCrateItemElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -529,6 +508,7 @@ mod_decl_item ::= attrs_and_vis MOD IDENTIFIER ';' {
   implements = [ "org.rust.lang.core.psi.RustReferenceElement"
                  "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustItemElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustModDeclItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.elements.RustModDeclElementItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
@@ -541,6 +521,7 @@ mod_item ::= attrs_and_vis MOD IDENTIFIER '{' inner_attr* items '}' {
                  "org.rust.lang.core.resolve.scope.RustResolveScope"
                  "org.rust.lang.core.psi.RustMod"
                  "org.rust.lang.core.psi.RustInnerAttributeOwner" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustModItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.elements.RustModItemElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
@@ -548,6 +529,9 @@ mod_item ::= attrs_and_vis MOD IDENTIFIER '{' inner_attr* items '}' {
 foreign_mod_item ::= attrs_and_vis extern_abi '{' inner_attr* foreign_decl* '}' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustItemElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustForeignModItemImplMixin"
+  stubClass = "org.rust.lang.core.stubs.elements.RustForeignModItemElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
 private foreign_decl ::= foreign_static_decl | foreign_fn_decl
@@ -558,6 +542,7 @@ foreign_static_decl ::= attrs_and_vis STATIC MUT? IDENTIFIER type_ascription ';'
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustForeignStaticDeclImplMixin"
 }
 
 foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params? foreign_fn_parameters ret_type? where_clause? ';' {
@@ -566,6 +551,7 @@ foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params? foreign_fn_param
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustForeignFnDeclImplMixin"
 }
 
 
@@ -577,6 +563,7 @@ struct_item ::= attrs_and_vis STRUCT IDENTIFIER generic_params? (tuple_fields? w
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustStructOrEnumItemElement"
                  "org.rust.lang.core.psi.RustFieldsOwner" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustStructItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.elements.RustStructItemElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
@@ -585,6 +572,7 @@ enum_item ::= attrs_and_vis ENUM IDENTIFIER generic_params? where_clause? enum_b
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
                  "org.rust.lang.core.psi.RustStructOrEnumItemElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.elements.RustEnumItemElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
@@ -596,6 +584,7 @@ enum_variant ::= outer_attr* IDENTIFIER variant_args? {
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustFieldsOwner" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustEnumVariantImplMixin"
 }
 
 private variant_args ::= variant_block_fields
@@ -617,6 +606,7 @@ field_decl ::= attrs_and_vis IDENTIFIER type_ascription {
                  "org.rust.lang.core.psi.RustVisibilityOwner"
                  "org.rust.lang.core.psi.RustTupleOrStructFieldDeclElement"
                  "org.rust.lang.core.psi.RustNamedElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustFieldDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.elements.RustFieldDeclElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
@@ -631,6 +621,7 @@ tuple_field_decl ::= attrs_and_vis type {
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner"
                  "org.rust.lang.core.psi.RustTupleOrStructFieldDeclElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustTupleFieldDeclImplMixin"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 variant_tuple_field_decl ::= outer_attr* type {
@@ -657,6 +648,7 @@ trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER generic_params? type_param
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustTypeBearingItemElement"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustTraitItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.elements.RustTraitItemElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
@@ -691,6 +683,7 @@ trait_method_member ::= outer_attr* fn_header method_decl_parameters ret_type? w
   pin = fn_header
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustFnElement" ]
+  mixin  = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodMemberImplMixin"
   stubClass = "org.rust.lang.core.stubs.elements.RustTraitMethodMemberElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
@@ -705,8 +698,10 @@ impl_item ::= attrs_and_vis UNSAFE? IMPL generic_params? ( bare_impl | for_impl 
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustItemElement"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustImplItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.elements.RustImplItemElementStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"}
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
+}
 
 private bare_impl ::= type where_clause? impl_body
 private for_impl ::= '!'? trait_ref FOR (type where_clause? impl_body | '..' '{' '}')
@@ -725,6 +720,7 @@ impl_method_member ::= attrs_default_vis fn_header method_parameters ret_type? w
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustFnElement"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustImplMethodMemberImplMixin"
   stubClass = "org.rust.lang.core.stubs.elements.RustImplMethodMemberElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
@@ -734,6 +730,7 @@ impl_const_member ::= attrs_default_vis CONST static_decl ';' {
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustImplConstMemberImplMixin"
 }
 
 impl_type_member ::= attrs_default_vis TYPE_KW IDENTIFIER generic_params? '=' type ';' {
@@ -741,6 +738,7 @@ impl_type_member ::= attrs_default_vis TYPE_KW IDENTIFIER generic_params? '=' ty
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustVisibilityOwner" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustImplTypeMemberImplMixin"
 }
 
 
@@ -785,6 +783,7 @@ type_item ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params? where_clause? '='
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustTypeBearingItemElement"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustTypeItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.elements.RustTypeItemElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
@@ -906,6 +905,7 @@ struct_expr_field ::= IDENTIFIER ':' any_expr {
   pin = 1
   recoverWhile = struct_expr_field_recover
   implements = [ "org.rust.lang.core.psi.RustReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustStructExprFieldImplMixin"
 }
 struct_expr_field_recover ::= !(IDENTIFIER | ',' | '}' | '..')
 
@@ -986,6 +986,7 @@ call_expr ::= expr arg_list
 
 method_call_expr ::= expr '.' IDENTIFIER colon_generic_args? arg_list {
   implements = [ "org.rust.lang.core.psi.RustReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustMethodCallExprImplMixin"
 }
 
 arg_list ::= '(' expr_list? ')' { pin = 1 }
@@ -996,6 +997,7 @@ field_id ::= IDENTIFIER | INTEGER_LITERAL
 
 field_expr ::= expr '.' field_id {
   implements = [ "org.rust.lang.core.psi.RustReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustFieldExprImplMixin"
 }
 
 lit_expr ::= lit

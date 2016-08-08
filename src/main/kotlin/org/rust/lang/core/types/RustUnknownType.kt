@@ -1,10 +1,19 @@
 package org.rust.lang.core.types
 
-import org.rust.lang.core.types.unresolved.RustUnresolvedType
+import com.intellij.openapi.project.Project
+import org.rust.lang.core.psi.RustFnElement
+import org.rust.lang.core.psi.RustTraitItemElement
+import org.rust.lang.core.types.unresolved.RustUnresolvedTypeBase
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 
-object RustUnknownType : RustType, RustUnresolvedType {
+object RustUnknownType : RustUnresolvedTypeBase(), RustType {
+
+    override fun getTraitsImplementedIn(project: Project): Sequence<RustTraitItemElement> =
+        emptySequence()
+
+    override fun getNonStaticMethodsIn(project: Project): Sequence<RustFnElement> =
+        emptySequence()
 
     override fun <T> accept(visitor: RustUnresolvedTypeVisitor<T>): T = visitor.visitUnknown(this)
 
@@ -12,7 +21,4 @@ object RustUnknownType : RustType, RustUnresolvedType {
 
     override fun toString(): String = "<unknown>"
 
-    override fun equals(other: Any?): Boolean = this === other
-
-    override fun hashCode(): Int = 10499
 }

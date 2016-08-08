@@ -1,4 +1,4 @@
-package org.rust.lang.core.types.visitors
+package org.rust.lang.core.types.visitors.impl
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -13,6 +13,7 @@ import org.rust.lang.core.types.unresolved.RustUnresolvedTupleType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.util.type
+import org.rust.lang.core.types.visitors.impl.RustTypeInferenceEngine
 
 object RustTypificationEngine {
 
@@ -49,6 +50,15 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     override fun visitExpr(o: RustExprElement) = set {
         // Default until we handle all the cases explicitly
         RustUnknownType
+    }
+
+    override fun visitUnaryExpr(o: RustUnaryExprElement) = set {
+        if (o.box != null || o.mut != null)
+            RustUnknownType
+        else
+            o.expr?.let {
+                it.resolvedType.let { if (o.and != null) RustReferenceType(it) else it }
+            } ?: RustUnknownType
     }
 
     override fun visitPathExpr(o: RustPathExprElement) = set {
@@ -163,7 +173,7 @@ private class RustItemTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 
     override fun visitTraitItem(o: RustTraitItemElement) = set {
-        RustTraitObjectType(o)
+        RustTraitType(o)
     }
 }
 
@@ -182,7 +192,13 @@ private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedT
     }
 
     override fun visitPathType(o: RustPathTypeElement) = set {
-        o.path?.let { RustIntegerType.deduceBySuffix(it.text) ?: RustUnresolvedPathType(it) } ?: RustUnknownType
+        o.path?.let {
+            (   RustIntegerType.deduceBySuffix(it.text) ?:
+                RustFloatType.deduceBySuffix(it.text)   ?:
+                RustBooleanType.deduce(it.text)         ?:
+                RustUnresolvedPathType(it)
+                ) as RustUnresolvedType
+        } ?: RustUnknownType
     }
 
     override fun visitRefType(o: RustRefTypeElement) = set {

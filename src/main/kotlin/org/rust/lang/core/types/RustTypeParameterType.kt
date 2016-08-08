@@ -1,28 +1,21 @@
 package org.rust.lang.core.types
 
+import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.trait
+import org.rust.lang.core.types.util.bounds
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 
-class RustTypeParameterType(val parameter: RustTypeParamElement) : RustType {
-
-    override val traits: Sequence<RustTraitItemElement>
-        get() = parameter.bounds.mapNotNull { it.bound.traitRef?.trait }
+class RustTypeParameterType(val parameter: RustTypeParamElement) : RustTypeBase() {
 
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitTypeParameter(this)
 
     override fun toString(): String = parameter.name ?: "<unknown>"
 
-    override fun equals(other: Any?): Boolean = other is RustTypeParameterType && other.parameter === parameter
+    override fun getTraitsImplementedIn(project: Project): Sequence<RustTraitItemElement> =
+        parameter.bounds.mapNotNull { it.bound.traitRef?.trait }
 
-    override fun hashCode(): Int = parameter.hashCode()
+    override fun getNonStaticMethodsIn(project: Project): Sequence<RustFnElement> =
+        getTraitsImplementedIn(project).flatMap { it.traitBody.traitMethodMemberList.asSequence() }
+
 }
-
-private val RustTypeParamElement.bounds: Sequence<RustPolyboundElement> get() {
-    val owner = parent?.parent as? RustGenericDeclaration
-    val whereBounds = owner?.whereClause?.wherePredList.orEmpty().asSequence()
-        .filter { (it.type as? RustPathTypeElement)?.path?.reference?.resolve() == this }
-        .flatMap { it.typeParamBounds?.polyboundList.orEmpty().asSequence() }
-    return typeParamBounds?.polyboundList.orEmpty().asSequence() + whereBounds
-}
-

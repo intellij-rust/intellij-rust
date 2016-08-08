@@ -6,6 +6,7 @@ import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.util.fields
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.RustResolveEngine
+import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.util.resolvedType
@@ -23,9 +24,12 @@ object RustCompletionEngine {
 
     fun completeFieldOrMethod(field: RustFieldExprElement): Array<out LookupElement> {
         val dispatchType = field.expr.resolvedType.stripAllRefsIfAny()
-        val methods = dispatchType.nonStaticMethods
+
         // Needs type ascription to please Kotlin's type checker, https://youtrack.jetbrains.com/issue/KT-12696.
-        val fields: List<RustNamedElement> = (dispatchType as? RustStructType)?.struct?.fields.orEmpty()
+        val fields: List<RustNamedElement> = (dispatchType as? RustStructType)?.item?.fields.orEmpty()
+
+        val methods = RustImplIndex.findNonStaticMethodsFor(dispatchType, field.project)
+
         return (fields + methods.toList()).toVariantsArray()
     }
 

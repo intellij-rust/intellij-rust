@@ -21,10 +21,11 @@ object RustModItemStubElementType : RustNamedStubElementType<RustModItemElementS
     override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustModItemElementStub =
         RustModItemElementStub(parentStub, this, dataStream.readName(), dataStream.readBoolean())
 
-    override fun serialize(stub: RustModItemElementStub, dataStream: StubOutputStream) = with(dataStream) {
-        writeName(stub.name)
-        writeBoolean(stub.isPublic)
-    }
+    override fun serialize(stub: RustModItemElementStub, dataStream: StubOutputStream) =
+        with(dataStream) {
+            writeName(stub.name)
+            writeBoolean(stub.isPublic)
+        }
 }
 
 

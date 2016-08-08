@@ -1,12 +1,12 @@
 package org.rust.lang.core.psi
 
-import com.intellij.psi.util.PsiTreeUtil
+import org.rust.lang.core.parser.RustPsiTreeUtil
 import org.rust.lang.core.resolve.scope.RustResolveScope
 
 interface RustItemsOwner : RustResolveScope
 
 private inline fun <reified I : RustItemElement> RustItemsOwner.items(): List<I> =
-    PsiTreeUtil.getChildrenOfTypeAsList(this, I::class.java)
+    RustPsiTreeUtil.getStubChildrenOfTypeAsList(this, I::class.java)
 
 val RustItemsOwner.allItems: List<RustItemElement> get() = items()
 

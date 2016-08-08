@@ -14,8 +14,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.util.cargoProject
 import org.rust.lang.RustFileType
 import org.rust.lang.RustLanguage
-import org.rust.lang.core.names.RustFileModuleId
-import org.rust.lang.core.names.RustQualifiedName
 import org.rust.lang.core.psi.RustInnerAttrElement
 import org.rust.lang.core.psi.RustInnerAttributeOwner
 import org.rust.lang.core.psi.RustMod
@@ -26,7 +24,9 @@ import org.rust.lang.core.stubs.index.RustModulesIndex
 
 class RustFile(
     fileViewProvider: FileViewProvider
-) : PsiFileBase(fileViewProvider, RustLanguage), RustMod, RustInnerAttributeOwner {
+) : PsiFileBase(fileViewProvider, RustLanguage),
+    RustMod,
+    RustInnerAttributeOwner {
 
     override fun getReference(): RustReference? = null
 
@@ -56,9 +56,6 @@ class RustFile(
     }
 
     override val isTopLevelInFile: Boolean = true
-
-    override val canonicalNameInFile: RustQualifiedName?
-        get() = cratePath?.let { RustFileModuleId(it) }
 
     override val innerAttrList: List<RustInnerAttrElement>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)
