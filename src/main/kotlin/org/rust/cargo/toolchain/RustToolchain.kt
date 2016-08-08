@@ -31,6 +31,7 @@ data class RustToolchain(val location: String) {
 
     fun queryCargoVersion(): Version? {
         check(!ApplicationManager.getApplication().isDispatchThread)
+        if (!looksLikeValidToolchain()) return null
 
         val cmd = nonProjectCargo().generalCommand("version")
         return runExecutableAndProcessStdout(cmd) { parseCargoVersion(it) }
@@ -38,7 +39,6 @@ data class RustToolchain(val location: String) {
 
     fun queryRustcVersion(): Version? {
         check(!ApplicationManager.getApplication().isDispatchThread)
-
         if (!looksLikeValidToolchain()) return null
 
         val cmd = GeneralCommandLine()
