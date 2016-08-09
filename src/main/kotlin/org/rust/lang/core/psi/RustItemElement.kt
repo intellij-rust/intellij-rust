@@ -15,6 +15,7 @@ interface RustItemElement : RustVisibilityOwner, RustOuterAttributeOwner
 val RustItemElement.canonicalCratePath: RustQualifiedPath
     get() =
         if (this is RustMod)
+            @Suppress("USELESS_CAST")
             (this as RustMod).canonicalCratePath!!
         else
             RustQualifiedPath.create(

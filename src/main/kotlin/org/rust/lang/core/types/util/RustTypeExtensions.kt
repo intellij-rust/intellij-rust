@@ -37,5 +37,3 @@ val RustUnresolvedType.isPrimitive: Boolean
             else -> false
         }
 
-val RustType.isPrimitive: Boolean
-    get() = this is RustUnresolvedType && (this as RustUnresolvedType).isPrimitive
