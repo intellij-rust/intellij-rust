@@ -40,22 +40,19 @@ class RustEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
         // find the PsiElement at the caret
         val elementAtCaret = file.findElementAt(caretOffset) ?: return Result.Continue
 
-        when (elementAtCaret.elementType) {
-            STRING_LITERAL,
-            BYTE_STRING_LITERAL -> {
+        return when (elementAtCaret.elementType) {
+            STRING_LITERAL, BYTE_STRING_LITERAL -> {
                 // If we are inside string literal, add trailing '\' just before caret
                 var offset = caretOffset
                 editor.document.insertString(offset++, "\\")
                 caretOffsetRef.set(offset)
-                return Result.DefaultForceIndent
+                Result.DefaultForceIndent
             }
 
-            RAW_STRING_LITERAL,
-            RAW_BYTE_STRING_LITERAL -> {
-                return Result.DefaultSkipIndent
-            }
+            RAW_STRING_LITERAL, RAW_BYTE_STRING_LITERAL ->
+                Result.DefaultSkipIndent
 
-            else -> return Result.Continue
+            else -> Result.Continue
         }
     }
 
