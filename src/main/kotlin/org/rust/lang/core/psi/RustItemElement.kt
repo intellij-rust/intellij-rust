@@ -7,7 +7,7 @@ interface RustItemElement : RustVisibilityOwner, RustOuterAttributeOwner
 
 /**
  * Returns a fully-qualified [RustQualifiedPath] representing a 'path' to this [RustItemElement]
- * from the crate root, like `foo::bar::baz`. Returns null for the crate's root.
+ * from the crate root, like `foo::bar::baz`.
  *
  * This path is NOT guaranteed to be unique: items from different crates
  * can have the same path within respective crates.

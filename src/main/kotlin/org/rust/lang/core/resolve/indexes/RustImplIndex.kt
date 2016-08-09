@@ -8,12 +8,15 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.RustFileElementType
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.util.trait
-import org.rust.lang.core.types.*
+import org.rust.lang.core.psi.RustFnElement
+import org.rust.lang.core.psi.RustImplItemElement
+import org.rust.lang.core.psi.RustStructOrEnumItemElement
+import org.rust.lang.core.psi.RustUseItemElement
+import org.rust.lang.core.types.RustStructOrEnumTypeBase
+import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.RustUnknownType
 import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
-import org.rust.lang.core.types.util.bounds
 import org.rust.lang.core.types.util.decay
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.visitors.impl.RustEqualityUnresolvedTypeVisitor
@@ -43,7 +46,7 @@ object RustImplIndex  {
 
         return findNonInherentImplsForInternal(target.decay, project)
                     .filter {
-                        impl -> impl.type?.let { it.resolvedType == target } ?: false
+                        it.type?.resolvedType == target
                     } + inherentImpls
     }
 
