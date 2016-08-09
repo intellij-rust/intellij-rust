@@ -1,0 +1,1 @@
+xs.iter().map(|x| { x * x })
