@@ -47,7 +47,7 @@ class RustItemsAnnotator : Annotator {
             return
         }
 
-        if (modDecl.reference?.resolve() == null) {
+        if (modDecl.reference.resolve() == null) {
             holder.createErrorAnnotation(modDecl, "Unresolved module")
                 .registerFix(AddModuleFile(modDecl, expandModuleFirst = false))
         }

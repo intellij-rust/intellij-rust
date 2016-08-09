@@ -22,7 +22,6 @@ import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
 import org.rust.lang.core.symbols.RustQualifiedPath
-import org.rust.lang.core.types.RustReferenceType
 import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
@@ -482,7 +481,7 @@ private fun RustItemsOwner.itemEntries(context: Context): Sequence<ScopeEntry> {
         // XXX: this must come before itemList to resolve `Box` from prelude. We need to handle cfg attributes to
         // fix this properly
         modDecls.asSequence().mapNotNull {
-            ScopeEntry.lazy(it.name) { it.reference?.resolve() }
+            ScopeEntry.lazy(it.name) { it.reference.resolve() }
         },
 
         allItemDefinitions.scopeEntries,
@@ -492,7 +491,7 @@ private fun RustItemsOwner.itemEntries(context: Context): Sequence<ScopeEntry> {
         },
 
         externCrates.asSequence().mapNotNull {
-            ScopeEntry.lazy(it.alias?.name ?: it.name) { it.reference?.resolve() }
+            ScopeEntry.lazy(it.alias?.name ?: it.name) { it.reference.resolve() }
         },
 
         usualImports.asSequence().flatMap { it.nonWildcardEntries() },

@@ -1,8 +1,6 @@
 package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.RustLitExprElement
-import org.rust.lang.core.types.unresolved.RustUnresolvedType
-import org.rust.lang.core.types.unresolved.RustUnresolvedTypeBase
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 
@@ -19,7 +17,8 @@ class RustFloatType(val kind: Kind) : RustPrimitiveTypeBase() {
         //      > If the program context under-constrains the type, it defaults to the 32-bit float
         //      > If the program context over-constrains the type, it is considered a static type error.
         //
-        fun deduceUnsuffixed(o: RustLitExprElement): RustFloatType = RustFloatType(kind = RustFloatType.Kind.f32)
+        fun deduceUnsuffixed(@Suppress("UNUSED_PARAMETER") o: RustLitExprElement): RustFloatType =
+            RustFloatType(kind = RustFloatType.Kind.f32)
     }
 
     enum class Kind { f32, f64 }
