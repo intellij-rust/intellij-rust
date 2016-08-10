@@ -852,7 +852,7 @@ private atom_expr ::= lit_expr
                     | tuple_or_paren_expr
 
 
-binary_expr ::= expr + {
+fake binary_expr ::= expr+ {
   methods=[
     left="/expr[0]"
     right="/expr[1]"

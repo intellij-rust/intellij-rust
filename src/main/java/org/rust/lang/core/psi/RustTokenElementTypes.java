@@ -170,6 +170,39 @@ public interface RustTokenElementTypes {
     @NotNull
     TokenSet EOL_COMMENTS_TOKEN_SET = TokenSet.create(EOL_COMMENT, INNER_EOL_DOC_COMMENT, OUTER_EOL_DOC_COMMENT);
 
+    @NotNull
+    TokenSet BINARY_OPS = TokenSet.create(
+        AND,
+        ANDEQ,
+        DIV,
+        DIVEQ,
+        EQ,
+        EQEQ,
+        EXCLEQ,
+        GT,
+        LT,
+        MINUS,
+        MINUSEQ,
+        MUL,
+        MULEQ,
+        OR,
+        OREQ,
+        PLUS,
+        PLUSEQ,
+        REM,
+        REMEQ,
+        XOR,
+        XOREQ,
+        GTGTEQ,
+        GTGT,
+        GTEQ,
+        LTLTEQ,
+        LTLT,
+        LTEQ,
+        OROR,
+        ANDAND
+    );
+
     /**
      * Set of possible arguments for {@link RustEscapesLexer.Companion#of(IElementType)}
      */
