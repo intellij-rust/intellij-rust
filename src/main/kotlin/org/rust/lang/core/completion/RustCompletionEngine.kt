@@ -6,6 +6,7 @@ import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.util.fields
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.RustResolveEngine
+import org.rust.lang.core.resolve.SearchFor
 import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.types.RustStructType
@@ -55,7 +56,7 @@ object RustCompletionEngine {
 
 private fun RustNamedElement?.completionsFromResolveScope(): Collection<RustNamedElement> =
     when (this) {
-        is RustResolveScope -> RustResolveEngine.declarations(this).toList()
+        is RustResolveScope -> RustResolveEngine.declarations(this, searchFor = SearchFor.PRIVATE).toList()
         else                -> emptyList()
     }
 

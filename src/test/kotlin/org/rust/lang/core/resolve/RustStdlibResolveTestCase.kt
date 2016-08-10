@@ -23,4 +23,7 @@ class RustStdlibResolveTestCase : RustMultiFileResolveTestCaseBase() {
     fun testResolvePrelude() = doTestResolved("prelude/main.rs")
     fun testResolveBox() = doTestResolved("box/main.rs")
     fun testResolveOption() = doTestResolved("option/main.rs")
+
+    fun testPreludeVisibility1() = doTestUnresolved("prelude_visibility1/main.rs")
+    fun testPreludeVisibility2() = doTestUnresolved("prelude_visibility2/main.rs")
 }

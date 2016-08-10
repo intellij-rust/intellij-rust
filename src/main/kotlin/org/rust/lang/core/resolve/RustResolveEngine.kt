@@ -89,7 +89,7 @@ object RustResolveEngine {
                     } else {
                         val parent = resolveInternal(qual, pivot, prefixed = true).element
                         if (parent is RustResolveScope)
-                            resolveIn(sequenceOf(parent), name = ref.part.name, pivot = pivot)
+                            resolveInside(parent, ref.part.name, pivot = pivot)
                         else
                             ResolveResult.Unresolved
                     }
@@ -177,7 +177,7 @@ object RustResolveEngine {
             ref.self != null && baseItem != null -> ResolveResult.Resolved(baseItem)
 
         // `use foo::{bar}`
-            baseItem is RustResolveScope -> resolveIn(sequenceOf(baseItem), ref)
+            baseItem is RustResolveScope -> resolveInside(baseItem, ref.referenceName, pivot = ref)
 
             else -> ResolveResult.Unresolved
         }
@@ -234,8 +234,11 @@ object RustResolveEngine {
      * Lazily retrieves all elements visible in the particular [scope] at the [pivot], or just all
      * visible elements if [pivot] is null.
      */
-    fun declarations(scope: RustResolveScope, pivot: RustCompositeElement? = null): Sequence<RustNamedElement> =
-        declarations(scope, Context(pivot)).mapNotNull { it.element }
+    fun declarations(
+        scope: RustResolveScope,
+        pivot: RustCompositeElement? = null,
+        searchFor: SearchFor = SearchFor.EVERYTHING
+    ): Sequence<RustNamedElement> = declarations(scope, Context(pivot, searchFor = searchFor)).mapNotNull { it.element }
 
     fun enumerateScopesFor(ref: RustQualifiedPath, pivot: RustCompositeElement): Sequence<RustResolveScope> =
         if (ref.fullyQualified) {
@@ -257,9 +260,10 @@ object RustResolveEngine {
 private fun resolveAncestorModule(pivot: RustMod?, modulePrefix: RelativeModulePrefix.AncestorModule): RustMod? =
     (0 until modulePrefix.level).fold(pivot, { mod, i -> mod?.`super` })
 
-
-private fun resolveIn(scopes: Sequence<RustResolveScope>, ref: RustReferenceElement): RustResolveEngine.ResolveResult =
-    resolveIn(scopes, name = ref.referenceName, pivot = ref)
+private fun resolveInside(scope: RustResolveScope, name: String, pivot: RustCompositeElement): RustResolveEngine.ResolveResult =
+    declarations(scope, Context(pivot = pivot, searchFor = SearchFor.PRIVATE))
+        .find { it.name == name }
+        ?.element.asResolveResult()
 
 private fun resolveIn(scopes: Sequence<RustResolveScope>, name: String, pivot: RustCompositeElement): RustResolveEngine.ResolveResult =
     scopes
@@ -275,9 +279,23 @@ private fun declarations(scope: RustResolveScope, context: Context): Sequence<Sc
 
 private data class Context(
     val pivot: RustCompositeElement?,
-    val inPrelude: Boolean = false,
-    val visitedStarImports: Set<RustUseItemElement> = emptySet()
+    val visitedStarImports: Set<RustUseItemElement> = emptySet(),
+    val searchFor: SearchFor = SearchFor.EVERYTHING
 )
+
+enum class SearchFor {
+    /**
+     * public, private and prelude names
+     */
+    EVERYTHING,
+
+    /**
+     * public and private
+     */
+    PRIVATE,
+
+    //TODO: PUBLIC,
+}
 
 
 private class ScopeEntry private constructor(
@@ -441,10 +459,12 @@ private class RustScopeVisitor(
             }
 
         // Rust injects implicit `use std::prelude::v1::*` into every module.
-        val preludeSymbols = if (module == null || context.inPrelude)
+        val preludeSymbols = if (module == null || context.searchFor != SearchFor.EVERYTHING)
             emptySequence()
         else
-            module.preludeModule?.rustMod?.let { declarations(it, context.copy(inPrelude = true)) } ?: emptySequence()
+            module.preludeModule?.rustMod?.let {
+                declarations(it, context.copy(searchFor = SearchFor.PRIVATE))
+            } ?: emptySequence()
 
         sequenceOf(
             mod.itemEntries(context),

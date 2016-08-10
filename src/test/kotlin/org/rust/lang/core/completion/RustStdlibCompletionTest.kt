@@ -8,5 +8,6 @@ class RustStdlibCompletionTest: RustCompletionTestBase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor()
 
     fun testPrelude() = checkSoleCompletion()
+    fun testPreludeVisibility() = checkNoCompletion()
 }
 
