@@ -1,0 +1,3 @@
+if <spot>!a && !b && !c</spot> {
+    a && b && c
+}
