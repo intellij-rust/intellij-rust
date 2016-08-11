@@ -1,1 +1,1 @@
-xs.iter().map(|x| x * x)
+xs.iter().map(|x| <spot>x * x</spot>)
