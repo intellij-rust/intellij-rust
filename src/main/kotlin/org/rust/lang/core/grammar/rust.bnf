@@ -958,10 +958,7 @@ private tuple_expr_end ::= ',' [ any_expr (',' any_expr)* ','? ] ')'
 paren_expr ::= '(' any_expr paren_expr_end
 private paren_expr_end ::= ')'
 
-array_expr ::= '[' array_elems? ']' { pin = 1 }
-
-private array_elems ::= any_expr ';' any_expr
-                      | expr_list
+array_expr ::= '[' [ any_expr ( ';' any_expr | (',' any_expr)* ','? ) ] ']' { pin = 1 }
 
 
 //private range_expr_group ::= open_range_expr
