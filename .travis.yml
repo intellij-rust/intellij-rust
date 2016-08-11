@@ -14,6 +14,8 @@ before_script:
   - rust-nightly-x86_64-unknown-linux-gnu/install.sh --prefix=$HOME/rust
   # because of this export, we can't put this into separate `install-rust.sh` script
   - export PATH=$PATH:$HOME/rust/bin
+  - cargo install rustfmt
+  - export PATH=$PATH:$HOME/.cargo/bin
 
 # https://docs.travis-ci.com/user/languages/java/#Caching
 before_cache:
