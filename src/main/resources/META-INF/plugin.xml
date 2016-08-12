@@ -140,6 +140,21 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.duplicates.RustDuplicateStructFieldInspection"/>
 
+        <localInspection language="Rust" groupName="Redeclared symbols"
+                         displayName="Duplicate trait constant"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.duplicates.RustDuplicateTraitConstantInspection"/>
+
+        <localInspection language="Rust" groupName="Redeclared symbols"
+                         displayName="Duplicate trait method"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.duplicates.RustDuplicateTraitMethodInspection"/>
+
+        <localInspection language="Rust" groupName="Redeclared symbols"
+                         displayName="Duplicate trait associated type"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.duplicates.RustDuplicateTraitTypeInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
