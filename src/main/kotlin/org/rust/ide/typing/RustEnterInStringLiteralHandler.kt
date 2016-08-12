@@ -7,12 +7,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Ref
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.StringEscapesTokenTypes
+import com.intellij.psi.StringEscapesTokenTypes.STRING_LITERAL_ESCAPES
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.core.psi.impl.RustFile
-import org.rust.lang.core.psi.util.elementType
 
 class RustEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
     override fun preprocessEnter(
@@ -23,29 +21,35 @@ class RustEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
         dataContext: DataContext,
         originalHandler: EditorActionHandler?
     ): Result {
-        // return if this is not a Rust file
+        // Return if this is not a Rust file
         if (file !is RustFile) {
             return Result.Continue
         }
 
         val caretOffset = caretOffsetRef.get()
 
-        if (!isInStringOrRawStringLiteral(editor, caretOffset)) {
-            return Result.Continue
+        val highlighter = (editor as EditorEx).highlighter
+        val iterator = highlighter.createIterator(caretOffset)
+
+        // Return if we are not inside literal contents (i.e. in prefix, suffix or delimiters)
+        if (!RustQuoteHandler().isDeepInsideLiteral(iterator, caretOffset)) return Result.Continue
+
+        // Return if we are inside escape sequence
+        if (iterator.tokenType in STRING_LITERAL_ESCAPES) {
+            // If we are just at the beginning, we don't want to return, but
+            // we have to determine literal type. Retreating iterator will do.
+            if (caretOffset == iterator.start) {
+                iterator.retreat()
+            } else {
+                return Result.Continue
+            }
         }
 
-        // commit any document changes, so we'll get latest PSI
-        PsiDocumentManager.getInstance(file.project).commitDocument(editor.document)
-
-        // find the PsiElement at the caret
-        val elementAtCaret = file.findElementAt(caretOffset) ?: return Result.Continue
-
-        return when (elementAtCaret.elementType) {
+        return when (iterator.tokenType) {
             STRING_LITERAL, BYTE_STRING_LITERAL -> {
                 // If we are inside string literal, add trailing '\' just before caret
-                var offset = caretOffset
-                editor.document.insertString(offset++, "\\")
-                caretOffsetRef.set(offset)
+                editor.document.insertString(caretOffset, "\\")
+                caretOffsetRef.set(caretOffset + 1)
                 Result.DefaultForceIndent
             }
 
@@ -54,14 +58,5 @@ class RustEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
 
             else -> Result.Continue
         }
-    }
-
-    private fun isInStringOrRawStringLiteral(editor: Editor, offset: Int): Boolean {
-        if (offset < 1) return false
-        val quotedHandler = RustQuoteHandler()
-        val highlighter = (editor as EditorEx).highlighter
-        val iterator = highlighter.createIterator(offset - 1)
-        return quotedHandler.isDeepInsideLiteral(iterator, offset)
-            || iterator.tokenType in StringEscapesTokenTypes.STRING_LITERAL_ESCAPES
     }
 }

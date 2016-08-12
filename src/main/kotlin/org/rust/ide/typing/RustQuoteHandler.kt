@@ -3,6 +3,7 @@ package org.rust.ide.typing
 import com.intellij.codeInsight.editorActions.MultiCharQuoteHandler
 import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
+import com.intellij.psi.StringEscapesTokenTypes
 import com.intellij.util.text.CharSequenceSubSequence
 import org.rust.lang.core.psi.RustLiteral
 import org.rust.lang.core.psi.RustLiteralTokenType
@@ -27,6 +28,13 @@ class RustQuoteHandler : SimpleTokenSetQuoteHandler(STRING_LITERAL, BYTE_STRING_
 
     override fun isClosingQuote(iterator: HighlighterIterator, offset: Int): Boolean {
         return super.isClosingQuote(iterator, offset)
+    }
+
+    override fun isInsideLiteral(iterator: HighlighterIterator): Boolean {
+        if(iterator.tokenType in StringEscapesTokenTypes.STRING_LITERAL_ESCAPES) {
+            return true
+        }
+        return super.isInsideLiteral(iterator)
     }
 
     fun isDeepInsideLiteral(iterator: HighlighterIterator, offset: Int): Boolean {
