@@ -12,4 +12,15 @@ class RustEnterInStringLiteralHandlerTest : RustTypingTestCaseBase() {
     fun testAfterClosing() = doTest()
 
     fun testRawLiteral() = doTest()
+
+    fun testBeforeEscape() = doTest()
+    fun testAfterEscape() = doTest()
+    fun testInsideEscape() = doTest()
+    fun testInsideEscapeAfterSlash() = doTest()
+    fun testBetweenQuoteEscape() = doTest()
+    fun testBetweenEscapeQuote() = doTest()
+
+    fun testIncomplete() = doTest()
+    fun testIncompleteEscape() = doTest()
+    fun testRawIncomplete() = doTest()
 }
