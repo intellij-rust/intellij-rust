@@ -131,6 +131,11 @@
                          implementationClass="org.rust.ide.inspections.RustSelfConventionInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
+                         displayName="Unsafe CString pointer"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustCStringPointerInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
                          displayName="Unresolved reference"
                          enabledByDefault="false" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RustUnresolvedReferenceInspection"/>
