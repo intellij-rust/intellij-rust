@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.Alarm
+import com.intellij.util.containers.SmartHashSet
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.settings.rustSettings
@@ -30,11 +31,20 @@ import org.rust.cargo.util.cargoLibraryName
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.updateLibrary
 import org.rust.ide.notifications.showBalloon
+import org.rust.ide.utils.EdtOnly
 import org.rust.ide.utils.runWriteAction
 
 
 /**
- * [CargoProjectWorkspace] component implementation
+ * [CargoProjectWorkspace] component implementation.
+ *
+ * We don't want to invoke several instances of the `cargo metadata`
+ * at the same time. In theory Cargo should handle this just fine, but
+ * in practice it may deadlock and its just wasteful. So we use [alarm]
+ * to debounce successive update requests and postpone updates when there
+ * is one in progress already ([wantsUpdate], [pendingUpdates]).
+ *
+ * TODO: schedule updates when `Cargo.toml` is being edited even if it is not saved yet.
  */
 class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorkspace, ModuleComponent {
 
@@ -47,6 +57,8 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
      * It uses dispatch-thread.
      */
     private val alarm = Alarm()
+    private var wantsUpdate by EdtOnly(false)
+    private val pendingUpdates by EdtOnly(SmartHashSet<UpdateTask>())
 
     /**
      * Cached instance of the latest [CargoProjectDescription] instance synced with `Cargo.toml`
@@ -74,6 +86,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     override fun projectOpened() { /* NOP */ }
 
     override fun moduleAdded() {
+        println("MODULE ADDED ${ApplicationManager.getApplication().isDispatchThread}")
         module.project.toolchain?.let { toolchain ->
             subscribeForOneMessage(module.messageBus, CargoProjectWorkspaceListener.Topics.UPDATES, object : CargoProjectWorkspaceListener {
                 override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
@@ -101,9 +114,9 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
         alarm.cancelAllRequests()
 
         if (immediately)
-            task.queue()
+            task.queueIfNeeded()
         else
-            alarm.addRequest({ task.queue() }, DELAY, ModalityState.any())
+            alarm.addRequest({ task.queueIfNeeded() }, DELAY, ModalityState.any())
     }
 
     /**
@@ -191,6 +204,26 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
         override fun onSuccess() {
             val r = requireNotNull(result)
             commitUpdate(r)
+        }
+
+        override fun onFinished() {
+            pendingUpdates.remove(this)
+            if (wantsUpdate) {
+                wantsUpdate = false
+                requestUpdateUsing(toolchain)
+            }
+        }
+
+        fun queueIfNeeded() {
+            ApplicationManager.getApplication().invokeAndWait({
+                LOG.assertTrue(pendingUpdates.size <= 1)
+                if (pendingUpdates.isEmpty) {
+                    pendingUpdates += this
+                    queue()
+                } else {
+                    wantsUpdate = true
+                }
+            }, ModalityState.any())
         }
     }
 

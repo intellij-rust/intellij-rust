@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.RecursionManager
+import kotlin.reflect.KProperty
 
 /**
  * Recursion guard
@@ -40,5 +41,17 @@ inline fun <reified T : Any> Project.service(): T = ServiceManager.getService(th
 fun checkWriteAccessAllowed() {
     check(ApplicationManager.getApplication().isWriteAccessAllowed) {
         "Needs write action"
+    }
+}
+
+class EdtOnly<T>(private var value: T) {
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
+        check(ApplicationManager.getApplication().isDispatchThread)
+        return value
+    }
+
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, newValue: T) {
+        check(ApplicationManager.getApplication().isDispatchThread)
+        value = newValue
     }
 }
