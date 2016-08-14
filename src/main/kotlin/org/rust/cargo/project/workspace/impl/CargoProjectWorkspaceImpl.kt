@@ -204,9 +204,19 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
         override fun onSuccess() {
             val r = requireNotNull(result)
             commitUpdate(r)
+            onDone()
         }
 
-        override fun onFinished() {
+        override fun onError(error: Exception) {
+            onDone()
+        }
+
+        override fun onCancel() {
+            onDone()
+        }
+
+        // Backward compat: no `onFinished` in IDEA 15
+        fun onDone() {
             pendingUpdates.remove(this)
             if (wantsUpdate) {
                 wantsUpdate = false
