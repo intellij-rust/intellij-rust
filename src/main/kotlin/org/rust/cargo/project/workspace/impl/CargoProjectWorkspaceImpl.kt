@@ -207,10 +207,6 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
             onDone()
         }
 
-        override fun onError(error: Exception) {
-            onDone()
-        }
-
         override fun onCancel() {
             onDone()
         }
