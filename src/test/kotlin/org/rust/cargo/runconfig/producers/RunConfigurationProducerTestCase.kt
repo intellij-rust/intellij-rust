@@ -100,6 +100,19 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
         doTestProducedConfigurations()
     }
 
+    fun testTestProducerWorksForRootModule() {
+        testProject {
+            lib("foo", "src/lib.rs", """
+                #[test] fn bar() {}
+
+                #[test] fn baz() {}
+
+                fn quux() {<caret>}
+            """).open()
+        }
+        doTestProducedConfigurations()
+    }
+
     fun testMeaningfulConfigurationName() {
         testProject {
             lib("foo", "src/lib.rs", "mod bar;")
