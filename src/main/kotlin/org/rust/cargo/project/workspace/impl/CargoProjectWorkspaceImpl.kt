@@ -86,7 +86,6 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     override fun projectOpened() { /* NOP */ }
 
     override fun moduleAdded() {
-        println("MODULE ADDED ${ApplicationManager.getApplication().isDispatchThread}")
         module.project.toolchain?.let { toolchain ->
             subscribeForOneMessage(module.messageBus, CargoProjectWorkspaceListener.Topics.UPDATES, object : CargoProjectWorkspaceListener {
                 override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
