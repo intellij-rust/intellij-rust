@@ -25,7 +25,8 @@ install Rust plugin, and use **project from existing sources** action to import 
 ## Compatible IDEs
 
 The plugin should be compatible with any Intellij based IDE starting from build
-143.2287.1. For example, the minimum supported IDEA version is 15.0.4, the
+143.2287.1. This includes all 2016.1 releases and newer.
+For example, the minimum supported IDEA version is 15.0.4, the
 minimum supported CLion version is 1.2. See `Help > About` menu in the IDE to
 learn the build version you are using.
 
