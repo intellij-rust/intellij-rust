@@ -7,12 +7,13 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.parentOfType
+import java.util.regex.Pattern
 
 fun RustNamedElement.createLookupElement(): LookupElement {
     return when (this) {
         is RustFnElement -> LookupElementBuilder.createWithIcon(this)
             .withLookupString(name ?: "")
-            .withTailText(parameters?.text ?: "()")
+            .withTailText(parameters?.text?.replace(Pattern.compile("\\s+").toRegex(), " ") ?: "()")
             .withTypeText(retType?.type?.text ?: "()")
         is RustConstItemElement -> LookupElementBuilder.createWithIcon(this)
             .withLookupString(name ?: "")
