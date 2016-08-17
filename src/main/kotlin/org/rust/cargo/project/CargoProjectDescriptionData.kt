@@ -8,7 +8,6 @@ package org.rust.cargo.project
  * package in `packages` list.
  */
 data class CargoProjectDescriptionData(
-    val rootPackageIndex: Int,
     val packages: List<Package>,
     val dependencies: Collection<DependencyNode>
 ) {

@@ -91,10 +91,6 @@ object CargoMetadata {
      * A rooted graph of dependencies, represented as adjacency list
      */
     data class Resolve(
-        /**
-         * id of the main package
-         */
-        val root: String,
         val nodes: List<ResolveNode>
     )
 
@@ -111,7 +107,6 @@ object CargoMetadata {
     fun intoCargoProjectDescriptionData(project: Project): CargoProjectDescriptionData {
         val packageIdToIndex = project.packages.mapIndexed { i, p -> p.id to i }.toMap()
         return CargoProjectDescriptionData(
-            packageIdToIndex[project.resolve.root]!!,
             project.packages.map { it.intoCargoProjectDescriptionPackage() },
             project.resolve.nodes.map { node ->
                 CargoProjectDescriptionData.DependencyNode(

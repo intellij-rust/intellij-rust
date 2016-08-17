@@ -237,7 +237,6 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
 
             val projectDescription = CargoProjectDescription.deserialize(
                 CargoProjectDescriptionData(
-                    rootPackageIndex = 0,
                     packages = listOf(
                         CargoProjectDescriptionData.Package(
                             myFixture.tempDirFixture.getFile(".")!!.url,

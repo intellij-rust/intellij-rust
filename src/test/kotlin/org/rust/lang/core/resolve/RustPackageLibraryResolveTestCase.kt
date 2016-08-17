@@ -10,7 +10,7 @@ class RustPackageLibraryResolveTestCase : RustMultiFileResolveTestCaseBase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = object : RustProjectDescriptor() {
 
         override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription =
-            CargoProjectDescriptionData(0, mutableListOf(testCargoPackage(contentRoot, name = "my_lib")), ArrayList()).let {
+            CargoProjectDescriptionData(mutableListOf(testCargoPackage(contentRoot, name = "my_lib")), ArrayList()).let {
                 CargoProjectDescription.deserialize(it)!!
             }
     }

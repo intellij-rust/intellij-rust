@@ -134,7 +134,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
         open protected fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
             val packages = listOf(testCargoPackage(contentRoot))
-            return CargoProjectDescription.deserialize(CargoProjectDescriptionData(0, packages, ArrayList()))!!
+            return CargoProjectDescription.deserialize(CargoProjectDescriptionData(packages, ArrayList()))!!
         }
 
         protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CargoProjectDescriptionData.Package(
@@ -154,12 +154,12 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
         override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
             checkNotNull(StandardLibraryRoots.fromFile(rustSourcesArchive())) {
-                "Corrupted invalid Rust sources"
+                "Corrupted Rust sources"
             }.attachTo(module)
 
             val packages = listOf(testCargoPackage(contentRoot))
 
-            return CargoProjectDescriptionData(0, packages, emptyList()).let {
+            return CargoProjectDescriptionData(packages, emptyList()).let {
                 CargoProjectDescription.deserialize(it)!!
             }
         }
