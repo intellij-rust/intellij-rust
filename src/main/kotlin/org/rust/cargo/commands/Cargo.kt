@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.cargo.CargoConstants
@@ -57,12 +58,17 @@ class Cargo(
         val path = PathUtil.toSystemDependentName(directory.path)
         generalCommand("init", listOf("--bin", path)).execute()
         check(File(directory.path, RustToolchain.CARGO_TOML).exists())
-        directory.refresh(/* async = */ false, /* recursive = */ true)
+        VfsUtil.markDirtyAndRefresh(/* async = */ false, /* recursive = */ true, /* reloadChildren = */ true, directory)
     }
 
-    fun reformatFile(filePath: String, listener: ProcessListener? = null) = rustfmtCommandline(filePath).execute(listener)
+    fun reformatFile(filePath: String, listener: ProcessListener? = null) =
+        rustfmtCommandline(filePath).execute(listener)
 
-    fun generalCommand(command: String, additionalArguments: List<String> = emptyList(), environmentVariables: Map<String, String> = emptyMap()): GeneralCommandLine =
+    fun generalCommand(
+        command: String,
+        additionalArguments: List<String> = emptyList(),
+        environmentVariables: Map<String, String> = emptyMap()
+    ): GeneralCommandLine =
         GeneralCommandLine(pathToCargoExecutable)
             .withWorkDirectory(projectDirectory)
             .withParameters(command)

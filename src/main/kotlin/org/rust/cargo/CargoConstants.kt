@@ -15,6 +15,7 @@ object CargoConstants {
     }
 
     object ProjectLayout {
+        val binaries = listOf("src/bin")
         val sources = listOf("src", "examples")
         val tests = listOf("tests", "benches")
         val target = "target"

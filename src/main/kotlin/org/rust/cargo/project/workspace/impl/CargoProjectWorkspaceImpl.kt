@@ -17,20 +17,22 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.Alarm
+import com.intellij.util.PathUtil
 import com.intellij.util.containers.SmartHashSet
 import org.jetbrains.annotations.TestOnly
+import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener.UpdateResult
-import org.rust.ide.notifications.subscribeForOneMessage
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoLibraryName
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.updateLibrary
 import org.rust.ide.notifications.showBalloon
+import org.rust.ide.notifications.subscribeForOneMessage
 import org.rust.ide.utils.EdtOnly
 import org.rust.ide.utils.runWriteAction
 
@@ -236,16 +238,23 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
      * File changes listener, detecting changes inside the `Cargo.toml` files
      */
     inner class FileChangesWatcher : BulkFileListener {
+        private val AUTO_TARGET_PATHS = listOf(
+            CargoConstants.ProjectLayout.binaries,
+            CargoConstants.ProjectLayout.sources,
+            CargoConstants.ProjectLayout.tests
+        ).flatten()
 
         override fun before(events: MutableList<out VFileEvent>) {}
 
         override fun after(events: MutableList<out VFileEvent>) {
             if (!module.project.rustSettings.autoUpdateEnabled) return
             val toolchain = module.project.toolchain ?: return
-
-            val needsUpdate = events.any {
+            val needsUpdate = events.filter { event ->
+                event.path.endsWith(RustToolchain.CARGO_TOML) ||
+                    AUTO_TARGET_PATHS.any { PathUtil.getParentPath(event.path).endsWith(it) }
+            }.any {
                 val file = it.file ?: return@any false
-                file.name == RustToolchain.CARGO_TOML && ModuleUtilCore.findModuleForFile(file, module.project) == module
+                ModuleUtilCore.findModuleForFile(file, module.project) == module
             }
 
             if (needsUpdate) {
@@ -259,4 +268,3 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
         commitUpdate(UpdateResult.Ok(projectDescription))
     }
 }
-
