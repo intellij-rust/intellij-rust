@@ -5,7 +5,7 @@ import org.rust.ide.formatter.settings.RustCodeStyleSettings
 import org.rust.lang.RustLanguage
 import org.rust.lang.RustTestCaseBase
 
-class RustFormatterTestCase : FormatterTestCase() {
+class RustFormatterTest : FormatterTestCase() {
     override fun getTestDataPath() = "src/test/resources"
 
     override fun getBasePath() = "org/rust/ide/formatter/fixtures"
@@ -26,8 +26,6 @@ class RustFormatterTestCase : FormatterTestCase() {
     fun testTupleAlignment() = doTest()
     fun testChainCallAlignmentOff() = doTest()
     fun testChainCallIndent() = doTest()
-    fun testLineBreaksInBlocks() = doTest()
-    fun testLineBreaksInBlocks2() = doTest()
 
     fun testChainCallAlignment() {
         common().ALIGN_MULTILINE_CHAINED_METHODS = true
@@ -78,9 +76,6 @@ class RustFormatterTestCase : FormatterTestCase() {
 
     // FIXME: these two guys are way too big
     fun testSpacing() = doTest()
-    fun testLineBreaks() = doTest()
-    fun testLineBreaksTraits() = doTest()
-
     fun testIssue451() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/451
     fun testIssue526() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/526
     fun testIssue569() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/569
@@ -95,3 +90,4 @@ class RustFormatterTestCase : FormatterTestCase() {
     private fun common() = getSettings(RustLanguage)
     private fun custom() = settings.getCustomSettings(RustCodeStyleSettings::class.java)
 }
+

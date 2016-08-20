@@ -634,7 +634,7 @@ private meta field_with_recover ::= !'}' <<param>> (',' | &'}') {
   pin = 1
   recoverWhile = field_recover
 }
-field_recover ::= !('}' | '#' | PUB | IDENTIFIER)
+private field_recover ::= !('}' | '#' | PUB | IDENTIFIER)
 
 private meta mk_tuple_fields ::= '(' <<comma_separated_list <<param>> >> ')' { pin = 1}
 
@@ -907,7 +907,7 @@ struct_expr_field ::= IDENTIFIER ':' any_expr {
   implements = [ "org.rust.lang.core.psi.RustReferenceElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustStructExprFieldImplMixin"
 }
-struct_expr_field_recover ::= !(IDENTIFIER | ',' | '}' | '..')
+private struct_expr_field_recover ::= !(IDENTIFIER | ',' | '}' | '..')
 
 path_expr ::= path_generic_args_with_colons
 
@@ -967,7 +967,7 @@ array_expr ::= '[' [ any_expr ( ';' any_expr | (',' any_expr)* ','? ) ] ']' { pi
 full_range_expr ::= expr ( '..' (&<<checkBraceAllowed>> expr)? | '...' (&<<checkBraceAllowed>> expr) )
 open_range_expr ::=      ( '..' (&<<checkBraceAllowed>> expr)? | '...' (&<<checkBraceAllowed>> expr) )
 
-range_expr ::= expr + {
+fake range_expr ::= expr + {
   methods=[
     from="/expr[0]"
     to="/expr[1]"
