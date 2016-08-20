@@ -65,8 +65,10 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
             override fun visitTraitItem(o: RustTraitItemElement) {
                 super.visitTraitItem(o)
 
-                val traitBody = o.traitBody
-                descriptors += FoldingDescriptor(o.node, traitBody.textRange)
+                val rbrace = o.rbrace
+                if (rbrace != null) {
+                    descriptors += FoldingDescriptor(o.node, TextRange(o.lbrace.textOffset, rbrace.textOffset + 1))
+                }
             }
 
             override fun visitEnumVariant(o: RustEnumVariantElement) {

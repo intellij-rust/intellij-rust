@@ -79,6 +79,7 @@ class RustFormatterTestCase : FormatterTestCase() {
     // FIXME: these two guys are way too big
     fun testSpacing() = doTest()
     fun testLineBreaks() = doTest()
+    fun testLineBreaksTraits() = doTest()
 
     fun testIssue451() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/451
     fun testIssue526() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/526

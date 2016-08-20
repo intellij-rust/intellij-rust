@@ -653,7 +653,7 @@ trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER generic_params? type_param
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
-trait_body ::= '{' trait_member* '}' { pin = 1 }
+private trait_body ::= '{' trait_member* '}' { pin = 1 }
 
 // TODO: use upper rules and inheritance here
 private trait_member ::= !'}' ( trait_const_member | trait_type_member | trait_method_member ) {

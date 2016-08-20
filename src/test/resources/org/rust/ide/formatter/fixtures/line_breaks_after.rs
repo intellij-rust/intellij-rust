@@ -95,8 +95,6 @@ fn many_stmts() {
     };
 }
 
-trait Name {}
-
 struct Foo {}
 
 enum Moo {}
@@ -104,10 +102,6 @@ enum Moo {}
 mod Bar {}
 
 extern {}
-
-trait NameC {
-    /* comment */
-}
 
 struct FooC {
     /* comment */
@@ -123,10 +117,6 @@ mod BarC {
 
 extern {
     /* comment */
-}
-
-trait Name2 {
-    fn moo(self);
 }
 
 struct Foo2 {
@@ -229,9 +219,3 @@ mod moo {
     fn b() {}
 }
 
-trait Bar {
-    fn a();
-
-
-    fn b();
-}

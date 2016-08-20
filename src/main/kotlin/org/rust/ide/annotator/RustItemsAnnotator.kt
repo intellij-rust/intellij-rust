@@ -61,13 +61,13 @@ class RustItemsAnnotator : Annotator {
             impl.type?.textRange?.endOffset ?: implBody.textRange.startOffset
         )
 
-        val canImplement = trait.traitBody.traitMethodMemberList.associateBy { it.name }
+        val canImplement = trait.traitMethodMemberList.associateBy { it.name }
         val mustImplement = canImplement.filterValues { it.isAbstract }
         val implemented = implBody.implMethodMemberList.associateBy { it.name }
 
         val notImplemented = mustImplement.keys - implemented.keys
         if (!notImplemented.isEmpty()) {
-            val toImplement = trait.traitBody.traitMethodMemberList.filter { it.name in notImplemented }
+            val toImplement = trait.traitMethodMemberList.filter { it.name in notImplemented }
 
             holder.createErrorAnnotation(implHeaderTextRange,
                 "Not all trait items implemented, missing: `${notImplemented.first()}`"

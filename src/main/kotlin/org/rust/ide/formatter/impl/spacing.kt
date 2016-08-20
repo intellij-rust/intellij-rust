@@ -167,8 +167,8 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtContext): Sp
                 keepBlankLines = ctx.commonSettings.KEEP_BLANK_LINES_IN_CODE)
 
             // Format blank lines between impl & trait members
-            parentPsi is RustImplBodyElement || parentPsi is RustTraitBodyElement
-                && !ncPsi1.isBlockDelim && !ncPsi2.isBlockDelim
+            (parentPsi is RustImplBodyElement && !ncPsi1.isBlockDelim && !ncPsi2.isBlockDelim) ||
+                (parentPsi is RustTraitItemElement && ncPsi1 is RustNamedElement && ncPsi2 is RustNamedElement)
             -> return lineBreak(
                 keepLineBreaks = ctx.commonSettings.KEEP_LINE_BREAKS,
                 keepBlankLines = ctx.commonSettings.KEEP_BLANK_LINES_IN_DECLARATIONS)
@@ -294,7 +294,7 @@ private fun SpacingContext.blockMustBeMultiLine(): Boolean {
 
         is RustBlockFieldsElement,
         is RustEnumBodyElement,
-        is RustTraitBodyElement,
+        is RustTraitItemElement,
         is RustModItemElement,
         is RustForeignModItemElement -> childrenCount != 0 // 3
 

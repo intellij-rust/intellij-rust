@@ -137,19 +137,16 @@ struct List(Vec<i32>);
 
 fn many_stmts() { let a = { let inner = 3; (inner * inner) };}
 
-trait Name { }
 struct Foo { }
 enum Moo { }
 mod Bar { }
 extern { }
 
-trait NameC { /* comment */ }
 struct FooC { /* comment */ }
 enum MooC { /* comment */ }
 mod BarC { /* comment */ }
 extern { /* comment */ }
 
-trait Name2 { fn moo(self); }
 struct Foo2 { x: i32 }
 enum Moo2 { Mmm(i32) }
 mod Bar2 { fn moo() -> i32 { 45 } }
@@ -264,10 +261,3 @@ mod moo {
     fn b() {}
 }
 
-trait Bar {
-    fn a();
-
-
-
-    fn b();
-}

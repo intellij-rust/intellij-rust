@@ -16,6 +16,6 @@ class RustTypeParameterType(val parameter: RustTypeParamElement) : RustTypeBase(
         parameter.bounds.mapNotNull { it.bound.traitRef?.trait }
 
     override fun getNonStaticMethodsIn(project: Project): Sequence<RustFnElement> =
-        getTraitsImplementedIn(project).flatMap { it.traitBody.traitMethodMemberList.asSequence() }
+        getTraitsImplementedIn(project).flatMap { it.traitMethodMemberList.asSequence() }
 
 }
