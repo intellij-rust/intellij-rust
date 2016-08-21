@@ -12,7 +12,6 @@ import org.rust.lang.core.symbols.impl.RustCSelfQualifiedPathPart
 import org.rust.lang.core.symbols.impl.RustNamedQualifiedPathPart
 import org.rust.lang.core.symbols.impl.RustSelfQualifiedPathPart
 import org.rust.lang.core.symbols.impl.RustSuperQualifiedPathPart
-import sun.plugin.dom.exception.InvalidStateException
 
 abstract class RustPathImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
                                                   , RustQualifiedReferenceElement
@@ -34,7 +33,7 @@ abstract class RustPathImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
             identifier  ?.let { RustNamedQualifiedPathPart(it.text) }   ?:
             self        ?.let { RustSelfQualifiedPathPart }             ?:
             cself       ?.let { RustCSelfQualifiedPathPart }            ?:
-            `super`     ?.let { RustSuperQualifiedPathPart }            ?: throw InvalidStateException("Panic at the disco!")
+            `super`     ?.let { RustSuperQualifiedPathPart }            ?: throw IllegalStateException("Panic at the disco!")
 
 
     override val fullyQualified: Boolean
