@@ -64,11 +64,7 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
 
             override fun visitTraitItem(o: RustTraitItemElement) {
                 super.visitTraitItem(o)
-
-                val rbrace = o.rbrace
-                if (rbrace != null) {
-                    descriptors += FoldingDescriptor(o.node, TextRange(o.lbrace.textOffset, rbrace.textOffset + 1))
-                }
+                foldBetween(o, o.lbrace, o.rbrace)
             }
 
             override fun visitEnumVariant(o: RustEnumVariantElement) {
@@ -91,11 +87,7 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
 
             override fun visitModItem(o: RustModItemElement) {
                 super.visitModItem(o)
-
-                val rbrace = o.rbrace
-                if (rbrace != null) {
-                    descriptors += FoldingDescriptor(o.node, TextRange(o.lbrace.textOffset, rbrace.textOffset + 1))
-                }
+                foldBetween(o, o.lbrace, o.rbrace)
             }
 
             override fun visitMatchExpr(o: RustMatchExprElement) {
@@ -109,13 +101,7 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
 
             override fun visitMacroArg(o: RustMacroArgElement) {
                 super.visitMacroArg(o)
-
-                val lbrace = o.lbrace
-                val rbrace = o.rbrace
-
-                if (lbrace != null && rbrace != null) {
-                    descriptors += FoldingDescriptor(o.node, TextRange(lbrace.textOffset, rbrace.textOffset + 1))
-                }
+                foldBetween(o, o.lbrace, o.rbrace)
             }
 
             override fun visitUseGlobList(o: RustUseGlobListElement) {
@@ -129,6 +115,12 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
 
                 if (comment.tokenType == RustTokenElementTypes.BLOCK_COMMENT) {
                     descriptors += FoldingDescriptor(comment.node, comment.textRange)
+                }
+            }
+
+            private fun foldBetween(element: PsiElement, left: PsiElement?, right: PsiElement?) {
+                if (left != null && right != null) {
+                    descriptors += FoldingDescriptor(element.node, TextRange(left.textOffset, right.textOffset + 1))
                 }
             }
         })
