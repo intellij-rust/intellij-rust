@@ -19,8 +19,6 @@ import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
 import org.rust.lang.core.types.unresolved.decay
 import org.rust.lang.core.types.util.type
-import sun.plugin.dom.exception.InvalidStateException
-
 
 object RustImplItemStubElementType : RustStubElementType<RustImplItemElementStub, RustImplItemElement>("IMPL_ITEM") {
 
