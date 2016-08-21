@@ -30,7 +30,7 @@ object RustElementFactory {
     fun createBlockExpr(project: Project, body: String): RustBlockExprElement? =
         createFromText(project, "fn main() { { $body } }")
 
-    fun createImplBody(project: Project, traitMethods: List<RustTraitMethodMemberElement>): RustImplBodyElement? {
+    fun createImplItem(project: Project, traitMethods: List<RustTraitMethodMemberElement>): RustImplItemElement? {
         val m = traitMethods.first()
         m.copy()
         val methods = traitMethods

@@ -66,7 +66,7 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
     val onDropFn: PsiElementPattern.Capture<PsiElement> get() {
         val dropTraitRef = psiElement<RustTraitRefElement>().withText("Drop")
         val implBlock = psiElement<RustImplItemElement>().withChild(dropTraitRef)
-        return psiElement().withSuperParent(5, implBlock)
+        return psiElement().withSuperParent(4, implBlock)
     }
 
     val onTestFn: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RustFnItemElement>()

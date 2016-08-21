@@ -706,7 +706,7 @@ impl_item ::= attrs_and_vis UNSAFE? IMPL generic_params? ( bare_impl | for_impl 
 private bare_impl ::= type where_clause? impl_body
 private for_impl ::= '!'? trait_ref FOR (type where_clause? impl_body | '..' '{' '}')
 
-impl_body ::= '{' inner_attr* impl_member* '}' { pin = 1 }
+private impl_body ::= '{' inner_attr* impl_member* '}' { pin = 1 }
 
 // TODO: unify with trait_member?
 private impl_member ::= !'}' ( impl_method_member | impl_const_member | impl_macro_member | impl_type_member ) {

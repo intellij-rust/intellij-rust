@@ -55,15 +55,14 @@ class RustItemsAnnotator : Annotator {
 
     private fun checkImpl(holder: AnnotationHolder, impl: RustImplItemElement) {
         val trait = impl.traitRef?.trait ?: return
-        val implBody = impl.implBody ?: return
         val implHeaderTextRange = TextRange.create(
             impl.textRange.startOffset,
-            impl.type?.textRange?.endOffset ?: implBody.textRange.startOffset
+            impl.type?.textRange?.endOffset ?: impl.textRange.endOffset
         )
 
         val canImplement = trait.traitMethodMemberList.associateBy { it.name }
         val mustImplement = canImplement.filterValues { it.isAbstract }
-        val implemented = implBody.implMethodMemberList.associateBy { it.name }
+        val implemented = impl.implMethodMemberList.associateBy { it.name }
 
         val notImplemented = mustImplement.keys - implemented.keys
         if (!notImplemented.isEmpty()) {
@@ -127,14 +126,12 @@ private class ImplementMethods(
         startElement: PsiElement,
         endElement: PsiElement
     ) {
-        val implBody = (startElement as RustImplItemElement).implBody ?: return
-
-        val templateImpl = RustElementFactory.createImplBody(project, methods) ?: return
+        val impl = (startElement as RustImplItemElement)
+        val templateImpl = RustElementFactory.createImplItem(project, methods) ?: return
+        val lastMethodOrBrace = impl.implMethodMemberList.lastOrNull() ?: impl.lbrace ?: return
         val firstToAdd = templateImpl.implMethodMemberList.firstOrNull() ?: return
         val lastToAdd = templateImpl.implMethodMemberList.lastOrNull() ?: return
-
-        val lastMethodOrBrace = implBody.implMethodMemberList.lastOrNull() ?: implBody.lbrace
-        implBody.addRangeAfter(firstToAdd, lastToAdd, lastMethodOrBrace)
+        impl.addRangeAfter(firstToAdd, lastToAdd, lastMethodOrBrace)
     }
 
 }

@@ -21,7 +21,7 @@ class RustInvalidSyntaxAnnotator : Annotator {
     })
 
     private fun isInTraitImpl(o: RustVisElement): Boolean {
-        val impl = o.parent?.parent?.parent
+        val impl = o.parent?.parent
         return impl is RustImplItemElement && impl.traitRef != null
     }
 }

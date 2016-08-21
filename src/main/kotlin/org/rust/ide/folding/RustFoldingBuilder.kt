@@ -33,11 +33,7 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
 
             override fun visitImplItem(o: RustImplItemElement) {
                 super.visitImplItem(o)
-
-                val implBody = o.implBody
-                if (implBody != null) {
-                    descriptors += FoldingDescriptor(o.node, implBody.textRange)
-                }
+                foldBetween(o, o.lbrace, o.rbrace)
             }
 
             override fun visitStructItem(o: RustStructItemElement) {
