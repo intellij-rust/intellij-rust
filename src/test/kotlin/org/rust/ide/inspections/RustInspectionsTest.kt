@@ -18,6 +18,8 @@ class RustInspectionsTest : RustInspectionsTestBase() {
     fun testDuplicateTraitMethod() = doTest<RustDuplicateTraitMethodInspection>()
     fun testDuplicateTraitType() = doTest<RustDuplicateTraitTypeInspection>()
 
+    fun testCstringPointer() = doTest<RustCStringPointerInspection>()
+
     fun testSuppression() = checkByFile {
         enableInspection<RustSelfConventionInspection>()
         myFixture.checkHighlighting(true, false, true)
