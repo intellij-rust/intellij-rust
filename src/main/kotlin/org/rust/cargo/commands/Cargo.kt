@@ -76,7 +76,8 @@ class Cargo(
             .withEnvironment(CargoConstants.RUSTC_ENV_VAR, pathToRustExecutable)
             .withEnvironment(environmentVariables)
 
-    private val metadataCommandline: GeneralCommandLine get() = generalCommand("metadata", listOf("--verbose"))
+    private val metadataCommandline: GeneralCommandLine get() =
+        generalCommand("metadata", listOf("--verbose", "--format-version", "1"))
 
     private fun rustfmtCommandline(filePath: String) =
         generalCommand("fmt").withParameters("--", "--write-mode=overwrite", "--skip-children", filePath)
