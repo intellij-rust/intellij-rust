@@ -38,6 +38,7 @@ class RustProjectSettingsPanel : JPanel() {
     private lateinit var autoUpdateEnabled: JCheckBox
     private lateinit var rustVersion: JLabel
     private lateinit var cargoVersion: JLabel
+    private lateinit var rustupVersion: JLabel
     private lateinit var versionUpdateAlarm: Alarm
 
     private val versionUpdateDelayMillis = 200
@@ -105,13 +106,14 @@ class RustProjectSettingsPanel : JPanel() {
 
             val rustc = toolchain.queryRustcVersion()
             val cargo = toolchain.queryCargoVersion()
+            val rustup = toolchain.queryRustupVersion()
 
-            updateVersion(rustc, cargo)
+            updateVersion(rustc, cargo, rustup)
 
         }, versionUpdateDelayMillis)
     }
 
-    private fun updateVersion(rustc: Version?, cargo: Version?) {
+    private fun updateVersion(rustc: Version?, cargo: Version?, rustup: Version?) {
         ApplicationManager.getApplication().invokeLater({
             if (!Disposer.isDisposed(disposable)) {
                 if (rustc != null) {
@@ -128,6 +130,14 @@ class RustProjectSettingsPanel : JPanel() {
                 } else {
                     cargoVersion.text       = "N/A"
                     cargoVersion.foreground = JBColor.RED
+                }
+
+                if (rustup != null) {
+                    rustupVersion.text       = rustup.release
+                    rustupVersion.foreground = JBColor.foreground()
+                } else {
+                    rustupVersion.text       = "N/A"
+                    rustupVersion.foreground = JBColor.RED
                 }
             }
         }, ModalityState.any())
