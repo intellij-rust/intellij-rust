@@ -756,6 +756,7 @@ type ::= vec_type
        | path_type
        | type_with_bounds_type
        | for_in_type
+       | impl_trait_type
        | wildcard_type
 
 vec_type ::= '[' type [';' any_expr] ']'
@@ -775,6 +776,8 @@ type_with_bounds_type ::= type ('+' bound) +
 bound ::= LIFETIME | trait_ref
 
 for_in_type ::= for_lifetimes (bare_fn_type | trait_ref)
+
+impl_trait_type ::= IMPL polybound ('+' polybound)*
 
 wildcard_type ::= '_'
 

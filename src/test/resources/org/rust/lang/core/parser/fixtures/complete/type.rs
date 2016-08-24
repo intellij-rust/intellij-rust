@@ -20,3 +20,7 @@ type Trailing1 = Box<TypeA<'static,>>;
 type Trailing2<'a> = MyType<'a, (),>;
 
 type TrailingCommaInFn = unsafe extern "system" fn(x: i32,) -> ();
+
+fn foo<T>(xs: Vec<T>) -> impl Iterator<Item=impl FnOnce() -> T> + Clone {
+    xs.into_iter().map(|x| || x)
+}
