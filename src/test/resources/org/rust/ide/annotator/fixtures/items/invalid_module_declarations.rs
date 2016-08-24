@@ -1,5 +1,8 @@
 <error descr="Cannot declare a new module at this location">mod foo;</error>
 
+#[path="helper.rs"]
+mod foobar;
+
 mod inner {
     <error descr="Unresolved module">mod bar;</error>
 }
