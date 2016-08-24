@@ -5,7 +5,6 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubInputStream
 import com.intellij.psi.stubs.StubOutputStream
-import com.intellij.util.io.StringRef
 import org.rust.lang.core.psi.RustImplMethodMemberElement
 import org.rust.lang.core.psi.impl.RustImplMethodMemberElementImpl
 import org.rust.lang.core.stubs.RustFnElementStub
@@ -21,7 +20,7 @@ object RustImplMethodMemberStubElementType : RustNamedStubElementType<RustImplMe
 
     override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustImplMethodMemberElementStub =
         RustImplMethodMemberElementStub(parentStub, this,
-            dataStream.readName(), dataStream.readBoolean(), dataStream.readFnAttributes())
+            dataStream.readNameAsString(), dataStream.readBoolean(), dataStream.readFnAttributes())
 
     override fun serialize(stub: RustImplMethodMemberElementStub, dataStream: StubOutputStream) = with(dataStream) {
         writeName(stub.name)
@@ -31,12 +30,10 @@ object RustImplMethodMemberStubElementType : RustNamedStubElementType<RustImplMe
 }
 
 
-class RustImplMethodMemberElementStub : RustFnElementStub<RustImplMethodMemberElement> {
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-                name: StringRef?, isPublic: Boolean, attributes: FnAttributes)
-    : super(parent, elementType, name ?: StringRef.fromNullableString(""), isPublic, attributes)
-
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-                name: String?, isPublic: Boolean, attributes: FnAttributes)
-    : super(parent, elementType, name ?: "", isPublic, attributes)
-}
+class RustImplMethodMemberElementStub(
+    parent: StubElement<*>?,
+    elementType: IStubElementType<*, *>,
+    name: String?,
+    isPublic: Boolean,
+    attributes: FnAttributes
+) : RustFnElementStub<RustImplMethodMemberElement>(parent, elementType, name ?: "", isPublic, attributes)

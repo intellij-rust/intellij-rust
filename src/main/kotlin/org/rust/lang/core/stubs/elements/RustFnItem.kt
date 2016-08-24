@@ -21,7 +21,7 @@ object RustFnItemStubElementType : RustNamedStubElementType<RustFnItemElementStu
 
     override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustFnItemElementStub =
         RustFnItemElementStub(parentStub, this,
-            dataStream.readName(), dataStream.readBoolean(), dataStream.readFnAttributes())
+            dataStream.readName()?.string, dataStream.readBoolean(), dataStream.readFnAttributes())
 
     override fun serialize(stub: RustFnItemElementStub, dataStream: StubOutputStream) = with(dataStream) {
         writeName(stub.name)
@@ -31,12 +31,10 @@ object RustFnItemStubElementType : RustNamedStubElementType<RustFnItemElementStu
 }
 
 
-class RustFnItemElementStub : RustFnElementStub<RustFnItemElement> {
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-                name: StringRef?, isPublic: Boolean, attributes: FnAttributes)
-    : super(parent, elementType, name ?: StringRef.fromNullableString(""), isPublic, attributes)
-
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-                name: String?, isPublic: Boolean, attributes: FnAttributes)
-    : super(parent, elementType, name ?: "", isPublic, attributes)
-}
+class RustFnItemElementStub(
+    parent: StubElement<*>?,
+    elementType: IStubElementType<*, *>,
+    name: String?,
+    isPublic: Boolean,
+    attributes: FnAttributes
+) : RustFnElementStub<RustFnItemElement>(parent, elementType, name ?: "", isPublic, attributes)

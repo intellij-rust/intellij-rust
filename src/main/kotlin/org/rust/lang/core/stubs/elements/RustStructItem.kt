@@ -2,7 +2,6 @@ package org.rust.lang.core.stubs.elements
 
 
 import com.intellij.psi.stubs.*
-import com.intellij.util.io.StringRef
 import org.rust.lang.core.psi.RustStructItemElement
 import org.rust.lang.core.psi.impl.RustStructItemElementImpl
 import org.rust.lang.core.stubs.RustNamedElementStub
@@ -17,7 +16,7 @@ object RustStructItemStubElementType : RustNamedStubElementType<RustStructItemEl
         RustStructItemElementImpl(stub, this)
 
     override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustStructItemElementStub =
-        RustStructItemElementStub(parentStub, this, dataStream.readName(), dataStream.readBoolean())
+        RustStructItemElementStub(parentStub, this, dataStream.readNameAsString(), dataStream.readBoolean())
 
     override fun serialize(stub: RustStructItemElementStub, dataStream: StubOutputStream) = with(dataStream) {
         writeName(stub.name)
@@ -32,10 +31,9 @@ object RustStructItemStubElementType : RustNamedStubElementType<RustStructItemEl
 }
 
 
-class RustStructItemElementStub : RustNamedElementStub<RustStructItemElement> {
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: StringRef?, isPublic: Boolean)
-    : super(parent, elementType, name ?: StringRef.fromNullableString(""), isPublic)
-
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: String?, isPublic: Boolean)
-    : super(parent, elementType, name ?: "", isPublic)
-}
+class RustStructItemElementStub(
+    parent: StubElement<*>?,
+    elementType: IStubElementType<*, *>,
+    name: String?,
+    isPublic: Boolean
+) : RustNamedElementStub<RustStructItemElement>(parent, elementType, name ?: "", isPublic)

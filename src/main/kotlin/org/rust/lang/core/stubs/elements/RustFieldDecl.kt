@@ -1,7 +1,9 @@
 package org.rust.lang.core.stubs.elements
 
-import com.intellij.psi.stubs.*
-import com.intellij.util.io.StringRef
+import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.stubs.StubElement
+import com.intellij.psi.stubs.StubInputStream
+import com.intellij.psi.stubs.StubOutputStream
 import org.rust.lang.core.psi.RustFieldDeclElement
 import org.rust.lang.core.psi.impl.RustFieldDeclElementImpl
 import org.rust.lang.core.stubs.RustNamedElementStub
@@ -15,7 +17,7 @@ object RustFieldDeclStubElementType : RustNamedStubElementType<RustFieldDeclElem
         RustFieldDeclElementImpl(stub, this)
 
     override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustFieldDeclElementStub =
-        RustFieldDeclElementStub(parentStub, this, dataStream.readName(), dataStream.readBoolean())
+        RustFieldDeclElementStub(parentStub, this, dataStream.readNameAsString(), dataStream.readBoolean())
 
     override fun serialize(stub: RustFieldDeclElementStub, dataStream: StubOutputStream) = with(dataStream) {
         writeName(stub.name)
@@ -25,10 +27,9 @@ object RustFieldDeclStubElementType : RustNamedStubElementType<RustFieldDeclElem
 }
 
 
-class RustFieldDeclElementStub : RustNamedElementStub<RustFieldDeclElement> {
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: StringRef?, isPublic: Boolean)
-    : super(parent, elementType, name ?: StringRef.fromNullableString(""), isPublic)
-
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: String?, isPublic: Boolean)
-    : super(parent, elementType, name ?: "", isPublic)
-}
+class RustFieldDeclElementStub(
+    parent: StubElement<*>?,
+    elementType: IStubElementType<*, *>,
+    name: String?,
+    isPublic: Boolean
+) : RustNamedElementStub<RustFieldDeclElement>(parent, elementType, name ?: "", isPublic)

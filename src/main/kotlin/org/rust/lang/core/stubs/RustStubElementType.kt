@@ -33,5 +33,7 @@ abstract class RustStubElementType<StubT, PsiT>(
             readBoolean(),
             readBoolean()
         )
+
+        fun StubInputStream.readNameAsString(): String? = readName()?.string
     }
 }

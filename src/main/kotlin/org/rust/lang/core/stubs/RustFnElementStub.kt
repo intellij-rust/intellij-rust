@@ -15,12 +15,6 @@ abstract class RustFnElementStub<PsiT : RustFnElement> : RustNamedElementStub<Ps
     val attributes: FnAttributes
 
     constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-                name: StringRef?, isPublic: Boolean, attributes: FnAttributes)
-    : super(parent, elementType, name ?: StringRef.fromNullableString(""), isPublic) {
-        this.attributes = attributes
-    }
-
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>,
                 name: String?, isPublic: Boolean, attributes: FnAttributes)
     : super(parent, elementType, name ?: "", isPublic) {
         this.attributes = attributes

@@ -19,7 +19,7 @@ object RustStaticItemStubElementType : RustNamedStubElementType<RustStaticItemEl
         RustStaticItemElementImpl(stub, this)
 
     override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustStaticItemElementStub =
-        RustStaticItemElementStub(parentStub, this, dataStream.readName(), dataStream.readBoolean())
+        RustStaticItemElementStub(parentStub, this, dataStream.readNameAsString(), dataStream.readBoolean())
 
     override fun serialize(stub: RustStaticItemElementStub, dataStream: StubOutputStream) = with(dataStream) {
         writeName(stub.name)
@@ -28,10 +28,9 @@ object RustStaticItemStubElementType : RustNamedStubElementType<RustStaticItemEl
 }
 
 
-class RustStaticItemElementStub : RustNamedElementStub<RustStaticItemElement> {
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: StringRef?, isPublic: Boolean)
-    : super(parent, elementType, name ?: StringRef.fromNullableString(""), isPublic)
-
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<*, *>, name: String?, isPublic: Boolean)
-    : super(parent, elementType, name ?: "", isPublic)
-}
+class RustStaticItemElementStub(
+    parent: StubElement<*>?,
+    elementType: IStubElementType<*, *>,
+    name: String?,
+    isPublic: Boolean
+) : RustNamedElementStub<RustStaticItemElement>(parent, elementType, name ?: "", isPublic)
