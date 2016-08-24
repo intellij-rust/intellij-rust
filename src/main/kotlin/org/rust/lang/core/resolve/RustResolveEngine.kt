@@ -574,7 +574,11 @@ private fun PsiDirectory.findFileByRelativePath(path: String): PsiFile? {
 
     var dir = this
     for (part in parts.dropLast(1)) {
-        dir = dir.findSubdirectory(part) ?: return null
+        when (part) {
+            "."  -> {}
+            ".." -> dir = dir.parentDirectory ?: return null
+            else -> dir = dir.findSubdirectory(part) ?: return null
+        }
     }
 
     return dir.findFile(fileName)

@@ -3,7 +3,7 @@ package org.rust.ide.annotator
 class RustItemAnnotatorTest : RustAnnotatorTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/items"
 
-    fun testInvalidModuleDeclarations() = doTest()
+    fun testInvalidModuleDeclarations() = doTest("helper.rs")
 
     fun testCreateFileQuickFix() = checkByDirectory {
         openFileInEditor("mod.rs")

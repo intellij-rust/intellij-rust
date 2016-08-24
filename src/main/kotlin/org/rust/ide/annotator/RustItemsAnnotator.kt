@@ -29,14 +29,16 @@ class RustItemsAnnotator : Annotator {
     }
 
     private fun checkModDecl(holder: AnnotationHolder, modDecl: RustModDeclItemElement) {
-        if (modDecl.isPathAttributeRequired && modDecl.pathAttribute == null) {
+        val pathAttribute = modDecl.pathAttribute
+
+        if (modDecl.isPathAttributeRequired && pathAttribute == null) {
             val message = "Cannot declare a non-inline module inside a block unless it has a path attribute"
             holder.createErrorAnnotation(modDecl, message)
             return
         }
 
         val containingMod = modDecl.containingMod ?: return
-        if (!containingMod.ownsDirectory) {
+        if (!containingMod.ownsDirectory && pathAttribute == null) {
             // We don't want to show the warning if there is no cargo project
             // associated with the current module. Without it we can't know for
             // sure that a mod is not a directory owner.

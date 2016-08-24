@@ -4,8 +4,8 @@ import org.rust.lang.RustTestCaseBase
 
 abstract class RustAnnotatorTestBase: RustTestCaseBase() {
 
-    protected fun doTest() {
-        myFixture.testHighlighting(fileName)
+    protected fun doTest(vararg additionalFilenames: String) {
+        myFixture.testHighlighting(fileName, *additionalFilenames)
     }
 
     protected fun doTestInfo() {
