@@ -15,7 +15,7 @@ abstract class RustStubbedElementImpl<StubT : StubBase<*>> : StubBasedPsiElement
 
     constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getParent(): PsiElement = parentByStub
+    override fun getParent(): PsiElement = parentByTree
 
     override fun getReference(): RustReference? = null
 

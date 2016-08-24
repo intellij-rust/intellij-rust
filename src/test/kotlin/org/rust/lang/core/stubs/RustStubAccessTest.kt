@@ -11,7 +11,9 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.stubs.StubElement
 import org.rust.lang.RustTestCaseBase
 import org.rust.lang.core.psi.RustCompositeElement
+import org.rust.lang.core.psi.RustImplMethodMemberElement
 import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustTraitMethodMemberElement
 import java.util.*
 
 class RustStubAccessTest : RustTestCaseBase() {
@@ -37,6 +39,32 @@ class RustStubAccessTest : RustTestCaseBase() {
 
     fun testGettingReferenceDoesNotNeedAst() {
         processStubsWithoutAstAccess<RustCompositeElement> { it.reference }
+    }
+
+    fun testParentWorksCorrectlyForStubbedElements() {
+        val parentsByStub: MutableMap<PsiElement, PsiElement> = HashMap()
+
+        val shouldImplementParentByStub = { element: PsiElement ->
+           //TODO: any non-nested inside a function element should use `parentByStub`.
+           when (element) {
+                is RustTraitMethodMemberElement, is RustImplMethodMemberElement -> true
+                else -> false
+            }
+        }
+
+        processStubsWithoutAstAccess<RustCompositeElement> {
+            if (shouldImplementParentByStub(it)) {
+                parentsByStub += it to it.parent
+            }
+        }
+
+        (psiManager as PsiManagerImpl).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable)
+
+        for ((element, stubParent) in parentsByStub) {
+            element.node // force AST loading
+            check(element.parent == stubParent)
+        }
+
     }
 
     private inline fun <reified T : PsiElement> processStubsWithoutAstAccess(block: (T) -> Unit) {
