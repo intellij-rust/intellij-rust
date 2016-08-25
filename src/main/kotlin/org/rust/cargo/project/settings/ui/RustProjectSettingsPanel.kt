@@ -12,7 +12,6 @@ import com.intellij.ui.JBColor
 import com.intellij.util.Alarm
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.toolchain.Version
 import javax.swing.JCheckBox
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -102,43 +101,33 @@ class RustProjectSettingsPanel : JPanel() {
     private fun scheduleVersionUpdate(toolchainLocation: String) {
         versionUpdateAlarm.cancelAllRequests()
         versionUpdateAlarm.addRequest({
-            val toolchain = RustToolchain(toolchainLocation)
-
-            val rustc = toolchain.queryRustcVersion()
-            val cargo = toolchain.queryCargoVersion()
-            val rustup = toolchain.queryRustupVersion()
-
-            updateVersion(rustc, cargo, rustup)
-
+            val versionInfo = RustToolchain(toolchainLocation).queryVersions()
+            updateVersion(versionInfo)
         }, versionUpdateDelayMillis)
     }
 
-    private fun updateVersion(rustc: Version?, cargo: Version?, rustup: Version?) {
+    private fun updateVersion(info: RustToolchain.VersionInfo) {
         ApplicationManager.getApplication().invokeLater({
-            if (!Disposer.isDisposed(disposable)) {
-                if (rustc != null) {
-                    rustVersion.text        = rustc.release
-                    rustVersion.foreground  = JBColor.foreground()
-                } else {
-                    rustVersion.text        = "N/A"
-                    rustVersion.foreground  = JBColor.RED
-                }
+            if (Disposer.isDisposed(disposable)) return@invokeLater
 
-                if (cargo != null) {
-                    cargoVersion.text       = cargo.release
-                    cargoVersion.foreground = if (cargo >= RustToolchain.CARGO_LEAST_COMPATIBLE_VERSION) JBColor.foreground() else JBColor.RED
-                } else {
-                    cargoVersion.text       = "N/A"
-                    cargoVersion.foreground = JBColor.RED
-                }
+            val labelToVersion = listOf(
+                rustVersion to info.rustc?.semver,
+                cargoVersion to info.cargo,
+                rustupVersion to info.rustup
+            )
 
-                if (rustup != null) {
-                    rustupVersion.text       = rustup.release
-                    rustupVersion.foreground = JBColor.foreground()
+            for ((label, version) in labelToVersion) {
+                if (version == null) {
+                    label.text = "N/A"
+                    label.foreground = JBColor.RED
                 } else {
-                    rustupVersion.text       = "N/A"
-                    rustupVersion.foreground = JBColor.RED
+                    label.text = version.parsedVersion
+                    label.foreground = JBColor.foreground()
                 }
+            }
+
+            if (!info.cargoHasMetadataCommand) {
+                cargoVersion.foreground = JBColor.RED
             }
         }, ModalityState.any())
     }

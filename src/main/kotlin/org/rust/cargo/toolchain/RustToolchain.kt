@@ -8,72 +8,41 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
+import com.intellij.util.text.SemVer
 import org.rust.cargo.commands.Cargo
 import org.rust.utils.seconds
 import java.io.File
 
 data class RustToolchain(val location: String) {
 
-    private fun hasExecuteable(exec: String): Boolean =
-        File(pathToExecutable(exec)).canExecute()
-
     fun looksLikeValidToolchain(): Boolean =
-        hasExecuteable(CARGO)
+        hasExecutable(CARGO)
 
-    fun containsMetadataCommand(): Boolean {
+    fun queryVersions(): VersionInfo {
         check(!ApplicationManager.getApplication().isDispatchThread)
+        if (!looksLikeValidToolchain()) return VersionInfo(null, null, null, false)
 
-        val cmd = nonProjectCargo().generalCommand("metadata", listOf("--help"))
-        val procOut = try {
-            CapturingProcessHandler(cmd.createProcess(), Charsets.UTF_8, cmd.commandLineString).runProcess(1.seconds)
-        } catch (e: ExecutionException) {
-            return false
-        }
-        return procOut.exitCode == 0
-    }
+        val cargo = nonProjectCargo().generalCommand("version").runExecutable()?.let { findSemVer(it) }
+        val hasMetadataCommand = nonProjectCargo().generalCommand("metadata", listOf("--help")).runExecutable() != null
 
-    fun queryCargoVersion(): Version? {
-        check(!ApplicationManager.getApplication().isDispatchThread)
-        if (!looksLikeValidToolchain()) return null
-
-        val cmd = nonProjectCargo().generalCommand("version")
-        return runExecutableAndProcessStdout(cmd) { parseCargoVersion(it) }
-    }
-
-    fun queryRustcVersion(): Version? {
-        check(!ApplicationManager.getApplication().isDispatchThread)
-        if (!looksLikeValidToolchain()) return null
-
-        val cmd = GeneralCommandLine()
-            .withExePath(pathToExecutable(RUSTC))
+        val rustc = GeneralCommandLine(pathToExecutable(RUSTC))
             .withParameters("--version", "--verbose")
+            .runExecutable()?.let { parseRustcVersion(it) }
 
-        return runExecutableAndProcessStdout(cmd) { parseRustcVersion(it) }
-    }
-
-    fun queryRustupVersion(): Version? {
-        check(!ApplicationManager.getApplication().isDispatchThread)
-        if (!hasExecuteable(RUSTUP)) return null
-
-        val cmd = GeneralCommandLine()
-            .withExePath(pathToExecutable(RUSTUP))
-            .withParameters("--version")
-
-        return runExecutableAndProcessStdout(cmd) { parseRustupVersion(it) }
-    }
-
-    private fun <T> runExecutableAndProcessStdout(cmd: GeneralCommandLine, extractor: (List<String>) -> T): T? {
-        val procOut = try {
-            CapturingProcessHandler(cmd.createProcess(), Charsets.UTF_8, cmd.commandLineString).runProcess(1.seconds)
-        } catch (e: ExecutionException) {
-            log.warn("Failed to run executable!", e)
-            return null
+        val rustup = if (hasExecutable(RUSTUP)) {
+            GeneralCommandLine(pathToExecutable(RUSTUP))
+                .withParameters("--version")
+                .runExecutable()?.let { findSemVer(it) }
+        } else {
+            null
         }
 
-        if (procOut.exitCode != 0 || procOut.isCancelled || procOut.isTimeout)
-            return null
-
-        return extractor(procOut.stdoutLines)
+        return VersionInfo(
+            cargo = cargo,
+            rustc = rustc,
+            rustup = rustup,
+            cargoHasMetadataCommand = hasMetadataCommand
+        )
     }
 
     fun cargo(cargoProjectDirectory: String): Cargo =
@@ -89,9 +58,34 @@ data class RustToolchain(val location: String) {
         return File(File(location), exeName).absolutePath
     }
 
+    private fun hasExecutable(exec: String): Boolean =
+        File(pathToExecutable(exec)).canExecute()
+
+    private fun GeneralCommandLine.runExecutable(): List<String>? {
+        val procOut = try {
+            CapturingProcessHandler(createProcess(), Charsets.UTF_8, commandLineString).runProcess(1.seconds)
+        } catch (e: ExecutionException) {
+            log.warn("Failed to run executable!", e)
+            return null
+        }
+
+        if (procOut.exitCode != 0 || procOut.isCancelled || procOut.isTimeout)
+            return null
+
+        return procOut.stdoutLines
+    }
+
+    // TODO: drop IDEA 15 support and use SevVer.UNKNOWN
+    data class VersionInfo(
+        val cargo: SemVer?,
+        val rustc: RustcVersion?,
+        val rustup: SemVer?,
+        val cargoHasMetadataCommand: Boolean
+    )
+
     companion object {
 
-        private val log = Logger.getInstance(UnstableVersion::class.java)
+        private val log = Logger.getInstance(RustToolchain::class.java)
 
         private val RUSTC = "rustc"
         private val CARGO = "cargo"
@@ -99,7 +93,7 @@ data class RustToolchain(val location: String) {
 
         val CARGO_TOML = "Cargo.toml"
 
-        val CARGO_LEAST_COMPATIBLE_VERSION = Version(0, 9, 0)
+        val CARGO_LEAST_COMPATIBLE_VERSION = SemVer.parseFromText("0.9.0")!!
 
         fun suggest(): RustToolchain? = Suggestions.all().mapNotNull {
             val candidate = RustToolchain(it.absolutePath)
@@ -108,59 +102,18 @@ data class RustToolchain(val location: String) {
     }
 }
 
-class UnstableVersion(
-    val commitHash: String,
-    major: Int,
-    minor: Int,
-    build: Int
-) : Version(major, minor, build)
+data class RustcVersion(
+    val semver: SemVer,
+    val nightlyCommitHash: String?
+)
 
-open class Version(val major: Int, val minor: Int, val build: Int) : Comparable<Version> {
-    val release: String = "$major.$minor.$build"
-
-    /**
-     * NOTA BENE: It only compares the release (!) part of the version
-     */
-    override fun compareTo(other: Version): Int {
-        if (major != other.major)
-            return major - other.major
-
-        if (minor != other.minor)
-            return minor - other.minor
-
-        return build - other.build
-    }
-
-    override fun toString(): String = release
+private fun findSemVer(lines: List<String>): SemVer? {
+    val re = """\d+\.\d+\.\d+""".toRegex()
+    val versionText = lines.mapNotNull { re.find(it) }.firstOrNull()?.value ?: return null
+    return SemVer.parseFromText(versionText)
 }
 
-private fun parseCargoVersion(lines: List<String>): Version? {
-    // We want to parse following
-    //
-    //  ```
-    //  cargo 0.9.0-nightly (c4c6f39 2016-01-30)
-    //  cargo 0.10.0 (10ddd7d 2016-04-08)
-    //  ```
-    val releaseRe = """cargo (\d+)\.(\d+)\.(\d+)-?(stable|nightly)? \(([a-zA-Z0-9]+) .*\)""".toRegex()
-
-    val match = lines.mapNotNull { releaseRe.matchEntire(it) }.firstOrNull() ?: return null
-
-    val major = match.groups[1]!!.value.toInt()
-    val minor = match.groups[2]!!.value.toInt()
-    val build = match.groups[3]!!.value.toInt()
-
-    val isStable = "stable" == match.groups[4]?.value?: "stable"
-
-    return if (isStable) {
-        Version(major, minor, build)
-    } else {
-        val commitHash = match.groups[5]!!.value
-        UnstableVersion(commitHash, major, minor, build)
-    }
-}
-
-
-private fun parseRustcVersion(lines: List<String>): Version? {
+private fun parseRustcVersion(lines: List<String>): RustcVersion? {
     // We want to parse following
     //
     //  ```
@@ -172,40 +125,16 @@ private fun parseRustcVersion(lines: List<String>): Version? {
     //  release: 1.8.0-beta.1
     //  ```
     val commitHashRe = "commit-hash: (.*)".toRegex()
-    val releaseRe = """release: (\d+)\.(\d+)\.(\d+)(.*)""".toRegex()
+    val releaseRe = """release: (\d+\.\d+\.\d+)(.*)""".toRegex()
     val find = { re: Regex -> lines.mapNotNull { re.matchEntire(it) }.firstOrNull() }
 
-    val commitHash = find(commitHashRe)?.let { it.groups[1]!!.value } ?: return null
-
+    val commitHash = find(commitHashRe)?.let { it.groups[1]!!.value }
     val releaseMatch = find(releaseRe) ?: return null
+    val versionText = releaseMatch.groups[1]?.value ?: return null
 
-    val major = releaseMatch.groups[1]!!.value.toInt()
-    val minor = releaseMatch.groups[2]!!.value.toInt()
-    val build = releaseMatch.groups[3]!!.value.toInt()
-
-    val isStable = releaseMatch.groups[4]!!.value.isEmpty()
-
-    return if (isStable)
-        Version(major, minor, build)
-    else
-        UnstableVersion(commitHash, major, minor, build)
-}
-
-private fun parseRustupVersion(lines: List<String>): Version? {
-    // We want to parse following
-    //
-    //  ```
-    //  rustup 0.5.0 (4be1012 2016-07-30)
-    //  ```
-    val releaseRe = """rustup (\d+)\.(\d+)\.(\d+) \(.*\)""".toRegex()
-
-    val match = lines.mapNotNull { releaseRe.matchEntire(it) }.firstOrNull() ?: return null
-
-    val major = match.groups[1]!!.value.toInt()
-    val minor = match.groups[2]!!.value.toInt()
-    val build = match.groups[3]!!.value.toInt()
-
-    return Version(major, minor, build)
+    val semVer = SemVer.parseFromText(versionText) ?: return null
+    val isStable = releaseMatch.groups[2]?.value.isNullOrEmpty()
+    return RustcVersion(semVer, if (isStable) null else commitHash)
 }
 
 private object Suggestions {
