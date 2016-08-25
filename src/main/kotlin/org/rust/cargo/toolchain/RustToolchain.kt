@@ -14,8 +14,11 @@ import java.io.File
 
 data class RustToolchain(val location: String) {
 
+    private fun hasExecuteable(exec: String): Boolean =
+        File(pathToExecutable(exec)).canExecute()
+
     fun looksLikeValidToolchain(): Boolean =
-        File(pathToExecutable(CARGO)).canExecute()
+        hasExecuteable(CARGO)
 
     fun containsMetadataCommand(): Boolean {
         check(!ApplicationManager.getApplication().isDispatchThread)
@@ -46,6 +49,17 @@ data class RustToolchain(val location: String) {
             .withParameters("--version", "--verbose")
 
         return runExecutableAndProcessStdout(cmd) { parseRustcVersion(it) }
+    }
+
+    fun queryRustupVersion(): Version? {
+        check(!ApplicationManager.getApplication().isDispatchThread)
+        if (!hasExecuteable(RUSTUP)) return null
+
+        val cmd = GeneralCommandLine()
+            .withExePath(pathToExecutable(RUSTUP))
+            .withParameters("--version")
+
+        return runExecutableAndProcessStdout(cmd) { parseRustupVersion(it) }
     }
 
     private fun <T> runExecutableAndProcessStdout(cmd: GeneralCommandLine, extractor: (List<String>) -> T): T? {
@@ -81,6 +95,7 @@ data class RustToolchain(val location: String) {
 
         private val RUSTC = "rustc"
         private val CARGO = "cargo"
+        private val RUSTUP = "rustup"
 
         val CARGO_TOML = "Cargo.toml"
 
@@ -174,6 +189,23 @@ private fun parseRustcVersion(lines: List<String>): Version? {
         Version(major, minor, build)
     else
         UnstableVersion(commitHash, major, minor, build)
+}
+
+private fun parseRustupVersion(lines: List<String>): Version? {
+    // We want to parse following
+    //
+    //  ```
+    //  rustup 0.5.0 (4be1012 2016-07-30)
+    //  ```
+    val releaseRe = """rustup (\d+)\.(\d+)\.(\d+) \(.*\)""".toRegex()
+
+    val match = lines.mapNotNull { releaseRe.matchEntire(it) }.firstOrNull() ?: return null
+
+    val major = match.groups[1]!!.value.toInt()
+    val minor = match.groups[2]!!.value.toInt()
+    val build = match.groups[3]!!.value.toInt()
+
+    return Version(major, minor, build)
 }
 
 private object Suggestions {
