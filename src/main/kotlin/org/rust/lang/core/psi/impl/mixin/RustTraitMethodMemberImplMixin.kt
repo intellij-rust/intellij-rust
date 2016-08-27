@@ -17,7 +17,7 @@ abstract class RustTraitMethodMemberImplMixin : RustFnImplMixin<RustTraitMethodM
 
     constructor(stub: RustTraitMethodMemberElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getParent(): PsiElement = parentByStub
+    override fun getParent(): PsiElement? = parentByStub
 
     override fun getIcon(flags: Int): Icon {
         var icon = if (isAbstract) RustIcons.ABSTRACT_METHOD else RustIcons.METHOD

@@ -22,7 +22,7 @@ abstract class RustImplMethodMemberImplMixin : RustFnImplMixin<RustImplMethodMem
 
     constructor(stub: RustImplMethodMemberElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getParent(): PsiElement = parentByStub
+    override fun getParent(): PsiElement? = parentByStub
 
     override fun getIcon(flags: Int): Icon? {
         var icon = RustIcons.METHOD
