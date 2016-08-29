@@ -98,11 +98,6 @@ class CargoProjectDescription private constructor(
 
     fun isCrateRoot(file: VirtualFile): Boolean = findTargetForFile(file) != null
 
-    fun findFileInPackage(packageName: String, relPath: String): VirtualFile? =
-        packages.find { it.name == packageName }?.let {
-            it.contentRoot?.findFileByRelativePath(relPath)
-        }
-
     fun withAdditionalPackages(additionalPackages: Collection<Pair<String, VirtualFile>>): CargoProjectDescription {
         val stdlibPackages = additionalPackages.map {
             val (crateName, crateRoot) = it

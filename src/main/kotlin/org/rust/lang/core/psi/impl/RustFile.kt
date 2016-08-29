@@ -18,7 +18,6 @@ import org.rust.lang.core.psi.RustInnerAttrElement
 import org.rust.lang.core.psi.RustInnerAttributeOwner
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.resolve.indexes.RustCratePath
 import org.rust.lang.core.resolve.ref.RustReference
 import org.rust.lang.core.stubs.index.RustModulesIndex
 
@@ -61,10 +60,6 @@ class RustFile(
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)
 
 }
-
-
-val PsiFile.cratePath: RustCratePath?
-    get() = RustCratePath.devise(this)
 
 
 /**
