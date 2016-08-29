@@ -19,7 +19,7 @@ class CargoProjectDescription private constructor(
 ) {
 
     class Package(
-        val contentRootPath: String,
+        val contentRootUrl: String,
         val name: String,
         val version: String,
         val targets: Collection<Target>,
@@ -29,14 +29,14 @@ class CargoProjectDescription private constructor(
         val isModule: Boolean get() = source == null
         val libTarget: Target? get() = targets.find { it.isLib }
 
-        val contentRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootPath)
+        val contentRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
     }
 
     class Target(
         /**
          * Absolute path to the crate root file
          */
-        val crateRootPath: String,
+        val crateRootUrl: String,
         val name: String,
         val kind: TargetKind
     ) {
@@ -50,7 +50,7 @@ class CargoProjectDescription private constructor(
         }
 
         private val crateRootCache by lazy {
-            VirtualFileManager.getInstance().findFileByUrl(crateRootPath)
+            VirtualFileManager.getInstance().findFileByUrl(crateRootUrl)
         }
     }
 
@@ -70,7 +70,7 @@ class CargoProjectDescription private constructor(
         val virtualFile: VirtualFile
     )
 
-    private val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootPath }
+    private val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
 
     val externCrates: Collection<ExternCrate> get() = packages.mapNotNull { pkg ->
         pkg.libTarget?.crateRoot?.let { ExternCrate(pkg.name, it) }
@@ -102,7 +102,7 @@ class CargoProjectDescription private constructor(
         val stdlibPackages = additionalPackages.map {
             val (crateName, crateRoot) = it
             Package(
-                contentRootPath = crateRoot.parent.url,
+                contentRootUrl = crateRoot.parent.url,
                 name = crateName,
                 version = "",
                 targets = listOf(Target(crateRoot.url, name = crateName, kind = TargetKind.LIB)),

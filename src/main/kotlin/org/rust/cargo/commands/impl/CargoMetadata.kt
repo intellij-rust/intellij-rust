@@ -1,9 +1,10 @@
 package org.rust.cargo.commands.impl
 
-import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.cargo.project.CargoProjectDescription
-import java.io.File
 
 /**
  * Classes mirroring JSON output of `cargo metadata`.
@@ -105,8 +106,9 @@ object CargoMetadata {
 
     fun clean(project: Project): CleanCargoMetadata {
         val packageIdToIndex = project.packages.mapIndexed { i, p -> p.id to i }.toMap()
+        val fs = LocalFileSystem.getInstance()
         return CleanCargoMetadata(
-            project.packages.map { it.clean() },
+            project.packages.mapNotNull { it.clean(fs) },
             project.resolve.nodes.map { node ->
                 CleanCargoMetadata.DependencyNode(
                     packageIdToIndex[node.id]!!,
@@ -116,33 +118,23 @@ object CargoMetadata {
         )
     }
 
-    private fun Package.clean(): CleanCargoMetadata.Package {
-        val rootDirectory = PathUtil.getParentPath(manifest_path)
-        val rootDirFile = File(rootDirectory)
-        check(rootDirFile.isAbsolute)
+    private fun Package.clean(fs: LocalFileSystem): CleanCargoMetadata.Package? {
+        val root = checkNotNull(fs.findFileByPath(PathUtil.getParentPath(manifest_path))) {
+            "`cargo metadata` reported a package which does not exist at `$manifest_path`"
+        }
         // crate name must be a valid Rust identifier, so map `-` to `_`
         // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
         val name = name.replace("-", "_")
         return CleanCargoMetadata.Package(
-            VfsUtilCore.pathToUrl(rootDirectory),
+            root.url,
             name,
             version,
-            targets.mapNotNull { it.clean(rootDirFile) },
+            targets.mapNotNull { it.clean(root) },
             source
         )
     }
 
-    private fun Target.clean(rootDirectory: File): CleanCargoMetadata.Target? {
-        val path = if (File(src_path).isAbsolute)
-            src_path
-        else
-            File(rootDirectory, src_path).absolutePath
-
-        if (!File(path).exists()) {
-            // Some targets of a crate may be not published, ignore them
-            return null
-        }
-
+    private fun Target.clean(root: VirtualFile): CleanCargoMetadata.Target? {
         val kind = when (kind) {
             listOf("bin")     -> CargoProjectDescription.TargetKind.BIN
             listOf("example") -> CargoProjectDescription.TargetKind.EXAMPLE
@@ -155,11 +147,12 @@ object CargoMetadata {
                     CargoProjectDescription.TargetKind.UNKNOWN
         }
 
-        // Must be the same string as returned by VirtualFile#getUrl.
-        // We don't want to construct virtual file itself here because
-        // the physical file might not exist yet.
-        val url = VfsUtilCore.pathToUrl(PathUtil.toSystemIndependentName(path))
-        return CleanCargoMetadata.Target(url, name, kind)
+        val mainFile = if (FileUtil.isAbsolute(src_path))
+            root.fileSystem.findFileByPath(src_path)
+        else
+            root.findFileByRelativePath(src_path)
+
+        return mainFile?.let { CleanCargoMetadata.Target(it.url, name, kind) }
     }
 }
 
