@@ -13,8 +13,8 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
+import org.rust.cargo.commands.impl.CleanCargoMetadata
 import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.project.CargoProjectDescriptionData
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
 import org.rust.cargo.util.StandardLibraryRoots
@@ -134,16 +134,16 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
         open protected fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
             val packages = listOf(testCargoPackage(contentRoot))
-            return CargoProjectDescription.deserialize(CargoProjectDescriptionData(packages, ArrayList()))!!
+            return CargoProjectDescription.deserialize(CleanCargoMetadata(packages, ArrayList()))!!
         }
 
-        protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CargoProjectDescriptionData.Package(
+        protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CleanCargoMetadata.Package(
             contentRoot,
             name = name,
             version = "0.0.1",
             targets = listOf(
-                CargoProjectDescriptionData.Target("$contentRoot/main.rs", name, CargoProjectDescription.TargetKind.BIN),
-                CargoProjectDescriptionData.Target("$contentRoot/lib.rs", name, CargoProjectDescription.TargetKind.LIB)
+                CleanCargoMetadata.Target("$contentRoot/main.rs", name, CargoProjectDescription.TargetKind.BIN),
+                CleanCargoMetadata.Target("$contentRoot/lib.rs", name, CargoProjectDescription.TargetKind.LIB)
             ),
             source = null
         )
@@ -159,7 +159,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
             val packages = listOf(testCargoPackage(contentRoot))
 
-            return CargoProjectDescriptionData(packages, emptyList()).let {
+            return CleanCargoMetadata(packages, emptyList()).let {
                 CargoProjectDescription.deserialize(it)!!
             }
         }

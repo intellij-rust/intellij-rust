@@ -6,8 +6,8 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.psi.PsiElement
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
+import org.rust.cargo.commands.impl.CleanCargoMetadata
 import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.project.CargoProjectDescriptionData
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
 import org.rust.cargo.runconfig.CargoCommandConfiguration
@@ -236,14 +236,14 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
             val metadataService = myFixture.module.getComponentOrThrow<CargoProjectWorkspace>() as CargoProjectWorkspaceImpl
 
             val projectDescription = CargoProjectDescription.deserialize(
-                CargoProjectDescriptionData(
+                CleanCargoMetadata(
                     packages = listOf(
-                        CargoProjectDescriptionData.Package(
+                        CleanCargoMetadata.Package(
                             myFixture.tempDirFixture.getFile(".")!!.url,
                             name = "test-package",
                             version = "0.0.1",
                             targets = targets.map {
-                                CargoProjectDescriptionData.Target(
+                                CleanCargoMetadata.Target(
                                     myFixture.tempDirFixture.getFile(it.file.path)!!.url,
                                     it.name,
                                     it.kind

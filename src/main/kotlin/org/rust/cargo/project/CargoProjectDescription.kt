@@ -3,6 +3,7 @@ package org.rust.cargo.project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import org.rust.cargo.commands.impl.CleanCargoMetadata
 import org.rust.cargo.util.AutoInjectedCrates
 import java.util.*
 
@@ -49,7 +50,7 @@ class CargoProjectDescription private constructor(
         }
 
         private val crateRootCache by lazy {
-           VirtualFileManager.getInstance().findFileByUrl(crateRootPath)
+            VirtualFileManager.getInstance().findFileByUrl(crateRootPath)
         }
     }
 
@@ -120,7 +121,7 @@ class CargoProjectDescription private constructor(
     val hasStandardLibrary: Boolean get() = findExternCrateRootByName(AutoInjectedCrates.std) != null
 
     companion object {
-        fun deserialize(data: CargoProjectDescriptionData): CargoProjectDescription? {
+        fun deserialize(data: CleanCargoMetadata): CargoProjectDescription? {
             // Packages form mostly a DAG. "Why mostly?", you say.
             // Well, a dev-dependency `X` of package `P` can depend on the `P` itself.
             // This is ok, because cargo can compile `P` (without `X`, because dev-deps
@@ -139,9 +140,9 @@ class CargoProjectDescription private constructor(
                 ) to deps
             }.unzip()
 
-            for (node in data.dependencies) {
-                val deps = mutableDeps.getOrNull(node.packageIndex) ?: return null
-                node.dependenciesIndexes.mapTo(deps) {
+            for ((packageIndex, dependenciesIndexes) in data.dependencies) {
+                val deps = mutableDeps.getOrNull(packageIndex) ?: return null
+                dependenciesIndexes.mapTo(deps) {
                     packages.getOrNull(it) ?: return null
                 }
             }

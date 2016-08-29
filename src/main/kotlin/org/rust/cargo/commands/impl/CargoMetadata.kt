@@ -3,7 +3,6 @@ package org.rust.cargo.commands.impl
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.util.PathUtil
 import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.project.CargoProjectDescriptionData
 import java.io.File
 
 /**
@@ -104,12 +103,12 @@ object CargoMetadata {
         val dependencies: List<String>
     )
 
-    fun intoCargoProjectDescriptionData(project: Project): CargoProjectDescriptionData {
+    fun clean(project: Project): CleanCargoMetadata {
         val packageIdToIndex = project.packages.mapIndexed { i, p -> p.id to i }.toMap()
-        return CargoProjectDescriptionData(
-            project.packages.map { it.intoCargoProjectDescriptionPackage() },
+        return CleanCargoMetadata(
+            project.packages.map { it.clean() },
             project.resolve.nodes.map { node ->
-                CargoProjectDescriptionData.DependencyNode(
+                CleanCargoMetadata.DependencyNode(
                     packageIdToIndex[node.id]!!,
                     node.dependencies.map { packageIdToIndex[it]!! }
                 )
@@ -117,23 +116,23 @@ object CargoMetadata {
         )
     }
 
-    private fun Package.intoCargoProjectDescriptionPackage(): CargoProjectDescriptionData.Package {
+    private fun Package.clean(): CleanCargoMetadata.Package {
         val rootDirectory = PathUtil.getParentPath(manifest_path)
         val rootDirFile = File(rootDirectory)
         check(rootDirFile.isAbsolute)
         // crate name must be a valid Rust identifier, so map `-` to `_`
         // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
         val name = name.replace("-", "_")
-        return CargoProjectDescriptionData.Package(
+        return CleanCargoMetadata.Package(
             VfsUtilCore.pathToUrl(rootDirectory),
             name,
             version,
-            targets.mapNotNull { it.intoCargoProjectDescriptionTarget(rootDirFile) },
+            targets.mapNotNull { it.clean(rootDirFile) },
             source
         )
     }
 
-    private fun Target.intoCargoProjectDescriptionTarget(rootDirectory: File): CargoProjectDescriptionData.Target? {
+    private fun Target.clean(rootDirectory: File): CleanCargoMetadata.Target? {
         val path = if (File(src_path).isAbsolute)
             src_path
         else
@@ -160,6 +159,38 @@ object CargoMetadata {
         // We don't want to construct virtual file itself here because
         // the physical file might not exist yet.
         val url = VfsUtilCore.pathToUrl(PathUtil.toSystemIndependentName(path))
-        return CargoProjectDescriptionData.Target(url, name, kind)
+        return CleanCargoMetadata.Target(url, name, kind)
     }
 }
+
+/**
+ * A POD-style representation of [CargoProjectDescription] used as intermediate representation
+ * between `cargo metadata` JSON and [CargoProjectDescription] object graph.
+ *
+ * Dependency graph is represented via adjacency list, where `Index` is the order of a particular
+ * package in `packages` list.
+ */
+data class CleanCargoMetadata(
+    val packages: List<Package>,
+    val dependencies: Collection<DependencyNode>
+) {
+    data class DependencyNode(
+        val packageIndex: Int,
+        val dependenciesIndexes: Collection<Int>
+    )
+
+    data class Package(
+        val contentRootUrl: String,
+        val name: String,
+        val version: String,
+        val targets: Collection<Target>,
+        val source: String?
+    )
+
+    data class Target(
+        val url: String,
+        val name: String,
+        val kind: CargoProjectDescription.TargetKind
+    )
+}
+

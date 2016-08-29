@@ -2,15 +2,15 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
 import com.intellij.testFramework.LightProjectDescriptor
+import org.rust.cargo.commands.impl.CleanCargoMetadata
 import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.project.CargoProjectDescriptionData
 import java.util.*
 
 class RustPackageLibraryResolveTestCase : RustMultiFileResolveTestCaseBase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = object : RustProjectDescriptor() {
 
         override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription =
-            CargoProjectDescriptionData(mutableListOf(testCargoPackage(contentRoot, name = "my_lib")), ArrayList()).let {
+            CleanCargoMetadata(mutableListOf(testCargoPackage(contentRoot, name = "my_lib")), ArrayList()).let {
                 CargoProjectDescription.deserialize(it)!!
             }
     }
