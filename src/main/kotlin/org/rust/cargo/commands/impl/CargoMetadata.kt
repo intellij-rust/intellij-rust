@@ -157,7 +157,7 @@ object CargoMetadata {
 }
 
 /**
- * A POD-style representation of [CargoProjectDescription] used as intermediate representation
+ * A POD-style representation of [CargoProjectDescription] used as an intermediate representation
  * between `cargo metadata` JSON and [CargoProjectDescription] object graph.
  *
  * Dependency graph is represented via adjacency list, where `Index` is the order of a particular
@@ -173,7 +173,7 @@ data class CleanCargoMetadata(
     )
 
     data class Package(
-        val contentRootUrl: String,
+        val url: String,
         val name: String,
         val version: String,
         val targets: Collection<Target>,

@@ -126,7 +126,7 @@ class CargoProjectDescription private constructor(
             val (packages, mutableDeps) = data.packages.map { pkg ->
                 val deps: MutableList<Package> = ArrayList()
                 Package(
-                    pkg.contentRootUrl,
+                    pkg.url,
                     pkg.name,
                     pkg.version,
                     pkg.targets.map { Target(it.url, it.name, it.kind) },

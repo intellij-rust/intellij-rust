@@ -47,10 +47,10 @@ class Cargo(
     @Throws(ExecutionException::class)
     fun fullProjectDescription(listener: ProcessListener? = null): CargoProjectDescription {
         val output = metadataCommandline.execute(listener)
-        val rawData = parse(output)
+        val rawData = parse(output.stdout)
         val projectDescriptionData = CargoMetadata.clean(rawData)
         return CargoProjectDescription.deserialize(projectDescriptionData)
-            ?: throw ExecutionException("Failed to understand cargo output")
+            ?: throw ExecutionException("Failed to understand cargo output:\n${output.stdout}\n${output.stderr}")
     }
 
     @Throws(ExecutionException::class)
@@ -99,9 +99,9 @@ class Cargo(
         return output
     }
 
-    private fun parse(output: ProcessOutput): CargoMetadata.Project {
+    private fun parse(output: String): CargoMetadata.Project {
         // Skip "Downloading..." stuff
-        val json = output.stdout.dropWhile { it != '{' }
+        val json = output.dropWhile { it != '{' }
         return try {
             Gson().fromJson(json, CargoMetadata.Project::class.java)
         } catch(e: JsonSyntaxException) {
