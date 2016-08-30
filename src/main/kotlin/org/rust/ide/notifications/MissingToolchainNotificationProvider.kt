@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileEditor
@@ -25,8 +26,7 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.toolchain.UnstableVersion
-import org.rust.cargo.toolchain.Version
+import org.rust.cargo.toolchain.RustcVersion
 import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.cargoProject
 import org.rust.ide.utils.runWriteAction
@@ -81,10 +81,12 @@ class MissingToolchainNotificationProvider(
                 createBadToolchainPanel("No Rust toolchain configured")
         }
 
-        if (!toolchain.containsMetadataCommand()) {
+        val versionInfo = toolchain.queryVersions()
+
+        if (!versionInfo.cargoHasMetadataCommand) {
             return createBadToolchainPanel("Configured Rust toolchain is incompatible with the plugin: " +
                 "required at least Cargo ${RustToolchain.CARGO_LEAST_COMPATIBLE_VERSION}, " +
-                "found ${toolchain.queryCargoVersion()}")
+                "found ${versionInfo.cargo}")
         }
 
         val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
@@ -164,15 +166,19 @@ class MissingToolchainNotificationProvider(
                     private var library: VirtualFile? = null
 
                     override fun run(indicator: ProgressIndicator) {
-                        val version = toolchain.queryRustcVersion() ?: return
+                        val version = toolchain.queryVersions().rustc
+                        if (version == null) {
+                            LOG.warn("Failed to query rustc version for downloading standard library with $toolchain")
+                            return
+                        }
                         val url = sourcesArchiveUrlFromVersion(version)
-                        library = download(url, "rust-${version.release}-src.zip", destination)
+                        library = download(url, "rust-${version.semver.parsedVersion}-src.zip", destination)
                     }
 
-                    private fun sourcesArchiveUrlFromVersion(v: Version): String {
-                        // We download sources from github and not from rust-lang.org, because we want zip archives. rust-lang.org
-                        // hosts only .tar.gz.
-                        val tag = if (v is UnstableVersion) v.commitHash else v.release
+                    private fun sourcesArchiveUrlFromVersion(v: RustcVersion): String {
+                        // We download sources from github and not from rust-lang.org, because we want zip archives.
+                        // rust-lang.org hosts only .tar.gz.
+                        val tag = v.nightlyCommitHash ?: v.semver.parsedVersion
                         return "https://github.com/rust-lang/rust/archive/$tag.zip"
                     }
 
@@ -258,5 +264,7 @@ class MissingToolchainNotificationProvider(
         private val LIBRARY_LOCATION_KEY = "org.rust.previousLibraryLocation"
 
         private val PROVIDER_KEY: Key<EditorNotificationPanel> = Key.create("Setup Rust toolchain")
+
+        private val LOG = Logger.getInstance(MissingToolchainNotificationProvider::class.java)
     }
 }
