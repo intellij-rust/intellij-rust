@@ -5,6 +5,5 @@
 build/
 out
 classes
-lib
 gen
 src/test/resources/rustc-src.zip
