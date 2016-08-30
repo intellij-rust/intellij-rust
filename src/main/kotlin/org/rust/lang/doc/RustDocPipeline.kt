@@ -12,6 +12,7 @@ import org.intellij.markdown.parser.LinkMap
 import org.intellij.markdown.parser.MarkdownParser
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustTokenElementTypes.*
+import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.stringLiteralValue
 import org.rust.lang.doc.psi.RustDocKind
 import java.net.URI
@@ -51,10 +52,21 @@ private fun RustDocAndAttributeOwner.outerDocs(): Sequence<Pair<RustDocKind, Str
 private fun RustDocAndAttributeOwner.innerDocs(): Sequence<Pair<RustDocKind, String>> {
     // Next, we have to consider inner comments and meta. These, like the outer case, are appended in
     // lexical order, after the outer elements. This only applies to functions and modules.
-    val childBlock = PsiTreeUtil.findChildOfType(this, RustBlockElement::class.java) ?: this
+    val childBlock = PsiTreeUtil.getChildOfType(this, RustBlockElement::class.java) ?: this
 
     val childInnerIterator = PsiTreeUtil.childIterator(childBlock, PsiElement::class.java)
-    childInnerIterator.next() // skip the first open bracket ...
+
+    // Skip until after the `{`.
+    while (true) {
+        if (!childInnerIterator.hasNext()) {
+            break
+        }
+        val next = childInnerIterator.next()
+        if (next.elementType == RustTokenElementTypes.LBRACE) {
+            break
+        }
+    }
+
     return childInnerIterator.asSequence()
         // We only consider comments and attributes at the beginning.
         // Technically, anything else is a syntax error.
