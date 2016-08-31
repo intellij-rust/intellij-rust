@@ -119,7 +119,7 @@ object CargoMetadata {
     }
 
     private fun Package.clean(fs: LocalFileSystem): CleanCargoMetadata.Package? {
-        val root = checkNotNull(fs.findFileByPath(PathUtil.getParentPath(manifest_path))) {
+        val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))) {
             "`cargo metadata` reported a package which does not exist at `$manifest_path`"
         }
         // crate name must be a valid Rust identifier, so map `-` to `_`
