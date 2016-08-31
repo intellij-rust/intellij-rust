@@ -134,6 +134,30 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
         doTestProducedConfigurations()
     }
 
+    fun testMainFnIsMoreSpecificThanTestMod() {
+        testProject {
+            bin("foo", "src/main.rs", """
+                fn main() { <caret> }
+                fn foo() {}
+                #[test]
+                fn test_foo() {}
+            """).open()
+        }
+        doTestProducedConfigurations()
+    }
+
+    fun testMainModAndTestModHaveSameSpecificity() {
+        testProject {
+            bin("foo", "src/main.rs", """
+                fn main() {}
+                fn foo() { <caret> }
+                #[test]
+                fn test_foo() {}
+            """).open()
+        }
+        doTestProducedConfigurations()
+    }
+
     private fun doTestProducedConfigurations() {
         val configurationContext = ConfigurationContext(myFixture.file.findElementAt(myFixture.caretOffset))
 

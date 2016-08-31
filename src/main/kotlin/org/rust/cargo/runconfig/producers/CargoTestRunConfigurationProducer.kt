@@ -1,7 +1,6 @@
 package org.rust.cargo.runconfig.producers
 
 import com.intellij.execution.actions.ConfigurationContext
-import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
@@ -34,6 +33,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         sourceElement: Ref<PsiElement>
     ): Boolean {
         val test = findTest(context) ?: return false
+        sourceElement.set(test.sourceElement)
 
         configuration.command = CargoConstants.Commands.TEST
         configuration.name = test.configurationName
@@ -41,10 +41,8 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         return true
     }
 
-    override fun shouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean =
-        other.isProducedBy(CargoExecutableRunConfigurationProducer::class.java)
-
     private data class TestConfig(
+        val sourceElement: RustCompositeElement,
         val configurationName: String,
         val testPath: String,
         val target: CargoProjectDescription.Target
@@ -72,7 +70,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         val fn = context.psiLocation?.parentOfType<RustFnItemElement>() ?: return null
         val name = fn.name ?: return null
         val target = cargoTargetForElement(fn) ?: return null
-        return if (fn.isTest) TestConfig("Test $name", name, target) else null
+        return if (fn.isTest) TestConfig(fn, "Test $name", name, target) else null
     }
 
     private fun findTestMod(context: ConfigurationContext): TestConfig? {
@@ -86,7 +84,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         // always returns fully-qualified path
         val testPath = (mod.canonicalCratePath ?: "").toString().removePrefix("::")
         val target = cargoTargetForElement(mod) ?: return null
-        return if (mod.functions.any { it.isTest }) TestConfig(testName, testPath, target) else null
+        return if (mod.functions.any { it.isTest }) TestConfig(mod, testName, testPath, target) else null
     }
 
     private fun cargoTargetForElement(element: RustCompositeElement): CargoProjectDescription.Target? {
