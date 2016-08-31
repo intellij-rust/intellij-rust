@@ -1,5 +1,5 @@
 fn foo() {}
 
 fn main() {
-    <caret>self::foo();
+    self::f<caret>oo();
 }

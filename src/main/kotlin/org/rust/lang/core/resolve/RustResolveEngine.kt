@@ -74,11 +74,11 @@ object RustResolveEngine {
      * used at [pivot]
      */
     fun resolve(ref: RustQualifiedPath, pivot: RustCompositeElement): ResolveResult =
-        resolveInternal(ref, pivot, prefixed = false)
+        resolveInternal(ref, pivot)
 
-    private fun resolveInternal(ref: RustQualifiedPath, pivot: RustCompositeElement, prefixed: Boolean): ResolveResult {
+    private fun resolveInternal(ref: RustQualifiedPath, pivot: RustCompositeElement): ResolveResult {
         return recursionGuard(ref, Computable {
-            val modulePrefix = ref.seekRelativeModulePrefixInternal(hasSuffix = prefixed)
+            val modulePrefix = ref.relativeModulePrefix
             when (modulePrefix) {
                 is RelativeModulePrefix.Invalid -> ResolveResult.Unresolved
                 is RelativeModulePrefix.AncestorModule -> resolveAncestorModule(pivot.containingMod, modulePrefix).asResolveResult()
@@ -87,7 +87,7 @@ object RustResolveEngine {
                     if (qual == null) {
                         resolveIn(enumerateScopesFor(ref, pivot), name = ref.part.name, pivot = pivot)
                     } else {
-                        val parent = resolveInternal(qual, pivot, prefixed = true).element
+                        val parent = resolveInternal(qual, pivot).element
                         if (parent is RustResolveScope)
                             resolveInside(parent, ref.part.name, pivot = pivot)
                         else

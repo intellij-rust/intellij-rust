@@ -39,6 +39,9 @@ abstract class RustPathImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
     override val fullyQualified: Boolean
         get() = qualifier?.fullyQualified ?: separator != null || isViewPath && self == null && `super` == null
 
+    override val relativeModulePrefix: RelativeModulePrefix
+        get() = seekRelativeModulePrefixInternal(nextSibling != null)
+
     private val separator: PsiElement?
         get() = findChildByType(RustTokenElementTypes.COLONCOLON)
 
