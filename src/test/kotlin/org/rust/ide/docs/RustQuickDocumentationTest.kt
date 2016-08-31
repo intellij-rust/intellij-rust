@@ -10,7 +10,9 @@ class RustQuickDocumentationTest : RustDocumentationProviderTest() {
     fun testTraitConst() = checkDoc()
     fun testTraitMethod() = checkDoc()
     fun testTraitMethodProvided() = checkDoc()
-    fun testInnerDocstring() = checkDoc()
+    fun testModInnerDocstring() = checkDoc()
+    fun testFnInnerDocstring() = checkDoc()
+    fun testFileInnerDocstring() = checkDoc()
 
     fun testIssue495() = checkDoc()     // https://github.com/intellij-rust/intellij-rust/issues/495
 

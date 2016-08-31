@@ -5,27 +5,20 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.rust.lang.core.psi.RustDocAndAttributeOwner
-import org.rust.lang.core.psi.RustFnElement
-import org.rust.lang.core.psi.RustOuterAttrElement
-import org.rust.lang.core.psi.RustPatBindingElement
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.isMut
 import org.rust.lang.doc.documentationAsHtml
 
 class RustDocumentationProvider : AbstractDocumentationProvider() {
 
-    override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? =
-        if (element is RustDocAndAttributeOwner) {
-            element.documentationAsHtml().let {
-                if (element.name != null) {
-                    "<pre>${element.name}</pre>\n$it"
-                } else {
-                    it
-                }
-            }
-        } else {
-            null
-        }
+    override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? {
+        if (element !is RustDocAndAttributeOwner) return null
+
+        val name = if (element is RustMod) element.modName else element.name
+        val header = if (name != null) "<pre>$name</pre>\n" else ""
+        val doc = element.documentationAsHtml() ?: ""
+        return header + doc
+    }
 
     override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?) = when (element) {
         is RustPatBindingElement -> getQuickNavigateInfo(element)

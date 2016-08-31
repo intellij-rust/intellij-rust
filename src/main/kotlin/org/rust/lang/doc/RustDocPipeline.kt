@@ -12,7 +12,6 @@ import org.intellij.markdown.parser.LinkMap
 import org.intellij.markdown.parser.MarkdownParser
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustTokenElementTypes.*
-import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.stringLiteralValue
 import org.rust.lang.doc.psi.RustDocKind
 import java.net.URI
@@ -56,21 +55,7 @@ private fun RustDocAndAttributeOwner.innerDocs(): Sequence<Pair<RustDocKind, Str
 
     val childInnerIterator = PsiTreeUtil.childIterator(childBlock, PsiElement::class.java)
 
-    // Skip until after the `{`.
-    while (true) {
-        if (!childInnerIterator.hasNext()) {
-            break
-        }
-        val next = childInnerIterator.next()
-        if (next.elementType == RustTokenElementTypes.LBRACE) {
-            break
-        }
-    }
-
     return childInnerIterator.asSequence()
-        // We only consider comments and attributes at the beginning.
-        // Technically, anything else is a syntax error.
-        .takeWhile { it is RustInnerAttrElement || it is PsiComment || it is PsiWhiteSpace }
         .mapNotNull {
             when {
                 it is RustInnerAttrElement -> it.metaItem.docAttr?.let { RustDocKind.Attr to it }
