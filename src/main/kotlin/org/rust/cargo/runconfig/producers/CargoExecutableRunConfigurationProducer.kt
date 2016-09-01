@@ -22,8 +22,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
     ): Boolean {
         val target = findBinaryTarget(context) ?: return false
 
-        return configuration.name == target.configurationName &&
-            configuration.command == CargoConstants.Commands.RUN &&
+        return configuration.command == CargoConstants.Commands.RUN &&
             configuration.additionalArguments == target.additionalArguments
     }
 

@@ -23,7 +23,6 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         val test = findTest(context) ?: return false
 
         return configuration.command == CargoConstants.Commands.TEST &&
-            configuration.name == test.configurationName &&
             configuration.additionalArguments == test.commandLineParameters
     }
 
