@@ -12,9 +12,10 @@ FILE
       PsiWhiteSpace('\n    ')
       RustLitExprElementImpl(LIT_EXPR)
         RustNumericLiteralImpl(<INTEGER>)('1')
+        PsiErrorElement:'&' or '|' expected, got '>'
+          <empty list>
       PsiWhiteSpace(' ')
-      PsiErrorElement:'&', ';' or '|' expected, got '>'
-        PsiElement(>)('>')
+      PsiElement(>)('>')
       PsiElement(DUMMY_BLOCK)
         PsiWhiteSpace(' ')
         PsiElement(>)('>')

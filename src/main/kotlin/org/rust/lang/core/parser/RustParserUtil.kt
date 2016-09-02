@@ -1,8 +1,6 @@
 package org.rust.lang.core.parser
 
-import com.intellij.lang.PsiBuilder
-import com.intellij.lang.PsiBuilderUtil
-import com.intellij.lang.WhitespacesBinders
+import com.intellij.lang.*
 import com.intellij.openapi.util.Key
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
@@ -22,7 +20,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         "Path context is not set. Be sure to call one of `withParsingMode...` functions"
     }
 
-    @JvmField val DOC_COMMENT_BINDER = WhitespacesBinders.leadingCommentsBinder(
+    @JvmField val DOC_COMMENT_BINDER: WhitespacesAndCommentsBinder = WhitespacesBinders.leadingCommentsBinder(
         TokenSet.create(OUTER_BLOCK_DOC_COMMENT, OUTER_EOL_DOC_COMMENT))
 
     //
@@ -101,6 +99,22 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return true
     }
 
+    private val BLOCK_LIKE =TokenSet.create(
+        RustCompositeElementTypes.WHILE_EXPR,
+        RustCompositeElementTypes.WHILE_LET_EXPR,
+        RustCompositeElementTypes.IF_EXPR,
+        RustCompositeElementTypes.IF_LET_EXPR,
+        RustCompositeElementTypes.FOR_EXPR,
+        RustCompositeElementTypes.LOOP_EXPR,
+        RustCompositeElementTypes.MATCH_EXPR,
+        RustCompositeElementTypes.BLOCK_EXPR
+    )
+
+    @JvmStatic fun isBlockLike(b: PsiBuilder, level: Int): Boolean {
+        val m = b.latestDoneMarker ?: return false
+        return m.tokenType in BLOCK_LIKE || m.isBracedMacro(b)
+    }
+
     private fun<T> PsiBuilder.withContext(key: Key<T>, value: T, block: PsiBuilder.() -> Boolean): Boolean {
         val old = getUserData(key)
         putUserData(key, value)
@@ -108,6 +122,10 @@ object RustParserUtil : GeneratedParserUtilBase() {
         putUserData(key, old)
         return result
     }
+
+    private fun LighterASTNode.isBracedMacro(b: PsiBuilder): Boolean  =
+        tokenType == RustCompositeElementTypes.MACRO_EXPR &&
+            '{' == b.originalText.subSequence(startOffset, endOffset).find { it == '{' || it == '[' || it == '(' }
 
 }
 

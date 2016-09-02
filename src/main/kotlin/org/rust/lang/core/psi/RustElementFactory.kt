@@ -11,7 +11,7 @@ object RustElementFactory {
         createFromText(project, "fn main() { $expression; }")
 
     fun createStatement(project: Project, statement: String): RustStmtElement? =
-        createFromText(project, "fn main() { $statement }")
+        createFromText(project, "fn main() { $statement 92; }")
 
     fun createModDeclItem(project: Project, modName: String): RustModDeclItemElement? =
         createFromText(project, "mod $modName;")

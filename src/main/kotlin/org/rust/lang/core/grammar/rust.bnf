@@ -139,7 +139,6 @@
     implements  ("enum_item")       = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
                                         "org.rust.lang.core.psi.RustStructOrEnumItemElement" ]
     implements  ("lambda_expr")     = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    implements  ("block")           =  "org.rust.lang.core.resolve.scope.RustResolveScope"
     implements  ("scoped_let_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     implements  ("for_expr")        = "org.rust.lang.core.resolve.scope.RustResolveScope"
     implements  ("match_arm")       = "org.rust.lang.core.resolve.scope.RustResolveScope"
@@ -838,7 +837,7 @@ block_expr ::= while_expr
              | for_expr
              | loop_expr
              | match_expr
-             | (UNSAFE &'{')? block
+             | (UNSAFE &'{')? simple_block
 
 
 private atom_expr ::= lit_expr
@@ -916,33 +915,33 @@ path_expr ::= path_generic_args_with_colons
 
 qual_path_expr ::= << qualified_path path_generic_args_with_colons >>
 
-while_expr ::= [ LIFETIME ':' ] WHILE no_struct_lit_expr block { pin = no_struct_lit_expr }
+while_expr ::= [ LIFETIME ':' ] WHILE no_struct_lit_expr simple_block { pin = no_struct_lit_expr }
 
-loop_expr ::= [ LIFETIME ':' ] LOOP block
+loop_expr ::= [ LIFETIME ':' ] LOOP simple_block
 cont_expr ::= CONTINUE LIFETIME?
 
 break_expr ::= BREAK LIFETIME?
 
 scoped_for_decl ::= pat IN no_struct_lit_expr
 
-for_expr ::= [ LIFETIME ':' ] FOR scoped_for_decl block { pin = "IN" }
+for_expr ::= [ LIFETIME ':' ] FOR scoped_for_decl simple_block { pin = "IN" }
 
 match_expr ::= MATCH no_struct_lit_expr match_body { pin = no_struct_lit_expr }
 match_body ::= '{' match_arm* '}' { pin = 1 }
 match_arm ::= outer_attr* match_pat '=>' (block_expr !('.' | '?') ','? | any_expr (',' | &'}')) { pin = 2 }
 match_pat ::= pat ('|' pat)* (IF any_expr)?
 
-if_expr ::= IF no_struct_lit_expr block else_branch? { pin = no_struct_lit_expr }
+if_expr ::= IF no_struct_lit_expr simple_block else_branch? { pin = no_struct_lit_expr }
 
-else_branch ::= ELSE ( if_expr | if_let_expr | block )
+else_branch ::= ELSE ( if_expr | if_let_expr | simple_block )
 
-fake scoped_let_expr ::= scoped_let_decl block
+fake scoped_let_expr ::= scoped_let_decl simple_block
 
 scoped_let_decl ::= LET pat '=' no_struct_lit_expr
 
-if_let_expr ::= IF scoped_let_decl block else_branch? { pin = scoped_let_decl }
+if_let_expr ::= IF scoped_let_decl simple_block else_branch? { pin = scoped_let_decl }
 
-while_let_expr ::= WHILE scoped_let_decl block { pin = scoped_let_decl }
+while_let_expr ::= WHILE scoped_let_decl simple_block { pin = scoped_let_decl }
 
 ret_expr ::= RETURN expr?
 
@@ -1106,27 +1105,32 @@ private lit ::= ( STRING_LITERAL
 // Statements
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-block ::= '{' (never inner_attr*)? block_tail '}' {
+fake block ::= '{' inner_attr* (item | stmt)* expr? '}' {
+  implements = [ "org.rust.lang.core.psi.RustItemsOwner"
+                 "org.rust.lang.core.resolve.scope.RustResolveScope" ]
+}
+
+simple_block ::= '{' block_tail '}' {
   pin = 1
-  implements = [ "org.rust.lang.core.psi.RustItemsOwner" ]
+  elementType = block
 }
 
 inner_attrs_and_block ::= '{' inner_attr* block_tail '}' {
-  elementType = block
   pin = 1
+  elementType = block
 }
 
-private block_tail ::= (stmt | item)* any_expr? {
-  recoverWhile = block_recover
-}
-
+private block_tail ::= (expr_stmt_or_last_expr | stmt | item)* { recoverWhile = block_recover }
 private block_recover ::= !('}')
 
-stmt ::= expr_stmt | let_decl | empty_stmt | never ';'
+stmt ::= let_decl | empty_stmt | never ';'
 
-expr_stmt ::= outer_attr? ( block_expr !('.' | '?') ';'? | any_expr ';' ) {
-  extends = stmt
-}
+expr_stmt_or_last_expr ::= outer_attr? any_expr (expr_stmt_upper | last_expr_upper)
+
+upper expr_stmt_upper ::= ';' | () <<isBlockLike>> !('.' | '?' | '}') { elementType = expr_stmt }
+upper last_expr_upper ::= () &'}' { elementType = expr pin = 1 }
+
+fake expr_stmt ::= outer_attr? any_expr ';'? { extends = stmt }
 
 let_decl ::= outer_attr? LET pat type_ascription? [ '=' any_expr ] ';' {
   extends = stmt
