@@ -81,7 +81,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
             LBRACE, RBRACE -> false
             LPAREN, RPAREN -> false
             LBRACK, RBRACK -> false
-            else           -> {
+            else -> {
                 b.advanceLexer()
                 true
             }
@@ -99,7 +99,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return true
     }
 
-    private val BLOCK_LIKE =TokenSet.create(
+    private val BLOCK_LIKE = TokenSet.create(
         RustCompositeElementTypes.WHILE_EXPR,
         RustCompositeElementTypes.WHILE_LET_EXPR,
         RustCompositeElementTypes.IF_EXPR,
@@ -115,7 +115,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return m.tokenType in BLOCK_LIKE || m.isBracedMacro(b)
     }
 
-    private fun<T> PsiBuilder.withContext(key: Key<T>, value: T, block: PsiBuilder.() -> Boolean): Boolean {
+    private fun <T> PsiBuilder.withContext(key: Key<T>, value: T, block: PsiBuilder.() -> Boolean): Boolean {
         val old = getUserData(key)
         putUserData(key, value)
         val result = block()
@@ -123,7 +123,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return result
     }
 
-    private fun LighterASTNode.isBracedMacro(b: PsiBuilder): Boolean  =
+    private fun LighterASTNode.isBracedMacro(b: PsiBuilder): Boolean =
         tokenType == RustCompositeElementTypes.MACRO_EXPR &&
             '{' == b.originalText.subSequence(startOffset, endOffset).find { it == '{' || it == '[' || it == '(' }
 
