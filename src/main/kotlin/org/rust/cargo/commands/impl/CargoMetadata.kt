@@ -122,9 +122,6 @@ object CargoMetadata {
         val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))) {
             "`cargo metadata` reported a package which does not exist at `$manifest_path`"
         }
-        // crate name must be a valid Rust identifier, so map `-` to `_`
-        // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
-        val name = name.replace("-", "_")
         return CleanCargoMetadata.Package(
             root.url,
             name,
@@ -152,6 +149,9 @@ object CargoMetadata {
         else
             root.findFileByRelativePath(src_path)
 
+        // crate name must be a valid Rust identifier, so map `-` to `_`
+        // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
+        val name = name.replace("-", "_")
         return mainFile?.let { CleanCargoMetadata.Target(it.url, name, kind) }
     }
 }

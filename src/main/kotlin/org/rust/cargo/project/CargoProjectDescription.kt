@@ -73,7 +73,8 @@ class CargoProjectDescription private constructor(
     private val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
 
     val externCrates: Collection<ExternCrate> get() = packages.mapNotNull { pkg ->
-        pkg.libTarget?.crateRoot?.let { ExternCrate(pkg.name, it) }
+        val target = pkg.libTarget ?: return@mapNotNull null
+        target.crateRoot?.let { ExternCrate(target.name, it) }
     }
 
     /**
