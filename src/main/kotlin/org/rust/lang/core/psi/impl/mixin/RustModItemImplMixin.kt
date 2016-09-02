@@ -39,8 +39,6 @@ abstract class RustModItemImplMixin : RustStubbedNamedElementImpl<RustModItemEle
 
     override val isCrateRoot: Boolean = false
 
-    override val isTopLevelInFile: Boolean = false
-
     override val innerAttrList: List<RustInnerAttrElement>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)
 

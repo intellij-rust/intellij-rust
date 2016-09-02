@@ -54,8 +54,6 @@ class RustFile(
         return module?.cargoProject?.isCrateRoot(file) ?: false
     }
 
-    override val isTopLevelInFile: Boolean = true
-
     override val innerAttrList: List<RustInnerAttrElement>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)
 

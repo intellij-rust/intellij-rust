@@ -23,8 +23,6 @@ interface RustMod : RustNamedElement, RustItemsOwner {
 
     val isCrateRoot: Boolean
 
-    val isTopLevelInFile: Boolean
-
     companion object {
         val MOD_RS = "mod.rs"
     }
