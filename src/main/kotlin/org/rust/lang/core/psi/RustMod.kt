@@ -1,6 +1,8 @@
 package org.rust.lang.core.psi
 
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiDirectory
+import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.symbols.RustQualifiedPath
 import org.rust.lang.core.symbols.RustQualifiedPathPart
 
@@ -28,14 +30,13 @@ interface RustMod : RustNamedElement, RustItemsOwner {
     }
 }
 
-val RustMod.canonicalCratePath: RustQualifiedPath?
-    get() {
-        if (isCrateRoot)
-            return null
-
-        return RustQualifiedPath.create(
+val RustMod.canonicalCratePath: RustQualifiedPath? get() = recursionGuard(this, Computable {
+    if (isCrateRoot)
+        null
+    else
+        RustQualifiedPath.create(
             RustQualifiedPathPart.from(modName),
             qualifier = `super`?.canonicalCratePath,
             fullyQualified = true
         )
-    }
+})
