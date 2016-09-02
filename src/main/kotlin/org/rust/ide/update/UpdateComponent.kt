@@ -62,21 +62,22 @@ class UpdateComponent : ApplicationComponent, Disposable {
             if (shouldUpdate) {
                 properties.setValue(LAST_UPDATE, System.currentTimeMillis().toString())
                 val url = updateUrl
-                try {
-                    HttpRequests.request(url).connect {
-                        try {
-                            JDOMUtil.load(it.reader)
-                        } catch (e: JDOMException) {
-                            LOG.warn(e)
+                ApplicationManager.getApplication().executeOnPooledThread {
+                    try {
+                        HttpRequests.request(url).connect {
+                            try {
+                                JDOMUtil.load(it.reader)
+                            } catch (e: JDOMException) {
+                                LOG.warn(e)
+                            }
+                            LOG.info("updated: $url")
                         }
-                        LOG.info("updated: $url")
+                    } catch (ignored: UnknownHostException) {
+                        // No internet connections, no need to log anything
+                    } catch (e: IOException) {
+                        LOG.warn(e)
                     }
-                } catch (ignored: UnknownHostException) {
-                    // No internet connections, no need to log anything
-                } catch (e: IOException) {
-                    LOG.warn(e)
                 }
-
             }
         }
 

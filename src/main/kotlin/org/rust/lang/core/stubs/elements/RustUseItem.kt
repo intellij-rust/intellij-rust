@@ -9,10 +9,10 @@ import org.rust.lang.core.stubs.RustStubElementType
 
 object RustUseItemStubElementType : RustStubElementType<RustUseItemElementStub, RustUseItemElement>("USE_ITEM") {
 
-    override fun createStub(psi: RustUseItemElement, parentStub: StubElement<*>?): RustUseItemElementStub? =
+    override fun createStub(psi: RustUseItemElement, parentStub: StubElement<*>?): RustUseItemElementStub =
         RustUseItemElementStub(parentStub, this, psi.alias?.name)
 
-    override fun createPsi(stub: RustUseItemElementStub): RustUseItemElement? =
+    override fun createPsi(stub: RustUseItemElementStub): RustUseItemElement =
         RustUseItemElementImpl(stub, this)
 
     override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustUseItemElementStub =
