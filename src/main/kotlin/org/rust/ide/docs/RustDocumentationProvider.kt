@@ -16,14 +16,10 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
 
         val name = if (element is RustMod) element.modName else element.name
         val header = if (name != null) "<pre>$name</pre>\n" else ""
-        val signature = getSignature(element)
+        val functionSignature = (element as? RustFnElement)?.formatSignature()
+        val signature = if (functionSignature != null) "<pre>$functionSignature</pre>\n" else ""
         val doc = element.documentationAsHtml() ?: ""
-        return header + signature?.let { "$signature\n" }.orEmpty() + doc
-    }
-
-    private fun getSignature(element: PsiElement) = when (element) {
-        is RustFnElement -> element.formatSignature()
-        else             -> null
+        return header + signature + doc
     }
 
     override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?) = when (element) {
