@@ -9,6 +9,7 @@ class RustLiveTemplatesTest : RustTestCaseBase() {
     fun testStructField() = expandAndCompare()
     fun testPrint() = expandAndCompare()
 
+    fun testAttribute() = noSnippetApplicable()
     fun testComment() = noSnippetApplicable()
     fun testDocComment() = noSnippetApplicable()
     fun testStringLiteral() = noSnippetApplicable()

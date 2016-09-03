@@ -25,6 +25,7 @@
             <option name="RUST_FILE" value="true"/>
             <option name="RUST_STATEMENT" value="false"/>
             <option name="RUST_ITEM" value="false"/>
+            <option name="RUST_ATTRIBUTE" value="false"/>
         </context>
     </template>
 
@@ -35,6 +36,7 @@
         <variable name="TRANSCRIBER" expression="" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="RUST_FILE" value="true"/>
+            <option name="RUST_ATTRIBUTE" value="false"/>
         </context>
     </template>
 

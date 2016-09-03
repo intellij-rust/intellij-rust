@@ -67,6 +67,12 @@ sealed class RustContextType(
             PsiTreeUtil.findFirstParent(element, blockOrItem) is RustModItemElement
     }
 
+    class Attribute : RustContextType("RUST_ATTRIBUTE", "Attribute", Item::class) {
+        override fun isInContext(element: PsiElement): Boolean =
+
+            element.parentOfType<RustAttrElement>() != null
+    }
+
     companion object {
         private val blockOrItem = Condition<PsiElement> { element ->
             element is RustBlockElement || element is RustItemElement || element is RustAttrElement

@@ -180,6 +180,7 @@
         <liveTemplateContext implementation="org.rust.ide.template.RustContextType$Item"/>
         <liveTemplateContext implementation="org.rust.ide.template.RustContextType$Struct"/>
         <liveTemplateContext implementation="org.rust.ide.template.RustContextType$Mod"/>
+        <liveTemplateContext implementation="org.rust.ide.template.RustContextType$Attribute"/>
 
         <liveTemplateMacro implementation="org.rust.ide.template.macros.RustSuggestIndexNameMacro"/>
         <liveTemplateMacro implementation="org.rust.ide.template.macros.RustCollectionElementNameMacro"/>
