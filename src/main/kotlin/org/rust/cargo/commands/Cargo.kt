@@ -46,7 +46,12 @@ class Cargo(
      */
     @Throws(ExecutionException::class)
     fun fullProjectDescription(listener: ProcessListener? = null): CargoProjectDescription {
-        val output = metadataCommandline.execute(listener)
+        val hasAllFeatures = "--all-features" in generalCommand("metadata", listOf("--help")).execute().stdout
+        val command = generalCommand("metadata", listOf("--verbose", "--format-version", "1")).apply {
+            if (hasAllFeatures) addParameter("--all-features")
+        }
+
+        val output = command.execute(listener)
         val rawData = parse(output.stdout)
         val projectDescriptionData = CargoMetadata.clean(rawData)
         return CargoProjectDescription.deserialize(projectDescriptionData)
@@ -75,9 +80,6 @@ class Cargo(
             .withParameters(additionalArguments)
             .withEnvironment(CargoConstants.RUSTC_ENV_VAR, pathToRustExecutable)
             .withEnvironment(environmentVariables)
-
-    private val metadataCommandline: GeneralCommandLine get() =
-        generalCommand("metadata", listOf("--verbose", "--format-version", "1"))
 
     private fun rustfmtCommandline(filePath: String) =
         generalCommand("fmt").withParameters("--", "--write-mode=overwrite", "--skip-children", filePath)
