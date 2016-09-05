@@ -13,6 +13,8 @@ import org.rust.cargo.commands.Cargo
 import org.rust.utils.seconds
 import java.io.File
 
+private val LOG = Logger.getInstance(RustToolchain::class.java)
+
 data class RustToolchain(val location: String) {
 
     fun looksLikeValidToolchain(): Boolean =
@@ -20,28 +22,16 @@ data class RustToolchain(val location: String) {
 
     fun queryVersions(): VersionInfo {
         check(!ApplicationManager.getApplication().isDispatchThread)
-        if (!looksLikeValidToolchain()) return VersionInfo(null, null, null, false)
+        if (!looksLikeValidToolchain()) return VersionInfo(null, null, null)
 
-        val cargo = nonProjectCargo().generalCommand("version").runExecutable()?.let { findSemVer(it) }
-        val hasMetadataCommand = nonProjectCargo().generalCommand("metadata", listOf("--help")).runExecutable() != null
-
-        val rustc = GeneralCommandLine(pathToExecutable(RUSTC))
-            .withParameters("--version", "--verbose")
-            .runExecutable()?.let { parseRustcVersion(it) }
-
-        val rustup = if (hasExecutable(RUSTUP)) {
-            GeneralCommandLine(pathToExecutable(RUSTUP))
-                .withParameters("--version")
-                .runExecutable()?.let { findSemVer(it) }
-        } else {
-            null
-        }
+        val rustup = GeneralCommandLine(pathToExecutable(RUSTUP))
+            .withParameters("--version")
+            .runExecutable()?.let { findSemVer(it) }
 
         return VersionInfo(
-            cargo = cargo,
-            rustc = rustc,
-            rustup = rustup,
-            cargoHasMetadataCommand = hasMetadataCommand
+            rustc = scrapeRustcVersion(pathToExecutable(RUSTC)),
+            cargo = scrapeCargoVersion(nonProjectCargo()),
+            rustup = rustup
         )
     }
 
@@ -61,32 +51,14 @@ data class RustToolchain(val location: String) {
     private fun hasExecutable(exec: String): Boolean =
         File(pathToExecutable(exec)).canExecute()
 
-    private fun GeneralCommandLine.runExecutable(): List<String>? {
-        val procOut = try {
-            CapturingProcessHandler(createProcess(), Charsets.UTF_8, commandLineString).runProcess(1.seconds)
-        } catch (e: ExecutionException) {
-            log.warn("Failed to run executable!", e)
-            return null
-        }
-
-        if (procOut.exitCode != 0 || procOut.isCancelled || procOut.isTimeout)
-            return null
-
-        return procOut.stdoutLines
-    }
-
     // TODO: drop IDEA 15 support and use SevVer.UNKNOWN
     data class VersionInfo(
-        val cargo: SemVer?,
         val rustc: RustcVersion?,
-        val rustup: SemVer?,
-        val cargoHasMetadataCommand: Boolean
+        val cargo: CargoVersion?,
+        val rustup: SemVer?
     )
 
     companion object {
-
-        private val log = Logger.getInstance(RustToolchain::class.java)
-
         private val RUSTC = "rustc"
         private val CARGO = "cargo"
         private val RUSTUP = "rustup"
@@ -107,13 +79,23 @@ data class RustcVersion(
     val nightlyCommitHash: String?
 )
 
+data class CargoVersion(
+    val semver: SemVer,
+    val hasMetadataCommand: Boolean
+)
+
 private fun findSemVer(lines: List<String>): SemVer? {
     val re = """\d+\.\d+\.\d+""".toRegex()
     val versionText = lines.mapNotNull { re.find(it) }.firstOrNull()?.value ?: return null
     return SemVer.parseFromText(versionText)
 }
 
-private fun parseRustcVersion(lines: List<String>): RustcVersion? {
+private fun scrapeRustcVersion(pathToRustc: String): RustcVersion? {
+    val lines = GeneralCommandLine(pathToRustc)
+        .withParameters("--version", "--verbose")
+        .runExecutable()
+        ?: return null
+
     // We want to parse following
     //
     //  ```
@@ -135,6 +117,13 @@ private fun parseRustcVersion(lines: List<String>): RustcVersion? {
     val semVer = SemVer.parseFromText(versionText) ?: return null
     val isStable = releaseMatch.groups[2]?.value.isNullOrEmpty()
     return RustcVersion(semVer, if (isStable) null else commitHash)
+}
+
+private fun scrapeCargoVersion(cargo: Cargo): CargoVersion? {
+    val lines = cargo.generalCommand("version").runExecutable() ?: return null
+    val semver = findSemVer(lines) ?: return null
+    val hasMetadataCommand = cargo.generalCommand("metadata", listOf("--help")).runExecutable() != null
+    return CargoVersion(semver, hasMetadataCommand)
 }
 
 private object Suggestions {
@@ -184,4 +173,18 @@ private object Suggestions {
             .filter { it.nameWithoutExtension.toLowerCase().startsWith("rust") }
             .map { File(it, "bin") }
     }
+}
+
+private fun GeneralCommandLine.runExecutable(): List<String>? {
+    val procOut = try {
+        CapturingProcessHandler(createProcess(), Charsets.UTF_8, commandLineString).runProcess(1.seconds)
+    } catch (e: ExecutionException) {
+        LOG.warn("Failed to run executable!", e)
+        return null
+    }
+
+    if (procOut.exitCode != 0 || procOut.isCancelled || procOut.isTimeout)
+        return null
+
+    return procOut.stdoutLines
 }

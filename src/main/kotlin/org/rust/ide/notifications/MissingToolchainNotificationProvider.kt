@@ -83,7 +83,7 @@ class MissingToolchainNotificationProvider(
 
         val versionInfo = toolchain.queryVersions()
 
-        if (!versionInfo.cargoHasMetadataCommand) {
+        if (versionInfo.cargo?.hasMetadataCommand == false) {
             return createBadToolchainPanel("Configured Rust toolchain is incompatible with the plugin: " +
                 "required at least Cargo ${RustToolchain.CARGO_LEAST_COMPATIBLE_VERSION}, " +
                 "found ${versionInfo.cargo}")

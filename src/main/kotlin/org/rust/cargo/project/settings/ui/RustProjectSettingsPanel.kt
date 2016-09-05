@@ -112,7 +112,7 @@ class RustProjectSettingsPanel : JPanel() {
 
             val labelToVersion = listOf(
                 rustVersion to info.rustc?.semver,
-                cargoVersion to info.cargo,
+                cargoVersion to info.cargo?.semver,
                 rustupVersion to info.rustup
             )
 
@@ -126,7 +126,7 @@ class RustProjectSettingsPanel : JPanel() {
                 }
             }
 
-            if (!info.cargoHasMetadataCommand) {
+            if (info.cargo?.hasMetadataCommand == false) {
                 cargoVersion.foreground = JBColor.RED
             }
         }, ModalityState.any())
