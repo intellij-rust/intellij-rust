@@ -1,0 +1,3 @@
+trait Automaton { }
+
+impl Automaton

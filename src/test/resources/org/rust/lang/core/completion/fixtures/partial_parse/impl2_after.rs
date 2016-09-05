@@ -1,0 +1,3 @@
+struct Automaton { }
+
+impl Automaton
