@@ -86,16 +86,23 @@ class CargoProjectDescription private constructor(
     /**
      * Finds a package for this file and returns a (Package, relative path) pair
      */
-    fun findPackageForFile(file: VirtualFile): Pair<Package, String>? = packages.asSequence().mapNotNull { pkg ->
-        val base = pkg.contentRoot ?: return@mapNotNull null
-        val relPath = VfsUtil.getRelativePath(file, base) ?: return@mapNotNull null
-        pkg to relPath
-    }.firstOrNull()
+    fun findPackageForFile(file: VirtualFile): Pair<Package, String>? {
+        val canonicalFile = file.canonicalFile ?: return null
+
+        return packages.asSequence().mapNotNull { pkg ->
+            val base = pkg.contentRoot ?: return@mapNotNull null
+            val relPath = VfsUtil.getRelativePath(canonicalFile, base) ?: return@mapNotNull null
+            pkg to relPath
+        }.firstOrNull()
+    }
 
     /**
      * If the [file] is a crate root, returns the corresponding [Target]
      */
-    fun findTargetForFile(file: VirtualFile): Target? = targetByCrateRootUrl[file.url]
+    fun findTargetForFile(file: VirtualFile): Target? {
+        val canonicalFile = file.canonicalFile ?: return null
+        return targetByCrateRootUrl[canonicalFile.url]
+    }
 
     fun isCrateRoot(file: VirtualFile): Boolean = findTargetForFile(file) != null
 
