@@ -18,11 +18,10 @@ private val LOG = Logger.getInstance(RustToolchain::class.java)
 data class RustToolchain(val location: String) {
 
     fun looksLikeValidToolchain(): Boolean =
-        hasExecutable(CARGO)
+        hasExecutable(CARGO) && hasExecutable(RUSTC)
 
     fun queryVersions(): VersionInfo {
         check(!ApplicationManager.getApplication().isDispatchThread)
-        if (!looksLikeValidToolchain()) return VersionInfo(null, null, null)
 
         val rustup = GeneralCommandLine(pathToExecutable(RUSTUP))
             .withParameters("--version")

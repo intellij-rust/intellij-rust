@@ -21,6 +21,9 @@ import java.io.File
  *
  * This class is not aware of SDKs or projects, so you'll need to provide
  * paths yourself.
+ *
+ * It is impossible to guarantee that paths to the project or executables are valid,
+ * because the user can always just `rm ~/.cargo/bin -rf`.
  */
 class Cargo(
     private val pathToCargoExecutable: String,
@@ -29,14 +32,6 @@ class Cargo(
     // because some commands don't accept `--manifest-path` argument
     private val projectDirectory: String?
 ) {
-    init {
-        require(File(pathToCargoExecutable).canExecute()) { "Invalid path to cargo $pathToCargoExecutable" }
-        require(File(pathToRustExecutable).canExecute()) { "Invalid path to rustc $pathToRustExecutable" }
-        require(projectDirectory == null || File(projectDirectory, CargoConstants.MANIFEST_FILE).exists()) {
-            "No Cargo.toml in $projectDirectory"
-        }
-    }
-
     /**
      * Fetch all dependencies and calculate project information.
      *

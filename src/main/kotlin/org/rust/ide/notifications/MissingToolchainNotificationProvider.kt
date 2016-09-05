@@ -74,14 +74,13 @@ class MissingToolchainNotificationProvider(
             return null
 
         val toolchain = project.toolchain
-        if (toolchain == null || !toolchain.looksLikeValidToolchain()) {
+        val versionInfo = toolchain?.queryVersions()
+        if (toolchain == null || versionInfo == null || versionInfo.cargo?.semver == null) {
             return if (trySetupToolchainAutomatically())
                 null
             else
                 createBadToolchainPanel("No Rust toolchain configured")
         }
-
-        val versionInfo = toolchain.queryVersions()
 
         if (versionInfo.cargo?.hasMetadataCommand == false) {
             return createBadToolchainPanel("Configured Rust toolchain is incompatible with the plugin: " +
