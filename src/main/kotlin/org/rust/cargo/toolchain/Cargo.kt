@@ -1,4 +1,4 @@
-package org.rust.cargo.commands
+package org.rust.cargo.toolchain
 
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
@@ -11,9 +11,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.commands.impl.CargoMetadata
 import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.impl.CargoMetadata
 import java.io.File
 
 /**
@@ -57,7 +56,7 @@ class Cargo(
     fun init(directory: VirtualFile) {
         val path = PathUtil.toSystemDependentName(directory.path)
         generalCommand("init", listOf("--bin", path)).execute()
-        check(File(directory.path, RustToolchain.CARGO_TOML).exists())
+        check(File(directory.path, RustToolchain.Companion.CARGO_TOML).exists())
         VfsUtil.markDirtyAndRefresh(/* async = */ false, /* recursive = */ true, /* reloadChildren = */ true, directory)
     }
 

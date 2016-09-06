@@ -9,7 +9,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.text.SemVer
-import org.rust.cargo.commands.Cargo
+import org.rust.cargo.toolchain.Cargo
 import org.rust.utils.seconds
 import java.io.File
 

@@ -3,7 +3,7 @@ package org.rust.cargo.project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import org.rust.cargo.commands.impl.CleanCargoMetadata
+import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.util.AutoInjectedCrates
 import java.util.*
 

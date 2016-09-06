@@ -6,7 +6,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.psi.PsiElement
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
-import org.rust.cargo.commands.impl.CleanCargoMetadata
+import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl

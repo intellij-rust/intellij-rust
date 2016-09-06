@@ -13,7 +13,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
-import org.rust.cargo.commands.impl.CleanCargoMetadata
+import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
