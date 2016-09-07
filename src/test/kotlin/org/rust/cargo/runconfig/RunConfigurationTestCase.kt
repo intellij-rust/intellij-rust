@@ -8,9 +8,9 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.openapi.util.Disposer
 import org.assertj.core.api.Assertions.assertThat
-import org.rust.cargo.RustWithToolchainTestCaseBase
+import org.rust.cargo.RustWithToolchainTestBase
 
-class RunConfigurationTestCase : RustWithToolchainTestCaseBase() {
+class RunConfigurationTestCase : RustWithToolchainTestBase() {
     override val dataPath = "src/test/resources/org/rust/cargo/runconfig/fixtures"
 
     fun testApplicationConfiguration() = withProject("hello") {

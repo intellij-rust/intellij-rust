@@ -8,7 +8,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
 import com.intellij.psi.stubs.StubIndex
 import org.assertj.core.api.Assertions.assertThat
-import org.rust.cargo.RustWithToolchainTestCaseBase
+import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener
@@ -18,7 +18,7 @@ import org.rust.lang.core.stubs.index.RustModulesIndex
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
-class CargoProjectResolveTestCase : RustWithToolchainTestCaseBase() {
+class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
     override val dataPath: String = "src/test/resources/org/rust/cargo/toolchain/fixtures"
 
