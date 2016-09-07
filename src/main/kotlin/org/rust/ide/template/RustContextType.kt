@@ -12,7 +12,6 @@ import com.intellij.psi.util.PsiUtilCore
 import org.rust.ide.highlight.RustHighlighter
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.util.parentOfType
 import kotlin.reflect.KClass
 
@@ -21,6 +20,7 @@ sealed class RustContextType(
     presentableName: String,
     baseContextType: KClass<out TemplateContextType>
 ) : TemplateContextType(id, presentableName, baseContextType.java) {
+
     final override fun isInContext(file: PsiFile, offset: Int): Boolean {
         if (!PsiUtilCore.getLanguageAtOffset(file, offset).isKindOf(RustLanguage)) {
             return false
@@ -69,7 +69,6 @@ sealed class RustContextType(
 
     class Attribute : RustContextType("RUST_ATTRIBUTE", "Attribute", Item::class) {
         override fun isInContext(element: PsiElement): Boolean =
-
             element.parentOfType<RustAttrElement>() != null
     }
 
