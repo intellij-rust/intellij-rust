@@ -29,6 +29,7 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.RustcVersion
 import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.cargoProject
+import org.rust.cargo.util.cargoProjectRoot
 import org.rust.ide.utils.runWriteAction
 import org.rust.ide.utils.service
 import org.rust.lang.core.psi.impl.isNotRustFile
@@ -90,7 +91,7 @@ class MissingToolchainNotificationProvider(
 
         val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
         if (module.cargoProject?.hasStandardLibrary == false) {
-            return if (trySetupLibraryAutomatically(module)) {
+            return if (trySetupLibraryAutomatically(module, toolchain)) {
                 null
             } else {
                 createLibraryAttachingPanel(module, toolchain)
@@ -124,11 +125,16 @@ class MissingToolchainNotificationProvider(
         return true
     }
 
-    private fun trySetupLibraryAutomatically(module: Module): Boolean {
+    private fun trySetupLibraryAutomatically(module: Module, toolchain: RustToolchain): Boolean {
         if (alreadyTriedForThisProject(LIBRARY_DISCOVERY_KEY)) return false
 
-        val previousLocation = PropertiesComponent.getInstance().getValue(LIBRARY_LOCATION_KEY) ?: return false
-        val stdlib = VirtualFileManager.getInstance().findFileByUrl(previousLocation) ?: return false
+        val stdlib = module.cargoProjectRoot?.path?.let { toolchain.rustup(it) }?.downloadStdlib()
+            ?:
+            PropertiesComponent.getInstance().getValue(LIBRARY_LOCATION_KEY)?.let { previousLocation ->
+                println("previousLocation = $previousLocation")
+                VirtualFileManager.getInstance().findFileByUrl(previousLocation)
+            }
+            ?: return false
 
         ApplicationManager.getApplication().invokeLater {
             if (module.isDisposed) return@invokeLater

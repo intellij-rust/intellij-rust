@@ -38,12 +38,12 @@ abstract class RustWithToolchainTestBase : PlatformTestCase() {
     override fun setUp() {
         super.setUp()
         if (toolchain != null) {
-            myModule.project.service<RustProjectSettingsService>().toolchain = toolchain
+            project.service<RustProjectSettingsService>().toolchain = toolchain
         }
     }
 
     override fun tearDown() {
-        myModule.project.service<RustProjectSettingsService>().toolchain = null
+        project.service<RustProjectSettingsService>().toolchain = null
         super.tearDown()
     }
 

@@ -9,7 +9,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.text.SemVer
-import org.rust.cargo.toolchain.Cargo
 import org.rust.utils.seconds
 import java.io.File
 
@@ -36,6 +35,12 @@ data class RustToolchain(val location: String) {
 
     fun cargo(cargoProjectDirectory: String): Cargo =
         Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), cargoProjectDirectory)
+
+    fun rustup(cargoProjectDirectory: String): Rustup? {
+        if (!hasExecutable(RUSTUP)) return null
+
+        return Rustup(pathToExecutable(RUSTUP), pathToExecutable(RUSTC), cargoProjectDirectory)
+    }
 
     fun nonProjectCargo(): Cargo =
         Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), null)
