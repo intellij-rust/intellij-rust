@@ -25,6 +25,7 @@
             <option name="RUST_FILE" value="true"/>
             <option name="RUST_STATEMENT" value="false"/>
             <option name="RUST_ITEM" value="false"/>
+            <option name="RUST_STATEMENT" value="false"/>
             <option name="RUST_MOD" value="true"/>
         </context>
     </template>
@@ -36,6 +37,7 @@
             <option name="RUST_FILE" value="true"/>
             <option name="RUST_STATEMENT" value="false"/>
             <option name="RUST_ITEM" value="false"/>
+            <option name="RUST_STATEMENT" value="false"/>
             <option name="RUST_MOD" value="true"/>
         </context>
     </template>
