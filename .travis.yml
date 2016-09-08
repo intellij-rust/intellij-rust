@@ -1,23 +1,18 @@
 language: java
 
 jdk: oraclejdk8
-env: 
-  global: ORG_GRADLE_PROJECT_downloadIdeaSources=false 
+env:
+  global: ORG_GRADLE_PROJECT_downloadIdeaSources=false
   matrix:
         # FIXME: use this when Grammar Kit supports it
         # - ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT
         - ORG_GRADLE_PROJECT_ideaVersion=162.1812.8
         - ORG_GRADLE_PROJECT_ideaVersion=15.0.4
-        
+
 before_script:
-  - curl -L -O https://static.rust-lang.org/dist/rust-nightly-x86_64-unknown-linux-gnu.tar.gz
-  - tar -xzf rust-nightly-x86_64-unknown-linux-gnu.tar.gz
-  # can't use sudo, so install rustc and cargo localy
-  - rust-nightly-x86_64-unknown-linux-gnu/install.sh --prefix=$HOME/rust
-  # because of this export, we can't put this into separate `install-rust.sh` script
-  - export PATH=$PATH:$HOME/rust/bin
+  - curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly
+  - export PATH=$HOME/.cargo/bin:$PATH
   - cargo install rustfmt
-  - export PATH=$PATH:$HOME/.cargo/bin
 
 # https://docs.travis-ci.com/user/languages/java/#Caching
 before_cache:
