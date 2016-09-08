@@ -1,6 +1,7 @@
 package org.rust.cargo.toolchain
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.util.text.SemVer
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.util.StandardLibraryRoots
@@ -12,9 +13,14 @@ class RustupTest : RustWithToolchainTestBase() {
 
     fun testDownloadStdlib() {
         ApplicationManager.getApplication().executeOnPooledThread {
-            val versionInfo = project.toolchain?.queryVersions()
+            val versionInfo = project.toolchain?.queryVersions()!!
 
-            if (versionInfo?.rustc?.nightlyCommitHash == null) {
+            if (versionInfo.rustup!! < SemVer.parseFromText("0.6.0")!!) {
+                System.err.println("SKIP $name: recent rustup required")
+                return@executeOnPooledThread
+            }
+
+            if (versionInfo.rustc?.nightlyCommitHash == null) {
                 System.err.println("SKIP $name: nightly toolchain required")
                 return@executeOnPooledThread
             }
