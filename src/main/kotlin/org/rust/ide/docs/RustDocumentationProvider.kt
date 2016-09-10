@@ -80,12 +80,15 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
             identEnd <= signatureEnd && signatureEnd <= textLength)
 
         val beforeIdent = text.substring(signatureStart, identStart).escaped
-
-        // since where clauses and return types may be separated
-        // by significant whitespace, remove consecutive whitespace runs
-        // unfortunately this doesn't handle a single trailing
-        // whitespace, so call trimEnd() as well
-        val afterIdent = text.substring(identEnd, signatureEnd).replace(Regex("""\s\s+"""), " ").trimEnd().escaped
+        val afterIdent = text.substring(identEnd, signatureEnd)
+                .replace(Regex("""\n"""), "")    // collapse signature into a single line
+                .replace(Regex("""\s\s+"""), "") // collapse consecutive whitespace runs into a single whitespace
+                .replace(Regex("""\(\s"""), "(") // remove whitespace after a parens
+                .replace(Regex("""\s\)"""), ")") // remove whitespace before a parens
+                .replace(Regex(""",\s"""), ",")  // normalize all commas to ?,?
+                .replace(Regex(""","""), ", ")   // now that commas don't have following spaces, add one
+                .trimEnd()                       // finally, trim any ending whitespace
+                .escaped
 
         return "$beforeIdent<b>$name</b>$afterIdent"
     }
