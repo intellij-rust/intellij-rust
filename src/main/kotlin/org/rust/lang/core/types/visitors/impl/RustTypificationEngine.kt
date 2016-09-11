@@ -191,12 +191,12 @@ private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedT
     }
 
     override fun visitPathType(o: RustPathTypeElement) = set {
-        o.path?.let {
-            (   RustIntegerType.deduceBySuffix(it.text) ?:
-                RustFloatType.deduceBySuffix(it.text)   ?:
-                RustBooleanType.deduce(it.text)         ?:
-                RustCharacterType.deduce(it.text)       ?:
-                RustStringType.deduce(it.text)          ?:
+         o.path?.let {
+            (   RustIntegerType.deduce(it.text)     ?:
+                RustFloatType.deduce(it.text)       ?:
+                RustBooleanType.deduce(it.text)     ?:
+                RustCharacterType.deduce(it.text)   ?:
+                RustStringType.deduce(it.text)      ?:
                 RustUnresolvedPathType(it)
                 )
         } ?: RustUnknownType

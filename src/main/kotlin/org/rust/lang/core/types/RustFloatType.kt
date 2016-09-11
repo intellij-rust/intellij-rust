@@ -7,8 +7,11 @@ import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 class RustFloatType(val kind: Kind) : RustPrimitiveTypeBase() {
 
     companion object {
+        fun deduce(text: String): RustFloatType? =
+            Kind.values().find { text == it.name }?.let { RustFloatType(it) }
+
         fun deduceBySuffix(text: String): RustFloatType? =
-            Kind.values().find { it.name == text }?.let { RustFloatType(it) }
+            Kind.values().find { text.endsWith(it.name) }?.let { RustFloatType(it) }
 
         //
         // TODO(xxx):
