@@ -125,6 +125,13 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
+    fun testDefaultFloat() = testExpr("""
+        fn main() {
+            let a = 1.0;
+                    //^ f64
+        }
+    """)
+
     fun testF32() = testExpr("""
         fn main() {
             let a = 1.0f32;
@@ -136,6 +143,13 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         fn main() {
             let a = 1.0f64;
                     //^ f64
+        }
+    """)
+
+    fun testDefaultInteger() = testExpr("""
+        fn main() {
+            let a = 42;
+                   //^ i32
         }
     """)
 
