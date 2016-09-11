@@ -125,6 +125,111 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
+    fun testF32() = testExpr("""
+        fn main() {
+            let a = 1.0f32;
+                    //^ f32
+        }
+    """)
+
+    fun testF64() = testExpr("""
+        fn main() {
+            let a = 1.0f64;
+                    //^ f64
+        }
+    """)
+
+    fun testI8() = testExpr("""
+        fn main() {
+            let a = 42i8;
+                   //^ i8
+        }
+    """)
+
+    fun testI16() = testExpr("""
+        fn main() {
+            let a = 42i16;
+                   //^ i16
+        }
+    """)
+
+    fun testI32() = testExpr("""
+        fn main() {
+            let a = 42i32;
+                   //^ i32
+        }
+    """)
+
+    fun testI64() = testExpr("""
+        fn main() {
+            let a = 42i64;
+                   //^ i64
+        }
+    """)
+
+    fun testISize() = testExpr("""
+        fn main() {
+            let a = 42isize;
+                   //^ isize
+        }
+    """)
+
+    fun testU8() = testExpr("""
+        fn main() {
+            let a = 42u8;
+                   //^ u8
+        }
+    """)
+
+    fun testU16() = testExpr("""
+        fn main() {
+            let a = 42u16;
+                   //^ u16
+        }
+    """)
+
+    fun testU32() = testExpr("""
+        fn main() {
+            let a = 42u32;
+                   //^ u32
+        }
+    """)
+
+    fun testU64() = testExpr("""
+        fn main() {
+            let a = 42u64;
+                   //^ u64
+        }
+    """)
+
+    fun testUSize() = testExpr("""
+        fn main() {
+            let a = 42usize;
+                   //^ usize
+        }
+    """)
+
+    fun testBoolTrue() = testExpr("""
+        fn main() {
+            let a = true;
+                     //^ bool
+        }
+    """)
+
+    fun testBoolFalse() = testExpr("""
+        fn main() {
+            let a = false;
+                      //^ bool
+        }
+    """)
+
+    fun testChar() = testExpr("""
+        fn main() {
+            let a = 'A';
+                   //^ char
+        }
+    """)
+
     fun testEnumVariantA() = testExpr("""
         enum E { A(i32), B { val: bool }, C }
         fn main() {
