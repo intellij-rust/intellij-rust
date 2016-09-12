@@ -7,18 +7,21 @@ import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 class RustFloatType(val kind: Kind) : RustPrimitiveTypeBase() {
 
     companion object {
+        fun deduce(text: String): RustFloatType? =
+            Kind.values().find { text == it.name }?.let { RustFloatType(it) }
+
         fun deduceBySuffix(text: String): RustFloatType? =
-            Kind.values().find { it.name == text }?.let { RustFloatType(it) }
+            Kind.values().find { text.endsWith(it.name) }?.let { RustFloatType(it) }
 
         //
         // TODO(xxx):
-        //  The type of an unsuffixed integer literal is determined by type inference
-        //      > If an integer type can be uniquely determined from the surrounding program context, the unsuffixed integer literal has that type.
-        //      > If the program context under-constrains the type, it defaults to the 32-bit float
+        //  The type of an unsuffixed floating point literal is determined by type inference
+        //      > If an floating point type can be uniquely determined from the surrounding program context, the unsuffixed floating point literal has that type.
+        //      > If the program context under-constrains the type, it defaults to the 64-bit float
         //      > If the program context over-constrains the type, it is considered a static type error.
         //
         fun deduceUnsuffixed(@Suppress("UNUSED_PARAMETER") o: RustLitExprElement): RustFloatType =
-            RustFloatType(kind = RustFloatType.Kind.f32)
+            RustFloatType(kind = RustFloatType.Kind.f64)
     }
 
     enum class Kind { f32, f64 }
