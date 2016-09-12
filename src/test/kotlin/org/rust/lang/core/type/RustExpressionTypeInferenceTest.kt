@@ -1,5 +1,7 @@
 package org.rust.lang.core.type
 
+import org.junit.ComparisonFailure
+
 class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
     fun testFunctionCall() = testExpr("""
         struct S;
@@ -243,6 +245,15 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
                    //^ char
         }
     """)
+
+    fun testStrRef() = expect<ComparisonFailure> {
+        testExpr("""
+        fn main() {
+            let a = "Hello";
+                       //^ & str
+        }
+    """)
+    }
 
     fun testEnumVariantA() = testExpr("""
         enum E { A(i32), B { val: bool }, C }
