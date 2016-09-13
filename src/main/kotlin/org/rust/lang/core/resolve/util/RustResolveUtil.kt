@@ -1,11 +1,10 @@
 package org.rust.lang.core.resolve.util
 
-import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiElement
-import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.containingMod
+import org.rust.lang.core.psi.superMods
 import org.rust.lang.core.resolve.scope.RustResolveScope
 
 object RustResolveUtil {
@@ -30,19 +29,14 @@ object RustResolveUtil {
      *  Reference:
      *    https://doc.rust-lang.org/reference.html#crates-and-source-files
      */
-    fun getCrateRootModFor(elem: RustCompositeElement): RustMod? = recursionGuard(elem, Computable {
+    fun getCrateRootModFor(elem: RustCompositeElement): RustMod? {
         val mod = elem as? RustMod ?: elem.containingMod
 
-        if (mod == null)
+        val root = mod?.superMods?.lastOrNull()
+        return if (root != null && root.isCrateRoot)
+            root
+        else
             null
-        else {
-            val superMod = mod.`super`
-            if (superMod == null) {
-                if (mod.isCrateRoot) mod else null
-            } else {
-                getCrateRootModFor(superMod)
-            }
-        }
-    }, memoize = false)
+    }
 }
 
