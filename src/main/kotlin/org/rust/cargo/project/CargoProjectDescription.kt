@@ -68,13 +68,21 @@ class CargoProjectDescription private constructor(
          * Root module file (typically `src/lib.rs`)
          */
         val virtualFile: VirtualFile
-    )
+    ) {
+        init {
+            check('-' !in name)
+        }
+    }
 
     private val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
 
     val externCrates: Collection<ExternCrate> get() = packages.mapNotNull { pkg ->
         val target = pkg.libTarget ?: return@mapNotNull null
-        target.crateRoot?.let { ExternCrate(target.name, it) }
+
+        // crate name must be a valid Rust identifier, so map `-` to `_`
+        // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
+        val name = target.name.replace("-", "_")
+        target.crateRoot?.let { ExternCrate(name, it) }
     }
 
     /**

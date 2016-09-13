@@ -6,11 +6,11 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.psi.PsiElement
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
-import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
 import org.rust.cargo.runconfig.CargoCommandConfiguration
+import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.util.getComponentOrThrow
 import org.rust.lang.RustTestCaseBase
 
@@ -154,6 +154,13 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
                 #[test]
                 fn test_foo() {}
             """).open()
+        }
+        doTestProducedConfigurations()
+    }
+
+    fun testHyphenInNameWorks() {
+        testProject {
+            example("hello-world", "example/hello.rs").open()
         }
         doTestProducedConfigurations()
     }

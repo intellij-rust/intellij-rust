@@ -28,6 +28,7 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
     fun testResolveLocalPackage() = resolveRefInFile("local_package", "src/main.rs")
     fun testResolveLocalPackageMod() = resolveRefInFile("local_package_mod", "src/bar.rs")
     fun testModuleRelations() = resolveRefInFile("mods", "src/foo.rs")
+    fun testKebabCase() = resolveRefInFile("kebab-case", "src/main.rs")
 
     private fun resolveRefInFile(project: String, fileWithRef: String) = withProject(project) {
         val f = bindToProjectUpdateEvent {
