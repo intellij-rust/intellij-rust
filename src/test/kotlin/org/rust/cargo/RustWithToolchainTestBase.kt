@@ -11,7 +11,7 @@ import org.rust.ide.utils.service
 // This class allows to execute real Cargo during the tests.
 // Unlike `RustTestCaseBase` it does not use in-memory temporary VFS
 // and instead copies real files.
-abstract class RustWithToolchainTestCaseBase : PlatformTestCase() {
+abstract class RustWithToolchainTestBase : PlatformTestCase() {
     abstract val dataPath: String
 
     private val toolchain = RustToolchain.suggest()
@@ -38,12 +38,12 @@ abstract class RustWithToolchainTestCaseBase : PlatformTestCase() {
     override fun setUp() {
         super.setUp()
         if (toolchain != null) {
-            myModule.project.service<RustProjectSettingsService>().toolchain = toolchain
+            project.service<RustProjectSettingsService>().toolchain = toolchain
         }
     }
 
     override fun tearDown() {
-        myModule.project.service<RustProjectSettingsService>().toolchain = null
+        project.service<RustProjectSettingsService>().toolchain = null
         super.tearDown()
     }
 

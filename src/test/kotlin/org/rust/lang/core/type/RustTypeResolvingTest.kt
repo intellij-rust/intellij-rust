@@ -78,7 +78,82 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
 
     fun testPrimitiveBool() = testType("""
         type T = bool;
-                 //^ bool
+                  //^ bool
+    """)
+
+    fun testPrimitiveChar() = testType("""
+        type T = char;
+                  //^ char
+    """)
+
+    fun testPrimitiveF32() = testType("""
+        type T = f32;
+                 //^ f32
+    """)
+
+    fun testPrimitiveF64() = testType("""
+        type T = f64;
+                 //^ f64
+    """)
+
+    fun testPrimitiveI8() = testType("""
+        type T = i8;
+                //^ i8
+    """)
+
+    fun testPrimitiveI16() = testType("""
+        type T = i16;
+                 //^ i16
+    """)
+
+    fun testPrimitiveI32() = testType("""
+        type T = i32;
+                 //^ i32
+    """)
+
+    fun testPrimitiveI64() = testType("""
+        type T = i64;
+                 //^ i64
+    """)
+
+    fun testPrimitiveISize() = testType("""
+        type T = isize;
+                   //^ isize
+    """)
+
+    fun testPrimitiveU8() = testType("""
+        type T = u8;
+                //^ u8
+    """)
+
+    fun testPrimitiveU16() = testType("""
+        type T = u16;
+                 //^ u16
+    """)
+
+    fun testPrimitiveU32() = testType("""
+        type T = u32;
+                 //^ u32
+    """)
+
+    fun testPrimitiveU64() = testType("""
+        type T = u64;
+                 //^ u64
+    """)
+
+    fun testPrimitiveUSize() = testType("""
+        type T = usize;
+                   //^ usize
+    """)
+
+    fun testPrimitiveStr() = testType("""
+        type T = str;
+                 //^ str
+    """)
+
+    fun testPrimitiveStrRef() = testType("""
+        type T = &'static str;
+                 //^ & str
     """)
 
     /**

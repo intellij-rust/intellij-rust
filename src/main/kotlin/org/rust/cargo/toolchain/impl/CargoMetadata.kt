@@ -1,4 +1,4 @@
-package org.rust.cargo.commands.impl
+package org.rust.cargo.toolchain.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -149,9 +149,6 @@ object CargoMetadata {
         else
             root.findFileByRelativePath(src_path)
 
-        // crate name must be a valid Rust identifier, so map `-` to `_`
-        // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
-        val name = name.replace("-", "_")
         return mainFile?.let { CleanCargoMetadata.Target(it.url, name, kind) }
     }
 }

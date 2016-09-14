@@ -692,7 +692,7 @@ trait_method_member ::= outer_attr* fn_header method_decl_parameters ret_type? w
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl_item ::= attrs_and_vis UNSAFE? IMPL generic_params? ( bare_impl | for_impl ) {
+impl_item ::= attrs_and_vis UNSAFE? IMPL generic_params? (for_impl | bare_impl) {
   pin = "IMPL"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustItemElement"
@@ -702,8 +702,10 @@ impl_item ::= attrs_and_vis UNSAFE? IMPL generic_params? ( bare_impl | for_impl 
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 
-private bare_impl ::= type where_clause? impl_body
-private for_impl ::= '!'? trait_ref FOR (type where_clause? impl_body | '..' '{' '}')
+private bare_impl ::= type !FOR where_clause? impl_body { pin = 2 }
+private for_impl ::= '!'? trait_ref FOR (auto_trait_impl | type_trait_impl) { pin = 3 }
+private auto_trait_impl ::= '..' '{' '}' { pin = 1 }
+private type_trait_impl ::= type where_clause? impl_body { pin = 1 }
 
 private impl_body ::= '{' inner_attr* impl_member* '}' { pin = 1 }
 

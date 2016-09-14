@@ -181,7 +181,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
             LOG.info("Cargo project update started")
 
             if (!toolchain.looksLikeValidToolchain()) {
-                result = UpdateResult.Err(ExecutionException("Invalid toolchain $toolchain"))
+                result = UpdateResult.Err(ExecutionException("Invalid toolchain ${toolchain.presentableLocation}"))
                 return
             }
 

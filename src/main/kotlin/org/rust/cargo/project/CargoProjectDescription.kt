@@ -3,7 +3,7 @@ package org.rust.cargo.project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import org.rust.cargo.commands.impl.CleanCargoMetadata
+import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.util.AutoInjectedCrates
 import java.util.*
 
@@ -68,13 +68,21 @@ class CargoProjectDescription private constructor(
          * Root module file (typically `src/lib.rs`)
          */
         val virtualFile: VirtualFile
-    )
+    ) {
+        init {
+            check('-' !in name)
+        }
+    }
 
     private val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
 
     val externCrates: Collection<ExternCrate> get() = packages.mapNotNull { pkg ->
         val target = pkg.libTarget ?: return@mapNotNull null
-        target.crateRoot?.let { ExternCrate(target.name, it) }
+
+        // crate name must be a valid Rust identifier, so map `-` to `_`
+        // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
+        val name = target.name.replace("-", "_")
+        target.crateRoot?.let { ExternCrate(name, it) }
     }
 
     /**
@@ -86,16 +94,23 @@ class CargoProjectDescription private constructor(
     /**
      * Finds a package for this file and returns a (Package, relative path) pair
      */
-    fun findPackageForFile(file: VirtualFile): Pair<Package, String>? = packages.asSequence().mapNotNull { pkg ->
-        val base = pkg.contentRoot ?: return@mapNotNull null
-        val relPath = VfsUtil.getRelativePath(file, base) ?: return@mapNotNull null
-        pkg to relPath
-    }.firstOrNull()
+    fun findPackageForFile(file: VirtualFile): Pair<Package, String>? {
+        val canonicalFile = file.canonicalFile ?: return null
+
+        return packages.asSequence().mapNotNull { pkg ->
+            val base = pkg.contentRoot ?: return@mapNotNull null
+            val relPath = VfsUtil.getRelativePath(canonicalFile, base) ?: return@mapNotNull null
+            pkg to relPath
+        }.firstOrNull()
+    }
 
     /**
      * If the [file] is a crate root, returns the corresponding [Target]
      */
-    fun findTargetForFile(file: VirtualFile): Target? = targetByCrateRootUrl[file.url]
+    fun findTargetForFile(file: VirtualFile): Target? {
+        val canonicalFile = file.canonicalFile ?: return null
+        return targetByCrateRootUrl[canonicalFile.url]
+    }
 
     fun isCrateRoot(file: VirtualFile): Boolean = findTargetForFile(file) != null
 

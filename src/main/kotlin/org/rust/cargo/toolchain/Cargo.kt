@@ -1,4 +1,4 @@
-package org.rust.cargo.commands
+package org.rust.cargo.toolchain
 
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
@@ -11,9 +11,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.commands.impl.CargoMetadata
 import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.impl.CargoMetadata
 import java.io.File
 
 /**
@@ -21,6 +20,9 @@ import java.io.File
  *
  * This class is not aware of SDKs or projects, so you'll need to provide
  * paths yourself.
+ *
+ * It is impossible to guarantee that paths to the project or executables are valid,
+ * because the user can always just `rm ~/.cargo/bin -rf`.
  */
 class Cargo(
     private val pathToCargoExecutable: String,
@@ -29,14 +31,6 @@ class Cargo(
     // because some commands don't accept `--manifest-path` argument
     private val projectDirectory: String?
 ) {
-    init {
-        require(File(pathToCargoExecutable).canExecute()) { "Invalid path to cargo $pathToCargoExecutable" }
-        require(File(pathToRustExecutable).canExecute()) { "Invalid path to rustc $pathToRustExecutable" }
-        require(projectDirectory == null || File(projectDirectory, CargoConstants.MANIFEST_FILE).exists()) {
-            "No Cargo.toml in $projectDirectory"
-        }
-    }
-
     /**
      * Fetch all dependencies and calculate project information.
      *
@@ -46,7 +40,12 @@ class Cargo(
      */
     @Throws(ExecutionException::class)
     fun fullProjectDescription(listener: ProcessListener? = null): CargoProjectDescription {
-        val output = metadataCommandline.execute(listener)
+        val hasAllFeatures = "--all-features" in generalCommand("metadata", listOf("--help")).execute().stdout
+        val command = generalCommand("metadata", listOf("--verbose", "--format-version", "1")).apply {
+            if (hasAllFeatures) addParameter("--all-features")
+        }
+
+        val output = command.execute(listener)
         val rawData = parse(output.stdout)
         val projectDescriptionData = CargoMetadata.clean(rawData)
         return CargoProjectDescription.deserialize(projectDescriptionData)
@@ -57,7 +56,7 @@ class Cargo(
     fun init(directory: VirtualFile) {
         val path = PathUtil.toSystemDependentName(directory.path)
         generalCommand("init", listOf("--bin", path)).execute()
-        check(File(directory.path, RustToolchain.CARGO_TOML).exists())
+        check(File(directory.path, RustToolchain.Companion.CARGO_TOML).exists())
         VfsUtil.markDirtyAndRefresh(/* async = */ false, /* recursive = */ true, /* reloadChildren = */ true, directory)
     }
 
@@ -75,9 +74,6 @@ class Cargo(
             .withParameters(additionalArguments)
             .withEnvironment(CargoConstants.RUSTC_ENV_VAR, pathToRustExecutable)
             .withEnvironment(environmentVariables)
-
-    private val metadataCommandline: GeneralCommandLine get() =
-        generalCommand("metadata", listOf("--verbose", "--format-version", "1"))
 
     private fun rustfmtCommandline(filePath: String) =
         generalCommand("fmt").withParameters("--", "--write-mode=overwrite", "--skip-children", filePath)

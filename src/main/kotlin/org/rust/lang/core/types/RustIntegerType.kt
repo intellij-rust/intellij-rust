@@ -7,6 +7,9 @@ import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 class RustIntegerType(val kind: Kind): RustPrimitiveTypeBase() {
 
     companion object {
+        fun deduce(s: String): RustIntegerType? =
+            Kind.values().find { s == it.name }?.let { RustIntegerType(it) }
+
         fun deduceBySuffix(s: String): RustIntegerType? =
             Kind.values().find { s.endsWith(it.name) }?.let { RustIntegerType(it) }
 

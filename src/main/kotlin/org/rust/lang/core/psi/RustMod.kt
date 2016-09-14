@@ -1,10 +1,9 @@
 package org.rust.lang.core.psi
 
-import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiDirectory
-import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.symbols.RustQualifiedPath
 import org.rust.lang.core.symbols.RustQualifiedPathPart
+import java.util.*
 
 interface RustMod : RustNamedElement, RustItemsOwner {
     /**
@@ -30,13 +29,19 @@ interface RustMod : RustNamedElement, RustItemsOwner {
     }
 }
 
-val RustMod.canonicalCratePath: RustQualifiedPath? get() = recursionGuard(this, Computable {
-    if (isCrateRoot)
-        null
-    else
-        RustQualifiedPath.create(
-            RustQualifiedPathPart.from(modName),
-            qualifier = `super`?.canonicalCratePath,
-            fullyQualified = true
-        )
-})
+val RustMod.superMods: List<RustMod> get() {
+    // For malformed programs, chain of `super`s may be infinite
+    // because of cycles, and we need to detect this situation.
+    val visited = HashSet<RustMod>()
+    return generateSequence(this) { it.`super`}
+        .takeWhile { visited.add(it) }
+        .toList()
+}
+
+val RustMod.canonicalCratePath: RustQualifiedPath? get() =
+    superMods.dropLast(1).foldRight(null, {mod, qualifier: RustQualifiedPath? -> RustQualifiedPath.create(
+        RustQualifiedPathPart.from(mod.modName),
+        qualifier = qualifier,
+        fullyQualified = true
+    )})
+

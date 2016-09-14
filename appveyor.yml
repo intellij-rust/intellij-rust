@@ -3,9 +3,8 @@ environment:
 
 install:
   - curl -sSf -o rustup-init.exe https://dev-static.rust-lang.org/rustup/dist/i686-pc-windows-gnu/rustup-init.exe
-  - rustup-init.exe -y
-  - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
-  - rustup default stable-x86_64-pc-windows-msvc
+  - rustup-init.exe -y --default-toolchain nightly
+  - set PATH=C:\Users\appveyor\.cargo\bin;%PATH%
   - cargo install rustfmt
 
 build_script:
@@ -17,4 +16,3 @@ test_script:
 # Appveyor does not allow cache folder greater then 500 MB
 # cache:
 #   - C:\Users\appveyor\.gradle
-

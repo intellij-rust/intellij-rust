@@ -9,6 +9,9 @@ class RustQuickNavigationInfoTest: RustDocumentationProviderTest() {
     fun testNoComments() = checkNavigationInfo()
     fun testBigSignature() = checkNavigationInfo()
     fun testMethod() = checkNavigationInfo()
+    fun testTraitMethod() = checkNavigationInfo()
+    fun testMultipleWhere() = checkNavigationInfo()
+    fun testExpandedSignature() = checkNavigationInfo()
 
     private fun checkNavigationInfo() = compareByHtml { element, originalElement ->
         RustDocumentationProvider().getQuickNavigateInfo(element, originalElement)

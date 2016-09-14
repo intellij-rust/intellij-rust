@@ -2,16 +2,14 @@ package org.rust.lang.core.resolve.indexes
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.AbstractStubIndex
-import com.intellij.psi.stubs.StringStubIndexExtension
-import com.intellij.psi.stubs.StubIndex
-import com.intellij.psi.stubs.StubIndexKey
+import com.intellij.psi.stubs.*
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.RustFileElementType
 import org.rust.lang.core.psi.RustFnElement
 import org.rust.lang.core.psi.RustImplItemElement
 import org.rust.lang.core.psi.RustStructOrEnumItemElement
 import org.rust.lang.core.psi.RustUseItemElement
+import org.rust.lang.core.stubs.elements.RustImplItemElementStub
 import org.rust.lang.core.types.RustStructOrEnumTypeBase
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustUnknownType
@@ -40,9 +38,10 @@ object RustImplIndex  {
             .flatMap { it.implMethodMemberList.orEmpty().asSequence() }
 
     fun findImplsFor(target: RustType, project: Project): Sequence<RustImplItemElement> {
-        var inherentImpls = emptySequence<RustImplItemElement>()
-        if (target is RustStructOrEnumTypeBase)
-            inherentImpls = findInherentImplsForInternal(target.item)
+        val inherentImpls = if (target is RustStructOrEnumTypeBase)
+            findInherentImplsForInternal(target.item)
+        else
+            emptySequence()
 
         return findNonInherentImplsForInternal(target.decay, project)
                     .filter {
@@ -158,6 +157,11 @@ object RustImplIndex  {
             val KEY: StubIndexKey<Key, RustImplItemElement> =
                 StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.ByType")
 
+            fun index(stub: RustImplItemElementStub, sink: IndexSink) {
+                if (stub.traitRef != null) {
+                    stub.type?.let { sink.occurrence(KEY, Key(it)) }
+                }
+            }
         }
 
         override fun getVersion(): Int = RustFileElementType.stubVersion
@@ -189,6 +193,12 @@ object RustImplIndex  {
         companion object {
             val KEY: StubIndexKey<String, RustImplItemElement> =
                 StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.ByName")
+
+            fun index(stub: RustImplItemElementStub, sink: IndexSink) {
+                (stub.type as? RustUnresolvedPathType)?.let {
+                    sink.occurrence(KEY, it.path.part.name)
+                }
+            }
         }
 
         override fun getKey(): StubIndexKey<String, RustImplItemElement> = KEY

@@ -78,13 +78,19 @@ class CargoCommandConfiguration(
         }
     }
 
-    @Throws(RuntimeConfigurationError::class)
     private fun getConfiguration(): ConfigurationResult {
         val module = configurationModule.module
             ?: return ConfigurationResult.error(ExecutionBundle.message("module.not.specified.error.text"))
-        return ConfigurationResult.Ok(
-            project.toolchain ?: return ConfigurationResult.error("No Rust toolchain specified"),
 
+        val toolchain = project.toolchain
+            ?: return ConfigurationResult.error("No Rust toolchain specified")
+
+        if (!toolchain.looksLikeValidToolchain()) {
+            return ConfigurationResult.error("Invalid toolchain: ${toolchain.presentableLocation}")
+        }
+
+        return ConfigurationResult.Ok(
+            toolchain,
             module.cargoProjectRoot ?: return ConfigurationResult.error("No Cargo.toml at the root of the module")
         )
     }

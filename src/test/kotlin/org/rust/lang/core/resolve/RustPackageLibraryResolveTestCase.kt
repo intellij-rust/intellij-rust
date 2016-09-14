@@ -2,7 +2,7 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
 import com.intellij.testFramework.LightProjectDescriptor
-import org.rust.cargo.commands.impl.CleanCargoMetadata
+import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.project.CargoProjectDescription
 import java.util.*
 
