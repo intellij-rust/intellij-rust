@@ -60,7 +60,14 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
         }
 
         val signatureStart = signatureStartElement?.startOffsetInParent ?: 0
-        val signatureEnd = block?.startOffsetInParent ?: textLength
+
+        // pick (in order) where clause, return type, or closing brace of the parameters
+        // if all else fails, drop down to the length of the current element
+        val functionElements = listOf(whereClause, retType, parameters)
+        val signatureEnd = functionElements
+                .filterNotNull().firstOrNull()
+                ?.let { it.startOffsetInParent + it.textLength }
+                ?: textLength
 
         val identStart = identifier.startOffsetInParent
         val identEnd = identStart + identifier.textLength
@@ -68,7 +75,13 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
             identEnd <= signatureEnd && signatureEnd <= textLength)
 
         val beforeIdent = text.substring(signatureStart, identStart).escaped
-        val afterIdent = text.substring(identEnd, signatureEnd).trimEnd().escaped
+        val afterIdent = text.substring(identEnd, signatureEnd)
+                .replace("""\s+""".toRegex(), " ")
+                .replace("( ", "(")
+                .replace(" )", ")")
+                .replace(" ,", ",")
+                .trimEnd()
+                .escaped
 
         return "$beforeIdent<b>$name</b>$afterIdent"
     }
