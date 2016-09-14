@@ -21,7 +21,8 @@ object StringLiteralTokenizer : EscapeSequenceTokenizer<LeafPsiElement>() {
     private fun processTextWithEscapeSequences(element: LeafPsiElement, text: String, consumer: TokenConsumer) {
         val unescapedText = StringBuilder()
         val offsets = IntArray(text.length + 1)
-        parseRustStringCharacters(text, unescapedText, offsets)
-        processTextWithOffsets(element, consumer, unescapedText, offsets, 0)
+        if (parseRustStringCharacters(text, unescapedText, offsets)) {
+            processTextWithOffsets(element, consumer, unescapedText, offsets, 0)
+        }
     }
 }
