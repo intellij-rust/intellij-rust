@@ -11,8 +11,12 @@ import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.core.psi.impl.RustRawStringLiteralImpl
 
 // Remember not to auto-pair `'` in char literals because of lifetimes, which use a single `'`: `'a`
-class RustQuoteHandler : SimpleTokenSetQuoteHandler(STRING_LITERAL, BYTE_STRING_LITERAL,
-    RAW_STRING_LITERAL, RAW_BYTE_STRING_LITERAL), MultiCharQuoteHandler {
+class RustQuoteHandler : SimpleTokenSetQuoteHandler(
+    STRING_LITERAL,
+    BYTE_STRING_LITERAL,
+    RAW_STRING_LITERAL,
+    RAW_BYTE_STRING_LITERAL
+), MultiCharQuoteHandler {
     override fun isOpeningQuote(iterator: HighlighterIterator, offset: Int): Boolean {
         val elementType = iterator.tokenType
         val start = iterator.start
@@ -30,26 +34,25 @@ class RustQuoteHandler : SimpleTokenSetQuoteHandler(STRING_LITERAL, BYTE_STRING_
         return super.isClosingQuote(iterator, offset)
     }
 
-    override fun isInsideLiteral(iterator: HighlighterIterator): Boolean {
-        if(iterator.tokenType in StringEscapesTokenTypes.STRING_LITERAL_ESCAPES) {
-            return true
-        }
-        return super.isInsideLiteral(iterator)
-    }
+    override fun isInsideLiteral(iterator: HighlighterIterator): Boolean =
+        if (iterator.tokenType in StringEscapesTokenTypes.STRING_LITERAL_ESCAPES)
+            true
+        else
+            super.isInsideLiteral(iterator)
 
     fun isDeepInsideLiteral(iterator: HighlighterIterator, offset: Int): Boolean {
-        if(!isInsideLiteral(iterator)) {
+        if (!isInsideLiteral(iterator)) {
             return false
         }
 
-        val literal = getLiteral(iterator) ?: return true // it's safer to fallback to true
+        val literal = getLiteralDumb(iterator) ?: return true // it's safer to fallback to true
         val offsets = literal.offsets ?: return true
         val relativeOffset = offset - iterator.start
         return offsets.value?.containsOffset(relativeOffset) ?: true
     }
 
     override fun getClosingQuote(iterator: HighlighterIterator, offset: Int): CharSequence? {
-        val literal = getLiteral(iterator) ?: return null
+        val literal = getLiteralDumb(iterator) ?: return null
 
         if (literal is RustRawStringLiteralImpl) {
             return '"' + "#".repeat(literal.hashes)
@@ -58,7 +61,12 @@ class RustQuoteHandler : SimpleTokenSetQuoteHandler(STRING_LITERAL, BYTE_STRING_
         return null
     }
 
-    private fun getLiteral(iterator: HighlighterIterator): RustLiteral? {
+    /**
+     * Creates virtual [RustLiteral] PSI element assuming that it is represented as
+     * single, contiguous token in highlighter, in other words - it doesn't contain
+     * any escape sequences etc. (hence 'dumb').
+     */
+    private fun getLiteralDumb(iterator: HighlighterIterator): RustLiteral? {
         val start = iterator.start
         val end = iterator.end
 
