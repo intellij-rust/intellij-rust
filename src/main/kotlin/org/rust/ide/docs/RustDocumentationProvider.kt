@@ -65,8 +65,7 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
         // if all else fails, drop down to the length of the current element
         val functionElements = listOf(whereClause, retType, parameters)
         val signatureEnd = functionElements
-                .filterNotNull()
-                .firstOrNull()
+                .filterNotNull().firstOrNull()
                 ?.let { it.startOffsetInParent + it.textLength }
                 ?: textLength
 
