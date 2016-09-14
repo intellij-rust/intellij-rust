@@ -78,9 +78,9 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
         val beforeIdent = text.substring(signatureStart, identStart).escaped
         val afterIdent = text.substring(identEnd, signatureEnd)
                 .replace("""\s+""".toRegex(), " ")
-                .replace("""( """, "(")
-                .replace(""" )""", ")")
-                .replace(Regex(""" ,"""), ",")
+                .replace("( ", "(")
+                .replace(" )", ")")
+                .replace(" ,", ",")
                 .trimEnd()
                 .escaped
 
