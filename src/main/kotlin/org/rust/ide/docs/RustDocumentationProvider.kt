@@ -61,18 +61,14 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
 
         val signatureStart = signatureStartElement?.startOffsetInParent ?: 0
 
-        // pick last of: where clause, return type, or closing brace of the parameters
+        // pick (in order) where clause, return type, or closing brace of the parameters
         // if all else fails, drop down to the length of the current element
-        val signatureEnd = if (block != null)
-            block!!.startOffsetInParent
-        else if (whereClause != null)
-            whereClause!!.let { it.startOffsetInParent + it.textLength }
-        else if (retType != null)
-            retType!!.let { it.startOffsetInParent + it.textLength }
-        else if (parameters != null)
-            parameters!!.let { it.startOffsetInParent + it.textLength }
-        else
-            textLength
+        val functionElements = listOf(whereClause, retType, parameters)
+        val signatureEnd = functionElements
+                .filterNotNull()
+                .firstOrNull()
+                ?.let { it.startOffsetInParent + it.textLength }
+                ?: textLength
 
         val identStart = identifier.startOffsetInParent
         val identEnd = identStart + identifier.textLength
@@ -81,13 +77,11 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
 
         val beforeIdent = text.substring(signatureStart, identStart).escaped
         val afterIdent = text.substring(identEnd, signatureEnd)
-                .replace(Regex("""\n"""), "")    // collapse signature into a single line
-                .replace(Regex("""\s\s+"""), "") // collapse consecutive whitespace runs into a single whitespace
-                .replace(Regex("""\(\s"""), "(") // remove whitespace after a parens
-                .replace(Regex("""\s\)"""), ")") // remove whitespace before a parens
-                .replace(Regex(""",\s"""), ",")  // normalize all commas to ?,?
-                .replace(Regex(""","""), ", ")   // now that commas don't have following spaces, add one
-                .trimEnd()                       // finally, trim any ending whitespace
+                .replace("""\s+""".toRegex(), " ")
+                .replace("""( """, "(")
+                .replace(""" )""", ")")
+                .replace(Regex(""" ,"""), ",")
+                .trimEnd()
                 .escaped
 
         return "$beforeIdent<b>$name</b>$afterIdent"
