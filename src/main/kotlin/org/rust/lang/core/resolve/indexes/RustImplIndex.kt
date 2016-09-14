@@ -10,6 +10,8 @@ import org.rust.lang.core.psi.RustImplItemElement
 import org.rust.lang.core.psi.RustStructOrEnumItemElement
 import org.rust.lang.core.psi.RustUseItemElement
 import org.rust.lang.core.stubs.elements.RustImplItemElementStub
+import org.rust.lang.core.symbols.RustPath
+import org.rust.lang.core.symbols.RustPathHead
 import org.rust.lang.core.types.RustStructOrEnumTypeBase
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustUnknownType
@@ -138,7 +140,7 @@ object RustImplIndex  {
                              */
                             override fun visitPathType(type: RustUnresolvedPathType): Boolean {
                                 val lop = lop
-                                return lop is RustUnresolvedPathType && lop.path.part == type.path.part
+                                return lop is RustUnresolvedPathType && lop.path.nameSegment == type.path.nameSegment
                             }
                         }
                     ) && (hashCode() == other.hashCode() || throw Exception("WTF"))
@@ -146,7 +148,8 @@ object RustImplIndex  {
             override fun hashCode(): Int =
                 type.accept(
                     object : RustHashCodeComputingUnresolvedTypeVisitor() {
-                        override fun visitPathType(type: RustUnresolvedPathType): Int = type.path.part.hashCode()
+                        override fun visitPathType(type: RustUnresolvedPathType): Int =
+                            type.path.nameSegment?.hashCode() ?: 0
                     }
                 )
 
@@ -195,8 +198,9 @@ object RustImplIndex  {
                 StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.ByName")
 
             fun index(stub: RustImplItemElementStub, sink: IndexSink) {
-                (stub.type as? RustUnresolvedPathType)?.let {
-                    sink.occurrence(KEY, it.path.part.name)
+                val key = (stub.type as? RustUnresolvedPathType)?.path?.nameSegment
+                if (key != null) {
+                    sink.occurrence(KEY, key)
                 }
             }
         }
@@ -221,3 +225,9 @@ class RustAliasIndex : StringStubIndexExtension<RustUseItemElement>() {
     override fun getKey(): StubIndexKey<String, RustUseItemElement> = KEY
 
 }
+
+private val RustPath.nameSegment: String? get() {
+    val lastSegment = if (head is RustPathHead.Named) head.segment else segments.lastOrNull()
+    return lastSegment?.name
+}
+

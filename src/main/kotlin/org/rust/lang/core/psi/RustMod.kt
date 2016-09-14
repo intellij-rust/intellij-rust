@@ -1,8 +1,9 @@
 package org.rust.lang.core.psi
 
 import com.intellij.psi.PsiDirectory
-import org.rust.lang.core.symbols.RustQualifiedPath
-import org.rust.lang.core.symbols.RustQualifiedPathPart
+import org.rust.lang.core.symbols.RustPath
+import org.rust.lang.core.symbols.RustPathHead
+import org.rust.lang.core.symbols.RustPathSegment
 import java.util.*
 
 interface RustMod : RustNamedElement, RustItemsOwner {
@@ -38,10 +39,10 @@ val RustMod.superMods: List<RustMod> get() {
         .toList()
 }
 
-val RustMod.canonicalCratePath: RustQualifiedPath? get() =
-    superMods.dropLast(1).foldRight(null, {mod, qualifier: RustQualifiedPath? -> RustQualifiedPath.create(
-        RustQualifiedPathPart.from(mod.modName),
-        qualifier = qualifier,
-        fullyQualified = true
-    )})
+val RustMod.canonicalCratePath: RustPath? get() {
+    val segments = superMods.asReversed().drop(1).map {
+        RustPathSegment(it.modName ?: return null)
+    }
+    return RustPath(RustPathHead.Absolute, segments)
+}
 
