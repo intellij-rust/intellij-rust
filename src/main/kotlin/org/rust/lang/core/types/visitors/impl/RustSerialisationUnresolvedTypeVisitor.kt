@@ -12,13 +12,6 @@ import java.io.DataOutput
 class RustSerialisationUnresolvedTypeVisitor(private val output: DataOutput)
     : RustRecursiveUnresolvedTypeVisitorWithDefaults<Unit>(kind = TraversalKind.PreOrder) {
 
-    companion object {
-
-        fun serialize(type: RustUnresolvedType, output: DataOutput) =
-            type.accept(RustSerialisationUnresolvedTypeVisitor(output))
-
-    }
-
     fun visit(type: RustUnresolvedType?) {
         if (type == null) {
             output.writeInt(-1)
@@ -65,13 +58,6 @@ class RustSerialisationUnresolvedTypeVisitor(private val output: DataOutput)
 
 
 class RustDeserializationUnresolvedTypeVisitor(private val input: DataInput) {
-
-    companion object {
-
-        fun deserialize(input: DataInput): RustUnresolvedType? =
-            RustDeserializationUnresolvedTypeVisitor(input).visit()
-
-    }
 
     /**
      * TODO(XXX): Brush up
