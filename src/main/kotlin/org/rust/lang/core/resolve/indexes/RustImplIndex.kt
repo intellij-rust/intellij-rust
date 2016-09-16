@@ -180,13 +180,12 @@ object RustImplIndex  {
                 override fun getHashCode(value: Key?): Int =
                     value?.hashCode() ?: -1
 
-                override fun read(`in`: DataInput): Key? {
-                    return RustUnresolvedType.deserialize(`in`)?.let { Key(it) }
+                override fun save(out: DataOutput, value: Key) {
+                    RustUnresolvedType.save(out, value.type)
                 }
 
-                override fun save(out: DataOutput, value: Key?) {
-                    RustUnresolvedType.serialize(value?.type, out)
-                }
+                override fun read(`in`: DataInput): Key =
+                    Key(RustUnresolvedType.read(`in`))
             }
     }
 

@@ -12,12 +12,8 @@ import java.io.DataOutput
 class RustSerialisationUnresolvedTypeVisitor(private val output: DataOutput)
     : RustRecursiveUnresolvedTypeVisitorWithDefaults<Unit>(kind = TraversalKind.PreOrder) {
 
-    fun visit(type: RustUnresolvedType?) {
-        if (type == null) {
-            output.writeInt(-1)
-        } else {
-            type.accept(this)
-        }
+    fun visit(type: RustUnresolvedType) {
+        type.accept(this)
     }
 
     override fun visitByDefault(type: RustUnresolvedType) {
@@ -69,31 +65,25 @@ class RustDeserializationUnresolvedTypeVisitor(private val input: DataInput) {
         val types   = arrayListOf<RustUnresolvedType>()
 
         for (i in (0 until size))
-            types.add(visit() ?: throw DeserializationException())
+            types.add(visit())
 
         return types
     }
 
-    fun visit(): RustUnresolvedType? {
-        val code = input.readInt()
-        if (code == -1)
-            return null
+    fun visit(): RustUnresolvedType = when (decode(input.readInt())) {
+        RustUnresolvedPathType::class.java      -> visitPathType()
+        RustUnresolvedTupleType::class.java     -> visitTupleType()
+        RustUnitType::class.java                -> visitUnitType()
+        RustUnknownType::class.java             -> visitUnknownType()
+        RustUnresolvedFunctionType::class.java  -> visitFunctionType()
+        RustIntegerType::class.java             -> visitIntegerType()
+        RustUnresolvedReferenceType::class.java -> visitReferenceType()
+        RustFloatType::class.java               -> visitFloatType()
+        RustStringType::class.java              -> visitStringType()
+        RustCharacterType::class.java           -> visitCharacterType()
+        RustBooleanType::class.java             -> visitBooleanType()
 
-        return when (decode(code)) {
-            RustUnresolvedPathType::class.java      -> visitPathType()
-            RustUnresolvedTupleType::class.java     -> visitTupleType()
-            RustUnitType::class.java                -> visitUnitType()
-            RustUnknownType::class.java             -> visitUnknownType()
-            RustUnresolvedFunctionType::class.java  -> visitFunctionType()
-            RustIntegerType::class.java             -> visitIntegerType()
-            RustUnresolvedReferenceType::class.java -> visitReferenceType()
-            RustFloatType::class.java               -> visitFloatType()
-            RustStringType::class.java              -> visitStringType()
-            RustCharacterType::class.java           -> visitCharacterType()
-            RustBooleanType::class.java             -> visitBooleanType()
-
-            else -> throw DeserializationException()
-        }
+        else -> throw DeserializationException()
     }
 
     private fun visitReferenceType(): RustUnresolvedReferenceType {
