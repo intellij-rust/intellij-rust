@@ -17,6 +17,8 @@ import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustUnknownType
 import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
+import org.rust.lang.core.types.unresolved.readRustUnresolvedType
+import org.rust.lang.core.types.unresolved.writeRustUnresolvedType
 import org.rust.lang.core.types.util.decay
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.visitors.impl.RustEqualityUnresolvedTypeVisitor
@@ -181,11 +183,11 @@ object RustImplIndex  {
                     value?.hashCode() ?: -1
 
                 override fun save(out: DataOutput, value: Key) {
-                    RustUnresolvedType.save(out, value.type)
+                    out.writeRustUnresolvedType(value.type)
                 }
 
                 override fun read(`in`: DataInput): Key =
-                    Key(RustUnresolvedType.read(`in`))
+                    Key(`in`.readRustUnresolvedType())
             }
     }
 

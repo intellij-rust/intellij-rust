@@ -1,6 +1,5 @@
 package org.rust.lang.core.symbols
 
-import org.rust.utils.RustDataExternalizer
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -23,23 +22,7 @@ data class RustPath(
         return start + segments.map { "::${it.name}" }.joinToString(separator = "")
     }
 
-    companion object : RustDataExternalizer<RustPath> {
-        override fun save(output: DataOutput, value: RustPath) {
-            RustPathHead.save(output, value.head)
-
-            output.writeInt(value.segments.size)
-            for (segment in value.segments) {
-                RustPathSegment.save(output, segment)
-            }
-        }
-
-        override fun read(input: DataInput): RustPath {
-            val head = RustPathHead.read(input)
-
-            val parts = input.readInt()
-            val segments = (0 until parts).map { RustPathSegment.read(input) }.toList()
-            return RustPath(head, segments)
-        }
+    companion object {
 
         fun identifier(name: String) = RustPath(RustPathHead.Named(RustPathSegment(name)), emptyList())
 
@@ -49,23 +32,36 @@ data class RustPath(
     }
 }
 
+fun DataOutput.writeRustPath(value: RustPath) {
+    writeRustPathHead(value.head)
+
+    writeInt(value.segments.size)
+    for (segment in value.segments) {
+        writeRustPathSegment(segment)
+    }
+}
+
+fun DataInput.readRustPath(): RustPath {
+    val head = readRustPathHead()
+
+    val parts = readInt()
+    val segments = (0 until parts).map { readRustPathSegment() }.toList()
+    return RustPath(head, segments)
+}
+
+
 data class RustPathSegment(
     val name: String
 ) {
     init {
         check(name != RustPath.SUPER)
     }
-
-    companion object : RustDataExternalizer<RustPathSegment> {
-        override fun save(output: DataOutput, value: RustPathSegment) {
-            output.writeUTF(value.name)
-        }
-
-        override fun read(input: DataInput): RustPathSegment {
-            return RustPathSegment(input.readUTF())
-        }
-    }
 }
+
+fun DataOutput.writeRustPathSegment(value: RustPathSegment) = writeUTF(value.name)
+
+fun DataInput.readRustPathSegment(): RustPathSegment = RustPathSegment(readUTF())
+
 
 sealed class RustPathHead {
     object Absolute : RustPathHead()
@@ -87,27 +83,25 @@ sealed class RustPathHead {
 
         override fun hashCode(): Int = segment.hashCode()
     }
+}
 
-    companion object : RustDataExternalizer<RustPathHead> {
-        override fun save(output: DataOutput, value: RustPathHead) {
-            when (value) {
-                is RustPathHead.Absolute -> output.writeInt(-1)
-                is RustPathHead.Relative -> output.writeInt(value.level)
-                is RustPathHead.Named -> {
-                    output.writeInt(-2)
-                    RustPathSegment.save(output, value.segment)
-                }
-            }
+fun DataOutput.writeRustPathHead(value: RustPathHead) {
+    when (value) {
+        is RustPathHead.Absolute -> writeInt(-1)
+        is RustPathHead.Relative -> writeInt(value.level)
+        is RustPathHead.Named -> {
+            writeInt(-2)
+            writeRustPathSegment(value.segment)
         }
+    }
+}
 
-        override fun read(input: DataInput): RustPathHead {
-            val tag = input.readInt()
-            return when {
-                tag == -1 -> RustPathHead.Absolute
-                tag == -2 -> RustPathHead.Named(RustPathSegment.read(input))
-                tag >= 0 -> RustPathHead.Relative(tag)
-                else -> error("Corrupted DataInput, bad RustPath")
-            }
-        }
+fun DataInput.readRustPathHead(): RustPathHead {
+    val tag = readInt()
+    return when {
+        tag == -1 -> RustPathHead.Absolute
+        tag == -2 -> RustPathHead.Named(readRustPathSegment())
+        tag >= 0 -> RustPathHead.Relative(tag)
+        else -> error("Corrupted DataInput, bad RustPath")
     }
 }

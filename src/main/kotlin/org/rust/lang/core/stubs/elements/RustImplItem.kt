@@ -9,9 +9,15 @@ import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.stubs.RustElementStub
 import org.rust.lang.core.stubs.RustStubElementType
 import org.rust.lang.core.symbols.RustPath
+import org.rust.lang.core.symbols.readRustPath
+import org.rust.lang.core.symbols.writeRustPath
 import org.rust.lang.core.types.RustUnknownType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
+import org.rust.lang.core.types.unresolved.readRustUnresolvedType
+import org.rust.lang.core.types.unresolved.writeRustUnresolvedType
 import org.rust.lang.core.types.util.type
+import org.rust.utils.readNullable
+import org.rust.utils.writeNullable
 
 object RustImplItemStubElementType : RustStubElementType<RustImplItemElementStub, RustImplItemElement>("IMPL_ITEM") {
 
@@ -22,15 +28,15 @@ object RustImplItemStubElementType : RustStubElementType<RustImplItemElementStub
         RustImplItemElementImpl(stub, this)
 
     override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustImplItemElementStub {
-        val type        = RustUnresolvedType.read(dataStream)
-        val traitRef    = RustPath.nullable().read(dataStream)
+        val type        = dataStream.readRustUnresolvedType()
+        val traitRef    = dataStream.readNullable { readRustPath() }
 
         return RustImplItemElementStub(parentStub, this, type, traitRef)
     }
 
     override fun serialize(stub: RustImplItemElementStub, dataStream: StubOutputStream) {
-        RustUnresolvedType.save(dataStream, stub.type)
-        RustPath.nullable().save(dataStream, stub.traitRef)
+        dataStream.writeRustUnresolvedType(stub.type)
+        dataStream.writeNullable(stub.traitRef) { writeRustPath(it) }
     }
 
     override fun indexStub(stub: RustImplItemElementStub, sink: IndexSink) {
