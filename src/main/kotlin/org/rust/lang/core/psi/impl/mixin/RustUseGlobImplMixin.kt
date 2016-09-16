@@ -2,7 +2,7 @@ package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustQualifiedReferenceElement
+import org.rust.lang.core.psi.RustPathElement
 import org.rust.lang.core.psi.RustUseGlobElement
 import org.rust.lang.core.psi.RustUseItemElement
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
@@ -20,5 +20,5 @@ abstract class RustUseGlobImplMixin(node: ASTNode) : RustCompositeElementImpl(no
         }
 }
 
-val RustUseGlobElement.basePath: RustQualifiedReferenceElement?
+val RustUseGlobElement.basePath: RustPathElement?
     get() = parentOfType<RustUseItemElement>()?.let { it.path }

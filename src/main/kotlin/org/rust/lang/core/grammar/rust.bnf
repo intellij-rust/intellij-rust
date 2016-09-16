@@ -130,7 +130,7 @@
     //
 
     mixin       ("path") = "org.rust.lang.core.psi.impl.mixin.RustPathImplMixin"
-    implements  ("path") = "org.rust.lang.core.psi.RustQualifiedReferenceElement"
+    implements  ("path") = "org.rust.lang.core.psi.RustReferenceElement"
 
     //
     // Resolve scopes

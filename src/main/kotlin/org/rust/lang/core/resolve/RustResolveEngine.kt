@@ -21,7 +21,8 @@ import org.rust.lang.core.psi.visitors.RustComputingVisitor
 import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.resolve.util.RustResolveUtil
-import org.rust.lang.core.symbols.RustQualifiedPath
+import org.rust.lang.core.symbols.RustPath
+import org.rust.lang.core.symbols.RustPathHead
 import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
@@ -73,37 +74,29 @@ object RustResolveEngine {
      * Resolves abstract qualified-path [ref] in such a way, like it was a qualified-reference
      * used at [pivot]
      */
-    fun resolve(ref: RustQualifiedPath, pivot: RustCompositeElement): ResolveResult =
-        resolveInternal(ref, pivot)
-
-    private fun resolveInternal(ref: RustQualifiedPath, pivot: RustCompositeElement): ResolveResult {
-        return recursionGuard(ref, Computable {
-            val modulePrefix = ref.relativeModulePrefix
-            when (modulePrefix) {
-                is RelativeModulePrefix.Invalid -> ResolveResult.Unresolved
-                is RelativeModulePrefix.AncestorModule -> resolveAncestorModule(pivot.containingMod, modulePrefix).asResolveResult()
-                is RelativeModulePrefix.NotRelative -> {
-                    val qual = ref.qualifier
-                    if (qual == null) {
-                        resolveIn(enumerateScopesFor(ref, pivot), name = ref.part.name, pivot = pivot)
-                    } else {
-                        val parent = resolveInternal(qual, pivot).element
-                        if (parent is RustResolveScope)
-                            resolveInside(parent, ref.part.name, pivot = pivot)
-                        else
-                            ResolveResult.Unresolved
-                    }
-                }
+    fun resolve(path: RustPath, pivot: RustCompositeElement): ResolveResult {
+        val head = path.head
+        val start: RustNamedElement? = when (head) {
+            is RustPathHead.Absolute -> RustResolveUtil.getCrateRootModFor(pivot)
+            is RustPathHead.Relative -> generateSequence(pivot.containingMod, { it.`super` }).elementAtOrNull(head.level)
+            is RustPathHead.Named -> {
+                RustResolveEngine.enumerateScopesFor(pivot)
+                    .flatMap { declarations(it, Context(pivot = pivot)) }
+                    .find { it.name == head.segment.name }
+                    ?.element
             }
-        }) ?: ResolveResult.Unresolved
-    }
+        }
 
-    /**
-     * Resolves `qualified-reference` bearing PSI-elements
-     *
-     * NOTE: This operate on PSI to extract all the necessary (yet implicit) resolving-context
-     */
-    fun resolve(ref: RustQualifiedReferenceElement): ResolveResult = resolve(ref, pivot = ref)
+        var current: RustNamedElement? = start
+        for ((name) in path.segments) {
+            if (current is RustResolveScope) {
+                val next = current
+                current = recursionGuard(pivot, Computable { resolveInside(next, name, pivot = pivot).element })
+            }
+        }
+
+        return current.asResolveResult()
+    }
 
     /**
      * Resolves references to struct's fields inside destructuring [RustStructExprElement]
@@ -240,13 +233,6 @@ object RustResolveEngine {
         searchFor: SearchFor = SearchFor.EVERYTHING
     ): Sequence<RustNamedElement> = declarations(scope, Context(pivot, searchFor = searchFor)).mapNotNull { it.element }
 
-    fun enumerateScopesFor(ref: RustQualifiedPath, pivot: RustCompositeElement): Sequence<RustResolveScope> =
-        if (ref.fullyQualified) {
-            listOfNotNull(RustResolveUtil.getCrateRootModFor(pivot)).asSequence()
-        } else {
-            enumerateScopesFor(pivot)
-        }
-
     fun enumerateScopesFor(pivot: RustCompositeElement): Sequence<RustResolveScope> =
         generateSequence(RustResolveUtil.getResolveScopeFor(pivot)) { parent ->
             if (parent is RustModItemElement)
@@ -257,20 +243,10 @@ object RustResolveEngine {
 }
 
 
-private fun resolveAncestorModule(pivot: RustMod?, modulePrefix: RelativeModulePrefix.AncestorModule): RustMod? =
-    (0 until modulePrefix.level).fold(pivot, { mod, i -> mod?.`super` })
-
 private fun resolveInside(scope: RustResolveScope, name: String, pivot: RustCompositeElement): RustResolveEngine.ResolveResult =
     declarations(scope, Context(pivot = pivot, searchFor = SearchFor.PRIVATE))
         .find { it.name == name }
         ?.element.asResolveResult()
-
-private fun resolveIn(scopes: Sequence<RustResolveScope>, name: String, pivot: RustCompositeElement): RustResolveEngine.ResolveResult =
-    scopes
-        .flatMap { declarations(it, Context(pivot = pivot)) }
-        .find { it.name == name }
-        ?.let { it.element }
-        .asResolveResult()
 
 
 private fun declarations(scope: RustResolveScope, context: Context): Sequence<ScopeEntry> =
@@ -396,7 +372,7 @@ private class RustScopeVisitor(
 
     override fun visitTraitItem(o: RustTraitItemElement) = set {
         if (isContextLocalTo(o)) {
-            o.typeParams.scopeEntries + ScopeEntry.of(RustQualifiedReferenceElement.SELF_TYPE_REF, o)
+            o.typeParams.scopeEntries + ScopeEntry.of(RustPath.CSELF, o)
         }
 
         else
@@ -418,7 +394,7 @@ private class RustScopeVisitor(
 
     override fun visitImplItem(o: RustImplItemElement) = set {
         if (isContextLocalTo(o)) {
-            o.typeParams.scopeEntries + sequenceOfNotNull(ScopeEntry.lazy(RustQualifiedReferenceElement.SELF_TYPE_REF) {
+            o.typeParams.scopeEntries + sequenceOfNotNull(ScopeEntry.lazy(RustPath.CSELF) {
                 //TODO: handle types which are not `NamedElements` (e.g. tuples)
                 (o.type as? RustPathTypeElement)?.path?.reference?.resolve()
             })

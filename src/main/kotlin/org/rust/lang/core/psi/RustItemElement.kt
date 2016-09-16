@@ -1,26 +1,15 @@
 package org.rust.lang.core.psi
 
-import org.rust.lang.core.symbols.RustQualifiedPath
-import org.rust.lang.core.symbols.RustQualifiedPathPart
+import org.rust.lang.core.symbols.RustPath
 
 interface RustItemElement : RustVisibilityOwner, RustOuterAttributeOwner
 
-/**
- * Returns a fully-qualified [RustQualifiedPath] representing a 'path' to this [RustItemElement]
- * from the crate root, like `foo::bar::baz`.
- *
- * This path is NOT guaranteed to be unique: items from different crates
- * can have the same path within respective crates.
- */
-val RustItemElement.canonicalCratePath: RustQualifiedPath
-    get() =
-        if (this is RustMod)
-            @Suppress("USELESS_CAST")
-            (this as RustMod).canonicalCratePath!!
-        else
-            RustQualifiedPath.create(
-                RustQualifiedPathPart.from(name),
-                qualifier = containingMod?.canonicalCratePath,
-                fullyQualified = true
-            )
+val RustItemElement.canonicalCratePath: RustPath? get() {
+    if (this is RustMod) {
+        @Suppress("USELESS_CAST")
+        return (this as RustMod).canonicalCratePath
+    }
+    val name = name ?: return null
+    return containingMod?.canonicalCratePath?.join(name)
+}
 

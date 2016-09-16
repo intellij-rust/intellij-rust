@@ -1,8 +1,7 @@
 package org.rust.lang.core.types.visitors.impl
 
 import org.rust.lang.core.psi.canonicalCratePath
-import org.rust.lang.core.symbols.RustQualifiedPath
-import org.rust.lang.core.symbols.RustQualifiedPathPart
+import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.unresolved.*
 import org.rust.lang.core.types.visitors.RustTypeVisitor
@@ -15,12 +14,18 @@ class RustDecayTypeVisitor : RustTypeVisitor<RustUnresolvedType> {
     private fun visitTypeList(types: Iterable<RustType>): Iterable<RustUnresolvedType> =
         types.map { visit(it) }
 
-    override fun visitStruct(type: RustStructType): RustUnresolvedType = RustUnresolvedPathType(type.item.canonicalCratePath)
+    override fun visitStruct(type: RustStructType): RustUnresolvedType = type.item.canonicalCratePath?.let {
+        RustUnresolvedPathType(it)
+    } ?: RustUnknownType
 
-    override fun visitEnum(type: RustEnumType): RustUnresolvedType = RustUnresolvedPathType(type.item.canonicalCratePath)
+    override fun visitEnum(type: RustEnumType): RustUnresolvedType = type.item.canonicalCratePath?.let {
+        RustUnresolvedPathType(it)
+    } ?: RustUnknownType
 
     override fun visitTypeParameter(type: RustTypeParameterType): RustUnresolvedType =
-        RustUnresolvedPathType(RustQualifiedPath.create(RustQualifiedPathPart.from(type.parameter.name)))
+        type.parameter.name?.let {
+            RustUnresolvedPathType(RustPath.identifier(it))
+        } ?: RustUnknownType
 
     override fun visitReference(type: RustReferenceType): RustUnresolvedType =
         RustUnresolvedReferenceType(referenced = visit(type.referenced), mutable = type.mutable)
@@ -31,8 +36,9 @@ class RustDecayTypeVisitor : RustTypeVisitor<RustUnresolvedType> {
     override fun visitFunctionType(type: RustFunctionType): RustUnresolvedType =
         RustUnresolvedFunctionType(visitTypeList(type.paramTypes).toList(), visit(type.retType))
 
-    override fun visitTrait(type: RustTraitType): RustUnresolvedType =
-        RustUnresolvedPathType(type.trait.canonicalCratePath)
+    override fun visitTrait(type: RustTraitType): RustUnresolvedType = type.trait.canonicalCratePath?.let {
+        RustUnresolvedPathType(it)
+    } ?: RustUnknownType
 
     override fun visitUnknown(type: RustUnknownType): RustUnresolvedType = type
 

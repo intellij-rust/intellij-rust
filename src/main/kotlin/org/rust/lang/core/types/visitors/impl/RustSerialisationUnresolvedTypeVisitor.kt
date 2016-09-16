@@ -1,7 +1,7 @@
 package org.rust.lang.core.types.visitors.impl
 
 import com.intellij.util.containers.BidirectionalMap
-import org.rust.lang.core.symbols.RustQualifiedPath
+import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.unresolved.*
 import org.rust.lang.core.types.visitors.RustRecursiveUnresolvedTypeVisitorWithDefaults
@@ -40,7 +40,7 @@ class RustSerialisationUnresolvedTypeVisitor(private val output: DataOutput)
     override fun visitPathType(type: RustUnresolvedPathType) {
         super.visitPathType(type)
 
-        RustQualifiedPath.serialize(type.path, output)
+        RustPath.save(output, type.path)
     }
 
     override fun visitInteger(type: RustIntegerType) {
@@ -113,9 +113,7 @@ class RustDeserializationUnresolvedTypeVisitor(private val input: DataInput) {
     }
 
     fun visitPathType(): RustUnresolvedPathType =
-        RustQualifiedPath.deserialize(input)?.let {
-            RustUnresolvedPathType(path = it)
-        } ?: throw DeserializationException()
+        RustUnresolvedPathType(RustPath.read(input))
 
     private fun visitFloatType(): RustFloatType =
         RustFloatType(RustFloatType.Kind.values()[input.readInt()])

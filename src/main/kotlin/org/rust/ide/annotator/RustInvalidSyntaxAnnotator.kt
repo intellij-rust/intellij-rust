@@ -4,11 +4,12 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.mixin.asRustPath
 
 class RustInvalidSyntaxAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) = element.accept(object : RustElementVisitor() {
         override fun visitPath(o: RustPathElement) {
-            if (o.relativeModulePrefix is RelativeModulePrefix.Invalid) {
+            if (o.asRustPath == null) {
                 holder.createErrorAnnotation(o, "Invalid path: self and super are allowed only at the beginning")
             }
         }

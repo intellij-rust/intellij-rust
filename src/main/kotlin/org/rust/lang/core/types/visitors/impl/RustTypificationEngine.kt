@@ -3,6 +3,7 @@ package org.rust.lang.core.types.visitors.impl
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.mixin.asRustPath
 import org.rust.lang.core.psi.impl.mixin.parentEnum
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
@@ -197,7 +198,7 @@ private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedT
                 RustBooleanType.deduce(it.text)     ?:
                 RustCharacterType.deduce(it.text)   ?:
                 RustStringType.deduce(it.text)      ?:
-                RustUnresolvedPathType(it)
+                it.asRustPath?.let { RustUnresolvedPathType(it) }
                 )
         } ?: RustUnknownType
     }

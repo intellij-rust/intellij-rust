@@ -3,6 +3,7 @@ package org.rust.lang.core.completion
 import com.intellij.codeInsight.lookup.LookupElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.basePath
+import org.rust.lang.core.psi.impl.mixin.asRustPath
 import org.rust.lang.core.psi.util.fields
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.RustResolveEngine
@@ -14,7 +15,7 @@ import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.util.stripAllRefsIfAny
 
 object RustCompletionEngine {
-    fun complete(ref: RustQualifiedReferenceElement): Array<out Any> =
+    fun complete(ref: RustPathElement): Array<out Any> =
         collectNamedElements(ref).toVariantsArray()
 
     fun completeFieldName(field: RustStructExprFieldElement): Array<out LookupElement> =
@@ -39,17 +40,18 @@ object RustCompletionEngine {
             .completionsFromResolveScope()
             .toVariantsArray()
 
-    private fun collectNamedElements(ref: RustQualifiedReferenceElement): Collection<RustNamedElement> {
+    private fun collectNamedElements(ref: RustPathElement): Collection<RustNamedElement> {
         // TODO: handle aliased items properly
-        val qual = ref.qualifier
-        if (qual != null) {
-            return qual.reference.resolve()
-                .completionsFromResolveScope()
-        }
+        val path = ref.asRustPath ?: return emptyList()
 
-        return RustResolveEngine.enumerateScopesFor(ref)
-            .flatMap { RustResolveEngine.declarations(it, pivot = ref) }
-            .toList()
+        return if (path.segments.isNotEmpty()) {
+            val qual = path.copy(segments = path.segments.subList(0, path.segments.size - 1))
+            RustResolveEngine.resolve(qual, ref).element.completionsFromResolveScope()
+        } else {
+            RustResolveEngine.enumerateScopesFor(ref)
+                .flatMap { RustResolveEngine.declarations(it, pivot = ref) }
+                .toList()
+        }
     }
 
 }
