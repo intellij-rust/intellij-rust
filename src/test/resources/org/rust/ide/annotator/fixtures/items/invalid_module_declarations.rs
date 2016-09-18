@@ -3,6 +3,8 @@
 #[path="helper.rs"]
 mod foobar;
 
+<error descr="Unresolved module">#[path=""] mod nonono;</error>
+
 mod inner {
     <error descr="Unresolved module">mod bar;</error>
 }
