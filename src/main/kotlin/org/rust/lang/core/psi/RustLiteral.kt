@@ -1,10 +1,8 @@
 package org.rust.lang.core.psi
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
-import org.rust.lang.core.psi.visitors.RustVisitorEx
 
 sealed class RustLiteral(type: IElementType, text: CharSequence) : LeafPsiElement(type, text) {
     /**
@@ -51,11 +49,13 @@ sealed class RustLiteral(type: IElementType, text: CharSequence) : LeafPsiElemen
     /**
      * Stores offsets of distinguishable parts of a literal.
      */
-    data class Offsets(val prefix: TextRange? = null,
-                       val openDelim: TextRange? = null,
-                       val value: TextRange? = null,
-                       val closeDelim: TextRange? = null,
-                       val suffix: TextRange? = null) {
+    data class Offsets(
+        val prefix: TextRange? = null,
+        val openDelim: TextRange? = null,
+        val value: TextRange? = null,
+        val closeDelim: TextRange? = null,
+        val suffix: TextRange? = null
+    ) {
         companion object {
             fun fromEndOffsets(prefixEnd: Int, openDelimEnd: Int, valueEnd: Int,
                                closeDelimEnd: Int, suffixEnd: Int): Offsets =
