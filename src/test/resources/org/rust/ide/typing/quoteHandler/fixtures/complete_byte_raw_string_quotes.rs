@@ -1,0 +1,3 @@
+fn main() {
+    br###<caret>
+}

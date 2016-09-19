@@ -4,6 +4,9 @@ import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RustLiteralTokenType
 
 class RustRawStringLiteralImpl(type: IElementType, text: CharSequence) : RustTextLiteralImplBase(type, text) {
+    val hashes: Int
+        get() = offsets.openDelim?.length?.let { it - 1 } ?: 0
+
     override val value: String?
         get() = valueString
 

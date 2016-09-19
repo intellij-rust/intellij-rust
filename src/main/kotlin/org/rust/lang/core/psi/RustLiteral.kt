@@ -1,10 +1,8 @@
 package org.rust.lang.core.psi
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
-import org.rust.lang.core.psi.visitors.RustVisitorEx
 
 sealed class RustLiteral(type: IElementType, text: CharSequence) : LeafPsiElement(type, text) {
     /**
@@ -51,20 +49,30 @@ sealed class RustLiteral(type: IElementType, text: CharSequence) : LeafPsiElemen
     /**
      * Stores offsets of distinguishable parts of a literal.
      */
-    data class Offsets(val prefix: TextRange? = null,
-                       val openDelim: TextRange? = null,
-                       val value: TextRange? = null,
-                       val closeDelim: TextRange? = null,
-                       val suffix: TextRange? = null) {
+    data class Offsets(
+        val prefix: TextRange? = null,
+        val openDelim: TextRange? = null,
+        val value: TextRange? = null,
+        val closeDelim: TextRange? = null,
+        val suffix: TextRange? = null
+    ) {
         companion object {
             fun fromEndOffsets(prefixEnd: Int, openDelimEnd: Int, valueEnd: Int,
-                               closeDelimEnd: Int, suffixEnd: Int): Offsets =
-                Offsets(
-                    prefix = makeRange(0, prefixEnd),
-                    openDelim = makeRange(prefixEnd, openDelimEnd),
-                    value = makeRange(openDelimEnd, valueEnd),
-                    closeDelim = makeRange(valueEnd, closeDelimEnd),
-                    suffix = makeRange(closeDelimEnd, suffixEnd))
+                               closeDelimEnd: Int, suffixEnd: Int): Offsets {
+                val prefix = makeRange(0, prefixEnd)
+                val openDelim = makeRange(prefixEnd, openDelimEnd)
+
+                val value = makeRange(openDelimEnd, valueEnd) ?:
+                    // empty value is still a value provided we have open delimiter
+                    if (openDelim != null) TextRange.create(openDelimEnd, openDelimEnd) else null
+
+                val closeDelim = makeRange(valueEnd, closeDelimEnd)
+                val suffix = makeRange(closeDelimEnd, suffixEnd)
+
+                return Offsets(
+                    prefix = prefix, openDelim = openDelim, value = value,
+                    closeDelim = closeDelim, suffix = suffix)
+            }
 
             private fun makeRange(start: Int, end: Int): TextRange? = when {
                 end - start > 0 -> TextRange(start, end)
