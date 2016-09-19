@@ -9,13 +9,14 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleComponent
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.Alarm
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.SmartHashSet
@@ -238,26 +239,26 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
      * File changes listener, detecting changes inside the `Cargo.toml` files
      */
     inner class FileChangesWatcher : BulkFileListener {
-        private val AUTO_TARGET_PATHS = listOf(
+        private val IMPLICIT_TARGET_DIRS = listOf(
             CargoConstants.ProjectLayout.binaries,
             CargoConstants.ProjectLayout.sources,
             CargoConstants.ProjectLayout.tests
         ).flatten()
 
-        override fun before(events: MutableList<out VFileEvent>) {}
+        override fun before(events: List<VFileEvent>) {
+        }
 
-        override fun after(events: MutableList<out VFileEvent>) {
+        override fun after(events: List<VFileEvent>) {
+            fun isInterestingEvent(event: VFileEvent): Boolean =
+                event.path.endsWith(RustToolchain.CARGO_TOML) ||
+                    IMPLICIT_TARGET_DIRS.any {
+                        PathUtil.getParentPath(event.path).endsWith(it)
+                    } && (event !is VFileContentChangeEvent) && (event !is VFilePropertyChangeEvent)
+
+
             if (!module.project.rustSettings.autoUpdateEnabled) return
             val toolchain = module.project.toolchain ?: return
-            val needsUpdate = events.filter { event ->
-                event.path.endsWith(RustToolchain.CARGO_TOML) ||
-                    AUTO_TARGET_PATHS.any { PathUtil.getParentPath(event.path).endsWith(it) }
-            }.any {
-                val file = it.file ?: return@any false
-                ModuleUtilCore.findModuleForFile(file, module.project) == module
-            }
-
-            if (needsUpdate) {
+            if (events.any { isInterestingEvent(it) }) {
                 requestUpdateUsing(toolchain)
             }
         }
