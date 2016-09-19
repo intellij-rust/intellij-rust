@@ -27,7 +27,7 @@ import java.io.DataInput
 import java.io.DataOutput
 
 
-object RustImplIndex  {
+object RustImplIndex {
 
     fun findNonStaticMethodsFor(target: RustType, project: Project): Sequence<RustFnElement> =
         findMethodsFor(target, project)
@@ -48,9 +48,9 @@ object RustImplIndex  {
             emptySequence()
 
         return findNonInherentImplsForInternal(target.decay, project)
-                    .filter {
-                        it.type?.resolvedType == target
-                    } + inherentImpls
+            .filter {
+                it.type?.resolvedType == target
+            } + inherentImpls
     }
 
     private fun findInherentImplsForInternal(target: RustStructOrEnumItemElement): Sequence<RustImplItemElement> {
@@ -91,14 +91,10 @@ object RustImplIndex  {
         }
 
         return found.asSequence()
-                    .filter { impl ->
-                        impl.type?.let {
-                            it.resolvedType.let { ty ->
-                                ty is RustStructOrEnumTypeBase &&
-                                ty.item == target
-                            }
-                        } ?: false
-                    }
+            .filter { impl ->
+                val ty = impl.type?.resolvedType
+                ty is RustStructOrEnumTypeBase && ty.item == target
+            }
     }
 
     private fun findNonInherentImplsForInternal(target: RustUnresolvedType, project: Project): Sequence<RustImplItemElement> {
@@ -163,8 +159,8 @@ object RustImplIndex  {
                 StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.ByType")
 
             fun index(stub: RustImplItemElementStub, sink: IndexSink) {
-                if (stub.traitRef != null) {
-                    stub.type?.let { sink.occurrence(KEY, Key(it)) }
+                if (stub.traitRef != null && stub.type != RustUnknownType) {
+                    sink.occurrence(KEY, Key(stub.type))
                 }
             }
         }
