@@ -12,6 +12,7 @@ import org.rust.lang.core.resolve.ref.RustReference
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathHead
 import org.rust.lang.core.symbols.RustPathSegment
+import org.rust.lang.core.types.util.type
 
 abstract class RustPathImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
     , RustPathElement {
@@ -51,7 +52,7 @@ val RustPathElement.asRustPath: RustPath? get() {
             }
         }
 
-        return qpath.join(referenceName)
+        return qpath.join(segment)
     }
 
     return when {
@@ -59,7 +60,7 @@ val RustPathElement.asRustPath: RustPath? get() {
             if (self != null || `super` != null)
                 null // Forbid `::super` and `::self`.
             else
-                RustPath(RustPathHead.Absolute, listOf(RustPathSegment(referenceName)))
+                RustPath(RustPathHead.Absolute, listOf(segment))
 
         // `self` can mean two different things:
         //  * if it is a part of a bigger path, then it is a reference to the current module,
@@ -68,17 +69,19 @@ val RustPathElement.asRustPath: RustPath? get() {
             if (parent is RustPathElement)
                 RustPath(RustPathHead.Relative(0), emptyList())
             else
-                RustPath.identifier(RustPath.SELF)
+                RustPath.identifier(segment)
 
         `super` != null ->
             RustPath(RustPathHead.Relative(1), emptyList())
 
         // Paths in use items are implicitly global.
         parentOfType<RustUseItemElement>() != null ->
-            RustPath(RustPathHead.Absolute, listOf(RustPathSegment(referenceName)))
+            RustPath(RustPathHead.Absolute, listOf(segment))
 
         else ->
-            RustPath.identifier(referenceName)
+            RustPath.identifier(segment)
     }
-
 }
+
+private val RustPathElement.segment: RustPathSegment get() =
+    RustPathSegment(referenceName, genericArgs?.typeList.orEmpty().map { it.type })

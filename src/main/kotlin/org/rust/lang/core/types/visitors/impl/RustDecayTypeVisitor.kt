@@ -1,6 +1,7 @@
 package org.rust.lang.core.types.visitors.impl
 
 import org.rust.lang.core.symbols.RustPath
+import org.rust.lang.core.symbols.RustPathSegment
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.unresolved.*
 import org.rust.lang.core.types.visitors.RustTypeVisitor
@@ -21,10 +22,10 @@ class RustDecayTypeVisitor : RustTypeVisitor<RustUnresolvedType> {
         RustUnresolvedPathType(it)
     } ?: RustUnknownType
 
-    override fun visitTypeParameter(type: RustTypeParameterType): RustUnresolvedType =
-        type.parameter.name?.let {
-            RustUnresolvedPathType(RustPath.identifier(it))
-        } ?: RustUnknownType
+    override fun visitTypeParameter(type: RustTypeParameterType): RustUnresolvedType {
+        val name = type.parameter.name ?: return RustUnknownType
+        return RustUnresolvedPathType(RustPath.identifier(RustPathSegment.withoutGenerics(name)))
+    }
 
     override fun visitReference(type: RustReferenceType): RustUnresolvedType =
         RustUnresolvedReferenceType(referenced = visit(type.referenced), mutable = type.mutable)

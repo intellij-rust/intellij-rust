@@ -1,5 +1,10 @@
 package org.rust.lang.core.symbols
 
+import org.rust.lang.core.types.unresolved.RustUnresolvedType
+import org.rust.lang.core.types.unresolved.readRustUnresolvedType
+import org.rust.lang.core.types.unresolved.writeRustUnresolvedType
+import org.rust.utils.readList
+import org.rust.utils.writeList
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -10,8 +15,7 @@ data class RustPath(
     val head: RustPathHead,
     val segments: List<RustPathSegment>
 ) {
-    fun join(name: String): RustPath =
-        RustPath(head, segments + RustPathSegment(name))
+    fun join(segment: RustPathSegment): RustPath = RustPath(head, segments + segment)
 
     override fun toString(): String {
         val start = when (head) {
@@ -24,7 +28,7 @@ data class RustPath(
 
     companion object {
 
-        fun identifier(name: String) = RustPath(RustPathHead.Named(RustPathSegment(name)), emptyList())
+        fun identifier(segment: RustPathSegment) = RustPath(RustPathHead.Named(segment), emptyList())
 
         val SELF = "self"
         val SUPER = "super"
@@ -51,16 +55,28 @@ fun DataInput.readRustPath(): RustPath {
 
 
 data class RustPathSegment(
-    val name: String
+    val name: String,
+    val genericArguments: List<RustUnresolvedType>
 ) {
     init {
         check(name != RustPath.SUPER)
     }
+
+    companion object {
+        fun withoutGenerics(name: String) = RustPathSegment(name, emptyList())
+    }
 }
 
-fun DataOutput.writeRustPathSegment(value: RustPathSegment) = writeUTF(value.name)
+fun DataOutput.writeRustPathSegment(value: RustPathSegment) {
+    writeUTF(value.name)
+    writeList(value.genericArguments) { writeRustUnresolvedType(it) }
+}
 
-fun DataInput.readRustPathSegment(): RustPathSegment = RustPathSegment(readUTF())
+fun DataInput.readRustPathSegment(): RustPathSegment {
+    val name = readUTF()
+    val genericArguments = readList { readRustUnresolvedType() }
+    return RustPathSegment(name, genericArguments)
+}
 
 
 sealed class RustPathHead {
