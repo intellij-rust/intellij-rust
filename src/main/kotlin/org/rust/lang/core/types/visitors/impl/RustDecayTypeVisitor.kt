@@ -1,6 +1,5 @@
 package org.rust.lang.core.types.visitors.impl
 
-import org.rust.lang.core.psi.canonicalCratePath
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.unresolved.*

@@ -8,6 +8,7 @@ import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
 import org.rust.lang.core.stubs.elements.RustStructItemElementStub
+import org.rust.lang.core.symbols.RustPath
 import javax.swing.Icon
 
 abstract class RustStructItemImplMixin : RustStubbedNamedElementImpl<RustStructItemElementStub>, RustStructItemElement {
@@ -20,4 +21,6 @@ abstract class RustStructItemImplMixin : RustStubbedNamedElementImpl<RustStructI
         iconWithVisibility(flags, RustIcons.STRUCT)
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
+
+    override val canonicalCratePath: RustPath? get() = RustPsiImplUtil.canonicalCratePath(this)
 }

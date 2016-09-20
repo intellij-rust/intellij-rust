@@ -644,7 +644,7 @@ private meta mk_tuple_fields ::= '(' <<comma_separated_list <<param>> >> ')' { p
 
 trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER generic_params? type_param_bounds? where_clause? trait_body {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+  implements = [ "org.rust.lang.core.psi.RustPathNamedElement"
                  "org.rust.lang.core.psi.RustTypeBearingItemElement"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustTraitItemImplMixin"

@@ -1,3 +1,3 @@
 package org.rust.lang.core.psi
 
-interface RustStructOrEnumItemElement : RustNamedElement, RustTypeBearingItemElement, RustGenericDeclaration
+interface RustStructOrEnumItemElement : RustPathNamedElement, RustTypeBearingItemElement, RustGenericDeclaration

@@ -6,7 +6,7 @@ import org.rust.lang.core.symbols.RustPathHead
 import org.rust.lang.core.symbols.RustPathSegment
 import java.util.*
 
-interface RustMod : RustNamedElement, RustItemsOwner {
+interface RustMod : RustPathNamedElement, RustItemsOwner {
     /**
      *  Returns a parent module (`super::` in paths).
      *
@@ -34,15 +34,9 @@ val RustMod.superMods: List<RustMod> get() {
     // For malformed programs, chain of `super`s may be infinite
     // because of cycles, and we need to detect this situation.
     val visited = HashSet<RustMod>()
-    return generateSequence(this) { it.`super`}
+    return generateSequence(this) { it.`super` }
         .takeWhile { visited.add(it) }
         .toList()
 }
 
-val RustMod.canonicalCratePath: RustPath? get() {
-    val segments = superMods.asReversed().drop(1).map {
-        RustPathSegment(it.modName ?: return null)
-    }
-    return RustPath(RustPathHead.Absolute, segments)
-}
 

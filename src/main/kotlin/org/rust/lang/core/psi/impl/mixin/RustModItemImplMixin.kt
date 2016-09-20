@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.stubs.elements.RustModItemElementStub
+import org.rust.lang.core.symbols.RustPath
 import javax.swing.Icon
 
 abstract class RustModItemImplMixin : RustStubbedNamedElementImpl<RustModItemElementStub>
@@ -29,6 +30,8 @@ abstract class RustModItemImplMixin : RustStubbedNamedElementImpl<RustModItemEle
     }
 
     override val modName: String? get() = name
+
+    override val canonicalCratePath: RustPath? get() = RustPsiImplUtil.modCanonicalCratePath(this)
 
     override val ownsDirectory: Boolean = true // Any inline nested mod owns a directory
 

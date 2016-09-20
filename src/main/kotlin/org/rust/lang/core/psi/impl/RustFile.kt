@@ -20,6 +20,7 @@ import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.ref.RustReference
 import org.rust.lang.core.stubs.index.RustModulesIndex
+import org.rust.lang.core.symbols.RustPath
 
 class RustFile(
     fileViewProvider: FileViewProvider
@@ -42,6 +43,8 @@ class RustFile(
     }
 
     override val modName: String? = if (name != RustMod.MOD_RS) FileUtil.getNameWithoutExtension(name) else parent?.name
+
+    override val canonicalCratePath: RustPath? get() = RustPsiImplUtil.modCanonicalCratePath(this)
 
     override val ownsDirectory: Boolean
         get() = name == RustMod.MOD_RS || isCrateRoot

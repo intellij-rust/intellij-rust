@@ -1,11 +1,14 @@
 package org.rust.lang.core.psi.impl
 
-import org.rust.lang.core.psi.RustVisibilityOwner
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.symbols.RustPath
+import org.rust.lang.core.symbols.RustPathHead
+import org.rust.lang.core.symbols.RustPathSegment
 
 /**
- * Mixin methods to implement [RustVisibilityOwner] without copy pasting and
+ * Mixin methods to implement PSI interfaces without copy pasting and
  * introducing monster base classes. Can be simplified when Kotlin supports
- * default methods in interfaces with mixed Kotlin-Java hierarchies.
+ * default methods in interfaces with mixed Kotlin-Java hierarchies (KT-9073 ).
  */
 object RustPsiImplUtil {
     fun <PsiT> isPublic(o: PsiT): Boolean
@@ -16,5 +19,17 @@ object RustPsiImplUtil {
     }
 
     fun isPublicNonStubbed(element: RustVisibilityOwner): Boolean = element.vis != null
+
+    fun canonicalCratePath(element: RustNamedElement): RustPath? {
+        val name = element.name ?: return null
+        return element.containingMod?.canonicalCratePath?.join(name)
+    }
+
+    fun modCanonicalCratePath(mod: RustMod): RustPath? {
+        val segments = mod.superMods.asReversed().drop(1).map {
+            RustPathSegment(it.modName ?: return null)
+        }
+        return RustPath(RustPathHead.Absolute, segments)
+    }
 }
 
