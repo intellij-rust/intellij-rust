@@ -173,7 +173,7 @@
     extends     (".*_attr") = attr
 
     elementType ("expr_like_macro|item_like_macro") = macro
-    extends     ("(try|format_like)_macro") = macro
+    extends     ("(try|format_like|assert|assert_eq)_macro") = macro
     elementType (".*_macro_invocation|macro_rules_invocation") = macro_invocation
 
     generateTokens=false
@@ -1004,6 +1004,8 @@ item_like_macro ::= macro_invocation item_macro_arg
 
 try_macro ::= try_macro_invocation try_macro_args { pin = 1 }
 format_like_macro ::= format_like_macro_invocation format_macro_args { pin = 1 }
+assert_macro ::= assert_macro_invocation assert_macro_args { pin = 1 }
+assert_eq_macro ::= assert_eq_macro_invocation assert_eq_macro_args { pin = 1 }
 
 macro_definition ::= macro_rules_invocation IDENTIFIER item_macro_arg {
   pin = 1
@@ -1012,6 +1014,8 @@ macro_definition ::= macro_rules_invocation IDENTIFIER item_macro_arg {
 
 private build_in_macro ::= try_macro
                          | format_like_macro
+                         | assert_macro
+                         | assert_eq_macro
 
 private zz_macro_call ::= build_in_macro | expr_like_macro { pin(".*") = macro_invocation }
 private zz_macro_item ::= macro_definition | item_like_macro {
@@ -1039,6 +1043,14 @@ format_like_macro_invocation ::= ( "format"
                                  | "trace"
                                  | "warn" ) '!'
 
+assert_macro_invocation ::= ( "assert"
+                            | "debug_assert") '!'
+
+assert_eq_macro_invocation ::= ( "assert_eq"
+                               | "assert_ne"
+                               | "debug_assert_eq"
+                               | "debug_assert_ne") '!'
+
 // Arguments
 macro_arg ::= <<macro_args_delim token_trees>>
 
@@ -1050,6 +1062,12 @@ item_macro_arg ::= '(' token_trees ')' ';'
 }
 
 try_macro_args ::= <<macro_args_delim any_expr>>
+
+private zz_assert_macro_args ::= any_expr [ ',' <<comma_separated_list format_macro_arg>> ]
+assert_macro_args ::= <<macro_args_delim zz_assert_macro_args>>
+
+private zz_assert_eq_macro_args ::= any_expr ',' any_expr [ ',' <<comma_separated_list format_macro_arg>> ]
+assert_eq_macro_args ::= <<macro_args_delim zz_assert_eq_macro_args>>
 
 format_macro_args ::= <<macro_args_delim [ <<comma_separated_list format_macro_arg>> ] >>
 format_macro_arg ::= [ IDENTIFIER '=' ] any_expr
