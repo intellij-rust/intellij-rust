@@ -20,6 +20,9 @@ class RustCompletionTest : RustCompletionTestBase() {
     fun testLocalScope() = checkNoCompletion()
     fun testWhileLet() = checkNoCompletion()
 
+    fun testCompleteAlias() = checkSoleCompletion()
+    fun testAliasShadowsOriginalName() = checkNoCompletion()
+    fun testCompleteSelfType() = checkSoleCompletion()
 
     fun testChildFile() = checkByDirectory {
         openFileInEditor("main.rs")

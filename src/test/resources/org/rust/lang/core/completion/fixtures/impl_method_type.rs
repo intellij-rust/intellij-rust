@@ -7,5 +7,5 @@ trait T {
 }
 
 impl T for S {
-    fn foo(self, f: F<caret>)
+    fn foo(self, f: Fo<caret>)
 }

@@ -1,5 +1,6 @@
 package org.rust.lang.core.resolve.ref
 
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.completion.RustCompletionEngine
 import org.rust.lang.core.psi.RustStructExprElement
@@ -15,7 +16,7 @@ class RustStructExprFieldReferenceImpl(
 
     override val RustStructExprFieldElement.referenceAnchor: PsiElement get() = referenceNameElement
 
-    override fun getVariants(): Array<out Any> =
+    override fun getVariants(): Array<out LookupElement> =
         // TODO(kudinkin): Fix in the similar way
         RustCompletionEngine.completeFieldName(element)
 

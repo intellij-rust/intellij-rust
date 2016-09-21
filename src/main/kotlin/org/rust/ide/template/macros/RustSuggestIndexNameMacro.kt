@@ -40,5 +40,5 @@ private fun getPatBindingNamesVisibleAt(pivot: RustCompositeElement): Set<String
             }
         }
         .flatMap { RustResolveEngine.declarations(it, pivot) }
-        .mapNotNull { (it as? RustPatBindingElement)?.name }
+        .mapNotNull { (it.element as? RustPatBindingElement)?.name }
         .toHashSet()

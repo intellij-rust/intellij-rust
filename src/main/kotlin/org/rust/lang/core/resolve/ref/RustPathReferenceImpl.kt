@@ -19,7 +19,7 @@ class RustPathReferenceImpl(element: RustPathElement)
     }
 
     override fun getVariants(): Array<out Any> =
-        RustCompletionEngine.complete(element)
+        RustCompletionEngine.completePath(element)
 
     override fun isReferenceTo(element: PsiElement): Boolean {
         val target = resolve()

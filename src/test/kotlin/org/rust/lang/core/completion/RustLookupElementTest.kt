@@ -64,7 +64,7 @@ class RustLookupElementTest : RustTestCaseBase() {
 
     fun testMod() {
         myFixture.configureByText("foo.rs", "")
-        val lookup = (myFixture.file as RustFile).createLookupElement()
+        val lookup = (myFixture.file as RustFile).createLookupElement("foo")
         val presentation = LookupElementPresentation()
 
         lookup.renderElement(presentation)
@@ -73,7 +73,8 @@ class RustLookupElementTest : RustTestCaseBase() {
     }
 
     private fun check(@Language("Rust") code: String, tailText: String? = null, typeText: String? = null) {
-        val lookup = InlineFile(code).elementAtCaret<RustNamedElement>().createLookupElement()
+        val element = InlineFile(code).elementAtCaret<RustNamedElement>()
+        val lookup = element.createLookupElement(element.name!!)
         val presentation = LookupElementPresentation()
 
         lookup.renderElement(presentation)

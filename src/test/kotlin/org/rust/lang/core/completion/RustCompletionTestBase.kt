@@ -16,10 +16,11 @@ abstract class RustCompletionTestBase : RustTestCaseBase() {
         assertThat(variants.size).isZero()
     }
 
-    protected  fun executeSoloCompletion() {
+    protected fun executeSoloCompletion() {
         val variants = myFixture.completeBasic()
-        assertThat(variants)
-            .withFailMessage("Expected a single completion, but got ${variants?.size}")
-            .isNull()
+        if (variants != null) {
+            error("Expected a single completion, but got ${variants.size}\n" +
+                "${variants.toList()}")
+        }
     }
 }

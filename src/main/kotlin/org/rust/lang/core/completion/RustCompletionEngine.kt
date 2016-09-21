@@ -1,12 +1,14 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.asRustPath
+import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.util.fields
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.RustResolveEngine
+import org.rust.lang.core.resolve.ScopeEntry
 import org.rust.lang.core.resolve.SearchFor
 import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.resolve.scope.RustResolveScope
@@ -15,14 +17,27 @@ import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.util.stripAllRefsIfAny
 
 object RustCompletionEngine {
-    fun complete(ref: RustPathElement): Array<out Any> =
-        collectNamedElements(ref).toVariantsArray()
+    fun completePath(ref: RustPathElement): Array<out LookupElement> {
+        val path = ref.asRustPath ?: return emptyArray()
+
+        return if (path.segments.isNotEmpty()) {
+            val qual = path.copy(segments = path.segments.subList(0, path.segments.size - 1))
+            RustResolveEngine.resolve(qual, ref).element.completionsFromResolveScope()
+        } else {
+            RustResolveEngine.enumerateScopesFor(ref)
+                .flatMap { RustResolveEngine.declarations(it, pivot = ref) }
+                .completionsFromScopeEntries()
+        }
+    }
+
+    fun completeUseGlob(glob: RustUseGlobElement): Array<out LookupElement> =
+        glob.basePath?.reference?.resolve()
+            .completionsFromResolveScope()
 
     fun completeFieldName(field: RustStructExprFieldElement): Array<out LookupElement> =
         field.parentOfType<RustStructExprElement>()
-                ?.let       { it.fields }
-                 .orEmpty()
-                 .toVariantsArray()
+            ?.fields.orEmpty()
+            .completionsFromNamedElements()
 
     fun completeFieldOrMethod(field: RustFieldExprElement): Array<out LookupElement> {
         val dispatchType = field.expr.resolvedType.stripAllRefsIfAny()
@@ -32,35 +47,57 @@ object RustCompletionEngine {
 
         val methods = RustImplIndex.findNonStaticMethodsFor(dispatchType, field.project)
 
-        return (fields + methods.toList()).toVariantsArray()
+        return (fields + methods.toList()).completionsFromNamedElements()
     }
-
-    fun completeUseGlob(glob: RustUseGlobElement): Array<out Any> =
-        glob.basePath?.reference?.resolve()
-            .completionsFromResolveScope()
-            .toVariantsArray()
-
-    private fun collectNamedElements(ref: RustPathElement): Collection<RustNamedElement> {
-        // TODO: handle aliased items properly
-        val path = ref.asRustPath ?: return emptyList()
-
-        return if (path.segments.isNotEmpty()) {
-            val qual = path.copy(segments = path.segments.subList(0, path.segments.size - 1))
-            RustResolveEngine.resolve(qual, ref).element.completionsFromResolveScope()
-        } else {
-            RustResolveEngine.enumerateScopesFor(ref)
-                .flatMap { RustResolveEngine.declarations(it, pivot = ref) }
-                .toList()
-        }
-    }
-
 }
 
-private fun RustNamedElement?.completionsFromResolveScope(): Collection<RustNamedElement> =
-    when (this) {
-        is RustResolveScope -> RustResolveEngine.declarations(this, searchFor = SearchFor.PRIVATE).toList()
-        else                -> emptyList()
-    }
+private fun RustNamedElement?.completionsFromResolveScope(): Array<LookupElement> =
+    if (this is RustResolveScope)
+        RustResolveEngine.declarations(this, searchFor = SearchFor.PRIVATE).completionsFromScopeEntries()
+    else
+        emptyArray()
 
-private fun Collection<RustNamedElement>.toVariantsArray(): Array<out LookupElement> =
-    filter { it.name != null }.map { it.createLookupElement() }.toTypedArray()
+private fun Sequence<ScopeEntry>.completionsFromScopeEntries(): Array<LookupElement> =
+    mapNotNull {
+        it.element?.createLookupElement(it.name)
+    }.toList().toTypedArray()
+
+private fun Collection<RustNamedElement>.completionsFromNamedElements(): Array<LookupElement> =
+    mapNotNull {
+        val name = it.name ?: return@mapNotNull null
+        it.createLookupElement(name)
+    }.toTypedArray()
+
+fun RustNamedElement.createLookupElement(scopeName: String): LookupElement {
+    val base = LookupElementBuilder.create(this, scopeName)
+        .withIcon(getIcon(0))
+        .withLookupString(scopeName)
+
+    return when (this) {
+        is RustConstItemElement -> base.withTypeText(type.text)
+        is RustStaticItemElement -> base.withTypeText(type.text)
+        is RustFieldDeclElement -> base.withTypeText(type?.text)
+
+        is RustFnElement -> base
+            .withTypeText(retType?.type?.text ?: "()")
+            .withTailText(parameters?.text?.replace("\\s+".toRegex(), " ") ?: "()")
+
+        is RustStructItemElement -> base
+            .withTailText(when {
+                blockFields != null -> " { ... }"
+                tupleFields != null -> tupleFields!!.text
+                else -> ""
+            })
+
+        is RustEnumVariantElement -> base
+            .withTypeText(parentOfType<RustEnumItemElement>()?.name?.toString() ?: "")
+            .withTailText(when {
+                blockFields != null -> " { ... }"
+                tupleFields != null ->
+                    tupleFields!!.tupleFieldDeclList.map { it.type.text }.joinToString(prefix = "(", postfix = ")")
+                else -> ""
+            })
+
+        else -> base
+    }
+}

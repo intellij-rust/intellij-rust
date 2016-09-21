@@ -231,7 +231,7 @@ object RustResolveEngine {
         scope: RustResolveScope,
         pivot: RustCompositeElement? = null,
         searchFor: SearchFor = SearchFor.EVERYTHING
-    ): Sequence<RustNamedElement> = declarations(scope, Context(pivot, searchFor = searchFor)).mapNotNull { it.element }
+    ): Sequence<ScopeEntry> = declarations(scope, Context(pivot, searchFor = searchFor))
 
     fun enumerateScopesFor(pivot: RustCompositeElement): Sequence<RustResolveScope> =
         generateSequence(RustResolveUtil.getResolveScopeFor(pivot)) { parent ->
@@ -274,7 +274,7 @@ enum class SearchFor {
 }
 
 
-private class ScopeEntry private constructor(
+class ScopeEntry private constructor(
     val name: String,
     private val thunk: Lazy<RustNamedElement?>
 ) {
