@@ -362,6 +362,21 @@ class RustUseResolveTestCase : RustResolveTestCaseBase() {
         }
     """)
 
+    //
+    fun testUseSelfCycle() = checkByCode("""
+         //X
+         use self;
+            //^
+    """)
+
+    fun testImportFromSelf() = checkByCode("""
+         use self::{foo as bar};
+         fn foo() {}
+           //X
+         fn main() { bar() }
+                    //^
+    """)
+
     fun testNoUse() = checkByCode("""
         fn foo() { }
 
@@ -426,6 +441,7 @@ class RustUseResolveTestCase : RustResolveTestCaseBase() {
             }
         }
     """)
+
 
     private fun checkByCode(@Language("Rust") code: String) {
         val file = InlineFile(code)

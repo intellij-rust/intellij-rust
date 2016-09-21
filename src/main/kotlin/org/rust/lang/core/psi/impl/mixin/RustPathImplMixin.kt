@@ -63,13 +63,15 @@ val RustPathElement.asRustPath: RustPath? get() {
                 RustPath(RustPathHead.Absolute, listOf(segment))
 
         // `self` can mean two different things:
-        //  * if it is a part of a bigger path, then it is a reference to the current module,
-        //  * if it is the only segment of path, then it is an identifier.
+        //  * if it is a part of a bigger path or a use declaration,
+        //    then it is a reference to the current module,
+        //  * if it is the only segment of path, then it is an identifier,
         self != null ->
-            if (parent is RustPathElement)
-                RustPath(RustPathHead.Relative(0), emptyList())
-            else
-                RustPath.identifier(segment)
+            when (parent) {
+                is RustPathElement, is RustUseItemElement ->
+                    RustPath(RustPathHead.Relative(0), emptyList())
+                else -> RustPath.identifier(segment)
+            }
 
         `super` != null ->
             RustPath(RustPathHead.Relative(1), emptyList())
