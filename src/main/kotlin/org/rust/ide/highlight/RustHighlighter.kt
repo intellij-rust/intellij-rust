@@ -47,6 +47,24 @@ class RustHighlighter : SyntaxHighlighterBase() {
             LBRACE, RBRACE                 -> RustColor.BRACES
             LBRACK, RBRACK                 -> RustColor.BRACKETS
 
+            UNDERSCORE, DOLLAR             -> RustColor.OPERATORS
+            SHA, COLON                     -> RustColor.OPERATORS
+            COLONCOLON                     -> RustColor.OPERATORS
+            DOT, DOTDOT, DOTDOTDOT         -> RustColor.OPERATORS
+            ARROW, FAT_ARROW               -> RustColor.OPERATORS
+            AND, ANDEQ                     -> RustColor.OPERATORS
+            OR, OREQ                       -> RustColor.OPERATORS
+            XOR, XOREQ                     -> RustColor.OPERATORS
+            EXCL, EXCLEQ                   -> RustColor.OPERATORS
+            MUL, MULEQ                     -> RustColor.OPERATORS
+            DIV, DIVEQ                     -> RustColor.OPERATORS
+            REM, REMEQ                     -> RustColor.OPERATORS
+            EQ, EQEQ                       -> RustColor.OPERATORS
+            PLUS, PLUSEQ                   -> RustColor.OPERATORS
+            MINUS, MINUSEQ                 -> RustColor.OPERATORS
+            GT, LT                         -> RustColor.OPERATORS
+            Q, AT                          -> RustColor.OPERATORS
+
             SEMICOLON                      -> RustColor.SEMICOLON
             DOT                            -> RustColor.DOT
             COMMA                          -> RustColor.COMMA
