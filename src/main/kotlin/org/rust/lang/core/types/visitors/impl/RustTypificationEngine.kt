@@ -244,7 +244,7 @@ private fun deviseEnumType(variant: RustEnumVariantElement): RustType =
     RustTypificationEngine.typifyItem((variant.parent as RustEnumBodyElement).parent as RustEnumItemElement)
 
 private fun deviseFunctionType(fn: RustFnElement): RustFunctionType {
-    var paramTypes = emptyList<RustType>()
+    val paramTypes = mutableListOf<RustType>()
 
     val params = fn.parameters
     if (params != null) {
