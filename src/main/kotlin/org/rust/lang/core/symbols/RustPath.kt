@@ -56,7 +56,7 @@ fun DataInput.readRustPath(): RustPath {
 
 data class RustPathSegment(
     val name: String,
-    val genericArguments: List<RustUnresolvedType>
+    val typeArguments: List<RustUnresolvedType>
 ) {
     init {
         check(name != RustPath.SUPER)
@@ -69,7 +69,7 @@ data class RustPathSegment(
 
 fun DataOutput.writeRustPathSegment(value: RustPathSegment) {
     writeUTF(value.name)
-    writeList(value.genericArguments) { writeRustUnresolvedType(it) }
+    writeList(value.typeArguments) { writeRustUnresolvedType(it) }
 }
 
 fun DataInput.readRustPathSegment(): RustPathSegment {
