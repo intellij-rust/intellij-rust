@@ -13,10 +13,10 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
-import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
+import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.getComponentOrThrow
 import org.rust.lang.core.psi.util.parentOfType
@@ -39,12 +39,15 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         get() = camelToSnake(getTestName(true))
 
     protected fun checkByFile(ignoreTrailingWhitespace: Boolean = true, action: () -> Unit) {
-        val before = fileName
-        val after = before.replace(".rs", "_after.rs")
+        val before = beforeFileName(fileName)
+        val after = afterFileName(fileName)
         myFixture.configureByFile(before)
         action()
         myFixture.checkResultByFile(after, ignoreTrailingWhitespace)
     }
+
+    protected open fun beforeFileName(fileName: String): String = fileName
+    protected open fun afterFileName(fileName: String) = fileName.replace(".rs", "_after.rs")
 
     protected fun checkByDirectory(action: () -> Unit) {
         val after = "$testName/after"

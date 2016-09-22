@@ -1,7 +1,7 @@
 package org.rust.ide.typing
 
 class RustRawLiteralHashesInserterTest : RustTypingTestCaseBase() {
-    override val dataPath = "org/rust/ide/typing/rawHashes/insert/fixtures"
+    override val dataPath = "org/rust/ide/typing/rawHashes/fixtures"
 
     fun testSimpleOpen() = doTest('#')
     fun testSimpleClose() = doTest('#')
