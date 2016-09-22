@@ -104,6 +104,7 @@
 
         <enterHandlerDelegate implementation="org.rust.ide.typing.RustEnterInLineCommentHandler" id="RustEnterInLineComments"/>
         <enterHandlerDelegate implementation="org.rust.ide.typing.RustEnterInStringLiteralHandler" id="RustEnterInStringLiterals"/>
+        <typedHandler implementation="org.rust.ide.typing.RustRawLiteralHashesInserter" id="RustRawLiteralHashesInserter"/>
 
         <!-- Code Style -->
 
