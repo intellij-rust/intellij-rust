@@ -69,6 +69,7 @@ public interface RustTokenElementTypes {
 
     RustTokenType IDENTIFIER = new RustTokenType("<IDENTIFIER>");
     RustTokenType LIFETIME = new RustTokenType("<LIFETIME>");
+    RustTokenType UNDERSCORE = new RustTokenType("_");
 
     // Literals
 
@@ -93,63 +94,67 @@ public interface RustTokenElementTypes {
 
     RustTokenType SHEBANG_LINE = new RustTokenType("<SHEBANG_LINE>");
 
-    // Operators
+    //
+    // Grouping
+    //
 
-    RustTokenType AND = new RustTokenType("&");
-    RustTokenType ANDEQ = new RustTokenType("&=");
-    RustTokenType ARROW = new RustTokenType("->");
-    RustTokenType FAT_ARROW = new RustTokenType("=>");
-    RustTokenType SHA = new RustTokenType("#");
-    RustTokenType COLON = new RustTokenType(":");
-    RustTokenType COLONCOLON = new RustTokenType("::");
-    RustTokenType COMMA = new RustTokenType(",");
-    RustTokenType DIV = new RustTokenType("/");
-    RustTokenType DIVEQ = new RustTokenType("/=");
-    RustTokenType DOT = new RustTokenType(".");
-    RustTokenType DOTDOT = new RustTokenType("..");
-    RustTokenType DOTDOTDOT = new RustTokenType("...");
-    RustTokenType EQ = new RustTokenType("=");
-    RustTokenType EQEQ = new RustTokenType("==");
-    RustTokenType EXCL = new RustTokenType("!");
-    RustTokenType EXCLEQ = new RustTokenType("!=");
-    RustTokenType GT = new RustTokenType(">");
     RustTokenType LBRACE = new RustTokenType("{");
     RustTokenType LBRACK = new RustTokenType("[");
     RustTokenType LPAREN = new RustTokenType("(");
-    RustTokenType LT = new RustTokenType("<");
-    RustTokenType MINUS = new RustTokenType("-");
-    RustTokenType MINUSEQ = new RustTokenType("-=");
-    RustTokenType MUL = new RustTokenType("*");
-    RustTokenType MULEQ = new RustTokenType("*=");
-    RustTokenType OR = new RustTokenType("|");
-    RustTokenType OREQ = new RustTokenType("|=");
-    RustTokenType PLUS = new RustTokenType("+");
-    RustTokenType PLUSEQ = new RustTokenType("+=");
     RustTokenType RBRACE = new RustTokenType("}");
     RustTokenType RBRACK = new RustTokenType("]");
-    RustTokenType REM = new RustTokenType("%");
-    RustTokenType REMEQ = new RustTokenType("%=");
     RustTokenType RPAREN = new RustTokenType(")");
-    RustTokenType SEMICOLON = new RustTokenType(";");
-    RustTokenType XOR = new RustTokenType("^");
-    RustTokenType XOREQ = new RustTokenType("^=");
-    RustTokenType Q = new RustTokenType("?");
-    RustTokenType AT = new RustTokenType("@");
-    RustTokenType UNDERSCORE = new RustTokenType("_");
-    RustTokenType DOLLAR = new RustTokenType("$");
+
+    // Operators
+
+    RustTokenType AND = new RustOperatorTokenType("&");
+    RustTokenType ANDEQ = new RustOperatorTokenType("&=");
+    RustTokenType ARROW = new RustOperatorTokenType("->");
+    RustTokenType FAT_ARROW = new RustOperatorTokenType("=>");
+    RustTokenType SHA = new RustOperatorTokenType("#");
+    RustTokenType COLON = new RustOperatorTokenType(":");
+    RustTokenType COLONCOLON = new RustOperatorTokenType("::");
+    RustTokenType COMMA = new RustOperatorTokenType(",");
+    RustTokenType DIV = new RustOperatorTokenType("/");
+    RustTokenType DIVEQ = new RustOperatorTokenType("/=");
+    RustTokenType DOT = new RustOperatorTokenType(".");
+    RustTokenType DOTDOT = new RustOperatorTokenType("..");
+    RustTokenType DOTDOTDOT = new RustOperatorTokenType("...");
+    RustTokenType EQ = new RustOperatorTokenType("=");
+    RustTokenType EQEQ = new RustOperatorTokenType("==");
+    RustTokenType EXCL = new RustOperatorTokenType("!");
+    RustTokenType EXCLEQ = new RustOperatorTokenType("!=");
+    RustTokenType GT = new RustOperatorTokenType(">");
+    RustTokenType LT = new RustOperatorTokenType("<");
+    RustTokenType MINUS = new RustOperatorTokenType("-");
+    RustTokenType MINUSEQ = new RustOperatorTokenType("-=");
+    RustTokenType MUL = new RustOperatorTokenType("*");
+    RustTokenType MULEQ = new RustOperatorTokenType("*=");
+    RustTokenType OR = new RustOperatorTokenType("|");
+    RustTokenType OREQ = new RustOperatorTokenType("|=");
+    RustTokenType PLUS = new RustOperatorTokenType("+");
+    RustTokenType PLUSEQ = new RustOperatorTokenType("+=");
+    RustTokenType REM = new RustOperatorTokenType("%");
+    RustTokenType REMEQ = new RustOperatorTokenType("%=");
+    RustTokenType SEMICOLON = new RustOperatorTokenType(";");
+    RustTokenType XOR = new RustOperatorTokenType("^");
+    RustTokenType XOREQ = new RustOperatorTokenType("^=");
+    RustTokenType Q = new RustOperatorTokenType("?");
+    RustTokenType AT = new RustOperatorTokenType("@");
+    RustTokenType DOLLAR = new RustOperatorTokenType("$");
 
     //
     // Operators created in parser by collapsing
     //
 
-    RustTokenType GTGTEQ = new RustTokenType(">>=");
-    RustTokenType GTGT = new RustTokenType(">>");
-    RustTokenType GTEQ = new RustTokenType(">=");
-    RustTokenType LTLTEQ = new RustTokenType("<<=");
-    RustTokenType LTLT = new RustTokenType("<<");
-    RustTokenType LTEQ = new RustTokenType("<=");
-    RustTokenType OROR = new RustTokenType("||");
-    RustTokenType ANDAND = new RustTokenType("&&");
+    RustTokenType GTGTEQ = new RustOperatorTokenType(">>=");
+    RustTokenType GTGT = new RustOperatorTokenType(">>");
+    RustTokenType GTEQ = new RustOperatorTokenType(">=");
+    RustTokenType LTLTEQ = new RustOperatorTokenType("<<=");
+    RustTokenType LTLT = new RustOperatorTokenType("<<");
+    RustTokenType LTEQ = new RustOperatorTokenType("<=");
+    RustTokenType OROR = new RustOperatorTokenType("||");
+    RustTokenType ANDAND = new RustOperatorTokenType("&&");
 
     //
     // Token Sets
@@ -201,6 +206,18 @@ public interface RustTokenElementTypes {
         LTEQ,
         OROR,
         ANDAND
+    );
+
+    @NotNull
+    TokenSet ALL_OPS = TokenSet.create(
+        IElementType.enumerate(
+            new IElementType.Predicate() {
+                @Override
+                public boolean matches(@NotNull IElementType type) {
+                    return type instanceof RustOperatorTokenType;
+                }
+            }
+        )
     );
 
     /**

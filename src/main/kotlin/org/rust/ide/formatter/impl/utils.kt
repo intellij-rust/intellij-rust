@@ -5,6 +5,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.tree.TokenSet.orSet
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
@@ -14,8 +15,7 @@ import com.intellij.psi.tree.TokenSet.create as ts
 val KEYWORDS = ts(*IElementType.enumerate { it is RustKeywordTokenType })
 
 val NO_SPACE_AROUND_OPS = ts(COLONCOLON, DOT, DOTDOT)
-val SPACE_AROUND_OPS = ts(AND, ANDAND, ANDEQ, ARROW, FAT_ARROW, DIV, DIVEQ, EQ, EQEQ, EXCLEQ, GT, LT, MINUSEQ, MUL,
-    MULEQ, OR, OREQ, OROR, PLUSEQ, REM, REMEQ, XOR, XOREQ, MINUS, PLUS, GTGTEQ, GTGT, GTEQ, LTLTEQ, LTLT, LTEQ)
+val SPACE_AROUND_OPS = TokenSet.andNot(ALL_OPS, NO_SPACE_AROUND_OPS)
 val UNARY_OPS = ts(MINUS, MUL, EXCL, AND, ANDAND)
 
 val PARAMS_LIKE = ts(PARAMETERS, VARIADIC_PARAMETERS)

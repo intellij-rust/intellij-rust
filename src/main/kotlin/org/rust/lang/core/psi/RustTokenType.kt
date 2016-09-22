@@ -20,6 +20,8 @@ class RustCommentTokenType(debugName: String) : RustTokenType(debugName) {
 
 class RustKeywordTokenType(debugName: String) : RustTokenType(debugName)
 
+class RustOperatorTokenType(debugName: String) : RustTokenType(debugName)
+
 class RustLiteralTokenType(
     debugName: String,
     private val implConstructor: (IElementType, CharSequence) -> RustLiteral

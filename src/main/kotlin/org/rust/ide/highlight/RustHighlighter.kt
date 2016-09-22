@@ -6,6 +6,7 @@ import com.intellij.psi.tree.IElementType
 import org.rust.ide.colors.RustColor
 import org.rust.lang.core.lexer.RustHighlightingLexer
 import org.rust.lang.core.psi.RustKeywordTokenType
+import org.rust.lang.core.psi.RustOperatorTokenType
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.doc.psi.RustDocElementTypes.*
 
@@ -17,9 +18,11 @@ class RustHighlighter : SyntaxHighlighterBase() {
 
     companion object {
         fun map(tokenType: IElementType?): RustColor? = when (tokenType) {
-            is RustKeywordTokenType -> RustColor.KEYWORD
+            is RustKeywordTokenType        -> RustColor.KEYWORD
+            is RustOperatorTokenType       -> RustColor.OPERATORS
 
             IDENTIFIER                     -> RustColor.IDENTIFIER
+            UNDERSCORE                     -> RustColor.IDENTIFIER
 
             LIFETIME                       -> RustColor.LIFETIME
 
