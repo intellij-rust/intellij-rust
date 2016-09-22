@@ -27,7 +27,7 @@ class RustEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
         }
 
         val caretOffset = caretOffsetRef.get()
-        if (!isValidOffset(caretOffset, editor.document.charsSequence)) return Result.Continue
+        if (!isValidInnerOffset(caretOffset, editor.document.charsSequence)) return Result.Continue
 
         val highlighter = (editor as EditorEx).highlighter
         val iterator = highlighter.createIterator(caretOffset)

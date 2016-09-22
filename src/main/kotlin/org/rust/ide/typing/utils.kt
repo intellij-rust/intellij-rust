@@ -7,6 +7,13 @@ import org.rust.lang.core.psi.RustLiteral
 import org.rust.lang.core.psi.RustLiteralTokenType
 
 fun isValidOffset(offset: Int, text: CharSequence): Boolean {
+    return 0 <= offset && offset <= text.length
+}
+
+/**
+ * Beware that this returns `false` for EOF!
+ */
+fun isValidInnerOffset(offset: Int, text: CharSequence): Boolean {
     return 0 <= offset && offset < text.length
 }
 
