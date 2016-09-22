@@ -59,6 +59,12 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         PlatformTestUtil.assertDirectoriesEqual(afterDir, beforeDir)
     }
 
+    protected fun checkByText(fileName: String, before: String, after: String, action: () -> Unit) {
+        myFixture.configureByText(fileName, before)
+        action()
+        myFixture.checkResult(after)
+    }
+
     protected fun openFileInEditor(path: String) {
         myFixture.configureFromExistingVirtualFile(myFixture.findFileInTempDir(path))
     }
