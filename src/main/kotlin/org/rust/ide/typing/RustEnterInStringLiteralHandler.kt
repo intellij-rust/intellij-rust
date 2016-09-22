@@ -60,8 +60,4 @@ class RustEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
             else -> Result.Continue
         }
     }
-
-    private fun isValidOffset(offset: Int, text: CharSequence): Boolean {
-        return offset >= 0 && offset < text.length
-    }
 }

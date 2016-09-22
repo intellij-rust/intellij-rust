@@ -91,36 +91,4 @@ class RustQuoteHandler : SimpleTokenSetQuoteHandler(
 
         return null
     }
-
-    /**
-     * Get previous and next token types relative to [iterator] position.
-     */
-    private fun getSiblingTokens(iterator: HighlighterIterator): Pair<IElementType?, IElementType?> {
-        iterator.retreat()
-        val prev = if (iterator.atEnd()) null else iterator.tokenType
-        iterator.advance()
-
-        iterator.advance()
-        val next = if (iterator.atEnd()) null else iterator.tokenType
-        iterator.retreat()
-
-        return prev to next
-    }
-
-    /**
-     * Creates virtual [RustLiteral] PSI element assuming that it is represented as
-     * single, contiguous token in highlighter, in other words - it doesn't contain
-     * any escape sequences etc. (hence 'dumb').
-     */
-    private fun getLiteralDumb(iterator: HighlighterIterator): RustLiteral? {
-        val start = iterator.start
-        val end = iterator.end
-
-        val document = iterator.document
-        val text = document.charsSequence
-        val literalText = CharSequenceSubSequence(text, start, end)
-
-        val elementType = iterator.tokenType as? RustLiteralTokenType ?: return null
-        return elementType.createLeafNode(literalText) as RustLiteral
-    }
 }
