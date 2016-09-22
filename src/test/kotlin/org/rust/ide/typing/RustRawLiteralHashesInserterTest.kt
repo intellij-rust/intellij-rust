@@ -14,4 +14,5 @@ class RustRawLiteralHashesInserterTest : RustTypingTestCaseBase() {
     fun testInsideValue() = doTest('#')
     fun testNoQuotes() = doTest('#')
     fun testNoQuotes2() = doTest('#')
+    fun testMulticursor() = doTest('#')
 }
