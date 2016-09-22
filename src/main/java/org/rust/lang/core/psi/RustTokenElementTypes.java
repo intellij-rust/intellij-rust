@@ -94,6 +94,17 @@ public interface RustTokenElementTypes {
 
     RustTokenType SHEBANG_LINE = new RustTokenType("<SHEBANG_LINE>");
 
+    //
+    // Grouping
+    //
+
+    RustTokenType LBRACE = new RustTokenType("{");
+    RustTokenType LBRACK = new RustTokenType("[");
+    RustTokenType LPAREN = new RustTokenType("(");
+    RustTokenType RBRACE = new RustTokenType("}");
+    RustTokenType RBRACK = new RustTokenType("]");
+    RustTokenType RPAREN = new RustTokenType(")");
+
     // Operators
 
     RustTokenType AND = new RustOperatorTokenType("&");
@@ -114,9 +125,6 @@ public interface RustTokenElementTypes {
     RustTokenType EXCL = new RustOperatorTokenType("!");
     RustTokenType EXCLEQ = new RustOperatorTokenType("!=");
     RustTokenType GT = new RustOperatorTokenType(">");
-    RustTokenType LBRACE = new RustOperatorTokenType("{");
-    RustTokenType LBRACK = new RustOperatorTokenType("[");
-    RustTokenType LPAREN = new RustOperatorTokenType("(");
     RustTokenType LT = new RustOperatorTokenType("<");
     RustTokenType MINUS = new RustOperatorTokenType("-");
     RustTokenType MINUSEQ = new RustOperatorTokenType("-=");
@@ -126,11 +134,8 @@ public interface RustTokenElementTypes {
     RustTokenType OREQ = new RustOperatorTokenType("|=");
     RustTokenType PLUS = new RustOperatorTokenType("+");
     RustTokenType PLUSEQ = new RustOperatorTokenType("+=");
-    RustTokenType RBRACE = new RustOperatorTokenType("}");
-    RustTokenType RBRACK = new RustOperatorTokenType("]");
     RustTokenType REM = new RustOperatorTokenType("%");
     RustTokenType REMEQ = new RustOperatorTokenType("%=");
-    RustTokenType RPAREN = new RustOperatorTokenType(")");
     RustTokenType SEMICOLON = new RustOperatorTokenType(";");
     RustTokenType XOR = new RustOperatorTokenType("^");
     RustTokenType XOREQ = new RustOperatorTokenType("^=");
