@@ -16,6 +16,8 @@ class RustTypeParameterType(val parameter: RustTypeParamElement) : RustTypeBase(
     override fun getNonStaticMethodsIn(project: Project): Sequence<RustFnElement> =
         getTraitsImplementedIn(project).flatMap { it.traitMethodMemberList.asSequence() }
 
+    override fun substitute(map: Map<RustTypeParameterType, RustType>): RustType = map[this] ?: this
+
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitTypeParameter(this)
 
     override fun toString(): String = parameter.name ?: "<unknown>"
