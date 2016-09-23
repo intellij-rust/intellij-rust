@@ -99,16 +99,22 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
 
     override fun visitMethodCallExpr(o: RustMethodCallExprElement) = set {
         val method = o.reference.resolve() as? RustFnElement
-        method?.let { deviseFunctionType(it).retType } ?: RustUnknownType
+            ?: return@set RustUnknownType
+
+        val impl = method.parentOfType<RustImplItemElement>()
+        val typeParameterMap = impl?.remapTypeParameters(o.expr.resolvedType.typeParameterValues).orEmpty()
+
+        deviseFunctionType(method).retType.substitute(typeParameterMap)
     }
 
     override fun visitFieldExpr(o: RustFieldExprElement) = set {
         val field = o.reference.resolve()
-        when (field) {
+        val raw = when (field) {
             is RustFieldDeclElement -> field.type?.resolvedType
             is RustTupleFieldDeclElement -> field.type.resolvedType
             else -> null
         } ?: RustUnknownType
+        raw.substitute(o.expr.resolvedType.typeParameterValues)
     }
 
     override fun visitLitExpr(o: RustLitExprElement) = set {
@@ -269,3 +275,26 @@ private fun deviseFunctionType(fn: RustFnElement): RustFunctionType {
 
     return RustFunctionType(paramTypes, fn.retType?.type?.resolvedType ?: RustUnitType)
 }
+
+/**
+ * Remap type parameters between type declaration and an impl block.
+ *
+ * Think about the following example:
+ * ```
+ * struct Flip<A, B> { ... }
+ * impl<X, Y> Flip<Y, X> { ... }
+ * ```
+ */
+private fun RustImplItemElement.remapTypeParameters(
+    map: Map<RustTypeParameterType, RustType>
+): Map<RustTypeParameterType, RustType> =
+    type?.resolvedType?.typeParameterValues.orEmpty()
+        .mapNotNull {
+            val (structParam, structType) = it
+            if (structType is RustTypeParameterType) {
+                val implType = map[structParam] ?: return@mapNotNull null
+                structType to implType
+            } else {
+                null
+            }
+        }.toMap()
