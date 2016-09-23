@@ -87,6 +87,8 @@ class RustFormatterTest : FormatterTestCase() {
 
     fun testElse() = doTest()
 
+    fun testIssue654() = doTest()
+
     private fun common() = getSettings(RustLanguage)
     private fun custom() = settings.getCustomSettings(RustCodeStyleSettings::class.java)
 }
