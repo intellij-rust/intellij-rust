@@ -79,6 +79,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         .beforeInside(LBRACE, FLAT_BRACE_BLOCKS).spaces(1)
 
         .between(ts(IDENTIFIER, FN), PARAMS_LIKE).spaceIf(false)
+        .between(IDENTIFIER, TUPLE_FIELDS).spaces(0)
         .between(IDENTIFIER, GENERIC_PARAMS).spaceIf(false)
         .between(IDENTIFIER, GENERIC_ARGS).spaceIf(false)
         .between(IDENTIFIER, ARG_LIST).spaceIf(false)
