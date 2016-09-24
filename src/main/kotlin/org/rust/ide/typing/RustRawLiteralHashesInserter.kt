@@ -31,11 +31,11 @@ class RustRawLiteralHashesInserter : TypedHandlerDelegate() {
         val openDelim = literal.offsets.openDelim ?: return Result.CONTINUE
         val closeDelim = literal.offsets.closeDelim ?: return Result.CONTINUE
 
-        // Get rid of ugly quotes from out precious ranges (remember - we are operating on left-closed ranges)
+        // Get rid of ugly quotes from our precious ranges (remember - we are operating on left-closed ranges)
         val openHashes = openDelim
         val closeHashes = closeDelim.shiftRight(1)
 
-        // No detect on which side of the literal we are, and insert hash on the other one
+        // Now detect on which side of the literal we are, and insert hash on the other one
         when (caretOffset - iterator.start) {
             in openHashes -> editor.document.insertString(iterator.end, "#")
             in closeHashes -> editor.document.insertString(iterator.start + 1, "#")
