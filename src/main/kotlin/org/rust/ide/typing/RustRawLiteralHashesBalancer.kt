@@ -51,6 +51,7 @@ class RustRawLiteralHashesDeleter : RustEnableableBackspaceHandlerDelegate() {
         // [getHashesOffsets] is O(n) (n = literal length), so do not evaluate it when it's not needed.
         if (c != '#' || iterator.tokenType !in RAW_LITERALS) return false
 
+        // We have to compute offsets here, because we still have our '#' in document.
         offsets = getHashesOffsets(iterator)
         return offsets != null
     }
@@ -63,12 +64,11 @@ class RustRawLiteralHashesDeleter : RustEnableableBackspaceHandlerDelegate() {
         // Now detect on which side of the literal we are, and remove hash on the other one.
         // Remember that offsets apply to literal before deletion!
         when (caretOffset) {
-            in openHashes -> {
+            in openHashes ->
                 // -1 because left-closed ranges
-                // -1 because open hash was deleted some range is shifted do right by 1
+                // -1 because open hash was deleted so offsets are now shifted right by 1
                 // TODO: Why one more -1?
                 editor.document.deleteChar(closeHashes.endOffset - 3)
-            }
             in closeHashes -> editor.document.deleteChar(openHashes.startOffset)
         }
 
