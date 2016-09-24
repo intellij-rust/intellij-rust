@@ -16,4 +16,5 @@ class RustRawLiteralHashesDeleterTest : RustTypingTestCaseBase() {
     fun testNoQuotes() = doTest('\b')
     fun testNoQuotes2() = doTest('\b')
     fun testMulticursor() = doTest('\b')
+    fun testByteLiteral() = doTest('\b')
 }
