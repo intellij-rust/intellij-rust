@@ -2,16 +2,19 @@ package org.rust.ide.intentions
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.PsiTypeElementImpl
 import org.rust.lang.core.psi.RustBlockExprElement
 import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustLambdaExprElement
+import org.rust.lang.core.psi.impl.RustBlockExprElementImpl
 import org.rust.lang.core.psi.util.parentOfType
 
 class WrapLambdaExprIntention : PsiElementBaseIntentionAction() {
     override fun getText() = "Add braces to lambda expression"
-    override fun getFamilyName() = getText()
+    override fun getFamilyName() = text
     override fun startInWriteAction() = true
 
     private data class Context(
@@ -32,9 +35,14 @@ class WrapLambdaExprIntention : PsiElementBaseIntentionAction() {
     override fun invoke(project: Project, editor: Editor, element: PsiElement) {
         val ctx = findContext(element) ?: return
         val lambdaBody = ctx.lambdaExpr.expr ?: return
-        val bodyStr = ctx.lambdaExpr.expr?.text ?: return
+        val relativeCaretPosition = editor.caretModel.offset - lambdaBody.textOffset
+
+        var bodyStr = ctx.lambdaExpr.expr?.text ?: return
+        bodyStr = "\n$bodyStr\n"
         val blockExpr = RustElementFactory.createBlockExpr(project, bodyStr) ?: return
-        lambdaBody.replace(blockExpr)
+
+        val offset = ((lambdaBody.replace(blockExpr)) as RustBlockExprElement).block?.expr?.textOffset ?: return
+        editor.caretModel.moveToOffset(offset + relativeCaretPosition)
     }
 
     override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
