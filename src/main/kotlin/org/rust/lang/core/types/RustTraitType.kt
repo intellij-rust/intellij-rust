@@ -13,13 +13,13 @@ import org.rust.lang.core.types.visitors.RustTypeVisitor
  */
 class RustTraitType(val trait: RustTraitItemElement) : RustTypeBase() {
 
-    override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitTrait(this)
-
-    override fun toString(): String = trait.name ?: "<anonymous>"
-
     override fun getTraitsImplementedIn(project: Project): Sequence<RustTraitItemElement> =
         sequenceOf(trait)
 
     override fun getNonStaticMethodsIn(project: Project): Sequence<RustFnElement> =
         getTraitsImplementedIn(project).flatMap { it.traitMethodMemberList.asSequence() }
+
+    override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitTrait(this)
+
+    override fun toString(): String = trait.name ?: "<anonymous>"
 }

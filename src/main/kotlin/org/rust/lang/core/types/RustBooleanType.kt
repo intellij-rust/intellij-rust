@@ -5,8 +5,8 @@ import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 
 object RustBooleanType : RustPrimitiveTypeBase() {
 
-    fun deduce(text: String?): RustBooleanType? =
-        text?.let { if (it == "bool") RustBooleanType else null }
+    fun deduce(text: String): RustBooleanType? =
+        if (text == "bool") RustBooleanType else null
 
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitBoolean(this)
 
