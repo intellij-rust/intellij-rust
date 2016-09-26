@@ -1,11 +1,140 @@
 package org.rust.ide.surroundWith
 
 class RustWithBlockSurrounderTest : RustSurrounderTestCaseBase(RustWithBlockSurrounder()) {
-    fun testSimple() = doTest()
-    fun testSimple2() = doTest()
-    fun testSimple3() = doTest()
-    fun testComments() = doTest()
+    fun testNotApplicable1() {
+        doTestNotApplicable(
+            """
+            fn main() {
+                let mut server <selection>= Nickel::new();
+                server.get("**", hello_world);
+                server.listen("127.0.0.1:6767").unwrap();</selection>
+            }
+            """
+        )
+    }
 
-    fun testAttrs() = doTestNotApplicable()
-    fun testSimple4() = doTestNotApplicable()
+    fun testNotApplicable2() {
+        doTestNotApplicable(
+            """
+            fn main() {
+                <selection>#![cfg(test)]
+                let mut server = Nickel::new();
+                server.get("**", hello_world);
+                server.listen("127.0.0.1:6767").unwrap();</selection>
+            }
+            """
+        )
+    }
+
+    fun testApplicableComment() {
+        doTest(
+            """
+            fn main() {
+                <selection>// comment
+                let mut server = Nickel::new();
+                server.get("**", hello_world);
+                server.listen("127.0.0.1:6767").unwrap(); // comment</selection>
+            }
+            """
+            ,
+            """
+            fn main() {
+                {
+                    // comment
+                    let mut server = Nickel::new();
+                    server.get("**", hello_world);
+                    server.listen("127.0.0.1:6767").unwrap(); // comment
+                }
+            }
+            """
+        )
+    }
+
+    fun testSimple1() {
+        doTest(
+            """
+            fn main() {
+                <selection>let mut server = Nickel::new();
+                server.get("**", hello_world);
+                server.listen("127.0.0.1:6767").unwrap();</selection>
+            }
+            """
+            ,
+            """
+            fn main() {
+                {
+                    let mut server = Nickel::new();
+                    server.get("**", hello_world);
+                    server.listen("127.0.0.1:6767").unwrap();
+                }
+            }
+            """
+        )
+    }
+
+    fun testSimple2() {
+        doTest(
+            """
+            fn main() {
+                let mut server = Nickel::new();<selection>
+                server.get("**", hello_world);
+                server.listen("127.0.0.1:6767").unwrap();</selection>
+            }
+            """
+            ,
+            """
+            fn main() {
+                let mut server = Nickel::new();
+                {
+                    server.get("**", hello_world);
+                    server.listen("127.0.0.1:6767").unwrap();
+                }
+            }
+            """
+        )
+    }
+
+    fun testSimple3() {
+        doTest(
+            """
+            fn main() {
+                <selection>let mut server = Nickel::new();
+                server.get("**", hello_world);</selection>
+                server.listen("127.0.0.1:6767").unwrap();
+            }
+            """
+            ,
+            """
+            fn main() {
+                {
+                    let mut server = Nickel::new();
+                    server.get("**", hello_world);
+                }
+                server.listen("127.0.0.1:6767").unwrap();
+            }
+            """
+        )
+    }
+
+    fun testSingleLine() {
+        doTest(
+            """
+            fn main() {
+                let mut server = Nickel::new();
+                server.get("**", hello_world)<caret>;
+                server.listen("127.0.0.1:6767").unwrap();
+            }
+            """
+            ,
+            """
+            fn main() {
+                let mut server = Nickel::new();
+                {
+                    server.get("**", hello_world);
+                }
+                server.listen("127.0.0.1:6767").unwrap();
+            }
+            """
+        )
+    }
 }
