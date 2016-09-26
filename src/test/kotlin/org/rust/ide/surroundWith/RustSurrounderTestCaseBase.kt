@@ -40,13 +40,16 @@ abstract class RustSurrounderTestCaseBase(val surrounder: Surrounder) : RustTest
             }
 
         val selectionModer = myFixture.editor.selectionModel
+        if (!selectionModer.hasSelection())
+            selectionModer.selectLineAtCaret()
+
         val elements = descriptor.getElementsToSurround(
             myFixture.file, selectionModer.selectionStart, selectionModer.selectionEnd)
 
         assertThat(surrounder.isApplicable(elements))
             .withFailMessage(
                 "surrounder %s be applicable to given selection:\n\n%s\nElements: %s",
-                if (isApplicable) "should" else "shouldn't",
+                if (isApplicable) "shouldn't" else "should",
                 FileUtil.loadFile(File("$testDataPath/$fileName")),
                 Arrays.toString(elements)
             )
