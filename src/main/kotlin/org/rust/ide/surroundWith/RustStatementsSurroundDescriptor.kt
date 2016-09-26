@@ -20,7 +20,8 @@ class RustStatementsSurroundDescriptor : SurroundDescriptor {
 
     companion object {
         private val SURROUNDERS = arrayOf(
-            RustWithBlockSurrounder()
+            RustWithBlockSurrounder(),
+            RustWithLoopSurrounder()
         )
     }
 }
