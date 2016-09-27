@@ -80,9 +80,13 @@ class RustQuoteHandler : SimpleTokenSetQuoteHandler(
 
     override fun getClosingQuote(iterator: HighlighterIterator, offset: Int): CharSequence? {
         val literal = getLiteralDumb(iterator) ?: return null
-
         if (literal is RustRawStringLiteralImpl) {
-            return '"' + "#".repeat(literal.hashes)
+            val valueOffsets = literal.offsets.value?.shiftRight(iterator.start) ?: return null
+            if (offset !in valueOffsets || offset == valueOffsets.startOffset || offset == valueOffsets.endOffset) {
+                return '"' + "#".repeat(literal.hashes)
+            } else {
+                return null
+            }
         }
 
         return null
