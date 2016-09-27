@@ -13,7 +13,7 @@ import org.rust.ide.actions.RustExpandModuleAction
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
-import org.rust.lang.core.psi.impl.mixin.isPathAttributeRequired
+import org.rust.lang.core.psi.impl.mixin.isLocal
 import org.rust.lang.core.psi.impl.mixin.pathAttribute
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.trait
@@ -31,7 +31,9 @@ class RustItemsAnnotator : Annotator {
     private fun checkModDecl(holder: AnnotationHolder, modDecl: RustModDeclItemElement) {
         val pathAttribute = modDecl.pathAttribute
 
-        if (modDecl.isPathAttributeRequired && pathAttribute == null) {
+        // mods inside blocks require explicit path  attribute
+        // https://github.com/rust-lang/rust/pull/31534
+        if (modDecl.isLocal && pathAttribute == null) {
             val message = "Cannot declare a non-inline module inside a block unless it has a path attribute"
             holder.createErrorAnnotation(modDecl, message)
             return

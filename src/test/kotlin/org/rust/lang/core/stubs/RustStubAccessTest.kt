@@ -1,5 +1,6 @@
 package org.rust.lang.core.stubs
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -9,11 +10,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.stubs.StubElement
+import com.intellij.testFramework.LoggedErrorProcessor
 import org.rust.lang.RustTestCaseBase
 import org.rust.lang.core.psi.RustCompositeElement
-import org.rust.lang.core.psi.RustImplMethodMemberElement
 import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustTraitMethodMemberElement
 import java.util.*
 
 class RustStubAccessTest : RustTestCaseBase() {
@@ -43,28 +43,31 @@ class RustStubAccessTest : RustTestCaseBase() {
 
     fun testParentWorksCorrectlyForStubbedElements() {
         val parentsByStub: MutableMap<PsiElement, PsiElement> = HashMap()
-
-        val shouldImplementParentByStub = { element: PsiElement ->
-           //TODO: any non-nested inside a function element should use `parentByStub`.
-           when (element) {
-                is RustTraitMethodMemberElement, is RustImplMethodMemberElement -> true
-                else -> false
+        val d = Disposer.newDisposable()
+        try {
+            LoggedErrorProcessor.getInstance().disableStderrDumping(d)
+            processStubsWithoutAstAccess<RustCompositeElement> {
+                val parent = try {
+                    it.parent
+                } catch (e: AssertionError) {
+                    null
+                }
+                if (parent != null) {
+                    parentsByStub += it to it.parent
+                }
             }
-        }
-
-        processStubsWithoutAstAccess<RustCompositeElement> {
-            if (shouldImplementParentByStub(it)) {
-                parentsByStub += it to it.parent
-            }
+        } finally {
+            Disposer.dispose(d)
         }
 
         (psiManager as PsiManagerImpl).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable)
 
         for ((element, stubParent) in parentsByStub) {
             element.node // force AST loading
-            check(element.parent == stubParent)
+            check(element.parent == stubParent) {
+                "parentByStub returned wrong result for $element\n${element.text}"
+            }
         }
-
     }
 
     private inline fun <reified T : PsiElement> processStubsWithoutAstAccess(block: (T) -> Unit) {

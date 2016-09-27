@@ -31,6 +31,10 @@ abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RustModDec
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
 
+    override fun getParent(): PsiElement? {
+        val stub = stub
+        return if (stub == null || stub.isLocal) parentByTree else parentByStub
+    }
 }
 
 fun RustModDeclItemElement.getOrCreateModuleFile(): PsiFile? {
@@ -53,12 +57,10 @@ val RustModDeclItemElement.possiblePaths: List<String> get() {
         implicitPaths
 }
 
-/*
- * mods inside blocks require explicit path  attribute
- * https://github.com/rust-lang/rust/pull/31534
- */
-val RustModDeclItemElement.isPathAttributeRequired: Boolean get() =
-    parentOfType<RustBlockElement>() != null
+val RustModDeclItemElement.isLocal: Boolean get() {
+    val stub = stub
+    return if (stub != null) stub.isLocal else parentOfType<RustBlockElement>() != null
+}
 
 
 //TODO: use explicit path if present.
@@ -68,10 +70,7 @@ private val RustModDeclItemElement.suggestChildFileName: String?
 
 private val RustModDeclItemElement.implicitPaths: List<String> get() {
     val name = name ?: return emptyList()
-    if (isPathAttributeRequired) {
-        return emptyList()
-    }
-    return listOf("$name.rs", "$name/mod.rs")
+    return if (isLocal) emptyList() else listOf("$name.rs", "$name/mod.rs")
 }
 
 
