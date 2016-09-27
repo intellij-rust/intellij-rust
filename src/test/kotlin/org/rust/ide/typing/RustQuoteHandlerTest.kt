@@ -13,4 +13,8 @@ class RustQuoteHandlerTest : RustTypingTestCaseBase() {
     fun testCompleteRawStringQuotes2() = doTest('"')
     fun testCompleteByteRawStringQuotes() = doTest('"')
     fun testCompleteByteRawStringQuotes2() = doTest('"')
+
+    // https://github.com/intellij-rust/intellij-rust/issues/687
+    fun testDoubleQuoteInRawLiteral() = doTest('"')
+    fun testSingleQuoteInRawLiteral() = doTest('\'')
 }
