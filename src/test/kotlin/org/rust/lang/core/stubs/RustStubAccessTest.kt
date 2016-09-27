@@ -1,6 +1,5 @@
 package org.rust.lang.core.stubs
 
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -11,6 +10,7 @@ import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.stubs.StubElement
 import com.intellij.testFramework.LoggedErrorProcessor
+import org.apache.log4j.Logger
 import org.rust.lang.RustTestCaseBase
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustNamedElement
@@ -43,9 +43,13 @@ class RustStubAccessTest : RustTestCaseBase() {
 
     fun testParentWorksCorrectlyForStubbedElements() {
         val parentsByStub: MutableMap<PsiElement, PsiElement> = HashMap()
-        val d = Disposer.newDisposable()
         try {
-            LoggedErrorProcessor.getInstance().disableStderrDumping(d)
+            LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
+                override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: Logger) {
+                    logger.info(message, t)
+                    throw AssertionError(message)
+                }
+            })
             processStubsWithoutAstAccess<RustCompositeElement> {
                 val parent = try {
                     it.parent
@@ -57,7 +61,7 @@ class RustStubAccessTest : RustTestCaseBase() {
                 }
             }
         } finally {
-            Disposer.dispose(d)
+            LoggedErrorProcessor.restoreDefaultProcessor()
         }
 
         (psiManager as PsiManagerImpl).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable)
