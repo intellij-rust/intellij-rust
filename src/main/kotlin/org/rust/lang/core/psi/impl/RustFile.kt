@@ -63,16 +63,6 @@ class RustFile(
 }
 
 
-/**
- * Prepends directory name to this file, if it is `mod.rs`
- */
-val PsiFile.usefulName: String get() = when (name) {
-    RustMod.MOD_RS -> containingDirectory?.let { dir ->
-        FileUtil.join(dir.name, name)
-    } ?: name
-    else -> name
-}
-
 val PsiFile.rustMod: RustMod? get() = this as? RustFile
 
 val VirtualFile.isNotRustFile: Boolean get() = !isRustFile
