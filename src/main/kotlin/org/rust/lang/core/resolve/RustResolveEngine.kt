@@ -1,8 +1,8 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.util.Computable
-import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.rust.cargo.util.AutoInjectedCrates
@@ -206,8 +206,9 @@ object RustResolveEngine {
 
         val dir = parent.ownedDirectory
 
-        val resolved = ref.possiblePaths.mapNotNull {
-            dir?.findFileByRelativePath(it)?.rustMod
+        val psiManager = PsiManager.getInstance(ref.project)
+        val resolved = ref.possiblePaths.mapNotNull { path ->
+            dir?.virtualFile?.findFileByRelativePath(path)?.let { psiManager.findFile(it) }?.rustMod
         }
 
         return when (resolved.size) {
@@ -542,23 +543,6 @@ private fun RustNamedElement?.asResolveResult(): RustResolveEngine.ResolveResult
         RustResolveEngine.ResolveResult.Unresolved
     else
         RustResolveEngine.ResolveResult.Resolved(this)
-
-
-private fun PsiDirectory.findFileByRelativePath(path: String): PsiFile? {
-    val parts = path.split("/")
-    val fileName = parts.lastOrNull() ?: return null
-
-    var dir = this
-    for (part in parts.dropLast(1)) {
-        when (part) {
-            "."  -> {}
-            ".." -> dir = dir.parentDirectory ?: return null
-            else -> dir = dir.findSubdirectory(part) ?: return null
-        }
-    }
-
-    return dir.findFile(fileName)
-}
 
 
 /**
