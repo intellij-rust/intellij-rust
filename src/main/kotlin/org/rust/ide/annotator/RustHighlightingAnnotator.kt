@@ -17,28 +17,28 @@ class RustHighlightingAnnotator : Annotator {
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val highlightingInfo =
-                // TODO(XXX): Much better would be to incorporate
-                //            that behaviour into visitor
-                if (element is RustReferenceElement) {
-                    val parent = element.parent
-                    val isPrimitiveType =
-                        element is RustPathElement &&
+            // TODO(XXX): Much better would be to incorporate
+            //            that behaviour into visitor
+            if (element is RustReferenceElement) {
+                val parent = element.parent
+                val isPrimitiveType =
+                    element is RustPathElement &&
                         parent is RustPathTypeElement &&
                         RustTypificationEngine.typifyType(parent).isPrimitive
 
-                    val color =
-                        if (isPrimitiveType) {
-                            RustColor.PRIMITIVE_TYPE
-                        } else {
-                            val ref = element.reference.resolve() ?: return
-                            // Highlight the element dependent on what it's referencing.
-                            HighlightingVisitor().compute(ref).color
-                        }
+                val color =
+                    if (isPrimitiveType) {
+                        RustColor.PRIMITIVE_TYPE
+                    } else {
+                        val ref = element.reference.resolve() ?: return
+                        // Highlight the element dependent on what it's referencing.
+                        HighlightingVisitor().compute(ref).color
+                    }
 
-                    HighlightingInfo(element.referenceNameElement, color)
-                } else {
-                    HighlightingVisitor().compute(element)
-                }
+                HighlightingInfo(element.referenceNameElement, color)
+            } else {
+                HighlightingVisitor().compute(element)
+            }
 
         highlightingInfo.apply(holder)
     }

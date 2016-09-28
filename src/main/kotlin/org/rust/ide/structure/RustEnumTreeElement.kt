@@ -7,7 +7,7 @@ class RustEnumTreeElement(element: RustEnumItemElement) : PsiTreeElementBase<Rus
 
     override fun getPresentableText() = element?.name
 
-    override fun getChildrenBase() = getVariants().orEmpty().map { RustEnumVariantTreeElement(it) }
+    override fun getChildrenBase() = getVariants().orEmpty().map(::RustEnumVariantTreeElement)
 
     private fun getVariants() = element?.enumBody?.enumVariantList
 }

@@ -76,7 +76,7 @@ sealed class RustLiteral(type: IElementType, text: CharSequence) : LeafPsiElemen
 
             private fun makeRange(start: Int, end: Int): TextRange? = when {
                 end - start > 0 -> TextRange(start, end)
-                else            -> null
+                else -> null
             }
         }
     }

@@ -11,9 +11,9 @@ import org.rust.lang.core.psi.impl.RustFile
 
 class ContractModuleIntention : IntentionAction {
 
-    override fun getFamilyName()        = "Contract module structure"
-    override fun getText()              = "Contract module"
-    override fun startInWriteAction()   = true
+    override fun getFamilyName() = "Contract module structure"
+    override fun getText() = "Contract module"
+    override fun startInWriteAction() = true
 
     override fun isAvailable(project: Project, editor: Editor, file: PsiFile) =
         file is RustFile

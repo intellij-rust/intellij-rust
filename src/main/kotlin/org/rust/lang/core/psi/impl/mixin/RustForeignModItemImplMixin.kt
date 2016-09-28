@@ -8,12 +8,12 @@ import org.rust.lang.core.psi.RustOuterAttrElement
 import org.rust.lang.core.psi.impl.RustStubbedElementImpl
 import org.rust.lang.core.stubs.elements.RustForeignModItemElementStub
 
-abstract class RustForeignModItemImplMixin  : RustStubbedElementImpl<RustForeignModItemElementStub>
-                                            , RustForeignModItemElement {
+abstract class RustForeignModItemImplMixin : RustStubbedElementImpl<RustForeignModItemElementStub>,
+                                             RustForeignModItemElement {
 
-    constructor(node: ASTNode): super(node)
+    constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RustForeignModItemElementStub, elementType: IStubElementType<*, *>): super(stub, elementType)
+    constructor(stub: RustForeignModItemElementStub, elementType: IStubElementType<*, *>) : super(stub, elementType)
 
     override val outerAttrList: List<RustOuterAttrElement>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustOuterAttrElement::class.java)

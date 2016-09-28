@@ -7,9 +7,10 @@ import org.rust.lang.core.psi.impl.mixin.asRustPath
 import org.rust.lang.core.resolve.RustResolveEngine
 
 
-class RustPathReferenceImpl(element: RustPathElement)
-    : RustReferenceBase<RustPathElement>(element)
-    , RustReference {
+class RustPathReferenceImpl(
+    element: RustPathElement
+) : RustReferenceBase<RustPathElement>(element),
+    RustReference {
 
     override val RustPathElement.referenceAnchor: PsiElement get() = referenceNameElement
 

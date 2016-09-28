@@ -10,11 +10,10 @@ import com.intellij.psi.stubs.StubIndexKey
 import org.rust.lang.core.psi.RustNamedElement
 
 abstract class RustNavigationContributorBase<T> protected constructor(
-        private val indexKey: StubIndexKey<String, T>,
-        private val clazz: Class<T>
-    ) : ChooseByNameContributor
-      , GotoClassContributor
-    where T: NavigationItem, T: RustNamedElement {
+    private val indexKey: StubIndexKey<String, T>,
+    private val clazz: Class<T>
+) : ChooseByNameContributor,
+    GotoClassContributor where T : NavigationItem, T : RustNamedElement {
 
     override fun getNames(project: Project?, includeNonProjectItems: Boolean): Array<out String> {
         project ?: return emptyArray()

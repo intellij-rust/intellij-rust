@@ -4,9 +4,10 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustModDeclItemElement
 import org.rust.lang.core.resolve.RustResolveEngine
 
-class RustModReferenceImpl(modDecl: RustModDeclItemElement)
-    : RustReferenceBase<RustModDeclItemElement>(modDecl)
-    , RustReference {
+class RustModReferenceImpl(
+    modDecl: RustModDeclItemElement
+) : RustReferenceBase<RustModDeclItemElement>(modDecl),
+    RustReference {
 
     override val RustModDeclItemElement.referenceAnchor: PsiElement get() = identifier
 

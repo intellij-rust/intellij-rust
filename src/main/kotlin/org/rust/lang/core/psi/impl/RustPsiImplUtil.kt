@@ -12,8 +12,8 @@ import org.rust.lang.core.symbols.RustPathSegment
  */
 object RustPsiImplUtil {
     fun <PsiT> isPublic(o: PsiT): Boolean
-        where PsiT: RustStubbedNamedElementImpl<*>,
-              PsiT: RustVisibilityOwner
+        where PsiT : RustStubbedNamedElementImpl<*>,
+              PsiT : RustVisibilityOwner
     {
         return o.stub?.isPublic ?: isPublicNonStubbed(o)
     }

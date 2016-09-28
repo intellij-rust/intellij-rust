@@ -159,7 +159,7 @@ class MissingToolchainNotificationProvider(
             createActionLabel("Download") {
                 val destination = chooseDownloadLocation(this) ?: return@createActionLabel
 
-                val task = object: Task.Backgroundable(module.project, "stdlib download") {
+                val task = object : Task.Backgroundable(module.project, "stdlib download") {
 
                     private var library: VirtualFile? = null
 
@@ -196,7 +196,7 @@ class MissingToolchainNotificationProvider(
 
             createActionLabel("Attach") {
                 val stdlib = chooseStdlibLocation(this) ?: return@createActionLabel
-                if(!tryAttachStdlibToModule(module, stdlib)) {
+                if (!tryAttachStdlibToModule(module, stdlib)) {
                     showWrongStdlibBalloon(stdlib)
                 }
                 notifications.updateAllNotifications()
@@ -217,7 +217,7 @@ class MissingToolchainNotificationProvider(
         return true
     }
 
-    private fun showWrongStdlibBalloon(stdlib: VirtualFile)  {
+    private fun showWrongStdlibBalloon(stdlib: VirtualFile) {
         project.showBalloon(
             "Invalid Rust standard library source path: `${stdlib.presentableUrl}`",
             NotificationType.ERROR

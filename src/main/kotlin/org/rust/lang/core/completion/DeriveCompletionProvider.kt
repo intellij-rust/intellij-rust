@@ -18,8 +18,14 @@ import org.rust.lang.core.psi.util.parentOfType
 
 object DeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
 
-    private val DERIVABLE_TRAITS = listOf("Eq", "PartialEq", "Ord", "PartialOrd", "Copy", "Clone", "Hash", "Default",
-        "Debug")
+    private val DERIVABLE_TRAITS = listOf(
+        "Eq", "PartialEq",
+        "Ord", "PartialOrd",
+        "Copy", "Clone",
+        "Hash",
+        "Default",
+        "Debug"
+    )
 
     override fun addCompletions(parameters: CompletionParameters,
                                 context: ProcessingContext?,

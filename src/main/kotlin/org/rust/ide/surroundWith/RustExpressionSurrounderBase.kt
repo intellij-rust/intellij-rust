@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustExprElement
-import java.util.*
 
 abstract class RustExpressionSurrounderBase : Surrounder {
     abstract fun isApplicable(expression: RustExprElement): Boolean

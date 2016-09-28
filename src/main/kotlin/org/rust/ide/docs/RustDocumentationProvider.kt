@@ -24,8 +24,8 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
 
     override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?) = when (element) {
         is RustPatBindingElement -> getQuickNavigateInfo(element)
-        is RustFnElement         -> getQuickNavigateInfo(element)
-        else                     -> null
+        is RustFnElement -> getQuickNavigateInfo(element)
+        else -> null
     }
 
     private fun getQuickNavigateInfo(element: RustPatBindingElement): String {
@@ -67,9 +67,9 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
         // if all else fails, drop down to the length of the current element
         val functionElements = listOf(whereClause, retType, parameters)
         val signatureEnd = functionElements
-                .filterNotNull().firstOrNull()
-                ?.let { it.startOffsetInParent + it.textLength }
-                ?: textLength
+            .filterNotNull().firstOrNull()
+            ?.let { it.startOffsetInParent + it.textLength }
+            ?: textLength
 
         val identStart = identifier.startOffsetInParent
         val identEnd = identStart + identifier.textLength
@@ -78,12 +78,12 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
 
         val beforeIdent = text.substring(signatureStart, identStart).escaped
         val afterIdent = text.substring(identEnd, signatureEnd)
-                .replace("""\s+""".toRegex(), " ")
-                .replace("( ", "(")
-                .replace(" )", ")")
-                .replace(" ,", ",")
-                .trimEnd()
-                .escaped
+            .replace("""\s+""".toRegex(), " ")
+            .replace("( ", "(")
+            .replace(" )", ")")
+            .replace(" ,", ",")
+            .trimEnd()
+            .escaped
 
         return "$beforeIdent<b>$name</b>$afterIdent"
     }

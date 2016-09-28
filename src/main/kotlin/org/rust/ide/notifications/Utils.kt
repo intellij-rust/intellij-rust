@@ -21,7 +21,7 @@ fun Project.showBalloon(content: String, type: NotificationType) {
  * Don't use it for anything more important then notifications.
  *
  */
-fun<L> subscribeForOneMessage(bus: MessageBus, topic: Topic<L>, listener: L) {
+fun <L> subscribeForOneMessage(bus: MessageBus, topic: Topic<L>, listener: L) {
     val connection = bus.connect()
     connection.setDefaultHandler { method, args ->
         connection.disconnect()

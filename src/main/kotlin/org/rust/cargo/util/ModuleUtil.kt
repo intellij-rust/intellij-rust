@@ -46,16 +46,6 @@ inline fun<reified T: Any> Module.getComponentOrThrow(): T =
 
 
 /**
- * Makes given path relative to the content-root of the module or
- * one of the respective's dependencies
- */
-fun Module.relativise(f: VirtualFile): Pair<String, String>? =
-    cargoProject?.findPackageForFile(f)?.let {
-        val (pkg, relPath) = it
-        pkg.name to relPath
-    }
-
-/**
  * Rust standard library crates source roots extracted from a zip archive or a folder with rust.
  * Hopefully this class will go away when a standard way to get rust sources appears.
  */

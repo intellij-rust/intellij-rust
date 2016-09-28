@@ -18,14 +18,14 @@ fun <T> recursionGuard(key: Any, block: Computable<T>, memoize: Boolean = true):
  *
  * Copy pasted from IDEA for backwards compatibility with 15.0.4
  */
-fun <T> runWriteAction(runnable: () -> T): T = ApplicationManager.getApplication().runWriteAction (Computable { runnable.invoke() })
+fun <T> runWriteAction(runnable: () -> T): T = ApplicationManager.getApplication().runWriteAction(Computable { runnable.invoke() })
 
 /**
  * Wrapper util to run [runnable] under RL
  *
  * Copy pasted from IDEA for backwards compatibility with 15.0.4
  */
-fun <T> runReadAction(runnable: () -> T): T = ApplicationManager.getApplication().runReadAction (Computable { runnable.invoke() })
+fun <T> runReadAction(runnable: () -> T): T = ApplicationManager.getApplication().runReadAction(Computable { runnable.invoke() })
 
 /**
  * Util to extract application-level services

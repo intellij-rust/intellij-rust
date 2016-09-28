@@ -11,8 +11,8 @@ import org.rust.lang.core.resolve.RustResolveEngine
 
 class RustStructExprFieldReferenceImpl(
     field: RustStructExprFieldElement
-) : RustReferenceBase<RustStructExprFieldElement>(field)
-  , RustReference {
+) : RustReferenceBase<RustStructExprFieldElement>(field),
+    RustReference {
 
     override val RustStructExprFieldElement.referenceAnchor: PsiElement get() = referenceNameElement
 
@@ -21,7 +21,7 @@ class RustStructExprFieldReferenceImpl(
         RustCompletionEngine.completeFieldName(element)
 
     override fun resolveVerbose(): RustResolveEngine.ResolveResult {
-        val structExpr  = element.parentOfType<RustStructExprElement>()
+        val structExpr = element.parentOfType<RustStructExprElement>()
 
         return if (structExpr != null)
             RustResolveEngine.resolveStructExprField(structExpr, element.referenceName)

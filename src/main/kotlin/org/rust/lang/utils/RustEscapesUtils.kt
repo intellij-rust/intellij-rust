@@ -19,7 +19,7 @@ fun String.unescapeRust(escapesLexer: RustEscapesLexer): String =
             val (type, text) = it
             when (type) {
                 VALID_STRING_ESCAPE_TOKEN -> decodeEscape(text)
-                else                      -> text
+                else -> text
             }
         }
 
@@ -33,7 +33,7 @@ fun parseRustStringCharacters(chars: String, outChars: StringBuilder, sourceOffs
     var index = 0
     for ((type, text) in chars.tokenize(RustEscapesLexer.dummy())) {
         when (type) {
-            VALID_STRING_ESCAPE_TOKEN    -> {
+            VALID_STRING_ESCAPE_TOKEN -> {
                 outChars.append(decodeEscape(text))
                 if (sourceOffsets != null) {
                     // Set offset for the decoded character to the beginning of the escape sequence.
@@ -47,7 +47,7 @@ fun parseRustStringCharacters(chars: String, outChars: StringBuilder, sourceOffs
             INVALID_UNICODE_ESCAPE_TOKEN ->
                 return false
 
-            else                         -> {
+            else -> {
                 val first = outChars.length - outOffset
                 outChars.append(text)
                 val last = outChars.length - outOffset - 1
@@ -66,22 +66,22 @@ fun parseRustStringCharacters(chars: String, outChars: StringBuilder, sourceOffs
 }
 
 private fun decodeEscape(esc: String): String = when (esc) {
-    "\\n"  -> "\n"
-    "\\r"  -> "\r"
-    "\\t"  -> "\t"
-    "\\0"  -> "\u0000"
+    "\\n" -> "\n"
+    "\\r" -> "\r"
+    "\\t" -> "\t"
+    "\\0" -> "\u0000"
     "\\\\" -> "\\"
-    "\\'"  -> "\'"
+    "\\'" -> "\'"
     "\\\"" -> "\""
 
-    else   -> {
+    else -> {
         assert(esc.length >= 2)
         assert(esc[0] == '\\')
         when (esc[1]) {
-            'x'        -> Integer.parseInt(esc.substring(2), 16).toChar().toString()
-            'u'        -> Integer.parseInt(esc.substring(3, esc.length - 1), 16).toChar().toString()
+            'x' -> Integer.parseInt(esc.substring(2), 16).toChar().toString()
+            'u' -> Integer.parseInt(esc.substring(3, esc.length - 1), 16).toChar().toString()
             '\r', '\n' -> ""
-            else       -> error("unreachable")
+            else -> error("unreachable")
         }
     }
 }

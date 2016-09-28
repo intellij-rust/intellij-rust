@@ -10,8 +10,8 @@ import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.stubs.elements.RustFnItemElementStub
 import javax.swing.Icon
 
-abstract class RustFnItemImplMixin : RustFnImplMixin<RustFnItemElementStub>
-                                   , RustFnItemElement {
+abstract class RustFnItemImplMixin : RustFnImplMixin<RustFnItemElementStub>,
+                                     RustFnItemElement {
 
     constructor(node: ASTNode) : super(node)
 

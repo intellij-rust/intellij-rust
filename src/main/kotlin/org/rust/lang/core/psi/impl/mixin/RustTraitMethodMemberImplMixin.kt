@@ -10,8 +10,8 @@ import org.rust.lang.core.stubs.elements.RustTraitMethodMemberElementStub
 import javax.swing.Icon
 
 
-abstract class RustTraitMethodMemberImplMixin : RustFnImplMixin<RustTraitMethodMemberElementStub>
-                                              , RustTraitMethodMemberElement {
+abstract class RustTraitMethodMemberImplMixin : RustFnImplMixin<RustTraitMethodMemberElementStub>,
+                                                RustTraitMethodMemberElement {
 
     constructor(node: ASTNode) : super(node)
 

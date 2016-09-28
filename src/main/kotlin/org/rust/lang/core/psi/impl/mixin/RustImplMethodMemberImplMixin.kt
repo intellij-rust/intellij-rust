@@ -15,8 +15,8 @@ import org.rust.lang.core.psi.util.trait
 import org.rust.lang.core.stubs.elements.RustImplMethodMemberElementStub
 import javax.swing.Icon
 
-abstract class RustImplMethodMemberImplMixin : RustFnImplMixin<RustImplMethodMemberElementStub>
-    , RustImplMethodMemberElement {
+abstract class RustImplMethodMemberImplMixin : RustFnImplMixin<RustImplMethodMemberElementStub>,
+                                               RustImplMethodMemberElement {
 
     constructor(node: ASTNode) : super(node)
 

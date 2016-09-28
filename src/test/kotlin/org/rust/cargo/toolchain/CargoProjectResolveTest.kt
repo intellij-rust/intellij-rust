@@ -55,7 +55,7 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
             .connect()
             .subscribe(
                 CargoProjectWorkspaceListener.Topics.UPDATES,
-                object: CargoProjectWorkspaceListener {
+                object : CargoProjectWorkspaceListener {
                     override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
                         assertThat(r is UpdateResult.Ok)
                         f.set(callback(r))

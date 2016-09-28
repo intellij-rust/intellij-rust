@@ -14,8 +14,8 @@ import org.rust.lang.core.resolve.RustResolveEngine
 
 abstract class RustReferenceBase<T : RustReferenceElement>(
     element: T
-) : PsiReferenceBase<T>(element)
-  , RustReference {
+) : PsiReferenceBase<T>(element),
+    RustReference {
 
     override fun equals(other: Any?): Boolean = other is RustReferenceBase<*> && element === other.element
 
@@ -53,7 +53,7 @@ abstract class RustReferenceBase<T : RustReferenceElement>(
         cache.resolveWithCaching(
             this,
             { e, incomplete -> block(e, incomplete) },
-            false /* needToPreventRecursion = */ ,
+            false /* needToPreventRecursion = */,
             false /* incompleteCode = */
         ) ?: RustResolveEngine.ResolveResult.Unresolved
 

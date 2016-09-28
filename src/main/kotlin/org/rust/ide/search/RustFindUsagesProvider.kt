@@ -4,7 +4,6 @@ import com.intellij.lang.HelpID
 import com.intellij.lang.findUsages.FindUsagesProvider
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustPatBindingElement
 
 class RustFindUsagesProvider : FindUsagesProvider {
     // XXX: must return new instance of WordScanner here, because it is not thread safe

@@ -71,7 +71,7 @@ object RustResolveEngine {
         type.accept(RustTypeResolvingVisitor(pivot))
 
     /**
-     * Resolves abstract qualified-path [ref] in such a way, like it was a qualified-reference
+     * Resolves abstract qualified-path [path] in such a way, like it was a qualified-reference
      * used at [pivot]
      */
     fun resolve(path: RustPath, pivot: RustCompositeElement): ResolveResult {

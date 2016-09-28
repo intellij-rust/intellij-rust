@@ -5,9 +5,10 @@ import org.rust.lang.core.completion.RustCompletionEngine
 import org.rust.lang.core.psi.RustUseGlobElement
 import org.rust.lang.core.resolve.RustResolveEngine
 
-class RustUseGlobReferenceImpl(useGlob: RustUseGlobElement)
-    : RustReferenceBase<RustUseGlobElement>(useGlob)
-    , RustReference {
+class RustUseGlobReferenceImpl(
+    useGlob: RustUseGlobElement
+) : RustReferenceBase<RustUseGlobElement>(useGlob),
+    RustReference {
 
     override val RustUseGlobElement.referenceAnchor: PsiElement get() = referenceNameElement
 

@@ -16,7 +16,7 @@ class RustStringLiteralImpl(type: IElementType, text: CharSequence) : RustTextLi
     override fun computeOffsets(): Offsets {
         val quote = when (elementType) {
             BYTE_LITERAL, CHAR_LITERAL -> '\''
-            else                       -> '"'
+            else -> '"'
         }
 
         val prefixEnd = locatePrefix()
@@ -42,7 +42,7 @@ class RustStringLiteralImpl(type: IElementType, text: CharSequence) : RustTextLi
             if (escape) {
                 escape = false
             } else when (ch) {
-                '\\'  -> escape = true
+                '\\' -> escape = true
                 quote -> return i + start
             }
         }

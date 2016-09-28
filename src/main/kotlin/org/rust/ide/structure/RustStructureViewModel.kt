@@ -7,8 +7,8 @@ import com.intellij.openapi.editor.Editor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
 
-class RustStructureViewModel(editor: Editor?, file: RustFile) : TextEditorBasedStructureViewModel(editor, file)
-                                                              , StructureViewModel.ElementInfoProvider {
+class RustStructureViewModel(editor: Editor?, file: RustFile) : TextEditorBasedStructureViewModel(editor, file),
+                                                                StructureViewModel.ElementInfoProvider {
 
     override fun getRoot() = RustModTreeElement(psiFile)
 
@@ -23,6 +23,6 @@ class RustStructureViewModel(editor: Editor?, file: RustFile) : TextEditorBasedS
             is RustImplMethodMemberElement,
             is RustModDeclItemElement,
             is RustTypeItemElement -> true
-            else            -> false
+            else -> false
         }
 }

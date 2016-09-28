@@ -10,6 +10,6 @@ import org.rust.lang.core.resolve.ref.RustReference
 abstract class RustFieldExprImplMixin(node: ASTNode?) : RustExprElementImpl(node), RustFieldExprElement {
     override val referenceNameElement: PsiElement get() = fieldId
 
-    override fun getReference(): RustReference =  RustFieldExprReferenceImpl(this)
+    override fun getReference(): RustReference = RustFieldExprReferenceImpl(this)
 
 }

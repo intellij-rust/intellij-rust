@@ -34,5 +34,5 @@ class RustTraitMethodMemberElementStub(
     elementType: IStubElementType<*, *>,
     name: String?,
     attributes: FnAttributes
-): RustFnElementStub<RustTraitMethodMemberElement>(parent, elementType, name ?: "", false, attributes)
+) : RustFnElementStub<RustTraitMethodMemberElement>(parent, elementType, name ?: "", false, attributes)
 

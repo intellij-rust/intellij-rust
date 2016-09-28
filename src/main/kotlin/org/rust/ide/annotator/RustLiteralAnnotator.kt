@@ -38,8 +38,8 @@ class RustLiteralAnnotator : Annotator {
                     val value = literal.value
                     when {
                         value == null || value.length == 0 -> "empty ${literal.displayName}"
-                        value.length > 1                   -> "too many characters in ${literal.displayName}"
-                        else                               -> null
+                        value.length > 1 -> "too many characters in ${literal.displayName}"
+                        else -> null
                     }?.let { holder.literalError(literal, it) }
                 }
             }
@@ -63,17 +63,17 @@ private val PsiElement.displayName: String
 // TODO: Make this more generic
 private val IElementType.displayName: String
     get() = when (this) {
-        INTEGER_LITERAL         -> "integer literal"
-        FLOAT_LITERAL           -> "float literal"
+        INTEGER_LITERAL -> "integer literal"
+        FLOAT_LITERAL -> "float literal"
 
-        CHAR_LITERAL            -> "char literal"
-        BYTE_LITERAL            -> "byte literal"
+        CHAR_LITERAL -> "char literal"
+        BYTE_LITERAL -> "byte literal"
 
-        STRING_LITERAL          -> "string literal"
-        BYTE_STRING_LITERAL     -> "byte string literal"
+        STRING_LITERAL -> "string literal"
+        BYTE_STRING_LITERAL -> "byte string literal"
 
-        RAW_STRING_LITERAL      -> "raw string literal"
+        RAW_STRING_LITERAL -> "raw string literal"
         RAW_BYTE_STRING_LITERAL -> "raw byte string literal"
 
-        else                    -> toString()
+        else -> toString()
     }

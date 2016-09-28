@@ -11,8 +11,7 @@ import java.util.regex.Pattern
  * Filters output for “[--explain Exxxx]” and links to the relevant
  * documentation.
  */
-class RustExplainFilter : Filter
-                        , DumbAware {
+class RustExplainFilter : Filter, DumbAware {
     private val link_length: Int = 15
     private val pattern: Pattern = Pattern.compile("--explain E(\\d{4})")
 

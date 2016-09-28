@@ -8,6 +8,6 @@ class RustStructTreeElement(element: RustStructItemElement) : PsiTreeElementBase
 
     override fun getPresentableText() = element?.name
 
-    override fun getChildrenBase() = (element?.fields ?: emptyList()).map { RustStructDeclFieldTreeElement(it) }
+    override fun getChildrenBase() = (element?.fields ?: emptyList()).map(::RustStructDeclFieldTreeElement)
 
 }

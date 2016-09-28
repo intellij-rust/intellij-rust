@@ -23,7 +23,7 @@ import org.rust.lang.core.psi.util.parentOfType
  */
 class AddCurlyBracesIntention : PsiElementBaseIntentionAction() {
     override fun getText() = "Add curly braces"
-    override fun getFamilyName() = getText()
+    override fun getFamilyName() = text
     override fun startInWriteAction() = true
 
     override fun invoke(project: Project, editor: Editor, element: PsiElement) {

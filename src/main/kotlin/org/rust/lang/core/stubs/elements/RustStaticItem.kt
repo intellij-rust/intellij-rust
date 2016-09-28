@@ -5,7 +5,6 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubInputStream
 import com.intellij.psi.stubs.StubOutputStream
-import com.intellij.util.io.StringRef
 import org.rust.lang.core.psi.RustStaticItemElement
 import org.rust.lang.core.psi.impl.RustStaticItemElementImpl
 import org.rust.lang.core.stubs.RustNamedElementStub

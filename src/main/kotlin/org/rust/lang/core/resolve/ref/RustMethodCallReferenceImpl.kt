@@ -6,8 +6,8 @@ import org.rust.lang.core.resolve.RustResolveEngine
 
 class RustMethodCallReferenceImpl(
     element: RustMethodCallExprElement
-) : RustReferenceBase<RustMethodCallExprElement>(element)
-  , RustReference {
+) : RustReferenceBase<RustMethodCallExprElement>(element),
+    RustReference {
 
     override val RustMethodCallExprElement.referenceAnchor: PsiElement get() = referenceNameElement
 

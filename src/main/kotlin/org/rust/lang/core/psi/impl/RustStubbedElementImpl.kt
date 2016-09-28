@@ -8,8 +8,8 @@ import com.intellij.psi.stubs.StubBase
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.resolve.ref.RustReference
 
-abstract class RustStubbedElementImpl<StubT : StubBase<*>> : StubBasedPsiElementBase<StubT>
-                                                           , RustCompositeElement {
+abstract class RustStubbedElementImpl<StubT : StubBase<*>> : StubBasedPsiElementBase<StubT>,
+                                                             RustCompositeElement {
 
     constructor(node: ASTNode) : super(node)
 

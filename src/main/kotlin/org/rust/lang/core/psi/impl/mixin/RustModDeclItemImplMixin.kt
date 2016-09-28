@@ -16,8 +16,8 @@ import org.rust.lang.core.stubs.elements.RustModDeclElementItemStub
 import java.io.File
 import javax.swing.Icon
 
-abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RustModDeclElementItemStub>
-                                        , RustModDeclItemElement {
+abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RustModDeclElementItemStub>,
+                                          RustModDeclItemElement {
 
     constructor(node: ASTNode) : super(node)
 
@@ -38,8 +38,9 @@ abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RustModDec
 }
 
 fun RustModDeclItemElement.getOrCreateModuleFile(): PsiFile? {
-    return  reference.resolve()?.containingFile ?:
-            containingMod?.ownedDirectory?.createFile(suggestChildFileName ?: return null)
+    val existing = reference.resolve()?.containingFile
+    if (existing != null) return existing
+    return suggestChildFileName?.let { containingMod?.ownedDirectory?.createFile(it) }
 }
 
 /*

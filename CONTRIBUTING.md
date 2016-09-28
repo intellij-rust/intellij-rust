@@ -63,9 +63,29 @@ When you are done with the PR, please make sure that all tests pass.
 
 ## Code style
 
-Please, consider our [code-style](STYLE.md) prior to submitting the pull request. We love PRs, but much more than just PRs we love PRs that are 'on style'.
+Please use **reformat code** action to maintain consistent style. Pay attention
+to IDEA's warning and suggestions, and try to keep the code green. If you are
+sure that the warning is false positive, use an annotation to suppress it.
 
-For the Java sources we're stuck to the Google's [one](https://google.github.io/styleguide/javaguide.html).
+Try to avoid copy-paste and boilerplate as much as possible. For example,
+proactively use `?:` and `?.let` to deal with nullable values.
+
+### Commit Messages
+
+Consider prefixing commit with a `(TAG):` which describes the area of the
+change. Common tags are:
+
+  * PSI
+  * CARGO
+  * GRD for build changes
+  * FMT for formatter
+  * GRAM for grammar changes
+  * T for tests
+  * RES for resolve
+  * TYPE for type iference
+  * MISC for anything else :)
+
+Try to keep the summary line of a commit message under 50 characters.
 
 # Testing
 

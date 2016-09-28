@@ -13,8 +13,8 @@ import org.rust.lang.core.stubs.elements.RustModItemElementStub
 import org.rust.lang.core.symbols.RustPath
 import javax.swing.Icon
 
-abstract class RustModItemImplMixin : RustStubbedNamedElementImpl<RustModItemElementStub>
-                                    , RustModItemElement {
+abstract class RustModItemImplMixin : RustStubbedNamedElementImpl<RustModItemElementStub>,
+                                      RustModItemElement {
 
     constructor(node: ASTNode) : super(node)
 

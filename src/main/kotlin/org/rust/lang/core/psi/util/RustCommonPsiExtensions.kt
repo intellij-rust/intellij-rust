@@ -4,15 +4,8 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.StubBasedPsiElement
-import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.util.PsiTreeUtil
-import org.rust.lang.core.psi.RustLitExprElement
-import org.rust.lang.core.psi.RustLiteral
 
 
 /**
@@ -61,24 +54,7 @@ fun PsiElement.contains(descendant: PsiElement?): Boolean {
     return descendant.ancestors.any { it === this }
 }
 
-
-/**
- * Composes tree-path from `this` node to the [other] (inclusive)
- */
-fun PsiElement.pathTo(other: PsiElement): Iterable<PsiElement> {
-    check(contains(other) || other.contains(this))
-
-    // Check whether we're walking the tree up or down
-    return if (other.contains(this))
-        walkUp(this, other).toList()
-    else
-        walkUp(other, this).toList().reversed()
-}
-
 private val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) { it.parent }
-
-private fun walkUp(descendant: PsiElement, ancestor: PsiElement): Sequence<PsiElement> =
-    descendant.ancestors.takeWhile { it !== ancestor } + ancestor
 
 /**
  * Extracts node's element type

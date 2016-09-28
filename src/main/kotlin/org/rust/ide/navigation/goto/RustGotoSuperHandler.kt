@@ -4,14 +4,10 @@ import com.intellij.lang.LanguageCodeInsightActionHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.rust.lang.core.psi.RustImplItemElement
 import org.rust.lang.core.psi.RustImplMethodMemberElement
 import org.rust.lang.core.psi.RustMod
-import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.superMethod
-import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.psi.util.trait
 
 class RustGotoSuperHandler : LanguageCodeInsightActionHandler {
     override fun startInWriteAction() = false
@@ -23,12 +19,12 @@ class RustGotoSuperHandler : LanguageCodeInsightActionHandler {
         while (current != null) {
             when (current) {
                 is RustImplMethodMemberElement -> {
-                    val focusedMethod : RustImplMethodMemberElement = current
+                    val focusedMethod: RustImplMethodMemberElement = current
                     focusedMethod.superMethod?.navigate(true)
                     return
                 }
                 is RustMod -> {
-                    val focusedMod : RustMod = current
+                    val focusedMod: RustMod = current
                     val superMod = focusedMod.`super` ?: return
 
                     superMod.navigate(true)

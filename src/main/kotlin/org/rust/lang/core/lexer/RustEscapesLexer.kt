@@ -13,10 +13,12 @@ private const val UNICODE_ESCAPE_MAX_LENGTH = "\\u{000000}".length
 /**
  * Performs lexical analysis of Rust byte/char/string/byte string literals using Rust character escaping rules.
  */
-class RustEscapesLexer private constructor(val defaultToken: IElementType,
-                                           val unicode: Boolean = false,
-                                           val eol: Boolean = false,
-                                           val extendedByte: Boolean = false) : LexerBaseEx() {
+class RustEscapesLexer private constructor(
+    val defaultToken: IElementType,
+    val unicode: Boolean = false,
+    val eol: Boolean = false,
+    val extendedByte: Boolean = false
+) : LexerBaseEx() {
     override fun determineTokenType(): IElementType? {
         // We're at the end of the string token => finish lexing
         if (tokenStart >= tokenEnd) {
@@ -34,16 +36,16 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
         }
 
         return when (bufferSequence[tokenStart + 1]) {
-            'u'                                 ->
+            'u' ->
                 when {
-                    !unicode                                   -> INVALID_CHARACTER_ESCAPE_TOKEN
+                    !unicode -> INVALID_CHARACTER_ESCAPE_TOKEN
                     isValidUnicodeEscape(tokenStart, tokenEnd) -> VALID_STRING_ESCAPE_TOKEN
-                    else                                       -> INVALID_UNICODE_ESCAPE_TOKEN
+                    else -> INVALID_UNICODE_ESCAPE_TOKEN
                 }
-            'x'                                 -> esc(isValidByteEscape(tokenStart, tokenEnd, extendedByte))
-            '\r', '\n'                          -> esc(eol)
+            'x' -> esc(isValidByteEscape(tokenStart, tokenEnd, extendedByte))
+            '\r', '\n' -> esc(eol)
             'n', 'r', 't', '0', '\\', '\'', '"' -> VALID_STRING_ESCAPE_TOKEN
-            else                                -> INVALID_CHARACTER_ESCAPE_TOKEN
+            else -> INVALID_CHARACTER_ESCAPE_TOKEN
         }
     }
 
@@ -60,7 +62,7 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
             }
 
             when (bufferSequence[i]) {
-                'x'        ->
+                'x' ->
                     if (bufferEnd - (i + 1) >= 1 && isHexDigit(bufferSequence[i + 1])) {
                         if (bufferEnd - (i + 2) >= 1 && isHexDigit(bufferSequence[i + 2])) {
                             return i + 2 + 1
@@ -68,7 +70,7 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
                             return i + 1 + 1
                         }
                     }
-                'u'        ->
+                'u' ->
                     if (bufferEnd - (i + 1) >= 1 && bufferSequence[i + 1] == '{') {
                         val idx = indexOf(bufferSequence, "}", i + 1, bufferEnd)
                         return if (idx != -1) idx + 1 else bufferEnd
@@ -120,11 +122,11 @@ class RustEscapesLexer private constructor(val defaultToken: IElementType,
          * @throws IllegalArgumentException when given token type is unsupported
          */
         fun of(tokenType: IElementType): RustEscapesLexer = when (tokenType) {
-            BYTE_LITERAL        -> RustEscapesLexer(BYTE_LITERAL, extendedByte = true)
-            CHAR_LITERAL        -> RustEscapesLexer(CHAR_LITERAL, unicode = true)
+            BYTE_LITERAL -> RustEscapesLexer(BYTE_LITERAL, extendedByte = true)
+            CHAR_LITERAL -> RustEscapesLexer(CHAR_LITERAL, unicode = true)
             BYTE_STRING_LITERAL -> RustEscapesLexer(BYTE_STRING_LITERAL, eol = true, extendedByte = true)
-            STRING_LITERAL      -> RustEscapesLexer(STRING_LITERAL, unicode = true, eol = true)
-            else                -> throw IllegalArgumentException("unsupported literal type")
+            STRING_LITERAL -> RustEscapesLexer(STRING_LITERAL, unicode = true, eol = true)
+            else -> throw IllegalArgumentException("unsupported literal type")
         }
 
         /**

@@ -13,9 +13,9 @@ import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.util.RustResolveUtil
 import org.rust.lang.core.stubs.RustNamedElementStub
 
-abstract class RustStubbedNamedElementImpl<StubT> : RustStubbedElementImpl<StubT>
-                                                  , RustNamedElement
-    where StubT: RustNamedElementStub<*> {
+abstract class RustStubbedNamedElementImpl<StubT> : RustStubbedElementImpl<StubT>,
+                                                    RustNamedElement
+    where StubT : RustNamedElementStub<*> {
 
     constructor(node: ASTNode) : super(node)
 

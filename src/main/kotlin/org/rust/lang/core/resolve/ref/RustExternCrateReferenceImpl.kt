@@ -4,9 +4,10 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustExternCrateItemElement
 import org.rust.lang.core.resolve.RustResolveEngine
 
-class RustExternCrateReferenceImpl(externCrate: RustExternCrateItemElement)
-    : RustReferenceBase<RustExternCrateItemElement>(externCrate)
-    , RustReference {
+class RustExternCrateReferenceImpl(
+    externCrate: RustExternCrateItemElement
+) : RustReferenceBase<RustExternCrateItemElement>(externCrate),
+    RustReference {
 
     override val RustExternCrateItemElement.referenceAnchor: PsiElement get() = identifier
 

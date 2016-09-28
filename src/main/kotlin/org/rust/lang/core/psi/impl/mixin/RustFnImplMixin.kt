@@ -8,8 +8,8 @@ import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
 import org.rust.lang.core.psi.queryAttributes
 import org.rust.lang.core.stubs.RustFnElementStub
 
-abstract class RustFnImplMixin<StubT : RustFnElementStub<*>> : RustStubbedNamedElementImpl<StubT>
-                                                             , RustFnElement {
+abstract class RustFnImplMixin<StubT : RustFnElementStub<*>> : RustStubbedNamedElementImpl<StubT>,
+                                                               RustFnElement {
 
     constructor(node: ASTNode) : super(node)
 

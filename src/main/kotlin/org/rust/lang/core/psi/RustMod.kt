@@ -1,9 +1,6 @@
 package org.rust.lang.core.psi
 
 import com.intellij.psi.PsiDirectory
-import org.rust.lang.core.symbols.RustPath
-import org.rust.lang.core.symbols.RustPathHead
-import org.rust.lang.core.symbols.RustPathSegment
 import java.util.*
 
 interface RustMod : RustPathNamedElement, RustItemsOwner {

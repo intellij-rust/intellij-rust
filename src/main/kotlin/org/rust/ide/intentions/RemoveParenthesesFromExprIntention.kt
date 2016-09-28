@@ -8,8 +8,8 @@ import org.rust.lang.core.psi.RustParenExprElement
 import org.rust.lang.core.psi.util.parentOfType
 
 class RemoveParenthesesFromExprIntention : PsiElementBaseIntentionAction() {
-    override fun getFamilyName(): String = text
     override fun getText(): String = "Remove parentheses from expression"
+    override fun getFamilyName(): String = text
     override fun startInWriteAction(): Boolean = true
 
     override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {

@@ -7,14 +7,12 @@ import org.rust.lang.core.psi.RustPatBindingElement
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
 import javax.swing.Icon
 
-abstract class RustPatBindingImplMixin(node: ASTNode) : RustNamedElementImpl(node)
-                                                      , RustPatBindingElement {
+abstract class RustPatBindingImplMixin(node: ASTNode) : RustNamedElementImpl(node),
+                                                        RustPatBindingElement {
 
     override fun getNavigationElement(): PsiElement = identifier
 
-    override fun getIcon(flags: Int): Icon? {
-        return RustIcons.BINDING
-    }
+    override fun getIcon(flags: Int): Icon = RustIcons.BINDING
 }
 
 val RustPatBindingElement.isMut: Boolean

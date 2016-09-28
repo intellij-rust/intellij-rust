@@ -14,8 +14,8 @@ import org.rust.lang.core.symbols.RustPathHead
 import org.rust.lang.core.symbols.RustPathSegment
 import org.rust.lang.core.types.util.type
 
-abstract class RustPathImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
-    , RustPathElement {
+abstract class RustPathImplMixin(node: ASTNode) : RustCompositeElementImpl(node),
+                                                  RustPathElement {
 
     override fun getReference(): RustReference = RustPathReferenceImpl(this)
 
@@ -85,5 +85,5 @@ val RustPathElement.asRustPath: RustPath? get() {
     }
 }
 
-private val RustPathElement.segment: RustPathSegment get() =
-    RustPathSegment(referenceName, genericArgs?.typeList.orEmpty().map { it.type })
+private val RustPathElement.segment: RustPathSegment
+    get() = RustPathSegment(referenceName, genericArgs?.typeList.orEmpty().map { it.type })

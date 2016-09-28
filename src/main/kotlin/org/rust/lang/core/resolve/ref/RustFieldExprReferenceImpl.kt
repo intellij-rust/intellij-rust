@@ -7,8 +7,8 @@ import org.rust.lang.core.resolve.RustResolveEngine
 
 class RustFieldExprReferenceImpl(
     fieldExpr: RustFieldExprElement
-) : RustReferenceBase<RustFieldExprElement>(fieldExpr)
-  , RustReference {
+) : RustReferenceBase<RustFieldExprElement>(fieldExpr),
+    RustReference {
 
     override val RustFieldExprElement.referenceAnchor: PsiElement get() = referenceNameElement
 

@@ -5,9 +5,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.resolve.ref.RustReference
 
 interface RustCompositeElement : PsiElement {
-
     override fun getReference(): RustReference?
-
 }
 
 val RustCompositeElement.containingMod: RustMod?

@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.download.DownloadableFileService
-import java.io.IOException
 import kotlin.reflect.KProperty
 
 
@@ -34,7 +33,7 @@ fun <T> using(d: Disposable, block: () -> T): T {
  * @d       Target `Disposable` to be disposed upon completion of the @block
  * @block   Target block to be run prior to disposal of @d
  */
-fun <D: Disposable, T> usingWith(d: D, block: (D) -> T): T {
+fun <D : Disposable, T> usingWith(d: D, block: (D) -> T): T {
     try {
         return block(d)
     } finally {
@@ -66,7 +65,7 @@ fun <T : Any> sequenceOfNotNull(element: T?): Sequence<T> = if (element != null)
  */
 fun download(url: String, fileName: String, destination: VirtualFile): VirtualFile? {
     val downloadService = DownloadableFileService.getInstance()
-    val downloader      = downloadService.createDownloader(listOf(downloadService.createFileDescription(url, fileName)), fileName)
+    val downloader = downloadService.createDownloader(listOf(downloadService.createFileDescription(url, fileName)), fileName)
 
     val downloadTo = VfsUtilCore.virtualToIoFile(destination)
     val (file, @Suppress("UNUSED_VARIABLE") d) = downloader.download(downloadTo).single()

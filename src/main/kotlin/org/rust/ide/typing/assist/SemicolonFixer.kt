@@ -3,7 +3,8 @@ package org.rust.ide.typing.assist
 import com.intellij.lang.SmartEnterProcessorWithFixers
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RustBlockElement
+import org.rust.lang.core.psi.RustStmtElement
 
 /**
  * Fixer that adds missing semicolons at the end of statements.

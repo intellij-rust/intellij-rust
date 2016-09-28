@@ -19,9 +19,9 @@ class RustSuggestIndexNameMacro : MacroBase("rustSuggestIndexName", "rustSuggest
         val pivot = context.psiElementAtStartOffset?.parentOfType<RustCompositeElement>() ?: return null
         val pats = getPatBindingNamesVisibleAt(pivot)
         return ('i'..'z')
-            .map { it.toString() }
+            .map(Char::toString)
             .find { it !in pats }
-            ?.let { TextResult(it) }
+            ?.let(::TextResult)
     }
 }
 

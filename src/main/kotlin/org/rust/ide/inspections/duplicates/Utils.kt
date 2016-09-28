@@ -7,10 +7,10 @@ import org.rust.lang.core.psi.RustReferenceElement
 import org.rust.lang.core.psi.referenceName
 import java.util.*
 
-fun<T: RustNamedElement> Collection<T>.findDuplicates(): Collection<T> =
+fun <T : RustNamedElement> Collection<T>.findDuplicates(): Collection<T> =
     findDuplicatesBy(this, { it.name })
 
-fun<T: RustReferenceElement> Collection<T>.findDuplicateReferences(): Collection<T> =
+fun <T : RustReferenceElement> Collection<T>.findDuplicateReferences(): Collection<T> =
     findDuplicatesBy(this, { it.referenceName })
 
 

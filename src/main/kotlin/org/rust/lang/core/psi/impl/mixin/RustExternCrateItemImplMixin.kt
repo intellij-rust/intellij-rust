@@ -10,8 +10,8 @@ import org.rust.lang.core.resolve.ref.RustExternCrateReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
 import org.rust.lang.core.stubs.elements.RustExternCrateItemElementStub
 
-abstract class RustExternCrateItemImplMixin : RustStubbedNamedElementImpl<RustExternCrateItemElementStub>
-                                            , RustExternCrateItemElement {
+abstract class RustExternCrateItemImplMixin : RustStubbedNamedElementImpl<RustExternCrateItemElementStub>,
+                                              RustExternCrateItemElement {
 
     constructor(node: ASTNode) : super(node)
 

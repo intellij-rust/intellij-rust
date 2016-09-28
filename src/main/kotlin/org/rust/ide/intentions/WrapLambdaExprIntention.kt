@@ -2,14 +2,11 @@ package org.rust.ide.intentions
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.source.PsiTypeElementImpl
 import org.rust.lang.core.psi.RustBlockExprElement
 import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustLambdaExprElement
-import org.rust.lang.core.psi.impl.RustBlockExprElementImpl
 import org.rust.lang.core.psi.util.parentOfType
 
 class WrapLambdaExprIntention : PsiElementBaseIntentionAction() {

@@ -6,8 +6,8 @@ import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustTokenElementTypes
 
-abstract class RustNamedElementImpl(node: ASTNode)   : RustCompositeElementImpl(node)
-                                                     , RustNamedElement {
+abstract class RustNamedElementImpl(node: ASTNode) : RustCompositeElementImpl(node),
+                                                     RustNamedElement {
 
     protected open val nameElement: PsiElement?
         get() = findChildByType(RustTokenElementTypes.IDENTIFIER)
