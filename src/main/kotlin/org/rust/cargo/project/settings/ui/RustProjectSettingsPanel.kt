@@ -30,6 +30,8 @@ class RustProjectSettingsPanel : JPanel() {
     }
 
     private val disposable = Disposer.newDisposable()
+    private val versionUpdateAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
+
     @Suppress("unused") // required by GUI designer to use this form as an element of other forms
     private lateinit var root: JPanel
     private lateinit var toolchainLocationField: TextFieldWithBrowseButton
@@ -38,7 +40,6 @@ class RustProjectSettingsPanel : JPanel() {
     private lateinit var rustVersion: JLabel
     private lateinit var cargoVersion: JLabel
     private lateinit var rustupVersion: JLabel
-    private lateinit var versionUpdateAlarm: Alarm
 
     private val versionUpdateDelayMillis = 200
 
@@ -61,10 +62,8 @@ class RustProjectSettingsPanel : JPanel() {
             TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
             false
         )
-        versionUpdateAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
         listenForUpdates(toolchainLocationField.textField)
         Disposer.register(disposable, toolchainLocationField)
-
 
         data = Data(
             RustToolchain.suggest(),

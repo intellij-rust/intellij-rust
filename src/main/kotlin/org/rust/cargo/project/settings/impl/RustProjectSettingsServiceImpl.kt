@@ -44,7 +44,7 @@ class RustProjectSettingsServiceImpl(
         }
 
     override var toolchain: RustToolchain?
-        get() = state.toolchainHomeDirectory?.let { RustToolchain(it) }
+        get() = state.toolchainHomeDirectory?.let(::RustToolchain)
         set(value) {
             if (state.toolchainHomeDirectory != value?.location) {
 
