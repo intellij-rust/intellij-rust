@@ -90,14 +90,91 @@ Try to keep the summary line of a commit message under 50 characters.
 # Testing
 
 It is much easier to understand code changes if they are accompanied with tests.
-Test classes are placed in the `src/test/kotlin` directory, `src/test/resources`
-holds rust files which are used as fixtures. Most tests are fixture driven: they
-read the rust file named as the test itself, execute some action and check result.
+Most tests are fixture-driven. They typically:
+  1. Load a rust file that represents the initial state
+  2. Execute your method under test
+  3. Verify the final state, which may also be represented as a fixture
 
-We also use Rust compiler and standard library as data in our test suite. They
+#### Structure
+
+All test classes are placed in the `src/test/kotlin` directory, while
+accompanying fixtures are placed in`src/test/resources`.
+
+In the example below `RustFormatterTest.kt` is the test class, `blocks.rs` is
+the fixture for the initial state and `blocks_after.rs` is the fixture for the
+final state. It is good practice to put fixtures in the same package as tests.
+
+     +-- src/test/kotlin
+     |    +-- org/rust/ide/formatter
+     |        +-- RustFormatterTest.kt
+     |
+     +-- src/test/resources
+         +-- org/rust/ide/formatter
+             +-- fixtures
+                 +-- blocks.rs
+                 +-- blocks_after.rs
+
+#### Fixtures
+
+Fixture files are very simple: they're rust code! Output fixtures
+on the other hand, can be rust code over which you've run an action,
+HTML (for generated documentation) or any other output you'd like
+to verify. Output fixtures have the same filename as the initial
+fixture, but with `_after` appended.
+
+Continuing with our example above, our initial fixture `blocks.rs`
+could look like:
+
+    pub fn main() {
+    let x = {
+    92
+    };
+    x;
+    }
+
+While our expected-output fixture `blocks_after.rs` contains:
+
+    pub fn main() {
+        let x = {
+            92
+        };
+        x;
+    }
+
+Some tests are dependent on the position of the editor caret. Fixtures support
+a special marker `<caret>` for this purpose. Multiple such markers for more complex
+tests. An example of a fixture with a caret:
+
+    pub fn main>() {
+      let _ = S {
+        <caret>
+    };
+
+#### Test Classes
+
+Test classes are JUnit and written in Kotlin. They specify the resource path
+in which fixtures are found and contain a number of test methods. Test methods
+follow a simple convention: their name is the initial fixture name camel-cased.
+For example, `RustFormatterTest.kt` would look like:
+
+    class RustFormatterTest: FormatterTestCase() {
+        override fun getTestDataPath() = "src/test/resources"
+        override fun getFileExtension() = "rs"
+
+        fun testBlocks() = doTest()
+    }
+
+The test method `testBlocks` states that this test uses `blocks.rs` as the
+initial fixture and `blocks_after.rs` as the expected output fixture. A more
+complicated fixture name like `a_longer_fixture_name.rs` would use the
+test method `testALongerFixtureName()`.
+
+#### Running
+
+We use the Rust compiler and standard library as data in our test suite. They
 are downloaded automatically by gradle.
 
-The test suite can be run by launching:
+To run the test suite, use:
 
     ./gradlew test
 
@@ -105,10 +182,9 @@ To launch parser performance tests, use
 
     ./gradlew performanceTest
 
-There is a special TeamCity configuration for tracking of [performance metrics].
+There is a special TeamCity configuration for tracking [performance metrics].
 
 [performance metrics]: https://teamcity.jetbrains.com/project.html?projectId=IntellijIdeaPlugins_Rust&tab=stats
-
 
 # Pull requests best practices
 
