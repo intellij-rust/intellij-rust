@@ -1,25 +1,11 @@
 package org.rust.lang.core.resolve.util
 
-import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.superMods
-import org.rust.lang.core.resolve.scope.RustResolveScope
 
 object RustResolveUtil {
-
-    fun getResolveScopeFor(elem: PsiElement): RustResolveScope? {
-        var current = elem.parent
-        while (current != null) {
-            when (current) {
-                is RustResolveScope -> return current
-                else                -> current = current.parent
-            }
-        }
-
-        return null
-    }
 
     /**
      *  Returns a "crate root": the top level module of the crate to which the `PsiElement` belongs.

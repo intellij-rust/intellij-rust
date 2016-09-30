@@ -235,11 +235,11 @@ object RustResolveEngine {
     ): Sequence<ScopeEntry> = declarations(scope, Context(pivot, searchFor = searchFor))
 
     fun enumerateScopesFor(pivot: RustCompositeElement): Sequence<RustResolveScope> =
-        generateSequence(RustResolveUtil.getResolveScopeFor(pivot)) { parent ->
-            if (parent is RustModItemElement)
+        generateSequence(pivot.parentOfType<RustResolveScope>()) { current ->
+            if (current is RustModItemElement)
                 null
             else
-                RustResolveUtil.getResolveScopeFor(parent)
+                current.parentOfType<RustResolveScope>()
         }
 }
 
