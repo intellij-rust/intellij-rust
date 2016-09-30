@@ -9,7 +9,8 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
 import com.intellij.psi.StringEscapesTokenTypes.STRING_LITERAL_ESCAPES
-import org.rust.lang.core.psi.RustTokenElementTypes.*
+import org.rust.lang.core.psi.RustTokenElementTypes.RAW_LITERALS
+import org.rust.lang.core.psi.RustTokenElementTypes.STRING_LITERALS
 import org.rust.lang.core.psi.impl.RustFile
 
 class RustEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
@@ -27,7 +28,7 @@ class RustEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
         }
 
         val caretOffset = caretOffsetRef.get()
-        if (!isValidOffset(caretOffset, editor.document.charsSequence)) return Result.Continue
+        if (!isValidInnerOffset(caretOffset, editor.document.charsSequence)) return Result.Continue
 
         val highlighter = (editor as EditorEx).highlighter
         val iterator = highlighter.createIterator(caretOffset)
@@ -47,21 +48,17 @@ class RustEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
         }
 
         return when (iterator.tokenType) {
-            STRING_LITERAL, BYTE_STRING_LITERAL -> {
+            in STRING_LITERALS -> {
                 // If we are inside string literal, add trailing '\' just before caret
                 editor.document.insertString(caretOffset, "\\")
                 caretOffsetRef.set(caretOffset + 1)
                 Result.DefaultForceIndent
             }
 
-            RAW_STRING_LITERAL, RAW_BYTE_STRING_LITERAL ->
+            in RAW_LITERALS ->
                 Result.DefaultSkipIndent
 
             else -> Result.Continue
         }
-    }
-
-    private fun isValidOffset(offset: Int, text: CharSequence): Boolean {
-        return offset >= 0 && offset < text.length
     }
 }

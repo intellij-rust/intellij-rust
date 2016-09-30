@@ -230,4 +230,10 @@ public interface RustTokenElementTypes {
         STRING_LITERAL,
         BYTE_STRING_LITERAL
     );
+
+    @NotNull
+    TokenSet STRING_LITERALS = TokenSet.create(STRING_LITERAL, BYTE_STRING_LITERAL);
+
+    @NotNull
+    TokenSet RAW_LITERALS = TokenSet.create(RAW_STRING_LITERAL, RAW_BYTE_STRING_LITERAL);
 }

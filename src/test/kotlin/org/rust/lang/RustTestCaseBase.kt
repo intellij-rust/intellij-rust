@@ -13,10 +13,10 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
-import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
+import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.getComponentOrThrow
 import org.rust.lang.core.psi.util.parentOfType
@@ -38,17 +38,17 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
     protected val testName: String
         get() = camelToSnake(getTestName(true))
 
+    protected open val inverse: Boolean = false
+
     protected fun checkByFile(ignoreTrailingWhitespace: Boolean = true, action: () -> Unit) {
-        val before = fileName
-        val after = before.replace(".rs", "_after.rs")
+        val (before, after) = (fileName to fileName.replace(".rs", "_after.rs")).swapIf(inverse)
         myFixture.configureByFile(before)
         action()
         myFixture.checkResultByFile(after, ignoreTrailingWhitespace)
     }
 
     protected fun checkByDirectory(action: () -> Unit) {
-        val after = "$testName/after"
-        val before = "$testName/before"
+        val (before, after) = ("$testName/before" to "$testName/after").swapIf(inverse)
 
         val targetPath = ""
         val beforeDir = myFixture.copyDirectoryToProject(before, targetPath)
@@ -60,9 +60,10 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
     }
 
     protected fun checkByText(fileName: String, before: String, after: String, action: () -> Unit) {
-        myFixture.configureByText(fileName, before)
+        val (myBefore, myAfter) = (before to after).swapIf(inverse)
+        myFixture.configureByText(fileName, myBefore)
         action()
-        myFixture.checkResult(after)
+        myFixture.checkResult(myAfter)
     }
 
     protected fun openFileInEditor(path: String) {
@@ -129,6 +130,12 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         val action = myFixture.findSingleIntention(name)
         myFixture.launchAction(action)
     }
+
+    private fun <T> Pair<T, T>.swapIf(condition: Boolean): Pair<T, T> =
+        if (condition)
+            this.second to this.first
+        else
+            this
 
     open class RustProjectDescriptor : LightProjectDescriptor() {
 
