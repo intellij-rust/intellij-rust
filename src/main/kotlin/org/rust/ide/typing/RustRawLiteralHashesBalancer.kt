@@ -28,10 +28,12 @@ class RustRawLiteralHashesInserter : TypedHandlerDelegate() {
         val iterator = highlighter.createIterator(caretOffset - 1)
         val (openHashes, closeHashes) = getHashesOffsets(iterator) ?: return Result.CONTINUE
 
-        // Now detect on which side of the literal we are, and insert hash on the other one
+        // Now detect on which side of the literal we are, and insert hash on the other one.
+        // We are growing ranges in order to catch situations where caret is places directly
+        // after last hash character.
         when (caretOffset) {
-            in openHashes -> editor.document.insertString(closeHashes.endOffset - 1, "#")
-            in closeHashes -> editor.document.insertString(openHashes.startOffset, "#")
+            in openHashes.grown(1) -> editor.document.insertString(closeHashes.startOffset, "#")
+            in closeHashes.grown(1) -> editor.document.insertString(openHashes.endOffset, "#")
         }
 
         return Result.CONTINUE
@@ -48,7 +50,7 @@ class RustRawLiteralHashesDeleter : RustEnableableBackspaceHandlerDelegate() {
         val highlighter = (editor as EditorEx).highlighter
         val iterator = highlighter.createIterator(caretOffset - 1)
 
-        // [getHashesOffsets] is O(n) (n = literal length), so do not evaluate it when it's not needed.
+        // [getHashesOffsets] is O(n) (n is literal length), so do not evaluate it when it's not needed.
         if (c != '#' || iterator.tokenType !in RAW_LITERALS) return false
 
         // We have to compute offsets here, because we still have our '#' in document.
@@ -63,13 +65,15 @@ class RustRawLiteralHashesDeleter : RustEnableableBackspaceHandlerDelegate() {
 
         // Now detect on which side of the literal we are, and remove hash on the other one.
         // Remember that offsets apply to literal before deletion!
+        // We are growing ranges in order to catch situations where caret is places directly
+        // after last hash character.
         when (caretOffset) {
-            in openHashes ->
+            in openHashes.grown(1) ->
                 // -1 because left-closed ranges
                 // -1 because open hash was deleted so offsets are now shifted right by 1
-                // TODO: Why one more -1?
-                editor.document.deleteChar(closeHashes.endOffset - 3)
-            in closeHashes -> editor.document.deleteChar(openHashes.startOffset)
+                editor.document.deleteChar(closeHashes.endOffset - 2)
+            in closeHashes.grown(1) ->
+                editor.document.deleteChar(openHashes.startOffset)
         }
 
         return false
@@ -84,5 +88,5 @@ private fun getHashesOffsets(iterator: HighlighterIterator): Pair<TextRange, Tex
 
     // Get rid of ugly quotes from our precious ranges (remember - we are operating on left-closed ranges),
     // and normalize them to real literal offsets.
-    return openDelim.shiftRight(iterator.start) to closeDelim.shiftRight(iterator.start + 1)
+    return openDelim.shiftRight(iterator.start).grown(-1) to closeDelim.shiftRight(iterator.start + 1).grown(-1)
 }
