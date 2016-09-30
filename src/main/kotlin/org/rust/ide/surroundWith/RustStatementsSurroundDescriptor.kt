@@ -21,7 +21,9 @@ class RustStatementsSurroundDescriptor : SurroundDescriptor {
     companion object {
         private val SURROUNDERS = arrayOf(
             RustWithBlockSurrounder(),
-            RustWithLoopSurrounder()
+            RustWithLoopSurrounder(),
+            RustWithWhileSurrounder(),
+            RustWithIfSurrounder()
         )
     }
 }
