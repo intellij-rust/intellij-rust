@@ -7,7 +7,7 @@ abstract class RustTypingTestCaseBase : RustTestCaseBase() {
         myFixture.type(c)
     }
 
-    protected fun doTestByText(fileName: String, before: String, after: String, c: Char = '\n') =
+    protected fun doTestByText(fileName: String, before: String, after: String, c: Char) =
         checkByText(fileName, before, after) {
             myFixture.type(c)
         }

@@ -20,7 +20,7 @@ class RustRawLiteralHashesInserter : TypedHandlerDelegate() {
         if (c != '#') return Result.CONTINUE
 
         val caretOffset = editor.caretModel.offset
-        if (!isValidOffset(caretOffset, editor.document.charsSequence)) return Result.CONTINUE
+        if (!isValidOffset(caretOffset - 1, editor.document.charsSequence)) return Result.CONTINUE
 
         // Get token type current cursor is, we are using caretOffset - 1 in order to properly
         // handle this case: r#""#<caret>, cases r<caret>#""# and <caret>r#""# will still work.
