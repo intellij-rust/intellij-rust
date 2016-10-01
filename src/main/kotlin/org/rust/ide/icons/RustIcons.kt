@@ -7,11 +7,28 @@ import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
 import javax.swing.Icon
 
+/**
+ * Icons that are used by various plugin components.
+ *
+ * The order of properties matters in this class. When conflating an icon from simple elements,
+ * make sure that all those elements are declared above to the icon.
+ */
 object RustIcons {
+    // Logos
+
     val RUST     = IconLoader.getIcon("/org/rust/ide/icons/rust.png")
     val RUST_BIG = IconLoader.getIcon("/org/rust/ide/icons/rust-big.png")
 
+    // File types
+
     val RUST_FILE = IconLoader.getIcon("/org/rust/ide/icons/rust-file.png")
+
+    // Marks
+
+    val STATIC_MARK  = AllIcons.Nodes.StaticMark!!
+    val TEST_MARK    = AllIcons.Nodes.JunitTestMark!!
+
+    // Source code elements
 
     val MODULE   = AllIcons.Nodes.Package!!
 
@@ -21,16 +38,16 @@ object RustIcons {
     val IMPL     = AllIcons.Nodes.AbstractClass!!
     val ENUM     = AllIcons.Nodes.Enum!!
 
+    val METHOD          = AllIcons.Nodes.Method!!
+    val FUNCTION        = IconLoader.getIcon("/org/rust/ide/icons/nodes/function.png")
+    val ASSOC_FUNCTION  = FUNCTION.addStaticMark()
+
+    val ABSTRACT_METHOD         = AllIcons.Nodes.AbstractMethod!!
+    val ABSTRACT_FUNCTION       = IconLoader.getIcon("/org/rust/ide/icons/nodes/abstractFunction.png")
+    val ABSTRACT_ASSOC_FUNCTION = ABSTRACT_FUNCTION.addStaticMark()
+
     val FIELD    = AllIcons.Nodes.Field!!
-    val FUNCTION = IconLoader.getIcon("/org/rust/ide/icons/nodes/function.png")
-    val METHOD   = AllIcons.Nodes.Method!!
     val BINDING  = AllIcons.Nodes.Variable!!
-
-    val ABSTRACT_METHOD = AllIcons.Nodes.AbstractMethod!!
-    val ABSTRACT_FUNCTION = IconLoader.getIcon("/org/rust/ide/icons/nodes/abstractFunction.png")
-
-    val STATIC_MARK  = AllIcons.Nodes.StaticMark!!
-    val TEST_MARK    = AllIcons.Nodes.JunitTestMark!!
 }
 
 fun Icon.addStaticMark(): Icon = LayeredIcon(this, RustIcons.STATIC_MARK)

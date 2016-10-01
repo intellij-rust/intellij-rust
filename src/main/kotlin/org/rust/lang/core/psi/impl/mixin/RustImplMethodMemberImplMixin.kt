@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
-import org.rust.ide.icons.addStaticMark
 import org.rust.lang.core.psi.RustImplItemElement
 import org.rust.lang.core.psi.RustImplMethodMemberElement
 import org.rust.lang.core.psi.RustNamedElement
@@ -13,7 +12,6 @@ import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.util.trait
 import org.rust.lang.core.stubs.elements.RustImplMethodMemberElementStub
-import javax.swing.Icon
 
 abstract class RustImplMethodMemberImplMixin : RustFnImplMixin<RustImplMethodMemberElementStub>,
                                                RustImplMethodMemberElement {
@@ -24,10 +22,10 @@ abstract class RustImplMethodMemberImplMixin : RustFnImplMixin<RustImplMethodMem
 
     override fun getParent(): PsiElement? = parentByStub
 
-    override fun getIcon(flags: Int): Icon? {
-        val icon = if (isStatic) RustIcons.FUNCTION.addStaticMark() else RustIcons.METHOD
-        return iconWithVisibility(flags, icon)
-    }
+    override fun getIcon(flags: Int) = iconWithVisibility(flags, when {
+        isStatic -> RustIcons.ASSOC_FUNCTION
+        else -> RustIcons.METHOD
+    })
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
 }
