@@ -1,0 +1,4 @@
+-statics.rs
+ N
+ NAME
+ MUT_N

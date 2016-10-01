@@ -12,10 +12,12 @@ class RustStructureViewTest : RustTestCaseBase() {
 
     fun testFunctions() = doFileTest()
 
+    fun testConsts() = doFileTest()
     fun testEnums() = doFileTest()
     fun testImpls() = doFileTest()
     fun testMods() = doFileTest()
     fun testStructs() = doFileTest()
+    fun testStatics() = doFileTest()
     fun testTraits() = doFileTest()
     fun testTypeAliases() = doFileTest()
 
