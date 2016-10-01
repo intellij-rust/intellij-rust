@@ -4,10 +4,8 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
-import org.rust.ide.icons.addStaticMark
 import org.rust.lang.core.psi.RustTraitMethodMemberElement
 import org.rust.lang.core.stubs.elements.RustTraitMethodMemberElementStub
-import javax.swing.Icon
 
 
 abstract class RustTraitMethodMemberImplMixin : RustFnImplMixin<RustTraitMethodMemberElementStub>,
@@ -19,12 +17,11 @@ abstract class RustTraitMethodMemberImplMixin : RustFnImplMixin<RustTraitMethodM
 
     override fun getParent(): PsiElement? = parentByStub
 
-    override fun getIcon(flags: Int): Icon {
-        var icon = if (isAbstract) RustIcons.ABSTRACT_METHOD else RustIcons.METHOD
-        if (isStatic) {
-            icon = icon.addStaticMark()
-        }
-        return icon
+    override fun getIcon(flags: Int) = when {
+        isStatic && isAbstract -> RustIcons.ABSTRACT_ASSOC_FUNCTION
+        isStatic -> RustIcons.ASSOC_FUNCTION
+        isAbstract -> RustIcons.ABSTRACT_METHOD
+        else -> RustIcons.METHOD
     }
 
 }
