@@ -23,7 +23,8 @@ class RustStatementsSurroundDescriptor : SurroundDescriptor {
             RustWithBlockSurrounder(),
             RustWithLoopSurrounder(),
             RustWithWhileSurrounder(),
-            RustWithIfSurrounder()
+            RustWithIfSurrounder(),
+            RustWithForSurrounder()
         )
     }
 }
