@@ -25,10 +25,7 @@ abstract class RustImplMethodMemberImplMixin : RustFnImplMixin<RustImplMethodMem
     override fun getParent(): PsiElement? = parentByStub
 
     override fun getIcon(flags: Int): Icon? {
-        var icon = RustIcons.METHOD
-        if (isStatic) {
-            icon = icon.addStaticMark()
-        }
+        val icon = if (isStatic) RustIcons.FUNCTION.addStaticMark() else RustIcons.METHOD
         return iconWithVisibility(flags, icon)
     }
 

@@ -22,11 +22,12 @@ object RustIcons {
     val ENUM     = AllIcons.Nodes.Enum!!
 
     val FIELD    = AllIcons.Nodes.Field!!
-    val FUNCTION = AllIcons.Nodes.Function!!
+    val FUNCTION = IconLoader.getIcon("/org/rust/ide/icons/nodes/function.png")
     val METHOD   = AllIcons.Nodes.Method!!
     val BINDING  = AllIcons.Nodes.Variable!!
 
     val ABSTRACT_METHOD = AllIcons.Nodes.AbstractMethod!!
+    val ABSTRACT_FUNCTION = IconLoader.getIcon("/org/rust/ide/icons/nodes/abstractFunction.png")
 
     val STATIC_MARK  = AllIcons.Nodes.StaticMark!!
     val TEST_MARK    = AllIcons.Nodes.JunitTestMark!!

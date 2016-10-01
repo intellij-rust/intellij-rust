@@ -20,9 +20,11 @@ abstract class RustTraitMethodMemberImplMixin : RustFnImplMixin<RustTraitMethodM
     override fun getParent(): PsiElement? = parentByStub
 
     override fun getIcon(flags: Int): Icon {
-        var icon = if (isAbstract) RustIcons.ABSTRACT_METHOD else RustIcons.METHOD
+        val icon: Icon
         if (isStatic) {
-            icon = icon.addStaticMark()
+            icon = (if (isAbstract) RustIcons.ABSTRACT_FUNCTION else RustIcons.FUNCTION).addStaticMark()
+        } else {
+            icon = if (isAbstract) RustIcons.ABSTRACT_METHOD else RustIcons.METHOD
         }
         return icon
     }
