@@ -25,6 +25,7 @@ object RustIcons {
 
     // Marks
 
+    val FINAL_MARK = AllIcons.Nodes.FinalMark!!
     val STATIC_MARK  = AllIcons.Nodes.StaticMark!!
     val TEST_MARK    = AllIcons.Nodes.JunitTestMark!!
 
@@ -48,7 +49,12 @@ object RustIcons {
 
     val FIELD    = AllIcons.Nodes.Field!!
     val BINDING  = AllIcons.Nodes.Variable!!
+    val CONSTANT = BINDING.addFinalMark()
+    val STATIC   = BINDING.addStaticMark()
+
 }
+
+fun Icon.addFinalMark(): Icon = LayeredIcon(this, RustIcons.FINAL_MARK)
 
 fun Icon.addStaticMark(): Icon = LayeredIcon(this, RustIcons.STATIC_MARK)
 
