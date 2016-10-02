@@ -266,6 +266,10 @@
 
         <editorNotificationProvider implementation="org.rust.ide.notifications.MissingToolchainNotificationProvider" />
 
+        <!-- Editor Tab Title Providers -->
+
+        <editorTabTitleProvider implementation="org.rust.ide.utils.RustModTabTitleProvider"/>
+
         <!-- Refactoring -->
 
         <lang.namesValidator language="Rust" implementationClass="org.rust.lang.refactoring.RustNamesValidator"/>
