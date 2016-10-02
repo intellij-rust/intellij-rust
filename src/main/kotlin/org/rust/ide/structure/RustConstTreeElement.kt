@@ -6,7 +6,7 @@ import org.rust.lang.core.psi.RustConstItemElement
 
 class RustConstTreeElement(element: RustConstItemElement) : PsiTreeElementBase<RustConstItemElement>(element) {
 
-    override fun getPresentableText(): String? = element?.name
+    override fun getPresentableText() = "${element?.name}: ${element?.type?.text}"
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> = emptyList()
 }

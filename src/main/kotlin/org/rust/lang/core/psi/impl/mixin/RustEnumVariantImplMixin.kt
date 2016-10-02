@@ -9,7 +9,7 @@ import javax.swing.Icon
 
 
 abstract class RustEnumVariantImplMixin(node: ASTNode) : RustNamedElementImpl(node), RustEnumVariantElement {
-    override fun getIcon(flags: Int): Icon = RustIcons.FIELD
+    override fun getIcon(flags: Int): Icon = RustIcons.ENUM_VARIANT
 }
 
 val RustEnumVariantElement.parentEnum: RustEnumItemElement get() = parent?.parent as RustEnumItemElement

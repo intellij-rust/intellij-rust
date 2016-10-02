@@ -1,6 +1,6 @@
 -impls.rs
  -Registry
-  query(name: &Dependency) -> CargoResult<Vec<Summary>>
+  query(&Dependency) -> CargoResult<Vec<Summary>>
  -Registry for Vec<Summary>
   query(&Dependency) -> CargoResult<Vec<Summary>>
  -Registry for Vec<Package>
