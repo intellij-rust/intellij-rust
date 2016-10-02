@@ -166,9 +166,9 @@
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
-                                 implementationClass="org.rust.ide.surroundWith.RustExpressionSurroundDescriptor"/>
+                                 implementationClass="org.rust.ide.surroundWith.expression.RustExpressionSurroundDescriptor"/>
         <lang.surroundDescriptor language="Rust"
-                                 implementationClass="org.rust.ide.surroundWith.RustStatementsSurroundDescriptor"/>
+                                 implementationClass="org.rust.ide.surroundWith.statement.RustStatementsSurroundDescriptor"/>
 
         <!-- Folding -->
 

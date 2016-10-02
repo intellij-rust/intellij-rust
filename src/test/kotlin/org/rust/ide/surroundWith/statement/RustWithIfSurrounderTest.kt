@@ -1,6 +1,9 @@
-package org.rust.ide.surroundWith
+package org.rust.ide.surroundWith.statement
 
-class RustWithForSurrounderTest : RustSurrounderTestCaseBase(RustWithForSurrounder()) {
+import org.rust.ide.surroundWith.RustSurrounderTestCaseBase
+import org.rust.ide.surroundWith.statement.RustWithIfSurrounder
+
+class RustWithIfSurrounderTest : RustSurrounderTestCaseBase(RustWithIfSurrounder()) {
     fun testNotApplicable1() {
         doTestNotApplicable(
             """
@@ -39,7 +42,7 @@ class RustWithForSurrounderTest : RustSurrounderTestCaseBase(RustWithForSurround
             ,
             """
             fn main() {
-                for <caret> {
+                if <caret> {
                     // comment
                     let mut server = Nickel::new();
                     server.get("**", hello_world);
@@ -62,7 +65,7 @@ class RustWithForSurrounderTest : RustSurrounderTestCaseBase(RustWithForSurround
             ,
             """
             fn main() {
-                for <caret> {
+                if <caret> {
                     let mut server = Nickel::new();
                     server.get("**", hello_world);
                     server.listen("127.0.0.1:6767").unwrap();
@@ -85,7 +88,7 @@ class RustWithForSurrounderTest : RustSurrounderTestCaseBase(RustWithForSurround
             """
             fn main() {
                 let mut server = Nickel::new();
-                for <caret> {
+                if <caret> {
                     server.get("**", hello_world);
                     server.listen("127.0.0.1:6767").unwrap();
                 }
@@ -106,7 +109,7 @@ class RustWithForSurrounderTest : RustSurrounderTestCaseBase(RustWithForSurround
             ,
             """
             fn main() {
-                for <caret> {
+                if <caret> {
                     let mut server = Nickel::new();
                     server.get("**", hello_world);
                 }
@@ -129,7 +132,7 @@ class RustWithForSurrounderTest : RustSurrounderTestCaseBase(RustWithForSurround
             """
             fn main() {
                 let mut server = Nickel::new();
-                for <caret> {
+                if <caret> {
                     server.get("**", hello_world);
                 }
                 server.listen("127.0.0.1:6767").unwrap();

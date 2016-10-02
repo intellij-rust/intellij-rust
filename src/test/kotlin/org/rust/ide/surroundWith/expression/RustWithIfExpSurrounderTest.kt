@@ -1,6 +1,9 @@
-package org.rust.ide.surroundWith
+package org.rust.ide.surroundWith.expression
 
-class RustWithNotSurrounderTest : RustSurrounderTestCaseBase(RustWithNotSurrounder()) {
+import org.rust.ide.surroundWith.RustSurrounderTestCaseBase
+import org.rust.ide.surroundWith.expression.RustWithIfExpSurrounder
+
+class RustWithIfExpSurrounderTest : RustSurrounderTestCaseBase(RustWithIfExpSurrounder()) {
     fun testSimple() {
         doTest(
             """
@@ -8,10 +11,10 @@ class RustWithNotSurrounderTest : RustSurrounderTestCaseBase(RustWithNotSurround
                 <selection>true</selection>
             }
             """
-        ,
+            ,
             """
             fn main() {
-                !(true)<caret>
+                if true {<caret>}
             }
             """
         )
@@ -27,14 +30,14 @@ class RustWithNotSurrounderTest : RustSurrounderTestCaseBase(RustWithNotSurround
                 <selection>func()</selection>
             }
             """
-        ,
+            ,
             """
             fn func() -> bool {
                 false
             }
 
             fn main() {
-                !(func())<caret>
+                if func() {<caret>}
             }
             """
         )

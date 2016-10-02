@@ -1,4 +1,4 @@
-package org.rust.ide.surroundWith
+package org.rust.ide.surroundWith.statement
 
 import com.intellij.lang.surroundWith.Surrounder
 import com.intellij.openapi.editor.Editor
