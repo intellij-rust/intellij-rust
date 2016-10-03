@@ -422,9 +422,10 @@ pat_field ::= IDENTIFIER ':' pat
 
 binding_mode ::= REF MUT? | MUT
 
-private static_decl ::= IDENTIFIER type_ascription '=' any_expr
+private static_decl ::= IDENTIFIER type_ascription '=' any_expr { pin = 1 }
 
 static_item ::= attrs_and_vis STATIC MUT? static_decl ';' {
+  pin = static_decl
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustItemElement" ]
@@ -435,6 +436,7 @@ static_item ::= attrs_and_vis STATIC MUT? static_decl ';' {
 }
 
 const_item ::= attrs_and_vis CONST static_decl ';' {
+  pin = static_decl
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustItemElement" ]

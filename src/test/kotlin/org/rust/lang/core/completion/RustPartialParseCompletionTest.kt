@@ -15,5 +15,7 @@ class RustPartialParseCompletionTest: RustCompletionTestBase() {
     fun testLet() = checkSingleCompletionByFile()
     fun testImplMethodType() = checkSingleCompletionByFile()
     fun testStructField() = checkSingleCompletionByFile()
+    fun testStatic() = checkSingleCompletionByFile()
+    fun testConst() = checkSingleCompletionByFile()
 }
 

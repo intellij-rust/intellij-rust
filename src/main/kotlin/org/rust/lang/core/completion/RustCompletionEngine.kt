@@ -72,8 +72,8 @@ fun RustNamedElement.createLookupElement(scopeName: String): LookupElement {
         .withIcon(getIcon(0))
 
     return when (this) {
-        is RustConstItemElement -> base.withTypeText(type.text)
-        is RustStaticItemElement -> base.withTypeText(type.text)
+        is RustConstItemElement -> base.withTypeText(type?.text)
+        is RustStaticItemElement -> base.withTypeText(type?.text)
         is RustFieldDeclElement -> base.withTypeText(type?.text)
 
         is RustFnElement -> base
