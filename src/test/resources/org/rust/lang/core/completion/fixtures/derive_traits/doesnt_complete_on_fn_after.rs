@@ -1,3 +1,0 @@
-#[foo(PartialE)]
-fn foo() {
-}

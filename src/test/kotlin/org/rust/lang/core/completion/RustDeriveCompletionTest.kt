@@ -7,13 +7,29 @@ class RustDeriveCompletionTest : RustCompletionTestBase() {
 
     fun testCompleteOnEnum() = checkSoleCompletion()
 
-    fun testDoesntCompleteOnFn() = checkNoCompletion()
+    fun testDoesntCompleteOnFn() = checkNoCompletion("""
+        #[foo(PartialE/*caret*/)]
+        fn foo() { }
+    """)
 
-    fun testDoesntCompleteOnMod() = checkNoCompletion()
+    fun testDoesntCompleteOnMod() = checkNoCompletion("""
+        #[foo(PartialE/*caret*/)]
+        mod foo { }
+    """)
 
-    fun testDoesntCompleteNonDeriveAttr() = checkNoCompletion()
+    fun testDoesntCompleteNonDeriveAttr() = checkNoCompletion("""
+        #[foo(PartialE/*caret*/)]
+        enum Test { Something }
+    """)
 
-    fun testDoesntCompleteInnerAttr() = checkNoCompletion()
+    fun testDoesntCompleteInnerAttr() = checkNoCompletion("""
+        mod bar {
+            #![derive(PartialE/*caret*/)]
+        }
+    """)
 
-    fun testDoesntCompleteAlreadyDerived() = checkNoCompletion()
+    fun testDoesntCompleteAlreadyDerived() = checkNoCompletion("""
+        #[derive(PartialEq, PartialE/*caret*/)]
+        enum Test { Something }
+    """)
 }

@@ -85,8 +85,10 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
     }
 
     inner class InlineFile(private @Language("Rust") val code: String) {
+        private val hasCaretMarker = "/*caret*/" in code
+
         init {
-            myFixture.configureByText("main.rs", code)
+            myFixture.configureByText("main.rs", code.replace("/*caret*/", "<caret>"))
         }
 
         inline fun<reified T: PsiElement> elementAtCaret(marker: String = "^"): T {
@@ -113,6 +115,12 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             val elementOffset = myFixture.editor.logicalPositionToOffset(previousLine)
 
             return myFixture.file.findElementAt(elementOffset)!! to data
+        }
+
+        fun withCaret() {
+            check(hasCaretMarker) {
+                "Please, add `/*caret*/` marker to\n$code"
+            }
         }
 
     }

@@ -17,14 +17,42 @@ class RustCompletionTest : RustCompletionTestBase() {
     fun testWildcardImports() = checkSoleCompletion()
     fun testShadowing() = checkSoleCompletion()
 
-    fun testLocalScope() = checkNoCompletion()
-    fun testWhileLet() = checkNoCompletion()
+    fun testLocalScope() = checkNoCompletion("""
+        fn foo() {
+            let x = spam/*caret*/;
+            let spamlot = 92;
+        }
+    """)
+
+    fun testWhileLet() = checkNoCompletion("""
+        fn main() {
+            while let Some(quazimagnitron) = quaz/*caret*/ { }
+        }
+    """)
 
     fun testCompleteAlias() = checkSoleCompletion()
-    fun testAliasShadowsOriginalName() = checkNoCompletion()
+
+    fun testAliasShadowsOriginalName() = checkNoCompletion("""
+        mod m {
+            pub fn transmogrify() {}
+        }
+
+        use self::m::{transmogrify as frobnicate};
+
+        fn main() {
+            trans/*caret*/
+        }
+    """)
+
     fun testCompleteSelfType() = checkSoleCompletion()
 
-    fun testCompletionRespectsNamespaces() = checkNoCompletion()
+    fun testCompletionRespectsNamespaces() = checkNoCompletion("""
+        fn foobar() {}
+
+        fn main() {
+            let _: f/*caret*/ = unimplemented!();
+        }
+    """)
 
     fun testChildFile() = checkByDirectory {
         openFileInEditor("main.rs")

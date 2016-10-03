@@ -1,6 +1,6 @@
 package org.rust.lang.core.completion
 
-import org.assertj.core.api.Assertions.assertThat
+import org.intellij.lang.annotations.Language
 import org.rust.lang.RustTestCaseBase
 
 abstract class RustCompletionTestBase : RustTestCaseBase() {
@@ -9,11 +9,16 @@ abstract class RustCompletionTestBase : RustTestCaseBase() {
         executeSoloCompletion()
     }
 
-    protected fun checkNoCompletion() {
-        myFixture.configureByFile(fileName)
+    protected fun checkNoCompletion(@Language("Rust") code: String) {
+        InlineFile(code).withCaret()
         val variants = myFixture.completeBasic()
-        assertThat(variants).isNotNull()
-        assertThat(variants.size).isZero()
+        checkNotNull(variants) {
+            val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)
+            "Expected zero completions, but one completion was auto inserted: `${element?.text}`."
+        }
+        check(variants.size == 0) {
+            "Expected zero completions, got ${variants.size}."
+        }
     }
 
     protected fun executeSoloCompletion() {

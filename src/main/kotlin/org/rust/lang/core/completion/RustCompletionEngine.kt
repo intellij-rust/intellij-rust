@@ -70,7 +70,6 @@ private fun Collection<RustNamedElement>.completionsFromNamedElements(): Array<L
 fun RustNamedElement.createLookupElement(scopeName: String): LookupElement {
     val base = LookupElementBuilder.create(this, scopeName)
         .withIcon(getIcon(0))
-        .withLookupString(scopeName)
 
     return when (this) {
         is RustConstItemElement -> base.withTypeText(type.text)
