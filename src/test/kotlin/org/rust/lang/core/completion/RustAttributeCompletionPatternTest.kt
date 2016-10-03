@@ -1,8 +1,12 @@
 package org.rust.lang.core.completion
 
-import org.rust.lang.core.completion.RustPatternTestBase
+import com.intellij.patterns.ElementPattern
+import com.intellij.psi.PsiElement
+import org.intellij.lang.annotations.Language
 
-class RustAttributeCompletionPatternTest : RustPatternTestBase() {
+class RustAttributeCompletionPatternTest : RustCompletionTestBase() {
+    override val dataPath: String get() = ""
+
     fun testOnStruct() = testPattern("""
         #[foo]
         //^
@@ -154,4 +158,9 @@ class RustAttributeCompletionPatternTest : RustPatternTestBase() {
 
         }
     """, AttributeCompletionProvider.onTestFn)
+
+    private fun <T> testPattern(@Language("Rust") code: String, pattern: ElementPattern<T>) {
+        val element = InlineFile(code).elementAtCaret<PsiElement>()
+        assertTrue(pattern.accepts(element))
+    }
 }

@@ -1,11 +1,21 @@
 package org.rust.lang.core.completion
 
 class RustDeriveCompletionTest : RustCompletionTestBase() {
-    override val dataPath = "org/rust/lang/core/completion/fixtures/derive_traits/"
+    override val dataPath = ""
 
-    fun testCompleteOnStruct() = checkSoleCompletion()
+    fun testCompleteOnStruct() = checkSingleCompletion("PartialEq", """
+        #[derive(PartialE/*caret*/)]
+        struct Test {
+            foo: u8
+        }
+    """)
 
-    fun testCompleteOnEnum() = checkSoleCompletion()
+    fun testCompleteOnEnum() = checkSingleCompletion("PartialEq", """
+        #[derive(PartialE/*caret*/)]
+        enum Test {
+            Something
+        }
+    """)
 
     fun testDoesntCompleteOnFn() = checkNoCompletion("""
         #[foo(PartialE/*caret*/)]

@@ -5,8 +5,20 @@ import org.rust.lang.RustTestCaseBase
 
 abstract class RustCompletionTestBase : RustTestCaseBase() {
 
-    protected fun checkSoleCompletion() = checkByFile {
+    protected fun checkSingleCompletionByFile() = checkByFile {
         executeSoloCompletion()
+    }
+
+    protected fun checkSingleCompletion(target: String, @Language("Rust") code: String) {
+        InlineFile(code).withCaret()
+        val variants = myFixture.completeBasic()
+        check(variants == null) {
+            "Expected a single completion, but got ${variants.size}\n" + "${variants.toList()}"
+        }
+        val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)!!
+        check(element.text == target) {
+            "Wrong completion, expected `$target`, but got `${element.text}`"
+        }
     }
 
     protected fun checkNoCompletion(@Language("Rust") code: String) {
