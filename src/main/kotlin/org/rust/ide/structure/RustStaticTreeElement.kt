@@ -6,7 +6,13 @@ import org.rust.lang.core.psi.RustStaticItemElement
 
 class RustStaticTreeElement(element: RustStaticItemElement) : PsiTreeElementBase<RustStaticItemElement>(element) {
 
-    override fun getPresentableText(): String? = element?.name
+    override fun getPresentableText(): String? {
+        var text = element?.name
+        if (element?.type != null) {
+            text += ": " + element?.type?.text
+        }
+        return text
+    }
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> = emptyList()
 }
