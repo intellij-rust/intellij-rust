@@ -59,7 +59,12 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         PlatformTestUtil.assertDirectoriesEqual(afterDir, beforeDir)
     }
 
-    protected fun checkByText(fileName: String, before: String, after: String, action: () -> Unit) {
+    protected fun checkByText(
+        fileName: String,
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        action: () -> Unit
+    ) {
         val (myBefore, myAfter) = (before to after).swapIf(inverse)
         myFixture.configureByText(fileName, myBefore)
         action()

@@ -51,3 +51,6 @@ fun getLiteralDumb(iterator: HighlighterIterator): RustLiteral? {
 fun Document.deleteChar(offset: Int) {
     deleteString(offset, offset + 1)
 }
+
+fun CharSequence.endsWithUnescapedBackslash(): Boolean =
+    takeLastWhile { it == '\\' }.length % 2 == 1
