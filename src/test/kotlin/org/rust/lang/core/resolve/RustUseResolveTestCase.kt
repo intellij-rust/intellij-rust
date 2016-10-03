@@ -443,22 +443,4 @@ class RustUseResolveTestCase : RustResolveTestCaseBase() {
     """)
 
 
-    private fun checkByCode(@Language("Rust") code: String) {
-        val file = InlineFile(code)
-
-        val (refElement, data) = file.elementAndData<RustReferenceElement>("^")
-
-        if (data == "unresolved") {
-            assertThat(refElement.reference.resolve()).isNull()
-            return
-        }
-
-        val resolved = checkNotNull(refElement.reference.resolve()) {
-            "Failed to resolve ${refElement.text}"
-        }
-
-        val target = file.elementAtCaret<RustNamedElement>("X")
-
-        assertThat(resolved).isEqualTo(target)
-    }
 }

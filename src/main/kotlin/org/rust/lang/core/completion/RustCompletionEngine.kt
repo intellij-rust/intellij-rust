@@ -7,9 +7,7 @@ import org.rust.lang.core.psi.impl.mixin.asRustPath
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.util.fields
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.resolve.RustResolveEngine
-import org.rust.lang.core.resolve.ScopeEntry
-import org.rust.lang.core.resolve.SearchFor
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.types.RustStructType
@@ -17,15 +15,16 @@ import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.util.stripAllRefsIfAny
 
 object RustCompletionEngine {
-    fun completePath(ref: RustPathElement): Array<out LookupElement> {
+    fun completePath(ref: RustPathElement, namespace: Namespace?): Array<out LookupElement> {
         val path = ref.asRustPath ?: return emptyArray()
 
         return if (path.segments.isNotEmpty()) {
             val qual = path.copy(segments = path.segments.subList(0, path.segments.size - 1))
-            RustResolveEngine.resolve(qual, ref).element.completionsFromResolveScope()
+            RustResolveEngine.resolve(qual, ref, namespace).element.completionsFromResolveScope()
         } else {
             RustResolveEngine.enumerateScopesFor(ref)
                 .flatMap { RustResolveEngine.declarations(it, pivot = ref) }
+                .filter { namespace == null || namespace in it.element?.namespaces.orEmpty() }
                 .completionsFromScopeEntries()
         }
     }

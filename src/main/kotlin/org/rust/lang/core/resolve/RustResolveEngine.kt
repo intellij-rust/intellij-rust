@@ -74,16 +74,21 @@ object RustResolveEngine {
      * Resolves abstract qualified-path [path] in such a way, like it was a qualified-reference
      * used at [pivot]
      */
-    fun resolve(path: RustPath, pivot: RustCompositeElement): ResolveResult {
+    fun resolve(path: RustPath, pivot: RustCompositeElement, namespace: Namespace? = null): ResolveResult {
         val head = path.head
         val start: RustNamedElement? = when (head) {
             is RustPathHead.Absolute -> RustResolveUtil.getCrateRootModFor(pivot)
             is RustPathHead.Relative -> generateSequence(pivot.containingMod, { it.`super` }).elementAtOrNull(head.level)
             is RustPathHead.Named -> {
-                RustResolveEngine.enumerateScopesFor(pivot)
+                val filterByName = RustResolveEngine.enumerateScopesFor(pivot)
                     .flatMap { declarations(it, Context(pivot = pivot)) }
-                    .find { it.name == head.segment.name }
-                    ?.element
+                    .filter { it.name == head.segment.name }
+
+                val filterByNamespace = if (namespace == null)
+                    filterByName
+                else
+                    filterByName.filter { namespace in it.element?.namespaces.orEmpty() }
+                filterByNamespace.firstOrNull()?.element
             }
         }
 
@@ -95,7 +100,10 @@ object RustResolveEngine {
             }
         }
 
-        return current.asResolveResult()
+        return if (namespace != null && namespace !in current?.namespaces.orEmpty())
+            ResolveResult.Unresolved
+        else
+            current.asResolveResult()
     }
 
     /**

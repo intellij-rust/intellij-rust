@@ -24,6 +24,8 @@ class RustCompletionTest : RustCompletionTestBase() {
     fun testAliasShadowsOriginalName() = checkNoCompletion()
     fun testCompleteSelfType() = checkSoleCompletion()
 
+    fun testCompletionRespectsNamespaces() = checkNoCompletion()
+
     fun testChildFile() = checkByDirectory {
         openFileInEditor("main.rs")
         executeSoloCompletion()

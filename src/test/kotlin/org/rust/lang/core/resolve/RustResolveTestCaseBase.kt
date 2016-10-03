@@ -2,8 +2,10 @@ package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiElement
 import org.assertj.core.api.Assertions.assertThat
+import org.intellij.lang.annotations.Language
 import org.rust.lang.RustTestCaseBase
 import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustReferenceElement
 import org.rust.lang.core.resolve.ref.RustReference
 
 abstract class RustResolveTestCaseBase : RustTestCaseBase() {
@@ -37,6 +39,25 @@ abstract class RustResolveTestCaseBase : RustTestCaseBase() {
     protected fun checkIsUnbound() {
         val declaration = getReference().resolve()
         assertThat(declaration).isNull()
+    }
+
+    protected fun checkByCode(@Language("Rust") code: String) {
+        val file = InlineFile(code)
+
+        val (refElement, data) = file.elementAndData<RustReferenceElement>("^")
+
+        if (data == "unresolved") {
+            assertThat(refElement.reference.resolve()).isNull()
+            return
+        }
+
+        val resolved = checkNotNull(refElement.reference.resolve()) {
+            "Failed to resolve ${refElement.text}"
+        }
+
+        val target = file.elementAtCaret<RustNamedElement>("X")
+
+        assertThat(resolved).isEqualTo(target)
     }
 
     private fun getReference(): RustReference {

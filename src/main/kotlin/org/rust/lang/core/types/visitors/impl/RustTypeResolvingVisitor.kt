@@ -1,11 +1,11 @@
 package org.rust.lang.core.types.visitors.impl
 
 import org.rust.lang.core.psi.RustCompositeElement
+import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.RustResolveEngine
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.unresolved.*
 import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
-import org.rust.lang.core.types.visitors.impl.RustTypificationEngine
 
 open class RustTypeResolvingVisitor(private val pivot: RustCompositeElement) : RustUnresolvedTypeVisitor<RustType> {
 
@@ -19,7 +19,7 @@ open class RustTypeResolvingVisitor(private val pivot: RustCompositeElement) : R
         RustTupleType(type.elements.map { visit(it) })
 
     override fun visitPathType(type: RustUnresolvedPathType): RustType =
-        RustResolveEngine.resolve(type.path, pivot).let {
+        RustResolveEngine.resolve(type.path, pivot, namespace = Namespace.Types).let {
             when (it) {
                 is RustResolveEngine.ResolveResult.Resolved -> RustTypificationEngine.typify(it.element!!)
                 else                                        -> RustUnknownType
