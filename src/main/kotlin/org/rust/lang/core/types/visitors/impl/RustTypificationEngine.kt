@@ -140,7 +140,28 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     override fun visitParenExpr(o: RustParenExprElement) = set { o.expr.resolvedType }
 
     override fun visitBinaryExpr(o: RustBinaryExprElement) {
-        super.visitBinaryExpr(o)
+        when (o.operatorType) {
+            RustTokenElementTypes.ANDAND,
+            RustTokenElementTypes.OROR -> {
+                if (o.left.resolvedType == RustBooleanType &&
+                    o.right?.resolvedType == RustBooleanType) {
+                    set { RustBooleanType }
+                } else {
+                    super.visitBinaryExpr(o)
+                }
+            }
+
+            RustTokenElementTypes.EQEQ,
+            RustTokenElementTypes.EXCLEQ,
+            RustTokenElementTypes.LT,
+            RustTokenElementTypes.GT,
+            RustTokenElementTypes.GTEQ,
+            RustTokenElementTypes.LTEQ -> {
+                set { RustBooleanType }
+            }
+
+            else -> super.visitBinaryExpr(o)
+        }
     }
 
     private val RustBlockElement.resolvedType: RustType get() = expr?.resolvedType ?: RustUnitType
@@ -150,7 +171,7 @@ private class RustItemTypificationVisitor : RustComputingVisitor<RustType>() {
 
     override fun visitElement(element: PsiElement) = set {
         check(element is RustItemElement) {
-           "Panic! Should not be used with anything except the inheritors of `RustItemElement` hierarchy!"
+            "Panic! Should not be used with anything except the inheritors of `RustItemElement` hierarchy!"
         }
 
         RustUnknownType
@@ -192,7 +213,7 @@ private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedT
     }
 
     override fun visitPathType(o: RustPathTypeElement) = set {
-         o.path?.let {
+        o.path?.let {
             (   RustIntegerType.deduce(it.text)     ?:
                 RustFloatType.deduce(it.text)       ?:
                 RustBooleanType.deduce(it.text)     ?:
