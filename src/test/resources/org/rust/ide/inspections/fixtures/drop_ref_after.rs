@@ -3,7 +3,7 @@ fn main() {
     drop(val1);
 
     let val2 = Box::new(84);
-    <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">std::mem::drop(&val2)</warning>;
+    std::mem::drop(&val2);
 }
 
 mod drop_ref {
@@ -11,7 +11,7 @@ mod drop_ref {
 
     fn test_drop() {
         let val = Box::new(84);
-        <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">free(&val)</warning>;
+        free(&val);
     }
 }
 
