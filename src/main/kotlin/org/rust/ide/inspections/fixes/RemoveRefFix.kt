@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.RustExprElement
  * Fix that converts the given reference to owned value.
  * @param argEl An element, that represents a reference from which the first
  * symbol '&' must be removed.
- * @param
+ * @param fixName A name to use for the fix instead of the default one to better fit the inspection.
  */
 class RemoveRefFix(
     val argEl: RustExprElement,

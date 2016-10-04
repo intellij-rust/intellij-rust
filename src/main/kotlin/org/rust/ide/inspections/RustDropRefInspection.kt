@@ -10,9 +10,8 @@ import org.rust.lang.core.psi.RustUnaryExprElement
 import org.rust.lang.core.psi.impl.RustFnItemElementImpl
 
 /**
- * Checks for calls to std::mem::drop with a reference instead of an owned value.
- *
- * Analogue of Clippy's drop_ref.
+ * Checks for calls to std::mem::drop with a reference instead of an owned value. Analogue of Clippy's drop_ref.
+ * Quick fix: Use the owned value as the argument.
  */
 class RustDropRefInspection : RustLocalInspectionTool() {
     override fun getDisplayName(): String = "Drop reference"
