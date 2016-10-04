@@ -35,7 +35,7 @@ class RustDropRefInspection : RustLocalInspectionTool() {
                 if (args.size == 1) {
                     val arg = args[0]
                     if (arg.resolvedType is RustReferenceType) {
-                        if (arg is RustUnaryExprElement && arg.expr is RustPathExprElement) {
+                        if (arg.text[0] == '&') {
                             holder.registerProblem(expr, Constants.MESSAGE, RemoveRefFix(arg, "Call with owned value"))
                         } else {
                             holder.registerProblem(expr, Constants.MESSAGE)
