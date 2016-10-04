@@ -9,11 +9,11 @@ import org.rust.lang.core.types.util.resolvedType
 abstract class RustTypificationTestBase : RustTestCaseBase() {
     override val dataPath: String get() = ""
 
-    protected fun testExpr(@Language("Rust") code: String) {
+    protected fun testExpr(@Language("Rust") code: String, description: String = "") {
         val (expr, expectedType) = InlineFile(code).elementAndData<RustExprElement>()
 
         assertThat(expr.resolvedType.toString())
+            .`as`(description)
             .isEqualTo(expectedType)
     }
 }
-
