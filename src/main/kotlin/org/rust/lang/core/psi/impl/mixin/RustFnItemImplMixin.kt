@@ -8,6 +8,7 @@ import org.rust.lang.core.psi.RustFnItemElement
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.stubs.elements.RustFnItemElementStub
+import org.rust.lang.core.symbols.RustPath
 import javax.swing.Icon
 
 abstract class RustFnItemImplMixin : RustFnImplMixin<RustFnItemElementStub>,
@@ -27,5 +28,6 @@ abstract class RustFnItemImplMixin : RustFnImplMixin<RustFnItemElementStub>,
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
 
+    override val canonicalCratePath: RustPath? get() = RustPsiImplUtil.canonicalCratePath(this)
 }
 

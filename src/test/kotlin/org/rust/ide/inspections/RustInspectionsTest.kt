@@ -26,4 +26,11 @@ class RustInspectionsTest : RustInspectionsTestBase() {
         applyQuickFix("Suppress for item")
         myFixture.testHighlighting(true, false, true, fileName.replace(".rs", "_after.rs"))
     }
+
+//    fun testDropRef() = checkByFile {
+//        enableInspection<RustDropRefInspection>()
+//        myFixture.checkHighlighting(true, false, false)
+//        applyQuickFix("Call with owned value")
+//        myFixture.testHighlighting(true, false, true, fileName.replace(".rs", "_after.rs"))
+//    }
 }

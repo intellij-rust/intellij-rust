@@ -343,7 +343,8 @@ ret_type ::= '->' (type | '!') { pin = 1 }
 fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustFnElement"
+  implements = [ "org.rust.lang.core.psi.RustPathNamedElement"
+                 "org.rust.lang.core.psi.RustFnElement"
                  "org.rust.lang.core.psi.RustTypeBearingItemElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.elements.RustFnItemElementStub"
