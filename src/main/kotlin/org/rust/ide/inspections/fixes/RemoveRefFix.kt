@@ -15,7 +15,8 @@ import org.rust.lang.core.psi.RustExprElement
  */
 class RemoveRefFix(
     val argEl: RustExprElement,
-    val fixName: String = "Change reference to owned value") : LocalQuickFix {
+    val fixName: String = "Change reference to owned value"
+) : LocalQuickFix {
     override fun getName() = fixName
     override fun getFamilyName() = "Change reference to owned value"
 
