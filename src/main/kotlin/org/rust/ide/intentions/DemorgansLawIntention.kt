@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.util.descendentsOfType
 import org.rust.lang.core.psi.util.parentOfType
 
 class DemorgansLawIntention : PsiElementBaseIntentionAction() {
-    override fun getFamilyName() = text
+    override fun getFamilyName() = "DeMorgan's Law"
     override fun startInWriteAction() = true
 
     private fun setTextForElement(element: PsiElement) {
