@@ -1,10 +1,12 @@
-package org.rust.ide.surroundWith
+package org.rust.ide.surroundWith.statement
 
 import com.intellij.codeInsight.CodeInsightUtilBase
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.rust.ide.surroundWith.statement.RustStatementsSurrounderBase
+import org.rust.ide.surroundWith.addStatements
 import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustForExprElement
 

@@ -1,4 +1,4 @@
-package org.rust.ide.surroundWith
+package org.rust.ide.surroundWith.expression
 
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.lang.surroundWith.SurroundDescriptor
@@ -21,7 +21,9 @@ class RustExpressionSurroundDescriptor : SurroundDescriptor {
     companion object {
         private val SURROUNDERS = arrayOf(
             RustWithParenthesesSurrounder(),
-            RustWithNotSurrounder()
+            RustWithNotSurrounder(),
+            RustWithIfExpSurrounder(),
+            RustWithWhileExpSurrounder()
         )
     }
 }
