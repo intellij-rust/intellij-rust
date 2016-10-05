@@ -397,8 +397,8 @@ pat_uniq        ::= BOX pat
 pat_ident       ::= pat_binding [ '@' pat ]
 
 
-pat_struct      ::= path_expr '{' pat_struct_fields '}'
-pat_enum        ::= path_expr '(' ( '..' | pats ) ')'
+pat_struct      ::= path_generic_args_with_colons '{' pat_struct_fields '}'
+pat_enum        ::= path_generic_args_with_colons '(' ( '..' | pats ) ')'
 
 pat_range ::= lit_or_path [ '...' lit_or_path ]
 private lit_or_path ::= '-'? lit | path_expr

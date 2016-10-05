@@ -109,34 +109,29 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
 
         val type = type
 
-        var tupleFields = emptyList<RustTupleFieldDeclElement>()
+        val e = o.path.reference.resolve()
+        val tupleFields = when (e) {
+            is RustStructItemElement -> {
+                if (type !is RustStructType || type.item !== e)
+                    return false
 
-        val e = o.pathExpr.path.reference.resolve()
-        if (e is RustStructItemElement) {
-            val struct = e
-
-            if (type !is RustStructType || type.item !== struct)
-                return false
-
-            struct.tupleFields?.tupleFieldDeclList?.let {
-                tupleFields = it
+                e.tupleFields?.tupleFieldDeclList
             }
 
-        } else if (e is RustEnumVariantElement) {
-            val variant = e
+            is RustEnumVariantElement -> {
+                if (type !is RustEnumType || type.item !== getEnumByVariant(e))
+                    return false
 
-            if (type !is RustEnumType || type.item !== getEnumByVariant(variant))
-                return false
-
-            variant.tupleFields?.tupleFieldDeclList?.let {
-                tupleFields = it
+                e.tupleFields?.tupleFieldDeclList
             }
-        }
+
+            else -> null
+        } ?: return false
 
         if (tupleFields.size != o.patList.size)
             return false
 
-        for (i in 0 .. tupleFields.size - 1) {
+        for (i in 0 until tupleFields.size) {
             if (!match(o.patList[i], tupleFields[i].type.resolvedType))
                 return false
         }
@@ -146,7 +141,7 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
 
     override fun visitPatStruct(o: RustPatStructElement) = set(fun(): Boolean {
         val type = type
-        if (type !is RustStructType || type.item !== o.pathExpr.path.reference.resolve())
+        if (type !is RustStructType || type.item !== o.path.reference.resolve())
             return false
 
         val fieldDecls =
