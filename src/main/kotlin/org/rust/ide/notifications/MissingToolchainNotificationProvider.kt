@@ -124,7 +124,6 @@ class MissingToolchainNotificationProvider(
         val stdlib = module.cargoProjectRoot?.path?.let { toolchain.rustup(it) }?.downloadStdlib()
             ?:
             PropertiesComponent.getInstance().getValue(LIBRARY_LOCATION_KEY)?.let { previousLocation ->
-                println("previousLocation = $previousLocation")
                 VirtualFileManager.getInstance().findFileByUrl(previousLocation)
             }
             ?: return false

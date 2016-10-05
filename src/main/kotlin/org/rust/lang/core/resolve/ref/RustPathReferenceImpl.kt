@@ -2,7 +2,9 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.completion.RustCompletionEngine
+import org.rust.lang.core.psi.RustPatStructElement
 import org.rust.lang.core.psi.RustPathElement
+import org.rust.lang.core.psi.RustPathExprElement
 import org.rust.lang.core.psi.RustTypeElement
 import org.rust.lang.core.psi.impl.mixin.asRustPath
 import org.rust.lang.core.resolve.Namespace
@@ -30,8 +32,10 @@ class RustPathReferenceImpl(
     }
 
     private val namespace: Namespace?
-        get() = if (element.parent is RustPathElement || element.parent is RustTypeElement)
-            Namespace.Types
-        else
-            null
+        get() = when (element.parent) {
+            is RustPathElement, is RustTypeElement -> Namespace.Types
+            is RustPathExprElement -> Namespace.Values
+            is RustPatStructElement -> Namespace.Types
+            else -> null
+        }
 }

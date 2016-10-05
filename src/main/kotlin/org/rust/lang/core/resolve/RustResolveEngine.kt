@@ -76,34 +76,37 @@ object RustResolveEngine {
      */
     fun resolve(path: RustPath, pivot: RustCompositeElement, namespace: Namespace? = null): ResolveResult {
         val head = path.head
-        val start: RustNamedElement? = when (head) {
-            is RustPathHead.Absolute -> RustResolveUtil.getCrateRootModFor(pivot)
-            is RustPathHead.Relative -> generateSequence(pivot.containingMod, { it.`super` }).elementAtOrNull(head.level)
-            is RustPathHead.Named -> {
-                val filterByName = RustResolveEngine.enumerateScopesFor(pivot)
+        val start: Sequence<RustNamedElement> = when (head) {
+            is RustPathHead.Absolute -> sequenceOfNotNull(RustResolveUtil.getCrateRootModFor(pivot))
+
+            is RustPathHead.Relative -> sequenceOfNotNull(
+                generateSequence(pivot.containingMod, { it.`super` }).elementAtOrNull(head.level)
+            )
+
+            is RustPathHead.Named ->
+                RustResolveEngine.enumerateScopesFor(pivot)
                     .flatMap { declarations(it, Context(pivot = pivot)) }
                     .filter { it.name == head.segment.name }
-
-                val filterByNamespace = if (namespace == null)
-                    filterByName
-                else
-                    filterByName.filter { namespace in it.element?.namespaces.orEmpty() }
-                filterByNamespace.firstOrNull()?.element
-            }
+                    .mapNotNull { it.element }
         }
 
-        var current: RustNamedElement? = start
+        var current: Sequence<RustNamedElement> = start
         for ((name) in path.segments) {
-            if (current is RustResolveScope) {
-                val next = current
-                current = recursionGuard(pivot, Computable { resolveInside(next, name, pivot = pivot).element })
-            }
+            val ns = recursionGuard(pivot, Computable {
+                current
+                    .filter { Namespace.Types in it.namespaces }
+                    .filterIsInstance<RustResolveScope>()
+                    .firstOrNull()
+            }) ?: return ResolveResult.Unresolved
+
+            current = declarations(ns, Context(pivot = pivot, searchFor = SearchFor.PRIVATE))
+                .filter { it.name == name }
+                .mapNotNull { it.element }
         }
 
-        return if (namespace != null && namespace !in current?.namespaces.orEmpty())
-            ResolveResult.Unresolved
-        else
-            current.asResolveResult()
+        val result = if (namespace == null) current else current.filter { namespace in it.namespaces }
+
+        return recursionGuard(pivot, Computable { result.firstOrNull() }).asResolveResult()
     }
 
     /**
@@ -252,9 +255,15 @@ object RustResolveEngine {
 }
 
 
-private fun resolveInside(scope: RustResolveScope, name: String, pivot: RustCompositeElement): RustResolveEngine.ResolveResult =
+private fun resolveInside(
+    scope: RustResolveScope,
+    name: String,
+    pivot: RustCompositeElement,
+    namespace: Namespace? = null
+): RustResolveEngine.ResolveResult =
     declarations(scope, Context(pivot = pivot, searchFor = SearchFor.PRIVATE))
-        .find { it.name == name }
+        .filter { it.name == name }
+        .find { namespace == null || namespace in it.element?.namespaces.orEmpty() }
         ?.element.asResolveResult()
 
 

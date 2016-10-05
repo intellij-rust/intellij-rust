@@ -17,6 +17,28 @@ class RustResolveNamespaceTest : RustResolveTestCaseBase() {
         }
     """)
 
+    fun testModFnInner() = checkByCode("""
+        mod m { fn bar() {} }
+                  //X
+
+        fn m() { }
+
+        fn main() { let _ = m::bar(); }
+                              //^
+    """)
+
+    fun testModFnInnerInner() = checkByCode("""
+        mod outer {
+            mod m { fn bar() {} }
+                      //X
+
+            fn m() { }
+        }
+
+        fn main() { let _ = outer::m::bar(); }
+                                     //^
+    """)
+
     fun testTypeAndConst() = checkByCode("""
         struct T { }
              //X
