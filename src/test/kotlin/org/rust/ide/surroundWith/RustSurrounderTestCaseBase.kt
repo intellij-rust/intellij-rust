@@ -13,7 +13,7 @@ import java.util.*
 abstract class RustSurrounderTestCaseBase(val surrounder: Surrounder) : RustTestCaseBase() {
     override val dataPath: String  = ""
 
-    public fun doTest(before: String, after: String) {
+    protected fun doTest(before: String, after: String) {
         myFixture.configureByText(RustFileType, before)
 
         checkApplicability(fileName, true)
@@ -24,7 +24,7 @@ abstract class RustSurrounderTestCaseBase(val surrounder: Surrounder) : RustTest
         myFixture.checkResult(after)
     }
 
-    public fun doTestNotApplicable(before: String) {
+    protected fun doTestNotApplicable(before: String) {
         myFixture.configureByText(RustFileType, before)
         checkApplicability(before, false)
     }

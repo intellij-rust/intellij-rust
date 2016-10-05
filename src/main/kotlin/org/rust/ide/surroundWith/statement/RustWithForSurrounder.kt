@@ -1,36 +1,22 @@
 package org.rust.ide.surroundWith.statement
 
-import com.intellij.codeInsight.CodeInsightUtilBase
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.rust.ide.surroundWith.statement.RustStatementsSurrounderBase
-import org.rust.ide.surroundWith.addStatements
+import org.rust.lang.core.psi.RustBlockElement
 import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustForExprElement
 
 class RustWithForSurrounder : RustStatementsSurrounderBase() {
     override fun getTemplateDescription(): String = "for { }"
 
-    override fun surroundStatements(
-        project: Project,
-        editor: Editor,
-        container: PsiElement,
-        statements: Array<out PsiElement>
-    ): TextRange? {
-        var forExpr = RustElementFactory.createExpression(project, "for a in b {\n}") as RustForExprElement
+    override fun createTemplate(project: Project): PsiElement =
+        checkNotNull(RustElementFactory.createExpression(project, "for a in b {\n}"))
 
-        forExpr = container.addBefore(forExpr, statements[0]) as RustForExprElement
-        forExpr.block.addStatements(statements)
-        container.deleteChildRange(statements.first(), statements.last())
+    override fun getCodeBlock(expression: PsiElement): RustBlockElement =
+        (expression as RustForExprElement).block
 
-        forExpr = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(forExpr)
+    override val shouldRemoveExpr = true
 
-        val conditionTextRange = forExpr.scopedForDecl.textRange
-        val range = TextRange.from(conditionTextRange.startOffset, 0)
-        editor.document.deleteString(conditionTextRange.startOffset, conditionTextRange.endOffset)
-
-        return range
-    }
+    override fun getExprForRemove(expression: PsiElement): PsiElement =
+        (expression as RustForExprElement).scopedForDecl
 }
