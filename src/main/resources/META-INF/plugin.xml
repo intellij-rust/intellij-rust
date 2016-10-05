@@ -144,6 +144,11 @@
                          enabledByDefault="false" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RustUnresolvedReferenceInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Double negation"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustDoubleNegInspection"/>
+
         <localInspection language="Rust" groupName="Redeclared symbols"
                          displayName="Duplicate field"
                          enabledByDefault="true" level="ERROR"
