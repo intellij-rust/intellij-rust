@@ -18,13 +18,13 @@ class RustDoubleNegInspection : RustLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : RustElementVisitor() {
             override fun visitUnaryExpr(expr: RustUnaryExprElement) {
-                if (isNegation(expr) && isNegation(expr.expr)) {
+                if (expr.isNegation && expr.expr.isNegation) {
                     holder.registerProblem(expr, "--x could be misinterpreted as a pre-decrement, but effectively is a no-op")
                 }
             }
         }
     }
 
-    private fun isNegation(el: RustExprElement?) =
-        el != null && el is RustUnaryExprElement && el.minus != null
+    private val RustExprElement?.isNegation: Boolean
+        get() = this is RustUnaryExprElement && minus != null
 }
