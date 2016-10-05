@@ -145,13 +145,14 @@ private fun PsiElement.getTopmostParentInside(parent: PsiElement): PsiElement {
 }
 
 private fun collectElements(start: PsiElement, stop: PsiElement?, pred: (PsiElement) -> Boolean): Array<out PsiElement> {
-    val list = mutableListOf<PsiElement>()
-    var current = start
-    while (current != stop) {
-        if (pred(current)) {
-            list.add(current)
-        }
-        current = current.nextSibling
+    check(stop == null || start.parent == stop.parent)
+
+    val psiSeq = generateSequence(start) {
+        if (it.nextSibling == stop)
+            null
+        else
+            it.nextSibling
     }
-    return PsiUtilCore.toPsiElementArray(list)
+
+    return PsiUtilCore.toPsiElementArray(psiSeq.filter(pred).toList())
 }

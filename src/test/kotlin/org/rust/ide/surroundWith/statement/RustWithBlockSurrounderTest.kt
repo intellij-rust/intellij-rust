@@ -29,6 +29,20 @@ class RustWithBlockSurrounderTest : RustSurrounderTestCaseBase(RustWithBlockSurr
         )
     }
 
+    fun testNotApplicable3() {
+        doTestNotApplicable(
+            """
+            fn main() {
+                loop<selection> {
+                    for 1 in 1..10 {
+                        println!("Hello, world!");
+                    }
+                }</selection>
+            }
+            """
+        )
+    }
+
     fun testApplicableComment() {
         doTest(
             """
@@ -136,6 +150,38 @@ class RustWithBlockSurrounderTest : RustSurrounderTestCaseBase(RustWithBlockSurr
                     server.get("**", hello_world);
                 }
                 server.listen("127.0.0.1:6767").unwrap();
+            }
+            """
+        )
+    }
+
+    // FIXME Indents after apply Surround With...
+    // Should be:
+//            fn main() {
+//                {
+//                    loop {
+//                        println!("Hello");
+//                    }
+//                }
+//            }
+
+    fun testNested() {
+        doTest(
+            """
+            fn main() {
+                <selection>loop {
+                    println!("Hello");
+                }</selection>
+            }
+            """
+            ,
+            """
+            fn main() {
+                {
+                    loop {
+                                        println!("Hello");
+                                    }
+                }
             }
             """
         )

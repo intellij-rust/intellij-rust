@@ -1,7 +1,6 @@
 package org.rust.ide.surroundWith.statement
 
 import org.rust.ide.surroundWith.RustSurrounderTestCaseBase
-import org.rust.ide.surroundWith.statement.RustWithWhileSurrounder
 
 class RustWithWhileSurrounderTest : RustSurrounderTestCaseBase(RustWithWhileSurrounder()) {
     fun testNotApplicable1() {
@@ -24,6 +23,20 @@ class RustWithWhileSurrounderTest : RustSurrounderTestCaseBase(RustWithWhileSurr
                 let mut server = Nickel::new();
                 server.get("**", hello_world);
                 server.listen("127.0.0.1:6767").unwrap();</selection>
+            }
+            """
+        )
+    }
+
+    fun testNotApplicable3() {
+        doTestNotApplicable(
+            """
+            fn main() {
+                loop<selection> {
+                    for 1 in 1..10 {
+                        println!("Hello, world!");
+                    }
+                }</selection>
             }
             """
         )
@@ -136,6 +149,38 @@ class RustWithWhileSurrounderTest : RustSurrounderTestCaseBase(RustWithWhileSurr
                     server.get("**", hello_world);
                 }
                 server.listen("127.0.0.1:6767").unwrap();
+            }
+            """
+        )
+    }
+
+    // FIXME Indents after apply Surround With...
+    // Should be:
+//            fn main() {
+//                while <caret> {
+//                    loop {
+//                        println!("Hello");
+//                    }
+//                }
+//            }
+
+    fun testNested() {
+        doTest(
+            """
+            fn main() {
+                <selection>loop {
+                    println!("Hello");
+                }</selection>
+            }
+            """
+            ,
+            """
+            fn main() {
+                while <caret> {
+                    loop {
+                                        println!("Hello");
+                                    }
+                }
             }
             """
         )
