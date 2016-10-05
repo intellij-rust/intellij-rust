@@ -164,6 +164,11 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.duplicates.RustDuplicateTraitTypeInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Dropping reference"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustDropRefInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"

@@ -72,6 +72,15 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
                 }
             }
 
+            override fun visitFnItem(o: RustFnItemElement) {
+                super.visitFnItem(o)
+
+                val fnBody = o.block
+                if (fnBody != null) {
+                    descriptors += FoldingDescriptor(o.node, fnBody.textRange)
+                }
+            }
+
             override fun visitFn(o: RustFnElement) {
                 super.visitFn(o)
 

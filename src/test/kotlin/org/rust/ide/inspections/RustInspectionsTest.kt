@@ -26,4 +26,5 @@ class RustInspectionsTest : RustInspectionsTestBase() {
         applyQuickFix("Suppress for item")
         myFixture.testHighlighting(true, false, true, fileName.replace(".rs", "_after.rs"))
     }
+
 }
