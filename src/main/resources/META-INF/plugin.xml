@@ -106,6 +106,7 @@
         <enterHandlerDelegate implementation="org.rust.ide.typing.RustEnterInStringLiteralHandler" id="RustEnterInStringLiterals"/>
         <typedHandler implementation="org.rust.ide.typing.RustRawLiteralHashesInserter" id="RustRawLiteralHashesInserter"/>
         <backspaceHandlerDelegate implementation="org.rust.ide.typing.RustRawLiteralHashesDeleter" id="RustRawLiteralHashesDeleter"/>
+        <joinLinesHandler implementation="org.rust.ide.actions.RustStringLiteralJoinLinesHandler" id="RustStringLiteralJoinLinesHandler"/>
 
         <!-- Code Style -->
 
