@@ -24,11 +24,8 @@ import org.rust.lang.core.resolve.util.RustResolveUtil
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathHead
 import org.rust.lang.core.types.RustStructType
-import org.rust.lang.core.types.RustType
-import org.rust.lang.core.types.unresolved.RustUnresolvedType
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.util.stripAllRefsIfAny
-import org.rust.lang.core.types.visitors.impl.RustTypeResolvingVisitor
 import org.rust.utils.sequenceOfNotNull
 import java.util.*
 
@@ -67,9 +64,6 @@ object RustResolveEngine {
         class Resolved(resolved: RustNamedElement) : ResolveResult(resolved)
     }
 
-    fun resolve(type: RustUnresolvedType, pivot: RustCompositeElement): RustType =
-        type.accept(RustTypeResolvingVisitor(pivot))
-
     /**
      * Resolves abstract qualified-path [path] in such a way, like it was a qualified-reference
      * used at [pivot]
@@ -85,12 +79,8 @@ object RustResolveEngine {
     /**
      * Resolves references to struct's fields inside destructuring [RustStructExprElement]
      */
-    fun resolveStructExprField(structExpr: RustStructExprElement, fieldName: String): ResolveResult {
-        val matching = structExpr   .fields
-                                    .filter { it.name == fieldName }
-
-        return ResolveResult.buildFrom(matching)
-    }
+    fun resolveStructExprField(structExpr: RustStructExprElement, fieldName: String): ResolveResult =
+        ResolveResult.buildFrom(structExpr.fields.filter { it.name == fieldName })
 
     /**
      * Resolves references to struct's fields inside [RustFieldExprElement]
@@ -337,9 +327,10 @@ private class RustScopeVisitor(
     }
 
     override fun visitScopedLetDecl(o: RustScopedLetDeclElement) = set {
-        if (context.pivot == null || !PsiTreeUtil.isAncestor(o, context.pivot, true)) {
+        if (context.pivot == null || !PsiTreeUtil.isAncestor(o, context.pivot, true))
             o.pat.scopeEntries
-        } else emptySequence()
+        else
+            emptySequence()
     }
 
     override fun visitBlock(o: RustBlockElement) = set {
@@ -364,13 +355,12 @@ private class RustScopeVisitor(
         val allBoundElements = visibleLetDecls.flatMap { it.pat.scopeEntries }
 
         // TODO: handle shadowing between blocks
-        // `toList` to make it safe to iterate the sequence twice
         val declaredNames = HashSet<String>()
         val nonShadowed = allBoundElements.filter {
             val result = it.name !in declaredNames
             declaredNames += it.name
             result
-        }.toList()
+        }.toList() // `toList` to make it safe to iterate the sequence twice
 
         nonShadowed.asSequence() + o.itemEntries(context)
     }
@@ -398,10 +388,8 @@ private class RustScopeVisitor(
     }
 
     override fun visitTraitItem(o: RustTraitItemElement) = set {
-        if (isContextLocalTo(o)) {
+        if (isContextLocalTo(o))
             o.typeParams.scopeEntries + ScopeEntry.of(RustPath.CSELF, o)
-        }
-
         else
             emptySequence()
     }
@@ -420,12 +408,12 @@ private class RustScopeVisitor(
     override fun visitImplMethodMember(o: RustImplMethodMemberElement) = visitFunction(o)
 
     override fun visitImplItem(o: RustImplItemElement) = set {
-        if (isContextLocalTo(o)) {
+        if (isContextLocalTo(o))
             o.typeParams.scopeEntries + sequenceOfNotNull(ScopeEntry.lazy(RustPath.CSELF) {
                 //TODO: handle types which are not `NamedElements` (e.g. tuples)
                 (o.type as? RustPathTypeElement)?.path?.reference?.resolve()
             })
-        } else
+        else
             emptySequence()
     }
 
