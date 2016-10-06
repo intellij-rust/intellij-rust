@@ -7,11 +7,16 @@ enum class Namespace {
     Values, Types
 }
 
+fun Sequence<ScopeEntry>.filterByNamespace(namespace: Namespace?): Sequence<ScopeEntry> {
+    if (namespace == null) return this
+    return filter { namespace in it.element?.namespaces.orEmpty() }
+}
+
 private val TYPES = EnumSet.of(Namespace.Types)
 private val VALUES = EnumSet.of(Namespace.Values)
 private val BOTH = TYPES + VALUES
 
-val RustNamedElement.namespaces: Set<Namespace> get() = when (this) {
+private val RustNamedElement.namespaces: Set<Namespace> get() = when (this) {
     is RustMod -> TYPES
 
     is RustPatBindingElement,

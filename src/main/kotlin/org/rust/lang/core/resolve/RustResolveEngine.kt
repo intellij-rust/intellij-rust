@@ -74,40 +74,13 @@ object RustResolveEngine {
      * Resolves abstract qualified-path [path] in such a way, like it was a qualified-reference
      * used at [pivot]
      */
-    fun resolve(path: RustPath, pivot: RustCompositeElement, namespace: Namespace? = null): ResolveResult {
-        val head = path.head
-        val start: Sequence<RustNamedElement> = when (head) {
-            is RustPathHead.Absolute -> sequenceOfNotNull(RustResolveUtil.getCrateRootModFor(pivot))
-
-            is RustPathHead.Relative -> sequenceOfNotNull(
-                generateSequence(pivot.containingMod, { it.`super` }).elementAtOrNull(head.level)
-            )
-
-            is RustPathHead.Named ->
-                RustResolveEngine.enumerateScopesFor(pivot)
-                    .flatMap { declarations(it, Context(pivot = pivot)) }
-                    .filter { it.name == head.segment.name }
-                    .mapNotNull { it.element }
-        }
-
-        var current: Sequence<RustNamedElement> = start
-        for ((name) in path.segments) {
-            val ns = recursionGuard(pivot, Computable {
-                current
-                    .filter { Namespace.Types in it.namespaces }
-                    .filterIsInstance<RustResolveScope>()
-                    .firstOrNull()
-            }) ?: return ResolveResult.Unresolved
-
-            current = declarations(ns, Context(pivot = pivot, searchFor = SearchFor.PRIVATE))
-                .filter { it.name == name }
-                .mapNotNull { it.element }
-        }
-
-        val result = if (namespace == null) current else current.filter { namespace in it.namespaces }
-
-        return recursionGuard(pivot, Computable { result.firstOrNull() }).asResolveResult()
-    }
+    fun resolve(path: RustPath, pivot: RustCompositeElement, namespace: Namespace? = null): ResolveResult =
+        recursionGuard(pivot, Computable {
+            resolveAllNamespaces(path, pivot)
+                .filterByNamespace(namespace)
+                .firstOrNull()
+                ?.element
+        }).asResolveResult()
 
     /**
      * Resolves references to struct's fields inside destructuring [RustStructExprElement]
@@ -255,6 +228,40 @@ object RustResolveEngine {
 }
 
 
+private fun resolveAllNamespaces(path: RustPath, pivot: RustCompositeElement): Sequence<ScopeEntry> {
+    val head = path.head
+    val start: Sequence<ScopeEntry> = when (head) {
+        is RustPathHead.Absolute -> sequenceOfNotNull(
+            RustResolveUtil.getCrateRootModFor(pivot)?.let { ScopeEntry.of(it) }
+        )
+
+        is RustPathHead.Relative -> sequenceOfNotNull(
+            generateSequence(pivot.containingMod, { it.`super` }).elementAtOrNull(head.level)?.let {
+                ScopeEntry.Companion.of(it)
+            }
+        )
+
+        is RustPathHead.Named ->
+            RustResolveEngine.enumerateScopesFor(pivot)
+                .flatMap { declarations(it, Context(pivot = pivot)) }
+                .filter { it.name == head.segment.name }
+    }
+
+    var current: Sequence<ScopeEntry> = start
+    for ((name) in path.segments) {
+        val scope = current
+            .filterByNamespace(Namespace.Types)
+            .mapNotNull { it.element }
+            .filterIsInstance<RustResolveScope>()
+            .firstOrNull() ?: return emptySequence()
+
+        current = declarations(scope, Context(pivot = pivot, searchFor = SearchFor.PRIVATE))
+            .filter { it.name == name }
+    }
+
+    return current
+}
+
 private fun resolveInside(
     scope: RustResolveScope,
     name: String,
@@ -263,8 +270,10 @@ private fun resolveInside(
 ): RustResolveEngine.ResolveResult =
     declarations(scope, Context(pivot = pivot, searchFor = SearchFor.PRIVATE))
         .filter { it.name == name }
-        .find { namespace == null || namespace in it.element?.namespaces.orEmpty() }
-        ?.element.asResolveResult()
+        .filterByNamespace(namespace)
+        .firstOrNull()
+        ?.element
+        .asResolveResult()
 
 
 private fun declarations(scope: RustResolveScope, context: Context): Sequence<ScopeEntry> =

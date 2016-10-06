@@ -24,7 +24,7 @@ object RustCompletionEngine {
         } else {
             RustResolveEngine.enumerateScopesFor(ref)
                 .flatMap { RustResolveEngine.declarations(it, pivot = ref) }
-                .filter { namespace == null || namespace in it.element?.namespaces.orEmpty() }
+                .filterByNamespace(namespace)
                 .completionsFromScopeEntries()
         }
     }
