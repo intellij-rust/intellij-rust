@@ -149,6 +149,11 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RustDoubleNegInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Suspicious assignment"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustSuspiciousAssignmentInspection"/>
+
         <localInspection language="Rust" groupName="Redeclared symbols"
                          displayName="Duplicate field"
                          enabledByDefault="true" level="ERROR"
