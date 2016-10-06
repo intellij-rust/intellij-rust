@@ -21,6 +21,7 @@ class RustMissingElseInspection : RustLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
             override fun visitExprStmt(expr: RustExprStmtElement) {
+                if (expr.extractIf() == null) return
                 val nextPair = expr.nextSibling.consumeSpaces() ?: return
                 val spaceLen = nextPair.second
                 val nextEl = nextPair.first
