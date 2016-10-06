@@ -25,21 +25,29 @@ class RustSuspiciousAssignmentInspection : RustLocalInspectionTool() {
         return object : RustElementVisitor() {
             override fun visitBinaryExpr(expr: RustBinaryExprElement) {
                 if (expr.operator.text == "=") {
-                    val rightExpr = findUnaryExpr(expr.right)
-                    if (rightExpr is RustUnaryExprElement && rightExpr.expr != null) {
-                        val uExpr = rightExpr.expr
-                        val op = rightExpr.text[0]
-                        if (uExpr != null
+                    val unaryExpr = findUnaryExpr(expr.right)
+                    if (unaryExpr is RustUnaryExprElement && unaryExpr.expr != null) {
+                        val unaryBody = unaryExpr.expr
+                        val op = unaryExpr.text[0]
+                        if (unaryBody != null
                             && (op == '-' || op == '*' || op == '!')
-                            && expr.operator.distanceTo(rightExpr) == 1
-                            && expr.operator.distanceTo(uExpr) > 2) {
-                            val uExprOffset = uExpr.textRange.startOffset - expr.left.textRange.startOffset
+                            && expr.operator.distanceTo(unaryExpr) == 1
+                            && expr.operator.distanceTo(unaryBody) > 2) {
+                            // Here we have:
+                            // var =- 12 * (a + 108)
+                            // ^^^                   expr.left
+                            //     ^                 expr.operator
+                            //      ^^^^^^^^^^^^^^^^ expr.right
+                            //      ^^^^             unaryExpr
+                            //      ^                op
+                            //        ^^             unaryBody
+                            val uExprOffset = unaryBody.textRange.startOffset - expr.left.textRange.startOffset
                             val left = expr.left.text.compact()
                             val right = expr.text.substring(uExprOffset).compact()
                             val right2 = if (right == Constants.LONG_TEXT_SUBST) "($op$right)" else "$op$right"
                             val subst1 = "$left $op= $right"
                             val subst2 = "$left = $right2"
-                            val substRange = TextRange(expr.left.textRange.endOffset, uExpr.textRange.startOffset)
+                            val substRange = TextRange(expr.left.textRange.endOffset, unaryBody.textRange.startOffset)
                             holder.registerProblem(
                                 expr,
                                 TextRange(expr.left.text.length, uExprOffset),
