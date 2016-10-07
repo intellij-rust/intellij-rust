@@ -154,6 +154,11 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RustSuspiciousAssignmentInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Missing else"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustMissingElseInspection"/>
+
         <localInspection language="Rust" groupName="Redeclared symbols"
                          displayName="Duplicate field"
                          enabledByDefault="true" level="ERROR"
