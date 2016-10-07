@@ -21,17 +21,17 @@ class RustMissingElseInspection : RustLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
             override fun visitExprStmt(expr: RustExprStmtElement) {
-                if (expr.extractIf() == null) return
-                val nextPair = expr.nextSibling.consumeSpaces() ?: return
-                val spaceLen = nextPair.second
-                val nextEl = nextPair.first
-                val nextIf = nextEl.extractIf() ?: return
-                val rangeStart = expr.startOffsetInParent + expr.textLength
-                val range = TextRange(rangeStart, rangeStart + spaceLen + nextIf.expr.startOffsetInParent)
+                val firstIf = expr.extractIf() ?: return
+                val nextIf = expr.rightSiblings
+                    .dropWhile { (it is PsiWhiteSpace || it is PsiComment) && '\n' !in it.text }
+                    .firstOrNull()
+                    .extractIf() ?: return
+                val rangeStart = expr.startOffsetInParent + firstIf.textLength
+                val rangeLen = nextIf.expr.textRange.startOffset - firstIf.textRange.startOffset - firstIf.textLength
                 val fixRange = TextRange(nextIf.textRange.startOffset, nextIf.textRange.startOffset)
                 holder.registerProblem(
                     expr.parent,
-                    range,
+                    TextRange(rangeStart, rangeStart + rangeLen),
                     "Suspicious if. Did you mean `else if`?",
                     SubstituteTextFix(expr.containingFile, fixRange, "else ", "Change to `else if`"))
             }
@@ -43,21 +43,5 @@ class RustMissingElseInspection : RustLocalInspectionTool() {
         else -> null
     }
 
-    /**
-     * Finds the first non-space/comment sibling starting from this element.
-     * Returns the found sibling along with the length of the consumed spaces/comments.
-     * If there's a space/comment with a line break, returns `null`.
-     */
-    private fun PsiElement?.consumeSpaces(): Pair<PsiElement?, Int>? {
-        var nextEl = this
-        var len = 0
-        while (nextEl is PsiWhiteSpace || nextEl is PsiComment) {
-            if (nextEl.textContains('\n')) {
-                return null
-            }
-            len += nextEl.textLength
-            nextEl = nextEl.nextSibling
-        }
-        return Pair(nextEl, len)
-    }
+    private val PsiElement.rightSiblings: Sequence<PsiElement> get() = generateSequence(this.nextSibling) { it.nextSibling }
 }

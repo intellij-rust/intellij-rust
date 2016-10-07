@@ -52,6 +52,26 @@ class RustMissingElseInspectionTest : RustInspectionsTestBase() {
         }
     """)
 
+    fun testHandlesBlocksWithNoSiblingsCorrectly() = checkByText<RustMissingElseInspection>("""
+        fn main() {if true {}}
+    """)
+
+    fun testNotAppliedWhenLineBreakExists() = checkByText<RustMissingElseInspection>("""
+        fn main() {
+            if true {}
+            if true {}
+        }
+    """)
+
+    fun testNotAppliedWhenTheresNoSecondIf() = checkByText<RustMissingElseInspection>("""
+        fn main() {
+            if {
+                92;
+            }
+            {}
+        }
+    """)
+
     fun testFix() = checkFixByText<RustMissingElseInspection>("Change to `else if`", """
         fn main() {
             let a = 10;
