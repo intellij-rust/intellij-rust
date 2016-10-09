@@ -20,6 +20,8 @@ class CargoRunState(
     init {
         consoleBuilder.addFilter(RustConsoleFilter(environment.project, cargoProjectDirectory))
         consoleBuilder.addFilter(RustExplainFilter())
+        consoleBuilder.addFilter(RustPanicFilter(environment.project, cargoProjectDirectory))
+        consoleBuilder.addFilter(RustBacktraceFilter(environment.project, cargoProjectDirectory))
     }
 
     override fun startProcess(): ProcessHandler {

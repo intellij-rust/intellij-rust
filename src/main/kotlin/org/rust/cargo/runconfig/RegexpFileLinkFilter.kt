@@ -7,11 +7,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
 
-
-class RustConsoleFilter(
+/**
+ * Base class for regexp-based output filters that extract
+ * source code location from the output and add corresponding hyperlinks.
+ */
+open class RegexpFileLinkFilter(
     private val project: Project,
-    private val cargoProjectDirectory: VirtualFile
-) : RegexpFilter(project, "(?: --> )?${RegexpFilter.FILE_PATH_MACROS}:${RegexpFilter.LINE_MACROS}:${RegexpFilter.COLUMN_MACROS}") {
+    private val cargoProjectDirectory: VirtualFile,
+    expression: String
+) : RegexpFilter(project, expression) {
 
     override fun createOpenFileHyperlink(fileName: String, line: Int, column: Int): HyperlinkInfo? {
         val platformNeutralName = fileName.replace(File.separatorChar, '/')
@@ -20,4 +24,3 @@ class RustConsoleFilter(
         }
     }
 }
-
