@@ -130,11 +130,6 @@
                          implementationClass="org.rust.ide.inspections.RustApproxConstantInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
-                         displayName="Self Convention"
-                         enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RustSelfConventionInspection"/>
-
-        <localInspection language="Rust" groupName="Rust"
                          displayName="Unsafe CString pointer"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RustCStringPointerInspection"/>
@@ -188,6 +183,96 @@
                          displayName="Dropping reference"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RustDropRefInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Argument naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustArgumentNamingInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Associated type naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustAssocTypeNamingInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Constant naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustConstNamingInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Enum naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustEnumNamingInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Enum variant naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustEnumVariantNamingInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Function naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustFunctionNamingInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Lifetime naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustLifetimeNamingInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Macro naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustMacroNamingInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Method naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustMethodNamingInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Module naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustModuleNamingInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Static constant naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustStaticConstNamingInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Self convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustSelfConventionInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Struct naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustStructNamingInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Field naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustFieldNamingInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Trait naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustTraitNamingInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Type alias naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustTypeAliasNamingInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Type parameter naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustTypeParameterNamingInspection"/>
+
+        <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
+                         displayName="Variable naming convention"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustVariableNamingInspection"/>
 
         <!-- Surrounders -->
 
