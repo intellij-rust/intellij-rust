@@ -155,6 +155,11 @@
                          implementationClass="org.rust.ide.inspections.RustSuspiciousAssignmentInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
+                         displayName="Dangling else"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustDanglingElseInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
                          displayName="Missing else"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RustMissingElseInspection"/>
