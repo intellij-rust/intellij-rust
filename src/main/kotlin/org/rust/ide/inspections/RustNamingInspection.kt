@@ -47,16 +47,18 @@ open class RustCamelCaseNamingInspection(
         val result = StringBuilder(name.length)
         var wasUnderscore = true
         var startWord = true
-        name.forEach { char ->
-            if (char == '_') {
-                wasUnderscore = true
-            } else if (wasUnderscore || startWord && char.canStartWord) {
-                result.append(char.toUpperCase())
-                wasUnderscore = false
-                startWord = false
-            } else {
-                startWord = char.isLowerCase()
-                result.append(char.toLowerCase())
+        for (char in name) {
+            when {
+                char == '_' -> wasUnderscore = true
+                wasUnderscore || startWord && char.canStartWord -> {
+                    result.append(char.toUpperCase())
+                    wasUnderscore = false
+                    startWord = false
+                }
+                else -> {
+                    startWord = char.isLowerCase()
+                    result.append(char.toLowerCase())
+                }
             }
         }
         return if (result.isEmpty()) "CamelCase" else result.toString()
