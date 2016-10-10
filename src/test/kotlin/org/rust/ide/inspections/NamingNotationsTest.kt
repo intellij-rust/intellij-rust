@@ -16,7 +16,7 @@ abstract class NamingNotationTest : TestCase() {
     }
 
     /**
-     * Checks that the given name is not acceptable in the notation and the must be suggested
+     * Checks that the given name is not acceptable in the notation and must be suggested
      * to be changed to `expSuggestion`.
      */
     protected fun testSuggestion(name: String, expSuggestion: String) {
@@ -25,8 +25,8 @@ abstract class NamingNotationTest : TestCase() {
 
     private fun testResult(name: String, expOk: Boolean, expSuggestion: String?) {
         val (isOk, suggestion) = inspection.checkName(name)
-        assertEquals("Name $name acceptance: is expected $expOk, but was $isOk", expOk, isOk)
-        assertEquals("Suggestion for name $name is expected to be $expSuggestion, but was $suggestion", expSuggestion, suggestion)
+        assertEquals("Name $name acceptance: expected $expOk, but was $isOk", expOk, isOk)
+        assertEquals("Suggestion for name $name: expected $expSuggestion, but was $suggestion", expSuggestion, suggestion)
     }
 }
 
