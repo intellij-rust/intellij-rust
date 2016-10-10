@@ -1,5 +1,7 @@
 package org.rust.cargo.runconfig
 
+import com.intellij.openapi.util.SystemInfo
+
 /**
  * Tests for RustBacktraceFilter
  */
@@ -18,6 +20,8 @@ class RustBacktraceFilterTest : HighlightFilterTestBase() {
     }
 
     fun testAbsolutePath() {
+        // Windows does not handle abs paths on the tmpfs
+        if (SystemInfo.isWindows) return
         val absPath = "${projectDir.canonicalPath}/src/main.rs"
         val text = "          at $absPath:24"
         doTest(filter, text, text.length, 13, 47)
