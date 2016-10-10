@@ -36,4 +36,22 @@ fn foo() {
     }
 
     error!();
+
+    let a = 42u32;
+    let b = 43u32;
+    assert!(a == b);
+    assert![a == b];
+    assert!{a == b};
+
+    assert_eq!(a, b, "Some text");
+    assert_ne!(a, b, "Some text");
+    assert!(a == b, "Some text");
+    assert!(a == b, "Text {} {} syntax", "with", "format");
+
+    assert!(a == b);
+    debug_assert!(a == b);
+    assert_eq!(a, b);
+    debug_assert_eq!(a, b);
+    assert_ne!(a, b);
+    debug_assert_ne!(a, b);
 }
