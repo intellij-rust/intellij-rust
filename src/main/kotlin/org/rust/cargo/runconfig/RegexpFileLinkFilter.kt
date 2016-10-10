@@ -5,6 +5,7 @@ import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.execution.filters.RegexpFilter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.rust.utils.findFileByMaybeRelativePath
 import java.io.File
 
 /**
@@ -19,7 +20,7 @@ open class RegexpFileLinkFilter(
 
     override fun createOpenFileHyperlink(fileName: String, line: Int, column: Int): HyperlinkInfo? {
         val platformNeutralName = fileName.replace(File.separatorChar, '/')
-        return cargoProjectDirectory.findFileByRelativePath(platformNeutralName)?.let { file ->
+        return cargoProjectDirectory.findFileByMaybeRelativePath(platformNeutralName)?.let { file ->
             OpenFileHyperlinkInfo(project, file, line, column)
         }
     }

@@ -26,7 +26,9 @@ abstract class HighlightFilterTestBase : RustTestCaseBase() {
         val item = result.resultItems.single()
         Assertions.assertThat(item.getHighlightStartOffset()).isEqualTo(hStart)
         Assertions.assertThat(item.getHighlightEndOffset()).isEqualTo(hEnd)
-        val hyperlink = checkNotNull(item.getHyperlinkInfo())
+        val hyperlink = checkNotNull(item.getHyperlinkInfo()) {
+            "No hyperlink info"
+        }
         val file = requireNotNull((hyperlink as OpenFileHyperlinkInfo).descriptor?.file)
         Assertions.assertThat(file.name).isEqualTo("main.rs")
 

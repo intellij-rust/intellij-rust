@@ -1,10 +1,10 @@
 package org.rust.cargo.toolchain.impl
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.cargo.project.CargoProjectDescription
+import org.rust.utils.findFileByMaybeRelativePath
 
 /**
  * Classes mirroring JSON output of `cargo metadata`.
@@ -144,10 +144,7 @@ object CargoMetadata {
                     CargoProjectDescription.TargetKind.UNKNOWN
         }
 
-        val mainFile = if (FileUtil.isAbsolute(src_path))
-            root.fileSystem.findFileByPath(src_path)
-        else
-            root.findFileByRelativePath(src_path)
+        val mainFile = root.findFileByMaybeRelativePath(src_path)
 
         return mainFile?.let { CleanCargoMetadata.Target(it.url, name, kind) }
     }

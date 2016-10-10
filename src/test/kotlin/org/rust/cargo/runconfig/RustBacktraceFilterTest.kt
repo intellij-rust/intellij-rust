@@ -17,7 +17,13 @@ class RustBacktraceFilterTest : HighlightFilterTestBase() {
         doTest(filter, text, text.length, 13, 24)
     }
 
-    fun testFullOuput() {
+    fun testAbsolutePath() {
+        val absPath = "${projectDir.canonicalPath}/src/main.rs"
+        val text = "          at $absPath:24"
+        doTest(filter, text, text.length, 13, 47)
+    }
+
+    fun testFullOutput() {
         val output = """    Running `target/debug/test`
 thread '<main>' panicked at 'called `Option::unwrap()` on a `None` value', ../src/libcore/option.rs:325
 stack backtrace:
