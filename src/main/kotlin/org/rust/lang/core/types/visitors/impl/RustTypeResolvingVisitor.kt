@@ -19,7 +19,7 @@ open class RustTypeResolvingVisitor(private val pivot: RustCompositeElement) : R
         RustTupleType(type.elements.map { visit(it) })
 
     override fun visitPathType(type: RustUnresolvedPathType): RustType =
-        RustResolveEngine.resolve(type.path, pivot, namespace = Namespace.Types)?.let {
+        RustResolveEngine.resolve(type.path, pivot, namespace = Namespace.Types).firstOrNull()?.let {
             RustTypificationEngine.typify(it)
         } ?: RustUnknownType
 

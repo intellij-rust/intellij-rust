@@ -75,4 +75,38 @@ class RustResolveNamespaceTest : RustResolveTestCaseBase() {
                      //^ unresolved
         }
     """)
+
+    fun testUseFn() = checkByCode("""
+        use m::foo;
+        mod m {
+            fn foo() {}
+              //X
+            mod foo { fn bar() {} }
+
+        }
+
+        fn main() {
+            foo();
+           //^
+            foo::bar();
+
+        }
+    """)
+
+    fun testUseMod() = checkByCode("""
+        use m::foo;
+        mod m {
+            fn foo() {}
+
+            mod foo { fn bar() {} }
+               //X
+        }
+
+        fn main() {
+            foo();
+
+            foo::bar();
+           //^
+        }
+    """)
 }

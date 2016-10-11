@@ -35,13 +35,14 @@ object RustResolveEngine {
      * Resolves abstract qualified-path [path] in such a way, like it was a qualified-reference
      * used at [pivot]
      */
-    fun resolve(path: RustPath, pivot: RustCompositeElement, namespace: Namespace? = null): RustNamedElement? =
+    fun resolve(path: RustPath, pivot: RustCompositeElement, namespace: Namespace? = null): List<RustNamedElement> =
         recursionGuard(pivot, Computable {
             resolveAllNamespaces(path, pivot)
                 .filterByNamespace(namespace)
-                .firstOrNull()
-                ?.element
-        })
+                .mapNotNull { it.element }
+                .toList()
+        }).orEmpty()
+
 
     /**
      * Resolves references to struct's fields inside destructuring [RustStructExprElement]
@@ -455,7 +456,9 @@ private fun RustUseItemElement.nonWildcardEntries(): Sequence<ScopeEntry> {
     if (globList == null) {
         val path = path ?: return emptySequence()
         // use foo::bar [as baz];
-        val entry = ScopeEntry.multiLazy(alias?.name ?: path.referenceName) { path.reference.multiResolve() }
+        val entry = ScopeEntry.multiLazy(alias?.name ?: path.referenceName) {
+            path.reference.multiResolve()
+        }
         return listOfNotNull(entry).asSequence()
     }
 

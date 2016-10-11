@@ -17,8 +17,10 @@ class RustPathReferenceImpl(
 
     override fun resolveInner(): List<RustNamedElement> {
         val path = element.asRustPath ?: return emptyList()
-        return listOfNotNull(RustResolveEngine.resolve(path, element, namespace))
+        return RustResolveEngine.resolve(path, element, namespace)
     }
+
+    override fun resolve(): RustNamedElement? = multiResolve().firstOrNull()
 
     override fun getVariants(): Array<out Any> =
         RustCompletionEngine.completePath(element, namespace)

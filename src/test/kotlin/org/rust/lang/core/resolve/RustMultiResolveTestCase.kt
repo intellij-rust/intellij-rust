@@ -20,6 +20,16 @@ class RustMultiResolveTestCase : RustResolveTestCaseBase() {
         }
     """)
 
+    fun testUseMultiReference() = doTest("""
+        use m::foo;
+              //^
+
+        mod m {
+            fn foo() {}
+            mod foo {}
+        }
+    """)
+
     private fun doTest(code: String) {
         val ref = checkNotNull(
             InlineFile(code).elementAtCaret<RustReferenceElement>().reference

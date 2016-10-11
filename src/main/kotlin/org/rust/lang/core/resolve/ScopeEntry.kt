@@ -4,7 +4,15 @@ import org.rust.lang.core.psi.*
 import java.util.*
 
 interface ScopeEntry {
+    /**
+     * The name under which an element is know in the scope.
+     * It may differ from [element].name because of aliases.
+     */
     val name: String
+
+    /**
+     * Potentially lazy evaluated element this entry points to.
+     */
     val element: RustNamedElement?
 
     fun filterByNamespace(namespace: Namespace): ScopeEntry? =
@@ -30,13 +38,17 @@ interface ScopeEntry {
 private class SingleEntry(
     override val name: String,
     override val element: RustNamedElement
-) : ScopeEntry
+) : ScopeEntry {
+    override fun toString(): String = "SingleEntry($name, $element)"
+}
 
 private class LazyEntry(
     override val name: String,
     thunk: Lazy<RustNamedElement?>
 ) : ScopeEntry {
     override val element: RustNamedElement? by thunk
+
+    override fun toString(): String = "LazyEntry($name, $element)"
 }
 
 private class LazyMultiEntry(
@@ -50,6 +62,8 @@ private class LazyMultiEntry(
         elements.find { namespace in it.namespaces }?.let {
             SingleEntry(name, it)
         }
+
+    override fun toString(): String = "LazyMultiEntry($name, $elements)"
 }
 
 enum class Namespace {
@@ -58,7 +72,7 @@ enum class Namespace {
 
 fun Sequence<ScopeEntry>.filterByNamespace(namespace: Namespace?): Sequence<ScopeEntry> {
     if (namespace == null) return this
-    return filter { namespace in it.element?.namespaces.orEmpty() }
+    return mapNotNull { it.filterByNamespace(namespace) }
 }
 
 private val TYPES = EnumSet.of(Namespace.Types)
