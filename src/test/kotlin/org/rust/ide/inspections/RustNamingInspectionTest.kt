@@ -18,9 +18,36 @@ class RustNamingInspectionTest : RustInspectionsTestBase() {
         }
     """)
 
+    // TODO: Uncomment when associated types support renaming
+    //
+    // fun testAssociatedTypesFix() = checkFixByText<RustAssocTypeNamingInspection>("Rename to `assocType`", """
+    //     trait Foo {
+    //         type <warning descr="Type `assoc_foo` should have a camel case name such as `AssocFoo`">ass<caret>oc_foo</warning>;
+    //         fn bar(&Self::assoc_foo) {}
+    //     }
+    // """, """
+    //     trait Foo {
+    //         type AssocFoo;
+    //         fn bar(&Self::AssocFoo) {}
+    //     }
+    // """)
+
+
     fun testConstants() = checkByText<RustConstNamingInspection>("""
         const CONST_OK: u32 = 12;
         const <warning descr="Constant `const_foo` should have an upper case name such as `CONST_FOO`">const_foo</warning>: u32 = 12;
+    """)
+
+    fun testConstantsFix() = checkFixByText<RustConstNamingInspection>("Rename to `CONST_FOO`", """
+        const <warning descr="Constant `ConstFoo` should have an upper case name such as `CONST_FOO`">Con<caret>stFoo</warning>: u32 = 42;
+        fn const_use() {
+            let a = ConstFoo;
+        }
+    """, """
+        const CONST_FOO: u32 = 42;
+        fn const_use() {
+            let a = CONST_FOO;
+        }
     """)
 
     fun testEnums() = checkByText<RustEnumNamingInspection>("""
@@ -28,10 +55,38 @@ class RustNamingInspectionTest : RustInspectionsTestBase() {
         enum <warning descr="Type `enum_foo` should have a camel case name such as `EnumFoo`">enum_foo</warning> {}
     """)
 
+    fun testEnumsFix() = checkFixByText<RustEnumNamingInspection>("Rename to `EnumFoo`", """
+        enum <warning descr="Type `enum_foo` should have a camel case name such as `EnumFoo`">enum_f<caret>oo</warning> { Var }
+        fn enum_use() {
+            let a = enum_foo::Var;
+        }
+    """, """
+        enum EnumFoo { Var }
+        fn enum_use() {
+            let a = EnumFoo::Var;
+        }
+    """)
+
     fun testEnumVariants() = checkByText<RustEnumVariantNamingInspection>("""
         enum EnumVars {
             VariantOk,
             <warning descr="Enum variant `variant_foo` should have a camel case name such as `VariantFoo`">variant_foo</warning>,
+        }
+    """)
+
+    fun testEnumVariantsFix() = checkFixByText<RustEnumVariantNamingInspection>("Rename to `VarBar`", """
+        enum ToFix {
+            <warning descr="Enum variant `var_bar` should have a camel case name such as `VarBar`">var_b<caret>ar</warning>
+        }
+        fn enum_var_use() {
+            let a = ToFix::var_bar;
+        }
+    """, """
+        enum ToFix {
+            VarBar
+        }
+        fn enum_var_use() {
+            let a = ToFix::VarBar;
         }
     """)
 
@@ -44,15 +99,57 @@ class RustNamingInspectionTest : RustInspectionsTestBase() {
         }
     """)
 
+    fun testEnumVariantFieldsFix() = checkFixByText<RustFieldNamingInspection>("Rename to `field_foo`", """
+        enum EnumToFix {
+            Test {
+                <warning descr="Field `FieldFoo` should have a snake case name such as `field_foo`">Fi<caret>eldFoo</warning>: u32
+            }
+        }
+        fn enum_use() {
+            let mut a = EnumToFix::Test{ FieldFoo: 12 };
+        }
+    """, """
+        enum EnumToFix {
+            Test {
+                field_foo: u32
+            }
+        }
+        fn enum_use() {
+            let mut a = EnumToFix::Test{ field_foo: 12 };
+        }
+    """)
+
     fun testFunctions() = checkByText<RustFunctionNamingInspection>("""
         fn fn_ok() {}
         fn <warning descr="Function `FN_BAR` should have a snake case name such as `fn_bar`">FN_BAR</warning>() {}
+    """)
+
+    fun testFunctionsFix() = checkFixByText<RustFunctionNamingInspection>("Rename to `fun_foo`", """
+        fn <warning descr="Function `FUN_FOO` should have a snake case name such as `fun_foo`">F<caret>UN_FOO</warning>() {}
+        fn fun_use() {
+            FUN_FOO();
+        }
+    """, """
+        fn fun_foo() {}
+        fn fun_use() {
+            fun_foo();
+        }
     """)
 
     fun testFunctionArguments() = checkByText<RustArgumentNamingInspection>("""
         fn fn_par(
             par_ok: u32,
             <warning descr="Argument `ParFoo` should have a snake case name such as `par_foo`">ParFoo</warning>: u32) {
+        }
+    """)
+
+    fun testFunctionArgumentsFix() = checkFixByText<RustArgumentNamingInspection>("Rename to `arg_baz`", """
+        fn test (<warning descr="Argument `Arg__Baz_` should have a snake case name such as `arg_baz`">Arg__<caret>Baz_</warning>: u32) {
+            println!("{}", Arg__Baz_);
+        }
+    """, """
+        fn test (arg_baz: u32) {
+            println!("{}", arg_baz);
         }
     """)
 
@@ -77,12 +174,48 @@ class RustNamingInspectionTest : RustInspectionsTestBase() {
         }
     """)
 
+    fun testMethodsFix() = checkFixByText<RustMethodNamingInspection>("Rename to `met_bar`", """
+        struct Foo;
+        impl Foo {
+            fn <warning descr="Method `MetBar` should have a snake case name such as `met_bar`">MetB<caret>ar</warning>(&self) {}
+        }
+        fn method_use() {
+            let f = Foo {};
+            f.MetBar();
+        }
+    """, """
+        struct Foo;
+        impl Foo {
+            fn met_bar(&self) {}
+        }
+        fn method_use() {
+            let f = Foo {};
+            f.met_bar();
+        }
+    """)
+
     fun testMethodArguments() = checkByText<RustArgumentNamingInspection>("""
         struct Foo {}
         impl Foo {
             fn fn_par(
                 par_ok: u32,
                 <warning descr="Argument `ParFoo` should have a snake case name such as `par_foo`">ParFoo</warning>: u32,) {
+            }
+        }
+    """)
+
+    fun testMethodArgumentsFix() = checkFixByText<RustArgumentNamingInspection>("Rename to `m_arg`", """
+        struct Foo;
+        impl Foo {
+            fn print(&self, <warning descr="Argument `mArg` should have a snake case name such as `m_arg`">m<caret>Arg</warning>: u32) {
+                println!("{}", mArg);
+            }
+        }
+    """, """
+        struct Foo;
+        impl Foo {
+            fn print(&self, m_arg: u32) {
+                println!("{}", m_arg);
             }
         }
     """)
@@ -94,9 +227,45 @@ class RustNamingInspectionTest : RustInspectionsTestBase() {
         }
     """)
 
+    // TODO: Uncomment when trait methods support renaming
+    //
+    // fun testTraitlMethodsFix() = checkFixByText<RustMethodNamingInspection>("Rename to `bar_baz`", """
+    //     trait Foo {
+    //         fn <warning descr="Method `BarBaz` should have a snake case name such as `bar_baz`">Bar<caret>Baz</warning>() {}
+    //     }
+    //     struct Food;
+    //     impl Foo for Food {
+    //         fn BarBaz() {}
+    //     }
+    // """, """
+    //     trait Foo {
+    //         fn bar_baz() {}
+    //     }
+    //     struct Food;
+    //     impl Foo for Food {
+    //         fn bar_baz() {}
+    //     }
+    // """)
+
     fun testModules() = checkByText<RustModuleNamingInspection>("""
         mod module_ok {}
         mod <warning descr="Module `moduleA` should have a snake case name such as `module_a`">moduleA</warning> {}
+    """)
+
+    fun testModulesFix() = checkFixByText<RustModuleNamingInspection>("Rename to `mod_foo`", """
+        mod <warning descr="Module `modFoo` should have a snake case name such as `mod_foo`">modF<caret>oo</warning> {
+            pub const ONE: u32 = 1;
+        }
+        fn use_mod() {
+            let a = modFoo::ONE;
+        }
+    """, """
+        mod mod_foo {
+            pub const ONE: u32 = 1;
+        }
+        fn use_mod() {
+            let a = mod_foo::ONE;
+        }
     """)
 
     fun testStatics() = checkByText<RustStaticConstNamingInspection>("""
@@ -104,9 +273,33 @@ class RustNamingInspectionTest : RustInspectionsTestBase() {
         static <warning descr="Static constant `static_foo` should have an upper case name such as `STATIC_FOO`">static_foo</warning>: u32 = 12;
     """)
 
+    fun testStaticsFix() = checkFixByText<RustStaticConstNamingInspection>("Rename to `STATIC_FOO`", """
+        static <warning descr="Static constant `staticFoo` should have an upper case name such as `STATIC_FOO`">sta<caret>ticFoo</warning>: u32 = 43;
+        fn static_use() {
+            let a = staticFoo;
+        }
+    """, """
+        static STATIC_FOO: u32 = 43;
+        fn static_use() {
+            let a = STATIC_FOO;
+        }
+    """)
+
     fun testStructs() = checkByText<RustStructNamingInspection>("""
         struct StructOk {}
         struct <warning descr="Type `struct_foo` should have a camel case name such as `StructFoo`">struct_foo</warning> {}
+    """)
+
+    fun testStructsFix() = checkFixByText<RustStructNamingInspection>("Rename to `StructFoo`", """
+        struct <warning descr="Type `Struct_foo` should have a camel case name such as `StructFoo`">Stru<caret>ct_foo</warning> {}
+        fn struct_use() {
+            let a = Struct_foo {};
+        }
+    """, """
+        struct StructFoo {}
+        fn struct_use() {
+            let a = StructFoo {};
+        }
     """)
 
     fun testStructFields() = checkByText<RustFieldNamingInspection>("""
@@ -116,15 +309,49 @@ class RustNamingInspectionTest : RustInspectionsTestBase() {
         }
     """)
 
+    fun testStructFieldsFix() = checkFixByText<RustFieldNamingInspection>("Rename to `is_deleted`", """
+        struct Foo {
+            <warning descr="Field `IsDeleted` should have a snake case name such as `is_deleted`">IsDelete<caret>d</warning>: bool
+        }
+        fn struct_use() {
+            let a = Foo { IsDeleted: false };
+        }
+    """, """
+        struct Foo {
+            is_deleted: bool
+        }
+        fn struct_use() {
+            let a = Foo { is_deleted: false };
+        }
+    """)
+
     fun testTraits() = checkByText<RustTraitNamingInspection>("""
         trait TraitOk {}
         trait <warning descr="Trait `trait_foo` should have a camel case name such as `TraitFoo`">trait_foo</warning> {}
     """)
 
+     fun testTraitsFix() = checkFixByText<RustTraitNamingInspection>("Rename to `HotFix`", """
+         trait <warning descr="Trait `hot_fix` should have a camel case name such as `HotFix`">ho<caret>t_fix</warning> {}
+         struct Patch {}
+         impl hot_fix for Patch {}
+     """, """
+         trait HotFix {}
+         struct Patch {}
+         impl HotFix for Patch {}
+     """)
+
     fun testTypeAliases() = checkByText<RustTypeAliasNamingInspection>("""
         type TypeOk = u32;
         type <warning descr="Type `type_foo` should have a camel case name such as `TypeFoo`">type_foo</warning> = u32;
     """)
+
+    fun testTypeAliasesFix() = checkFixByText<RustTypeAliasNamingInspection>("Rename to `ULong`", """
+         type <warning descr="Type `u_long` should have a camel case name such as `ULong`">u_<caret>long</warning> = u64;
+         const ZERO: u_long = 0;
+     """, """
+         type ULong = u64;
+         const ZERO: ULong = 0;
+     """)
 
     fun testTypeParameters() = checkByText<RustTypeParameterNamingInspection>("""
         fn type_params<
@@ -133,6 +360,12 @@ class RustNamingInspectionTest : RustInspectionsTestBase() {
         }
     """)
 
+    fun testTypeParametersFix() = checkFixByText<RustTypeParameterNamingInspection>("Rename to `To`", """
+        fn type_params<<warning descr="Type parameter `to` should have a camel case name such as `To`">t<caret>o</warning>: Clone> () {}
+     """, """
+        fn type_params<To: Clone> () {}
+     """)
+
     fun testTypeParametersWithWhere() = checkByText<RustTypeParameterNamingInspection>("""
         fn type_params<
             SomeType,
@@ -140,10 +373,28 @@ class RustNamingInspectionTest : RustInspectionsTestBase() {
         }
     """)
 
+    fun testTypeParametersWithWhereFix() = checkFixByText<RustTypeParameterNamingInspection>("Rename to `Base`", """
+        fn type_params<<warning descr="Type parameter `base` should have a camel case name such as `Base`">b<caret>ase</warning>>(b: &base) where base: Clone {}
+     """, """
+        fn type_params<Base>(b: &Base) where Base: Clone {}
+     """)
+
     fun testVariables() = checkByText<RustVariableNamingInspection>("""
         fn loc_var() {
             let var_ok = 12;
             let <warning descr="Variable `VarFoo` should have a snake case name such as `var_foo`">VarFoo</warning> = 12;
         }
     """)
+
+    fun testVariablesFix() = checkFixByText<RustVariableNamingInspection>("Rename to `dwarfs_count`", """
+        fn test() {
+            let <warning descr="Variable `DWARFS_COUNT` should have a snake case name such as `dwarfs_count`">DWARF<caret>S_COUNT</warning> = 7;
+            let legs_count = DWARFS_COUNT * 2;
+        }
+     """, """
+        fn test() {
+            let dwarfs_count = 7;
+            let legs_count = dwarfs_count * 2;
+        }
+     """)
 }

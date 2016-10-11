@@ -2,6 +2,8 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNamedElement
+import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustParameterElementImpl
 
@@ -17,11 +19,16 @@ abstract class RustNamingInspection(
     val dispName = elementTitle + " naming convention"
     override fun getDisplayName(): String = dispName
 
-    fun inspect(id: PsiElement?, holder: ProblemsHolder) {
+    fun inspect(id: PsiElement?, holder: ProblemsHolder, fix: Boolean = true) {
         if (id == null) return
         val (isOk, suggestedName) = checkName(id.text)
-        if (!isOk) {
-            holder.registerProblem(id, "$elementType `${id.text}` should have $styleName case name such as `$suggestedName`")
+        if (!isOk && suggestedName != null) {
+            val fixEl = id.parent
+            val fixes = if (fix && fixEl is PsiNamedElement) arrayOf(RenameFix(fixEl, suggestedName)) else emptyArray()
+            holder.registerProblem(
+                id,
+                "$elementType `${id.text}` should have $styleName case name such as `$suggestedName`",
+                *fixes)
         }
     }
 
@@ -139,7 +146,7 @@ class RustArgumentNamingInspection : RustSnakeCaseNamingInspection("Argument") {
 class RustAssocTypeNamingInspection : RustCamelCaseNamingInspection("Type", "Associated type") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
-            override fun visitTraitTypeMember(el: RustTraitTypeMemberElement) = inspect(el.identifier, holder)
+            override fun visitTraitTypeMember(el: RustTraitTypeMemberElement) = inspect(el.identifier, holder, false)
         }
 }
 
@@ -174,21 +181,21 @@ class RustFunctionNamingInspection : RustSnakeCaseNamingInspection("Function") {
 class RustLifetimeNamingInspection : RustSnakeCaseNamingInspection("Lifetime") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
-            override fun visitLifetimeParam(el: RustLifetimeParamElement) = inspect(el, holder)
+            override fun visitLifetimeParam(el: RustLifetimeParamElement) = inspect(el, holder, false)
         }
 }
 
 class RustMacroNamingInspection : RustSnakeCaseNamingInspection("Macro") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
-            override fun visitMacroDefinition(el: RustMacroDefinitionElement) = inspect(el.identifier, holder)
+            override fun visitMacroDefinition(el: RustMacroDefinitionElement) = inspect(el.identifier, holder, false)
         }
 }
 
 class RustMethodNamingInspection : RustSnakeCaseNamingInspection("Method") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
-            override fun visitTraitMethodMember(el: RustTraitMethodMemberElement) = inspect(el.identifier, holder)
+            override fun visitTraitMethodMember(el: RustTraitMethodMemberElement) = inspect(el.identifier, holder, false)
             override fun visitImplMethodMember(el: RustImplMethodMemberElement) = inspect(el.identifier, holder)
         }
 }
