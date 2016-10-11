@@ -2,7 +2,9 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiReferenceBase
+import com.intellij.psi.PsiElementResolveResult
+import com.intellij.psi.PsiPolyVariantReferenceBase
+import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.ResolveCache
 import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustNamedElement
@@ -14,26 +16,25 @@ import org.rust.lang.core.resolve.RustResolveEngine
 
 abstract class RustReferenceBase<T : RustReferenceElement>(
     element: T
-) : PsiReferenceBase<T>(element),
+) : PsiPolyVariantReferenceBase<T>(element),
     RustReference {
-
-    override fun equals(other: Any?): Boolean = other is RustReferenceBase<*> && element === other.element
-
-    override fun hashCode(): Int = element.hashCode()
-
-    abstract val T.referenceAnchor: PsiElement
 
     abstract fun resolveVerbose(): RustResolveEngine.ResolveResult
 
-    final override fun resolve(): RustNamedElement? =
-        cache { e, incomplete ->
-            resolveVerbose()
-        }.let {
-            when (it) {
-                is RustResolveEngine.ResolveResult.Resolved -> it.element
-                else -> null
-            }
-        }
+    final override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
+        ResolveCache.getInstance(element.project)
+            .resolveWithCaching(this, { r, incomplete ->
+                r.resolveVerbose().element?.let {
+                    arrayOf(PsiElementResolveResult(it))
+                } ?: ResolveResult.EMPTY_ARRAY
+            },
+                /* needToPreventRecursion = */ false,
+                /* incompleteCode = */ false)
+
+    final override fun multiResolve(): List<RustNamedElement> =
+        multiResolve(false).asList().mapNotNull { it.element as? RustNamedElement }
+
+    abstract val T.referenceAnchor: PsiElement
 
     final override fun getRangeInElement(): TextRange = super.getRangeInElement()
 
@@ -47,15 +48,9 @@ abstract class RustReferenceBase<T : RustReferenceElement>(
         return element
     }
 
-    val cache = ResolveCache.getInstance(element.project)
+    override fun equals(other: Any?): Boolean = other is RustReferenceBase<*> && element === other.element
 
-    private fun cache(block: (RustReferenceBase<T>, Boolean) -> RustResolveEngine.ResolveResult): RustResolveEngine.ResolveResult =
-        cache.resolveWithCaching(
-            this,
-            { e, incomplete -> block(e, incomplete) },
-            false /* needToPreventRecursion = */,
-            false /* incompleteCode = */
-        ) ?: RustResolveEngine.ResolveResult.Unresolved
+    override fun hashCode(): Int = element.hashCode()
 
     companion object {
         @JvmStatic protected fun doRename(identifier: PsiElement, newName: String) {
