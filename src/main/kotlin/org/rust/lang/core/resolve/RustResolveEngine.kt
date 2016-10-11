@@ -132,18 +132,12 @@ object RustResolveEngine {
      * Reference:
      *      https://github.com/rust-lang/rust/blob/master/src/doc/reference.md#modules
      */
-    fun resolveModDecl(ref: RustModDeclItemElement): RustNamedElement? {
-        val parent  = ref.containingMod
-        val name    = ref.name
+    fun resolveModDecl(modDecl: RustModDeclItemElement): RustNamedElement? {
+        val dir = modDecl.containingMod?.ownedDirectory ?: return null
 
-        if (parent == null || name == null) return null
-
-        val dir = parent.ownedDirectory
-
-        val psiManager = PsiManager.getInstance(ref.project)
-
-        return ref.possiblePaths.mapNotNull { path ->
-            dir?.virtualFile?.findFileByRelativePath(path)?.let { psiManager.findFile(it) }?.rustMod
+        val psiManager = PsiManager.getInstance(modDecl.project)
+        return modDecl.possiblePaths.mapNotNull { path ->
+            dir.virtualFile.findFileByRelativePath(path)?.let { psiManager.findFile(it) }?.rustMod
         }.singleOrNull()
     }
 
@@ -418,7 +412,7 @@ private class RustScopeVisitor(
 private fun RustItemsOwner.itemEntries(context: Context): Sequence<ScopeEntry> {
     val (wildCardImports, usualImports) = useDeclarations.partition { it.mul != null }
 
-    return sequenceOf (
+    return sequenceOf(
         // XXX: this must come before itemList to resolve `Box` from prelude. We need to handle cfg attributes to
         // fix this properly
         modDecls.asSequence().mapNotNull {
@@ -488,7 +482,7 @@ private val Sequence<RustNamedElement>.scopeEntries: Sequence<ScopeEntry>
  * Helper to debug complex iterator pipelines
  */
 @Suppress("unused")
-private fun<T> Sequence<T>.inspect(f: (T) -> Unit = { println("inspecting $it") }): Sequence<T> {
+private fun <T> Sequence<T>.inspect(f: (T) -> Unit = { println("inspecting $it") }): Sequence<T> {
     return map { it ->
         f(it)
         it
