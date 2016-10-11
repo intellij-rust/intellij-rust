@@ -3,6 +3,28 @@ package org.rust.lang.core.resolve
 import org.rust.lang.core.psi.*
 import java.util.*
 
+class ScopeEntry private constructor(
+    val name: String,
+    private val thunk: Lazy<RustNamedElement?>
+) {
+    val element: RustNamedElement? by thunk
+
+    companion object {
+        fun of(name: String, element: RustNamedElement): ScopeEntry = ScopeEntry(name, lazyOf(element))
+
+        fun of(element: RustNamedElement): ScopeEntry? = element.name?.let { ScopeEntry.of(it, element) }
+
+        fun lazy(name: String?, thunk: () -> RustNamedElement?): ScopeEntry? =
+            name?.let {
+                ScopeEntry(name, lazy(thunk))
+            }
+    }
+
+    override fun toString(): String {
+        return "ScopeEntryImpl(name='$name', thunk=$thunk)"
+    }
+}
+
 enum class Namespace {
     Values, Types
 }
