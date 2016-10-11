@@ -455,7 +455,7 @@ private fun RustUseItemElement.nonWildcardEntries(): Sequence<ScopeEntry> {
     if (globList == null) {
         val path = path ?: return emptySequence()
         // use foo::bar [as baz];
-        val entry = ScopeEntry.lazy(alias?.name ?: path.referenceName) { path.reference.resolve() }
+        val entry = ScopeEntry.multiLazy(alias?.name ?: path.referenceName) { path.reference.multiResolve() }
         return listOfNotNull(entry).asSequence()
     }
 
@@ -466,7 +466,7 @@ private fun RustUseItemElement.nonWildcardEntries(): Sequence<ScopeEntry> {
             glob.referenceName // {foo}
         ).firstOrNull()
 
-        ScopeEntry.lazy(name) { glob.reference.resolve() }
+        ScopeEntry.multiLazy(name) { glob.reference.multiResolve() }
     }
 }
 

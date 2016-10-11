@@ -3,26 +3,53 @@ package org.rust.lang.core.resolve
 import org.rust.lang.core.psi.*
 import java.util.*
 
-class ScopeEntry private constructor(
-    val name: String,
-    private val thunk: Lazy<RustNamedElement?>
-) {
-    val element: RustNamedElement? by thunk
+interface ScopeEntry {
+    val name: String
+    val element: RustNamedElement?
+
+    fun filterByNamespace(namespace: Namespace): ScopeEntry? =
+        if (namespace in element?.namespaces.orEmpty()) this else null
 
     companion object {
-        fun of(name: String, element: RustNamedElement): ScopeEntry = ScopeEntry(name, lazyOf(element))
+        fun of(name: String, element: RustNamedElement): ScopeEntry = SingleEntry(name, element)
 
         fun of(element: RustNamedElement): ScopeEntry? = element.name?.let { ScopeEntry.of(it, element) }
 
         fun lazy(name: String?, thunk: () -> RustNamedElement?): ScopeEntry? =
             name?.let {
-                ScopeEntry(name, lazy(thunk))
+                LazyEntry(name, lazy(thunk))
+            }
+
+        fun multiLazy(name: String?, thunk: () -> List<RustNamedElement>): ScopeEntry? =
+            name?.let {
+                LazyMultiEntry(name, kotlin.lazy(thunk))
             }
     }
+}
 
-    override fun toString(): String {
-        return "ScopeEntryImpl(name='$name', thunk=$thunk)"
-    }
+private class SingleEntry(
+    override val name: String,
+    override val element: RustNamedElement
+) : ScopeEntry
+
+private class LazyEntry(
+    override val name: String,
+    thunk: Lazy<RustNamedElement?>
+) : ScopeEntry {
+    override val element: RustNamedElement? by thunk
+}
+
+private class LazyMultiEntry(
+    override val name: String,
+    thunk: Lazy<List<RustNamedElement>>
+) : ScopeEntry {
+    private val elements: List<RustNamedElement> by thunk
+    override val element: RustNamedElement? get() = elements.firstOrNull()
+
+    override fun filterByNamespace(namespace: Namespace): ScopeEntry? =
+        elements.find { namespace in it.namespaces }?.let {
+            SingleEntry(name, it)
+        }
 }
 
 enum class Namespace {
