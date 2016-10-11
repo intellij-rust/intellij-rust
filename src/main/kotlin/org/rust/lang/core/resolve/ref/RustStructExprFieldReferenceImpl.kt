@@ -3,6 +3,7 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.completion.RustCompletionEngine
+import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustStructExprElement
 import org.rust.lang.core.psi.RustStructExprFieldElement
 import org.rust.lang.core.psi.referenceName
@@ -20,12 +21,9 @@ class RustStructExprFieldReferenceImpl(
         // TODO(kudinkin): Fix in the similar way
         RustCompletionEngine.completeFieldName(element)
 
-    override fun resolveVerbose(): RustResolveEngine.ResolveResult {
-        val structExpr = element.parentOfType<RustStructExprElement>()
+    override fun resolveInner(): List<RustNamedElement> {
+        val structExpr = element.parentOfType<RustStructExprElement>() ?: return emptyList()
 
-        return if (structExpr != null)
-            RustResolveEngine.resolveStructExprField(structExpr, element.referenceName)
-        else
-            RustResolveEngine.ResolveResult.Unresolved
+        return RustResolveEngine.resolveStructExprField(structExpr, element.referenceName)
     }
 }

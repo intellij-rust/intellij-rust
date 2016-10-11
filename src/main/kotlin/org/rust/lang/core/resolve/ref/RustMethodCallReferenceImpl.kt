@@ -2,6 +2,7 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustMethodCallExprElement
+import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.resolve.RustResolveEngine
 
 class RustMethodCallReferenceImpl(
@@ -13,7 +14,7 @@ class RustMethodCallReferenceImpl(
 
     override fun getVariants(): Array<out Any> = emptyArray()
 
-    override fun resolveVerbose(): RustResolveEngine.ResolveResult =
-        RustResolveEngine.resolveMethodCallExpr(element)
+    override fun resolveInner(): List<RustNamedElement> =
+        listOfNotNull(RustResolveEngine.resolveMethodCallExpr(element))
 
 }

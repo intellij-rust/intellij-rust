@@ -20,7 +20,7 @@ object RustCompletionEngine {
 
         return if (path.segments.isNotEmpty()) {
             val qual = path.copy(segments = path.segments.subList(0, path.segments.size - 1))
-            RustResolveEngine.resolve(qual, ref, Namespace.Types).element.completionsFromResolveScope()
+            RustResolveEngine.resolve(qual, ref, Namespace.Types).completionsFromResolveScope()
         } else {
             RustResolveEngine.enumerateScopesFor(ref)
                 .flatMap { RustResolveEngine.declarations(it, pivot = ref) }

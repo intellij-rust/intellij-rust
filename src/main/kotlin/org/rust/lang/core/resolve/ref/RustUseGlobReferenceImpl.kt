@@ -2,6 +2,7 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.completion.RustCompletionEngine
+import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustUseGlobElement
 import org.rust.lang.core.resolve.RustResolveEngine
 
@@ -15,7 +16,7 @@ class RustUseGlobReferenceImpl(
     override fun getVariants(): Array<out Any> =
         RustCompletionEngine.completeUseGlob(element)
 
-    override fun resolveVerbose(): RustResolveEngine.ResolveResult = RustResolveEngine.resolveUseGlob(element)
+    override fun resolveInner(): List<RustNamedElement> = listOfNotNull(RustResolveEngine.resolveUseGlob(element))
 }
 
 

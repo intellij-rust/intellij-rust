@@ -12,21 +12,18 @@ import org.rust.lang.core.psi.RustReferenceElement
 import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.parentRelativeRange
-import org.rust.lang.core.resolve.RustResolveEngine
 
 abstract class RustReferenceBase<T : RustReferenceElement>(
     element: T
 ) : PsiPolyVariantReferenceBase<T>(element),
     RustReference {
 
-    abstract fun resolveVerbose(): RustResolveEngine.ResolveResult
+    abstract fun resolveInner(): List<RustNamedElement>
 
     final override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
         ResolveCache.getInstance(element.project)
             .resolveWithCaching(this, { r, incomplete ->
-                r.resolveVerbose().element?.let {
-                    arrayOf(PsiElementResolveResult(it))
-                } ?: ResolveResult.EMPTY_ARRAY
+                r.resolveInner().map(::PsiElementResolveResult).toTypedArray()
             },
                 /* needToPreventRecursion = */ false,
                 /* incompleteCode = */ false)

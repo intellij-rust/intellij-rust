@@ -3,6 +3,7 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.completion.RustCompletionEngine
 import org.rust.lang.core.psi.RustFieldExprElement
+import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.resolve.RustResolveEngine
 
 class RustFieldExprReferenceImpl(
@@ -14,7 +15,7 @@ class RustFieldExprReferenceImpl(
 
     override fun getVariants(): Array<out Any> = RustCompletionEngine.completeFieldOrMethod(element)
 
-    override fun resolveVerbose(): RustResolveEngine.ResolveResult =
+    override fun resolveInner(): List<RustNamedElement> =
         RustResolveEngine.resolveFieldExpr(element)
 
     override fun handleElementRename(newName: String): PsiElement {

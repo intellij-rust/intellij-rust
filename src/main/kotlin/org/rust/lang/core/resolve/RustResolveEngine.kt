@@ -31,97 +31,58 @@ import java.util.*
 
 
 object RustResolveEngine {
-
-    open class ResolveResult private constructor(val resolved: RustNamedElement?) : com.intellij.psi.ResolveResult {
-
-        companion object {
-            fun buildFrom(candidates: Iterable<RustNamedElement>): ResolveResult {
-                return when (candidates.count()) {
-                    1       -> ResolveResult.Resolved(candidates.first())
-                    0       -> ResolveResult.Unresolved
-                    else    -> ResolveResult.Ambiguous(candidates)
-                }
-            }
-        }
-
-        override fun getElement():      RustNamedElement? = resolved
-        override fun isValidResult():   Boolean           = resolved != null
-
-        /**
-         * Designates resolve-engine failure to properly resolve item
-         */
-        object Unresolved : ResolveResult(null)
-
-        /**
-         * Designates resolve-engine failure to properly recognise target item
-         * among the possible candidates
-         */
-        class Ambiguous(val candidates: Iterable<RustNamedElement>) : ResolveResult(null)
-
-        /**
-         * Designates resolve-engine successfully resolved given target
-         */
-        class Resolved(resolved: RustNamedElement) : ResolveResult(resolved)
-    }
-
     /**
      * Resolves abstract qualified-path [path] in such a way, like it was a qualified-reference
      * used at [pivot]
      */
-    fun resolve(path: RustPath, pivot: RustCompositeElement, namespace: Namespace? = null): ResolveResult =
+    fun resolve(path: RustPath, pivot: RustCompositeElement, namespace: Namespace? = null): RustNamedElement? =
         recursionGuard(pivot, Computable {
             resolveAllNamespaces(path, pivot)
                 .filterByNamespace(namespace)
                 .firstOrNull()
                 ?.element
-        }).asResolveResult()
+        })
 
     /**
      * Resolves references to struct's fields inside destructuring [RustStructExprElement]
      */
-    fun resolveStructExprField(structExpr: RustStructExprElement, fieldName: String): ResolveResult =
-        ResolveResult.buildFrom(structExpr.fields.filter { it.name == fieldName })
+    fun resolveStructExprField(structExpr: RustStructExprElement, fieldName: String): List<RustNamedElement> =
+        structExpr.fields.filter { it.name == fieldName }
 
     /**
      * Resolves references to struct's fields inside [RustFieldExprElement]
      */
-    fun resolveFieldExpr(fieldExpr: RustFieldExprElement): ResolveResult {
+    fun resolveFieldExpr(fieldExpr: RustFieldExprElement): List<RustNamedElement> {
         val receiverType = fieldExpr.expr.resolvedType.stripAllRefsIfAny()
 
         val id = (fieldExpr.fieldId.identifier ?: fieldExpr.fieldId.integerLiteral)!!
-        val matching = when (id.elementType) {
+        return when (id.elementType) {
             IDENTIFIER -> {
-                val name = id.text
-                when (receiverType) {
-                    is RustStructType -> receiverType.item.fields.filter { it.name == name }
-                    else -> emptyList()
-                }
+                if (receiverType is RustStructType)
+                    receiverType.item.fields.filter { it.name == id.text }
+                else
+                    emptyList()
             }
             else -> emptyList()
         }
-
-        return ResolveResult.buildFrom(matching)
     }
 
     /**
      * Resolves method-call expressions
      */
-    fun resolveMethodCallExpr(call: RustMethodCallExprElement): ResolveResult {
+    fun resolveMethodCallExpr(call: RustMethodCallExprElement): RustNamedElement? {
         val receiverType = call.expr.resolvedType
         val name = call.identifier.text
 
-        return ResolveResult.buildFrom(
-            receiverType.getNonStaticMethodsIn(call.project)
-                .filter { it.name == name }
-                .asIterable()
-        )
+        return receiverType.getNonStaticMethodsIn(call.project)
+            .find { it.name == name }
     }
 
     //
     // TODO(kudinkin): Unify following?
     //
 
-    fun resolveUseGlob(ref: RustUseGlobElement): ResolveResult = recursionGuard(ref, Computable {
+    fun resolveUseGlob(ref: RustUseGlobElement): RustNamedElement? = recursionGuard(ref, Computable {
         val basePath = ref.basePath
 
         // This is not necessarily a module, e.g.
@@ -141,14 +102,14 @@ object RustResolveEngine {
 
         when {
         // `use foo::{self}`
-            ref.self != null && baseItem != null -> ResolveResult.Resolved(baseItem)
+            ref.self != null && baseItem != null -> baseItem
 
         // `use foo::{bar}`
             baseItem is RustResolveScope -> resolveInside(baseItem, ref.referenceName, pivot = ref)
 
-            else -> ResolveResult.Unresolved
+            else -> null
         }
-    }) ?: ResolveResult.Unresolved
+    })
 
     /**
      * Looks-up file corresponding to particular module designated by `mod-declaration-item`:
@@ -170,32 +131,25 @@ object RustResolveEngine {
      * Reference:
      *      https://github.com/rust-lang/rust/blob/master/src/doc/reference.md#modules
      */
-    fun resolveModDecl(ref: RustModDeclItemElement): ResolveResult {
+    fun resolveModDecl(ref: RustModDeclItemElement): RustNamedElement? {
         val parent  = ref.containingMod
         val name    = ref.name
 
-        if (parent == null || name == null) {
-            return ResolveResult.Unresolved
-        }
+        if (parent == null || name == null) return null
 
         val dir = parent.ownedDirectory
 
         val psiManager = PsiManager.getInstance(ref.project)
-        val resolved = ref.possiblePaths.mapNotNull { path ->
-            dir?.virtualFile?.findFileByRelativePath(path)?.let { psiManager.findFile(it) }?.rustMod
-        }
 
-        return when (resolved.size) {
-            0    -> ResolveResult.Unresolved
-            1    -> ResolveResult.Resolved    (resolved.single())
-            else -> ResolveResult.Ambiguous   (resolved)
-        }
+        return ref.possiblePaths.mapNotNull { path ->
+            dir?.virtualFile?.findFileByRelativePath(path)?.let { psiManager.findFile(it) }?.rustMod
+        }.singleOrNull()
     }
 
-    fun resolveExternCrate(crate: RustExternCrateItemElement): ResolveResult {
-        val name = crate.name ?: return ResolveResult.Unresolved
-        val module = crate.module ?: return ResolveResult.Unresolved
-        return module.project.getPsiFor(module.cargoProject?.findExternCrateRootByName(name))?.rustMod.asResolveResult()
+    fun resolveExternCrate(crate: RustExternCrateItemElement): RustNamedElement? {
+        val name = crate.name ?: return null
+        val module = crate.module ?: return null
+        return module.project.getPsiFor(module.cargoProject?.findExternCrateRootByName(name))?.rustMod
     }
 
     /**
@@ -257,13 +211,12 @@ private fun resolveInside(
     name: String,
     pivot: RustCompositeElement,
     namespace: Namespace? = null
-): RustResolveEngine.ResolveResult =
+): RustNamedElement? =
     declarations(scope, Context(pivot = pivot, searchFor = SearchFor.PRIVATE))
         .filter { it.name == name }
         .filterByNamespace(namespace)
         .firstOrNull()
         ?.element
-        .asResolveResult()
 
 
 private fun declarations(scope: RustResolveScope, context: Context): Sequence<ScopeEntry> =
@@ -526,13 +479,6 @@ private val RustPatElement?.scopeEntries: Sequence<ScopeEntry>
 
 private val Sequence<RustNamedElement>.scopeEntries: Sequence<ScopeEntry>
     get() = mapNotNull { ScopeEntry.of(it) }
-
-
-private fun RustNamedElement?.asResolveResult(): RustResolveEngine.ResolveResult =
-    if (this == null)
-        RustResolveEngine.ResolveResult.Unresolved
-    else
-        RustResolveEngine.ResolveResult.Resolved(this)
 
 
 /**

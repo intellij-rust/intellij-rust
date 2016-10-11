@@ -2,10 +2,7 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.completion.RustCompletionEngine
-import org.rust.lang.core.psi.RustPatStructElement
-import org.rust.lang.core.psi.RustPathElement
-import org.rust.lang.core.psi.RustPathExprElement
-import org.rust.lang.core.psi.RustTypeElement
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.asRustPath
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.RustResolveEngine
@@ -18,9 +15,9 @@ class RustPathReferenceImpl(
 
     override val RustPathElement.referenceAnchor: PsiElement get() = referenceNameElement
 
-    override fun resolveVerbose(): RustResolveEngine.ResolveResult {
-        val path = element.asRustPath ?: return RustResolveEngine.ResolveResult.Unresolved
-        return RustResolveEngine.resolve(path, element, namespace)
+    override fun resolveInner(): List<RustNamedElement> {
+        val path = element.asRustPath ?: return emptyList()
+        return listOfNotNull(RustResolveEngine.resolve(path, element, namespace))
     }
 
     override fun getVariants(): Array<out Any> =
