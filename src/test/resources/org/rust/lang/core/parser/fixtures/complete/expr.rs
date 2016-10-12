@@ -44,6 +44,8 @@ fn test() -> u32 {
         x
     };
 
+    |x: &mut i32| x = 92;
+
     { }             /* block */
 
     unsafe { 92 }

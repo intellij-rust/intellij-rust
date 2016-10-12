@@ -801,11 +801,11 @@ type_qual_path ::= <<qualified_path path_without_types>>
 // There are `no_struct_lit_expr` and `any_expr` productions for this two cases.
 // `expr` production is an implementation detail. It passes the context information to the child expressions.
 expr ::= ret_expr
+       | lambda_expr
        | assign_bin_expr
        | block_expr
        | cont_expr
        | break_expr
-       | lambda_expr
        | full_range_expr
        | open_range_expr
        | bool_or_bin_expr
