@@ -35,13 +35,10 @@ object RustResolveEngine {
      * Resolves abstract qualified-path [path] in such a way, like it was a qualified-reference
      * used at [pivot]
      */
-    fun resolve(path: RustPath, pivot: RustCompositeElement, namespace: Namespace? = null): List<RustNamedElement> =
-        recursionGuard(pivot, Computable {
-            resolveAllNamespaces(path, pivot)
-                .filterByNamespace(namespace)
-                .mapNotNull { it.element }
-                .toList()
-        }).orEmpty()
+    fun resolve(path: RustPath, pivot: RustCompositeElement, namespace: Namespace? = null): Sequence<RustNamedElement> =
+        resolveAllNamespaces(path, pivot)
+            .filterByNamespace(namespace)
+            .mapNotNull { it.element }
 
 
     /**

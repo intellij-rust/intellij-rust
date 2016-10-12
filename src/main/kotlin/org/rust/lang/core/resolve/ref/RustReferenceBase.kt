@@ -25,7 +25,7 @@ abstract class RustReferenceBase<T : RustReferenceElement>(
             .resolveWithCaching(this, { r, incomplete ->
                 r.resolveInner().map(::PsiElementResolveResult).toTypedArray()
             },
-                /* needToPreventRecursion = */ false,
+                /* needToPreventRecursion = */ true,
                 /* incompleteCode = */ false)
 
     final override fun multiResolve(): List<RustNamedElement> =

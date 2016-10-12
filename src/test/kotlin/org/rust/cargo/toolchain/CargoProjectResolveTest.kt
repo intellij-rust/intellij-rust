@@ -30,6 +30,10 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
     fun testModuleRelations() = resolveRefInFile("mods", "src/foo.rs")
     fun testKebabCase() = resolveRefInFile("kebab-case", "src/main.rs")
 
+    // Test that we can resolve winapi crate, which uses **A LOT** of
+    // glob imports and is just **ENORMOUS**
+    fun testWinTorture() = resolveRefInFile("win_torture", "src/main.rs")
+
     private fun resolveRefInFile(project: String, fileWithRef: String) = withProject(project) {
         val f = bindToProjectUpdateEvent {
             val reference = extractReference(fileWithRef)
