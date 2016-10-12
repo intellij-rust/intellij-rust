@@ -254,7 +254,8 @@ class RustVariableNamingInspection : RustSnakeCaseNamingInspection("Variable") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
             override fun visitPatBinding(el: RustPatBindingElement) {
-                if (el.parent?.parent !is RustParameterElementImpl) {
+                val parent = el.parent?.parent
+                if (parent is RustLetDeclElement || parent is RustPatTupElement) {
                     inspect(el.identifier, holder)
                 }
             }
