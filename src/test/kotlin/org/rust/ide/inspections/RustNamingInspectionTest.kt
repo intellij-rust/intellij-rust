@@ -386,6 +386,13 @@ class RustNamingInspectionTest : RustInspectionsTestBase() {
         }
     """)
 
+    fun testVariablesWithinStruct() = checkByText<RustVariableNamingInspection>("""
+        struct Foo { fld: u32 }
+        fn test() {
+            let Foo { fld: <warning descr="Variable `FLD_VAL` should have a snake case name such as `fld_val`">FLD_VAL</warning> } = Foo { fld: 17 };
+        }
+    """)
+
     fun testVariablesFix() = checkFixByText<RustVariableNamingInspection>("Rename to `dwarfs_count`", """
         fn test() {
             let <warning descr="Variable `DWARFS_COUNT` should have a snake case name such as `dwarfs_count`">DWARF<caret>S_COUNT</warning> = 7;
@@ -397,4 +404,46 @@ class RustNamingInspectionTest : RustInspectionsTestBase() {
             let legs_count = dwarfs_count * 2;
         }
      """)
+
+    fun testTupleVariables() = checkByText<RustVariableNamingInspection>("""
+        fn loc_var() {
+            let (var1_ok, var2_ok) = (17, 83);
+            let (<warning descr="Variable `VarFoo` should have a snake case name such as `var_foo`">VarFoo</warning>, var2_ok) = (120, 30);
+        }
+    """)
+
+    fun testTupleVariablesFix() = checkFixByText<RustVariableNamingInspection>("Rename to `real`", """
+        fn test() {
+            let (<warning descr="Variable `Real` should have a snake case name such as `real`">Re<caret>al</warning>, imaginary) = (7.2, 3.5);
+            println!("{} + {}i", Real, imaginary);
+        }
+     """, """
+        fn test() {
+            let (real, imaginary) = (7.2, 3.5);
+            println!("{} + {}i", real, imaginary);
+        }
+     """)
+
+    // Issue #730. The inspection must not be applied in the following cases
+    fun testVariablesNotApplied() = checkByText<RustVariableNamingInspection>("""
+        fn test_not_applied() {
+            match Some(()) {
+                None => ()
+            }
+
+            match 1 {
+                Foo => { }
+            }
+
+            let seven = Some(7);
+            if let Some(Number) = seven {
+            }
+
+            let (a, b) = (Some(10), Some(12));
+            match (a, b) {
+                (None, Some(x)) => {}
+                _ => {}
+            }
+        }
+    """)
 }

@@ -3,6 +3,7 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustParameterElementImpl
@@ -254,8 +255,9 @@ class RustVariableNamingInspection : RustSnakeCaseNamingInspection("Variable") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
             override fun visitPatBinding(el: RustPatBindingElement) {
-                if (el.parent?.parent !is RustParameterElementImpl) {
-                    inspect(el.identifier, holder)
+                val pattern = PsiTreeUtil.getTopmostParentOfType(el, RustPatElement::class.java) ?: return
+                when (pattern.parent) {
+                    is RustLetDeclElement -> inspect(el.identifier, holder)
                 }
             }
         }
