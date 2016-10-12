@@ -17,5 +17,6 @@ class RustPartialParseCompletionTest: RustCompletionTestBase() {
     fun testStructField() = checkSingleCompletionByFile()
     fun testStatic() = checkSingleCompletionByFile()
     fun testConst() = checkSingleCompletionByFile()
+    fun testUseGlobs() = checkSingleCompletionByFile()
 }
 

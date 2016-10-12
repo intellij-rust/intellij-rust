@@ -469,10 +469,18 @@ private use_path ::=
                   //  use ::foo::*;
                   | path_without_types ( alias | '::' ( use_glob_list | '*' ) )?
 
-use_glob_list ::= '{' [ <<comma_separated_list use_glob>> ] '}'
+use_glob_list ::= '{' use_glob_with_recover* '}' { pin = 1 }
+
 use_glob ::= (IDENTIFIER | SELF) alias? {
   implements = [ "org.rust.lang.core.psi.RustReferenceElement" ]
 }
+
+private use_glob_with_recover ::= !'}' use_glob (',' | &'}') {
+  pin = 1
+  recoverWhile = use_glob_recover
+}
+
+private use_glob_recover ::= !('}' | SELF | IDENTIFIER)
 
 alias ::= AS IDENTIFIER
 
