@@ -386,6 +386,13 @@ class RustNamingInspectionTest : RustInspectionsTestBase() {
         }
     """)
 
+    fun testVariablesWithinStruct() = checkByText<RustVariableNamingInspection>("""
+        struct Foo { fld: u32 }
+        fn test() {
+            let Foo { fld: <warning descr="Variable `FLD_VAL` should have a snake case name such as `fld_val`">FLD_VAL</warning> } = Foo { fld: 17 };
+        }
+    """)
+
     fun testVariablesFix() = checkFixByText<RustVariableNamingInspection>("Rename to `dwarfs_count`", """
         fn test() {
             let <warning descr="Variable `DWARFS_COUNT` should have a snake case name such as `dwarfs_count`">DWARF<caret>S_COUNT</warning> = 7;
@@ -423,11 +430,19 @@ class RustNamingInspectionTest : RustInspectionsTestBase() {
             match Some(()) {
                 None => ()
             }
+
             match 1 {
                 Foo => { }
             }
+
             let seven = Some(7);
             if let Some(Number) = seven {
+            }
+
+            let (a, b) = (Some(10), Some(12));
+            match (a, b) {
+                (None, Some(x)) => {}
+                _ => {}
             }
         }
     """)
