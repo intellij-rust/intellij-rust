@@ -23,7 +23,7 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         command.text = configuration.command
 
-        comboModules.fillModules(configuration.project)
+        comboModules.setModules(configuration.validModules)
         comboModules.selectedModule = configuration.configurationModule.module
 
         additionalArguments.text = configuration.additionalArguments
