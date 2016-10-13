@@ -11,6 +11,7 @@ class RustEnterInLineCommentHandlerTest : RustTypingTestCaseBase() {
     fun testAfterOuterDocComment() = doTest()
     fun testInInnerDocComment() = doTest()
     fun testAfterInnerDocComment() = doTest()
+    fun testAfterModuleComment() = doTest()
 
     fun testDirectlyAfterToken() = doTest()
     fun testInsideToken() = doTest()

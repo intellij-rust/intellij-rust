@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.util.text.CharArrayUtil
@@ -44,7 +45,7 @@ class RustEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
 
         // find the PsiElement at the caret
         var elementAtCaret = file.findElementAt(offset) ?: return Result.Continue
-        if (isEOL && elementAtCaret.node?.elementType == WHITE_SPACE) {
+        if (isEOL && elementAtCaret.isEolWhitespace(offset)) {
             // ... or the previous one if this is end-of-line whitespace
             elementAtCaret = elementAtCaret.prevSibling ?: return Result.Continue
         }
@@ -93,5 +94,24 @@ class RustEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
         }
 
         return Result.Default
+    }
+
+    // Returns true for
+    //   ```
+    //   fooo  <caret>
+    //
+    //
+    //   ```
+    //
+    // Returns false for
+    //   ```
+    //   fooo
+    //
+    //   <caret>
+    //   ```
+    private fun PsiElement.isEolWhitespace(caretOffset: Int): Boolean {
+        if (node?.elementType != WHITE_SPACE) return false
+        val pos = node.text.indexOf('\n')
+        return pos == -1 || caretOffset <= pos + textRange.startOffset
     }
 }
