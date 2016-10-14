@@ -50,8 +50,13 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
                     CodeStyleSettingsCustomizable.WRAPPING_KEEP)
 
                 consumer.showCustomOption(RustCodeStyleSettings::class.java,
-                    "ALIGN_RET_TYPE_AND_WHERE_CLAUSE",
-                    "Align return type and where clause",
+                    "ALIGN_RET_TYPE",
+                    "Align return type to function parameters",
+                    CodeStyleSettingsCustomizable.WRAPPING_METHOD_PARAMETERS)
+
+                consumer.showCustomOption(RustCodeStyleSettings::class.java,
+                    "ALIGN_WHERE_CLAUSE",
+                    "Align where clause to function parameters",
                     CodeStyleSettingsCustomizable.WRAPPING_METHOD_PARAMETERS)
 
                 consumer.showCustomOption(RustCodeStyleSettings::class.java,

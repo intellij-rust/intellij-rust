@@ -42,8 +42,13 @@ class RustFormatterTest : FormatterTestCase() {
         doTest()
     }
 
-    fun testAlignRetWhereOff() {
-        custom().ALIGN_RET_TYPE_AND_WHERE_CLAUSE = false
+    fun testAlignRetOff() {
+        custom().ALIGN_RET_TYPE = false
+        doTest()
+    }
+
+    fun testAlignWhereOn() {
+        custom().ALIGN_WHERE_CLAUSE = true
         doTest()
     }
 
@@ -61,6 +66,8 @@ class RustFormatterTest : FormatterTestCase() {
         custom().MIN_NUMBER_OF_BLANKS_BETWEEN_ITEMS = 2
         doTest()
     }
+
+    fun testAlignReturnType() = doTest()
 
     fun testAllowOneLineMatchOff() = doTest()
     fun testAllowOneLineMatch() {
