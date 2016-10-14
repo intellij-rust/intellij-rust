@@ -6,6 +6,7 @@ fn patterns() {
     let T(field, ..) = x;
     let T(.., field) = x;
     let (x, .., y) = (1, 2, 3, 4, 5);
+    let &[x, ref y..] = [1, 2, 3];
 
     let ref a @ _ = value;
 

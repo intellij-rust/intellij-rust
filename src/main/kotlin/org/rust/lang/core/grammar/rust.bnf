@@ -401,7 +401,7 @@ pat_struct      ::= path_generic_args_with_colons '{' pat_field_with_recover* '.
 pat_enum        ::= path_generic_args_with_colons '(' seq_pat ')'
 
 // TODO: actual recover
-private pat_with_recover ::= pat (',' | &(')' | ']'))
+private pat_with_recover ::= pat (',' | &(')' | ']' | '..'))
 private pat_field_with_recover ::= pat_field (',' | & '}')
 
 pat_range ::= lit_or_path [ '...' lit_or_path ]
@@ -409,6 +409,7 @@ private lit_or_path ::= '-'? lit | path_expr
 
 pat_tup ::= '(' seq_pat ')'
 pat_vec ::= '[' seq_pat ']'
+// NB: there are `[x, .. , y]` and `[x, z.. , y]`
 private seq_pat ::= pat_with_recover* ['..' [',' pat_with_recover+] ]
 
 pat_ref ::= '&' MUT? pat
