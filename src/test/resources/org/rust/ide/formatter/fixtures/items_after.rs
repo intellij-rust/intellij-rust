@@ -21,7 +21,7 @@ pub mod m {
                   X: 'a {}
 
         pub fn new<S>(shape: S, material_idx: usize)
-            -> Primitive
+                      -> Primitive
             where S: Shape + 'static {}
     }
 }

@@ -5,7 +5,7 @@ fn foo(x: i32,
 pub fn new<S>(shape: S,
               material_idx: usize)
               -> Primitive
-              where S: Shape + 'static {}
+    where S: Shape + 'static {}
 
 fn main() {
     fooooo(1,

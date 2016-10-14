@@ -9,7 +9,6 @@ import org.rust.ide.formatter.RustFormattingModelBuilder
 import org.rust.ide.formatter.impl.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.METHOD_CALL_EXPR
 import org.rust.lang.core.psi.RustTokenElementTypes.DOT
-import org.rust.lang.core.psi.util.containsEOL
 
 class RustFmtBlock(
     private val node: ASTNode,
@@ -30,17 +29,13 @@ class RustFmtBlock(
 
     private fun buildChildren(): List<Block> {
         val sharedAlignment = when (node.elementType) {
-            in FN_DECLS ->
-                // Do not align single-line parameter lists in order to avoid producing this:
-                // foo(......) -> ret
-                //             where ... {}
-                if (node.findChildByType(PARAMS_LIKE)?.containsEOL() ?: false) {
-                    Alignment.createAlignment()
-                } else {
-                    null
-                }
+            in FN_DECLS -> Alignment.createAlignment()
             in PARAMS_LIKE -> ctx.sharedAlignment
-            METHOD_CALL_EXPR -> ctx.sharedAlignment ?: Alignment.createAlignment()
+            METHOD_CALL_EXPR ->
+                if (node.treeParent.elementType == METHOD_CALL_EXPR)
+                    ctx.sharedAlignment
+                else
+                    Alignment.createAlignment()
             else -> null
         }
         var metLBrace = false

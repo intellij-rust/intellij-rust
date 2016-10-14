@@ -46,8 +46,10 @@ fun RustFmtBlock.getAlignmentStrategy(): RustAlignmentStrategy = when (node.elem
 
     in FN_DECLS ->
         RustAlignmentStrategy.shared()
-            .alignIf(RET_TYPE, WHERE_CLAUSE)
-            .alignIf(ctx.rustSettings.ALIGN_RET_TYPE_AND_WHERE_CLAUSE)
+            .alignIf { c, p, rustFmtContext ->
+                c.elementType == RET_TYPE && ctx.rustSettings.ALIGN_RET_TYPE ||
+                    c.elementType == WHERE_CLAUSE && ctx.rustSettings.ALIGN_WHERE_CLAUSE
+            }
 
     PAT_ENUM ->
         RustAlignmentStrategy.wrap()
