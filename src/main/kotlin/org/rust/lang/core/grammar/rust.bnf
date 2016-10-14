@@ -397,26 +397,23 @@ pat_uniq        ::= BOX pat
 pat_ident       ::= pat_binding [ '@' pat ]
 
 
-pat_struct      ::= path_generic_args_with_colons '{' pat_struct_fields '}'
-pat_enum        ::= path_generic_args_with_colons '(' ( '..' | pats ) ')'
+pat_struct      ::= path_generic_args_with_colons '{' pat_field_with_recover* '..'? '}'
+pat_enum        ::= path_generic_args_with_colons '(' pat_with_recover* '..'? ')'
+
+// TODO: actual recover
+private pat_with_recover ::= pat (',' | &(')' | ']'))
+private pat_field_with_recover ::= pat_field (',' | & '}')
 
 pat_range ::= lit_or_path [ '...' lit_or_path ]
 private lit_or_path ::= '-'? lit | path_expr
 
-pat_tup ::= '(' pats? ')'
-pat_vec ::= '[' pat_vec_elts ']'
-
-private pats ::= <<comma_separated_list pat>>
-private pat_vec_elts ::= pats? [ '..' [ ',' pats ] ]
+pat_tup ::= '(' pat_with_recover* ')'
+pat_vec ::= '[' pat_with_recover* ['..' [',' pat_with_recover+] ] ']'
 
 pat_ref ::= '&' MUT? pat
 
 pat_wild ::= '_'
 pat_binding ::= binding_mode? IDENTIFIER !'...' !'::'
-
-private pat_struct_fields ::= (pat_field ',') + '..'
-                            | <<comma_separated_list pat_field>>
-                            | '..'
 
 pat_field ::= IDENTIFIER ':' pat
             | BOX? pat_binding

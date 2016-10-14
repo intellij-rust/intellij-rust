@@ -44,10 +44,10 @@ FILE
               PsiElement({)('{')
               PsiElement(mut)('mut')
               PsiWhiteSpace(' ')
-              PsiElement(<IDENTIFIER>)('f')
+              PsiErrorElement:<IDENTIFIER> expected, got 'f'
+                PsiElement(<IDENTIFIER>)('f')
               PsiWhiteSpace(' ')
-              PsiErrorElement:',' or '}' expected, got ':'
-                PsiElement(:)(':')
+              PsiElement(:)(':')
               PsiWhiteSpace(' ')
               PsiElement(<IDENTIFIER>)('f')
               PsiElement(})('}')
