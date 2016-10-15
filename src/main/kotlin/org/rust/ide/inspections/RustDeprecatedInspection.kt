@@ -31,21 +31,18 @@ class RustDeprecatedInspection : RustLocalInspectionTool() {
 
     fun inspectReference(ref: RustReference?, el: PsiElement?, holder: ProblemsHolder) {
         if (ref == null || el == null) return
-        val refEl = ref.resolve() ?: return
-        val deprInfo = refEl.findDeprecation()
-        if (deprInfo != null) {
-            var msg = "${deprInfo.element.getTitle()} is deprecated"
-            if (deprInfo.since != null) {
-                msg += " since ${deprInfo.since}"
-            }
-            if (deprInfo.reason != null) {
-                msg += ": ${deprInfo.reason}"
-            }
-            if (deprInfo.note != null) {
-                msg += ": ${deprInfo.note}"
-            }
-            holder.registerProblem(el, msg, ProblemHighlightType.LIKE_DEPRECATED)
+        val deprInfo = ref.resolve()?.findDeprecation() ?: return
+        var msg = "${deprInfo.element.getTitle()} is deprecated"
+        if (deprInfo.since != null) {
+            msg += " since ${deprInfo.since}"
         }
+        if (deprInfo.reason != null) {
+            msg += ": ${deprInfo.reason}"
+        }
+        if (deprInfo.note != null) {
+            msg += ": ${deprInfo.note}"
+        }
+        holder.registerProblem(el, msg, ProblemHighlightType.LIKE_DEPRECATED)
     }
 
     /**
