@@ -213,6 +213,54 @@ class RustDeprecatedInspectionTest : RustInspectionsTestBase() {
     """)
 
     fun testStdLibrary() = checkByText<RustDeprecatedInspection>("""
-        use <warning descr="Function `sleep_ms` is deprecated">std::thread::sleep_ms</warning>;
+        use <warning descr="Function `sleep_ms` is deprecated since 1.6.0: replaced by `std::thread::sleep`">std::thread::sleep_ms</warning>;
+    """)
+
+    fun testRustcDeprecation() = checkByText<RustDeprecatedInspection>("""
+        #[rustc_deprecated]
+        struct Foo {}
+        fn main() {
+            let _ = <warning descr="Type `Foo` is deprecated">Foo</warning> {};
+        }
+    """)
+
+    fun testSince() = checkByText<RustDeprecatedInspection>("""
+        #[deprecated(since = "3.2")]
+        struct Foo {}
+        fn main() {
+            let _ = <warning descr="Type `Foo` is deprecated since 3.2">Foo</warning> {};
+        }
+    """)
+
+    fun testNote() = checkByText<RustDeprecatedInspection>("""
+        #[deprecated(note = "use Bar instead")]
+        struct Foo {}
+        fn main() {
+            let _ = <warning descr="Type `Foo` is deprecated: use Bar instead">Foo</warning> {};
+        }
+    """)
+
+    fun testReason() = checkByText<RustDeprecatedInspection>("""
+        #[rustc_deprecated(reason = "replaced by `bar`")]
+        fn foo() {}
+        fn main() {
+            <warning descr="Function `foo` is deprecated: replaced by `bar`">foo</warning>();
+        }
+    """)
+
+    fun testSinceAndNote() = checkByText<RustDeprecatedInspection>("""
+        #[deprecated(note = "use `Bar` instead", since = "3.4")]
+        struct Foo {}
+        fn main() {
+            let _ = <warning descr="Type `Foo` is deprecated since 3.4: use `Bar` instead">Foo</warning> {};
+        }
+    """)
+
+    fun testSinceAndReason() = checkByText<RustDeprecatedInspection>("""
+        #[rustc_deprecated(since = "0.9", reason = "replaced by `bar`")]
+        fn foo() {}
+        fn main() {
+            <warning descr="Function `foo` is deprecated since 0.9: replaced by `bar`">foo</warning>();
+        }
     """)
 }

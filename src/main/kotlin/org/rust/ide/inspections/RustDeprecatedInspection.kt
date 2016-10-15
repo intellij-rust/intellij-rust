@@ -32,9 +32,19 @@ class RustDeprecatedInspection : RustLocalInspectionTool() {
     fun inspectReference(ref: RustReference?, el: PsiElement?, holder: ProblemsHolder) {
         if (ref == null || el == null) return
         val refEl = ref.resolve() ?: return
-        val (deprecated, deprTitle) = refEl.findDeprecation()
-        if (deprecated) {
-            holder.registerProblem(el, "$deprTitle is deprecated", ProblemHighlightType.LIKE_DEPRECATED)
+        val deprInfo = refEl.findDeprecation()
+        if (deprInfo != null) {
+            var msg = "${deprInfo.element.getTitle()} is deprecated"
+            if (deprInfo.since != null) {
+                msg += " since ${deprInfo.since}"
+            }
+            if (deprInfo.reason != null) {
+                msg += ": ${deprInfo.reason}"
+            }
+            if (deprInfo.note != null) {
+                msg += ": ${deprInfo.note}"
+            }
+            holder.registerProblem(el, msg, ProblemHighlightType.LIKE_DEPRECATED)
         }
     }
 
@@ -42,17 +52,18 @@ class RustDeprecatedInspection : RustLocalInspectionTool() {
      * Detects if element is deprecated and returns the title of the exact tree node
      * that causes deprecation.
      */
-    private fun PsiElement.findDeprecation(): Pair<Boolean, String?> {
-        if (this is RustOuterAttributeOwner && (findOuterAttr("deprecated") != null || findOuterAttr("rustc_deprecated") != null)) {
-            return Pair(true, getTitle())
+    private fun PsiElement.findDeprecation(): DeprecationInfo? {
+        var attr: RustAttrElement? = null
+        if (this is RustOuterAttributeOwner) {
+            attr = findOuterAttr("deprecated") ?: findOuterAttr("rustc_deprecated")
         }
-        if (this is RustInnerAttributeOwner && (findInnerAttr("deprecated") != null || findInnerAttr("rustc_deprecated") != null)) {
-            return Pair(true, getTitle())
+        if (attr == null && this is RustInnerAttributeOwner) {
+            attr = findInnerAttr("deprecated") ?: findInnerAttr("rustc_deprecated")
         }
-        if (parent != null) {
+        if (attr == null && parent != null) {
             return parent.findDeprecation()
         }
-        return Pair(false, null)
+        return if (attr != null) DeprecationInfo(this, attr) else null
     }
 
     private fun PsiElement.getTitle(): String = when (this) {
@@ -70,4 +81,29 @@ class RustDeprecatedInspection : RustLocalInspectionTool() {
         is RustNamedElement -> "`$name`"
         else -> "Item"
     }
+}
+
+/**
+ * Represents information about deprecated element.
+ */
+private class DeprecationInfo(
+    val element: PsiElement,
+    attr: RustAttrElement
+) {
+    var since: String? = null
+    var note: String? = null
+    var reason: String? = null
+
+    init {
+        for (mi in attr.metaItem.metaItemList) {
+            when (mi.identifier.text) {
+                "since" -> since = mi.value
+                "note" -> note = mi.value
+                "reason" -> reason = mi.value
+            }
+        }
+    }
+
+    private val RustMetaItemElement.value: String?
+        get() = litExpr?.text?.trim('"')
 }
