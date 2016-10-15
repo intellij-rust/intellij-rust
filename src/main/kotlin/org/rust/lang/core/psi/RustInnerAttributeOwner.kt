@@ -8,3 +8,9 @@ interface RustInnerAttributeOwner : RustDocAndAttributeOwner {
      */
     val innerAttrList: List<RustInnerAttrElement>
 }
+
+/**
+ * Find the first inner attribute with the given identifier.
+ */
+fun RustInnerAttributeOwner.findInnerAttr(name: String): RustInnerAttrElement? =
+    innerAttrList.find { it.metaItem.identifier.textMatches(name) }
