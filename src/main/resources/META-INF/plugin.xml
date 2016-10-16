@@ -89,7 +89,12 @@
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RustItemsAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RustInvalidSyntaxAnnotator"/>
 
+        <!-- Line Marker Providers -->
+
+        <codeInsight.lineMarkerProvider language="Rust" implementationClass="org.rust.ide.annotator.RustTraitMethodImplLineMarkerProvider"/>
+
         <!-- Completion -->
+
         <completion.contributor language="Rust" implementationClass="org.rust.lang.core.completion.RustCompletionContributor"/>
 
         <!-- Description Provider -->
