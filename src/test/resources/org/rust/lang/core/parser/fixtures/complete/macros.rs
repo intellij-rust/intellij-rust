@@ -54,4 +54,7 @@ fn foo() {
     debug_assert_eq!(a, b);
     assert_ne!(a, b);
     debug_assert_ne!(a, b);
+
+    panic!("division by zero");
+
 }
