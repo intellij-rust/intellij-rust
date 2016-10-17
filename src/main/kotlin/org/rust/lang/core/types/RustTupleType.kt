@@ -14,9 +14,6 @@ class RustTupleType(private val elements: List<RustType>) : RustTypeBase() {
 
     val size: Int = elements.size
 
-    override fun substitute(map: Map<RustTypeParameterType, RustType>): RustTupleType =
-        RustTupleType(elements.map { it.substitute(map) })
-
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitTupleType(this)
 
     override fun toString(): String = elements.joinToString(", ", "(", ")")
