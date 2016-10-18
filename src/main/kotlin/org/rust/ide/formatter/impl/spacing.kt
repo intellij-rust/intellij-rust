@@ -48,6 +48,8 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         .afterInside(AND, ts(REF_TYPE, SELF_ARGUMENT, PAT_REF, PARAMETER)).spaces(0)
         .beforeInside(Q, TRY_EXPR).spaces(0)
         .afterInside(UNARY_OPS, UNARY_EXPR).spaces(0)
+        // `use ::{bar}`
+        .between(USE, COLONCOLON).spaces(1)
 
         //== attributes
         .aroundInside(ts(SHA, EXCL, LBRACK, RBRACK), ATTRS).spaces(0)
