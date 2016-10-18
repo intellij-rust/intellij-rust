@@ -57,6 +57,11 @@ object RustIcons {
     val MUT_STATIC      = GLOBAL_BINDING.addStaticMark()
     val STATIC          = MUT_STATIC.addFinalMark()
     val ENUM_VARIANT    = FIELD.addFinalMark().addStaticMark()
+
+    // Gutter
+
+    val IMPLEMENTING_METHOD = AllIcons.Gutter.ImplementingMethod!!
+    val OVERRIDING_METHOD   = AllIcons.Gutter.OverridingMethod!!
 }
 
 fun Icon.addFinalMark(): Icon = LayeredIcon(this, RustIcons.FINAL_MARK)
