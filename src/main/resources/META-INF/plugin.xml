@@ -390,6 +390,10 @@
 
         <lang.namesValidator language="Rust" implementationClass="org.rust.lang.refactoring.RustNamesValidator"/>
 
+        <!-- Postfix templates -->
+        <codeInsight.template.postfixTemplateProvider language="Rust"
+                                                      implementationClass="org.rust.ide.template.postfix.RustPostfixTemplateProvider"/>
+
     </extensions>
 
     <application-components>

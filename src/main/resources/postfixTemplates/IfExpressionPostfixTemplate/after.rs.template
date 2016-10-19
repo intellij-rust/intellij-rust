@@ -1,0 +1,3 @@
+fn foo(a: bool) {
+    <spot>if a {}</spot>
+}

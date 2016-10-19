@@ -54,7 +54,7 @@ fun PsiElement.contains(descendant: PsiElement?): Boolean {
     return descendant.ancestors.any { it === this }
 }
 
-private val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) { it.parent }
+val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) { it.parent }
 
 /**
  * Extracts node's element type

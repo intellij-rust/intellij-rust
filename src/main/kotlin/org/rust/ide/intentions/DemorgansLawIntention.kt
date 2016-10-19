@@ -8,6 +8,8 @@ import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.descendentsOfType
 import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.utils.isNegation
+import org.rust.lang.utils.negateToString
 
 class DemorgansLawIntention : PsiElementBaseIntentionAction() {
     override fun getFamilyName() = "DeMorgan's Law"
@@ -53,7 +55,7 @@ class DemorgansLawIntention : PsiElementBaseIntentionAction() {
         var isAllSameOpType = true
         while (topBinExpr.parent is RustBinaryExprElement
             || (topBinExpr.parent is RustParenExprElement
-            && isNegation(topBinExpr.parent.parent)
+            && topBinExpr.parent.parent.isNegation()
             && topBinExpr.parent.parent.parent is RustBinaryExprElement)) {
             topBinExpr = if (topBinExpr.parent is RustBinaryExprElement) topBinExpr.parent as RustBinaryExprElement else topBinExpr.parent.parent.parent as RustBinaryExprElement
             isAllSameOpType = topBinExpr.parent is RustBinaryExprElement && topBinExpr.operatorType == opType
@@ -78,7 +80,7 @@ class DemorgansLawIntention : PsiElementBaseIntentionAction() {
         var expressionToReplace: RustExprElement = topBinExpr
         var expString = "!($converted)"
         val parent = topBinExpr.parent.parent
-        if (isNegation(parent)) {
+        if (parent.isNegation()) {
             expressionToReplace = parent as RustExprElement
             expString = converted
         }
@@ -91,29 +93,8 @@ class DemorgansLawIntention : PsiElementBaseIntentionAction() {
         return expression is RustBinaryExprElement && expression.operatorType == opType
     }
 
-    private fun isNegation(expression: PsiElement): Boolean {
-        if (expression !is RustUnaryExprElement) return false
-        expression.excl ?: return false
-        return true
-    }
-
-    private fun negateBinaryExpr(expr: RustBinaryExprElement): String {
-        val lhs = expr.left.text
-        val rhs = expr.right?.text ?: ""
-        val op = when (expr.operatorType) {
-            RustTokenElementTypes.EQEQ -> "!="
-            RustTokenElementTypes.EXCLEQ -> "=="
-            RustTokenElementTypes.GT -> "<="
-            RustTokenElementTypes.LT -> ">="
-            RustTokenElementTypes.GTEQ -> "<"
-            RustTokenElementTypes.LTEQ -> ">"
-            else -> null
-        }
-        return if (op != null) "$lhs $op $rhs" else "!(" + expr.text + ")"
-    }
-
     private fun convertLeafExpression(condition: RustExprElement): String {
-        if (isNegation(condition)) {
+        if (condition.isNegation()) {
             val negated = (condition as RustUnaryExprElement).expr ?: return ""
             return negated.text
         } else {
@@ -127,12 +108,12 @@ class DemorgansLawIntention : PsiElementBaseIntentionAction() {
                 return if (c is RustBinaryExprElement
                     && c.operatorType != RustTokenElementTypes.ANDAND
                     && c.operatorType != RustTokenElementTypes.OROR) {
-                    "${"(".repeat(level)}${negateBinaryExpr(c)}${")".repeat(level)}"
+                    "${"(".repeat(level)}${c.negateToString()}${")".repeat(level)}"
                 } else {
                     "!" + condition.text
                 }
             } else if (condition is RustBinaryExprElement) {
-                return negateBinaryExpr(condition)
+                return condition.negateToString()
             } else {
                 return "!" + condition.text
             }
