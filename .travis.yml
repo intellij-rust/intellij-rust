@@ -10,7 +10,7 @@ env:
         - ORG_GRADLE_PROJECT_ideaVersion=15.0.4
 
 before_script:
-  - curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly
+  - curl https://sh.rustup.rs -sSf | sh -s -- -y
   - export PATH=$HOME/.cargo/bin:$PATH
   - cargo install rustfmt
 

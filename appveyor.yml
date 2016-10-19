@@ -3,7 +3,7 @@ environment:
 
 install:
   - curl -sSf -o rustup-init.exe https://dev-static.rust-lang.org/rustup/dist/i686-pc-windows-gnu/rustup-init.exe
-  - rustup-init.exe -y --default-toolchain nightly
+  - rustup-init.exe -y
   - set PATH=C:\Users\appveyor\.cargo\bin;%PATH%
   - cargo install rustfmt
 
