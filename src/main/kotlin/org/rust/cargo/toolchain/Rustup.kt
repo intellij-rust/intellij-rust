@@ -4,9 +4,12 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.TestOnly
+import org.rust.utils.fullyRefreshDirectory
+import org.rust.utils.seconds
 
 private val LOG = Logger.getInstance(Rustup::class.java)
 
@@ -15,23 +18,36 @@ class Rustup(
     private val pathToRustcExecutable: String,
     private val projectDirectory: String
 ) {
+    sealed class DownloadResult {
+        class Ok(val library: VirtualFile) : DownloadResult()
+        class Err(val error: String) : DownloadResult()
+    }
 
-    fun downloadStdlib(): VirtualFile? {
-        GeneralCommandLine(pathToRustupExecutable)
+    fun downloadStdlib(): DownloadResult {
+        val downloadProcessOutput = GeneralCommandLine(pathToRustupExecutable)
             .withWorkDirectory(projectDirectory)
             .withParameters("component", "add", "rust-src")
             .exec()
-            ?: return null
 
+        return if (downloadProcessOutput.exitCode != 0) {
+            DownloadResult.Err("rustup failed: `${downloadProcessOutput.stderr}`")
+        } else {
+            val sources = getStdlibFromSysroot() ?: return DownloadResult.Err("Failed to find stdlib in sysroot")
+            fullyRefreshDirectory(sources)
+            DownloadResult.Ok(sources)
+        }
+    }
+
+    fun getStdlibFromSysroot(): VirtualFile? {
         val sysroot = GeneralCommandLine(pathToRustcExecutable)
             .withWorkDirectory(projectDirectory)
             .withParameters("--print", "sysroot")
-            .exec()
-            ?.stdout?.trim()
-            ?: return null
+            .exec(1.seconds)
+            .stdout.trim()
+
 
         val fs = LocalFileSystem.getInstance()
-        return fs.refreshAndFindFileByPath(sysroot)?.findFileByRelativePath("lib/rustlib/src/rust/src")
+        return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust/src"))
     }
 
     @TestOnly
@@ -40,26 +56,30 @@ class Rustup(
             .withWorkDirectory(projectDirectory)
             // See https://github.com/rust-lang-nursery/rustup.rs/issues/450
             .withParameters("show")
-            .exec()
-            ?: return null
+            .exec(1.seconds)
+
+        if (output.exitCode != 0) return null
 
         return output.stdoutLines.dropLastWhile { it.isBlank() }.lastOrNull()
     }
 
-    private fun GeneralCommandLine.exec(): ProcessOutput? {
+    private fun GeneralCommandLine.exec(timeoutInMilliseconds: Int? = null): ProcessOutput {
         val process = createProcess()
         val handler = CapturingProcessHandler(process, Charsets.UTF_8, commandLineString)
 
-        val output = handler.runProcess()
-        // We use brand new functionality of rustup, which is only available
-        // in nightly, so expect it to fail often.
+        LOG.info("Executing `$commandLineString`")
+        val output = if (timeoutInMilliseconds != null)
+            handler.runProcess(timeoutInMilliseconds)
+        else
+            handler.runProcess()
+
         if (output.exitCode != 0) {
             LOG.warn("Failed to execute `$commandLineString`" +
                 "\ncode  : ${output.exitCode}" +
                 "\nstdout:\n${output.stdout}" +
                 "\nstderr:\n${output.stderr}")
-            return null
         }
+
         return output
     }
 }

@@ -7,12 +7,12 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.utils.fullyRefreshDirectory
 import java.io.File
 
 /**
@@ -57,7 +57,7 @@ class Cargo(
         val path = PathUtil.toSystemDependentName(directory.path)
         generalCommand("init", listOf("--bin", path)).execute()
         check(File(directory.path, RustToolchain.Companion.CARGO_TOML).exists())
-        VfsUtil.markDirtyAndRefresh(/* async = */ false, /* recursive = */ true, /* reloadChildren = */ true, directory)
+        fullyRefreshDirectory(directory)
     }
 
     fun reformatFile(filePath: String, listener: ProcessListener? = null) =

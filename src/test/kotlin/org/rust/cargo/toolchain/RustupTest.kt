@@ -37,11 +37,13 @@ class RustupTest : RustWithToolchainTestBase() {
                 return@executeOnPooledThread
             }
 
-            val stdlib = checkNotNull(rustup.downloadStdlib()) {
-                "Failed to download stdlib via rustup"
+
+            val stdlib = rustup.downloadStdlib()
+            if (stdlib !is Rustup.DownloadResult.Ok) {
+                error("Failed to download stdlib via rustup")
             }
 
-            checkNotNull(StandardLibraryRoots.fromFile(stdlib)) {
+            checkNotNull(StandardLibraryRoots.fromFile(stdlib.library)) {
                 "Failed to extract standard library roots"
             }
         }.get()
