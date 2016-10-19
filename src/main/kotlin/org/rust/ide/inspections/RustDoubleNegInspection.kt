@@ -1,7 +1,6 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.RustElementVisitor
 import org.rust.lang.core.psi.RustExprElement
 import org.rust.lang.core.psi.RustUnaryExprElement
@@ -15,15 +14,14 @@ import org.rust.lang.core.psi.RustUnaryExprElement
 class RustDoubleNegInspection : RustLocalInspectionTool() {
     override fun getDisplayName(): String = "Double negation"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return object : RustElementVisitor() {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+        object : RustElementVisitor() {
             override fun visitUnaryExpr(expr: RustUnaryExprElement) {
                 if (expr.isNegation && expr.expr.isNegation) {
                     holder.registerProblem(expr, "--x could be misinterpreted as a pre-decrement, but effectively is a no-op")
                 }
             }
         }
-    }
 
     private val RustExprElement?.isNegation: Boolean
         get() = this is RustUnaryExprElement && minus != null
