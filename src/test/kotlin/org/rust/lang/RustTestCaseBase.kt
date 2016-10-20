@@ -2,6 +2,7 @@ package org.rust.lang
 
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -16,6 +17,8 @@ import org.intellij.lang.annotations.Language
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
+import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.getComponentOrThrow
@@ -31,6 +34,16 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
     abstract val dataPath: String
 
     override fun getTestDataPath(): String = "${RustTestCase.testResourcesPath}/$dataPath"
+
+    override fun runTest() {
+        val projectDescriptor = projectDescriptor
+        if (projectDescriptor is WithStdlibRustProjectDescriptor && projectDescriptor.rustup == null) {
+            System.err.println("SKIP $name: no rustup found")
+            return
+        }
+
+        super.runTest()
+    }
 
     protected val fileName: String
         get() = "$testName.rs"
@@ -188,16 +201,31 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
     protected object DefaultDescriptor : RustProjectDescriptorBase()
 
     protected object WithStdlibRustProjectDescriptor : RustProjectDescriptorBase() {
+        private val toolchain: RustToolchain? by lazy { RustToolchain.suggest() }
+
+        val rustup by lazy { toolchain?.rustup("/") }
+
+        override fun setUpProject(project: Project, handler: SetupHandler) {
+            if (rustup == null) return
+            super.setUpProject(project, handler)
+        }
 
         override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
-            checkNotNull(StandardLibraryRoots.fromFile(rustSourcesArchive())) {
-                "Corrupted Rust sources"
-            }.attachTo(module)
+
+            StandardLibraryRoots.fromFile(stdlib())!!.attachTo(module)
 
             val packages = listOf(testCargoPackage(contentRoot))
 
             return CleanCargoMetadata(packages, emptyList()).let {
                 CargoProjectDescription.deserialize(it)!!
+            }
+        }
+
+        fun stdlib(): VirtualFile {
+            val download = rustup!!.downloadStdlib()
+            return when (download) {
+                is Rustup.DownloadResult.Err -> error("Failed to download standard library: ${download.error}")
+                is Rustup.DownloadResult.Ok -> download.library
             }
         }
     }
@@ -208,13 +236,6 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             camelCaseName.split("(?=[A-Z])".toRegex())
                 .map(String::toLowerCase)
                 .joinToString("_")
-
-        @JvmStatic
-        fun rustSourcesArchive(): VirtualFile =
-            checkNotNull(LocalFileSystem.getInstance()
-                .findFileByPath("${RustTestCase.testResourcesPath}/rustc-src.zip")) {
-                "Rust sources archive not found. Run `./gradlew test` to download the archive."
-            }
     }
 }
 

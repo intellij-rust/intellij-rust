@@ -24,7 +24,7 @@ data class RustToolchain(val location: String) {
 
         val rustup = GeneralCommandLine(pathToExecutable(RUSTUP))
             .withParameters("--version")
-            .runExecutable()?.let { findSemVer(it) }
+            .runExecutable()?.let(::findSemVer)
 
         return VersionInfo(
             rustc = scrapeRustcVersion(pathToExecutable(RUSTC)),

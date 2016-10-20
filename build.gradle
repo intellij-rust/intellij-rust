@@ -17,7 +17,6 @@ buildscript {
 
 plugins {
     id 'org.jetbrains.intellij' version "0.1.10"
-    id 'de.undercouch.download' version "2.1.0"
 }
 
 
@@ -30,7 +29,6 @@ allprojects {
     // IntelliJ plugin configuration
 
     apply plugin: 'org.jetbrains.intellij'
-    apply plugin: 'de.undercouch.download'
 
     intellij {
         pluginName 'intellij-rust'
@@ -166,15 +164,7 @@ task generate {
 compileKotlin.dependsOn generate
 compileTestKotlin.dependsOn generate
 
-task downloadRustSources(type: de.undercouch.gradle.tasks.download.Download) {
-    overwrite false
-    src 'https://github.com/rust-lang/rust/archive/1.10.0.zip'
-    dest new File(projectDir, "src/test/resources/rustc-src.zip")
-}
-
-test.dependsOn downloadRustSources
-
-task performanceTest(type: Test, group: 'Verification', dependsOn: [classes, testClasses, downloadRustSources]) {
+task performanceTest(type: Test, group: 'Verification', dependsOn: [classes, testClasses]) {
     useJUnit {
         includeCategories 'org.rust.Performance'
         reports.html.destination = "$buildDir/reports/performanceTests"

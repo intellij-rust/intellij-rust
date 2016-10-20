@@ -1,7 +1,6 @@
 package org.rust.lang.core.parser
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
@@ -18,12 +17,14 @@ import kotlin.system.measureTimeMillis
 class RustParserPerformanceTest : RustTestCaseBase() {
     override val dataPath: String = ""
 
+    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
+
     fun testHighlightingPerformance() {
         val file = rustSrcDir().findFileByRelativePath("libsyntax/parse/parser.rs")!!
         val fileContents = String(file.contentsToByteArray())
         myFixture.configureByText("parser.rs", fileContents)
         val elapsed = myFixture.checkHighlighting()
-        reportTeamCityMetric("$name", elapsed)
+        reportTeamCityMetric(name, elapsed)
     }
 
     fun testParsingCompilerSources() {
@@ -61,6 +62,12 @@ class RustParserPerformanceTest : RustTestCaseBase() {
             VfsUtilCore.visitChildrenRecursively(directory, object : VirtualFileVisitor<Void>() {
                 override fun visitFileEx(file: VirtualFile): Result {
                     if (file.isDirectory && file.name in ignored) return SKIP_CHILDREN
+
+                    // There is a syntax error in this file
+                    // https://github.com/rust-lang/rust/pull/37278
+                    // TODO: remove after rust 1.14.0
+                    if (file.path.endsWith("dataflow/graphviz.rs")) return CONTINUE
+
                     if (file.fileType != RustFileType) return CONTINUE
                     val fileContent = String(file.contentsToByteArray())
 
@@ -90,14 +97,11 @@ class RustParserPerformanceTest : RustTestCaseBase() {
             "\nFiles: ${processed.size}")
         val slowest = processed.sortedByDescending { it.time }.take(5)
         println("\nSlowest files")
-        for (stats in slowest) {
-            println("${"%3d".format(stats.time)}ms ${"%3d".format(stats.fileLength / 1024)}kb: ${stats.path}")
+        for ((path, time, fileLength) in slowest) {
+            println("${"%3d".format(time)}ms ${"%3d".format(fileLength / 1024)}kb: $path")
         }
         println()
     }
 
-    private fun rustSrcDir(): VirtualFile =
-        JarFileSystem.getInstance().getJarRootForLocalFile(rustSourcesArchive())
-            ?.children?.singleOrNull()
-            ?.findChild("src")!!
+    private fun rustSrcDir(): VirtualFile = projectDescriptor.stdlib()
 }
