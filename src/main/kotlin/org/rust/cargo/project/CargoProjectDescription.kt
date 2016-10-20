@@ -1,6 +1,5 @@
 package org.rust.cargo.project
 
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
@@ -91,19 +90,6 @@ class CargoProjectDescription private constructor(
      */
     fun findExternCrateRootByName(crateName: String): VirtualFile? =
         externCrates.orEmpty().find { it.name == crateName }?.let { it.virtualFile }
-
-    /**
-     * Finds a package for this file and returns a (Package, relative path) pair
-     */
-    fun findPackageForFile(file: VirtualFile): Pair<Package, String>? {
-        val canonicalFile = file.canonicalFile ?: return null
-
-        return packages.asSequence().mapNotNull { pkg ->
-            val base = pkg.contentRoot ?: return@mapNotNull null
-            val relPath = VfsUtil.getRelativePath(canonicalFile, base) ?: return@mapNotNull null
-            pkg to relPath
-        }.firstOrNull()
-    }
 
     /**
      * If the [file] is a crate root, returns the corresponding [Target]
