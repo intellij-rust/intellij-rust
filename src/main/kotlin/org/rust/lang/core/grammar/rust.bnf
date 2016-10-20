@@ -1161,14 +1161,14 @@ empty_stmt ::= ';' {
 // Utils
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private gtgteq ::= <<collapse GTGTEQ GT GT EQ>> | never GTGTEQ { name = ">>=" }
-private gtgt   ::= <<collapse GTGT   GT GT>>    | never GTGT   { name = ">>" }
-private gteq   ::= <<collapse GTEQ   GT EQ>>    | never GTEQ   { name = ">=" }
-private ltlteq ::= <<collapse LTLTEQ LT LT EQ>> | never LTLTEQ { name = "<<=" }
-private ltlt   ::= <<collapse LTLT   LT LT>>    | never LTLT   { name = "<<" }
-private lteq   ::= <<collapse LTEQ   LT EQ>>    | never LTEQ   { name = "<=" }
-private oror   ::= <<collapse OROR   OR OR>>    | never OROR   { name = "||" }
-private andand ::= <<collapse ANDAND AND AND>>  | never ANDAND { name = "&&" }
+private gtgteq ::= <<gtgteqImpl>>  | never GTGTEQ { name = ">>=" }
+private gtgt   ::= <<gtgtImpl>>    | never GTGT   { name = ">>" }
+private gteq   ::= <<gteqImpl>>    | never GTEQ   { name = ">=" }
+private ltlteq ::= <<ltlteqImpl>>  | never LTLTEQ { name = "<<=" }
+private ltlt   ::= <<ltltImpl>>    | never LTLT   { name = "<<" }
+private lteq   ::= <<lteqImpl>>    | never LTEQ   { name = "<=" }
+private oror   ::= <<ororImpl>>    | never OROR   { name = "||" }
+private andand ::= <<andandImpl>>  | never ANDAND { name = "&&" }
 
 private never ::= !()
 

@@ -64,7 +64,7 @@ class RustStubAccessTest : RustTestCaseBase() {
             LoggedErrorProcessor.restoreDefaultProcessor()
         }
 
-        (psiManager as PsiManagerImpl).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable)
+        (psiManager as PsiManagerImpl).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, testRootDisposable)
 
         for ((element, stubParent) in parentsByStub) {
             element.node // force AST loading
@@ -75,7 +75,7 @@ class RustStubAccessTest : RustTestCaseBase() {
     }
 
     private inline fun <reified T : PsiElement> processStubsWithoutAstAccess(block: (T) -> Unit) {
-        (psiManager as PsiManagerImpl).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, myTestRootDisposable)
+        (psiManager as PsiManagerImpl).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, testRootDisposable)
 
         val work = ArrayDeque<StubElement<*>>()
 

@@ -87,7 +87,16 @@ object RustParserUtil : GeneratedParserUtilBase() {
             }
         }
 
-    @JvmStatic fun collapse(b: PsiBuilder, level: Int, tokenType: IElementType, vararg parts: IElementType): Boolean {
+    @JvmStatic fun gtgteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, GTGTEQ, GT, GT, EQ)
+    @JvmStatic fun gtgtImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, GTGT, GT, GT)
+    @JvmStatic fun gteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, GTEQ, GT, EQ)
+    @JvmStatic fun ltlteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, LTLTEQ, LT, LT, EQ)
+    @JvmStatic fun ltltImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, LTLT, LT, LT)
+    @JvmStatic fun lteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, LTEQ, LT, EQ)
+    @JvmStatic fun ororImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, OROR, OR, OR)
+    @JvmStatic fun andandImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, ANDAND, AND, AND)
+
+    private @JvmStatic fun collapse(b: PsiBuilder, tokenType: IElementType, vararg parts: IElementType): Boolean {
         // We do not want whitespace between parts, so firstly we do raw lookup for each part,
         // and when we make sure that we have desired token, we consume and collapse it.
         parts.forEachIndexed { i, tt ->
