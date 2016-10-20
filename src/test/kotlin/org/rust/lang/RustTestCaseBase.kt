@@ -24,7 +24,7 @@ import java.util.*
 
 abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), RustTestCase {
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = RustProjectDescriptor()
+    override fun getProjectDescriptor(): LightProjectDescriptor = DefaultDescriptor
 
     override fun isWriteActionRequired(): Boolean = false
 
@@ -96,13 +96,13 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             myFixture.configureByText("main.rs", code.replace("/*caret*/", "<caret>"))
         }
 
-        inline fun<reified T: PsiElement> elementAtCaret(marker: String = "^"): T {
+        inline fun <reified T : PsiElement> elementAtCaret(marker: String = "^"): T {
             val (element, data) = elementAndData<T>(marker)
             check(data.isEmpty()) { "Did not expect marker data" }
             return element
         }
 
-        inline fun<reified T: PsiElement> elementAndData(marker: String = "^"): Pair<T, String> {
+        inline fun <reified T : PsiElement> elementAndData(marker: String = "^"): Pair<T, String> {
             val (element, data) = extract(marker)
             return checkNotNull(element.parentOfType<T>(strict = false)) {
                 "No ${T::class.java.simpleName} at ${element.text}"
@@ -150,8 +150,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         else
             this
 
-    open class RustProjectDescriptor : LightProjectDescriptor() {
-
+    protected open class RustProjectDescriptorBase : LightProjectDescriptor() {
         final override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
             super.configureModule(module, model, contentEntry)
 
@@ -186,7 +185,9 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
     }
 
-    class WithStdlibRustProjectDescriptor : RustProjectDescriptor() {
+    protected object DefaultDescriptor : RustProjectDescriptorBase()
+
+    protected object WithStdlibRustProjectDescriptor : RustProjectDescriptorBase() {
 
         override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
             checkNotNull(StandardLibraryRoots.fromFile(rustSourcesArchive())) {
@@ -205,7 +206,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         @JvmStatic
         fun camelToSnake(camelCaseName: String): String =
             camelCaseName.split("(?=[A-Z])".toRegex())
-                .map { it.toLowerCase() }
+                .map(String::toLowerCase)
                 .joinToString("_")
 
         @JvmStatic

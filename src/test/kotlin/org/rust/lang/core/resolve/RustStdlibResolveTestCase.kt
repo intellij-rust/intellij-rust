@@ -8,7 +8,7 @@ class RustStdlibResolveTestCase : RustMultiFileResolveTestCaseBase() {
 
     override val dataPath = "org/rust/lang/core/resolve/fixtures/stdlib"
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor()
+    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
 
     fun testHasStdlibSources() {
         assertThat(myModule.cargoProject?.findExternCrateRootByName("std"))

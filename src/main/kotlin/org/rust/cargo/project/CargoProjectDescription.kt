@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.util.AutoInjectedCrates
 import java.util.*
-
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Rust project model represented roughly in the same way as in Cargo itself.
@@ -45,13 +45,14 @@ class CargoProjectDescription private constructor(
         val isExample: Boolean get() = kind == TargetKind.EXAMPLE
 
         val crateRoot: VirtualFile? get() {
-            val root = crateRootCache
-            return if (root != null && root.isValid) root else null
+            val cached = crateRootCache.get()
+            if (cached != null && cached.isValid) return cached
+            val file = VirtualFileManager.getInstance().findFileByUrl(crateRootUrl)
+            crateRootCache.set(file)
+            return file
         }
 
-        private val crateRootCache by lazy {
-            VirtualFileManager.getInstance().findFileByUrl(crateRootUrl)
-        }
+        private val crateRootCache = AtomicReference<VirtualFile>()
     }
 
     enum class TargetKind {

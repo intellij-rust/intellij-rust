@@ -9,7 +9,7 @@ class RustNamingInspectionTest : RustInspectionsTestBase() {
 
     override val dataPath = ""
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor()
+    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
 
     fun testAssociatedTypes() = checkByText<RustAssocTypeNamingInspection>("""
         trait Foo {

@@ -9,7 +9,7 @@ class RustDropRefInspectionTest : RustInspectionsTestBase() {
 
     override val dataPath = ""
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor()
+    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
 
     fun testDropRefSimple() = checkByText<RustDropRefInspection>("""
         fn main() {

@@ -17,7 +17,7 @@ class RustHighlightingPerformanceTest : RustTestCaseBase() {
         FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID)
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor()
+    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
 
     fun testHighlightingWithStdlib() {
         myFixture.copyDirectoryToProject("", "")
