@@ -6,7 +6,7 @@ package org.rust.ide.annotator
 class RustTraitMethodImplLineMarkerProviderTest : RustLineMarkerProviderTestBase() {
 
     fun testImpl() = doTestByText("""
-        trait Foo {
+        trait Foo {         // - Has implementations
             fn foo(&self);
             fn bar(&self) {
                 self.foo();
