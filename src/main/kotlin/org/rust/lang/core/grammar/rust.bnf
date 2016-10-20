@@ -912,9 +912,10 @@ path_expr ::= path_generic_args_with_colons
 
 qual_path_expr ::= << qualified_path path_generic_args_with_colons >>
 
-while_expr ::= [ LIFETIME ':' ] WHILE no_struct_lit_expr simple_block { pin = no_struct_lit_expr }
+while_expr ::= label? WHILE no_struct_lit_expr simple_block { pin = no_struct_lit_expr }
+loop_expr ::= label? LOOP simple_block
+private label ::= LIFETIME ':'
 
-loop_expr ::= [ LIFETIME ':' ] LOOP simple_block
 cont_expr ::= CONTINUE LIFETIME?
 
 break_expr ::= BREAK LIFETIME?
@@ -938,7 +939,7 @@ scoped_let_decl ::= LET pat '=' no_struct_lit_expr
 
 if_let_expr ::= IF scoped_let_decl simple_block else_branch? { pin = scoped_let_decl }
 
-while_let_expr ::= WHILE scoped_let_decl simple_block { pin = scoped_let_decl }
+while_let_expr ::= label? WHILE scoped_let_decl simple_block { pin = scoped_let_decl }
 
 ret_expr ::= RETURN expr?
 
