@@ -27,6 +27,6 @@ abstract class RustImplItemImplMixin : RustStubbedElementImpl<RustImplItemElemen
                 return PresentationData(pres.presentableText, pres.locationString, RustIcons.IMPL, null)
             }
         }
-        return PresentationData(type?.text ?: "Impl", null, RustIcons.STRUCT, null)
+        return PresentationData(type?.text ?: "Impl", null, RustIcons.IMPL, null)
     }
 }
