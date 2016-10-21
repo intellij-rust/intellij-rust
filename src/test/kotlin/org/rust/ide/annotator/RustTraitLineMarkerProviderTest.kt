@@ -34,4 +34,14 @@ class RustTraitLineMarkerProviderTest : RustLineMarkerProviderTestBase() {
         fn bar<T: Foo>(x: T) {}     // Doesn't count
         fn baz(x: &Foo) {}          // Doesn't count
     """)
+
+    fun testIconPosition() = doTestByText("""
+        ///
+        /// Documentation
+        ///
+        #[warn(non_camel_case_types)]
+        trait Foo {}                // - Has implementations
+        struct Bar {}
+        impl Foo for Bar {}
+    """)
 }
