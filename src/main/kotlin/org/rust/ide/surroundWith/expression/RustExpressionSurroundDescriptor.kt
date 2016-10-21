@@ -23,7 +23,9 @@ class RustExpressionSurroundDescriptor : SurroundDescriptor {
             RustWithParenthesesSurrounder(),
             RustWithNotSurrounder(),
             RustWithIfExpSurrounder(),
-            RustWithWhileExpSurrounder()
+            RustWithWhileExpSurrounder(),
+            RustWithAssertSurrounder(),
+            RustWithDebugAssertSurrounder()
         )
     }
 }

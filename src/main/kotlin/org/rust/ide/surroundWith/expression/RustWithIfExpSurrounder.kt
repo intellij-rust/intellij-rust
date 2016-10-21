@@ -15,7 +15,7 @@ class RustWithIfExpSurrounder : RustExpressionSurrounderBase<RustIfExprElement>(
     override fun createTemplate(project: Project): RustIfExprElement =
         RustElementFactory.createExpression(project, "if a {}") as RustIfExprElement
 
-    override fun getLeafExpression(expression: RustIfExprElement): RustExprElement =
+    override fun getWrappedExpression(expression: RustIfExprElement): RustExprElement =
         expression.expr
 
     override fun isApplicable(expression: RustExprElement): Boolean =

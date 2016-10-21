@@ -15,7 +15,7 @@ class RustWithWhileExpSurrounder : RustExpressionSurrounderBase<RustWhileExprEle
     override fun createTemplate(project: Project): RustWhileExprElement =
         RustElementFactory.createExpression(project, "while a {}") as RustWhileExprElement
 
-    override fun getLeafExpression(expression: RustWhileExprElement): RustExprElement =
+    override fun getWrappedExpression(expression: RustWhileExprElement): RustExprElement =
         expression.expr
 
     override fun isApplicable(expression: RustExprElement): Boolean =
