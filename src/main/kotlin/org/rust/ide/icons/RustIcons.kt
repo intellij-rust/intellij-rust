@@ -60,6 +60,7 @@ object RustIcons {
 
     // Gutter
 
+    val IMPLEMENTED         = AllIcons.Gutter.ImplementedMethod!!
     val IMPLEMENTING_METHOD = AllIcons.Gutter.ImplementingMethod!!
     val OVERRIDING_METHOD   = AllIcons.Gutter.OverridingMethod!!
 }

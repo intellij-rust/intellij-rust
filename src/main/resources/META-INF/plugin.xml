@@ -91,6 +91,7 @@
 
         <!-- Line Marker Providers -->
 
+        <codeInsight.lineMarkerProvider language="Rust" implementationClass="org.rust.ide.annotator.RustTraitLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="Rust" implementationClass="org.rust.ide.annotator.RustTraitMethodImplLineMarkerProvider"/>
 
         <!-- Completion -->
