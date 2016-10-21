@@ -29,4 +29,9 @@ class RustTraitLineMarkerProviderTest : RustLineMarkerProviderTestBase() {
         }
     """)
 
+    fun testTraitBoundsAndObjects() = doTestByText("""
+        trait Foo {}
+        fn bar<T: Foo>(x: T) {}     // Doesn't count
+        fn baz(x: &Foo) {}          // Doesn't count
+    """)
 }
