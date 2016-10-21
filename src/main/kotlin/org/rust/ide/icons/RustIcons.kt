@@ -63,6 +63,7 @@ object RustIcons {
     val IMPLEMENTED         = AllIcons.Gutter.ImplementedMethod!!
     val IMPLEMENTING_METHOD = AllIcons.Gutter.ImplementingMethod!!
     val OVERRIDING_METHOD   = AllIcons.Gutter.OverridingMethod!!
+    val RECURSIVE_CALL      = AllIcons.Gutter.RecursiveMethod!!
 }
 
 fun Icon.addFinalMark(): Icon = LayeredIcon(this, RustIcons.FINAL_MARK)
