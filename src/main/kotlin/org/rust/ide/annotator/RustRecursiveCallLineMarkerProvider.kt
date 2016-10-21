@@ -4,7 +4,6 @@ import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.util.Comparing
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.FunctionUtil
@@ -27,7 +26,7 @@ class RustRecursiveCallLineMarkerProvider : LineMarkerProvider {
         val lines = HashSet<Int>()  // To prevent several markers on one line
         for (el in elements) {
             val isRecursive = when (el) {
-                is RustCallExprElement       -> el.isRecursive(el.pathExpr()?.path?.reference)
+                is RustCallExprElement       -> el.isRecursive(el.pathExpr?.path?.reference)
                 is RustMethodCallExprElement -> el.isRecursive(el.reference)
                 else                         -> false
             }
@@ -50,15 +49,12 @@ class RustRecursiveCallLineMarkerProvider : LineMarkerProvider {
         }
     }
 
-    private fun RustCallExprElement.pathExpr() : RustPathExprElement? {
-        val e = expr
-        return if (e is RustPathExprElement) e else null
-    }
+    private val RustCallExprElement.pathExpr: RustPathExprElement?
+        get() = expr as? RustPathExprElement
 
     private fun RustExprElement.isRecursive(ref: RustReference?): Boolean {
-        if (ref == null) return false
-        val def = ref.resolve() ?: return false
-        return (Comparing.equal(parentOfType<RustImplMethodMemberElement>(), def))  // Methods and associative functions
-                || Comparing.equal(parentOfType<RustFnItemElement>(), def)          // Pure functions
+        val def = ref?.resolve() ?: return false
+        return parentOfType<RustImplMethodMemberElement>() == def  // Methods and associated functions
+                || parentOfType<RustFnItemElement>() == def        // Pure functions
     }
 }
