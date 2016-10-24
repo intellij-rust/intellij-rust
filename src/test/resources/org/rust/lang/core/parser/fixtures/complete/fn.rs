@@ -13,3 +13,5 @@ fn constant() -> i32 { 92 }
 
 const        fn a() -> () { () }
 const unsafe fn b() -> () { () }
+
+fn diverging() -> ! { panic("! is a type") }

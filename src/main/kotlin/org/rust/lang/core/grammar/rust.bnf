@@ -338,7 +338,7 @@ private fn_header ::= CONST? UNSAFE? extern_abi? FN IDENTIFIER generic_params?
 
 extern_abi ::= EXTERN STRING_LITERAL?
 
-ret_type ::= '->' (type | '!') { pin = 1 }
+ret_type ::= '->' type { pin = 1 }
 
 fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
@@ -754,6 +754,7 @@ type ::= vec_type
        | for_in_type
        | impl_trait_type
        | wildcard_type
+       | never_type
 
 vec_type ::= '[' type [';' any_expr] ']'
 
@@ -776,6 +777,7 @@ for_in_type ::= for_lifetimes (bare_fn_type | trait_ref)
 impl_trait_type ::= IMPL polybound ('+' polybound)*
 
 wildcard_type ::= '_'
+never_type ::= '!'
 
 type_item ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params? where_clause? '=' type ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
