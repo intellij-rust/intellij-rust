@@ -42,7 +42,7 @@ class Rustup(
         val sysroot = GeneralCommandLine(pathToRustcExecutable)
             .withWorkDirectory(projectDirectory)
             .withParameters("--print", "sysroot")
-            .exec(1.seconds)
+            .exec(5.seconds)
             .stdout.trim()
 
 

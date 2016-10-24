@@ -103,5 +103,5 @@ class RustParserPerformanceTest : RustTestCaseBase() {
         println()
     }
 
-    private fun rustSrcDir(): VirtualFile = projectDescriptor.stdlib()
+    private fun rustSrcDir(): VirtualFile = projectDescriptor.stdlib!!
 }

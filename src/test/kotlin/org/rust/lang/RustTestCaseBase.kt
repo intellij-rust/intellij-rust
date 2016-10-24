@@ -37,9 +37,15 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
     override fun runTest() {
         val projectDescriptor = projectDescriptor
-        if (projectDescriptor is WithStdlibRustProjectDescriptor && projectDescriptor.rustup == null) {
-            System.err.println("SKIP $name: no rustup found")
-            return
+        if (projectDescriptor is WithStdlibRustProjectDescriptor) {
+            if (projectDescriptor.rustup == null) {
+                System.err.println("SKIP $name: no rustup found")
+                return
+            }
+            if (projectDescriptor.stdlib == null) {
+                System.err.println("SKIP $name: rustup found, but there is no stdlib available")
+                return
+            }
         }
 
         super.runTest()
@@ -204,6 +210,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         private val toolchain: RustToolchain? by lazy { RustToolchain.suggest() }
 
         val rustup by lazy { toolchain?.rustup("/") }
+        val stdlib by lazy { (rustup?.downloadStdlib() as? Rustup.DownloadResult.Ok)?.library }
 
         override fun setUpProject(project: Project, handler: SetupHandler) {
             if (rustup == null) return
@@ -212,20 +219,12 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
         override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
 
-            StandardLibraryRoots.fromFile(stdlib())!!.attachTo(module)
+            StandardLibraryRoots.fromFile(stdlib!!)!!.attachTo(module)
 
             val packages = listOf(testCargoPackage(contentRoot))
 
             return CleanCargoMetadata(packages, emptyList()).let {
                 CargoProjectDescription.deserialize(it)!!
-            }
-        }
-
-        fun stdlib(): VirtualFile {
-            val download = rustup!!.downloadStdlib()
-            return when (download) {
-                is Rustup.DownloadResult.Err -> error("Failed to download standard library: ${download.error}")
-                is Rustup.DownloadResult.Ok -> download.library
             }
         }
     }
