@@ -54,4 +54,8 @@ fn foo() {
     debug_assert_eq!(a, b);
     assert_ne!(a, b);
     debug_assert_ne!(a, b);
+
+    let v: Vec<i32> = vec![];
+    panic!("division by zero");
+
 }

@@ -28,8 +28,8 @@ fn foo(a: i32, b: str, c: i32, d: f32) -> () {
         ast::ExprKind::Field(..) |
         ast::ExprKind::MethodCall(..) => rewrite_chain(self, context, width, offset)
     };
-    let f: fn(&_, _) -> _ = panic!();
-    let f = panic! {};
+    let f: fn(&_, _) -> _ = unimplemented!();
+    let f = unimplemented! {};
     {
         foo();
     }
