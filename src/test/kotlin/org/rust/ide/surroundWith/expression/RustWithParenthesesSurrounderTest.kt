@@ -1,7 +1,6 @@
 package org.rust.ide.surroundWith.expression
 
 import org.rust.ide.surroundWith.RustSurrounderTestCaseBase
-import org.rust.ide.surroundWith.expression.RustWithParenthesesSurrounder
 
 class RustWithParenthesesSurrounderTest : RustSurrounderTestCaseBase(RustWithParenthesesSurrounder()) {
     fun testSelectPartOfExpression() {

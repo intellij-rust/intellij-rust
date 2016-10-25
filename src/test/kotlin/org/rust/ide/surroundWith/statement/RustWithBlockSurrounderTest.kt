@@ -1,7 +1,6 @@
 package org.rust.ide.surroundWith.statement
 
 import org.rust.ide.surroundWith.RustSurrounderTestCaseBase
-import org.rust.ide.surroundWith.statement.RustWithBlockSurrounder
 
 class RustWithBlockSurrounderTest : RustSurrounderTestCaseBase(RustWithBlockSurrounder()) {
     fun testNotApplicable1() {
