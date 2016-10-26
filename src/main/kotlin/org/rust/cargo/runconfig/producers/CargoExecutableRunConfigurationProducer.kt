@@ -11,6 +11,7 @@ import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.runconfig.CargoCommandRunConfigurationType
 import org.rust.cargo.util.cargoProject
 import org.rust.lang.core.psi.RustFnElement
+import org.rust.lang.core.psi.RustFnItemElement
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.parentOfType
 
@@ -20,6 +21,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         configuration: CargoCommandConfiguration,
         context: ConfigurationContext
     ): Boolean {
+        if (isTestFn(context.psiLocation)) return false
         val target = findBinaryTarget(context) ?: return false
 
         return configuration.command == CargoConstants.Commands.RUN &&
@@ -31,6 +33,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         context: ConfigurationContext,
         sourceElement: Ref<PsiElement>
     ): Boolean {
+        if (isTestFn(context.psiLocation)) return false
         val target = findBinaryTarget(context) ?: return false
         val fn = context.psiLocation?.parentOfType<RustFnElement>()
         val source = if (fn != null && isMainFunction(fn)) fn else context.psiLocation?.containingFile
@@ -69,6 +72,12 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
                 target.isExample -> ExecutableTarget(target.name, "example")
                 else -> null
             }
+        }
+
+        private fun isTestFn(psiLocation: PsiElement?): Boolean {
+            val fn = psiLocation?.parentOfType<RustFnItemElement>() ?: return false
+            fn.name ?: return false
+            return fn.isTest
         }
     }
 
