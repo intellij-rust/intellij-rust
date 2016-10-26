@@ -49,6 +49,8 @@ class RustWithIfSurrounderTest : RustSurrounderTestCaseBase(RustWithIfSurrounder
                 }
             }
             """
+            ,
+            checkSyntaxErrors = false
         )
     }
 
@@ -85,6 +87,8 @@ class RustWithIfSurrounderTest : RustSurrounderTestCaseBase(RustWithIfSurrounder
                 }
             }
             """
+            ,
+            checkSyntaxErrors = false
         )
     }
 
@@ -107,6 +111,8 @@ class RustWithIfSurrounderTest : RustSurrounderTestCaseBase(RustWithIfSurrounder
                 }
             }
             """
+            ,
+            checkSyntaxErrors = false
         )
     }
 
@@ -129,6 +135,8 @@ class RustWithIfSurrounderTest : RustSurrounderTestCaseBase(RustWithIfSurrounder
                 server.listen("127.0.0.1:6767").unwrap();
             }
             """
+            ,
+            checkSyntaxErrors = false
         )
     }
 
@@ -151,6 +159,8 @@ class RustWithIfSurrounderTest : RustSurrounderTestCaseBase(RustWithIfSurrounder
                 server.listen("127.0.0.1:6767").unwrap();
             }
             """
+            ,
+            checkSyntaxErrors = false
         )
     }
 
@@ -182,6 +192,8 @@ class RustWithIfSurrounderTest : RustSurrounderTestCaseBase(RustWithIfSurrounder
                 }
             }
             """
+            ,
+            checkSyntaxErrors = false
         )
     }
 }

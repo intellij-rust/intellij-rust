@@ -12,7 +12,7 @@ import org.rust.lang.utils.negate
 
 class IfExpressionPostfixTemplate : SurroundPostfixTemplateBase(
     "if",
-    "if exp",
+    "if exp {}",
     RustPostfixTemplatePsiInfo,
     RustTopMostInScopeSelector(RustExprElement::isBool)
 ) {

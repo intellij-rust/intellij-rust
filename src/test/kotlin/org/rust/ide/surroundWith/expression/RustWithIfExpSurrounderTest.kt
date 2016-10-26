@@ -42,6 +42,24 @@ class RustWithIfExpSurrounderTest : RustSurrounderTestCaseBase(RustWithIfExpSurr
         )
     }
 
+    fun testCorrectPostProcess() {
+        doTest(
+            """
+            fn main() {
+                <selection>true</selection>
+                1;
+            }
+            """
+            ,
+            """
+            fn main() {
+                if true {<caret>}
+                1;
+            }
+            """
+        )
+    }
+
     fun testNumber() {
         doTestNotApplicable(
             """

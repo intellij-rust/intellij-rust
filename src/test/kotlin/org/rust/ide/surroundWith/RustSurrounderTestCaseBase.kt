@@ -5,6 +5,7 @@ import com.intellij.lang.LanguageSurrounders
 import com.intellij.lang.surroundWith.Surrounder
 import com.intellij.openapi.command.WriteCommandAction
 import org.assertj.core.api.Assertions.assertThat
+import org.intellij.lang.annotations.Language
 import org.rust.lang.RustFileType
 import org.rust.lang.RustLanguage
 import org.rust.lang.RustTestCaseBase
@@ -13,7 +14,9 @@ import java.util.*
 abstract class RustSurrounderTestCaseBase(val surrounder: Surrounder) : RustTestCaseBase() {
     override val dataPath: String  = ""
 
-    protected fun doTest(before: String, after: String) {
+    protected fun doTest(@Language("Rust") before: String,
+                         @Language("Rust") after: String,
+                         checkSyntaxErrors: Boolean = true) {
         myFixture.configureByText(RustFileType, before)
 
         checkApplicability(fileName, true)
@@ -21,10 +24,11 @@ abstract class RustSurrounderTestCaseBase(val surrounder: Surrounder) : RustTest
             SurroundWithHandler.invoke(myFixture.project, myFixture.editor, myFixture.file, surrounder)
         }
 
+        if (checkSyntaxErrors) myFixture.checkHighlighting(false, false, false)
         myFixture.checkResult(after)
     }
 
-    protected fun doTestNotApplicable(before: String) {
+    protected fun doTestNotApplicable(@Language("Rust") before: String) {
         myFixture.configureByText(RustFileType, before)
         checkApplicability(before, false)
     }

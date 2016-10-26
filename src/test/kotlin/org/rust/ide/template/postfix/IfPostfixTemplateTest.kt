@@ -32,7 +32,7 @@ class IfPostfixTemplateTest : PostfixTemplateTestCase(IfExpressionPostfixTemplat
                 a.if<caret>
             }
             """
-        ,
+            ,
             """
             fn main() {
                 let a = 4 == 2;
@@ -64,7 +64,7 @@ class IfPostfixTemplateTest : PostfixTemplateTestCase(IfExpressionPostfixTemplat
                 !a.if<caret>
             }
             """
-        ,
+            ,
             """
             fn main() {
                 let a = 4 == 2;
@@ -80,7 +80,7 @@ class IfPostfixTemplateTest : PostfixTemplateTestCase(IfExpressionPostfixTemplat
                 true == true.if<caret>
             }
             """
-        ,
+            ,
             """
             fn main() {
                 if true == true {<caret>}
@@ -97,17 +97,17 @@ class IfPostfixTemplateTest : PostfixTemplateTestCase(IfExpressionPostfixTemplat
                     true == false.if<caret>
                 } else {
                     false == true
-                }
+                };
             }
             """
-        ,
+            ,
             """
             fn main() {
                 let a = if (true) {
                     if true == false {<caret>}
                 } else {
                     false == true
-                }
+                };
             }
             """
         )
@@ -123,7 +123,7 @@ class IfPostfixTemplateTest : PostfixTemplateTestCase(IfExpressionPostfixTemplat
                 func().if<caret>
             }
             """
-        ,
+            ,
             """
             fn func() -> bool {
                 false
