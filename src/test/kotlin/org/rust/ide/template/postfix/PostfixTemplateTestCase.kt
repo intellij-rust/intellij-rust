@@ -12,10 +12,15 @@ import org.rust.lang.RustTestCaseBase
 abstract class PostfixTemplateTestCase(val postfixTemplate: PostfixTemplate) : RustTestCaseBase() {
     override val dataPath = ""
 
-    protected fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) {
+    protected fun doTest(@Language("Rust") before: String,
+                         @Language("Rust") after: String,
+                         checkSyntaxErrors: Boolean = true) {
         myFixture.configureByText(RustFileType, before)
+
         checkApplicability(before, true)
         myFixture.type('\t')
+        if (checkSyntaxErrors) myFixture.checkHighlighting(false, false, false)
+
         myFixture.checkResult(after)
     }
 

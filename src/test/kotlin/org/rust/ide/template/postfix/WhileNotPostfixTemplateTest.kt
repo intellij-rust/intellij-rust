@@ -97,7 +97,7 @@ class WhileNotPostfixTemplateTest : PostfixTemplateTestCase(WhileNotExpressionPo
                     42 < 43.whilenot<caret>
                 } else {
                     false == true
-                }
+                };
             }
             """
             ,
@@ -107,7 +107,7 @@ class WhileNotPostfixTemplateTest : PostfixTemplateTestCase(WhileNotExpressionPo
                     while 42 >= 43 {<caret>}
                 } else {
                     false == true
-                }
+                };
             }
             """
         )

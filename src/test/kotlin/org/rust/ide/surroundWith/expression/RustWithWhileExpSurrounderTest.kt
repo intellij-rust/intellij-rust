@@ -42,6 +42,22 @@ class RustWithWhileExpSurrounderTest : RustSurrounderTestCaseBase(RustWithWhileE
         )
     }
 
+    fun testCorrectPostProcess() = doTest(
+        """
+        fn main() {
+            <selection>true</selection>
+            1;
+        }
+        """
+        ,
+        """
+        fn main() {
+            while true {<caret>}
+            1;
+        }
+        """
+    )
+
     fun testNumber() {
         doTestNotApplicable(
             """

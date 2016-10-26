@@ -97,7 +97,7 @@ class ElsePostfixTemplateTest : PostfixTemplateTestCase(ElseExpressionPostfixTem
                     42 < 43.else<caret>
                 } else {
                     false == true
-                }
+                };
             }
             """
             ,
@@ -107,7 +107,7 @@ class ElsePostfixTemplateTest : PostfixTemplateTestCase(ElseExpressionPostfixTem
                     if 42 >= 43 {<caret>}
                 } else {
                     false == true
-                }
+                };
             }
             """
         )
@@ -161,7 +161,7 @@ class ElsePostfixTemplateTest : PostfixTemplateTestCase(ElseExpressionPostfixTem
                     if ${case.second} {<caret>}
                 }
                 """
-                )
+            )
         }
     }
 }

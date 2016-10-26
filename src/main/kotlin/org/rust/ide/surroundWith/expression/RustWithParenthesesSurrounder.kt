@@ -1,5 +1,6 @@
 package org.rust.ide.surroundWith.expression
 
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -13,12 +14,12 @@ class RustWithParenthesesSurrounder : RustExpressionSurrounderBase<RustParenExpr
     override fun createTemplate(project: Project): RustParenExprElement =
         RustElementFactory.createExpression(project, "(a)") as RustParenExprElement
 
-    override fun getLeafExpression(expression: RustParenExprElement): RustExprElement =
+    override fun getWrappedExpression(expression: RustParenExprElement): RustExprElement =
         expression.expr
 
     override fun isApplicable(expression: RustExprElement): Boolean = true
 
-    override fun getSelectionRange(expression: PsiElement): TextRange {
+    override fun doPostprocessAndGetSelectionRange(editor: Editor, expression: PsiElement): TextRange {
         val offset = expression.textRange.endOffset
         return TextRange.from(offset, 0)
     }
