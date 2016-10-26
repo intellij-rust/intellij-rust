@@ -8,9 +8,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustExprElement
 
-abstract class RustExpressionSurrounderBase<E : RustExprElement> : Surrounder {
+abstract class RustExpressionSurrounderBase<E : PsiElement> : Surrounder {
     abstract fun createTemplate(project: Project): E
-    abstract fun getLeafExpression(expression: E): RustExprElement
+    abstract fun getWrappedExpression(expression: E): RustExprElement
     abstract fun isApplicable(expression: RustExprElement): Boolean
     abstract fun getSelectionRange(expression: PsiElement): TextRange?
 
@@ -26,7 +26,7 @@ abstract class RustExpressionSurrounderBase<E : RustExprElement> : Surrounder {
         val expression = requireNotNull(targetExpr(elements))
         val templateExpr = createTemplate(project)
 
-        getLeafExpression(templateExpr).replace(expression)
+        getWrappedExpression(templateExpr).replace(expression)
         val newExpression = expression.replace(templateExpr)
 
         CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(newExpression)

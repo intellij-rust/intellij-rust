@@ -13,7 +13,7 @@ class RustWithNotSurrounder : RustExpressionSurrounderBase<RustUnaryExprElement>
     override fun createTemplate(project: Project): RustUnaryExprElement =
         RustElementFactory.createExpression(project, "!(a)") as RustUnaryExprElement
 
-    override fun getLeafExpression(expression: RustUnaryExprElement): RustExprElement =
+    override fun getWrappedExpression(expression: RustUnaryExprElement): RustExprElement =
         (expression.expr as RustParenExprElement).expr
 
     override fun isApplicable(expression: RustExprElement): Boolean =

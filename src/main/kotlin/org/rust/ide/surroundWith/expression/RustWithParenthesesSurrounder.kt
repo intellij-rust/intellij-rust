@@ -13,7 +13,7 @@ class RustWithParenthesesSurrounder : RustExpressionSurrounderBase<RustParenExpr
     override fun createTemplate(project: Project): RustParenExprElement =
         RustElementFactory.createExpression(project, "(a)") as RustParenExprElement
 
-    override fun getLeafExpression(expression: RustParenExprElement): RustExprElement =
+    override fun getWrappedExpression(expression: RustParenExprElement): RustExprElement =
         expression.expr
 
     override fun isApplicable(expression: RustExprElement): Boolean = true
