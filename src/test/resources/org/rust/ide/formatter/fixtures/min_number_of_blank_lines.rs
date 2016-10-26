@@ -1,3 +1,4 @@
+#![allow(unused)]
 extern crate a;
 extern crate b;
 use c;

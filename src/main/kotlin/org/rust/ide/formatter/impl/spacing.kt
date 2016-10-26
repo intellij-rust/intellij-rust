@@ -325,7 +325,15 @@ private fun SpacingContext.needsBlankLineBetweenItems(): Boolean {
         return false
 
     // Allow to keep consecutive runs of `use`, `const` or other "one line" items without blank lines
-    return !(elementType1 == elementType2 && elementType1 in ONE_LINE_ITEMS)
+    if (elementType1 == elementType2 && elementType1 in ONE_LINE_ITEMS)
+        return false
+
+    // #![deny(missing_docs)
+    // extern crate regex;
+    if (elementType1 == INNER_ATTR && elementType2 == EXTERN_CRATE_ITEM)
+        return false
+
+    return true
 }
 
 private fun countNonWhitespaceASTNodesBetween(left: ASTNode, right: ASTNode): Int {
