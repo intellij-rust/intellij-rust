@@ -16,12 +16,12 @@ import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.rust.ide.formatter.RustFmtContext
-import org.rust.ide.formatter.blocks.RustMacroArgFmtBlock
 import org.rust.ide.formatter.settings.RustCodeStyleSettings
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.core.psi.util.containsEOL
+import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.getNextNonCommentSibling
 import org.rust.lang.core.psi.util.getPrevNonCommentSibling
 import com.intellij.psi.tree.TokenSet.create as ts
@@ -143,8 +143,8 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtContext): Sp
             -> return createSpacing(1, 1, 0, true, 0)
 
             // Determine spacing between macro invocation and it's arguments
-            psi1 is RustMacroInvocationElement && child2 is RustMacroArgFmtBlock
-            -> return if (child2.isBraced) {
+            psi1 is RustMacroInvocationElement && psi2.elementType in MACRO_ARGS
+            -> return if (child2.node.firstChildNode.elementType == LBRACE) {
                 createSpacing(1, 1, 0, false, 0)
             } else {
                 createSpacing(0, 0, 0, false, 0)

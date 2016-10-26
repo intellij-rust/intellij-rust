@@ -98,6 +98,8 @@ class RustFormatterTest : FormatterTestCase() {
 
     fun testUseRoot() = doTest() // https://github.com/intellij-rust/intellij-rust/issues/746
 
+    fun testSpecialMacros() = doTest()
+
     private fun common() = getSettings(RustLanguage)
     private fun custom() = settings.getCustomSettings(RustCodeStyleSettings::class.java)
 }
