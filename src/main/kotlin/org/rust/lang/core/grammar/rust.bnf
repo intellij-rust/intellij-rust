@@ -205,6 +205,7 @@ fake attr ::= meta_item
 inner_attr ::= '#' '!' '[' meta_item ']'
 
 outer_attr ::= '#' '[' meta_item ']'
+first_outer_attr ::= '#'
 
 meta_item ::= IDENTIFIER [ '=' lit_expr | '(' [ <<comma_separated_list meta_item>> ] ')' ]
 
@@ -383,6 +384,9 @@ pat ::= pat_wild
       | pat_range
       | pat_uniq
       | pat_qual_path
+
+private first_pat ::= '_' | '&' | '(' | '[' | IDENTIFIER | SELF | CSELF | SUPER | lit | '::' | BOX | '<' | '-' | REF | MUT
+
 
 pat_qual_path   ::= <<qualified_path path_without_types>>
 pat_uniq        ::= BOX pat
@@ -928,7 +932,11 @@ for_expr ::= [ LIFETIME ':' ] FOR scoped_for_decl simple_block { pin = "IN" }
 
 match_expr ::= MATCH no_struct_lit_expr match_body { pin = no_struct_lit_expr }
 match_body ::= '{' match_arm* '}' { pin = 1 }
-match_arm ::= outer_attr* match_pat '=>' (block_expr !('.' | '?') ','? | any_expr (',' | &'}')) { pin = 2 }
+match_arm ::= outer_attr* match_pat '=>' (block_expr !('.' | '?') ','? | any_expr (',' | &'}')) {
+  pin = 2
+  recoverWhile = match_arm_recover
+}
+private match_arm_recover ::= !(first_pat | first_outer_attr | '}')
 match_pat ::= pat ('|' pat)* (IF any_expr)?
 
 if_expr ::= IF no_struct_lit_expr simple_block else_branch? { pin = no_struct_lit_expr }
