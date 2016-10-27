@@ -1,0 +1,2 @@
+fn foo<T>(t: T) where T: Sync {
+}
