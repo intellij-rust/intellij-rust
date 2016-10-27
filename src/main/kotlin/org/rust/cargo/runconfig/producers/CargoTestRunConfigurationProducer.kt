@@ -1,5 +1,6 @@
 package org.rust.cargo.runconfig.producers
 
+import com.intellij.execution.Location
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.util.Ref
@@ -9,7 +10,10 @@ import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.runconfig.CargoCommandRunConfigurationType
 import org.rust.cargo.util.cargoProject
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RustCompositeElement
+import org.rust.lang.core.psi.RustFnItemElement
+import org.rust.lang.core.psi.RustMod
+import org.rust.lang.core.psi.functions
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.util.RustResolveUtil
@@ -20,7 +24,8 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         configuration: CargoCommandConfiguration,
         context: ConfigurationContext
     ): Boolean {
-        val test = findTest(context) ?: return false
+        val location = context.location ?: return false
+        val test = findTest(location) ?: return false
 
         return configuration.command == CargoConstants.Commands.TEST &&
             configuration.additionalArguments == test.commandLineParameters
@@ -31,7 +36,8 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         context: ConfigurationContext,
         sourceElement: Ref<PsiElement>
     ): Boolean {
-        val test = findTest(context) ?: return false
+        val location = context.location ?: return false
+        val test = findTest(location) ?: return false
         sourceElement.set(test.sourceElement)
 
         configuration.command = CargoConstants.Commands.TEST
@@ -48,11 +54,11 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
     ) {
         val commandLineParameters: String get() {
             val targetKind = when (target.kind) {
-                CargoProjectDescription.TargetKind.BIN     -> "bin"
-                CargoProjectDescription.TargetKind.TEST    -> "test"
+                CargoProjectDescription.TargetKind.BIN -> "bin"
+                CargoProjectDescription.TargetKind.TEST -> "test"
                 CargoProjectDescription.TargetKind.EXAMPLE -> "example"
-                CargoProjectDescription.TargetKind.BENCH   -> "bench"
-                CargoProjectDescription.TargetKind.LIB     -> return "--lib $testPath"
+                CargoProjectDescription.TargetKind.BENCH -> "bench"
+                CargoProjectDescription.TargetKind.LIB -> return "--lib $testPath"
                 CargoProjectDescription.TargetKind.UNKNOWN -> return testPath
             }
 
@@ -60,20 +66,20 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         }
     }
 
-    private fun findTest(context: ConfigurationContext): TestConfig? = listOfNotNull(
-        findTestFunction(context),
-        findTestMod(context)
+    private fun findTest(location: Location<*>): TestConfig? = listOfNotNull(
+        findTestFunction(location),
+        findTestMod(location)
     ).firstOrNull()
 
-    private fun findTestFunction(context: ConfigurationContext): TestConfig? {
-        val fn = context.psiLocation?.parentOfType<RustFnItemElement>() ?: return null
+    private fun findTestFunction(location: Location<*>): TestConfig? {
+        val fn = location.psiElement.parentOfType<RustFnItemElement>() ?: return null
         val name = fn.name ?: return null
         val target = cargoTargetForElement(fn) ?: return null
         return if (fn.isTest) TestConfig(fn, "Test $name", name, target) else null
     }
 
-    private fun findTestMod(context: ConfigurationContext): TestConfig? {
-        val mod = context.psiLocation?.parentOfType<RustMod>() ?: return null
+    private fun findTestMod(location: Location<*>): TestConfig? {
+        val mod = location.psiElement.parentOfType<RustMod>() ?: return null
         val testName = if (mod.modName == "test" || mod.modName == "tests")
             "Test ${mod.`super`?.modName}::${mod.modName}"
         else

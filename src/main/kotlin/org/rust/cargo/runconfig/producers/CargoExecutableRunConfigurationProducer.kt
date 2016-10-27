@@ -1,5 +1,6 @@
 package org.rust.cargo.runconfig.producers
 
+import com.intellij.execution.Location
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.module.Module
@@ -20,7 +21,8 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         configuration: CargoCommandConfiguration,
         context: ConfigurationContext
     ): Boolean {
-        val target = findBinaryTarget(context) ?: return false
+        val location = context.location ?: return false
+        val target = findBinaryTarget(location) ?: return false
 
         return configuration.command == CargoConstants.Commands.RUN &&
             configuration.additionalArguments == target.additionalArguments
@@ -31,8 +33,9 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         context: ConfigurationContext,
         sourceElement: Ref<PsiElement>
     ): Boolean {
-        val target = findBinaryTarget(context) ?: return false
-        val fn = context.psiLocation?.parentOfType<RustFnElement>()
+        val location = context.location ?: return false
+        val target = findBinaryTarget(location) ?: return false
+        val fn = location.psiElement.parentOfType<RustFnElement>()
         val source = if (fn != null && isMainFunction(fn)) fn else context.psiLocation?.containingFile
         sourceElement.set(source)
 
@@ -56,9 +59,9 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
             return fn.name == "main" && findBinaryTarget(module, fn.containingFile.virtualFile) != null
         }
 
-        private fun findBinaryTarget(context: ConfigurationContext): ExecutableTarget? {
-            val module = context.module ?: return null
-            val file = context.location?.virtualFile ?: return null
+        private fun findBinaryTarget(location: Location<*>): ExecutableTarget? {
+            val module = location.module ?: return null
+            val file = location.virtualFile ?: return null
             return findBinaryTarget(module, file)
         }
 
