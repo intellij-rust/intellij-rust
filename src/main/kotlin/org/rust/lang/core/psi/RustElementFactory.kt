@@ -42,6 +42,17 @@ object RustElementFactory {
     fun createIdentifier(project: Project, name: String): PsiElement =
         createFromText<RustModDeclItemElement>(project, "mod $name;")!!.identifier
 
+    fun createWhereClause(project: Project, lifetimeBounds: List<RustLifetimeParamElement>, typeBounds: List<RustTypeParamElement>): RustWhereClauseElement? {
+        val lifetimes = lifetimeBounds
+            .filter { it.lifetimeParamBounds != null }
+            .mapNotNull { it.text }
+        val typeConstraints = typeBounds
+            .filter { it.typeParamBounds != null }
+            .mapNotNull { it.text }
+        val whereClauseConstraints = (lifetimes.asIterable() + typeConstraints.asIterable()).joinToString(", ")
+        return createFromText(project, "fn main() where $whereClauseConstraints {}")
+    }
+
     private inline fun <reified T : RustCompositeElement> createFromText(project: Project, code: String): T? =
         PsiFileFactory.getInstance(project)
             .createFileFromText("DUMMY.rs", RustLanguage, code)
