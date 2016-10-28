@@ -16,12 +16,15 @@ class RustPathReferenceImpl(
 
     override val RustPathElement.referenceAnchor: PsiElement get() = referenceNameElement
 
-    override fun resolveInner(): List<RustNamedElement> = lazyResolve().toList()
+    override fun resolveInner(): List<RustNamedElement> {
+        val path = element.asRustPath ?: return emptyList()
+        return RustResolveEngine.resolve(path, element, namespace)
+    }
 
     override fun resolve(): RustNamedElement? = ResolveCache.getInstance(element.project)
         .resolveWithCaching(this,
             ResolveCache.AbstractResolver<RustPathReferenceImpl, RustNamedElement>
-            { r, incomplete -> r.lazyResolve().firstOrNull() },
+            { r, incomplete -> r.resolveInner().firstOrNull() },
             /* needToPreventRecursion = */ true,
             /* incompleteCode = */ false)
 
@@ -40,9 +43,4 @@ class RustPathReferenceImpl(
             is RustPatStructElement -> Namespace.Types
             else -> null
         }
-
-    private fun lazyResolve(): Sequence<RustNamedElement> {
-        val path = element.asRustPath ?: return emptySequence()
-        return RustResolveEngine.resolve(path, element, namespace)
-    }
 }
