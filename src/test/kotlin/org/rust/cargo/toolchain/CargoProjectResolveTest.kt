@@ -30,23 +30,31 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
     fun testModuleRelations() = resolveRefInFile("mods", "src/foo.rs")
     fun testKebabCase() = resolveRefInFile("kebab-case", "src/main.rs")
 
-    // Test that we can resolve winapi crate, which uses **A LOT** of
+    // Test that we don't choke on winapi crate, which uses **A LOT** of
     // glob imports and is just **ENORMOUS**
-    fun testWinTorture() = resolveRefInFile("win_torture", "src/main.rs")
+    fun testWinTorture() = resolveRefInFile("win_torture", "src/main.rs", unresolved = true)
 
-    private fun resolveRefInFile(project: String, fileWithRef: String) = withProject(project) {
-        val f = bindToProjectUpdateEvent {
-            val reference = extractReference(fileWithRef)
-            reference.resolve()
+    private fun resolveRefInFile(project: String, fileWithRef: String, unresolved: Boolean = false) =
+        withProject(project) {
+            val f = bindToProjectUpdateEvent {
+                val reference = extractReference(fileWithRef)
+                reference.resolve()
+            }
+
+            // make sure that indexes do not depend on cargo project
+            populateIndexes()
+
+            updateCargoProject()
+
+            val result = f.get(TIMEOUT, TimeUnit.MILLISECONDS)
+            if (unresolved) {
+                check(result == null) { "Reference is erroneously resolved" }
+            } else {
+                checkNotNull(result) {
+                    "Unresolved reference in $fileWithRef"
+                }
+            }
         }
-
-        // make sure that indexes do not depend on cargo project
-        populateIndexes()
-
-        updateCargoProject()
-
-        assertThat(f.get(TIMEOUT, TimeUnit.MILLISECONDS)).isNotNull()
-    }
 
     private fun populateIndexes() {
         StubIndex.getInstance().getAllKeys(RustModulesIndex.KEY, myProject)

@@ -1,10 +1,5 @@
 package org.rust.lang.core.resolve
 
-import org.assertj.core.api.Assertions.assertThat
-import org.intellij.lang.annotations.Language
-import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustReferenceElement
-
 class RustUseResolveTestCase : RustResolveTestCaseBase() {
     override fun getTestDataPath() = super.getTestDataPath() + "/use"
 
@@ -442,5 +437,16 @@ class RustUseResolveTestCase : RustResolveTestCaseBase() {
         }
     """)
 
+    fun testStarImportsDoNotLeak() = checkByCode("""
+        fn foo() {}
+        mod m {
+            use super::*;
+        }
+
+        fn bar() {
+            m::foo();
+             //^ unresolved
+        }
+    """)
 
 }

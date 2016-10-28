@@ -429,7 +429,9 @@ private fun RustItemsOwner.itemEntries(context: Context): Sequence<ScopeEntry> {
         usualImports.asSequence().flatMap { it.nonWildcardEntries() },
 
         // wildcard imports have low priority
-        wildCardImports.asSequence().flatMap { it.wildcardEntries(context) }
+        wildCardImports.asSequence()
+            .filter { it.isPublic || it.containingMod == context.pivot?.containingMod }
+            .flatMap { it.wildcardEntries(context) }
     ).flatten()
 }
 

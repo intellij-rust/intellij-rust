@@ -1,5 +1,6 @@
 extern crate winapi;
+use winapi::*;
 
 fn main() {
-    let _ = winapi::MB_O<ref>K;
+    let _ = foo<ref>o;
 }
