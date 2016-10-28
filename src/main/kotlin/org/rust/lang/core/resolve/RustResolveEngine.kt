@@ -77,11 +77,7 @@ object RustResolveEngine {
             .find { it.name == name }
     }
 
-    //
-    // TODO(kudinkin): Unify following?
-    //
-
-    fun resolveUseGlob(ref: RustUseGlobElement): RustNamedElement? = recursionGuard(ref, Computable {
+    fun resolveUseGlob(ref: RustUseGlobElement): List<RustNamedElement> = recursionGuard(ref, Computable {
         val basePath = ref.basePath
 
         // This is not necessarily a module, e.g.
@@ -101,14 +97,18 @@ object RustResolveEngine {
 
         when {
         // `use foo::{self}`
-            ref.self != null && baseItem != null -> baseItem
+            ref.self != null && baseItem != null -> listOf(baseItem)
 
         // `use foo::{bar}`
-            baseItem is RustResolveScope -> resolveInside(baseItem, ref.referenceName, pivot = ref)
+            baseItem is RustResolveScope ->
+                declarations(baseItem, Context(pivot = ref, searchFor = SearchFor.PRIVATE))
+                    .filter { it.name == ref.referenceName }
+                    .mapNotNull { it.element }
+                    .toList()
 
-            else -> null
+            else -> emptyList()
         }
-    })
+    }) ?: emptyList()
 
     /**
      * Looks-up file corresponding to particular module designated by `mod-declaration-item`:
@@ -198,18 +198,6 @@ private fun resolveAllNamespaces(path: RustPath, pivot: RustCompositeElement): S
 
     return current
 }
-
-private fun resolveInside(
-    scope: RustResolveScope,
-    name: String,
-    pivot: RustCompositeElement,
-    namespace: Namespace? = null
-): RustNamedElement? =
-    declarations(scope, Context(pivot = pivot, searchFor = SearchFor.PRIVATE))
-        .filter { it.name == name }
-        .filterByNamespace(namespace)
-        .firstOrNull()
-        ?.element
 
 
 private fun declarations(scope: RustResolveScope, context: Context): Sequence<ScopeEntry> =

@@ -109,4 +109,38 @@ class RustNamespaceResolveTest : RustResolveTestCaseBase() {
            //^
         }
     """)
+
+    fun testUseModGlob() = checkByCode("""
+        use m::{foo};
+        mod m {
+            fn foo() {}
+
+            mod foo { fn bar() {} }
+               //X
+        }
+
+        fn main() {
+            foo();
+
+            foo::bar();
+           //^
+        }
+    """)
+
+    fun testUseFnGlob() = checkByCode("""
+        use m::{foo};
+        mod m {
+            fn foo() {}
+              //X
+            mod foo { fn bar() {} }
+
+        }
+
+        fn main() {
+            foo();
+           //^
+            foo::bar();
+
+        }
+    """)
 }

@@ -16,7 +16,7 @@ class RustUseGlobReferenceImpl(
     override fun getVariants(): Array<out Any> =
         RustCompletionEngine.completeUseGlob(element)
 
-    override fun resolveInner(): List<RustNamedElement> = listOfNotNull(RustResolveEngine.resolveUseGlob(element))
+    override fun resolveInner(): List<RustNamedElement> = RustResolveEngine.resolveUseGlob(element)
 }
 
 
