@@ -96,5 +96,8 @@ class RustHighlightingAnnotator : Annotator {
         override fun visitTraitMethodMember(o: RustTraitMethodMemberElement) =
             highlight(o.identifier, if (o.isStatic) RustColor.STATIC_METHOD else RustColor.INSTANCE_METHOD)
 
+        override fun visitParameters(o: RustParametersElement) = o.parameterList.forEach { highlight(it.pat, RustColor.PARAMETER) }
+
+        override fun visitSelfArgument(o: RustSelfArgumentElement) = highlight(o.self, RustColor.SELF_PARAMETER)
     }
 }
