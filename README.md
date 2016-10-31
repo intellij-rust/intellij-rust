@@ -22,6 +22,8 @@ installation options and features.
 If you want to jump straight in, install IntelliJ IDEA, open `Settings > Plugins > Browse repositories`,
 install Rust plugin, and use **project from existing sources** action to import a Cargo-based project.
 
+Unstable master branch builds can be downloaded from [TeamCity].
+
 ## Compatible IDEs
 
 The plugin should be compatible with any Intellij based IDE starting from build
@@ -40,6 +42,7 @@ first bugs are tagged with [up-for-grab].
 [intellij-rust.github.io]: https://intellij-rust.github.io/docs/
 [up-for-grab]: https://github.com/intellij-rust/intellij-rust/labels/up%20for%20grab
 [CONTRIBUTING.md]: CONTRIBUTING.md
+[TeamCity]: https://teamcity.jetbrains.com/repository/download/IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust/.lastSuccessful/intellij-rust-0.1.0.%7Bbuild.number%7D.zip
 
 <!-- Badges -->
 [gitter-chat]: https://gitter.im/intellij-rust/intellij-rust
