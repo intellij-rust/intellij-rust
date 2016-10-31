@@ -9,5 +9,6 @@ class RustHighlightingAnnotatorTest : RustAnnotatorTestBase() {
     fun testMacro() = doTestInfo()
     fun testMutBinding() = doTestInfo()
     fun testTypeParameters() = doTestInfo()
+    fun testFunctionArguments() = doTestInfo()
 
 }
