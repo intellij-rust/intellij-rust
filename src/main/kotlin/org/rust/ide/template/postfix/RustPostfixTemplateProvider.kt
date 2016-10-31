@@ -10,7 +10,8 @@ class RustPostfixTemplateProvider : PostfixTemplateProvider {
         IfExpressionPostfixTemplate(),
         ElseExpressionPostfixTemplate(),
         WhileExpressionPostfixTemplate(),
-        WhileNotExpressionPostfixTemplate()
+        WhileNotExpressionPostfixTemplate(),
+        MatchPostfixTemplate()
     )
 
     override fun getTemplates(): Set<PostfixTemplate> = templates

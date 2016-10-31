@@ -15,25 +15,25 @@ abstract class PostfixTemplateTestCase(val postfixTemplate: PostfixTemplate) : R
     protected fun doTest(@Language("Rust") before: String,
                          @Language("Rust") after: String,
                          checkSyntaxErrors: Boolean = true) {
-        myFixture.configureByText(RustFileType, before)
 
+        InlineFile(before).withCaret()
         checkApplicability(before, true)
         myFixture.type('\t')
         if (checkSyntaxErrors) myFixture.checkHighlighting(false, false, false)
 
-        myFixture.checkResult(after)
+        myFixture.checkResult(after.replace("/*caret*/", "<caret>"))
     }
 
     protected fun doTestNotApplicable(@Language("Rust") testCase: String) {
-        myFixture.configureByText(RustFileType, testCase)
+        InlineFile(testCase).withCaret()
         checkApplicability(testCase, false)
     }
 
     private fun checkApplicability(testCase: String, isApplicable: Boolean) {
         val provider = LanguagePostfixTemplate.LANG_EP.allForLanguage(RustLanguage)
             .first { descriptor ->
-                descriptor.templates.any { surrounder ->
-                    surrounder.javaClass == this.postfixTemplate.javaClass
+                descriptor.templates.any { template ->
+                    template.javaClass == this.postfixTemplate.javaClass
                 }
             }
 
