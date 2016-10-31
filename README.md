@@ -51,8 +51,8 @@ first bugs are tagged with [up-for-grab].
 [appveyor-build-status]: https://ci.appveyor.com/project/matklad/intellij-rust
 [appveyor-build-status-svg]: https://img.shields.io/appveyor/ci/matklad/intellij-rust.svg?style=flat-square
 
-[teamcity-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_Idea16_TestsRust_2&guest=1
-[teamcity-build-status-svg]: https://img.shields.io/teamcity/http/teamcity.jetbrains.com/s/IntellijIdeaPlugins_Rust_Idea16_TestsRust_2.svg?style=flat-square
+[teamcity-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust&guest=1
+[teamcity-build-status-svg]: https://img.shields.io/teamcity/http/teamcity.jetbrains.com/s/IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust.svg?style=flat-square
 
 [performance]: https://teamcity.jetbrains.com/project.html?projectId=IntellijIdeaPlugins_Rust&tab=stats&guest=1
 [performance-svg]: https://img.shields.io/badge/build-performance-blue.svg?style=flat-square
