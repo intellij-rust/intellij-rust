@@ -420,6 +420,20 @@ class RustResolveTestCase : RustResolveTestCaseBase() {
         }
     """)
 
+    fun testEnumStructPattern() = checkByCode("""
+        enum E {
+            B { f: i32 }
+          //X
+        }
+
+        fn process_message(msg: E) {
+            match msg {
+                E::B { .. } => {}
+                 //^
+            };
+        }
+    """)
+
     fun testNonGlobalPathWithColons() = checkByCode("""
         mod m {
             pub struct Matrix<T> { data: Vec<T> }

@@ -3,7 +3,10 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.resolve.ResolveCache
 import org.rust.lang.core.completion.RustCompletionEngine
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustPathElement
+import org.rust.lang.core.psi.RustPathExprElement
+import org.rust.lang.core.psi.RustTypeElement
 import org.rust.lang.core.psi.impl.mixin.asRustPath
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.RustResolveEngine
@@ -40,7 +43,6 @@ class RustPathReferenceImpl(
         get() = when (element.parent) {
             is RustPathElement, is RustTypeElement -> Namespace.Types
             is RustPathExprElement -> Namespace.Values
-            is RustPatStructElement -> Namespace.Types
             else -> null
         }
 }
