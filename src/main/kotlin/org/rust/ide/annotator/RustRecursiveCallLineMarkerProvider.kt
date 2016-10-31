@@ -1,6 +1,5 @@
 package org.rust.ide.annotator
 
-import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -10,7 +9,6 @@ import com.intellij.util.FunctionUtil
 import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.resolve.ref.RustReference
 import java.util.*
 
 /**
@@ -21,30 +19,27 @@ class RustRecursiveCallLineMarkerProvider : LineMarkerProvider {
 
     override fun getLineMarkerInfo(element: PsiElement) = null
 
-    override fun collectSlowLineMarkers(elements: MutableList<PsiElement>,
+    override fun collectSlowLineMarkers(elements: List<PsiElement>,
                                         result: MutableCollection<LineMarkerInfo<PsiElement>>) {
         val lines = HashSet<Int>()  // To prevent several markers on one line
-        for (el in elements) {
-            val isRecursive = when (el) {
-                is RustCallExprElement       -> el.isRecursive(el.pathExpr?.path?.reference)
-                is RustMethodCallExprElement -> el.isRecursive(el.reference)
-                else                         -> false
-            }
-            if (isRecursive) {
-                val instance = PsiDocumentManager.getInstance(el.project)
-                val doc = instance.getDocument(el.containingFile) ?: continue
-                val lineNumber = doc.getLineNumber(el.textOffset)
-                if (!lines.contains(lineNumber)) {
-                    result.add(LineMarkerInfo(
-                        el,
-                        el.textRange,
-                        RustIcons.RECURSIVE_CALL,
-                        Pass.LINE_MARKERS,
-                        FunctionUtil.constant("Recursive call"),
-                        null,
-                        GutterIconRenderer.Alignment.RIGHT))
-                    lines.add(lineNumber)
-                }
+
+        for (el in elements.filter { it.isRecursive }) {
+            val doc = PsiDocumentManager.getInstance(el.project).getDocument(el.containingFile) ?: continue
+            val lineNumber = doc.getLineNumber(el.textOffset)
+            if (lineNumber !in lines) {
+                lines.add(lineNumber)
+                result.add(LineMarkerInfo(
+                    el,
+                    el.textRange,
+                    RustIcons.RECURSIVE_CALL,
+                    // Pass.UPDATE_OVERRIDEN_MARKERS in IDEA 15
+                    // Pass.UPDATE_OVERRIDDEN_MARKERS in IDEA 2016.x
+                    // TODO: change to Pass.LINE_MARKERS, when it
+                    // does not create duplicate icons.
+                    6, // :(
+                    FunctionUtil.constant("Recursive call"),
+                    null,
+                    GutterIconRenderer.Alignment.RIGHT))
             }
         }
     }
@@ -52,9 +47,14 @@ class RustRecursiveCallLineMarkerProvider : LineMarkerProvider {
     private val RustCallExprElement.pathExpr: RustPathExprElement?
         get() = expr as? RustPathExprElement
 
-    private fun RustExprElement.isRecursive(ref: RustReference?): Boolean {
-        val def = ref?.resolve() ?: return false
+    private val PsiElement.isRecursive: Boolean get() {
+        val def = when (this) {
+            is RustCallExprElement -> pathExpr?.path?.reference?.resolve()
+            is RustMethodCallExprElement -> reference.resolve()
+            else -> null
+        } ?: return false
+
         return parentOfType<RustImplMethodMemberElement>() == def  // Methods and associated functions
-                || parentOfType<RustFnItemElement>() == def        // Pure functions
+            || parentOfType<RustFnItemElement>() == def            // Pure functions
     }
 }
