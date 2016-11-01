@@ -1,7 +1,6 @@
 package org.rust.ide.intentions
 
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RustFileType
 import org.rust.lang.RustTestCaseBase
 
 class AddElseIntentionTest : RustTestCaseBase() {
@@ -11,7 +10,7 @@ class AddElseIntentionTest : RustTestCaseBase() {
         doUnavailableTest(
             """
             fn main() {
-                42<caret>;
+                42/*caret*/;
             }
             """
         )
@@ -21,7 +20,7 @@ class AddElseIntentionTest : RustTestCaseBase() {
             """
             fn foo(a: i32, b: i32) {
                 if a == b {
-                    println!("Equally");<caret>
+                    println!("Equally");/*caret*/
                 } else {
                     println!("Not equally");
                 }
@@ -34,7 +33,7 @@ class AddElseIntentionTest : RustTestCaseBase() {
             """
             fn foo(a: i32, b: i32) {
                 if a == b {
-                    println!("Equally");<caret>
+                    println!("Equally");/*caret*/
                 }
             }
             """,
@@ -42,7 +41,7 @@ class AddElseIntentionTest : RustTestCaseBase() {
             fn foo(a: i32, b: i32) {
                 if a == b {
                     println!("Equally");
-                } else {<caret>}
+                } else {/*caret*/}
             }
             """
         )
@@ -54,7 +53,7 @@ class AddElseIntentionTest : RustTestCaseBase() {
                 if true {
                     if true {
                         42
-                    <caret>}
+                    /*caret*/}
                 }
             }
             """,
@@ -63,7 +62,7 @@ class AddElseIntentionTest : RustTestCaseBase() {
                 if true {
                     if true {
                         42
-                    } else {<caret>}
+                    } else {/*caret*/}
                 }
             }
             """
@@ -76,7 +75,7 @@ class AddElseIntentionTest : RustTestCaseBase() {
                 if true {
                     if true {
                         42
-                    }<caret>
+                    }/*caret*/
                 }
             }
             """,
@@ -86,7 +85,7 @@ class AddElseIntentionTest : RustTestCaseBase() {
                     if true {
                         42
                     }
-                } else {<caret>}
+                } else {/*caret*/}
             }
             """
         )
@@ -96,26 +95,26 @@ class AddElseIntentionTest : RustTestCaseBase() {
             """
             fn main() {
                 if true {
-                <caret>
+                /*caret*/
                 }
             }
             """,
             """
             fn main() {
-                if true {} else {<caret>}
+                if true {} else {/*caret*/}
             }
             """
         )
 
     private fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
-        myFixture.configureByText(RustFileType, before)
+        InlineFile(before).withCaret()
         myFixture.launchAction(AddElseIntention())
-        myFixture.checkResult(after)
+        myFixture.checkResult(after.replace("/*caret*/", "<caret>"))
     }
 
     private fun doUnavailableTest(@Language("Rust") before: String) {
-        myFixture.configureByText(RustFileType, before)
+        InlineFile(before).withCaret()
         myFixture.launchAction(AddElseIntention())
-        myFixture.checkResult(before)
+        myFixture.checkResult(before.replace("/*caret*/", "<caret>"))
     }
 }
