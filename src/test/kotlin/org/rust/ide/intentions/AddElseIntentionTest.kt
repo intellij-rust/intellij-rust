@@ -1,7 +1,6 @@
 package org.rust.ide.intentions
 
 class AddElseIntentionTest : RustIntentionTestBase(AddElseIntention()) {
-    override val dataPath: String = ""
 
     fun test1() = doUnavailableTest(
         """

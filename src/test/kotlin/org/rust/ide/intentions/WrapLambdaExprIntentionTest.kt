@@ -1,8 +1,6 @@
 package org.rust.ide.intentions
 
 class WrapLambdaExprIntentionTest : RustIntentionTestBase(WrapLambdaExprIntention()) {
-    override val dataPath = ""
-
     fun testAvailableWrapBraces() = doAvailableTest(
         """
         fn main() {
