@@ -292,6 +292,11 @@ Of a particular interest are the following sections:
   * custom language support
   [reference](http://www.jetbrains.org/intellij/sdk/docs/reference_guide/custom_language_support.html)
 
+If you find any piece of SDK docs missing or unclear, do open an issue at
+[YouTrack](https://youtrack.jetbrains.com/issues/IJSDK). You can also
+[contribute directly](https://github.com/JetBrains/intellij-sdk-docs/blob/master/CONTRIBUTING.md)
+to the plugin development docs.
+
 
 It's also very inspirational to browse existing plugins. Check out
 [Erlang](https://github.com/ignatov/intellij-erlang) and
