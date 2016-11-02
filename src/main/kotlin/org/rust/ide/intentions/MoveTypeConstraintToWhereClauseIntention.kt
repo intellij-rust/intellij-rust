@@ -4,9 +4,7 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustElementFactory
-import org.rust.lang.core.psi.RustFnItemElement
-import org.rust.lang.core.psi.RustGenericParamsElement
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
 
 class MoveTypeConstraintToWhereClauseIntention : PsiElementBaseIntentionAction() {
@@ -29,10 +27,25 @@ class MoveTypeConstraintToWhereClauseIntention : PsiElementBaseIntentionAction()
         val typeBounds = genericParams.typeParamList
         val whereClause = RustElementFactory.createWhereClause(project, lifetimeBounds, typeBounds) ?: return
 
-        val function = element.parentOfType<RustFnItemElement>() ?: return
-        val offset = function.addBefore(whereClause, function.block).textOffset + whereClause.textLength
+        val declaration = element.parentOfType<RustGenericDeclaration>() ?: return
+        val addedClause = declaration.addWhereClause(whereClause) ?: return
+        val offset = addedClause.textOffset + whereClause.textLength
         editor.caretModel.moveToOffset(offset)
         typeBounds.forEach { it.typeParamBounds?.delete() }
         lifetimeBounds.forEach { it.lifetimeParamBounds?.delete() }
     }
+}
+
+private fun RustGenericDeclaration.addWhereClause(whereClause: RustWhereClauseElement): PsiElement? {
+    val anchor = when (this) {
+        is RustTypeItemElement -> eq
+        is RustImplItemElement -> lbrace
+        is RustTraitItemElement -> lbrace
+        is RustFnItemElement -> block
+        is RustStructItemElement -> semicolon ?: blockFields
+        is RustEnumItemElement -> enumBody
+        else -> error("Unhandled RustGenericDeclaration: $this")
+    } ?: return null
+
+    return addBefore(whereClause, anchor)
 }
