@@ -281,6 +281,11 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RustVariableNamingInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Extra semicolon"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustExtraSemicolonInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
