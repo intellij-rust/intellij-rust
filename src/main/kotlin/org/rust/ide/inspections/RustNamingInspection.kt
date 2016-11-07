@@ -7,6 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustParameterElementImpl
+import org.rust.lang.core.psi.util.parentOfType
 
 /**
  * Base class for naming inspections. Implements the core logic of checking names
@@ -23,15 +24,17 @@ abstract class RustNamingInspection(
     fun inspect(id: PsiElement?, holder: ProblemsHolder, fix: Boolean = true) {
         if (id == null) return
         val (isOk, suggestedName) = checkName(id.text)
-        if (!isOk && suggestedName != null) {
-            val fixEl = id.parent
-            val fixes = if (fix && fixEl is PsiNamedElement) arrayOf(RenameFix(fixEl, suggestedName)) else emptyArray()
-            holder.registerProblem(
-                id,
-                "$elementType `${id.text}` should have $styleName case name such as `$suggestedName`",
-                *fixes)
-        }
+        if (isOk || suggestedName == null || hasAllowAttribute(id)) return
+
+        val fixEl = id.parent
+        val fixes = if (fix && fixEl is PsiNamedElement) arrayOf(RenameFix(fixEl, suggestedName)) else emptyArray()
+        holder.registerProblem(
+            id,
+            "$elementType `${id.text}` should have $styleName case name such as `$suggestedName`",
+            *fixes)
     }
+
+    open fun hasAllowAttribute(id: PsiElement): Boolean = false
 
     abstract fun checkName(name: String): Pair<Boolean, String?>
 }
@@ -228,6 +231,11 @@ class RustFieldNamingInspection : RustSnakeCaseNamingInspection("Field") {
         object : RustElementVisitor() {
             override fun visitFieldDecl(el: RustFieldDeclElement) = inspect(el.identifier, holder)
         }
+
+    override fun hasAllowAttribute(id: PsiElement): Boolean {
+        val struct = id.parentOfType<RustStructItemElement>() ?: return false
+        return struct.queryAttributes.hasAllow(QueryAttributes.Companion.Lint.NonSnakeCase)
+    }
 }
 
 class RustTraitNamingInspection : RustCamelCaseNamingInspection("Trait") {

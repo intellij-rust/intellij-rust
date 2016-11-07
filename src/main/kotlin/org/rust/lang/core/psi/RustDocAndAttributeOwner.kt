@@ -37,4 +37,14 @@ class QueryAttributes(private val attributes: List<RustAttrElement>) {
 
     val metaItems: List<RustMetaItemElement>
         get() = attributes.mapNotNull { it.metaItem }
+
+    fun hasAllow(lint: Lint): Boolean = metaItems
+        .filter { it.identifier.text == "allow" }
+        .any { it.metaItemList.any { it.text == lint.id } }
+
+    companion object {
+        enum class Lint(val id: String) {
+            NonSnakeCase("non_snake_case")
+        }
+    }
 }

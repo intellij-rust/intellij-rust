@@ -309,6 +309,15 @@ class RustNamingInspectionTest : RustInspectionsTestBase() {
         }
     """)
 
+    fun testStructFieldsSuppression() = checkByText<RustFieldNamingInspection>("""
+        #[allow(non_snake_case)]
+        #[derive(Debug, Deserialize)]
+        pub struct HoverParams {
+            pub textDocument: Document,
+            pub position: Position
+        }
+    """)
+
     fun testStructFieldsFix() = checkFixByText<RustFieldNamingInspection>("Rename to `is_deleted`", """
         struct Foo {
             <warning descr="Field `IsDeleted` should have a snake case name such as `is_deleted`">IsDelete<caret>d</warning>: bool
