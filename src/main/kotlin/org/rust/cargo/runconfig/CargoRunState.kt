@@ -27,6 +27,10 @@ class CargoRunState(
     override fun startProcess(): ProcessHandler {
         val cmd = toolchain.cargo(cargoProjectDirectory.path)
             .generalCommand(command, additionalArguments, environmentVariables)
+            // Explicitly use UTF-8.
+            // Even though default system encoding is usually not UTF-8 on windows,
+            // most Rust programs are UTF-8 only.
+            .withCharset(Charsets.UTF_8)
 
         val handler = KillableColoredProcessHandler(cmd)
         ProcessTerminatedListener.attach(handler) // shows exit code upon termination
