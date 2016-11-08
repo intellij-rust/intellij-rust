@@ -39,7 +39,8 @@
 
         <!-- Syntax Highlighter -->
 
-        <lang.syntaxHighlighterFactory language="Rust" implementationClass="org.rust.ide.highlight.RustHighlighterFactory"/>
+        <lang.syntaxHighlighterFactory language="Rust"
+                                       implementationClass="org.rust.ide.highlight.RustHighlighterFactory"/>
 
         <!-- Formatter -->
 
@@ -47,7 +48,8 @@
 
         <!-- Refactoring support -->
 
-        <lang.refactoringSupport language="Rust" implementationClass="org.rust.lang.refactoring.RustRefactoringSupportProvider"/>
+        <lang.refactoringSupport language="Rust"
+                                 implementationClass="org.rust.lang.refactoring.RustRefactoringSupportProvider"/>
 
         <!-- Commenter -->
 
@@ -95,13 +97,17 @@
 
         <!-- Line Marker Providers -->
 
-        <codeInsight.lineMarkerProvider language="Rust" implementationClass="org.rust.ide.annotator.RustTraitLineMarkerProvider"/>
-        <codeInsight.lineMarkerProvider language="Rust" implementationClass="org.rust.ide.annotator.RustRecursiveCallLineMarkerProvider"/>
-        <codeInsight.lineMarkerProvider language="Rust" implementationClass="org.rust.ide.annotator.RustTraitMethodImplLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="Rust"
+                                        implementationClass="org.rust.ide.annotator.RustTraitLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="Rust"
+                                        implementationClass="org.rust.ide.annotator.RustRecursiveCallLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="Rust"
+                                        implementationClass="org.rust.ide.annotator.RustTraitMethodImplLineMarkerProvider"/>
 
         <!-- Completion -->
 
-        <completion.contributor language="Rust" implementationClass="org.rust.lang.core.completion.RustCompletionContributor"/>
+        <completion.contributor language="Rust"
+                                implementationClass="org.rust.lang.core.completion.RustCompletionContributor"/>
 
         <!-- Description Provider -->
 
@@ -113,16 +119,26 @@
 
         <!-- Handlers -->
 
-        <enterHandlerDelegate implementation="org.rust.ide.typing.RustEnterInLineCommentHandler" id="RustEnterInLineComments"/>
-        <enterHandlerDelegate implementation="org.rust.ide.typing.RustEnterInStringLiteralHandler" id="RustEnterInStringLiterals"/>
-        <typedHandler implementation="org.rust.ide.typing.RustRawLiteralHashesInserter" id="RustRawLiteralHashesInserter"/>
-        <backspaceHandlerDelegate implementation="org.rust.ide.typing.RustRawLiteralHashesDeleter" id="RustRawLiteralHashesDeleter"/>
-        <joinLinesHandler implementation="org.rust.ide.actions.RustStringLiteralJoinLinesHandler" id="RustStringLiteralJoinLinesHandler"/>
+        <enterHandlerDelegate implementation="org.rust.ide.typing.RustEnterInLineCommentHandler"
+                              id="RustEnterInLineComments"/>
+
+        <enterHandlerDelegate implementation="org.rust.ide.typing.RustEnterInStringLiteralHandler"
+                              id="RustEnterInStringLiterals"/>
+
+        <typedHandler implementation="org.rust.ide.typing.RustRawLiteralHashesInserter"
+                      id="RustRawLiteralHashesInserter"/>
+
+        <backspaceHandlerDelegate implementation="org.rust.ide.typing.RustRawLiteralHashesDeleter"
+                                  id="RustRawLiteralHashesDeleter"/>
+
+        <joinLinesHandler implementation="org.rust.ide.actions.RustStringLiteralJoinLinesHandler"
+                          id="RustStringLiteralJoinLinesHandler"/>
 
         <!-- Code Style -->
 
         <codeStyleSettingsProvider implementation="org.rust.ide.formatter.settings.RustCodeStyleSettingsProvider"/>
-        <langCodeStyleSettingsProvider implementation="org.rust.ide.formatter.settings.RustLanguageCodeStyleSettingsProvider"/>
+        <langCodeStyleSettingsProvider
+            implementation="org.rust.ide.formatter.settings.RustLanguageCodeStyleSettingsProvider"/>
 
         <!-- Color Settings -->
 
@@ -133,7 +149,8 @@
 
         <!-- Inspections -->
 
-        <lang.inspectionSuppressor language="Rust" implementationClass="org.rust.ide.inspections.RustInspectionSuppressor"/>
+        <lang.inspectionSuppressor language="Rust"
+                                   implementationClass="org.rust.ide.inspections.RustInspectionSuppressor"/>
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Approximate Constants"
@@ -365,7 +382,7 @@
         <!-- Run Configurations -->
 
         <programRunner implementation="org.rust.cargo.runconfig.RustRunner"/>
-        <configurationType implementation="org.rust.cargo.runconfig.CargoCommandRunConfigurationType" />
+        <configurationType implementation="org.rust.cargo.runconfig.CargoCommandRunConfigurationType"/>
         <runConfigurationProducer
             implementation="org.rust.cargo.runconfig.producers.CargoExecutableRunConfigurationProducer"/>
         <runConfigurationProducer
@@ -399,7 +416,7 @@
 
         <!-- Notification Providers -->
 
-        <editorNotificationProvider implementation="org.rust.ide.notifications.MissingToolchainNotificationProvider" />
+        <editorNotificationProvider implementation="org.rust.ide.notifications.MissingToolchainNotificationProvider"/>
 
         <!-- Editor Tab Title Providers -->
 
@@ -433,7 +450,9 @@
     </module-components>
 
     <actions>
-        <action class="org.rust.ide.actions.RustCreateFileAction" id="Rust.NewRustFile" text="Rust File"
+        <action id="Rust.NewRustFile"
+                class="org.rust.ide.actions.RustCreateFileAction"
+                text="Rust File"
                 description="Create new Rust file">
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
@@ -449,7 +468,9 @@
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 
-        <action class="org.rust.ide.actions.RustFmtFileAction" id="Rust.CargoFmtFile"  text="Reformat file with rustfmt"
+        <action id="Rust.CargoFmtFile"
+                class="org.rust.ide.actions.RustFmtFileAction"
+                text="Reformat file with rustfmt"
                 description="Reformat current file with rustfmt">
             <add-to-group group-id="CodeMenu" anchor="last"/>
         </action>
