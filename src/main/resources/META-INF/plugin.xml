@@ -45,6 +45,10 @@
 
         <lang.formatter language="Rust" implementationClass="org.rust.ide.formatter.RustFormattingModelBuilder"/>
 
+        <!-- Refactoring support -->
+
+        <lang.refactoringSupport language="Rust" implementationClass="org.rust.lang.refactoring.RustRefactoringSupportProvider"/>
+
         <!-- Commenter -->
 
         <lang.commenter language="Rust" implementationClass="org.rust.ide.commenter.RustCommenter"/>
