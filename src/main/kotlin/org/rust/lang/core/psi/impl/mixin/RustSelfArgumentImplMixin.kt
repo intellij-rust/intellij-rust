@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.RustSelfArgumentElement
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
 
 abstract class RustSelfArgumentImplMixin(node: ASTNode) : RustNamedElementImpl(node), RustSelfArgumentElement {
-    override val nameElement: PsiElement get() = self
+    override fun getNameIdentifier(): PsiElement = self
 
     override fun setName(name: String): PsiElement? {
         // can't rename self

@@ -2,24 +2,25 @@ package org.rust.lang.core.psi.impl
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNameIdentifierOwner
 import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustTokenElementTypes
 
 abstract class RustNamedElementImpl(node: ASTNode) : RustCompositeElementImpl(node),
-                                                     RustNamedElement {
+                                                     RustNamedElement,
+                                                     PsiNameIdentifierOwner {
 
-    protected open val nameElement: PsiElement?
-        get() = findChildByType(RustTokenElementTypes.IDENTIFIER)
+    override fun getNameIdentifier(): PsiElement? = findChildByType(RustTokenElementTypes.IDENTIFIER)
 
-    override fun getName(): String? = nameElement?.text
+    override fun getName(): String? = nameIdentifier?.text
 
     override fun setName(name: String): PsiElement? {
-        nameElement?.replace(RustElementFactory.createIdentifier(project, name))
+        nameIdentifier?.replace(RustElementFactory.createIdentifier(project, name))
         return this
     }
 
-    override fun getNavigationElement(): PsiElement = nameElement ?: this
+    override fun getNavigationElement(): PsiElement = nameIdentifier ?: this
 
-    override fun getTextOffset(): Int = nameElement?.textOffset ?: super.getTextOffset()
+    override fun getTextOffset(): Int = nameIdentifier?.textOffset ?: super.getTextOffset()
 }
