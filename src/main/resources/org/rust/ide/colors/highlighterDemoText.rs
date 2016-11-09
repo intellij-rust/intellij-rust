@@ -12,7 +12,7 @@ pub enum <ENUM>Flag</ENUM> {
 }
 
 pub trait <TRAIT>Write</TRAIT> {
-    fn <INSTANCE_METHOD>write</INSTANCE_METHOD>(&mut self, buf: &[<PRIMITIVE_TYPE>u8</PRIMITIVE_TYPE>]) -> <ENUM>Result</ENUM><usize>;
+    fn <INSTANCE_METHOD>write</INSTANCE_METHOD>(&mut <SELF_PARAMETER>self</SELF_PARAMETER>, <PARAMETER>buf</PARAMETER>: &[<PRIMITIVE_TYPE>u8</PRIMITIVE_TYPE>]) -> <ENUM>Result</ENUM><usize>;
 }
 
 struct <STRUCT>Object</STRUCT><<TYPE_PARAMETER>T</TYPE_PARAMETER>> {
