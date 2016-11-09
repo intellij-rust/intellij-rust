@@ -8,6 +8,7 @@ import org.rust.ide.highlight.RustHighlighter
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.isMut
 import org.rust.lang.core.psi.util.elementType
+import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
 import org.rust.lang.core.types.util.isPrimitive
 import org.rust.lang.core.types.visitors.impl.RustTypificationEngine
@@ -70,8 +71,9 @@ class RustHighlightingAnnotator : Annotator {
         override fun visitTraitRef(o: RustTraitRefElement) = highlight(o.path.identifier, RustColor.TRAIT)
 
         override fun visitPatBinding(o: RustPatBindingElement) {
-            if (o.isMut) {
-                highlight(o.identifier, RustColor.MUT_BINDING)
+            when {
+                o.parentOfType<RustParameterElement>() != null -> highlight(o.identifier, RustColor.PARAMETER)
+                o.isMut -> highlight(o.identifier, RustColor.MUT_BINDING)
             }
         }
 
@@ -95,8 +97,6 @@ class RustHighlightingAnnotator : Annotator {
             highlight(o.identifier, if (o.isStatic) RustColor.STATIC_METHOD else RustColor.INSTANCE_METHOD)
         override fun visitTraitMethodMember(o: RustTraitMethodMemberElement) =
             highlight(o.identifier, if (o.isStatic) RustColor.STATIC_METHOD else RustColor.INSTANCE_METHOD)
-
-        override fun visitParameters(o: RustParametersElement) = o.parameterList.forEach { highlight(it.pat, RustColor.PARAMETER) }
 
         override fun visitSelfArgument(o: RustSelfArgumentElement) = highlight(o.self, RustColor.SELF_PARAMETER)
     }
