@@ -25,7 +25,10 @@ class RustRunLineMarkerContributor : RunLineMarkerContributor() {
             fn.isTest -> Info(
                 AllIcons.RunConfigurations.TestState.Green2,
                 Function<PsiElement, String> { "Run Test" },
-                *ExecutorAction.getActions(0)
+                // `1` here will prefer test configuration over application configuration,
+                // when both a applicable. Usually configurations are ordered by their target
+                // PSI elements (smaller element means more specific), but this is not the case here.
+                *ExecutorAction.getActions(1)
             )
 
             else -> null
