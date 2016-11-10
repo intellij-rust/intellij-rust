@@ -5,10 +5,11 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInf
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
-import org.rust.lang.core.psi.RustBlockElement
-import org.rust.lang.core.psi.RustElementFactory
-import org.rust.lang.core.psi.RustExprElement
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.ancestors
+import org.rust.lang.core.types.RustBooleanType
+import org.rust.lang.core.types.RustEnumType
+import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.utils.negate
 
 internal object RustPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
@@ -41,3 +42,30 @@ class RustTopMostInScopeSelector(pred: (RustExprElement) -> Boolean) : RustExprP
             .takeWhile { it !is RustBlockElement }
             .any { it is RustExprElement && pred(it) }
 }
+
+class RustAllParentsInScopeSelector(pred: (RustExprElement) -> Boolean) : RustExprParentsSelectorBase(pred) {
+    override fun getExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> =
+        context
+            .ancestors
+            .takeWhile { it !is RustBlockElement }
+            .filter { it is RustExprElement && pred(it) }
+            .toList()
+
+    override fun hasExpression(context: PsiElement, copyDocument: Document, newOffset: Int): Boolean =
+        context
+            .ancestors
+            .takeWhile { it !is RustBlockElement }
+            .any { it is RustExprElement && pred(it) }
+}
+
+
+internal fun RustExprElement.isBool() = resolvedType == RustBooleanType
+internal fun RustExprElement.isEnum() = resolvedType is RustEnumType
+internal fun RustExprElement.all() = true
+internal fun RustExprElement.isEqExpr() =
+    if (this is RustBinaryExprElement) {
+        this.operatorType == RustTokenElementTypes.EQEQ && this.right != null
+    } else {
+        false
+    }
+

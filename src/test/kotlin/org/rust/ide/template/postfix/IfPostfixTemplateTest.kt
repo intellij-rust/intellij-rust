@@ -1,100 +1,93 @@
 package org.rust.ide.template.postfix
 
 class IfPostfixTemplateTest : PostfixTemplateTestCase(IfExpressionPostfixTemplate()) {
-    fun testNumber() =
-        doTestNotApplicable(
+    fun testNumber() = doTestNotApplicable(
             """
             fn main() {
                 let a = 4;
-                a.if<caret>
+                a.if/*caret*/
             }
             """
         )
 
-    fun testNumberCall() =
-        doTestNotApplicable(
+    fun testNumberCall() = doTestNotApplicable(
             """
             fn func() -> i32 {
                 1234
             }
 
             fn main() {
-                func().if<caret>
+                func().if/*caret*/
             }
             """
         )
 
-    fun testSimple() =
-        doTest(
+    fun testSimple() = doTest(
             """
             fn main() {
                 let a = 4 == 2;
-                a.if<caret>
+                a.if/*caret*/
             }
             """
             ,
             """
             fn main() {
                 let a = 4 == 2;
-                if a {<caret>}
+                if a {/*caret*/}
             }
             """
         )
 
-    fun testFunArg() =
-        doTest(
-            """
-            fn foo(a: bool) {
-                a.if<caret>
-            }
-            """
-            ,
-            """
-            fn foo(a: bool) {
-                if a {<caret>}
-            }
-            """
+    fun testFunArg() = doTest(
+                """
+                fn foo(a: bool) {
+                    a.if/*caret*/
+                }
+                """
+                ,
+                """
+                fn foo(a: bool) {
+                    if a {/*caret*/}
+                }
+                """
         )
 
-    fun testSimpleNegatedExpr() =
-        doTest(
+    fun testSimpleNegatedExpr() = doTest(
             """
             fn main() {
                 let a = 4 == 2;
-                !a.if<caret>
+                !a.if/*caret*/
             }
             """
             ,
             """
             fn main() {
                 let a = 4 == 2;
-                if !a {<caret>}
+                if !a {/*caret*/}
             }
             """
         )
 
-    fun testSimpleEqExpr() =
-        doTest(
+    fun testSimpleEqExpr() = doTest(
             """
             fn main() {
-                true == true.if<caret>
+                true == true.if/*caret*/
             }
             """
             ,
             """
             fn main() {
-                if true == true {<caret>}
+                if true == true {/*caret*/}
             }
             """
         )
 
 
-    fun testSelector() =
-        doTest(
+    fun testSelector() = doTest(
             """
             fn main() {
                 let a = if (true) {
-                    true == false.if<caret>
+                    true == false.if/*caret*/
                 } else {
                     false == true
                 };
@@ -104,7 +97,7 @@ class IfPostfixTemplateTest : PostfixTemplateTestCase(IfExpressionPostfixTemplat
             """
             fn main() {
                 let a = if (true) {
-                    if true == false {<caret>}
+                    if true == false {/*caret*/}
                 } else {
                     false == true
                 };
@@ -112,27 +105,25 @@ class IfPostfixTemplateTest : PostfixTemplateTestCase(IfExpressionPostfixTemplat
             """
         )
 
-    fun testCall() {
-        doTest(
-            """
-            fn func() -> bool {
-                false
-            }
+    fun testCall() = doTest(
+        """
+        fn func() -> bool {
+            false
+        }
 
-            fn main() {
-                func().if<caret>
-            }
-            """
-            ,
-            """
-            fn func() -> bool {
-                false
-            }
+        fn main() {
+            func().if/*caret*/
+        }
+        """
+        ,
+        """
+        fn func() -> bool {
+            false
+        }
 
-            fn main() {
-                if func() {<caret>}
-            }
-            """
-        )
-    }
+        fn main() {
+            if func() {/*caret*/}
+        }
+        """
+    )
 }
