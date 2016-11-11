@@ -30,7 +30,7 @@
     </template>
 
     <template name="macro" description="macro_rules! declaration" toReformat="true" toShortenFQNames="true"
-              value="macro_rules! $NAME$ {&#10;    ($MATCHER$) => ($TRANSCRIBER$);$END$&#10;}">
+              value="macro_rules! $NAME$ {&#10;    ($MATCHER$) => {$TRANSCRIBER$};$END$&#10;}">
         <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true"/>
         <variable name="MATCHER" expression="" defaultValue="" alwaysStopAt="true"/>
         <variable name="TRANSCRIBER" expression="" defaultValue="" alwaysStopAt="true"/>
