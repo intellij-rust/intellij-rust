@@ -17,13 +17,12 @@ class RustTraitLineMarkerProvider : LineMarkerProvider {
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<PsiElement>? = null
 
-    override fun collectSlowLineMarkers(elements: MutableList<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {
+    override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {
         for (el in elements) {
             if (el !is RustTraitItemElement) continue
             val targets = ReferencesSearch.search(el, el.useScope)
                 .map { it.element.parent?.parent }
                 .filter { it is RustImplItemElement && it.type != null }
-                .toList()
 
             if (!targets.isEmpty()) {
                 val builder = NavigationGutterIconBuilder
