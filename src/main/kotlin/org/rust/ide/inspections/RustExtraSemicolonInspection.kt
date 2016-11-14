@@ -30,6 +30,7 @@ private fun inspect(holder: ProblemsHolder, fn: RustFnElement) {
     val retType = fn.retType?.type ?: return
     if (block.expr != null) return
     val lastStatement = block.stmtList.lastOrNull() as? RustExprStmtElement ?: return
+    if (lastStatement.expr is RustRetExprElement) return
 
     holder.registerProblem(
         lastStatement,
