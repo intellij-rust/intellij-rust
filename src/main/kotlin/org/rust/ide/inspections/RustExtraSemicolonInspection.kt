@@ -29,8 +29,7 @@ private fun inspect(holder: ProblemsHolder, fn: RustFnElement) {
     val block = fn.block ?: return
     val retType = fn.retType?.type ?: return
     if (block.expr != null) return
-    val lastStatement = block.stmtList.lastOrNull() ?: return
-    if (lastStatement !is RustExprStmtElement) return
+    val lastStatement = block.stmtList.lastOrNull() as? RustExprStmtElement ?: return
 
     holder.registerProblem(
         lastStatement,
