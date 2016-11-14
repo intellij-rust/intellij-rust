@@ -307,6 +307,11 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RustExtraSemicolonInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="try! macro usage"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="org.rust.ide.inspections.RustTryMacroInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
