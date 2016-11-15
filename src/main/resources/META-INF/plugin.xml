@@ -383,6 +383,10 @@
             <className>org.rust.ide.intentions.MoveTypeConstraintToWhereClauseIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.MatchToIfLetIntention</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 

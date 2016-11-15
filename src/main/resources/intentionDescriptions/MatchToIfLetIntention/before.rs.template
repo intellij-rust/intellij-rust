@@ -1,0 +1,14 @@
+enum OptionColor {
+    NoColor,
+    Color(i32, i32, i32),
+}
+
+fn main() {
+    let color = OptionColor::Color(255, 255, 255);
+
+<spot>    match color {
+        OptionColor::Color(255, 255, 255) => print!("White"),
+        OptionColor::Color(_,   _,   _  ) => {}
+        OptionColor::NoColor => {}
+    }</spot>
+}
