@@ -12,8 +12,8 @@ enum class RustColor(humanName: String, val default: TextAttributesKey) {
     FUNCTION_DECLARATION  ("Function declaration",        Default.FUNCTION_DECLARATION),
     INSTANCE_METHOD       ("Instance method declaration", Default.INSTANCE_METHOD),
     STATIC_METHOD         ("Static method declaration",   Default.STATIC_METHOD),
-    PARAMETER             ("Function parameter",          Default.IDENTIFIER),
-    SELF_PARAMETER        ("Self parameter",              Default.IDENTIFIER),
+    PARAMETER             ("Function parameter",          Default.PARAMETER),
+    SELF_PARAMETER        ("Self parameter",              Default.PARAMETER),
 
     LIFETIME              ("Lifetime",                    Default.IDENTIFIER),
 
