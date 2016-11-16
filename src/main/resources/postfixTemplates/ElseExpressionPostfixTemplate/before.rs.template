@@ -1,3 +1,0 @@
-fn foo(a: i32, b: i32) {
-    <spot>a == b</spot>.$key
-}

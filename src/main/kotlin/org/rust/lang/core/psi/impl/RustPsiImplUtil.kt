@@ -1,6 +1,7 @@
 package org.rust.lang.core.psi.impl
 
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathHead
 import org.rust.lang.core.symbols.RustPathSegment
@@ -22,7 +23,13 @@ object RustPsiImplUtil {
 
     fun canonicalCratePath(element: RustNamedElement): RustPath? {
         val segment = element.name?.let { RustPathSegment.withoutGenerics(it) } ?: return null
-        return element.containingMod?.canonicalCratePath?.join(segment)
+        return if (element is RustEnumVariantElement) {
+            val enumSegment = element.parentOfType<RustEnumItemElement>()?.name?.let { RustPathSegment.withoutGenerics(it) }
+                ?: return null
+            element.containingMod?.canonicalCratePath?.join(enumSegment)?.join(segment)
+        } else {
+            element.containingMod?.canonicalCratePath?.join(segment)
+        }
     }
 
     fun modCanonicalCratePath(mod: RustMod): RustPath? {
