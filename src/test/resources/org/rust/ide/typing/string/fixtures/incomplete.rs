@@ -1,2 +1,0 @@
-fn main() {
-    "foo<caret>

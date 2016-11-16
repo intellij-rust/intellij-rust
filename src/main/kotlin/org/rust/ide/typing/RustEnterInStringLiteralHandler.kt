@@ -22,10 +22,7 @@ class RustEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
         dataContext: DataContext,
         originalHandler: EditorActionHandler?
     ): Result {
-        // Return if this is not a Rust file
-        if (file !is RustFile) {
-            return Result.Continue
-        }
+        if (file !is RustFile) return Result.Continue
 
         val caretOffset = caretOffsetRef.get()
         if (!isValidInnerOffset(caretOffset, editor.document.charsSequence)) return Result.Continue
@@ -49,7 +46,12 @@ class RustEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
 
         return when (iterator.tokenType) {
             in STRING_LITERALS -> {
-                // If we are inside string literal, add trailing '\' just before caret
+                // In Rust, an unescaped newline inside a string literal is perfectly valid,
+                // and can be used to format multiline text. So if there is at least one such
+                // newline, don't try to be smart.
+                val tokenText = editor.document.immutableCharSequence.subSequence(iterator.start, iterator.end)
+                if (tokenText.contains(UNESCAPED_NEWLINE)) return Result.Continue
+
                 editor.document.insertString(caretOffset, "\\")
                 caretOffsetRef.set(caretOffset + 1)
                 Result.DefaultForceIndent
@@ -62,3 +64,5 @@ class RustEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
         }
     }
 }
+
+private val UNESCAPED_NEWLINE = """[^\\]\n""".toRegex()

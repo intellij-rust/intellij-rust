@@ -1,4 +1,0 @@
-fn main() {
-    "\
-    <caret>\n"
-}
