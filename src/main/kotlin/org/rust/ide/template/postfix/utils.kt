@@ -9,6 +9,8 @@ import org.rust.lang.core.psi.RustBlockElement
 import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustExprElement
 import org.rust.lang.core.psi.util.ancestors
+import org.rust.lang.core.types.RustBooleanType
+import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.utils.negate
 
 internal object RustPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
@@ -41,3 +43,5 @@ class RustTopMostInScopeSelector(pred: (RustExprElement) -> Boolean) : RustExprP
             .takeWhile { it !is RustBlockElement }
             .any { it is RustExprElement && pred(it) }
 }
+
+fun RustExprElement.isBool() = resolvedType == RustBooleanType

@@ -7,6 +7,8 @@ import com.intellij.psi.PsiFile
 
 class RustPostfixTemplateProvider : PostfixTemplateProvider {
     private val templates: Set<PostfixTemplate> = setOf(
+        AssertPostfixTemplate(),
+        DebugAssertPostfixTemplate(),
         IfExpressionPostfixTemplate(),
         ElseExpressionPostfixTemplate(),
         WhileExpressionPostfixTemplate(),

@@ -49,5 +49,3 @@ class WhileNotExpressionPostfixTemplate : SurroundPostfixTemplateBase(
 
     override fun getWrappedExpression(expression: PsiElement?): PsiElement = checkNotNull(expression).negate()
 }
-
-private fun RustExprElement.isBool() = resolvedType == RustBooleanType
