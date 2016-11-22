@@ -7,6 +7,7 @@ import org.rust.lang.core.psi.impl.mixin.asRustPath
 import org.rust.lang.core.psi.impl.mixin.parentEnum
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
+import org.rust.lang.core.symbols.RustPathHead
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
 import org.rust.lang.core.types.unresolved.RustUnresolvedReferenceType
@@ -53,11 +54,11 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 
     override fun visitUnaryExpr(o: RustUnaryExprElement) = set {
-        if (o.box != null || o.mut != null)
+        if (o.box != null)
             RustUnknownType
         else
-            o.expr?.let {
-                it.resolvedType.let { if (o.and != null) RustReferenceType(it) else it }
+            o.expr?.resolvedType?.let {
+                if (o.and != null) RustReferenceType(it, o.mut != null) else it
             } ?: RustUnknownType
     }
 
@@ -112,13 +113,12 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
 
     override fun visitLitExpr(o: RustLitExprElement) = set {
         when {
-            o.integerLiteral    != null -> RustIntegerType.deduceBySuffix(o.text)   ?: RustIntegerType.deduceUnsuffixed(o)
-            o.floatLiteral      != null -> RustFloatType.deduceBySuffix(o.text)     ?: RustFloatType.deduceUnsuffixed(o)
-            o.stringLiteral     != null -> RustStringType
-            o.charLiteral       != null -> RustCharacterType
+            o.integerLiteral != null -> RustIntegerType.fromLiteral(o.integerLiteral!!)
+            o.floatLiteral != null -> RustFloatType.fromLiteral(o.floatLiteral!!)
+            o.stringLiteral != null -> RustStringSliceType
+            o.charLiteral != null -> RustCharacterType
 
-            o.`true`            != null ||
-            o.`false`           != null -> RustBooleanType
+            o.`true` != null || o.`false` != null -> RustBooleanType
 
             else -> RustUnknownType
         }
@@ -141,20 +141,18 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
 
     override fun visitParenExpr(o: RustParenExprElement) = set { o.expr.resolvedType }
 
-    override fun visitBinaryExpr(o: RustBinaryExprElement) {
-        set {
-            when (o.operatorType) {
-                RustTokenElementTypes.ANDAND,
-                RustTokenElementTypes.OROR,
-                RustTokenElementTypes.EQEQ,
-                RustTokenElementTypes.EXCLEQ,
-                RustTokenElementTypes.LT,
-                RustTokenElementTypes.GT,
-                RustTokenElementTypes.GTEQ,
-                RustTokenElementTypes.LTEQ -> RustBooleanType
+    override fun visitBinaryExpr(o: RustBinaryExprElement) = set {
+        when (o.operatorType) {
+            RustTokenElementTypes.ANDAND,
+            RustTokenElementTypes.OROR,
+            RustTokenElementTypes.EQEQ,
+            RustTokenElementTypes.EXCLEQ,
+            RustTokenElementTypes.LT,
+            RustTokenElementTypes.GT,
+            RustTokenElementTypes.GTEQ,
+            RustTokenElementTypes.LTEQ -> RustBooleanType
 
-                else -> RustUnknownType
-            }
+            else -> RustUnknownType
         }
     }
 
@@ -207,19 +205,16 @@ private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedT
     }
 
     override fun visitPathType(o: RustPathTypeElement) = set {
-        o.path?.let {
-            (   RustIntegerType.deduce(it.text)     ?:
-                RustFloatType.deduce(it.text)       ?:
-                RustBooleanType.deduce(it.text)     ?:
-                RustCharacterType.deduce(it.text)   ?:
-                RustStringType.deduce(it.text)      ?:
-                it.asRustPath?.let { RustUnresolvedPathType(it) }
-                )
-        } ?: RustUnknownType
+        val path = o.path?.asRustPath ?: return@set RustUnknownType
+        if (path.head is RustPathHead.Named && path.segments.isEmpty()) {
+            val primitiveType = RustPrimitiveTypeBase.fromTypeName(path.head.segment.name)
+            if (primitiveType != null) return@set primitiveType
+        }
+        RustUnresolvedPathType(path)
     }
 
     override fun visitRefType(o: RustRefTypeElement) = set {
-        o.type?.let { RustUnresolvedReferenceType(it.type , o.mut != null) } ?: RustUnknownType
+        o.type?.let { RustUnresolvedReferenceType(it.type, o.mut != null) } ?: RustUnknownType
     }
 }
 
@@ -249,8 +244,9 @@ private fun deviseBoundPatType(binding: RustPatBindingElement): RustType {
 private fun deviseSelfType(self: RustSelfArgumentElement): RustType {
     var Self = self.parentOfType<RustImplItemElement>()?.type?.resolvedType ?: return RustUnknownType
 
-    if (self.and != null)
+    if (self.and != null) {
         Self = RustReferenceType(Self, mutable = self.mut != null)
+    }
 
     return Self
 }
@@ -264,14 +260,12 @@ private fun deviseFunctionType(fn: RustFnElement): RustFunctionType {
     val params = fn.parameters
     if (params != null) {
         val self = params.selfArgument
-        if (self != null)
+        if (self != null) {
             paramTypes += deviseSelfType(self)
+        }
 
         paramTypes += params.parameterList.orEmpty().map { it.type?.resolvedType ?: RustUnknownType }
     }
 
-    return RustFunctionType(
-        paramTypes  = paramTypes,
-        retType     = fn.retType?.type?.resolvedType ?: RustUnitType
-    )
+    return RustFunctionType(paramTypes, fn.retType?.type?.resolvedType ?: RustUnitType)
 }

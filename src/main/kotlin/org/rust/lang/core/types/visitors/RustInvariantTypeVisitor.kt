@@ -13,7 +13,7 @@ interface RustInvariantTypeVisitor<T> {
 
     fun visitFloat(type: RustFloatType): T
 
-    fun visitString(type: RustStringType): T
+    fun visitString(type: RustStringSliceType): T
 
     fun visitChar(type: RustCharacterType): T
 

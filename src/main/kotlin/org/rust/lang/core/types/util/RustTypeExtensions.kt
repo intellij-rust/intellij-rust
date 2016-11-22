@@ -32,7 +32,7 @@ val RustUnresolvedType.isPrimitive: Boolean
             is RustIntegerType,
             is RustBooleanType,
             is RustCharacterType,
-            is RustStringType -> true
+            is RustStringSliceType -> true
 
             else -> false
         }

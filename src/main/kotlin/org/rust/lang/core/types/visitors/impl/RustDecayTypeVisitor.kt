@@ -48,7 +48,7 @@ class RustDecayTypeVisitor : RustTypeVisitor<RustUnresolvedType> {
 
     override fun visitFloat(type: RustFloatType): RustUnresolvedType = type
 
-    override fun visitString(type: RustStringType): RustUnresolvedType = type
+    override fun visitString(type: RustStringSliceType): RustUnresolvedType = type
 
     override fun visitChar(type: RustCharacterType): RustUnresolvedType = type
 

@@ -80,7 +80,7 @@ class RustDeserializationUnresolvedTypeVisitor(private val input: DataInput) {
         RustIntegerType::class.java             -> visitIntegerType()
         RustUnresolvedReferenceType::class.java -> visitReferenceType()
         RustFloatType::class.java               -> visitFloatType()
-        RustStringType::class.java              -> visitStringType()
+        RustStringSliceType::class.java         -> visitStringType()
         RustCharacterType::class.java           -> visitCharacterType()
         RustBooleanType::class.java             -> visitBooleanType()
 
@@ -116,7 +116,7 @@ class RustDeserializationUnresolvedTypeVisitor(private val input: DataInput) {
     fun visitUnitType(): RustUnitType = RustUnitType
     fun visitBooleanType(): RustBooleanType = RustBooleanType
     fun visitCharacterType(): RustCharacterType = RustCharacterType
-    fun visitStringType(): RustStringType = RustStringType
+    fun visitStringType(): RustStringSliceType = RustStringSliceType
 
 }
 
@@ -137,7 +137,7 @@ private val typeCodes =
         RustIntegerType::class.java             to 62,   // 111110
         RustUnresolvedReferenceType::class.java to 30,   // 11110
         RustFloatType::class.java               to 14,   // 1110
-        RustStringType::class.java              to 6,    // 110
+        RustStringSliceType::class.java         to 6,    // 110
         RustCharacterType::class.java           to 2,    // 10
         RustBooleanType::class.java             to 0     // 0
     )

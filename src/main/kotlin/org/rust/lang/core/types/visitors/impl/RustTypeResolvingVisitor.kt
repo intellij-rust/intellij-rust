@@ -32,7 +32,7 @@ open class RustTypeResolvingVisitor(private val pivot: RustCompositeElement) : R
 
     override fun visitFloat(type: RustFloatType): RustType = type
 
-    override fun visitString(type: RustStringType): RustType = type
+    override fun visitString(type: RustStringSliceType): RustType = type
 
     override fun visitChar(type: RustCharacterType): RustType = type
 

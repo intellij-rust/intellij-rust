@@ -152,7 +152,7 @@ abstract class RustEqualityTypeVisitorBase<T>() : RustInvariantTypeVisitor<Boole
         return lop === type
     }
 
-    override fun visitString(type: RustStringType): Boolean {
+    override fun visitString(type: RustStringSliceType): Boolean {
         return lop === type
     }
 

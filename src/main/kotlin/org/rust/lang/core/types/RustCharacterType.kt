@@ -5,9 +5,6 @@ import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 
 object RustCharacterType : RustPrimitiveTypeBase() {
 
-    fun deduce(text: String): RustCharacterType? =
-        if (text == "char") RustCharacterType else null
-
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitChar(this)
 
     override fun <T> accept(visitor: RustUnresolvedTypeVisitor<T>): T = visitor.visitChar(this)

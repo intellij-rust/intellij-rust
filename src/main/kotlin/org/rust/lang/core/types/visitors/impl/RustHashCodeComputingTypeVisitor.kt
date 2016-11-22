@@ -60,7 +60,7 @@ open class RustHashCodeComputingTypeVisitorBase : RustInvariantTypeVisitor<Int> 
 
     override fun visitUnitType(type: RustUnitType): Int = 9049
 
-    override fun visitString(type: RustStringType): Int = 10709
+    override fun visitString(type: RustStringSliceType): Int = 10709
 
     override fun visitChar(type: RustCharacterType): Int = 10099
 

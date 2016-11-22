@@ -24,7 +24,7 @@ abstract class RustUnresolvedTypeVisitorWithDefaults<T> : RustUnresolvedTypeVisi
 
     override fun visitFloat(type: RustFloatType): T = visitByDefault(type)
 
-    override fun visitString(type: RustStringType): T = visitByDefault(type)
+    override fun visitString(type: RustStringSliceType): T = visitByDefault(type)
 
     override fun visitChar(type: RustCharacterType): T = visitByDefault(type)
 
