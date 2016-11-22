@@ -1,7 +1,7 @@
 package org.rust.lang.core.resolve
 
 import org.assertj.core.api.Assertions.assertThat
-import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.resolve.ref.RustReference
 
 
@@ -28,7 +28,7 @@ abstract class RustMultiFileResolveTestCaseBase : RustResolveTestCaseBase() {
         assertThat(configureAndResolve(*files)).isNull()
     }
 
-    protected fun configureAndResolve(vararg files: String): RustNamedElement? {
+    protected fun configureAndResolve(vararg files: String): RustCompositeElement? {
         files.reversed().forEach {
             configureByFile(it)
         }

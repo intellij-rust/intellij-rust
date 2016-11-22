@@ -42,7 +42,7 @@ class RustExpressionAnnotator : Annotator {
         if (expr.dotdot != null) return  // functional update, no need to declare all the fields.
 
         val declaredFields = expr.structExprFieldList.map { it.referenceName }.toSet()
-        val missingFields = decl.fields.filter { it.name !in declaredFields }
+        val missingFields = decl.namedFields.filter { it.name !in declaredFields }
 
         if (missingFields.isNotEmpty()) {
             holder.createErrorAnnotation(expr.rbrace ?: expr, "Some fields are missing")

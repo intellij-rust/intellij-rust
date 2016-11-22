@@ -4,7 +4,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.rust.lang.core.psi.RustFieldDeclElement
 import org.rust.lang.core.psi.RustFieldsOwner
-import org.rust.lang.core.psi.fields
+import org.rust.lang.core.psi.namedFields
 
 class RustDuplicateStructFieldInspection : RustDuplicateInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
@@ -14,4 +14,4 @@ class RustDuplicateStructFieldInspection : RustDuplicateInspectionTool() {
 }
 
 //TODO: Why do we need this extra layer of indirection? Why can't we rely on the property's getter via reference?
-private fun RustFieldsOwner.getFields(): List<RustFieldDeclElement> = fields
+private fun RustFieldsOwner.getFields(): List<RustFieldDeclElement> = namedFields

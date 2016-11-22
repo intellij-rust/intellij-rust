@@ -5,5 +5,8 @@ interface RustFieldsOwner {
     val tupleFields: RustTupleFieldsElement?
 }
 
-val RustFieldsOwner.fields: List<RustFieldDeclElement>
+val RustFieldsOwner.namedFields: List<RustFieldDeclElement>
     get() = blockFields?.fieldDeclList.orEmpty()
+
+val RustFieldsOwner.positionalFields: List<RustTupleFieldDeclElement>
+    get() = tupleFields?.tupleFieldDeclList.orEmpty()

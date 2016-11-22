@@ -3,7 +3,7 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.resolve.ResolveCache
 import org.rust.lang.core.completion.RustCompletionEngine
-import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustPathElement
 import org.rust.lang.core.psi.RustPathExprElement
 import org.rust.lang.core.psi.RustTypeElement
@@ -19,14 +19,14 @@ class RustPathReferenceImpl(
 
     override val RustPathElement.referenceAnchor: PsiElement get() = referenceNameElement
 
-    override fun resolveInner(): List<RustNamedElement> {
+    override fun resolveInner(): List<RustCompositeElement> {
         val path = element.asRustPath ?: return emptyList()
         return RustResolveEngine.resolve(path, element, namespace)
     }
 
-    override fun resolve(): RustNamedElement? = ResolveCache.getInstance(element.project)
+    override fun resolve(): RustCompositeElement? = ResolveCache.getInstance(element.project)
         .resolveWithCaching(this,
-            ResolveCache.AbstractResolver<RustPathReferenceImpl, RustNamedElement>
+            ResolveCache.AbstractResolver<RustPathReferenceImpl, RustCompositeElement>
             { r, incomplete -> r.resolveInner().firstOrNull() },
             /* needToPreventRecursion = */ true,
             /* incompleteCode = */ false)

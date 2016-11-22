@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.*
  */
 // TODO: rename to make it clear that these are filed of the type and not of the expression.
 val RustStructExprElement.fields: List<RustNamedElement>
-    get() = (path.reference.resolve() as? RustFieldsOwner)?.fields.orEmpty()
+    get() = (path.reference.resolve() as? RustFieldsOwner)?.namedFields.orEmpty()
 
 
 /**

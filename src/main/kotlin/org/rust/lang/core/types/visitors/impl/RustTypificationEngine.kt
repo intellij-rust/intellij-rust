@@ -62,7 +62,8 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 
     override fun visitPathExpr(o: RustPathExprElement) = set {
-        o.path.reference.resolve()?.let { RustTypificationEngine.typify(it) } ?: RustUnknownType
+        val resolve = o.path.reference.resolve() as? RustNamedElement
+        resolve?.let { RustTypificationEngine.typify(it) } ?: RustUnknownType
     }
 
     override fun visitStructExpr(o: RustStructExprElement) = set {
@@ -92,10 +93,7 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
         }
 
         val calleeType = fn.resolvedType
-        if (calleeType is RustFunctionType)
-            calleeType.retType
-        else
-            RustUnknownType
+        (calleeType as? RustFunctionType)?.retType ?: RustUnknownType
     }
 
     override fun visitMethodCallExpr(o: RustMethodCallExprElement) = set {
@@ -104,8 +102,12 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 
     override fun visitFieldExpr(o: RustFieldExprElement) = set {
-        val field = o.reference.resolve() as? RustFieldDeclElement
-        field?.type?.resolvedType ?: RustUnknownType
+        val field = o.reference.resolve()
+        when (field) {
+            is RustFieldDeclElement -> field.type?.resolvedType
+            is RustTupleFieldDeclElement -> field.type.resolvedType
+            else -> null
+        } ?: RustUnknownType
     }
 
     override fun visitLitExpr(o: RustLitExprElement) = set {

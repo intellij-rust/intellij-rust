@@ -11,7 +11,6 @@ import org.rust.cargo.util.getPsiFor
 import org.rust.cargo.util.preludeModule
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RustTokenElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.possiblePaths
@@ -35,7 +34,7 @@ object RustResolveEngine {
      * Resolves abstract qualified-path [path] in such a way, like it was a qualified-reference
      * used at [pivot]
      */
-    fun resolve(path: RustPath, pivot: RustCompositeElement, namespace: Namespace? = null): List<RustNamedElement> {
+    fun resolve(path: RustPath, pivot: RustCompositeElement, namespace: Namespace? = null): List<RustCompositeElement> {
         val allNs = resolveAllNamespaces(path, pivot)
         val filteredByNs = if (namespace == null) allNs else allNs.filterByNamespace(namespace).take(1)
         return filteredByNs
@@ -53,18 +52,16 @@ object RustResolveEngine {
     /**
      * Resolves references to struct's fields inside [RustFieldExprElement]
      */
-    fun resolveFieldExpr(fieldExpr: RustFieldExprElement): List<RustNamedElement> {
+    fun resolveFieldExpr(fieldExpr: RustFieldExprElement): List<RustCompositeElement> {
         val receiverType = fieldExpr.expr.resolvedType.stripAllRefsIfAny()
+        val struct = (receiverType as? RustStructType)?.item ?: return emptyList()
 
-        val id = (fieldExpr.fieldId.identifier ?: fieldExpr.fieldId.integerLiteral)!!
-        return when (id.elementType) {
-            IDENTIFIER -> {
-                if (receiverType is RustStructType)
-                    receiverType.item.fields.filter { it.name == id.text }
-                else
-                    emptyList()
-            }
-            else -> emptyList()
+        val name = fieldExpr.fieldId.identifier
+        val index = fieldExpr.fieldId.integerLiteral
+        return when {
+            name != null -> struct.namedFields.filter { it.name == name.text }
+            index != null -> listOfNotNull(struct.positionalFields.getOrNull(index.text.toInt()))
+            else -> error("Field expression without a field $fieldExpr")
         }
     }
 
@@ -79,7 +76,7 @@ object RustResolveEngine {
             .find { it.name == name }
     }
 
-    fun resolveUseGlob(ref: RustUseGlobElement): List<RustNamedElement> = recursionGuard(ref, Computable {
+    fun resolveUseGlob(ref: RustUseGlobElement): List<RustCompositeElement> = recursionGuard(ref, Computable {
         val basePath = ref.basePath
 
         // This is not necessarily a module, e.g.

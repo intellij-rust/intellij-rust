@@ -13,22 +13,24 @@ interface ScopeEntry {
     /**
      * Potentially lazy evaluated element this entry points to.
      */
-    val element: RustNamedElement?
+    val element: RustCompositeElement?
 
-    fun filterByNamespace(namespace: Namespace): ScopeEntry? =
-        if (namespace in element?.namespaces.orEmpty()) this else null
+    fun filterByNamespace(namespace: Namespace): ScopeEntry? {
+        val element = element as? RustNamedElement ?: return null
+        return if (namespace in element.namespaces.orEmpty()) this else null
+    }
 
     companion object {
         fun of(name: String, element: RustNamedElement): ScopeEntry = SingleEntry(name, element)
 
         fun of(element: RustNamedElement): ScopeEntry? = element.name?.let { ScopeEntry.of(it, element) }
 
-        fun lazy(name: String?, thunk: () -> RustNamedElement?): ScopeEntry? =
+        fun lazy(name: String?, thunk: () -> RustCompositeElement?): ScopeEntry? =
             name?.let {
                 LazyEntry(name, lazy(thunk))
             }
 
-        fun multiLazy(name: String?, thunk: () -> List<RustNamedElement>): ScopeEntry? =
+        fun multiLazy(name: String?, thunk: () -> List<RustCompositeElement>): ScopeEntry? =
             name?.let {
                 LazyMultiEntry(name, kotlin.lazy(thunk))
             }
@@ -37,29 +39,31 @@ interface ScopeEntry {
 
 private class SingleEntry(
     override val name: String,
-    override val element: RustNamedElement
+    override val element: RustCompositeElement
 ) : ScopeEntry {
     override fun toString(): String = "SingleEntry($name, $element)"
 }
 
 private class LazyEntry(
     override val name: String,
-    thunk: Lazy<RustNamedElement?>
+    thunk: Lazy<RustCompositeElement?>
 ) : ScopeEntry {
-    override val element: RustNamedElement? by thunk
+    override val element: RustCompositeElement? by thunk
 
     override fun toString(): String = "LazyEntry($name, $element)"
 }
 
 private class LazyMultiEntry(
     override val name: String,
-    thunk: Lazy<List<RustNamedElement>>
+    thunk: Lazy<List<RustCompositeElement>>
 ) : ScopeEntry {
-    private val elements: List<RustNamedElement> by thunk
-    override val element: RustNamedElement? get() = elements.firstOrNull()
+    private val elements: List<RustCompositeElement> by thunk
+    override val element: RustCompositeElement? get() = elements.firstOrNull()
 
     override fun filterByNamespace(namespace: Namespace): ScopeEntry? =
-        elements.find { namespace in it.namespaces }?.let {
+        elements
+            .filterIsInstance<RustNamedElement>()
+            .find { namespace in it.namespaces }?.let {
             SingleEntry(name, it)
         }
 

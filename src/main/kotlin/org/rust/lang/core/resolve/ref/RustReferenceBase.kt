@@ -6,10 +6,7 @@ import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.PsiPolyVariantReferenceBase
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.ResolveCache
-import org.rust.lang.core.psi.RustElementFactory
-import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustReferenceElement
-import org.rust.lang.core.psi.RustTokenElementTypes
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.parentRelativeRange
 
@@ -18,7 +15,7 @@ abstract class RustReferenceBase<T : RustReferenceElement>(
 ) : PsiPolyVariantReferenceBase<T>(element),
     RustReference {
 
-    abstract fun resolveInner(): List<RustNamedElement>
+    abstract fun resolveInner(): List<RustCompositeElement>
 
     final override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
         ResolveCache.getInstance(element.project)

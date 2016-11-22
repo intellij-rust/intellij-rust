@@ -42,7 +42,7 @@ object RustCompletionEngine {
         val dispatchType = field.expr.resolvedType.stripAllRefsIfAny()
 
         // Needs type ascription to please Kotlin's type checker, https://youtrack.jetbrains.com/issue/KT-12696.
-        val fields: List<RustNamedElement> = (dispatchType as? RustStructType)?.item?.fields.orEmpty()
+        val fields: List<RustNamedElement> = (dispatchType as? RustStructType)?.item?.namedFields.orEmpty()
 
         val methods = RustImplIndex.findNonStaticMethodsFor(dispatchType, field.project)
 
@@ -50,7 +50,7 @@ object RustCompletionEngine {
     }
 }
 
-private fun RustNamedElement?.completionsFromResolveScope(): Array<LookupElement> =
+private fun RustCompositeElement?.completionsFromResolveScope(): Array<LookupElement> =
     if (this is RustResolveScope)
         RustResolveEngine.declarations(this, searchFor = SearchFor.PRIVATE).completionsFromScopeEntries()
     else
@@ -67,7 +67,7 @@ private fun Collection<RustNamedElement>.completionsFromNamedElements(): Array<L
         it.createLookupElement(name)
     }.toTypedArray()
 
-fun RustNamedElement.createLookupElement(scopeName: String): LookupElement {
+fun RustCompositeElement.createLookupElement(scopeName: String): LookupElement {
     val base = LookupElementBuilder.create(this, scopeName)
         .withIcon(getIcon(0))
 
@@ -88,7 +88,7 @@ fun RustNamedElement.createLookupElement(scopeName: String): LookupElement {
             })
 
         is RustEnumVariantElement -> base
-            .withTypeText(parentOfType<RustEnumItemElement>()?.name?.toString() ?: "")
+            .withTypeText(parentOfType<RustEnumItemElement>()?.name ?: "")
             .withTailText(when {
                 blockFields != null -> " { ... }"
                 tupleFields != null ->
