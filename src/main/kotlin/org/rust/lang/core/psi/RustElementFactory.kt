@@ -27,6 +27,9 @@ object RustElementFactory {
         return createFromText(project, "fn main() { S { $fields }; }")
     }
 
+    fun createVariableDeclaration(project: Project, name: String, expr: RustExprStmtElement): RustLetDeclElement? =
+        createFromText(project, "fn main() {let $name = ${expr.text} }")
+
     fun createBlockExpr(project: Project, body: String): RustBlockExprElement? =
         createFromText(project, "fn main() { { $body } }")
 
