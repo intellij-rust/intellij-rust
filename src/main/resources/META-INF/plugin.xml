@@ -476,7 +476,6 @@
                 description="Move this module to a dedicated directory">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
-
         <action id="Rust.CargoFmtFile"
                 class="org.rust.ide.actions.RustFmtFileAction"
                 text="Reformat file with rustfmt"

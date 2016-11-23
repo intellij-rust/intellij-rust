@@ -11,4 +11,12 @@ class IntroduceVariableTest : RustTestCaseBase() {
         openFileInEditor("variable.rs")
         rustLocalVariableHandler.invoke(myFixture.project, myFixture.editor, myFixture.file, com.intellij.openapi.actionSystem.DataContext.EMPTY_CONTEXT)
     }
+
+    fun testMultipleOccurrences() = checkByFile {
+        checkByFile {
+            val rustLocalVariableHandler = RustLocalVariableHandler()
+            openFileInEditor("multiple_occurrences.rs")
+            rustLocalVariableHandler.invoke(myFixture.project, myFixture.editor, myFixture.file, com.intellij.openapi.actionSystem.DataContext.EMPTY_CONTEXT)
+        }
+    }
 }
