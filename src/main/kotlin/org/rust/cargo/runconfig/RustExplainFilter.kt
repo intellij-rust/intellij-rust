@@ -5,29 +5,30 @@ import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.Filter.Result
 import com.intellij.ide.browsers.OpenUrlHyperlinkInfo
 import com.intellij.openapi.project.DumbAware
+import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 
 /**
- * Filters output for “[--explain Exxxx]” and links to the relevant
- * documentation.
+ * Filters output for “[--explain Exxxx]” (or other similar patterns) and links
+ * to the relevant documentation.
  */
 class RustExplainFilter : Filter, DumbAware {
-    private val link_length: Int = 15
-    private val pattern: Pattern = Pattern.compile("--explain E(\\d{4})")
+    private val patterns = listOf(
+        Pattern.compile("--explain E(\\d{4})"),
+        Pattern.compile("error\\[E(\\d{4})\\]"))
 
     override fun applyFilter(line: String, entireLength: Int): Result? {
-        val matcher = pattern.matcher(line)
-        if (!matcher.find()) {
-            return null
-        }
+        val matcher = patterns
+            .map { it.matcher(line) }
+            .firstOrNull { it.find() } ?: return null
 
         val eNumber = matcher.group(1)
         val url = "https://doc.rust-lang.org/error-index.html#E$eNumber"
         val info = BrowserHyperlinkInfo(url)
 
         val highlightStartOffset = entireLength - line.length + matcher.start()
-        val highlightEndOffset = highlightStartOffset + link_length
+        val highlightEndOffset = highlightStartOffset + matcher.group().length
 
         return Result(highlightStartOffset, highlightEndOffset, info)
     }

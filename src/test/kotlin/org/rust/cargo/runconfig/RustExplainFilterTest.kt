@@ -8,14 +8,19 @@ class RustExplainFilterTest : RustTestCaseBase() {
     override val dataPath = ""
     private var filter: Filter = RustExplainFilter()
 
-    fun testOldErrorFormat() {
+    fun testOldExplainFormat() {
         val text = "src/lib.rs:57:17: 57:25 help: run `rustc --explain E0282` to see a detailed explanation"
         doTest(text, text.length, 41, 56)
     }
 
-    fun testNewErrorFormat() {
+    fun testNewExplainFormat() {
         val text = "error: the trait bound `std::string::String: std::ops::Index<_>` is not satisfied [--explain E0277]"
         doTest(text, text.length, 83, 98)
+    }
+
+    fun testErrorFormat() {
+        val text = "error[E0382]: use of moved value: `v`"
+        doTest(text, text.length, 0, 12)
     }
 
     fun testNothingToSee() {
