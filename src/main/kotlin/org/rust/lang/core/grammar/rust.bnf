@@ -283,6 +283,7 @@ private item ::= static_item
                | mod_item
                | foreign_mod_item
                | struct_item
+               | union_item
                | enum_item
                | view_item
                | macro_item
@@ -563,6 +564,17 @@ struct_item ::= attrs_and_vis STRUCT IDENTIFIER generic_params? (tuple_fields? w
                  "org.rust.lang.core.psi.RustFieldsOwner" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustStructItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.elements.RustStructItemElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
+}
+
+// RFC 1444
+union_item ::= attrs_and_vis "union" IDENTIFIER generic_params? where_clause? block_fields {
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RustItemElement"
+                 "org.rust.lang.core.psi.RustPathNamedElement"
+                 "org.rust.lang.core.psi.RustGenericDeclaration" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustUnionItemImplMixin"
+  stubClass = "org.rust.lang.core.stubs.elements.RustUnionItemElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.ElementFactoryKt.factory"
 }
 

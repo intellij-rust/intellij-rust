@@ -17,10 +17,9 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "TRAIT_METHOD_MEMBER"   -> RustTraitMethodMemberStubElementType
     "TYPE_ITEM"             -> RustTypeItemStubElementType
     "USE_ITEM"              -> RustUseItemStubElementType
+    "UNION_ITEM"            -> RustUnionItemStubElementType
     "FOREIGN_MOD_ITEM"      -> RustForeignModItemStubElementType
     "EXTERN_CRATE_ITEM"     -> RustExternCrateItemStubElementType
 
-    else               -> {
-        throw IllegalArgumentException("Unknown element $name")
-    }
+    else ->  error("Unknown element $name")
 }

@@ -84,7 +84,7 @@ FILE
     RustBlockElementImpl(BLOCK)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      PsiErrorElement:<expr>, const, enum, extern, fn, impl, mod, static, struct, trait, type or use expected, got '+'
+      PsiErrorElement:<expr>, const, enum, extern, fn, impl, mod, static, struct, trait, type, union or use expected, got '+'
         PsiElement(+)('+')
       PsiWhiteSpace('\n')
       PsiElement(})('}')
