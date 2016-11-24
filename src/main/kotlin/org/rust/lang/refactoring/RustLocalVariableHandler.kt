@@ -12,10 +12,7 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.IntroduceTargetChooser
 import com.intellij.refactoring.RefactoringActionHandler
-import org.rust.lang.core.psi.RustBlockElement
-import org.rust.lang.core.psi.RustElementFactory
-import org.rust.lang.core.psi.RustExprElement
-import org.rust.lang.core.psi.RustExprStmtElement
+import org.rust.lang.core.psi.*
 
 class RustLocalVariableHandler : RefactoringActionHandler {
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?, dataContext: DataContext?) {
@@ -50,6 +47,9 @@ class RustLocalVariableHandler : RefactoringActionHandler {
 
             val statement = RustElementFactory.createVariableDeclaration(project, "x", expr)!!
             context?.addBefore(statement, context.addBefore(newline, anchor))
+
+            val id = PsiTreeUtil.findChildOfType(statement, RustPatElement::class.java)!!
+            expr.replace(id)
         }
     }
 

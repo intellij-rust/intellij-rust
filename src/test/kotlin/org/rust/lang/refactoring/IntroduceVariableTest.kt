@@ -14,7 +14,7 @@ class IntroduceVariableTest : RustTestCaseBase() {
         rustLocalVariableHandler.invoke(myFixture.project, myFixture.editor, myFixture.file, com.intellij.openapi.actionSystem.DataContext.EMPTY_CONTEXT)
     }
 
-    @Ignore
+
     fun testExpression() = checkByFile {
             val rustLocalVariableHandler = RustLocalVariableHandler()
             openFileInEditor("expression.rs")
