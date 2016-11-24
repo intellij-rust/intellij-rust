@@ -20,12 +20,16 @@ class RustLocalVariableHandler : RefactoringActionHandler {
         val expr = PsiTreeUtil.getNonStrictParentOfType(file?.findElementAt(offSet ?: 0), RustExprElement::class.java)
         val exprs: List<RustExprElement> = expr?.let(::possibleExpressions) ?: emptyList()
 
-        println(exprs)
-
         val passer: Pass<RustExprElement> = object : Pass<RustExprElement>() {
-            override fun pass(t: RustExprElement?) {
-                if (t != null && t.isValid) {
-
+            override fun pass(expr: RustExprElement?) {
+                if (expr != null && expr.isValid) {
+                    //the expr that has been chosen
+                    val parent = expr.parent
+                    if(parent is RustExprStmtElement) {
+                        replaceElementForStmt(project, parent)
+                    } else {
+                        replaceElementForExpr(project, expr)
+                    }
                 }
             }
         }
@@ -33,8 +37,6 @@ class RustLocalVariableHandler : RefactoringActionHandler {
         IntroduceTargetChooser.showChooser(editor!!, exprs, passer) {
             it.text
         }
-
-        println(expr)
     }
 
     fun findExpr(file: PsiFile?, offSet: Int) = PsiTreeUtil.getNonStrictParentOfType(file?.findElementAt(offSet), RustExprElement::class.java)
