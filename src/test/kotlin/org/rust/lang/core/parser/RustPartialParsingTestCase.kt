@@ -23,13 +23,13 @@ class RustPartialParsingTestCase : RustParsingTestCaseBase("partial") {
     fun testHrtbForLifetimes() = doTest(true)
     fun testNoLifetimeBoundsInGenericArgs() = doTest(true)
 
-    override fun checkResult(targetDataName: String?, file: PsiFile?) {
+    override fun checkResult(targetDataName: String?, file: PsiFile) {
         checkHasError(file)
         super.checkResult(targetDataName, file)
     }
 
-    private fun checkHasError(file: PsiFile?) {
-        assertThat(hasError(file!!))
+    private fun checkHasError(file: PsiFile) {
+        assertThat(hasError(file))
             .withFailMessage("Invalid file was parsed successfully: ${file.name}")
             .isTrue()
     }

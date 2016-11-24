@@ -11,7 +11,7 @@ FILE
         PsiElement())(')')
       PsiElement(])(']')
     PsiWhiteSpace('\n')
-    PsiElement(<IDENTIFIER>)('union')
+    PsiElement(union)('union')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('U')
     PsiWhiteSpace(' ')

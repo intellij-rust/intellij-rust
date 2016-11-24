@@ -65,6 +65,10 @@ public interface RustTokenElementTypes {
     RustTokenType WHILE = new RustKeywordTokenType("while");
     RustTokenType YIELD = new RustKeywordTokenType("yield");
 
+    // Context keywords
+    RustTokenType DEFAULT = new RustKeywordTokenType("default");
+    RustTokenType UNION = new RustKeywordTokenType("union");
+
     // Identifiers
 
     RustTokenType IDENTIFIER = new RustTokenType("<IDENTIFIER>");
@@ -236,4 +240,7 @@ public interface RustTokenElementTypes {
 
     @NotNull
     TokenSet RAW_LITERALS = TokenSet.create(RAW_STRING_LITERAL, RAW_BYTE_STRING_LITERAL);
+
+    @NotNull
+    TokenSet CONTEXTUAL_KEYWORDS = TokenSet.create(DEFAULT, UNION);
 }

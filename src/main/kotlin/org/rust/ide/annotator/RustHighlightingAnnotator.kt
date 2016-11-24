@@ -64,6 +64,12 @@ class RustHighlightingAnnotator : Annotator {
             }
         }
 
+        override fun visitElement(element: PsiElement) {
+            if (element.elementType in RustTokenElementTypes.CONTEXTUAL_KEYWORDS) {
+                highlight(element, RustColor.KEYWORD)
+            }
+        }
+
         override fun visitTypeParam(o: RustTypeParamElement) = highlight(o.identifier, RustColor.TYPE_PARAMETER)
 
         override fun visitAttr(o: RustAttrElement) = highlight(o, RustColor.ATTRIBUTE)

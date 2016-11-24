@@ -5,7 +5,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.psi.RustCompositeElementTypes
+import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustTokenElementTypes.*
+import org.rust.lang.core.psi.RustTokenType
 
 @Suppress("UNUSED_PARAMETER")
 object RustParserUtil : GeneratedParserUtilBase() {
@@ -96,6 +98,10 @@ object RustParserUtil : GeneratedParserUtilBase() {
     @JvmStatic fun ororImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, OROR, OR, OR)
     @JvmStatic fun andandImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, ANDAND, AND, AND)
 
+    @JvmStatic fun defaultKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeyword(b, "default", RustTokenElementTypes.DEFAULT)
+    @JvmStatic fun unionKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeyword(b, "union", RustTokenElementTypes.UNION)
+
+
     private @JvmStatic fun collapse(b: PsiBuilder, tokenType: IElementType, vararg parts: IElementType): Boolean {
         // We do not want whitespace between parts, so firstly we do raw lookup for each part,
         // and when we make sure that we have desired token, we consume and collapse it.
@@ -135,6 +141,15 @@ object RustParserUtil : GeneratedParserUtilBase() {
     private fun LighterASTNode.isBracedMacro(b: PsiBuilder): Boolean =
         tokenType == RustCompositeElementTypes.MACRO_EXPR &&
             '{' == b.originalText.subSequence(startOffset, endOffset).find { it == '{' || it == '[' || it == '(' }
+
+    private fun contextualKeyword(b: PsiBuilder, keyword: String, elementType: RustTokenType): Boolean {
+        if (b.tokenType == RustTokenElementTypes.IDENTIFIER && b.tokenText == keyword) {
+            b.remapCurrentToken(elementType)
+            b.advanceLexer()
+            return true
+        }
+        return false
+    }
 
 }
 

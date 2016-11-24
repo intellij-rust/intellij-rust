@@ -41,4 +41,6 @@ impl<T> GenVal<T> {
 impl<T: fmt::Display + ?Sized> ToString for T {
     #[inline]
     default fn to_string(&self) -> String { }
+    default fn a() {}
+    default fn b() {}
 }

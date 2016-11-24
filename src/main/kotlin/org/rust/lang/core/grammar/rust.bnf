@@ -267,11 +267,12 @@ trait_ref ::= path_generic_args_without_colons
 
 vis ::= PUB
 
-
-defaulted ::= "default" // contextual keyword
+//XXX: don't use contextual keywords in recover, because they remap tokens.
+private DEFAULT ::= <<defaultKeyword>>
+private UNION ::= <<unionKeyword>>
 
 private attrs_and_vis ::= outer_attr* vis?
-private attrs_default_vis ::= outer_attr* defaulted? vis?
+private attrs_default_vis ::= outer_attr* DEFAULT? vis?
 
 private item ::= static_item
                | const_item
@@ -292,7 +293,7 @@ private item_with_recover ::= !('}' | <<eof>>) item {
   pin = 1
   recoverWhile = item_recover
 }
-private item_recover ::= !('}' | '#' | PUB | FN | CONST | EXTERN | UNSAFE | STRUCT | ENUM | USE | IDENTIFIER '!' | MOD | TRAIT | STATIC | TYPE_KW | IMPL)
+private item_recover ::= !('}' | '#' | PUB | FN | CONST | EXTERN | UNSAFE | STRUCT | ENUM | USE | IDENTIFIER | MOD | TRAIT | STATIC | TYPE_KW | IMPL | "union")
 
 private items ::= item_with_recover*
 
@@ -568,7 +569,7 @@ struct_item ::= attrs_and_vis STRUCT IDENTIFIER generic_params? (tuple_fields? w
 }
 
 // RFC 1444
-union_item ::= attrs_and_vis "union" IDENTIFIER generic_params? where_clause? block_fields {
+union_item ::= attrs_and_vis UNION IDENTIFIER generic_params? where_clause? block_fields {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustItemElement"
                  "org.rust.lang.core.psi.RustPathNamedElement"
@@ -725,7 +726,7 @@ private impl_member ::= !'}' ( impl_method_member | impl_const_member | impl_mac
   pin = 1
   recoverWhile = impl_member_recover
 }
-private impl_member_recover ::= !('#' | defaulted | vis | EXTERN | CONST | UNSAFE | FN | (IDENTIFIER '!') | TYPE_KW | '}')
+private impl_member_recover ::= !('#' | vis | EXTERN | CONST | UNSAFE | FN | (IDENTIFIER '!') | TYPE_KW | "default" | '}')
 
 impl_method_member ::= attrs_default_vis fn_header method_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
