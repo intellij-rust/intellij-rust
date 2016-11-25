@@ -56,17 +56,18 @@ class RustLocalVariableHandler : RefactoringActionHandler {
 
     fun replaceElementForAllExpr(project: Project, editor: Editor, exprs: List<PsiElement>) {
         val expr = exprs.first()
+
         createLet(project, expr)?.let {
             val (let, name) = it
-            var nameElem: RustPatBindingElement = name
+            var nameElem: RustPatBindingElement? = null
             WriteCommandAction.runWriteCommandAction(project) {
                 val newElement = introduceLet(project, expr, let)
                 exprs.forEach { it.replace(name) }
 
-                moveEditorToNameElement(editor, newElement)?.let { nameElem = it }
+                nameElem = moveEditorToNameElement(editor, newElement)
             }
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-            RustInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(LinkedHashSet(listOf("x")))
+            nameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(LinkedHashSet(listOf("x"))) }
         }
     }
 
@@ -96,12 +97,19 @@ class RustLocalVariableHandler : RefactoringActionHandler {
      * Creates a let binding for the found expression.
      * Returning handles to the complete let expr and the identifier inside the newly created let binding.
      */
-    fun createLet(project: Project, expr: PsiElement): Pair<RustLetDeclElement, RustPatBindingElement>? {
-        val let = RustElementFactory.createVariableDeclaration(project, "x", expr)
+    fun createLet(project: Project, expr: PsiElement): Pair<RustLetDeclElement, PsiElement>? {
+        val parent = expr.parent
+
+        val let = if (parent is RustUnaryExprElement && parent.mut != null) {
+            RustElementFactory.createMutableVariableDeclaration(project, "x", expr)
+        } else {
+            RustElementFactory.createVariableDeclaration(project, "x", expr)
+        }
+
         val binding = let?.findBinding()
 
         if (let != null && binding != null) {
-            return Pair(let, binding)
+            return Pair(let, binding.identifier)
         } else {
             return null
         }

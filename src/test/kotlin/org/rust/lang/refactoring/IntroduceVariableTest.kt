@@ -50,4 +50,11 @@ class IntroduceVariableTest : RustTestCaseBase() {
         val expr = findExpr(myFixture.file, myFixture.editor?.caretModel?.offset ?: 0)
         rustLocalVariableHandler.replaceElement(myFixture.project, myFixture.editor, listOf((possibleExpressions(expr!!)[1])))
     }
+
+    fun testRefMut() = checkByFile {
+        val rustLocalVariableHandler = RustLocalVariableHandler()
+        openFileInEditor("ref_mut.rs")
+        val expr = findExpr(myFixture.file, myFixture.editor?.caretModel?.offset ?: 0)
+        rustLocalVariableHandler.replaceElement(myFixture.project, myFixture.editor, listOf((possibleExpressions(expr!!)[0])))
+    }
 }
