@@ -27,7 +27,7 @@ class RustLocalVariableHandler : RefactoringActionHandler {
 
                 OccurrencesChooser.simpleChooser<PsiElement>(editor).showChooser(expr, occurrences, pass { choice ->
                     if (choice == OccurrencesChooser.ReplaceChoice.ALL) {
-                        replaceElementForAllExpr(project, editor!!, occurrences)
+                        replaceElement(project, editor!!, occurrences)
                     } else {
                         replaceElement(project, editor!!, listOf(it))
                     }
@@ -40,15 +40,15 @@ class RustLocalVariableHandler : RefactoringActionHandler {
         }
     }
 
-    fun replaceElement(project: Project, editor: Editor, exprs: List<RustExprElement>) {
+    fun replaceElement(project: Project, editor: Editor, exprs: List<PsiElement>) {
         //the expr that has been chosen
         val expr = exprs.first()
         val anchor = findAnchor(expr)
         val parent = expr.parent
         if (anchor == expr) {
-            inlineLet(project, anchor, { RustElementFactory.createVariableDeclaration(project, "x", it)!! })
+            inlineLet(project, editor, anchor, { RustElementFactory.createVariableDeclaration(project, "x", it)!! })
         } else if (parent is RustExprStmtElement) {
-            inlineLet(project, parent, { RustElementFactory.createVariableDeclarationFromStmt(project, "x", it)!! })
+            inlineLet(project, editor, parent, { RustElementFactory.createVariableDeclarationFromStmt(project, "x", it)!! })
         } else {
             replaceElementForAllExpr(project, editor, exprs)
         }
@@ -63,13 +63,7 @@ class RustLocalVariableHandler : RefactoringActionHandler {
                 val newElement = introduceLet(project, expr, let)
                 exprs.forEach { it.replace(name) }
 
-                val newName = newElement?.findBinding()
-
-                if (newName != null) {
-                    nameElem = newName
-                }
-
-                editor.caretModel.moveToOffset(newElement?.findBinding()?.identifier?.textRange?.startOffset ?: 0)
+                moveEditorToNameElement(editor, newElement)?.let { nameElem = it }
             }
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
             RustInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(LinkedHashSet(listOf("x")))
@@ -77,11 +71,17 @@ class RustLocalVariableHandler : RefactoringActionHandler {
     }
 
 
-    fun <T : PsiElement> inlineLet(project: Project, stmt: T, statementFactory: (T) -> RustStmtElement) {
+    fun <T : PsiElement> inlineLet(project: Project, editor: Editor, stmt: T, statementFactory: (T) -> RustStmtElement) {
+        var newNameElem: RustPatBindingElement? = null
         WriteCommandAction.runWriteCommandAction(project) {
             val statement = statementFactory.invoke(stmt)
-            stmt.replace(statement)
+            val newStatement = stmt.replace(statement)
+
+            newNameElem = moveEditorToNameElement(editor, newStatement)
         }
+
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+        newNameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(LinkedHashSet(listOf("x"))) }
     }
 
     fun introduceLet(project: Project, expr: PsiElement, let: RustLetDeclElement): PsiElement? {
@@ -105,6 +105,14 @@ class RustLocalVariableHandler : RefactoringActionHandler {
         } else {
             return null
         }
+    }
+
+    fun moveEditorToNameElement(editor: Editor, element: PsiElement?): RustPatBindingElement? {
+        val newName = element?.findBinding()
+
+        editor.caretModel.moveToOffset(newName?.identifier?.textRange?.startOffset ?: 0)
+
+        return newName
     }
 
     fun PsiElement.findBinding() = PsiTreeUtil.findChildOfType(this, RustPatBindingElement::class.java)
