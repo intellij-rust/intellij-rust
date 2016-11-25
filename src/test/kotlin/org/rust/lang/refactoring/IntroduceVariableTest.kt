@@ -1,6 +1,5 @@
 package org.rust.lang.refactoring
 
-import org.junit.Ignore
 import org.rust.lang.RustTestCaseBase
 import org.rust.lang.core.psi.RustExprStmtElement
 
@@ -18,7 +17,7 @@ class IntroduceVariableTest : RustTestCaseBase() {
     fun testMultipleOccurrences() = checkByFile {
         val rustLocalVariableHandler = RustLocalVariableHandler()
         openFileInEditor("multiple_occurrences.rs")
-        val expr = rustLocalVariableHandler.findExpr(myFixture.file, myFixture.editor?.caretModel?.offset ?: 0)?.parent
+        val expr = findExpr(myFixture.file, myFixture.editor?.caretModel?.offset ?: 0)?.parent
         val occurrences = findOccurrences(expr!!)
         rustLocalVariableHandler.replaceElementForAllExpr(myFixture.project, occurrences)
     }
@@ -26,14 +25,14 @@ class IntroduceVariableTest : RustTestCaseBase() {
     fun testExpression() = checkByFile {
             val rustLocalVariableHandler = RustLocalVariableHandler()
             openFileInEditor("expression.rs")
-            val expr = rustLocalVariableHandler.findExpr(myFixture.file, myFixture.editor?.caretModel?.offset ?: 0)
+            val expr = findExpr(myFixture.file, myFixture.editor?.caretModel?.offset ?: 0)
             rustLocalVariableHandler.replaceElementForExpr(myFixture.project, expr!!)
     }
 
     fun testStatement() = checkByFile {
         val rustLocalVariableHandler = RustLocalVariableHandler()
         openFileInEditor("statement.rs")
-        val expr = rustLocalVariableHandler.findExpr(myFixture.file, myFixture.editor?.caretModel?.offset ?: 0)
+        val expr = findExpr(myFixture.file, myFixture.editor?.caretModel?.offset ?: 0)
         val statement = possibleExpressions(expr!!).last().parent!! as RustExprStmtElement
         rustLocalVariableHandler.replaceElementForStmt(myFixture.project, statement)
     }
