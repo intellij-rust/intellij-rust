@@ -42,9 +42,13 @@ class RustLocalVariableHandler : RefactoringActionHandler {
 
     fun replaceElement(project: Project, editor: Editor, exprs: List<RustExprElement>) {
         //the expr that has been chosen
-        val parent = exprs.first().parent
-        if (parent is RustExprStmtElement) {
-            replaceElementForStmt(project, parent)
+        val expr = exprs.first()
+        val anchor = findAnchor(expr)
+        val parent = expr.parent
+        if (anchor == expr) {
+            inlineLet(project, anchor, { RustElementFactory.createVariableDeclaration(project, "x", it)!! })
+        } else if (parent is RustExprStmtElement) {
+            inlineLet(project, parent, { RustElementFactory.createVariableDeclarationFromStmt(project, "x", it)!! })
         } else {
             replaceElementForAllExpr(project, editor, exprs)
         }
@@ -73,16 +77,16 @@ class RustLocalVariableHandler : RefactoringActionHandler {
     }
 
 
-    fun replaceElementForStmt(project: Project, stmt: RustExprStmtElement) {
+    fun <T : PsiElement> inlineLet(project: Project, stmt: T, statementFactory: (T) -> RustStmtElement) {
         WriteCommandAction.runWriteCommandAction(project) {
-            val statement = RustElementFactory.createVariableDeclarationFromStmt(project, "x", stmt)!!
+            val statement = statementFactory.invoke(stmt)
             stmt.replace(statement)
         }
     }
 
     fun introduceLet(project: Project, expr: PsiElement, let: RustLetDeclElement): PsiElement? {
-        val anchor = findAnchor(expr)!!
-        val context = anchor.context
+        val anchor = findAnchor(expr)
+        val context = anchor?.context
         val newline = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(System.lineSeparator())
 
         return context?.addBefore(let, context.addBefore(newline, anchor))
@@ -112,10 +116,21 @@ class RustLocalVariableHandler : RefactoringActionHandler {
 
 fun findExpr(file: PsiFile?, offSet: Int) = PsiTreeUtil.getNonStrictParentOfType(file?.findElementAt(offSet), RustExprElement::class.java)
 
-fun findAnchor(expr: PsiElement) = PsiTreeUtil.getNonStrictParentOfType(expr, RustExprStmtElement::class.java)
+
+fun findAnchor(expr: PsiElement) = PsiTreeUtil.getNonStrictParentOfType(expr, RustBlockElement::class.java)?.let { findAnchor(expr, it) }
+
+fun findAnchor(expr: PsiElement, block: PsiElement): PsiElement? {
+    var anchor = expr
+    while (anchor.parent != block) {
+        anchor = anchor.parent
+    }
+
+    return anchor
+}
 
 fun possibleExpressions(expr: RustExprElement) = SyntaxTraverser.psiApi().parents(expr)
     .takeWhile { it !is RustBlockElement }
+    .filter { it !is RustPathExprElement }
     .filterIsInstance(RustExprElement::class.java)
 
 fun findBlock(expr: PsiElement) = PsiTreeUtil.getNonStrictParentOfType(expr, RustBlockElement::class.java)

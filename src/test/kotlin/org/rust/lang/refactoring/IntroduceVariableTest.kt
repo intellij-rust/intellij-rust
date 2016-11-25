@@ -33,8 +33,8 @@ class IntroduceVariableTest : RustTestCaseBase() {
         val rustLocalVariableHandler = RustLocalVariableHandler()
         openFileInEditor("statement.rs")
         val expr = findExpr(myFixture.file, myFixture.editor?.caretModel?.offset ?: 0)
-        val statement = possibleExpressions(expr!!).last().parent!! as RustExprStmtElement
-        rustLocalVariableHandler.replaceElementForStmt(myFixture.project, statement)
+        val exprs = possibleExpressions(expr!!)
+        rustLocalVariableHandler.replaceElement(myFixture.project, myFixture.editor, listOf(exprs[2]))
     }
 
     fun testMatch() = checkByFile {
@@ -42,5 +42,12 @@ class IntroduceVariableTest : RustTestCaseBase() {
         openFileInEditor("match.rs")
         val expr = findExpr(myFixture.file, myFixture.editor?.caretModel?.offset ?: 0)
         rustLocalVariableHandler.replaceElement(myFixture.project, myFixture.editor, listOf(expr!!))
+    }
+
+    fun testFile() = checkByFile {
+        val rustLocalVariableHandler = RustLocalVariableHandler()
+        openFileInEditor("file.rs")
+        val expr = findExpr(myFixture.file, myFixture.editor?.caretModel?.offset ?: 0)
+        rustLocalVariableHandler.replaceElement(myFixture.project, myFixture.editor, listOf((possibleExpressions(expr!!)[1])))
     }
 }
