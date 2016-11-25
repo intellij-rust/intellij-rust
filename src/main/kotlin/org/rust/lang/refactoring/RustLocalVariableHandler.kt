@@ -22,14 +22,14 @@ class RustLocalVariableHandler : RefactoringActionHandler {
         val exprs: List<RustExprElement> = expr?.let(::possibleExpressions) ?: emptyList()
 
         val passer: Pass<RustExprElement> = pass {
-            if (expr != null && expr.isValid) {
-                val occurrences = findOccurrences(expr)
+            if (it.isValid) {
+                val occurrences = findOccurrences(it)
 
                 OccurrencesChooser.simpleChooser<PsiElement>(editor).showChooser(expr, occurrences, pass { choice ->
                     if (choice == OccurrencesChooser.ReplaceChoice.ALL) {
                         replaceElementForAllExpr(project, editor!!, occurrences)
                     } else {
-                        replaceElement(project, editor!!, listOf(expr))
+                        replaceElement(project, editor!!, listOf(it))
                     }
                 })
             }
