@@ -29,7 +29,7 @@ class RustLocalVariableHandler : RefactoringActionHandler {
                     if (choice == OccurrencesChooser.ReplaceChoice.ALL) {
                         replaceElementForAllExpr(project, editor!!, occurrences)
                     } else {
-                        replaceElement(expr, project)
+                        replaceElement(project, editor!!, listOf(expr))
                     }
                 })
             }
@@ -40,23 +40,13 @@ class RustLocalVariableHandler : RefactoringActionHandler {
         }
     }
 
-    private fun replaceElement(expr: RustExprElement, project: Project) {
+    private fun replaceElement(project: Project, editor: Editor, exprs: List<RustExprElement>) {
         //the expr that has been chosen
-        val parent = expr.parent
+        val parent = exprs.first().parent
         if (parent is RustExprStmtElement) {
             replaceElementForStmt(project, parent)
         } else {
-            replaceElementForExpr(project, expr)
-        }
-    }
-
-    fun replaceElementForExpr(project: Project, expr: RustExprElement) {
-        WriteCommandAction.runWriteCommandAction(project) {
-            createLet(project, expr)?.let {
-                val (let, name) = it
-                introduceLet(project, expr, let)
-                expr.replace(name)
-            }
+            replaceElementForAllExpr(project, editor, exprs)
         }
     }
 
@@ -78,7 +68,7 @@ class RustLocalVariableHandler : RefactoringActionHandler {
                 editor.caretModel.moveToOffset(newElement?.findBinding()?.identifier?.textRange?.startOffset ?: 0)
             }
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-            RustInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(LinkedHashSet(listOf("hello")))
+            RustInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(LinkedHashSet(listOf("x")))
         }
     }
 

@@ -19,14 +19,14 @@ class IntroduceVariableTest : RustTestCaseBase() {
         openFileInEditor("multiple_occurrences.rs")
         val expr = findExpr(myFixture.file, myFixture.editor?.caretModel?.offset ?: 0)?.parent
         val occurrences = findOccurrences(expr!!)
-        rustLocalVariableHandler.replaceElementForAllExpr(myFixture.project, occurrences)
+        rustLocalVariableHandler.replaceElementForAllExpr(myFixture.project, myFixture.editor, occurrences)
     }
 
     fun testExpression() = checkByFile {
-            val rustLocalVariableHandler = RustLocalVariableHandler()
-            openFileInEditor("expression.rs")
-            val expr = findExpr(myFixture.file, myFixture.editor?.caretModel?.offset ?: 0)
-            rustLocalVariableHandler.replaceElementForExpr(myFixture.project, expr!!)
+        val rustLocalVariableHandler = RustLocalVariableHandler()
+        openFileInEditor("expression.rs")
+        val expr = findExpr(myFixture.file, myFixture.editor?.caretModel?.offset ?: 0)
+        rustLocalVariableHandler.replaceElementForAllExpr(myFixture.project, myFixture.editor, listOf(expr!!))
     }
 
     fun testStatement() = checkByFile {
