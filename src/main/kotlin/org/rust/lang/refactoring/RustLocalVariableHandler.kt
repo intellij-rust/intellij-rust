@@ -20,21 +20,17 @@ class RustLocalVariableHandler : RefactoringActionHandler {
         val expr = PsiTreeUtil.getNonStrictParentOfType(file?.findElementAt(offSet ?: 0), RustExprElement::class.java)
         val exprs: List<RustExprElement> = expr?.let(::possibleExpressions) ?: emptyList()
 
-        val passer: Pass<RustExprElement> = object : Pass<RustExprElement>() {
-            override fun pass(expr: RustExprElement?) {
-                if (expr != null && expr.isValid) {
-                    val occurrences = findOccurrences(expr)
+        val passer: Pass<RustExprElement> = pass {
+            if (expr != null && expr.isValid) {
+                val occurrences = findOccurrences(expr)
 
-                    OccurrencesChooser.simpleChooser<PsiElement>(editor).showChooser(expr, occurrences, object : Pass<OccurrencesChooser.ReplaceChoice>() {
-                        override fun pass(choice: OccurrencesChooser.ReplaceChoice?) {
-                            if (choice == OccurrencesChooser.ReplaceChoice.ALL){
-                                replaceElementForAllExpr(project, occurrences)
-                            } else {
-                                replaceElement(expr, project)
-                            }
-                        }
-                    })
-                }
+                OccurrencesChooser.simpleChooser<PsiElement>(editor).showChooser(expr, occurrences, pass { choice ->
+                    if (choice == OccurrencesChooser.ReplaceChoice.ALL) {
+                        replaceElementForAllExpr(project, occurrences)
+                    } else {
+                        replaceElement(expr, project)
+                    }
+                })
             }
         }
 
@@ -69,7 +65,7 @@ class RustLocalVariableHandler : RefactoringActionHandler {
         }
     }
 
-    fun replaceElementForAllExpr(project: Project, exprs:  List<PsiElement>) {
+    fun replaceElementForAllExpr(project: Project, exprs: List<PsiElement>) {
         WriteCommandAction.runWriteCommandAction(project) {
             val id = introduceLet(exprs.first(), project)
             exprs.forEach { it.replace(id) }
@@ -120,13 +116,21 @@ fun findOccurrences(expr: PsiElement): List<PsiElement> {
     return occurrences
 }
 
+fun <T> pass(pass: (T) -> Unit): Pass<T> {
+    return object : Pass<T>() {
+        override fun pass(t: T) {
+            pass.invoke(t)
+        }
+    }
+}
+
 
 class OccurrenceVisitor(val element: PsiElement) : PsiRecursiveElementVisitor() {
     val foundOccurrences = ArrayList<PsiElement>()
 
 
     override fun visitElement(element: PsiElement?) {
-        if(element != null) {
+        if (element != null) {
             if (PsiEquivalenceUtil.areElementsEquivalent(this.element, element)) {
                 foundOccurrences.add(element)
             } else {
