@@ -36,4 +36,11 @@ class IntroduceVariableTest : RustTestCaseBase() {
         val statement = possibleExpressions(expr!!).last().parent!! as RustExprStmtElement
         rustLocalVariableHandler.replaceElementForStmt(myFixture.project, statement)
     }
+
+    fun testMatch() = checkByFile {
+        val rustLocalVariableHandler = RustLocalVariableHandler()
+        openFileInEditor("match.rs")
+        val expr = findExpr(myFixture.file, myFixture.editor?.caretModel?.offset ?: 0)
+        rustLocalVariableHandler.replaceElement(myFixture.project, myFixture.editor, listOf(expr!!))
+    }
 }

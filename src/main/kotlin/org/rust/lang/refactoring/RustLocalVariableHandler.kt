@@ -40,7 +40,7 @@ class RustLocalVariableHandler : RefactoringActionHandler {
         }
     }
 
-    private fun replaceElement(project: Project, editor: Editor, exprs: List<RustExprElement>) {
+    fun replaceElement(project: Project, editor: Editor, exprs: List<RustExprElement>) {
         //the expr that has been chosen
         val parent = exprs.first().parent
         if (parent is RustExprStmtElement) {
