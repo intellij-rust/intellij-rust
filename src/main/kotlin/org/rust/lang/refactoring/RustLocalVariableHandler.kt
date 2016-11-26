@@ -67,7 +67,7 @@ class RustLocalVariableHandler : RefactoringActionHandler {
                 nameElem = moveEditorToNameElement(editor, newElement)
             }
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-            nameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(LinkedHashSet(listOf("x"))) }
+            nameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(LinkedHashSet()) }
         }
     }
 
@@ -82,13 +82,16 @@ class RustLocalVariableHandler : RefactoringActionHandler {
         }
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-        newNameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(LinkedHashSet(listOf("x"))) }
+        newNameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(LinkedHashSet()) }
     }
 
+    /**
+     *
+     */
     fun introduceLet(project: Project, expr: PsiElement, let: RustLetDeclElement): PsiElement? {
         val anchor = findAnchor(expr)
         val context = anchor?.context
-        val newline = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(System.lineSeparator())
+        val newline = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n")
 
         return context?.addBefore(let, context.addBefore(newline, anchor))
     }
@@ -123,8 +126,6 @@ class RustLocalVariableHandler : RefactoringActionHandler {
         return newName
     }
 
-    fun PsiElement.findBinding() = PsiTreeUtil.findChildOfType(this, RustPatBindingElement::class.java)
-
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
         println("not from the editor.")
     }
@@ -132,10 +133,12 @@ class RustLocalVariableHandler : RefactoringActionHandler {
 
 fun findExpr(file: PsiFile?, offSet: Int) = PsiTreeUtil.getNonStrictParentOfType(file?.findElementAt(offSet), RustExprElement::class.java)
 
-
+/**
+ * An anchor point is surrounding element before the block scope, which is used to scope the insertion of the new let binding.
+ */
 fun findAnchor(expr: PsiElement) = PsiTreeUtil.getNonStrictParentOfType(expr, RustBlockElement::class.java)?.let { findAnchor(expr, it) }
 
-fun findAnchor(expr: PsiElement, block: PsiElement): PsiElement? {
+private fun findAnchor(expr: PsiElement, block: PsiElement): PsiElement? {
     var anchor = expr
     while (anchor.parent != block) {
         anchor = anchor.parent
@@ -144,6 +147,11 @@ fun findAnchor(expr: PsiElement, block: PsiElement): PsiElement? {
     return anchor
 }
 
+/**
+ * Finds possible expressions that might want to be bound to a local variable.
+ * We don't go further than the current block scope,
+ * further more path expressions don't make sense to bind to a local variable so we exclude them.
+ */
 fun possibleExpressions(expr: RustExprElement) = SyntaxTraverser.psiApi().parents(expr)
     .takeWhile { it !is RustBlockElement }
     .filter { it !is RustPathExprElement }
@@ -151,6 +159,9 @@ fun possibleExpressions(expr: RustExprElement) = SyntaxTraverser.psiApi().parent
 
 fun findBlock(expr: PsiElement) = PsiTreeUtil.getNonStrictParentOfType(expr, RustBlockElement::class.java)
 
+/**
+ * Finds occurrences in the sub scope of expr, so that all will be replaced if replace all is selected.
+ */
 fun findOccurrences(expr: PsiElement): List<PsiElement> {
     val visitor = OccurrenceVisitor(expr)
 
@@ -170,6 +181,7 @@ fun <T> pass(pass: (T) -> Unit): Pass<T> {
     }
 }
 
+fun PsiElement.findBinding() = PsiTreeUtil.findChildOfType(this, RustPatBindingElement::class.java)
 
 class OccurrenceVisitor(val element: PsiElement) : PsiRecursiveElementVisitor() {
     val foundOccurrences = ArrayList<PsiElement>()
