@@ -595,7 +595,8 @@ enum_variant ::= outer_attr* IDENTIFIER variant_args? {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RustFieldsOwner" ]
+                 "org.rust.lang.core.psi.RustFieldsOwner"
+                 "org.rust.lang.core.psi.RustPathNamedElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustEnumVariantImplMixin"
 }
 

@@ -85,6 +85,7 @@ private val BOTH = TYPES + VALUES
 
 private val RustNamedElement.namespaces: Set<Namespace> get() = when (this) {
     is RustMod -> TYPES
+    is RustEnumItemElement -> TYPES
 
     is RustPatBindingElement,
     is RustStaticItemElement,

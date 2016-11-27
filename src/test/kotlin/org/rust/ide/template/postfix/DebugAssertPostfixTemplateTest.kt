@@ -4,7 +4,7 @@ class DebugAssertPostfixTemplateTest : PostfixTemplateTestCase(DebugAssertPostfi
     fun testNumber() = doTestNotApplicable(
         """
         fn main() {
-            1234.debug_assert<caret>
+            1234.debug_assert/*caret*/
         }
         """
     )
@@ -12,13 +12,13 @@ class DebugAssertPostfixTemplateTest : PostfixTemplateTestCase(DebugAssertPostfi
     fun testSimple() = doTest(
         """
         fn main() {
-            true.debug_assert<caret>
+            true.debug_assert/*caret*/
         }
         """
         ,
         """
         fn main() {
-            debug_assert!(true);<caret>
+            debug_assert!(true);/*caret*/
         }
         """
     )
@@ -26,13 +26,13 @@ class DebugAssertPostfixTemplateTest : PostfixTemplateTestCase(DebugAssertPostfi
     fun testNEQ() = doTest(
         """
         fn foo(a: i32, b: i32) {
-            a != b.debug_assert<caret>
+            a != b.debug_assert/*caret*/
         }
         """
         ,
         """
         fn foo(a: i32, b: i32) {
-            debug_assert!(a != b);<caret>
+            debug_assert!(a != b);/*caret*/
         }
         """
     )
@@ -40,13 +40,13 @@ class DebugAssertPostfixTemplateTest : PostfixTemplateTestCase(DebugAssertPostfi
     fun testSimple1() = doTest(
         """
         fn foo(a: i32, b: i32) {
-            a == b.debug_assert<caret>
+            a == b.debug_assert/*caret*/
         }
         """
         ,
         """
         fn foo(a: i32, b: i32) {
-            debug_assert_eq!(a, b);<caret>
+            debug_assert_eq!(a, b);/*caret*/
         }
         """
     )

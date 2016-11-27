@@ -1,9 +1,0 @@
-fn check(a: i32, b: i32) -> bool {
-    a > b
-}
-
-fn main() {
-    let a = 42;
-    let mut b = 0;
-    <spot>while !check(a, b) {}</spot>
-}

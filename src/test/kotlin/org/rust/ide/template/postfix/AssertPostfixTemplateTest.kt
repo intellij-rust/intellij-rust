@@ -4,7 +4,7 @@ class AssertPostfixTemplateTest : PostfixTemplateTestCase(AssertPostfixTemplate(
     fun testNumber() = doTestNotApplicable(
         """
         fn main() {
-            1234.assert<caret>
+            1234.assert/*caret*/
         }
         """
     )
@@ -13,14 +13,14 @@ class AssertPostfixTemplateTest : PostfixTemplateTestCase(AssertPostfixTemplate(
         """
         fn main() {
             let a = true;
-            a.assert<caret>
+            a.assert/*caret*/
         }
         """
         ,
         """
         fn main() {
             let a = true;
-            assert!(a);<caret>
+            assert!(a);/*caret*/
         }
         """
     )
@@ -28,13 +28,13 @@ class AssertPostfixTemplateTest : PostfixTemplateTestCase(AssertPostfixTemplate(
     fun testNEQ() = doTest(
         """
         fn foo(a: i32, b: i32) {
-            a != b.assert<caret>
+            a != b.assert/*caret*/
         }
         """
         ,
         """
         fn foo(a: i32, b: i32) {
-            assert!(a != b);<caret>
+            assert!(a != b);/*caret*/
         }
         """
     )
@@ -42,13 +42,13 @@ class AssertPostfixTemplateTest : PostfixTemplateTestCase(AssertPostfixTemplate(
     fun testSimple1() = doTest(
         """
         fn foo(a: i32, b: i32) {
-            a == b.assert<caret>
+            a == b.assert/*caret*/
         }
         """
         ,
         """
         fn foo(a: i32, b: i32) {
-            assert_eq!(a, b);<caret>
+            assert_eq!(a, b);/*caret*/
         }
         """
     )

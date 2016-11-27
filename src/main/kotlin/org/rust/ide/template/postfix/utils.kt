@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustExprElement
 import org.rust.lang.core.psi.util.ancestors
 import org.rust.lang.core.types.RustBooleanType
+import org.rust.lang.core.types.RustEnumType
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.utils.negate
 
@@ -45,3 +46,4 @@ class RustTopMostInScopeSelector(pred: (RustExprElement) -> Boolean) : RustExprP
 }
 
 fun RustExprElement.isBool() = resolvedType == RustBooleanType
+fun RustExprElement.isEnum() = resolvedType is RustEnumType
