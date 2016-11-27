@@ -1,100 +1,93 @@
 package org.rust.ide.template.postfix
 
 class WhilePostfixTemplateTest : PostfixTemplateTestCase(WhileExpressionPostfixTemplate()) {
-    fun testNumber() =
-        doTestNotApplicable(
+    fun testNumber() = doTestNotApplicable(
             """
             fn main() {
                 let a = 4;
-                a.while<caret>
+                a.while/*caret*/
             }
             """
         )
 
-    fun testNumberCall() =
-        doTestNotApplicable(
+    fun testNumberCall() = doTestNotApplicable(
             """
             fn func() -> i32 {
                 1234
             }
 
             fn main() {
-                func().while<caret>
+                func().while/*caret*/
             }
             """
         )
 
-    fun testSimple() =
-        doTest(
+    fun testSimple() = doTest(
             """
             fn main() {
                 let a = 4 == 2;
-                a.while<caret>
+                a.while/*caret*/
             }
             """
             ,
             """
             fn main() {
                 let a = 4 == 2;
-                while a {<caret>}
+                while a {/*caret*/}
             }
             """
         )
 
-    fun testFunArg() =
-        doTest(
+    fun testFunArg() = doTest(
             """
             fn foo(a: bool) {
-                a.while<caret>
+                a.while/*caret*/
             }
             """
             ,
             """
             fn foo(a: bool) {
-                while a {<caret>}
+                while a {/*caret*/}
             }
             """
         )
 
-    fun testSimpleNegatedExpr() =
-        doTest(
+    fun testSimpleNegatedExpr() = doTest(
             """
             fn main() {
                 let a = 4 == 2;
-                !a.while<caret>
+                !a.while/*caret*/
             }
             """
             ,
             """
             fn main() {
                 let a = 4 == 2;
-                while !a {<caret>}
+                while !a {/*caret*/}
             }
             """
         )
 
-    fun testSimpleEqExpr() =
-        doTest(
+    fun testSimpleEqExpr() = doTest(
             """
             fn main() {
-                true == true.while<caret>
+                true == true.while/*caret*/
             }
             """
             ,
             """
             fn main() {
-                while true == true {<caret>}
+                while true == true {/*caret*/}
             }
             """
         )
 
 
-    fun testSelector() =
-        doTest(
+    fun testSelector() = doTest(
             """
             fn main() {
                 let a = if true {
-                    true == false.while<caret>
+                    true == false.while/*caret*/
                 } else {
                     false == true
                 };
@@ -104,7 +97,7 @@ class WhilePostfixTemplateTest : PostfixTemplateTestCase(WhileExpressionPostfixT
             """
             fn main() {
                 let a = if true {
-                    while true == false {<caret>}
+                    while true == false {/*caret*/}
                 } else {
                     false == true
                 };
@@ -112,27 +105,25 @@ class WhilePostfixTemplateTest : PostfixTemplateTestCase(WhileExpressionPostfixT
             """
         )
 
-    fun testCall() {
-        doTest(
-            """
-            fn func() -> bool {
-                false
-            }
+    fun testCall() = doTest(
+        """
+        fn func() -> bool {
+            false
+        }
 
-            fn main() {
-                func().while<caret>
-            }
-            """
-            ,
-            """
-            fn func() -> bool {
-                false
-            }
+        fn main() {
+            func().while/*caret*/
+        }
+        """
+        ,
+        """
+        fn func() -> bool {
+            false
+        }
 
-            fn main() {
-                while func() {<caret>}
-            }
-            """
-        )
-    }
+        fn main() {
+            while func() {/*caret*/}
+        }
+        """
+    )
 }
