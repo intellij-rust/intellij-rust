@@ -2,15 +2,16 @@ package org.rust.lang.core.psi
 
 import com.intellij.psi.NavigatablePsiElement
 import org.rust.lang.core.psi.util.stringLiteralValue
+import java.util.*
+import java.util.Collections.emptyIterator
 
 interface RustDocAndAttributeOwner : RustCompositeElement, NavigatablePsiElement
 
 /**
- * Get list of all item's inner and outer attributes.
+ * Get sequence of all item's inner and outer attributes.
  */
-val RustDocAndAttributeOwner.allAttributes: List<RustAttrElement>
-    get() = (this as? RustOuterAttributeOwner)?.outerAttrList.orEmpty() +
-        (this as? RustInnerAttributeOwner)?.innerAttrList.orEmpty()
+val RustDocAndAttributeOwner.allAttributes: Sequence<RustAttrElement>
+    get() = RustAttributeIterator(this).asSequence()
 
 /**
  * Returns [QueryAttributes] for given PSI element.
@@ -23,7 +24,7 @@ val RustDocAndAttributeOwner.queryAttributes: QueryAttributes
  *
  * **Do not instantiate directly**, use [RustDocAndAttributeOwner.queryAttributes] instead.
  */
-class QueryAttributes(private val attributes: List<RustAttrElement>) {
+class QueryAttributes(private val attributes: Sequence<RustAttrElement>) {
     fun hasAtomAttribute(name: String): Boolean =
         metaItems
             .filter { it.eq == null && it.lparen == null }
@@ -35,16 +36,55 @@ class QueryAttributes(private val attributes: List<RustAttrElement>) {
             .mapNotNull { it.litExpr?.stringLiteralValue }
             .singleOrNull()
 
-    val metaItems: List<RustMetaItemElement>
+    val metaItems: Sequence<RustMetaItemElement>
         get() = attributes.mapNotNull { it.metaItem }
+}
 
-    fun hasAllow(lint: Lint): Boolean = metaItems
-        .filter { it.identifier.text == "allow" }
-        .any { it.metaItemList.any { it.text == lint.id } }
+/**
+ * Iterator that walks through both inner and outer attributes without allocating extra collections.
+ * Inner attributes have priority, so they are iterated first.
+ */
+class RustAttributeIterator (
+    val owner: RustDocAndAttributeOwner
+) : Iterator<RustAttrElement> {
+    var useOuter: Boolean = false
+    var currentIterator: Iterator<RustAttrElement> = emptyIterator()
 
-    companion object {
-        enum class Lint(val id: String) {
-            NonSnakeCase("non_snake_case")
+    init {
+        if (owner is RustInnerAttributeOwner) {
+            currentIterator = owner.innerAttrList.iterator()
+        } else {
+            switchToOuterIterator()
+        }
+    }
+
+    override fun hasNext(): Boolean {
+        val hasNext = currentIterator.hasNext()
+        if (!hasNext && !useOuter) {
+            switchToOuterIterator()
+            return currentIterator.hasNext()
+        }
+        return hasNext
+    }
+
+    override fun next(): RustAttrElement {
+        try {
+            return currentIterator.next()
+        } catch(e: NoSuchElementException) {
+            if (!useOuter) {
+                switchToOuterIterator()
+                return currentIterator.next()
+            }
+        }
+        throw NoSuchElementException()
+    }
+
+    private fun switchToOuterIterator() {
+        useOuter = true
+        if (owner is RustOuterAttributeOwner) {
+            currentIterator = owner.outerAttrList.iterator()
+        } else {
+            currentIterator = emptyIterator()
         }
     }
 }

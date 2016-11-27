@@ -97,13 +97,7 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
 
         val elem = parameters.position.parent?.parent?.parent
 
-        val existing = if (elem is RustDocAndAttributeOwner) {
-            elem.queryAttributes.metaItems.map { it.identifier.text }
-        } else {
-            emptyList<String>()
-        }
-
-        val suggestions = attributes.filter { it.appliesTo.accepts(parameters.position) && it.name !in existing }
+        val suggestions = attributes.filter { it.appliesTo.accepts(parameters.position) && elem.attrMetaItems.none { item -> item == it.name }}
             .map { LookupElementBuilder.create(it.name) }
         result.addAllElements(suggestions)
     }
@@ -123,4 +117,11 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
     private fun onItem(pattern: ElementPattern<out RustDocAndAttributeOwner>): PsiElementPattern.Capture<PsiElement> {
         return psiElement().withSuperParent(3, pattern)
     }
+
+    val PsiElement?.attrMetaItems: Sequence<String>
+        get() = if (this is RustDocAndAttributeOwner) {
+                    queryAttributes.metaItems.map { it.identifier.text }
+                } else {
+                    emptySequence()
+                }
 }
