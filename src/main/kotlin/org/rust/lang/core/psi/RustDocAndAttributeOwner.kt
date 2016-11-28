@@ -2,16 +2,16 @@ package org.rust.lang.core.psi
 
 import com.intellij.psi.NavigatablePsiElement
 import org.rust.lang.core.psi.util.stringLiteralValue
-import java.util.*
-import java.util.Collections.emptyIterator
 
 interface RustDocAndAttributeOwner : RustCompositeElement, NavigatablePsiElement
 
 /**
  * Get sequence of all item's inner and outer attributes.
+ * Inner attributes take precedence, so they must go first.
  */
 val RustDocAndAttributeOwner.allAttributes: Sequence<RustAttrElement>
-    get() = RustAttributeIterator(this).asSequence()
+    get() = Sequence { (this as? RustInnerAttributeOwner)?.innerAttrList.orEmpty().iterator() } +
+        Sequence { (this as? RustOuterAttributeOwner)?.outerAttrList.orEmpty().iterator() }
 
 /**
  * Returns [QueryAttributes] for given PSI element.
@@ -38,53 +38,4 @@ class QueryAttributes(private val attributes: Sequence<RustAttrElement>) {
 
     val metaItems: Sequence<RustMetaItemElement>
         get() = attributes.mapNotNull { it.metaItem }
-}
-
-/**
- * Iterator that walks through both inner and outer attributes without allocating extra collections.
- * Inner attributes have priority, so they are iterated first.
- */
-class RustAttributeIterator (
-    val owner: RustDocAndAttributeOwner
-) : Iterator<RustAttrElement> {
-    var useOuter: Boolean = false
-    var currentIterator: Iterator<RustAttrElement> = emptyIterator()
-
-    init {
-        if (owner is RustInnerAttributeOwner) {
-            currentIterator = owner.innerAttrList.iterator()
-        } else {
-            switchToOuterIterator()
-        }
-    }
-
-    override fun hasNext(): Boolean {
-        val hasNext = currentIterator.hasNext()
-        if (!hasNext && !useOuter) {
-            switchToOuterIterator()
-            return currentIterator.hasNext()
-        }
-        return hasNext
-    }
-
-    override fun next(): RustAttrElement {
-        try {
-            return currentIterator.next()
-        } catch(e: NoSuchElementException) {
-            if (!useOuter) {
-                switchToOuterIterator()
-                return currentIterator.next()
-            }
-        }
-        throw NoSuchElementException()
-    }
-
-    private fun switchToOuterIterator() {
-        useOuter = true
-        if (owner is RustOuterAttributeOwner) {
-            currentIterator = owner.outerAttrList.iterator()
-        } else {
-            currentIterator = emptyIterator()
-        }
-    }
 }
