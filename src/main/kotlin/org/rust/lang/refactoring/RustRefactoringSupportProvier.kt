@@ -10,13 +10,10 @@ class RustRefactoringSupportProvider : RefactoringSupportProvider() {
         return element is RustPatBindingElement
     }
 
-    override fun getIntroduceVariableHandler(): RefactoringActionHandler? {
-        return RustLocalVariableHandler()
-    }
+    override fun getIntroduceVariableHandler() = RustLocalVariableHandler()
 
     // needed this one too to get it to show up in the dialog.
-    override fun getIntroduceVariableHandler(element: PsiElement?): RefactoringActionHandler? {
-        return RustLocalVariableHandler()
-    }
+    override fun getIntroduceVariableHandler(element: PsiElement?) = RustLocalVariableHandler()
+
 }
 
