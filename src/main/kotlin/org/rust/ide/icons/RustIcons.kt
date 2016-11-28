@@ -16,12 +16,12 @@ import javax.swing.Icon
 object RustIcons {
     // Logos
 
-    val RUST     = IconLoader.getIcon("/org/rust/ide/icons/rust.png")
-    val RUST_BIG = IconLoader.getIcon("/org/rust/ide/icons/rust-big.png")
+    val RUST     = IconLoader.getIcon("/icons/rust.png")
+    val RUST_BIG = IconLoader.getIcon("/icons/rust-big.png")
 
     // File types
 
-    val RUST_FILE = IconLoader.getIcon("/org/rust/ide/icons/rust-file.png")
+    val RUST_FILE = IconLoader.getIcon("/icons/rust-file.png")
 
     // Marks
 
@@ -40,11 +40,11 @@ object RustIcons {
     val ENUM     = AllIcons.Nodes.Enum!!
 
     val METHOD          = AllIcons.Nodes.Method!!
-    val FUNCTION        = IconLoader.getIcon("/org/rust/ide/icons/nodes/function.png")
+    val FUNCTION        = IconLoader.getIcon("/icons/nodes/function.png")
     val ASSOC_FUNCTION  = FUNCTION.addStaticMark()
 
     val ABSTRACT_METHOD         = AllIcons.Nodes.AbstractMethod!!
-    val ABSTRACT_FUNCTION       = IconLoader.getIcon("/org/rust/ide/icons/nodes/abstractFunction.png")
+    val ABSTRACT_FUNCTION       = IconLoader.getIcon("/icons/nodes/abstractFunction.png")
     val ABSTRACT_ASSOC_FUNCTION = ABSTRACT_FUNCTION.addStaticMark()
 
     val MUT_ARGUMENT    = AllIcons.Nodes.Parameter!!
@@ -52,7 +52,7 @@ object RustIcons {
     val FIELD           = AllIcons.Nodes.Field!!
     val MUT_BINDING     = AllIcons.Nodes.Variable!!
     val BINDING         = MUT_BINDING.addFinalMark()
-    val GLOBAL_BINDING  = IconLoader.getIcon("/org/rust/ide/icons/nodes/globalBinding.png")
+    val GLOBAL_BINDING  = IconLoader.getIcon("/icons/nodes/globalBinding.png")
     val CONSTANT        = GLOBAL_BINDING.addFinalMark()
     val MUT_STATIC      = GLOBAL_BINDING.addStaticMark()
     val STATIC          = MUT_STATIC.addFinalMark()
