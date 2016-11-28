@@ -7,7 +7,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustParameterElementImpl
-import org.rust.lang.core.psi.util.parentOfType
 
 /**
  * Base class for naming inspections. Implements the core logic of checking names
@@ -16,6 +15,7 @@ import org.rust.lang.core.psi.util.parentOfType
 abstract class RustNamingInspection(
     val elementType: String,
     val styleName: String,
+    val lint: RustLint,
     elementTitle: String = elementType
 ) : RustLocalInspectionTool() {
     val dispName = elementTitle + " naming convention"
@@ -24,7 +24,7 @@ abstract class RustNamingInspection(
     fun inspect(id: PsiElement?, holder: ProblemsHolder, fix: Boolean = true) {
         if (id == null) return
         val (isOk, suggestedName) = checkName(id.text)
-        if (isOk || suggestedName == null || hasAllowAttribute(id)) return
+        if (isOk || suggestedName == null || lint.levelFor(id) == RustLintLevel.ALLOW) return
 
         val fixEl = id.parent
         val fixes = if (fix && fixEl is PsiNamedElement) arrayOf(RenameFix(fixEl, suggestedName)) else emptyArray()
@@ -33,8 +33,6 @@ abstract class RustNamingInspection(
             "$elementType `${id.text}` should have $styleName case name such as `$suggestedName`",
             *fixes)
     }
-
-    open fun hasAllowAttribute(id: PsiElement): Boolean = false
 
     abstract fun checkName(name: String): Pair<Boolean, String?>
 }
@@ -45,7 +43,8 @@ abstract class RustNamingInspection(
 open class RustCamelCaseNamingInspection(
     elementType: String,
     elementTitle: String = elementType
-) : RustNamingInspection(elementType, "a camel", elementTitle) {
+) : RustNamingInspection(elementType, "a camel", RustLint.NonCamelCaseTypes, elementTitle) {
+
     override fun checkName(name: String): Pair<Boolean, String?> {
         val str = name.trim('_')
         if (!str.isEmpty() && str[0].canStartWord && '_' !in str) {
@@ -81,7 +80,7 @@ open class RustCamelCaseNamingInspection(
 /**
  * Checks if the name is snake_case.
  */
-open class RustSnakeCaseNamingInspection(elementType: String) : RustNamingInspection(elementType, "a snake") {
+open class RustSnakeCaseNamingInspection(elementType: String) : RustNamingInspection(elementType, "a snake", RustLint.NonSnakeCase) {
     override fun checkName(name: String): Pair<Boolean, String?> {
         val str = name.trim('_')
         if (!str.isEmpty() && str.all { !it.isLetter() || it.isLowerCase() }) {
@@ -94,7 +93,7 @@ open class RustSnakeCaseNamingInspection(elementType: String) : RustNamingInspec
 /**
  * Checks if the name is UPPER_CASE.
  */
-open class RustUpperCaseNamingInspection(elementType: String) : RustNamingInspection(elementType, "an upper") {
+open class RustUpperCaseNamingInspection(elementType: String) : RustNamingInspection(elementType, "an upper", RustLint.NonUpperCaseGlobals) {
     override fun checkName(name: String): Pair<Boolean, String?> {
         val str = name.trim('_')
         if (!str.isEmpty() && str.all { !it.isLetter() || it.isUpperCase() }) {
@@ -231,11 +230,6 @@ class RustFieldNamingInspection : RustSnakeCaseNamingInspection("Field") {
         object : RustElementVisitor() {
             override fun visitFieldDecl(el: RustFieldDeclElement) = inspect(el.identifier, holder)
         }
-
-    override fun hasAllowAttribute(id: PsiElement): Boolean {
-        val struct = id.parentOfType<RustStructItemElement>() ?: return false
-        return struct.queryAttributes.hasAllow(QueryAttributes.Companion.Lint.NonSnakeCase)
-    }
 }
 
 class RustTraitNamingInspection : RustCamelCaseNamingInspection("Trait") {
