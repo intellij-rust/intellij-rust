@@ -11,13 +11,12 @@ import org.rust.lang.core.psi.containingMod
 import org.rust.lang.core.psi.impl.RustFile
 
 class RustModulesIndex : StringStubIndexExtension<RustModDeclItemElement>() {
-
     override fun getVersion(): Int = RustFileElementType.stubVersion
-
     override fun getKey(): StubIndexKey<String, RustModDeclItemElement> = KEY
 
     companion object {
-        val KEY: StubIndexKey<String, RustModDeclItemElement> = StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustModulesIndex")
+        val KEY: StubIndexKey<String, RustModDeclItemElement> =
+            StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustModulesIndex")
 
         fun getSuperFor(mod: RustFile): RustMod? {
             val project = mod.project

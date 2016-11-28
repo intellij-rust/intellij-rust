@@ -122,6 +122,9 @@ object RustImplIndex {
 
 
     class ByType : AbstractStubIndex<ByType.Key, RustImplItemElement>() {
+        override fun getVersion(): Int = RustFileElementType.stubVersion
+        override fun getKey(): StubIndexKey<Key, RustImplItemElement> = KEY
+
         /**
          * This wrapper is required due to a subtle bug in the [com.intellij.util.indexing.MemoryIndexStorage], involving
          * use of the object's `hashCode`, while [com.intellij.util.indexing.MapIndexStorage] being using the one
@@ -154,7 +157,6 @@ object RustImplIndex {
         }
 
         companion object {
-
             val KEY: StubIndexKey<Key, RustImplItemElement> =
                 StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.ByType")
 
@@ -164,10 +166,6 @@ object RustImplIndex {
                 }
             }
         }
-
-        override fun getVersion(): Int = RustFileElementType.stubVersion
-
-        override fun getKey(): StubIndexKey<Key, RustImplItemElement> = KEY
 
         override fun getKeyDescriptor(): KeyDescriptor<Key> =
             object : KeyDescriptor<Key> {
@@ -189,6 +187,8 @@ object RustImplIndex {
 
 
     class ByName : StringStubIndexExtension<RustImplItemElement>() {
+        override fun getVersion(): Int = RustFileElementType.stubVersion
+        override fun getKey(): StubIndexKey<String, RustImplItemElement> = KEY
 
         companion object {
             val KEY: StubIndexKey<String, RustImplItemElement> =
@@ -201,30 +201,22 @@ object RustImplIndex {
                 }
             }
         }
-
-        override fun getKey(): StubIndexKey<String, RustImplItemElement> = KEY
-
     }
 }
 
 
 class RustAliasIndex : StringStubIndexExtension<RustUseItemElement>() {
-
-    companion object {
-
-        val KEY: StubIndexKey<String, RustUseItemElement> =
-            StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustAliasIndex")
-
-    }
-
     override fun getVersion(): Int = RustFileElementType.stubVersion
-
     override fun getKey(): StubIndexKey<String, RustUseItemElement> = KEY
 
+    companion object {
+        val KEY: StubIndexKey<String, RustUseItemElement> =
+            StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustAliasIndex")
+    }
 }
 
 private val RustPath.nameSegment: String? get() {
-    val lastSegment = if (head is RustPathHead.Named) head.segment else segments.lastOrNull()
+    val lastSegment = (head as? RustPathHead.Named)?.segment ?: segments.lastOrNull()
     return lastSegment?.name
 }
 
