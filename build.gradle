@@ -1,13 +1,10 @@
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Buildscript
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 buildscript {
+    ext.kotlinVersion = '1.0.5'
+    ext.javaVersion = '1.6'
+
     repositories {
         mavenCentral()
         maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
-        maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
     }
 
     dependencies {
@@ -19,90 +16,75 @@ plugins {
     id 'org.jetbrains.intellij' version "0.1.10"
 }
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Projects
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-allprojects {
-
-    // IntelliJ plugin configuration
-
-    apply plugin: 'org.jetbrains.intellij'
-
-    intellij {
-        pluginName 'intellij-rust'
-
-        version ideaVersion
-        downloadSources Boolean.valueOf(downloadIdeaSources)
-        // FIXME: hack to support both IDEA 15 and IDEA 16.
-        // See https://github.com/intellij-rust/intellij-rust/issues/243
-        updateSinceUntilBuild = false
-
-        publish {
-            username publishUsername
-            password publishPassword
-            channel publishChannel
-        }
-
-        sandboxDirectory project.rootDir.canonicalPath + "/.sandbox"
-    }
-
-    apply plugin: 'java'
-    apply plugin: 'kotlin'
-
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
-
-    tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
-
-    sourceSets {
-        main.java.srcDirs += "gen"
-    }
-
-    test {
-        useJUnit {
-            excludeCategories 'org.rust.Performance'
-        }
-        testLogging {
-            events "passed", "skipped", "failed"
-            exceptionFormat = 'full'
-        }
-    }
-
-    repositories {
-        mavenCentral()
-        maven { url 'http://dl.bintray.com/jetbrains/markdown' }
-        maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
-    }
-
-    dependencies {
-        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
-        compile "org.jetbrains.kotlin:kotlin-runtime:$kotlinVersion"
-        compile "org.jetbrains:markdown:0.1.12"
-
-        testCompile "junit:junit:4.+"
-        testCompile 'org.assertj:assertj-core:3.2.0'
-    }
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// IDE support
-///////////////////////////////////////////////////////////////////////////////////////////////////
+version = "0.1.0.$buildNumber" + (publishChannel?.trim() ? "-$publishChannel" : "")
 
 apply plugin: 'idea'
-
 idea {
     project {
         jdkName = javaVersion
         languageLevel = javaVersion
+        vcs = 'Git'
     }
 
     module {
         generatedSourceDirs += file('gen')
         excludeDirs += file('.sandbox')
     }
+}
+
+apply plugin: 'org.jetbrains.intellij'
+intellij {
+    pluginName 'intellij-rust'
+
+    version ideaVersion
+    downloadSources Boolean.valueOf(downloadIdeaSources)
+    // FIXME: hack to support both IDEA 15 and IDEA 16.
+    // See https://github.com/intellij-rust/intellij-rust/issues/243
+    updateSinceUntilBuild = false
+
+    publish {
+        username publishUsername
+        password publishPassword
+        channel publishChannel
+    }
+
+    sandboxDirectory "${project.rootDir.canonicalPath}/.sandbox"
+}
+
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+sourceCompatibility = javaVersion
+targetCompatibility = javaVersion
+
+tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
+
+sourceSets {
+    main.java.srcDirs += "gen"
+}
+
+test {
+    useJUnit {
+        excludeCategories 'org.rust.Performance'
+    }
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat = 'full'
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'http://dl.bintray.com/jetbrains/markdown' }
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+    compile "org.jetbrains.kotlin:kotlin-runtime:$kotlinVersion"
+    compile "org.jetbrains:markdown:0.1.12"
+
+    testCompile "junit:junit:4.+"
+    testCompile 'org.assertj:assertj-core:3.2.0'
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -112,49 +94,49 @@ idea {
 def lexerConfig(src, dst, lexerFileName) {
     return {
         classpath = files('lib/jflex/jflex-1.7.0-SNAPSHOT.jar')
-        main = "jflex.Main"
+        main = 'jflex.Main'
 
-        args = ["--skel",   'lib/jflex/idea-flex.skeleton',
-                "-d",       dst,
+        args = ['--skel', 'lib/jflex/idea-flex.skeleton',
+                '-d', dst,
                 src
         ]
 
-        inputs  .file   file(src)
-        outputs .dir    file(dst + lexerFileName)
+        inputs.file file(src)
+        outputs.dir file(dst + lexerFileName)
     }
 }
 
 task generateRustLexer(type: JavaExec) {
     configure lexerConfig(
-        "src/main/kotlin/org/rust/lang/core/lexer/RustLexer.flex",
-        "gen/org/rust/lang/core/lexer/",
-        "_RustLexer.java"
+        'src/main/kotlin/org/rust/lang/core/lexer/RustLexer.flex',
+        'gen/org/rust/lang/core/lexer/',
+        '_RustLexer.java'
     )
 }
 
 task generateRustDocHighlightingLexer(type: JavaExec) {
     configure lexerConfig(
-        "src/main/kotlin/org/rust/lang/doc/lexer/RustDocHighlightingLexer.flex",
-        "gen/org/rust/lang/doc/lexer/",
-        "_RustDocHighlightingLexer.java"
+        'src/main/kotlin/org/rust/lang/doc/lexer/RustDocHighlightingLexer.flex',
+        'gen/org/rust/lang/doc/lexer/',
+        '_RustDocHighlightingLexer.java'
     )
 }
 
 task generateRustPsiAndParser(type: JavaExec) {
     doFirst {
-        delete file("gen/org/rust/lang/core/psi/")
+        delete file('gen/org/rust/lang/core/psi/')
     }
-    ext.src     = "src/main/kotlin/org/rust/lang/core/grammar/rust.bnf"
-    ext.dstRoot = "gen"
+    ext.src = 'src/main/kotlin/org/rust/lang/core/grammar/rust.bnf'
+    ext.dstRoot = 'gen'
 
-    main = "org.intellij.grammar.Main"
+    main = 'org.intellij.grammar.Main'
 
-    args = [ dstRoot, file(src) ]
+    args = [dstRoot, file(src)]
 
-    inputs  .file   file(src)
-    outputs .dir    fileTree(dir: dstRoot + '/org/rust/lang/core/', include: '**/*.java')
+    inputs.file file(src)
+    outputs.dir fileTree(dir: "$dstRoot/org/rust/lang/core/", include: '**/*.java')
 
-    classpath (configurations.compile + files('lib/grammar-kit.jar'))
+    classpath(configurations.compile + files('lib/grammar-kit.jar'))
 }
 
 task generate {
@@ -164,6 +146,7 @@ task generate {
 compileKotlin.dependsOn generate
 compileTestKotlin.dependsOn generate
 
+
 task performanceTest(type: Test, group: 'Verification', dependsOn: [classes, testClasses]) {
     useJUnit {
         includeCategories 'org.rust.Performance'
@@ -171,7 +154,7 @@ task performanceTest(type: Test, group: 'Verification', dependsOn: [classes, tes
     }
 
     testLogging {
-        events "passed", "skipped", "failed"
+        events 'passed', 'skipped', 'failed'
         showStandardStreams = true
         exceptionFormat = 'full'
     }
@@ -181,8 +164,3 @@ task performanceTest(type: Test, group: 'Verification', dependsOn: [classes, tes
 
 check.dependsOn performanceTest
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Misc
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-version = "$version.$buildNumber" + (publishChannel?.trim() ? "-$publishChannel" : "")
