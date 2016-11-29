@@ -86,6 +86,7 @@
         <!-- Hints -->
 
         <codeInsight.typeInfo language="Rust" implementationClass="org.rust.ide.hints.RustExpressionTypeProvider"/>
+        <codeInsight.parameterInfo language="Rust" implementationClass="org.rust.ide.info.RustParameterInfoHandler"/>
 
         <!-- Annotator -->
 
