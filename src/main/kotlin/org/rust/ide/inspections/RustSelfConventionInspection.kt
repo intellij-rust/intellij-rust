@@ -2,21 +2,27 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
-import org.rust.lang.core.psi.RustElementVisitor
-import org.rust.lang.core.psi.RustImplMethodMemberElement
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.types.RustStructOrEnumTypeBase
+import org.rust.lang.core.types.util.resolvedType
 
 class RustSelfConventionInspection : RustLocalInspectionTool() {
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return object : RustElementVisitor() {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+        object : RustElementVisitor() {
             override fun visitImplMethodMember(m: RustImplMethodMemberElement) {
                 val convention = SELF_CONVENTIONS.find { m.identifier.text.startsWith(it.prefix) } ?: return
-                if (m.selfType !in convention.selfTypes) {
-                    holder.registerProblem(m.parameters?.selfArgument ?: m.identifier, convention)
-                }
+                if (m.selfType in convention.selfTypes) return
+                if (m.selfType == SelfType.SELF && m.isOwnerCopyable()) return
+                holder.registerProblem(m.parameters?.selfArgument ?: m.identifier, convention)
             }
         }
+
+    private fun RustImplMethodMemberElement.isOwnerCopyable(): Boolean {
+        val implBlock = parentOfType<RustImplItemElement>() ?: return false
+        val owner = implBlock.type?.resolvedType as? RustStructOrEnumTypeBase ?: return false
+        return owner.item.queryAttributes.hasMetaItem("derive", "Copy")
     }
 
     companion object {

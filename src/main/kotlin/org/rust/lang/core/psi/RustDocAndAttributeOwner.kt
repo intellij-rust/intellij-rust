@@ -30,6 +30,12 @@ class QueryAttributes(private val attributes: Sequence<RustAttrElement>) {
             .filter { it.eq == null && it.lparen == null }
             .any { it.identifier.text == name }
 
+    fun hasMetaItem(attribute: String, item: String): Boolean =
+        metaItems
+            .filter { it.identifier.text == attribute }
+            .flatMap { it.metaItemList.asSequence() }
+            .any { it.text == item }
+
     fun lookupStringValueForKey(key: String): String? =
         metaItems
             .filter { it.identifier.text == key }

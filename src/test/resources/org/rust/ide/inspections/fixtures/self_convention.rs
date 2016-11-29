@@ -12,3 +12,9 @@ impl T {
 
     fn is_awesome(<warning descr="methods called `is_*` usually take self by reference or no self; consider choosing a less ambiguous name">self</warning>) {}
 }
+
+#[derive(Copy)]
+struct Copyable;
+impl Copyable {
+    fn is_ok(self) {}
+}
