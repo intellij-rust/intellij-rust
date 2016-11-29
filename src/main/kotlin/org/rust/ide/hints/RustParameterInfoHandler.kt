@@ -1,4 +1,4 @@
-package org.rust.ide.info
+package org.rust.ide.hints
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.parameterInfo.*
@@ -12,6 +12,8 @@ import org.rust.lang.core.psi.util.parentOfType
  * Provides funcions/methods afruments hint.
  */
 class RustParameterInfoHandler : ParameterInfoHandler<PsiElement, RustArgumentsDescription> {
+
+    var hintText: String = ""
 
     override fun couldShowInLookup() = true
 
@@ -43,7 +45,7 @@ class RustParameterInfoHandler : ParameterInfoHandler<PsiElement, RustArgumentsD
 
     override fun showParameterInfo(element: PsiElement, context: CreateParameterInfoContext) {
         if (element !is RustArgListElement) return
-        val argsDescr = RustArgumentsDescription.tryGetDescription(element) ?: return
+        val argsDescr = RustArgumentsDescription.findDescription(element) ?: return
         context.itemsToShow = arrayOf(argsDescr)
         context.showHint(element, element.textRange.startOffset, this)
     }
@@ -70,8 +72,9 @@ class RustParameterInfoHandler : ParameterInfoHandler<PsiElement, RustArgumentsD
             return
         }
         val range = p.getArgumentRange(context.currentParameterIndex)
+        hintText = p.presentText
         context.setupUIComponentPresentation(
-            p.parametersPresentText,
+            hintText,
             range.startOffset,
             range.endOffset,
             !context.isUIComponentEnabled,
@@ -85,7 +88,7 @@ class RustParameterInfoHandler : ParameterInfoHandler<PsiElement, RustArgumentsD
      */
     private fun findArgumentIndex(place: PsiElement): Int {
         val callArgs = place.parentOfType<RustArgListElement>() ?: return INVALID_INDEX
-        val descr = RustArgumentsDescription.tryGetDescription(callArgs) ?: return INVALID_INDEX
+        val descr = RustArgumentsDescription.findDescription(callArgs) ?: return INVALID_INDEX
         var index = -1
         if (descr.arguments.isNotEmpty()) {
             index += generateSequence(callArgs.firstChild, { c -> c.nextSibling})
@@ -104,20 +107,26 @@ class RustParameterInfoHandler : ParameterInfoHandler<PsiElement, RustArgumentsD
     }
 }
 
+/**
+ * Holds information about arguments from func/method declaration
+ */
 class RustArgumentsDescription(
     val arguments: Array<RustArgumentDescription>
 ) {
     fun getArgumentRange(index: Int): TextRange {
-        if (index < 0) return TextRange.EMPTY_RANGE
+        if (index < 0 || index >= arguments.size) return TextRange.EMPTY_RANGE
         val start = (0..index - 1).sumBy { arguments[it].textLen + 2 }
         val range = TextRange(start, start + arguments[index].textLen)
         return range
     }
 
-    val parametersPresentText = if (arguments.isEmpty()) "<no arguments>" else arguments.joinToString(", ")
+    val presentText = if (arguments.isEmpty()) "<no arguments>" else arguments.joinToString(", ")
 
     companion object {
-        fun tryGetDescription(args: RustArgListElement): RustArgumentsDescription? {
+        /**
+         * Finds declaration of the func/method and creates description of its arguments
+         */
+        fun findDescription(args: RustArgListElement): RustArgumentsDescription? {
             val call = args.parent
             val decl = when (call) {
                 is RustCallExprElement -> call.declaration
