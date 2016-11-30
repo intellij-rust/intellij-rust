@@ -1,3 +1,4 @@
+
 {
     parserClass='org.rust.lang.core.parser.RustParser'
     parserUtilClass='org.rust.lang.core.parser.RustParserUtil'

@@ -34,7 +34,7 @@
 
         <!-- Parser -->
 
-        <lang.parserDefinition language="Rust" implementationClass="org.rust.lang.core.RustParserDefinition"/>
+        <lang.parserDefinition language="Rust" implementationClass="org.rust.lang.core.parser.RustParserDefinition"/>
         <stubElementTypeHolder class="org.rust.lang.core.psi.RustCompositeElementTypes"/>
 
         <!-- Syntax Highlighter -->

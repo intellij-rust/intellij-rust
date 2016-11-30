@@ -16,136 +16,77 @@ plugins {
     id 'org.jetbrains.intellij' version "0.1.10"
 }
 
-version = "0.1.0.$buildNumber" + (publishChannel?.trim() ? "-$publishChannel" : "")
 
-apply plugin: 'idea'
-idea {
-    project {
-        jdkName = javaVersion
-        languageLevel = javaVersion
-        vcs = 'Git'
+allprojects {
+    apply plugin: 'idea'
+    idea {
+        module {
+            generatedSourceDirs += file('src/gen')
+        }
     }
 
-    module {
-        generatedSourceDirs += file('gen')
-        excludeDirs += file('.sandbox')
+    apply plugin: 'org.jetbrains.intellij'
+    intellij {
+        version ideaVersion
+        downloadSources Boolean.valueOf(downloadIdeaSources)
+        // FIXME: hack to support both IDEA 15 and IDEA 16.
+        // See https://github.com/intellij-rust/intellij-rust/issues/243
+        updateSinceUntilBuild = false
+
+        publish {
+            username publishUsername
+            password publishPassword
+            channel publishChannel
+        }
+    }
+
+    apply plugin: 'java'
+    apply plugin: 'kotlin'
+
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+
+    tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
+    sourceSets {
+        main.java.srcDirs += 'src/gen'
+    }
+
+    test {
+        testLogging {
+            events 'passed', 'skipped', 'failed'
+            exceptionFormat = 'full'
+        }
+    }
+
+    repositories {
+        mavenCentral()
+        maven { url 'http://dl.bintray.com/jetbrains/markdown' }
+    }
+
+    dependencies {
+        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+        compile "org.jetbrains.kotlin:kotlin-runtime:$kotlinVersion"
+
+        testCompile 'junit:junit:4.+'
+        testCompile 'org.assertj:assertj-core:3.2.0'
     }
 }
 
-apply plugin: 'org.jetbrains.intellij'
-intellij {
-    pluginName 'intellij-rust'
-
-    version ideaVersion
-    downloadSources Boolean.valueOf(downloadIdeaSources)
-    // FIXME: hack to support both IDEA 15 and IDEA 16.
-    // See https://github.com/intellij-rust/intellij-rust/issues/243
-    updateSinceUntilBuild = false
-
-    publish {
-        username publishUsername
-        password publishPassword
-        channel publishChannel
-    }
-
-    sandboxDirectory "${project.rootDir.canonicalPath}/.sandbox"
+project(':') {
+    version = "0.1.0.$buildNumber" + (publishChannel?.trim() ? "-$publishChannel" : "")
+    intellij { pluginName 'intellij-rust' }
 }
 
-apply plugin: 'java'
-apply plugin: 'kotlin'
-
-sourceCompatibility = javaVersion
-targetCompatibility = javaVersion
-
-tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
-
-sourceSets {
-    main.java.srcDirs += "gen"
+project(':toml') {
+    version = "0.0.1.$buildNumber" + (publishChannel?.trim() ? "-$publishChannel" : "")
+    intellij { pluginName 'intellij-toml' }
 }
 
 test {
     useJUnit {
         excludeCategories 'org.rust.Performance'
     }
-    testLogging {
-        events "passed", "skipped", "failed"
-        exceptionFormat = 'full'
-    }
 }
-
-repositories {
-    mavenCentral()
-    maven { url 'http://dl.bintray.com/jetbrains/markdown' }
-}
-
-dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
-    compile "org.jetbrains.kotlin:kotlin-runtime:$kotlinVersion"
-    compile "org.jetbrains:markdown:0.1.12"
-
-    testCompile "junit:junit:4.+"
-    testCompile 'org.assertj:assertj-core:3.2.0'
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Tasks
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-def lexerConfig(src, dst, lexerFileName) {
-    return {
-        classpath = files('lib/jflex/jflex-1.7.0-SNAPSHOT.jar')
-        main = 'jflex.Main'
-
-        args = ['--skel', 'lib/jflex/idea-flex.skeleton',
-                '-d', dst,
-                src
-        ]
-
-        inputs.file file(src)
-        outputs.dir file(dst + lexerFileName)
-    }
-}
-
-task generateRustLexer(type: JavaExec) {
-    configure lexerConfig(
-        'src/main/kotlin/org/rust/lang/core/lexer/RustLexer.flex',
-        'gen/org/rust/lang/core/lexer/',
-        '_RustLexer.java'
-    )
-}
-
-task generateRustDocHighlightingLexer(type: JavaExec) {
-    configure lexerConfig(
-        'src/main/kotlin/org/rust/lang/doc/lexer/RustDocHighlightingLexer.flex',
-        'gen/org/rust/lang/doc/lexer/',
-        '_RustDocHighlightingLexer.java'
-    )
-}
-
-task generateRustPsiAndParser(type: JavaExec) {
-    doFirst {
-        delete file('gen/org/rust/lang/core/psi/')
-    }
-    ext.src = 'src/main/kotlin/org/rust/lang/core/grammar/rust.bnf'
-    ext.dstRoot = 'gen'
-
-    main = 'org.intellij.grammar.Main'
-
-    args = [dstRoot, file(src)]
-
-    inputs.file file(src)
-    outputs.dir fileTree(dir: "$dstRoot/org/rust/lang/core/", include: '**/*.java')
-
-    classpath(configurations.compile + files('lib/grammar-kit.jar'))
-}
-
-task generate {
-    dependsOn generateRustLexer, generateRustDocHighlightingLexer, generateRustPsiAndParser
-}
-
-compileKotlin.dependsOn generate
-compileTestKotlin.dependsOn generate
-
 
 task performanceTest(type: Test, group: 'Verification', dependsOn: [classes, testClasses]) {
     useJUnit {
@@ -164,3 +105,59 @@ task performanceTest(type: Test, group: 'Verification', dependsOn: [classes, tes
 
 check.dependsOn performanceTest
 
+
+dependencies {
+    compile 'org.jetbrains:markdown:0.1.12'
+}
+
+lexerTask(project, 'RustLexer', 'org/rust/lang/core/lexer')
+lexerTask(project, 'RustDocHighlightingLexer', 'org/rust/lang/doc/lexer')
+parserTask(project, 'RustParser', 'org/rust/lang/core/psi')
+
+project(':toml') {
+    lexerTask(project, 'TomlLexer', 'org/toml/lang/core/lexer')
+    parserTask(project, 'TomlParser', 'org/toml/lang/core/psi')
+}
+
+static def codegenTask(project, task) {
+    project.compileKotlin.dependsOn task
+    project.compileTestKotlin.dependsOn task
+    return task
+}
+
+def lexerTask(project, lexerName, pkg) {
+    return codegenTask(project, tasks.create("generate${lexerName}", JavaExec) {
+        def src = "$project.projectDir/src/main/grammars/${lexerName}.flex"
+        def dst = "$project.projectDir/src/gen/$pkg"
+
+        main = 'jflex.Main'
+        classpath = files('lib/jflex/jflex-1.7.0-SNAPSHOT.jar')
+
+        args = ['--skel', 'lib/jflex/idea-flex.skeleton',
+                '-d', dst,
+                src
+        ]
+
+        inputs.file file(src)
+        outputs.dir file("$dst/_${lexerName}.java")
+    })
+}
+
+def parserTask(project, parserName, pkg) {
+    return codegenTask(project, tasks.create("generate${parserName}", JavaExec) {
+        def dstRoot = "$project.projectDir/src/gen"
+        def src = "$project.projectDir/src/main/grammars/${parserName}.bnf"
+        def dst = "$dstRoot/$pkg"
+        doFirst {
+            delete file(dst)
+        }
+
+        main = 'org.intellij.grammar.Main'
+        classpath(configurations.compile + files('lib/grammar-kit.jar'))
+
+        args = [dstRoot, file(src)]
+
+        inputs.file file(src)
+        outputs.dir fileTree(dir: dst, include: '**/*.java')
+    })
+}

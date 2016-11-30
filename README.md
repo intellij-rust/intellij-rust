@@ -24,7 +24,9 @@ install Rust plugin, and use **project from existing sources** action to import 
 
 Unstable master branch builds can be downloaded from [TeamCity].
 
-If you are looking for a TOML plugin for `Cargo.toml` and `Cargo.lock` files, see [intellij-toml].
+## TOML
+
+If you are looking for the TOML plugin, see [toml] directory.
 
 ## Compatible IDEs
 
@@ -45,7 +47,7 @@ first bugs are tagged with [up-for-grab].
 [up-for-grab]: https://github.com/intellij-rust/intellij-rust/labels/up%20for%20grab
 [CONTRIBUTING.md]: CONTRIBUTING.md
 [TeamCity]: https://teamcity.jetbrains.com/repository/download/IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust/.lastSuccessful/intellij-rust-0.1.0.%7Bbuild.number%7D.zip
-[intellij-toml]: https://github.com/intellij-rust/intellij-toml
+[toml]: toml/
 
 <!-- Badges -->
 [gitter-chat]: https://gitter.im/intellij-rust/intellij-rust
