@@ -1,0 +1,7 @@
+struct MyStruct {
+    ...
+}
+
+<spot>impl MyStruct {
+
+}</spot>
