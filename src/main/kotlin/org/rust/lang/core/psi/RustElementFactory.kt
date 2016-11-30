@@ -42,6 +42,9 @@ object RustElementFactory {
         return createFromText(project, "impl T for S { $methods }")
     }
 
+    fun createImplItem(project: Project, name: String): RustImplItemElement? =
+        createFromText(project, "impl $name {  }")
+
     fun createIdentifier(project: Project, name: String): PsiElement =
         createFromText<RustModDeclItemElement>(project, "mod $name;")!!.identifier
 
