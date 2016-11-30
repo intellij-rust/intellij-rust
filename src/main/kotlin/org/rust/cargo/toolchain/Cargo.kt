@@ -76,8 +76,10 @@ class Cargo(
             .withEnvironment(CargoConstants.RUSTC_ENV_VAR, pathToRustExecutable)
             .withEnvironment(environmentVariables)
 
-        // Make output colorful
-        if ((SystemInfo.isLinux || SystemInfo.isMac) && additionalArguments.none { it.startsWith("--color") }) {
+        // Make output colored
+        if ((SystemInfo.isLinux || SystemInfo.isMac)
+            && command != "fmt"
+            && additionalArguments.none { it.startsWith("--color") }) {
             cmdLine
                 .withEnvironment("TERM", "linux")
                 .withRedirectErrorStream(true)
