@@ -10,6 +10,9 @@ object RustElementFactory {
     fun createExpression(project: Project, expression: String): RustExprElement? =
         createFromText(project, "fn main() { $expression; }")
 
+    fun createParameter(project: Project, parameter: String): RustParameterElement? =
+        createFromText(project, "fn main($parameter) {}")
+
     fun createStatement(project: Project, statement: String): RustStmtElement? =
         createFromText(project, "fn main() { $statement 92; }")
 
