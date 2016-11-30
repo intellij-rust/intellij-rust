@@ -119,7 +119,7 @@ class RustLocalVariableHandler : RefactoringActionHandler {
 
         val binding = let.findBinding()
 
-        return binding?.let { Pair(let, it) }
+        return binding?.let { Pair(let, it.identifier) }
     }
 
     fun moveEditorToNameElement(editor: Editor, element: PsiElement?): RustPatBindingElement? {
@@ -131,7 +131,7 @@ class RustLocalVariableHandler : RefactoringActionHandler {
     }
 
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
-        println("not from the editor.")
+        //this doesn't get called form the editor.
     }
 }
 
@@ -140,7 +140,7 @@ fun findExpr(file: PsiFile, offSet: Int) = PsiTreeUtil.getNonStrictParentOfType(
 /**
  * An anchor point is surrounding element before the block scope, which is used to scope the insertion of the new let binding.
  */
-fun findAnchor(expr: PsiElement) = PsiTreeUtil.getNonStrictParentOfType(expr, RustBlockElement::class.java)?.let { findAnchor(expr, it) }
+private fun findAnchor(expr: PsiElement) = PsiTreeUtil.getNonStrictParentOfType(expr, RustBlockElement::class.java)?.let { findAnchor(expr, it) }
 
 private fun findAnchor(expr: PsiElement, block: PsiElement): PsiElement? {
     var anchor = expr
@@ -161,7 +161,7 @@ fun possibleExpressions(expr: RustExprElement) = SyntaxTraverser.psiApi().parent
     .filter { it !is RustPathExprElement }
     .filterIsInstance(RustExprElement::class.java)
 
-fun findBlock(expr: PsiElement) = PsiTreeUtil.getNonStrictParentOfType(expr, RustBlockElement::class.java)
+private fun findBlock(expr: PsiElement) = PsiTreeUtil.getNonStrictParentOfType(expr, RustBlockElement::class.java)
 
 /**
  * Finds occurrences in the sub scope of expr, so that all will be replaced if replace all is selected.
@@ -177,7 +177,7 @@ fun findOccurrences(expr: PsiElement): List<PsiElement> {
     return occurrences
 }
 
-fun <T> pass(pass: (T) -> Unit): Pass<T> {
+private fun <T> pass(pass: (T) -> Unit): Pass<T> {
     return object : Pass<T>() {
         override fun pass(t: T) {
             pass.invoke(t)
@@ -185,7 +185,7 @@ fun <T> pass(pass: (T) -> Unit): Pass<T> {
     }
 }
 
-fun PsiElement.findBinding() = PsiTreeUtil.findChildOfType(this, RustPatBindingElement::class.java)
+private fun PsiElement.findBinding() = PsiTreeUtil.findChildOfType(this, RustPatBindingElement::class.java)
 
 class OccurrenceVisitor(val element: PsiElement) : PsiRecursiveElementVisitor() {
     val foundOccurrences = ArrayList<PsiElement>()
@@ -203,4 +203,3 @@ class OccurrenceVisitor(val element: PsiElement) : PsiRecursiveElementVisitor() 
 class RustInPlaceVariableIntroducer(elementToRename: PsiNamedElement, editor: Editor, project: Project, title: String, occurrences: Array<PsiElement>) :
     InplaceVariableIntroducer<PsiElement>(elementToRename, editor, project, title, occurrences, null) {
 }
-
