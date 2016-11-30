@@ -83,6 +83,28 @@ class RustParameterInfoHandlerTest : RustTestCaseBase() {
         fn main() { foo(|x| x + <caret>); }
     """, "fun: Fn(u32) -> u32", 0)
 
+    fun testFnNestedInner() = checkByText("""
+        fn add(v1: u32, v2: u32) -> u32 { v1 + v2 }
+        fn display(v: u32, format: &'static str) {}
+        fn main() { display(add(4, <caret>), "0.00"); }
+    """, "v1: u32, v2: u32", 1)
+
+    fun testFnNestedOuter() = checkByText("""
+        fn add(v1: u32, v2: u32) -> u32 { v1 + v2 }
+        fn display(v: u32, indent: bool, format: &'static str) {}
+        fn main() { display(add(4, 7), false, <caret>"); }
+    """, "v: u32, indent: bool, format: &'static str", 2)
+
+    fun testMultiline() = checkByText("""
+        fn sum(v1: u32, v2: u32, v3: u32) -> u32 { v1 + v2 + v3 }
+        fn main() {
+            sum(
+                10,
+                <caret>
+            );
+        }
+    """, "v1: u32, v2: u32, v3: u32", 1)
+
     fun testAssocFn() = checkByText("""
         struct Foo;
         impl Foo { fn new(id: u32, val: f64) {} }
