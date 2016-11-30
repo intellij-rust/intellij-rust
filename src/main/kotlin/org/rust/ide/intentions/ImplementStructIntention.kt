@@ -21,14 +21,10 @@ class ImplementStructIntention : PsiElementBaseIntentionAction() {
         val struct = element.parentOfType<RustStructItemElement>() ?: return
         val identifier = struct.identifier.text
 
-        val impl = RustElementFactory.createImplItem(project, identifier) ?: return
+        var impl = RustElementFactory.createImplItem(project, identifier) ?: return
         val file = element.parentOfType<PsiFile>() ?: return
 
-        file.addAfter(impl, struct)
-
-        println(impl.textOffset)
-        println(impl.textLength)
-        println(impl.textOffset + impl.textLength - 1)
+        impl = file.addAfter(impl, struct) as? RustImplItemElement ?: return
 
         (editor ?: return).caretModel.moveToOffset(impl.textOffset + impl.textLength - 1)
     }

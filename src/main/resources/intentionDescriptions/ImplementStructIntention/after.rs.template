@@ -2,6 +2,4 @@ struct MyStruct {
     ...
 }
 
-<spot>impl MyStruct {
-
-}</spot>
+<spot>impl MyStruct {}</spot>

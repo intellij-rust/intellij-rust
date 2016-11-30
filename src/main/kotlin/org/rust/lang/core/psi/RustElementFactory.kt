@@ -10,8 +10,8 @@ object RustElementFactory {
     fun createExpression(project: Project, expression: String): RustExprElement? =
         createFromText(project, "fn main() { $expression; }")
 
-    fun createParameter(project: Project, parameter: String): RustParameterElement? =
-        createFromText(project, "fn main($parameter) {}")
+    fun createReference(project: Project, type: String, mutable: Boolean): RustRefTypeElement? =
+        createFromText(project, "fn main() { let a: &${if (mutable) "mut " else ""}$type; }")
 
     fun createStatement(project: Project, statement: String): RustStmtElement? =
         createFromText(project, "fn main() { $statement 92; }")

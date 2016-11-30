@@ -1,16 +1,16 @@
 package org.rust.ide.intentions
 
 /**
- * Set reference immutable in a parameter of a function declaration
+ * Set reference immutable
  *
  * ```
- * fn func(param: &mut type)
+ * &mut type
  * ```
  *
  * to this:
  *
  * ```
- * fn func(param: &type)
+ * &type
  * ```
  */
 class SetImmutableIntention : SetMutableIntention() {
