@@ -16,8 +16,7 @@ class ImplementStructIntention : PsiElementBaseIntentionAction() {
     override fun getFamilyName() = text
     override fun startInWriteAction() = true
 
-    override fun invoke(project: Project, editor: Editor?, element: PsiElement)
-    {
+    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         val struct = element.parentOfType<RustStructItemElement>() ?: return
         val identifier = struct.identifier.text
 
@@ -29,8 +28,7 @@ class ImplementStructIntention : PsiElementBaseIntentionAction() {
         (editor ?: return).caretModel.moveToOffset(impl.textOffset + impl.textLength - 1)
     }
 
-    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean
-    {
+    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
         return element.parentOfType<RustStructItemElement>() != null
     }
 }
