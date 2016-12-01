@@ -5,17 +5,16 @@ buildscript {
     repositories {
         mavenCentral()
         maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
     }
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+        // use snapshot because "instrument code" task in 0.1.0 always invalidates
+        // Kotlin's tasks
+        classpath "org.jetbrains.intellij.plugins:gradle-intellij-plugin:0.2.0-SNAPSHOT"
     }
 }
-
-plugins {
-    id 'org.jetbrains.intellij' version "0.1.10"
-}
-
 
 allprojects {
     apply plugin: 'idea'
