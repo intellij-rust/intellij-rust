@@ -1,3 +1,0 @@
-struct MySt<caret>ruct {
-
-}
