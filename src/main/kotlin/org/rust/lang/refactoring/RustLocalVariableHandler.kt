@@ -167,14 +167,21 @@ private fun findBlock(expr: PsiElement) = PsiTreeUtil.getNonStrictParentOfType(e
  * Finds occurrences in the sub scope of expr, so that all will be replaced if replace all is selected.
  */
 fun findOccurrences(expr: PsiElement): List<PsiElement> {
-    val visitor = OccurrenceVisitor(expr)
+    val visitor = object : PsiRecursiveElementVisitor() {
+        val foundOccurrences = ArrayList<PsiElement>()
 
-    val occurrences: List<PsiElement> = findBlock(expr)?.let {
-        it.acceptChildren(visitor)
-        visitor.foundOccurrences
-    } ?: emptyList()
+        override fun visitElement(element: PsiElement) {
+            if (PsiEquivalenceUtil.areElementsEquivalent(expr, element)) {
+                foundOccurrences.add(element)
+            } else {
+                super.visitElement(element)
+            }
+        }
+    }
 
-    return occurrences
+    val block = findBlock(expr) ?: return emptyList()
+    block.acceptChildren(visitor)
+    return visitor.foundOccurrences
 }
 
 private fun <T> pass(pass: (T) -> Unit): Pass<T> {
@@ -186,18 +193,6 @@ private fun <T> pass(pass: (T) -> Unit): Pass<T> {
 }
 
 private fun PsiElement.findBinding() = PsiTreeUtil.findChildOfType(this, RustPatBindingElement::class.java)
-
-class OccurrenceVisitor(val element: PsiElement) : PsiRecursiveElementVisitor() {
-    val foundOccurrences = ArrayList<PsiElement>()
-
-    override fun visitElement(element: PsiElement) {
-        if (PsiEquivalenceUtil.areElementsEquivalent(this.element, element)) {
-            foundOccurrences.add(element)
-        } else {
-            super.visitElement(element)
-        }
-    }
-}
 
 
 class RustInPlaceVariableIntroducer(elementToRename: PsiNamedElement, editor: Editor, project: Project, title: String, occurrences: Array<PsiElement>) :
