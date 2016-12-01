@@ -7,6 +7,21 @@ import org.rust.lang.core.psi.impl.RustFile
 class RustLocalVariableHandlerTest : RustTestCaseBase() {
     override val dataPath = "org/rust/lang/refactoring/fixtures/introduce_variable/"
 
+    fun testExpression() = doTest("""
+        fn hello() {
+            foo(5 + /*caret*/10);
+        }""", """
+        fn hello() {
+            let x = 10;
+            foo(5 + x);
+        }""")
+    {
+        val ref = refactoring()
+        val targets = ref.possibleTargets()
+        check(targets.size == 3)
+        ref.replaceElementForAllExpr(listOf(targets[0]))
+    }
+
     fun testMultipleOccurrences() = doTest("""
         fn hello() {
             foo(5 + /*caret*/10);
@@ -34,19 +49,18 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
         ref.replaceElementForAllExpr(occurrences)
     }
 
-    fun testExpression() = doTest("""
-        fn hello() {
-            foo(5 + /*caret*/10);
+    fun testCaretAfterElement() = doTest("""
+        fn main() {
+            1/*caret*/;
         }""", """
-        fn hello() {
-            let x = 10;
-            foo(5 + x);
+        fn main() {
+            let x = 1;
         }""")
     {
         val ref = refactoring()
         val targets = ref.possibleTargets()
-        check(targets.size == 3)
-        ref.replaceElementForAllExpr(listOf(targets[0]))
+        check(targets.size == 1)
+        ref.replaceElement(targets)
     }
 
     fun testStatement() = doTest("""

@@ -18,6 +18,12 @@ import org.rust.lang.core.psi.util.ancestors
 import org.rust.lang.core.psi.util.parentOfType
 import java.util.*
 
+/**
+ * Introduce variable refactoring entry point.
+ *
+ * [RustLocalVariableHandler] handles all the asynchronous user interaction, while
+ * [RustIntroduceVariableRefactoring] does actual computations.
+ */
 class RustLocalVariableHandler : RefactoringActionHandler {
 
     /**
@@ -59,7 +65,10 @@ class RustIntroduceVariableRefactoring(
 ) {
     fun possibleTargets(): List<RustExprElement> {
         val offset = editor.caretModel.offset
-        val expr = file.findElementAt(offset)?.parentOfType<RustExprElement>(strict = false)
+        val elementAfterCaret = file.findElementAt(offset)
+        val elementBeforeCaret = file.findElementAt(offset - 1)
+        val expr = elementAfterCaret?.parentOfType<RustExprElement>(strict = false)
+            ?: elementBeforeCaret?.parentOfType<RustExprElement>(strict = false)
             ?: return emptyList()
 
         // Finds possible expressions that might want to be bound to a local variable.
