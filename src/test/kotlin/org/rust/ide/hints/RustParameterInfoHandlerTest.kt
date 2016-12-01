@@ -1,6 +1,5 @@
 package org.rust.ide.hints
 
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext
 import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext
@@ -16,7 +15,7 @@ class RustParameterInfoHandlerTest : RustTestCaseBase() {
 
     override val dataPath = ""
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
+    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
     fun testFnNoArgs() = checkByText("""
         fn foo() {}

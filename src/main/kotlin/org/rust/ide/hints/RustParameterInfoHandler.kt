@@ -27,21 +27,19 @@ class RustParameterInfoHandler : ParameterInfoHandler<PsiElement, RustArgumentsD
         return if (p is RustCallExprElement && p.declaration != null || p is RustMethodCallExprElement && p.declaration != null) arrayOf(p) else emptyArray()
     }
 
-    override fun getParametersForDocumentation(p: RustArgumentsDescription, context: ParameterInfoContext?): Array<out Any> {
-        return p.arguments
-    }
+    override fun getParametersForDocumentation(p: RustArgumentsDescription, context: ParameterInfoContext?) =
+        p.arguments
 
     override fun findElementForParameterInfo(context: CreateParameterInfoContext): PsiElement? {
         val contextElement = context.file.findElementAt(context.editor.caretModel.offset) ?: return null
         return findElementForParameterInfo(contextElement)
     }
 
-    fun findElementForParameterInfo(contextElement: PsiElement)
-        = PsiTreeUtil.getParentOfType(contextElement, RustArgListElement::class.java)
+    fun findElementForParameterInfo(contextElement: PsiElement) =
+        PsiTreeUtil.getParentOfType(contextElement, RustArgListElement::class.java)
 
-    override fun findElementForUpdatingParameterInfo(context: UpdateParameterInfoContext): PsiElement? {
-        return context.file.findElementAt(context.editor.caretModel.offset)
-    }
+    override fun findElementForUpdatingParameterInfo(context: UpdateParameterInfoContext) =
+        context.file.findElementAt(context.editor.caretModel.offset)
 
     override fun showParameterInfo(element: PsiElement, context: CreateParameterInfoContext) {
         if (element !is RustArgListElement) return
