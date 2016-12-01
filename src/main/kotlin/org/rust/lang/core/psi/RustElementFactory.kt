@@ -10,6 +10,9 @@ object RustElementFactory {
     fun createExpression(project: Project, expression: String): RustExprElement? =
         createFromText(project, "fn main() { $expression; }")
 
+    fun createReference(project: Project, type: String, mutable: Boolean): RustRefTypeElement? =
+        createFromText(project, "fn main() { let a: &${if (mutable) "mut " else ""}$type; }")
+
     fun createStatement(project: Project, statement: String): RustStmtElement? =
         createFromText(project, "fn main() { $statement 92; }")
 
@@ -47,6 +50,9 @@ object RustElementFactory {
             .joinToString("\n\n")
         return createFromText(project, "impl T for S { $methods }")
     }
+
+    fun createImplItem(project: Project, name: String): RustImplItemElement? =
+        createFromText(project, "impl $name {  }")
 
     fun createIdentifier(project: Project, name: String): PsiElement =
         createFromText<RustModDeclItemElement>(project, "mod $name;")!!.identifier
