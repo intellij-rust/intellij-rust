@@ -148,7 +148,7 @@ class RustIntroduceVariableRefactoring(
         newNameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(LinkedHashSet()) }
     }
 
-    fun moveEditorToNameElement(editor: Editor, element: PsiElement?): RustPatBindingElement? {
+    private fun moveEditorToNameElement(editor: Editor, element: PsiElement?): RustPatBindingElement? {
         val newName = element?.findBinding()
 
         editor.caretModel.moveToOffset(newName?.identifier?.textRange?.startOffset ?: 0)
@@ -160,9 +160,10 @@ class RustIntroduceVariableRefactoring(
 /**
  * An anchor point is surrounding element before the block scope, which is used to scope the insertion of the new let binding.
  */
-private fun findAnchor(expr: PsiElement) = PsiTreeUtil.getNonStrictParentOfType(expr, RustBlockElement::class.java)?.let { findAnchor(expr, it) }
+private fun findAnchor(expr: PsiElement): PsiElement? {
+    val block = expr.parentOfType<RustBlockElement>(strict = false)
+        ?: return null
 
-private fun findAnchor(expr: PsiElement, block: PsiElement): PsiElement? {
     var anchor = expr
     while (anchor.parent != block) {
         anchor = anchor.parent
