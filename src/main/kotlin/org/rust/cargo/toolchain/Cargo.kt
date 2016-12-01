@@ -78,7 +78,7 @@ class Cargo(
 
         // Make output colored
         if ((SystemInfo.isLinux || SystemInfo.isMac)
-            && command != "fmt"
+            && command in COLOR_ACCEPTING_COMMANDS
             && additionalArguments.none { it.startsWith("--color") }) {
             cmdLine
                 .withEnvironment("TERM", "linux")
@@ -116,5 +116,9 @@ class Cargo(
         } catch(e: JsonSyntaxException) {
             throw ExecutionException(e)
         }
+    }
+
+    private companion object {
+        val COLOR_ACCEPTING_COMMANDS = listOf("bench", "build", "clean", "doc", "install", "publish", "run", "test", "update")
     }
 }

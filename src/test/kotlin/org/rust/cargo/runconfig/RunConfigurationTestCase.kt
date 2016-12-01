@@ -58,8 +58,8 @@ class AnsiAwareCapturingProcessAdapter : ProcessAdapter(), AnsiEscapeDecoder.Col
         override fun getCurrentOutputAttributes(outputType: Key<*>) = outputType
     }
 
-    override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>)
-        = decoder.escapeText(event.text, outputType, this)
+    override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) =
+        decoder.escapeText(event.text, outputType, this)
 
     private fun addToOutput(text: String, outputType: Key<*>) {
         if (outputType === ProcessOutputTypes.STDERR) {
@@ -73,6 +73,6 @@ class AnsiAwareCapturingProcessAdapter : ProcessAdapter(), AnsiEscapeDecoder.Col
         output.exitCode = event.exitCode
     }
 
-    override fun coloredTextAvailable(text: String, attributes: Key<*>)
-        = addToOutput(text, attributes)
+    override fun coloredTextAvailable(text: String, attributes: Key<*>) =
+        addToOutput(text, attributes)
 }
