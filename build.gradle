@@ -53,9 +53,27 @@ allprojects {
 
     test {
         testLogging {
-            events 'passed', 'skipped', 'failed'
+            events 'skipped', 'failed'
             exceptionFormat = 'full'
         }
+
+        beforeSuite { suite ->
+            if (suite.className != null) {
+                println()
+                println(suite.className)
+            }
+        }
+        afterTest { desc, result ->
+            def c = '.'
+            if (result.resultType == TestResult.ResultType.FAILURE) {
+                c = 'X'
+            } else if (result.resultType == TestResult.ResultType.SKIPPED) {
+                c = 'S'
+            }
+            print(c)
+            System.out.flush()
+        }
+        afterSuite { println() }
     }
 
     repositories {
