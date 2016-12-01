@@ -27,6 +27,15 @@ object RustElementFactory {
         return createFromText(project, "fn main() { S { $fields }; }")
     }
 
+    fun createVariableDeclaration(project: Project, name: String, expr: PsiElement): RustLetDeclElement =
+        checkNotNull(createFromText(project, "fn main() {let $name = ${expr.text}; }"))
+
+    fun createMutableVariableDeclaration(project: Project, name: String, expr: PsiElement): RustLetDeclElement =
+        checkNotNull(createFromText(project, "fn main() {let mut $name = ${expr.text}; }"))
+
+    fun createVariableDeclarationFromStmt(project: Project, name: String, expr: RustExprStmtElement): RustLetDeclElement =
+        checkNotNull(createFromText(project, "fn main() {let $name = ${expr.text} }"))
+
     fun createBlockExpr(project: Project, body: String): RustBlockExprElement? =
         createFromText(project, "fn main() { { $body } }")
 
