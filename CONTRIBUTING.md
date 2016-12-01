@@ -97,8 +97,9 @@ Most tests are fixture-driven. They typically:
 
 #### Structure
 
-All test classes are placed in the `src/test/kotlin` directory, while
-accompanying fixtures are placed in`src/test/resources`.
+All test classes are placed in the `src/test/kotlin` directory. There are two
+ways of providing fixtures for the tests. The first one is to put Rust files 
+in `src/test/resources`.
 
 In the example below `RustFormatterTest.kt` is the test class, `blocks.rs` is
 the fixture for the initial state and `blocks_after.rs` is the fixture for the
@@ -113,6 +114,12 @@ final state. It is good practice to put fixtures in the same package as tests.
              +-- fixtures
                  +-- blocks.rs
                  +-- blocks_after.rs
+
+Another way of provideing fixtures is to use Kotlin's tripple quoted multiline
+string literals. You can get Rust syntax highlighting inside them if you have a
+`@Language("Rust")` annotation applied. You can see an example [here](https://github.com/intellij-rust/intellij-rust/blob/b5e680cc80e90523610016e662a131985aa88e56/src/test/kotlin/org/rust/ide/intentions/MoveTypeConstraintToWhereClauseIntentionTest.kt).
+
+In general, triple quoted string fixtures should be prefered over separate Rust files.
 
 #### Fixtures
 
