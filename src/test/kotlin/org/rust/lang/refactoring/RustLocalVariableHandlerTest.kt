@@ -2,6 +2,7 @@ package org.rust.lang.refactoring
 
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RustTestCaseBase
+import org.rust.lang.core.psi.impl.RustFile
 
 class RustLocalVariableHandlerTest : RustTestCaseBase() {
     override val dataPath = "org/rust/lang/refactoring/fixtures/introduce_variable/"
@@ -25,10 +26,12 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
 
         }""")
     {
-        val rustLocalVariableHandler = RustLocalVariableHandler()
-        val expr = findExpr(myFixture.file, myFixture.editor.caretModel.offset)?.parent
-        val occurrences = findOccurrences(expr!!)
-        rustLocalVariableHandler.replaceElementForAllExpr(myFixture.project, myFixture.editor, occurrences)
+        val ref = refactoring()
+        val targets = ref.possibleTargets()
+        check(targets.size == 3)
+        val expr = targets[1]
+        val occurrences = findOccurrences(expr)
+        ref.replaceElementForAllExpr(occurrences)
     }
 
     fun testExpression() = doTest("""
@@ -40,9 +43,10 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
             foo(5 + x);
         }""")
     {
-        val rustLocalVariableHandler = RustLocalVariableHandler()
-        val expr = findExpr(myFixture.file, myFixture.editor.caretModel.offset)
-        rustLocalVariableHandler.replaceElementForAllExpr(myFixture.project, myFixture.editor, listOf(expr!!))
+        val ref = refactoring()
+        val targets = ref.possibleTargets()
+        check(targets.size == 3)
+        ref.replaceElementForAllExpr(listOf(targets[0]))
     }
 
     fun testStatement() = doTest("""
@@ -53,10 +57,10 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
             let x = foo(5 + 10);
         }""")
     {
-        val rustLocalVariableHandler = RustLocalVariableHandler()
-        val expr = findExpr(myFixture.file, myFixture.editor.caretModel.offset)
-        val exprs = possibleExpressions(expr!!)
-        rustLocalVariableHandler.replaceElement(myFixture.project, myFixture.editor, listOf(exprs[2]))
+        val ref = refactoring()
+        val targets = ref.possibleTargets()
+        check(targets.size == 3)
+        ref.replaceElement(listOf(targets[2]))
     }
 
     fun testMatch() = doTest("""
@@ -73,9 +77,9 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
             };
         }""")
     {
-        val rustLocalVariableHandler = RustLocalVariableHandler()
-        val expr = findExpr(myFixture.file, myFixture.editor.caretModel.offset)
-        rustLocalVariableHandler.replaceElement(myFixture.project, myFixture.editor, listOf(expr!!))
+        val ref = refactoring()
+        val targets = ref.possibleTargets()
+        ref.replaceElement(listOf(targets.single()))
     }
 
     fun testFile() = doTest("""
@@ -86,9 +90,10 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
             let x = File::open("res/input.txt")?;
         }""")
     {
-        val rustLocalVariableHandler = RustLocalVariableHandler()
-        val expr = findExpr(myFixture.file, myFixture.editor.caretModel.offset)
-        rustLocalVariableHandler.replaceElement(myFixture.project, myFixture.editor, listOf((possibleExpressions(expr!!)[1])))
+        val ref = refactoring()
+        val targets = ref.possibleTargets()
+        check(targets.size == 2)
+        ref.replaceElement(listOf(targets[1]))
     }
 
     fun testRefMut() = doTest("""
@@ -108,9 +113,9 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
             Ok(x)
         }""")
     {
-        val rustLocalVariableHandler = RustLocalVariableHandler()
-        val expr = findExpr(myFixture.file, myFixture.editor.caretModel.offset)
-        rustLocalVariableHandler.replaceElement(myFixture.project, myFixture.editor, listOf((possibleExpressions(expr!!)[0])))
+        val ref = refactoring()
+        val targets = ref.possibleTargets()
+        ref.replaceElement(listOf(targets[0]))
     }
 
     private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String, action: () -> Unit) {
@@ -119,4 +124,7 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
         action()
         myFixture.checkResult(after)
     }
+
+    private fun refactoring(): RustIntroduceVariableRefactoring =
+        RustIntroduceVariableRefactoring(project, myFixture.editor, myFixture.file as RustFile)
 }
