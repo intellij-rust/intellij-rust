@@ -205,6 +205,10 @@ private fun <T> pass(pass: (T) -> Unit): Pass<T> {
 
 private fun PsiElement.findBinding() = PsiTreeUtil.findChildOfType(this, RustPatBindingElement::class.java)
 
-
-class RustInPlaceVariableIntroducer(elementToRename: PsiNamedElement, editor: Editor, project: Project, title: String, occurrences: Array<PsiElement>) :
-    InplaceVariableIntroducer<PsiElement>(elementToRename, editor, project, title, occurrences, null)
+private class RustInPlaceVariableIntroducer(
+    elementToRename: PsiNamedElement,
+    editor: Editor,
+    project: Project,
+    title: String,
+    occurrences: Array<PsiElement>
+) : InplaceVariableIntroducer<PsiElement>(elementToRename, editor, project, title, occurrences, null)
