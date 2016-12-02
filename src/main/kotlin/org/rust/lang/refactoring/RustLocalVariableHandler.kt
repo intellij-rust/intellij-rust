@@ -10,11 +10,14 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.IntroduceTargetChooser
 import com.intellij.refactoring.RefactoringActionHandler
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.util.ancestors
+import org.rust.lang.core.psi.util.findExpressionInRange
 import org.rust.lang.core.psi.util.parentOfType
 import java.util.*
 
@@ -43,10 +46,19 @@ class RustLocalVariableHandler : RefactoringActionHandler {
             })
         }
 
-        if (exprs.size == 1) {
-            extractExpression(exprs.single())
-        } else {
-            IntroduceTargetChooser.showChooser(editor, exprs, pass(::extractExpression), { it.text })
+        when (exprs.size) {
+            0 -> {
+                val message = RefactoringBundle.message(if (editor.selectionModel.hasSelection())
+                    "selected.block.should.represent.an.expression"
+                else
+                    "refactoring.introduce.selection.error"
+                )
+                val title = RefactoringBundle.message("introduce.variable.title")
+                val helpId = "refactoring.extractVariable"
+                CommonRefactoringUtil.showErrorHint(project, editor, message, title, helpId)
+            }
+            1 -> extractExpression(exprs.single())
+            else -> IntroduceTargetChooser.showChooser(editor, exprs, pass(::extractExpression), { it.text })
         }
     }
 
@@ -61,21 +73,27 @@ class RustIntroduceVariableRefactoring(
     private val file: RustFile
 ) {
     fun possibleTargets(): List<RustExprElement> {
-        val offset = editor.caretModel.offset
-        val elementAfterCaret = file.findElementAt(offset)
-        val elementBeforeCaret = file.findElementAt(offset - 1)
-        val expr = elementAfterCaret?.parentOfType<RustExprElement>(strict = false)
-            ?: elementBeforeCaret?.parentOfType<RustExprElement>(strict = false)
-            ?: return emptyList()
+        val selection = editor.selectionModel
+        return if (selection.hasSelection()) {
+            // If there's an explicit selection, suggest only one expression
+            listOfNotNull(findExpressionInRange(file, selection.selectionStart, selection.selectionEnd))
+        } else {
+            val offset = editor.caretModel.offset
+            val elementAfterCaret = file.findElementAt(offset)
+            val elementBeforeCaret = file.findElementAt(offset - 1)
+            val expr = elementAfterCaret?.parentOfType<RustExprElement>(strict = false)
+                ?: elementBeforeCaret?.parentOfType<RustExprElement>(strict = false)
+                ?: return emptyList()
 
-        // Finds possible expressions that might want to be bound to a local variable.
-        // We don't go further than the current block scope,
-        // further more path expressions don't make sense to bind to a local variable so we exclude them.
-        return expr.ancestors
-            .takeWhile { it !is RustBlockElement }
-            .filter { it !is RustPathExprElement }
-            .filterIsInstance<RustExprElement>()
-            .toList()
+            // Finds possible expressions that might want to be bound to a local variable.
+            // We don't go further than the current block scope,
+            // further more path expressions don't make sense to bind to a local variable so we exclude them.
+            expr.ancestors
+                .takeWhile { it !is RustBlockElement }
+                .filterIsInstance<RustExprElement>()
+                .filter { it !is RustPathExprElement }
+                .toList()
+        }
     }
 
     /**

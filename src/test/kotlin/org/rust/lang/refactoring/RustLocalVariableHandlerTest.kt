@@ -22,6 +22,14 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
         ref.replaceElementForAllExpr(listOf(targets[0]))
     }
 
+    fun testExplicitSelectionWorks() {
+        myFixture.configureByText("main.rs", """
+            fn main() { 1 + <selection>1</selection>;}
+        """)
+        val targets = refactoring().possibleTargets()
+        check(targets.size == 1)
+    }
+
     fun testMultipleOccurrences() = doTest("""
         fn hello() {
             foo(5 + /*caret*/10);
