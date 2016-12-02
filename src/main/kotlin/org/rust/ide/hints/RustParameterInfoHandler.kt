@@ -4,12 +4,11 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.parameterInfo.*
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
 
 /**
- * Provides funcions/methods afruments hint.
+ * Provides functions/methods arguments hint.
  */
 class RustParameterInfoHandler : ParameterInfoHandler<PsiElement, RustArgumentsDescription> {
 
@@ -36,7 +35,7 @@ class RustParameterInfoHandler : ParameterInfoHandler<PsiElement, RustArgumentsD
     }
 
     fun findElementForParameterInfo(contextElement: PsiElement) =
-        PsiTreeUtil.getParentOfType(contextElement, RustArgListElement::class.java)
+        contextElement.parentOfType<RustArgListElement>()
 
     override fun findElementForUpdatingParameterInfo(context: UpdateParameterInfoContext) =
         context.file.findElementAt(context.editor.caretModel.offset)
@@ -55,11 +54,12 @@ class RustParameterInfoHandler : ParameterInfoHandler<PsiElement, RustArgumentsD
             return
         }
         context.setCurrentParameter(argIndex)
-        if (context.parameterOwner == null) {
-            context.parameterOwner = place
-        } else if (context.parameterOwner != findElementForParameterInfo(place)) {
-            context.removeHint()
-            return
+        when {
+            context.parameterOwner == null -> context.parameterOwner = place
+            context.parameterOwner != findElementForParameterInfo(place) -> {
+                context.removeHint()
+                return
+            }
         }
         context.objectsToView.mapIndexed { i, o -> context.setUIComponentEnabled(i, true) }
     }
@@ -91,8 +91,7 @@ class RustParameterInfoHandler : ParameterInfoHandler<PsiElement, RustArgumentsD
         if (descr.arguments.isNotEmpty()) {
             index += generateSequence(callArgs.firstChild, { c -> c.nextSibling})
                 .filter { it.text == "," }
-                .takeWhile { it.textRange.startOffset < place.textRange.startOffset }
-                .count() + 1
+                .count({ it.textRange.startOffset < place.textRange.startOffset }) + 1
             if (index >= descr.arguments.size) {
                 index = -1
             }
@@ -109,12 +108,12 @@ class RustParameterInfoHandler : ParameterInfoHandler<PsiElement, RustArgumentsD
  * Holds information about arguments from func/method declaration
  */
 class RustArgumentsDescription(
-    val arguments: Array<RustArgumentDescription>
+    val arguments: Array<String>
 ) {
     fun getArgumentRange(index: Int): TextRange {
         if (index < 0 || index >= arguments.size) return TextRange.EMPTY_RANGE
-        val start = (0..index - 1).sumBy { arguments[it].textLen + 2 }
-        val range = TextRange(start, start + arguments[index].textLen)
+        val start = arguments.take(index).sumBy { it.length + 2 }
+        val range = TextRange(start, start + arguments[index].length)
         return range
     }
 
@@ -126,30 +125,17 @@ class RustArgumentsDescription(
          */
         fun findDescription(args: RustArgListElement): RustArgumentsDescription? {
             val call = args.parent
-            val decl = when (call) {
-                is RustCallExprElement -> call.declaration
-                is RustMethodCallExprElement -> call.declaration
+            val paramsList = when (call) {
+                is RustCallExprElement -> call.declaration?.parameters
+                is RustMethodCallExprElement -> call.declaration?.parameters
                 else -> null
-            } ?: return null
-            val paramsList = when (decl) {
-                is RustFnItemElement -> decl.parameters
-                is RustImplMethodMemberElement -> decl.parameters
-                else -> null
-            }?.parameterList
+            }?.parameterList ?: return null
             val params = paramsList
-                ?.map { RustArgumentDescription(it.pat?.text, it.type?.text) }
-                ?.toTypedArray()
-            return RustArgumentsDescription(params ?: emptyArray())
+                .map { "${it.pat?.text ?: "?"}: ${it.type?.text ?: "?"}" }
+                .toTypedArray()
+            return RustArgumentsDescription(params)
         }
     }
-}
-
-class RustArgumentDescription(
-    val name: String?,
-    val type: String?
-) {
-    val textLen = (name?.length ?: 1) + 2 + (type?.length ?: 1)
-    override fun toString() = (name ?: "?") + ": " + (type ?: "?")
 }
 
 private val RustCallExprElement.declaration: RustFnElement?

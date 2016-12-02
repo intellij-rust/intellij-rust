@@ -157,7 +157,7 @@ class RustParameterInfoHandlerTest : RustTestCaseBase() {
         if (hint.isNotEmpty()) {
             elt ?: throw AssertionFailedError("Element not found")
             handler.showParameterInfo(elt, createContext)
-            val items = createContext.itemsToShow ?: throw AssertionFailedError("Paremeters are not shown")
+            val items = createContext.itemsToShow ?: throw AssertionFailedError("Parameters are not shown")
             if (items.isEmpty()) throw AssertionFailedError("Paremeters are empty")
             val context = MockParameterInfoUIContext(elt)
             handler.updateUI(items[0] as RustArgumentsDescription, context)
