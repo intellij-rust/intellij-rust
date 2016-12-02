@@ -6,6 +6,7 @@ class RustFoldingTestCase : RustTestCaseBase() {
     override val dataPath = "org/rust/ide/folding/fixtures"
 
     fun testFn() = doTest()
+    fun testLoops() = doTest()
     fun testBlockExpr() = doTest()
     fun testImpl() = doTest()
     fun testImplMethod() = doTest()

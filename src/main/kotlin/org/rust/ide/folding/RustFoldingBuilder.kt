@@ -8,9 +8,9 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
-import org.rust.lang.core.psi.visitors.RustRecursiveElementVisitor
 import java.util.*
 
 class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
@@ -20,117 +20,57 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
         if (root !is RustFile) return emptyArray()
 
         val descriptors: MutableList<FoldingDescriptor> = ArrayList()
-
-        root.accept(object : RustRecursiveElementVisitor() {
-            override fun visitBlockExpr(o: RustBlockExprElement) {
-                super.visitBlockExpr(o)
-
-                val block = o.block
-                if (block != null) {
-                    descriptors += FoldingDescriptor(o.node, block.textRange)
-                }
-            }
-
-            override fun visitImplItem(o: RustImplItemElement) {
-                super.visitImplItem(o)
-                foldBetween(o, o.lbrace, o.rbrace)
-            }
-
-            override fun visitStructItem(o: RustStructItemElement) {
-                super.visitStructItem(o)
-
-                val blockFields = o.blockFields
-                if (blockFields != null) {
-                    descriptors += FoldingDescriptor(o.node, blockFields.textRange)
-                }
-            }
-
-            override fun visitStructExpr(o: RustStructExprElement) {
-                super.visitStructExpr(o)
-
-                descriptors += FoldingDescriptor(o.node, o.structExprBody.textRange)
-            }
-
-            override fun visitEnumItem(o: RustEnumItemElement) {
-                super.visitEnumItem(o)
-
-                val enumBody = o.enumBody
-                descriptors += FoldingDescriptor(o.node, enumBody.textRange)
-            }
-
-            override fun visitTraitItem(o: RustTraitItemElement) {
-                super.visitTraitItem(o)
-                foldBetween(o, o.lbrace, o.rbrace)
-            }
-
-            override fun visitEnumVariant(o: RustEnumVariantElement) {
-                super.visitEnumVariant(o)
-
-                val blockFields = o.blockFields
-                if (blockFields != null) {
-                    descriptors += FoldingDescriptor(o.node, blockFields.textRange)
-                }
-            }
-
-            override fun visitFnItem(o: RustFnItemElement) {
-                super.visitFnItem(o)
-
-                val fnBody = o.block
-                if (fnBody != null) {
-                    descriptors += FoldingDescriptor(o.node, fnBody.textRange)
-                }
-            }
-
-            override fun visitFn(o: RustFnElement) {
-                super.visitFn(o)
-
-                val fnBody = o.block
-                if (fnBody != null) {
-                    descriptors += FoldingDescriptor(o.node, fnBody.textRange)
-                }
-            }
-
-            override fun visitModItem(o: RustModItemElement) {
-                super.visitModItem(o)
-                foldBetween(o, o.lbrace, o.rbrace)
-            }
-
-            override fun visitMatchExpr(o: RustMatchExprElement) {
-                super.visitMatchExpr(o)
-
-                val body = o.matchBody
-                if (body != null) {
-                    descriptors += FoldingDescriptor(o.node, body.textRange)
-                }
-            }
-
-            override fun visitMacroArg(o: RustMacroArgElement) {
-                super.visitMacroArg(o)
-                foldBetween(o, o.lbrace, o.rbrace)
-            }
-
-            override fun visitUseGlobList(o: RustUseGlobListElement) {
-                super.visitUseGlobList(o)
-
-                descriptors += FoldingDescriptor(o.node, o.textRange)
-            }
-
-            override fun visitComment(comment: PsiComment) {
-                super.visitComment(comment)
-
-                if (comment.tokenType == RustTokenElementTypes.BLOCK_COMMENT) {
-                    descriptors += FoldingDescriptor(comment.node, comment.textRange)
-                }
-            }
-
-            private fun foldBetween(element: PsiElement, left: PsiElement?, right: PsiElement?) {
-                if (left != null && right != null) {
-                    descriptors += FoldingDescriptor(element.node, TextRange(left.textOffset, right.textOffset + 1))
-                }
-            }
-        })
+        val visitor = FoldingVisitor(descriptors)
+        PsiTreeUtil.processElements(root) { it.accept(visitor); true }
 
         return descriptors.toTypedArray()
+    }
+
+    private class FoldingVisitor(private val descriptors: MutableList<FoldingDescriptor>) : RustElementVisitor() {
+
+        override fun visitStructExprBody(o: RustStructExprBodyElement) = fold(o)
+
+        override fun visitEnumBody(o: RustEnumBodyElement) = fold(o)
+
+        override fun visitBlockFields(o: RustBlockFieldsElement) = fold(o)
+
+        override fun visitBlock(o: RustBlockElement) = fold(o)
+
+        override fun visitMatchBody(o: RustMatchBodyElement) = fold(o)
+
+        override fun visitUseGlobList(o: RustUseGlobListElement) = fold(o)
+
+        override fun visitTraitItem(o: RustTraitItemElement) = foldBetween(o, o.lbrace, o.rbrace)
+
+        override fun visitModItem(o: RustModItemElement) = foldBetween(o, o.lbrace, o.rbrace)
+
+        override fun visitMacroArg(o: RustMacroArgElement) = foldBetween(o, o.lbrace, o.rbrace)
+
+        override fun visitImplItem(o: RustImplItemElement) = foldBetween(o, o.lbrace, o.rbrace)
+
+        override fun visitComment(comment: PsiComment) {
+            if (comment.tokenType == RustTokenElementTypes.BLOCK_COMMENT) {
+                fold(comment)
+            }
+        }
+
+        override fun visitStructItem(o: RustStructItemElement) {
+            val blockFields = o.blockFields
+            if (blockFields != null) {
+                fold(blockFields)
+            }
+        }
+
+        private fun fold(element: PsiElement) {
+            descriptors += FoldingDescriptor(element.node, element.textRange)
+        }
+
+        private fun foldBetween(element: PsiElement, left: PsiElement?, right: PsiElement?) {
+            if (left != null && right != null) {
+                val range = TextRange(left.textOffset, right.textOffset + 1)
+                descriptors += FoldingDescriptor(element.node, range)
+            }
+        }
     }
 
     override fun isCollapsedByDefault(node: ASTNode): Boolean = false

@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.cargo.CargoConstants
@@ -67,13 +68,25 @@ class Cargo(
         command: String,
         additionalArguments: List<String> = emptyList(),
         environmentVariables: Map<String, String> = emptyMap()
-    ): GeneralCommandLine =
-        GeneralCommandLine(pathToCargoExecutable)
+    ): GeneralCommandLine {
+        var args = additionalArguments
+        val cmdLine = GeneralCommandLine(pathToCargoExecutable)
             .withWorkDirectory(projectDirectory)
             .withParameters(command)
-            .withParameters(additionalArguments)
             .withEnvironment(CargoConstants.RUSTC_ENV_VAR, pathToRustExecutable)
             .withEnvironment(environmentVariables)
+
+        // Make output colored
+        if ((SystemInfo.isLinux || SystemInfo.isMac)
+            && command in COLOR_ACCEPTING_COMMANDS
+            && additionalArguments.none { it.startsWith("--color") }) {
+            cmdLine
+                .withEnvironment("TERM", "linux")
+                .withRedirectErrorStream(true)
+            args = additionalArguments + "--color=always"
+        }
+        return cmdLine.withParameters(args)
+    }
 
     private fun rustfmtCommandline(filePath: String) =
         generalCommand("fmt").withParameters("--", "--write-mode=overwrite", "--skip-children", filePath)
@@ -103,5 +116,9 @@ class Cargo(
         } catch(e: JsonSyntaxException) {
             throw ExecutionException(e)
         }
+    }
+
+    private companion object {
+        val COLOR_ACCEPTING_COMMANDS = listOf("bench", "build", "clean", "doc", "install", "publish", "run", "test", "update")
     }
 }

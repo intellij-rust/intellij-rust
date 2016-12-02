@@ -1,17 +1,13 @@
 package org.rust.ide.intentions
 
-import org.rust.lang.RustTestCaseBase
+class SetMutableIntentionTest : RustIntentionTestBase(SetMutableIntention()) {
+    fun testSetMutableVariable() = doAvailableTest(
+        """ fn main() { let var: &i3/*caret*/2 = 52; } """,
+        """ fn main() { let var: &mut i3/*caret*/2 = 52; } """
+    )
 
-class SetMutableIntentionTest : RustTestCaseBase() {
-    override val dataPath = "org/rust/ide/intentions/fixtures/set_mutable/"
-
-    fun testSetMutableVariable() = checkByFile {
-        openFileInEditor("set_mutable_variable.rs")
-        myFixture.launchAction(SetMutableIntention())
-    }
-
-    fun testSetMutableParameter() = checkByFile {
-        openFileInEditor("set_mutable_parameter.rs")
-        myFixture.launchAction(SetMutableIntention())
-    }
+    fun testSetMutableParameter() = doAvailableTest(
+        """ fn func(param: &i3/*caret*/2) {} """,
+        """ fn func(param: &mut i3/*caret*/2) {} """
+    )
 }
