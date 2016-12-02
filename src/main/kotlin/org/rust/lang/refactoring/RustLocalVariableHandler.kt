@@ -34,22 +34,19 @@ class RustLocalVariableHandler : RefactoringActionHandler {
         val refactoring = RustIntroduceVariableRefactoring(project, editor, file)
         val exprs = refactoring.possibleTargets()
 
-        val passer: Pass<RustExprElement> = pass { expr ->
-            if (expr.isValid) {
-                val occurrences = findOccurrences(expr)
-
-                OccurrencesChooser.simpleChooser<PsiElement>(editor).showChooser(expr, occurrences, pass { choice ->
-                    if (choice == OccurrencesChooser.ReplaceChoice.ALL) {
-                        refactoring.replaceElement(occurrences)
-                    } else {
-                        refactoring.replaceElement(listOf(expr))
-                    }
-                })
-            }
+        fun extractExpression(expr: RustExprElement) {
+            if (!expr.isValid) return
+            val occurrences = findOccurrences(expr)
+            OccurrencesChooser.simpleChooser<PsiElement>(editor).showChooser(expr, occurrences, pass { choice ->
+                val toReplace = if (choice == OccurrencesChooser.ReplaceChoice.ALL) occurrences else listOf(expr)
+                refactoring.replaceElement(toReplace)
+            })
         }
 
-        IntroduceTargetChooser.showChooser(editor, exprs, passer) {
-            it.text
+        if (exprs.size == 1) {
+            extractExpression(exprs.single())
+        } else {
+            IntroduceTargetChooser.showChooser(editor, exprs, pass(::extractExpression), { it.text })
         }
     }
 
