@@ -115,7 +115,7 @@ final state. It is good practice to put fixtures in the same package as tests.
                  +-- blocks.rs
                  +-- blocks_after.rs
 
-Another way of provideing fixtures is to use Kotlin's tripple quoted multiline
+Another way of providing fixtures is to use Kotlin's tripple quoted multiline
 string literals. You can get Rust syntax highlighting inside them if you have a
 `@Language("Rust")` annotation applied. You can see an example [here](https://github.com/intellij-rust/intellij-rust/blob/b5e680cc80e90523610016e662a131985aa88e56/src/test/kotlin/org/rust/ide/intentions/MoveTypeConstraintToWhereClauseIntentionTest.kt).
 
