@@ -20,7 +20,12 @@ class RustExplainFilterTest : RustTestCaseBase() {
 
     fun testErrorFormat() {
         val text = "error[E0382]: use of moved value: `v`"
-        doTest(text, text.length, 0, 12)
+        doTest(text, text.length, 5, 12)
+    }
+
+    fun testWarningFormat() {
+        val text = "warning[E0122]: trait bounds are not (yet) enforced in type definitions"
+        doTest(text, text.length, 7, 14)
     }
 
     fun testNothingToSee() {

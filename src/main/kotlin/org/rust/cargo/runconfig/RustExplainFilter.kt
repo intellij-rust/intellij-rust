@@ -3,9 +3,7 @@ package org.rust.cargo.runconfig
 import com.intellij.execution.filters.BrowserHyperlinkInfo
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.Filter.Result
-import com.intellij.ide.browsers.OpenUrlHyperlinkInfo
 import com.intellij.openapi.project.DumbAware
-import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 
@@ -16,20 +14,23 @@ import java.util.regex.Pattern
 class RustExplainFilter : Filter, DumbAware {
     private val patterns = listOf(
         Pattern.compile("--explain E(\\d{4})"),
-        Pattern.compile("error\\[E(\\d{4})\\]"))
+        Pattern.compile("(error|warning)\\[E(\\d{4})\\]"))
 
     override fun applyFilter(line: String, entireLength: Int): Result? {
         val matcher = patterns
             .map { it.matcher(line) }
             .firstOrNull { it.find() } ?: return null
 
-        val eNumber = matcher.group(1)
-        val url = "https://doc.rust-lang.org/error-index.html#E$eNumber"
+        val (offset, length, code) = when (matcher.groupCount()) {
+            1 -> Triple(0, matcher.group(0).length, matcher.group(1))
+            else -> Triple(matcher.group(1).length, matcher.group(2).length + 3, matcher.group(2))
+        }
+        val url = "https://doc.rust-lang.org/error-index.html#E$code"
         val info = BrowserHyperlinkInfo(url)
 
-        val highlightStartOffset = entireLength - line.length + matcher.start()
-        val highlightEndOffset = highlightStartOffset + matcher.group().length
+        val startOffset = entireLength - line.length + matcher.start() + offset
+        val endOffset = startOffset + length
 
-        return Result(highlightStartOffset, highlightEndOffset, info)
+        return Result(startOffset, endOffset, info)
     }
 }
