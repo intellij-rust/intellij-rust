@@ -15,8 +15,6 @@ class RustParameterInfoHandlerTest : RustTestCaseBase() {
 
     override val dataPath = ""
 
-    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
-
     fun testFnNoArgs() = checkByText("""
         fn foo() {}
         fn main() { foo(<caret>); }
