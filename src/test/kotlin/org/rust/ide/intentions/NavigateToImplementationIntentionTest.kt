@@ -1,6 +1,6 @@
 package org.rust.ide.intentions
 
-class NavigateToImplementationTest : RustIntentionTestBase(NavigateToImplementationIntention()) {
+class NavigateToImplementationIntentionTest : RustIntentionTestBase(NavigateToImplementationIntention()) {
     fun testNavigateToImplementation() = doAvailableTest(
         """
 struct /*caret*/MyTest {
