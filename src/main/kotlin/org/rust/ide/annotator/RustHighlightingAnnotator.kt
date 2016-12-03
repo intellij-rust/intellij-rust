@@ -98,6 +98,7 @@ class RustHighlightingAnnotator : Annotator {
         override fun visitMacroInvocation(m: RustMacroInvocationElement) = highlight(m, RustColor.MACRO)
         override fun visitMethodCallExpr(o: RustMethodCallExprElement)   = highlight(o.identifier, RustColor.INSTANCE_METHOD)
         override fun visitFnItem(o: RustFnItemElement)                   = highlight(o.identifier, RustColor.FUNCTION_DECLARATION)
+        override fun visitTryExpr(o: RustTryExprElement)                 = highlight(o.q, RustColor.Q_OPERATOR)
 
         override fun visitImplMethodMember(o: RustImplMethodMemberElement) =
             highlight(o.identifier, if (o.isStatic) RustColor.STATIC_METHOD else RustColor.INSTANCE_METHOD)
