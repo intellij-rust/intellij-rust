@@ -25,7 +25,7 @@ class RustSelfConventionInspection : RustLocalInspectionTool() {
         return owner.item.queryAttributes.hasMetaItem("derive", "Copy")
     }
 
-    companion object {
+    private companion object {
         val SELF_CONVENTIONS = listOf(
             SelfConvention("as_", listOf(SelfType.REF_SELF, SelfType.REF_MUT_SELF)),
             SelfConvention("from_", listOf(SelfType.NO_SELF)),

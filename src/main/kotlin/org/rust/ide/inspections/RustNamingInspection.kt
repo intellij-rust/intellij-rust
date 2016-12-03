@@ -19,7 +19,7 @@ abstract class RustNamingInspection(
     elementTitle: String = elementType
 ) : RustLocalInspectionTool() {
     val dispName = elementTitle + " naming convention"
-    override fun getDisplayName(): String = dispName
+    override fun getDisplayName() = dispName
 
     fun inspect(id: PsiElement?, holder: ProblemsHolder, fix: Boolean = true) {
         if (id == null) return

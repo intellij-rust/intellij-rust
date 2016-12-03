@@ -5,8 +5,6 @@ package org.rust.ide.inspections
  */
 class RustDanglingElseInspectionTest : RustInspectionsTestBase() {
 
-    override val dataPath = ""
-
     fun testSimple() = checkByText<RustDanglingElseInspection>("""
         fn main() {
             if true {

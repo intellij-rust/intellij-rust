@@ -3,10 +3,14 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.LocalInspectionTool
 import org.rust.lang.RustTestCaseBase
 
-abstract class RustInspectionsTestBase : RustTestCaseBase() {
-    protected inline fun<reified T : LocalInspectionTool> enableInspection() {
+abstract class RustInspectionsTestBase(val useStdLib: Boolean = false) : RustTestCaseBase() {
+
+    override val dataPath = ""
+
+    override fun getProjectDescriptor() = if (useStdLib) WithStdlibRustProjectDescriptor else super.getProjectDescriptor()
+
+    protected inline fun<reified T : LocalInspectionTool> enableInspection() =
         myFixture.enableInspections(T::class.java)
-    }
 
     protected inline fun <reified T : LocalInspectionTool> doTest() {
         enableInspection<T>()

@@ -12,7 +12,7 @@ import org.rust.lang.core.psi.RustUnaryExprElement
  * Analogue of Clippy's double_neg.
  */
 class RustDoubleNegInspection : RustLocalInspectionTool() {
-    override fun getDisplayName(): String = "Double negation"
+    override fun getDisplayName() = "Double negation"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {

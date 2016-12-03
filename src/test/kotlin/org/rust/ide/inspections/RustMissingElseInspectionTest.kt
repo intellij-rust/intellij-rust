@@ -5,8 +5,6 @@ package org.rust.ide.inspections
  */
 class RustMissingElseInspectionTest : RustInspectionsTestBase() {
 
-    override val dataPath = ""
-
     fun testSimple() = checkByText<RustMissingElseInspection>("""
         fn main() {
             if true {
