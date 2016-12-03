@@ -20,4 +20,19 @@ class RustTraitMethodImplLineMarkerProviderTest : RustLineMarkerProviderTestBase
             }
         }
     """)
+
+    fun testIconPosition() = doTestByText("""
+        trait Foo {         // - Has implementations
+            fn foo(&self);
+        }
+        struct Bar {}
+        impl Foo for Bar {
+            ///
+            /// Documentation
+            ///
+            #[warn(non_camel_case_types)]
+            fn foo(&self) { // - Implements method in `Foo`
+            }
+        }
+    """)
 }
