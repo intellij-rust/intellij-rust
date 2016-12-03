@@ -3,7 +3,7 @@ extern crate <CRATE>log</CRATE>;
 
 use std::collections::<STRUCT>HashMap</STRUCT>;
 
-mod <MODULE>Stuff</MODULE>;
+mod <MODULE>stuff</MODULE>;
 
 pub enum <ENUM>Flag</ENUM> {
     <ENUM_VARIANT>Good</ENUM_VARIANT>,
@@ -20,13 +20,21 @@ struct <STRUCT>Object</STRUCT><<TYPE_PARAMETER>T</TYPE_PARAMETER>> {
     <FIELD>fields</FIELD>: <STRUCT>HashMap</STRUCT><<TYPE_PARAMETER>T</TYPE_PARAMETER>, <PRIMITIVE_TYPE>u64</PRIMITIVE_TYPE>>
 }
 
+impl<<TYPE_PARAMETER>T</TYPE_PARAMETER>> Write for <STRUCT>Object</STRUCT><<TYPE_PARAMETER>T</TYPE_PARAMETER>> {
+    fn <INSTANCE_METHOD>write</INSTANCE_METHOD>(&mut <SELF_PARAMETER>self</SELF_PARAMETER>, <PARAMETER>buf</PARAMETER>: &[<PRIMITIVE_TYPE>u8</PRIMITIVE_TYPE>]) -> <ENUM>Result</ENUM><usize> {
+        let s = stuff::<FUNCTION_DECLARATION>write_map</FUNCTION_DECLARATION>(&self.<FIELD>fields</FIELD>, <PARAMETER>buf</PARAMETER>)<Q_OPERATOR>?</Q_OPERATOR>;
+        <MACRO>info!</MACRO>("{} byte(s) written", s);
+        <ENUM_VARIANT>Ok</ENUM_VARIANT>(s)
+    }
+}
+
 /* Block comment */
 fn <FUNCTION_DECLARATION>main</FUNCTION_DECLARATION>() {
     // A simple integer calculator:
     // `+` or `-` means add or subtract by 1
     // `*` or `/` means multiply or divide by 2
 
-    let input = <ENUM>Option</ENUM>::None;
+    let input = <ENUM>Option</ENUM>::<ENUM_VARIANT>None</ENUM_VARIANT>;
     let program = input.<INSTANCE_METHOD>unwrap_or_else</INSTANCE_METHOD>(|| "+ + * - /");
     let mut <MUT_BINDING>accumulator</MUT_BINDING> = 0;
 
