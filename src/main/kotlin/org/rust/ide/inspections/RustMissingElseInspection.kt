@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.RustIfExprElement
  * QuickFix: Change to `else if`
  */
 class RustMissingElseInspection : RustLocalInspectionTool() {
-    override fun getDisplayName(): String = "Missing else"
+    override fun getDisplayName() = "Missing else"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {

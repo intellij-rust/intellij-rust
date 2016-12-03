@@ -143,7 +143,7 @@ class RustParameterInfoHandlerTest : RustTestCaseBase() {
         fn main() { foo()<caret>; }
     """, "", -1)
 
-    fun testNotArgs3() = checkByText("""
+    fun testNotAppliedWithinDeclaration() = checkByText("""
         fn foo(v<caret>: u32) {}
     """, "", -1)
 
@@ -155,7 +155,7 @@ class RustParameterInfoHandlerTest : RustTestCaseBase() {
         // Check hint
         val elt = handler.findElementForParameterInfo(createContext)
         if (hint.isNotEmpty()) {
-            elt ?: throw AssertionFailedError("Element not found")
+            elt ?: throw AssertionFailedError("Hint not found")
             handler.showParameterInfo(elt, createContext)
             val items = createContext.itemsToShow ?: throw AssertionFailedError("Parameters are not shown")
             if (items.isEmpty()) throw AssertionFailedError("Paremeters are empty")
@@ -169,7 +169,7 @@ class RustParameterInfoHandlerTest : RustTestCaseBase() {
             handler.updateParameterInfo(element, updateContext)
             TestCase.assertEquals(index, updateContext.currentParameter)
         } else if (elt != null) {
-            throw AssertionFailedError("Unexpected element found")
+            throw AssertionFailedError("Unexpected hint found")
         }
     }
 }

@@ -14,7 +14,7 @@ import org.rust.lang.core.psi.*
  * QuickFix 2: Change `a =? b` to `a = ?b`
  */
 class RustSuspiciousAssignmentInspection : RustLocalInspectionTool() {
-    override fun getDisplayName(): String = "Suspicious assignment"
+    override fun getDisplayName() = "Suspicious assignment"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RustElementVisitor() {

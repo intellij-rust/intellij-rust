@@ -5,8 +5,6 @@ package org.rust.ide.inspections
  */
 class RustSuspiciousAssignmentInspectionTest : RustInspectionsTestBase() {
 
-    override val dataPath = ""
-
     fun testMinus() = checkByText<RustSuspiciousAssignmentInspection>("""
         fn main() {
             let mut a = 12;

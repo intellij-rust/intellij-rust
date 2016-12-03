@@ -1,15 +1,9 @@
 package org.rust.ide.inspections
 
-import com.intellij.testFramework.LightProjectDescriptor
-
 /**
  * Tests for lint level detection.
  */
-class RustLintLevelTest : RustInspectionsTestBase() {
-
-    override val dataPath = ""
-
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
+class RustLintLevelTest : RustInspectionsTestBase(true) {
 
     fun testDirrectAllow() = checkByText<RustStructNamingInspection>("""
         #[allow(non_camel_case_types)]

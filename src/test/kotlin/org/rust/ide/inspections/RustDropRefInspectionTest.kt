@@ -1,15 +1,9 @@
 package org.rust.ide.inspections
 
-import com.intellij.testFramework.LightProjectDescriptor
-
 /**
  * Tests for Drop Reference inspection.
  */
-class RustDropRefInspectionTest : RustInspectionsTestBase() {
-
-    override val dataPath = ""
-
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
+class RustDropRefInspectionTest : RustInspectionsTestBase(true) {
 
     fun testDropRefSimple() = checkByText<RustDropRefInspection>("""
         fn main() {

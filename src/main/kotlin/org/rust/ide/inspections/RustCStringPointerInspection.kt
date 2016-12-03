@@ -16,9 +16,7 @@ class RustCStringPointerInspection : RustLocalInspectionTool() {
 
                 val methodCallExpr = expr.expr
                 if (methodCallExpr !is RustMethodCallExprElement || methodCallExpr.identifier.text != "unwrap") return
-
-                val callExpr = methodCallExpr.expr
-                if (callExpr !is RustCallExprElement) return
+                val callExpr = methodCallExpr.expr as? RustCallExprElement ?: return
 
                 val pathExpr = callExpr.expr
                 if (pathExpr is RustPathExprElement

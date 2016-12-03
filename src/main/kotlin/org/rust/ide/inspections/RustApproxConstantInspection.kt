@@ -21,7 +21,7 @@ class RustApproxConstantInspection : RustLocalInspectionTool() {
         holder.registerProblem(literal, literal.suffix ?: "f64", constant)
     }
 
-    companion object {
+    private companion object {
         val KNOWN_CONSTS = listOf(
             PredefinedConstant("E", Math.E, 4),
             PredefinedConstant("FRAC_1_PI", 1.0 / Math.PI, 4),
@@ -46,9 +46,7 @@ class RustApproxConstantInspection : RustLocalInspectionTool() {
 data class PredefinedConstant(val name: String, val value: Double, val minDigits: Int) {
     val accuracy = Math.pow(0.1, minDigits.toDouble())
 
-    fun matches(value: Double): Boolean {
-        return Math.abs(value - this.value) < accuracy
-    }
+    fun matches(value: Double) = Math.abs(value - this.value) < accuracy
 }
 
 private fun ProblemsHolder.registerProblem(element: PsiElement, type: String, constant: PredefinedConstant) {

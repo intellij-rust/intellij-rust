@@ -15,7 +15,7 @@ import org.rust.lang.core.psi.*
  * ```
  */
 class RustExtraSemicolonInspection : RustLocalInspectionTool() {
-    override fun getDisplayName(): String = "Extra semicolon"
+    override fun getDisplayName() = "Extra semicolon"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RustElementVisitor() {
@@ -36,9 +36,9 @@ private fun inspect(holder: ProblemsHolder, fn: RustFnElement) {
         lastStatement,
         "Function returns () instead of ${retType.text}",
         object : LocalQuickFix {
-            override fun getName(): String = "Remove semicolon"
+            override fun getName() = "Remove semicolon"
 
-            override fun getFamilyName(): String = name
+            override fun getFamilyName() = name
 
             override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
                 val statement = (descriptor.psiElement as RustExprStmtElement)

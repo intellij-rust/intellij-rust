@@ -5,8 +5,6 @@ package org.rust.ide.inspections
  */
 class RustDoubleNegInspectionTest : RustInspectionsTestBase() {
 
-    override val dataPath = ""
-
     fun testSimple() = checkByText<RustDoubleNegInspection>("""
         fn main() {
             let a = 12;

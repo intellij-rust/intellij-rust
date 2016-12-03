@@ -1,7 +1,6 @@
 package org.rust.ide.inspections
 
 class RustTryMacroInspectionTest : RustInspectionsTestBase() {
-    override val dataPath: String get() = ""
 
     fun testFix() = checkFixByText<RustTryMacroInspection>("Change try! to ?", """
         fn foo() -> Result<(), ()> {
@@ -15,4 +14,3 @@ class RustTryMacroInspectionTest : RustInspectionsTestBase() {
         }
     """)
 }
-

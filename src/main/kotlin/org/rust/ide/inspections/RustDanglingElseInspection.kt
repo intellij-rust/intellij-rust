@@ -17,7 +17,7 @@ import org.rust.lang.core.psi.RustIfExprElement
  * Quick fix 2: Join `else if`
  */
 class RustDanglingElseInspection : RustLocalInspectionTool() {
-    override fun getDisplayName(): String = "Dangling else"
+    override fun getDisplayName() = "Dangling else"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {

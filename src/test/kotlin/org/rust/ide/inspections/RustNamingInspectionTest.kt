@@ -1,15 +1,9 @@
 package org.rust.ide.inspections
 
-import com.intellij.testFramework.LightProjectDescriptor
-
 /**
  * Tests for the set of Naming Convention inspections.
  */
-class RustNamingInspectionTest : RustInspectionsTestBase() {
-
-    override val dataPath = ""
-
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
+class RustNamingInspectionTest : RustInspectionsTestBase(true) {
 
     fun testAssociatedTypes() = checkByText<RustAssocTypeNamingInspection>("""
         trait Foo {
