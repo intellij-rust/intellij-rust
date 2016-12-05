@@ -57,9 +57,9 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
 
     /**
      * Alarm used to coalesce consecutive update requests.
-     * It uses dispatch-thread.
+     * It uses a pooled thread. Actual updates happen on EDT thread.
      */
-    private val alarm = Alarm()
+    private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, module)
     private var wantsUpdate by EdtOnly(false)
     private val pendingUpdates by EdtOnly(SmartHashSet<UpdateTask>())
 
@@ -81,7 +81,6 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     }
 
     override fun disposeComponent() {
-        alarm.dispose()
     }
 
     override fun projectClosed() { /* NOP */ }
@@ -118,7 +117,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
         if (immediately)
             task.queueIfNeeded()
         else
-            alarm.addRequest({ task.queueIfNeeded() }, DELAY, ModalityState.any())
+            alarm.addRequest({ task.queueIfNeeded() }, DELAY)
     }
 
     /**
@@ -231,7 +230,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
                 } else {
                     wantsUpdate = true
                 }
-            }, ModalityState.any())
+            }, ModalityState.NON_MODAL)
         }
     }
 
