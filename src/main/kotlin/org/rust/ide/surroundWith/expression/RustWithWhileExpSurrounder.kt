@@ -26,9 +26,12 @@ class RustWithWhileExpSurrounder : RustExpressionSurrounderBase<RustWhileExprEle
     override fun doPostprocessAndGetSelectionRange(editor: Editor, expression: PsiElement): TextRange? {
         var block = (expression as? RustWhileExprElement)?.block ?: return null
         block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block)
+        val rbrace = checkNotNull(block.rbrace) {
+            "Incomplete block in while surrounder"
+        }
 
         val offset = block.lbrace.textOffset + 1
-        editor.document.deleteString(offset, block.rbrace.textOffset)
+        editor.document.deleteString(offset, rbrace.textOffset)
         return TextRange.from(offset, 0)
     }
 }

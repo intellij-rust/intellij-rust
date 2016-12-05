@@ -18,7 +18,7 @@ class MatchToIfLetIntention : PsiElementBaseIntentionAction() {
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         val matchExpr = checkNotNull(findMathExpr(element))
         val matchBody = checkNotNull(matchExpr.matchBody)
-        val arm =  matchBody.matchArmList.find { it.expr?.isVoid == false } ?: return
+        val arm = matchBody.matchArmList.find { it.expr?.isVoid == false } ?: return
         var bodyText = arm.expr?.text ?: return
         if (arm.expr !is RustBlockExprElement) {
             bodyText = "{\n$bodyText\n}"
@@ -47,8 +47,7 @@ class MatchToIfLetIntention : PsiElementBaseIntentionAction() {
         }
     }
 
-    val RustExprElement.isVoid: Boolean get() =
-    (this is RustBlockExprElement &&
-        (block?.lbrace.getNextNonCommentSibling()?.equals(this.block?.rbrace) ?: true)) ||
-        this is RustUnitExprElement
+    val RustExprElement.isVoid: Boolean
+        get() = (this is RustBlockExprElement && block?.lbrace.getNextNonCommentSibling() == block?.rbrace)
+            || this is RustUnitExprElement
 }

@@ -1153,6 +1153,7 @@ private lit ::= ( STRING_LITERAL
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 fake block ::= '{' inner_attr* (item | stmt)* expr? '}' {
+  pin = 1
   implements = [ "org.rust.lang.core.psi.RustItemsOwner"
                  "org.rust.lang.core.resolve.scope.RustResolveScope" ]
 }
