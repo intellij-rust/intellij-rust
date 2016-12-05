@@ -70,8 +70,6 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
      */
     private var cached: CargoProjectDescription? = null
 
-    /** Component hooks */
-
     override fun getComponentName(): String = "org.rust.cargo.CargoProjectWorkspace"
 
     override fun initComponent() {
@@ -81,11 +79,14 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     }
 
     override fun disposeComponent() {
+        // Nothing to do here, bind all cleanup to `module`, which is Disposable
     }
 
-    override fun projectClosed() { /* NOP */ }
+    override fun projectClosed() {
+    }
 
-    override fun projectOpened() { /* NOP */ }
+    override fun projectOpened() {
+    }
 
     override fun moduleAdded() {
         module.project.toolchain?.let { toolchain ->
@@ -149,7 +150,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
         notifyCargoProjectUpdate(r)
 
         when (r) {
-            is UpdateResult.Ok  -> LOG.info("Project '${module.project.name}' successfully updated")
+            is UpdateResult.Ok -> LOG.info("Project '${module.project.name}' successfully updated")
             is UpdateResult.Err -> LOG.info("Project '${module.project.name}' update failed", r.error)
         }
     }
@@ -257,7 +258,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
 
             if (!module.project.rustSettings.autoUpdateEnabled) return
             val toolchain = module.project.toolchain ?: return
-            if (events.any { isInterestingEvent(it) }) {
+            if (events.any(::isInterestingEvent)) {
                 requestUpdateUsing(toolchain)
             }
         }
