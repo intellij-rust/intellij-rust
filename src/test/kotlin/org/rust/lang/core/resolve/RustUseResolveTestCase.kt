@@ -1,7 +1,6 @@
 package org.rust.lang.core.resolve
 
 class RustUseResolveTestCase : RustResolveTestCaseBase() {
-    override fun getTestDataPath() = super.getTestDataPath() + "/use"
 
     fun testViewPath() = checkByCode("""
         mod foo {
@@ -14,7 +13,6 @@ class RustUseResolveTestCase : RustResolveTestCaseBase() {
                    //X
         }
     """)
-
 
     fun testUsePath() = checkByCode("""
         fn foo() { }
@@ -448,5 +446,4 @@ class RustUseResolveTestCase : RustResolveTestCaseBase() {
              //^ unresolved
         }
     """)
-
 }
