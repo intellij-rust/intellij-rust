@@ -1,6 +1,7 @@
 package org.rust.cargo.toolchain
 
 import com.google.common.util.concurrent.SettableFuture
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiDocumentManager
@@ -23,7 +24,17 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
     override val dataPath: String = "src/test/resources/org/rust/cargo/toolchain/fixtures"
 
-    private val TIMEOUT: Long = 5 * 60 * 1000 /* millis */
+    private val TIMEOUT: Long = 60 * 1000 /* millis */
+
+    override fun runTest() {
+        // IDEA 15 fails to execute `onComplete` callback in test mode
+        // if not on the EDT. I don't see a clean workaround, so let's just
+        // skip these tests then :(
+        if (ApplicationInfo.getInstance().majorVersion == "15") {
+            return
+        }
+        super.runTest()
+    }
 
     override fun runInDispatchThread(): Boolean = false
     override fun setUp() = runOnEdt { super.setUp() }
