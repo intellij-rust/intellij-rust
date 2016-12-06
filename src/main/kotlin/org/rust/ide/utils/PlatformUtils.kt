@@ -43,15 +43,3 @@ fun checkWriteAccessAllowed() {
         "Needs write action"
     }
 }
-
-class EdtOnly<T>(private var value: T) {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        check(ApplicationManager.getApplication().isDispatchThread)
-        return value
-    }
-
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, newValue: T) {
-        check(ApplicationManager.getApplication().isDispatchThread)
-        value = newValue
-    }
-}
