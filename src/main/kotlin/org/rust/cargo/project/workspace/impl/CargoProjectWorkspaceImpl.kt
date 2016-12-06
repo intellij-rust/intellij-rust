@@ -25,14 +25,12 @@ import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
-import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener
-import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener.UpdateResult
+import org.rust.cargo.project.workspace.CargoProjectWorkspace.UpdateResult
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoLibraryName
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.updateLibrary
 import org.rust.ide.notifications.showBalloon
-import org.rust.ide.notifications.subscribeForOneMessage
 import org.rust.ide.utils.runWriteAction
 
 private val LOG = Logger.getInstance(CargoProjectWorkspaceImpl::class.java)
@@ -78,16 +76,13 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
 
     override fun moduleAdded() {
         val toolchain = module.project.toolchain ?: return
-        subscribeForOneMessage(module.messageBus, CargoProjectWorkspaceListener.Topics.UPDATES, object : CargoProjectWorkspaceListener {
-            override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
-                when (r) {
-                    is UpdateResult.Err -> module.project.showBalloon(
-                        "Project '${module.name}' failed to update.<br> ${r.error.message}", NotificationType.ERROR)
-                }
+        requestImmediateUpdate(toolchain) { result ->
+            when (result) {
+                is UpdateResult.Err -> module.project.showBalloon(
+                    "Project '${module.name}' failed to update.<br> ${result.error.message}", NotificationType.ERROR
+                )
             }
-        })
-
-        requestUpdateUsing(toolchain, immediately = true)
+        }
     }
 
     /**
@@ -96,12 +91,17 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
      * Works in two phases. First `cargo metadata` is executed on the background thread. Then,
      * the actual Library update happens on the event dispatch thread.
      */
-    override fun requestUpdateUsing(toolchain: RustToolchain, immediately: Boolean) {
-        val contentRoot = module.cargoProjectRoot ?: return
+    override fun requestUpdate(toolchain: RustToolchain) =
+        requestUpdate(toolchain, null)
 
+    override fun requestImmediateUpdate(toolchain: RustToolchain, afterCommit: (UpdateResult) -> Unit) =
+        requestUpdate(toolchain, afterCommit)
+
+    private fun requestUpdate(toolchain: RustToolchain, afterCommit: ((UpdateResult) -> Unit)?) {
+        val contentRoot = module.cargoProjectRoot ?: return
         updateQueue.submit({ completionToken ->
-            UpdateTask(toolchain, contentRoot.path, completionToken).queue()
-        }, immediately = immediately)
+            UpdateTask(toolchain, contentRoot.path, completionToken, afterCommit).queue()
+        }, immediately = afterCommit != null)
     }
 
     /**
@@ -130,8 +130,6 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
             }
         }
 
-        notifyCargoProjectUpdate(r)
-
         when (r) {
             is UpdateResult.Ok -> LOG.info("Project '${module.project.name}' successfully updated")
             is UpdateResult.Err -> LOG.info("Project '${module.project.name}' update failed", r.error)
@@ -146,16 +144,11 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
         module.updateLibrary(module.cargoLibraryName, libraryRoots)
     }
 
-    private fun notifyCargoProjectUpdate(r: UpdateResult) {
-        module.messageBus
-            .syncPublisher(CargoProjectWorkspaceListener.Topics.UPDATES)
-            .onWorkspaceUpdateCompleted(r)
-    }
-
     private inner class UpdateTask(
         private val toolchain: RustToolchain,
         private val projectDirectory: String,
-        private val completionToken: DebouncingQueue.CompletionToken
+        private val completionToken: DebouncingQueue.CompletionToken,
+        private val afterCommit: ((UpdateResult) -> Unit)? = null
     ) : Task.Backgroundable(module.project, "Updating cargo") {
 
         private var result: UpdateResult? = null
@@ -189,6 +182,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
             try {
                 val r = requireNotNull(result)
                 commitUpdate(r)
+                afterCommit?.invoke(r)
             } finally {
                 onDone()
             }
@@ -226,7 +220,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
             if (!module.project.rustSettings.autoUpdateEnabled) return
             val toolchain = module.project.toolchain ?: return
             if (events.any(::isInterestingEvent)) {
-                requestUpdateUsing(toolchain)
+                requestUpdate(toolchain)
             }
         }
     }

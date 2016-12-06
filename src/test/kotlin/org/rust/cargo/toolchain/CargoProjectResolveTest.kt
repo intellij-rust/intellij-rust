@@ -7,12 +7,13 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
 import com.intellij.psi.stubs.StubIndex
-import org.assertj.core.api.Assertions.assertThat
+import com.intellij.testFramework.EdtTestUtil
+import com.intellij.util.ThrowableRunnable
 import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
-import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener
-import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener.UpdateResult
+import org.rust.cargo.project.workspace.CargoProjectWorkspace.UpdateResult
 import org.rust.cargo.util.getComponentOrThrow
 import org.rust.lang.core.stubs.index.RustModulesIndex
 import java.util.concurrent.Future
@@ -23,6 +24,10 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
     override val dataPath: String = "src/test/resources/org/rust/cargo/toolchain/fixtures"
 
     private val TIMEOUT: Long = 10 * 1000 /* millis */
+
+    override fun runInDispatchThread(): Boolean = false
+    override fun setUp() = runOnEdt { super.setUp() }
+    override fun tearDown() = runOnEdt { super.tearDown() }
 
     fun testResolveExternalLibrary() = resolveRefInFile("external_library", "src/main.rs")
     fun testResolveLocalPackage() = resolveRefInFile("local_package", "src/main.rs")
@@ -36,49 +41,35 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
     private fun resolveRefInFile(project: String, fileWithRef: String, unresolved: Boolean = false) =
         withProject(project) {
-            val f = bindToProjectUpdateEvent {
-                val reference = extractReference(fileWithRef)
-                reference.resolve()
-            }
-
             // make sure that indexes do not depend on cargo project
             populateIndexes()
 
-            updateCargoProject()
+            updateCargoProject().get(TIMEOUT, TimeUnit.MILLISECONDS)
 
-            val result = f.get(TIMEOUT, TimeUnit.MILLISECONDS)
-            if (unresolved) {
-                check(result == null) { "Reference is erroneously resolved" }
-            } else {
-                checkNotNull(result) {
-                    "Unresolved reference in $fileWithRef"
+            runOnEdt {
+                val result = extractReference(fileWithRef).resolve()
+                if (unresolved) {
+                    check(result == null) { "Reference is erroneously resolved" }
+                } else {
+                    checkNotNull(result) {
+                        "Unresolved reference in $fileWithRef"
+                    }
                 }
             }
         }
 
-    private fun populateIndexes() {
-        StubIndex.getInstance().getAllKeys(RustModulesIndex.KEY, myProject)
-    }
+    private fun populateIndexes() = runOnEdt { StubIndex.getInstance().getAllKeys(RustModulesIndex.KEY, myProject) }
 
-    private fun <T> bindToProjectUpdateEvent(callback: (UpdateResult) -> T): Future<T> {
-        val f = SettableFuture.create<T>()
-
-        module.messageBus
-            .connect()
-            .subscribe(
-                CargoProjectWorkspaceListener.Topics.UPDATES,
-                object : CargoProjectWorkspaceListener {
-                    override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
-                        assertThat(r is UpdateResult.Ok)
-                        f.set(callback(r))
-                    }
-                })
-
-        return f
-    }
-
-    private fun updateCargoProject() {
-        module.getComponentOrThrow<CargoProjectWorkspace>().requestUpdateUsing(project.toolchain!!, immediately = true)
+    private fun updateCargoProject(): Future<CargoProjectDescription> {
+        val workspace = module.getComponentOrThrow<CargoProjectWorkspace>()
+        val future = SettableFuture.create<CargoProjectDescription>()
+        workspace.requestImmediateUpdate(project.toolchain!!) { result ->
+            when (result) {
+                is UpdateResult.Ok -> future.set(result.projectDescription)
+                is UpdateResult.Err -> error("Failed to update a project during tests: ${result.error.message}")
+            }
+        }
+        return future
     }
 
     private fun extractReference(path: String): PsiReference {
@@ -98,5 +89,9 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
         check(referenceOffset > 0)
 
         return psiFile.findReferenceAt(referenceOffset)!!
+    }
+
+    private fun runOnEdt(work: () -> Unit) {
+        EdtTestUtil.runInEdtAndWait(ThrowableRunnable { work() })
     }
 }

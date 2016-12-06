@@ -13,19 +13,3 @@ fun Project.showBalloon(content: String, type: NotificationType) {
     val notification = pluginNotifications.createNotification(content, type)
     Notifications.Bus.notify(notification, this)
 }
-
-/**
- * Subscribes to at most one message on the [topic].
- *
- * This function provides **zero guarantees** about which particular message will be delivered to the listener.
- * Don't use it for anything more important then notifications.
- *
- */
-fun <L> subscribeForOneMessage(bus: MessageBus, topic: Topic<L>, listener: L) {
-    val connection = bus.connect()
-    connection.setDefaultHandler { method, args ->
-        connection.disconnect()
-        method.invoke(listener, *args)
-    }
-    connection.subscribe(topic)
-}

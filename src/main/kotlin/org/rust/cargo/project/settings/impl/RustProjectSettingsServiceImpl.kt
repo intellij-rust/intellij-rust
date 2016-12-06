@@ -50,7 +50,7 @@ class RustProjectSettingsServiceImpl(
 
                 if (value != null) {
                     for (module in project.modules) {
-                        module.getComponentOrThrow<CargoProjectWorkspace>().requestUpdateUsing(value)
+                        module.getComponentOrThrow<CargoProjectWorkspace>().requestUpdate(value)
                     }
                 }
 

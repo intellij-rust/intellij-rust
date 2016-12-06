@@ -6,8 +6,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
-import org.rust.cargo.project.workspace.CargoProjectWorkspaceListener
-import org.rust.ide.notifications.subscribeForOneMessage
 import org.rust.cargo.util.getComponentOrThrow
 import org.rust.cargo.util.modulesWithCargoProject
 import org.rust.ide.notifications.showBalloon
@@ -35,22 +33,17 @@ class RefreshCargoProjectAction : AnAction() {
         for (module in modules) {
             val workspace = module.getComponentOrThrow<CargoProjectWorkspace>()
 
-            subscribeForOneMessage(module.messageBus, CargoProjectWorkspaceListener.Topics.UPDATES, object : CargoProjectWorkspaceListener {
-                override fun onWorkspaceUpdateCompleted(r: CargoProjectWorkspaceListener.UpdateResult) {
-                    val (type, content) = when (r) {
-                        is CargoProjectWorkspaceListener.UpdateResult.Ok ->
-                            NotificationType.INFORMATION to "Project '${module.name}' successfully updated!"
+            workspace.requestImmediateUpdate(toolchain) { result ->
+                val (type, content) = when (result) {
+                    is CargoProjectWorkspace.UpdateResult.Ok ->
+                        NotificationType.INFORMATION to "Project '${module.name}' successfully updated!"
 
-                        is CargoProjectWorkspaceListener.UpdateResult.Err ->
-                            NotificationType.ERROR to "Project '${module.name}' failed to update.<br> ${r.error.message}"
-                    }
-
-                    project.showBalloon(content, type)
+                    is CargoProjectWorkspace.UpdateResult.Err ->
+                        NotificationType.ERROR to "Project '${module.name}' failed to update.<br> ${result.error.message}"
                 }
 
-            })
-
-            workspace.requestUpdateUsing(toolchain)
+                project.showBalloon(content, type)
+            }
         }
     }
 }
