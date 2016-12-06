@@ -23,7 +23,7 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
     override val dataPath: String = "src/test/resources/org/rust/cargo/toolchain/fixtures"
 
-    private val TIMEOUT: Long = 60 * 1000 /* millis */
+    private val TIMEOUT: Long = 5 * 60 * 1000 /* millis */
 
     override fun runInDispatchThread(): Boolean = false
     override fun setUp() = runOnEdt { super.setUp() }
