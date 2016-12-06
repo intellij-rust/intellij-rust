@@ -77,18 +77,17 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     }
 
     override fun moduleAdded() {
-        module.project.toolchain?.let { toolchain ->
-            subscribeForOneMessage(module.messageBus, CargoProjectWorkspaceListener.Topics.UPDATES, object : CargoProjectWorkspaceListener {
-                override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
-                    when (r) {
-                        is UpdateResult.Err -> module.project.showBalloon(
-                            "Project '${module.name}' failed to update.<br> ${r.error.message}", NotificationType.ERROR)
-                    }
+        val toolchain = module.project.toolchain ?: return
+        subscribeForOneMessage(module.messageBus, CargoProjectWorkspaceListener.Topics.UPDATES, object : CargoProjectWorkspaceListener {
+            override fun onWorkspaceUpdateCompleted(r: UpdateResult) {
+                when (r) {
+                    is UpdateResult.Err -> module.project.showBalloon(
+                        "Project '${module.name}' failed to update.<br> ${r.error.message}", NotificationType.ERROR)
                 }
-            })
+            }
+        })
 
-            requestUpdateUsing(toolchain, immediately = true)
-        }
+        requestUpdateUsing(toolchain, immediately = true)
     }
 
     /**
@@ -140,10 +139,9 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     }
 
     private fun updateModuleDependencies(projectDescription: CargoProjectDescription) {
-        val libraryRoots =
-            projectDescription.packages
-                .filter { !it.isModule }
-                .mapNotNull { it.contentRoot }
+        val libraryRoots = projectDescription.packages
+            .filter { !it.isModule }
+            .mapNotNull { it.contentRoot }
 
         module.updateLibrary(module.cargoLibraryName, libraryRoots)
     }
