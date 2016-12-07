@@ -4,10 +4,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.ide.inspections.toSnakeCase
 import org.rust.ide.navigation.goto.RustSymbolNavigationContributor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.childOfType
 import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.types.RustUnknownType
 import org.rust.lang.core.types.util.resolvedType
 import java.util.*
 
@@ -21,11 +23,11 @@ import java.util.*
  */
 fun PsiElement.suggestNames(): LinkedHashSet<String> {
     val names = LinkedHashSet<String>()
-    nameForType(this)?.let { names.addAll(RustNameUtil(it)) }
+    nameForType(this)?.let { names.addAll(rustNameUtil(it)) }
 
     val foundNames = when {
-        this.isArgument() -> RustNameUtil(nameForArgument())
-        this is RustCallExprElement -> nameForCall(this).flatMap(::RustNameUtil)
+        this.isArgument() -> rustNameUtil(nameForArgument())
+        this is RustCallExprElement -> nameForCall(this).flatMap(::rustNameUtil)
         else -> emptyList()
     }
 
@@ -38,13 +40,13 @@ fun PsiElement.suggestNames(): LinkedHashSet<String> {
 }
 
 private fun nameForType(expr: PsiElement): String? {
-    val typeString = (expr as? RustExprElement)?.resolvedType.toString()
-    //doesn't really seem to do that much.
-    if (typeString != "unknown" && typeString != "null") {
-        return typeString.take(1)
+    val type = (expr as? RustExprElement)?.resolvedType
+
+    if (type is RustUnknownType || type == null) {
+        return null
     }
 
-    return null
+    return type.toString().take(1)
 }
 
 private fun nameForCall(expr: RustCallExprElement): List<String> {
@@ -68,26 +70,13 @@ fun PsiElement.nameForArgument(): String {
 }
 
 private fun findFnImpl(project: Project, callExpr: RustCallExprElement): RustFnItemElement? {
+//    return  callExpr.reference?.resolve() as? RustFnItemElement
     val navigator = RustSymbolNavigationContributor()
     val items = navigator.getItemsByName(callExpr.firstChild.text, null, project, false)
 
     return items.firstOrNull() as? RustFnItemElement
 }
 
-fun String.toSnakeCase(): String {
-    val builder = StringBuilder()
-    for (char in this.toCharArray()) {
-        if (char.isUpperCase()) {
-            builder
-                .append('_')
-                .append(char.toLowerCase())
-        } else {
-            builder.append(char)
-        }
-    }
-
-    return builder.toString()
-}
 
 fun findNamesInLocalScope(expr: PsiElement): List<String> {
     val blockScope = expr.parentOfType<RustBlockElement>(strict = false)
@@ -98,4 +87,4 @@ fun findNamesInLocalScope(expr: PsiElement): List<String> {
 
 private fun PsiElement.isArgument() = this.parent is RustArgListElement
 
-private fun RustNameUtil(name: String) = NameUtil.getSuggestionsByName(name, "", "", false, false, false).map(String::toSnakeCase)
+private fun rustNameUtil(name: String) = NameUtil.getSuggestionsByName(name, "", "", false, false, false).map { it.toSnakeCase(false) }

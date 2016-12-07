@@ -92,11 +92,4 @@ fn foo() {
         openFileInEditor("main.rs")
         action()
     }
-
-
-    @Test
-    fun testToSnakeCase() {
-        assertThat("variableName".toSnakeCase()).isEqualTo("variable_name")
-    }
-
 }
