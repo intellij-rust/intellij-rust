@@ -4,8 +4,8 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustIfExprElement
+import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.psi.util.parentOfType
 
 class AddElseIntention : PsiElementBaseIntentionAction() {
@@ -29,7 +29,7 @@ class AddElseIntention : PsiElementBaseIntentionAction() {
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         val ifStmnt = findContext(element)?.blockExpr ?: return
-        val ifExpr = RustElementFactory.createExpression(project, ifStmnt.text + "\nelse {}") as RustIfExprElement
+        val ifExpr = RustPsiFactory(project).createExpression("${ifStmnt.text}\nelse {}") as RustIfExprElement
         val elseBlockOffset = (ifStmnt.replace(ifExpr) as RustIfExprElement).elseBranch?.block?.textOffset ?: return
         editor?.caretModel?.moveToOffset(elseBlockOffset + 1) ?: return
     }

@@ -5,9 +5,9 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustModDeclItemElement
 import org.rust.lang.core.psi.RustModItemElement
+import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
 import org.rust.lang.core.psi.util.parentOfType
 
@@ -19,7 +19,7 @@ class ExtractInlineModuleIntention : PsiElementBaseIntentionAction() {
     override fun invoke(project: Project, editor: Editor, element: PsiElement) {
         val mod = element.parentOfType<RustModItemElement>() ?: return
         val modName = mod.name ?: return
-        var decl = RustElementFactory.createModDeclItem(project, modName) ?: return
+        var decl = RustPsiFactory(project).createModDeclItem(modName)
         decl = mod.parent?.addBefore(decl, mod) as? RustModDeclItemElement ?: return
         val modFile = decl.getOrCreateModuleFile() ?: return
 

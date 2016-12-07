@@ -4,8 +4,8 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustPathTypeElement
+import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.psi.RustRefTypeElement
 import org.rust.lang.core.psi.util.parentOfType
 
@@ -39,7 +39,7 @@ open class SetMutableIntention : PsiElementBaseIntentionAction() {
         val ref = element.parentOfType<RustRefTypeElement>() ?: return
         val path = ref.type as? RustPathTypeElement ?: return
 
-        val newType = RustElementFactory.createReference(project, path.text, mutable) ?: return
+        val newType = RustPsiFactory(project).createReferenceType(path.text, mutable)
         ref.replace(newType)
     }
 }

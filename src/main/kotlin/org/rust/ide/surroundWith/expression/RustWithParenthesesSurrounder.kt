@@ -4,15 +4,15 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustExprElement
 import org.rust.lang.core.psi.RustParenExprElement
+import org.rust.lang.core.psi.RustPsiFactory
 
 class RustWithParenthesesSurrounder : RustExpressionSurrounderBase<RustParenExprElement>() {
     override fun getTemplateDescription(): String = "(expr)"
 
     override fun createTemplate(project: Project): RustParenExprElement =
-        RustElementFactory.createExpression(project, "(a)") as RustParenExprElement
+        RustPsiFactory(project).createExpression("(a)") as RustParenExprElement
 
     override fun getWrappedExpression(expression: RustParenExprElement): RustExprElement =
         expression.expr

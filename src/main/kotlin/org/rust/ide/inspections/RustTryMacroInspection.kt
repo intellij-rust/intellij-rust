@@ -4,8 +4,8 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustElementVisitor
+import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.psi.RustTryExprElement
 import org.rust.lang.core.psi.RustTryMacroElement
 
@@ -27,7 +27,7 @@ class RustTryMacroInspection : RustLocalInspectionTool() {
                 override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
                     val macro = descriptor.psiElement.parent as RustTryMacroElement
                     val body = macro.tryMacroArgs?.expr ?: return
-                    val tryExpr = RustElementFactory.createExpression(project, "${body.text}?") as RustTryExprElement
+                    val tryExpr = RustPsiFactory(project).createExpression("${body.text}?") as RustTryExprElement
                     macro.replace(tryExpr)
                 }
             }

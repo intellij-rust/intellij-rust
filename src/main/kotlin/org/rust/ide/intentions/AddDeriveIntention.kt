@@ -40,7 +40,7 @@ class AddDeriveIntention : PsiElementBaseIntentionAction() {
             return existingDeriveAttr
         }
 
-        val attr = RustElementFactory.createOuterAttr(project, "derive()") ?: return null
+        val attr = RustPsiFactory(project).createOuterAttr("derive()")
         return item.addBefore(attr, keyword) as RustOuterAttrElement
     }
 

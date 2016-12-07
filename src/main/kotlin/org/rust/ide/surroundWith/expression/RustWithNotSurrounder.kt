@@ -4,7 +4,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RustExprElement
+import org.rust.lang.core.psi.RustParenExprElement
+import org.rust.lang.core.psi.RustPsiFactory
+import org.rust.lang.core.psi.RustUnaryExprElement
 import org.rust.lang.core.types.RustBooleanType
 import org.rust.lang.core.types.util.resolvedType
 
@@ -12,7 +15,7 @@ class RustWithNotSurrounder : RustExpressionSurrounderBase<RustUnaryExprElement>
     override fun getTemplateDescription(): String = "!(expr)"
 
     override fun createTemplate(project: Project): RustUnaryExprElement =
-        RustElementFactory.createExpression(project, "!(a)") as RustUnaryExprElement
+        RustPsiFactory(project).createExpression("!(a)") as RustUnaryExprElement
 
     override fun getWrappedExpression(expression: RustUnaryExprElement): RustExprElement =
         (expression.expr as RustParenExprElement).expr

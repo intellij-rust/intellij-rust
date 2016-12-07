@@ -7,8 +7,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.cargo.util.cargoProject
-import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.util.RustResolveUtil
@@ -17,7 +17,7 @@ import org.rust.lang.core.stubs.RustNamedElementStub
 abstract class RustStubbedNamedElementImpl<StubT> : RustStubbedElementImpl<StubT>,
                                                     RustNamedElement,
                                                     PsiNameIdentifierOwner
-    where StubT : RustNamedElementStub<*> {
+where StubT : RustNamedElementStub<*> {
 
     constructor(node: ASTNode) : super(node)
 
@@ -32,7 +32,7 @@ abstract class RustStubbedNamedElementImpl<StubT> : RustStubbedElementImpl<StubT
     }
 
     override fun setName(name: String): PsiElement? {
-        nameIdentifier?.replace(RustElementFactory.createIdentifier(project, name))
+        nameIdentifier?.replace(RustPsiFactory(project).createIdentifier(name))
         return this
     }
 

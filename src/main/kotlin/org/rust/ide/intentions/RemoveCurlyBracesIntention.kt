@@ -4,7 +4,7 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustElementFactory
+import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.psi.RustUseGlobElement
 import org.rust.lang.core.psi.RustUseItemElement
 import org.rust.lang.core.psi.util.parentOfType
@@ -44,7 +44,7 @@ class RemoveCurlyBracesIntention : PsiElementBaseIntentionAction() {
 
         // Conjure up a new use item to make a new path containing the
         // identifier we want; then grab the relevant parts
-        val newUseItem = RustElementFactory.createUseItem(project, "dummy::${identifier.text}") ?: return
+        val newUseItem = RustPsiFactory(project).createUseItem("dummy::${identifier.text}")
         val newPath = newUseItem.path ?: return
         val newSubPath = newPath.path ?: return
         val newAlias = newUseItem.alias

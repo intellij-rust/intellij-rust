@@ -5,9 +5,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustExprElement
 import org.rust.lang.core.psi.RustIfExprElement
+import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.types.RustBooleanType
 import org.rust.lang.core.types.util.resolvedType
 
@@ -15,7 +15,7 @@ class RustWithIfExpSurrounder : RustExpressionSurrounderBase<RustIfExprElement>(
     override fun getTemplateDescription(): String = "if expr"
 
     override fun createTemplate(project: Project): RustIfExprElement =
-        RustElementFactory.createExpression(project, "if a {stmnt;}") as RustIfExprElement
+        RustPsiFactory(project).createExpression("if a {stmnt;}") as RustIfExprElement
 
     override fun getWrappedExpression(expression: RustIfExprElement): RustExprElement =
         expression.expr

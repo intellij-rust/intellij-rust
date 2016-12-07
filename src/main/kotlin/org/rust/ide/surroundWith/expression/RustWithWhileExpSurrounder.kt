@@ -5,8 +5,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustExprElement
+import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.psi.RustWhileExprElement
 import org.rust.lang.core.types.RustBooleanType
 import org.rust.lang.core.types.util.resolvedType
@@ -15,7 +15,7 @@ class RustWithWhileExpSurrounder : RustExpressionSurrounderBase<RustWhileExprEle
     override fun getTemplateDescription(): String = "while expr"
 
     override fun createTemplate(project: Project): RustWhileExprElement =
-        RustElementFactory.createExpression(project, "while a {stmnt;}") as RustWhileExprElement
+        RustPsiFactory(project).createExpression("while a {stmnt;}") as RustWhileExprElement
 
     override fun getWrappedExpression(expression: RustWhileExprElement): RustExprElement =
         expression.expr

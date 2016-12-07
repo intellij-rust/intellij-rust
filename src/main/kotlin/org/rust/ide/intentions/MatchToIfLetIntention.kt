@@ -25,7 +25,7 @@ class MatchToIfLetIntention : PsiElementBaseIntentionAction() {
         }
 
         val rustIfLetExprElement =
-            RustElementFactory.createExpression(project, "if let ${arm.matchPat.text} = ${matchExpr.expr.text} $bodyText")
+            RustPsiFactory(project).createExpression("if let ${arm.matchPat.text} = ${matchExpr.expr.text} $bodyText")
                 as RustIfLetExprElement
         matchExpr.replace(rustIfLetExprElement)
     }

@@ -5,10 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.lang.core.psi.RustElementFactory
-import org.rust.lang.core.psi.RustImplItemElement
-import org.rust.lang.core.psi.RustStructItemElement
-import org.rust.lang.core.psi.RustStructOrEnumItemElement
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
 
 class ImplementStructIntention : PsiElementBaseIntentionAction() {
@@ -20,7 +17,7 @@ class ImplementStructIntention : PsiElementBaseIntentionAction() {
         val struct = element.parentOfType<RustStructItemElement>() ?: return
         val identifier = struct.identifier.text
 
-        var impl = RustElementFactory.createImplItem(project, identifier) ?: return
+        var impl = RustPsiFactory(project).createInherentImplItem(identifier)
         val file = element.parentOfType<PsiFile>() ?: return
 
         impl = file.addAfter(impl, struct) as? RustImplItemElement ?: return

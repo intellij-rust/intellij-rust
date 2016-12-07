@@ -6,8 +6,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.rust.lang.core.psi.RustBlockElement
-import org.rust.lang.core.psi.RustElementFactory
 import org.rust.lang.core.psi.RustExprElement
+import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.psi.util.ancestors
 import org.rust.lang.core.types.RustBooleanType
 import org.rust.lang.core.types.RustEnumType
@@ -19,7 +19,7 @@ internal object RustPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
         element.negate()
 
     override fun createExpression(context: PsiElement, prefix: String, suffix: String): PsiElement =
-        RustElementFactory.createExpression(context.project, "$prefix${context.text}$suffix")!!
+        RustPsiFactory(context.project).createExpression("$prefix${context.text}$suffix")
 }
 
 abstract class RustExprParentsSelectorBase(val pred: (RustExprElement) -> Boolean) : PostfixTemplateExpressionSelector {

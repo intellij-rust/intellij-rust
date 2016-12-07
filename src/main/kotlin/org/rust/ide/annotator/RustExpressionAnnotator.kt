@@ -28,12 +28,12 @@ class RustExpressionAnnotator : Annotator {
         decl: RustFieldsOwner,
         expr: RustStructExprBodyElement
     ) {
-        for (field in expr.structExprFieldList) {
-            if (field.reference.resolve() == null) {
-                holder.createErrorAnnotation(field.identifier, "No such field")
+        expr.structExprFieldList
+            .filter { it.reference.resolve() == null }
+            .forEach {
+                holder.createErrorAnnotation(it.identifier, "No such field")
                     .highlightType = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
             }
-        }
 
         for (field in expr.structExprFieldList.findDuplicateReferences()) {
             holder.createErrorAnnotation(field.identifier, "Duplicate field")
@@ -67,7 +67,7 @@ private class AddStructFieldsQuickFix(
         endElement: PsiElement
     ) {
         val expr = startElement as RustStructExprBodyElement
-        val newBody = RustElementFactory.createStructExprBody(project, fieldsToAdd.mapNotNull { it.name }) ?: return
+        val newBody = RustPsiFactory(project).createStructExprBody(fieldsToAdd.mapNotNull { it.name })
         val firstNewField = newBody.lbrace.nextSibling ?: return
         val lastNewField = newBody.rbrace?.prevSibling ?: return
         expr.addRangeAfter(firstNewField, lastNewField, expr.lbrace)

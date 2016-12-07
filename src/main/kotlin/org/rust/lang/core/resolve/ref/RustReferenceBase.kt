@@ -49,7 +49,7 @@ abstract class RustReferenceBase<T : RustReferenceElement>(
     companion object {
         @JvmStatic protected fun doRename(identifier: PsiElement, newName: String) {
             check(identifier.elementType == RustTokenElementTypes.IDENTIFIER)
-            identifier.replace(RustElementFactory.createIdentifier(identifier.project, newName.replace(".rs", "")))
+            identifier.replace(RustPsiFactory(identifier.project).createIdentifier(newName.replace(".rs", "")))
         }
     }
 }

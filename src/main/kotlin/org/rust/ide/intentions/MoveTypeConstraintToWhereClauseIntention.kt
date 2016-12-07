@@ -16,8 +16,8 @@ class MoveTypeConstraintToWhereClauseIntention : PsiElementBaseIntentionAction()
         if (!element.isWritable) return false
 
         val genericParams = element.parentOfType<RustGenericParamsElement>() ?: return false
-        val hasTypeBounds = !genericParams.typeParamList.filterNotNull().isEmpty()
-        val hasLifetimeBounds = !genericParams.lifetimeParamList.filterNotNull().isEmpty()
+        val hasTypeBounds = genericParams.typeParamList.any { it.typeParamBounds != null }
+        val hasLifetimeBounds = genericParams.lifetimeParamList.any { it.lifetimeParamBounds != null }
         return hasTypeBounds || hasLifetimeBounds
     }
 
@@ -25,7 +25,7 @@ class MoveTypeConstraintToWhereClauseIntention : PsiElementBaseIntentionAction()
         val genericParams = element.parentOfType<RustGenericParamsElement>() ?: return
         val lifetimeBounds = genericParams.lifetimeParamList
         val typeBounds = genericParams.typeParamList
-        val whereClause = RustElementFactory.createWhereClause(project, lifetimeBounds, typeBounds) ?: return
+        val whereClause = RustPsiFactory(project).createWhereClause(lifetimeBounds, typeBounds)
 
         val declaration = element.parentOfType<RustGenericDeclaration>() ?: return
         val addedClause = declaration.addWhereClause(whereClause) ?: return

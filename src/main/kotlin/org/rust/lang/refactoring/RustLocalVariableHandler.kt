@@ -72,6 +72,9 @@ class RustIntroduceVariableRefactoring(
     private val editor: Editor,
     private val file: RustFile
 ) {
+
+    private val psiFactory = RustPsiFactory(project)
+
     fun possibleTargets(): List<RustExprElement> {
         val selection = editor.selectionModel
         return if (selection.hasSelection()) {
@@ -109,8 +112,8 @@ class RustIntroduceVariableRefactoring(
         val parent = expr.parent
 
         when {
-            anchor == expr -> inlineLet(project, editor, anchor, { RustElementFactory.createVariableDeclaration(project, "x", it) })
-            parent is RustExprStmtElement -> inlineLet(project, editor, parent, { RustElementFactory.createVariableDeclarationFromStmt(project, "x", it) })
+            anchor == expr -> inlineLet(project, editor, anchor, { psiFactory.createLetDeclaration("x", it) })
+            parent is RustExprStmtElement -> inlineLet(project, editor, parent, { psiFactory.createLetDeclaration("x", it) })
             else -> replaceElementForAllExpr(exprs)
         }
     }
@@ -118,7 +121,7 @@ class RustIntroduceVariableRefactoring(
     fun replaceElementForAllExpr(exprs: List<PsiElement>) {
         val expr = exprs.first()
 
-        val (let, name) = createLet(project, expr)
+        val (let, name) = createLet(expr)
             ?: return
 
         var nameElem: RustPatBindingElement? = null
@@ -137,18 +140,16 @@ class RustIntroduceVariableRefactoring(
      * Creates a let binding for the found expression.
      * Returning handles to the complete let expr and the identifier inside the newly created let binding.
      */
-    private fun createLet(project: Project, expr: PsiElement): Pair<RustLetDeclElement, PsiElement>? {
+    private fun createLet(expr: PsiElement): Pair<RustLetDeclElement, PsiElement>? {
         val parent = expr.parent
 
-        val let = if (parent is RustUnaryExprElement && parent.mut != null) {
-            RustElementFactory.createMutableVariableDeclaration(project, "x", expr)
-        } else {
-            RustElementFactory.createVariableDeclaration(project, "x", expr)
-        }
+        val mutable = parent is RustUnaryExprElement && parent.mut != null
+        val let = psiFactory.createLetDeclaration("x", expr, mutable = mutable)
 
         val binding = let.findBinding()
+            ?: error("Faild to create a proper let expression: `${let.text}`")
 
-        return binding?.let { Pair(let, it.identifier) }
+        return let to binding.identifier
     }
 
     private fun introduceLet(project: Project, expr: PsiElement, let: RustLetDeclElement): PsiElement? {

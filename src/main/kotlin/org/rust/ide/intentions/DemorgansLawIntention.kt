@@ -84,7 +84,7 @@ class DemorgansLawIntention : PsiElementBaseIntentionAction() {
             expressionToReplace = parent as RustExprElement
             expString = converted
         }
-        val newExpr = RustElementFactory.createExpression(project, expString) ?: return
+        val newExpr = RustPsiFactory(project).createExpression(expString)
 
         expressionToReplace.replace(newExpr)
     }

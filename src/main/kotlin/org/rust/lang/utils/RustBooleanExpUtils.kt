@@ -7,12 +7,12 @@ fun RustBinaryExprElement.negateToString(): String {
     val lhs = left.text
     val rhs = right?.text ?: ""
     val op = when (operatorType) {
-        RustTokenElementTypes.EQEQ      -> "!="
-        RustTokenElementTypes.EXCLEQ    -> "=="
-        RustTokenElementTypes.GT        -> "<="
-        RustTokenElementTypes.LT        -> ">="
-        RustTokenElementTypes.GTEQ      -> "<"
-        RustTokenElementTypes.LTEQ      -> ">"
+        RustTokenElementTypes.EQEQ -> "!="
+        RustTokenElementTypes.EXCLEQ -> "=="
+        RustTokenElementTypes.GT -> "<="
+        RustTokenElementTypes.LT -> ">="
+        RustTokenElementTypes.GTEQ -> "<"
+        RustTokenElementTypes.LTEQ -> ">"
         else -> null
     }
     return if (op != null) "$lhs $op $rhs" else "!($text)"
@@ -21,23 +21,21 @@ fun RustBinaryExprElement.negateToString(): String {
 fun PsiElement.isNegation(): Boolean =
     this is RustUnaryExprElement && excl != null
 
-fun PsiElement.negate() : PsiElement {
-    when {
+fun PsiElement.negate(): PsiElement {
+    val psiFactory = RustPsiFactory(project)
+    return when {
         isNegation() -> {
-            val e = (this as RustUnaryExprElement).expr
-            return if (e is RustParenExprElement) return e.expr
-            else checkNotNull(e)
+            val inner = (this as RustUnaryExprElement).expr!!
+            (inner as? RustParenExprElement)?.expr ?: inner
         }
 
         this is RustBinaryExprElement ->
-            return checkNotNull(RustElementFactory.createExpression(project, negateToString()))
+            psiFactory.createExpression(negateToString())
 
-        this is RustParenExprElement ||
-        this is RustPathExprElement  ||
-        this is RustCallExprElement      ->
-            return checkNotNull(RustElementFactory.createExpression(project, "!$text"))
+        this is RustParenExprElement || this is RustPathExprElement || this is RustCallExprElement ->
+            psiFactory.createExpression("!$text")
 
         else ->
-            return checkNotNull(RustElementFactory.createExpression(project, "!($text)"))
+            psiFactory.createExpression("!($text)")
     }
 }

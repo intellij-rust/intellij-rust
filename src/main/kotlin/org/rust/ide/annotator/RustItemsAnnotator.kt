@@ -106,7 +106,7 @@ private class AddModuleFile(
             val containingFile = modDecl.containingFile as RustFile
             RustExpandModuleAction.expandModule(containingFile)
         }
-        modDecl.getOrCreateModuleFile()?.let { it.navigate(true) }
+        modDecl.getOrCreateModuleFile()?.navigate(true)
     }
 
 }
@@ -131,10 +131,10 @@ private class ImplementMethods(
         endElement: PsiElement
     ) {
         val impl = (startElement as RustImplItemElement)
-        val templateImpl = RustElementFactory.createImplItem(project, methods) ?: return
+        val templateImpl = RustPsiFactory(project).createTraitImplItem(methods)
         val lastMethodOrBrace = impl.implMethodMemberList.lastOrNull() ?: impl.lbrace ?: return
-        val firstToAdd = templateImpl.implMethodMemberList.firstOrNull() ?: return
-        val lastToAdd = templateImpl.implMethodMemberList.lastOrNull() ?: return
+        val firstToAdd = templateImpl.implMethodMemberList.first()
+        val lastToAdd = templateImpl.implMethodMemberList.last()
         impl.addRangeAfter(firstToAdd, lastToAdd, lastMethodOrBrace)
     }
 
