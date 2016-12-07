@@ -6,7 +6,7 @@ import org.junit.Test
 import org.rust.lang.RustTestCaseBase
 import org.rust.lang.core.psi.impl.RustFile
 
-class NameSuggestionsKtTest : RustTestCaseBase() {
+class RustNameSuggestionsKtTest : RustTestCaseBase() {
     override val dataPath = "org/rust/lang/refactoring/fixtures/introduce_variable/"
 
     fun testArgumentNames() = doTest("""
@@ -22,7 +22,7 @@ fn bar() {
         val expr = refactoring.possibleTargets().first()
 
         assertThat(nameForArgument(project, expr)).isEqualTo("veryCoolVariableName")
-        assertThat(suggestedNames(project, expr)).containsExactly("name", "variable_name", "cool_variable_name" ,"very_cool_variable_name")
+        assertThat(suggestedNames(project, expr)).containsExactly("name", "variable_name", "cool_variable_name", "very_cool_variable_name")
     }
 
     fun testNonDirectArgumentNames() = doTest("""
@@ -39,7 +39,6 @@ fn bar() {
 
         assertThat(suggestedNames(project, expr)).containsExactly("i")
     }
-
 
 
     fun testFunctionNames() = doTest("""
@@ -60,7 +59,7 @@ fn bar() {
     }
 
     fun testStringNew() = doTest(
-    """
+        """
         fn read_file() -> Result<String, Error> {
         let file = File::open("res/input.txt")?;
 
@@ -72,6 +71,19 @@ fn bar() {
         val expr = refactoring.possibleTargets().first()
 
         assertThat(suggestedNames(project, expr)).containsExactly("new", "string")
+    }
+
+    fun testLocalNames() = doTest("""
+fn foo() {
+    let a = 5;
+    let b = String::new();
+    5/*caret*/+ 10;
+}
+""") {
+        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
+        val expr = refactoring.possibleTargets().first()
+
+        assertThat(findNamesInLocalScope(expr)).containsExactly("a", "b")
     }
 
 
