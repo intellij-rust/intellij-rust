@@ -59,6 +59,22 @@ fn bar() {
         assertThat(names).containsExactly("i", "foo")
     }
 
+    fun testStringNew() = doTest(
+    """
+        fn read_file() -> Result<String, Error> {
+        let file = File::open("res/input.txt")?;
+
+        file.read_to_string(&mut String:/*caret*/:new())?;
+
+        Ok(x)
+    }""") {
+        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
+        val expr = refactoring.possibleTargets().first()
+
+        assertThat(suggestedNames(project, expr)).containsExactly("new", "string")
+    }
+
+
     private fun doTest(@Language("Rust") before: String, action: () -> Unit) {
         InlineFile(before).withCaret()
         openFileInEditor("main.rs")

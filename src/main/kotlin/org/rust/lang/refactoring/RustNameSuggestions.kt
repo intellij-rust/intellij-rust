@@ -1,37 +1,53 @@
-package org.rust.lang.refactoring
+    package org.rust.lang.refactoring
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.NameUtil
 import org.rust.ide.navigation.goto.RustSymbolNavigationContributor
-import org.rust.lang.core.psi.RustArgListElement
-import org.rust.lang.core.psi.RustCallExprElement
-import org.rust.lang.core.psi.RustExprElement
-import org.rust.lang.core.psi.RustFnItemElement
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.types.util.resolvedType
 import java.util.*
 
-fun suggestedNames(project: Project, expr: RustExprElement): LinkedHashSet<String> {
+fun suggestedNames(project: Project, expr: PsiElement): LinkedHashSet<String> {
     val names = LinkedHashSet<String>()
 
-    val typeString = expr.resolvedType.toString()
-    //doesn't really seem to do that much.
-    if (typeString != "unkown") {
-        names.addAll(RustNameUtil(typeString.take(1)))
-    }
+
+    nameForType(expr)?.let { names.addAll(RustNameUtil(it)) }
 
     if (expr.isArgument()) {
         val name = nameForArgument(project, expr)
         val suggestionsByName = RustNameUtil(name)
         names.addAll(suggestionsByName)
     } else if (expr is RustCallExprElement) {
-        names.addAll(RustNameUtil(expr.expr.text))
+        names.addAll(nameForCall(expr).flatMap(::RustNameUtil))
     }
 
     return names
 }
 
-fun nameForArgument(project: Project, expr: RustExprElement): String {
+fun nameForType(expr: PsiElement): String? {
+    val typeString = (expr as? RustExprElement)?.resolvedType.toString()
+    //doesn't really seem to do that much.
+    if (typeString != "unkown" && typeString != "null") {
+        return typeString.take(1)
+    }
+
+    return null
+}
+
+fun nameForCall(expr: RustCallExprElement): List<String> {
+    val pathElement = expr.expr
+    if (pathElement is RustPathExprElement) {
+        val path = pathElement.path
+
+        //path.path gives us the x's out of: Xxx::yyy
+        return listOf(path.identifier, path.path).filterNotNull().map(PsiElement::getText)
+    }
+    return listOf(pathElement.text)
+}
+
+fun nameForArgument(project: Project, expr: PsiElement): String {
     val call = expr.parentOfType<RustCallExprElement>(strict = false) ?: return ""
 
     val parameterIndex = call.argList.children.indexOf(expr)
@@ -62,6 +78,6 @@ fun String.toSnakeCase(): String {
     return builder.toString()
 }
 
-fun RustExprElement.isArgument() = this.parent is RustArgListElement
+fun PsiElement.isArgument() = this.parent is RustArgListElement
 
 fun RustNameUtil(name: String) = NameUtil.getSuggestionsByName(name, "", "", false, false, false).map(String::toSnakeCase)

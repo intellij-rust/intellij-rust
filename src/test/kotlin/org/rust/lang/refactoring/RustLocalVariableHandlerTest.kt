@@ -12,8 +12,8 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
             foo(5 + /*caret*/10);
         }""", """
         fn hello() {
-            let x = 10;
-            foo(5 + x);
+            let i = 10;
+            foo(5 + i);
         }""")
     {
         val ref = refactoring()
@@ -128,11 +128,11 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
         }""", """
         fn read_file() -> Result<String, Error> {
             let file = File::open("res/input.txt")?;
-            let mut x = String::new();
+            let mut new = String::new();
 
-            file.read_to_string(&mut x)?;
+            file.read_to_string(&mut new)?;
 
-            Ok(x)
+            Ok(new)
         }""")
     {
         val ref = refactoring()
