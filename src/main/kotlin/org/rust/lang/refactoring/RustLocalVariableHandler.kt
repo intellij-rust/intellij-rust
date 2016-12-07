@@ -133,7 +133,7 @@ class RustIntroduceVariableRefactoring(
         }
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-        nameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(suggestedNames(project, expr)) }
+        nameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(expr.suggestNames()) }
     }
 
     /**
@@ -170,7 +170,7 @@ class RustIntroduceVariableRefactoring(
         }
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-        newNameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(suggestedNames(project, stmt)) }
+        newNameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(stmt.suggestNames()) }
     }
 
     private fun moveEditorToNameElement(editor: Editor, element: PsiElement?): RustPatBindingElement? {

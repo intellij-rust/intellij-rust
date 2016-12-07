@@ -21,8 +21,8 @@ fn bar() {
         val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
         val expr = refactoring.possibleTargets().first()
 
-        assertThat(nameForArgument(project, expr)).isEqualTo("veryCoolVariableName")
-        assertThat(suggestedNames(project, expr)).containsExactly("name", "variable_name", "cool_variable_name", "very_cool_variable_name")
+        assertThat(expr.nameForArgument()).isEqualTo("veryCoolVariableName")
+        assertThat(expr.suggestNames()).containsExactly("name", "variable_name", "cool_variable_name", "very_cool_variable_name")
     }
 
     fun testNonDirectArgumentNames() = doTest("""
@@ -37,7 +37,7 @@ fn bar() {
         val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
         val expr = refactoring.possibleTargets().first()
 
-        assertThat(suggestedNames(project, expr)).containsExactly("i")
+        assertThat(expr.suggestNames()).containsExactly("i")
     }
 
 
@@ -54,7 +54,7 @@ fn bar() {
         val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
         val expr = refactoring.possibleTargets().first()
 
-        val names = suggestedNames(project, expr)
+        val names = expr.suggestNames()
         assertThat(names).containsExactly("i", "foo")
     }
 
@@ -70,7 +70,7 @@ fn bar() {
         val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
         val expr = refactoring.possibleTargets().first()
 
-        assertThat(suggestedNames(project, expr)).containsExactly("new", "string")
+        assertThat(expr.suggestNames()).containsExactly("new", "string")
     }
 
     fun testLocalNames() = doTest("""

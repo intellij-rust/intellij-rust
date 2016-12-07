@@ -19,19 +19,19 @@ import java.util.*
  * If its a function call suggest the name of the function and the enclosing name space (if any).
  * If a name is already bound in the local scope do not suggest it.
  */
-fun suggestedNames(project: Project, expr: PsiElement): LinkedHashSet<String> {
+fun PsiElement.suggestNames(): LinkedHashSet<String> {
     val names = LinkedHashSet<String>()
-    nameForType(expr)?.let { names.addAll(RustNameUtil(it)) }
+    nameForType(this)?.let { names.addAll(RustNameUtil(it)) }
 
     val foundNames = when {
-        expr.isArgument() -> RustNameUtil(nameForArgument(project, expr))
-        expr is RustCallExprElement -> nameForCall(expr).flatMap(::RustNameUtil)
+        this.isArgument() -> RustNameUtil(nameForArgument())
+        this is RustCallExprElement -> nameForCall(this).flatMap(::RustNameUtil)
         else -> emptyList()
     }
 
     names.addAll(foundNames)
 
-    val usedNames = findNamesInLocalScope(expr)
+    val usedNames = findNamesInLocalScope(this)
     names.removeAll(usedNames)
 
     return names
@@ -58,10 +58,10 @@ private fun nameForCall(expr: RustCallExprElement): List<String> {
     return listOf(pathElement.text)
 }
 
-fun nameForArgument(project: Project, expr: PsiElement): String {
-    val call = expr.parentOfType<RustCallExprElement>(strict = false) ?: return ""
+fun PsiElement.nameForArgument(): String {
+    val call = this.parentOfType<RustCallExprElement>(strict = false) ?: return ""
 
-    val parameterIndex = call.argList.children.indexOf(expr)
+    val parameterIndex = call.argList.children.indexOf(this)
     val fn = findFnImpl(project, call)
 
     return fn?.parameters?.parameterList?.get(parameterIndex)?.pat?.text ?: ""
