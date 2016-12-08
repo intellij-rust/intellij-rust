@@ -1,13 +1,10 @@
 package org.rust.lang.refactoring
 
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.toSnakeCase
-import org.rust.ide.navigation.goto.RustSymbolNavigationContributor
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.util.childOfType
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.types.RustUnknownType
 import org.rust.lang.core.types.util.resolvedType
@@ -19,6 +16,7 @@ import java.util.*
  * If the type is resolved suggest the first letter of the type name.
  * If its an argument to a function call, suggest the name of the argument in the function definition.
  * If its a function call suggest the name of the function and the enclosing name space (if any).
+ * If the expression is in a struct literal (Foo {x: 5, y: 6}) suggest the tag for the expression as a name
  * If a name is already bound in the local scope do not suggest it.
  */
 fun PsiElement.suggestNames(): LinkedHashSet<String> {
@@ -28,6 +26,7 @@ fun PsiElement.suggestNames(): LinkedHashSet<String> {
     val foundNames = when {
         this.isArgument() -> rustNameUtil(nameForArgument())
         this is RustCallExprElement -> nameForCall(this).flatMap(::rustNameUtil)
+        isStructField() -> rustNameUtil((this.parent as? RustStructExprFieldElement)?.identifier?.text ?: "")
         else -> emptyList()
     }
 
@@ -38,6 +37,7 @@ fun PsiElement.suggestNames(): LinkedHashSet<String> {
 
     return names
 }
+
 
 private fun nameForType(expr: PsiElement): String? {
     val type = (expr as? RustExprElement)?.resolvedType
@@ -83,5 +83,6 @@ fun findNamesInLocalScope(expr: PsiElement): List<String> {
 }
 
 private fun PsiElement.isArgument() = this.parent is RustArgListElement
+private fun PsiElement.isStructField() = this.parent is RustStructExprFieldElement
 
 private fun rustNameUtil(name: String) = NameUtil.getSuggestionsByName(name, "", "", false, false, false).map { it.toSnakeCase(false) }

@@ -92,7 +92,25 @@ class RustNameSuggestionsKtTest : RustTestCaseBase() {
         val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
         val expr = refactoring.possibleTargets().first()
 
-        assertThat(expr.suggestNames()).contains("board_size")
+        assertThat(expr.suggestNames()).containsExactly("size", "board_size")
+    }
+
+    fun testStructLiteral() = doTest("""
+        struct Foo {
+            bar: i32,
+            baz: i32,
+        }
+
+        impl Foo {
+            fn new() -> Foo {
+                Foo{bar: 5, baz: 1/*caret*/0}
+            }
+        }
+        """) {
+        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
+        val expr = refactoring.possibleTargets().first()
+
+        assertThat(expr.suggestNames()).containsExactly("i", "baz")
     }
 
 
