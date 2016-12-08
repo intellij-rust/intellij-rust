@@ -22,11 +22,12 @@ import java.util.*
 fun RustExprElement.suggestNames(): LinkedHashSet<String> {
     val names = LinkedHashSet<String>()
     nameForType(this)?.let { names.addAll(rustNameUtil(it)) }
+    val parent = this.parent
 
     val foundNames = when {
         this.isArgument() -> rustNameUtil(nameForArgument())
         this is RustCallExprElement -> nameForCall(this).flatMap(::rustNameUtil)
-        isStructField() -> rustNameUtil((this.parent as? RustStructExprFieldElement)?.identifier?.text ?: "")
+        parent is RustStructExprFieldElement -> rustNameUtil(parent.identifier.text)
         else -> emptyList()
     }
 

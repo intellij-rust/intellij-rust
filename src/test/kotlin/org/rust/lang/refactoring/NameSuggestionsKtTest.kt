@@ -18,11 +18,7 @@ class RustNameSuggestionsKtTest : RustTestCaseBase() {
             foo(4, 10/*caret*/ + 2)
         }
     """) {
-        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
-        val expr = refactoring.possibleTargets().first()
-
-        assertThat(expr.nameForArgument()).isEqualTo("veryCoolVariableName")
-        assertThat(expr.suggestNames()).containsExactly("name", "variable_name", "cool_variable_name", "very_cool_variable_name")
+        assertThat(it).containsExactly("name", "variable_name", "cool_variable_name", "very_cool_variable_name")
     }
 
     fun testNonDirectArgumentNames() = doTest("""
@@ -34,10 +30,7 @@ class RustNameSuggestionsKtTest : RustTestCaseBase() {
             foo(4, 1/*caret*/0 + 2)
         }
     """) {
-        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
-        val expr = refactoring.possibleTargets().first()
-
-        assertThat(expr.suggestNames()).containsExactly("i")
+        assertThat(it).containsExactly("i")
     }
 
 
@@ -50,11 +43,7 @@ class RustNameSuggestionsKtTest : RustTestCaseBase() {
             f/*caret*/oo(4, 10 + 2)
         }
     """) {
-        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
-        val expr = refactoring.possibleTargets().first()
-
-        val names = expr.suggestNames()
-        assertThat(names).containsExactly("i", "foo")
+        assertThat(it).containsExactly("i", "foo")
     }
 
     fun testStringNew() = doTest("""
@@ -63,23 +52,16 @@ class RustNameSuggestionsKtTest : RustTestCaseBase() {
 
             file.read_to_string(&mut String:/*caret*/:new())?;
     }""") {
-        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
-        val expr = refactoring.possibleTargets().first()
-
-        assertThat(expr.suggestNames()).containsExactly("string", "new")
+        assertThat(it).containsExactly("string", "new")
     }
 
     fun testLocalNames() = doTest("""
         fn foo() {
-            let a = 5;
-            let b = String::new();
-            5/*caret*/+ 10;
+            let string = "hi";
+            let b = String:/*caret*/:new();
         }
     """) {
-        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
-        val expr = refactoring.possibleTargets().first()
-
-        assertThat(findNamesInLocalScope(expr)).containsExactly("a", "b")
+        assertThat(it).containsExactly("new")
     }
 
     fun testFunctionCallAsArgument() = doTest("""
@@ -89,10 +71,7 @@ class RustNameSuggestionsKtTest : RustTestCaseBase() {
             foo(Default::de/*caret*/fault());
         }
     """) {
-        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
-        val expr = refactoring.possibleTargets().first()
-
-        assertThat(expr.suggestNames()).containsExactly("size", "board_size")
+        assertThat(it).containsExactly("size", "board_size")
     }
 
     fun testStructLiteral() = doTest("""
@@ -107,10 +86,7 @@ class RustNameSuggestionsKtTest : RustTestCaseBase() {
             }
         }
         """) {
-        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
-        val expr = refactoring.possibleTargets().first()
-
-        assertThat(expr.suggestNames()).containsExactly("i", "baz")
+        assertThat(it).containsExactly("i", "baz")
     }
 
     fun testGenericPath() = doTest("""
@@ -128,16 +104,14 @@ class RustNameSuggestionsKtTest : RustTestCaseBase() {
             Foo:/*caret*/:<i32>::new(10)
         }
         """) {
-        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
-        val expr = refactoring.possibleTargets().first()
-
-        assertThat(expr.suggestNames()).containsExactly("f", "foo", "new")
+        assertThat(it).containsExactly("f", "foo", "new")
     }
 
-
-    private fun doTest(@Language("Rust") before: String, action: () -> Unit) {
+    private fun doTest(@Language("Rust") before: String, action: (Set<String>) -> Unit) {
         InlineFile(before).withCaret()
         openFileInEditor("main.rs")
-        action()
+        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
+        val expr = refactoring.possibleTargets().first()
+        action(expr.suggestNames())
     }
 }
