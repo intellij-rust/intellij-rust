@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleComponent
@@ -100,7 +101,10 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     private fun requestUpdate(toolchain: RustToolchain, afterCommit: ((UpdateResult) -> Unit)?) {
         val contentRoot = module.cargoProjectRoot ?: return
         updateQueue.submit({ completionToken ->
-            UpdateTask(toolchain, contentRoot.path, completionToken, afterCommit).queue()
+            // FIXME: remove invoke later when drop IDEA 15 support
+            ApplicationManager.getApplication().invokeLater({
+                UpdateTask(toolchain, contentRoot.path, completionToken, afterCommit).queue()
+            }, ModalityState.NON_MODAL)
         }, immediately = afterCommit != null)
     }
 
