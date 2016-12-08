@@ -1,7 +1,7 @@
 package org.rust.ide.annotator
 
 class RustHighlightingAnnotatorTest : RustAnnotatorTestBase() {
-    override val dataPath = "org/rust/ide/annotator/fixtures/highlighting"
+    override val dataPath = ""
 
     fun testAttributes() = checkByText("""
         <info>#[cfg_attr(foo)]</info>
