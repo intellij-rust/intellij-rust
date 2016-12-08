@@ -61,7 +61,7 @@ private fun nameForCall(expr: RustCallExprElement): List<String> {
 }
 
 fun PsiElement.nameForArgument(): String {
-    val call = this.parentOfType<RustCallExprElement>(strict = false) ?: return ""
+    val call = this.parentOfType<RustCallExprElement>(strict = true) ?: return ""
 
     val parameterIndex = call.argList.children.indexOf(this)
     val fn = call.findFnImpl()

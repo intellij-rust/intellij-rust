@@ -86,6 +86,19 @@ fn foo() {
         assertThat(findNamesInLocalScope(expr)).containsExactly("a", "b")
     }
 
+    fun testFunctionCallAsArgument() = doTest("""
+fn foo(board_size: i32) {}
+
+fn bar() {
+    foo(Default::de/*caret*/fault());
+}
+    """) {
+        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
+        val expr = refactoring.possibleTargets().first()
+
+        assertThat(expr.suggestNames()).contains("board_size")
+    }
+
 
     private fun doTest(@Language("Rust") before: String, action: () -> Unit) {
         InlineFile(before).withCaret()

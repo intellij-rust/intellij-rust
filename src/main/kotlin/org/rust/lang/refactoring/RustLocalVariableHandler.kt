@@ -120,6 +120,7 @@ class RustIntroduceVariableRefactoring(
 
     fun replaceElementForAllExpr(exprs: List<PsiElement>) {
         val expr = exprs.first()
+        val suggestNames = expr.suggestNames()
 
         val (let, name) = createLet(expr)
             ?: return
@@ -133,7 +134,7 @@ class RustIntroduceVariableRefactoring(
         }
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-        nameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(expr.suggestNames()) }
+        nameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(suggestNames) }
     }
 
     /**
@@ -162,6 +163,7 @@ class RustIntroduceVariableRefactoring(
 
     private fun <T : PsiElement> inlineLet(project: Project, editor: Editor, stmt: T, statementFactory: (T) -> RustStmtElement) {
         var newNameElem: RustPatBindingElement? = null
+        val suggestNames = stmt.suggestNames()
         WriteCommandAction.runWriteCommandAction(project) {
             val statement = statementFactory.invoke(stmt)
             val newStatement = stmt.replace(statement)
@@ -170,7 +172,7 @@ class RustIntroduceVariableRefactoring(
         }
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-        newNameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(stmt.suggestNames()) }
+        newNameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(suggestNames) }
     }
 
     private fun moveEditorToNameElement(editor: Editor, element: PsiElement?): RustPatBindingElement? {
