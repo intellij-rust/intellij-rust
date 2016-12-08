@@ -10,14 +10,14 @@ class RustNameSuggestionsKtTest : RustTestCaseBase() {
     override val dataPath = "org/rust/lang/refactoring/fixtures/introduce_variable/"
 
     fun testArgumentNames() = doTest("""
-fn foo(a: i32, veryCoolVariableName: i32) {
-    a + b
-}
+        fn foo(a: i32, veryCoolVariableName: i32) {
+            a + b
+        }
 
-fn bar() {
-    foo(4, 10/*caret*/ + 2)
-}
-""") {
+        fn bar() {
+            foo(4, 10/*caret*/ + 2)
+        }
+    """) {
         val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
         val expr = refactoring.possibleTargets().first()
 
@@ -26,14 +26,14 @@ fn bar() {
     }
 
     fun testNonDirectArgumentNames() = doTest("""
-fn foo(a: i32, veryCoolVariableName: i32) {
-    a + b
-}
+        fn foo(a: i32, veryCoolVariableName: i32) {
+            a + b
+        }
 
-fn bar() {
-    foo(4, 1/*caret*/0 + 2)
-}
-""") {
+        fn bar() {
+            foo(4, 1/*caret*/0 + 2)
+        }
+    """) {
         val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
         val expr = refactoring.possibleTargets().first()
 
@@ -42,15 +42,14 @@ fn bar() {
 
 
     fun testFunctionNames() = doTest("""
-fn foo(a: i32, veryCoolVariableName: i32) -> i32 {
-    a + b
-}
+        fn foo(a: i32, veryCoolVariableName: i32) -> i32 {
+            a + b
+        }
 
-fn bar() {
-    f/*caret*/oo(4, 10 + 2)
-}
-"""
-    ) {
+        fn bar() {
+            f/*caret*/oo(4, 10 + 2)
+        }
+    """) {
         val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
         val expr = refactoring.possibleTargets().first()
 
@@ -58,14 +57,13 @@ fn bar() {
         assertThat(names).containsExactly("i", "foo")
     }
 
-    fun testStringNew() = doTest(
-        """
+    fun testStringNew() = doTest("""
         fn read_file() -> Result<String, Error> {
-        let file = File::open("res/input.txt")?;
+            let file = File::open("res/input.txt")?;
 
-        file.read_to_string(&mut String:/*caret*/:new())?;
+            file.read_to_string(&mut String:/*caret*/:new())?;
 
-        Ok(x)
+            Ok(x)
     }""") {
         val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
         val expr = refactoring.possibleTargets().first()
@@ -74,12 +72,12 @@ fn bar() {
     }
 
     fun testLocalNames() = doTest("""
-fn foo() {
-    let a = 5;
-    let b = String::new();
-    5/*caret*/+ 10;
-}
-""") {
+        fn foo() {
+            let a = 5;
+            let b = String::new();
+            5/*caret*/+ 10;
+        }
+    """) {
         val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
         val expr = refactoring.possibleTargets().first()
 
@@ -87,11 +85,11 @@ fn foo() {
     }
 
     fun testFunctionCallAsArgument() = doTest("""
-fn foo(board_size: i32) {}
+        fn foo(board_size: i32) {}
 
-fn bar() {
-    foo(Default::de/*caret*/fault());
-}
+        fn bar() {
+            foo(Default::de/*caret*/fault());
+        }
     """) {
         val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
         val expr = refactoring.possibleTargets().first()
