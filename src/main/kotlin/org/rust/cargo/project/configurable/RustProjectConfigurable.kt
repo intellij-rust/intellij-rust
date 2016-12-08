@@ -17,7 +17,7 @@ import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.cargoProject
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
-import org.rust.ide.utils.runWriteAction
+import backcompat.runWriteAction
 import javax.swing.JComponent
 
 class RustProjectConfigurable(

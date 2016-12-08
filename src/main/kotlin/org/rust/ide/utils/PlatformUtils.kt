@@ -14,20 +14,6 @@ fun <T> recursionGuard(key: Any, block: Computable<T>, memoize: Boolean = true):
     RecursionManager.doPreventingRecursion(key, memoize, block)
 
 /**
- * Wrapper util to run [runnable] under WL
- *
- * Copy pasted from IDEA for backwards compatibility with 15.0.4
- */
-fun <T> runWriteAction(runnable: () -> T): T = ApplicationManager.getApplication().runWriteAction(Computable { runnable.invoke() })
-
-/**
- * Wrapper util to run [runnable] under RL
- *
- * Copy pasted from IDEA for backwards compatibility with 15.0.4
- */
-fun <T> runReadAction(runnable: () -> T): T = ApplicationManager.getApplication().runReadAction(Computable { runnable.invoke() })
-
-/**
  * Util to extract application-level services
  */
 inline fun <reified T : Any> service(): T = ServiceManager.getService(T::class.java)

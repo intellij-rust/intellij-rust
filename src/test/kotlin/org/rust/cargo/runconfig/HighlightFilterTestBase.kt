@@ -3,7 +3,7 @@ package org.rust.cargo.runconfig
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.openapi.vfs.VirtualFile
 import org.assertj.core.api.Assertions
-import org.rust.ide.utils.runWriteAction
+import backcompat.runWriteAction
 import org.rust.lang.RustTestCaseBase
 
 /**

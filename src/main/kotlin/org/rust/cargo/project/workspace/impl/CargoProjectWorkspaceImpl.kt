@@ -32,7 +32,7 @@ import org.rust.cargo.util.cargoLibraryName
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.updateLibrary
 import org.rust.ide.notifications.showBalloon
-import org.rust.ide.utils.runWriteAction
+import backcompat.runWriteAction
 
 private val LOG = Logger.getInstance(CargoProjectWorkspaceImpl::class.java)
 

@@ -12,7 +12,7 @@ import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.actions.BaseRefactoringAction
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import org.rust.ide.utils.checkWriteAccessAllowed
-import org.rust.ide.utils.runWriteAction
+import backcompat.runWriteAction
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.impl.RustFile

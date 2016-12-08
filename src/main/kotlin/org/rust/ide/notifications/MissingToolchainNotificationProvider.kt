@@ -27,7 +27,7 @@ import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.cargoProject
 import org.rust.cargo.util.cargoProjectRoot
-import org.rust.ide.utils.runWriteAction
+import backcompat.runWriteAction
 import org.rust.ide.utils.service
 import org.rust.lang.core.psi.impl.isNotRustFile
 import java.awt.Component
