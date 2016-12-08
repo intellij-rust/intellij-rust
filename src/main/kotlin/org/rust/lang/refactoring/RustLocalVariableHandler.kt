@@ -42,7 +42,7 @@ class RustLocalVariableHandler : RefactoringActionHandler {
             val occurrences = findOccurrences(expr)
             OccurrencesChooser.simpleChooser<PsiElement>(editor).showChooser(expr, occurrences, pass { choice ->
                 val toReplace = if (choice == OccurrencesChooser.ReplaceChoice.ALL) occurrences else listOf(expr)
-                refactoring.replaceElement(toReplace)
+                refactoring.replaceElement(expr, toReplace)
             })
         }
 
@@ -105,29 +105,26 @@ class RustIntroduceVariableRefactoring(
      * Either we need to put a let in front of a statement on the same line.
      * Or we extract an expression and put that in a let on the line above.
      */
-    fun replaceElement(exprs: List<PsiElement>) {
-        //the expr that has been chosen
-        val expr = exprs.first()
-        val anchor = findAnchor(expr)
-        val parent = expr.parent
+    fun replaceElement(chosenExpr: RustExprElement, exprs: List<PsiElement>) {
+        val anchor = findAnchor(chosenExpr)
+        val parent = chosenExpr.parent
 
         when {
-            anchor == expr -> inlineLet(project, editor, anchor, {expr, name -> psiFactory.createLetDeclaration(name, expr) })
-            parent is RustExprStmtElement -> inlineLet(project, editor, parent, {expr, name ->  psiFactory.createLetDeclaration(name, expr) })
-            else -> replaceElementForAllExpr(exprs)
+            anchor == chosenExpr -> inlineLet(project, editor, chosenExpr, chosenExpr)
+            parent is RustExprStmtElement -> inlineLet(project, editor, chosenExpr, chosenExpr.parent)
+            else -> replaceElementForAllExpr(chosenExpr, exprs)
         }
     }
 
-    fun replaceElementForAllExpr(exprs: List<PsiElement>) {
-        val expr = exprs.first()
-        val suggestNames = expr.suggestNames()
+    fun replaceElementForAllExpr(chosenExpr: RustExprElement, exprs: List<PsiElement>) {
+        val suggestNames = chosenExpr.suggestNames()
 
-        val (let, name) = createLet(expr, suggestNames.firstName()) ?: return
+        val (let, name) = createLet(chosenExpr, suggestNames.firstName()) ?: return
 
         var nameElem: RustPatBindingElement? = null
 
         WriteCommandAction.runWriteCommandAction(project) {
-            val newElement = introduceLet(project, expr, let)
+            val newElement = introduceLet(project, chosenExpr, let)
             exprs.forEach { it.replace(name) }
             nameElem = moveEditorToNameElement(editor, newElement)
         }
@@ -147,7 +144,7 @@ class RustIntroduceVariableRefactoring(
         val let = psiFactory.createLetDeclaration(name, expr, mutable = mutable)
 
         val binding = let.findBinding()
-            ?: error("Faild to create a proper let expression: `${let.text}`")
+            ?: error("Failed to create a proper let expression: `${let.text}`")
 
         return let to binding.identifier
     }
@@ -160,12 +157,18 @@ class RustIntroduceVariableRefactoring(
         return context?.addBefore(let, context.addBefore(newline, anchor))
     }
 
-    private fun <T : PsiElement> inlineLet(project: Project, editor: Editor, stmt: T, statementFactory: (T, String) -> RustStmtElement) {
+    /**
+     * @param expr the expression we are creating a let binding for and which to suggest names for.
+     * @param elementToReplace the element that should be replaced with the new let binding.
+     *         this can be either the expression its self if it had no semicolon at the end.
+     *         or the statement surrounding the entire expression if it already had a semicolon.
+     */
+    private fun <T : RustExprElement> inlineLet(project: Project, editor: Editor, expr: T, elementToReplace: PsiElement) {
         var newNameElem: RustPatBindingElement? = null
-        val suggestNames = stmt.suggestNames()
+        val suggestNames = expr.suggestNames()
         WriteCommandAction.runWriteCommandAction(project) {
-            val statement = statementFactory.invoke(stmt, suggestNames.firstName())
-            val newStatement = stmt.replace(statement)
+            val statement = psiFactory.createLetDeclaration(suggestNames.firstName(), expr)
+            val newStatement = elementToReplace.replace(statement)
 
             newNameElem = moveEditorToNameElement(editor, newStatement)
         }

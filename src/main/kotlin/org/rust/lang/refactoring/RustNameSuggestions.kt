@@ -19,7 +19,7 @@ import java.util.*
  * If the expression is in a struct literal (Foo {x: 5, y: 6}) suggest the tag for the expression as a name
  * If a name is already bound in the local scope do not suggest it.
  */
-fun PsiElement.suggestNames(): LinkedHashSet<String> {
+fun RustExprElement.suggestNames(): LinkedHashSet<String> {
     val names = LinkedHashSet<String>()
     nameForType(this)?.let { names.addAll(rustNameUtil(it)) }
 
@@ -39,10 +39,10 @@ fun PsiElement.suggestNames(): LinkedHashSet<String> {
 }
 
 
-private fun nameForType(expr: PsiElement): String? {
-    val type = (expr as? RustExprElement)?.resolvedType
+private fun nameForType(expr: RustExprElement): String? {
+    val type = expr.resolvedType
 
-    if (type is RustUnknownType || type == null) {
+    if (type is RustUnknownType) {
         return null
     }
 
