@@ -1,5 +1,8 @@
 package org.rust.cargo.project.settings.ui
 
+import backcompat.ui.layout.CCFlags
+import backcompat.ui.layout.LayoutBuilder
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -14,11 +17,10 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.RustToolchain
 import javax.swing.JCheckBox
 import javax.swing.JLabel
-import javax.swing.JPanel
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
-class RustProjectSettingsPanel : JPanel() {
+class RustProjectSettingsPanel {
     data class Data(
         val toolchain: RustToolchain?,
         val autoUpdateEnabled: Boolean
@@ -29,17 +31,16 @@ class RustProjectSettingsPanel : JPanel() {
         }
     }
 
-    private val disposable = Disposer.newDisposable()
+    private val disposable: Disposable = Disposer.newDisposable()
+    fun disposeUIResources() = Disposer.dispose(disposable)
+
     private val versionUpdateAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
 
-    @Suppress("unused") // required by GUI designer to use this form as an element of other forms
-    private lateinit var root: JPanel
-    private lateinit var toolchainLocationField: TextFieldWithBrowseButton
-
-    private lateinit var autoUpdateEnabled: JCheckBox
-    private lateinit var rustVersion: JLabel
-    private lateinit var cargoVersion: JLabel
-    private lateinit var rustupVersion: JLabel
+    private val toolchainLocationField = TextFieldWithBrowseButton(null, disposable)
+    private val autoUpdateEnabled = JCheckBox()
+    private val rustVersion = JLabel()
+    private val cargoVersion = JLabel()
+    private val rustupVersion = JLabel()
 
     private val versionUpdateDelayMillis = 200
 
@@ -53,7 +54,7 @@ class RustProjectSettingsPanel : JPanel() {
             autoUpdateEnabled.isSelected = value.autoUpdateEnabled
         }
 
-    init {
+    fun attachTo(layout: LayoutBuilder) = with(layout) {
         toolchainLocationField.addBrowseFolderListener(
             "",
             "Cargo location",
@@ -69,10 +70,11 @@ class RustProjectSettingsPanel : JPanel() {
             RustToolchain.suggest(),
             autoUpdateEnabled = true
         )
-    }
 
-    fun disposeUIResources() {
-        Disposer.dispose(disposable)
+        row("Toolchain location") { toolchainLocationField(CCFlags.pushX) }
+        row("Rustc") { rustVersion() }
+        row("Cargo") { cargoVersion() }
+        row("Rustup") { rustupVersion() }
     }
 
     @Throws(ConfigurationException::class)
@@ -131,4 +133,3 @@ class RustProjectSettingsPanel : JPanel() {
         }, ModalityState.any())
     }
 }
-

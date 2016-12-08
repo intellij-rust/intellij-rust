@@ -1,11 +1,13 @@
 package org.rust.cargo.project.configurable
 
+import backcompat.ui.components.Label
+import backcompat.ui.components.textFieldWithHistoryWithBrowseButton
+import backcompat.ui.layout.panel
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.ui.JBColor
 import org.rust.cargo.project.settings.rustSettings
@@ -17,26 +19,23 @@ import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
 import org.rust.ide.utils.runWriteAction
 import javax.swing.JComponent
-import javax.swing.JLabel
 
 class RustProjectConfigurable(
     private val project: Project
 ) : Configurable, Configurable.NoScroll {
 
-    private lateinit var root: JComponent
-    private lateinit var rustProjectSettings: RustProjectSettingsPanel
-    private lateinit var stdlibLocation: TextFieldWithBrowseButton
-    private lateinit var cargoTomlLocation: JLabel
+    private val rustProjectSettings = RustProjectSettingsPanel()
+    private val stdlibLocation = textFieldWithHistoryWithBrowseButton(
+        project,
+        "Attach Rust sources",
+        FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+    )
+    private val cargoTomlLocation = Label("N/A")
 
-    override fun createComponent(): JComponent {
-        val descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
-        stdlibLocation.addBrowseFolderListener(
-            "Attach Rust sources",
-            "Select the folder with Rust standard library source code",
-            project,
-            descriptor
-        )
-        return root
+    override fun createComponent(): JComponent = panel {
+        rustProjectSettings.attachTo(this)
+        row("Standard library") { stdlibLocation() }
+        row("Cargo.toml") { cargoTomlLocation() }
     }
 
     override fun disposeUIResources() = rustProjectSettings.disposeUIResources()
@@ -55,14 +54,13 @@ class RustProjectConfigurable(
             cargoTomlLocation.text = "N/A"
             cargoTomlLocation.foreground = JBColor.RED
             stdlibLocation.isEnabled = false
-            stdlibLocation.text = "N/A"
+            stdlibLocation.text = ""
         } else {
             cargoTomlLocation.text = module.cargoProjectRoot?.findChild(RustToolchain.CARGO_TOML)?.presentableUrl
             cargoTomlLocation.foreground = JBColor.foreground()
             stdlibLocation.isEnabled = true
-            stdlibLocation.text = getCurrentStdlibLocation(module)
+            stdlibLocation.text = getCurrentStdlibLocation(module) ?: ""
         }
-
     }
 
     @Throws(ConfigurationException::class)

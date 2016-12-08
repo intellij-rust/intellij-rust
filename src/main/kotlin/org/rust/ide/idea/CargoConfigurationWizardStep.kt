@@ -1,5 +1,6 @@
 package org.rust.ide.idea
 
+import backcompat.ui.layout.panel
 import com.intellij.ide.util.importProject.ProjectDescriptor
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
@@ -19,10 +20,11 @@ class CargoConfigurationWizardStep(
     private val projectDescriptor: ProjectDescriptor? = null
 ) : ModuleWizardStep(), Disposable {
 
-    private lateinit var root: JComponent
-    private lateinit var rustProjectSettings: RustProjectSettingsPanel
+    private val rustProjectSettings = RustProjectSettingsPanel()
 
-    override fun getComponent(): JComponent = root
+    override fun getComponent(): JComponent = panel {
+        rustProjectSettings.attachTo(this)
+    }
 
     override fun disposeUIResources() = rustProjectSettings.disposeUIResources()
 
@@ -44,9 +46,7 @@ class CargoConfigurationWizardStep(
         return true
     }
 
-    override fun dispose() {
-        rustProjectSettings.disposeUIResources()
-    }
+    override fun dispose() = rustProjectSettings.disposeUIResources()
 
     private object ConfigurationUpdater : ModuleConfigurationUpdater() {
         var data: RustProjectSettingsPanel.Data? = null
