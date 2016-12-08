@@ -64,17 +64,14 @@ fun PsiElement.nameForArgument(): String {
     val call = this.parentOfType<RustCallExprElement>(strict = false) ?: return ""
 
     val parameterIndex = call.argList.children.indexOf(this)
-    val fn = findFnImpl(project, call)
+    val fn = call.findFnImpl()
 
     return fn?.parameters?.parameterList?.get(parameterIndex)?.pat?.text ?: ""
 }
 
-private fun findFnImpl(project: Project, callExpr: RustCallExprElement): RustFnItemElement? {
-//    return  callExpr.reference?.resolve() as? RustFnItemElement
-    val navigator = RustSymbolNavigationContributor()
-    val items = navigator.getItemsByName(callExpr.firstChild.text, null, project, false)
-
-    return items.firstOrNull() as? RustFnItemElement
+private fun RustCallExprElement.findFnImpl(): RustFnItemElement? {
+    val path = expr as? RustPathExprElement
+    return path?.path?.reference?.resolve() as? RustFnItemElement
 }
 
 
