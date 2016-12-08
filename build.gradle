@@ -32,6 +32,7 @@ allprojects {
         // FIXME: hack to support both IDEA 15 and IDEA 16.
         // See https://github.com/intellij-rust/intellij-rust/issues/243
         updateSinceUntilBuild = false
+        instrumentCode = false
 
         publish {
             username publishUsername
@@ -48,7 +49,12 @@ allprojects {
 
     tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
     sourceSets {
-        main.java.srcDirs += 'src/gen'
+        main {
+            java.srcDirs += 'src/gen'
+            // Exclude miglayout bundled with the IDE because we need a newer version, which
+            // is only available since 2016.3
+            compileClasspath = compileClasspath.filter { it.name != 'miglayout-swing.jar' }
+        }
     }
 
     test {
@@ -79,11 +85,15 @@ allprojects {
     repositories {
         mavenCentral()
         maven { url 'http://dl.bintray.com/jetbrains/markdown' }
+        maven { url 'https://jitpack.io' }
     }
 
     dependencies {
         compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
         compile "org.jetbrains.kotlin:kotlin-runtime:$kotlinVersion"
+        compile('com.github.matklad:miglayout:afbdb74067') {
+            exclude module: 'org-netbeans-api-annotations-common'
+        }
 
         testCompile 'junit:junit:4.+'
         testCompile 'org.assertj:assertj-core:3.2.0'
