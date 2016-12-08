@@ -62,8 +62,6 @@ class RustNameSuggestionsKtTest : RustTestCaseBase() {
             let file = File::open("res/input.txt")?;
 
             file.read_to_string(&mut String:/*caret*/:new())?;
-
-            Ok(x)
     }""") {
         val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
         val expr = refactoring.possibleTargets().first()

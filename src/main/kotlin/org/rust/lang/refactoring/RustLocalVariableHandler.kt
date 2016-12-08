@@ -112,8 +112,8 @@ class RustIntroduceVariableRefactoring(
         val parent = expr.parent
 
         when {
-            anchor == expr -> inlineLet(project, editor, anchor, { psiFactory.createLetDeclaration("x", it) })
-            parent is RustExprStmtElement -> inlineLet(project, editor, parent, { psiFactory.createLetDeclaration("x", it) })
+            anchor == expr -> inlineLet(project, editor, anchor, {expr, name -> psiFactory.createLetDeclaration(name, expr) })
+            parent is RustExprStmtElement -> inlineLet(project, editor, parent, {expr, name ->  psiFactory.createLetDeclaration(name, expr) })
             else -> replaceElementForAllExpr(exprs)
         }
     }
@@ -122,8 +122,7 @@ class RustIntroduceVariableRefactoring(
         val expr = exprs.first()
         val suggestNames = expr.suggestNames()
 
-        val (let, name) = createLet(expr)
-            ?: return
+        val (let, name) = createLet(expr, suggestNames.firstName()) ?: return
 
         var nameElem: RustPatBindingElement? = null
 
@@ -141,11 +140,11 @@ class RustIntroduceVariableRefactoring(
      * Creates a let binding for the found expression.
      * Returning handles to the complete let expr and the identifier inside the newly created let binding.
      */
-    private fun createLet(expr: PsiElement): Pair<RustLetDeclElement, PsiElement>? {
+    private fun createLet(expr: PsiElement, name: String): Pair<RustLetDeclElement, PsiElement>? {
         val parent = expr.parent
 
         val mutable = parent is RustUnaryExprElement && parent.mut != null
-        val let = psiFactory.createLetDeclaration("x", expr, mutable = mutable)
+        val let = psiFactory.createLetDeclaration(name, expr, mutable = mutable)
 
         val binding = let.findBinding()
             ?: error("Faild to create a proper let expression: `${let.text}`")
@@ -161,11 +160,11 @@ class RustIntroduceVariableRefactoring(
         return context?.addBefore(let, context.addBefore(newline, anchor))
     }
 
-    private fun <T : PsiElement> inlineLet(project: Project, editor: Editor, stmt: T, statementFactory: (T) -> RustStmtElement) {
+    private fun <T : PsiElement> inlineLet(project: Project, editor: Editor, stmt: T, statementFactory: (T, String) -> RustStmtElement) {
         var newNameElem: RustPatBindingElement? = null
         val suggestNames = stmt.suggestNames()
         WriteCommandAction.runWriteCommandAction(project) {
-            val statement = statementFactory.invoke(stmt)
+            val statement = statementFactory.invoke(stmt, suggestNames.firstName())
             val newStatement = stmt.replace(statement)
 
             newNameElem = moveEditorToNameElement(editor, newStatement)
@@ -229,6 +228,8 @@ private fun <T> pass(pass: (T) -> Unit): Pass<T> {
         }
     }
 }
+
+private fun LinkedHashSet<String>.firstName() = this.firstOrNull() ?: "x"
 
 private fun PsiElement.findBinding() = PsiTreeUtil.findChildOfType(this, RustPatBindingElement::class.java)
 
