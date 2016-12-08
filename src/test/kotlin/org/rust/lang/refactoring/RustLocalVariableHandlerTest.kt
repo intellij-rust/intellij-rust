@@ -126,9 +126,9 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
         }""", """
         fn read_file() -> Result<String, Error> {
             let file = File::open("res/input.txt")?;
-            let mut new = String::new();
+            let mut string = String::new();
 
-            file.read_to_string(&mut new)?;
+            file.read_to_string(&mut string)?;
         }""")
     {
         val ref = refactoring()

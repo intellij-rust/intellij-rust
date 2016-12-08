@@ -66,7 +66,7 @@ class RustNameSuggestionsKtTest : RustTestCaseBase() {
         val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
         val expr = refactoring.possibleTargets().first()
 
-        assertThat(expr.suggestNames()).containsExactly("new", "string")
+        assertThat(expr.suggestNames()).containsExactly("string", "new")
     }
 
     fun testLocalNames() = doTest("""

@@ -55,9 +55,15 @@ private fun nameForCall(expr: RustCallExprElement): List<String> {
         val path = pathElement.path
 
         //path.path gives us the x's out of: Xxx::yyy
-        return listOf(path.identifier, path.path).filterNotNull().map(PsiElement::getText)
+        return listOf(path.identifier, path.path).filterNotNull().map(PsiElement::getText).reverseNew()
     }
     return listOf(pathElement.text)
+}
+
+private fun List<String>.reverseNew() = if (this.firstOrNull() == "new") {
+    this.reversed()
+} else {
+    this
 }
 
 fun PsiElement.nameForArgument(): String {
