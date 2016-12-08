@@ -54,8 +54,8 @@ private fun nameForCall(expr: RustCallExprElement): List<String> {
     if (pathElement is RustPathExprElement) {
         val path = pathElement.path
 
-        //path.path gives us the x's out of: Xxx::yyy
-        return listOf(path.identifier, path.path).filterNotNull().map(PsiElement::getText).reverseNew()
+        //path.path.identifier gives us the x's out of: Xxx::<T>::yyy
+        return listOf(path.identifier, path.path?.identifier).filterNotNull().map(PsiElement::getText).reverseNew()
     }
     return listOf(pathElement.text)
 }

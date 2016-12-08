@@ -113,6 +113,27 @@ class RustNameSuggestionsKtTest : RustTestCaseBase() {
         assertThat(expr.suggestNames()).containsExactly("i", "baz")
     }
 
+    fun testGenericPath() = doTest("""
+        struct Foo<T> {
+            t: T,
+        }
+
+        impl <T> Foo<T> {
+            fn new(t: T) -> Foo<T> {
+                Foo {t: t}
+            }
+        }
+
+        fn bar() {
+            Foo:/*caret*/:<i32>::new(10)
+        }
+        """) {
+        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
+        val expr = refactoring.possibleTargets().first()
+
+        assertThat(expr.suggestNames()).containsExactly("f", "foo", "new")
+    }
+
 
     private fun doTest(@Language("Rust") before: String, action: () -> Unit) {
         InlineFile(before).withCaret()
