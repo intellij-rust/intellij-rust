@@ -27,7 +27,7 @@ class RustPsiFactory(private val project: Project) {
         createFromText("fn main() { $text 92; }")
             ?: error("Failed to create statement from text: `$text`")
 
-    fun createLetDeclaration(name: String, expr: PsiElement, mutable: Boolean = false): RustLetDeclElement =
+    fun createLetDeclaration(name: String, expr: RustExprElement, mutable: Boolean = false): RustLetDeclElement =
         createStatement("let ${if (mutable) "mut " else ""}$name = ${expr.text};") as RustLetDeclElement
 
     fun createType(text: String): RustTypeElement =

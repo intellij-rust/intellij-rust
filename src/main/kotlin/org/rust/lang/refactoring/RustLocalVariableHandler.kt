@@ -40,7 +40,7 @@ class RustLocalVariableHandler : RefactoringActionHandler {
         fun extractExpression(expr: RustExprElement) {
             if (!expr.isValid) return
             val occurrences = findOccurrences(expr)
-            OccurrencesChooser.simpleChooser<PsiElement>(editor).showChooser(expr, occurrences, pass { choice ->
+            OccurrencesChooser.simpleChooser<RustExprElement>(editor).showChooser(expr, occurrences, pass { choice ->
                 val toReplace = if (choice == OccurrencesChooser.ReplaceChoice.ALL) occurrences else listOf(expr)
                 refactoring.replaceElement(expr, toReplace)
             })
@@ -137,7 +137,7 @@ class RustIntroduceVariableRefactoring(
      * Creates a let binding for the found expression.
      * Returning handles to the complete let expr and the identifier inside the newly created let binding.
      */
-    private fun createLet(expr: PsiElement, name: String): Pair<RustLetDeclElement, PsiElement>? {
+    private fun createLet(expr: RustExprElement, name: String): Pair<RustLetDeclElement, PsiElement>? {
         val parent = expr.parent
 
         val mutable = parent is RustUnaryExprElement && parent.mut != null
@@ -163,7 +163,7 @@ class RustIntroduceVariableRefactoring(
      *         this can be either the expression its self if it had no semicolon at the end.
      *         or the statement surrounding the entire expression if it already had a semicolon.
      */
-    private fun <T : RustExprElement> inlineLet(project: Project, editor: Editor, expr: T, elementToReplace: PsiElement) {
+    private fun inlineLet(project: Project, editor: Editor, expr: RustExprElement, elementToReplace: PsiElement) {
         var newNameElem: RustPatBindingElement? = null
         val suggestNames = expr.suggestNames()
         WriteCommandAction.runWriteCommandAction(project) {
@@ -206,12 +206,12 @@ private fun findBlock(expr: PsiElement) = PsiTreeUtil.getNonStrictParentOfType(e
 /**
  * Finds occurrences in the sub scope of expr, so that all will be replaced if replace all is selected.
  */
-fun findOccurrences(expr: PsiElement): List<PsiElement> {
+fun findOccurrences(expr: RustExprElement): List<RustExprElement> {
     val visitor = object : PsiRecursiveElementVisitor() {
-        val foundOccurrences = ArrayList<PsiElement>()
+        val foundOccurrences = ArrayList<RustExprElement>()
 
         override fun visitElement(element: PsiElement) {
-            if (PsiEquivalenceUtil.areElementsEquivalent(expr, element)) {
+            if (element is RustExprElement && PsiEquivalenceUtil.areElementsEquivalent(expr, element)) {
                 foundOccurrences.add(element)
             } else {
                 super.visitElement(element)
