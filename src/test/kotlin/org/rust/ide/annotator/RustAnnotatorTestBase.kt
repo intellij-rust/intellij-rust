@@ -3,6 +3,7 @@ package org.rust.ide.annotator
 import org.rust.lang.RustTestCaseBase
 
 abstract class RustAnnotatorTestBase: RustTestCaseBase() {
+    override val dataPath = ""
 
     protected fun doTest(vararg additionalFilenames: String) {
         myFixture.testHighlighting(fileName, *additionalFilenames)
