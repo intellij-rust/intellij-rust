@@ -20,9 +20,6 @@ class RustHighlighter : SyntaxHighlighterBase() {
 
     companion object {
         fun map(tokenType: IElementType?): RustColor? = when (tokenType) {
-            is RustKeywordTokenType        -> RustColor.KEYWORD
-            is RustOperatorTokenType       -> RustColor.OPERATORS
-
             IDENTIFIER                     -> RustColor.IDENTIFIER
             UNDERSCORE                     -> RustColor.IDENTIFIER
 
@@ -59,6 +56,9 @@ class RustHighlighter : SyntaxHighlighterBase() {
             VALID_STRING_ESCAPE_TOKEN      -> RustColor.VALID_STRING_ESCAPE
             INVALID_CHARACTER_ESCAPE_TOKEN -> RustColor.INVALID_STRING_ESCAPE
             INVALID_UNICODE_ESCAPE_TOKEN   -> RustColor.INVALID_STRING_ESCAPE
+
+            is RustKeywordTokenType        -> RustColor.KEYWORD
+            is RustOperatorTokenType       -> RustColor.OPERATORS
 
             else                           -> null
         }

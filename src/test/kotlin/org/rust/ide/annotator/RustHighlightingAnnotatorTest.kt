@@ -1,15 +1,89 @@
 package org.rust.ide.annotator
 
 class RustHighlightingAnnotatorTest : RustAnnotatorTestBase() {
-    override val dataPath = "org/rust/ide/annotator/fixtures/highlighting"
 
-    fun testAttributes() = doTestInfo()
-    fun testFieldsAndMethods() = doTestInfo()
-    fun testFunctions() = doTestInfo()
-    fun testMacro() = doTestInfo()
-    fun testMutBinding() = doTestInfo()
-    fun testTypeParameters() = doTestInfo()
-    fun testFunctionArguments() = doTestInfo()
-    fun testContextualKeywords() = doTestInfo()
-    fun testTryExpr() = doTestInfo()
+    fun testAttributes() = checkByText("""
+        <info>#[cfg_attr(foo)]</info>
+        fn <info>main</info>() {
+            <info>#![crate_type = <info>"lib"</info>]</info>
+        }
+    """)
+
+    fun testFieldsAndMethods() = checkByText("""
+        struct <info>T</info>(<info>i32</info>);
+        struct <info>S</info>{ <info>field</info>: <info>T</info>}
+        fn <info>main</info>() {
+            let s = <info>S</info>{ <info>field</info>: <info>T</info>(92) };
+            s.<info>field</info>.0;
+        }
+    """)
+
+    fun testFunctions() = checkByText("""
+        fn <info>main</info>() {}
+        struct <info>S</info>;
+        impl <info>S</info> {
+            fn <info>foo</info>() {}
+        }
+        trait <info>T</info> {
+            fn <info>foo</info>();
+            fn <info>bar</info>() {}
+        }
+        impl <info>T</info> for <info>S</info> {
+            fn <info>foo</info>() {}
+        }
+    """)
+
+    fun testMacro() = checkByText("""
+        fn <info>main</info>() {
+            <info>println!</info>["Hello, World!"];
+            <info>unreachable!</info>();
+        }
+        <info>macro_rules!</info> foo {
+            (x => \u0024e:expr) => (println!("mode X: {}", \u0024e));
+            (y => \u0024e:expr) => (println!("mode Y: {}", \u0024e));
+        }
+        impl T {
+            <info>foo!</info>();
+        }
+    """)
+
+    fun testMutBinding() = checkByText("""
+        fn <info>main</info>() {
+            let mut <info>a</info> = 1;
+            let b = <info>a</info>;
+            let Some(ref mut <info>c</info>) = Some(10);
+            let d = <info>c</info>;
+        }
+    """)
+
+    fun testTypeParameters() = checkByText("""
+        trait <info>MyTrait</info> {
+            type AssocType;
+            fn <info>some_fn</info>(&<info>self</info>);
+        }
+        struct <info>MyStruct</info><<info>N</info>: ?<info>Sized</info>+<info>Debug</info>+<info><info>MyTrait</info></info>> {
+            <info>N</info>: my_field
+        }
+    """)
+
+    fun testFunctionArguments() = checkByText("""
+        struct <info>Foo</info> {}
+        impl <info>Foo</info> {
+            fn <info>bar</info>(&<info>self</info>, (<info>i</info>, <info>j</info>): (<info>i32</info>, <info>i32</info>)) {}
+        }
+        fn <info>baz</info>(<info>u</info>: <info>u32</info>) {}
+    """)
+
+    fun testContextualKeywords() = checkByText("""
+        <info>union</info> U { }
+        impl <info>T</info> for U {
+            <info>default</info> fn <info>foo</info>() {}
+        }
+    """)
+
+    fun testQOperator() = checkByText("""
+        fn <info>foo</info>() -> Result<<info>i32</info>, ()>{
+            Ok(Ok(1)<info>?</info> * 2)
+        }
+    """)
 }
