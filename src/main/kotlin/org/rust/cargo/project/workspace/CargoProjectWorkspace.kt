@@ -1,6 +1,7 @@
 package org.rust.cargo.project.workspace
 
 import com.intellij.execution.ExecutionException
+import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.toolchain.RustToolchain
 
@@ -25,6 +26,9 @@ interface CargoProjectWorkspace {
      * EDT thread.
      */
     fun requestImmediateUpdate(toolchain: RustToolchain, afterCommit: (UpdateResult) -> Unit)
+
+    @TestOnly
+    fun syncUpdate(toolchain: RustToolchain)
 
     /**
      * Latest version of the Cargo's project-description obtained

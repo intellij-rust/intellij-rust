@@ -1,15 +1,16 @@
 package org.rust.cargo.project.workspace.impl
 
+import backcompat.runWriteAction
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleComponent
+import com.intellij.openapi.progress.BackgroundTaskQueue
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.Key
@@ -32,23 +33,16 @@ import org.rust.cargo.util.cargoLibraryName
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.updateLibrary
 import org.rust.ide.notifications.showBalloon
-import backcompat.runWriteAction
 
 private val LOG = Logger.getInstance(CargoProjectWorkspaceImpl::class.java)
 
 
-/**
- * [CargoProjectWorkspace] component implementation.
- *
- * We don't want to invoke several instances of the `cargo metadata`
- * at the same time. In theory Cargo should handle this just fine, but
- * in practice it may deadlock and it's just wasteful, so we use [DebouncingQueue].
- *
- * TODO: schedule updates when `Cargo.toml` is being edited even if it is not saved yet.
- */
 class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorkspace, ModuleComponent {
-
-    private val updateQueue = DebouncingQueue(delayMillis = 1000, parentDisposable = module)
+    // First updates go through [debouncer] to be properly throttled,
+    // and then via [taskQueue] to be serialized (it should be safe to execute
+    // several Cargo's concurrently, but let's avoid that)
+    private val debouncer = Debouncer(delayMillis = 1000, parentDisposable = module)
+    private val taskQueue = BackgroundTaskQueue(module.project, "Cargo update")
 
     /**
      * Cached instance of the latest [CargoProjectDescription] instance synced with `Cargo.toml`
@@ -98,13 +92,14 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     override fun requestImmediateUpdate(toolchain: RustToolchain, afterCommit: (UpdateResult) -> Unit) =
         requestUpdate(toolchain, afterCommit)
 
+    override fun syncUpdate(toolchain: RustToolchain) {
+        taskQueue.run(UpdateTask(toolchain, module.cargoProjectRoot!!.path, null))
+    }
+
     private fun requestUpdate(toolchain: RustToolchain, afterCommit: ((UpdateResult) -> Unit)?) {
         val contentRoot = module.cargoProjectRoot ?: return
-        updateQueue.submit({ completionToken ->
-            // FIXME: remove invoke later when drop IDEA 15 support
-            ApplicationManager.getApplication().invokeLater({
-                UpdateTask(toolchain, contentRoot.path, completionToken, afterCommit).queue()
-            }, ModalityState.NON_MODAL)
+        debouncer.submit({
+            taskQueue.run(UpdateTask(toolchain, contentRoot.path, afterCommit))
         }, immediately = afterCommit != null)
     }
 
@@ -151,7 +146,6 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     private inner class UpdateTask(
         private val toolchain: RustToolchain,
         private val projectDirectory: String,
-        private val completionToken: DebouncingQueue.CompletionToken,
         private val afterCommit: ((UpdateResult) -> Unit)? = null
     ) : Task.Backgroundable(module.project, "Updating cargo") {
 
@@ -183,21 +177,10 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
         }
 
         override fun onSuccess() {
-            try {
-                val r = requireNotNull(result)
-                commitUpdate(r)
-                afterCommit?.invoke(r)
-            } finally {
-                onDone()
-            }
+            val r = requireNotNull(result)
+            commitUpdate(r)
+            afterCommit?.invoke(r)
         }
-
-        override fun onCancel() {
-            onDone()
-        }
-
-        // Backward compat: no `onFinished` in IDEA 15
-        fun onDone() = completionToken.taskCompleted()
     }
 
     /**
@@ -236,58 +219,22 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
 }
 
 /**
- * Executes long running tasks with rate of at most once every [delayMillis] and makes sure
- * at most one tasks executes at a time. The task itself may take more than [delayMillis]
- * to complete. Task may be asynchronous.
+ * Executes tasks with rate of at most once every [delayMillis].
  */
-private class DebouncingQueue(
+private class Debouncer(
     private val delayMillis: Int,
     parentDisposable: Disposable
 ) {
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
-    private var pendingTask: ((CompletionToken) -> Unit)? = null
-    private var inFlightTask: CompletionToken? = null
 
-    fun submit(task: (CompletionToken) -> Unit, immediately: Boolean) = onAlarmThread {
+    fun submit(task: () -> Unit, immediately: Boolean) = onAlarmThread {
         alarm.cancelAllRequests()
         if (immediately) {
-            schedule(task)
+            task()
         } else {
-            alarm.addRequest({ schedule(task) }, delayMillis)
-        }
-    }
-
-    /**
-     * Tasks should call [taskCompleted] after they finished (successfully or not), to
-     * allow the queue to schedule the next task.
-     */
-    inner class CompletionToken() {
-        fun taskCompleted() = onAlarmThread {
-            LOG.assertTrue(inFlightTask == this)
-            inFlightTask = null
-
-            val task = pendingTask
-            if (task != null) {
-                pendingTask = null
-                execute(task)
-            }
+            alarm.addRequest(task, delayMillis)
         }
     }
 
     private fun onAlarmThread(work: () -> Unit) = alarm.addRequest(work, 0)
-
-    private fun schedule(task: (CompletionToken) -> Unit) {
-        if (inFlightTask == null) {
-            execute(task)
-        } else {
-            pendingTask = task
-        }
-    }
-
-    private fun execute(task: (CompletionToken) -> Unit) {
-        LOG.assertTrue(inFlightTask == null)
-        val token = CompletionToken()
-        inFlightTask = token
-        task(token)
-    }
 }
