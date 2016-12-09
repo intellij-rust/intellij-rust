@@ -12,14 +12,15 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
             foo(5 + /*caret*/10);
         }""", """
         fn hello() {
-            let x = 10;
-            foo(5 + x);
+            let i = 10;
+            foo(5 + i);
         }""")
     {
         val ref = refactoring()
         val targets = ref.possibleTargets()
         check(targets.size == 3)
-        ref.replaceElementForAllExpr(listOf(targets[0]))
+        val expr = targets[0]
+        ref.replaceElementForAllExpr(expr, listOf(expr))
     }
 
     fun testExplicitSelectionWorks() {
@@ -54,7 +55,7 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
         check(targets.size == 3)
         val expr = targets[1]
         val occurrences = findOccurrences(expr)
-        ref.replaceElementForAllExpr(occurrences)
+        ref.replaceElementForAllExpr(expr, occurrences)
     }
 
     fun testCaretAfterElement() = doTest("""
@@ -62,13 +63,13 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
             1/*caret*/;
         }""", """
         fn main() {
-            let x = 1;
+            let i = 1;
         }""")
     {
         val ref = refactoring()
         val targets = ref.possibleTargets()
         check(targets.size == 1)
-        ref.replaceElement(targets)
+        ref.replaceElement(targets[0], targets)
     }
 
     fun testStatement() = doTest("""
@@ -76,13 +77,13 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
             foo(5 + /*caret*/10);
         }""", """
         fn hello() {
-            let x = foo(5 + 10);
+            let foo = foo(5 + 10);
         }""")
     {
         val ref = refactoring()
         val targets = ref.possibleTargets()
         check(targets.size == 3)
-        ref.replaceElement(listOf(targets[2]))
+        ref.replaceElement(targets[2], listOf(targets[2]))
     }
 
     fun testMatch() = doTest("""
@@ -101,7 +102,7 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
     {
         val ref = refactoring()
         val targets = ref.possibleTargets()
-        ref.replaceElement(listOf(targets.single()))
+        ref.replaceElement(targets.single(), listOf(targets.single()))
     }
 
     fun testFile() = doTest("""
@@ -115,7 +116,7 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
         val ref = refactoring()
         val targets = ref.possibleTargets()
         check(targets.size == 2)
-        ref.replaceElement(listOf(targets[1]))
+        ref.replaceElement(targets[1], listOf(targets[1]))
     }
 
     fun testRefMut() = doTest("""
@@ -123,21 +124,17 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
             let file = File::open("res/input.txt")?;
 
             file.read_to_string(&mut String:/*caret*/:new())?;
-
-            Ok(x)
         }""", """
         fn read_file() -> Result<String, Error> {
             let file = File::open("res/input.txt")?;
-            let mut x = String::new();
+            let mut string = String::new();
 
-            file.read_to_string(&mut x)?;
-
-            Ok(x)
+            file.read_to_string(&mut string)?;
         }""")
     {
         val ref = refactoring()
         val targets = ref.possibleTargets()
-        ref.replaceElement(listOf(targets[0]))
+        ref.replaceElement(targets[0], listOf(targets[0]))
     }
 
     private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String, action: () -> Unit) {

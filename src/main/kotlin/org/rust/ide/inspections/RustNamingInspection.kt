@@ -103,7 +103,7 @@ open class RustUpperCaseNamingInspection(elementType: String) : RustNamingInspec
     }
 }
 
-private fun String.toSnakeCase(upper: Boolean): String {
+fun String.toSnakeCase(upper: Boolean): String {
     val result = StringBuilder(length + 3)     // 3 is a reasonable margin for growth when `_`s are added
     result.append(takeWhile { it == '_' || it == '\'' })    // Preserve prefix
     var firstPart = true
