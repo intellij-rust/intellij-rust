@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.util.getNextNonCommentSibling
 import org.rust.lang.core.psi.util.parentOfType
 
 class MatchToIfLetIntention : PsiElementBaseIntentionAction() {
-    override fun getText() = "Convert math statement to if let"
+    override fun getText() = "Convert match statement to if let"
     override fun getFamilyName(): String = text
 
     override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean =
