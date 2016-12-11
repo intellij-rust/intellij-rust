@@ -45,5 +45,21 @@ class RustTopMostInScopeSelector(pred: (RustExprElement) -> Boolean) : RustExprP
             .any { it is RustExprElement && pred(it) }
 }
 
+class RustAllParentsSelector(pred: (RustExprElement) -> Boolean) : RustExprParentsSelectorBase(pred) {
+    override fun getExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> =
+        context
+            .ancestors
+            .takeWhile { it !is RustBlockElement }
+            .filter { it is RustExprElement && pred(it) }
+            .toList()
+
+    override fun hasExpression(context: PsiElement, copyDocument: Document, newOffset: Int): Boolean =
+        context
+            .ancestors
+            .takeWhile { it !is RustBlockElement }
+            .any { it is RustExprElement && pred(it) }
+}
+
 fun RustExprElement.isBool() = resolvedType == RustBooleanType
 fun RustExprElement.isEnum() = resolvedType is RustEnumType
+fun RustExprElement.any() = true
