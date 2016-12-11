@@ -33,6 +33,16 @@ open class AssertPostfixTemplateBase(name: String) : StringBasedPostfixTemplate(
 class AssertPostfixTemplate : AssertPostfixTemplateBase("assert")
 class DebugAssertPostfixTemplate : AssertPostfixTemplateBase("debug_assert")
 
+open class LambdaPostfixTemplate : StringBasedPostfixTemplate(
+    "lambda",
+    "|| expr",
+    RustTopMostInScopeSelector(RustExprElement::any)) {
+
+    override fun getTemplateString(element: PsiElement): String = "|| ${element.text}"
+
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
+}
+
 class MatchPostfixTemplate : StringBasedPostfixTemplate(
     "match",
     "match expr {...}",

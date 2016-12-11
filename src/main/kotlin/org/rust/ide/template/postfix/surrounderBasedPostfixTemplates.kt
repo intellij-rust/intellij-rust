@@ -4,6 +4,7 @@ import com.intellij.codeInsight.template.postfix.templates.SurroundPostfixTempla
 import com.intellij.lang.surroundWith.Surrounder
 import com.intellij.psi.PsiElement
 import org.rust.ide.surroundWith.expression.RustWithIfExpSurrounder
+import org.rust.ide.surroundWith.expression.RustWithParenthesesSurrounder
 import org.rust.ide.surroundWith.expression.RustWithWhileExpSurrounder
 import org.rust.lang.core.psi.RustExprElement
 import org.rust.lang.core.types.RustBooleanType
@@ -48,4 +49,13 @@ class WhileNotExpressionPostfixTemplate : SurroundPostfixTemplateBase(
     override fun getSurrounder(): Surrounder = RustWithWhileExpSurrounder()
 
     override fun getWrappedExpression(expression: PsiElement?): PsiElement = checkNotNull(expression).negate()
+}
+
+class ParenPostfixTemplate : SurroundPostfixTemplateBase(
+    "par",
+    "(expr)",
+    RustPostfixTemplatePsiInfo,
+    RustAllParentsSelector(RustExprElement::any)
+) {
+    override fun getSurrounder(): Surrounder = RustWithParenthesesSurrounder()
 }
