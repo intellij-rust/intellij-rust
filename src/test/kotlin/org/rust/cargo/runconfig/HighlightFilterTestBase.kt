@@ -1,5 +1,6 @@
 package org.rust.cargo.runconfig
 
+import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.openapi.vfs.VirtualFile
 import org.assertj.core.api.Assertions
@@ -18,7 +19,7 @@ abstract class HighlightFilterTestBase : RustTestCaseBase() {
         projectDir = createTestDirectoryAndFile()
     }
 
-    protected fun doTest(filter: RegexpFileLinkFilter, line: String, entireLength: Int, hStart: Int, hEnd: Int) {
+    protected fun doTest(filter: Filter, line: String, entireLength: Int, hStart: Int, hEnd: Int) {
         val result = checkNotNull(filter.applyFilter(line, entireLength)) {
             "No match in $line"
         }

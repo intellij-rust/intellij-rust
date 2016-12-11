@@ -27,8 +27,8 @@ class CargoProjectDescription private constructor(
     ) {
         val isModule: Boolean get() = source == null
         val libTarget: Target? get() = targets.find { it.isLib }
-
         val contentRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
+        val isExternal: Boolean get() = targets.asSequence().filter { it.crateRoot != null }.any { it.isLib }
 
         override fun toString(): String = "Package(contentRootUrl='$contentRootUrl', name='$name')"
     }
