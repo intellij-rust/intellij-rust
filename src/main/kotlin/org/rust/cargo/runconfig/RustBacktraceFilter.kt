@@ -5,6 +5,8 @@ import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.execution.filters.RegexpFilter
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -19,6 +21,8 @@ import org.rust.lang.core.resolve.RustResolveEngine
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathHead
 import org.rust.lang.core.symbols.RustPathSegment
+import java.awt.Color
+import java.awt.Font
 import java.util.*
 import java.util.regex.Pattern
 
@@ -26,7 +30,7 @@ import java.util.regex.Pattern
  * Adds features to stack backtraces:
  * - Wrap function calls into hyperlinks to source code.
  * - Turn source code links into hyperlinks.
- * - Dims funcion hashcodes to remove noise.
+ * - Dims function hash codes to reduce noise.
  */
 class RustBacktraceFilter(
     project: Project,
@@ -36,9 +40,8 @@ class RustBacktraceFilter(
     private val backtraceItemFilter = RustBacktraceItemFilter(project)
 
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
-        backtraceItemFilter.applyFilter(line, entireLength)?.let { return it }
-        sourceLinkFilter.applyFilter(line, entireLength)?.let { return it }
-        return null
+        return backtraceItemFilter.applyFilter(line, entireLength)
+            ?: sourceLinkFilter.applyFilter(line, entireLength)
     }
 }
 
@@ -54,45 +57,97 @@ private class RustBacktraceItemFilter(
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
         val matcher = pattern.matcher(line)
         if (!matcher.find()) return null
+        val header = matcher.group(1)
         val funcName = matcher.group(2)
+        val funcHash = matcher.group(3)
+        val normFuncName = funcName.normalize()
         val resultItems = ArrayList<Filter.ResultItem>(2)
 
         // Add hyperlink to the function name
-        val funcStart = entireLength - line.length + matcher.group(1).length
-        if (SKIP_PREFIXES.none { funcName.startsWith(it) }) {
-            extractFnHyperlink(funcName, funcStart)?.let { resultItems.add(it) }
+        val funcStart = entireLength - line.length + header.length
+        val funcEnd = funcStart + funcName.length
+        if (SKIP_PREFIXES.none { normFuncName.startsWith(it) }) {
+            extractFnHyperlink(normFuncName, funcStart, funcEnd)?.let { resultItems.add(it) }
         }
 
         // Dim the hashcode
-        val funcEnd = funcStart + funcName.length
-        resultItems.add(Filter.ResultItem(funcEnd, funcEnd + matcher.group(3).length, null, DIMMED_TEXT))
+        resultItems.add(Filter.ResultItem(funcEnd, funcEnd + funcHash.length, null, DIMMED_TEXT))
 
         return Filter.Result(resultItems)
     }
 
-    private fun extractFnHyperlink(funcName: String, start: Int): Filter.ResultItem? {
+    private fun extractFnHyperlink(funcName: String, start: Int, end: Int): Filter.ResultItem? {
         val func = ElementResolver.resolve(funcName, project) ?: return null
         val funcFile = func.element.containingFile
         val doc = docManager.getDocument(funcFile) ?: return null
         val link = OpenFileHyperlinkInfo(project, funcFile.virtualFile, doc.getLineNumber(func.element.textOffset))
-        return Filter.ResultItem(start, start + funcName.length, link, func.pkg.isExternal)
+        val linkAttr = if (func.pkg.isExternal) GRAYED_LINK else null
+        return Filter.ResultItem(start, end, link, linkAttr)
+    }
+
+    /**
+     * Normalizes function path:
+     * - Removes angle brackets from the element path, including enclosed contents when necessary.
+     * - Removes closure markers.
+     * Examples:
+     * - <core::option::Option<T>>::unwrap -> core::option::Option::unwrap
+     * - std::panicking::default_hook::{{closure}} -> std::panicking::default_hook
+     */
+    private fun String.normalize(): String {
+        var str = this
+        while (str.endsWith("::{{closure}}")) {
+            str = str.substringBeforeLast("::")
+        }
+        while (true) {
+            val range = str.findAngleBrackets() ?: break
+            val idx = str.indexOf("::", range.start + 1)
+            if (idx < 0 || idx > range.endInclusive) {
+                str = str.removeRange(range)
+            } else {
+                str = str.removeRange(IntRange(range.endInclusive, range.endInclusive))
+                    .removeRange(IntRange(range.start, range.start))
+            }
+            println("$this -> $str")
+        }
+        return str
+    }
+
+    /**
+     * Finds the range of the first matching angle brackets within the string.
+     */
+    private fun String.findAngleBrackets(): IntRange? {
+        var start = -1
+        var counter = 0
+        loop@ for (i in 0..(length - 1)) {
+            when (this[i]) {
+                '<' -> {
+                    if (start < 0) {
+                        start = i
+                    }
+                    counter += 1
+                }
+                '>' -> counter -= 1
+                else -> continue@loop
+            }
+            if (counter == 0) {
+                val range = IntRange(start, i)
+                return range
+            }
+        }
+        return null
     }
 
     private companion object {
         val DIMMED_TEXT = EditorColorsManager.getInstance().globalScheme
             .getAttributes(TextAttributesKey.createTextAttributesKey("org.rust.DIMMED_TEXT"))!!
-        val SKIP_PREFIXES = arrayOf(
-            // TODO: Put the whole std:: and core:: here?
-//            "std::sys::backtrace::",
-//            "std::panicking::",
-            "std::rt::lang_start"
-        )
+        val GRAYED_LINK_COLOR = Color(135, 135, 135)
+        val GRAYED_LINK = TextAttributes(GRAYED_LINK_COLOR, null, GRAYED_LINK_COLOR, EffectType.LINE_UNDERSCORE, Font.PLAIN)
+        val SKIP_PREFIXES = arrayOf("std::", "core::")
     }
 }
 
 
 private object ElementResolver {
-    private val vfm = VirtualFileManager.getInstance()
 
     data class Result (
         val element: RustNamedElement,
@@ -104,12 +159,13 @@ private object ElementResolver {
         val segments = pathStr.segments
         if (segments.isEmpty()) return null
         val pkg = project.getPackage(segments[0].name) ?: return null
+        val vfm = VirtualFileManager.getInstance()
         val path = RustPath(RustPathHead.Absolute, segments.drop(1))
-        val el = pkg.targets
+        val el = pkg.targets.asSequence()
             .mapNotNull { vfm.findFileByUrl(it.crateRootUrl) }
             .mapNotNull { project.getPsiFor(it) as? RustCompositeElement }
-            .flatMap { RustResolveEngine.resolve(path, it) }
-            .mapNotNull { it as? RustNamedElement }
+            .flatMap { RustResolveEngine.resolve(path, it).asSequence() }
+            .filterIsInstance(RustNamedElement::class.java)
             .firstOrNull() ?: return null
 
         return Result(el, pkg)
@@ -119,19 +175,11 @@ private object ElementResolver {
         modulesWithCargoProject
             .mapNotNull { it.cargoProject }
             .flatMap { it.packages }
-            .filter { it.isModule && it.name == name }
-            .firstOrNull()
+            .find { it.isModule && it.name == name }
 
     private val String.segments: List<RustPathSegment>
-        get() = normalize()
-            .splitToSequence("::")
-            .filter { it != "{{closure}}" }
+        get() = splitToSequence("::")
             .map { RustPathSegment(it, emptyList()) }
             .toList()
 
-    private fun String.normalize(): String = when (this) {        // TODO: Implement conversion. And move to RustPath?
-        "<core::option::Option<T>>::unwrap" -> "core::option::Option::unwrap"
-        "<core::result::Result<T, E>>::unwrap" -> "core::result::Result::unwrap"
-        else -> this
-    }
 }
