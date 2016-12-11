@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.resolve.util.RustResolveUtil
+import org.rust.lang.core.resolve.crateRoot
 import org.rust.lang.core.stubs.RustNamedElementStub
 
 abstract class RustStubbedNamedElementImpl<StubT> : RustStubbedElementImpl<StubT>,
@@ -41,7 +41,6 @@ where StubT : RustNamedElementStub<*> {
     override fun getTextOffset(): Int = nameIdentifier?.textOffset ?: super.getTextOffset()
 
     override fun getPresentation(): ItemPresentation {
-        val crateRoot = RustResolveUtil.getCrateRootModFor(this)
         val crateName = crateRoot?.containingFile?.virtualFile?.let {
             module?.cargoProject?.findTargetForFile(it)?.name
         }

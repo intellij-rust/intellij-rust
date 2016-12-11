@@ -19,7 +19,6 @@ import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
 import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.resolve.scope.RustResolveScope
-import org.rust.lang.core.resolve.util.RustResolveUtil
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathHead
 import org.rust.lang.core.types.RustStructType
@@ -27,6 +26,16 @@ import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.util.stripAllRefsIfAny
 import org.rust.utils.sequenceOfNotNull
 import java.util.*
+
+val RustCompositeElement.crateRoot: RustMod? get() {
+    val mod = containingFile as? RustFile ?: return null
+
+    val root = mod.superMods.lastOrNull()
+    return if (root != null && root.isCrateRoot)
+        root
+    else
+        null
+}
 
 
 object RustResolveEngine {
@@ -92,7 +101,7 @@ object RustResolveEngine {
             basePath.reference.resolve()
         else
         // `use ::{foo, bar}`
-            RustResolveUtil.getCrateRootModFor(ref)
+            ref.crateRoot
 
         when {
         // `use foo::{self}`
@@ -168,7 +177,7 @@ private fun resolveAllNamespaces(path: RustPath, pivot: RustCompositeElement): S
     val head = path.head
     val start: Sequence<ScopeEntry> = when (head) {
         is RustPathHead.Absolute -> sequenceOfNotNull(
-            RustResolveUtil.getCrateRootModFor(pivot)?.let { ScopeEntry.of(it) }
+            pivot.crateRoot?.let { ScopeEntry.of(it) }
         )
 
         is RustPathHead.Relative -> sequenceOfNotNull(

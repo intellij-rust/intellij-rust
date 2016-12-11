@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.functions
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.resolve.util.RustResolveUtil
+import org.rust.lang.core.resolve.crateRoot
 
 class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandRunConfigurationType()) {
 
@@ -93,8 +93,8 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
     }
 
     private fun cargoTargetForElement(element: RustCompositeElement): CargoProjectDescription.Target? {
-        val rootMod = RustResolveUtil.getCrateRootModFor(element) ?: return null
-        return element.module?.cargoProject?.findTargetForFile(rootMod.containingFile.virtualFile)
+        val crateRoot = element.crateRoot ?: return null
+        return element.module?.cargoProject?.findTargetForFile(crateRoot.containingFile.virtualFile)
     }
 }
 
