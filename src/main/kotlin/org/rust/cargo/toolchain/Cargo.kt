@@ -15,6 +15,7 @@ import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.utils.fullyRefreshDirectory
 import java.io.File
+import java.util.*
 
 /**
  * A main gateway for executing cargo commands.
@@ -83,7 +84,9 @@ class Cargo(
             cmdLine
                 .withEnvironment("TERM", "linux")
                 .withRedirectErrorStream(true)
-            args = additionalArguments + "--color=always"
+            args = ArrayList(additionalArguments.size + 1)
+            args.add("--color=always")  // Must come first in order not to corrupt the running program arguments
+            args.addAll(additionalArguments)
         }
         return cmdLine.withParameters(args)
     }
