@@ -4,6 +4,7 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.psi.PsiElement
+import com.intellij.testFramework.LightProjectDescriptor
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.rust.cargo.project.CargoProjectDescription
@@ -16,6 +17,8 @@ import org.rust.lang.RustTestCaseBase
 
 class RunConfigurationProducerTestCase : RustTestCaseBase() {
     override val dataPath: String get() = "org/rust/cargo/runconfig/producers/fixtures"
+    // We need to override this because we call [CargoProjectWorkspaceImpl.setState].
+    override fun getProjectDescriptor(): LightProjectDescriptor = LightProjectDescriptor()
 
     fun testExecutableProducerWorksForBin() {
         testProject {
