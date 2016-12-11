@@ -221,9 +221,13 @@ class RustTypeAwareResolveTestCase : RustResolveTestCaseBase() {
         struct S;
 
         impl S { fn test(&self) { } }
+                    //X
 
-        fn main() { S::test(); }
-                      //^ unresolved
+        fn main() {
+            let s = S;
+            S::test(&s);
+               //^
+        }
     """)
 
     fun testHiddenInherentImpl() = checkByCode("""

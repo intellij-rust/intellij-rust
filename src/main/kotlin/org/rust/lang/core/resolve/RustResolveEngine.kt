@@ -273,7 +273,7 @@ private class RustScopeVisitor(
 
     override fun visitStructItem(o: RustStructItemElement) = set {
         sequenceOf(
-            staticMethods(o),
+            methods(o),
 
             if (isContextLocalTo(o))
                 o.typeParams.scopeEntries
@@ -284,7 +284,7 @@ private class RustScopeVisitor(
 
     override fun visitEnumItem(o: RustEnumItemElement) = set {
         sequenceOf(
-            staticMethods(o),
+            methods(o),
 
             if (isContextLocalTo(o))
                 o.typeParams.scopeEntries
@@ -383,9 +383,9 @@ private class RustScopeVisitor(
 
     private fun isContextLocalTo(o: RustCompositeElement) = o.contains(context.pivot)
 
-    private fun staticMethods(o: RustTypeBearingItemElement): Sequence<ScopeEntry> =
+    private fun methods(o: RustTypeBearingItemElement): Sequence<ScopeEntry> =
         RustImplIndex
-            .findStaticMethodsFor(o.resolvedType, o.project)
+            .findMethodsFor(o.resolvedType, o.project)
             .scopeEntries
 
 }
