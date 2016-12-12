@@ -27,6 +27,14 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
         doTestProducedConfigurations()
     }
 
+    fun testExecutableProducerWorksForBinFile() {
+        testProject {
+            bin("hello", "src/main.rs").open()
+        }
+        doTestProducedConfigurations(wholeFileIsContext = true)
+    }
+
+
     fun testExecutableProducerWorksForExample() {
         testProject {
             example("hello", "example/hello.rs").open()
@@ -103,6 +111,13 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
         doTestProducedConfigurations()
     }
 
+    fun testTestProducerWorksForFiles() {
+        testProject {
+            test("foo", "tests/foo.rs").open()
+        }
+        doTestProducedConfigurations(wholeFileIsContext = true)
+    }
+
     fun testTestProducerWorksForRootModule() {
         testProject {
             lib("foo", "src/lib.rs", """
@@ -168,8 +183,10 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
         doTestProducedConfigurations()
     }
 
-    private fun doTestProducedConfigurations() {
-        val configurationContext = ConfigurationContext(myFixture.file.findElementAt(myFixture.caretOffset))
+    private fun doTestProducedConfigurations(wholeFileIsContext: Boolean = false) {
+        val configurationContext = ConfigurationContext(
+            if (wholeFileIsContext) myFixture.file else myFixture.file.findElementAt(myFixture.caretOffset)
+        )
 
         val configurations = configurationContext.configurationsFromContext.orEmpty().map { it.configuration }
 
@@ -224,16 +241,22 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
         private var targets = arrayListOf<Target>()
         private var files = arrayListOf<File>()
         private var toOpen: File? = null
-        private val hello_world = """fn main() { println!("Hello, World!") }"""
+        private val helloWorld = """fn main() { println!("Hello, World!") }"""
+        private val simpleTest = """#[test] fn test_simple() { assert_eq!(2 + 2, 5) }"""
         private val hello = """pub fn hello() -> String { return "Hello, World!".to_string() }"""
 
-        fun bin(name: String, path: String, code: String = hello_world): TestProjectBuilder {
+        fun bin(name: String, path: String, code: String = helloWorld): TestProjectBuilder {
             addTarget(name, CargoProjectDescription.TargetKind.BIN, path, code)
             return this
         }
 
-        fun example(name: String, path: String, code: String = hello_world): TestProjectBuilder {
+        fun example(name: String, path: String, code: String = helloWorld): TestProjectBuilder {
             addTarget(name, CargoProjectDescription.TargetKind.EXAMPLE, path, code)
+            return this
+        }
+
+        fun test(name: String, path: String, code: String = simpleTest): TestProjectBuilder {
+            addTarget(name, CargoProjectDescription.TargetKind.TEST, path, code)
             return this
         }
 

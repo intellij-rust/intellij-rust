@@ -79,7 +79,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
     }
 
     private fun findTestMod(location: Location<*>): TestConfig? {
-        val mod = location.psiElement.parentOfType<RustMod>() ?: return null
+        val mod = location.psiElement.parentOfType<RustMod>(strict = false) ?: return null
         val testName = if (mod.modName == "test" || mod.modName == "tests")
             "Test ${mod.`super`?.modName}::${mod.modName}"
         else
