@@ -71,6 +71,11 @@ private class AddStructFieldsQuickFix(
         val firstNewField = newBody.lbrace.nextSibling ?: return
         val lastNewField = newBody.rbrace?.prevSibling ?: return
         expr.addRangeAfter(firstNewField, lastNewField, expr.lbrace)
+        if (editor != null) {
+            val firstExpression = expr.structExprFieldList.first().expr
+                ?: error("Invalid struct expr body: `${expr.text}`")
+            editor.caretModel.moveToOffset(firstExpression.textOffset)
+        }
     }
 }
 

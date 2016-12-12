@@ -99,7 +99,7 @@ class RustExpressionAnnotatorTest : RustAnnotatorTestBase() {
 
         fn main() {
             let _ = S {
-                foo: (),
+                foo: /*caret*/(),
                 bar: (),
             };
         }
@@ -129,7 +129,7 @@ class RustExpressionAnnotatorTest : RustAnnotatorTestBase() {
 
         fn main() {
             let _ = S {
-                b: (),
+                b: /*caret*/(),
                 d: (),
                 a: 92,
                 c: 92
