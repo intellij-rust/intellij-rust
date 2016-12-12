@@ -12,9 +12,9 @@ class RustTypingEmptyFileFuzzyTest : RustTypingTestCaseBase() {
         for (ch in chars) {
             var backspace = false
             try {
-                doTestByText("fuzzy.rs", "<caret>", "$ch<caret>", ch)
+                doTestByText("<caret>", "$ch<caret>", ch)
                 backspace = true
-                doTestByText("fuzzy_backspace.rs", "$ch<caret>", "<caret>", '\b')
+                doTestByText("$ch<caret>", "<caret>", '\b')
             } catch(e: Throwable) {
                 print("Fuzzy test failed for character '${StringUtil.escapeStringCharacters(ch.toString())}'")
                 if (backspace) print(" when performing backspace")

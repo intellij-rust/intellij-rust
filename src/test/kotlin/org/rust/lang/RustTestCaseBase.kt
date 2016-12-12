@@ -79,15 +79,14 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
     }
 
     protected fun checkByText(
-        fileName: String,
         @Language("Rust") before: String,
         @Language("Rust") after: String,
         action: () -> Unit
     ) {
         val (myBefore, myAfter) = (before to after).swapIf(inverse)
-        myFixture.configureByText(fileName, myBefore)
+        InlineFile(myBefore)
         action()
-        myFixture.checkResult(myAfter)
+        myFixture.checkResult(replaceCaretMarker(myAfter))
     }
 
     protected fun openFileInEditor(path: String) {
@@ -112,7 +111,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         private val hasCaretMarker = "/*caret*/" in code
 
         init {
-            myFixture.configureByText("main.rs", code.replace("/*caret*/", "<caret>"))
+            myFixture.configureByText("main.rs", replaceCaretMarker(code))
         }
 
         inline fun <reified T : PsiElement> elementAtCaret(marker: String = "^"): T {
@@ -148,6 +147,8 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         }
 
     }
+
+    protected fun replaceCaretMarker(text: String) = text.replace("/*caret*/", "<caret>")
 
     protected fun reportTeamCityMetric(name: String, value: Long) {
         //https://confluence.jetbrains.com/display/TCD10/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingBuildStatistics

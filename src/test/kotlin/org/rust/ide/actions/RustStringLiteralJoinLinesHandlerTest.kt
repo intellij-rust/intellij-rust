@@ -11,7 +11,7 @@ class RustStringLiteralJoinLinesHandlerTest : RustTestCaseBase() {
         @Language("Rust") before: String,
         @Language("Rust") after: String
     ) {
-        checkByText("foo.rs", before, after) {
+        checkByText(before, after) {
             myFixture.performEditorAction(IdeActions.ACTION_EDITOR_JOIN_LINES)
         }
     }
