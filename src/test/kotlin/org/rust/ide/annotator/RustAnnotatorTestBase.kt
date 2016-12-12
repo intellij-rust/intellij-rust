@@ -9,7 +9,7 @@ abstract class RustAnnotatorTestBase: RustTestCaseBase() {
         myFixture.testHighlighting(fileName, *additionalFilenames)
     }
 
-    protected fun checkByText(text: String) {
+    protected fun checkInfo(text: String) {
         myFixture.configureByText("main.rs", text)
         myFixture.testHighlighting(false, true, false)
     }

@@ -2,14 +2,14 @@ package org.rust.ide.annotator
 
 class RustHighlightingAnnotatorTest : RustAnnotatorTestBase() {
 
-    fun testAttributes() = checkByText("""
+    fun testAttributes() = checkInfo("""
         <info>#[cfg_attr(foo)]</info>
         fn <info>main</info>() {
             <info>#![crate_type = <info>"lib"</info>]</info>
         }
     """)
 
-    fun testFieldsAndMethods() = checkByText("""
+    fun testFieldsAndMethods() = checkInfo("""
         struct <info>T</info>(<info>i32</info>);
         struct <info>S</info>{ <info>field</info>: <info>T</info>}
         fn <info>main</info>() {
@@ -18,7 +18,7 @@ class RustHighlightingAnnotatorTest : RustAnnotatorTestBase() {
         }
     """)
 
-    fun testFunctions() = checkByText("""
+    fun testFunctions() = checkInfo("""
         fn <info>main</info>() {}
         struct <info>S</info>;
         impl <info>S</info> {
@@ -33,7 +33,7 @@ class RustHighlightingAnnotatorTest : RustAnnotatorTestBase() {
         }
     """)
 
-    fun testMacro() = checkByText("""
+    fun testMacro() = checkInfo("""
         fn <info>main</info>() {
             <info>println!</info>["Hello, World!"];
             <info>unreachable!</info>();
@@ -47,7 +47,7 @@ class RustHighlightingAnnotatorTest : RustAnnotatorTestBase() {
         }
     """)
 
-    fun testMutBinding() = checkByText("""
+    fun testMutBinding() = checkInfo("""
         fn <info>main</info>() {
             let mut <info>a</info> = 1;
             let b = <info>a</info>;
@@ -56,7 +56,7 @@ class RustHighlightingAnnotatorTest : RustAnnotatorTestBase() {
         }
     """)
 
-    fun testTypeParameters() = checkByText("""
+    fun testTypeParameters() = checkInfo("""
         trait <info>MyTrait</info> {
             type AssocType;
             fn <info>some_fn</info>(&<info>self</info>);
@@ -66,7 +66,7 @@ class RustHighlightingAnnotatorTest : RustAnnotatorTestBase() {
         }
     """)
 
-    fun testFunctionArguments() = checkByText("""
+    fun testFunctionArguments() = checkInfo("""
         struct <info>Foo</info> {}
         impl <info>Foo</info> {
             fn <info>bar</info>(&<info>self</info>, (<info>i</info>, <info>j</info>): (<info>i32</info>, <info>i32</info>)) {}
@@ -74,14 +74,14 @@ class RustHighlightingAnnotatorTest : RustAnnotatorTestBase() {
         fn <info>baz</info>(<info>u</info>: <info>u32</info>) {}
     """)
 
-    fun testContextualKeywords() = checkByText("""
+    fun testContextualKeywords() = checkInfo("""
         <info>union</info> U { }
         impl <info>T</info> for U {
             <info>default</info> fn <info>foo</info>() {}
         }
     """)
 
-    fun testQOperator() = checkByText("""
+    fun testQOperator() = checkInfo("""
         fn <info>foo</info>() -> Result<<info>i32</info>, ()>{
             Ok(Ok(1)<info>?</info> * 2)
         }
