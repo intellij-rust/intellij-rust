@@ -10,12 +10,8 @@ abstract class RustIntentionTestBase(val intention: IntentionAction) : RustTestC
     protected fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         InlineFile(before).withCaret()
         myFixture.launchAction(intention)
-        myFixture.checkResult(after.replace("/*caret*/", "<caret>"))
+        myFixture.checkResult(replaceCaretMarker(after))
     }
 
-    protected fun doUnavailableTest(@Language("Rust") before: String) {
-        InlineFile(before).withCaret()
-        myFixture.launchAction(intention)
-        myFixture.checkResult(before.replace("/*caret*/", "<caret>"))
-    }
+    protected fun doUnavailableTest(@Language("Rust") before: String) = doAvailableTest(before, before)
 }

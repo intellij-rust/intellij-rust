@@ -197,6 +197,6 @@ last
     fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         InlineFile(before).withCaret()
         myFixture.type('\n')
-        myFixture.checkResult(after.replace("/*caret*/", "<caret>"))
+        myFixture.checkResult(replaceCaretMarker(after))
     }
 }
