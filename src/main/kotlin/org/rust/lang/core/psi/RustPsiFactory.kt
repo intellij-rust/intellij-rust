@@ -78,6 +78,15 @@ class RustPsiFactory(private val project: Project) {
             ?: error("Failed to create a where clause from text: `$text`")
     }
 
+    fun createGenericParams(
+        params: Iterable<String>
+    ): RustGenericParamsElement {
+        val text = params.joinToString (prefix = "<", separator = ", ", postfix = ">")
+
+        return createFromText<RustFnItemElement>("fn foo$text() {}")?.genericParams
+            ?: error("Failed to create type from text: `$text`")
+    }
+
     fun createOuterAttr(text: String): RustOuterAttrElement =
         createFromText("#[$text] struct Dummy;")
             ?: error("Failed to create an outer attribute from text: `$text`")
