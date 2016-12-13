@@ -10,7 +10,6 @@ import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ref.RustPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
 import org.rust.lang.core.symbols.RustPath
-import org.rust.lang.core.symbols.RustPathHead
 import org.rust.lang.core.symbols.RustPathSegment
 import org.rust.lang.core.types.util.type
 
@@ -46,8 +45,8 @@ val RustPathElement.asRustPath: RustPath? get() {
 
         if (`super` != null) {
             return when {
-                qpath.head is RustPathHead.Relative && qpath.segments.isEmpty() ->
-                    RustPath(RustPathHead.Relative(qpath.head.level + 1), emptyList())
+                qpath is RustPath.ModRelative && qpath.segments.isEmpty() ->
+                    RustPath.ModRelative((qpath.level + 1), emptyList())
                 else -> null // Forbid `foo::super`.
             }
         }
@@ -60,7 +59,7 @@ val RustPathElement.asRustPath: RustPath? get() {
             if (self != null || `super` != null)
                 null // Forbid `::super` and `::self`.
             else
-                RustPath(RustPathHead.Absolute, listOf(segment))
+                RustPath.CrateRelative(listOf(segment))
 
         // `self` can mean two different things:
         //  * if it is a part of a bigger path or a use declaration,
@@ -69,19 +68,19 @@ val RustPathElement.asRustPath: RustPath? get() {
         self != null ->
             when (parent) {
                 is RustPathElement, is RustUseItemElement ->
-                    RustPath(RustPathHead.Relative(0), emptyList())
-                else -> RustPath.identifier(segment)
+                    RustPath.ModRelative(0, emptyList())
+                else -> RustPath.Named(segment)
             }
 
         `super` != null ->
-            RustPath(RustPathHead.Relative(1), emptyList())
+            RustPath.ModRelative(1, emptyList())
 
         // Paths in use items are implicitly global.
         parentOfType<RustUseItemElement>() != null ->
-            RustPath(RustPathHead.Absolute, listOf(segment))
+            RustPath.CrateRelative(listOf(segment))
 
         else ->
-            RustPath.identifier(segment)
+            RustPath.Named(segment)
     }
 }
 

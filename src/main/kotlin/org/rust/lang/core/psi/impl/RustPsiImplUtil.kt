@@ -2,7 +2,6 @@ package org.rust.lang.core.psi.impl
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.symbols.RustPath
-import org.rust.lang.core.symbols.RustPathHead
 import org.rust.lang.core.symbols.RustPathSegment
 
 /**
@@ -20,16 +19,16 @@ object RustPsiImplUtil {
 
     fun isPublicNonStubbed(element: RustVisibilityOwner): Boolean = element.vis != null
 
-    fun crateRelativePath(element: RustNamedElement): RustPath? {
+    fun crateRelativePath(element: RustNamedElement): RustPath.CrateRelative? {
         val segment = element.name?.let { RustPathSegment.withoutGenerics(it) } ?: return null
         return element.containingMod?.crateRelativePath?.join(segment)
     }
 
-    fun modCrateRelativePath(mod: RustMod): RustPath? {
+    fun modCrateRelativePath(mod: RustMod): RustPath.CrateRelative? {
         val segments = mod.superMods.asReversed().drop(1).map {
             RustPathSegment.withoutGenerics(it.modName ?: return null)
         }
-        return RustPath(RustPathHead.Absolute, segments)
+        return RustPath.CrateRelative(segments)
     }
 }
 

@@ -20,7 +20,6 @@ import org.rust.lang.core.psi.visitors.RustComputingVisitor
 import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.symbols.RustPath
-import org.rust.lang.core.symbols.RustPathHead
 import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.util.stripAllRefsIfAny
@@ -174,22 +173,21 @@ object RustResolveEngine {
 
 
 private fun resolveAllNamespaces(path: RustPath, pivot: RustCompositeElement): Sequence<ScopeEntry> {
-    val head = path.head
-    val start: Sequence<ScopeEntry> = when (head) {
-        is RustPathHead.Absolute -> sequenceOfNotNull(
+    val start: Sequence<ScopeEntry> = when (path) {
+        is RustPath.CrateRelative -> sequenceOfNotNull(
             pivot.crateRoot?.let { ScopeEntry.of(it) }
         )
 
-        is RustPathHead.Relative -> sequenceOfNotNull(
-            generateSequence(pivot.containingMod, { it.`super` }).elementAtOrNull(head.level)?.let {
+        is RustPath.ModRelative -> sequenceOfNotNull(
+            generateSequence(pivot.containingMod, { it.`super` }).elementAtOrNull(path.level)?.let {
                 ScopeEntry.Companion.of(it)
             }
         )
 
-        is RustPathHead.Named ->
+        is RustPath.Named ->
             RustResolveEngine.enumerateScopesFor(pivot)
                 .flatMap { declarations(it, Context(pivot = pivot)) }
-                .filter { it.name == head.segment.name }
+                .filter { it.name == path.head.name }
     }
 
     var current: Sequence<ScopeEntry> = start

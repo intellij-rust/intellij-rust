@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.impl.mixin.asRustPath
 import org.rust.lang.core.psi.impl.mixin.parentEnum
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
-import org.rust.lang.core.symbols.RustPathHead
+import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
 import org.rust.lang.core.types.unresolved.RustUnresolvedReferenceType
@@ -206,8 +206,8 @@ private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedT
 
     override fun visitPathType(o: RustPathTypeElement) = set {
         val path = o.path?.asRustPath ?: return@set RustUnknownType
-        if (path.head is RustPathHead.Named && path.segments.isEmpty()) {
-            val primitiveType = RustPrimitiveTypeBase.fromTypeName(path.head.segment.name)
+        if (path is RustPath.Named && path.segments.isEmpty()) {
+            val primitiveType = RustPrimitiveTypeBase.fromTypeName(path.head.name)
             if (primitiveType != null) return@set primitiveType
         }
         RustUnresolvedPathType(path)

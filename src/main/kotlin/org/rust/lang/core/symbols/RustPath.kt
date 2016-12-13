@@ -8,28 +8,50 @@ import org.rust.utils.writeList
 import java.io.DataInput
 import java.io.DataOutput
 
-/**
- * PSI-independent representation of Rust paths.
- */
-data class RustPath(
-    val head: RustPathHead,
-    val segments: List<RustPathSegment>
-) {
-    fun join(segment: RustPathSegment): RustPath = RustPath(head, segments + segment)
+sealed class RustPath(val segments: List<RustPathSegment>) {
+    abstract fun join(segment: RustPathSegment): RustPath
 
-    override fun toString(): String {
-        val start = when (head) {
-            is RustPathHead.Absolute -> ""
-            is RustPathHead.Relative -> if (head.level == 0) SELF else SUPER + "::$SUPER".repeat(head.level - 1)
-            is RustPathHead.Named -> head.segment.name
+    abstract protected fun headToString(): String
+    override fun toString(): String = headToString() + segments.map { "::${it.name}" }.joinToString(separator = "")
+
+    class CrateRelative(segments: List<RustPathSegment>) : RustPath(segments) {
+        override fun headToString(): String = ""
+
+        override fun join(segment: RustPathSegment): CrateRelative = CrateRelative(segments + segment)
+
+        override fun equals(other: Any?): Boolean =
+            other is CrateRelative && segments == other.segments
+
+        override fun hashCode(): Int = segments.hashCode()
+    }
+
+    class ModRelative(val level: Int, segments: List<RustPathSegment>) : RustPath(segments) {
+        init {
+            check(level >= 0)
         }
-        return start + segments.map { "::${it.name}" }.joinToString(separator = "")
+
+        override fun headToString(): String = if (level == 0) RustPath.SELF else RustPath.SUPER + "::${RustPath.SUPER}".repeat(level - 1)
+
+        override fun join(segment: RustPathSegment): ModRelative = ModRelative(level, segments + segment)
+
+        override fun equals(other: Any?): Boolean =
+            other is ModRelative && level == other.level && segments == other.segments
+
+        override fun hashCode(): Int = 31 * level + segments.hashCode()
+    }
+
+    class Named(val head: RustPathSegment, segments: List<RustPathSegment> = emptyList()) : RustPath(segments) {
+        override fun headToString(): String = head.name
+
+        override fun join(segment: RustPathSegment): Named = Named(head, segments + segment)
+
+        override fun equals(other: Any?): Boolean =
+            other is Named && head == other.head && segments == other.segments
+
+        override fun hashCode(): Int = 31 * head.hashCode() + segments.hashCode()
     }
 
     companion object {
-
-        fun identifier(segment: RustPathSegment) = RustPath(RustPathHead.Named(segment), emptyList())
-
         val SELF = "self"
         val SUPER = "super"
         val CSELF = "Self"
@@ -37,7 +59,14 @@ data class RustPath(
 }
 
 fun DataOutput.writeRustPath(value: RustPath) {
-    writeRustPathHead(value.head)
+    when (value) {
+        is RustPath.CrateRelative -> writeInt(-1)
+        is RustPath.ModRelative -> writeInt(value.level)
+        is RustPath.Named -> {
+            writeInt(-2)
+            writeRustPathSegment(value.head)
+        }
+    }
 
     writeInt(value.segments.size)
     for (segment in value.segments) {
@@ -46,11 +75,18 @@ fun DataOutput.writeRustPath(value: RustPath) {
 }
 
 fun DataInput.readRustPath(): RustPath {
-    val head = readRustPathHead()
+    fun readSegments(): List<RustPathSegment> {
+        val parts = readInt()
+        return (0 until parts).map { readRustPathSegment() }
+    }
 
-    val parts = readInt()
-    val segments = (0 until parts).map { readRustPathSegment() }.toList()
-    return RustPath(head, segments)
+    val tag = readInt()
+    return when {
+        tag == -1 -> RustPath.CrateRelative(readSegments())
+        tag == -2 -> RustPath.Named(readRustPathSegment(), readSegments())
+        tag >= 0 -> RustPath.ModRelative(tag, readSegments())
+        else -> error("Corrupted DataInput, bad RustPath")
+    }
 }
 
 
@@ -76,48 +112,4 @@ fun DataInput.readRustPathSegment(): RustPathSegment {
     val name = readUTF()
     val genericArguments = readList { readRustUnresolvedType() }
     return RustPathSegment(name, genericArguments)
-}
-
-
-sealed class RustPathHead {
-    object Absolute : RustPathHead()
-
-    class Relative(val level: Int) : RustPathHead() {
-        init {
-            check(0 <= level)
-        }
-
-        // TODO: use data class in Kotlin 1.1
-        override fun equals(other: Any?): Boolean = other is Relative && level == other.level
-
-        override fun hashCode(): Int = level.hashCode()
-    }
-
-    class Named(val segment: RustPathSegment) : RustPathHead() {
-        // TODO: ditto
-        override fun equals(other: Any?): Boolean = other is Named && segment == other.segment
-
-        override fun hashCode(): Int = segment.hashCode()
-    }
-}
-
-fun DataOutput.writeRustPathHead(value: RustPathHead) {
-    when (value) {
-        is RustPathHead.Absolute -> writeInt(-1)
-        is RustPathHead.Relative -> writeInt(value.level)
-        is RustPathHead.Named -> {
-            writeInt(-2)
-            writeRustPathSegment(value.segment)
-        }
-    }
-}
-
-fun DataInput.readRustPathHead(): RustPathHead {
-    val tag = readInt()
-    return when {
-        tag == -1 -> RustPathHead.Absolute
-        tag == -2 -> RustPathHead.Named(readRustPathSegment())
-        tag >= 0 -> RustPathHead.Relative(tag)
-        else -> error("Corrupted DataInput, bad RustPath")
-    }
 }

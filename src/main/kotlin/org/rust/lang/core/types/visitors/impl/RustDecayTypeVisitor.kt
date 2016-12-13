@@ -24,7 +24,7 @@ class RustDecayTypeVisitor : RustTypeVisitor<RustUnresolvedType> {
 
     override fun visitTypeParameter(type: RustTypeParameterType): RustUnresolvedType {
         val name = type.parameter.name ?: return RustUnknownType
-        return RustUnresolvedPathType(RustPath.identifier(RustPathSegment.withoutGenerics(name)))
+        return RustUnresolvedPathType(RustPath.Named(RustPathSegment.withoutGenerics(name)))
     }
 
     override fun visitReference(type: RustReferenceType): RustUnresolvedType =

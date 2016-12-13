@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.resolve.scope.RustResolveScope
+import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.util.stripAllRefsIfAny
@@ -19,7 +20,7 @@ object RustCompletionEngine {
         val path = ref.asRustPath ?: return emptyArray()
 
         return if (path.segments.isNotEmpty()) {
-            val qual = path.copy(segments = path.segments.subList(0, path.segments.size - 1))
+            val qual = path.dropLastSegment()
             RustResolveEngine.resolve(qual, ref, Namespace.Types).firstOrNull().completionsFromResolveScope()
         } else {
             RustResolveEngine.enumerateScopesFor(ref)
@@ -97,5 +98,15 @@ fun RustCompositeElement.createLookupElement(scopeName: String): LookupElement {
             })
 
         else -> base
+    }
+}
+
+private fun RustPath.dropLastSegment(): RustPath {
+    check(segments.isNotEmpty())
+    val segments = segments.subList(0, segments.size - 1)
+    return when (this) {
+        is RustPath.CrateRelative -> RustPath.CrateRelative(segments)
+        is RustPath.ModRelative -> RustPath.ModRelative(level, segments)
+        is RustPath.Named -> RustPath.Named(head, segments)
     }
 }

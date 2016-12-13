@@ -16,7 +16,7 @@ import javax.swing.Icon
 abstract class RustEnumVariantImplMixin(node: ASTNode) : RustNamedElementImpl(node), RustEnumVariantElement {
     override fun getIcon(flags: Int): Icon = RustIcons.ENUM_VARIANT
 
-    override val crateRelativePath: RustPath? get() {
+    override val crateRelativePath: RustPath.CrateRelative? get() {
         val segment = name?.let { RustPathSegment.withoutGenerics(it) } ?: return null
         val enumSegment = this.parentOfType<RustEnumItemElement>()?.name?.let { RustPathSegment.withoutGenerics(it) }
                          ?: return null

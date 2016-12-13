@@ -11,7 +11,6 @@ import org.rust.lang.core.psi.RustStructOrEnumItemElement
 import org.rust.lang.core.psi.RustUseItemElement
 import org.rust.lang.core.stubs.elements.RustImplItemElementStub
 import org.rust.lang.core.symbols.RustPath
-import org.rust.lang.core.symbols.RustPathHead
 import org.rust.lang.core.types.RustStructOrEnumTypeBase
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustUnknownType
@@ -216,7 +215,7 @@ class RustAliasIndex : StringStubIndexExtension<RustUseItemElement>() {
 }
 
 private val RustPath.nameSegment: String? get() {
-    val lastSegment = (head as? RustPathHead.Named)?.segment ?: segments.lastOrNull()
+    val lastSegment = segments.lastOrNull() ?: (this as? RustPath.Named)?.head
     return lastSegment?.name
 }
 

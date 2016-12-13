@@ -22,5 +22,5 @@ abstract class RustUnionItemImplMixin : RustStubbedNamedElementImpl<RustUnionIte
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
 
-    override val crateRelativePath: RustPath? get() = RustPsiImplUtil.crateRelativePath(this)
+    override val crateRelativePath: RustPath.CrateRelative? get() = RustPsiImplUtil.crateRelativePath(this)
 }

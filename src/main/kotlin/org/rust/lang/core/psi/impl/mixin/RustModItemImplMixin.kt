@@ -31,7 +31,7 @@ abstract class RustModItemImplMixin : RustStubbedNamedElementImpl<RustModItemEle
 
     override val modName: String? get() = name
 
-    override val crateRelativePath: RustPath? get() = RustPsiImplUtil.modCrateRelativePath(this)
+    override val crateRelativePath: RustPath.CrateRelative? get() = RustPsiImplUtil.modCrateRelativePath(this)
 
     override val ownsDirectory: Boolean = true // Any inline nested mod owns a directory
 
