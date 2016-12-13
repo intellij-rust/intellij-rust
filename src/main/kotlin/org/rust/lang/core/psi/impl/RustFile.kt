@@ -33,7 +33,7 @@ class RustFile(
     override fun getFileType(): FileType = RustFileType
 
     override val `super`: RustMod? get() {
-        val original = this.originalFile as RustFile
+        val original = originalFile as RustFile
         return CachedValuesManager.getCachedValue(original, CachedValueProvider {
             CachedValueProvider.Result.create(
                 RustModulesIndex.getSuperFor(original),

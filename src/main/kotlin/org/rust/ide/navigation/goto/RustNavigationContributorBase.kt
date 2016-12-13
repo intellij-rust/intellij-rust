@@ -8,6 +8,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RustQualifiedNameOwner
+import org.rust.lang.core.psi.qualifiedName
 
 abstract class RustNavigationContributorBase<T> protected constructor(
     private val indexKey: StubIndexKey<String, T>,
@@ -36,7 +38,7 @@ abstract class RustNavigationContributorBase<T> protected constructor(
         return StubIndex.getElements(indexKey, name, project, scope, clazz).toTypedArray<NavigationItem>()
     }
 
-    override fun getQualifiedName(item: NavigationItem?): String? = null
+    override fun getQualifiedName(item: NavigationItem?): String? = (item as? RustQualifiedNameOwner)?.qualifiedName
 
     override fun getQualifiedNameSeparator(): String = "::"
 }
