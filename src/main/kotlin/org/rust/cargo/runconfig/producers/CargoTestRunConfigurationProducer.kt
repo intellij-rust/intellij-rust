@@ -85,9 +85,9 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         else
             "Test ${mod.modName}"
 
-        // We need to chop off heading colon `::`, since `canonicalCratePath`
+        // We need to chop off heading colon `::`, since `crateRelativePath`
         // always returns fully-qualified path
-        val testPath = (mod.canonicalCratePath ?: "").toString().removePrefix("::")
+        val testPath = (mod.crateRelativePath ?: "").toString().removePrefix("::")
         val target = cargoTargetForElement(mod) ?: return null
         return if (mod.functions.any { it.isTest }) TestConfig(mod, testName, testPath, target) else null
     }

@@ -45,7 +45,7 @@ where StubT : RustNamedElementStub<*> {
             module?.cargoProject?.findTargetForFile(it)?.name
         }
         val mod = containingFile as RustFile
-        val cratePath = mod.canonicalCratePath?.toString()
+        val cratePath = mod.crateRelativePath?.toString()
         val loc = if (crateName != null && cratePath != null) {
             "$crateName$cratePath"
         } else {

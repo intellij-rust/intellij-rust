@@ -20,12 +20,12 @@ object RustPsiImplUtil {
 
     fun isPublicNonStubbed(element: RustVisibilityOwner): Boolean = element.vis != null
 
-    fun canonicalCratePath(element: RustNamedElement): RustPath? {
+    fun crateRelativePath(element: RustNamedElement): RustPath? {
         val segment = element.name?.let { RustPathSegment.withoutGenerics(it) } ?: return null
-        return element.containingMod?.canonicalCratePath?.join(segment)
+        return element.containingMod?.crateRelativePath?.join(segment)
     }
 
-    fun modCanonicalCratePath(mod: RustMod): RustPath? {
+    fun modCrateRelativePath(mod: RustMod): RustPath? {
         val segments = mod.superMods.asReversed().drop(1).map {
             RustPathSegment.withoutGenerics(it.modName ?: return null)
         }

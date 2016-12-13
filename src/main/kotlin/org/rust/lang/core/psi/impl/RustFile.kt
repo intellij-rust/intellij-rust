@@ -44,7 +44,7 @@ class RustFile(
 
     override val modName: String? = if (name != RustMod.MOD_RS) FileUtil.getNameWithoutExtension(name) else parent?.name
 
-    override val canonicalCratePath: RustPath? get() = RustPsiImplUtil.modCanonicalCratePath(this)
+    override val crateRelativePath: RustPath? get() = RustPsiImplUtil.modCrateRelativePath(this)
 
     override val ownsDirectory: Boolean
         get() = name == RustMod.MOD_RS || isCrateRoot

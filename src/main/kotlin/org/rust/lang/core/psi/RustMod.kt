@@ -3,7 +3,7 @@ package org.rust.lang.core.psi
 import com.intellij.psi.PsiDirectory
 import java.util.*
 
-interface RustMod : RustPathNamedElement, RustItemsOwner {
+interface RustMod : RustQualifiedNameOwner, RustItemsOwner {
     /**
      *  Returns a parent module (`super::` in paths).
      *

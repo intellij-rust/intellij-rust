@@ -6,7 +6,7 @@ import org.rust.lang.core.psi.*
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.impl.TextExpression
 import org.rust.lang.core.psi.RustExprElement
-import org.rust.lang.core.psi.RustPathNamedElement
+import org.rust.lang.core.psi.RustQualifiedNameOwner
 import org.rust.lang.core.psi.RustTupleFieldDeclElement
 import org.rust.lang.core.psi.util.descendentsOfType
 import org.rust.lang.core.psi.util.parentOfType
@@ -47,7 +47,7 @@ class MatchPostfixTemplate : StringBasedPostfixTemplate(
         )
             .flatMap { RustResolveEngine.declarations(it, element) }
             .mapNotNull {
-                val path = (it.element as? RustPathNamedElement)?.canonicalCratePath ?: return@mapNotNull null
+                val path = (it.element as? RustQualifiedNameOwner)?.crateRelativePath ?: return@mapNotNull null
                 if (path.segments.lastOrNull()?.name == it.name)
                     return@mapNotNull path
                 else
@@ -61,14 +61,14 @@ class MatchPostfixTemplate : StringBasedPostfixTemplate(
         val variantList = enumType.item.enumBody.enumVariantList
 
         val createName: (item: RustEnumVariantElement) -> String = when {
-            variantList.all { it.canonicalCratePath in allDeclaration } -> {
+            variantList.all { it.crateRelativePath in allDeclaration } -> {
                 x -> x.name ?: ""
             }
-            enumType.item.canonicalCratePath in allDeclaration -> {
+            enumType.item.crateRelativePath in allDeclaration -> {
                 x -> "${enumType.item.name ?: "UnknownEnumName"}::${x.name ?: "UnknownVariantName"}"
             }
             else -> {
-                x -> x.canonicalCratePath.toString()
+                x -> x.crateRelativePath.toString()
             }
         }
 

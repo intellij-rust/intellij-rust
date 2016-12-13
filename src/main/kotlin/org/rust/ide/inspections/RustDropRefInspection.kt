@@ -25,7 +25,7 @@ class RustDropRefInspection : RustLocalInspectionTool() {
         val pathExpr = expr.expr as? RustPathExprElement ?: return
 
         val resEl = pathExpr.path.reference.resolve()
-        if (resEl !is RustFnItemElement || resEl.canonicalCratePath.toString() != "::mem::drop") return
+        if (resEl !is RustFnItemElement || resEl.crateRelativePath.toString() != "::mem::drop") return
 
         val args = expr.argList.exprList
         if (args.size != 1) return

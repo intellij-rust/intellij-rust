@@ -23,5 +23,5 @@ abstract class RustTraitItemImplMixin : RustStubbedNamedElementImpl<RustTraitIte
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
 
-    override val canonicalCratePath: RustPath? get() = RustPsiImplUtil.canonicalCratePath(this)
+    override val crateRelativePath: RustPath? get() = RustPsiImplUtil.crateRelativePath(this)
 }

@@ -16,11 +16,11 @@ import javax.swing.Icon
 abstract class RustEnumVariantImplMixin(node: ASTNode) : RustNamedElementImpl(node), RustEnumVariantElement {
     override fun getIcon(flags: Int): Icon = RustIcons.ENUM_VARIANT
 
-    override val canonicalCratePath: RustPath? get() {
+    override val crateRelativePath: RustPath? get() {
         val segment = name?.let { RustPathSegment.withoutGenerics(it) } ?: return null
         val enumSegment = this.parentOfType<RustEnumItemElement>()?.name?.let { RustPathSegment.withoutGenerics(it) }
                          ?: return null
-        return containingMod?.canonicalCratePath?.join(enumSegment)?.join(segment)
+        return containingMod?.crateRelativePath?.join(enumSegment)?.join(segment)
     }
 }
 

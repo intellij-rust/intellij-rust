@@ -347,7 +347,7 @@ ret_type ::= '->' type { pin = 1 }
 fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustPathNamedElement"
+  implements = [ "org.rust.lang.core.psi.RustQualifiedNameOwner"
                  "org.rust.lang.core.psi.RustFnElement"
                  "org.rust.lang.core.psi.RustTypeBearingItemElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
@@ -573,7 +573,7 @@ struct_item ::= attrs_and_vis STRUCT IDENTIFIER generic_params? (tuple_fields? w
 union_item ::= attrs_and_vis UNION IDENTIFIER generic_params? where_clause? block_fields {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustItemElement"
-                 "org.rust.lang.core.psi.RustPathNamedElement"
+                 "org.rust.lang.core.psi.RustQualifiedNameOwner"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustUnionItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.elements.RustUnionItemElementStub"
@@ -593,10 +593,10 @@ enum_body ::= '{' [ <<comma_separated_list enum_variant>> ] '}' { pin = 1 }
 enum_variant ::= outer_attr* IDENTIFIER variant_args? {
   pin = 2
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+  implements = [ "org.rust.lang.core.psi.RustQualifiedNameOwner"
+                 "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RustFieldsOwner"
-                 "org.rust.lang.core.psi.RustPathNamedElement" ]
+                 "org.rust.lang.core.psi.RustFieldsOwner" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustEnumVariantImplMixin"
 }
 
@@ -658,7 +658,7 @@ private meta mk_tuple_fields ::= '(' <<comma_separated_list <<param>> >> ')' { p
 
 trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER generic_params? type_param_bounds? where_clause? trait_body {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustPathNamedElement"
+  implements = [ "org.rust.lang.core.psi.RustQualifiedNameOwner"
                  "org.rust.lang.core.psi.RustTypeBearingItemElement"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustTraitItemImplMixin"
