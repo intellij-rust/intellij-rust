@@ -1,13 +1,10 @@
 package org.rust.ide.template.postfix
 
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.impl.TextExpression
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.impl.TextExpression
-import org.rust.lang.core.psi.RustExprElement
-import org.rust.lang.core.psi.RustQualifiedNameOwner
-import org.rust.lang.core.psi.RustTupleFieldDeclElement
 import org.rust.lang.core.psi.util.descendentsOfType
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.RustResolveEngine

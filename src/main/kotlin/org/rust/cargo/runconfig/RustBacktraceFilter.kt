@@ -9,18 +9,8 @@ import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
-import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.util.cargoProject
-import org.rust.cargo.util.getPsiFor
-import org.rust.cargo.util.modulesWithCargoProject
-import org.rust.lang.core.psi.RustCompositeElement
-import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.resolve.RustResolveEngine
-import org.rust.lang.core.symbols.RustPath
-import org.rust.lang.core.symbols.RustPathHead
-import org.rust.lang.core.symbols.RustPathSegment
 import java.awt.Color
 import java.awt.Font
 import java.util.*
@@ -77,7 +67,7 @@ private class RustBacktraceItemFilter(
     }
 
     private fun extractFnHyperlink(funcName: String, start: Int, end: Int): Filter.ResultItem? {
-        val func = ElementResolver.resolve(funcName, project) ?: return null
+        val func = RustResolveEngine.resolve(funcName, project) ?: return null
         val funcFile = func.element.containingFile
         val doc = docManager.getDocument(funcFile) ?: return null
         val link = OpenFileHyperlinkInfo(project, funcFile.virtualFile, doc.getLineNumber(func.element.textOffset))
@@ -144,42 +134,4 @@ private class RustBacktraceItemFilter(
         val GRAYED_LINK = TextAttributes(GRAYED_LINK_COLOR, null, GRAYED_LINK_COLOR, EffectType.LINE_UNDERSCORE, Font.PLAIN)
         val SKIP_PREFIXES = arrayOf("std::", "core::")
     }
-}
-
-
-private object ElementResolver {
-
-    data class Result (
-        val element: RustNamedElement,
-        val pkg: CargoProjectDescription.Package
-    )
-
-    // TODO: Move to RustResolveEngine
-    fun resolve(pathStr: String, project: Project) : Result? {
-        val segments = pathStr.segments
-        if (segments.isEmpty()) return null
-        val pkg = project.getPackage(segments[0].name) ?: return null
-        val vfm = VirtualFileManager.getInstance()
-        val path = RustPath(RustPathHead.Absolute, segments.drop(1))
-        val el = pkg.targets.asSequence()
-            .mapNotNull { vfm.findFileByUrl(it.crateRootUrl) }
-            .mapNotNull { project.getPsiFor(it) as? RustCompositeElement }
-            .flatMap { RustResolveEngine.resolve(path, it).asSequence() }
-            .filterIsInstance(RustNamedElement::class.java)
-            .firstOrNull() ?: return null
-
-        return Result(el, pkg)
-    }
-
-    private fun Project.getPackage(name: String): CargoProjectDescription.Package? =
-        modulesWithCargoProject
-            .mapNotNull { it.cargoProject }
-            .flatMap { it.packages }
-            .find { it.isModule && it.name == name }
-
-    private val String.segments: List<RustPathSegment>
-        get() = splitToSequence("::")
-            .map { RustPathSegment(it, emptyList()) }
-            .toList()
-
 }
