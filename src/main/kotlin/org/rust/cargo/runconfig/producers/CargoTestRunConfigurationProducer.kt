@@ -9,14 +9,8 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.runconfig.CargoCommandRunConfigurationType
-import org.rust.cargo.util.cargoProject
-import org.rust.lang.core.psi.RustCompositeElement
-import org.rust.lang.core.psi.RustFnItemElement
-import org.rust.lang.core.psi.RustMod
-import org.rust.lang.core.psi.functions
-import org.rust.lang.core.psi.util.module
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.resolve.crateRoot
 
 class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandRunConfigurationType()) {
 
@@ -74,7 +68,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
     private fun findTestFunction(location: Location<*>): TestConfig? {
         val fn = location.psiElement.parentOfType<RustFnItemElement>() ?: return null
         val name = fn.name ?: return null
-        val target = cargoTargetForElement(fn) ?: return null
+        val target = fn.containingCargoTarget ?: return null
         return if (fn.isTest) TestConfig(fn, "Test $name", name, target) else null
     }
 
@@ -88,13 +82,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         // We need to chop off heading colon `::`, since `crateRelativePath`
         // always returns fully-qualified path
         val testPath = (mod.crateRelativePath ?: "").toString().removePrefix("::")
-        val target = cargoTargetForElement(mod) ?: return null
+        val target = mod.containingCargoTarget ?: return null
         return if (mod.functions.any { it.isTest }) TestConfig(mod, testName, testPath, target) else null
     }
-
-    private fun cargoTargetForElement(element: RustCompositeElement): CargoProjectDescription.Target? {
-        val crateRoot = element.crateRoot ?: return null
-        return element.module?.cargoProject?.findTargetForCrateRootFile(crateRoot.containingFile.virtualFile)
-    }
 }
-

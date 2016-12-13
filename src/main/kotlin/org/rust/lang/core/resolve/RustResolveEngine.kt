@@ -26,16 +26,6 @@ import org.rust.lang.core.types.util.stripAllRefsIfAny
 import org.rust.utils.sequenceOfNotNull
 import java.util.*
 
-val RustCompositeElement.crateRoot: RustMod? get() {
-    val mod = containingFile as? RustFile ?: return null
-
-    val root = mod.superMods.lastOrNull()
-    return if (root != null && root.isCrateRoot)
-        root
-    else
-        null
-}
-
 
 object RustResolveEngine {
     /**

@@ -6,12 +6,10 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.stubs.IStubElementType
-import org.rust.cargo.util.cargoProject
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.psi.RustTokenElementTypes
-import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.resolve.crateRoot
+import org.rust.lang.core.psi.containingCargoTarget
 import org.rust.lang.core.stubs.RustNamedElementStub
 
 abstract class RustStubbedNamedElementImpl<StubT> : RustStubbedElementImpl<StubT>,
@@ -41,16 +39,10 @@ where StubT : RustNamedElementStub<*> {
     override fun getTextOffset(): Int = nameIdentifier?.textOffset ?: super.getTextOffset()
 
     override fun getPresentation(): ItemPresentation {
-        val crateName = crateRoot?.containingFile?.virtualFile?.let {
-            module?.cargoProject?.findTargetForCrateRootFile(it)?.name
-        }
         val mod = containingFile as RustFile
+        val crateName = containingCargoTarget?.name
         val cratePath = mod.crateRelativePath?.toString()
-        val loc = if (crateName != null && cratePath != null) {
-            "$crateName$cratePath"
-        } else {
-            mod.modName
-        }
+        val loc = if (crateName != null && cratePath != null) "$crateName$cratePath" else mod.modName
         return PresentationData(
             name, "(in $loc)", getIcon(0), null)
     }
