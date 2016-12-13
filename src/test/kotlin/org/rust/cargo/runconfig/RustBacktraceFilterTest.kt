@@ -7,6 +7,8 @@ import com.intellij.openapi.util.SystemInfo
  */
 class RustBacktraceFilterTest : HighlightFilterTestBase() {
 
+    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
+
     private lateinit var filter: RustBacktraceFilter
 
     override fun setUp() {
@@ -27,6 +29,11 @@ class RustBacktraceFilterTest : HighlightFilterTestBase() {
         doTest(filter, text, text.length, 13, 47)
     }
 
+    fun testBacktraceLine() {
+        val line = "   7:     0x7feeefb7d11f - std::mem::drop::h93df64e7370b5253"
+        doTest(filter, line, line.length, 27, 41)
+    }
+
     fun testFullOutput() {
         val output = """    Running `target/debug/test`
 thread '<main>' panicked at 'called `Option::unwrap()` on a `None` value', ../src/libcore/option.rs:325
@@ -39,12 +46,14 @@ stack backtrace:
    6:     0x7feeefb480ee - rust_begin_unwind
    7:     0x7feeefb7d11f - core::panicking::panic_fmt::h93df64e7370b5253
    8:     0x7feeefb7d3f8 - core::panicking::panic::h9d5bd65bbb401959
-   9:     0x7feeefb3f765 - _<std..option..Option<T>>::unwrap::hbe9ea065746f6376
+   9:     0x7feeefb3f765 - <core::option::Option<T>>::unwrap::hbe9ea065746f6376
                         at ../src/libcore/macros.rs:21
   10:     0x7feeefb3f538 - btest::main::h888e623968051ab6
                         at src/main.rs:22"""
-        val line = output.split('\n')[14]
-        doTest(filter, line, output.length, 957, 968)
+
+        val items = output.split('\n')
+        //doTest(filter, items[13], output.length, 910, 939)
+        doTest(filter, items[14], output.length, 957, 968)
     }
 
 }

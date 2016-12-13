@@ -1,7 +1,10 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
+
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
@@ -9,6 +12,8 @@ import com.intellij.psi.util.PsiUtilCore
 import org.rust.cargo.project.workspace.cargoProject
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.getPsiFor
+import org.rust.cargo.project.CargoProjectDescription
+import org.rust.cargo.util.*
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
@@ -20,6 +25,7 @@ import org.rust.lang.core.psi.visitors.RustComputingVisitor
 import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.symbols.RustPath
+import org.rust.lang.core.symbols.RustPathSegment
 import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.util.stripAllRefsIfAny
@@ -28,6 +34,11 @@ import java.util.*
 
 
 object RustResolveEngine {
+    data class Result (
+        val element: RustNamedElement,
+        val pkg: CargoProjectDescription.Package
+    )
+
     /**
      * Resolves abstract qualified-path [path] in such a way, like it was a qualified-reference
      * used at [pivot]
@@ -40,6 +51,24 @@ object RustResolveEngine {
             .toList()
     }
 
+    /**
+     * Resolves an absolute path.
+     */
+    fun resolve(path: String, project: Project) : Result? {
+        val segments = path.segments
+        if (segments.isEmpty()) return null
+        val pkg = project.getPackage(segments[0].name) ?: return null
+        val vfm = VirtualFileManager.getInstance()
+        val rustPath = RustPath(RustPathHead.Absolute, segments.drop(1))
+        val el = pkg.targets.asSequence()
+            .mapNotNull { vfm.findFileByUrl(it.crateRootUrl) }
+            .mapNotNull { project.getPsiFor(it) as? RustCompositeElement }
+            .flatMap { RustResolveEngine.resolve(rustPath, it).asSequence() }
+            .filterIsInstance(RustNamedElement::class.java)
+            .firstOrNull() ?: return null
+
+        return Result(el, pkg)
+    }
 
     /**
      * Resolves references to struct's fields inside destructuring [RustStructExprElement]
@@ -159,6 +188,17 @@ object RustResolveEngine {
             else
                 current.parentOfType<RustResolveScope>()
         }
+
+    private fun Project.getPackage(name: String): CargoProjectDescription.Package? =
+        modulesWithCargoProject
+            .mapNotNull { it.cargoProject }
+            .flatMap { it.packages }
+            .find { it.isModule && it.name == name }
+
+    private val String.segments: List<RustPathSegment>
+        get() = splitToSequence("::")
+            .map { RustPathSegment(it, emptyList()) }
+            .toList()
 }
 
 
