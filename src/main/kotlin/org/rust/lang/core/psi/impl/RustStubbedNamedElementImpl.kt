@@ -42,7 +42,7 @@ where StubT : RustNamedElementStub<*> {
 
     override fun getPresentation(): ItemPresentation {
         val crateName = crateRoot?.containingFile?.virtualFile?.let {
-            module?.cargoProject?.findTargetForFile(it)?.name
+            module?.cargoProject?.findTargetForCrateRootFile(it)?.name
         }
         val mod = containingFile as RustFile
         val cratePath = mod.crateRelativePath?.toString()

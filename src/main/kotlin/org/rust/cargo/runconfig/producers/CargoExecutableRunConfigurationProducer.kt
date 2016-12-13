@@ -66,7 +66,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         }
 
         private fun findBinaryTarget(module: Module, file: VirtualFile): ExecutableTarget? {
-            val target = module.cargoProject?.findTargetForFile(file) ?: return null
+            val target = module.cargoProject?.findTargetForCrateRootFile(file) ?: return null
             return when {
                 target.isBin -> ExecutableTarget(target.name, "bin")
                 target.isExample -> ExecutableTarget(target.name, "example")

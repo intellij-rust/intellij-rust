@@ -94,7 +94,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
 
     private fun cargoTargetForElement(element: RustCompositeElement): CargoProjectDescription.Target? {
         val crateRoot = element.crateRoot ?: return null
-        return element.module?.cargoProject?.findTargetForFile(crateRoot.containingFile.virtualFile)
+        return element.module?.cargoProject?.findTargetForCrateRootFile(crateRoot.containingFile.virtualFile)
     }
 }
 

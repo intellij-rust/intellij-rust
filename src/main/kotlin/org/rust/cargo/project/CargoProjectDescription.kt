@@ -89,17 +89,17 @@ class CargoProjectDescription private constructor(
      * Searches for the `VirtualFile` of the root mod of the crate
      */
     fun findExternCrateRootByName(crateName: String): VirtualFile? =
-        externCrates.orEmpty().find { it.name == crateName }?.let { it.virtualFile }
+        externCrates.orEmpty().find { it.name == crateName }?.virtualFile
 
     /**
      * If the [file] is a crate root, returns the corresponding [Target]
      */
-    fun findTargetForFile(file: VirtualFile): Target? {
+    fun findTargetForCrateRootFile(file: VirtualFile): Target? {
         val canonicalFile = file.canonicalFile ?: return null
         return targetByCrateRootUrl[canonicalFile.url]
     }
 
-    fun isCrateRoot(file: VirtualFile): Boolean = findTargetForFile(file) != null
+    fun isCrateRoot(file: VirtualFile): Boolean = findTargetForCrateRootFile(file) != null
 
     fun withAdditionalPackages(additionalPackages: Collection<Pair<String, VirtualFile>>): CargoProjectDescription {
         val stdlibPackages = additionalPackages.map {
