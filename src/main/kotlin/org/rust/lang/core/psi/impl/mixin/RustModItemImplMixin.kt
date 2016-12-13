@@ -25,9 +25,7 @@ abstract class RustModItemImplMixin : RustStubbedNamedElementImpl<RustModItemEle
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
 
-    override val `super`: RustMod get() = requireNotNull(containingMod) {
-        "No parent mod for non-file mod at ${containingFile.virtualFile.path}:\n$text"
-    }
+    override val `super`: RustMod get() = containingMod
 
     override val modName: String? get() = name
 

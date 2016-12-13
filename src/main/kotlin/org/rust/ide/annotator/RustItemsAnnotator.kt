@@ -39,8 +39,7 @@ class RustItemsAnnotator : Annotator {
             return
         }
 
-        val containingMod = modDecl.containingMod ?: return
-        if (!containingMod.ownsDirectory && pathAttribute == null) {
+        if (!modDecl.containingMod.ownsDirectory && pathAttribute == null) {
             // We don't want to show the warning if there is no cargo project
             // associated with the current module. Without it we can't know for
             // sure that a mod is not a directory owner.

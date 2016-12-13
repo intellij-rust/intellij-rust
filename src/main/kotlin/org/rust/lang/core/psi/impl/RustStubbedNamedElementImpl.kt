@@ -36,7 +36,7 @@ where StubT : RustNamedElementStub<*> {
     override fun getTextOffset(): Int = nameIdentifier?.textOffset ?: super.getTextOffset()
 
     override fun getPresentation(): ItemPresentation {
-        val mod = containingMod ?: containingFile as RustFile
+        val mod = containingMod
         return PresentationData(
             name, "(in ${mod.qualifiedName ?: mod.modName})", getIcon(0), null)
     }

@@ -128,7 +128,7 @@ object RustResolveEngine {
      *      https://github.com/rust-lang/rust/blob/master/src/doc/reference.md#modules
      */
     fun resolveModDecl(modDecl: RustModDeclItemElement): RustNamedElement? {
-        val dir = modDecl.containingMod?.ownedDirectory ?: return null
+        val dir = modDecl.containingMod.ownedDirectory ?: return null
 
         val psiManager = PsiManager.getInstance(modDecl.project)
         return modDecl.possiblePaths.mapNotNull { path ->

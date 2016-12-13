@@ -40,7 +40,7 @@ abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RustModDec
 fun RustModDeclItemElement.getOrCreateModuleFile(): PsiFile? {
     val existing = reference.resolve()?.containingFile
     if (existing != null) return existing
-    return suggestChildFileName?.let { containingMod?.ownedDirectory?.createFile(it) }
+    return suggestChildFileName?.let { containingMod.ownedDirectory?.createFile(it) }
 }
 
 /*

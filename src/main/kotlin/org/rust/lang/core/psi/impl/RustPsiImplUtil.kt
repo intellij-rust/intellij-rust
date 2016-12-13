@@ -21,7 +21,7 @@ object RustPsiImplUtil {
 
     fun crateRelativePath(element: RustNamedElement): RustPath.CrateRelative? {
         val segment = element.name?.let { RustPathSegment.withoutGenerics(it) } ?: return null
-        return element.containingMod?.crateRelativePath?.join(segment)
+        return element.containingMod.crateRelativePath?.join(segment)
     }
 
     fun modCrateRelativePath(mod: RustMod): RustPath.CrateRelative? {
