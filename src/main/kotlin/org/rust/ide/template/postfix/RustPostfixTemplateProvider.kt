@@ -2,8 +2,13 @@ package org.rust.ide.template.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateWithExpressionSelector
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.lang.core.psi.RustExprElement
+import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.refactoring.RustLocalVariableHandler
 
 class RustPostfixTemplateProvider : PostfixTemplateProvider {
     private val templates: Set<PostfixTemplate> = setOf(
@@ -15,7 +20,8 @@ class RustPostfixTemplateProvider : PostfixTemplateProvider {
         WhileNotExpressionPostfixTemplate(),
         MatchPostfixTemplate(),
         ParenPostfixTemplate(),
-        LambdaPostfixTemplate()
+        LambdaPostfixTemplate(),
+        LetPostfixTemplate()
     )
 
     override fun getTemplates(): Set<PostfixTemplate> = templates
@@ -32,3 +38,14 @@ class RustPostfixTemplateProvider : PostfixTemplateProvider {
     }
 }
 
+class LetPostfixTemplate : PostfixTemplateWithExpressionSelector(
+    "let",
+    "let name = expr;",
+    RustAllParentsSelector(RustExprElement::any)
+) {
+    override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
+        var rustFile = expression.containingFile as? RustFile ?: return
+        if (expression !is RustExprElement) return
+        RustLocalVariableHandler().doRefactoring(editor, expression.project, rustFile, expression)
+    }
+}
