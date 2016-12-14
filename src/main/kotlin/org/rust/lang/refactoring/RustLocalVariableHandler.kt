@@ -35,8 +35,12 @@ class RustLocalVariableHandler : RefactoringActionHandler {
      */
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext) {
         if (file !is RustFile) return
+        doRefactoring(editor, project, file)
+    }
+
+    fun doRefactoring(editor: Editor, project: Project, file: RustFile, expr: RustExprElement? = null) {
         val refactoring = RustIntroduceVariableRefactoring(project, editor, file)
-        val exprs = refactoring.possibleTargets()
+        val exprs = if (expr == null) refactoring.possibleTargets() else listOf(expr)
 
         fun extractExpression(expr: RustExprElement) {
             if (!expr.isValid) return

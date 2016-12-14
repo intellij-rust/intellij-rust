@@ -33,7 +33,7 @@ open class AssertPostfixTemplateBase(name: String) : StringBasedPostfixTemplate(
 class AssertPostfixTemplate : AssertPostfixTemplateBase("assert")
 class DebugAssertPostfixTemplate : AssertPostfixTemplateBase("debug_assert")
 
-open class LambdaPostfixTemplate : StringBasedPostfixTemplate(
+class LambdaPostfixTemplate : StringBasedPostfixTemplate(
     "lambda",
     "|| expr",
     RustTopMostInScopeSelector(RustExprElement::any)) {
