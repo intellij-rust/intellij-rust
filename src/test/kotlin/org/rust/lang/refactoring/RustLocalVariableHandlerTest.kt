@@ -2,6 +2,7 @@ package org.rust.lang.refactoring
 
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RustTestCaseBase
+import org.rust.lang.core.psi.RustExprElement
 import org.rust.lang.core.psi.impl.RustFile
 
 class RustLocalVariableHandlerTest : RustTestCaseBase() {
@@ -17,9 +18,7 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
         }""")
     {
         val ref = refactoring()
-        val targets = ref.possibleTargets()
-        check(targets.size == 3)
-        val expr = targets[0]
+        val expr = ref.getTarget(0, 3)
         ref.replaceElementForAllExpr(expr, listOf(expr))
     }
 
@@ -27,8 +26,7 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
         myFixture.configureByText("main.rs", """
             fn main() { 1 + <selection>1</selection>;}
         """)
-        val targets = refactoring().possibleTargets()
-        check(targets.size == 1)
+        refactoring().getTarget(0, 1)
     }
 
     fun testMultipleOccurrences() = doTest("""
@@ -51,9 +49,7 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
         }""")
     {
         val ref = refactoring()
-        val targets = ref.possibleTargets()
-        check(targets.size == 3)
-        val expr = targets[1]
+        val expr = ref.getTarget(1, 3)
         val occurrences = findOccurrences(expr)
         ref.replaceElementForAllExpr(expr, occurrences)
     }
@@ -67,9 +63,25 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
         }""")
     {
         val ref = refactoring()
-        val targets = ref.possibleTargets()
-        check(targets.size == 1)
-        ref.replaceElement(targets[0], targets)
+        val expr = ref.getTarget(0, 1)
+        ref.replaceElement(expr, listOf(expr))
+    }
+
+    fun testTopLevelInBlock() = doTest("""
+        fn main() {
+            let _ = {
+                1/*caret*/
+            };
+        }""", """
+        fn main() {
+            let _ = {
+                let i = 1;
+            };
+        }""")
+    {
+        val ref = refactoring()
+        val expr = ref.getTarget(0, 1)
+        ref.replaceElement(expr, listOf(expr))
     }
 
     fun testStatement() = doTest("""
@@ -81,9 +93,8 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
         }""")
     {
         val ref = refactoring()
-        val targets = ref.possibleTargets()
-        check(targets.size == 3)
-        ref.replaceElement(targets[2], listOf(targets[2]))
+        val expr = ref.getTarget(2, 3)
+        ref.replaceElement(expr, listOf(expr))
     }
 
     fun testMatch() = doTest("""
@@ -101,8 +112,8 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
         }""")
     {
         val ref = refactoring()
-        val targets = ref.possibleTargets()
-        ref.replaceElement(targets.single(), listOf(targets.single()))
+        val expr = ref.getTarget(0, 1)
+        ref.replaceElement(expr, listOf(expr))
     }
 
     fun testFile() = doTest("""
@@ -114,27 +125,26 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
         }""")
     {
         val ref = refactoring()
-        val targets = ref.possibleTargets()
-        check(targets.size == 2)
-        ref.replaceElement(targets[1], listOf(targets[1]))
+        val expr = ref.getTarget(1, 2)
+        ref.replaceElement(expr, listOf(expr))
     }
 
     fun testRefMut() = doTest("""
         fn read_file() -> Result<String, Error> {
             let file = File::open("res/input.txt")?;
 
-            file.read_to_string(&mut String:/*caret*/:new())?;
+            file.read_to_string(&mut String:/*caret*/:new())
         }""", """
         fn read_file() -> Result<String, Error> {
             let file = File::open("res/input.txt")?;
             let mut string = String::new();
 
-            file.read_to_string(&mut string)?;
+            file.read_to_string(&mut string)
         }""")
     {
         val ref = refactoring()
-        val targets = ref.possibleTargets()
-        ref.replaceElement(targets[0], listOf(targets[0]))
+        val expr = ref.getTarget(0, 3)
+        ref.replaceElement(expr, listOf(expr))
     }
 
     private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String, action: () -> Unit) {
@@ -146,4 +156,13 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
 
     private fun refactoring(): RustIntroduceVariableRefactoring =
         RustIntroduceVariableRefactoring(project, myFixture.editor, myFixture.file as RustFile)
+
+    fun RustIntroduceVariableRefactoring.getTarget(idx: Int, total: Int): RustExprElement {
+        check(idx < total)
+        val targets = possibleTargets()
+        check(targets.size == total) {
+            "Expected $total targets, got ${targets.size}:\n\n${targets.map { it.text }.joinToString("\n\n")}"
+        }
+        return targets[idx]
+    }
 }

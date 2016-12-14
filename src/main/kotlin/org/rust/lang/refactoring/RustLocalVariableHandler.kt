@@ -17,6 +17,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.util.ancestors
+import org.rust.lang.core.psi.util.findExpressionAtCaret
 import org.rust.lang.core.psi.util.findExpressionInRange
 import org.rust.lang.core.psi.util.parentOfType
 import java.util.*
@@ -81,13 +82,8 @@ class RustIntroduceVariableRefactoring(
             // If there's an explicit selection, suggest only one expression
             listOfNotNull(findExpressionInRange(file, selection.selectionStart, selection.selectionEnd))
         } else {
-            val offset = editor.caretModel.offset
-            val elementAfterCaret = file.findElementAt(offset)
-            val elementBeforeCaret = file.findElementAt(offset - 1)
-            val expr = elementAfterCaret?.parentOfType<RustExprElement>(strict = false)
-                ?: elementBeforeCaret?.parentOfType<RustExprElement>(strict = false)
+            val expr = findExpressionAtCaret(file, editor.caretModel.offset)
                 ?: return emptyList()
-
             // Finds possible expressions that might want to be bound to a local variable.
             // We don't go further than the current block scope,
             // further more path expressions don't make sense to bind to a local variable so we exclude them.

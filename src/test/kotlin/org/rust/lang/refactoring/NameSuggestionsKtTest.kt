@@ -15,10 +15,10 @@ class RustNameSuggestionsKtTest : RustTestCaseBase() {
         }
 
         fn bar() {
-            foo(4, 10/*caret*/ + 2)
+            foo(4, 10/*caret*/)
         }
     """) {
-        assertThat(it).containsExactly("name", "variable_name", "cool_variable_name", "very_cool_variable_name")
+        assertThat(it).containsExactly("i", "name", "variable_name", "cool_variable_name", "very_cool_variable_name")
     }
 
     fun testNonDirectArgumentNames() = doTest("""

@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiUtilCore
 import org.rust.lang.core.psi.RustBlockElement
 import org.rust.lang.core.psi.RustExprElement
 import org.rust.lang.core.psi.RustStmtElement
+import org.rust.lang.core.psi.impl.RustFile
 
 inline fun <reified T : PsiElement> PsiElement.parentOfType(strict: Boolean = true, minStartOffset: Int = -1): T? =
     PsiTreeUtil.getParentOfType(this, T::class.java, strict, minStartOffset)
@@ -31,6 +32,20 @@ fun PsiElement?.getPrevNonCommentSibling(): PsiElement? =
  */
 fun PsiElement?.getNextNonCommentSibling(): PsiElement? =
     PsiTreeUtil.skipSiblingsForward(this, PsiWhiteSpace::class.java, PsiComment::class.java)
+
+fun findExpressionAtCaret(file: RustFile, offset: Int): RustExprElement? {
+    val expr = file.expressionAtOffset(offset)
+    val exprBefore = file.expressionAtOffset(offset - 1)
+    return when {
+        expr == null -> exprBefore
+        exprBefore == null -> expr
+        PsiTreeUtil.isAncestor(expr, exprBefore, false) -> exprBefore
+        else -> expr
+    }
+}
+
+private fun RustFile.expressionAtOffset(offset: Int): RustExprElement? =
+    findElementAt(offset)?.parentOfType<RustExprElement>(strict = false)
 
 
 /**
