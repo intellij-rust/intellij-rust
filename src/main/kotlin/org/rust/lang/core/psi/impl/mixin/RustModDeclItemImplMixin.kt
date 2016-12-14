@@ -58,10 +58,8 @@ val RustModDeclItemElement.possiblePaths: List<String> get() {
         implicitPaths
 }
 
-val RustModDeclItemElement.isLocal: Boolean get() {
-    val stub = stub
-    return if (stub != null) stub.isLocal else parentOfType<RustBlockElement>() != null
-}
+val RustModDeclItemElement.isLocal: Boolean
+    get() = stub?.isLocal ?: (parentOfType<RustBlockElement>() != null)
 
 
 //TODO: use explicit path if present.
