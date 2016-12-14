@@ -40,5 +40,8 @@ where StubT : RustNamedElementStub<*> {
         return PresentationData(
             name, "(in ${mod.qualifiedName ?: mod.modName})", getIcon(0), null)
     }
+
+    val containingMod: RustMod get() = (this as RustCompositeElement).containingMod
+        ?: error("Rust inner element outside of the module")
 }
 

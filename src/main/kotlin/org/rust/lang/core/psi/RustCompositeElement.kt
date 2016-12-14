@@ -12,9 +12,12 @@ interface RustCompositeElement : PsiElement {
     override fun getReference(): RustReference?
 }
 
-val RustCompositeElement.containingMod: RustMod
+val RustCompositeElement.containingMod: RustMod?
     get() = PsiTreeUtil.getStubOrPsiParentOfType(this, RustMod::class.java)
-        ?: error("Rust element outside of the module (in $containingFile file): `$text`")
+
+val RustModDeclItemElement.containingMod: RustMod
+    get() = (this as RustCompositeElement).containingMod
+        ?: error("Rust mod decl outside of a module")
 
 val RustCompositeElement.crateRoot: RustMod? get() {
     val mod = containingFile as? RustFile ?: return null

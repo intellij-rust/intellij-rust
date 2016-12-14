@@ -29,6 +29,8 @@ class CargoProjectDescription private constructor(
         val libTarget: Target? get() = targets.find { it.isLib }
 
         val contentRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
+
+        override fun toString(): String = "Package(contentRootUrl='$contentRootUrl', name='$name')"
     }
 
     class Target(
