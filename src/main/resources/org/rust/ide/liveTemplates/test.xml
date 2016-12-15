@@ -31,6 +31,19 @@
     </template>
 
     <!-- TODO: Convert this to Generate... action -->
+    <template name="tbn" description="bench function" toReformat="false" toShortenFQNames="true"
+              value="#[bench]&#10;fn $NAME$(b: &amp;mut test::Bencher) {&#10;    b.iter(||);$END$&#10;}">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_FILE" value="true"/>
+            <option name="RUST_STATEMENT" value="false"/>
+            <option name="RUST_ITEM" value="false"/>
+            <option name="RUST_STATEMENT" value="false"/>
+            <option name="RUST_MOD" value="true"/>
+        </context>
+    </template>
+
+    <!-- TODO: Convert this to Generate... action -->
     <template name="tmod" description="test module" toReformat="false" toShortenFQNames="true"
               value="#[cfg(test)]&#10;mod tests {&#10;    use super::*;&#10;    &#10;    $END$&#10;}">
         <context>
