@@ -24,13 +24,6 @@ class RustPathReferenceImpl(
         return RustResolveEngine.resolve(path, element, namespace)
     }
 
-    override fun resolve(): RustCompositeElement? = ResolveCache.getInstance(element.project)
-        .resolveWithCaching(this,
-            ResolveCache.AbstractResolver<RustPathReferenceImpl, RustCompositeElement>
-            { r, incomplete -> r.resolveInner().firstOrNull() },
-            /* needToPreventRecursion = */ true,
-            /* incompleteCode = */ false)
-
     override fun getVariants(): Array<out Any> =
         RustCompletionEngine.completePath(element, namespace)
 
