@@ -400,6 +400,11 @@
             <className>org.rust.ide.intentions.ImplementStructIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.NavigateToImplementationIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+
         <!-- Run Configurations -->
 
         <programRunner implementation="org.rust.cargo.runconfig.RustRunner"/>
