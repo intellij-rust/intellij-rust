@@ -58,4 +58,5 @@ fn foo() {
     let v: Vec<i32> = vec![];
     panic!("division by zero");
 
+    trace!(target: "smbc", "open_with {:?}", options);
 }
