@@ -23,12 +23,12 @@ class CargoProjectDescription private constructor(
         val version: String,
         val targets: Collection<Target>,
         val source: String?,
-        val dependencies: List<Package>
+        val dependencies: List<Package>,
+        val isExternal: Boolean
     ) {
         val isModule: Boolean get() = source == null
         val libTarget: Target? get() = targets.find { it.isLib }
         val contentRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
-        val isExternal: Boolean get() = targets.asSequence().filter { it.crateRoot != null }.any { it.isLib }
 
         override fun toString(): String = "Package(contentRootUrl='$contentRootUrl', name='$name')"
     }
@@ -112,7 +112,8 @@ class CargoProjectDescription private constructor(
                 version = "",
                 targets = listOf(Target(crateRoot.url, name = crateName, kind = TargetKind.LIB)),
                 source = null,
-                dependencies = emptyList()
+                dependencies = emptyList(),
+                isExternal = true
             )
         }
         return CargoProjectDescription(packages + stdlibPackages)
@@ -136,7 +137,8 @@ class CargoProjectDescription private constructor(
                     pkg.version,
                     pkg.targets.map { Target(it.url, it.name, it.kind) },
                     pkg.source,
-                    deps
+                    deps,
+                    pkg.isExternal
                 ) to deps
             }.unzip()
 
