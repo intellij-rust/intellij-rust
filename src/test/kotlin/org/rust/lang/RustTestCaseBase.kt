@@ -200,7 +200,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
                 CleanCargoMetadata.Target("$contentRoot/lib.rs", name, CargoProjectDescription.TargetKind.LIB)
             ),
             source = null,
-            isExternal = false
+            isWorkspaceMember = true
         )
 
     }
