@@ -66,9 +66,6 @@ class StandardLibraryRoots private constructor(
             LocalFileSystem.getInstance().findFileByPath(path)?.let { fromFile(it) }
 
         fun fromFile(sources: VirtualFile): StandardLibraryRoots? {
-            // sources may be either a zip archive downloaded from github,
-            // or a root directory with rust sources, or its src subdirectory.
-            // In any case, we want to find the src subdir
             val srcDir = if (sources.isDirectory) {
                 if (sources.name == "src") sources else sources.findChild("src")
             } else {
@@ -77,9 +74,9 @@ class StandardLibraryRoots private constructor(
                     ?.findChild("src")
             } ?: return null
 
-            return StandardLibraryRoots(stdlibCrateNames.map {
-                srcDir.findFileByRelativePath("lib$it") ?: return null
-            })
+            val roots = stdlibCrateNames.mapNotNull { srcDir.findFileByRelativePath("lib$it") }
+            if (roots.isEmpty()) return null
+            return StandardLibraryRoots(roots)
         }
     }
 }
@@ -125,7 +122,7 @@ fun Module.updateLibrary(libraryName: String, roots: Collection<VirtualFile>) {
     }
 }
 
-private val stdlibCrateNames = listOf("std", "core", "collections", "alloc", "rustc_unicode")
+private val stdlibCrateNames = listOf("std", "core", "collections", "alloc", "rustc_unicode", "std_unicode")
 
 private fun fillLibrary(library: Library, roots: Collection<VirtualFile>) {
     val model = library.modifiableModel
