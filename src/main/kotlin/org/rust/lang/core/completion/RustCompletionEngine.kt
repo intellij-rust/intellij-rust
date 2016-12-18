@@ -1,7 +1,9 @@
 package org.rust.lang.core.completion
 
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.editor.EditorModificationUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.asRustPath
 import org.rust.lang.core.psi.impl.mixin.basePath
@@ -80,6 +82,13 @@ fun RustCompositeElement.createLookupElement(scopeName: String): LookupElement {
         is RustFnElement -> base
             .withTypeText(retType?.type?.text ?: "()")
             .withTailText(parameters?.text?.replace("\\s+".toRegex(), " ") ?: "()")
+            .withInsertHandler handler@ { context: InsertionContext, lookupElement: LookupElement ->
+                val element = context.file.findElementAt(context.startOffset - 1)!!
+                if (element.parentOfType<RustUseGlobListElement>() != null) return@handler
+                val argsCount = parameters?.parameterList?.size ?: 0
+                context.document.insertString(context.selectionEndOffset, "()")
+                EditorModificationUtil.moveCaretRelatively(context.editor, if (argsCount > 0) 1 else 2)
+            }
 
         is RustStructItemElement -> base
             .withTailText(when {

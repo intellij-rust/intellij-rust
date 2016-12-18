@@ -8,13 +8,13 @@ class RustCompletionTest : RustCompletionTestBase() {
         fn foo(quux: i32) { qu/*caret*/ }
     """)
 
-    fun testFunctionName() = checkSingleCompletion("frobnicate", """
+    fun testFunctionName() = checkSingleCompletion("frobnicate()", """
         fn frobnicate() {}
 
         fn main() { frob/*caret*/ }
     """)
 
-    fun testPath() = checkSingleCompletion("frobnicate", """
+    fun testPath() = checkSingleCompletion("foo::bar::frobnicate()", """
         mod foo {
             mod bar {
                 fn frobnicate() {}
@@ -28,7 +28,7 @@ class RustCompletionTest : RustCompletionTestBase() {
         }
     """)
 
-    fun testAnonymousItemDoesNotBreakCompletion() = checkSingleCompletion("frobnicate", """
+    fun testAnonymousItemDoesNotBreakCompletion() = checkSingleCompletion("frobnicate()", """
         extern "C" { }
 
         fn frobnicate() {}
@@ -48,7 +48,7 @@ class RustCompletionTest : RustCompletionTestBase() {
         fn main() {}
     """)
 
-    fun testWildcardImports() = checkSingleCompletion("transmogrify", """
+    fun testWildcardImports() = checkSingleCompletion("transmogrify()", """
         mod foo {
             fn transmogrify() {}
         }
@@ -68,7 +68,7 @@ class RustCompletionTest : RustCompletionTestBase() {
         }
     """)
 
-    fun testCompleteAlias() = checkSingleCompletion("frobnicate", """
+    fun testCompleteAlias() = checkSingleCompletion("frobnicate()", """
         mod m {
             pub fn transmogrify() {}
         }
