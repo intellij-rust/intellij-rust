@@ -59,14 +59,13 @@ object RustResolveEngine {
         if (segments.isEmpty()) return null
         val pkg = project.getPackage(segments[0].name) ?: return null
         val vfm = VirtualFileManager.getInstance()
-        val rustPath = RustPath(RustPathHead.Absolute, segments.drop(1))
+        val rustPath = RustPath.CrateRelative(segments.drop(1))
         val el = pkg.targets.asSequence()
             .mapNotNull { vfm.findFileByUrl(it.crateRootUrl) }
             .mapNotNull { project.getPsiFor(it) as? RustCompositeElement }
             .flatMap { RustResolveEngine.resolve(rustPath, it).asSequence() }
             .filterIsInstance(RustNamedElement::class.java)
             .firstOrNull() ?: return null
-
         return Result(el, pkg)
     }
 
@@ -190,7 +189,7 @@ object RustResolveEngine {
         }
 
     private fun Project.getPackage(name: String): CargoProjectDescription.Package? =
-        modulesWithCargoProject
+        modules
             .mapNotNull { it.cargoProject }
             .flatMap { it.packages }
             .find { it.isModule && it.name == name }

@@ -132,6 +132,10 @@ private class RustBacktraceItemFilter(
             .getAttributes(TextAttributesKey.createTextAttributesKey("org.rust.DIMMED_TEXT"))!!
         val GRAYED_LINK_COLOR = Color(135, 135, 135)
         val GRAYED_LINK = TextAttributes(GRAYED_LINK_COLOR, null, GRAYED_LINK_COLOR, EffectType.LINE_UNDERSCORE, Font.PLAIN)
-        val SKIP_PREFIXES = arrayOf("std::", "core::")
+        val SKIP_PREFIXES = arrayOf(
+            "std::rt::lang_start",
+            "std::panicking",
+            "std::sys::backtrace",
+            "core::panicking")
     }
 }
