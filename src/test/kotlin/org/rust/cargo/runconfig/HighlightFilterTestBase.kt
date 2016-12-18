@@ -1,11 +1,12 @@
 package org.rust.cargo.runconfig
 
+import backcompat.runWriteAction
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.openapi.vfs.VirtualFile
 import org.assertj.core.api.Assertions
-import backcompat.runWriteAction
 import org.rust.lang.RustTestCaseBase
+import java.util.*
 
 /**
  * Base class for tests of output highlighting filters.
@@ -19,20 +20,29 @@ abstract class HighlightFilterTestBase : RustTestCaseBase() {
         projectDir = createTestDirectoryAndFile()
     }
 
-    protected fun doTest(filter: Filter, line: String, entireLength: Int, hStart: Int, hEnd: Int) {
-        val result = checkNotNull(filter.applyFilter(line, entireLength)) {
-            "No match in $line"
-        }
+    protected fun checkNoHighlights(filter: Filter, text: String) {
+        val items = filter.applyFilter(text, text.length)?.resultItems ?: return
+        Assertions.assertThat(items.size).isEqualTo(0)
+    }
 
-        val item = result.resultItems.single()
-        Assertions.assertThat(item.getHighlightStartOffset()).isEqualTo(hStart)
-        Assertions.assertThat(item.getHighlightEndOffset()).isEqualTo(hEnd)
-        val hyperlink = checkNotNull(item.getHyperlinkInfo()) {
-            "No hyperlink info"
+    protected fun checkHighlights(filter: Filter, before: String, after: String, lineIndex: Int = 0) {
+        val line = before.split('\n')[lineIndex]
+        val result = checkNotNull(filter.applyFilter(line, before.length)) {
+            "No match in $before"
         }
-        val file = requireNotNull((hyperlink as OpenFileHyperlinkInfo).descriptor?.file)
-        Assertions.assertThat(file.name).isEqualTo("main.rs")
-
+        var checkText = before
+        val items = ArrayList(result.resultItems)
+        items.sortByDescending { it.getHighlightEndOffset() }
+        items.forEach { item ->
+            val range = IntRange(item.getHighlightStartOffset(), item.getHighlightEndOffset() - 1)
+            var itemText = before.substring(range)
+            (item.getHyperlinkInfo() as? OpenFileHyperlinkInfo)?.let { link ->
+                itemText = "$itemText -> ${link.descriptor?.file?.name}"
+            }
+            checkText = checkText.replaceRange(range, "[$itemText]")
+        }
+        checkText = checkText.split('\n')[lineIndex]
+        Assertions.assertThat(checkText).isEqualTo(after)
     }
 
     private fun createTestDirectoryAndFile(): VirtualFile = runWriteAction {
