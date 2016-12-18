@@ -50,7 +50,8 @@ class RustExpandModuleAction : BaseRefactoringAction() {
             checkWriteAccessAllowed()
 
             val dirName = FileUtil.getNameWithoutExtension(file.name)
-            val directory = file.parent?.createSubdirectory(dirName)
+            val directory = file.containingDirectory?.createSubdirectory(dirName)
+                ?: error("Can't expand file: no parent directory for $file at ${file.virtualFile.path}")
             MoveFilesOrDirectoriesUtil.doMoveFile(file, directory)
             PsiFileImplUtil.setName(file, RustMod.MOD_RS)
         }
