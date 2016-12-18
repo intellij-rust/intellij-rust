@@ -7,7 +7,7 @@ class RustStdlibCompletionTest: RustCompletionTestBase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
 
-    fun testPrelude() = checkSingleCompletion("drop", """
+    fun testPrelude() = checkSingleCompletion("drop()", """
         fn main() {
             dr/*caret*/
         }

@@ -3,7 +3,7 @@ package org.rust.lang.core.completion
 class RustTypeAwareCompletionTest : RustCompletionTestBase() {
     override val dataPath = ""
 
-    fun testMethodCallExpr() = checkSingleCompletion("transmogrify", """
+    fun testMethodCallExpr() = checkSingleCompletion("S.transmogrify()", """
         struct S;
 
         impl S { fn transmogrify(&self) {} }
@@ -13,7 +13,7 @@ class RustTypeAwareCompletionTest : RustCompletionTestBase() {
         }
     """)
 
-    fun testMethodCallExprRef() = checkSingleCompletion("transmogrify", """
+    fun testMethodCallExprRef() = checkSingleCompletion("self.transmogrify()", """
         struct S;
 
         impl S {
@@ -25,7 +25,7 @@ class RustTypeAwareCompletionTest : RustCompletionTestBase() {
         }
     """)
 
-    fun testMethodCallExprEnum() = checkSingleCompletion("quux", """
+    fun testMethodCallExprEnum() = checkSingleCompletion("self.quux()", """
         enum E { X }
 
         impl E {
@@ -46,7 +46,7 @@ class RustTypeAwareCompletionTest : RustCompletionTestBase() {
         }
     """)
 
-    fun testStaticMethod() = checkSingleCompletion("create", """
+    fun testStaticMethod() = checkSingleCompletion("S::create()", """
         struct S;
 
         impl S {
