@@ -1041,6 +1041,7 @@ assert_macro ::= assert_macro_invocation assert_macro_args { pin = 1 }
 assert_eq_macro ::= assert_eq_macro_invocation assert_eq_macro_args { pin = 1 }
 
 vec_macro ::= vec_macro_invocation vec_macro_args { pin = 1 }
+log_macro ::= log_macro_invocation log_macro_args { pin = 1 }
 
 macro_definition ::= macro_rules_invocation IDENTIFIER item_macro_arg {
   pin = 1
@@ -1052,6 +1053,7 @@ private build_in_macro ::= try_macro
                          | assert_macro
                          | assert_eq_macro
                          | vec_macro
+                         | log_macro
 
 private zz_macro_call ::= build_in_macro | expr_like_macro { pin(".*") = macro_invocation }
 private zz_macro_item ::= macro_definition | item_like_macro {
@@ -1063,6 +1065,7 @@ private zz_macro_item ::= macro_definition | item_like_macro {
 macro_invocation ::= IDENTIFIER '!' IDENTIFIER?
 try_macro_invocation ::= "try" '!'
 vec_macro_invocation ::= "vec" '!'
+log_macro_invocation ::= ( "trace" | "log" | "warn" | "debug" | "error" | "info" ) '!'
 macro_rules_invocation ::= "macro_rules" '!'
 
 // https://doc.rust-lang.org/std/fmt/
@@ -1072,13 +1075,6 @@ format_like_macro_invocation ::= ( "format"
                                  | "writeln"
                                  | "print"
                                  | "println"
-                                 // logging macros from the log crate
-                                 | "debug"
-                                 | "error"
-                                 | "info"
-                                 | "log"
-                                 | "trace"
-                                 | "warn"
                                  | "panic") '!'
 
 assert_macro_invocation ::= ( "assert"
@@ -1101,6 +1097,9 @@ item_macro_arg ::= '(' token_trees ')' ';'
 
 try_macro_args ::= <<macro_args_delim any_expr>>
 vec_macro_args ::= '[' expr_list ']' | '[' any_expr';' any_expr ']' | '[' ']'  { pin = 1 }
+
+private zz_log_macro_args ::= ('target' ':' expr ','?)? (<<comma_separated_list format_macro_arg>>)?
+log_macro_args ::=  <<macro_args_delim zz_log_macro_args>>
 
 private zz_assert_macro_args ::= any_expr [ ',' <<comma_separated_list format_macro_arg>> ]
 assert_macro_args ::= <<macro_args_delim zz_assert_macro_args>>
