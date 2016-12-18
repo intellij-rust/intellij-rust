@@ -71,7 +71,7 @@ private class RustBacktraceItemFilter(
         val funcFile = func.element.containingFile
         val doc = docManager.getDocument(funcFile) ?: return null
         val link = OpenFileHyperlinkInfo(project, funcFile.virtualFile, doc.getLineNumber(func.element.textOffset))
-        val linkAttr = if (func.pkg.isExternal) GRAYED_LINK else null
+        val linkAttr = if (!func.pkg.isWorkspaceMember) GRAYED_LINK else null
         return Filter.ResultItem(start, end, link, linkAttr)
     }
 

@@ -306,7 +306,7 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
                                 )
                             },
                             source = null,
-                            isExternal = false
+                            isWorkspaceMember = true
                         )
                     ),
                     dependencies = emptyList()

@@ -113,7 +113,7 @@ object CargoMetadata {
         val packageIdToIndex = project.packages.mapIndexed { i, p -> p.id to i }.toMap()
         val fs = LocalFileSystem.getInstance()
         return CleanCargoMetadata(
-            project.packages.mapNotNull { it.clean(fs, it.id !in project.workspace_members) },
+            project.packages.mapNotNull { it.clean(fs, it.id in project.workspace_members) },
             project.resolve.nodes.map { node ->
                 CleanCargoMetadata.DependencyNode(
                     packageIdToIndex[node.id]!!,
@@ -123,7 +123,7 @@ object CargoMetadata {
         )
     }
 
-    private fun Package.clean(fs: LocalFileSystem, isExternal: Boolean): CleanCargoMetadata.Package? {
+    private fun Package.clean(fs: LocalFileSystem, isWorkspaceMember: Boolean): CleanCargoMetadata.Package? {
         val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))) {
             "`cargo metadata` reported a package which does not exist at `$manifest_path`"
         }
@@ -133,7 +133,7 @@ object CargoMetadata {
             version,
             targets.mapNotNull { it.clean(root) },
             source,
-            isExternal
+            isWorkspaceMember
         )
     }
 
@@ -178,7 +178,7 @@ data class CleanCargoMetadata(
         val version: String,
         val targets: Collection<Target>,
         val source: String?,
-        val isExternal: Boolean
+        val isWorkspaceMember: Boolean
     )
 
     data class Target(

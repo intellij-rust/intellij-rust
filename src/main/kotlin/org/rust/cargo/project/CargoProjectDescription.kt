@@ -24,7 +24,7 @@ class CargoProjectDescription private constructor(
         val targets: Collection<Target>,
         val source: String?,
         val dependencies: List<Package>,
-        val isExternal: Boolean
+        val isWorkspaceMember: Boolean
     ) {
         val isModule: Boolean get() = source == null
         val libTarget: Target? get() = targets.find { it.isLib }
@@ -113,7 +113,7 @@ class CargoProjectDescription private constructor(
                 targets = listOf(Target(crateRoot.url, name = crateName, kind = TargetKind.LIB)),
                 source = null,
                 dependencies = emptyList(),
-                isExternal = true
+                isWorkspaceMember = false
             )
         }
         return CargoProjectDescription(packages + stdlibPackages)
@@ -138,7 +138,7 @@ class CargoProjectDescription private constructor(
                     pkg.targets.map { Target(it.url, it.name, it.kind) },
                     pkg.source,
                     deps,
-                    pkg.isExternal
+                    pkg.isWorkspaceMember
                 ) to deps
             }.unzip()
 
