@@ -142,4 +142,28 @@ class RustCompletionTest : RustCompletionTestBase() {
         openFileInEditor("foo/mod.rs")
         executeSoloCompletion()
     }
+
+    fun testCallCaretPositionNoArguments() = checkByText("""
+        fn frobnicate() {}
+        fn main() {
+            frob/*caret*/
+        }
+    """, """
+        fn frobnicate() {}
+        fn main() {
+            frobnicate()/*caret*/
+        }
+    """) { executeSoloCompletion() }
+
+    fun testCallCaretPositionWithArguments() = checkByText("""
+        fn frobnicate(foo: i32, bar: String) {}
+        fn main() {
+            frob/*caret*/
+        }
+    """, """
+        fn frobnicate(foo: i32, bar: String) {}
+        fn main() {
+            frobnicate(/*caret*/)
+        }
+    """) { executeSoloCompletion() }
 }
