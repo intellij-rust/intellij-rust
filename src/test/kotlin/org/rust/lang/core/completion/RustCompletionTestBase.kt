@@ -16,9 +16,10 @@ abstract class RustCompletionTestBase : RustTestCaseBase() {
         check(variants == null) {
             "Expected a single completion, but got ${variants.size}\n" + "${variants.toList()}"
         }
+        val fnName = target.substringBeforeLast("()").substringAfterLast("::").substringAfterLast(".")
         val shift = if (target.endsWith("()")) 3 else 1
         val element = myFixture.file.findElementAt(myFixture.caretOffset - shift)!!
-        check(element.correspondsToText(target)) {
+        check(element.text == fnName && element.correspondsToText(target)) {
             "Wrong completion, expected `$target`, but got `${element.text}`"
         }
     }
@@ -43,12 +44,10 @@ abstract class RustCompletionTestBase : RustTestCaseBase() {
         }
     }
 
-    private fun PsiElement.correspondsToText(target: String): Boolean {
-        return when {
+    private fun PsiElement.correspondsToText(target: String): Boolean = when {
             text == target -> true
             text.length > target.length -> false
             parent != null -> parent.correspondsToText(target)
             else -> false
         }
-    }
 }
