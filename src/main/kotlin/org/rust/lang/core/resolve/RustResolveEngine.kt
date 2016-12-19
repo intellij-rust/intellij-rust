@@ -390,26 +390,11 @@ private class RustScopeVisitor(
 
 }
 
-
 private fun RustItemsOwner.itemEntries(context: Context): Sequence<ScopeEntry> {
     val (wildCardImports, usualImports) = useDeclarations.partition { it.mul != null }
 
     return sequenceOf(
-        // XXX: this must come before itemList to resolve `Box` from prelude. We need to handle cfg attributes to
-        // fix this properly
-        modDecls.asSequence().mapNotNull {
-            ScopeEntry.lazy(it.name) { it.reference.resolve() }
-        },
-
-        allItemDefinitions.scopeEntries,
-
-        foreignMods.asSequence().flatMap {
-            it.foreignFnDeclList.scopeEntries + it.foreignStaticDeclList.scopeEntries
-        },
-
-        externCrates.asSequence().mapNotNull {
-            ScopeEntry.lazy(it.alias?.name ?: it.name) { it.reference.resolve() }
-        },
+        declaredItems().map { ScopeEntry.of(it.first, it.second) },
 
         usualImports.asSequence().flatMap { it.nonWildcardEntries() },
 
@@ -417,6 +402,35 @@ private fun RustItemsOwner.itemEntries(context: Context): Sequence<ScopeEntry> {
         wildCardImports.asSequence()
             .filter { it.isPublic || it.containingMod == context.pivot?.containingMod }
             .flatMap { it.wildcardEntries(context) }
+    ).flatten()
+}
+
+fun RustItemsOwner.declaredItems(): Sequence<Pair<String, RustNamedElement>> {
+    val inlineItems: Sequence<RustNamedElement> = sequenceOf(
+        allItemDefinitions.asSequence(),
+        foreignMods.asSequence().flatMap {
+            it.foreignFnDeclList.asSequence<RustNamedElement>() + it.foreignStaticDeclList.asSequence()
+        }
+    ).flatten()
+
+    return sequenceOf(
+        // XXX: this must come before itemList to resolve `Box` from prelude. We need to handle cfg attributes to
+        // fix this properly
+        modDecls.asSequence().mapNotNull { modDecl ->
+            val name = modDecl.name
+            val mod = modDecl.reference.resolve() as? RustMod
+            if (name != null && mod != null) name to mod else null
+        },
+
+        inlineItems.mapNotNull { item ->
+            item.name?.let { it to item }
+        },
+
+        externCrates.asSequence().mapNotNull { crate ->
+            val name = crate.alias?.name ?: crate.name
+            val mod = crate.reference.resolve() as? RustMod
+            if (name != null && mod != null) name to mod else null
+        }
     ).flatten()
 }
 
