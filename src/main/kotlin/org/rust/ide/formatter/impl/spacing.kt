@@ -150,10 +150,6 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtContext): Sp
                 createSpacing(0, 0, 0, false, 0)
             }
 
-            // In-line attributes (such as #[macro_use])
-            isInlineAttr()
-            -> return createSpacing(1, 1, 0, false, 0)
-
             // Ensure that each attribute is in separate line; comment aware
             psi1 is RustOuterAttrElement && (psi2 is RustOuterAttrElement || psi1.parent is RustItemElement)
                 || psi1 is PsiComment && (psi2 is RustOuterAttrElement || psi1.getPrevNonCommentSibling() is RustOuterAttrElement)
@@ -298,19 +294,6 @@ private fun SpacingContext.blockMustBeMultiLine(): Boolean {
 
         else -> false
     }
-}
-
-private fun SpacingContext.isInlineAttr(): Boolean {
-    // We have to be at last outer attr
-    if (psi1 !is RustOuterAttrElement || psi2 is RustOuterAttrElement) return false
-
-    // We have some comments
-    if (psi1 != ncPsi1 || psi2 != ncPsi2) return false
-
-    val meta = psi1.metaItem.identifier.text
-    val (parentClasses, configName) = INLINE_ATTRS[meta] ?: return false
-    val isOn = RustCodeStyleSettings::class.java.getField(configName).getBoolean(ctx.rustSettings)
-    return isOn && parentClasses.any { it.java.isInstance(parentPsi) }
 }
 
 private fun SpacingContext.needsBlankLineBetweenItems(): Boolean {
