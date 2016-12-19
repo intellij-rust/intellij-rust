@@ -9,8 +9,7 @@ import com.intellij.psi.stubs.StubIndex
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
-import org.rust.cargo.util.cargoProject
-import org.rust.cargo.util.getComponentOrThrow
+import org.rust.cargo.project.workspace.cargoProject
 import org.rust.lang.core.stubs.index.RustModulesIndex
 
 class CargoProjectResolveTest : RustWithToolchainTestBase() {
@@ -32,7 +31,7 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
             // make sure that indexes do not depend on cargo project
             populateIndexes()
 
-            module.getComponentOrThrow<CargoProjectWorkspace>().syncUpdate(module.project.toolchain!!)
+            CargoProjectWorkspace.forModule(module).syncUpdate(module.project.toolchain!!)
 
             if (module.cargoProject == null) {
                 error("Failed to update a test Cargo project")

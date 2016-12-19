@@ -8,9 +8,9 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.project.workspace.cargoProject
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.runconfig.CargoCommandRunConfigurationType
-import org.rust.cargo.util.cargoProject
 import org.rust.lang.core.psi.RustFnElement
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.parentOfType

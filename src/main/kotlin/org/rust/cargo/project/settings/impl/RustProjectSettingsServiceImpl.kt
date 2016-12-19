@@ -10,7 +10,6 @@ import org.rust.cargo.project.configurable.RustProjectConfigurable
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.util.getComponentOrThrow
 import org.rust.cargo.util.modules
 
 @State(
@@ -50,7 +49,7 @@ class RustProjectSettingsServiceImpl(
 
                 if (value != null) {
                     for (module in project.modules) {
-                        module.getComponentOrThrow<CargoProjectWorkspace>().requestUpdate(value)
+                        CargoProjectWorkspace.forModule(module).requestUpdate(value)
                     }
                 }
 

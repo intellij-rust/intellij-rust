@@ -1,14 +1,14 @@
 package org.rust.lang.core.resolve
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
+import org.rust.cargo.project.workspace.cargoProject
 import org.rust.cargo.util.AutoInjectedCrates
-import org.rust.cargo.util.cargoProject
 import org.rust.cargo.util.getPsiFor
-import org.rust.cargo.util.preludeModule
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
@@ -461,6 +461,12 @@ private val RustPatElement?.scopeEntries: Sequence<ScopeEntry>
 private val Sequence<RustNamedElement>.scopeEntries: Sequence<ScopeEntry>
     get() = mapNotNull { ScopeEntry.of(it) }
 
+private val Module.preludeModule: PsiFile? get() {
+    val stdlib = cargoProject?.findExternCrateRootByName(AutoInjectedCrates.std) ?: return null
+    val preludeFile = stdlib.findFileByRelativePath("../prelude/v1.rs") ?: return null
+    return project.getPsiFor(preludeFile)
+}
+
 
 /**
  * Helper to debug complex iterator pipelines
@@ -472,3 +478,4 @@ private fun <T> Sequence<T>.inspect(f: (T) -> Unit = { println("inspecting $it")
         it
     }
 }
+

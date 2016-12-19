@@ -1,7 +1,6 @@
 package org.rust.cargo.util
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleServiceManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.OrderEntryUtil
@@ -13,9 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.ide.utils.checkWriteAccessAllowed
 
-object RustModuleUtil
-
-
 /**
  * Established Cargo's library name
  */
@@ -25,25 +21,6 @@ val Module.cargoLibraryName: String get() = "Cargo <$name>"
  * Established Rust's 'stdlib' library name
  */
 private val Module.rustLibraryName: String get() = "Rust <$name>"
-
-/**
- * Helper extracting generic service for the particular module
- */
-inline fun<reified T: Any> Module.getService(): T? =
-    ModuleServiceManager.getService(this, T::class.java)
-
-inline fun<reified T: Any> Module.getServiceOrThrow(): T =
-    getService()!!
-
-/**
- * Helper extracting generic component for the particular module
- */
-inline fun<reified T: Any> Module.getComponent(): T? =
-    this.getComponent(T::class.java)
-
-inline fun<reified T: Any> Module.getComponentOrThrow(): T =
-    getComponent()!!
-
 
 /**
  * Rust standard library crates source roots extracted from a zip archive or a folder with rust.

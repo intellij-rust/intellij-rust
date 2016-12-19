@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.cargo.util.cargoProject
+import org.rust.cargo.project.workspace.cargoProject
 import org.rust.ide.actions.RustExpandModuleAction
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile

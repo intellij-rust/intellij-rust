@@ -1,9 +1,11 @@
 package org.rust.cargo.project.workspace
 
 import com.intellij.execution.ExecutionException
+import com.intellij.openapi.module.Module
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.util.extendProjectDescriptionWithStandardLibraryCrates
 
 /**
  * Cargo based project's workspace abstraction insulating inter-op with the `cargo` & `Cargo.toml`
@@ -39,4 +41,18 @@ interface CargoProjectWorkspace {
         class Ok(val projectDescription: CargoProjectDescription) : UpdateResult()
         class Err(val error: ExecutionException) : UpdateResult()
     }
+
+    companion object {
+        fun forModule(module: Module): CargoProjectWorkspace =
+            module.getComponent(CargoProjectWorkspace::class.java)
+                ?: error("Can't retrieve CargoProjectWorkspace component for $this")
+    }
 }
+
+/**
+ * Extracts Cargo project description out of `Cargo.toml`
+ */
+val Module.cargoProject: CargoProjectDescription?
+    get() = CargoProjectWorkspace.forModule(this).projectDescription?.let {
+        extendProjectDescriptionWithStandardLibraryCrates(it)
+    }

@@ -3,7 +3,7 @@ package org.rust.lang.core.psi
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.util.cargoProject
+import org.rust.cargo.project.workspace.cargoProject
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.ref.RustReference

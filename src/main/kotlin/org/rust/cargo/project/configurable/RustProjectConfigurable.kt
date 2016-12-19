@@ -14,10 +14,10 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.StandardLibraryRoots
-import org.rust.cargo.util.cargoProject
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
 import backcompat.runWriteAction
+import org.rust.cargo.project.workspace.cargoProject
 import javax.swing.JComponent
 
 class RustProjectConfigurable(

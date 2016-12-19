@@ -12,7 +12,6 @@ import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
-import org.rust.cargo.util.getComponentOrThrow
 import org.rust.lang.RustTestCaseBase
 
 class RunConfigurationProducerTestCase : RustTestCaseBase() {
@@ -290,7 +289,7 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
                 }
             }
 
-            val metadataService = myFixture.module.getComponentOrThrow<CargoProjectWorkspace>() as CargoProjectWorkspaceImpl
+            val metadataService = CargoProjectWorkspace.forModule(myFixture.module) as CargoProjectWorkspaceImpl
 
             val projectDescription = CargoProjectDescription.deserialize(
                 CleanCargoMetadata(

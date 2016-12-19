@@ -21,7 +21,6 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.util.StandardLibraryRoots
-import org.rust.cargo.util.getComponentOrThrow
 import org.rust.lang.core.psi.util.parentOfType
 import java.util.*
 
@@ -175,7 +174,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             super.configureModule(module, model, contentEntry)
 
             val moduleBaseDir = contentEntry.file!!.url
-            val projectWorkspace = module.getComponentOrThrow<CargoProjectWorkspace>() as CargoProjectWorkspaceImpl
+            val projectWorkspace = CargoProjectWorkspace.forModule(module) as CargoProjectWorkspaceImpl
 
             projectWorkspace.setState(testCargoProject(module, moduleBaseDir))
 
