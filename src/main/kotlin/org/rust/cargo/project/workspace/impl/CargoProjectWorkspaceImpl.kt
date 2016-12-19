@@ -137,7 +137,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
 
     private fun updateModuleDependencies(projectDescription: CargoProjectDescription) {
         val libraryRoots = projectDescription.packages
-            .filter { !it.isModule }
+            .filter { !it.isWorkspaceMember }
             .mapNotNull { it.contentRoot }
 
         module.updateLibrary(module.cargoLibraryName, libraryRoots)

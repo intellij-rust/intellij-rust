@@ -45,9 +45,7 @@ class CargoCommandConfiguration(
         CargoRunConfigurationEditorForm()
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
-        val config = getConfiguration()
-        if (config !is ConfigurationResult.Ok) return null
-
+        val config = getConfiguration() as? ConfigurationResult.Ok ?: return null
         val args = ParametersListUtil.parse(additionalArguments)
 
         val environmentVariables = if (printBacktrace)
@@ -55,7 +53,7 @@ class CargoCommandConfiguration(
         else
             environmentVariables
 
-        return CargoRunState(environment, config.toolchain, config.moduleDirectory, command, args, environmentVariables)
+        return CargoRunState(environment, config.toolchain, configurationModule.module, config.moduleDirectory, command, args, environmentVariables)
     }
 
     override fun writeExternal(element: Element) {
