@@ -48,6 +48,16 @@ class RustCompletionTest : RustCompletionTestBase() {
         fn main() {}
     """)
 
+    fun testUseItem() = checkSingleCompletion("quux", """
+        mod foo {
+            pub fn quux() {}
+        }
+
+        use self::foo::q/*caret*/;
+
+        fn main() {}
+    """)
+
     fun testWildcardImports() = checkSingleCompletion("transmogrify()", """
         mod foo {
             fn transmogrify() {}
