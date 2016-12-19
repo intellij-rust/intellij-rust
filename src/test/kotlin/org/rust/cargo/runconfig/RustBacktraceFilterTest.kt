@@ -1,6 +1,7 @@
 package org.rust.cargo.runconfig
 
 import com.intellij.openapi.util.SystemInfo
+import org.rust.cargo.util.modules
 
 /**
  * Tests for RustBacktraceFilter
@@ -13,7 +14,8 @@ class RustBacktraceFilterTest : HighlightFilterTestBase() {
 
     override fun setUp() {
         super.setUp()
-        filter = RustBacktraceFilter(project, projectDir)
+        val module = checkNotNull(project.modules.firstOrNull())
+        filter = RustBacktraceFilter(project, projectDir, module)
     }
 
     fun testRustcSourceCodeLink() =

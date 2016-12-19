@@ -1,19 +1,16 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
-
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
+import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.workspace.cargoProject
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.getPsiFor
-import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.util.*
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
@@ -54,15 +51,16 @@ object RustResolveEngine {
     /**
      * Resolves an absolute path.
      */
-    fun resolve(path: String, project: Project) : Result? {
+    fun resolve(path: String, module: Module) : Result? {
         val segments = path.segments
         if (segments.isEmpty()) return null
-        val pkg = project.getPackage(segments[0].name) ?: return null
+        val cargoProject = module.cargoProject ?: return null
+        val pkg = cargoProject.findPackage(segments[0].name) ?: return null
         val vfm = VirtualFileManager.getInstance()
         val rustPath = RustPath.CrateRelative(segments.drop(1))
         val el = pkg.targets.asSequence()
             .mapNotNull { vfm.findFileByUrl(it.crateRootUrl) }
-            .mapNotNull { project.getPsiFor(it) as? RustCompositeElement }
+            .mapNotNull { module.project.getPsiFor(it) as? RustCompositeElement }
             .flatMap { RustResolveEngine.resolve(rustPath, it).asSequence() }
             .filterIsInstance(RustNamedElement::class.java)
             .firstOrNull() ?: return null
@@ -187,12 +185,6 @@ object RustResolveEngine {
             else
                 current.parentOfType<RustResolveScope>()
         }
-
-    private fun Project.getPackage(name: String): CargoProjectDescription.Package? =
-        modules
-            .mapNotNull { it.cargoProject }
-            .flatMap { it.packages }
-            .find { it.isModule && it.name == name }
 
     private val String.segments: List<RustPathSegment>
         get() = splitToSequence("::")

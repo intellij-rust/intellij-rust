@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
@@ -24,10 +25,11 @@ import java.util.regex.Pattern
  */
 class RustBacktraceFilter(
     project: Project,
-    cargoProjectDir: VirtualFile
+    cargoProjectDir: VirtualFile,
+    module: Module
 ) : Filter {
     private val sourceLinkFilter = RegexpFileLinkFilter(project, cargoProjectDir, "^\\s+at ${RegexpFilter.FILE_PATH_MACROS}:${RegexpFilter.LINE_MACROS}$")
-    private val backtraceItemFilter = RustBacktraceItemFilter(project)
+    private val backtraceItemFilter = RustBacktraceItemFilter(project, module)
 
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
         return backtraceItemFilter.applyFilter(line, entireLength)
@@ -39,7 +41,8 @@ class RustBacktraceFilter(
  * Adds hyperlinks to function names in backtraces
  */
 private class RustBacktraceItemFilter(
-    val project: Project
+    val project: Project,
+    val module: Module
 ) : Filter {
     private val pattern = Pattern.compile("^(\\s*\\d+:\\s+0x[a-f0-9]+ - )(.+)(::h[0-9a-f]+)$")!!
     private val docManager = PsiDocumentManager.getInstance(project)
@@ -67,7 +70,7 @@ private class RustBacktraceItemFilter(
     }
 
     private fun extractFnHyperlink(funcName: String, start: Int, end: Int): Filter.ResultItem? {
-        val func = RustResolveEngine.resolve(funcName, project) ?: return null
+        val func = RustResolveEngine.resolve(funcName, module) ?: return null
         val funcFile = func.element.containingFile
         val doc = docManager.getDocument(funcFile) ?: return null
         val link = OpenFileHyperlinkInfo(project, funcFile.virtualFile, doc.getLineNumber(func.element.textOffset))
@@ -97,7 +100,6 @@ private class RustBacktraceItemFilter(
                 str = str.removeRange(IntRange(range.endInclusive, range.endInclusive))
                     .removeRange(IntRange(range.start, range.start))
             }
-            println("$this -> $str")
         }
         return str
     }
@@ -108,11 +110,11 @@ private class RustBacktraceItemFilter(
     private fun String.findAngleBrackets(): IntRange? {
         var start = -1
         var counter = 0
-        loop@ for (i in 0..(length - 1)) {
-            when (this[i]) {
+        loop@ for ((index, char) in this.withIndex()) {
+            when (char) {
                 '<' -> {
                     if (start < 0) {
-                        start = i
+                        start = index
                     }
                     counter += 1
                 }
@@ -120,7 +122,7 @@ private class RustBacktraceItemFilter(
                 else -> continue@loop
             }
             if (counter == 0) {
-                val range = IntRange(start, i)
+                val range = IntRange(start, index)
                 return range
             }
         }

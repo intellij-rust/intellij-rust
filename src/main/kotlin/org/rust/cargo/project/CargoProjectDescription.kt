@@ -26,7 +26,6 @@ class CargoProjectDescription private constructor(
         val dependencies: List<Package>,
         val isWorkspaceMember: Boolean
     ) {
-        val isModule: Boolean get() = source == null
         val libTarget: Target? get() = targets.find { it.isLib }
         val contentRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
 
@@ -120,6 +119,8 @@ class CargoProjectDescription private constructor(
     }
 
     val hasStandardLibrary: Boolean get() = findExternCrateRootByName(AutoInjectedCrates.std) != null
+
+    fun findPackage(name: String): Package? = packages.find { it.name == name }
 
     companion object {
         fun deserialize(data: CleanCargoMetadata): CargoProjectDescription? {
