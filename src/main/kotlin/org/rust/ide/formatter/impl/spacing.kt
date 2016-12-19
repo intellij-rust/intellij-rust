@@ -190,13 +190,6 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtContext): Sp
     return ctx.spacingBuilder.getSpacing(this, child1, child2)
 }
 
-/**
- * Attribute name -> parent PSI classes in which this attribute should be placed in-line.
- */
-private val INLINE_ATTRS = mapOf(
-    "macro_use" to (arrayOf(RustExternCrateItemElement::class, RustModDeclItemElement::class) to "INLINE_MACRO_USE_ATTR")
-)
-
 private data class SpacingContext(val node1: ASTNode,
                                   val node2: ASTNode,
                                   val psi1: PsiElement,
