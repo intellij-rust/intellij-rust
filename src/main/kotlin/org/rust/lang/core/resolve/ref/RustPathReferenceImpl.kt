@@ -1,12 +1,8 @@
 package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.source.resolve.ResolveCache
 import org.rust.lang.core.completion.RustCompletionEngine
-import org.rust.lang.core.psi.RustCompositeElement
-import org.rust.lang.core.psi.RustPathElement
-import org.rust.lang.core.psi.RustPathExprElement
-import org.rust.lang.core.psi.RustTypeElement
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.asRustPath
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.RustResolveEngine
@@ -32,10 +28,13 @@ class RustPathReferenceImpl(
         return element.manager.areElementsEquivalent(target, element)
     }
 
-    private val namespace: Namespace?
-        get() = when (element.parent) {
+    private val namespace: Namespace? get() {
+        val parent = element.parent
+        return when (parent) {
             is RustPathElement, is RustTypeElement -> Namespace.Types
+            is RustUseItemElement -> if (parent.mul != null) Namespace.Types else null
             is RustPathExprElement -> Namespace.Values
             else -> null
         }
+    }
 }

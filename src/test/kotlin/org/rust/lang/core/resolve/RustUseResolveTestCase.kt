@@ -455,4 +455,31 @@ class RustUseResolveTestCase : RustResolveTestCaseBase() {
         // but it once caused a stack overflow in the resolve.
         mod circular_mod;
     """)
+
+    // This won't actually fail if the resolve is O(N^2) or worse,
+    // but this is a helpful test for debugging!
+    fun testQuadraticBehavior() = checkByCode("""
+        use self::a::*;
+        use self::b::*;
+        use self::c::*;
+        use self::d::*;
+
+        const X1: i32 = 0;
+        mod a {
+            pub const X2: i32 = ::X1;
+        }
+        mod b {
+            pub const X3: i32 = ::X1;
+        }
+        mod c {
+            pub const X4: i32 = ::X1;
+        }
+        mod d {
+            pub const X5: i32 = ::X1;
+                    //X
+        }
+
+        const Z: i32 = X5;
+                     //^
+    """)
 }
