@@ -85,6 +85,7 @@ fun RustCompositeElement.createLookupElement(scopeName: String): LookupElement {
             .withInsertHandler handler@ { context: InsertionContext, lookupElement: LookupElement ->
                 val element = context.file.findElementAt(context.startOffset - 1)!!
                 if (element.parentOfType<RustUseGlobListElement>() != null) return@handler
+                if (element.parentOfType<RustUseItemElement>() != null) return@handler
                 val argsCount = parameters?.parameterList?.size ?: 0
                 context.document.insertString(context.selectionEndOffset, "()")
                 EditorModificationUtil.moveCaretRelatively(context.editor, if (argsCount > 0) 1 else 2)
