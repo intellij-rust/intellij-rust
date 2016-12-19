@@ -59,7 +59,7 @@ class RustProjectSettingsPanel {
             "",
             "Cargo location",
             null,
-            FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(),
+            FileChooserDescriptorFactory.createSingleFolderDescriptor(),
             TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
             false
         )

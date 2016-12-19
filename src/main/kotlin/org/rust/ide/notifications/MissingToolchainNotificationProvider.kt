@@ -200,7 +200,7 @@ class MissingToolchainNotificationProvider(
         }
 
     private fun chooseStdlibLocation(parent: Component): VirtualFile? {
-        val descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+        val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
 
         return FileChooser.chooseFile(descriptor, parent, project, null)
     }

@@ -6,7 +6,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.CargoProjectDescription
@@ -43,13 +42,9 @@ class StandardLibraryRoots private constructor(
             LocalFileSystem.getInstance().findFileByPath(path)?.let { fromFile(it) }
 
         fun fromFile(sources: VirtualFile): StandardLibraryRoots? {
-            val srcDir = if (sources.isDirectory) {
-                if (sources.name == "src") sources else sources.findChild("src")
-            } else {
-                JarFileSystem.getInstance().getJarRootForLocalFile(sources)
-                    ?.children?.singleOrNull()
-                    ?.findChild("src")
-            } ?: return null
+            if (!sources.isDirectory) return null
+            val srcDir = if (sources.name == "src") sources else sources.findChild("src")
+                ?: return null
 
             val roots = stdlibCrateNames.mapNotNull { srcDir.findFileByRelativePath("lib$it") }
             if (roots.isEmpty()) return null
@@ -62,7 +57,7 @@ class StandardLibraryRoots private constructor(
  * Combines information about project structure which we got form cargo and information
  * about standard library which is stored as an IDEA external library
  */
-fun Module.extendProjectDescriptionWithStandardLibraryCrates(projectDescription: CargoProjectDescription) : CargoProjectDescription {
+fun Module.extendProjectDescriptionWithStandardLibraryCrates(projectDescription: CargoProjectDescription): CargoProjectDescription {
     val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(rustLibraryName)
         ?: return projectDescription
 
