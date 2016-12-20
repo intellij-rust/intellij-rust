@@ -86,4 +86,11 @@ class RustHighlightingAnnotatorTest : RustAnnotatorTestBase() {
             Ok(Ok(1)<info>?</info> * 2)
         }
     """)
+
+    fun testTypeAlias() = checkInfo("""
+        type <info>Bar</info> = <info>u32</info>;
+        fn <info>main</info>() {
+            let a: <info>Bar</info> = 10;
+        }
+    """)
 }
