@@ -27,7 +27,7 @@ class CargoCommandConfiguration(
     var command: String = CargoConstants.Commands.RUN
     var additionalArguments: String = ""
     var environmentVariables: Map<String, String> = mutableMapOf()
-    var printBacktrace: Boolean = false
+    var printBacktrace: Boolean = true
 
     init {
         configurationModule.module = project.modulesWithCargoProject.firstOrNull()
