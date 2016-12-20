@@ -49,7 +49,7 @@ class CargoCommandConfiguration(
         val args = ParametersListUtil.parse(additionalArguments)
 
         val environmentVariables = if (printBacktrace)
-            environmentVariables.plus(Pair("RUST_BACKTRACE", "1"))
+            environmentVariables + ("RUST_BACKTRACE" to "1")
         else
             environmentVariables
 
