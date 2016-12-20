@@ -37,7 +37,7 @@ class CargoCommandConfiguration(
 
     @Throws(RuntimeConfigurationError::class)
     override fun checkConfiguration() {
-        val config = getConfiguration()
+        val config = cleanConfiguration()
         if (config is ConfigurationResult.Err) throw config.error
     }
 
@@ -45,7 +45,7 @@ class CargoCommandConfiguration(
         CargoRunConfigurationEditorForm()
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
-        val config = getConfiguration() as? ConfigurationResult.Ok ?: return null
+        val config = cleanConfiguration() as? ConfigurationResult.Ok ?: return null
         val args = ParametersListUtil.parse(additionalArguments)
 
         val environmentVariables = if (printBacktrace)
@@ -53,7 +53,7 @@ class CargoCommandConfiguration(
         else
             environmentVariables
 
-        return CargoRunState(environment, config.toolchain, configurationModule.module, config.moduleDirectory, command, args, environmentVariables)
+        return CargoRunState(environment, config.toolchain, config.module, config.cargoProjectDirectory, command, args, environmentVariables)
     }
 
     override fun writeExternal(element: Element) {
@@ -67,7 +67,12 @@ class CargoCommandConfiguration(
     }
 
     private sealed class ConfigurationResult {
-        class Ok(val toolchain: RustToolchain, val moduleDirectory: VirtualFile) : ConfigurationResult()
+        class Ok(
+            val toolchain: RustToolchain,
+            val module: Module,
+            val cargoProjectDirectory: VirtualFile
+        ) : ConfigurationResult()
+
         class Err(val error: RuntimeConfigurationError) : ConfigurationResult()
 
         companion object {
@@ -75,7 +80,7 @@ class CargoCommandConfiguration(
         }
     }
 
-    private fun getConfiguration(): ConfigurationResult {
+    private fun cleanConfiguration(): ConfigurationResult {
         val module = configurationModule.module
             ?: return ConfigurationResult.error(ExecutionBundle.message("module.not.specified.error.text"))
 
@@ -88,7 +93,9 @@ class CargoCommandConfiguration(
 
         return ConfigurationResult.Ok(
             toolchain,
-            module.cargoProjectRoot ?: return ConfigurationResult.error("No Cargo.toml at the root of the module")
+            module,
+            module.cargoProjectRoot
+                ?: return ConfigurationResult.error("No Cargo.toml at the root of the module")
         )
     }
 }

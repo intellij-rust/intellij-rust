@@ -12,7 +12,7 @@ import org.rust.cargo.toolchain.RustToolchain
 class CargoRunState(
     environment: ExecutionEnvironment,
     private val toolchain: RustToolchain,
-    module: Module?,
+    module: Module,
     private val cargoProjectDirectory: VirtualFile,
     private val command: String,
     private val additionalArguments: List<String>,
@@ -23,9 +23,7 @@ class CargoRunState(
         consoleBuilder.addFilter(RustConsoleFilter(environment.project, cargoProjectDirectory))
         consoleBuilder.addFilter(RustExplainFilter())
         consoleBuilder.addFilter(RustPanicFilter(environment.project, cargoProjectDirectory))
-        if (module != null) {
-            consoleBuilder.addFilter(RustBacktraceFilter(environment.project, cargoProjectDirectory, module))
-        }
+        consoleBuilder.addFilter(RustBacktraceFilter(environment.project, cargoProjectDirectory, module))
     }
 
     override fun startProcess(): ProcessHandler {
