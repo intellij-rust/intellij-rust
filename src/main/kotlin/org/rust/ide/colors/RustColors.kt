@@ -30,6 +30,7 @@ enum class RustColor(humanName: String, val default: TextAttributesKey) {
     MODULE                ("Module",                      Default.IDENTIFIER),
     ENUM                  ("Enum",                        Default.CLASS_NAME),
     ENUM_VARIANT          ("Enum Variant",                Default.STATIC_FIELD),
+    TYPE_ALIAS            ("Type alias",                  Default.CLASS_NAME),
 
     FIELD                 ("Field",                       Default.INSTANCE_FIELD),
 
