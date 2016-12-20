@@ -7,10 +7,13 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
+import org.rust.lang.core.psi.RustLitExprElement
 import org.rust.lang.core.psi.RustTokenElementTypes.RAW_LITERALS
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.RustRawStringLiteralImpl
+import org.rust.lang.core.psi.util.parentOfType
 
 class RustRawLiteralHashesInserter : TypedHandlerDelegate() {
     override fun beforeCharTyped(c: Char, project: Project, editor: Editor, file: PsiFile, fileType: FileType): Result {

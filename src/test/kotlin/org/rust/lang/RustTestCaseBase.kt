@@ -56,17 +56,15 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
     protected val testName: String
         get() = camelToSnake(getTestName(true))
 
-    protected open val inverse: Boolean = false
-
     protected fun checkByFile(ignoreTrailingWhitespace: Boolean = true, action: () -> Unit) {
-        val (before, after) = (fileName to fileName.replace(".rs", "_after.rs")).swapIf(inverse)
+        val (before, after) = (fileName to fileName.replace(".rs", "_after.rs"))
         myFixture.configureByFile(before)
         action()
         myFixture.checkResultByFile(after, ignoreTrailingWhitespace)
     }
 
     protected fun checkByDirectory(action: () -> Unit) {
-        val (before, after) = ("$testName/before" to "$testName/after").swapIf(inverse)
+        val (before, after) = ("$testName/before" to "$testName/after")
 
         val targetPath = ""
         val beforeDir = myFixture.copyDirectoryToProject(before, targetPath)
@@ -82,10 +80,9 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         @Language("Rust") after: String,
         action: () -> Unit
     ) {
-        val (myBefore, myAfter) = (before to after).swapIf(inverse)
-        InlineFile(myBefore)
+        InlineFile(before)
         action()
-        myFixture.checkResult(replaceCaretMarker(myAfter))
+        myFixture.checkResult(replaceCaretMarker(after))
     }
 
     protected fun openFileInEditor(path: String) {
@@ -162,12 +159,6 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         val action = myFixture.findSingleIntention(name)
         myFixture.launchAction(action)
     }
-
-    private fun <T> Pair<T, T>.swapIf(condition: Boolean): Pair<T, T> =
-        if (condition)
-            this.second to this.first
-        else
-            this
 
     protected open class RustProjectDescriptorBase : LightProjectDescriptor() {
         final override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
