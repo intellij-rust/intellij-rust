@@ -64,8 +64,7 @@ class Rustup(
     }
 
     private fun GeneralCommandLine.exec(timeoutInMilliseconds: Int? = null): ProcessOutput {
-        val process = createProcess()
-        val handler = CapturingProcessHandler(process, Charsets.UTF_8, commandLineString)
+        val handler = CapturingProcessHandler(this)
 
         LOG.info("Executing `$commandLineString`")
         val output = if (timeoutInMilliseconds != null)

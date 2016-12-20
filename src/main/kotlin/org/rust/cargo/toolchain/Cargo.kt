@@ -95,8 +95,7 @@ class Cargo(
         generalCommand("fmt").withParameters("--", "--write-mode=overwrite", "--skip-children", filePath)
 
     private fun GeneralCommandLine.execute(listener: ProcessListener? = null): ProcessOutput {
-        val process = createProcess()
-        val handler = CapturingProcessHandler(process, Charsets.UTF_8, commandLineString)
+        val handler = CapturingProcessHandler(this)
 
         listener?.let { handler.addProcessListener(it) }
 

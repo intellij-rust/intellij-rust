@@ -179,7 +179,7 @@ private object Suggestions {
 
 private fun GeneralCommandLine.runExecutable(): List<String>? {
     val procOut = try {
-        CapturingProcessHandler(createProcess(), Charsets.UTF_8, commandLineString).runProcess(1.seconds)
+        CapturingProcessHandler(this).runProcess(1.seconds)
     } catch (e: ExecutionException) {
         LOG.warn("Failed to run executable!", e)
         return null
