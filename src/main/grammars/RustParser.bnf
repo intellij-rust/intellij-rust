@@ -20,6 +20,7 @@
     parserImports=[
       'static org.rust.lang.core.psi.RustTokenElementTypes.*'
       'static org.rust.lang.core.parser.RustParserUtil.PathParsingMode.*'
+      'static org.rust.lang.core.parser.RustParserUtil.BinaryMode.*'
     ]
 
 
@@ -847,8 +848,8 @@ expr ::= ret_expr
        | atom_expr
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
-no_struct_lit_expr ::= <<structLiterals "off" expr>> { elementType = expr }
-any_expr ::= <<structLiterals "on" expr>> { elementType = expr }
+no_struct_lit_expr ::= <<structLiterals 'OFF' expr>> { elementType = expr }
+any_expr ::= <<structLiterals 'ON' expr>> { elementType = expr }
 
 
 block_expr ::= while_expr

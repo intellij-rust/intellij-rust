@@ -12,6 +12,7 @@ import org.rust.lang.core.psi.RustTokenType
 @Suppress("UNUSED_PARAMETER")
 object RustParserUtil : GeneratedParserUtilBase() {
     enum class PathParsingMode { COLONS, NO_COLONS, NO_TYPES }
+    enum class BinaryMode { ON, OFF }
 
     private val STRUCT_ALLOWED: Key<Boolean> = Key("org.rust.STRUCT_ALLOWED")
     private val PATH_PARSING_MODE: Key<PathParsingMode> = Key("org.rust.PATH_PARSING_MODE")
@@ -60,8 +61,8 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return b.structAllowed || b.tokenType != LBRACE
     }
 
-    @JvmStatic fun structLiterals(b: PsiBuilder, level: Int, mode: String, parser: Parser): Boolean =
-        b.withContext(STRUCT_ALLOWED, mode == "on") { parser.parse(this, level) }
+    @JvmStatic fun structLiterals(b: PsiBuilder, level: Int, mode: BinaryMode, parser: Parser): Boolean =
+        b.withContext(STRUCT_ALLOWED, mode == BinaryMode.ON) { parser.parse(this, level) }
 
     @JvmStatic fun pathMode(b: PsiBuilder, level: Int, mode: PathParsingMode, parser: Parser): Boolean =
         b.withContext(PATH_PARSING_MODE, mode) { parser.parse(this, level) }
