@@ -137,6 +137,17 @@ class RustRawLiteralHashesBalancerTest : RustTypingTestCaseBase() {
         }
     """)
 
+    // https://github.com/intellij-rust/intellij-rust/issues/817
+    fun testDontMessupBrokenLiteral() = doTestByText("""
+        static CHILD_TEMPLATE: &'static str = r<caret>"
+        {% extends "parent.html" %}
+        ";
+    """, """
+        static CHILD_TEMPLATE: &'static str = r#<caret>"
+        {% extends "parent.html" %}
+        ";
+    """, '#')
+
     private fun doTest(before: String, after: String) {
         // First type a pound sign...
         doTestByText(before, after, '#')

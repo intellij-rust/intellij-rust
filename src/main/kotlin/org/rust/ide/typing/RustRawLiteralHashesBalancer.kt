@@ -1,5 +1,6 @@
 package org.rust.ide.typing
 
+import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
@@ -9,11 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
-import org.rust.lang.core.psi.RustLitExprElement
 import org.rust.lang.core.psi.RustTokenElementTypes.RAW_LITERALS
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.RustRawStringLiteralImpl
-import org.rust.lang.core.psi.util.parentOfType
 
 class RustRawLiteralHashesInserter : TypedHandlerDelegate() {
     override fun beforeCharTyped(c: Char, project: Project, editor: Editor, file: PsiFile, fileType: FileType): Result {
@@ -30,6 +29,16 @@ class RustRawLiteralHashesInserter : TypedHandlerDelegate() {
         val highlighter = (editor as EditorEx).highlighter
         val iterator = highlighter.createIterator(caretOffset - 1)
         val (openHashes, closeHashes) = getHashesOffsets(iterator) ?: return Result.CONTINUE
+
+        val hasErrorAfterLiteral = run {
+            val start = closeHashes.endOffset
+            var end = editor.document.charsSequence.indexOf('\n', start)
+            if (end == -1) {
+                end = editor.document.charsSequence.length
+            }
+            CollectHighlightsUtil.getElementsInRange(file, start, end).any { it is PsiErrorElement }
+        }
+        if (hasErrorAfterLiteral) return Result.CONTINUE
 
         // Now detect on which side of the literal we are, and insert hash on the other one.
         // We are growing ranges in order to catch situations where caret is places directly
