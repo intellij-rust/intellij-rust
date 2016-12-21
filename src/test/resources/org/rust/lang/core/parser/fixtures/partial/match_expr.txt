@@ -29,7 +29,8 @@ FILE
               PsiWhiteSpace(' ')
               PsiElement(=>)('=>')
               PsiErrorElement:<expr> expected, got ';'
-                PsiElement(;)(';')
+                <empty list>
+              PsiElement(;)(';')
             PsiWhiteSpace('\n        ')
             RustMatchArmElementImpl(MATCH_ARM)
               RustMatchPatElementImpl(MATCH_PAT)

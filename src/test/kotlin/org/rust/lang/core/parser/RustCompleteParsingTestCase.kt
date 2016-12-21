@@ -37,7 +37,8 @@ class RustCompleteParsingTestCase : RustParsingTestCaseBase("complete") {
     fun testLastBlockIsExpression() = doTest(true)
     fun testLabels() = doTest(true)
     fun testUnion() = doTest(true)
-    fun testBlockRef() = doTest(true)
+    fun testBlockBinExpr() = doTest(true)
+    fun testMatchCallAmbiguity() = doTest(true)
 
     fun testIssue320() = doTest(true)
 

@@ -849,7 +849,9 @@ expr ::= ret_expr
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
 no_struct_lit_expr ::= <<structLiterals 'OFF' expr>> { elementType = expr }
-any_expr ::= <<structLiterals 'ON' expr>> { elementType = expr }
+any_expr ::= <<structLiterals 'ON' <<stmtMode 'OFF' expr>> >> { elementType = expr }
+stmt_mode_expr ::= <<structLiterals 'ON' <<stmtMode 'ON' expr>> >> { elementType = expr }
+stmt_mode_expr_off ::= <<stmtMode 'OFF' expr>> { elementType = expr }
 
 
 block_expr ::= while_expr
@@ -897,18 +899,18 @@ assign_bin_expr ::= expr
                   | '%='
                   ) expr    { rightAssociative = true }
 
-comp_bin_expr       ::= expr ('==' | '!=') expr
-rel_comp_bin_expr   ::= expr ('<' !('<' | '=') | '>' !('>' | '=') | lteq | gteq) expr
-bit_shift_bin_expr  ::= expr (ltlt | gtgt) expr
-add_bin_expr        ::= expr ('+' | '-') expr
-mul_bin_expr        ::= expr ('*' | '/' | '%') expr
+comp_bin_expr       ::= expr !<<isCompleteBlockExpr>> ('==' | '!=') stmt_mode_expr_off
+rel_comp_bin_expr   ::= expr !<<isCompleteBlockExpr>> ('<' !('<' | '=') | '>' !('>' | '=') | lteq | gteq) stmt_mode_expr_off
+bit_shift_bin_expr  ::= expr !<<isCompleteBlockExpr>> (ltlt | gtgt) stmt_mode_expr_off
+add_bin_expr        ::= expr !<<isCompleteBlockExpr>> ('+' | '-') stmt_mode_expr_off
+mul_bin_expr        ::= expr !<<isCompleteBlockExpr>> ('*' | '/' | '%') stmt_mode_expr_off
 
 // <expr> | <expr> has higher priority than <expr> || <expr>
-bool_or_bin_expr    ::= expr oror expr
-bool_and_bin_expr   ::= expr andand expr
-bit_or_bin_expr     ::= expr !oror   '|' expr
-bit_and_bin_expr    ::= expr !(<<isBlockLike>> | andand) '&' expr
-bit_xor_bin_expr    ::= expr '^' expr
+bool_or_bin_expr    ::= expr !<<isCompleteBlockExpr>> oror stmt_mode_expr_off
+bool_and_bin_expr   ::= expr !<<isCompleteBlockExpr>> andand stmt_mode_expr_off
+bit_or_bin_expr     ::= expr !(<<isCompleteBlockExpr>> | oror)   '|' stmt_mode_expr_off
+bit_and_bin_expr    ::= expr !(<<isCompleteBlockExpr>> | andand) '&' stmt_mode_expr_off
+bit_xor_bin_expr    ::= expr !<<isCompleteBlockExpr>> '^' stmt_mode_expr_off
 
 
 cast_expr ::= expr AS type
@@ -951,7 +953,7 @@ for_expr ::= [ LIFETIME ':' ] FOR scoped_for_decl simple_block { pin = "IN" }
 
 match_expr ::= MATCH no_struct_lit_expr match_body { pin = no_struct_lit_expr }
 match_body ::= '{' match_arm* '}' { pin = 1 }
-match_arm ::= outer_attr* match_pat '=>' (block_expr !('.' | '?') ','? | any_expr (',' | &'}')) {
+match_arm ::= outer_attr* match_pat '=>' stmt_mode_expr (',' | (&'}' | <<isBlock>>)) {
   pin = 2
   recoverWhile = match_arm_recover
 }
@@ -1008,7 +1010,7 @@ index_expr ::= expr index_arg
 // Do not inline this rule, it breaks expression parsing
 private index_arg ::= '[' expr ']'
 
-call_expr ::= expr arg_list
+call_expr ::= expr !<<isCompleteBlockExpr>> arg_list
 
 method_call_expr ::= expr '.' IDENTIFIER colon_generic_args? arg_list {
   implements = [ "org.rust.lang.core.psi.RustReferenceElement" ]
@@ -1176,9 +1178,9 @@ private block_recover ::= !('}')
 
 stmt ::= let_decl | empty_stmt | never ';'
 
-expr_stmt_or_last_expr ::= outer_attr? any_expr (expr_stmt_upper | last_expr_upper)
+expr_stmt_or_last_expr ::= outer_attr? stmt_mode_expr (expr_stmt_upper | last_expr_upper)
 
-upper expr_stmt_upper ::= ';' | () <<isBlockLike>> !('.' | '?' | '}') { elementType = expr_stmt }
+upper expr_stmt_upper ::= ';' | () <<isBlock>> !('}') { elementType = expr_stmt }
 upper last_expr_upper ::= () &'}' { elementType = expr pin = 1 }
 
 fake expr_stmt ::= outer_attr? any_expr ';'? { extends = stmt }

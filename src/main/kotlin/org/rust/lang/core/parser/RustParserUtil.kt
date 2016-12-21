@@ -16,6 +16,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
     private val STRUCT_ALLOWED: Key<Boolean> = Key("org.rust.STRUCT_ALLOWED")
     private val PATH_PARSING_MODE: Key<PathParsingMode> = Key("org.rust.PATH_PARSING_MODE")
+    private val STMT_EXPR_MODE: Key<Boolean> = Key("org.rust.STMT_EXPR_MODE")
 
     private val PsiBuilder.structAllowed: Boolean get() = getUserData(STRUCT_ALLOWED) ?: true
 
@@ -63,6 +64,34 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
     @JvmStatic fun structLiterals(b: PsiBuilder, level: Int, mode: BinaryMode, parser: Parser): Boolean =
         b.withContext(STRUCT_ALLOWED, mode == BinaryMode.ON) { parser.parse(this, level) }
+
+    /**
+     * Controls the difference between
+     *
+     *     ```
+     *     // bit and
+     *     let _ = {1} & x;
+     *     ```
+     * and
+     *
+     *     ```
+     *     // two statements: block expression {1} and unary reference expression &x
+     *     {1} & x;
+     *     ```
+     *
+     * See `Restrictions::RESTRICTION_STMT_EXPR` in libsyntax
+     */
+    @JvmStatic fun stmtMode(b: PsiBuilder, level: Int, mode: BinaryMode, parser: Parser): Boolean =
+        b.withContext(STMT_EXPR_MODE, mode == BinaryMode.ON) { parser.parse(this, level) }
+
+    @JvmStatic fun isCompleteBlockExpr(b: PsiBuilder, level: Int): Boolean {
+        return isBlock(b, level) && b.getUserData(STMT_EXPR_MODE) == true
+    }
+
+    @JvmStatic fun isBlock(b: PsiBuilder, level: Int): Boolean {
+        val m = b.latestDoneMarker ?: return false
+        return m.tokenType in BLOCK_LIKE || m.isBracedMacro(b)
+    }
 
     @JvmStatic fun pathMode(b: PsiBuilder, level: Int, mode: PathParsingMode, parser: Parser): Boolean =
         b.withContext(PATH_PARSING_MODE, mode) { parser.parse(this, level) }
@@ -115,11 +144,6 @@ object RustParserUtil : GeneratedParserUtilBase() {
         RustCompositeElementTypes.MATCH_EXPR,
         RustCompositeElementTypes.BLOCK_EXPR
     )
-
-    @JvmStatic fun isBlockLike(b: PsiBuilder, level: Int): Boolean {
-        val m = b.latestDoneMarker ?: return false
-        return m.tokenType in BLOCK_LIKE || m.isBracedMacro(b)
-    }
 
     private fun <T> PsiBuilder.withContext(key: Key<T>, value: T, block: PsiBuilder.() -> Boolean): Boolean {
         val old = getUserData(key)
