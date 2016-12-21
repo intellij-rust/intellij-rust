@@ -34,6 +34,13 @@ class RustPsiFactory(private val project: Project) {
         createFromText("fn main() { let a : $text; }")
             ?: error("Failed to create type from text: `$text`")
 
+    fun createMethodParam(text: String): PsiElement {
+        val fnItem: RustTraitMethodMemberElement = createTraitMethodMember("fn foo($text);")
+        return fnItem.parameters?.selfArgument ?:
+            fnItem.parameters?.parameterList?.firstOrNull() ?:
+            error("Failed to create type from text: `$text`")
+    }
+
     fun createReferenceType(innerTypeText: String, mutable: Boolean): RustRefTypeElement =
         createType("&${if (mutable) "mut " else ""}$innerTypeText") as RustRefTypeElement
 
@@ -52,6 +59,12 @@ class RustPsiFactory(private val project: Project) {
         val text = "impl T for S { $methods }"
         return createFromText(text)
             ?: error("Failed to create an impl from text: `$text`")
+    }
+
+    fun createTraitMethodMember(text: String): RustTraitMethodMemberElement {
+        val traitImpl: RustTraitItemElement = createFromText("trait Foo { $text }") ?:
+            error("Failed to create an method member from text: `$text`")
+        return traitImpl.traitMethodMemberList.first()
     }
 
     fun createInherentImplItem(name: String): RustImplItemElement =

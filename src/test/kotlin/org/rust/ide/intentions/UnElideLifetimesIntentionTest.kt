@@ -55,6 +55,43 @@ class UnElideLifetimesIntentionTest : RustIntentionTestBase(UnElideLifetimesInte
         """
     )
 
+    fun testMethodDecl() = doAvailableTest(
+        """
+        trait Foo {
+            fn /*caret*/bar(&self, x: &i32, y: &i32, x: i32) -> &i32;
+        }
+        """
+        ,
+        """
+        trait Foo {
+            fn /*caret*/bar<'a, 'b, 'c>(&'a self, x: &'b i32, y: &'c i32, x: i32) -> &'a i32;
+        }
+        """
+    )
 
-
+    fun testMethodImpl() = doAvailableTest(
+        """
+        trait Foo {
+            fn bar(&self, x: &i32, y: &i32, x: i32) -> &i32;
+        }
+        struct S {}
+        impl Foo for S {
+            fn /*caret*/bar(&self, x: &i32, y: &i32, x: i32) -> &i32 {
+                unimplemented!()
+            }
+        }
+        """
+        ,
+        """
+        trait Foo {
+            fn bar(&self, x: &i32, y: &i32, x: i32) -> &i32;
+        }
+        struct S {}
+        impl Foo for S {
+            fn /*caret*/bar<'a, 'b, 'c>(&'a self, x: &'b i32, y: &'c i32, x: i32) -> &'a i32 {
+                unimplemented!()
+            }
+        }
+        """
+    )
 }

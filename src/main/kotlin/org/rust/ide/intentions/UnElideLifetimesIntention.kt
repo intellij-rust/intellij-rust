@@ -26,22 +26,21 @@ class UnElideLifetimesIntention : PsiElementBaseIntentionAction() {
         if ((fnDecl.retType?.type as? RustRefTypeElement)?.lifetime != null)
             return false
 
-        val types = fnDecl.allParamsRefTypes
+        val args = fnDecl.allRefArgs
 
-        return types.any() && types.all { it.lifetime == null }
+        return args.any() && args.all { it.lifetime == null }
     }
 
     override fun invoke(project: Project, editor: Editor, element: PsiElement) {
         val fnDecl = checkNotNull(findFnDecl(element))
 
-        // function params
-        fnDecl.allParamsRefTypes.zip(nameGenerator).forEach {
-            it.first.replace(createRefType(project, it.first, it.second))
+        fnDecl.allRefArgs.zip(nameGenerator).forEach {
+            it.first.replace(createParam(project, it.first, it.second))
         }
 
         // generic params
         val genericParams = RustPsiFactory(project).createGenericParams(
-            (fnDecl.allParamsRefTypes.mapNotNull { it.lifetime?.text } +
+            (fnDecl.allRefArgs.mapNotNull { it.lifetime?.text } +
                 (fnDecl.genericParams?.typeParamList?.asSequence()?.map { it.text } ?: emptySequence()))
                 .toList()
         )
@@ -51,8 +50,8 @@ class UnElideLifetimesIntention : PsiElementBaseIntentionAction() {
         val retType = fnDecl.retType?.type as? RustRefTypeElement ?: return
 
         val parameters = checkNotNull(fnDecl.parameters)
-        if ((parameters.selfArgument != null) || (fnDecl.allParamsRefTypes.drop(1).none())) {
-            retType.replace(createRefType(project, retType, fnDecl.allParamsRefTypes.first().lifetime!!.text))
+        if ((parameters.selfArgument != null) || (fnDecl.allRefArgs.drop(1).none())) {
+            retType.replace(createRefType(project, retType, fnDecl.allRefArgs.first().lifetime!!.text))
         } else {
             val lifeTime = (retType.replace(createRefType(project, retType, "'unknown"))
                 as RustRefTypeElement).lifetime ?: return
@@ -60,8 +59,8 @@ class UnElideLifetimesIntention : PsiElementBaseIntentionAction() {
         }
     }
 
-    fun findFnDecl(element: PsiElement): RustFnItemElement? {
-        val fnItem = element.parentOfType<RustFnItemElement>() ?: return null
+    fun findFnDecl(element: PsiElement): RustFnElement? {
+        val fnItem = element.parentOfType<RustFnElement>() ?: return null
         val scope = element.parentOfType<RustBlockElement>()
 
         return if (fnItem.contains(scope)) null else fnItem
@@ -70,9 +69,19 @@ class UnElideLifetimesIntention : PsiElementBaseIntentionAction() {
     private fun createRefType(project: Project, origin: RustRefTypeElement, lifeTimeName: String): RustRefTypeElement =
         RustPsiFactory(project).createType(origin.text.replaceFirst("&", "&$lifeTimeName ")) as RustRefTypeElement
 
-    private val RustFnItemElement.allParamsRefTypes: Sequence<RustRefTypeElement> get() {
-        val selfAfgType = sequenceOf(parameters?.selfArgument?.type)
-        val paramsTypes = parameters?.parameterList?.asSequence()?.mapNotNull { it.type } ?: emptySequence<RustTypeElement>()
-        return (selfAfgType + paramsTypes).mapNotNull { it as? RustRefTypeElement }
+    private fun createParam(project: Project, origin: PsiElement, lifeTimeName: String): PsiElement =
+        RustPsiFactory(project).createMethodParam(origin.text.replaceFirst("&", "&$lifeTimeName "))
+
+    private val RustFnElement.allRefArgs: Sequence<PsiElement> get() {
+        val selfAfg: Sequence<PsiElement?> = sequenceOf(parameters?.selfArgument)
+        val params:  Sequence<PsiElement?> = parameters?.parameterList?.asSequence()?.filter { it.type is RustRefTypeElement } ?: emptySequence()
+        return (selfAfg + params).filterNotNull()
     }
+
+    private val PsiElement.lifetime: PsiElement? get() =
+        when (this) {
+            is RustSelfArgumentElement -> lifetime
+            is RustParameterElement -> (type as? RustRefTypeElement)?.lifetime
+            else -> null
+        }
 }
