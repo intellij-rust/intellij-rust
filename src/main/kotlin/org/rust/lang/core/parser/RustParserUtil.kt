@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.RustTokenType
 
 @Suppress("UNUSED_PARAMETER")
 object RustParserUtil : GeneratedParserUtilBase() {
-    enum class PathParsingMode { COLONS, NO_COLONS, NO_TYPES_ALLOWED }
+    enum class PathParsingMode { COLONS, NO_COLONS, NO_TYPES }
 
     private val STRUCT_ALLOWED: Key<Boolean> = Key("org.rust.STRUCT_ALLOWED")
     private val PATH_PARSING_MODE: Key<PathParsingMode> = Key("org.rust.PATH_PARSING_MODE")
@@ -60,23 +60,13 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return b.structAllowed || b.tokenType != LBRACE
     }
 
-    @JvmStatic fun withoutStructLiterals(b: PsiBuilder, level: Int, parser: Parser): Boolean =
-        b.withContext(STRUCT_ALLOWED, false) { parser.parse(this, level) }
+    @JvmStatic fun structLiterals(b: PsiBuilder, level: Int, mode: String, parser: Parser): Boolean =
+        b.withContext(STRUCT_ALLOWED, mode == "on") { parser.parse(this, level) }
 
-    @JvmStatic fun withStructLiterals(b: PsiBuilder, level: Int, parser: Parser): Boolean =
-        b.withContext(STRUCT_ALLOWED, true) { parser.parse(this, level) }
+    @JvmStatic fun pathMode(b: PsiBuilder, level: Int, mode: PathParsingMode, parser: Parser): Boolean =
+        b.withContext(PATH_PARSING_MODE, mode) { parser.parse(this, level) }
 
-    @JvmStatic fun withPathModeNoColons(b: PsiBuilder, level: Int, parser: Parser): Boolean =
-        b.withContext(PATH_PARSING_MODE, PathParsingMode.NO_COLONS) { parser.parse(this, level) }
-
-    @JvmStatic fun withPathModeColons(b: PsiBuilder, level: Int, parser: Parser): Boolean =
-        b.withContext(PATH_PARSING_MODE, PathParsingMode.COLONS) { parser.parse(this, level) }
-
-    @JvmStatic fun withPathModeNoTypes(b: PsiBuilder, level: Int, parser: Parser): Boolean =
-        b.withContext(PATH_PARSING_MODE, PathParsingMode.NO_TYPES_ALLOWED) { parser.parse(this, level) }
-
-    @JvmStatic fun isPathModeColons(b: PsiBuilder, level: Int): Boolean = b.pathParsingMode == PathParsingMode.COLONS
-    @JvmStatic fun isPathModeNoColons(b: PsiBuilder, level: Int): Boolean = b.pathParsingMode == PathParsingMode.NO_COLONS
+    @JvmStatic fun isPathMode(b: PsiBuilder, level: Int, mode: PathParsingMode): Boolean = mode == b.pathParsingMode
 
     @JvmStatic fun unpairedToken(b: PsiBuilder, level: Int): Boolean =
         when (b.tokenType) {

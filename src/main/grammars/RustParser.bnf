@@ -17,7 +17,10 @@
     psiPackage='org.rust.lang.core.psi'
     psiImplPackage='org.rust.lang.core.psi.impl'
 
-    parserImports='static org.rust.lang.core.psi.RustTokenElementTypes.*'
+    parserImports=[
+      'static org.rust.lang.core.psi.RustTokenElementTypes.*'
+      'static org.rust.lang.core.parser.RustParserUtil.PathParsingMode.*'
+    ]
 
 
     tokens = [
@@ -223,8 +226,8 @@ private path_impl ::= path_start path_segment*
 path_start ::= '::'?  path_ident path_generics? { elementType = path }
 left path_segment ::= '::' path_ident path_generics? { elementType = path }
 
-private path_generics ::= <<isPathModeColons>> colon_generic_args
-                        | <<isPathModeNoColons>> ( generic_args | path_parameters ret_type? ) // Fn(i32) -> i32 sugar
+private path_generics ::= <<isPathMode 'COLONS'>> colon_generic_args
+                        | <<isPathMode 'NO_COLONS '>> ( generic_args | path_parameters ret_type? ) // Fn(i32) -> i32 sugar
 
 generic_args ::= generic_args_impl
 colon_generic_args ::= '::' generic_args_impl { elementType = generic_args }
@@ -238,17 +241,17 @@ assoc_type_binding ::= IDENTIFIER '=' type
 
 // Paths (with `::` separating `generic_args` from actual name) used in expression contexts:
 //    a::b::<T,U>::c
-path_generic_args_without_colons ::= <<withPathModeNoColons path_impl>> { elementType = path }
+path_generic_args_without_colons ::= <<pathMode 'NO_COLONS' path_impl>> { elementType = path }
 
 // Paths (w/o types and therefore `generic_args`, containing only identifiers, `self`, etc.):
 //    a::b::c
-path_without_types ::= <<withPathModeNoTypes path_impl>> { elementType = path }
+path_without_types ::= <<pathMode 'NO_TYPES' path_impl>> { elementType = path }
 
 // Paths (w/o `::` separating `generic_args` from actual name) used in type contexts:
 //    a::b<T,U>::c<V,W>
 //    a::b<T,U>::c(V) -> W
 //    a::b<T,U>::c(V)
-path_generic_args_with_colons ::= <<withPathModeColons path_impl>> { elementType = path }
+path_generic_args_with_colons ::= <<pathMode 'COLONS' path_impl>> { elementType = path }
 
 // Qualified paths
 //
@@ -844,8 +847,8 @@ expr ::= ret_expr
        | atom_expr
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
-no_struct_lit_expr ::= <<withoutStructLiterals expr>> { elementType = expr }
-any_expr ::= <<withStructLiterals expr>> { elementType = expr }
+no_struct_lit_expr ::= <<structLiterals "off" expr>> { elementType = expr }
+any_expr ::= <<structLiterals "on" expr>> { elementType = expr }
 
 
 block_expr ::= while_expr

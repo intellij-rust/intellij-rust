@@ -12,7 +12,6 @@ class RustStdlibResolveTestCase : RustMultiFileResolveTestCaseBase() {
 
     fun testHasStdlibSources() {
         val cargoProject = myModule.cargoProject
-        println("cargoProject = ${cargoProject?.packages}")
         assertThat(cargoProject?.findExternCrateRootByName("std"))
             .overridingErrorMessage("No Rust SDK sources found during test.\n" +
                 "Try running `rustup component add rust-src`")
