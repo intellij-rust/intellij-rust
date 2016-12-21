@@ -10,14 +10,6 @@ class RustBacktraceFilterTest : HighlightFilterTestBase() {
 
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
-    private lateinit var filter: RustBacktraceFilter
-
-    override fun setUp() {
-        super.setUp()
-        val module = checkNotNull(project.modules.firstOrNull())
-        filter = RustBacktraceFilter(project, projectDir, module)
-    }
-
     fun testRustcSourceCodeLink() =
         checkHighlights(filter,
             "          at src/main.rs:24",
@@ -76,5 +68,7 @@ stack backtrace:
   10:     0x7feeefb3f538 - btest::main::h888e623968051ab6
                         at src/main.rs:22""",
             "                        at [src/main.rs -> main.rs]:22", 14)
+
+    private val filter: RustBacktraceFilter get() = RustBacktraceFilter(project, projectDir, project.modules.first())
 
 }
