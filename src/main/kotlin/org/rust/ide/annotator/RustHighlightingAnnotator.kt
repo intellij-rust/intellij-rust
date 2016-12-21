@@ -97,14 +97,14 @@ class RustHighlightingAnnotator : Annotator {
         override fun visitExternCrateItem(o: RustExternCrateItemElement) = highlight(o.identifier, RustColor.CRATE)
 
         override fun visitMacroInvocation(m: RustMacroInvocationElement) = highlight(m, RustColor.MACRO)
-        override fun visitMethodCallExpr(o: RustMethodCallExprElement)   = highlight(o.identifier, RustColor.INSTANCE_METHOD)
-        override fun visitFnItem(o: RustFnItemElement)                   = highlight(o.identifier, RustColor.FUNCTION_DECLARATION)
+        override fun visitMethodCallExpr(o: RustMethodCallExprElement)   = highlight(o.identifier, RustColor.METHOD)
+        override fun visitFnItem(o: RustFnItemElement)                   = highlight(o.identifier, RustColor.FUNCTION)
         override fun visitTryExpr(o: RustTryExprElement)                 = highlight(o.q, RustColor.Q_OPERATOR)
 
         override fun visitImplMethodMember(o: RustImplMethodMemberElement) =
-            highlight(o.identifier, if (o.isStatic) RustColor.STATIC_METHOD else RustColor.INSTANCE_METHOD)
+            highlight(o.identifier, if (o.isStatic) RustColor.ASSOC_FUNCTION else RustColor.METHOD)
         override fun visitTraitMethodMember(o: RustTraitMethodMemberElement) =
-            highlight(o.identifier, if (o.isStatic) RustColor.STATIC_METHOD else RustColor.INSTANCE_METHOD)
+            highlight(o.identifier, if (o.isStatic) RustColor.ASSOC_FUNCTION else RustColor.METHOD)
 
         override fun visitSelfArgument(o: RustSelfArgumentElement) = highlight(o.self, RustColor.SELF_PARAMETER)
     }

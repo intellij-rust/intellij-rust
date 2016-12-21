@@ -9,10 +9,10 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Default
  */
 enum class RustColor(humanName: String, val default: TextAttributesKey) {
     IDENTIFIER            ("Identifier",                  Default.IDENTIFIER),
-    FUNCTION_DECLARATION  ("Function declaration",        Default.FUNCTION_DECLARATION),
-    INSTANCE_METHOD       ("Instance method declaration", Default.INSTANCE_METHOD),
-    STATIC_METHOD         ("Static method declaration",   Default.STATIC_METHOD),
-    PARAMETER             ("Function parameter",          Default.PARAMETER),
+    FUNCTION              ("Function",                    Default.FUNCTION_DECLARATION),
+    METHOD                ("Method",                      Default.INSTANCE_METHOD),
+    ASSOC_FUNCTION        ("Associated function",         Default.STATIC_METHOD),
+    PARAMETER             ("Parameter",                   Default.PARAMETER),
     SELF_PARAMETER        ("Self parameter",              Default.KEYWORD),
     Q_OPERATOR            ("? operator",                  Default.KEYWORD),
 
@@ -22,14 +22,14 @@ enum class RustColor(humanName: String, val default: TextAttributesKey) {
     STRING                ("String",                      Default.STRING),
     NUMBER                ("Number",                      Default.NUMBER),
 
-    PRIMITIVE_TYPE        ("Primitive Type",              Default.KEYWORD),
+    PRIMITIVE_TYPE        ("Primitive type",              Default.KEYWORD),
 
     CRATE                 ("Crate",                       Default.IDENTIFIER),
     STRUCT                ("Struct",                      Default.CLASS_NAME),
     TRAIT                 ("Trait",                       Default.INTERFACE_NAME),
     MODULE                ("Module",                      Default.IDENTIFIER),
     ENUM                  ("Enum",                        Default.CLASS_NAME),
-    ENUM_VARIANT          ("Enum Variant",                Default.STATIC_FIELD),
+    ENUM_VARIANT          ("Enum variant",                Default.STATIC_FIELD),
     TYPE_ALIAS            ("Type alias",                  Default.CLASS_NAME),
 
     FIELD                 ("Field",                       Default.INSTANCE_FIELD),
@@ -66,7 +66,7 @@ enum class RustColor(humanName: String, val default: TextAttributesKey) {
     INVALID_STRING_ESCAPE ("Invalid escape sequence",     Default.INVALID_STRING_ESCAPE),
     ;
 
-    val textAttributesKey = TextAttributesKey.createTextAttributesKey("org.rust.${this.name}", default)
+    val textAttributesKey = TextAttributesKey.createTextAttributesKey("org.rust.$name", default)
     val attributesDescriptor = AttributesDescriptor(humanName, textAttributesKey)
 }
 
