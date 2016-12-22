@@ -5,7 +5,7 @@ import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.resolve.ref.RustReference
 
 
-abstract class RustMultiFileResolveTestCaseBase : RustResolveTestCaseBase() {
+abstract class RustMultiFileResolveTestBase : RustResolveTestBase() {
 
     private fun trimDir(path: String): String {
         val idx = path.substring(1).indexOfFirst {

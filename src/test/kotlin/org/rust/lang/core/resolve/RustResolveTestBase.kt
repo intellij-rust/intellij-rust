@@ -8,7 +8,7 @@ import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustReferenceElement
 import org.rust.lang.core.resolve.ref.RustReference
 
-abstract class RustResolveTestCaseBase : RustTestCaseBase() {
+abstract class RustResolveTestBase : RustTestCaseBase() {
 
     override val dataPath = "org/rust/lang/core/resolve/fixtures"
 

@@ -1,6 +1,6 @@
 package org.rust.lang.core.resolve
 
-class RustNamespaceResolveTest : RustResolveTestCaseBase() {
+class RustNamespaceResolveTest : RustResolveTestBase() {
     fun testModAndFn() = checkByCode("""
         mod test {
            //X

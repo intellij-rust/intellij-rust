@@ -4,7 +4,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.project.workspace.cargoProject
 
-class RustStdlibResolveTestCase : RustMultiFileResolveTestCaseBase() {
+class RustStdlibResolveTest : RustMultiFileResolveTestBase() {
 
     override val dataPath = "org/rust/lang/core/resolve/fixtures/stdlib"
 

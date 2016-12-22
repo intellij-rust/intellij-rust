@@ -1,6 +1,6 @@
 package org.rust.lang.core.resolve
 
-class RustMultiFileResolveTestCase : RustMultiFileResolveTestCaseBase() {
+class RustMultiFileResolveTest : RustMultiFileResolveTestBase() {
     // Check whether resolving-procedure succeeds
 
     fun testModDecl2() = doTestResolved("mod_decl2/foo/mod.rs", "mod_decl2/main.rs", "mod_decl2/bar.rs")

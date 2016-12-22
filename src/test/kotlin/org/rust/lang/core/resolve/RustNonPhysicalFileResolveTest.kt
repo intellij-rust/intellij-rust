@@ -7,7 +7,7 @@ import com.intellij.psi.PsiFileFactory
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.lang.RustLanguage
 
-class RustNonPhysicalFileResolveTestCase : RustResolveTestCaseBase() {
+class RustNonPhysicalFileResolveTest : RustResolveTestBase() {
     fun test() {
         val code = """
             extern crate foo;

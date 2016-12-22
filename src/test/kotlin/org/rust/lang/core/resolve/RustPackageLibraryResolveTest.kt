@@ -5,7 +5,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 
-class RustPackageLibraryResolveTestCase : RustMultiFileResolveTestCaseBase() {
+class RustPackageLibraryResolveTest : RustMultiFileResolveTestBase() {
 
     fun testLibraryAsCrate() = doTestResolved("library_as_crate/main.rs", "library_as_crate/lib.rs")
     fun testCrateAlias() = doTestResolved("crate_alias/main.rs", "crate_alias/lib.rs")

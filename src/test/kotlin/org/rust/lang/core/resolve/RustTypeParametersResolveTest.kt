@@ -1,6 +1,6 @@
 package org.rust.lang.core.resolve
 
-class RustTypeParametersResolveTestCase : RustResolveTestCaseBase() {
+class RustTypeParametersResolveTest : RustResolveTestBase() {
     override val dataPath = "org/rust/lang/core/resolve/fixtures/type_parameters"
 
     fun testFn() = checkIsBound()

@@ -1,6 +1,6 @@
 package org.rust.lang.core.resolve
 
-class RustResolveTestCase : RustResolveTestCaseBase() {
+class RustResolveTest : RustResolveTestBase() {
 
     fun testFunctionArgument() = checkByCode("""
         fn foo(x: i32, y: f64) -> f64 {

@@ -3,7 +3,7 @@ package org.rust.lang.core.resolve
 import org.rust.lang.core.psi.RustReferenceElement
 
 
-class RustMultiResolveTestCase : RustResolveTestCaseBase() {
+class RustMultiResolveTest : RustResolveTestBase() {
     fun testStructExpr() = doTest("""
         struct S { foo: i32, foo: () }
         fn main() {

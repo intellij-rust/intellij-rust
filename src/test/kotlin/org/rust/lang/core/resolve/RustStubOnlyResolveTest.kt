@@ -5,7 +5,7 @@ import com.intellij.psi.impl.PsiManagerImpl
 import org.intellij.lang.annotations.Language
 import org.rust.lang.core.psi.RustReferenceElement
 
-class RustStubOnlyResolveTestCase : RustResolveTestCaseBase() {
+class RustStubOnlyResolveTest : RustResolveTestBase() {
     fun testChildMod() = doTest("""
     //- main.rs
         mod child;

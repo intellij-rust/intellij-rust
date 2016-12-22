@@ -1,6 +1,6 @@
 package org.rust.lang.core.resolve
 
-class RustUseResolveTestCase : RustResolveTestCaseBase() {
+class RustUseResolveTest : RustResolveTestBase() {
 
     fun testViewPath() = checkByCode("""
         mod foo {
