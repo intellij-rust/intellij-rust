@@ -103,11 +103,11 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         fail("No ${X::class.java} was thrown during the test")
     }
 
-    inner class InlineFile(private @Language("Rust") val code: String) {
+    inner class InlineFile(private @Language("Rust") val code: String, val name: String = "main.rs") {
         private val hasCaretMarker = "/*caret*/" in code
 
         init {
-            myFixture.configureByText("main.rs", replaceCaretMarker(code))
+            myFixture.configureByText(name, replaceCaretMarker(code))
         }
 
         inline fun <reified T : PsiElement> elementAtCaret(marker: String = "^"): T {
