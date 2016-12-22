@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.text.SemVer
+import org.rust.utils.runAndTerminate
 import org.rust.utils.seconds
 import java.io.File
 
@@ -179,7 +180,7 @@ private object Suggestions {
 
 private fun GeneralCommandLine.runExecutable(): List<String>? {
     val procOut = try {
-        CapturingProcessHandler(this).runProcess(1.seconds)
+        CapturingProcessHandler(this).runAndTerminate(1.seconds)
     } catch (e: ExecutionException) {
         LOG.warn("Failed to run executable!", e)
         return null

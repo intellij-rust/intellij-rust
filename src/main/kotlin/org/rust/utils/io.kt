@@ -1,5 +1,7 @@
 package org.rust.utils
 
+import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.DataInput
@@ -24,9 +26,17 @@ fun <T> DataOutput.writeList(value: List<T>, inner: DataOutput.(T) -> Unit) {
 
 fun <T> DataInput.readList(inner: DataInput.() -> T): List<T> {
     val size = readInt()
-    return (0 until size).map { inner() }.toList()
+    return (0 until size).map { inner() }
 }
 
 fun fullyRefreshDirectory(directory: VirtualFile) {
     VfsUtil.markDirtyAndRefresh(/* async = */ false, /* recursive = */ true, /* reloadChildren = */ true, directory)
+}
+
+fun CapturingProcessHandler.runAndTerminate(timeout: Int? = null): ProcessOutput {
+    try {
+        return runProcess(timeout ?: 0)
+    } finally {
+        destroyProcess()
+    }
 }
