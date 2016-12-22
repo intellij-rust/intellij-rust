@@ -7,8 +7,31 @@ import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 
 class RustPackageLibraryResolveTest : RustMultiFileResolveTestBase() {
 
-    fun testLibraryAsCrate() = doTestResolved("library_as_crate/main.rs", "library_as_crate/lib.rs")
-    fun testCrateAlias() = doTestResolved("crate_alias/main.rs", "crate_alias/lib.rs")
+    fun testLibraryAsCrate() = stubOnlyResolve("""
+    //- main.rs
+        extern crate my_lib;
+
+        fn main() {
+            my_lib::hello();
+        }         //^ lib.rs
+
+    //- lib.rs
+        pub fn hello() {}
+    """)
+
+    fun testCrateAlias() = stubOnlyResolve("""
+    //- main.rs
+        extern crate my_lib as other_name;
+
+        fn main() {
+            other_name::hello();
+        }                //^ lib.rs
+
+    //- lib.rs
+        pub fn hello() {}
+    """)
+
+    override fun getProjectDescriptor(): LightProjectDescriptor = WithLibraryProjectDescriptor
 
     private object WithLibraryProjectDescriptor : RustProjectDescriptorBase() {
         override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
@@ -17,6 +40,4 @@ class RustPackageLibraryResolveTest : RustMultiFileResolveTestBase() {
             }
         }
     }
-
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithLibraryProjectDescriptor
 }

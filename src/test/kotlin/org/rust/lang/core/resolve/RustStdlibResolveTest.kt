@@ -1,7 +1,6 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.testFramework.LightProjectDescriptor
-import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.project.workspace.cargoProject
 
 class RustStdlibResolveTest : RustMultiFileResolveTestBase() {
@@ -12,10 +11,8 @@ class RustStdlibResolveTest : RustMultiFileResolveTestBase() {
 
     fun testHasStdlibSources() {
         val cargoProject = myModule.cargoProject
-        assertThat(cargoProject?.findExternCrateRootByName("std"))
-            .overridingErrorMessage("No Rust SDK sources found during test.\n" +
-                "Try running `rustup component add rust-src`")
-            .isNotNull()
+        cargoProject?.findExternCrateRootByName("std")
+            ?: error("No Rust SDK sources found during test.\nTry running `rustup component add rust-src`")
     }
 
     fun testResolveFs() = doTestResolved("fs/main.rs")
