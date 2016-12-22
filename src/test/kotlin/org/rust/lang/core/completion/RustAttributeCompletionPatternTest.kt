@@ -160,7 +160,8 @@ class RustAttributeCompletionPatternTest : RustCompletionTestBase() {
     """, AttributeCompletionProvider.onTestFn)
 
     private fun <T> testPattern(@Language("Rust") code: String, pattern: ElementPattern<T>) {
-        val element = InlineFile(code).elementAtCaret<PsiElement>()
+        InlineFile(code)
+        val element = findElementInEditor<PsiElement>()
         assertTrue(pattern.accepts(element))
     }
 }

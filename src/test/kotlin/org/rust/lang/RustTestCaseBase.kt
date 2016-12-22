@@ -110,38 +110,35 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             myFixture.configureByText(name, replaceCaretMarker(code))
         }
 
-        inline fun <reified T : PsiElement> elementAtCaret(marker: String = "^"): T {
-            val (element, data) = elementAndData<T>(marker)
-            check(data.isEmpty()) { "Did not expect marker data" }
-            return element
-        }
-
-        inline fun <reified T : PsiElement> elementAndData(marker: String = "^"): Pair<T, String> {
-            val (element, data) = extract(marker)
-            return checkNotNull(element.parentOfType<T>(strict = false)) {
-                "No ${T::class.java.simpleName} at ${element.text}"
-            } to data
-        }
-
-        fun extract(marker: String): Pair<PsiElement, String> {
-            val caretMarker = "//$marker"
-            val markerOffset = code.indexOf(caretMarker)
-            check(markerOffset != -1) { "No `$marker` marker:\n$code" }
-
-            val data = code.drop(markerOffset).removePrefix(caretMarker).takeWhile { it != '\n' }.trim()
-            val markerPosition = myFixture.editor.offsetToLogicalPosition(markerOffset + caretMarker.length - 1)
-            val previousLine = LogicalPosition(markerPosition.line - 1, markerPosition.column)
-            val elementOffset = myFixture.editor.logicalPositionToOffset(previousLine)
-
-            return myFixture.file.findElementAt(elementOffset)!! to data
-        }
-
         fun withCaret() {
             check(hasCaretMarker) {
                 "Please, add `/*caret*/` marker to\n$code"
             }
         }
+    }
 
+    inline fun <reified T : PsiElement> findElementInEditor(marker: String = "^"): T {
+        val (element, data) = findElementAndDataInEditor<T>(marker)
+        check(data.isEmpty()) { "Did not expect marker data" }
+        return element
+    }
+
+    inline fun <reified T : PsiElement> findElementAndDataInEditor(marker: String = "^"): Pair<T, String> {
+        val caretMarker = "//$marker"
+        val (elementAtMarker, data) = run {
+            val text = myFixture.file.text
+            val markerOffset = text.indexOf(caretMarker)
+            check(markerOffset != -1) { "No `$marker` marker:\n$text" }
+
+            val data = text.drop(markerOffset).removePrefix(caretMarker).takeWhile { it != '\n' }.trim()
+            val markerPosition = myFixture.editor.offsetToLogicalPosition(markerOffset + caretMarker.length - 1)
+            val previousLine = LogicalPosition(markerPosition.line - 1, markerPosition.column)
+            val elementOffset = myFixture.editor.logicalPositionToOffset(previousLine)
+            myFixture.file.findElementAt(elementOffset)!! to data
+        }
+        val element = elementAtMarker.parentOfType<T>(strict = false)
+            ?: error("No ${T::class.java.simpleName} at ${elementAtMarker.text}")
+        return element to data
     }
 
     protected fun replaceCaretMarker(text: String) = text.replace("/*caret*/", "<caret>")

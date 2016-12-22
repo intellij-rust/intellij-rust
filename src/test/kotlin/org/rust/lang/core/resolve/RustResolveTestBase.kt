@@ -42,9 +42,9 @@ abstract class RustResolveTestBase : RustTestCaseBase() {
     }
 
     protected fun checkByCode(@Language("Rust") code: String) {
-        val file = InlineFile(code)
+        InlineFile(code)
 
-        val (refElement, data) = file.elementAndData<RustReferenceElement>("^")
+        val (refElement, data) = findElementAndDataInEditor<RustReferenceElement>("^")
 
         if (data == "unresolved") {
             assertThat(refElement.reference.resolve()).isNull()
@@ -55,7 +55,7 @@ abstract class RustResolveTestBase : RustTestCaseBase() {
             "Failed to resolve ${refElement.text}"
         }
 
-        val target = file.elementAtCaret<RustNamedElement>("X")
+        val target = findElementInEditor<RustNamedElement>("X")
 
         assertThat(resolved).isEqualTo(target)
     }

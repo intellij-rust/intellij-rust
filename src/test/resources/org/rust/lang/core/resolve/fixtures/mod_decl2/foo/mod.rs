@@ -1,1 +1,0 @@
-use bar::<caret>Bar;

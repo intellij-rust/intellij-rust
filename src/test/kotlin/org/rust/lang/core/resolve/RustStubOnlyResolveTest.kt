@@ -45,6 +45,20 @@ class RustStubOnlyResolveTest : RustResolveTestBase() {
         // Empty file
     """)
 
+    fun testModDecl2() = doTest("""
+    //- foo/mod.rs
+        use bar::Bar;
+                //^ bar.rs
+
+    //- main.rs
+        mod bar;
+        mod foo;
+
+        fn main() {}
+
+    //- bar.rs
+        struct Bar {}
+    """)
 
     private fun doTest(@Language("Rust") code: String) {
         val fileSeparator = """^\s* //- (\S+)\s*$""".toRegex(RegexOption.MULTILINE)
@@ -52,7 +66,7 @@ class RustStubOnlyResolveTest : RustResolveTestBase() {
         val fileTexts = fileSeparator.split(code).filter(String::isNotBlank)
 
         check(fileNames.size == fileTexts.size)
-        for ((name, text) in fileNames.zip(fileTexts).drop(1)) {
+        for ((name, text) in fileNames.zip(fileTexts)) {
             myFixture.tempDirFixture.createFile(name, text)
         }
         (psiManager as PsiManagerImpl)
@@ -60,8 +74,9 @@ class RustStubOnlyResolveTest : RustResolveTestBase() {
                 !file.path.endsWith(fileNames[0])
             }, testRootDisposable)
 
-        val (reference, resolveFile) = InlineFile(fileTexts[0], fileNames[0]).elementAndData<RustReferenceElement>()
-        val expectedResolveFile = myFixture.tempDirFixture.getFile(resolveFile)
+        myFixture.configureFromTempProjectFile(fileNames[0])
+        val (reference, resolveFile) = findElementAndDataInEditor<RustReferenceElement>()
+        val expectedResolveFile = myFixture.findFileInTempDir(resolveFile)
             ?: error("Not `$resolveFile` file")
 
         val element = reference.reference.resolve()

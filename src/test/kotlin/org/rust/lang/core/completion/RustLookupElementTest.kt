@@ -73,7 +73,8 @@ class RustLookupElementTest : RustTestCaseBase() {
     }
 
     private fun check(@Language("Rust") code: String, tailText: String? = null, typeText: String? = null) {
-        val element = InlineFile(code).elementAtCaret<RustNamedElement>()
+        InlineFile(code)
+        val element = findElementInEditor<RustNamedElement>()
         val lookup = element.createLookupElement(element.name!!)
         val presentation = LookupElementPresentation()
 

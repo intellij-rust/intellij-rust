@@ -3,7 +3,6 @@ package org.rust.lang.core.resolve
 class RustMultiFileResolveTest : RustMultiFileResolveTestBase() {
     // Check whether resolving-procedure succeeds
 
-    fun testModDecl2() = doTestResolved("mod_decl2/foo/mod.rs", "mod_decl2/main.rs", "mod_decl2/bar.rs")
     fun testModDeclPath() = doTestResolved("mod_decl_path/main.rs", "mod_decl_path/bar/baz/foo.rs")
     fun testModDeclPathSuper() = doTestResolved("mod_decl_path_super/bar/baz/quux.rs", "mod_decl_path_super/main.rs")
     fun testModRelative() = doTestResolved("mod_relative/main.rs", "mod_relative/sub.rs", "mod_relative/foo.rs")

@@ -36,7 +36,8 @@ class RustFindUsagesTest : RustTestCaseBase() {
     """, 3)
 
     private fun doTest(@Language("Rust") code: String, expectedUsages: Int) {
-        val source = InlineFile(code).elementAtCaret<RustNamedElement>()
+        InlineFile(code)
+        val source = findElementInEditor<RustNamedElement>()
 
         val usages = myFixture.findUsages(source)
 

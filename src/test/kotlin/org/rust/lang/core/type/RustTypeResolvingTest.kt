@@ -160,7 +160,8 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */
     private fun testType(@Language("Rust") code: String) {
-        val (typeAtCaret, expectedType) = InlineFile(code).elementAndData<RustTypeElement>()
+        InlineFile(code)
+        val (typeAtCaret, expectedType) = findElementAndDataInEditor<RustTypeElement>()
 
         assertThat(typeAtCaret.resolvedType.toString())
             .isEqualTo(expectedType)

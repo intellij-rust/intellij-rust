@@ -31,9 +31,8 @@ class RustMultiResolveTest : RustResolveTestBase() {
     """)
 
     private fun doTest(code: String) {
-        val ref = checkNotNull(
-            InlineFile(code).elementAtCaret<RustReferenceElement>().reference
-        ) { "No poly reference at caret " }
+        InlineFile(code)
+        val ref = findElementInEditor<RustReferenceElement>().reference
         check(ref.multiResolve().size == 2)
     }
 }

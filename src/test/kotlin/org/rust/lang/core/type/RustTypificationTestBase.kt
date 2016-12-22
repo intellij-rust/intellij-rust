@@ -10,7 +10,8 @@ abstract class RustTypificationTestBase : RustTestCaseBase() {
     override val dataPath: String get() = ""
 
     protected fun testExpr(@Language("Rust") code: String, description: String = "") {
-        val (expr, expectedType) = InlineFile(code).elementAndData<RustExprElement>()
+        InlineFile(code)
+        val (expr, expectedType) = findElementAndDataInEditor<RustExprElement>()
 
         assertThat(expr.resolvedType.toString())
             .`as`(description)
