@@ -14,6 +14,14 @@ class RustExtraSemicolonInspectionTest : RustInspectionsTestBase() {
         fn foo() -> i32 { return 92; }
     """)
 
+    fun testNotApplicableWithExplicitUnitType() = checkByText<RustExtraSemicolonInspection>("""
+        fn fun() -> () { 2 + 2; }
+    """)
+
+    fun testNotApplicableWithMacro() = checkByText<RustExtraSemicolonInspection>("""
+        fn fun() -> i32 { panic!("diverge"); }
+    """)
+
     fun testFix() = checkFixByText<RustExtraSemicolonInspection>("Remove semicolon", """
         fn foo() -> i32 {
             let x = 92;

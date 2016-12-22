@@ -6,6 +6,8 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.types.RustUnitType
+import org.rust.lang.core.types.util.resolvedType
 
 /**
  * Suggest to remove a semicolon in situations like
@@ -28,9 +30,13 @@ class RustExtraSemicolonInspection : RustLocalInspectionTool() {
 private fun inspect(holder: ProblemsHolder, fn: RustFnElement) {
     val block = fn.block ?: return
     val retType = fn.retType?.type ?: return
+    if (retType.resolvedType == RustUnitType) return
     if (block.expr != null) return
     val lastStatement = block.stmtList.lastOrNull() as? RustExprStmtElement ?: return
-    if (lastStatement.expr is RustRetExprElement) return
+
+    when (lastStatement.expr) {
+        is RustRetExprElement, is RustMacroExprElement  -> return
+    }
 
     holder.registerProblem(
         lastStatement,
