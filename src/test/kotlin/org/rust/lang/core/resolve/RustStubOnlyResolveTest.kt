@@ -1,12 +1,7 @@
 package org.rust.lang.core.resolve
 
-import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.psi.impl.PsiManagerImpl
-import org.intellij.lang.annotations.Language
-import org.rust.lang.core.psi.RustReferenceElement
-
-class RustStubOnlyResolveTest : RustResolveTestBase() {
-    fun testChildMod() = doTest("""
+class RustStubOnlyResolveTest : RustMultiFileResolveTestBase() {
+    fun testChildMod() = stubOnlyResolve("""
     //- main.rs
         mod child;
 
@@ -19,7 +14,7 @@ class RustStubOnlyResolveTest : RustResolveTestBase() {
         pub fn foo() {}
     """)
 
-    fun testNestedChildMod() = doTest("""
+    fun testNestedChildMod() = stubOnlyResolve("""
     //- main.rs
         mod inner {
             pub mod child;
@@ -34,7 +29,7 @@ class RustStubOnlyResolveTest : RustResolveTestBase() {
         fn foo() {}
     """)
 
-    fun testModDecl() = doTest("""
+    fun testModDecl() = stubOnlyResolve("""
     //- main.rs
         mod foo;
            //^ foo.rs
@@ -45,7 +40,7 @@ class RustStubOnlyResolveTest : RustResolveTestBase() {
         // Empty file
     """)
 
-    fun testModDecl2() = doTest("""
+    fun testModDecl2() = stubOnlyResolve("""
     //- foo/mod.rs
         use bar::Bar;
                 //^ bar.rs
@@ -60,31 +55,132 @@ class RustStubOnlyResolveTest : RustResolveTestBase() {
         struct Bar {}
     """)
 
-    private fun doTest(@Language("Rust") code: String) {
-        val fileSeparator = """^\s* //- (\S+)\s*$""".toRegex(RegexOption.MULTILINE)
-        val fileNames = fileSeparator.findAll(code).map { it.groupValues[1] }.toList()
-        val fileTexts = fileSeparator.split(code).filter(String::isNotBlank)
+    fun testModDeclPath() = stubOnlyResolve("""
+    //- main.rs
+        #[path = "bar/baz/foo.rs"]
+        mod foo;
+            //^ bar/baz/foo.rs
 
-        check(fileNames.size == fileTexts.size)
-        for ((name, text) in fileNames.zip(fileTexts)) {
-            myFixture.tempDirFixture.createFile(name, text)
+        fn main() {}
+    //- bar/baz/foo.rs
+        fn quux() {}
+    """)
+
+    fun testModDeclPathSuper() = stubOnlyResolve("""
+    //- bar/baz/quux.rs
+        fn quux() {
+            super::main();
+        }          //^ main.rs
+
+    //- main.rs
+        #[path = "bar/baz/quux.rs"]
+        mod foo;
+
+        fn main(){}
+    """)
+
+    fun testModRelative() = stubOnlyResolve("""
+    //- main.rs
+        mod sub;
+
+        fn main() {
+            sub::foobar::quux();
+        }               //^ foo.rs
+
+    //- sub.rs
+        #[path="./foo.rs"]
+        pub mod foobar;
+
+    //- foo.rs
+        fn quux() {}
+    """)
+
+    fun testModRelative2() = stubOnlyResolve("""
+    //- main.rs
+        mod sub;
+
+        fn main() {
+            sub::foobar::quux();
+        }               //^ foo.rs
+
+    //- sub/mod.rs
+        #[path="../foo.rs"]
+        pub mod foobar;
+
+    //- foo.rs
+        pub fn quux() {}
+    """)
+
+    fun testUseFromChild() = stubOnlyResolve("""
+    //- main.rs
+        use child::{foo};
+        mod child;
+
+        fn main() {
+            foo();
+        }  //^ child.rs
+
+    //- child.rs
+        pub fn foo() {}
+    """)
+
+    fun testUseGlobalPath() = stubOnlyResolve("""
+    //- foo.rs
+        fn main() {
+            ::bar::hello();
+        }         //^ bar.rs
+
+    //- lib.rs
+        mod foo;
+        pub mod bar;
+
+    //- bar.rs
+        pub fn hello() {}
+    """)
+
+    // We resolve mod_decls even if the parent module does not own a directory and mod_decl should not be allowed.
+    // This way, we don't need to know the set of crate roots for resolve, which helps indexing.
+    // The `mod_decl not allowed here` error is then reported by an annotator.
+    fun testModDeclNotOwn() = stubOnlyResolve("""
+    //- foo.rs
+        pub mod bar;
+
+        mod foo {
+            pub use super::bar::baz;
+                              //^ bar.rs
         }
-        (psiManager as PsiManagerImpl)
-            .setAssertOnFileLoadingFilter(VirtualFileFilter { file ->
-                !file.path.endsWith(fileNames[0])
-            }, testRootDisposable)
 
-        myFixture.configureFromTempProjectFile(fileNames[0])
-        val (reference, resolveFile) = findElementAndDataInEditor<RustReferenceElement>()
-        val expectedResolveFile = myFixture.findFileInTempDir(resolveFile)
-            ?: error("Not `$resolveFile` file")
+    //- bar.rs
+        pub fn baz() {}
 
-        val element = reference.reference.resolve()
-            ?: error("Failed to resolve ${reference.text}")
+    //- main.rs
+        // Empty file
+    """)
 
-        val actualResolveFile = element.containingFile.virtualFile
-        check(actualResolveFile == expectedResolveFile) {
-            "Should resolve to ${expectedResolveFile.path}, was ${actualResolveFile.path} instead"
-        }
-    }
+    fun testModDeclWrongPath() = stubOnlyResolve("""
+    //- main.rs
+        #[path = "foo/bar/baz/rs"]
+        mod foo;
+           //^ unresolved
+
+        fn main() {}
+    """)
+
+    fun testModDeclCycle() = stubOnlyResolve("""
+    //- foo.rs
+        use quux;
+            //^ unresolved
+
+        #[path="bar.rs"]
+        mod bar;
+
+    //- baz.rs
+        #[path="foo.rs"]
+        mod foo;
+
+    //- bar.rs
+        #[path="baz.rs"]
+        mod baz;
+    """)
+
 }

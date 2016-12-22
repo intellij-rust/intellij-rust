@@ -190,7 +190,7 @@ For example, `RustFormatterTest.kt` would look like:
         override fun getTestDataPath() = "src/test/resources"
         override fun getFileExtension() = "rs"
 
-        fun testBlocks() = doTest()
+        fun testBlocks() = stubOnlyResolve()
     }
 
 The test method `testBlocks` states that this test uses `blocks.rs` as the
