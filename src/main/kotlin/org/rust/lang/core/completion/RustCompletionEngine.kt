@@ -82,9 +82,7 @@ fun RustCompositeElement.createLookupElement(scopeName: String): LookupElement {
             .withTypeText(retType?.type?.text ?: "()")
             .withTailText(parameters?.text?.replace("\\s+".toRegex(), " ") ?: "()")
             .withInsertHandler handler@ { context: InsertionContext, lookupElement: LookupElement ->
-                val element = context.file.findElementAt(context.startOffset - 1)!!
-                if (element.parentOfType<RustUseGlobListElement>() != null) return@handler
-                if (element.parentOfType<RustUseItemElement>() != null) return@handler
+                if (context.isInUseBlock()) return@handler
                 val argsCount = parameters?.parameterList?.size ?: 0
                 context.document.insertString(context.selectionEndOffset, "()")
                 EditorModificationUtil.moveCaretRelatively(context.editor, if (argsCount > 0) 1 else 2)
@@ -105,6 +103,16 @@ fun RustCompositeElement.createLookupElement(scopeName: String): LookupElement {
                     tupleFields!!.tupleFieldDeclList.map { it.type.text }.joinToString(prefix = "(", postfix = ")")
                 else -> ""
             })
+            .withInsertHandler handler@ { context, lookupElement ->
+                if (context.isInUseBlock()) return@handler
+                if (tupleFields != null) {
+                    context.document.insertString(context.selectionEndOffset, "()")
+                    EditorModificationUtil.moveCaretRelatively(context.editor, 1)
+                } else if (blockFields != null) {
+                    context.document.insertString(context.selectionEndOffset, " {}")
+                    EditorModificationUtil.moveCaretRelatively(context.editor, 2)
+                }
+            }
 
         else -> base
     }
@@ -118,4 +126,10 @@ private fun RustPath.dropLastSegment(): RustPath {
         is RustPath.ModRelative -> RustPath.ModRelative(level, segments)
         is RustPath.Named -> RustPath.Named(head, segments)
     }
+}
+
+private fun InsertionContext.isInUseBlock(): Boolean {
+    val element = file.findElementAt(startOffset - 1)!!
+    return (element.parentOfType<RustUseGlobListElement>() != null)
+            || (element.parentOfType<RustUseItemElement>() != null)
 }

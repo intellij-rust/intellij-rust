@@ -16,10 +16,18 @@ abstract class RustCompletionTestBase : RustTestCaseBase() {
         check(variants == null) {
             "Expected a single completion, but got ${variants.size}\n" + "${variants.toList()}"
         }
-        val fnName = target.substringBeforeLast("()").substringAfterLast("::").substringAfterLast(".")
-        val shift = if (target.endsWith("()")) 3 else 1
+        val normName = target
+            .substringBeforeLast("()")
+            .substringBeforeLast(" {}")
+            .substringAfterLast("::")
+            .substringAfterLast(".")
+        val shift = when {
+            target.endsWith("()") -> 3
+            target.endsWith(" {}") -> 4
+            else -> 1
+        }
         val element = myFixture.file.findElementAt(myFixture.caretOffset - shift)!!
-        check(element.text == fnName && element.correspondsToText(target)) {
+        check(element.text == normName && element.correspondsToText(target)) {
             "Wrong completion, expected `$target`, but got `${element.text}`"
         }
     }

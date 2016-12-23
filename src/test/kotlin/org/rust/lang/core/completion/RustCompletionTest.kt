@@ -90,9 +90,31 @@ class RustCompletionTest : RustCompletionTestBase() {
         }
     """)
 
-    fun testCompleteSelfType() = checkSingleCompletionByFile()
-    fun testStructField() = checkSingleCompletionByFile()
-    fun testEnumField() = checkSingleCompletionByFile()
+    fun testCompleteSelfType() = checkSingleCompletion("Self", """
+        trait T {
+            fn foo() -> Se/*caret*/
+        }
+    """)
+
+    fun testStructField() = checkSingleCompletion("foobarbaz", """
+        struct S {
+            foobarbaz: i32
+        }
+        fn main() {
+            let _ = S { foo/*caret*/ };
+        }
+    """)
+
+    fun testEnumField() = checkSingleCompletion("bazbarfoo", """
+        enum E {
+            X {
+                bazbarfoo: i32
+            }
+        }
+        fn main() {
+            let _ = E::X { baz/*caret*/ }
+        }
+    """)
 
     fun testLocalScope() = checkNoCompletion("""
         fn foo() {
@@ -166,4 +188,54 @@ class RustCompletionTest : RustCompletionTestBase() {
             frobnicate(/*caret*/)
         }
     """) { executeSoloCompletion() }
+
+    fun testEnumVariant() = checkSingleCompletion("BAZBAR", """
+        enum Foo {
+            BARBOO,
+            BAZBAR
+        }
+        fn main() {
+            let _ = Foo::BAZ/*caret*/
+        }
+    """)
+
+    fun testEnumVariantWithTupleFields() = checkSingleCompletion("Foo::BARBAZ()", """
+        enum Foo {
+            BARBAZ(f64)
+        }
+        fn main() {
+            let _ = Foo::BAR/*caret*/
+        }
+    """)
+
+    fun testEnumVariantWithTupleFieldsInUseBlock() = checkSingleCompletion("BARBAZ", """
+        enum Foo {
+            BARBAZ(f64)
+        }
+        fn main() {
+            use Foo::BAR/*caret*/
+        }
+    """)
+
+    fun testEnumVariantWithBlockFields() = checkSingleCompletion("Foo::BARBAZ {}", """
+        enum Foo {
+            BARBAZ {
+                foo: f64
+            }
+        }
+        fn main() {
+            let _ = Foo::BAR/*caret*/
+        }
+    """)
+
+    fun testEnumVariantWithBlockFieldsInUseBlock() = checkSingleCompletion("BARBAZ", """
+        enum Foo {
+            BARBAZ {
+                foo: f64
+            }
+        }
+        fn main() {
+            use Foo::{BAR/*caret*/}
+        }
+    """)
 }
