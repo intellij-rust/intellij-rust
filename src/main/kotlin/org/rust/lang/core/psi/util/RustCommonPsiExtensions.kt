@@ -51,6 +51,7 @@ val PsiElement.module: Module?
  */
 fun PsiElement.contains(descendant: PsiElement?): Boolean {
     if (descendant == null) return false
+    if (containingFile != descendant.containingFile) return false
     return descendant.ancestors.any { it === this }
 }
 
