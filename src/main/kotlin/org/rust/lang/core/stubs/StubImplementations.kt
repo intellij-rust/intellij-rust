@@ -40,6 +40,7 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "FIELD_DECL" -> RustFieldDeclElementStub.Type
     "IMPL_METHOD_MEMBER" -> RustImplMethodMemberElementStub.Type
     "TRAIT_METHOD_MEMBER" -> RustTraitMethodMemberElementStub.Type
+    "ALIAS" -> RustAliasElementStub.Type
 
     else -> error("Unknown element $name")
 }
@@ -80,7 +81,6 @@ class RustExternCrateItemElementStub(
 
 class RustUseItemElementStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val alias: String?,
     override val isPublic: Boolean
 ) : RustElementStub<RustUseItemElement>(parent, elementType),
     RustVisibilityStub {
@@ -89,13 +89,11 @@ class RustUseItemElementStub(
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RustUseItemElementStub(parentStub, this,
-                dataStream.readNameAsString(),
                 dataStream.readBoolean()
             )
 
         override fun serialize(stub: RustUseItemElementStub, dataStream: StubOutputStream) =
             with(dataStream) {
-                writeName(stub.alias)
                 writeBoolean(stub.isPublic)
             }
 
@@ -103,9 +101,11 @@ class RustUseItemElementStub(
             RustUseItemElementImpl(stub, this)
 
         override fun createStub(psi: RustUseItemElement, parentStub: StubElement<*>?) =
-            RustUseItemElementStub(parentStub, this, psi.alias?.name, psi.isPublic)
+            RustUseItemElementStub(parentStub, this, psi.isPublic)
 
-        override fun indexStub(stub: RustUseItemElementStub, sink: IndexSink) = sink.indexUseItem(stub)
+        override fun indexStub(stub: RustUseItemElementStub, sink: IndexSink) {
+            //NOP
+        }
     }
 }
 
@@ -592,5 +592,32 @@ class RustTraitMethodMemberElementStub(
                 psi.name, psi.isAbstract, psi.isStatic, psi.isTest)
 
         override fun indexStub(stub: RustTraitMethodMemberElementStub, sink: IndexSink) = sink.indexTraitMethodMember(stub)
+    }
+}
+
+class RustAliasElementStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    override val name: String?
+) : StubBase<RustAliasElement>(parent, elementType),
+    RustNamedStub {
+
+    object Type : RustStubElementType<RustAliasElementStub, RustAliasElement>("ALIAS") {
+        override fun createPsi(stub: RustAliasElementStub) =
+            RustAliasElementImpl(stub, this)
+
+        override fun createStub(psi: RustAliasElement, parentStub: StubElement<*>?) =
+            RustAliasElementStub(parentStub, this, psi.name)
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RustAliasElementStub(parentStub, this,
+                dataStream.readNameAsString()
+            )
+
+        override fun serialize(stub: RustAliasElementStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.name)
+            }
+
+        override fun indexStub(stub: RustAliasElementStub, sink: IndexSink) = sink.indexAlias(stub)
     }
 }

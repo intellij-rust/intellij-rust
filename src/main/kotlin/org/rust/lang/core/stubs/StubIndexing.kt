@@ -13,12 +13,6 @@ fun IndexSink.indexExternCrate(stub: RustExternCrateItemElementStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexUseItem(stub: RustUseItemElementStub) {
-    stub.alias?.let {
-        occurrence(RustAliasIndex.KEY, it)
-    }
-}
-
 fun IndexSink.indexStructItem(stub: RustStructItemElementStub) {
     indexNamedStub(stub)
     indexGotoClass(stub)
@@ -80,6 +74,12 @@ fun IndexSink.indexImplMethodMember(stub: RustImplMethodMemberElementStub) {
 
 fun IndexSink.indexTraitMethodMember(stub: RustTraitMethodMemberElementStub) {
     indexNamedStub(stub)
+}
+
+fun IndexSink.indexAlias(stub: RustAliasElementStub) {
+    stub.name?.let {
+        occurrence(RustAliasIndex.KEY, it)
+    }
 }
 
 private fun IndexSink.indexNamedStub(stub: RustNamedStub) {

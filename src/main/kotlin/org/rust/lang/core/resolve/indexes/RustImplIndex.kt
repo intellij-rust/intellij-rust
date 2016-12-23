@@ -5,10 +5,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.*
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.RustFileElementType
-import org.rust.lang.core.psi.RustFnElement
-import org.rust.lang.core.psi.RustImplItemElement
-import org.rust.lang.core.psi.RustStructOrEnumItemElement
-import org.rust.lang.core.psi.RustUseItemElement
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RustImplItemElementStub
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.RustStructOrEnumTypeBase
@@ -64,7 +61,7 @@ object RustImplIndex {
                 target.name!!,
                 target.project,
                 GlobalSearchScope.allScope(target.project),
-                RustUseItemElement::class.java,
+                RustAliasElement::class.java,
                 {
                     it.name?.let {
                         aliases.add(it)
@@ -204,12 +201,12 @@ object RustImplIndex {
 }
 
 
-class RustAliasIndex : StringStubIndexExtension<RustUseItemElement>() {
+class RustAliasIndex : StringStubIndexExtension<RustAliasElement>() {
     override fun getVersion(): Int = RustFileElementType.stubVersion
-    override fun getKey(): StubIndexKey<String, RustUseItemElement> = KEY
+    override fun getKey(): StubIndexKey<String, RustAliasElement> = KEY
 
     companion object {
-        val KEY: StubIndexKey<String, RustUseItemElement> =
+        val KEY: StubIndexKey<String, RustAliasElement> =
             StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustAliasIndex")
     }
 }

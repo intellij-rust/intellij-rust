@@ -480,7 +480,11 @@ private use_glob_with_recover ::= !'}' use_glob (',' | &'}') {
 
 private use_glob_recover ::= !('}' | SELF | IDENTIFIER)
 
-alias ::= AS IDENTIFIER
+alias ::= AS IDENTIFIER {
+  extends = "org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RustAliasElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 extern_crate_item ::= attrs_and_vis EXTERN CRATE IDENTIFIER alias? ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
