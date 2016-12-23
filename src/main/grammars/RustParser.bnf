@@ -280,7 +280,6 @@ private attrs_and_vis ::= outer_attr* vis?
 private attrs_default_vis ::= outer_attr* DEFAULT? vis?
 
 private item ::= static_item
-               | const_item
                | type_item
                | fn_item
                | trait_item
@@ -435,7 +434,7 @@ binding_mode ::= REF MUT? | MUT
 
 private static_decl ::= IDENTIFIER type_ascription '=' any_expr { pin = 1 }
 
-static_item ::= attrs_and_vis STATIC MUT? static_decl ';' {
+static_item ::= attrs_and_vis (STATIC MUT? | CONST) static_decl ';' {
   pin = static_decl
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
@@ -443,17 +442,6 @@ static_item ::= attrs_and_vis STATIC MUT? static_decl ';' {
   extends = "org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.impl.mixin.RustStaticItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RustStaticItemElementStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
-
-const_item ::= attrs_and_vis CONST static_decl ';' {
-  pin = static_decl
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement"
-                 "org.rust.lang.core.psi.RustItemElement" ]
-  extends = "org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl<?>"
-  mixin = "org.rust.lang.core.psi.impl.mixin.RustConstItemImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RustConstItemElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 

@@ -15,8 +15,9 @@ abstract class RustStaticItemImplMixin : RustStubbedNamedElementImpl<RustStaticI
     constructor(stub: RustStaticItemElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int) = iconWithVisibility(flags, when {
+        isConstant -> RustIcons.CONSTANT
         isMut -> RustIcons.MUT_STATIC
-        else  -> RustIcons.STATIC
+        else -> RustIcons.STATIC
     })
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
@@ -24,3 +25,5 @@ abstract class RustStaticItemImplMixin : RustStubbedNamedElementImpl<RustStaticI
 
 val RustStaticItemElement.isMut: Boolean
     get() = mut != null
+
+val RustStaticItemElement.isConstant: Boolean get() = const != null

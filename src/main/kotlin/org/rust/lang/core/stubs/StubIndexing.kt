@@ -19,14 +19,6 @@ fun IndexSink.indexUseItem(stub: RustUseItemElementStub) {
     }
 }
 
-fun IndexSink.indexConstItem(stub: RustConstItemElementStub) {
-    indexNamedStub(stub)
-}
-
-fun IndexSink.indexStaticItem(stub: RustStaticItemElementStub) {
-    indexNamedStub(stub)
-}
-
 fun IndexSink.indexStructItem(stub: RustStructItemElementStub) {
     indexNamedStub(stub)
     indexGotoClass(stub)
@@ -67,6 +59,10 @@ fun IndexSink.indexImplItem(stub: RustImplItemElementStub) {
 }
 
 fun IndexSink.indexFnItem(stub: RustFnItemElementStub) {
+    indexNamedStub(stub)
+}
+
+fun IndexSink.indexStaticItem(stub: RustStaticItemElementStub) {
     indexNamedStub(stub)
 }
 

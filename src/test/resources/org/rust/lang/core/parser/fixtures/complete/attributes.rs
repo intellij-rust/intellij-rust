@@ -17,7 +17,7 @@ enum E {
 }
 
 #[empty_attr()]
-const t: i32 = 92;
+const T: i32 = 92;
 
 fn attrs_on_statements() {
    #[cfg(test)]

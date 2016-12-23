@@ -7,6 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustParameterElementImpl
+import org.rust.lang.core.psi.impl.mixin.isConstant
 
 /**
  * Base class for naming inspections. Implements the core logic of checking names
@@ -156,7 +157,22 @@ class RustAssocTypeNamingInspection : RustCamelCaseNamingInspection("Type", "Ass
 class RustConstNamingInspection : RustUpperCaseNamingInspection("Constant") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
-            override fun visitConstItem(el: RustConstItemElement) = inspect(el.identifier, holder)
+            override fun visitStaticItem(el: RustStaticItemElement) {
+                if (el.isConstant) {
+                    inspect(el.identifier, holder)
+                }
+            }
+        }
+}
+
+class RustStaticConstNamingInspection : RustUpperCaseNamingInspection("Static constant") {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+        object : RustElementVisitor() {
+            override fun visitStaticItem(el: RustStaticItemElement) {
+                if (!el.isConstant) {
+                    inspect(el.identifier, holder)
+                }
+            }
         }
 }
 
@@ -208,13 +224,6 @@ class RustModuleNamingInspection : RustSnakeCaseNamingInspection("Module") {
         object : RustElementVisitor() {
             override fun visitModDeclItem(el: RustModDeclItemElement) = inspect(el.identifier, holder)
             override fun visitModItem(el: RustModItemElement) = inspect(el.identifier, holder)
-        }
-}
-
-class RustStaticConstNamingInspection : RustUpperCaseNamingInspection("Static constant") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitStaticItem(el: RustStaticItemElement) = inspect(el.identifier, holder)
         }
 }
 

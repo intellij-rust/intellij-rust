@@ -10,7 +10,7 @@ FILE
         <empty list>
   PsiWhiteSpace('\n    ')
   PsiElement(pub)('pub')
-  PsiErrorElement:const, enum, extern, fn, impl, mod, static, struct, trait, type or use expected, got 'F'
+  PsiErrorElement:enum, extern, fn, impl, mod, struct, trait, type or use expected, got 'F'
     <empty list>
   PsiWhiteSpace(' ')
   PsiElement(<IDENTIFIER>)('F')

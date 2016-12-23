@@ -22,9 +22,6 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "EXTERN_CRATE_ITEM" -> RustExternCrateItemElementStub.Type
     "USE_ITEM" -> RustUseItemElementStub.Type
 
-    "CONST_ITEM" -> RustConstItemElementStub.Type
-    "STATIC_ITEM" -> RustStaticItemElementStub.Type
-
     "STRUCT_ITEM" -> RustStructItemElementStub.Type
     "ENUM_ITEM" -> RustEnumItemElementStub.Type
     "UNION_ITEM" -> RustUnionItemElementStub.Type
@@ -36,6 +33,7 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "IMPL_ITEM" -> RustImplItemElementStub.Type
 
     "FN_ITEM" -> RustFnItemElementStub.Type
+    "STATIC_ITEM" -> RustStaticItemElementStub.Type
     "TYPE_ITEM" -> RustTypeItemElementStub.Type
     "FOREIGN_MOD_ITEM" -> RustForeignModItemElementStub.Type
 
@@ -108,72 +106,6 @@ class RustUseItemElementStub(
             RustUseItemElementStub(parentStub, this, psi.alias?.name, psi.isPublic)
 
         override fun indexStub(stub: RustUseItemElementStub, sink: IndexSink) = sink.indexUseItem(stub)
-    }
-}
-
-
-class RustConstItemElementStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    override val name: String?,
-    override val isPublic: Boolean
-) : StubBase<RustConstItemElement>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub {
-
-    object Type : RustStubElementType<RustConstItemElementStub, RustConstItemElement>("CONST_ITEM") {
-
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RustConstItemElementStub(parentStub, this,
-                dataStream.readNameAsString(),
-                dataStream.readBoolean()
-            )
-
-        override fun serialize(stub: RustConstItemElementStub, dataStream: StubOutputStream) =
-            with(dataStream) {
-                writeName(stub.name)
-                writeBoolean(stub.isPublic)
-            }
-
-        override fun createPsi(stub: RustConstItemElementStub) =
-            RustConstItemElementImpl(stub, this)
-
-        override fun createStub(psi: RustConstItemElement, parentStub: StubElement<*>?) =
-            RustConstItemElementStub(parentStub, this, psi.name, psi.isPublic)
-
-
-        override fun indexStub(stub: RustConstItemElementStub, sink: IndexSink) = sink.indexConstItem(stub)
-    }
-}
-
-
-class RustStaticItemElementStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    override val name: String?,
-    override val isPublic: Boolean
-) : StubBase<RustStaticItemElement>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub {
-
-    object Type : RustStubElementType<RustStaticItemElementStub, RustStaticItemElement>("STATIC_ITEM") {
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RustStaticItemElementStub(parentStub, this,
-                dataStream.readNameAsString(),
-                dataStream.readBoolean()
-            )
-
-        override fun serialize(stub: RustStaticItemElementStub, dataStream: StubOutputStream) =
-            with(dataStream) {
-                writeName(stub.name)
-                writeBoolean(stub.isPublic)
-            }
-
-        override fun createPsi(stub: RustStaticItemElementStub) =
-            RustStaticItemElementImpl(stub, this)
-
-        override fun createStub(psi: RustStaticItemElement, parentStub: StubElement<*>?) =
-            RustStaticItemElementStub(parentStub, this, psi.name, psi.isPublic)
-
-        override fun indexStub(stub: RustStaticItemElementStub, sink: IndexSink) = sink.indexStaticItem(stub)
     }
 }
 
@@ -451,6 +383,38 @@ class RustFnItemElementStub(
                 psi.name, psi.isPublic, psi.isAbstract, psi.isStatic, psi.isTest)
 
         override fun indexStub(stub: RustFnItemElementStub, sink: IndexSink) = sink.indexFnItem(stub)
+    }
+}
+
+
+class RustStaticItemElementStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    override val name: String?,
+    override val isPublic: Boolean
+) : StubBase<RustStaticItemElement>(parent, elementType),
+    RustNamedStub,
+    RustVisibilityStub {
+
+    object Type : RustStubElementType<RustStaticItemElementStub, RustStaticItemElement>("STATIC_ITEM") {
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RustStaticItemElementStub(parentStub, this,
+                dataStream.readNameAsString(),
+                dataStream.readBoolean()
+            )
+
+        override fun serialize(stub: RustStaticItemElementStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.name)
+                writeBoolean(stub.isPublic)
+            }
+
+        override fun createPsi(stub: RustStaticItemElementStub) =
+            RustStaticItemElementImpl(stub, this)
+
+        override fun createStub(psi: RustStaticItemElement, parentStub: StubElement<*>?) =
+            RustStaticItemElementStub(parentStub, this, psi.name, psi.isPublic)
+
+        override fun indexStub(stub: RustStaticItemElementStub, sink: IndexSink) = sink.indexStaticItem(stub)
     }
 }
 

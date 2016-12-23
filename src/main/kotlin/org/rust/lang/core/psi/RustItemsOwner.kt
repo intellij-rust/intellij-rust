@@ -12,7 +12,6 @@ val RustItemsOwner.allItems: List<RustItemElement> get() = items()
 
 val RustItemsOwner.allItemDefinitions: List<RustNamedElement>
     get() = listOf<List<RustNamedElement>>(
-        items<RustConstItemElement>(),
         items<RustEnumItemElement>(),
         items<RustFnItemElement>(),
         items<RustModItemElement>(),
