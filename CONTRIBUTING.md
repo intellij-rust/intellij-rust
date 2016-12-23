@@ -101,7 +101,6 @@ change. Common tags are:
   * T for tests
   * RES for resolve
   * TYPE for type iference
-  * MISC for anything else :)
 
 Try to keep the summary line of a commit message under 50 characters.
 
