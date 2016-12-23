@@ -12,8 +12,8 @@ import org.rust.lang.core.psi.util.elementType
 
 class RustRunLineMarkerContributor : RunLineMarkerContributor() {
 
-    override fun getInfo(element: PsiElement?): Info? {
-        if (element == null || element.elementType != RustTokenElementTypes.IDENTIFIER) return null
+    override fun getInfo(element: PsiElement): Info? {
+        if (element.elementType != RustTokenElementTypes.IDENTIFIER) return null
         val fn = element.parent as? RustFnElement ?: return null
         return when {
             CargoExecutableRunConfigurationProducer.isMainFunction(fn) -> Info(
