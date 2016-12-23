@@ -422,7 +422,9 @@ private class RustScopeVisitor(
 }
 
 private fun RustItemsOwner.itemEntries(context: Context): Sequence<ScopeEntry> {
-    val (wildCardImports, usualImports) = useDeclarations.partition { it.mul != null }
+    val (wildCardImports, usualImports) = useDeclarations
+        .filter { it.isPublic || it.containingMod == context.pivot?.containingMod }
+        .partition { it.mul != null }
 
     return sequenceOf(
         declaredItems().map { ScopeEntry.of(it.first, it.second) },
@@ -430,9 +432,7 @@ private fun RustItemsOwner.itemEntries(context: Context): Sequence<ScopeEntry> {
         usualImports.asSequence().flatMap { it.nonWildcardEntries() },
 
         // wildcard imports have low priority
-        wildCardImports.asSequence()
-            .filter { it.isPublic || it.containingMod == context.pivot?.containingMod }
-            .flatMap { it.wildcardEntries(context) }
+        wildCardImports.asSequence().flatMap { it.wildcardEntries(context) }
     ).flatten()
 }
 
