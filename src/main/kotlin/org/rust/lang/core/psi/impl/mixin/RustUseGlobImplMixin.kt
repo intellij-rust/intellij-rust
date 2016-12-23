@@ -21,4 +21,4 @@ abstract class RustUseGlobImplMixin(node: ASTNode) : RustCompositeElementImpl(no
 }
 
 val RustUseGlobElement.basePath: RustPathElement?
-    get() = parentOfType<RustUseItemElement>()?.let { it.path }
+    get() = parentOfType<RustUseItemElement>()?.path
