@@ -5,6 +5,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.*
 import org.rust.lang.core.psi.impl.mixin.asRustPath
 import org.rust.lang.core.psi.impl.mixin.isLocal
+import org.rust.lang.core.psi.impl.mixin.isStarImport
 import org.rust.lang.core.psi.impl.mixin.pathAttribute
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.readRustPath
@@ -81,7 +82,8 @@ class RustExternCrateItemElementStub(
 
 class RustUseItemElementStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    override val isPublic: Boolean
+    override val isPublic: Boolean,
+    val isStarImport: Boolean
 ) : RustElementStub<RustUseItemElement>(parent, elementType),
     RustVisibilityStub {
 
@@ -89,19 +91,21 @@ class RustUseItemElementStub(
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RustUseItemElementStub(parentStub, this,
+                dataStream.readBoolean(),
                 dataStream.readBoolean()
             )
 
         override fun serialize(stub: RustUseItemElementStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeBoolean(stub.isPublic)
+                writeBoolean(stub.isStarImport)
             }
 
         override fun createPsi(stub: RustUseItemElementStub) =
             RustUseItemElementImpl(stub, this)
 
         override fun createStub(psi: RustUseItemElement, parentStub: StubElement<*>?) =
-            RustUseItemElementStub(parentStub, this, psi.isPublic)
+            RustUseItemElementStub(parentStub, this, psi.isPublic, psi.isStarImport)
 
         override fun indexStub(stub: RustUseItemElementStub, sink: IndexSink) {
             //NOP
