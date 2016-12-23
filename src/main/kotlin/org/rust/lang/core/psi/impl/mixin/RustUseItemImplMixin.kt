@@ -15,5 +15,5 @@ abstract class RustUseItemImplMixin : RustStubbedElementImpl<RustUseItemElementS
     override fun getName(): String? =
         stub?.alias ?: alias?.identifier?.text
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublicNonStubbed(this)
+    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 }

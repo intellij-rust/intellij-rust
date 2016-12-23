@@ -82,26 +82,30 @@ class RustExternCrateItemElementStub(
 
 class RustUseItemElementStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val alias: String?
-) : RustElementStub<RustUseItemElement>(parent, elementType) {
+    val alias: String?,
+    override val isPublic: Boolean
+) : RustElementStub<RustUseItemElement>(parent, elementType),
+    RustVisibilityStub {
 
     object Type : RustStubElementType<RustUseItemElementStub, RustUseItemElement>("USE_ITEM") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RustUseItemElementStub(parentStub, this,
-                dataStream.readName()?.string
+                dataStream.readNameAsString(),
+                dataStream.readBoolean()
             )
 
         override fun serialize(stub: RustUseItemElementStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.alias)
+                writeBoolean(stub.isPublic)
             }
 
         override fun createPsi(stub: RustUseItemElementStub) =
             RustUseItemElementImpl(stub, this)
 
         override fun createStub(psi: RustUseItemElement, parentStub: StubElement<*>?) =
-            RustUseItemElementStub(parentStub, this, psi.alias?.name)
+            RustUseItemElementStub(parentStub, this, psi.alias?.name, psi.isPublic)
 
         override fun indexStub(stub: RustUseItemElementStub, sink: IndexSink) = sink.indexUseItem(stub)
     }
