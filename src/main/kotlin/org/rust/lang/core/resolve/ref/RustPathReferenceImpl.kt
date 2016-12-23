@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.completion.RustCompletionEngine
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.asRustPath
+import org.rust.lang.core.psi.impl.mixin.isStarImport
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.RustResolveEngine
 
@@ -32,7 +33,7 @@ class RustPathReferenceImpl(
         val parent = element.parent
         return when (parent) {
             is RustPathElement, is RustTypeElement -> Namespace.Types
-            is RustUseItemElement -> if (parent.mul != null) Namespace.Types else null
+            is RustUseItemElement -> if (parent.isStarImport) Namespace.Types else null
             is RustPathExprElement -> Namespace.Values
             else -> null
         }

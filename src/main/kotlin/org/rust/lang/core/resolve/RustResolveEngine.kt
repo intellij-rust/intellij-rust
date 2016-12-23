@@ -15,6 +15,7 @@ import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.basePath
+import org.rust.lang.core.psi.impl.mixin.isStarImport
 import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.*
@@ -422,17 +423,17 @@ private class RustScopeVisitor(
 }
 
 private fun RustItemsOwner.itemEntries(context: Context): Sequence<ScopeEntry> {
-    val (wildCardImports, usualImports) = useDeclarations
+    val (starImports, itemImports) = useDeclarations
         .filter { it.isPublic || it.containingMod == context.pivot?.containingMod }
-        .partition { it.mul != null }
+        .partition { it.isStarImport }
 
     return sequenceOf(
         declaredItems().map { ScopeEntry.of(it.first, it.second) },
 
-        usualImports.asSequence().flatMap { it.nonWildcardEntries() },
+        itemImports.asSequence().flatMap { it.nonWildcardEntries() },
 
         // wildcard imports have low priority
-        wildCardImports.asSequence().flatMap { it.wildcardEntries(context) }
+        starImports.asSequence().flatMap { it.wildcardEntries(context) }
     ).flatten()
 }
 

@@ -15,3 +15,5 @@ abstract class RustUseItemImplMixin : RustStubbedElementImpl<RustUseItemElementS
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 }
+
+val RustUseItemElement.isStarImport: Boolean get() = mul != null
