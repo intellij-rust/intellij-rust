@@ -6,7 +6,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RustForeignModItemElement
 import org.rust.lang.core.psi.RustOuterAttrElement
 import org.rust.lang.core.psi.impl.RustStubbedElementImpl
-import org.rust.lang.core.stubs.elements.RustForeignModItemElementStub
+import org.rust.lang.core.stubs.RustForeignModItemElementStub
 
 abstract class RustForeignModItemImplMixin : RustStubbedElementImpl<RustForeignModItemElementStub>,
                                              RustForeignModItemElement {

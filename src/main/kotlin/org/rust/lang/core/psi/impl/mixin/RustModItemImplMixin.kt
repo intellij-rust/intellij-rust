@@ -8,8 +8,7 @@ import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
-import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.stubs.elements.RustModItemElementStub
+import org.rust.lang.core.stubs.RustModItemElementStub
 import org.rust.lang.core.symbols.RustPath
 import javax.swing.Icon
 
@@ -23,7 +22,7 @@ abstract class RustModItemImplMixin : RustStubbedNamedElementImpl<RustModItemEle
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RustIcons.MODULE)
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
+    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 
     override val `super`: RustMod get() = containingMod
 

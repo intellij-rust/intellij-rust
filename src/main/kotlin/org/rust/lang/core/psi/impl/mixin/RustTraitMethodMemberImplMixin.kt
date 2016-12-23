@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.RustTraitMethodMemberElement
-import org.rust.lang.core.stubs.elements.RustTraitMethodMemberElementStub
+import org.rust.lang.core.stubs.RustTraitMethodMemberElementStub
 
 
 abstract class RustTraitMethodMemberImplMixin : RustFnImplMixin<RustTraitMethodMemberElementStub>,

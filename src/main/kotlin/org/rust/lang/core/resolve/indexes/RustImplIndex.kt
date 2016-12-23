@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.RustFnElement
 import org.rust.lang.core.psi.RustImplItemElement
 import org.rust.lang.core.psi.RustStructOrEnumItemElement
 import org.rust.lang.core.psi.RustUseItemElement
-import org.rust.lang.core.stubs.elements.RustImplItemElementStub
+import org.rust.lang.core.stubs.RustImplItemElementStub
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.RustStructOrEnumTypeBase
 import org.rust.lang.core.types.RustType

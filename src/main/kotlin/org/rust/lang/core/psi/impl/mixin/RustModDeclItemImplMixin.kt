@@ -12,16 +12,16 @@ import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ref.RustModReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
-import org.rust.lang.core.stubs.elements.RustModDeclElementItemStub
+import org.rust.lang.core.stubs.RustModDeclItemElementStub
 import java.io.File
 import javax.swing.Icon
 
-abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RustModDeclElementItemStub>,
+abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RustModDeclItemElementStub>,
                                           RustModDeclItemElement {
 
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RustModDeclElementItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RustModDeclItemElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getReference(): RustReference = RustModReferenceImpl(this)
 
@@ -29,7 +29,7 @@ abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RustModDec
 
     override fun getIcon(flags: Int): Icon? = iconWithVisibility(flags, RustIcons.MODULE)
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
+    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 
     override fun getParent(): PsiElement? {
         val stub = stub

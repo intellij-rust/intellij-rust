@@ -5,7 +5,7 @@ import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RustUseItemElement
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedElementImpl
-import org.rust.lang.core.stubs.elements.RustUseItemElementStub
+import org.rust.lang.core.stubs.RustUseItemElementStub
 
 abstract class RustUseItemImplMixin : RustStubbedElementImpl<RustUseItemElementStub>, RustUseItemElement {
 

@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.RustFieldDeclElement
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
-import org.rust.lang.core.stubs.elements.RustFieldDeclElementStub
+import org.rust.lang.core.stubs.RustFieldDeclElementStub
 import javax.swing.Icon
 
 abstract class RustFieldDeclImplMixin : RustStubbedNamedElementImpl<RustFieldDeclElementStub>, RustFieldDeclElement {
@@ -18,6 +18,6 @@ abstract class RustFieldDeclImplMixin : RustStubbedNamedElementImpl<RustFieldDec
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RustIcons.FIELD)
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
+    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 
 }

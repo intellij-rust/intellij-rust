@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.util.trait
-import org.rust.lang.core.stubs.elements.RustImplMethodMemberElementStub
+import org.rust.lang.core.stubs.RustImplMethodMemberElementStub
 
 abstract class RustImplMethodMemberImplMixin : RustFnImplMixin<RustImplMethodMemberElementStub>,
                                                RustImplMethodMemberElement {
@@ -27,7 +27,7 @@ abstract class RustImplMethodMemberImplMixin : RustFnImplMixin<RustImplMethodMem
         else -> RustIcons.METHOD
     })
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
+    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 }
 
 val RustImplMethodMemberElement.superMethod: RustTraitMethodMemberElement? get() {

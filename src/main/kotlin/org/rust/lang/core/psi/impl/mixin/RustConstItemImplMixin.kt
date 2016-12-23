@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.RustConstItemElement
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
-import org.rust.lang.core.stubs.elements.RustConstItemElementStub
+import org.rust.lang.core.stubs.RustConstItemElementStub
 
 abstract class RustConstItemImplMixin : RustStubbedNamedElementImpl<RustConstItemElementStub>, RustConstItemElement {
     constructor(node: ASTNode) : super(node)
@@ -16,5 +16,5 @@ abstract class RustConstItemImplMixin : RustStubbedNamedElementImpl<RustConstIte
 
     override fun getIcon(flags: Int) = iconWithVisibility(flags, RustIcons.CONSTANT)
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
+    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 }

@@ -5,6 +5,6 @@ import com.intellij.psi.stubs.StubBase
 import com.intellij.psi.stubs.StubElement
 import org.rust.lang.core.psi.RustCompositeElement
 
-abstract class RustElementStub<PsiT : RustCompositeElement> : StubBase<PsiT> {
-    constructor(parent: StubElement<*>?, elementType: IStubElementType<out StubElement<*>, *>?) : super(parent, elementType)
-}
+abstract class RustElementStub<PsiT : RustCompositeElement>(
+    parent: StubElement<*>?, elementType: IStubElementType<out StubElement<*>, *>?
+) : StubBase<PsiT>(parent, elementType)

@@ -4,12 +4,12 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
-import com.intellij.psi.stubs.StubBase
+import com.intellij.psi.stubs.StubElement
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.resolve.ref.RustReference
 
-abstract class RustStubbedElementImpl<StubT : StubBase<*>> : StubBasedPsiElementBase<StubT>,
-                                                             RustCompositeElement {
+abstract class RustStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElementBase<StubT>,
+                                                                RustCompositeElement {
 
     constructor(node: ASTNode) : super(node)
 

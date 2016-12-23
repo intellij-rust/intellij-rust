@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.RustStaticItemElement
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
-import org.rust.lang.core.stubs.elements.RustStaticItemElementStub
+import org.rust.lang.core.stubs.RustStaticItemElementStub
 
 abstract class RustStaticItemImplMixin : RustStubbedNamedElementImpl<RustStaticItemElementStub>, RustStaticItemElement {
     constructor(node: ASTNode) : super(node)
@@ -19,7 +19,7 @@ abstract class RustStaticItemImplMixin : RustStubbedNamedElementImpl<RustStaticI
         else  -> RustIcons.STATIC
     })
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
+    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 }
 
 val RustStaticItemElement.isMut: Boolean

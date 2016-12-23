@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.RustTraitItemElement
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
-import org.rust.lang.core.stubs.elements.RustTraitItemElementStub
+import org.rust.lang.core.stubs.RustTraitItemElementStub
 import org.rust.lang.core.symbols.RustPath
 import javax.swing.Icon
 
@@ -21,7 +21,7 @@ abstract class RustTraitItemImplMixin : RustStubbedNamedElementImpl<RustTraitIte
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RustIcons.TRAIT)
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
+    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 
     override val crateRelativePath: RustPath.CrateRelative? get() = RustPsiImplUtil.crateRelativePath(this)
 }

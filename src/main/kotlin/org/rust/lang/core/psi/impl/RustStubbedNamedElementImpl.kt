@@ -6,13 +6,14 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.stubs.StubElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.stubs.RustNamedElementStub
+import org.rust.lang.core.stubs.RustNamedStub
 
 abstract class RustStubbedNamedElementImpl<StubT> : RustStubbedElementImpl<StubT>,
                                                     RustNamedElement,
                                                     PsiNameIdentifierOwner
-where StubT : RustNamedElementStub<*> {
+    where StubT : RustNamedStub, StubT : StubElement<*> {
 
     constructor(node: ASTNode) : super(node)
 

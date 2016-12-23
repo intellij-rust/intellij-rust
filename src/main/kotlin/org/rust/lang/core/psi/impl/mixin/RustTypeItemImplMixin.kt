@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.RustTypeItemElement
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
-import org.rust.lang.core.stubs.elements.RustTypeItemElementStub
+import org.rust.lang.core.stubs.RustTypeItemElementStub
 import javax.swing.Icon
 
 abstract class RustTypeItemImplMixin : RustStubbedNamedElementImpl<RustTypeItemElementStub>, RustTypeItemElement {
@@ -18,5 +18,5 @@ abstract class RustTypeItemImplMixin : RustStubbedNamedElementImpl<RustTypeItemE
 
     override fun getIcon(flags: Int): Icon? = iconWithVisibility(flags, RustIcons.TYPE)
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
+    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 }

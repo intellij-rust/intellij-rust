@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.RustImplItemElement
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustPathTypeElement
 import org.rust.lang.core.psi.impl.RustStubbedElementImpl
-import org.rust.lang.core.stubs.elements.RustImplItemElementStub
+import org.rust.lang.core.stubs.RustImplItemElementStub
 
 abstract class RustImplItemImplMixin : RustStubbedElementImpl<RustImplItemElementStub>, RustImplItemElement {
 

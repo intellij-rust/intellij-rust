@@ -1,6 +1,7 @@
 package org.rust.lang.core.psi.impl
 
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.stubs.RustVisibilityStub
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
 
@@ -10,14 +11,11 @@ import org.rust.lang.core.symbols.RustPathSegment
  * default methods in interfaces with mixed Kotlin-Java hierarchies (KT-9073 ).
  */
 object RustPsiImplUtil {
-    fun <PsiT> isPublic(o: PsiT): Boolean
-        where PsiT : RustStubbedNamedElementImpl<*>,
-              PsiT : RustVisibilityOwner
-    {
-        return o.stub?.isPublic ?: isPublicNonStubbed(o)
-    }
+    fun isPublic(psi: RustVisibilityOwner, stub: RustVisibilityStub?): Boolean =
+        stub?.isPublic ?: isPublicNonStubbed(psi)
 
-    fun isPublicNonStubbed(element: RustVisibilityOwner): Boolean = element.vis != null
+    fun isPublicNonStubbed(element: RustVisibilityOwner): Boolean =
+        element.vis != null
 
     fun crateRelativePath(element: RustNamedElement): RustPath.CrateRelative? {
         val segment = element.name?.let { RustPathSegment.withoutGenerics(it) } ?: return null

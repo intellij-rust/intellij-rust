@@ -8,7 +8,7 @@ import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
 import org.rust.lang.core.resolve.ref.RustExternCrateReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
-import org.rust.lang.core.stubs.elements.RustExternCrateItemElementStub
+import org.rust.lang.core.stubs.RustExternCrateItemElementStub
 
 abstract class RustExternCrateItemImplMixin : RustStubbedNamedElementImpl<RustExternCrateItemElementStub>,
                                               RustExternCrateItemElement {
@@ -21,5 +21,5 @@ abstract class RustExternCrateItemImplMixin : RustStubbedNamedElementImpl<RustEx
 
     override val referenceNameElement: PsiElement get() = identifier
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this)
+    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 }
