@@ -1,3 +1,5 @@
+use std::io::prelude::*;
+use std::io;
 use std::collections::HashMap;
 
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -23,6 +25,10 @@ fn main() {
     ::std::thread::spawn(|| {
         let _ = Vec::<f64>::new();
     }).join().unwrap();
+
+    let r: &Read = &io::stdin().lock();
+    let mut buffer = String::new();
+    r.read_to_string(&mut buffer);
 }
 
 

@@ -1,4 +1,4 @@
-use super::Spam;
+use super::*;
 
 impl Spam {
     pub fn create() -> Spam {

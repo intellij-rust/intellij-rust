@@ -6,6 +6,7 @@ import org.rust.lang.core.psi.RustUseItemElement
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedElementImpl
 import org.rust.lang.core.stubs.RustUseItemElementStub
+import org.rust.lang.core.symbols.RustPath
 
 abstract class RustUseItemImplMixin : RustStubbedElementImpl<RustUseItemElementStub>, RustUseItemElement {
 
@@ -14,3 +15,10 @@ abstract class RustUseItemImplMixin : RustStubbedElementImpl<RustUseItemElementS
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 }
+
+//
+//sealed class RustImport(path: RustPath) {
+//    class Wildcard(path: RustPath) : RustImport(path)
+//    class Named(path: RustPath, val alias: String) : RustImport(path)
+//}
+//
