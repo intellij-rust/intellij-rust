@@ -138,6 +138,7 @@ private class RustBacktraceItemFilter(
             "std::rt::lang_start",
             "std::panicking",
             "std::sys::backtrace",
+            "std::sys::imp::backtrace",
             "core::panicking")
     }
 }
