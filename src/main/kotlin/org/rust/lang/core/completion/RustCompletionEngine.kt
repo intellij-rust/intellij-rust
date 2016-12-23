@@ -82,7 +82,7 @@ fun RustCompositeElement.createLookupElement(scopeName: String): LookupElement {
             .withTypeText(retType?.type?.text ?: "()")
             .withTailText(parameters?.text?.replace("\\s+".toRegex(), " ") ?: "()")
             .withInsertHandler handler@ { context: InsertionContext, lookupElement: LookupElement ->
-                if (context.isInUseBlock()) return@handler
+                if (context.isInUseBlock) return@handler
                 val argsCount = parameters?.parameterList?.size ?: 0
                 context.document.insertString(context.selectionEndOffset, "()")
                 EditorModificationUtil.moveCaretRelatively(context.editor, if (argsCount > 0) 1 else 2)
@@ -104,14 +104,14 @@ fun RustCompositeElement.createLookupElement(scopeName: String): LookupElement {
                 else -> ""
             })
             .withInsertHandler handler@ { context, lookupElement ->
-                if (context.isInUseBlock()) return@handler
-                if (tupleFields != null) {
-                    context.document.insertString(context.selectionEndOffset, "()")
-                    EditorModificationUtil.moveCaretRelatively(context.editor, 1)
-                } else if (blockFields != null) {
-                    context.document.insertString(context.selectionEndOffset, " {}")
-                    EditorModificationUtil.moveCaretRelatively(context.editor, 2)
+                if (context.isInUseBlock) return@handler
+                val (text, shift) = when {
+                    tupleFields != null -> Pair("()", 1)
+                    blockFields != null -> Pair(" {}", 2)
+                    else -> return@handler
                 }
+                context.document.insertString(context.selectionEndOffset, text)
+                EditorModificationUtil.moveCaretRelatively(context.editor, shift)
             }
 
         else -> base
@@ -128,8 +128,5 @@ private fun RustPath.dropLastSegment(): RustPath {
     }
 }
 
-private fun InsertionContext.isInUseBlock(): Boolean {
-    val element = file.findElementAt(startOffset - 1)!!
-    return (element.parentOfType<RustUseGlobListElement>() != null)
-            || (element.parentOfType<RustUseItemElement>() != null)
-}
+private val InsertionContext.isInUseBlock: Boolean
+    get() = file.findElementAt(startOffset - 1)!!.parentOfType<RustUseItemElement>() != null
