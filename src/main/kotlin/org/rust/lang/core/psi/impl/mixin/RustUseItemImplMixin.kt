@@ -15,10 +15,3 @@ abstract class RustUseItemImplMixin : RustStubbedElementImpl<RustUseItemElementS
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 }
-
-//
-//sealed class RustImport(path: RustPath) {
-//    class Wildcard(path: RustPath) : RustImport(path)
-//    class Named(path: RustPath, val alias: String) : RustImport(path)
-//}
-//
