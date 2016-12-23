@@ -1,9 +1,6 @@
 .idea
 *.iml
 .gradle
-.sandbox
+out/
 build/
-out
-classes
-gen
-src/test/resources/rustc-src.zip
+gen/
