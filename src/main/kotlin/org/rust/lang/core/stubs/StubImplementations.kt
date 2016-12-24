@@ -460,25 +460,11 @@ class RustForeignModItemElementStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>
 ) : StubBase<RustForeignModItemElement>(parent, elementType) {
 
-    object Type : RustStubElementType<RustForeignModItemElementStub, RustForeignModItemElement>("FOREIGN_MOD_ITEM") {
-
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RustForeignModItemElementStub(parentStub, this)
-
-        override fun serialize(stub: RustForeignModItemElementStub, dataStream: StubOutputStream) {
-            // NOP
-        }
-
-        override fun createPsi(stub: RustForeignModItemElementStub) =
-            RustForeignModItemElementImpl(stub, this)
-
-        override fun createStub(psi: RustForeignModItemElement, parentStub: StubElement<*>?) =
-            RustForeignModItemElementStub(parentStub, this)
-
-        override fun indexStub(stub: RustForeignModItemElementStub, sink: IndexSink) {
-            // NOP
-        }
-    }
+    object Type : RustStubElementType.Trivial<RustForeignModItemElementStub, RustForeignModItemElement>(
+        "FOREIGN_MOD_ITEM",
+        ::RustForeignModItemElementStub,
+        ::RustForeignModItemElementImpl
+    )
 }
 
 
