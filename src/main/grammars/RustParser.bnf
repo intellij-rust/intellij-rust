@@ -472,7 +472,7 @@ private use_path ::=
 
 use_glob_list ::= '{' use_glob_with_recover* '}' {
   pin = 1
-  extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl<?>"
+  extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl.WithParent<?>"
   stubClass = "org.rust.lang.core.stubs.RustUseGlobListElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -605,6 +605,8 @@ enum_variant ::= outer_attr* IDENTIFIER variant_args? {
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustFieldsOwner" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustEnumVariantImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RustEnumVariantElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 private variant_args ::= variant_block_fields
@@ -612,7 +614,7 @@ private variant_args ::= variant_block_fields
                        | variant_discriminant
 
 block_fields ::= <<mk_block_fileds field_decl>> {
-  extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl<?>"
+  extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl.WithParent<?>"
   stubClass = "org.rust.lang.core.stubs.RustBlockFieldsElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }

@@ -25,6 +25,7 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "STRUCT_ITEM" -> RustStructItemElementStub.Type
     "ENUM_ITEM" -> RustEnumItemElementStub.Type
     "UNION_ITEM" -> RustUnionItemElementStub.Type
+    "ENUM_VARIANT" -> RustEnumVariantElementStub.Type
 
     "MOD_DECL_ITEM" -> RustModDeclItemElementStub.Type
     "MOD_ITEM" -> RustModItemElementStub.Type
@@ -214,6 +215,37 @@ class RustUnionItemElementStub(
             RustUnionItemElementStub(parentStub, this, psi.name, psi.isPublic)
 
         override fun indexStub(stub: RustUnionItemElementStub, sink: IndexSink) = sink.indexUnionItem(stub)
+    }
+}
+
+
+class RustEnumVariantElementStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    override val name: String?
+) : StubBase<RustEnumVariantElement>(parent, elementType),
+    RustNamedStub {
+
+    object Type : RustStubElementType<RustEnumVariantElementStub, RustEnumVariantElement>("ENUM_VARIANT") {
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustEnumVariantElementStub =
+            RustEnumVariantElementStub(parentStub, this,
+                dataStream.readNameAsString()
+            )
+
+        override fun serialize(stub: RustEnumVariantElementStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.name)
+            }
+
+        override fun createPsi(stub: RustEnumVariantElementStub) =
+            RustEnumVariantElementImpl(stub, this)
+
+        override fun createStub(psi: RustEnumVariantElement, parentStub: StubElement<*>?) =
+            RustEnumVariantElementStub(parentStub, this, psi.name)
+
+
+        override fun indexStub(stub: RustEnumVariantElementStub, sink: IndexSink) {
+            // NOP
+        }
     }
 }
 

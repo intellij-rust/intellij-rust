@@ -18,4 +18,13 @@ abstract class RustStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElem
     override fun getReference(): RustReference? = null
 
     override fun toString(): String = "${javaClass.simpleName}($elementType)"
+
+    // Remove when drop support for 2016.1
+    abstract class WithParent<StubT : StubElement<*>> : RustStubbedElementImpl<StubT> {
+        constructor(node: ASTNode) : super(node)
+
+        constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+
+        override fun getParent(): PsiElement = parentByStub
+    }
 }
