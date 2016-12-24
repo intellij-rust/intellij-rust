@@ -3,7 +3,6 @@ package org.rust.cargo.project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
-import org.rust.cargo.util.AutoInjectedCrates
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
@@ -23,13 +22,12 @@ class CargoProjectDescription private constructor(
         val version: String,
         val targets: Collection<Target>,
         val source: String?,
-        val dependencies: List<Package>,
-        val isWorkspaceMember: Boolean
+        val origin: PackageOrigin
     ) {
         val libTarget: Target? get() = targets.find { it.isLib }
         val contentRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
 
-        override fun toString(): String = "Package(contentRootUrl='$contentRootUrl', name='$name')"
+        override fun toString() = "Package(contentRootUrl='$contentRootUrl', name='$name')"
     }
 
     class Target(
@@ -77,7 +75,7 @@ class CargoProjectDescription private constructor(
 
     private val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
 
-    val externCrates: Collection<ExternCrate> get() = packages.mapNotNull { pkg ->
+    private val externCrates: Collection<ExternCrate> get() = packages.mapNotNull { pkg ->
         val target = pkg.libTarget ?: return@mapNotNull null
 
         // crate name must be a valid Rust identifier, so map `-` to `_`
@@ -102,7 +100,7 @@ class CargoProjectDescription private constructor(
 
     fun isCrateRoot(file: VirtualFile): Boolean = findTargetForCrateRootFile(file) != null
 
-    fun withAdditionalPackages(additionalPackages: Collection<Pair<String, VirtualFile>>): CargoProjectDescription {
+    fun withAdditionalPackages(additionalPackages: Collection<Pair<String, VirtualFile>>, origin: PackageOrigin): CargoProjectDescription {
         val stdlibPackages = additionalPackages.map {
             val (crateName, crateRoot) = it
             Package(
@@ -111,14 +109,13 @@ class CargoProjectDescription private constructor(
                 version = "",
                 targets = listOf(Target(crateRoot.url, name = crateName, kind = TargetKind.LIB)),
                 source = null,
-                dependencies = emptyList(),
-                isWorkspaceMember = false
+                origin = origin
             )
         }
         return CargoProjectDescription(packages + stdlibPackages)
     }
 
-    val hasStandardLibrary: Boolean get() = findExternCrateRootByName(AutoInjectedCrates.std) != null
+    val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
 
     fun findPackage(name: String): Package? = packages.find { it.name == name }
 
@@ -128,26 +125,37 @@ class CargoProjectDescription private constructor(
             // Well, a dev-dependency `X` of package `P` can depend on the `P` itself.
             // This is ok, because cargo can compile `P` (without `X`, because dev-deps
             // are used only for tests), then `X`, and then `P`s tests. So we need to
-            // handle cycles here, and it is the justification for the trick with `mutableDeps`.
+            // handle cycles here.
 
-            val (packages, mutableDeps) = data.packages.map { pkg ->
-                val deps: MutableList<Package> = ArrayList()
+            // Figure out packages origins:
+            // - if a package is a workspace member, it's WORKSPACE
+            // - if a package is a direct dependency of a workspace member, it's DEPENDENCY
+            // - otherwise, it's TRANSITIVE_DEPENDENCY
+            val nameToOrigin = HashMap<String, PackageOrigin>(data.packages.size)
+            data.packages.forEachIndexed pkgs@ { index, pkg ->
+                if (pkg.isWorkspaceMember) {
+                    nameToOrigin[pkg.name] = PackageOrigin.WORKSPACE
+                    val depNode = data.dependencies.getOrNull(index) ?: return@pkgs
+                    depNode.dependenciesIndexes
+                        .mapNotNull { data.packages.getOrNull(it) }
+                        .forEach {
+                            nameToOrigin.merge(it.name, PackageOrigin.DEPENDENCY, { o1, o2 -> PackageOrigin.min(o1, o2) })
+                        }
+                } else {
+                    nameToOrigin.putIfAbsent(pkg.name, PackageOrigin.TRANSITIVE_DEPENDENCY)
+                }
+            }
+
+            val packages = data.packages.map { pkg ->
+                val origin = nameToOrigin[pkg.name] ?: error("Origin is undefined for package ${pkg.name}")
                 Package(
                     pkg.url,
                     pkg.name,
                     pkg.version,
                     pkg.targets.map { Target(it.url, it.name, it.kind) },
                     pkg.source,
-                    deps,
-                    pkg.isWorkspaceMember
-                ) to deps
-            }.unzip()
-
-            for ((packageIndex, dependenciesIndexes) in data.dependencies) {
-                val deps = mutableDeps.getOrNull(packageIndex) ?: return null
-                dependenciesIndexes.mapTo(deps) {
-                    packages.getOrNull(it) ?: return null
-                }
+                    origin
+                )
             }
 
             return CargoProjectDescription(packages)

@@ -24,6 +24,7 @@ import com.intellij.util.PathUtil
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.CargoProjectDescription
+import org.rust.cargo.project.PackageOrigin
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
@@ -137,7 +138,7 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
 
     private fun updateModuleDependencies(projectDescription: CargoProjectDescription) {
         val libraryRoots = projectDescription.packages
-            .filter { !it.isWorkspaceMember }
+            .filter { it.origin != PackageOrigin.WORKSPACE }
             .mapNotNull { it.contentRoot }
 
         module.updateLibrary(module.cargoLibraryName, libraryRoots)

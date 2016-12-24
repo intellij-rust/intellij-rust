@@ -11,6 +11,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import org.rust.cargo.project.PackageOrigin
 import org.rust.lang.core.resolve.RustResolveEngine
 import java.awt.Color
 import java.awt.Font
@@ -74,7 +75,7 @@ private class RustBacktraceItemFilter(
         val funcFile = func.element.containingFile
         val doc = docManager.getDocument(funcFile) ?: return null
         val link = OpenFileHyperlinkInfo(project, funcFile.virtualFile, doc.getLineNumber(func.element.textOffset))
-        val linkAttr = if (!func.pkg.isWorkspaceMember) GRAYED_LINK else null
+        val linkAttr = if (func.pkg.origin != PackageOrigin.WORKSPACE) GRAYED_LINK else null
         return Filter.ResultItem(start, end, link, linkAttr)
     }
 

@@ -165,7 +165,7 @@ object CargoMetadata {
  */
 data class CleanCargoMetadata(
     val packages: List<Package>,
-    val dependencies: Collection<DependencyNode>
+    val dependencies: List<DependencyNode>
 ) {
     data class DependencyNode(
         val packageIndex: Int,
