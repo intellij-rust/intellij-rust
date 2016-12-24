@@ -40,8 +40,22 @@ class RustStdlibResolveTest : RustMultiFileResolveTestBase() {
         fn main() { }
     """)
 
-    fun testResolvePrelude() = doTestResolved("prelude/main.rs")
-    fun testResolveBox() = doTestResolved("box/main.rs")
+    fun testResolvePrelude() = stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            let _ = String::new();
+                    //^  ...libcollections/string.rs
+        }
+    """)
+
+    fun testResolveBox() = stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            let _ = Box::new(92);
+                   //^ ...liballoc/boxed.rs
+        }
+    """)
+
     fun testResolveOption() = doTestResolved("option/main.rs")
 
     fun testPreludeVisibility1() = doTestUnresolved("prelude_visibility1/main.rs")

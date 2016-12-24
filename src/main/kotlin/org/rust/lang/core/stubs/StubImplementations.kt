@@ -37,6 +37,7 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "TYPE_ITEM" -> RustTypeItemElementStub.Type
     "FOREIGN_MOD_ITEM" -> RustForeignModItemElementStub.Type
 
+    "BLOCK_FIELDS" -> RustBlockFieldsElementStub.Type
     "FIELD_DECL" -> RustFieldDeclElementStub.Type
     "IMPL_METHOD_MEMBER" -> RustImplMethodMemberElementStub.Type
     "TRAIT_METHOD_MEMBER" -> RustTraitMethodMemberElementStub.Type
@@ -468,6 +469,18 @@ class RustForeignModItemElementStub(
         "FOREIGN_MOD_ITEM",
         ::RustForeignModItemElementStub,
         ::RustForeignModItemElementImpl
+    )
+}
+
+
+class RustBlockFieldsElementStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>
+) : StubBase<RustBlockFieldsElement>(parent, elementType) {
+
+    object Type : RustStubElementType.Trivial<RustBlockFieldsElementStub, RustBlockFieldsElement>(
+        "BLOCK_FIELDS",
+        ::RustBlockFieldsElementStub,
+        ::RustBlockFieldsElementImpl
     )
 }
 

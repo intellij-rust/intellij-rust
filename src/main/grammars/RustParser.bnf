@@ -611,7 +611,11 @@ private variant_args ::= variant_block_fields
                        | variant_tuple_fields
                        | variant_discriminant
 
-block_fields ::= <<mk_block_fileds field_decl>>
+block_fields ::= <<mk_block_fileds field_decl>> {
+  extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RustBlockFieldsElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 tuple_fields ::= <<mk_tuple_fields tuple_field_decl>>
 
 variant_block_fields ::= <<mk_block_fileds variant_field_decl>> { elementType = block_fields }
