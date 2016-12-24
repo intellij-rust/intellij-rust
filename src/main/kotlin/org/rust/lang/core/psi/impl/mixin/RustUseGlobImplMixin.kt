@@ -27,6 +27,8 @@ abstract class RustUseGlobImplMixin : RustStubbedElementImpl<RustUseGlobElementS
         }
 
     override val referenceName: String get() = stub?.referenceName ?: referenceNameElement.text
+
+    override fun getParent(): PsiElement = parentByStub
 }
 
 val RustUseGlobElement.basePath: RustPathElement?
