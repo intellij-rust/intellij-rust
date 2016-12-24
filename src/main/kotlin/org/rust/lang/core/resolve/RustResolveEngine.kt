@@ -15,6 +15,7 @@ import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.basePath
+import org.rust.lang.core.psi.impl.mixin.isSelf
 import org.rust.lang.core.psi.impl.mixin.isStarImport
 import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
@@ -121,7 +122,7 @@ object RustResolveEngine {
 
         when {
         // `use foo::{self}`
-            ref.self != null && baseItem != null -> listOf(baseItem)
+            ref.isSelf && baseItem != null -> listOf(baseItem)
 
         // `use foo::{bar}`
             baseItem is RustResolveScope ->
@@ -489,7 +490,7 @@ private fun RustUseItemElement.nonWildcardEntries(): Sequence<ScopeEntry> {
     return globList.useGlobList.asSequence().mapNotNull { glob ->
         val name = listOfNotNull(
             glob.alias?.name, // {foo as bar};
-            glob.self?.let { path?.referenceName }, // {self}
+            (if (glob.isSelf) path?.referenceName else null), // {self}
             glob.referenceName // {foo}
         ).firstOrNull()
 
