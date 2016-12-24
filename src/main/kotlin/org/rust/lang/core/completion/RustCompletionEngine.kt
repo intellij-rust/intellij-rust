@@ -11,7 +11,6 @@ import org.rust.lang.core.psi.util.fields
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.indexes.RustImplIndex
-import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.util.resolvedType
@@ -23,10 +22,10 @@ object RustCompletionEngine {
 
         return if (path.segments.isNotEmpty()) {
             val qual = path.dropLastSegment()
-            RustResolveEngine.resolve(qual, ref, Namespace.Types).firstOrNull().completionsFromResolveScope()
+            RustResolveEngine.resolve(qual, ref, Namespace.Types).firstOrNull()
+                .completionsFromResolveScope()
         } else {
-            RustResolveEngine.enumerateScopesFor(ref)
-                .flatMap { RustResolveEngine.declarations(it, pivot = ref) }
+            innerDeclarations(ref)
                 .filterByNamespace(namespace)
                 .completionsFromScopeEntries()
         }
@@ -54,10 +53,10 @@ object RustCompletionEngine {
 }
 
 private fun RustCompositeElement?.completionsFromResolveScope(): Array<LookupElement> =
-    if (this is RustResolveScope)
-        RustResolveEngine.declarations(this, searchFor = SearchFor.PRIVATE).completionsFromScopeEntries()
-    else
+    if (this == null)
         emptyArray()
+    else
+        (outerDeclarations(this) ?: emptySequence()).completionsFromScopeEntries()
 
 private fun Sequence<ScopeEntry>.completionsFromScopeEntries(): Array<LookupElement> =
     mapNotNull {

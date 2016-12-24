@@ -6,9 +6,7 @@ import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTem
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.descendentsOfType
-import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.resolve.RustResolveEngine
-import org.rust.lang.core.resolve.scope.RustResolveScope
+import org.rust.lang.core.resolve.innerDeclarations
 import org.rust.lang.core.types.RustEnumType
 import org.rust.lang.core.types.util.resolvedType
 
@@ -48,11 +46,7 @@ class MatchPostfixTemplate : StringBasedPostfixTemplate(
     override fun getTemplateString(element: PsiElement): String? {
         val enumType = (element as RustExprElement).resolvedType as RustEnumType
 
-        val allDeclaration = generateSequence(
-            element.parentOfType<RustResolveScope>(),
-            { it.parentOfType<RustResolveScope>() }
-        )
-            .flatMap { RustResolveEngine.declarations(it, element) }
+        val allDeclaration = innerDeclarations(element)
             .mapNotNull {
                 val path = (it.element as? RustQualifiedNameOwner)?.crateRelativePath ?: return@mapNotNull null
                 if (path.segments.lastOrNull()?.name == it.name)

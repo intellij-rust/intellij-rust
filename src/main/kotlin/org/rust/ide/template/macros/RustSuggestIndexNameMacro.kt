@@ -5,13 +5,11 @@ import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.codeInsight.template.macro.MacroBase
-import org.rust.lang.core.psi.RustBlockElement
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustItemElement
 import org.rust.lang.core.psi.RustPatBindingElement
-import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.resolve.RustResolveEngine
+import org.rust.lang.core.resolve.innerDeclarations
 
 class RustSuggestIndexNameMacro : MacroBase("rustSuggestIndexName", "rustSuggestIndexName()") {
     override fun calculateResult(params: Array<out Expression>, context: ExpressionContext, quick: Boolean): Result? {
@@ -26,19 +24,9 @@ class RustSuggestIndexNameMacro : MacroBase("rustSuggestIndexName", "rustSuggest
 }
 
 private fun getPatBindingNamesVisibleAt(pivot: RustCompositeElement): Set<String> =
-    RustResolveEngine
-        .enumerateScopesFor(pivot)
-        .takeWhile {
-            // we are only interested in local scopes
-            if (it is RustItemElement) {
-                // workaround diamond inheritance issue
-                // (ambiguity between RustItemElement.parent & RustResolveScope.parent)
-                val item: RustItemElement = it
-                item.parent is RustBlockElement
-            } else {
-                it !is RustFile
-            }
-        }
-        .flatMap { RustResolveEngine.declarations(it, pivot) }
+    innerDeclarations(pivot,
+        // we are only interested in local scopes
+        stop = { scope -> scope is RustItemElement }
+    )
         .mapNotNull { (it.element as? RustPatBindingElement)?.name }
         .toHashSet()

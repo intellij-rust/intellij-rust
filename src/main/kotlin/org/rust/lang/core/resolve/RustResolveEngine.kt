@@ -3,6 +3,7 @@ package org.rust.lang.core.resolve
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
@@ -20,7 +21,6 @@ import org.rust.lang.core.psi.impl.mixin.isStarImport
 import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.*
-import org.rust.lang.core.psi.visitors.RustComputingVisitor
 import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.symbols.RustPath
@@ -33,7 +33,7 @@ import java.util.*
 
 
 object RustResolveEngine {
-    data class Result (
+    data class Result(
         val element: RustNamedElement,
         val pkg: CargoProjectDescription.Package
     )
@@ -53,7 +53,7 @@ object RustResolveEngine {
     /**
      * Resolves an absolute path.
      */
-    fun resolve(path: String, module: Module) : Result? {
+    fun resolve(path: String, module: Module): Result? {
         val segments = path.segments
         if (segments.isEmpty()) return null
         val cargoProject = module.cargoProject ?: return null
@@ -114,23 +114,21 @@ object RustResolveEngine {
         //       use foo::{self};
         //   }
         //   ```
-        val baseItem = if (basePath != null)
+        val baseItem = (if (basePath != null)
             basePath.reference.resolve()
         else
         // `use ::{foo, bar}`
-            ref.crateRoot
+            ref.crateRoot)
 
         when {
         // `use foo::{self}`
             ref.isSelf && baseItem != null -> listOf(baseItem)
 
         // `use foo::{bar}`
-            baseItem is RustResolveScope ->
-                declarations(baseItem, Context(pivot = ref, searchFor = SearchFor.PRIVATE))
-                    .filter { it.name == ref.referenceName }
-                    .mapNotNull { it.element }
-                    .toList()
-
+            baseItem != null -> (outerDeclarations(baseItem) ?: emptySequence())
+                .filter { it.name == ref.referenceName }
+                .mapNotNull { it.element }
+                .toList()
             else -> emptyList()
         }
     }) ?: emptyList()
@@ -170,29 +168,27 @@ object RustResolveEngine {
         return module.project.getPsiFor(module.cargoProject?.findExternCrateRootByName(name))?.rustMod
     }
 
-    /**
-     * Lazily retrieves all elements visible in the particular [scope] at the [pivot], or just all
-     * visible elements if [pivot] is null.
-     */
-    fun declarations(
-        scope: RustResolveScope,
-        pivot: RustCompositeElement? = null,
-        searchFor: SearchFor = SearchFor.EVERYTHING
-    ): Sequence<ScopeEntry> = declarations(scope, Context(pivot, searchFor = searchFor))
-
-    fun enumerateScopesFor(pivot: RustCompositeElement): Sequence<RustResolveScope> =
-        generateSequence(pivot.parentOfType<RustResolveScope>()) { current ->
-            if (current is RustModItemElement)
-                null
-            else
-                current.parentOfType<RustResolveScope>()
-        }
-
     private val String.segments: List<RustPathSegment>
         get() = splitToSequence("::")
             .map { RustPathSegment(it, emptyList()) }
             .toList()
 }
+
+
+/**
+ * Collect the name visible at [scope] from outside. In other words, find all things,
+ * that `scope::thing` is a valid path. Return `null` if scope can't have outer declarations
+ * (for example, this will return `null` for functions and some sequence for a moudle)
+ */
+fun outerDeclarations(scope: RustCompositeElement): Sequence<ScopeEntry>? =
+    outerDeclarations(scope, Context())
+
+/**
+ * Walk the tree up starting at [place] and collect all visible declarations
+ * (local variables, items, imports)
+ */
+fun innerDeclarations(place: RustCompositeElement, stop: (PsiElement) -> Boolean = { false }): Sequence<ScopeEntry> =
+    innerDeclarations(place, Context(), stop)
 
 
 private fun resolveAllNamespaces(path: RustPath, pivot: RustCompositeElement): Sequence<ScopeEntry> {
@@ -202,15 +198,13 @@ private fun resolveAllNamespaces(path: RustPath, pivot: RustCompositeElement): S
         )
 
         is RustPath.ModRelative -> sequenceOfNotNull(
-            generateSequence(pivot.containingMod, { it.`super` }).elementAtOrNull(path.level)?.let {
-                ScopeEntry.Companion.of(it)
-            }
+            generateSequence(pivot.containingMod, { it.`super` })
+                .elementAtOrNull(path.level)
+                ?.let { ScopeEntry.of(it) }
         )
 
-        is RustPath.Named ->
-            RustResolveEngine.enumerateScopesFor(pivot)
-                .flatMap { declarations(it, Context(pivot = pivot)) }
-                .filter { it.name == path.head.name }
+        is RustPath.Named -> innerDeclarations(pivot)
+            .filter { it.name == path.head.name }
     }
 
     var current: Sequence<ScopeEntry> = start
@@ -218,218 +212,160 @@ private fun resolveAllNamespaces(path: RustPath, pivot: RustCompositeElement): S
         val scope = current
             .filterByNamespace(Namespace.Types)
             .mapNotNull { it.element }
-            .filterIsInstance<RustResolveScope>()
+            .mapNotNull(::outerDeclarations)
             .firstOrNull() ?: return emptySequence()
 
-        current = declarations(scope, Context(pivot = pivot, searchFor = SearchFor.PRIVATE))
-            .filter { it.name == name }
+        current = scope.filter { it.name == name }
     }
 
     return current
 }
 
-
-private fun declarations(scope: RustResolveScope, context: Context): Sequence<ScopeEntry> =
-    Sequence { RustScopeVisitor(context).compute(scope).iterator() }
-
-
 private data class Context(
-    val pivot: RustCompositeElement?,
-    val visitedStarImports: Set<RustUseItemElement> = emptySet(),
-    val searchFor: SearchFor = SearchFor.EVERYTHING
+    val visitedStarImports: Set<RustUseItemElement> = emptySet()
 )
 
-enum class SearchFor {
-    /**
-     * public, private and prelude names
-     */
-    EVERYTHING,
-
-    /**
-     * public and private
-     */
-    PRIVATE,
-
-    //TODO: PUBLIC,
+private fun outerDeclarations(scope: RustCompositeElement, context: Context = Context()): Sequence<ScopeEntry>? = when (scope) {
+    is RustFile -> itemDeclarations(scope, false, context) + injectedCrates(scope)
+    is RustMod -> itemDeclarations(scope, false, context)
+    is RustStructItemElement -> methods(scope)
+    is RustEnumItemElement ->
+        scope.enumBody.enumVariantList.asScopeEntries() + methods(scope)
+    else -> null
 }
 
-private class RustScopeVisitor(
-    val context: Context
-) : RustComputingVisitor<Sequence<ScopeEntry>>() {
+private fun innerDeclarations(
+    place: RustCompositeElement,
+    context: Context = Context(),
+    stop: (PsiElement) -> Boolean
+): Sequence<ScopeEntry> =
+    place.ancestors
+        .takeWhileInclusive { it !is RustMod && !stop(it) }
+        .flatMap { innerDeclarationsIn(it, place, context) }
 
-    override fun visitModItem(o: RustModItemElement) = visitMod(o)
-
-    override fun visitFile(file: PsiFile) = visitMod(file as RustFile)
-
-    override fun visitForExpr(o: RustForExprElement) = set {
-        o.scopedForDecl.pat.scopeEntries
-    }
-
-    override fun visitScopedLetDecl(o: RustScopedLetDeclElement) = set {
-        if (context.pivot == null || !PsiTreeUtil.isAncestor(o, context.pivot, true))
-            o.pat.scopeEntries
-        else
-            emptySequence()
-    }
-
-    override fun visitBlock(o: RustBlockElement) = set {
-        // If place is specified in context, we want to filter out
-        // all non strictly preceding let declarations.
-        //
-        // ```
-        // let x = 92; // visible
-        // let x = x;  // not visible
-        //         ^ context.place
-        // let x = 62; // not visible
-        // ```
-        val allLetDecls = o.stmtList.asReversed().asSequence().filterIsInstance<RustLetDeclElement>()
-        val visibleLetDecls = if (context.pivot == null)
-            allLetDecls
-        else
-            allLetDecls
-                .dropWhile { PsiUtilCore.compareElementsByPosition(context.pivot, it) < 0 }
-                // Drops at most one element
-                .dropWhile { PsiTreeUtil.isAncestor(it, context.pivot, true) }
-
-        val allBoundElements = visibleLetDecls.flatMap { it.pat.scopeEntries }
-
-        // TODO: handle shadowing between blocks
-        val declaredNames = HashSet<String>()
-        val nonShadowed = allBoundElements.filter {
-            val result = it.name !in declaredNames
-            declaredNames += it.name
-            result
-        }.toList() // `toList` to make it safe to iterate the sequence twice
-
-        nonShadowed.asSequence() + o.itemEntries(context)
-    }
-
-    override fun visitStructItem(o: RustStructItemElement) = set {
-        sequenceOf(
-            methods(o),
-
-            if (isContextLocalTo(o))
-                o.typeParams.scopeEntries
-            else
-                emptySequence()
-        ).flatten()
-    }
-
-    override fun visitEnumItem(o: RustEnumItemElement) = set {
-        sequenceOf(
-            methods(o),
-
-            if (isContextLocalTo(o))
-                o.typeParams.scopeEntries
-            else
-                o.enumBody.enumVariantList.scopeEntries
-        ).flatten()
-    }
-
-    override fun visitTraitItem(o: RustTraitItemElement) = set {
-        if (isContextLocalTo(o))
-            o.typeParams.scopeEntries + ScopeEntry.of(RustPath.CSELF, o)
-        else
-            emptySequence()
-    }
-
-    override fun visitTypeItem(o: RustTypeItemElement) = set {
-        if (isContextLocalTo(o))
-            o.typeParams.scopeEntries
-        else
-            emptySequence()
-    }
-
-    override fun visitFnItem(o: RustFnItemElement) = visitFunction(o)
-
-    override fun visitTraitMethodMember(o: RustTraitMethodMemberElement) = visitFunction(o)
-
-    override fun visitImplMethodMember(o: RustImplMethodMemberElement) = visitFunction(o)
-
-    override fun visitImplItem(o: RustImplItemElement) = set {
-        if (isContextLocalTo(o))
-            o.typeParams.scopeEntries + sequenceOfNotNull(ScopeEntry.lazy(RustPath.CSELF) {
-                //TODO: handle types which are not `NamedElements` (e.g. tuples)
-                (o.type as? RustPathTypeElement)?.path?.reference?.resolve()
-            })
-        else
-            emptySequence()
-    }
-
-    override fun visitLambdaExpr(o: RustLambdaExprElement) = set {
-        o.parameters.parameterList.orEmpty()
-            .asSequence()
-            .flatMap { it.pat.scopeEntries }
-    }
-
-    override fun visitMatchArm(o: RustMatchArmElement) = set {
-        // Rust allows to defined several patterns in the single match arm,
-        // but they all must bind the same variables, hence we can inspect
-        // only the first one.
-        o.matchPat.patList.firstOrNull().scopeEntries
-    }
-
-    override fun visitWhileLetExpr(o: RustWhileLetExprElement) = visitScopedLetDecl(o.scopedLetDecl)
-
-    override fun visitIfLetExpr(o: RustIfLetExprElement) = visitScopedLetDecl(o.scopedLetDecl)
-
-    private fun visitMod(mod: RustMod) = set {
-        val module = mod.module
-        // Rust injects implicit `extern crate std` in every crate root module unless it is
-        // a `#![no_std]` crate, in which case `extern crate core` is injected.
-        // The stdlib lib itself is `#![no_std]`.
-        // We inject both crates for simplicity for now.
-        val injectedCrates = if (module == null || !mod.isCrateRoot)
-            emptySequence()
-        else
-            sequenceOf(AutoInjectedCrates.std, AutoInjectedCrates.core).mapNotNull { crateName ->
-                ScopeEntry.lazy(crateName) {
-                    module.project.getPsiFor(module.cargoProject?.findExternCrateRootByName(crateName))?.rustMod
-                }
-            }
-
-        // Rust injects implicit `use std::prelude::v1::*` into every module.
-        val preludeSymbols = if (module == null || context.searchFor != SearchFor.EVERYTHING)
-            emptySequence()
-        else
-            module.preludeModule?.rustMod?.let {
-                declarations(it, context.copy(searchFor = SearchFor.PRIVATE))
+private fun innerDeclarationsIn(
+    scope: PsiElement,
+    place: RustCompositeElement,
+    context: Context
+): Sequence<ScopeEntry> {
+    return when (scope) {
+        is RustFile -> {
+            val preludeSymbols = scope.module?.preludeModule?.rustMod?.let {
+                outerDeclarations(it, context)
             } ?: emptySequence()
 
-        sequenceOf(
-            mod.itemEntries(context),
-            injectedCrates,
-            preludeSymbols
-        ).flatten()
-    }
-
-    private fun visitFunction(o: RustFnElement) = set {
-        if (isContextLocalTo(o))
             sequenceOf(
-                sequenceOfNotNull(o.parameters?.selfArgument?.let { ScopeEntry.of(it) }),
-                o.parameters?.parameterList.orEmpty().asSequence().flatMap { it.pat.scopeEntries },
-                o.typeParams.scopeEntries
+                itemDeclarations(scope, true, context),
+                injectedCrates(scope),
+                preludeSymbols
             ).flatten()
-        else
-            emptySequence()
+        }
+
+        is RustModItemElement -> itemDeclarations(scope, true, context)
+
+        is RustStructItemElement,
+        is RustEnumItemElement,
+        is RustUnionItemElement,
+        is RustTypeItemElement -> {
+            scope as RustGenericDeclaration
+            scope.typeParams.asScopeEntries()
+        }
+
+        is RustTraitItemElement ->
+            scope.typeParams.asScopeEntries() + ScopeEntry.of(RustPath.CSELF, scope)
+
+        is RustImplItemElement -> {
+            scope.typeParams.asScopeEntries() +
+                sequenceOfNotNull(ScopeEntry.lazy(RustPath.CSELF) {
+                    //TODO: handle types which are not `NamedElements` (e.g. tuples)
+                    (scope.type as? RustPathTypeElement)?.path?.reference?.resolve()
+                })
+        }
+
+        is RustFnItemElement,
+        is RustTraitMethodMemberElement,
+        is RustImplMethodMemberElement -> {
+            scope as RustFnElement
+            val selfArgument = scope.parameters?.selfArgument
+            val arguments = scope.parameters?.parameterList.orEmpty().asSequence()
+
+            sequenceOf(
+                sequenceOfNotNull(selfArgument?.let { ScopeEntry.of(it) }),
+                arguments.mapNotNull { it.pat }.flatMap { it.boundNames },
+                scope.typeParams.asScopeEntries()
+            ).flatten()
+        }
+
+        is RustBlockElement -> {
+            // We want to filter out
+            // all non strictly preceding let declarations.
+            //
+            // ```
+            // let x = 92; // visible
+            // let x = x;  // not visible
+            //         ^ context.place
+            // let x = 62; // not visible
+            // ```
+            val visiblePatterns = scope
+                .stmtList.asReversed().asSequence()
+                .filterIsInstance<RustLetDeclElement>()
+                .dropWhile { PsiUtilCore.compareElementsByPosition(place, it) < 0 }
+                // Drops at most one element
+                .dropWhile { it.isStrictAncestorOf(place) }
+                .mapNotNull { it.pat }
+
+            val allBoundElements = visiblePatterns.flatMap { it.boundNames }
+
+            // TODO: handle shadowing between blocks
+            val declaredNames = HashSet<String>()
+            val nonShadowed = allBoundElements.filter {
+                val result = it.name !in declaredNames
+                declaredNames += it.name
+                result
+            }.toList() // `toList` to make it safe to iterate the sequence twice
+
+            nonShadowed.asSequence() + itemDeclarations(scope, true, context)
+        }
+
+    //  FIXME: `for i in i` is broken, needs a test
+        is RustForExprElement ->
+            scope.scopedForDecl.pat.boundNames
+
+        is RustIfLetExprElement, is RustWhileLetExprElement -> {
+            scope as RustScopedLetExprElement
+            if (scope.scopedLetDecl.isStrictAncestorOf(place)) {
+                return emptySequence()
+            }
+            scope.scopedLetDecl.pat.boundNames
+        }
+
+        is RustLambdaExprElement -> scope
+            .parameters.parameterList.asSequence()
+            .mapNotNull { it.pat }
+            .flatMap { it.boundNames }
+
+        is RustMatchArmElement -> scope
+            // Rust allows to defined several patterns in the single match arm,
+            // but they all must bind the same variables, hence we can inspect
+            // only the first one.
+            .matchPat.patList.take(1).asSequence()
+            .flatMap { it.boundNames }
+
+        else -> emptySequence()
     }
-
-    private fun isContextLocalTo(o: RustCompositeElement) = o.contains(context.pivot)
-
-    private fun methods(o: RustTypeBearingItemElement): Sequence<ScopeEntry> =
-        RustImplIndex
-            .findMethodsFor(o.resolvedType, o.project)
-            .scopeEntries
-
 }
 
-private fun RustItemsOwner.itemEntries(context: Context): Sequence<ScopeEntry> {
-    val (starImports, itemImports) = useDeclarations
-        .filter { it.isPublic || it.containingMod == context.pivot?.containingMod }
+private fun itemDeclarations(
+    scope: RustItemsOwner,
+    isLocal: Boolean,
+    context: Context
+): Sequence<ScopeEntry> {
+    val (starImports, itemImports) = scope.useDeclarations
+        .filter { it.isPublic || isLocal }
         .partition { it.isStarImport }
 
     return sequenceOf(
-        declaredItems().map { ScopeEntry.of(it.first, it.second) },
+        definedItems(scope).map { ScopeEntry.of(it.first, it.second) },
 
         itemImports.asSequence().flatMap { it.nonWildcardEntries() },
 
@@ -438,10 +374,10 @@ private fun RustItemsOwner.itemEntries(context: Context): Sequence<ScopeEntry> {
     ).flatten()
 }
 
-fun RustItemsOwner.declaredItems(): Sequence<Pair<String, RustNamedElement>> {
+private fun definedItems(scope: RustItemsOwner): Sequence<Pair<String, RustNamedElement>> {
     val inlineItems: Sequence<RustNamedElement> = sequenceOf(
-        allItemDefinitions.asSequence(),
-        foreignMods.asSequence().flatMap {
+        scope.allItemDefinitions.asSequence(),
+        scope.foreignMods.asSequence().flatMap {
             it.foreignFnDeclList.asSequence<RustNamedElement>() + it.foreignStaticDeclList.asSequence()
         }
     ).flatten()
@@ -449,7 +385,7 @@ fun RustItemsOwner.declaredItems(): Sequence<Pair<String, RustNamedElement>> {
     return sequenceOf(
         // XXX: this must come before itemList to resolve `Box` from prelude. We need to handle cfg attributes to
         // fix this properly
-        modDecls.asSequence().mapNotNull { modDecl ->
+        scope.modDecls.asSequence().mapNotNull { modDecl ->
             val name = modDecl.name
             val mod = modDecl.reference.resolve() as? RustMod
             if (name != null && mod != null) name to mod else null
@@ -459,7 +395,7 @@ fun RustItemsOwner.declaredItems(): Sequence<Pair<String, RustNamedElement>> {
             item.name?.let { it to item }
         },
 
-        externCrates.asSequence().mapNotNull { crate ->
+        scope.externCrates.asSequence().mapNotNull { crate ->
             val name = crate.alias?.name ?: crate.name
             val mod = crate.reference.resolve() as? RustMod
             if (name != null && mod != null) name to mod else null
@@ -467,14 +403,36 @@ fun RustItemsOwner.declaredItems(): Sequence<Pair<String, RustNamedElement>> {
     ).flatten()
 }
 
+private val RustPatElement.boundNames: Sequence<ScopeEntry>
+    get() = PsiTreeUtil.findChildrenOfType(this, RustPatBindingElement::class.java)
+        .asScopeEntries()
+
+
+private fun injectedCrates(file: RustFile): Sequence<ScopeEntry> {
+    val module = file.module
+        ?: return emptySequence()
+    val cargoProject = module.cargoProject
+        ?: return emptySequence()
+
+    // Rust injects implicit `extern crate std` in every crate root module unless it is
+    // a `#![no_std]` crate, in which case `extern crate core` is injected.
+    // The stdlib lib itself is `#![no_std]`.
+    // We inject both crates for simplicity for now.
+    return sequenceOf(AutoInjectedCrates.std, AutoInjectedCrates.core).mapNotNull { crateName ->
+        ScopeEntry.lazy(crateName) {
+            val crate = cargoProject.findExternCrateRootByName(crateName)
+            module.project.getPsiFor(crate)?.rustMod
+        }
+    }
+}
 
 private fun RustUseItemElement.wildcardEntries(context: Context): Sequence<ScopeEntry> {
     if (this in context.visitedStarImports) return emptySequence()
     // Recursively step into `use foo::*`
     val mod = path?.reference?.resolve() as? RustResolveScope ?: return emptySequence()
-    return declarations(mod, context.copy(visitedStarImports = context.visitedStarImports + this))
+    val newCtx = context.copy(visitedStarImports = context.visitedStarImports + this)
+    return outerDeclarations(mod, newCtx) ?: emptySequence()
 }
-
 
 private fun RustUseItemElement.nonWildcardEntries(): Sequence<ScopeEntry> {
     val globList = useGlobList
@@ -498,22 +456,34 @@ private fun RustUseItemElement.nonWildcardEntries(): Sequence<ScopeEntry> {
     }
 }
 
-
-private val Collection<RustNamedElement>.scopeEntries: Sequence<ScopeEntry>
-    get() = asSequence().scopeEntries
-
-private val RustPatElement?.scopeEntries: Sequence<ScopeEntry>
-    get() = PsiTreeUtil.findChildrenOfType(this, RustPatBindingElement::class.java).scopeEntries
-
-private val Sequence<RustNamedElement>.scopeEntries: Sequence<ScopeEntry>
-    get() = mapNotNull { ScopeEntry.of(it) }
+private fun methods(o: RustTypeBearingItemElement): Sequence<ScopeEntry> =
+    RustImplIndex
+        .findMethodsFor(o.resolvedType, o.project)
+        .mapNotNull { ScopeEntry.of(it) }
 
 private val Module.preludeModule: PsiFile? get() {
-    val stdlib = cargoProject?.findExternCrateRootByName(AutoInjectedCrates.std) ?: return null
-    val preludeFile = stdlib.findFileByRelativePath("../prelude/v1.rs") ?: return null
+    val stdlib = cargoProject?.findExternCrateRootByName(AutoInjectedCrates.std)
+        ?: return null
+    val preludeFile = stdlib.findFileByRelativePath("../prelude/v1.rs")
+        ?: return null
     return project.getPsiFor(preludeFile)
 }
 
+private fun Collection<RustNamedElement>.asScopeEntries(): Sequence<ScopeEntry> =
+    asSequence().mapNotNull { ScopeEntry.Companion.of(it) }
+
+
+private fun <T> Sequence<T>.takeWhileInclusive(pred: (T) -> Boolean): Sequence<T> {
+    var shouldContinue = true
+    return takeWhile {
+        val result = shouldContinue
+        shouldContinue = pred(it)
+        result
+    }
+}
+
+private fun PsiElement.isStrictAncestorOf(child: PsiElement) =
+    PsiTreeUtil.isAncestor(this, child, true)
 
 /**
  * Helper to debug complex iterator pipelines
