@@ -4,7 +4,6 @@ import com.intellij.util.SmartList
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.RustReferenceElement
-import org.rust.lang.core.psi.referenceName
 import java.util.*
 
 fun <T : RustNamedElement> Collection<T>.findDuplicates(): Collection<T> =

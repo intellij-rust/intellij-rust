@@ -27,6 +27,8 @@ abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RustModDec
 
     override val referenceNameElement: PsiElement get() = identifier
 
+    override val referenceName: String get() = referenceNameElement.text
+
     override fun getIcon(flags: Int): Icon? = iconWithVisibility(flags, RustIcons.MODULE)
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)

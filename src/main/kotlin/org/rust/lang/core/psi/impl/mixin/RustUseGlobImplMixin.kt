@@ -18,6 +18,8 @@ abstract class RustUseGlobImplMixin(node: ASTNode) : RustCompositeElementImpl(no
         get() = requireNotNull(identifier ?: self) {
             "Use glob must have an identifier: $this ${this.text} at ${this.containingFile.virtualFile.path}"
         }
+
+    override val referenceName: String get() = referenceNameElement.text
 }
 
 val RustUseGlobElement.basePath: RustPathElement?

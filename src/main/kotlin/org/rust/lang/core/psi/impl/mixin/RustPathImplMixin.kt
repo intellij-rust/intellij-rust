@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustPathElement
 import org.rust.lang.core.psi.RustUseItemElement
 import org.rust.lang.core.psi.impl.RustCompositeElementImpl
-import org.rust.lang.core.psi.referenceName
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ref.RustPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
@@ -22,6 +21,8 @@ abstract class RustPathImplMixin(node: ASTNode) : RustCompositeElementImpl(node)
         get() = checkNotNull(identifier ?: self ?: `super` ?: cself) {
             "Path must contain identifier: $this ${this.text} at ${this.containingFile.virtualFile.path}"
         }
+
+    override val referenceName: String get() = referenceNameElement.text
 }
 
 /**

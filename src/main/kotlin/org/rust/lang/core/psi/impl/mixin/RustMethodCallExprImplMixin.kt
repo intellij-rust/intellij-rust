@@ -10,6 +10,8 @@ import org.rust.lang.core.resolve.ref.RustReference
 abstract class RustMethodCallExprImplMixin(node: ASTNode?) : RustExprElementImpl(node), RustMethodCallExprElement {
     override val referenceNameElement: PsiElement get() = identifier
 
+    override val referenceName: String get() = referenceNameElement.text
+
     override fun getReference(): RustReference = RustMethodCallReferenceImpl(this)
 
 }

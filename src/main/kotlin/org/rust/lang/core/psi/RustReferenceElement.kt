@@ -7,8 +7,7 @@ interface RustReferenceElement : RustCompositeElement {
 
     val referenceNameElement: PsiElement
 
+    val referenceName: String
+
     override fun getReference(): RustReference
 }
-
-val RustReferenceElement.referenceName: String
-    get() = referenceNameElement.text

@@ -12,5 +12,7 @@ abstract class RustStructExprFieldImplMixin(node: ASTNode) : RustCompositeElemen
     override fun getReference(): RustReference = RustStructExprFieldReferenceImpl(this)
 
     override val referenceNameElement: PsiElement get() = identifier
+
+    override val referenceName: String get() = referenceNameElement.text
 }
 
