@@ -15,8 +15,6 @@ abstract class RustStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElem
 
     constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getParent(): PsiElement? = parentByTree
-
     override fun getReference(): RustReference? = null
 
     override fun toString(): String = "${javaClass.simpleName}($elementType)"

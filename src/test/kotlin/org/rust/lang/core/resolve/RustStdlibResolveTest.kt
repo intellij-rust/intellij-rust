@@ -31,7 +31,15 @@ class RustStdlibResolveTest : RustMultiFileResolveTestBase() {
         fn main() {}
     """)
 
-    fun testResolveCore() = doTestResolved("core/main.rs")
+    fun testResolveCore() = stubOnlyResolve("""
+    //- main.rs
+        // FromStr is defined in `core` and reexported in `std`
+        use std::str::FromStr;
+                        //^ ...libcore/str/mod.rs
+
+        fn main() { }
+    """)
+
     fun testResolvePrelude() = doTestResolved("prelude/main.rs")
     fun testResolveBox() = doTestResolved("box/main.rs")
     fun testResolveOption() = doTestResolved("option/main.rs")
