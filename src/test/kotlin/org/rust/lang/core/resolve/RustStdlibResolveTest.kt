@@ -23,7 +23,14 @@ class RustStdlibResolveTest : RustMultiFileResolveTestBase() {
         fn main() {}
     """)
 
-    fun testResolveCollections() = doTestResolved("collections/main.rs")
+    fun testResolveCollections() = stubOnlyResolve("""
+    //- main.rs
+        use std::collections::Bound;
+                             //^ ...libcollections/lib.rs
+
+        fn main() {}
+    """)
+
     fun testResolveCore() = doTestResolved("core/main.rs")
     fun testResolvePrelude() = doTestResolved("prelude/main.rs")
     fun testResolveBox() = doTestResolved("box/main.rs")

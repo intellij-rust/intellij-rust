@@ -1,12 +1,11 @@
 package org.rust.lang.core.stubs
 
+import com.intellij.lang.ASTNode
+import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.stubs.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.*
-import org.rust.lang.core.psi.impl.mixin.asRustPath
-import org.rust.lang.core.psi.impl.mixin.isLocal
-import org.rust.lang.core.psi.impl.mixin.isStarImport
-import org.rust.lang.core.psi.impl.mixin.pathAttribute
+import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.readRustPath
 import org.rust.lang.core.symbols.writeRustPath
@@ -45,6 +44,8 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
 
     "USE_GLOB_LIST" -> RustUseGlobListElementStub.Type
     "USE_GLOB" -> RustUseGlobElementStub.Type
+
+    "PATH" -> RustPathElementStub.Type
 
     else -> error("Unknown element $name")
 }
@@ -652,6 +653,44 @@ class RustUseGlobElementStub(
             }
 
         override fun indexStub(stub: RustUseGlobElementStub, sink: IndexSink) {
+            //NOP
+        }
+    }
+}
+
+
+class RustPathElementStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val referenceName: String,
+    val isCrateRelative: Boolean,
+    val hasGenericArgs: Boolean
+) : StubBase<RustPathElement>(parent, elementType) {
+
+    object Type : RustStubElementType<RustPathElementStub, RustPathElement>("PATH") {
+        override fun shouldCreateStub(node: ASTNode): Boolean =
+            TreeUtil.findParent(node, RustCompositeElementTypes.USE_ITEM) != null
+
+        override fun createPsi(stub: RustPathElementStub) =
+            RustPathElementImpl(stub, this)
+
+        override fun createStub(psi: RustPathElement, parentStub: StubElement<*>?) =
+            RustPathElementStub(parentStub, this, psi.referenceName, psi.isCrateRelative, psi.genericArgs != null)
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RustPathElementStub(parentStub, this,
+                dataStream.readName()!!.string,
+                dataStream.readBoolean(),
+                dataStream.readBoolean()
+            )
+
+        override fun serialize(stub: RustPathElementStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.referenceName)
+                writeBoolean(stub.isCrateRelative)
+                writeBoolean(stub.hasGenericArgs)
+            }
+
+        override fun indexStub(stub: RustPathElementStub, sink: IndexSink) {
             //NOP
         }
     }

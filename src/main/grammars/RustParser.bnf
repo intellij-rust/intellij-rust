@@ -220,7 +220,10 @@ meta_item ::= IDENTIFIER [ '=' lit_expr | '(' [ <<comma_separated_list meta_item
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 private path_ident ::= IDENTIFIER | SELF | SUPER | CSELF
-fake path ::= (path '::')? path_ident path_generics?
+fake path ::= (path '::')? path_ident path_generics? {
+  stubClass = "org.rust.lang.core.stubs.RustPathElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 private path_impl ::= path_start path_segment*
 
