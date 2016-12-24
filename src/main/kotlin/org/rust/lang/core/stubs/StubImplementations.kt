@@ -43,6 +43,9 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "TRAIT_METHOD_MEMBER" -> RustTraitMethodMemberElementStub.Type
     "ALIAS" -> RustAliasElementStub.Type
 
+    "USE_GLOB_LIST" -> RustUseGlobListElementStub.Type
+    "USE_GLOB" -> RustUseGlobElementStub.Type
+
     else -> error("Unknown element $name")
 }
 
@@ -585,6 +588,7 @@ class RustTraitMethodMemberElementStub(
     }
 }
 
+
 class RustAliasElementStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?
@@ -609,5 +613,46 @@ class RustAliasElementStub(
             }
 
         override fun indexStub(stub: RustAliasElementStub, sink: IndexSink) = sink.indexAlias(stub)
+    }
+}
+
+
+class RustUseGlobListElementStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>
+) : StubBase<RustUseGlobListElement>(parent, elementType) {
+
+    object Type : RustStubElementType.Trivial<RustUseGlobListElementStub, RustUseGlobListElement>(
+        "USE_GLOB_LIST",
+        ::RustUseGlobListElementStub,
+        ::RustUseGlobListElementImpl
+    )
+}
+
+
+class RustUseGlobElementStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val referenceName: String
+) : StubBase<RustUseGlobElement>(parent, elementType) {
+
+    object Type : RustStubElementType<RustUseGlobElementStub, RustUseGlobElement>("USE_GLOB") {
+        override fun createPsi(stub: RustUseGlobElementStub) =
+            RustUseGlobElementImpl(stub, this)
+
+        override fun createStub(psi: RustUseGlobElement, parentStub: StubElement<*>?) =
+            RustUseGlobElementStub(parentStub, this, psi.referenceName)
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RustUseGlobElementStub(parentStub, this,
+                dataStream.readName()!!.string
+            )
+
+        override fun serialize(stub: RustUseGlobElementStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.referenceName)
+            }
+
+        override fun indexStub(stub: RustUseGlobElementStub, sink: IndexSink) {
+            //NOP
+        }
     }
 }

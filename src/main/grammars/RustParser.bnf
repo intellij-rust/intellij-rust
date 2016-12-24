@@ -467,10 +467,18 @@ private use_path ::=
                   //  use ::foo::*;
                   | path_without_types ( alias | '::' ( use_glob_list | '*' ) )?
 
-use_glob_list ::= '{' use_glob_with_recover* '}' { pin = 1 }
+use_glob_list ::= '{' use_glob_with_recover* '}' {
+  pin = 1
+  extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RustUseGlobListElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 use_glob ::= (IDENTIFIER | SELF) alias? {
   implements = [ "org.rust.lang.core.psi.RustReferenceElement" ]
+  extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RustUseGlobElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 private use_glob_with_recover ::= !'}' use_glob (',' | &'}') {
