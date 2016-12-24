@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.CargoProjectDescription
+import org.rust.cargo.project.PackageOrigin
 import org.rust.ide.utils.checkWriteAccessAllowed
 
 /**
@@ -69,7 +70,7 @@ fun Module.extendProjectDescriptionWithStandardLibraryCrates(projectDescription:
         }
     }
 
-    return projectDescription.withAdditionalPackages(stdlibPackages)
+    return projectDescription.withAdditionalPackages(stdlibPackages, PackageOrigin.STDLIB)
 }
 
 /**
