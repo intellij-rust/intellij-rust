@@ -15,7 +15,14 @@ class RustStdlibResolveTest : RustMultiFileResolveTestBase() {
             ?: error("No Rust SDK sources found during test.\nTry running `rustup component add rust-src`")
     }
 
-    fun testResolveFs() = doTestResolved("fs/main.rs")
+    fun testResolveFs() = stubOnlyResolve("""
+    //- main.rs
+        use std::fs::File;
+                    //^ ...libstd/fs.rs
+
+        fn main() {}
+    """)
+
     fun testResolveCollections() = doTestResolved("collections/main.rs")
     fun testResolveCore() = doTestResolved("core/main.rs")
     fun testResolvePrelude() = doTestResolved("prelude/main.rs")

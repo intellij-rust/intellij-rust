@@ -54,19 +54,27 @@ abstract class RustMultiFileResolveTestBase : RustResolveTestBase() {
 
         myFixture.configureFromTempProjectFile(fileNames[0])
         val (reference, resolveFile) = findElementAndDataInEditor<RustReferenceElement>()
+
         if (resolveFile == "unresolved") {
             val element = reference.reference.resolve()
             if (element != null) {
                 error("Should not resolve ${reference.text} to ${element.text}")
             }
+            return
+        }
+
+        val element = reference.reference.resolve()
+            ?: error("Failed to resolve ${reference.text}")
+        val actualResolveFile = element.containingFile.virtualFile
+
+        if (resolveFile.startsWith("...")) {
+            check(actualResolveFile.path.endsWith(resolveFile.drop(3))) {
+                "Should resolve to $resolveFile, was ${actualResolveFile.path} instead"
+            }
         } else {
             val expectedResolveFile = myFixture.findFileInTempDir(resolveFile)
                 ?: error("Can't find `$resolveFile` file")
 
-            val element = reference.reference.resolve()
-                ?: error("Failed to resolve ${reference.text}")
-
-            val actualResolveFile = element.containingFile.virtualFile
             check(actualResolveFile == expectedResolveFile) {
                 "Should resolve to ${expectedResolveFile.path}, was ${actualResolveFile.path} instead"
             }
