@@ -18,12 +18,12 @@ fun IndexSink.indexStructItem(stub: RustStructItemElementStub) {
     indexGotoClass(stub)
 }
 
-fun IndexSink.indexEnumItem(stub: RustEnumItemElementStub) {
+fun IndexSink.indexUnionItem(stub: RustUnionItemElementStub) {
     indexNamedStub(stub)
     indexGotoClass(stub)
 }
 
-fun IndexSink.indexUnionItem(stub: RustUnionItemElementStub) {
+fun IndexSink.indexEnumItem(stub: RustEnumItemElementStub) {
     indexNamedStub(stub)
     indexGotoClass(stub)
 }

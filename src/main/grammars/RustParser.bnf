@@ -596,7 +596,12 @@ enum_item ::= attrs_and_vis ENUM IDENTIFIER generic_params? where_clause? enum_b
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-enum_body ::= '{' [ <<comma_separated_list enum_variant>> ] '}' { pin = 1 }
+enum_body ::= '{' [ <<comma_separated_list enum_variant>> ] '}' {
+  pin = 1
+  extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl.WithParent<?>"
+  stubClass = "org.rust.lang.core.stubs.RustEnumBodyElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 enum_variant ::= outer_attr* IDENTIFIER variant_args? {
   pin = 2
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]

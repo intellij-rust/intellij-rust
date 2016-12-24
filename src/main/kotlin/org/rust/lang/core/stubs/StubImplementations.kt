@@ -23,8 +23,9 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "USE_ITEM" -> RustUseItemElementStub.Type
 
     "STRUCT_ITEM" -> RustStructItemElementStub.Type
-    "ENUM_ITEM" -> RustEnumItemElementStub.Type
     "UNION_ITEM" -> RustUnionItemElementStub.Type
+    "ENUM_ITEM" -> RustEnumItemElementStub.Type
+    "ENUM_BODY" -> RustEnumBodyElementStub.Type
     "ENUM_VARIANT" -> RustEnumVariantElementStub.Type
 
     "MOD_DECL_ITEM" -> RustModDeclItemElementStub.Type
@@ -153,6 +154,38 @@ class RustStructItemElementStub(
 }
 
 
+class RustUnionItemElementStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    override val name: String?,
+    override val isPublic: Boolean
+) : StubBase<RustUnionItemElement>(parent, elementType),
+    RustNamedStub,
+    RustVisibilityStub {
+
+    object Type : RustStubElementType<RustUnionItemElementStub, RustUnionItemElement>("UNION_ITEM") {
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RustUnionItemElementStub(parentStub, this,
+                dataStream.readNameAsString(),
+                dataStream.readBoolean()
+            )
+
+        override fun serialize(stub: RustUnionItemElementStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.name)
+                writeBoolean(stub.isPublic)
+            }
+
+        override fun createPsi(stub: RustUnionItemElementStub) =
+            RustUnionItemElementImpl(stub, this)
+
+        override fun createStub(psi: RustUnionItemElement, parentStub: StubElement<*>?) =
+            RustUnionItemElementStub(parentStub, this, psi.name, psi.isPublic)
+
+        override fun indexStub(stub: RustUnionItemElementStub, sink: IndexSink) = sink.indexUnionItem(stub)
+    }
+}
+
+
 class RustEnumItemElementStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
@@ -187,35 +220,15 @@ class RustEnumItemElementStub(
 }
 
 
-class RustUnionItemElementStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    override val name: String?,
-    override val isPublic: Boolean
-) : StubBase<RustUnionItemElement>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub {
+class RustEnumBodyElementStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>
+) : StubBase<RustEnumBodyElement>(parent, elementType) {
 
-    object Type : RustStubElementType<RustUnionItemElementStub, RustUnionItemElement>("UNION_ITEM") {
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RustUnionItemElementStub(parentStub, this,
-                dataStream.readNameAsString(),
-                dataStream.readBoolean()
-            )
-
-        override fun serialize(stub: RustUnionItemElementStub, dataStream: StubOutputStream) =
-            with(dataStream) {
-                writeName(stub.name)
-                writeBoolean(stub.isPublic)
-            }
-
-        override fun createPsi(stub: RustUnionItemElementStub) =
-            RustUnionItemElementImpl(stub, this)
-
-        override fun createStub(psi: RustUnionItemElement, parentStub: StubElement<*>?) =
-            RustUnionItemElementStub(parentStub, this, psi.name, psi.isPublic)
-
-        override fun indexStub(stub: RustUnionItemElementStub, sink: IndexSink) = sink.indexUnionItem(stub)
-    }
+    object Type : RustStubElementType.Trivial<RustEnumBodyElementStub, RustEnumBodyElement>(
+        "ENUM_BODY",
+        ::RustEnumBodyElementStub,
+        ::RustEnumBodyElementImpl
+    )
 }
 
 
