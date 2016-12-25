@@ -2,10 +2,11 @@ package org.rust.cargo.project.workspace
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.util.extendProjectDescriptionWithStandardLibraryCrates
+import org.rust.cargo.util.rustLibraryName
 
 /**
  * Cargo based project's workspace abstraction insulating inter-op with the `cargo` & `Cargo.toml`
@@ -54,5 +55,7 @@ interface CargoProjectWorkspace {
  */
 val Module.cargoProject: CargoProjectDescription?
     get() = CargoProjectWorkspace.forModule(this).projectDescription?.let {
-        extendProjectDescriptionWithStandardLibraryCrates(it)
+        val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(rustLibraryName)
+            ?: return it
+        return it.withStdlib(lib)
     }

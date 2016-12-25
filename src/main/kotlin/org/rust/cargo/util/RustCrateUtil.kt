@@ -3,14 +3,13 @@ package org.rust.cargo.util
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiFile
-import org.rust.cargo.project.workspace.cargoProject
 import org.rust.cargo.toolchain.RustToolchain
 
 
 object AutoInjectedCrates {
     const val std: String = "std"
     const val core: String = "core"
+    val stdlibCrateNames = listOf(std, core, "collections", "alloc", "rustc_unicode", "std_unicode")
 }
 
 /**

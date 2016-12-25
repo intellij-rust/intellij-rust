@@ -8,8 +8,6 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.project.PackageOrigin
 import org.rust.ide.utils.checkWriteAccessAllowed
 
 /**
@@ -20,7 +18,7 @@ val Module.cargoLibraryName: String get() = "Cargo <$name>"
 /**
  * Established Rust's 'stdlib' library name
  */
-private val Module.rustLibraryName: String get() = "Rust <$name>"
+val Module.rustLibraryName: String get() = "Rust <$name>"
 
 /**
  * Rust standard library crates source roots extracted from a zip archive or a folder with rust.
@@ -32,7 +30,6 @@ class StandardLibraryRoots private constructor(
 
     /**
      * Creates an module level IDEA external library from [roots].
-     * The crates can be extracted with [extendProjectDescriptionWithStandardLibraryCrates].
      */
     fun attachTo(module: Module) {
         module.updateLibrary(module.rustLibraryName, roots)
@@ -47,30 +44,11 @@ class StandardLibraryRoots private constructor(
             val srcDir = if (sources.name == "src") sources else sources.findChild("src")
                 ?: return null
 
-            val roots = stdlibCrateNames.mapNotNull { srcDir.findFileByRelativePath("lib$it") }
+            val roots = AutoInjectedCrates.stdlibCrateNames.mapNotNull { srcDir.findFileByRelativePath("lib$it") }
             if (roots.isEmpty()) return null
             return StandardLibraryRoots(roots)
         }
     }
-}
-
-/**
- * Combines information about project structure which we got form cargo and information
- * about standard library which is stored as an IDEA external library
- */
-fun Module.extendProjectDescriptionWithStandardLibraryCrates(projectDescription: CargoProjectDescription): CargoProjectDescription {
-    val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(rustLibraryName)
-        ?: return projectDescription
-
-    val roots: Map<String, VirtualFile> = lib.getFiles(OrderRootType.CLASSES).associateBy { it.name }
-    val stdlibPackages = stdlibCrateNames.mapNotNull { name ->
-        roots["lib$name"]?.let { libDir ->
-            val file = libDir.findFileByRelativePath("lib.rs") ?: return@let null
-            name to file
-        }
-    }
-
-    return projectDescription.withAdditionalPackages(stdlibPackages, PackageOrigin.STDLIB)
 }
 
 /**
@@ -94,8 +72,6 @@ fun Module.updateLibrary(libraryName: String, roots: Collection<VirtualFile>) {
         model.addLibraryEntry(library)
     }
 }
-
-private val stdlibCrateNames = listOf("std", "core", "collections", "alloc", "rustc_unicode", "std_unicode")
 
 private fun fillLibrary(library: Library, roots: Collection<VirtualFile>) {
     val model = library.modifiableModel
