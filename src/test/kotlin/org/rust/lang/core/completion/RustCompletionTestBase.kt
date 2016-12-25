@@ -24,10 +24,11 @@ abstract class RustCompletionTestBase : RustTestCaseBase() {
         val shift = when {
             target.endsWith("()") -> 3
             target.endsWith(" {}") -> 4
-            else -> 1
+            else -> 2
         }
         val element = myFixture.file.findElementAt(myFixture.caretOffset - shift)!!
-        check(element.text == normName && element.correspondsToText(target)) {
+        val skipTextCheck = normName.contains(' ')
+        check((skipTextCheck || element.text == normName) && (element.fitsHierarchically(target) || element.fitsLinearly(target))) {
             "Wrong completion, expected `$target`, but got `${element.text}`"
         }
     }
@@ -52,10 +53,21 @@ abstract class RustCompletionTestBase : RustTestCaseBase() {
         }
     }
 
-    private fun PsiElement.correspondsToText(target: String): Boolean = when {
+    private fun PsiElement.fitsHierarchically(target: String): Boolean = when {
             text == target -> true
             text.length > target.length -> false
-            parent != null -> parent.correspondsToText(target)
+            parent != null -> parent.fitsHierarchically(target)
             else -> false
         }
+
+    private fun PsiElement.fitsLinearly(target: String): Boolean {
+        var el = this
+        var text = ""
+        while (text.length < target.length) {
+            text = el.text + text
+            if (text == target) return true
+            el = el.prevSibling ?: break
+        }
+        return false
+    }
 }

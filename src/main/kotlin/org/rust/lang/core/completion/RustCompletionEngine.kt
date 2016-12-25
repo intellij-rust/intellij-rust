@@ -20,6 +20,8 @@ import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.util.stripAllRefsIfAny
 
 object RustCompletionEngine {
+    const val KEYWORD_PRIORITY = 10.0
+
     fun completePath(ref: RustPathElement, namespace: Namespace?): Array<out LookupElement> {
         val path = ref.asRustPath ?: return emptyArray()
 
