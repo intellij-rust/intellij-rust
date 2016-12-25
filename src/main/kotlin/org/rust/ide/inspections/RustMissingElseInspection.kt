@@ -9,6 +9,7 @@ import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.RustElementVisitor
 import org.rust.lang.core.psi.RustExprStmtElement
 import org.rust.lang.core.psi.RustIfExprElement
+import rightSiblings
 
 /**
  * Checks for potentially missing `else`s.
@@ -42,6 +43,4 @@ class RustMissingElseInspection : RustLocalInspectionTool() {
         is RustExprStmtElement -> firstChild.extractIf()
         else -> null
     }
-
-    private val PsiElement.rightSiblings: Sequence<PsiElement> get() = generateSequence(this.nextSibling) { it.nextSibling }
 }

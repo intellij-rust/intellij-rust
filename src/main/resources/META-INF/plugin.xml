@@ -111,6 +111,8 @@
 
         <completion.contributor language="Rust"
                                 implementationClass="org.rust.lang.core.completion.RustCompletionContributor"/>
+        <completion.contributor language="Rust"
+                                implementationClass="org.rust.lang.core.completion.RustKeywordCompletionContributor"/>
 
         <!-- Description Provider -->
 
