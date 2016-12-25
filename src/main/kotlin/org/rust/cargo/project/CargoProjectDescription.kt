@@ -1,8 +1,11 @@
 package org.rust.cargo.project
 
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
+import org.rust.cargo.util.AutoInjectedCrates
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
@@ -100,8 +103,20 @@ class CargoProjectDescription private constructor(
 
     fun isCrateRoot(file: VirtualFile): Boolean = findTargetForCrateRootFile(file) != null
 
-    fun withAdditionalPackages(additionalPackages: Collection<Pair<String, VirtualFile>>, origin: PackageOrigin): CargoProjectDescription {
-        val stdlibPackages = additionalPackages.map {
+    /**
+     * Combines information about the project structure we got form cargo and information
+     * about the standard library that is stored as an IDEA external library
+     */
+    fun withStdlib(lib: Library): CargoProjectDescription {
+        val roots: Map<String, VirtualFile> = lib.getFiles(OrderRootType.CLASSES).associateBy { it.name }
+        val stdlibPackages = AutoInjectedCrates.stdlibCrateNames.mapNotNull { name ->
+            roots["lib$name"]?.let { libDir ->
+                val file = libDir.findFileByRelativePath("lib.rs") ?: return@let null
+                name to file
+            }
+        }
+
+        val stdlib = stdlibPackages.map {
             val (crateName, crateRoot) = it
             Package(
                 contentRootUrl = crateRoot.parent.url,
@@ -109,10 +124,10 @@ class CargoProjectDescription private constructor(
                 version = "",
                 targets = listOf(Target(crateRoot.url, name = crateName, kind = TargetKind.LIB)),
                 source = null,
-                origin = origin
+                origin = PackageOrigin.STDLIB
             )
         }
-        return CargoProjectDescription(packages + stdlibPackages)
+        return CargoProjectDescription(packages + stdlib)
     }
 
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
