@@ -27,7 +27,7 @@ class RustMissingElseInspection : RustLocalInspectionTool() {
                     .firstOrNull()
                     .extractIf() ?: return
                 val rangeStart = expr.startOffsetInParent + firstIf.textLength
-                val rangeLen = nextIf.expr.textRange.startOffset - firstIf.textRange.startOffset - firstIf.textLength
+                val rangeLen = nextIf.condition.expr.textRange.startOffset - firstIf.textRange.startOffset - firstIf.textLength
                 val fixRange = TextRange(nextIf.textRange.startOffset, nextIf.textRange.startOffset)
                 holder.registerProblem(
                     expr.parent,

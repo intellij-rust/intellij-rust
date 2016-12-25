@@ -331,13 +331,8 @@ private fun innerDeclarationsIn(
         is RustForExprElement ->
             scope.scopedForDecl.pat.boundNames
 
-        is RustIfLetExprElement, is RustWhileLetExprElement -> {
-            scope as RustScopedLetExprElement
-            if (scope.scopedLetDecl.isStrictAncestorOf(place)) {
-                return emptySequence()
-            }
-            scope.scopedLetDecl.pat.boundNames
-        }
+        is RustIfExprElement -> scope.condition.boundNames(place)
+        is RustWhileExprElement -> scope.condition.boundNames(place)
 
         is RustLambdaExprElement -> scope
             .parameters.parameterList.asSequence()
@@ -407,6 +402,9 @@ private val RustPatElement.boundNames: Sequence<ScopeEntry>
     get() = PsiTreeUtil.findChildrenOfType(this, RustPatBindingElement::class.java)
         .asScopeEntries()
 
+private fun RustConditionElement.boundNames(place: RustCompositeElement): Sequence<ScopeEntry> =
+    if (this.isStrictAncestorOf(place)) emptySequence()
+    else pat?.boundNames ?: emptySequence()
 
 private fun injectedCrates(file: RustFile): Sequence<ScopeEntry> {
     val module = file.module

@@ -18,5 +18,5 @@ class RustWithIfSurrounder : RustStatementsSurrounderBase() {
     override val shouldRemoveExpr = true
 
     override fun getExprForRemove(expression: PsiElement): PsiElement =
-        (expression as RustIfExprElement).expr
+        (expression as RustIfExprElement).condition.expr
 }

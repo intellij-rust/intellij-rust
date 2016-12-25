@@ -136,9 +136,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
     private val BLOCK_LIKE = TokenSet.create(
         RustCompositeElementTypes.WHILE_EXPR,
-        RustCompositeElementTypes.WHILE_LET_EXPR,
         RustCompositeElementTypes.IF_EXPR,
-        RustCompositeElementTypes.IF_LET_EXPR,
         RustCompositeElementTypes.FOR_EXPR,
         RustCompositeElementTypes.LOOP_EXPR,
         RustCompositeElementTypes.MATCH_EXPR,

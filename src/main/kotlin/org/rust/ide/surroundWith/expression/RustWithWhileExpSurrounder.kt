@@ -18,7 +18,7 @@ class RustWithWhileExpSurrounder : RustExpressionSurrounderBase<RustWhileExprEle
         RustPsiFactory(project).createExpression("while a {stmnt;}") as RustWhileExprElement
 
     override fun getWrappedExpression(expression: RustWhileExprElement): RustExprElement =
-        expression.expr
+        expression.condition.expr
 
     override fun isApplicable(expression: RustExprElement): Boolean =
         expression.resolvedType == RustBooleanType

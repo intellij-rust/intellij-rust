@@ -144,7 +144,6 @@
     implements  ("enum_item")       = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
                                         "org.rust.lang.core.psi.RustStructOrEnumItemElement" ]
     implements  ("lambda_expr")     = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    implements  ("scoped_let_expr") = "org.rust.lang.core.resolve.scope.RustResolveScope"
     implements  ("for_expr")        = "org.rust.lang.core.resolve.scope.RustResolveScope"
     implements  ("match_arm")       = "org.rust.lang.core.resolve.scope.RustResolveScope"
 
@@ -171,7 +170,6 @@
     elementType ("(fn|lambda|path)_parameters|method_parameters|method_decl_parameters") = parameters
     elementType ("(fn_type|foreign_fn)_parameters") = variadic_parameters
 
-    extends     ("(if|while)_let_expr") = scoped_let_expr
     extends     (".*_expr") = expr
     extends     ("(?!ret_type).*_type") = type
     extends     ("pat_(wild|ref|tup|vec|macro|struct|enum|ident|range|uniq|qual_path)")  = pat
@@ -869,9 +867,7 @@ stmt_mode_expr_off ::= <<stmtMode 'OFF' expr>> { elementType = expr }
 
 
 block_expr ::= while_expr
-             | while_let_expr
              | if_expr
-             | if_let_expr
              | for_expr
              | loop_expr
              | match_expr
@@ -953,7 +949,9 @@ path_expr ::= path_generic_args_with_colons
 
 qual_path_expr ::= << qualified_path path_generic_args_with_colons >>
 
-while_expr ::= label? WHILE no_struct_lit_expr simple_block { pin = no_struct_lit_expr }
+while_expr ::= label? WHILE condition simple_block { pin = 'condition' }
+condition ::= (LET pat '=')? no_struct_lit_expr
+
 loop_expr ::= label? LOOP simple_block
 private label ::= LIFETIME ':'
 
@@ -974,17 +972,8 @@ match_arm ::= outer_attr* match_pat '=>' stmt_mode_expr (',' | (&'}' | <<isBlock
 private match_arm_recover ::= !(first_pat | first_outer_attr | '}')
 match_pat ::= pat ('|' pat)* (IF any_expr)?
 
-if_expr ::= IF no_struct_lit_expr simple_block else_branch? { pin = no_struct_lit_expr }
-
-else_branch ::= ELSE ( if_expr | if_let_expr | simple_block )
-
-fake scoped_let_expr ::= scoped_let_decl simple_block
-
-scoped_let_decl ::= LET pat '=' no_struct_lit_expr
-
-if_let_expr ::= IF scoped_let_decl simple_block else_branch? { pin = scoped_let_decl }
-
-while_let_expr ::= label? WHILE scoped_let_decl simple_block { pin = scoped_let_decl }
+if_expr ::= IF condition simple_block else_branch? { pin = 'condition' }
+else_branch ::= ELSE ( if_expr | simple_block )
 
 ret_expr ::= RETURN expr?
 

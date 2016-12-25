@@ -80,10 +80,7 @@ private class AddStructFieldsQuickFix(
 }
 
 private class RedundantParenthesisVisitor(private val holder: AnnotationHolder) : RustElementVisitor() {
-    override fun visitIfExpr(o: RustIfExprElement) =
-        o.expr.warnIfParens("Predicate expression has unnecessary parentheses")
-
-    override fun visitWhileExpr(o: RustWhileExprElement) =
+    override fun visitCondition(o: RustConditionElement) =
         o.expr.warnIfParens("Predicate expression has unnecessary parentheses")
 
     override fun visitRetExpr(o: RustRetExprElement) =
