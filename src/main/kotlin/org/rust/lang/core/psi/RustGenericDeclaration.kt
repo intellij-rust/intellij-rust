@@ -1,8 +1,6 @@
 package org.rust.lang.core.psi
 
-import org.rust.lang.core.resolve.scope.RustResolveScope
-
-interface RustGenericDeclaration : RustResolveScope {
+interface RustGenericDeclaration : RustCompositeElement {
     val genericParams: RustGenericParamsElement?
     val whereClause: RustWhereClauseElement?
 }

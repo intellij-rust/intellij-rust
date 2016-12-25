@@ -1,11 +1,9 @@
 package org.rust.lang.core.psi
 
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.resolve.scope.RustResolveScope
 
 interface RustFnElement : RustNamedElement,
                           RustGenericDeclaration,
-                          RustResolveScope,
                           RustInnerAttributeOwner,
                           RustOuterAttributeOwner {
     val identifier: PsiElement

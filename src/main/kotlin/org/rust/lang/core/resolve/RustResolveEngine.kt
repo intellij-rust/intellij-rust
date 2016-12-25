@@ -22,7 +22,6 @@ import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.resolve.indexes.RustImplIndex
-import org.rust.lang.core.resolve.scope.RustResolveScope
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
 import org.rust.lang.core.types.RustStructType
@@ -427,7 +426,7 @@ private fun injectedCrates(file: RustFile): Sequence<ScopeEntry> {
 private fun RustUseItemElement.wildcardEntries(context: Context): Sequence<ScopeEntry> {
     if (this in context.visitedStarImports) return emptySequence()
     // Recursively step into `use foo::*`
-    val mod = path?.reference?.resolve() as? RustResolveScope ?: return emptySequence()
+    val mod = path?.reference?.resolve() ?: return emptySequence()
     val newCtx = context.copy(visitedStarImports = context.visitedStarImports + this)
     return outerDeclarations(mod, newCtx) ?: emptySequence()
 }

@@ -138,17 +138,6 @@
     implements  ("path") = "org.rust.lang.core.psi.RustReferenceElement"
 
     //
-    // Resolve scopes
-    //
-
-    implements  ("enum_item")       = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
-                                        "org.rust.lang.core.psi.RustStructOrEnumItemElement" ]
-    implements  ("lambda_expr")     = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    implements  ("for_expr")        = "org.rust.lang.core.resolve.scope.RustResolveScope"
-    implements  ("match_arm")       = "org.rust.lang.core.resolve.scope.RustResolveScope"
-
-
-    //
     //  Misc
     //
 
@@ -524,7 +513,6 @@ mod_item ::= attrs_and_vis MOD IDENTIFIER '{' inner_attr* items '}' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustItemElement"
-                 "org.rust.lang.core.resolve.scope.RustResolveScope"
                  "org.rust.lang.core.psi.RustMod"
                  "org.rust.lang.core.psi.RustInnerAttributeOwner" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustModItemImplMixin"
@@ -587,8 +575,7 @@ union_item ::= attrs_and_vis UNION IDENTIFIER generic_params? where_clause? bloc
 
 enum_item ::= attrs_and_vis ENUM IDENTIFIER generic_params? where_clause? enum_body {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.resolve.scope.RustResolveScope"
-                 "org.rust.lang.core.psi.RustStructOrEnumItemElement" ]
+  implements = "org.rust.lang.core.psi.RustStructOrEnumItemElement"
   mixin = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RustEnumItemElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1162,8 +1149,7 @@ private lit ::= ( STRING_LITERAL
 
 fake block ::= '{' inner_attr* (item | stmt)* expr? '}' {
   pin = 1
-  implements = [ "org.rust.lang.core.psi.RustItemsOwner"
-                 "org.rust.lang.core.resolve.scope.RustResolveScope" ]
+  implements = "org.rust.lang.core.psi.RustItemsOwner"
 }
 
 simple_block ::= '{' block_tail '}' {

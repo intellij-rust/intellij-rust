@@ -1,9 +1,8 @@
 package org.rust.lang.core.psi
 
 import org.rust.lang.core.parser.RustPsiTreeUtil
-import org.rust.lang.core.resolve.scope.RustResolveScope
 
-interface RustItemsOwner : RustResolveScope
+interface RustItemsOwner : RustCompositeElement
 
 private inline fun <reified I : RustItemElement> RustItemsOwner.items(): List<I> =
     RustPsiTreeUtil.getStubChildrenOfTypeAsList(this, I::class.java)
