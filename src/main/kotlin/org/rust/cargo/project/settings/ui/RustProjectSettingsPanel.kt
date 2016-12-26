@@ -31,7 +31,7 @@ class RustProjectSettingsPanel {
         }
     }
 
-    private val disposable: Disposable = Disposer.newDisposable()
+    private val disposable: Disposable = Disposer.newDisposable("RustProjectSettingsPanel")
     fun disposeUIResources() = Disposer.dispose(disposable)
 
     private val versionUpdateAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
