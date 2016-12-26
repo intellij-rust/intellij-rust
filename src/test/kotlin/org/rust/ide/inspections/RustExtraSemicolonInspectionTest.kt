@@ -22,6 +22,13 @@ class RustExtraSemicolonInspectionTest : RustInspectionsTestBase() {
         fn fun() -> i32 { panic!("diverge"); }
     """)
 
+    fun testNotApplicableWithTrailingFn() = checkByText<RustExtraSemicolonInspection>("""
+        fn foo() -> bool {
+            loop {}
+            fn f() {}
+        }
+    """)
+
     fun testFix() = checkFixByText<RustExtraSemicolonInspection>("Remove semicolon", """
         fn foo() -> i32 {
             let x = 92;

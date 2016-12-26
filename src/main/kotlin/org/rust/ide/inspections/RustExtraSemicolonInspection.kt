@@ -35,7 +35,7 @@ private fun inspect(holder: ProblemsHolder, fn: RustFnElement) {
     val lastStatement = block.stmtList.lastOrNull() as? RustExprStmtElement ?: return
 
     when (lastStatement.expr) {
-        is RustRetExprElement, is RustMacroExprElement  -> return
+        is RustRetExprElement, is RustMacroExprElement, is RustLoopExprElement -> return
     }
 
     holder.registerProblem(
