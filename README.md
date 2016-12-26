@@ -30,11 +30,7 @@ If you are looking for the TOML plugin, see [toml] directory.
 
 ## Compatible IDEs
 
-The plugin should be compatible with any Intellij based IDE starting from build
-143.2287.1. This includes all 2016.1 releases and newer.
-For example, the minimum supported IDEA version is 15.0.4, the
-minimum supported CLion version is 1.2. See `Help > About` menu in the IDE to
-learn the build version you are using.
+The plugin should be compatible with any Intellij based IDE starting from 2016.1.
 
 ## Contributing
 

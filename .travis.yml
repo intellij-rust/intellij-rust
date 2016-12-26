@@ -6,7 +6,6 @@ env:
   matrix:
         - ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT
         - ORG_GRADLE_PROJECT_ideaVersion=2016.1
-        - ORG_GRADLE_PROJECT_ideaVersion=15.0.4
 
 before_script:
   - curl https://sh.rustup.rs -sSf | sh -s -- -y
