@@ -83,8 +83,7 @@ data class RustcVersion(
 )
 
 data class CargoVersion(
-    val semver: SemVer,
-    val hasMetadataCommand: Boolean
+    val semver: SemVer
 )
 
 private fun findSemVer(lines: List<String>): SemVer? {
@@ -125,8 +124,7 @@ private fun scrapeRustcVersion(pathToRustc: String): RustcVersion? {
 private fun scrapeCargoVersion(cargo: Cargo): CargoVersion? {
     val lines = cargo.generalCommand("version").runExecutable() ?: return null
     val semver = findSemVer(lines) ?: return null
-    val hasMetadataCommand = cargo.generalCommand("metadata", listOf("--help")).runExecutable() != null
-    return CargoVersion(semver, hasMetadataCommand)
+    return CargoVersion(semver)
 }
 
 private object Suggestions {
@@ -151,7 +149,7 @@ private object Suggestions {
         .split(File.pathSeparator)
         .asSequence()
         .filter { !it.isEmpty() }
-        .map { File(it) }
+        .map(::File)
         .filter { it.isDirectory }
 
     private fun forUnix(): Sequence<File> {

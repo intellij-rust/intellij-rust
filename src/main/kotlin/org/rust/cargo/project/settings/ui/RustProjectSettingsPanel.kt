@@ -126,10 +126,6 @@ class RustProjectSettingsPanel {
                     label.foreground = JBColor.foreground()
                 }
             }
-
-            if (info.cargo?.hasMetadataCommand == false) {
-                cargoVersion.foreground = JBColor.RED
-            }
         }, ModalityState.any())
     }
 }
