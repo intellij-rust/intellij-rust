@@ -13,8 +13,7 @@ import org.rust.lang.core.psi.RustTokenElementTypes
 class RustPsiPattern {
     class StatementBeginning : PatternCondition<PsiElement>("on statement beginning") {
         override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
-            if (PsiTreeUtil.prevLeaf(t) == null) return true
-            val prev = t.prevVisibleOrNewLine ?: return false
+            val prev = t.prevVisibleOrNewLine ?: return true
             if (prev is PsiWhiteSpace) return true
             return prev.node.elementType in STATEMENT_BOUNDARIES
         }

@@ -3,6 +3,8 @@ package org.rust.lang.core.completion
 class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
     override val dataPath = ""
 
+    fun testExternCrateAtTheFileVeryBeginning() = checkSingleCompletion("extern crate", "exte/*caret*/")
+
     fun testExternCrate() = checkSingleCompletion("extern crate", """
         exte/*caret*/
     """)
@@ -83,6 +85,8 @@ class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
     fun testUse() = checkSingleCompletion("use", """
         u/*caret*/
     """)
+
+    fun testUseAtTheFileVeryBeginning() = checkSingleCompletion("use", "u/*caret*/")
 
     fun testUseWithinMod() = checkSingleCompletion("use", """
         mod foo {
