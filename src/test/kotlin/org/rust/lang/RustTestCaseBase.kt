@@ -158,6 +158,11 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
     }
 
     protected open class RustProjectDescriptorBase : LightProjectDescriptor() {
+        private val toolchain: RustToolchain? by lazy { RustToolchain.suggest() }
+
+        val rustup by lazy { toolchain?.rustup("/") }
+        val stdlib by lazy { (rustup?.downloadStdlib() as? Rustup.DownloadResult.Ok)?.library }
+
         final override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
             super.configureModule(module, model, contentEntry)
 
@@ -191,15 +196,21 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             isWorkspaceMember = true
         )
 
+        protected fun externalPackage(name: String) = CleanCargoMetadata.Package(
+            "",
+            name = name,
+            version = "0.0.1",
+            targets = listOf(
+                CleanCargoMetadata.Target("", name, CargoProjectDescription.TargetKind.LIB)
+            ),
+            source = null,
+            isWorkspaceMember = false
+        )
     }
 
     protected object DefaultDescriptor : RustProjectDescriptorBase()
 
     protected object WithStdlibRustProjectDescriptor : RustProjectDescriptorBase() {
-        private val toolchain: RustToolchain? by lazy { RustToolchain.suggest() }
-
-        val rustup by lazy { toolchain?.rustup("/") }
-        val stdlib by lazy { (rustup?.downloadStdlib() as? Rustup.DownloadResult.Ok)?.library }
 
         override fun setUpProject(project: Project, handler: SetupHandler) {
             if (rustup == null) return
@@ -213,6 +224,31 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             val packages = listOf(testCargoPackage(contentRoot))
 
             return CleanCargoMetadata(packages, emptyList()).let {
+                CargoProjectDescription.deserialize(it)!!
+            }
+        }
+    }
+
+    protected object WithStdlibAndDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
+
+        override fun setUpProject(project: Project, handler: SetupHandler) {
+            if (WithStdlibRustProjectDescriptor.rustup == null) return
+            super.setUpProject(project, handler)
+        }
+
+        override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
+
+            StandardLibraryRoots.fromFile(stdlib!!)!!.attachTo(module)
+
+            val packages = listOf(
+                testCargoPackage(contentRoot),
+                externalPackage("dep_lib"),
+                externalPackage("trans_lib"))
+
+            val depNodes = ArrayList<CleanCargoMetadata.DependencyNode>()
+            depNodes.add(CleanCargoMetadata.DependencyNode(0, listOf(1)))   // Our package depends on test_dep
+
+            return CleanCargoMetadata(packages, depNodes).let {
                 CargoProjectDescription.deserialize(it)!!
             }
         }

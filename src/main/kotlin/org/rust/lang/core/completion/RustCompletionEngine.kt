@@ -4,10 +4,13 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
+import org.rust.cargo.project.PackageOrigin
+import org.rust.cargo.project.workspace.cargoProject
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.asRustPath
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.util.fields
+import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.indexes.RustImplIndex
@@ -50,6 +53,12 @@ object RustCompletionEngine {
 
         return (fields + methods.toList()).completionsFromNamedElements()
     }
+
+    fun completeExternCrate(extCrate: RustExternCrateItemElement): Array<out LookupElement> =
+        extCrate.module?.cargoProject?.packages
+                ?.filter { it.origin == PackageOrigin.DEPENDENCY }
+                ?.map { LookupElementBuilder.create(extCrate, it.name).withIcon(extCrate.getIcon(0)) }
+                ?.toTypedArray() ?: emptyArray()
 }
 
 private fun RustCompositeElement?.completionsFromResolveScope(): Array<LookupElement> =

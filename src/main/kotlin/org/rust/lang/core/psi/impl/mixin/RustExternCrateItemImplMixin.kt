@@ -3,6 +3,7 @@ package org.rust.lang.core.psi.impl.mixin
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
+import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.RustExternCrateItemElement
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
@@ -24,4 +25,6 @@ abstract class RustExternCrateItemImplMixin : RustStubbedNamedElementImpl<RustEx
     override val referenceName: String get() = referenceNameElement.text
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
+
+    override fun getIcon(flags: Int) = RustIcons.CRATE
 }
