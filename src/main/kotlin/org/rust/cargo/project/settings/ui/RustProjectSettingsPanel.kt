@@ -60,8 +60,7 @@ class RustProjectSettingsPanel {
             "Cargo location",
             null,
             FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-            TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
-            false
+            TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
         )
         listenForUpdates(toolchainLocationField.textField)
         Disposer.register(disposable, toolchainLocationField)
