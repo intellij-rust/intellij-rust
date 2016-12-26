@@ -14,7 +14,6 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.utils.fullyRefreshDirectory
-import org.rust.utils.runAndTerminate
 import java.io.File
 import java.util.*
 
@@ -100,7 +99,7 @@ class Cargo(
 
         listener?.let { handler.addProcessListener(it) }
 
-        val output = handler.runAndTerminate()
+        val output = handler.runProcess()
         if (output.exitCode != 0) {
             throw ExecutionException("""
             Cargo execution failed (exit code ${output.exitCode}).

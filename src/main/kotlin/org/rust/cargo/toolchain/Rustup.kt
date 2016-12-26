@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.TestOnly
 import org.rust.utils.fullyRefreshDirectory
-import org.rust.utils.runAndTerminate
 import org.rust.utils.seconds
 
 private val LOG = Logger.getInstance(Rustup::class.java)
@@ -68,7 +67,10 @@ class Rustup(
         val handler = CapturingProcessHandler(this)
 
         LOG.info("Executing `$commandLineString`")
-        val output = handler.runAndTerminate(timeoutInMilliseconds)
+        val output = if (timeoutInMilliseconds != null)
+            handler.runProcess(timeoutInMilliseconds)
+        else
+            handler.runProcess()
 
         if (output.exitCode != 0) {
             LOG.warn("Failed to execute `$commandLineString`" +
