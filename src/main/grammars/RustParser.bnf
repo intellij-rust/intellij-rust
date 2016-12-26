@@ -484,6 +484,7 @@ alias ::= AS IDENTIFIER {
 }
 
 extern_crate_item ::= attrs_and_vis EXTERN CRATE IDENTIFIER alias? ';' {
+  pin = "IDENTIFIER"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustReferenceElement"
                  "org.rust.lang.core.psi.RustNamedElement"

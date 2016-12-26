@@ -31,6 +31,7 @@ object RustIcons {
 
     // Source code elements
 
+    val CRATE    = AllIcons.Nodes.PpLib!!
     val MODULE   = AllIcons.Nodes.Package!!
 
     val TRAIT    = AllIcons.Nodes.Interface!!
