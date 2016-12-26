@@ -2,8 +2,6 @@ package org.rust.cargo.project.settings.impl
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.configurable.RustProjectConfigurable
@@ -12,10 +10,7 @@ import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.modules
 
-@State(
-    name = "RustProjectSettings",
-    storages = arrayOf(Storage(file = StoragePathMacros.PROJECT_FILE))
-)
+@State(name = "RustProjectSettings")
 class RustProjectSettingsServiceImpl(
     private val project: Project
 ) : PersistentStateComponent<RustProjectSettingsServiceImpl.State>, RustProjectSettingsService {
