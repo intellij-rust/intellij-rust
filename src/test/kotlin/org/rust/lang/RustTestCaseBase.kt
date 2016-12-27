@@ -242,8 +242,8 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
             val packages = listOf(
                 testCargoPackage(contentRoot),
-                externalPackage("dep_lib"),
-                externalPackage("trans_lib"))
+                externalPackage("dep-lib"),
+                externalPackage("trans-lib"))
 
             val depNodes = ArrayList<CleanCargoMetadata.DependencyNode>()
             depNodes.add(CleanCargoMetadata.DependencyNode(0, listOf(1)))   // Our package depends on test_dep
