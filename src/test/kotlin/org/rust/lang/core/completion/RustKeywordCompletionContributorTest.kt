@@ -3,26 +3,30 @@ package org.rust.lang.core.completion
 class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
     override val dataPath = ""
 
-    fun testExternCrateAtTheFileVeryBeginning() = checkSingleCompletion("extern crate", "exte/*caret*/")
+    fun testEnum() = checkSingleCompletion("enum", """
+        enu/*caret*/
+    """)
+
+    fun testEnumAtTheFileVeryBeginning() = checkSingleCompletion("enum", "enu/*caret*/")
+
+    fun testEnumWithinMod() = checkSingleCompletion("enum", """
+        mod foo {
+            en/*caret*/
+        }
+    """)
+
+    fun testEnumNotAppliedWithinStruct() = checkNoCompletion("""
+        struct Foo {
+            en/*caret*/
+        }
+    """)
+
+    fun testEnumNotAppliedIfDoesntStartExpression() = checkNoCompletion("""
+        mod en/*caret*/
+    """)
 
     fun testExternCrate() = checkSingleCompletion("extern crate", """
         exte/*caret*/
-    """)
-
-    fun testExternCrateWithinMod() = checkSingleCompletion("extern crate", """
-        mod foo {
-            ex/*caret*/
-        }
-    """)
-
-    fun testExternCrateNotAppliedWithinStruct() = checkNoCompletion("""
-        struct Foo {
-            ext/*caret*/
-        }
-    """)
-
-    fun testExternCrateNotAppliedIfDoesntStartExpression() = checkNoCompletion("""
-        mod ext/*caret*/
     """)
 
     fun testLetWithinFn() = checkSingleCompletion("let", """
@@ -82,26 +86,19 @@ class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
         const retu/*caret*/
     """)
 
+    fun testStruct() = checkSingleCompletion("struct", """
+        str/*caret*/
+    """)
+
+    fun testTrait() = checkSingleCompletion("trait", """
+        tra/*caret*/
+    """)
+
+    fun testType() = checkSingleCompletion("type", """
+        typ/*caret*/
+    """)
+
     fun testUse() = checkSingleCompletion("use", """
-        u/*caret*/
+        us/*caret*/
     """)
-
-    fun testUseAtTheFileVeryBeginning() = checkSingleCompletion("use", "u/*caret*/")
-
-    fun testUseWithinMod() = checkSingleCompletion("use", """
-        mod foo {
-            us/*caret*/
-        }
-    """)
-
-    fun testUseNotAppliedWithinStruct() = checkNoCompletion("""
-        struct Foo {
-            us/*caret*/
-        }
-    """)
-
-    fun testUseNotAppliedIfDoesntStartExpression() = checkNoCompletion("""
-        const us/*caret*/
-    """)
-
 }

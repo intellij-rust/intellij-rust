@@ -21,7 +21,8 @@ import org.rust.lang.core.psi.impl.RustFile
 class RustKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     init {
-        extend(CompletionType.BASIC, moduleTopLevelPattern(), RustKeywordCompletionProvider("extern crate", "use"))
+        extend(CompletionType.BASIC, moduleTopLevelPattern(),
+            RustKeywordCompletionProvider("enum", "extern crate", "struct", "trait", "type", "use"))
         extend(CompletionType.BASIC, returnPattern(), RustKeywordCompletionProvider("return", "let"))
     }
 
@@ -37,6 +38,6 @@ class RustKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     private fun statementBeginningPattern(vararg tokenTypes: IElementType) : PsiElementPattern.Capture<PsiElement> {
         return psiElement<PsiElement>()
-            .withElementType(TokenSet.create(*tokenTypes)).with(RustPsiPattern.StatementBeginning())
+            .withElementType(TokenSet.create(*tokenTypes)).with(RustPsiPattern.OnStatementBeginning())
     }
 }
