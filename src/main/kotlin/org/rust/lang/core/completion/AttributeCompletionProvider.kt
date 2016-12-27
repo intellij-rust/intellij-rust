@@ -1,76 +1,35 @@
 package org.rust.lang.core.completion
 
+import RustPsiPattern.onAnyItem
+import RustPsiPattern.onCrate
+import RustPsiPattern.onDropFn
+import RustPsiPattern.onEnum
+import RustPsiPattern.onExternBlock
+import RustPsiPattern.onExternBlockDecl
+import RustPsiPattern.onExternCrate
+import RustPsiPattern.onFn
+import RustPsiPattern.onMacro
+import RustPsiPattern.onMod
+import RustPsiPattern.onStatic
+import RustPsiPattern.onStaticMut
+import RustPsiPattern.onStruct
+import RustPsiPattern.onTestFn
+import RustPsiPattern.onTrait
+import RustPsiPattern.onTupleStruct
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.ElementPattern
-import com.intellij.patterns.PatternCondition
-import com.intellij.patterns.PlatformPatterns.psiElement
-import com.intellij.patterns.PsiElementPattern
+import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.util.ProcessingContext
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustFile
 
 object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() {
 
     private data class RustAttribute(val name: String, val appliesTo: ElementPattern<PsiElement>)
-
-    val onStruct: PsiElementPattern.Capture<PsiElement> = onItem<RustStructItemElement>()
-
-    val onEnum: PsiElementPattern.Capture<PsiElement> = onItem<RustEnumItemElement>()
-
-    val onFn: PsiElementPattern.Capture<PsiElement> = onItem<RustFnItemElement>()
-
-    val onMod: PsiElementPattern.Capture<PsiElement> = onItem<RustModItemElement>()
-
-    val onStatic: PsiElementPattern.Capture<PsiElement> = onItem<RustStaticItemElement>()
-
-    val onStaticMut: PsiElementPattern.Capture<PsiElement> = psiElement().with(
-        object : PatternCondition<PsiElement>("onStaticMutCondition") {
-            override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
-                val elem = t.parent?.parent?.parent
-                return (elem is RustStaticItemElement) && elem.mut != null
-            }
-        })
-
-    val onMacro: PsiElementPattern.Capture<PsiElement> = onItem<RustMacroItemElement>()
-
-    val onTupleStruct: PsiElementPattern.Capture<PsiElement> = psiElement()
-        .withSuperParent(3, psiElement().withChild(psiElement<RustTupleFieldsElement>()))
-
-    val onCrate: PsiElementPattern.Capture<PsiElement> = psiElement().withSuperParent<PsiFile>(3).with(
-        object : PatternCondition<PsiElement>("onCrateCondition") {
-            override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
-                val file = t.containingFile.originalFile as RustFile
-                return file.isCrateRoot
-            }
-        })
-
-    val onExternBlock: PsiElementPattern.Capture<PsiElement> = onItem<RustForeignModItemElement>()
-
-    val onExternBlockDecl: PsiElementPattern.Capture<PsiElement> =
-        onItem<RustForeignFnDeclElement>() or
-            onItem<RustForeignStaticDeclElement>() or
-            onItem<RustForeignModItemElement>()
-
-    val onAnyItem: PsiElementPattern.Capture<PsiElement> = onItem<RustDocAndAttributeOwner>()
-
-    val onExternCrate: PsiElementPattern.Capture<PsiElement> = onItem<RustExternCrateItemElement>()
-
-    val onTrait: PsiElementPattern.Capture<PsiElement> = onItem<RustTraitItemElement>()
-
-    val onDropFn: PsiElementPattern.Capture<PsiElement> get() {
-        val dropTraitRef = psiElement<RustTraitRefElement>().withText("Drop")
-        val implBlock = psiElement<RustImplItemElement>().withChild(dropTraitRef)
-        return psiElement().withSuperParent(4, implBlock)
-    }
-
-    val onTestFn: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RustFnItemElement>()
-        .withChild(psiElement<RustOuterAttrElement>().withText("#[test]")))
 
     private val attributes = mapOf(
         onCrate to "crate_name crate_type feature no_builtins no_main no_start no_std plugin recursion_limit",
@@ -106,16 +65,8 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
         val outerAttrElem = psiElement<RustOuterAttrElement>()
         val innerAttrElem = psiElement<RustInnerAttrElement>()
         val metaItemElem = psiElement<RustMetaItemElement>()
-            .and(psiElement().withParent(outerAttrElem) or psiElement().withParent(innerAttrElem))
-        return psiElement().withParent(metaItemElem).withLanguage(RustLanguage)
-    }
-
-    inline fun <reified I : RustDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
-        return psiElement().withSuperParent<I>(3)
-    }
-
-    private fun onItem(pattern: ElementPattern<out RustDocAndAttributeOwner>): PsiElementPattern.Capture<PsiElement> {
-        return psiElement().withSuperParent(3, pattern)
+            .and(PlatformPatterns.psiElement().withParent(outerAttrElem) or PlatformPatterns.psiElement().withParent(innerAttrElem))
+        return PlatformPatterns.psiElement().withParent(metaItemElem).withLanguage(RustLanguage)
     }
 
     val PsiElement?.attrMetaItems: Sequence<String>
