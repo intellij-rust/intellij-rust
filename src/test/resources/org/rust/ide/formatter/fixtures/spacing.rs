@@ -1,5 +1,3 @@
-#![   stable   (   feature   =   "rust1"  ,   since   =   "1.0.0"  )  ]
-
 extern    crate    std    as    ruststd   ;
 
 use   core    ::    hash  ::   {    self    ,    Hash    }    ;
@@ -10,8 +8,6 @@ use core::ops::{    Index ,IndexMut    };
 
 const    CAPACITY   :usize    =    2*B-1;
 
-#[    inline    ]
-#[stable(feature="rust1",since="1.0.0")]
 fn     foo   (    a   :  i32   ,  b    :str,   c: i32   ,d:f32   )     ->    (   )   {
     let    mut   e   :   &  'static   [   str   ]   =   "abcd"   ;
     let mut f :& [str ]="cdef";
@@ -348,7 +344,6 @@ macro_rules!    vec    {
     };
 }
 
-#   [   link   (   name    =    "objc"   )   ]
 extern    {
     fn  foo (name   : *   const    libc   ::   c_uchar   )   ;
     fn  bar (a   :  i32,         ...        )       ->      i32     ;

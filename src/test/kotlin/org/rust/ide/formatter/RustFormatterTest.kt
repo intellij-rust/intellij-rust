@@ -76,6 +76,7 @@ class RustFormatterTest : FormatterTestCase() {
     }
 
     fun testMacroUse() = doTest()
+    fun testAttributes() = doTest()
 
     // FIXME: these two guys are way too big
     fun testSpacing() = doTest()

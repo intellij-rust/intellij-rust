@@ -53,7 +53,8 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
 
         //== attributes
         .aroundInside(ts(SHA, EXCL, LBRACK, RBRACK), ATTRS).spaces(0)
-        .aroundInside(ts(LPAREN, RPAREN), META_ITEM).spaces(0)
+        .aroundInside(ts(LPAREN, RPAREN), META_ITEM_ARGS).spaces(0)
+        .around(META_ITEM_ARGS).spaces(0)
 
         //== empty parens
         .between(LPAREN, RPAREN).spacing(0, 0, 0, false, 0)

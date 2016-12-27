@@ -28,7 +28,7 @@ enum class RustLint(
         = el.ancestors
             .filterIsInstance<RustDocAndAttributeOwner>()
             .flatMap { it.queryAttributes.metaItems }
-            .filter { it.metaItemList.any { it.text == id } }
+            .filter { it.metaItemArgs?.metaItemList.orEmpty().any { it.text == id } }
             .mapNotNull { RustLintLevel.valueForId(it.identifier.text) }
             .firstOrNull()
 

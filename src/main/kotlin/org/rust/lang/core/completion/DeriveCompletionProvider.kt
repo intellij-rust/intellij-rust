@@ -5,15 +5,14 @@ import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.ElementPatternCondition
+import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.lang.RustLanguage
-import org.rust.lang.core.parser.RustPsiTreeUtil
-import org.rust.lang.core.psi.RustCompositeElementTypes
-import org.rust.lang.core.psi.RustMetaItemElement
+import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustOuterAttrElement
-import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.util.parentOfType
 
 object DeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
@@ -32,9 +31,9 @@ object DeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
                                 result: CompletionResultSet) {
 
         val outerAttrElem = parameters.position.parentOfType<RustOuterAttrElement>()
-        val deriveMetaItem = RustPsiTreeUtil.getChildOfType(outerAttrElem, RustMetaItemElement::class.java)
-        val alreadyDerived = RustPsiTreeUtil.getChildrenOfType(deriveMetaItem, RustMetaItemElement::class.java)
-            ?.mapNotNull { it.firstChild.text }.orEmpty()
+            ?: return
+        val alreadyDerived = outerAttrElem.metaItem.metaItemArgs?.metaItemList.orEmpty()
+            .mapNotNull { it.identifier.text }
         val lookupElements = DERIVABLE_TRAITS.filter { it !in alreadyDerived }
             .map { LookupElementBuilder.create(it) }
         result.addAllElements(lookupElements)
@@ -42,19 +41,44 @@ object DeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
 
     val elementPattern: ElementPattern<PsiElement> get() {
 
-        val deriveIdentifier = psiElement(RustTokenElementTypes.IDENTIFIER)
-            .withText("derive")
+        val deriveAttr = psiElement(META_ITEM)
+            .withParent(psiElement(OUTER_ATTR))
+            .with(object : PatternCondition<PsiElement>("derive") {
+                // `withFirstChild` does not handle leaf elements.
+                // See a note in [com.intellij.psi.PsiElement.getChildren]
+                override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean =
+                    t.firstChild.text == "derive"
+            })
 
-        val traitEntry = psiElement(RustCompositeElementTypes.META_ITEM)
-            .afterLeafSkipping(psiElement(RustTokenElementTypes.LPAREN), deriveIdentifier)
+        val traitMetaItem = psiElement(META_ITEM)
+            .withParent(
+                psiElement(META_ITEM_ARGS)
+                    .withParent(deriveAttr)
+            )
 
-        val deriveMetaItem = psiElement(RustCompositeElementTypes.META_ITEM)
-            .withFirstChild(traitEntry)
-            .withParent(psiElement(RustCompositeElementTypes.OUTER_ATTR))
-
-        val traitMetaItem = psiElement(RustCompositeElementTypes.META_ITEM)
-            .withParent(deriveMetaItem)
-
-        return psiElement().inside(traitMetaItem).withLanguage(RustLanguage)
+        return psiElement()
+            .inside(traitMetaItem)
+            .withLanguage(RustLanguage)
     }
+}
+
+fun ElementPattern<PsiElement>.trace(id: String): ElementPattern<PsiElement> {
+    return Pat(this, id)
+}
+
+class Pat(val p: ElementPattern<PsiElement>, val id: String) : ElementPattern<PsiElement> {
+    override fun accepts(o: Any?, context: ProcessingContext?): Boolean {
+        val result = p.accepts(o, context)
+        println("$id for ${(o as PsiElement).text} = $result")
+        return result
+    }
+
+    override fun getCondition(): ElementPatternCondition<PsiElement> {
+        return p.condition
+    }
+
+    override fun accepts(o: Any?): Boolean {
+        return p.accepts(o)
+    }
+
 }

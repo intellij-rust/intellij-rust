@@ -42,3 +42,6 @@ macro_rules! give_me_struct {
 give_me_struct!{
     hello_world
 }
+
+#[post("/", data = "<todo_form>")]
+fn string_value()  { }

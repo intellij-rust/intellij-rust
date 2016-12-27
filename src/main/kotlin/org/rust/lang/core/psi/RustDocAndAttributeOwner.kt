@@ -25,16 +25,16 @@ val RustDocAndAttributeOwner.queryAttributes: QueryAttributes
  * **Do not instantiate directly**, use [RustDocAndAttributeOwner.queryAttributes] instead.
  */
 class QueryAttributes(private val attributes: Sequence<RustAttrElement>) {
-    fun hasAtomAttribute(name: String): Boolean =
-        metaItems
-            .filter { it.eq == null && it.lparen == null }
-            .any { it.identifier.text == name }
+    fun hasAtomAttribute(attributeName: String): Boolean {
+        val attr = attrByName(attributeName)
+        return attr != null && (attr.eq == null && attr.metaItemArgs == null)
+    }
 
-    fun hasMetaItem(attribute: String, item: String): Boolean =
-        metaItems
-            .filter { it.identifier.text == attribute }
-            .flatMap { it.metaItemList.asSequence() }
-            .any { it.text == item }
+    fun hasAttributeWithArg(attributeName: String, arg: String): Boolean {
+        val attr = attrByName(attributeName) ?: return false
+        val args = attr.metaItemArgs ?: return false
+        return args.metaItemList.any { it.identifier.text == arg }
+    }
 
     fun lookupStringValueForKey(key: String): String? =
         metaItems
@@ -44,4 +44,6 @@ class QueryAttributes(private val attributes: Sequence<RustAttrElement>) {
 
     val metaItems: Sequence<RustMetaItemElement>
         get() = attributes.mapNotNull { it.metaItem }
+
+    private fun attrByName(name: String) = metaItems.find { it.identifier.text == name }
 }

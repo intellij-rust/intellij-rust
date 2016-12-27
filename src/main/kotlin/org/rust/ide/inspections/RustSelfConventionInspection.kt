@@ -22,7 +22,7 @@ class RustSelfConventionInspection : RustLocalInspectionTool() {
     private fun RustImplMethodMemberElement.isOwnerCopyable(): Boolean {
         val implBlock = parentOfType<RustImplItemElement>() ?: return false
         val owner = implBlock.type?.resolvedType as? RustStructOrEnumTypeBase ?: return false
-        return owner.item.queryAttributes.hasMetaItem("derive", "Copy")
+        return owner.item.queryAttributes.hasAttributeWithArg("derive", "Copy")
     }
 
     private companion object {

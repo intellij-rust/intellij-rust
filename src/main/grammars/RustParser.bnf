@@ -162,7 +162,6 @@
     extends     (".*_expr") = expr
     extends     ("(?!ret_type).*_type") = type
     extends     ("pat_(wild|ref|tup|vec|macro|struct|enum|ident|range|uniq|qual_path)")  = pat
-    extends     (".*_attr") = attr
 
     elementType ("expr_like_macro|item_like_macro") = macro
     extends     ("(try|format_like|assert|assert_eq)_macro") = macro
@@ -194,12 +193,12 @@ file ::= [ SHEBANG_LINE ] inner_attr* items
 
 fake attr ::= meta_item
 
-inner_attr ::= '#' '!' '[' meta_item ']'
+inner_attr ::= '#' '!' '[' meta_item ']' { extends = attr }
+outer_attr ::= '#'     '[' meta_item ']' { extends = attr }
+private first_outer_attr ::= '#'
 
-outer_attr ::= '#' '[' meta_item ']'
-first_outer_attr ::= '#'
-
-meta_item ::= IDENTIFIER [ '=' lit_expr | '(' [ <<comma_separated_list meta_item>> ] ')' ]
+meta_item ::= IDENTIFIER [ '=' lit_expr | meta_item_args ]
+meta_item_args ::= '(' [ <<comma_separated_list (meta_item | lit_expr)>> ] ')'
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
