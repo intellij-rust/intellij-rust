@@ -16,101 +16,80 @@ class RustStringLiteralJoinLinesHandlerTest : RustTestCaseBase() {
         }
     }
 
-    fun testNoEscape() = doTest(
-        """
+    fun testNoEscape() = doTest("""
         fn main() {
             "Hello<caret>,
              World"
         }
-        """,
-        """
+    """, """
         fn main() {
             "Hello,<caret> World"
         }
-        """
-    )
+    """)
 
-    fun testNewlineEscape() = doTest(
-        """
+    fun testNewlineEscape() = doTest("""
         fn main() {
             "He<caret>llo, \
              World"
         }
-        """,
-        """
+    """, """
         fn main() {
             "Hello,<caret> World"
         }
-        """
-    )
+    """)
 
-    fun testEscapedNewlineEscape() = doTest(
-        """
+    fun testEscapedNewlineEscape() = doTest("""
         fn main() {
             "He<caret>llo, \\
              World"
         }
-        """,
-        """
+    """, """
         fn main() {
             "Hello, \\<caret> World"
         }
-        """
-    )
+    """)
 
-    fun testEscapedButNotEscapedInFactNewlineEscape() = doTest(
-        """
+    fun testEscapedButNotEscapedInFactNewlineEscape() = doTest("""
         fn main() {
             "He<caret>llo, \\\
              World"
         }
-        """,
-        """
+    """, """
         fn main() {
             "Hello, \\<caret> World"
         }
-        """
-    )
+    """)
 
-    fun testTwoEscapedBackslashes() = doTest(
-        """
+    fun testTwoEscapedBackslashes() = doTest("""
         fn main() {
             "He<caret>llo, \\\\
              World"
         }
-        """,
-        """
+    """, """
         fn main() {
             "Hello, \\\\<caret> World"
         }
-        """
-    )
+    """)
 
-    fun testNoIndent() = doTest(
-        """
+    fun testNoIndent() = doTest("""
         fn main() {
             "Hel<caret>lo,
 World"
         }
-        """,
-        """
+    """, """
         fn main() {
             "Hello,<caret> World"
         }
-        """
-    )
+    """)
 
-    fun testOnlyNewlineEscape() = doTest(
-        """
+    fun testOnlyNewlineEscape() = doTest("""
         fn main() {
             "<caret>\
             "
         }
-        """,
-        """
+    """, """
         fn main() {
             "<caret> "
         }
-        """
-    )
+    """)
 }
