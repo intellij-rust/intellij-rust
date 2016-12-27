@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
@@ -14,9 +15,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.cargoProject
 import org.rust.lang.RustFileType
 import org.rust.lang.RustLanguage
-import org.rust.lang.core.psi.RustInnerAttrElement
-import org.rust.lang.core.psi.RustInnerAttributeOwner
-import org.rust.lang.core.psi.RustMod
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.ref.RustReference
 import org.rust.lang.core.stubs.index.RustModulesIndex
@@ -60,6 +60,30 @@ class RustFile(
     override val innerAttrList: List<RustInnerAttrElement>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)
 
+    override val fnItemList: List<RustFnItemElement> get() = findItems(FN_ITEM)
+    override val modItemList: List<RustModItemElement> get() = findItems(MOD_ITEM)
+    override val staticItemList: List<RustStaticItemElement> get() = findItems(STATIC_ITEM)
+    override val structItemList: List<RustStructItemElement> get() = findItems(STRUCT_ITEM)
+    override val enumItemList: List<RustEnumItemElement> get() = findItems(ENUM_ITEM)
+    override val unionItemList: List<RustUnionItemElement> get() = findItems(UNION_ITEM)
+    override val implItemList: List<RustImplItemElement> get() = findItems(IMPL_ITEM)
+    override val traitItemList: List<RustTraitItemElement> get() = findItems(TRAIT_ITEM)
+    override val typeItemList: List<RustTypeItemElement> get() = findItems(TYPE_ITEM)
+    override val useItemList: List<RustUseItemElement> get() = findItems(USE_ITEM)
+    override val modDeclItemList: List<RustModDeclItemElement> get() = findItems(MOD_DECL_ITEM)
+    override val externCrateItemList: List<RustExternCrateItemElement> get() = findItems(EXTERN_CRATE_ITEM)
+    override val foreignModItemList: List<RustForeignModItemElement> get() = findItems(FOREIGN_MOD_ITEM)
+
+    private inline fun <reified T : RustCompositeElement> findItems(elementType: IElementType): List<T> {
+        val stub = stub
+        return if (stub != null) {
+            @Suppress("UNCHECKED_CAST")
+            stub.getChildrenByType(elementType, { kotlin.arrayOfNulls<T>(it) })
+                .asList() as List<T>
+        } else {
+            PsiTreeUtil.getChildrenOfTypeAsList(this, T::class.java)
+        }
+    }
 }
 
 

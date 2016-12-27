@@ -2,25 +2,23 @@ package org.rust.ide.structure
 
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RustMod
 
 open class RustModTreeElement(item: RustMod) : PsiTreeElementBase<RustMod>(item) {
     override fun getPresentableText() = element?.name
 
-    override fun getChildrenBase(): Collection<StructureViewTreeElement> =
-        element?.allItems.orEmpty().mapNotNull { toTreeElement(it) }
-
-    private fun toTreeElement(it: RustItemElement): StructureViewTreeElement? =
-        when (it) {
-            is RustEnumItemElement      -> RustEnumTreeElement(it)
-            is RustFnItemElement        -> RustFnTreeElement(it)
-            is RustImplItemElement      -> RustImplTreeElement(it)
-            is RustModDeclItemElement   -> RustModDeclTreeElement(it)
-            is RustModItemElement       -> RustModTreeElement(it)
-            is RustStaticItemElement    -> RustStaticTreeElement(it)
-            is RustStructItemElement    -> RustStructTreeElement(it)
-            is RustTraitItemElement     -> RustTraitTreeElement(it)
-            is RustTypeItemElement      -> RustTypeTreeElement(it)
-            else                        -> null
-        }
+    override fun getChildrenBase(): Collection<StructureViewTreeElement> {
+        val mod = element ?: return emptyList()
+        return listOf(
+            mod.enumItemList.map(::RustEnumTreeElement),
+            mod.fnItemList.map(::RustFnTreeElement),
+            mod.implItemList.map(::RustImplTreeElement),
+            mod.modDeclItemList.map(::RustModDeclTreeElement),
+            mod.modItemList.map(::RustModTreeElement),
+            mod.staticItemList.map(::RustStaticTreeElement),
+            mod.structItemList.map(::RustStructTreeElement),
+            mod.traitItemList.map(::RustTraitTreeElement),
+            mod.typeItemList.map(::RustTypeTreeElement)
+        ).flatten().sortedBy { it.element?.textOffset }
+    }
 }

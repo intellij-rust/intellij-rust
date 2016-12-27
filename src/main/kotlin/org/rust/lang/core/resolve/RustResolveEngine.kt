@@ -354,7 +354,7 @@ private fun itemDeclarations(
     isLocal: Boolean,
     context: Context
 ): Sequence<ScopeEntry> {
-    val (starImports, itemImports) = scope.useDeclarations
+    val (starImports, itemImports) = scope.useItemList
         .filter { it.isPublic || isLocal }
         .partition { it.isStarImport }
 
@@ -370,8 +370,15 @@ private fun itemDeclarations(
 
 private fun definedItems(scope: RustItemsOwner): Sequence<Pair<String, RustNamedElement>> {
     val inlineItems: Sequence<RustNamedElement> = sequenceOf(
-        scope.allItemDefinitions.asSequence(),
-        scope.foreignMods.asSequence().flatMap {
+        scope.fnItemList.asSequence(),
+        scope.enumItemList.asSequence(),
+        scope.unionItemList.asSequence(),
+        scope.modItemList.asSequence(),
+        scope.staticItemList.asSequence(),
+        scope.structItemList.asSequence(),
+        scope.traitItemList.asSequence(),
+        scope.typeItemList.asSequence(),
+        scope.foreignModItemList.asSequence().flatMap {
             it.foreignFnDeclList.asSequence<RustNamedElement>() + it.foreignStaticDeclList.asSequence()
         }
     ).flatten()
@@ -379,7 +386,7 @@ private fun definedItems(scope: RustItemsOwner): Sequence<Pair<String, RustNamed
     return sequenceOf(
         // XXX: this must come before itemList to resolve `Box` from prelude. We need to handle cfg attributes to
         // fix this properly
-        scope.modDecls.asSequence().mapNotNull { modDecl ->
+        scope.modDeclItemList.asSequence().mapNotNull { modDecl ->
             val name = modDecl.name
             val mod = modDecl.reference.resolve() as? RustMod
             if (name != null && mod != null) name to mod else null
@@ -389,7 +396,7 @@ private fun definedItems(scope: RustItemsOwner): Sequence<Pair<String, RustNamed
             item.name?.let { it to item }
         },
 
-        scope.externCrates.asSequence().mapNotNull { crate ->
+        scope.externCrateItemList.asSequence().mapNotNull { crate ->
             val name = crate.alias?.name ?: crate.name
             val mod = crate.reference.resolve() as? RustMod
             if (name != null && mod != null) name to mod else null

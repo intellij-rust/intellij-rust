@@ -507,6 +507,13 @@ class RustResolveTest : RustResolveTestBase() {
         }
     """)
 
+    fun testUnionDef() = checkByCode("""
+        union U { f: f64, u: u64 }
+            //X
+        fn foo(u: U) { }
+                //^
+    """)
+
     fun testUnbound() = checkByCode("""
         fn foo() { y }
                  //^ unresolved

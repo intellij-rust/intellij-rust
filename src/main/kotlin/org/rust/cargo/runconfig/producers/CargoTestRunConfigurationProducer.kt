@@ -83,6 +83,6 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         // always returns fully-qualified path
         val testPath = (mod.crateRelativePath ?: "").toString().removePrefix("::")
         val target = mod.containingCargoTarget ?: return null
-        return if (mod.functions.any { it.isTest }) TestConfig(mod, testName, testPath, target) else null
+        return if (mod.fnItemList.any { it.isTest }) TestConfig(mod, testName, testPath, target) else null
     }
 }
