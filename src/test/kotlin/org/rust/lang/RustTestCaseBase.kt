@@ -36,7 +36,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
     override fun runTest() {
         val projectDescriptor = projectDescriptor
-        if (projectDescriptor is WithStdlibRustProjectDescriptor) {
+        if (projectDescriptor is RustProjectDescriptorBase.WithRustup) {
             if (projectDescriptor.rustup == null) {
                 System.err.println("SKIP $name: no rustup found")
                 return
@@ -158,10 +158,18 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
     }
 
     protected open class RustProjectDescriptorBase : LightProjectDescriptor() {
-        private val toolchain: RustToolchain? by lazy { RustToolchain.suggest() }
+        open class WithRustup : RustProjectDescriptorBase() {
+            override fun setUpProject(project: Project, handler: SetupHandler) {
+                if (WithStdlibRustProjectDescriptor.rustup == null) return
+                // The actual tests should be skipped as well, if we skip the setup
+                super.setUpProject(project, handler)
+            }
 
-        val rustup by lazy { toolchain?.rustup("/") }
-        val stdlib by lazy { (rustup?.downloadStdlib() as? Rustup.DownloadResult.Ok)?.library }
+            private val toolchain: RustToolchain? by lazy { RustToolchain.suggest() }
+
+            val rustup by lazy { toolchain?.rustup("/") }
+            val stdlib by lazy { (rustup?.downloadStdlib() as? Rustup.DownloadResult.Ok)?.library }
+        }
 
         final override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
             super.configureModule(module, model, contentEntry)
@@ -210,13 +218,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
     protected object DefaultDescriptor : RustProjectDescriptorBase()
 
-    protected object WithStdlibRustProjectDescriptor : RustProjectDescriptorBase() {
-
-        override fun setUpProject(project: Project, handler: SetupHandler) {
-            if (rustup == null) return
-            super.setUpProject(project, handler)
-        }
-
+    protected object WithStdlibRustProjectDescriptor : RustProjectDescriptorBase.WithRustup() {
         override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
 
             StandardLibraryRoots.fromFile(stdlib!!)!!.attachTo(module)
@@ -229,13 +231,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         }
     }
 
-    protected object WithStdlibAndDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
-
-        override fun setUpProject(project: Project, handler: SetupHandler) {
-            if (WithStdlibRustProjectDescriptor.rustup == null) return
-            super.setUpProject(project, handler)
-        }
-
+    protected object WithStdlibAndDependencyRustProjectDescriptor : RustProjectDescriptorBase.WithRustup() {
         override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
 
             StandardLibraryRoots.fromFile(stdlib!!)!!.attachTo(module)
