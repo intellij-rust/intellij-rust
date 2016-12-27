@@ -1,5 +1,6 @@
 package org.rust.ide.annotator
 
+import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -32,11 +33,7 @@ class RustRecursiveCallLineMarkerProvider : LineMarkerProvider {
                     el,
                     el.textRange,
                     RustIcons.RECURSIVE_CALL,
-                    // Pass.UPDATE_OVERRIDEN_MARKERS in IDEA 15
-                    // Pass.UPDATE_OVERRIDDEN_MARKERS in IDEA 2016.x
-                    // TODO: change to Pass.LINE_MARKERS, when it
-                    // does not create duplicate icons.
-                    6, // :(
+                    Pass.LINE_MARKERS,
                     FunctionUtil.constant("Recursive call"),
                     null,
                     GutterIconRenderer.Alignment.RIGHT))
