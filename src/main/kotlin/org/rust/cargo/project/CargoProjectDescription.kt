@@ -27,6 +27,9 @@ class CargoProjectDescription private constructor(
         val source: String?,
         val origin: PackageOrigin
     ) {
+        // crate name must be a valid Rust identifier, so normalize it by mapping `-` to `_`
+        // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
+        val normName = name.replace('-', '_')
         val libTarget: Target? get() = targets.find { it.isLib }
         val contentRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
 
@@ -41,6 +44,7 @@ class CargoProjectDescription private constructor(
         val name: String,
         val kind: TargetKind
     ) {
+        val normName = name.replace('-', '_')
         val isLib: Boolean get() = kind == TargetKind.LIB
         val isBin: Boolean get() = kind == TargetKind.BIN
         val isExample: Boolean get() = kind == TargetKind.EXAMPLE
@@ -80,11 +84,7 @@ class CargoProjectDescription private constructor(
 
     private val externCrates: Collection<ExternCrate> get() = packages.mapNotNull { pkg ->
         val target = pkg.libTarget ?: return@mapNotNull null
-
-        // crate name must be a valid Rust identifier, so map `-` to `_`
-        // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
-        val name = target.name.replace("-", "_")
-        target.crateRoot?.let { ExternCrate(name, it) }
+        target.crateRoot?.let { ExternCrate(target.normName, it) }
     }
 
     /**
