@@ -10,15 +10,37 @@ import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.util.elementType
 
-class RustStringLiteralJoinLinesHandler : JoinLinesHandlerDelegate {
+class RustJoinLinesHandler : JoinLinesHandlerDelegate {
     override fun tryJoinLines(document: Document, file: PsiFile, offsetNear: Int, end: Int): Int {
         if (file !is RustFile) return CANNOT_JOIN
 
-        val text = document.charsSequence
         val leftPsi = file.findElementAt(offsetNear) ?: return CANNOT_JOIN
         val rightPsi = file.findElementAt(end) ?: return CANNOT_JOIN
+        if (leftPsi != rightPsi) return CANNOT_JOIN
+        val elementType = leftPsi.elementType
 
-        if (leftPsi != rightPsi || leftPsi.elementType !in RustTokenElementTypes.STRING_LITERALS) return CANNOT_JOIN
+        return when (elementType) {
+            in RustTokenElementTypes.STRING_LITERALS ->
+                joinStringLiteral(document, offsetNear, end)
+
+            RustTokenElementTypes.INNER_EOL_DOC_COMMENT, RustTokenElementTypes.OUTER_EOL_DOC_COMMENT ->
+                joinLineDocComment(document, offsetNear, end)
+
+            else -> CANNOT_JOIN
+        }
+    }
+
+    // Normally this is handled by `CodeDocumentationAwareCommenter`, but Rust have different styles
+    // of documentation comments, so we handle this manually.
+    private fun joinLineDocComment(document: Document, offsetNear: Int, end: Int): Int {
+        val prefix = document.charsSequence.subSequence(end, end + 3).toString()
+        if (prefix != "///" && prefix != "//!") return CANNOT_JOIN
+        document.deleteString(offsetNear + 1, end + prefix.length)
+        return offsetNear + 1
+    }
+
+    private fun joinStringLiteral(document: Document, offsetNear: Int, end: Int): Int {
+        val text = document.charsSequence
 
         var start = offsetNear
 

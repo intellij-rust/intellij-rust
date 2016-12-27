@@ -134,7 +134,7 @@
         <backspaceHandlerDelegate implementation="org.rust.ide.typing.RustRawLiteralHashesDeleter"
                                   id="RustRawLiteralHashesDeleter"/>
 
-        <joinLinesHandler implementation="org.rust.ide.actions.RustStringLiteralJoinLinesHandler"
+        <joinLinesHandler implementation="org.rust.ide.actions.RustJoinLinesHandler"
                           id="RustStringLiteralJoinLinesHandler"/>
 
         <!-- Code Style -->

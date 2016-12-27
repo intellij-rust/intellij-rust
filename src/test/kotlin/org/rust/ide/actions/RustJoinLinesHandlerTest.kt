@@ -4,7 +4,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RustTestCaseBase
 
-class RustStringLiteralJoinLinesHandlerTest : RustTestCaseBase() {
+class RustJoinLinesHandlerTest : RustTestCaseBase() {
     override val dataPath: String = ""
 
     private fun doTest(
@@ -92,4 +92,28 @@ World"
             "<caret> "
         }
     """)
+
+    fun testOuterDocComment() = doTest("""
+        /// Hello<caret>
+        /// Docs
+        fn foo() {}
+    """, """
+        /// Hello<caret> Docs
+        fn foo() {}
+    """)
+
+    fun testInnerDocComment() = doTest("""
+        //! Hello<caret>
+        //! Docs
+    """, """
+        //! Hello<caret> Docs
+    """)
+
+    fun testOuterDocCommentNotComment() = doTest("""
+        /// Hello<caret>
+        fn foo() {}
+    """, """
+        /// Hello<caret> fn foo() {}
+    """)
+
 }
