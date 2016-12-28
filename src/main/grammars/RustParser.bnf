@@ -336,6 +336,13 @@ extern_abi ::= EXTERN STRING_LITERAL?
 
 ret_type ::= '->' type { pin = 1 }
 
+function ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_attrs_and_block {
+  pin = fn_header
+  implements = [ "org.rust.lang.core.psi.RustQualifiedNameOwner"
+                 "org.rust.lang.core.psi.RustFnElement"
+                 "org.rust.lang.core.psi.RustTypeBearingItemElement" ]
+}
+
 fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
