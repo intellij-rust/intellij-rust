@@ -979,7 +979,8 @@ private tuple_expr_end ::= ',' [ any_expr (',' any_expr)* ','? ] ')'
 paren_expr ::= '(' any_expr paren_expr_end
 private paren_expr_end ::= ')'
 
-array_expr ::= '[' [ any_expr ( ';' any_expr | (',' any_expr)* ','? ) ] ']' { pin = 1 }
+array_expr ::= '[' array_initializer ']' { pin = 1 }
+private array_initializer ::= [ any_expr ( ';' any_expr | (',' any_expr)* ','? ) ]
 
 
 //private range_expr_group ::= open_range_expr
@@ -1092,7 +1093,7 @@ item_macro_arg ::= '(' token_trees ')' ';'
 }
 
 try_macro_args ::= <<macro_args_delim any_expr>>
-vec_macro_args ::= '[' expr_list? ']' | '[' any_expr';' any_expr ']'  { pin = 1 }
+vec_macro_args ::= '[' array_initializer ']'  { pin = 1 }
 
 private zz_log_macro_args ::= ('target' ':' expr ','?)? (<<comma_separated_list format_macro_arg>>)?
 log_macro_args ::=  <<macro_args_delim zz_log_macro_args>>
