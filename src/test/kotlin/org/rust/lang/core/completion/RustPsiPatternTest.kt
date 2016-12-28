@@ -1,11 +1,11 @@
 package org.rust.lang.core.completion
 
-import RustPsiPattern
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PatternCondition
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RustTestCaseBase
+import org.rust.lang.core.RustPsiPattern
 
 class RustPsiPatternTest : RustTestCaseBase() {
     override val dataPath: String get() = ""

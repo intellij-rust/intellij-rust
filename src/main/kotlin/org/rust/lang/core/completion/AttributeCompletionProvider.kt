@@ -1,21 +1,5 @@
 package org.rust.lang.core.completion
 
-import RustPsiPattern.onAnyItem
-import RustPsiPattern.onCrate
-import RustPsiPattern.onDropFn
-import RustPsiPattern.onEnum
-import RustPsiPattern.onExternBlock
-import RustPsiPattern.onExternBlockDecl
-import RustPsiPattern.onExternCrate
-import RustPsiPattern.onFn
-import RustPsiPattern.onMacro
-import RustPsiPattern.onMod
-import RustPsiPattern.onStatic
-import RustPsiPattern.onStaticMut
-import RustPsiPattern.onStruct
-import RustPsiPattern.onTestFn
-import RustPsiPattern.onTrait
-import RustPsiPattern.onTupleStruct
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
@@ -25,6 +9,22 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.lang.RustLanguage
+import org.rust.lang.core.RustPsiPattern.onAnyItem
+import org.rust.lang.core.RustPsiPattern.onCrate
+import org.rust.lang.core.RustPsiPattern.onDropFn
+import org.rust.lang.core.RustPsiPattern.onEnum
+import org.rust.lang.core.RustPsiPattern.onExternBlock
+import org.rust.lang.core.RustPsiPattern.onExternBlockDecl
+import org.rust.lang.core.RustPsiPattern.onExternCrate
+import org.rust.lang.core.RustPsiPattern.onFn
+import org.rust.lang.core.RustPsiPattern.onMacro
+import org.rust.lang.core.RustPsiPattern.onMod
+import org.rust.lang.core.RustPsiPattern.onStatic
+import org.rust.lang.core.RustPsiPattern.onStaticMut
+import org.rust.lang.core.RustPsiPattern.onStruct
+import org.rust.lang.core.RustPsiPattern.onTestFn
+import org.rust.lang.core.RustPsiPattern.onTrait
+import org.rust.lang.core.RustPsiPattern.onTupleStruct
 import org.rust.lang.core.psi.*
 
 object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() {

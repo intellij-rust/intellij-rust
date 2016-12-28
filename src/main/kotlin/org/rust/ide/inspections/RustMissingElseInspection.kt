@@ -9,7 +9,7 @@ import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.RustElementVisitor
 import org.rust.lang.core.psi.RustExprStmtElement
 import org.rust.lang.core.psi.RustIfExprElement
-import rightSiblings
+import org.rust.lang.core.rightSiblings
 
 /**
  * Checks for potentially missing `else`s.

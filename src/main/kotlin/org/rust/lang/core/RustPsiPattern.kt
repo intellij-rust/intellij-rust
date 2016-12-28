@@ -1,3 +1,5 @@
+package org.rust.lang.core
+
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns

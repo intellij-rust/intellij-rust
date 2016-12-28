@@ -8,20 +8,15 @@ import com.intellij.util.ProcessingContext
 import org.rust.lang.core.completion.RustCompletionEngine.KEYWORD_PRIORITY
 
 class RustKeywordCompletionProvider(
-    vararg keywords: String
+    private vararg val keywords: String
 ) : CompletionProvider<CompletionParameters>() {
-    val myKeywords: Array<out String>
     val addSpaceHandler = InsertHandler<LookupElement> { context, el ->
         context.document.insertString(context.selectionEndOffset, " ")
         EditorModificationUtil.moveCaretRelatively(context.editor, 1)
     }
 
-    init {
-        myKeywords = keywords
-    }
-
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
-        myKeywords.forEach { keyword ->
+        for (keyword in keywords) {
             var builder = LookupElementBuilder.create(keyword)
             if (keyword in ADD_SPACE) {
                 builder = builder.withInsertHandler(addSpaceHandler)
