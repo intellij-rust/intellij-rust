@@ -326,9 +326,10 @@ private fun innerDeclarationsIn(
             nonShadowed.asSequence() + itemDeclarations(scope, true, context)
         }
 
-    //  FIXME: `for i in i` is broken, needs a test
-        is RustForExprElement ->
+        is RustForExprElement -> {
+            if (scope.scopedForDecl.isStrictAncestorOf(place)) return emptySequence()
             scope.scopedForDecl.pat.boundNames
+        }
 
         is RustIfExprElement -> scope.condition.boundNames(place)
         is RustWhileExprElement -> scope.condition.boundNames(place)

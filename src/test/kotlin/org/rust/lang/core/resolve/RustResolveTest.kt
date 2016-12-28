@@ -157,6 +157,13 @@ class RustResolveTest : RustResolveTestBase() {
         }
     """)
 
+    fun testForNoLeak() = checkByCode("""
+        fn main() {
+            for x in x { }
+                   //^ unresolved
+        }
+    """)
+
     fun testTraitMethodArgument() = checkByCode("""
         trait T {
             fn foo(x: i32) {

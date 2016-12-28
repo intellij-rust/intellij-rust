@@ -47,7 +47,10 @@ abstract class RustResolveTestBase : RustTestCaseBase() {
         val (refElement, data) = findElementAndDataInEditor<RustReferenceElement>("^")
 
         if (data == "unresolved") {
-            assertThat(refElement.reference.resolve()).isNull()
+            val resolved = refElement.reference.resolve()
+            check(resolved == null) {
+                "$refElement `${refElement.text}`should be unresolved, was resolved to\n$resolved `${resolved?.text}`"
+            }
             return
         }
 
