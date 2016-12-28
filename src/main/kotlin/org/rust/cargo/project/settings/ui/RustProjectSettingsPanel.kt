@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.JBColor
 import com.intellij.util.Alarm
+import com.intellij.util.text.SemVer
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.RustToolchain
 import javax.swing.JCheckBox
@@ -111,13 +112,13 @@ class RustProjectSettingsPanel {
             if (Disposer.isDisposed(disposable)) return@invokeLater
 
             val labelToVersion = listOf(
-                rustVersion to info.rustc?.semver,
-                cargoVersion to info.cargo?.semver,
+                rustVersion to info.rustc.semver,
+                cargoVersion to info.cargo,
                 rustupVersion to info.rustup
             )
 
             for ((label, version) in labelToVersion) {
-                if (version == null) {
+                if (version == SemVer.UNKNOWN) {
                     label.text = "N/A"
                     label.foreground = JBColor.RED
                 } else {

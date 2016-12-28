@@ -21,14 +21,16 @@ data class RustToolchain(val location: String) {
 
     fun queryVersions(): VersionInfo {
         check(!ApplicationManager.getApplication().isDispatchThread)
+        val cargo = nonProjectCargo().generalCommand("version")
+            .runExecutable()?.let(::findSemVer) ?: SemVer.UNKNOWN
 
         val rustup = GeneralCommandLine(pathToExecutable(RUSTUP))
             .withParameters("--version")
-            .runExecutable()?.let(::findSemVer)
+            .runExecutable()?.let(::findSemVer) ?: SemVer.UNKNOWN
 
         return VersionInfo(
             rustc = scrapeRustcVersion(pathToExecutable(RUSTC)),
-            cargo = scrapeCargoVersion(nonProjectCargo()),
+            cargo = cargo,
             rustup = rustup
         )
     }
@@ -55,11 +57,10 @@ data class RustToolchain(val location: String) {
     private fun hasExecutable(exec: String): Boolean =
         File(pathToExecutable(exec)).canExecute()
 
-    // TODO: drop IDEA 15 support and use SevVer.UNKNOWN
     data class VersionInfo(
-        val rustc: RustcVersion?,
-        val cargo: CargoVersion?,
-        val rustup: SemVer?
+        val rustc: RustcVersion,
+        val cargo: SemVer,
+        val rustup: SemVer
     )
 
     companion object {
@@ -79,23 +80,23 @@ data class RustToolchain(val location: String) {
 data class RustcVersion(
     val semver: SemVer,
     val nightlyCommitHash: String?
-)
-
-data class CargoVersion(
-    val semver: SemVer
-)
-
-private fun findSemVer(lines: List<String>): SemVer? {
-    val re = """\d+\.\d+\.\d+""".toRegex()
-    val versionText = lines.mapNotNull { re.find(it) }.firstOrNull()?.value ?: return null
-    return SemVer.parseFromText(versionText)
+) {
+    companion object {
+        val UNKNOWN = RustcVersion(SemVer.UNKNOWN, null)
+    }
 }
 
-private fun scrapeRustcVersion(pathToRustc: String): RustcVersion? {
+private fun findSemVer(lines: List<String>): SemVer {
+    val re = """\d+\.\d+\.\d+""".toRegex()
+    val versionText = lines.mapNotNull { re.find(it) }.firstOrNull()?.value ?: return SemVer.UNKNOWN
+    return SemVer.parseFromTextNonNullize(versionText)
+}
+
+private fun scrapeRustcVersion(pathToRustc: String): RustcVersion {
     val lines = GeneralCommandLine(pathToRustc)
         .withParameters("--version", "--verbose")
         .runExecutable()
-        ?: return null
+        ?: return RustcVersion.UNKNOWN
 
     // We want to parse following
     //
@@ -112,18 +113,12 @@ private fun scrapeRustcVersion(pathToRustc: String): RustcVersion? {
     val find = { re: Regex -> lines.mapNotNull { re.matchEntire(it) }.firstOrNull() }
 
     val commitHash = find(commitHashRe)?.let { it.groups[1]!!.value }
-    val releaseMatch = find(releaseRe) ?: return null
-    val versionText = releaseMatch.groups[1]?.value ?: return null
+    val releaseMatch = find(releaseRe) ?: return RustcVersion.UNKNOWN
+    val versionText = releaseMatch.groups[1]?.value ?: return RustcVersion.UNKNOWN
 
-    val semVer = SemVer.parseFromText(versionText) ?: return null
+    val semVer = SemVer.parseFromText(versionText) ?: return RustcVersion.UNKNOWN
     val isStable = releaseMatch.groups[2]?.value.isNullOrEmpty()
     return RustcVersion(semVer, if (isStable) null else commitHash)
-}
-
-private fun scrapeCargoVersion(cargo: Cargo): CargoVersion? {
-    val lines = cargo.generalCommand("version").runExecutable() ?: return null
-    val semver = findSemVer(lines) ?: return null
-    return CargoVersion(semver)
 }
 
 private object Suggestions {
