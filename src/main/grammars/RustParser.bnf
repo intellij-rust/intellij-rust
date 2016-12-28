@@ -1092,7 +1092,7 @@ item_macro_arg ::= '(' token_trees ')' ';'
 }
 
 try_macro_args ::= <<macro_args_delim any_expr>>
-vec_macro_args ::= '[' expr_list ']' | '[' any_expr';' any_expr ']' | '[' ']'  { pin = 1 }
+vec_macro_args ::= '[' expr_list? ']' | '[' any_expr';' any_expr ']'  { pin = 1 }
 
 private zz_log_macro_args ::= ('target' ':' expr ','?)? (<<comma_separated_list format_macro_arg>>)?
 log_macro_args ::=  <<macro_args_delim zz_log_macro_args>>
