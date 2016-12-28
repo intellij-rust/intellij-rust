@@ -336,11 +336,18 @@ extern_abi ::= EXTERN STRING_LITERAL?
 
 ret_type ::= '->' type { pin = 1 }
 
-function ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_attrs_and_block {
+fake function ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? (';' | inner_attrs_and_block) {
   pin = fn_header
   implements = [ "org.rust.lang.core.psi.RustQualifiedNameOwner"
                  "org.rust.lang.core.psi.RustFnElement"
                  "org.rust.lang.core.psi.RustTypeBearingItemElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustFunctionImplMixin"
+}
+
+foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params? foreign_fn_parameters ret_type? where_clause? ';' {
+  pin = "FN"
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  elementType = function
 }
 
 fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_attrs_and_block {
@@ -546,14 +553,6 @@ foreign_static_decl ::= attrs_and_vis STATIC MUT? IDENTIFIER type_ascription ';'
   mixin = "org.rust.lang.core.psi.impl.mixin.RustForeignStaticDeclImplMixin"
 }
 
-foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params? foreign_fn_parameters ret_type? where_clause? ';' {
-  pin = "FN"
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement"
-                 "org.rust.lang.core.psi.RustOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RustVisibilityOwner" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RustForeignFnDeclImplMixin"
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

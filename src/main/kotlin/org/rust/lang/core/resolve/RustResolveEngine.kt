@@ -380,7 +380,7 @@ private fun definedItems(scope: RustItemsOwner): Sequence<Pair<String, RustNamed
         scope.traitItemList.asSequence(),
         scope.typeItemList.asSequence(),
         scope.foreignModItemList.asSequence().flatMap {
-            it.foreignFnDeclList.asSequence<RustNamedElement>() + it.foreignStaticDeclList.asSequence()
+            it.functionList.asSequence<RustNamedElement>() + it.foreignStaticDeclList.asSequence()
         }
     ).flatten()
 
