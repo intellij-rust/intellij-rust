@@ -1,9 +1,6 @@
 package org.rust.lang.core
 
-import com.intellij.patterns.ElementPattern
-import com.intellij.patterns.PatternCondition
-import com.intellij.patterns.PlatformPatterns
-import com.intellij.patterns.PsiElementPattern
+import com.intellij.patterns.*
 import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
@@ -39,31 +36,27 @@ object RustPsiPattern {
 
     val onStatic: PsiElementPattern.Capture<PsiElement> = onItem<RustStaticItemElement>()
 
-    val onStaticMut: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement().with(
-        object : PatternCondition<PsiElement>("onStaticMutCondition") {
-            override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
-                val elem = t.parent?.parent?.parent
-                return (elem is RustStaticItemElement) && elem.mut != null
-            }
-        })
+    val onStaticMut: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement()
+        .with("onStaticMutCondition") {
+            val elem = it.parent?.parent?.parent
+            (elem is RustStaticItemElement) && elem.mut != null
+        }
 
     val onMacro: PsiElementPattern.Capture<PsiElement> = onItem<RustMacroItemElement>()
 
     val onTupleStruct: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement()
         .withSuperParent(3, PlatformPatterns.psiElement().withChild(psiElement<RustTupleFieldsElement>()))
 
-    val onCrate: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement().withSuperParent<PsiFile>(3).with(
-        object : PatternCondition<PsiElement>("onCrateCondition") {
-            override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
-                val file = t.containingFile.originalFile as RustFile
-                return file.isCrateRoot
-            }
-        })
+    val onCrate: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement().withSuperParent<PsiFile>(3)
+        .with("onCrateCondition") {
+            val file = it.containingFile.originalFile as RustFile
+            file.isCrateRoot
+        }
 
     val onExternBlock: PsiElementPattern.Capture<PsiElement> = onItem<RustForeignModItemElement>()
 
     val onExternBlockDecl: PsiElementPattern.Capture<PsiElement> =
-            onItem<RustForeignFnDeclElement>() or
+        onItem<RustForeignFnDeclElement>() or
             onItem<RustForeignStaticDeclElement>() or
             onItem<RustForeignModItemElement>()
 
@@ -100,3 +93,8 @@ val PsiElement.prevVisibleOrNewLine: PsiElement?
 val PsiElement.leftLeaves: Sequence<PsiElement> get() = generateSequence(this, PsiTreeUtil::prevLeaf).drop(1)
 
 val PsiElement.rightSiblings: Sequence<PsiElement> get() = generateSequence(this.nextSibling) { it.nextSibling }
+
+private fun <T, Self : ObjectPattern<T, Self>> ObjectPattern<T, Self>.with(name: String, cond: (T) -> Boolean): Self =
+    with(object : PatternCondition<T>(name) {
+        override fun accepts(t: T, context: ProcessingContext?): Boolean = cond(t)
+    })
