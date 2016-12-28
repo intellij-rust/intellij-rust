@@ -52,6 +52,10 @@ fun IndexSink.indexImplItem(stub: RustImplItemElementStub) {
     RustImplIndex.ByName.index(stub, this)
 }
 
+fun IndexSink.indexFunction(stub: RustFunctionElementStub) {
+    indexNamedStub(stub)
+}
+
 fun IndexSink.indexFnItem(stub: RustFnItemElementStub) {
     indexNamedStub(stub)
 }

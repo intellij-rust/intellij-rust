@@ -342,6 +342,8 @@ fake function ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? 
                  "org.rust.lang.core.psi.RustFnElement"
                  "org.rust.lang.core.psi.RustTypeBearingItemElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustFunctionImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RustFunctionElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params? foreign_fn_parameters ret_type? where_clause? ';' {

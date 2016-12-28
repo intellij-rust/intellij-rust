@@ -34,6 +34,7 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "TRAIT_ITEM" -> RustTraitItemElementStub.Type
     "IMPL_ITEM" -> RustImplItemElementStub.Type
 
+    "FUNCTION" -> RustFunctionElementStub.Type
     "FN_ITEM" -> RustFnItemElementStub.Type
     "STATIC_ITEM" -> RustStaticItemElementStub.Type
     "TYPE_ITEM" -> RustTypeItemElementStub.Type
@@ -393,6 +394,50 @@ class RustImplItemElementStub(
                 psi.type?.type ?: RustUnknownType, psi.traitRef?.path?.asRustPath)
 
         override fun indexStub(stub: RustImplItemElementStub, sink: IndexSink) = sink.indexImplItem(stub)
+    }
+}
+
+
+class RustFunctionElementStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    override val name: String?,
+    override val isPublic: Boolean,
+    override val isAbstract: Boolean,
+    override val isStatic: Boolean,
+    override val isTest: Boolean
+) : StubBase<RustFunctionElement>(parent, elementType),
+    RustNamedStub,
+    RustVisibilityStub,
+    RustFnStub {
+
+    object Type : RustStubElementType<RustFunctionElementStub, RustFunctionElement>("FUNCTION") {
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RustFunctionElementStub(parentStub, this,
+                dataStream.readName()?.string,
+                dataStream.readBoolean(),
+                dataStream.readBoolean(),
+                dataStream.readBoolean(),
+                dataStream.readBoolean()
+            )
+
+        override fun serialize(stub: RustFunctionElementStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.name)
+                writeBoolean(stub.isPublic)
+                writeBoolean(stub.isAbstract)
+                writeBoolean(stub.isStatic)
+                writeBoolean(stub.isTest)
+            }
+
+        override fun createPsi(stub: RustFunctionElementStub) =
+            RustFunctionElementImpl(stub, this)
+
+        override fun createStub(psi: RustFunctionElement, parentStub: StubElement<*>?) =
+            RustFunctionElementStub(parentStub, this,
+                psi.name, psi.isPublic, psi.isAbstract, psi.isStatic, psi.isTest)
+
+        override fun indexStub(stub: RustFunctionElementStub, sink: IndexSink) = sink.indexFunction(stub)
     }
 }
 

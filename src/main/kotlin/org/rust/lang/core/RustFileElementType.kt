@@ -5,5 +5,5 @@ import org.rust.lang.RustLanguage
 import org.rust.lang.core.stubs.RustFileStub
 
 object RustFileElementType : IStubFileElementType<RustFileStub>(RustLanguage) {
-    override fun getStubVersion(): Int = 23
+    override fun getStubVersion(): Int = 24
 }
