@@ -56,10 +56,6 @@ fun IndexSink.indexFunction(stub: RustFunctionElementStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexFnItem(stub: RustFnItemElementStub) {
-    indexNamedStub(stub)
-}
-
 fun IndexSink.indexStaticItem(stub: RustStaticItemElementStub) {
     indexNamedStub(stub)
 }

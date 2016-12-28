@@ -8,6 +8,7 @@ import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustParameterElementImpl
 import org.rust.lang.core.psi.impl.mixin.isConstant
+import org.rust.lang.core.psi.impl.mixin.isForeign
 
 /**
  * Base class for naming inspections. Implements the core logic of checking names
@@ -193,7 +194,10 @@ class RustEnumVariantNamingInspection : RustCamelCaseNamingInspection("Enum vari
 class RustFunctionNamingInspection : RustSnakeCaseNamingInspection("Function") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
-            override fun visitFnItem(el: RustFnItemElement) = inspect(el.identifier, holder)
+            override fun visitFunction(el: RustFunctionElement) {
+                if (el.isForeign) return
+                inspect(el.identifier, holder)
+            }
         }
 }
 

@@ -1,5 +1,5 @@
 FILE
-  RustFnItemElementImpl(FN_ITEM)
+  RustFunctionElementImpl(FUNCTION)
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('add')
@@ -19,7 +19,7 @@ FILE
     PsiErrorElement:'{' expected, got 'fn'
       <empty list>
   PsiWhiteSpace('\n\n')
-  RustFnItemElementImpl(FN_ITEM)
+  RustFunctionElementImpl(FUNCTION)
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('add')
@@ -46,7 +46,7 @@ FILE
     PsiElement({)('{')
     PsiElement(})('}')
   PsiWhiteSpace('\n\n')
-  RustFnItemElementImpl(FN_ITEM)
+  RustFunctionElementImpl(FUNCTION)
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('add')
@@ -89,7 +89,7 @@ FILE
       PsiWhiteSpace('\n')
       PsiElement(})('}')
   PsiWhiteSpace('\n\n')
-  RustFnItemElementImpl(FN_ITEM)
+  RustFunctionElementImpl(FUNCTION)
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('add')
@@ -110,7 +110,7 @@ FILE
   PsiErrorElement:fn, impl or trait expected, got 'const'
     <empty list>
   PsiWhiteSpace(' ')
-  RustFnItemElementImpl(FN_ITEM)
+  RustFunctionElementImpl(FUNCTION)
     PsiElement(const)('const')
     PsiWhiteSpace(' ')
     PsiElement(fn)('fn')

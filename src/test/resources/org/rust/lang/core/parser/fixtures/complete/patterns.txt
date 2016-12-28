@@ -1,5 +1,5 @@
 FILE
-  RustFnItemElementImpl(FN_ITEM)
+  RustFunctionElementImpl(FUNCTION)
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('patterns')

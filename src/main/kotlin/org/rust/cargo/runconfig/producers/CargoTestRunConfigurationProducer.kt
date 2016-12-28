@@ -66,7 +66,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
     ).firstOrNull()
 
     private fun findTestFunction(location: Location<*>): TestConfig? {
-        val fn = location.psiElement.parentOfType<RustFnItemElement>() ?: return null
+        val fn = location.psiElement.parentOfType<RustFunctionElement>() ?: return null
         val name = fn.name ?: return null
         val target = fn.containingCargoTarget ?: return null
         return if (fn.isTest) TestConfig(fn, "Test $name", name, target) else null
@@ -83,6 +83,6 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         // always returns fully-qualified path
         val testPath = (mod.crateRelativePath ?: "").toString().removePrefix("::")
         val target = mod.containingCargoTarget ?: return null
-        return if (mod.fnItemList.any { it.isTest }) TestConfig(mod, testName, testPath, target) else null
+        return if (mod.functionList.any { it.isTest }) TestConfig(mod, testName, testPath, target) else null
     }
 }

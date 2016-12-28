@@ -41,7 +41,7 @@ private fun RustGenericDeclaration.addWhereClause(whereClause: RustWhereClauseEl
         is RustTypeItemElement -> eq
         is RustImplItemElement -> lbrace
         is RustTraitItemElement -> lbrace
-        is RustFnItemElement -> block
+        is RustFunctionElement -> block
         is RustStructItemElement -> semicolon ?: blockFields
         is RustEnumItemElement -> enumBody
         else -> error("Unhandled RustGenericDeclaration: $this")

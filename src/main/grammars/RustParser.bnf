@@ -355,12 +355,7 @@ foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params? foreign_fn_param
 fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_attrs_and_block {
   pin = fn_header
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustQualifiedNameOwner"
-                 "org.rust.lang.core.psi.RustFnElement"
-                 "org.rust.lang.core.psi.RustTypeBearingItemElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RustFnItemImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RustFnItemElementStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+  elementType = function
 }
 
 generic_params ::= '<' lifetimes_params type_params '>'

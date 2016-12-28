@@ -30,7 +30,7 @@ object RustPsiPattern {
 
     val onEnum: PsiElementPattern.Capture<PsiElement> = onItem<RustEnumItemElement>()
 
-    val onFn: PsiElementPattern.Capture<PsiElement> = onItem<RustFnItemElement>()
+    val onFn: PsiElementPattern.Capture<PsiElement> = onItem<RustFunctionElement>()
 
     val onMod: PsiElementPattern.Capture<PsiElement> = onItem<RustModItemElement>()
 
@@ -72,7 +72,7 @@ object RustPsiPattern {
         return PlatformPatterns.psiElement().withSuperParent(4, implBlock)
     }
 
-    val onTestFn: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RustFnItemElement>()
+    val onTestFn: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RustFunctionElement>()
         .withChild(psiElement<RustOuterAttrElement>().withText("#[test]")))
 
     inline fun <reified I : RustDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {

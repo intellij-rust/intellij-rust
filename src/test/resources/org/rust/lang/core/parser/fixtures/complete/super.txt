@@ -39,7 +39,7 @@ FILE
         PsiWhiteSpace('\n        ')
         PsiElement(})('}')
       PsiWhiteSpace('\n\n        ')
-      RustFnItemElementImpl(FN_ITEM)
+      RustFunctionElementImpl(FUNCTION)
         PsiElement(fn)('fn')
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('f')

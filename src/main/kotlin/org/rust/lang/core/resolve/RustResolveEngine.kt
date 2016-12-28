@@ -281,7 +281,7 @@ private fun innerDeclarationsIn(
                 })
         }
 
-        is RustFnItemElement,
+        is RustFunctionElement,
         is RustTraitMethodMemberElement,
         is RustImplMethodMemberElement -> {
             scope as RustFnElement
@@ -371,7 +371,7 @@ private fun itemDeclarations(
 
 private fun definedItems(scope: RustItemsOwner): Sequence<Pair<String, RustNamedElement>> {
     val inlineItems: Sequence<RustNamedElement> = sequenceOf(
-        scope.fnItemList.asSequence(),
+        scope.functionList.asSequence(),
         scope.enumItemList.asSequence(),
         scope.unionItemList.asSequence(),
         scope.modItemList.asSequence(),

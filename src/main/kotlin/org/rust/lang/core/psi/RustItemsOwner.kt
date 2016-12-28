@@ -1,9 +1,7 @@
 package org.rust.lang.core.psi
 
-import org.rust.lang.core.parser.RustPsiTreeUtil
-
 interface RustItemsOwner : RustCompositeElement {
-    val fnItemList: List<RustFnItemElement>
+    val functionList: List<RustFunctionElement>
     val modItemList: List<RustModItemElement>
     val staticItemList: List<RustStaticItemElement>
     val structItemList: List<RustStructItemElement>

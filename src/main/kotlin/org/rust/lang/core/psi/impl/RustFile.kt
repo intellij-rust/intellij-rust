@@ -60,7 +60,7 @@ class RustFile(
     override val innerAttrList: List<RustInnerAttrElement>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)
 
-    override val fnItemList: List<RustFnItemElement> get() = findItems(FN_ITEM)
+    override val functionList: List<RustFunctionElement> get() = findItems(FUNCTION)
     override val modItemList: List<RustModItemElement> get() = findItems(MOD_ITEM)
     override val staticItemList: List<RustStaticItemElement> get() = findItems(STATIC_ITEM)
     override val structItemList: List<RustStructItemElement> get() = findItems(STRUCT_ITEM)

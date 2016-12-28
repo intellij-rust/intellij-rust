@@ -148,6 +148,10 @@ class RustNamingInspectionTest : RustInspectionsTestBase(true) {
     fun testFunctions() = checkByText<RustFunctionNamingInspection>("""
         fn fn_ok() {}
         fn <warning descr="Function `FN_BAR` should have a snake case name such as `fn_bar`">FN_BAR</warning>() {}
+
+        extern "C" {
+            fn OK();
+        }
     """)
 
     fun testFunctionsSuppression() = checkByText<RustFunctionNamingInspection>("""

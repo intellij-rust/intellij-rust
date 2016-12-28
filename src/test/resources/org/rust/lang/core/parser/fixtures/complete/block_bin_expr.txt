@@ -1,7 +1,7 @@
 FILE
   PsiComment(<EOL_COMMENT>)('// See stuff around `Restrictions::RESTRICTION_STMT_EXPR` in libsyntax')
   PsiWhiteSpace('\n\n')
-  RustFnItemElementImpl(FN_ITEM)
+  RustFunctionElementImpl(FUNCTION)
     RustVisElementImpl(VIS)
       PsiElement(pub)('pub')
     PsiWhiteSpace(' ')
@@ -231,7 +231,7 @@ FILE
               PsiElement(})('}')
         PsiElement(;)(';')
       PsiWhiteSpace('\n\n    ')
-      RustFnItemElementImpl(FN_ITEM)
+      RustFunctionElementImpl(FUNCTION)
         PsiElement(fn)('fn')
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('bar')

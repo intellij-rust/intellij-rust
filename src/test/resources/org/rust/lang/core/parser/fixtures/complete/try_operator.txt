@@ -1,7 +1,7 @@
 FILE
   PsiComment(<EOL_COMMENT>)('// https://github.com/rust-lang/rust/issues/31436')
   PsiWhiteSpace('\n\n')
-  RustFnItemElementImpl(FN_ITEM)
+  RustFunctionElementImpl(FUNCTION)
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('main')

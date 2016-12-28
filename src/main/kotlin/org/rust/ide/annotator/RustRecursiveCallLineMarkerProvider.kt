@@ -52,6 +52,6 @@ class RustRecursiveCallLineMarkerProvider : LineMarkerProvider {
         } ?: return false
 
         return parentOfType<RustImplMethodMemberElement>() == def  // Methods and associated functions
-            || parentOfType<RustFnItemElement>() == def            // Pure functions
+            || parentOfType<RustFunctionElement>() == def          // Pure functions
     }
 }

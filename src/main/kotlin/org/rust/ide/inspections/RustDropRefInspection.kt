@@ -4,7 +4,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import org.rust.ide.inspections.fixes.RemoveRefFix
 import org.rust.lang.core.psi.RustCallExprElement
 import org.rust.lang.core.psi.RustElementVisitor
-import org.rust.lang.core.psi.RustFnItemElement
+import org.rust.lang.core.psi.RustFunctionElement
 import org.rust.lang.core.psi.RustPathExprElement
 import org.rust.lang.core.types.RustReferenceType
 import org.rust.lang.core.types.util.resolvedType
@@ -25,7 +25,7 @@ class RustDropRefInspection : RustLocalInspectionTool() {
         val pathExpr = expr.expr as? RustPathExprElement ?: return
 
         val resEl = pathExpr.path.reference.resolve()
-        if (resEl !is RustFnItemElement || resEl.crateRelativePath.toString() != "::mem::drop") return
+        if (resEl !is RustFunctionElement || resEl.crateRelativePath.toString() != "::mem::drop") return
 
         val args = expr.argList.exprList
         if (args.size != 1) return

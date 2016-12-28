@@ -35,7 +35,6 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "IMPL_ITEM" -> RustImplItemElementStub.Type
 
     "FUNCTION" -> RustFunctionElementStub.Type
-    "FN_ITEM" -> RustFnItemElementStub.Type
     "STATIC_ITEM" -> RustStaticItemElementStub.Type
     "TYPE_ITEM" -> RustTypeItemElementStub.Type
     "FOREIGN_MOD_ITEM" -> RustForeignModItemElementStub.Type
@@ -438,50 +437,6 @@ class RustFunctionElementStub(
                 psi.name, psi.isPublic, psi.isAbstract, psi.isStatic, psi.isTest)
 
         override fun indexStub(stub: RustFunctionElementStub, sink: IndexSink) = sink.indexFunction(stub)
-    }
-}
-
-
-class RustFnItemElementStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    override val name: String?,
-    override val isPublic: Boolean,
-    override val isAbstract: Boolean,
-    override val isStatic: Boolean,
-    override val isTest: Boolean
-) : StubBase<RustFnItemElement>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub,
-    RustFnStub {
-
-    object Type : RustStubElementType<RustFnItemElementStub, RustFnItemElement>("FN_ITEM") {
-
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RustFnItemElementStub(parentStub, this,
-                dataStream.readName()?.string,
-                dataStream.readBoolean(),
-                dataStream.readBoolean(),
-                dataStream.readBoolean(),
-                dataStream.readBoolean()
-            )
-
-        override fun serialize(stub: RustFnItemElementStub, dataStream: StubOutputStream) =
-            with(dataStream) {
-                writeName(stub.name)
-                writeBoolean(stub.isPublic)
-                writeBoolean(stub.isAbstract)
-                writeBoolean(stub.isStatic)
-                writeBoolean(stub.isTest)
-            }
-
-        override fun createPsi(stub: RustFnItemElementStub) =
-            RustFnItemElementImpl(stub, this)
-
-        override fun createStub(psi: RustFnItemElement, parentStub: StubElement<*>?) =
-            RustFnItemElementStub(parentStub, this,
-                psi.name, psi.isPublic, psi.isAbstract, psi.isStatic, psi.isTest)
-
-        override fun indexStub(stub: RustFnItemElementStub, sink: IndexSink) = sink.indexFnItem(stub)
     }
 }
 

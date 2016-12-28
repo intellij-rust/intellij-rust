@@ -89,7 +89,7 @@ private val RustNamedElement.namespaces: Set<Namespace> get() = when (this) {
 
     is RustPatBindingElement,
     is RustStaticItemElement,
-    is RustFnItemElement,
+    is RustFunctionElement,
     is RustEnumVariantElement -> VALUES
 
     is RustStructItemElement -> if (blockFields == null) BOTH else TYPES

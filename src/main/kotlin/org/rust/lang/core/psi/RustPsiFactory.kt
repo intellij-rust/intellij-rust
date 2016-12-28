@@ -96,7 +96,7 @@ class RustPsiFactory(private val project: Project) {
     ): RustGenericParamsElement {
         val text = params.joinToString (prefix = "<", separator = ", ", postfix = ">")
 
-        return createFromText<RustFnItemElement>("fn foo$text() {}")?.genericParams
+        return createFromText<RustFunctionElement>("fn foo$text() {}")?.genericParams
             ?: error("Failed to create type from text: `$text`")
     }
 

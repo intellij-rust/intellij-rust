@@ -1,5 +1,5 @@
 FILE
-  RustFnItemElementImpl(FN_ITEM)
+  RustFunctionElementImpl(FUNCTION)
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('foo')
@@ -25,7 +25,7 @@ FILE
       PsiWhiteSpace(' ')
       PsiElement({)('{')
       PsiWhiteSpace('\n        ')
-      RustFnItemElementImpl(FN_ITEM)
+      RustFunctionElementImpl(FUNCTION)
         PsiElement(fn)('fn')
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('bar')

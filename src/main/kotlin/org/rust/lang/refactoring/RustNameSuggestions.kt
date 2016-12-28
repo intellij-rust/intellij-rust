@@ -76,9 +76,9 @@ fun PsiElement.nameForArgument(): String {
     return fn?.parameters?.parameterList?.get(parameterIndex)?.pat?.text ?: ""
 }
 
-private fun RustCallExprElement.findFnImpl(): RustFnItemElement? {
+private fun RustCallExprElement.findFnImpl(): RustFunctionElement? {
     val path = expr as? RustPathExprElement
-    return path?.path?.reference?.resolve() as? RustFnItemElement
+    return path?.path?.reference?.resolve() as? RustFunctionElement
 }
 
 

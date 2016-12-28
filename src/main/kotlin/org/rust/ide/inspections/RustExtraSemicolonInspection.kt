@@ -22,7 +22,7 @@ class RustExtraSemicolonInspection : RustLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RustElementVisitor() {
             override fun visitImplMethodMember(o: RustImplMethodMemberElement) = inspect(holder, o)
-            override fun visitFnItem(o: RustFnItemElement) = inspect(holder, o)
+            override fun visitFunction(o: RustFunctionElement) = inspect(holder, o)
         }
 }
 
