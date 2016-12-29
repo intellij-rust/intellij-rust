@@ -458,6 +458,15 @@ pat_field ::= IDENTIFIER ':' pat
 
 binding_mode ::= REF MUT? | MUT
 
+fake constant ::= attrs_and_vis (STATIC MUT? | CONST) IDENTIFIER type_ascription '=' any_expr {
+  pin = 'IDENTIFIER'
+  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.psi.RustItemElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustConstantImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RustConstantElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
 private static_decl ::= IDENTIFIER type_ascription '=' any_expr { pin = 1 }
 
 static_item ::= attrs_and_vis (STATIC MUT? | CONST) static_decl ';' {
