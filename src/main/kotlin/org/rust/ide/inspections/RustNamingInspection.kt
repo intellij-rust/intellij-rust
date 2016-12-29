@@ -7,8 +7,9 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustParameterElementImpl
+import org.rust.lang.core.psi.impl.mixin.RustConstantKind
 import org.rust.lang.core.psi.impl.mixin.RustFunctionRole
-import org.rust.lang.core.psi.impl.mixin.isConst
+import org.rust.lang.core.psi.impl.mixin.kind
 import org.rust.lang.core.psi.impl.mixin.role
 
 /**
@@ -160,7 +161,7 @@ class RustConstNamingInspection : RustUpperCaseNamingInspection("Constant") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
             override fun visitConstant(el: RustConstantElement) {
-                if (el.isConst) {
+                if (el.kind == RustConstantKind.CONST) {
                     inspect(el.identifier, holder)
                 }
             }
@@ -171,7 +172,7 @@ class RustStaticConstNamingInspection : RustUpperCaseNamingInspection("Static co
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
             override fun visitConstant(el: RustConstantElement) {
-                if (!el.isConst) {
+                if (el.kind != RustConstantKind.CONST) {
                     inspect(el.identifier, holder)
                 }
             }

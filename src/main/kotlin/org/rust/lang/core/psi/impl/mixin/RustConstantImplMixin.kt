@@ -14,16 +14,23 @@ abstract class RustConstantImplMixin : RustStubbedNamedElementImpl<RustConstantE
 
     constructor(stub: RustConstantElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getIcon(flags: Int) = iconWithVisibility(flags, when {
-        isConst -> RustIcons.CONSTANT
-        isMut -> RustIcons.MUT_STATIC
-        else -> RustIcons.STATIC
+    override fun getIcon(flags: Int) = iconWithVisibility(flags, when (kind) {
+        RustConstantKind.CONST -> RustIcons.CONSTANT
+        RustConstantKind.MUT_STATIC -> RustIcons.MUT_STATIC
+        RustConstantKind.STATIC -> RustIcons.STATIC
     })
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 }
 
-val RustConstantElement.isMut: Boolean
-    get() = mut != null
+enum class RustConstantKind {
+    STATIC,
+    MUT_STATIC,
+    CONST
+}
 
-val RustConstantElement.isConst: Boolean get() = const != null
+val RustConstantElement.kind: RustConstantKind get() = when {
+    mut != null -> RustConstantKind.MUT_STATIC
+    const != null -> RustConstantKind.CONST
+    else -> RustConstantKind.STATIC
+}
