@@ -188,7 +188,7 @@ FILE
         PsiElement())(')')
       PsiElement(;)(';')
     PsiWhiteSpace('\n\n    ')
-    RustForeignStaticDeclElementImpl(FOREIGN_STATIC_DECL)
+    RustConstantElementImpl(CONSTANT)
       PsiComment(<OUTER_EOL_DOC_COMMENT>)('/// Doc')
       PsiWhiteSpace('\n    ')
       PsiElement(static)('static')

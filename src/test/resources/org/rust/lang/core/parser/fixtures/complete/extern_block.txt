@@ -110,7 +110,7 @@ FILE
         PsiElement())(')')
       PsiElement(;)(';')
     PsiWhiteSpace('\n\n    ')
-    RustForeignStaticDeclElementImpl(FOREIGN_STATIC_DECL)
+    RustConstantElementImpl(CONSTANT)
       RustOuterAttrElementImpl(OUTER_ATTR)
         PsiElement(#)('#')
         PsiElement([)('[')

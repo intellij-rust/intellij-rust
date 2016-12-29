@@ -58,7 +58,7 @@ object RustPsiPattern {
 
     val onExternBlockDecl: PsiElementPattern.Capture<PsiElement> =
             onItem<RustFunctionElement>() or //FIXME: check if this is indeed a foreign function
-            onItem<RustForeignStaticDeclElement>() or
+            onItem<RustConstantElement>() or
             onItem<RustForeignModItemElement>()
 
     val onAnyItem: PsiElementPattern.Capture<PsiElement> = onItem<RustDocAndAttributeOwner>()

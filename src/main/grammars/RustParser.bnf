@@ -485,6 +485,12 @@ impl_const_member ::= outer_attr* DEFAULT* vis? CONST IDENTIFIER type_ascription
   elementType = constant
 }
 
+foreign_static_decl ::= attrs_and_vis STATIC MUT? IDENTIFIER type_ascription ';' {
+  pin = 'IDENTIFIER'
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  elementType = constant
+}
+
 private view_item ::= use_item
                     | extern_crate_item
 
@@ -580,16 +586,6 @@ foreign_mod_item ::= attrs_and_vis extern_abi '{' inner_attr* foreign_decl* '}' 
 }
 
 private foreign_decl ::= foreign_static_decl | foreign_fn_decl
-
-foreign_static_decl ::= attrs_and_vis STATIC MUT? IDENTIFIER type_ascription ';' {
-  pin = "STATIC"
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement"
-                 "org.rust.lang.core.psi.RustOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RustVisibilityOwner" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RustForeignStaticDeclImplMixin"
-}
-
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
