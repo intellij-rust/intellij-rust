@@ -45,15 +45,23 @@ val RustFunctionElement.isTest: Boolean get() = stub?.isTest ?: queryAttributes.
 
 
 enum class RustFunctionKind {
-    FREE, FOREIGN, TRAIT_METHOD, IMPL_METHOD
+    // Bump stub version if reorder fields
+    FREE,
+    TRAIT_METHOD,
+    IMPL_METHOD,
+    FOREIGN
 }
 
-val RustFunctionElement.kind: RustFunctionKind get() = when (parent) {
-    is RustItemsOwner -> RustFunctionKind.FREE
-    is RustForeignModItemElement -> RustFunctionKind.FOREIGN
-    is RustTraitItemElement -> RustFunctionKind.TRAIT_METHOD
-    is RustImplItemElement -> RustFunctionKind.IMPL_METHOD
-    else -> error("Unexpected function parent: $parent")
+val RustFunctionElement.kind: RustFunctionKind get() {
+    val stub = stub
+    if (stub != null) return stub.kind
+    return when (parent) {
+        is RustItemsOwner -> RustFunctionKind.FREE
+        is RustTraitItemElement -> RustFunctionKind.TRAIT_METHOD
+        is RustImplItemElement -> RustFunctionKind.IMPL_METHOD
+        is RustForeignModItemElement -> RustFunctionKind.FOREIGN
+        else -> error("Unexpected function parent: $parent")
+    }
 }
 
 val RustFunctionElement.superMethod: RustFunctionElement? get() {
