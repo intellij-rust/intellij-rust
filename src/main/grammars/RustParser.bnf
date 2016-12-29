@@ -728,15 +728,6 @@ private trait_member ::= !'}' ( trait_const_member | trait_type_member | trait_m
 
 private trait_member_recover ::= !('#' | vis | EXTERN | CONST | UNSAFE | FN | TYPE_KW | '}')
 
-trait_type_member ::= outer_attr* TYPE_KW IDENTIFIER type_param_bounds? [ '=' type ] ';' {
-  implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RustNamedElement" ]
-  extends = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-}
-
-
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Impl
@@ -817,8 +808,8 @@ impl_trait_type ::= IMPL polybound ('+' polybound)*
 wildcard_type ::= '_'
 never_type ::= '!'
 
-fake type_alias ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params? where_clause? [ '=' type ] ';' {
-  pin = 'TYPE_KW'
+fake type_alias ::= attrs_and_vis TYPE_KW IDENTIFIER ( generic_params where_clause? | where_clause | type_param_bounds )? [ '=' type ] ';' {
+  pin = 'IDENTIFIER'
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustTypeBearingItemElement"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
@@ -828,6 +819,11 @@ fake type_alias ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params? where_claus
 }
 
 type_item ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params? where_clause? '=' type ';' {
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  elementType = type_alias
+}
+
+trait_type_member ::= outer_attr* TYPE_KW IDENTIFIER type_param_bounds? [ '=' type ] ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   elementType = type_alias
 }

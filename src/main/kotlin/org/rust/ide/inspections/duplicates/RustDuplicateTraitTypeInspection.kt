@@ -6,7 +6,7 @@ import org.rust.lang.core.psi.RustTraitItemElement
 
 class RustDuplicateTraitTypeInspection : RustDuplicateInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        createInspection(RustTraitItemElement::getTraitTypeMemberList) {
+        createInspection(RustTraitItemElement::getTypeAliasList) {
             holder.registerProblem(it.identifier, "Duplicate associated type <code>#ref</code>", ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         }
 }
