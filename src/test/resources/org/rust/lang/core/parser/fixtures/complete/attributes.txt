@@ -108,7 +108,7 @@ FILE
       PsiWhiteSpace('\n')
       PsiElement(})('}')
   PsiWhiteSpace('\n\n')
-  RustStaticItemElementImpl(STATIC_ITEM)
+  RustConstantElementImpl(CONSTANT)
     RustOuterAttrElementImpl(OUTER_ATTR)
       PsiElement(#)('#')
       PsiElement([)('[')

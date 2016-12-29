@@ -8,7 +8,7 @@ import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustParameterElementImpl
 import org.rust.lang.core.psi.impl.mixin.RustFunctionKind
-import org.rust.lang.core.psi.impl.mixin.isConstant
+import org.rust.lang.core.psi.impl.mixin.isConst
 import org.rust.lang.core.psi.impl.mixin.kind
 
 /**
@@ -159,8 +159,8 @@ class RustAssocTypeNamingInspection : RustCamelCaseNamingInspection("Type", "Ass
 class RustConstNamingInspection : RustUpperCaseNamingInspection("Constant") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
-            override fun visitStaticItem(el: RustStaticItemElement) {
-                if (el.isConstant) {
+            override fun visitConstant(el: RustConstantElement) {
+                if (el.isConst) {
                     inspect(el.identifier, holder)
                 }
             }
@@ -170,8 +170,8 @@ class RustConstNamingInspection : RustUpperCaseNamingInspection("Constant") {
 class RustStaticConstNamingInspection : RustUpperCaseNamingInspection("Static constant") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
-            override fun visitStaticItem(el: RustStaticItemElement) {
-                if (!el.isConstant) {
+            override fun visitConstant(el: RustConstantElement) {
+                if (!el.isConst) {
                     inspect(el.identifier, holder)
                 }
             }

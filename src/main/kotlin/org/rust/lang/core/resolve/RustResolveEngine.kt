@@ -375,7 +375,7 @@ private fun definedItems(scope: RustItemsOwner): Sequence<Pair<String, RustNamed
         scope.enumItemList.asSequence(),
         scope.unionItemList.asSequence(),
         scope.modItemList.asSequence(),
-        scope.staticItemList.asSequence(),
+        scope.constantList.asSequence(),
         scope.structItemList.asSequence(),
         scope.traitItemList.asSequence(),
         scope.typeItemList.asSequence(),

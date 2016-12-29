@@ -15,7 +15,7 @@ open class RustModTreeElement(item: RustMod) : PsiTreeElementBase<RustMod>(item)
             mod.implItemList.map(::RustImplTreeElement),
             mod.modDeclItemList.map(::RustModDeclTreeElement),
             mod.modItemList.map(::RustModTreeElement),
-            mod.staticItemList.map(::RustStaticTreeElement),
+            mod.constantList.map(::RustConstantTreeElement),
             mod.structItemList.map(::RustStructTreeElement),
             mod.traitItemList.map(::RustTraitTreeElement),
             mod.typeItemList.map(::RustTypeTreeElement)

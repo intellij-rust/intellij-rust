@@ -3,7 +3,7 @@ package org.rust.lang.core.psi
 interface RustItemsOwner : RustCompositeElement {
     val functionList: List<RustFunctionElement>
     val modItemList: List<RustModItemElement>
-    val staticItemList: List<RustStaticItemElement>
+    val constantList: List<RustConstantElement>
     val structItemList: List<RustStructItemElement>
     val enumItemList: List<RustEnumItemElement>
     val unionItemList: List<RustUnionItemElement>

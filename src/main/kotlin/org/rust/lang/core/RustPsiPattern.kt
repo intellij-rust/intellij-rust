@@ -10,6 +10,7 @@ import org.rust.lang.core.completion.psiElement
 import org.rust.lang.core.completion.withSuperParent
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.impl.mixin.isMut
 
 /**
  * Rust PSI tree patterns.
@@ -34,12 +35,12 @@ object RustPsiPattern {
 
     val onMod: PsiElementPattern.Capture<PsiElement> = onItem<RustModItemElement>()
 
-    val onStatic: PsiElementPattern.Capture<PsiElement> = onItem<RustStaticItemElement>()
+    val onStatic: PsiElementPattern.Capture<PsiElement> = onItem<RustConstantElement>()
 
     val onStaticMut: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement()
         .with("onStaticMutCondition") {
             val elem = it.parent?.parent?.parent
-            (elem is RustStaticItemElement) && elem.mut != null
+            (elem is RustConstantElement) && elem.isMut
         }
 
     val onMacro: PsiElementPattern.Capture<PsiElement> = onItem<RustMacroItemElement>()

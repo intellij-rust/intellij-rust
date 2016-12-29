@@ -472,12 +472,7 @@ private static_decl ::= IDENTIFIER type_ascription '=' any_expr { pin = 1 }
 static_item ::= attrs_and_vis (STATIC MUT? | CONST) static_decl ';' {
   pin = static_decl
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement"
-                 "org.rust.lang.core.psi.RustItemElement" ]
-  extends = "org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl<?>"
-  mixin = "org.rust.lang.core.psi.impl.mixin.RustStaticItemImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RustStaticItemElementStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+  elementType = constant
 }
 
 private view_item ::= use_item

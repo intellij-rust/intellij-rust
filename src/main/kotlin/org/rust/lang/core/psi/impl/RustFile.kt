@@ -62,7 +62,7 @@ class RustFile(
 
     override val functionList: List<RustFunctionElement> get() = findItems(FUNCTION)
     override val modItemList: List<RustModItemElement> get() = findItems(MOD_ITEM)
-    override val staticItemList: List<RustStaticItemElement> get() = findItems(STATIC_ITEM)
+    override val constantList: List<RustConstantElement> get() = findItems(CONSTANT)
     override val structItemList: List<RustStructItemElement> get() = findItems(STRUCT_ITEM)
     override val enumItemList: List<RustEnumItemElement> get() = findItems(ENUM_ITEM)
     override val unionItemList: List<RustUnionItemElement> get() = findItems(UNION_ITEM)

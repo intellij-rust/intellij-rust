@@ -85,7 +85,7 @@ fun RustCompositeElement.createLookupElement(scopeName: String): LookupElement {
         .withIcon(getIcon(0))
 
     return when (this) {
-        is RustStaticItemElement -> base.withTypeText(type?.text)
+        is RustConstantElement -> base.withTypeText(type?.text)
         is RustFieldDeclElement -> base.withTypeText(type?.text)
 
         is RustFunctionElement -> base
