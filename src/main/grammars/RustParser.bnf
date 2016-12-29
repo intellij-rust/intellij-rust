@@ -339,7 +339,9 @@ ret_type ::= '->' type { pin = 1 }
 fake function ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? (';' | inner_attrs_and_block) {
   pin = fn_header
   implements = [ "org.rust.lang.core.psi.RustQualifiedNameOwner"
-                 "org.rust.lang.core.psi.RustFnElement"
+                 "org.rust.lang.core.psi.RustGenericDeclaration"
+                 "org.rust.lang.core.psi.RustOuterAttributeOwner"
+                 "org.rust.lang.core.psi.RustInnerAttributeOwner"
                  "org.rust.lang.core.psi.RustTypeBearingItemElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustFunctionImplMixin"
   stubClass = "org.rust.lang.core.stubs.RustFunctionElementStub"

@@ -6,6 +6,7 @@ import com.intellij.psi.stubs.*
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.RustFileElementType
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.mixin.isStatic
 import org.rust.lang.core.stubs.RustImplItemElementStub
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.RustStructOrEnumTypeBase
@@ -25,15 +26,15 @@ import java.io.DataOutput
 
 object RustImplIndex {
 
-    fun findNonStaticMethodsFor(target: RustType, project: Project): Sequence<RustFnElement> =
+    fun findNonStaticMethodsFor(target: RustType, project: Project): Sequence<RustFunctionElement> =
         findMethodsFor(target, project)
             .filter { !it.isStatic }
 
-    fun findStaticMethodsFor(target: RustType, project: Project): Sequence<RustFnElement> =
+    fun findStaticMethodsFor(target: RustType, project: Project): Sequence<RustFunctionElement> =
         findMethodsFor(target, project)
             .filter { it.isStatic }
 
-    fun findMethodsFor(target: RustType, project: Project): Sequence<RustFnElement> =
+    fun findMethodsFor(target: RustType, project: Project): Sequence<RustFunctionElement> =
         findImplsFor(target, project)
             .flatMap { it.functionList.orEmpty().asSequence() }
 

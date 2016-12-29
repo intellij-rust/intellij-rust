@@ -16,7 +16,7 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
 
         val name = if (element is RustMod) element.modName else element.name
         val header = if (name != null) "<pre>$name</pre>\n" else ""
-        val functionSignature = (element as? RustFnElement)?.formatSignature()
+        val functionSignature = (element as? RustFunctionElement)?.formatSignature()
         val signature = if (functionSignature != null) "<pre>$functionSignature</pre>\n" else ""
         val doc = element.documentationAsHtml() ?: ""
         return header + signature + doc
@@ -24,7 +24,7 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
 
     override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?) = when (element) {
         is RustPatBindingElement -> getQuickNavigateInfo(element)
-        is RustFnElement -> getQuickNavigateInfo(element)
+        is RustFunctionElement -> getQuickNavigateInfo(element)
         else -> null
     }
 
@@ -35,13 +35,13 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
         return "let $bindingMode<b>${element.identifier.text}</b>$location"
     }
 
-    private fun getQuickNavigateInfo(element: RustFnElement): String {
+    private fun getQuickNavigateInfo(element: RustFunctionElement): String {
         val signature = element.formatSignature()
         val location = element.locationString
         return "$signature$location"
     }
 
-    private fun RustFnElement.formatSignature(): String {
+    private fun RustFunctionElement.formatSignature(): String {
         // fn item looks like this:
         // ```
         //     ///doc comment

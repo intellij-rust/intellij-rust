@@ -399,13 +399,12 @@ class RustFunctionElementStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
     override val isPublic: Boolean,
-    override val isAbstract: Boolean,
-    override val isStatic: Boolean,
-    override val isTest: Boolean
+    val isAbstract: Boolean,
+    val isStatic: Boolean,
+    val isTest: Boolean
 ) : StubBase<RustFunctionElement>(parent, elementType),
     RustNamedStub,
-    RustVisibilityStub,
-    RustFnStub {
+    RustVisibilityStub {
 
     object Type : RustStubElementType<RustFunctionElementStub, RustFunctionElement>("FUNCTION") {
 

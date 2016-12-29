@@ -59,8 +59,8 @@ class UnElideLifetimesIntention : PsiElementBaseIntentionAction() {
         }
     }
 
-    fun findFnDecl(element: PsiElement): RustFnElement? {
-        val fnItem = element.parentOfType<RustFnElement>() ?: return null
+    fun findFnDecl(element: PsiElement): RustFunctionElement? {
+        val fnItem = element.parentOfType<RustFunctionElement>() ?: return null
         val scope = element.parentOfType<RustBlockElement>()
 
         return if (fnItem.contains(scope)) null else fnItem
@@ -72,7 +72,7 @@ class UnElideLifetimesIntention : PsiElementBaseIntentionAction() {
     private fun createParam(project: Project, origin: PsiElement, lifeTimeName: String): PsiElement =
         RustPsiFactory(project).createMethodParam(origin.text.replaceFirst("&", "&$lifeTimeName "))
 
-    private val RustFnElement.allRefArgs: Sequence<PsiElement> get() {
+    private val RustFunctionElement.allRefArgs: Sequence<PsiElement> get() {
         val selfAfg: Sequence<PsiElement?> = sequenceOf(parameters?.selfArgument)
         val params:  Sequence<PsiElement?> = parameters?.parameterList?.asSequence()?.filter { it.type is RustRefTypeElement } ?: emptySequence()
         return (selfAfg + params).filterNotNull()

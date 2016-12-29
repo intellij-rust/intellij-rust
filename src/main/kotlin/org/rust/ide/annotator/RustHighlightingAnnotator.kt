@@ -8,6 +8,7 @@ import org.rust.ide.highlight.RustHighlighter
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.RustFunctionKind
 import org.rust.lang.core.psi.impl.mixin.isMut
+import org.rust.lang.core.psi.impl.mixin.isStatic
 import org.rust.lang.core.psi.impl.mixin.kind
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.parentOfType

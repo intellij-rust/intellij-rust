@@ -37,7 +37,7 @@ object RustTypificationEngine {
 
             is RustEnumVariantElement -> deviseEnumType(named)
 
-            is RustFnElement -> deviseFunctionType(named)
+            is RustFunctionElement -> deviseFunctionType(named)
 
             is RustTypeParamElement -> RustTypeParameterType(named)
 
@@ -98,7 +98,7 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 
     override fun visitMethodCallExpr(o: RustMethodCallExprElement) = set {
-        val method = o.reference.resolve() as? RustFnElement
+        val method = o.reference.resolve() as? RustFunctionElement
             ?: return@set RustUnknownType
 
         val impl = method.parentOfType<RustImplItemElement>()
@@ -260,7 +260,7 @@ private fun deviseSelfType(self: RustSelfArgumentElement): RustType {
 private fun deviseEnumType(variant: RustEnumVariantElement): RustType =
     RustTypificationEngine.typifyItem((variant.parent as RustEnumBodyElement).parent as RustEnumItemElement)
 
-private fun deviseFunctionType(fn: RustFnElement): RustFunctionType {
+private fun deviseFunctionType(fn: RustFunctionElement): RustFunctionType {
     val paramTypes = mutableListOf<RustType>()
 
     val params = fn.parameters

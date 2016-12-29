@@ -10,6 +10,7 @@ import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.runconfig.CargoCommandRunConfigurationType
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.mixin.isTest
 import org.rust.lang.core.psi.util.parentOfType
 
 class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandRunConfigurationType()) {

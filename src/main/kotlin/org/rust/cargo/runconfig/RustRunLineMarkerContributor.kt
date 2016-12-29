@@ -6,15 +6,16 @@ import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.rust.cargo.runconfig.producers.CargoExecutableRunConfigurationProducer
-import org.rust.lang.core.psi.RustFnElement
+import org.rust.lang.core.psi.RustFunctionElement
 import org.rust.lang.core.psi.RustTokenElementTypes
+import org.rust.lang.core.psi.impl.mixin.isTest
 import org.rust.lang.core.psi.util.elementType
 
 class RustRunLineMarkerContributor : RunLineMarkerContributor() {
 
     override fun getInfo(element: PsiElement): Info? {
         if (element.elementType != RustTokenElementTypes.IDENTIFIER) return null
-        val fn = element.parent as? RustFnElement ?: return null
+        val fn = element.parent as? RustFunctionElement ?: return null
         return when {
             CargoExecutableRunConfigurationProducer.isMainFunction(fn) -> Info(
                 AllIcons.RunConfigurations.TestState.Run,

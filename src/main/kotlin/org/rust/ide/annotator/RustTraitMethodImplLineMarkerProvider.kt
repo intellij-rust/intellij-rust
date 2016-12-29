@@ -8,6 +8,7 @@ import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.RustFunctionElement
 import org.rust.lang.core.psi.RustTraitItemElement
 import org.rust.lang.core.psi.impl.mixin.RustFunctionKind
+import org.rust.lang.core.psi.impl.mixin.isAbstract
 import org.rust.lang.core.psi.impl.mixin.kind
 import org.rust.lang.core.psi.impl.mixin.superMethod
 import org.rust.lang.core.psi.util.parentOfType

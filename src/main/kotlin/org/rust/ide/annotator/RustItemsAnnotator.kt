@@ -13,6 +13,7 @@ import org.rust.ide.actions.RustExpandModuleAction
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
+import org.rust.lang.core.psi.impl.mixin.isAbstract
 import org.rust.lang.core.psi.impl.mixin.isLocal
 import org.rust.lang.core.psi.impl.mixin.pathAttribute
 import org.rust.lang.core.psi.util.module

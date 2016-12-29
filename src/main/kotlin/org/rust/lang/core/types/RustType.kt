@@ -1,7 +1,7 @@
 package org.rust.lang.core.types
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.RustFnElement
+import org.rust.lang.core.psi.RustFunctionElement
 import org.rust.lang.core.psi.RustTraitItemElement
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 
@@ -15,7 +15,7 @@ interface RustType {
     /**
      * Non-static methods accessible for this particular type
      */
-    fun getNonStaticMethodsIn(project: Project): Sequence<RustFnElement>
+    fun getNonStaticMethodsIn(project: Project): Sequence<RustFunctionElement>
 
     /**
      * Apply positional type arguments to a generic type.

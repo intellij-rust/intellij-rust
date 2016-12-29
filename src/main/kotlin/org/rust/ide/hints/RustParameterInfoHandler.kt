@@ -138,8 +138,8 @@ class RustArgumentsDescription(
     }
 }
 
-private val RustCallExprElement.declaration: RustFnElement?
-    get() = (expr as? RustPathExprElement)?.path?.reference?.resolve() as? RustFnElement
+private val RustCallExprElement.declaration: RustFunctionElement?
+    get() = (expr as? RustPathExprElement)?.path?.reference?.resolve() as? RustFunctionElement
 
-private val RustMethodCallExprElement.declaration: RustFnElement?
-    get() = reference.resolve() as? RustFnElement
+private val RustMethodCallExprElement.declaration: RustFunctionElement?
+    get() = reference.resolve() as? RustFunctionElement

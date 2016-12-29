@@ -88,7 +88,7 @@ fun RustCompositeElement.createLookupElement(scopeName: String): LookupElement {
         is RustStaticItemElement -> base.withTypeText(type?.text)
         is RustFieldDeclElement -> base.withTypeText(type?.text)
 
-        is RustFnElement -> base
+        is RustFunctionElement -> base
             .withTypeText(retType?.type?.text ?: "()")
             .withTailText(parameters?.text?.replace("\\s+".toRegex(), " ") ?: "()")
             .withInsertHandler handler@ { context: InsertionContext, lookupElement: LookupElement ->

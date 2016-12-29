@@ -7,7 +7,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.RustBlockElement
-import org.rust.lang.core.psi.RustFnElement
+import org.rust.lang.core.psi.RustFunctionElement
 import org.rust.lang.core.psi.RustPatBindingElement
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
 import org.rust.lang.core.psi.impl.RustParameterElementImpl
@@ -27,7 +27,7 @@ abstract class RustPatBindingImplMixin(node: ASTNode) : RustNamedElementImpl(nod
     override fun getUseScope(): SearchScope {
         val owner = PsiTreeUtil.getParentOfType(this,
             RustBlockElement::class.java,
-            RustFnElement::class.java
+            RustFunctionElement::class.java
         )
 
         if (owner != null) return LocalSearchScope(owner)

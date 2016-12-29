@@ -26,7 +26,7 @@ class RustExtraSemicolonInspection : RustLocalInspectionTool() {
 }
 
 
-private fun inspect(holder: ProblemsHolder, fn: RustFnElement) {
+private fun inspect(holder: ProblemsHolder, fn: RustFunctionElement) {
     val block = fn.block ?: return
     val retType = fn.retType?.type ?: return
     if (retType.resolvedType == RustUnitType) return

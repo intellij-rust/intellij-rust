@@ -1,7 +1,7 @@
 package org.rust.lang.core.types
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.RustFnElement
+import org.rust.lang.core.psi.RustFunctionElement
 import org.rust.lang.core.psi.RustTraitItemElement
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 
@@ -16,7 +16,7 @@ class RustTraitType(val trait: RustTraitItemElement) : RustTypeBase() {
     override fun getTraitsImplementedIn(project: Project): Sequence<RustTraitItemElement> =
         sequenceOf(trait)
 
-    override fun getNonStaticMethodsIn(project: Project): Sequence<RustFnElement> =
+    override fun getNonStaticMethodsIn(project: Project): Sequence<RustFunctionElement> =
         getTraitsImplementedIn(project).flatMap { it.functionList.asSequence() }
 
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitTrait(this)
