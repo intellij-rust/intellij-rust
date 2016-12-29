@@ -91,7 +91,7 @@ class RustHighlightingAnnotator : Annotator {
 
         override fun visitStructItem(o: RustStructItemElement)   = highlight(o.identifier, RustColor.STRUCT)
         override fun visitTraitItem(o: RustTraitItemElement)     = highlight(o.identifier, RustColor.TRAIT)
-        override fun visitTypeItem(o: RustTypeItemElement)       = highlight(o.identifier, RustColor.TYPE_ALIAS)
+        override fun visitTypeAlias(o: RustTypeAliasElement)     = highlight(o.identifier, RustColor.TYPE_ALIAS)
         override fun visitModDeclItem(o: RustModDeclItemElement) = highlight(o.identifier, RustColor.MODULE)
         override fun visitModItem(o: RustModItemElement)         = highlight(o.identifier, RustColor.MODULE)
 

@@ -268,7 +268,7 @@ private fun innerDeclarationsIn(
         is RustStructItemElement,
         is RustEnumItemElement,
         is RustUnionItemElement,
-        is RustTypeItemElement -> {
+        is RustTypeAliasElement -> {
             scope as RustGenericDeclaration
             scope.typeParams.asScopeEntries()
         }
@@ -378,7 +378,7 @@ private fun definedItems(scope: RustItemsOwner): Sequence<Pair<String, RustNamed
         scope.constantList.asSequence(),
         scope.structItemList.asSequence(),
         scope.traitItemList.asSequence(),
-        scope.typeItemList.asSequence(),
+        scope.typeAliasList.asSequence(),
         scope.foreignModItemList.asSequence().flatMap {
             it.functionList.asSequence<RustNamedElement>() + it.constantList.asSequence()
         }

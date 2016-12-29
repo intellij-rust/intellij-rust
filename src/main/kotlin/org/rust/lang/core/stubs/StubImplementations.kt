@@ -36,8 +36,7 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
 
     "FUNCTION" -> RustFunctionElementStub.Type
     "CONSTANT" -> RustConstantElementStub.Type
-    "TYPE_ALIAS" -> RustTypeItemElementStub.Type
-    "TYPE_ITEM" -> RustTypeItemElementStub.Type
+    "TYPE_ALIAS" -> RustTypeAliasElementStub.Type
     "FOREIGN_MOD_ITEM" -> RustForeignModItemElementStub.Type
 
     "BLOCK_FIELDS" -> RustBlockFieldsElementStub.Type
@@ -503,39 +502,6 @@ class RustTypeAliasElementStub(
             RustTypeAliasElementStub(parentStub, this, psi.name, psi.isPublic)
 
         override fun indexStub(stub: RustTypeAliasElementStub, sink: IndexSink) = sink.indexTypeAlias(stub)
-    }
-}
-
-
-class RustTypeItemElementStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    override val name: String?,
-    override val isPublic: Boolean
-) : StubBase<RustTypeItemElement>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub {
-
-    object Type : RustStubElementType<RustTypeItemElementStub, RustTypeItemElement>("TYPE_ITEM") {
-
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RustTypeItemElementStub(parentStub, this,
-                dataStream.readNameAsString(),
-                dataStream.readBoolean()
-            )
-
-        override fun serialize(stub: RustTypeItemElementStub, dataStream: StubOutputStream) =
-            with(dataStream) {
-                writeName(stub.name)
-                writeBoolean(stub.isPublic)
-            }
-
-        override fun createPsi(stub: RustTypeItemElementStub) =
-            RustTypeItemElementImpl(stub, this)
-
-        override fun createStub(psi: RustTypeItemElement, parentStub: StubElement<*>?) =
-            RustTypeItemElementStub(parentStub, this, psi.name, psi.isPublic)
-
-        override fun indexStub(stub: RustTypeItemElementStub, sink: IndexSink) = sink.indexTypeItem(stub)
     }
 }
 

@@ -38,7 +38,7 @@ class MoveTypeConstraintToWhereClauseIntention : PsiElementBaseIntentionAction()
 
 private fun RustGenericDeclaration.addWhereClause(whereClause: RustWhereClauseElement): PsiElement? {
     val anchor = when (this) {
-        is RustTypeItemElement -> eq
+        is RustTypeAliasElement -> eq
         is RustImplItemElement -> lbrace
         is RustTraitItemElement -> lbrace
         is RustFunctionElement -> block

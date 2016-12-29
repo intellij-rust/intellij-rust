@@ -829,12 +829,7 @@ fake type_alias ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params? where_claus
 
 type_item ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params? where_clause? '=' type ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement"
-                 "org.rust.lang.core.psi.RustTypeBearingItemElement"
-                 "org.rust.lang.core.psi.RustGenericDeclaration" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RustTypeItemImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RustTypeItemElementStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+  elementType = type_alias
 }
 
 type_qual_path ::= <<qualified_path path_without_types>>

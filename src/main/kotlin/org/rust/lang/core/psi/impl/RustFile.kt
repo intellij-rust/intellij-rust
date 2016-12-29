@@ -68,7 +68,7 @@ class RustFile(
     override val unionItemList: List<RustUnionItemElement> get() = findItems(UNION_ITEM)
     override val implItemList: List<RustImplItemElement> get() = findItems(IMPL_ITEM)
     override val traitItemList: List<RustTraitItemElement> get() = findItems(TRAIT_ITEM)
-    override val typeItemList: List<RustTypeItemElement> get() = findItems(TYPE_ITEM)
+    override val typeAliasList: List<RustTypeAliasElement> get() = findItems(TYPE_ALIAS)
     override val useItemList: List<RustUseItemElement> get() = findItems(USE_ITEM)
     override val modDeclItemList: List<RustModDeclItemElement> get() = findItems(MOD_DECL_ITEM)
     override val externCrateItemList: List<RustExternCrateItemElement> get() = findItems(EXTERN_CRATE_ITEM)

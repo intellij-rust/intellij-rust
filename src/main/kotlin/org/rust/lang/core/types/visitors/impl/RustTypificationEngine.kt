@@ -183,8 +183,8 @@ private class RustItemTypificationVisitor : RustComputingVisitor<RustType>() {
         RustEnumType(o)
     }
 
-    override fun visitTypeItem(o: RustTypeItemElement) = set {
-        o.type.resolvedType
+    override fun visitTypeAlias(o: RustTypeAliasElement) = set {
+        o.type?.resolvedType ?: RustUnknownType
     }
 
     override fun visitFunction(o: RustFunctionElement) = set {

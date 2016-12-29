@@ -64,10 +64,6 @@ fun IndexSink.indexTypeAlias(stub: RustTypeAliasElementStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexTypeItem(stub: RustTypeItemElementStub) {
-    indexNamedStub(stub)
-}
-
 fun IndexSink.indexFieldDecl(stub: RustFieldDeclElementStub) {
     indexNamedStub(stub)
 }

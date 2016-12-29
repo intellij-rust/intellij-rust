@@ -22,7 +22,7 @@ class RustStructureViewModel(editor: Editor?, file: RustFile) : TextEditorBasedS
             is RustFunctionElement,
             is RustModDeclItemElement,
             is RustConstantElement,
-            is RustTypeItemElement -> true
+            is RustTypeAliasElement -> true
             else -> false
         }
 }

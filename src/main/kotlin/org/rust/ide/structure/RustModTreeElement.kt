@@ -18,7 +18,7 @@ open class RustModTreeElement(item: RustMod) : PsiTreeElementBase<RustMod>(item)
             mod.constantList.map(::RustConstantTreeElement),
             mod.structItemList.map(::RustStructTreeElement),
             mod.traitItemList.map(::RustTraitTreeElement),
-            mod.typeItemList.map(::RustTypeTreeElement)
+            mod.typeAliasList.map(::RustTypeAliasTreeElement)
         ).flatten().sortedBy { it.element?.textOffset }
     }
 }

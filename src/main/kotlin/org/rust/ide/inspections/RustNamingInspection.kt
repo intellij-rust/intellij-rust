@@ -261,7 +261,7 @@ class RustTraitNamingInspection : RustCamelCaseNamingInspection("Trait") {
 class RustTypeAliasNamingInspection : RustCamelCaseNamingInspection("Type", "Type alias") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
-            override fun visitTypeItem(el: RustTypeItemElement) = inspect(el.identifier, holder)
+            override fun visitTypeAlias(el: RustTypeAliasElement) = inspect(el.identifier, holder)
         }
 }
 

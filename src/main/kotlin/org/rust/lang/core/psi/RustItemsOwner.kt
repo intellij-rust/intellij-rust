@@ -9,7 +9,7 @@ interface RustItemsOwner : RustCompositeElement {
     val unionItemList: List<RustUnionItemElement>
     val implItemList: List<RustImplItemElement>
     val traitItemList: List<RustTraitItemElement>
-    val typeItemList: List<RustTypeItemElement>
+    val typeAliasList: List<RustTypeAliasElement>
     val useItemList: List<RustUseItemElement>
     val modDeclItemList: List<RustModDeclItemElement>
     val externCrateItemList: List<RustExternCrateItemElement>
