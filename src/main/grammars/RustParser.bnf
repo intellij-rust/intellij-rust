@@ -458,7 +458,9 @@ pat_field ::= IDENTIFIER ':' pat
 
 binding_mode ::= REF MUT? | MUT
 
-fake constant ::= outer_attr* DEFAULT? vis? (STATIC MUT? | CONST) IDENTIFIER type_ascription '=' any_expr ';' {
+fake constant ::=
+  outer_attr* DEFAULT? vis? (STATIC MUT? | CONST) IDENTIFIER type_ascription [ '=' any_expr ] ';'
+{
   pin = 'IDENTIFIER'
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustItemElement" ]
@@ -467,25 +469,33 @@ fake constant ::= outer_attr* DEFAULT? vis? (STATIC MUT? | CONST) IDENTIFIER typ
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-static_item ::= outer_attr* vis? (STATIC MUT? | CONST) IDENTIFIER type_ascription '=' any_expr ';' {
+static_item ::=
+  outer_attr*          vis? (STATIC MUT? | CONST) IDENTIFIER type_ascription '=' any_expr ';'
+{
   pin = 'IDENTIFIER'
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   elementType = constant
 }
 
-trait_const_member ::= outer_attr* CONST IDENTIFIER type_ascription [ '=' any_expr ] ';'{
+trait_const_member ::=
+  outer_attr*                              CONST  IDENTIFIER type_ascription [ '=' any_expr ] ';'
+{
   pin =  'IDENTIFIER'
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   elementType = constant
 }
 
-impl_const_member ::= outer_attr* DEFAULT* vis? CONST IDENTIFIER type_ascription '=' any_expr ';' {
+impl_const_member ::=
+  outer_attr* DEFAULT* vis?                CONST  IDENTIFIER type_ascription '=' any_expr ';'
+{
   pin = 'IDENTIFIER'
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   elementType = constant
 }
 
-foreign_static_decl ::= attrs_and_vis STATIC MUT? IDENTIFIER type_ascription ';' {
+foreign_static_decl ::=
+  outer_attr*          vis?  STATIC MUT?          IDENTIFIER type_ascription ';'
+{
   pin = 'IDENTIFIER'
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   elementType = constant
