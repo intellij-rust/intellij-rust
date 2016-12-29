@@ -458,7 +458,7 @@ pat_field ::= IDENTIFIER ':' pat
 
 binding_mode ::= REF MUT? | MUT
 
-fake constant ::= attrs_and_vis (STATIC MUT? | CONST) IDENTIFIER type_ascription '=' any_expr ';' {
+fake constant ::= outer_attr* DEFAULT? vis? (STATIC MUT? | CONST) IDENTIFIER type_ascription '=' any_expr ';' {
   pin = 'IDENTIFIER'
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustItemElement" ]
@@ -467,9 +467,7 @@ fake constant ::= attrs_and_vis (STATIC MUT? | CONST) IDENTIFIER type_ascription
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private static_decl ::= IDENTIFIER type_ascription '=' any_expr { pin = 1 }
-
-static_item ::= attrs_and_vis (STATIC MUT? | CONST) IDENTIFIER type_ascription '=' any_expr ';' {
+static_item ::= outer_attr* vis? (STATIC MUT? | CONST) IDENTIFIER type_ascription '=' any_expr ';' {
   pin = 'IDENTIFIER'
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   elementType = constant
@@ -477,6 +475,12 @@ static_item ::= attrs_and_vis (STATIC MUT? | CONST) IDENTIFIER type_ascription '
 
 trait_const_member ::= outer_attr* CONST IDENTIFIER type_ascription [ '=' any_expr ] ';'{
   pin =  'IDENTIFIER'
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  elementType = constant
+}
+
+impl_const_member ::= outer_attr* DEFAULT* vis? CONST IDENTIFIER type_ascription '=' any_expr ';' {
+  pin = 'IDENTIFIER'
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   elementType = constant
 }
@@ -756,14 +760,6 @@ private impl_member ::= !'}' ( impl_method_member | impl_const_member | impl_mac
 }
 private impl_member_recover ::= !('#' | vis | EXTERN | CONST | UNSAFE | FN | (IDENTIFIER '!') | TYPE_KW | "default" | '}')
 
-
-impl_const_member ::= attrs_default_vis CONST static_decl ';' {
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement"
-                 "org.rust.lang.core.psi.RustOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RustVisibilityOwner" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RustImplConstMemberImplMixin"
-}
 
 impl_type_member ::= attrs_default_vis TYPE_KW IDENTIFIER generic_params? '=' type ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
