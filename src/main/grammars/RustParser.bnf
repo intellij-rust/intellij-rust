@@ -329,49 +329,6 @@ private restricted_pat ::= &( IDENTIFIER
                             | MUT IDENTIFIER
                             ) pat
 
-
-private fn_header ::= CONST? UNSAFE? extern_abi? FN IDENTIFIER generic_params?
-
-extern_abi ::= EXTERN STRING_LITERAL?
-
-ret_type ::= '->' type { pin = 1 }
-
-fake function ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? (';' | inner_attrs_and_block) {
-  pin = fn_header
-  implements = [ "org.rust.lang.core.psi.RustQualifiedNameOwner"
-                 "org.rust.lang.core.psi.RustGenericDeclaration"
-                 "org.rust.lang.core.psi.RustOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RustInnerAttributeOwner"
-                 "org.rust.lang.core.psi.RustTypeBearingItemElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RustFunctionImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RustFunctionElementStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
-
-foreign_fn_decl ::= attrs_and_vis FN IDENTIFIER generic_params? foreign_fn_parameters ret_type? where_clause? ';' {
-  pin = "FN"
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = function
-}
-
-fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_attrs_and_block {
-  pin = fn_header
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = function
-}
-
-trait_method_member ::= outer_attr* fn_header method_decl_parameters ret_type? where_clause? (';' | inner_attrs_and_block) {
-  pin = fn_header
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = function
-}
-
-impl_method_member ::= attrs_default_vis fn_header method_parameters ret_type? where_clause? inner_attrs_and_block {
-  pin = fn_header
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = function
-}
-
 generic_params ::= '<' lifetimes_params type_params '>'
 
 private lifetimes_params ::= <<list_element lifetime_param>>*
@@ -392,6 +349,61 @@ where_clause ::= WHERE <<comma_separated_list where_pred>>
 where_pred ::= LIFETIME lifetime_param_bounds | for_lifetimes? type type_param_bounds
 
 for_lifetimes ::= FOR '<' lifetimes_params '>'
+
+
+private fn_attrs ::= CONST? UNSAFE? extern_abi?
+private fn_header ::= FN IDENTIFIER generic_params?
+private fn_tail ::= ret_type? where_clause?
+
+extern_abi ::= EXTERN STRING_LITERAL?
+
+ret_type ::= '->' type { pin = 1 }
+
+fake function ::=
+  outer_attr* DEFAULT? vis? fn_attrs fn_header fn_parameters fn_tail (';' | inner_attrs_and_block)
+{
+  pin = fn_header
+  implements = [ "org.rust.lang.core.psi.RustQualifiedNameOwner"
+                 "org.rust.lang.core.psi.RustGenericDeclaration"
+                 "org.rust.lang.core.psi.RustOuterAttributeOwner"
+                 "org.rust.lang.core.psi.RustInnerAttributeOwner"
+                 "org.rust.lang.core.psi.RustTypeBearingItemElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustFunctionImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RustFunctionElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+foreign_fn_decl ::=
+  outer_attr*          vis?          fn_header foreign_fn_parameters fn_tail ';'
+{
+  pin = fn_header
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  elementType = function
+}
+
+fn_item ::=
+  outer_attr*          vis? fn_attrs fn_header fn_parameters fn_tail inner_attrs_and_block
+{
+  pin = fn_header
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  elementType = function
+}
+
+trait_method_member ::=
+  outer_attr*               fn_attrs fn_header method_decl_parameters fn_tail (';' | inner_attrs_and_block)
+{
+  pin = fn_header
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  elementType = function
+}
+
+impl_method_member ::=
+  outer_attr* DEFAULT? vis? fn_attrs fn_header method_parameters fn_tail inner_attrs_and_block
+{
+  pin = fn_header
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  elementType = function
+}
 
 pat ::= pat_wild
       | pat_ref
