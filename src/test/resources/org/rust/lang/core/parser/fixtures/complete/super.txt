@@ -112,7 +112,7 @@ FILE
       PsiWhiteSpace(' ')
       PsiElement({)('{')
       PsiWhiteSpace('\n        ')
-      RustTraitMethodMemberElementImpl(TRAIT_METHOD_MEMBER)
+      RustFunctionElementImpl(FUNCTION)
         PsiElement(fn)('fn')
         PsiWhiteSpace(' ')
         PsiElement(<IDENTIFIER>)('foo')

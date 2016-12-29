@@ -11,7 +11,7 @@ open class RustModTreeElement(item: RustMod) : PsiTreeElementBase<RustMod>(item)
         val mod = element ?: return emptyList()
         return listOf(
             mod.enumItemList.map(::RustEnumTreeElement),
-            mod.functionList.map(::RustFnTreeElement),
+            mod.functionList.map(::RustFunctionTreeElement),
             mod.implItemList.map(::RustImplTreeElement),
             mod.modDeclItemList.map(::RustModDeclTreeElement),
             mod.modItemList.map(::RustModTreeElement),

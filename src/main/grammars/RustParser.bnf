@@ -358,6 +358,13 @@ fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_
   elementType = function
 }
 
+trait_method_member ::= outer_attr* fn_header method_decl_parameters ret_type? where_clause? (';' | inner_attrs_and_block) {
+  pin = fn_header
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RustFnElement" ]
+  elementType = function
+}
+
 generic_params ::= '<' lifetimes_params type_params '>'
 
 private lifetimes_params ::= <<list_element lifetime_param>>*
@@ -698,14 +705,7 @@ trait_type_member ::= outer_attr* TYPE_KW IDENTIFIER type_param_bounds? [ '=' ty
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
-trait_method_member ::= outer_attr* fn_header method_decl_parameters ret_type? where_clause? (';' | inner_attrs_and_block) {
-  pin = fn_header
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustFnElement" ]
-  mixin  = "org.rust.lang.core.psi.impl.mixin.RustTraitMethodMemberImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RustTraitMethodMemberElementStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

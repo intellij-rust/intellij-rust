@@ -4,10 +4,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
-import org.rust.lang.core.psi.RustImplItemElement
-import org.rust.lang.core.psi.RustImplMethodMemberElement
-import org.rust.lang.core.psi.RustTraitMethodMemberElement
-import org.rust.lang.core.psi.iconWithVisibility
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.util.trait
@@ -30,9 +27,9 @@ abstract class RustImplMethodMemberImplMixin : RustFnImplMixin<RustImplMethodMem
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 }
 
-val RustImplMethodMemberElement.superMethod: RustTraitMethodMemberElement? get() {
+val RustImplMethodMemberElement.superMethod: RustFunctionElement? get() {
     val rustImplItem = parentOfType<RustImplItemElement>() ?: return null
     val superTrait = rustImplItem.traitRef?.trait ?: return null
 
-    return superTrait.traitMethodMemberList.find { it.name == this.name }
+    return superTrait.functionList.find { it.name == this.name }
 }

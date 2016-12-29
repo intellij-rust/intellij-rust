@@ -42,7 +42,6 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "BLOCK_FIELDS" -> RustBlockFieldsElementStub.Type
     "FIELD_DECL" -> RustFieldDeclElementStub.Type
     "IMPL_METHOD_MEMBER" -> RustImplMethodMemberElementStub.Type
-    "TRAIT_METHOD_MEMBER" -> RustTraitMethodMemberElementStub.Type
     "ALIAS" -> RustAliasElementStub.Type
 
     "USE_GLOB_LIST" -> RustUseGlobListElementStub.Type
@@ -603,47 +602,6 @@ class RustImplMethodMemberElementStub(
                 psi.name, psi.isPublic, psi.isAbstract, psi.isStatic, psi.isTest)
 
         override fun indexStub(stub: RustImplMethodMemberElementStub, sink: IndexSink) = sink.indexImplMethodMember(stub)
-    }
-}
-
-
-class RustTraitMethodMemberElementStub(
-    parent: StubElement<*>?,
-    elementType: IStubElementType<*, *>,
-    override val name: String?,
-    override val isAbstract: Boolean,
-    override val isStatic: Boolean,
-    override val isTest: Boolean
-
-) : StubBase<RustTraitMethodMemberElement>(parent, elementType),
-    RustNamedStub,
-    RustFnStub {
-
-    object Type : RustStubElementType<RustTraitMethodMemberElementStub, RustTraitMethodMemberElement>("TRAIT_METHOD_MEMBER") {
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RustTraitMethodMemberElementStub(parentStub, this,
-                dataStream.readNameAsString(),
-                dataStream.readBoolean(),
-                dataStream.readBoolean(),
-                dataStream.readBoolean()
-            )
-
-        override fun serialize(stub: RustTraitMethodMemberElementStub, dataStream: StubOutputStream) =
-            with(dataStream) {
-                writeName(stub.name)
-                writeBoolean(stub.isAbstract)
-                writeBoolean(stub.isStatic)
-                writeBoolean(stub.isTest)
-            }
-
-        override fun createPsi(stub: RustTraitMethodMemberElementStub): RustTraitMethodMemberElement =
-            RustTraitMethodMemberElementImpl(stub, this)
-
-        override fun createStub(psi: RustTraitMethodMemberElement, parentStub: StubElement<*>?) =
-            RustTraitMethodMemberElementStub(parentStub, this,
-                psi.name, psi.isAbstract, psi.isStatic, psi.isTest)
-
-        override fun indexStub(stub: RustTraitMethodMemberElementStub, sink: IndexSink) = sink.indexTraitMethodMember(stub)
     }
 }
 

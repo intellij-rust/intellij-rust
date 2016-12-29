@@ -7,6 +7,7 @@ import org.rust.ide.colors.RustColor
 import org.rust.ide.highlight.RustHighlighter
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.isMut
+import org.rust.lang.core.psi.impl.mixin.isTraitMethod
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
@@ -98,12 +99,18 @@ class RustHighlightingAnnotator : Annotator {
 
         override fun visitMacroInvocation(m: RustMacroInvocationElement) = highlight(m, RustColor.MACRO)
         override fun visitMethodCallExpr(o: RustMethodCallExprElement)   = highlight(o.identifier, RustColor.METHOD)
-        override fun visitFunction(o: RustFunctionElement)               = highlight(o.identifier, RustColor.FUNCTION)
         override fun visitTryExpr(o: RustTryExprElement)                 = highlight(o.q, RustColor.Q_OPERATOR)
 
+        override fun visitFunction(o: RustFunctionElement) {
+            val color = if (o.isTraitMethod)
+                if (o.isStatic) RustColor.ASSOC_FUNCTION else RustColor.METHOD
+            else
+                RustColor.FUNCTION
+
+            highlight(o.identifier, color)
+        }
+
         override fun visitImplMethodMember(o: RustImplMethodMemberElement) =
-            highlight(o.identifier, if (o.isStatic) RustColor.ASSOC_FUNCTION else RustColor.METHOD)
-        override fun visitTraitMethodMember(o: RustTraitMethodMemberElement) =
             highlight(o.identifier, if (o.isStatic) RustColor.ASSOC_FUNCTION else RustColor.METHOD)
 
         override fun visitSelfArgument(o: RustSelfArgumentElement) = highlight(o.self, RustColor.SELF_PARAMETER)

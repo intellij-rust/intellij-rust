@@ -72,10 +72,6 @@ fun IndexSink.indexImplMethodMember(stub: RustImplMethodMemberElementStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexTraitMethodMember(stub: RustTraitMethodMemberElementStub) {
-    indexNamedStub(stub)
-}
-
 fun IndexSink.indexAlias(stub: RustAliasElementStub) {
     stub.name?.let {
         occurrence(RustAliasIndex.KEY, it)

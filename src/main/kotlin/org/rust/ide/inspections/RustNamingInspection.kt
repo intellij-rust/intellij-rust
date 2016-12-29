@@ -9,6 +9,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustParameterElementImpl
 import org.rust.lang.core.psi.impl.mixin.isConstant
 import org.rust.lang.core.psi.impl.mixin.isForeign
+import org.rust.lang.core.psi.impl.mixin.isTraitMethod
 
 /**
  * Base class for naming inspections. Implements the core logic of checking names
@@ -218,7 +219,12 @@ class RustMacroNamingInspection : RustSnakeCaseNamingInspection("Macro") {
 class RustMethodNamingInspection : RustSnakeCaseNamingInspection("Method") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
-            override fun visitTraitMethodMember(el: RustTraitMethodMemberElement) = inspect(el.identifier, holder, false)
+            override fun visitFunction(el: RustFunctionElement) {
+                if (el.isTraitMethod) {
+                    inspect(el.identifier, holder, false)
+                }
+            }
+
             override fun visitImplMethodMember(el: RustImplMethodMemberElement) = inspect(el.identifier, holder)
         }
 }

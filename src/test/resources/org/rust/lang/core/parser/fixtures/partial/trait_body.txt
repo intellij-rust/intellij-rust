@@ -32,7 +32,7 @@ FILE
         PsiErrorElement:fn expected, got 'intellijidearulezzz'
           PsiElement(<IDENTIFIER>)('intellijidearulezzz')
         PsiWhiteSpace('\n        ')
-        RustTraitMethodMemberElementImpl(TRAIT_METHOD_MEMBER)
+        RustFunctionElementImpl(FUNCTION)
           PsiElement(fn)('fn')
           PsiWhiteSpace(' ')
           PsiElement(<IDENTIFIER>)('foo')

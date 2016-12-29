@@ -63,13 +63,13 @@ class RustItemsAnnotator : Annotator {
             impl.type?.textRange?.endOffset ?: impl.textRange.endOffset
         )
 
-        val canImplement = trait.traitMethodMemberList.associateBy { it.name }
+        val canImplement = trait.functionList.associateBy { it.name }
         val mustImplement = canImplement.filterValues { it.isAbstract }
         val implemented = impl.implMethodMemberList.associateBy { it.name }
 
         val notImplemented = mustImplement.keys - implemented.keys
         if (!notImplemented.isEmpty()) {
-            val toImplement = trait.traitMethodMemberList.filter { it.name in notImplemented }
+            val toImplement = trait.functionList.filter { it.name in notImplemented }
 
             holder.createErrorAnnotation(implHeaderTextRange,
                 "Not all trait items implemented, missing: `${notImplemented.first()}`"
@@ -112,7 +112,7 @@ private class AddModuleFile(
 
 private class ImplementMethods(
     implBody: RustImplItemElement,
-    private val methods: List<RustTraitMethodMemberElement>
+    private val methods: List<RustFunctionElement>
 ) : LocalQuickFixAndIntentionActionOnPsiElement(implBody) {
     init {
         check(methods.isNotEmpty())

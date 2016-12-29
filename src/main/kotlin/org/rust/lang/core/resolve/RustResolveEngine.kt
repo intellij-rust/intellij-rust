@@ -282,7 +282,6 @@ private fun innerDeclarationsIn(
         }
 
         is RustFunctionElement,
-        is RustTraitMethodMemberElement,
         is RustImplMethodMemberElement -> {
             scope as RustFnElement
             val selfArgument = scope.parameters?.selfArgument

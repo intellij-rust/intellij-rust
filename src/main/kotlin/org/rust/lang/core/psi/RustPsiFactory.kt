@@ -35,7 +35,7 @@ class RustPsiFactory(private val project: Project) {
             ?: error("Failed to create type from text: `$text`")
 
     fun createMethodParam(text: String): PsiElement {
-        val fnItem: RustTraitMethodMemberElement = createTraitMethodMember("fn foo($text);")
+        val fnItem: RustFunctionElement = createTraitMethodMember("fn foo($text);")
         return fnItem.parameters?.selfArgument ?:
             fnItem.parameters?.parameterList?.firstOrNull() ?:
             error("Failed to create type from text: `$text`")
@@ -52,7 +52,7 @@ class RustPsiFactory(private val project: Project) {
         createFromText("use $text;")
             ?: error("Failed to create use item from text: `$text`")
 
-    fun createTraitImplItem(traitMethods: List<RustTraitMethodMemberElement>): RustImplItemElement {
+    fun createTraitImplItem(traitMethods: List<RustFunctionElement>): RustImplItemElement {
         val methods = traitMethods
             .mapNotNull { " ${it.signatureText} {\nunimplemented!()\n}" }
             .joinToString("\n\n")
@@ -61,10 +61,10 @@ class RustPsiFactory(private val project: Project) {
             ?: error("Failed to create an impl from text: `$text`")
     }
 
-    fun createTraitMethodMember(text: String): RustTraitMethodMemberElement {
+    fun createTraitMethodMember(text: String): RustFunctionElement {
         val traitImpl: RustTraitItemElement = createFromText("trait Foo { $text }") ?:
             error("Failed to create an method member from text: `$text`")
-        return traitImpl.traitMethodMemberList.first()
+        return traitImpl.functionList.first()
     }
 
     fun createInherentImplItem(name: String): RustImplItemElement =
@@ -110,7 +110,7 @@ class RustPsiFactory(private val project: Project) {
             ?.childOfType<T>()
 }
 
-private val RustTraitMethodMemberElement.signatureText: String? get() {
+private val RustFunctionElement.signatureText: String? get() {
     // We can't simply take a substring of original method declaration
     // because of anonymous parameters.
     val name = name ?: return null

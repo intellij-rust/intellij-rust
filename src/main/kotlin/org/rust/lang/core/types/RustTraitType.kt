@@ -17,7 +17,7 @@ class RustTraitType(val trait: RustTraitItemElement) : RustTypeBase() {
         sequenceOf(trait)
 
     override fun getNonStaticMethodsIn(project: Project): Sequence<RustFnElement> =
-        getTraitsImplementedIn(project).flatMap { it.traitMethodMemberList.asSequence() }
+        getTraitsImplementedIn(project).flatMap { it.functionList.asSequence() }
 
     override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitTrait(this)
 
