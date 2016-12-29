@@ -6,10 +6,10 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RustColor
 import org.rust.ide.highlight.RustHighlighter
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.RustFunctionKind
+import org.rust.lang.core.psi.impl.mixin.RustFunctionRole
 import org.rust.lang.core.psi.impl.mixin.isMut
 import org.rust.lang.core.psi.impl.mixin.isStatic
-import org.rust.lang.core.psi.impl.mixin.kind
+import org.rust.lang.core.psi.impl.mixin.role
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
@@ -104,9 +104,9 @@ class RustHighlightingAnnotator : Annotator {
         override fun visitTryExpr(o: RustTryExprElement)                 = highlight(o.q, RustColor.Q_OPERATOR)
 
         override fun visitFunction(o: RustFunctionElement) {
-            val color = when (o.kind) {
-                RustFunctionKind.FOREIGN, RustFunctionKind.FREE -> RustColor.FUNCTION
-                RustFunctionKind.TRAIT_METHOD, RustFunctionKind.IMPL_METHOD ->
+            val color = when (o.role) {
+                RustFunctionRole.FOREIGN, RustFunctionRole.FREE -> RustColor.FUNCTION
+                RustFunctionRole.TRAIT_METHOD, RustFunctionRole.IMPL_METHOD ->
                     if (o.isStatic) RustColor.ASSOC_FUNCTION else RustColor.METHOD
             }
             highlight(o.identifier, color)

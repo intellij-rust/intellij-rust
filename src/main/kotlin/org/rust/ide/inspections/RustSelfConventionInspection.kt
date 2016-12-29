@@ -3,8 +3,8 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.RustFunctionKind
-import org.rust.lang.core.psi.impl.mixin.kind
+import org.rust.lang.core.psi.impl.mixin.RustFunctionRole
+import org.rust.lang.core.psi.impl.mixin.role
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.types.RustStructOrEnumTypeBase
 import org.rust.lang.core.types.util.resolvedType
@@ -15,7 +15,7 @@ class RustSelfConventionInspection : RustLocalInspectionTool() {
         object : RustElementVisitor() {
             override fun visitFunction(m: RustFunctionElement) {
                 // Should this handle traits as well perhaps?
-                if (m.kind != RustFunctionKind.IMPL_METHOD) return
+                if (m.role != RustFunctionRole.IMPL_METHOD) return
 
                 val convention = SELF_CONVENTIONS.find { m.identifier.text.startsWith(it.prefix) } ?: return
                 if (m.selfType in convention.selfTypes) return

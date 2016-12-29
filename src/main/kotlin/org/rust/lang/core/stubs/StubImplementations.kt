@@ -402,7 +402,7 @@ class RustFunctionElementStub(
     val isAbstract: Boolean,
     val isStatic: Boolean,
     val isTest: Boolean,
-    val kind: RustFunctionKind
+    val role: RustFunctionRole
 ) : StubBase<RustFunctionElement>(parent, elementType),
     RustNamedStub,
     RustVisibilityStub {
@@ -416,7 +416,7 @@ class RustFunctionElementStub(
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
-                RustFunctionKind.values()[dataStream.readByte().toInt()]
+                RustFunctionRole.values()[dataStream.readByte().toInt()]
             )
 
         override fun serialize(stub: RustFunctionElementStub, dataStream: StubOutputStream) =
@@ -426,7 +426,7 @@ class RustFunctionElementStub(
                 writeBoolean(stub.isAbstract)
                 writeBoolean(stub.isStatic)
                 writeBoolean(stub.isTest)
-                writeByte(stub.kind.ordinal)
+                writeByte(stub.role.ordinal)
             }
 
         override fun createPsi(stub: RustFunctionElementStub) =
@@ -434,7 +434,7 @@ class RustFunctionElementStub(
 
         override fun createStub(psi: RustFunctionElement, parentStub: StubElement<*>?) =
             RustFunctionElementStub(parentStub, this,
-                psi.name, psi.isPublic, psi.isAbstract, psi.isStatic, psi.isTest, psi.kind)
+                psi.name, psi.isPublic, psi.isAbstract, psi.isStatic, psi.isTest, psi.role)
 
         override fun indexStub(stub: RustFunctionElementStub, sink: IndexSink) = sink.indexFunction(stub)
     }

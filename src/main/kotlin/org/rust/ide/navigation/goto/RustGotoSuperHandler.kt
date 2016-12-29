@@ -10,8 +10,8 @@ import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustFunctionElement
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.impl.RustFile
-import org.rust.lang.core.psi.impl.mixin.RustFunctionKind
-import org.rust.lang.core.psi.impl.mixin.kind
+import org.rust.lang.core.psi.impl.mixin.RustFunctionRole
+import org.rust.lang.core.psi.impl.mixin.role
 import org.rust.lang.core.psi.impl.mixin.superMethod
 
 class RustGotoSuperHandler : LanguageCodeInsightActionHandler {
@@ -36,7 +36,7 @@ class RustGotoSuperHandler : LanguageCodeInsightActionHandler {
             RustMod::class.java
         ) ?: return null
 
-        if (modOrMethod is RustFunctionElement && modOrMethod.kind != RustFunctionKind.IMPL_METHOD) {
+        if (modOrMethod is RustFunctionElement && modOrMethod.role != RustFunctionRole.IMPL_METHOD) {
             return findTarget(modOrMethod)
         }
 

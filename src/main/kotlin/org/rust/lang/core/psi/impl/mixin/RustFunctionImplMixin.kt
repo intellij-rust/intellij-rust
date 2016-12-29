@@ -26,11 +26,11 @@ abstract class RustFunctionImplMixin : RustStubbedNamedElementImpl<RustFunctionE
     final override val innerAttrList: List<RustInnerAttrElement>
         get() = block?.innerAttrList.orEmpty()
 
-    override fun getIcon(flags: Int): Icon = when (kind) {
-        RustFunctionKind.FREE, RustFunctionKind.FOREIGN ->
+    override fun getIcon(flags: Int): Icon = when (role) {
+        RustFunctionRole.FREE, RustFunctionRole.FOREIGN ->
             if (isTest) RustIcons.FUNCTION.addTestMark() else RustIcons.FUNCTION
 
-        RustFunctionKind.TRAIT_METHOD, RustFunctionKind.IMPL_METHOD -> when {
+        RustFunctionRole.TRAIT_METHOD, RustFunctionRole.IMPL_METHOD -> when {
             isStatic && isAbstract -> RustIcons.ABSTRACT_ASSOC_FUNCTION
             isStatic -> RustIcons.ASSOC_FUNCTION
             isAbstract -> RustIcons.ABSTRACT_METHOD
@@ -44,7 +44,7 @@ val RustFunctionElement.isStatic: Boolean get() = stub?.isStatic ?: parameters?.
 val RustFunctionElement.isTest: Boolean get() = stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
 
 
-enum class RustFunctionKind {
+enum class RustFunctionRole {
     // Bump stub version if reorder fields
     FREE,
     TRAIT_METHOD,
@@ -52,14 +52,14 @@ enum class RustFunctionKind {
     FOREIGN
 }
 
-val RustFunctionElement.kind: RustFunctionKind get() {
+val RustFunctionElement.role: RustFunctionRole get() {
     val stub = stub
-    if (stub != null) return stub.kind
+    if (stub != null) return stub.role
     return when (parent) {
-        is RustItemsOwner -> RustFunctionKind.FREE
-        is RustTraitItemElement -> RustFunctionKind.TRAIT_METHOD
-        is RustImplItemElement -> RustFunctionKind.IMPL_METHOD
-        is RustForeignModItemElement -> RustFunctionKind.FOREIGN
+        is RustItemsOwner -> RustFunctionRole.FREE
+        is RustTraitItemElement -> RustFunctionRole.TRAIT_METHOD
+        is RustImplItemElement -> RustFunctionRole.IMPL_METHOD
+        is RustForeignModItemElement -> RustFunctionRole.FOREIGN
         else -> error("Unexpected function parent: $parent")
     }
 }
