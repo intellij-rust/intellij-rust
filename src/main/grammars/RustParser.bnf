@@ -458,7 +458,7 @@ pat_field ::= IDENTIFIER ':' pat
 
 binding_mode ::= REF MUT? | MUT
 
-fake constant ::= attrs_and_vis (STATIC MUT? | CONST) IDENTIFIER type_ascription '=' any_expr {
+fake constant ::= attrs_and_vis (STATIC MUT? | CONST) IDENTIFIER type_ascription '=' any_expr ';' {
   pin = 'IDENTIFIER'
   implements = [ "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustItemElement" ]
@@ -469,8 +469,14 @@ fake constant ::= attrs_and_vis (STATIC MUT? | CONST) IDENTIFIER type_ascription
 
 private static_decl ::= IDENTIFIER type_ascription '=' any_expr { pin = 1 }
 
-static_item ::= attrs_and_vis (STATIC MUT? | CONST) static_decl ';' {
-  pin = static_decl
+static_item ::= attrs_and_vis (STATIC MUT? | CONST) IDENTIFIER type_ascription '=' any_expr ';' {
+  pin = 'IDENTIFIER'
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  elementType = constant
+}
+
+trait_const_member ::= outer_attr* CONST IDENTIFIER type_ascription [ '=' any_expr ] ';'{
+  pin =  'IDENTIFIER'
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   elementType = constant
 }
@@ -711,15 +717,6 @@ private trait_member ::= !'}' ( trait_const_member | trait_type_member | trait_m
 }
 
 private trait_member_recover ::= !('#' | vis | EXTERN | CONST | UNSAFE | FN | TYPE_KW | '}')
-
-trait_const_member ::= outer_attr* CONST IDENTIFIER type_ascription? const_default? ';'{
-  implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RustNamedElement" ]
-  extends = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-}
-
-private const_default ::= '=' any_expr
 
 trait_type_member ::= outer_attr* TYPE_KW IDENTIFIER type_param_bounds? [ '=' type ] ';' {
   implements = [ "org.rust.lang.core.psi.RustOuterAttributeOwner"
