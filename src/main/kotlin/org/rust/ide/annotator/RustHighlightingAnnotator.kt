@@ -105,14 +105,11 @@ class RustHighlightingAnnotator : Annotator {
         override fun visitFunction(o: RustFunctionElement) {
             val color = when (o.kind) {
                 RustFunctionKind.FOREIGN, RustFunctionKind.FREE -> RustColor.FUNCTION
-                RustFunctionKind.TRAIT_METHOD ->
+                RustFunctionKind.TRAIT_METHOD, RustFunctionKind.IMPL_METHOD ->
                     if (o.isStatic) RustColor.ASSOC_FUNCTION else RustColor.METHOD
             }
             highlight(o.identifier, color)
         }
-
-        override fun visitImplMethodMember(o: RustImplMethodMemberElement) =
-            highlight(o.identifier, if (o.isStatic) RustColor.ASSOC_FUNCTION else RustColor.METHOD)
 
         override fun visitSelfArgument(o: RustSelfArgumentElement) = highlight(o.self, RustColor.SELF_PARAMETER)
     }

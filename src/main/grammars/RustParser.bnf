@@ -361,7 +361,12 @@ fn_item ::= attrs_and_vis fn_header fn_parameters ret_type? where_clause? inner_
 trait_method_member ::= outer_attr* fn_header method_decl_parameters ret_type? where_clause? (';' | inner_attrs_and_block) {
   pin = fn_header
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustFnElement" ]
+  elementType = function
+}
+
+impl_method_member ::= attrs_default_vis fn_header method_parameters ret_type? where_clause? inner_attrs_and_block {
+  pin = fn_header
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   elementType = function
 }
 
@@ -736,15 +741,6 @@ private impl_member ::= !'}' ( impl_method_member | impl_const_member | impl_mac
 }
 private impl_member_recover ::= !('#' | vis | EXTERN | CONST | UNSAFE | FN | (IDENTIFIER '!') | TYPE_KW | "default" | '}')
 
-impl_method_member ::= attrs_default_vis fn_header method_parameters ret_type? where_clause? inner_attrs_and_block {
-  pin = fn_header
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustFnElement"
-                 "org.rust.lang.core.psi.RustVisibilityOwner" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RustImplMethodMemberImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RustImplMethodMemberElementStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
 
 impl_const_member ::= attrs_default_vis CONST static_decl ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]

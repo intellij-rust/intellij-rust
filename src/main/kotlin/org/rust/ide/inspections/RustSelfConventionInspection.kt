@@ -3,6 +3,8 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.mixin.RustFunctionKind
+import org.rust.lang.core.psi.impl.mixin.kind
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.types.RustStructOrEnumTypeBase
 import org.rust.lang.core.types.util.resolvedType
@@ -11,7 +13,10 @@ class RustSelfConventionInspection : RustLocalInspectionTool() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
-            override fun visitImplMethodMember(m: RustImplMethodMemberElement) {
+            override fun visitFunction(m: RustFunctionElement) {
+                // Should this handle traits as well perhaps?
+                if (m.kind != RustFunctionKind.IMPL_METHOD) return
+
                 val convention = SELF_CONVENTIONS.find { m.identifier.text.startsWith(it.prefix) } ?: return
                 if (m.selfType in convention.selfTypes) return
                 if (m.selfType == SelfType.SELF && m.isOwnerCopyable()) return
@@ -19,7 +24,7 @@ class RustSelfConventionInspection : RustLocalInspectionTool() {
             }
         }
 
-    private fun RustImplMethodMemberElement.isOwnerCopyable(): Boolean {
+    private fun RustFunctionElement.isOwnerCopyable(): Boolean {
         val implBlock = parentOfType<RustImplItemElement>() ?: return false
         val owner = implBlock.type?.resolvedType as? RustStructOrEnumTypeBase ?: return false
         return owner.item.queryAttributes.hasAttributeWithArg("derive", "Copy")
@@ -43,7 +48,7 @@ enum class SelfType(val description: String) {
     REF_MUT_SELF("self by mutable reference");
 }
 
-private val RustImplMethodMemberElement.selfType: SelfType get() {
+private val RustFunctionElement.selfType: SelfType get() {
     val self = parameters?.selfArgument
     return when {
         self == null -> SelfType.NO_SELF

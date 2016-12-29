@@ -8,7 +8,10 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.FunctionUtil
 import org.rust.ide.icons.RustIcons
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RustCallExprElement
+import org.rust.lang.core.psi.RustFunctionElement
+import org.rust.lang.core.psi.RustMethodCallExprElement
+import org.rust.lang.core.psi.RustPathExprElement
 import org.rust.lang.core.psi.util.parentOfType
 import java.util.*
 
@@ -51,7 +54,6 @@ class RustRecursiveCallLineMarkerProvider : LineMarkerProvider {
             else -> null
         } ?: return false
 
-        return parentOfType<RustImplMethodMemberElement>() == def  // Methods and associated functions
-            || parentOfType<RustFunctionElement>() == def          // Pure functions
+        return parentOfType<RustFunctionElement>() == def
     }
 }

@@ -68,10 +68,6 @@ fun IndexSink.indexFieldDecl(stub: RustFieldDeclElementStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexImplMethodMember(stub: RustImplMethodMemberElementStub) {
-    indexNamedStub(stub)
-}
-
 fun IndexSink.indexAlias(stub: RustAliasElementStub) {
     stub.name?.let {
         occurrence(RustAliasIndex.KEY, it)

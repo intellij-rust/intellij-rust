@@ -14,7 +14,7 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement({)('{')
     PsiWhiteSpace('\n    ')
-    RustImplMethodMemberElementImpl(IMPL_METHOD_MEMBER)
+    RustFunctionElementImpl(FUNCTION)
       PsiElement(fn)('fn')
       PsiWhiteSpace(' ')
       PsiElement(<IDENTIFIER>)('foo')
@@ -26,7 +26,7 @@ FILE
     PsiWhiteSpace('\n    ')
     PsiElement(<IDENTIFIER>)('bar')
     PsiWhiteSpace('\n    ')
-    RustImplMethodMemberElementImpl(IMPL_METHOD_MEMBER)
+    RustFunctionElementImpl(FUNCTION)
       PsiElement(fn)('fn')
       PsiWhiteSpace(' ')
       PsiElement(<IDENTIFIER>)('baz')
@@ -59,7 +59,7 @@ FILE
     PsiErrorElement:'!' expected, got 'fn'
       <empty list>
     PsiWhiteSpace('\n    ')
-    RustImplMethodMemberElementImpl(IMPL_METHOD_MEMBER)
+    RustFunctionElementImpl(FUNCTION)
       PsiElement(fn)('fn')
       PsiWhiteSpace(' ')
       PsiElement(<IDENTIFIER>)('foo')
@@ -69,7 +69,7 @@ FILE
       PsiErrorElement:'{' expected, got 'fn'
         <empty list>
     PsiWhiteSpace('\n    ')
-    RustImplMethodMemberElementImpl(IMPL_METHOD_MEMBER)
+    RustFunctionElementImpl(FUNCTION)
       PsiElement(fn)('fn')
       PsiWhiteSpace(' ')
       PsiElement(<IDENTIFIER>)('baz')

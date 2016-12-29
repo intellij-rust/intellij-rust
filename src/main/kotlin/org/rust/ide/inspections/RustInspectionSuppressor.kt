@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RustItemElement
+import org.rust.lang.core.psi.util.ancestors
 import org.rust.lang.core.psi.util.parentOfType
 
 class RustInspectionSuppressor : InspectionSuppressor {
@@ -17,10 +18,9 @@ class RustInspectionSuppressor : InspectionSuppressor {
         SuppressInspectionFix(SuppressionUtil.ALL)
     )
 
-    override fun isSuppressedFor(element: PsiElement, toolId: String): Boolean {
-        val item = element.parentOfType<RustItemElement>(strict = false) ?: return false
-        return isSuppressedByComment(item, toolId)
-    }
+    override fun isSuppressedFor(element: PsiElement, toolId: String): Boolean =
+        element.ancestors.filterIsInstance<RustItemElement>()
+            .any { isSuppressedByComment(it, toolId) }
 
     private fun isSuppressedByComment(element: PsiElement, toolId: String): Boolean {
         val comment = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace::class.java) as? PsiComment

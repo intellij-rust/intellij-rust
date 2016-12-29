@@ -41,7 +41,6 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
 
     "BLOCK_FIELDS" -> RustBlockFieldsElementStub.Type
     "FIELD_DECL" -> RustFieldDeclElementStub.Type
-    "IMPL_METHOD_MEMBER" -> RustImplMethodMemberElementStub.Type
     "ALIAS" -> RustAliasElementStub.Type
 
     "USE_GLOB_LIST" -> RustUseGlobListElementStub.Type
@@ -557,51 +556,6 @@ class RustFieldDeclElementStub(
             }
 
         override fun indexStub(stub: RustFieldDeclElementStub, sink: IndexSink) = sink.indexFieldDecl(stub)
-    }
-}
-
-
-class RustImplMethodMemberElementStub(
-    parent: StubElement<*>?,
-    elementType: IStubElementType<*, *>,
-    override val name: String?,
-    override val isPublic: Boolean,
-    override val isAbstract: Boolean,
-    override val isStatic: Boolean,
-    override val isTest: Boolean
-) : StubBase<RustImplMethodMemberElement>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub,
-    RustFnStub {
-
-    object Type : RustStubElementType<RustImplMethodMemberElementStub, RustImplMethodMemberElement>("IMPL_METHOD_MEMBER") {
-
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RustImplMethodMemberElementStub(parentStub, this,
-                dataStream.readNameAsString(),
-                dataStream.readBoolean(),
-                dataStream.readBoolean(),
-                dataStream.readBoolean(),
-                dataStream.readBoolean()
-            )
-
-        override fun serialize(stub: RustImplMethodMemberElementStub, dataStream: StubOutputStream) =
-            with(dataStream) {
-                writeName(stub.name)
-                writeBoolean(stub.isPublic)
-                writeBoolean(stub.isAbstract)
-                writeBoolean(stub.isStatic)
-                writeBoolean(stub.isTest)
-            }
-
-        override fun createPsi(stub: RustImplMethodMemberElementStub) =
-            RustImplMethodMemberElementImpl(stub, this)
-
-        override fun createStub(psi: RustImplMethodMemberElement, parentStub: StubElement<*>?) =
-            RustImplMethodMemberElementStub(parentStub, this,
-                psi.name, psi.isPublic, psi.isAbstract, psi.isStatic, psi.isTest)
-
-        override fun indexStub(stub: RustImplMethodMemberElementStub, sink: IndexSink) = sink.indexImplMethodMember(stub)
     }
 }
 

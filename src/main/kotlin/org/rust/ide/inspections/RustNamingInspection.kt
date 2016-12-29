@@ -220,13 +220,11 @@ class RustMacroNamingInspection : RustSnakeCaseNamingInspection("Macro") {
 class RustMethodNamingInspection : RustSnakeCaseNamingInspection("Method") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
-            override fun visitFunction(el: RustFunctionElement) {
-                if (el.kind == RustFunctionKind.TRAIT_METHOD) {
-                    inspect(el.identifier, holder)
-                }
+            override fun visitFunction(el: RustFunctionElement) = when (el.kind) {
+                RustFunctionKind.TRAIT_METHOD,
+                RustFunctionKind.IMPL_METHOD -> inspect(el.identifier, holder)
+                else -> Unit
             }
-
-            override fun visitImplMethodMember(el: RustImplMethodMemberElement) = inspect(el.identifier, holder)
         }
 }
 

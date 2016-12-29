@@ -35,7 +35,7 @@ object RustImplIndex {
 
     fun findMethodsFor(target: RustType, project: Project): Sequence<RustFnElement> =
         findImplsFor(target, project)
-            .flatMap { it.implMethodMemberList.orEmpty().asSequence() }
+            .flatMap { it.functionList.orEmpty().asSequence() }
 
     fun findImplsFor(target: RustType, project: Project): Sequence<RustImplItemElement> {
         val inherentImpls = if (target is RustStructOrEnumTypeBase)

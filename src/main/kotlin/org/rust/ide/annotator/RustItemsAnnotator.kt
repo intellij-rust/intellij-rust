@@ -65,7 +65,7 @@ class RustItemsAnnotator : Annotator {
 
         val canImplement = trait.functionList.associateBy { it.name }
         val mustImplement = canImplement.filterValues { it.isAbstract }
-        val implemented = impl.implMethodMemberList.associateBy { it.name }
+        val implemented = impl.functionList.associateBy { it.name }
 
         val notImplemented = mustImplement.keys - implemented.keys
         if (!notImplemented.isEmpty()) {
@@ -131,9 +131,9 @@ private class ImplementMethods(
     ) {
         val impl = (startElement as RustImplItemElement)
         val templateImpl = RustPsiFactory(project).createTraitImplItem(methods)
-        val lastMethodOrBrace = impl.implMethodMemberList.lastOrNull() ?: impl.lbrace ?: return
-        val firstToAdd = templateImpl.implMethodMemberList.first()
-        val lastToAdd = templateImpl.implMethodMemberList.last()
+        val lastMethodOrBrace = impl.functionList.lastOrNull() ?: impl.lbrace ?: return
+        val firstToAdd = templateImpl.functionList.first()
+        val lastToAdd = templateImpl.functionList.last()
         impl.addRangeAfter(firstToAdd, lastToAdd, lastMethodOrBrace)
     }
 

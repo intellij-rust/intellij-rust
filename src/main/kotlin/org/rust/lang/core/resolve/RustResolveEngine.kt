@@ -20,7 +20,10 @@ import org.rust.lang.core.psi.impl.mixin.isSelf
 import org.rust.lang.core.psi.impl.mixin.isStarImport
 import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
-import org.rust.lang.core.psi.util.*
+import org.rust.lang.core.psi.util.ancestors
+import org.rust.lang.core.psi.util.fields
+import org.rust.lang.core.psi.util.module
+import org.rust.lang.core.psi.util.typeParams
 import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
@@ -281,9 +284,7 @@ private fun innerDeclarationsIn(
                 })
         }
 
-        is RustFunctionElement,
-        is RustImplMethodMemberElement -> {
-            scope as RustFnElement
+        is RustFunctionElement -> {
             val selfArgument = scope.parameters?.selfArgument
             val arguments = scope.parameters?.parameterList.orEmpty().asSequence()
 

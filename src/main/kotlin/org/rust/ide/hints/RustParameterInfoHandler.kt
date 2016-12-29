@@ -141,5 +141,5 @@ class RustArgumentsDescription(
 private val RustCallExprElement.declaration: RustFnElement?
     get() = (expr as? RustPathExprElement)?.path?.reference?.resolve() as? RustFnElement
 
-private val RustMethodCallExprElement.declaration: RustImplMethodMemberElement?
-    get() = reference.resolve() as? RustImplMethodMemberElement
+private val RustMethodCallExprElement.declaration: RustFnElement?
+    get() = reference.resolve() as? RustFnElement

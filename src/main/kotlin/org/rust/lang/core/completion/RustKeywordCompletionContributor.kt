@@ -10,7 +10,6 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.RustPsiPattern
 import org.rust.lang.core.psi.RustFunctionElement
-import org.rust.lang.core.psi.RustImplMethodMemberElement
 import org.rust.lang.core.psi.RustModItemElement
 import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.impl.RustFile
@@ -33,7 +32,7 @@ class RustKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     private fun returnPattern(): PsiElementPattern.Capture<PsiElement> {
         return statementBeginningPattern(RustTokenElementTypes.IDENTIFIER)
-            .inside(or(psiElement<RustFunctionElement>(), psiElement<RustImplMethodMemberElement>()))
+            .inside(psiElement<RustFunctionElement>())
     }
 
     private fun statementBeginningPattern(vararg tokenTypes: IElementType): PsiElementPattern.Capture<PsiElement> {

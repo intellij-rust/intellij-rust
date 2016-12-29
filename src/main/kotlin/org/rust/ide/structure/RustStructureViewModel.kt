@@ -20,7 +20,6 @@ class RustStructureViewModel(editor: Editor?, file: RustFile) : TextEditorBasedS
         when (element.value) {
             is RustFieldDeclElement,
             is RustFunctionElement,
-            is RustImplMethodMemberElement,
             is RustModDeclItemElement,
             is RustStaticItemElement,
             is RustTypeItemElement -> true
