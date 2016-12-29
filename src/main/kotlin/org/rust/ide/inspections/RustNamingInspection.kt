@@ -7,10 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustParameterElementImpl
-import org.rust.lang.core.psi.impl.mixin.RustConstantKind
-import org.rust.lang.core.psi.impl.mixin.RustFunctionRole
-import org.rust.lang.core.psi.impl.mixin.kind
-import org.rust.lang.core.psi.impl.mixin.role
+import org.rust.lang.core.psi.impl.mixin.*
 
 /**
  * Base class for naming inspections. Implements the core logic of checking names
@@ -254,14 +251,22 @@ class RustTraitNamingInspection : RustCamelCaseNamingInspection("Trait") {
 class RustTypeAliasNamingInspection : RustCamelCaseNamingInspection("Type", "Type alias") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
-            override fun visitTypeAlias(el: RustTypeAliasElement) = inspect(el.identifier, holder)
+            override fun visitTypeAlias(el: RustTypeAliasElement) {
+                if (el.role == RustTypeAliasRole.FREE) {
+                    inspect(el.identifier, holder)
+                }
+            }
         }
 }
 
 class RustAssocTypeNamingInspection : RustCamelCaseNamingInspection("Type", "Associated type") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
-            override fun visitTypeAlias(el: RustTypeAliasElement) = inspect(el.identifier, holder, false)
+            override fun visitTypeAlias(el: RustTypeAliasElement) {
+                if (el.role == RustTypeAliasRole.TRAIT_ASSOC_TYPE) {
+                    inspect(el.identifier, holder, false)
+                }
+            }
         }
 }
 
