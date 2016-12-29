@@ -6,6 +6,8 @@ pub trait ExecEngine: Send + Sync {
 
 trait A {
     type B;
+    const C: i32;
+    const D: f64 = 92.92;
 }
 
 pub trait Registry {

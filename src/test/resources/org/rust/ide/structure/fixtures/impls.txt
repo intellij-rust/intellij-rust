@@ -1,7 +1,9 @@
 -impls.rs
  -Registry
+  C: i32
   query(&Dependency) -> CargoResult<Vec<Summary>>
  -Registry for Vec<Summary>
+  C: i32
   query(&Dependency) -> CargoResult<Vec<Summary>>
  -Registry for Vec<Package>
   query(&Dependency) -> CargoResult<Vec<Summary>>

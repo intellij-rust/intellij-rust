@@ -2,11 +2,13 @@
 ///
 /// See also `core::Source`.
 pub trait Registry {
+    const C: i32;
     /// Attempt to find the packages that match a dependency request.
     fn query(&mut self, name: &Dependency) -> CargoResult<Vec<Summary>>;
 }
 
 impl Registry for Vec<Summary> {
+    const C: i32 = 92;
     fn query(&mut self, dep: &Dependency) -> CargoResult<Vec<Summary>> {
         Ok(self.iter().filter(|summary| dep.matches(*summary))
                .map(|summary| summary.clone()).collect())

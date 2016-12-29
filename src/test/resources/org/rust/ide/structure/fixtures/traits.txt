@@ -2,7 +2,9 @@
  -ExecEngine: Send + Sync
   exec(CommandPrototype) -> Result<(), ProcessError>
   exec_with_output(CommandPrototype) -> Result<Output, ProcessError>
- A
+ -A
+  C: i32
+  D: f64
  -Registry
   query(&Dependency) -> CargoResult<Vec<Summary>>
  -FnBox<A, R>

@@ -20,7 +20,11 @@ class RustTraitTreeElement(element: RustTraitItemElement) : PsiTreeElementBase<R
         return text
     }
 
-    override fun getChildrenBase(): Collection<StructureViewTreeElement> =
-        element?.functionList.orEmpty()
-            .map(::RustFunctionTreeElement)
+    override fun getChildrenBase(): Collection<StructureViewTreeElement> {
+        val trait = element ?: return emptyList()
+        return listOf(
+            trait.functionList.map(::RustFunctionTreeElement),
+            trait.constantList.map(::RustConstantTreeElement)
+        ).flatten().sortedBy { it.element?.textOffset }
+    }
 }
