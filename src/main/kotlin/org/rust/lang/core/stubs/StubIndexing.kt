@@ -60,6 +60,10 @@ fun IndexSink.indexConstant(stub: RustConstantElementStub) {
     indexNamedStub(stub)
 }
 
+fun IndexSink.indexTypeAlias(stub: RustTypeAliasElementStub) {
+    indexNamedStub(stub)
+}
+
 fun IndexSink.indexTypeItem(stub: RustTypeItemElementStub) {
     indexNamedStub(stub)
 }

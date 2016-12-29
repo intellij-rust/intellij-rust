@@ -36,6 +36,7 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
 
     "FUNCTION" -> RustFunctionElementStub.Type
     "CONSTANT" -> RustConstantElementStub.Type
+    "TYPE_ALIAS" -> RustTypeItemElementStub.Type
     "TYPE_ITEM" -> RustTypeItemElementStub.Type
     "FOREIGN_MOD_ITEM" -> RustForeignModItemElementStub.Type
 
@@ -469,6 +470,39 @@ class RustConstantElementStub(
             RustConstantElementStub(parentStub, this, psi.name, psi.isPublic)
 
         override fun indexStub(stub: RustConstantElementStub, sink: IndexSink) = sink.indexConstant(stub)
+    }
+}
+
+
+class RustTypeAliasElementStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    override val name: String?,
+    override val isPublic: Boolean
+) : StubBase<RustTypeAliasElement>(parent, elementType),
+    RustNamedStub,
+    RustVisibilityStub {
+
+    object Type : RustStubElementType<RustTypeAliasElementStub, RustTypeAliasElement>("TYPE_ALIAS") {
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RustTypeAliasElementStub(parentStub, this,
+                dataStream.readNameAsString(),
+                dataStream.readBoolean()
+            )
+
+        override fun serialize(stub: RustTypeAliasElementStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.name)
+                writeBoolean(stub.isPublic)
+            }
+
+        override fun createPsi(stub: RustTypeAliasElementStub) =
+            RustTypeAliasElementImpl(stub, this)
+
+        override fun createStub(psi: RustTypeAliasElement, parentStub: StubElement<*>?) =
+            RustTypeAliasElementStub(parentStub, this, psi.name, psi.isPublic)
+
+        override fun indexStub(stub: RustTypeAliasElementStub, sink: IndexSink) = sink.indexTypeAlias(stub)
     }
 }
 
