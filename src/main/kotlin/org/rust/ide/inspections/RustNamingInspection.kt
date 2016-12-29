@@ -7,9 +7,9 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustParameterElementImpl
+import org.rust.lang.core.psi.impl.mixin.RustFunctionKind
 import org.rust.lang.core.psi.impl.mixin.isConstant
-import org.rust.lang.core.psi.impl.mixin.isForeign
-import org.rust.lang.core.psi.impl.mixin.isTraitMethod
+import org.rust.lang.core.psi.impl.mixin.kind
 
 /**
  * Base class for naming inspections. Implements the core logic of checking names
@@ -196,8 +196,9 @@ class RustFunctionNamingInspection : RustSnakeCaseNamingInspection("Function") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
             override fun visitFunction(el: RustFunctionElement) {
-                if (el.isForeign) return
-                inspect(el.identifier, holder)
+                if (el.kind == RustFunctionKind.FREE) {
+                    inspect(el.identifier, holder)
+                }
             }
         }
 }
@@ -220,8 +221,8 @@ class RustMethodNamingInspection : RustSnakeCaseNamingInspection("Method") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
             override fun visitFunction(el: RustFunctionElement) {
-                if (el.isTraitMethod) {
-                    inspect(el.identifier, holder, false)
+                if (el.kind == RustFunctionKind.TRAIT_METHOD) {
+                    inspect(el.identifier, holder)
                 }
             }
 
