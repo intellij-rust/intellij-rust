@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.RustTypeAliasElement
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
-import org.rust.lang.core.stubs.RustTypeItemElementStub
+import org.rust.lang.core.stubs.RustTypeAliasElementStub
 import javax.swing.Icon
 
 abstract class RustTypeAliasImplMixin : RustStubbedNamedElementImpl<RustTypeAliasElementStub>, RustTypeAliasElement {

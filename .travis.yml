@@ -4,7 +4,10 @@ jdk: oraclejdk8
 env:
   global: ORG_GRADLE_PROJECT_downloadIdeaSources=false
   matrix:
-        - ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT
+        # uncomment whenk
+        # https://github.com/JetBrains/intellij-community/commit/004e0d76046ca732d7115c89e64baf6094c9271d
+        # hits EAP
+        # - ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT
         - ORG_GRADLE_PROJECT_ideaVersion=2016.1
 
 before_script:
