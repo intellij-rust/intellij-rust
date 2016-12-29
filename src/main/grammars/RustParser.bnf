@@ -814,6 +814,7 @@ fake type_alias ::=
 type_item ::=
   outer_attr*          vis? TYPE_KW IDENTIFIER generic_params? where_clause? '=' type ';'
 {
+  pin = 'IDENTIFIER'
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   elementType = type_alias
 }
@@ -821,6 +822,7 @@ type_item ::=
 trait_type_member ::=
   outer_attr*               TYPE_KW IDENTIFIER type_param_bounds? [ '=' type ] ';'
 {
+  pin = 'IDENTIFIER'
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   elementType = type_alias
 }
@@ -828,10 +830,8 @@ trait_type_member ::=
 impl_type_member ::=
   outer_attr* DEFAULT? vis? TYPE_KW IDENTIFIER generic_params? '=' type ';'
 {
+  pin = 'IDENTIFIER'
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement"
-                 "org.rust.lang.core.psi.RustOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RustVisibilityOwner" ]
   elementType = type_alias
 }
 
