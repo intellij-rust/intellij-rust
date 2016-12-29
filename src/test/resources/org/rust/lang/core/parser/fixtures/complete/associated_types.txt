@@ -47,7 +47,7 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement({)('{')
     PsiWhiteSpace('\n    ')
-    RustImplTypeMemberElementImpl(IMPL_TYPE_MEMBER)
+    RustTypeAliasElementImpl(TYPE_ALIAS)
       PsiElement(type)('type')
       PsiWhiteSpace(' ')
       PsiElement(<IDENTIFIER>)('B')

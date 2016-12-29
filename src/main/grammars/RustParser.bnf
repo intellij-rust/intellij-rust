@@ -758,15 +758,6 @@ private impl_member ::= !'}' ( impl_method_member | impl_const_member | impl_mac
 private impl_member_recover ::= !('#' | vis | EXTERN | CONST | UNSAFE | FN | (IDENTIFIER '!') | TYPE_KW | "default" | '}')
 
 
-impl_type_member ::= attrs_default_vis TYPE_KW IDENTIFIER generic_params? '=' type ';' {
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustNamedElement"
-                 "org.rust.lang.core.psi.RustOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RustVisibilityOwner" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RustImplTypeMemberImplMixin"
-}
-
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Types
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -825,6 +816,14 @@ type_item ::= attrs_and_vis TYPE_KW IDENTIFIER generic_params? where_clause? '='
 
 trait_type_member ::= outer_attr* TYPE_KW IDENTIFIER type_param_bounds? [ '=' type ] ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  elementType = type_alias
+}
+
+impl_type_member ::= attrs_default_vis TYPE_KW IDENTIFIER generic_params? '=' type ';' {
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+                 "org.rust.lang.core.psi.RustOuterAttributeOwner"
+                 "org.rust.lang.core.psi.RustVisibilityOwner" ]
   elementType = type_alias
 }
 
