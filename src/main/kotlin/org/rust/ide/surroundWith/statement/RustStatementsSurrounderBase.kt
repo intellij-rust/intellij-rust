@@ -12,9 +12,6 @@ import org.rust.lang.core.psi.RustBlockElement
 sealed class RustStatementsSurrounderBase : Surrounder {
     protected abstract fun createTemplate(project: Project): Pair<PsiElement, RustBlockElement>
 
-    final override fun isApplicable(elements: Array<out PsiElement>): Boolean =
-        elements.isNotEmpty()
-
     abstract class SimpleBlock : RustStatementsSurrounderBase() {
         final override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange? {
             val template = surroundWithTemplate(project, elements)
@@ -23,9 +20,9 @@ sealed class RustStatementsSurrounderBase : Surrounder {
     }
 
     abstract class BlockWithCondition : RustStatementsSurrounderBase() {
-        protected open fun getExprForRemove(expression: PsiElement): PsiElement? = null
+        protected abstract fun getExprForRemove(expression: PsiElement): PsiElement?
 
-        override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange? {
+        final override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange? {
             val template = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(
                 surroundWithTemplate(project, elements)
             )
@@ -37,6 +34,9 @@ sealed class RustStatementsSurrounderBase : Surrounder {
             return TextRange.from(conditionTextRange.startOffset, 0)
         }
     }
+
+    final override fun isApplicable(elements: Array<out PsiElement>): Boolean =
+        elements.isNotEmpty()
 
     protected fun surroundWithTemplate(project: Project, elements: Array<out PsiElement>): PsiElement {
         require(elements.isNotEmpty())
