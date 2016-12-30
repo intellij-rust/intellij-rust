@@ -13,10 +13,10 @@ class MatchToIfLetIntention : PsiElementBaseIntentionAction() {
     override fun getFamilyName(): String = text
 
     override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean =
-        findMathExpr(element) != null
+        findMatchExpr(element) != null
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
-        val matchExpr = checkNotNull(findMathExpr(element))
+        val matchExpr = checkNotNull(findMatchExpr(element))
         val matchBody = checkNotNull(matchExpr.matchBody)
         val arm = matchBody.matchArmList.find { it.expr?.isVoid == false } ?: return
         var bodyText = arm.expr?.text ?: return
@@ -30,7 +30,7 @@ class MatchToIfLetIntention : PsiElementBaseIntentionAction() {
         matchExpr.replace(rustIfLetExprElement)
     }
 
-    private fun findMathExpr(element: PsiElement): RustMatchExprElement? {
+    private fun findMatchExpr(element: PsiElement): RustMatchExprElement? {
         if (!element.isWritable) return null
 
         val matchExpr = element.parentOfType<RustMatchExprElement>() ?: return null
