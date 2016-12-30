@@ -27,8 +27,9 @@ class RustMissingElseInspection : RustLocalInspectionTool() {
                     .dropWhile { (it is PsiWhiteSpace || it is PsiComment) && '\n' !in it.text }
                     .firstOrNull()
                     .extractIf() ?: return
+                val condition = nextIf.condition ?: return
                 val rangeStart = expr.startOffsetInParent + firstIf.textLength
-                val rangeLen = nextIf.condition.expr.textRange.startOffset - firstIf.textRange.startOffset - firstIf.textLength
+                val rangeLen = condition.expr.textRange.startOffset - firstIf.textRange.startOffset - firstIf.textLength
                 val fixRange = TextRange(nextIf.textRange.startOffset, nextIf.textRange.startOffset)
                 holder.registerProblem(
                     expr.parent,

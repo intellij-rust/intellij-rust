@@ -960,19 +960,19 @@ path_expr ::= path_generic_args_with_colons
 
 qual_path_expr ::= << qualified_path path_generic_args_with_colons >>
 
-while_expr ::= label? WHILE condition simple_block { pin = 'condition' }
+while_expr ::= label? WHILE condition simple_block { pin = 'WHILE' }
 condition ::= (LET pat '=')? no_struct_lit_expr
 
-loop_expr ::= label? LOOP simple_block
+loop_expr ::= label? LOOP simple_block { pin = 'LOOP' }
 private label ::= LIFETIME ':'
 
 cont_expr ::= CONTINUE LIFETIME?
 
 break_expr ::= BREAK LIFETIME?
 
-for_expr ::= label? FOR pat IN no_struct_lit_expr simple_block { pin = "IN" }
+for_expr ::= label? FOR pat IN no_struct_lit_expr simple_block { pin = "FOR" }
 
-match_expr ::= MATCH no_struct_lit_expr match_body { pin = no_struct_lit_expr }
+match_expr ::= MATCH no_struct_lit_expr match_body { pin = 'MATCH'}
 match_body ::= '{' match_arm* '}' { pin = 1 }
 match_arm ::= outer_attr* match_pat '=>' stmt_mode_expr (',' | (&'}' | <<isBlock>>)) {
   pin = 2
@@ -981,7 +981,7 @@ match_arm ::= outer_attr* match_pat '=>' stmt_mode_expr (',' | (&'}' | <<isBlock
 private match_arm_recover ::= !(first_pat | first_outer_attr | '}')
 match_pat ::= pat ('|' pat)* (IF any_expr)?
 
-if_expr ::= IF condition simple_block else_branch? { pin = 'condition' }
+if_expr ::= IF condition simple_block else_branch? { pin = 'IF' }
 else_branch ::= ELSE ( if_expr | simple_block )
 
 ret_expr ::= RETURN expr?

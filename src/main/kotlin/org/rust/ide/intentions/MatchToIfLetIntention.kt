@@ -16,7 +16,7 @@ class MatchToIfLetIntention : PsiElementBaseIntentionAction() {
         findMatchExpr(element) != null
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
-        val (matchExpr, matchBody, arm) = findMatchExpr(element)
+        val (matchExpr, matchTarget, matchBody, arm) = findMatchExpr(element)
             ?: error("Unavailable intention invoked")
 
         var bodyText = arm.expr?.text ?: return
@@ -25,13 +25,14 @@ class MatchToIfLetIntention : PsiElementBaseIntentionAction() {
         }
 
         val rustIfLetExprElement =
-            RustPsiFactory(project).createExpression("if let ${arm.matchPat.text} = ${matchExpr.expr.text} $bodyText")
+            RustPsiFactory(project).createExpression("if let ${arm.matchPat.text} = ${matchTarget.text} $bodyText")
                 as RustIfExprElement
         matchExpr.replace(rustIfLetExprElement)
     }
 
     data class Context(
         val match: RustMatchExprElement,
+        val matchTarget: RustExprElement,
         val matchBody: RustMatchBodyElement,
         val nonVoidArm: RustMatchArmElement
     )
@@ -40,6 +41,7 @@ class MatchToIfLetIntention : PsiElementBaseIntentionAction() {
         if (!element.isWritable) return null
 
         val matchExpr = element.parentOfType<RustMatchExprElement>() ?: return null
+        val matchTarget = matchExpr.expr ?: return null
         val matchBody = matchExpr.matchBody ?: return null
         val matchArmList = matchBody.matchArmList
 
@@ -50,7 +52,7 @@ class MatchToIfLetIntention : PsiElementBaseIntentionAction() {
         val pattern = nonVoidArm.matchPat.patList.singleOrNull() ?: return null
         if (pattern.text == "_") return null
 
-        return Context(matchExpr, matchBody, nonVoidArm)
+        return Context(matchExpr, matchTarget, matchBody, nonVoidArm)
     }
 
     val RustExprElement.isVoid: Boolean

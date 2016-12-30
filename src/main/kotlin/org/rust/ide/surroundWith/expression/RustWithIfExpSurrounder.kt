@@ -18,7 +18,7 @@ class RustWithIfExpSurrounder : RustExpressionSurrounderBase<RustIfExprElement>(
         RustPsiFactory(project).createExpression("if a {stmnt;}") as RustIfExprElement
 
     override fun getWrappedExpression(expression: RustIfExprElement): RustExprElement =
-        expression.condition.expr
+        expression.condition!!.expr
 
     override fun isApplicable(expression: RustExprElement): Boolean =
         expression.resolvedType == RustBooleanType

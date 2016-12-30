@@ -328,11 +328,11 @@ private fun innerDeclarationsIn(
 
         is RustForExprElement -> {
             if (scope.expr?.isStrictAncestorOf(place) ==  true) return emptySequence()
-            scope.pat.boundNames
+            scope.pat?.boundNames ?: emptySequence()
         }
 
-        is RustIfExprElement -> scope.condition.boundNames(place)
-        is RustWhileExprElement -> scope.condition.boundNames(place)
+        is RustIfExprElement -> scope.condition?.boundNames(place) ?: emptySequence()
+        is RustWhileExprElement -> scope.condition?.boundNames(place) ?: emptySequence()
 
         is RustLambdaExprElement -> scope
             .parameters.parameterList.asSequence()

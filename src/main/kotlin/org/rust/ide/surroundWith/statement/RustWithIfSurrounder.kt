@@ -16,6 +16,6 @@ class RustWithIfSurrounder : RustStatementsSurrounderBase.BlockWithCondition<Rus
     }
 
     override fun conditionRange(expression: RustIfExprElement): TextRange =
-        expression.condition.textRange
+        expression.condition!!.textRange
 
 }

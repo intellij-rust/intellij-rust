@@ -16,7 +16,7 @@ class RustWithForSurrounder : RustStatementsSurrounderBase.BlockWithCondition<Ru
 
     override fun conditionRange(expression: RustForExprElement): TextRange =
         TextRange(
-            expression.pat.textRange.startOffset,
+            expression.pat!!.textRange.startOffset,
             expression.expr!!.textRange.endOffset
         )
 }

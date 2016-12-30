@@ -10,7 +10,7 @@ class RustWithLoopSurrounder : RustStatementsSurrounderBase.SimpleBlock<RustLoop
 
     override fun createTemplate(project: Project): Pair<RustLoopExprElement, RustBlockElement> {
         val l = RustPsiFactory(project).createExpression("loop {\n}") as RustLoopExprElement
-        return l to l.block
+        return l to l.block!!
     }
 
 }
