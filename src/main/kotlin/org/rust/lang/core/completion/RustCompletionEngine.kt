@@ -6,7 +6,9 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import org.rust.cargo.project.PackageOrigin
 import org.rust.cargo.project.workspace.cargoProject
+import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.asRustPath
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.util.fields
@@ -82,7 +84,7 @@ private fun Collection<RustNamedElement>.completionsFromNamedElements(): Array<L
 
 fun RustCompositeElement.createLookupElement(scopeName: String): LookupElement {
     val base = LookupElementBuilder.create(this, scopeName)
-        .withIcon(getIcon(0))
+        .withIcon(if (this is RustFile) RustIcons.MODULE else getIcon(0))
 
     return when (this) {
         is RustConstantElement -> base.withTypeText(type?.text)
