@@ -30,15 +30,16 @@ abstract class RustStatementsSurrounderBase : Surrounder {
 
         container.deleteChildRange(elements.first(), elements.last())
 
-        return if (shouldRemoveExpr) {
+        val newCaretOffset = if (shouldRemoveExpr) {
             template = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(template)
             val removeIt = getExprForRemove(template)
             val conditionTextRange = checkNotNull(removeIt).textRange
             editor.document.deleteString(conditionTextRange.startOffset, conditionTextRange.endOffset)
-            val range = TextRange.from(conditionTextRange.startOffset, 0)
-            range
+            conditionTextRange.startOffset
         } else {
-            TextRange.from(template.firstChild.textRange.endOffset, 0)
+            template.firstChild.textRange.endOffset
         }
+
+        return TextRange.from(newCaretOffset, 0)
     }
 }
