@@ -8,19 +8,20 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.surroundWith.addStatements
 import org.rust.lang.core.psi.RustBlockElement
+import org.rust.lang.core.psi.RustExprElement
 
-sealed class RustStatementsSurrounderBase : Surrounder {
-    protected abstract fun createTemplate(project: Project): Pair<PsiElement, RustBlockElement>
+sealed class RustStatementsSurrounderBase<out T : RustExprElement> : Surrounder {
+    protected abstract fun createTemplate(project: Project): Pair<T, RustBlockElement>
 
-    abstract class SimpleBlock : RustStatementsSurrounderBase() {
+    abstract class SimpleBlock<out T : RustExprElement> : RustStatementsSurrounderBase<T>() {
         final override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange? {
             val template = surroundWithTemplate(project, elements)
             return TextRange.from(template.firstChild.textRange.endOffset, 0)
         }
     }
 
-    abstract class BlockWithCondition : RustStatementsSurrounderBase() {
-        protected abstract fun conditionRange(expression: PsiElement): TextRange
+    abstract class BlockWithCondition<T : RustExprElement> : RustStatementsSurrounderBase<T>() {
+        protected abstract fun conditionRange(expression: T): TextRange
 
         final override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange? {
             val template = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(
@@ -37,13 +38,15 @@ sealed class RustStatementsSurrounderBase : Surrounder {
     final override fun isApplicable(elements: Array<out PsiElement>): Boolean =
         elements.isNotEmpty()
 
-    protected fun surroundWithTemplate(project: Project, elements: Array<out PsiElement>): PsiElement {
+    protected fun surroundWithTemplate(project: Project, elements: Array<out PsiElement>): T {
         require(elements.isNotEmpty())
         val container = requireNotNull(elements[0].parent)
 
         var (template, block) = createTemplate(project)
         block.addStatements(elements)
-        template = container.addBefore(template, elements[0])
+        template = template.javaClass.cast(
+            container.addBefore(template, elements[0])
+        )
 
         container.deleteChildRange(elements.first(), elements.last())
         return template

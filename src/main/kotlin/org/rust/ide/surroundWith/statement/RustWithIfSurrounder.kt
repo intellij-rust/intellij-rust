@@ -7,15 +7,15 @@ import org.rust.lang.core.psi.RustBlockElement
 import org.rust.lang.core.psi.RustIfExprElement
 import org.rust.lang.core.psi.RustPsiFactory
 
-class RustWithIfSurrounder : RustStatementsSurrounderBase.BlockWithCondition() {
+class RustWithIfSurrounder : RustStatementsSurrounderBase.BlockWithCondition<RustIfExprElement>() {
     override fun getTemplateDescription(): String = "if { }"
 
-    override fun createTemplate(project: Project): Pair<PsiElement, RustBlockElement> {
+    override fun createTemplate(project: Project): Pair<RustIfExprElement, RustBlockElement> {
         val i = RustPsiFactory(project).createExpression("if a {\n}") as RustIfExprElement
         return i to i.block!!
     }
 
-    override fun conditionRange(expression: PsiElement): TextRange =
-        (expression as RustIfExprElement).condition.textRange
+    override fun conditionRange(expression: RustIfExprElement): TextRange =
+        expression.condition.textRange
 
 }
