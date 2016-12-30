@@ -9,11 +9,10 @@ import org.rust.lang.core.psi.RustPsiFactory
 class RustWithForSurrounder : RustStatementsSurrounderBase() {
     override fun getTemplateDescription(): String = "for { }"
 
-    override fun createTemplate(project: Project): PsiElement =
-        RustPsiFactory(project).createExpression("for a in b {\n}")
-
-    override fun getCodeBlock(expression: PsiElement): RustBlockElement =
-        (expression as RustForExprElement).block
+    override fun createTemplate(project: Project): Pair<PsiElement, RustBlockElement> {
+        val f = RustPsiFactory(project).createExpression("for a in b {\n}") as RustForExprElement
+        return f to f.block
+    }
 
     override val shouldRemoveExpr = true
 

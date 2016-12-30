@@ -9,9 +9,9 @@ import org.rust.lang.core.psi.RustPsiFactory
 class RustWithLoopSurrounder : RustStatementsSurrounderBase() {
     override fun getTemplateDescription(): String = "loop { }"
 
-    override fun createTemplate(project: Project): PsiElement =
-        RustPsiFactory(project).createExpression("loop {\n}")
+    override fun createTemplate(project: Project): Pair<PsiElement, RustBlockElement> {
+        val l = RustPsiFactory(project).createExpression("loop {\n}") as RustLoopExprElement
+        return l to l.block
+    }
 
-    override fun getCodeBlock(expression: PsiElement): RustBlockElement =
-        (expression as RustLoopExprElement).block
 }

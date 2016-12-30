@@ -178,8 +178,8 @@ class RustWithBlockSurrounderTest : RustSurrounderTestCaseBase(RustWithBlockSurr
             fn main() {
                 {
                     loop {
-                                        println!("Hello");
-                                    }
+                        println!("Hello");
+                    }
                 }
             }
             """

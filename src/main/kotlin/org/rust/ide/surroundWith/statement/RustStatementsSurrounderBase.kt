@@ -10,8 +10,7 @@ import org.rust.ide.surroundWith.addStatements
 import org.rust.lang.core.psi.RustBlockElement
 
 abstract class RustStatementsSurrounderBase : Surrounder {
-    protected abstract fun createTemplate(project: Project): PsiElement
-    protected abstract fun getCodeBlock(expression: PsiElement): RustBlockElement
+    protected abstract fun createTemplate(project: Project): Pair<PsiElement, RustBlockElement>
 
     protected open fun getExprForRemove(expression: PsiElement): PsiElement? = null
     protected open val shouldRemoveExpr = false
@@ -23,10 +22,9 @@ abstract class RustStatementsSurrounderBase : Surrounder {
         require(elements.isNotEmpty())
         val container = requireNotNull(elements[0].parent)
 
-        var template = createTemplate(project)
+        var (template, block) = createTemplate(project)
+        block.addStatements(elements)
         template = container.addBefore(template, elements[0])
-
-        getCodeBlock(template).addStatements(elements)
 
         container.deleteChildRange(elements.first(), elements.last())
 

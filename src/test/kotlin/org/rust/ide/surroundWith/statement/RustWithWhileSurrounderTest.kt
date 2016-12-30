@@ -164,16 +164,6 @@ class RustWithWhileSurrounderTest : RustSurrounderTestCaseBase(RustWithWhileSurr
         )
     }
 
-    // FIXME Indents after apply Surround With...
-    // Should be:
-//            fn main() {
-//                while <caret> {
-//                    loop {
-//                        println!("Hello");
-//                    }
-//                }
-//            }
-
     fun testNested() {
         doTest(
             """
@@ -188,8 +178,8 @@ class RustWithWhileSurrounderTest : RustSurrounderTestCaseBase(RustWithWhileSurr
             fn main() {
                 while <caret> {
                     loop {
-                                        println!("Hello");
-                                    }
+                        println!("Hello");
+                    }
                 }
             }
             """

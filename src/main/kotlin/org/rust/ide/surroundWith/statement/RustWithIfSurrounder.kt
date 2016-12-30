@@ -9,11 +9,10 @@ import org.rust.lang.core.psi.RustPsiFactory
 class RustWithIfSurrounder : RustStatementsSurrounderBase() {
     override fun getTemplateDescription(): String = "if { }"
 
-    override fun createTemplate(project: Project): PsiElement =
-        RustPsiFactory(project).createExpression("if a {\n}")
-
-    override fun getCodeBlock(expression: PsiElement): RustBlockElement =
-        checkNotNull((expression as RustIfExprElement).block)
+    override fun createTemplate(project: Project): Pair<PsiElement, RustBlockElement> {
+        val i = RustPsiFactory(project).createExpression("if a {\n}") as RustIfExprElement
+        return i to i.block!!
+    }
 
     override val shouldRemoveExpr = true
 

@@ -9,11 +9,10 @@ import org.rust.lang.core.psi.RustWhileExprElement
 class RustWithWhileSurrounder : RustStatementsSurrounderBase() {
     override fun getTemplateDescription(): String = "while { }"
 
-    override fun createTemplate(project: Project): PsiElement =
-        RustPsiFactory(project).createExpression("while a {\n}")
-
-    override fun getCodeBlock(expression: PsiElement): RustBlockElement =
-        checkNotNull((expression as RustWhileExprElement).block)
+    override fun createTemplate(project: Project): Pair<PsiElement, RustBlockElement> {
+        val w = RustPsiFactory(project).createExpression("while a {\n}") as RustWhileExprElement
+        return w to w.block!!
+    }
 
     override val shouldRemoveExpr = true
 

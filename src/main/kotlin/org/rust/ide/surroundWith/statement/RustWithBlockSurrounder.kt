@@ -7,9 +7,9 @@ import org.rust.lang.core.psi.*
 class RustWithBlockSurrounder : RustStatementsSurrounderBase() {
     override fun getTemplateDescription(): String = "{}"
 
-    override fun createTemplate(project: Project): PsiElement =
-        RustPsiFactory(project).createStatement("{\n}")
+    override fun createTemplate(project: Project): Pair<PsiElement, RustBlockElement> {
+        val block = RustPsiFactory(project).createBlockExpr("\n")
+        return block to block.block!!
+    }
 
-    override fun getCodeBlock(expression: PsiElement): RustBlockElement =
-        checkNotNull(((expression as RustExprStmtElement).expr as RustBlockExprElement).block)
 }
