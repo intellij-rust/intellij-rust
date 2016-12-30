@@ -1,6 +1,7 @@
 package org.rust.lang.core.completion
 
 import com.intellij.psi.PsiElement
+import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RustTestCaseBase
 
@@ -31,6 +32,16 @@ abstract class RustCompletionTestBase : RustTestCaseBase() {
         check((skipTextCheck || element.text == normName) && (element.fitsHierarchically(target) || element.fitsLinearly(target))) {
             "Wrong completion, expected `$target`, but got `${element.text}`"
         }
+    }
+
+    protected fun checkContainsCompletion(text: String, @Language("Rust") code: String) {
+        InlineFile(code).withCaret()
+        val variants = myFixture.completeBasic()
+        checkNotNull(variants) {
+            "Expected completions that contain $text, but no completions found"
+        }
+        variants.filter { it.lookupString == text }.forEach { return }
+        error("Expected completions that contain $text, but got ${variants.toList()}")
     }
 
     protected fun checkNoCompletion(@Language("Rust") code: String) {

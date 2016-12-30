@@ -1,6 +1,7 @@
 package org.rust.lang.core
 
 import com.intellij.patterns.*
+import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
@@ -20,13 +21,10 @@ object RustPsiPattern {
     private val STATEMENT_BOUNDARIES = TokenSet.create(
         RustTokenElementTypes.SEMICOLON, RustTokenElementTypes.LBRACE, RustTokenElementTypes.RBRACE)
 
-    class OnStatementBeginning : PatternCondition<PsiElement>("on statement beginning") {
-        override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
-            val prev = t.prevVisibleOrNewLine ?: return true
-            if (prev is PsiWhiteSpace) return true
-            return prev.node.elementType in STATEMENT_BOUNDARIES
-        }
-    }
+    val onStatementBeginning: PsiElementPattern.Capture<PsiElement> = psiElement().with(OnStatementBeginning())
+
+    fun onStatementBeginning(vararg startWords: String): PsiElementPattern.Capture<PsiElement> =
+        psiElement().with(OnStatementBeginning(*startWords))
 
     val onStruct: PsiElementPattern.Capture<PsiElement> = onItem<RustStructItemElement>()
 
@@ -76,18 +74,28 @@ object RustPsiPattern {
     val onDropFn: PsiElementPattern.Capture<PsiElement> get() {
         val dropTraitRef = psiElement<RustTraitRefElement>().withText("Drop")
         val implBlock = psiElement<RustImplItemElement>().withChild(dropTraitRef)
-        return PlatformPatterns.psiElement().withSuperParent(4, implBlock)
+        return psiElement().withSuperParent(4, implBlock)
     }
 
     val onTestFn: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RustFunctionElement>()
         .withChild(psiElement<RustOuterAttrElement>().withText("#[test]")))
 
     inline fun <reified I : RustDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
-        return PlatformPatterns.psiElement().withSuperParent<I>(3)
+        return psiElement().withSuperParent<I>(3)
     }
 
     private fun onItem(pattern: ElementPattern<out RustDocAndAttributeOwner>): PsiElementPattern.Capture<PsiElement> {
-        return PlatformPatterns.psiElement().withSuperParent(3, pattern)
+        return psiElement().withSuperParent(3, pattern)
+    }
+
+    private class OnStatementBeginning(vararg startWords: String) : PatternCondition<PsiElement>("on statement beginning") {
+        val myStartWords = startWords
+        override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
+            val prev = t.prevVisibleOrNewLine ?: return true
+            if (prev is PsiWhiteSpace) return true
+            return myStartWords.isEmpty() && prev.node.elementType in STATEMENT_BOUNDARIES
+                || myStartWords.isNotEmpty() && prev.node.text in myStartWords
+        }
     }
 }
 
