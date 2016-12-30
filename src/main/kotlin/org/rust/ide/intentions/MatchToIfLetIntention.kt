@@ -16,9 +16,9 @@ class MatchToIfLetIntention : PsiElementBaseIntentionAction() {
         findMatchExpr(element) != null
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
-        val matchExpr = checkNotNull(findMatchExpr(element))
-        val matchBody = checkNotNull(matchExpr.matchBody)
-        val arm = matchBody.matchArmList.find { it.expr?.isVoid == false } ?: return
+        val (matchExpr, matchBody, arm) = findMatchExpr(element)
+            ?: error("Unavailable intention invoked")
+
         var bodyText = arm.expr?.text ?: return
         if (arm.expr !is RustBlockExprElement) {
             bodyText = "{\n$bodyText\n}"
@@ -30,21 +30,27 @@ class MatchToIfLetIntention : PsiElementBaseIntentionAction() {
         matchExpr.replace(rustIfLetExprElement)
     }
 
-    private fun findMatchExpr(element: PsiElement): RustMatchExprElement? {
+    data class Context(
+        val match: RustMatchExprElement,
+        val matchBody: RustMatchBodyElement,
+        val nonVoidArm: RustMatchArmElement
+    )
+
+    private fun findMatchExpr(element: PsiElement): Context? {
         if (!element.isWritable) return null
 
         val matchExpr = element.parentOfType<RustMatchExprElement>() ?: return null
-        val matchBody = matchExpr.matchBody
-        val matchArmList = matchBody?.matchArmList ?: return null
+        val matchBody = matchExpr.matchBody ?: return null
+        val matchArmList = matchBody.matchArmList
 
-        val notVoidArms: List<RustMatchArmElement> = matchArmList.filter { it.expr?.isVoid == false }
-        if (notVoidArms.size == 1 &&
-            notVoidArms[0].matchPat.patList.size == 1 &&
-            notVoidArms[0].matchPat.patList[0].text != "_") {
-            return matchExpr
-        } else {
-            return null
-        }
+        val nonVoidArm = matchArmList
+            .filter { it.expr?.isVoid == false }
+            .singleOrNull() ?: return null
+
+        val pattern = nonVoidArm.matchPat.patList.singleOrNull() ?: return null
+        if (pattern.text == "_") return null
+
+        return Context(matchExpr, matchBody, nonVoidArm)
     }
 
     val RustExprElement.isVoid: Boolean
