@@ -20,18 +20,17 @@ sealed class RustStatementsSurrounderBase : Surrounder {
     }
 
     abstract class BlockWithCondition : RustStatementsSurrounderBase() {
-        protected abstract fun getExprForRemove(expression: PsiElement): PsiElement?
+        protected abstract fun conditionRange(expression: PsiElement): TextRange
 
         final override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange? {
             val template = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(
                 surroundWithTemplate(project, elements)
             )
 
-            val removeIt = getExprForRemove(template)
-            val conditionTextRange = checkNotNull(removeIt).textRange
-            editor.document.deleteString(conditionTextRange.startOffset, conditionTextRange.endOffset)
+            val range = conditionRange(template)
+            editor.document.deleteString(range.startOffset, range.endOffset)
 
-            return TextRange.from(conditionTextRange.startOffset, 0)
+            return TextRange.from(range.startOffset, 0)
         }
     }
 

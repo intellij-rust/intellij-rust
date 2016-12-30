@@ -1,6 +1,7 @@
 package org.rust.ide.surroundWith.statement
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RustBlockElement
 import org.rust.lang.core.psi.RustForExprElement
@@ -14,6 +15,6 @@ class RustWithForSurrounder : RustStatementsSurrounderBase.BlockWithCondition() 
         return f to f.block
     }
 
-    override fun getExprForRemove(expression: PsiElement): PsiElement =
-        (expression as RustForExprElement).scopedForDecl
+    override fun conditionRange(expression: PsiElement): TextRange =
+        (expression as RustForExprElement).scopedForDecl.textRange
 }
