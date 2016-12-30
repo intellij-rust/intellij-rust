@@ -11,9 +11,12 @@ class RustWithForSurrounder : RustStatementsSurrounderBase.BlockWithCondition<Ru
 
     override fun createTemplate(project: Project): Pair<RustForExprElement, RustBlockElement> {
         val f = RustPsiFactory(project).createExpression("for a in b {\n}") as RustForExprElement
-        return f to f.block
+        return f to f.block!!
     }
 
     override fun conditionRange(expression: RustForExprElement): TextRange =
-        expression.scopedForDecl.textRange
+        TextRange(
+            expression.pat.textRange.startOffset,
+            expression.expr!!.textRange.endOffset
+        )
 }

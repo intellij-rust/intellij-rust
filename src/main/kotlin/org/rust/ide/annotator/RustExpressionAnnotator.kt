@@ -90,7 +90,7 @@ private class RedundantParenthesisVisitor(private val holder: AnnotationHolder) 
         o.expr.warnIfParens("Match expression has unnecessary parentheses")
 
     override fun visitForExpr(o: RustForExprElement) =
-        o.scopedForDecl.expr.warnIfParens("For loop expression has unnecessary parentheses")
+        o.expr.warnIfParens("For loop expression has unnecessary parentheses")
 
     override fun visitParenExpr(o: RustParenExprElement) =
         o.expr.warnIfParens("Redundant parentheses in expression")

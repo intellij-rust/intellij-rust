@@ -970,9 +970,7 @@ cont_expr ::= CONTINUE LIFETIME?
 
 break_expr ::= BREAK LIFETIME?
 
-scoped_for_decl ::= pat IN no_struct_lit_expr
-
-for_expr ::= label? FOR scoped_for_decl simple_block { pin = "IN" }
+for_expr ::= label? FOR pat IN no_struct_lit_expr simple_block { pin = "IN" }
 
 match_expr ::= MATCH no_struct_lit_expr match_body { pin = no_struct_lit_expr }
 match_body ::= '{' match_arm* '}' { pin = 1 }
