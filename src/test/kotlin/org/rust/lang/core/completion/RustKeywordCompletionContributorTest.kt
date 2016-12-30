@@ -9,9 +9,38 @@ class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
 
     fun testEnumAtTheFileVeryBeginning() = checkSingleCompletion("enum", "enu/*caret*/")
 
+    fun testPubEnum() = checkSingleCompletion("enum", """
+        pub enu/*caret*/
+    """)
+
     fun testEnumWithinMod() = checkSingleCompletion("enum", """
         mod foo {
             en/*caret*/
+        }
+    """)
+
+    fun testEnumWithinFn() = checkSingleCompletion("enum", """
+        fn foo() {
+            en/*caret*/
+        }
+    """)
+
+    fun testEnumWithinFnNestedBlock() = checkSingleCompletion("enum", """
+        fn foo() {{
+            en/*caret*/
+        }}
+    """)
+
+    fun testEnumWithinFnAfterOtherStmt() = checkSingleCompletion("enum", """
+        fn foo() {
+            let _ = 10;
+            en/*caret*/
+        }
+    """)
+
+    fun testEnumNotAppliedIfDoesntStartStmtWithinFn() = checkNoCompletion("""
+        fn foo() {
+            let en/*caret*/
         }
     """)
 
@@ -21,12 +50,52 @@ class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
         }
     """)
 
-    fun testEnumNotAppliedIfDoesntStartExpression() = checkNoCompletion("""
+    fun testEnumNotAppliedIfDoesntStartStmt() = checkNoCompletion("""
         mod en/*caret*/
     """)
 
-    fun testExternCrate() = checkSingleCompletion("extern crate", """
-        exte/*caret*/
+    fun testExtern() = checkSingleCompletion("extern", """
+        ext/*caret*/
+    """)
+
+    fun testPubExtern() = checkSingleCompletion("extern", """
+        pub ext/*caret*/
+    """)
+
+    fun testUnsafeExtern() = checkSingleCompletion("extern", """
+        unsafe ext/*caret*/
+    """)
+
+    fun testPubUnsafeExtern() = checkSingleCompletion("extern", """
+        pub unsafe ext/*caret*/
+    """)
+
+    fun testExternCrate() = checkSingleCompletion("crate", """
+        extern cr/*caret*/
+    """)
+
+    fun testFn() = checkContainsCompletion("fn", """
+        f/*caret*/
+    """)
+
+    fun testPubFn() = checkContainsCompletion("fn", """
+        pub f/*caret*/
+    """)
+
+    fun testExternFn() = checkSingleCompletion("fn", """
+        extern f/*caret*/
+    """)
+
+    fun testUnsafeFn() = checkSingleCompletion("fn", """
+        unsafe f/*caret*/
+    """)
+
+    fun testImpl() = checkSingleCompletion("impl", """
+        imp/*caret*/
+    """)
+
+    fun testUnsafeImpl() = checkSingleCompletion("impl", """
+        unsafe im/*caret*/
     """)
 
     fun testLetWithinFn() = checkSingleCompletion("let", """
@@ -39,7 +108,7 @@ class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
     fun testLetWithinAssocFn() = checkSingleCompletion("let", """
         struct Foo;
         impl Foo {
-            fn shutdown() { l/*caret*/ }
+            fn shutdown() { le/*caret*/ }
         }
     """)
 
@@ -47,6 +116,28 @@ class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
         struct Foo;
         impl Foo {
             fn calc(&self) { le/*caret*/ }
+        }
+    """)
+
+    fun testLetNotAppliedWithinNestedMod() = checkNoCompletion("""
+        fn foo() {
+            mod bar {
+                le/*caret*/
+            }
+        }
+    """)
+
+    fun testMod() = checkSingleCompletion("mod", """
+        mo/*caret*/
+    """)
+
+    fun testPubMod() = checkSingleCompletion("mod", """
+        pub mo/*caret*/
+    """)
+
+    fun testMut() = checkSingleCompletion("mut", """
+        fn main() {
+            let m/*caret*/
         }
     """)
 
@@ -90,15 +181,43 @@ class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
         str/*caret*/
     """)
 
+    fun testPubStruct() = checkSingleCompletion("struct", """
+        pub str/*caret*/
+    """)
+
     fun testTrait() = checkSingleCompletion("trait", """
         tra/*caret*/
+    """)
+
+    fun testPubTrait() = checkSingleCompletion("trait", """
+        pub tra/*caret*/
+    """)
+
+    fun testUnsafeTrait() = checkSingleCompletion("trait", """
+        unsafe tra/*caret*/
     """)
 
     fun testType() = checkSingleCompletion("type", """
         typ/*caret*/
     """)
 
+    fun testPubType() = checkSingleCompletion("type", """
+        pub typ/*caret*/
+    """)
+
+    fun testUnsafe() = checkSingleCompletion("unsafe", """
+        uns/*caret*/
+    """)
+
+    fun testPubUnsafe() = checkSingleCompletion("unsafe", """
+        pub unsa/*caret*/
+    """)
+
     fun testUse() = checkSingleCompletion("use", """
         us/*caret*/
+    """)
+
+    fun testPubUse() = checkSingleCompletion("use", """
+        pub us/*caret*/
     """)
 }

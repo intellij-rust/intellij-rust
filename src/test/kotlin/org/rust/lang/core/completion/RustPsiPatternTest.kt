@@ -1,7 +1,6 @@
 package org.rust.lang.core.completion
 
 import com.intellij.patterns.ElementPattern
-import com.intellij.patterns.PatternCondition
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RustTestCaseBase
@@ -170,37 +169,37 @@ class RustPsiPatternTest : RustTestCaseBase() {
 
     fun testOnStmtBeginning() = testPattern("""
         //^
-    """, RustPsiPattern.OnStatementBeginning())
+    """, RustPsiPattern.onStatementBeginning)
 
     fun testOnStmtBeginningWithinMod() = testPattern("""
         mod foo {    }
                 //^
-    """, RustPsiPattern.OnStatementBeginning())
+    """, RustPsiPattern.onStatementBeginning)
 
     fun testOnStmtBeginningAfterOtherStmt() = testPattern("""
         extern crate foo;
                        //^
-    """, RustPsiPattern.OnStatementBeginning())
+    """, RustPsiPattern.onStatementBeginning)
 
     fun testOnStmtBeginningAfterBlock() = testPattern("""
         mod foo {}
                 //^
-    """, RustPsiPattern.OnStatementBeginning())
+    """, RustPsiPattern.onStatementBeginning)
 
     fun testOnStmtBeginningIgnoresComments() = testPattern("""
         const A: u8 = 3; /* three */    /* it's greater than two */
                                     //^
-    """, RustPsiPattern.OnStatementBeginning())
+    """, RustPsiPattern.onStatementBeginning)
 
     fun testOnStmtBeginningNegativeWhenFollowsVisible() = testPatternNegative("""
         abc
           //^
-    """, RustPsiPattern.OnStatementBeginning())
+    """, RustPsiPattern.onStatementBeginning)
 
     fun testOnStmtBeginningNegativeInMiddleOfOtherStmt() = testPatternNegative("""
         mod abc {}
              //^
-    """, RustPsiPattern.OnStatementBeginning())
+    """, RustPsiPattern.onStatementBeginning)
 
     private fun <T> testPattern(@Language("Rust") code: String, pattern: ElementPattern<T>) {
         InlineFile(code)
@@ -208,13 +207,7 @@ class RustPsiPatternTest : RustTestCaseBase() {
         assertTrue(pattern.accepts(element))
     }
 
-    private fun testPattern(@Language("Rust") code: String, pattern: PatternCondition<PsiElement>) {
-        InlineFile(code)
-        val element = findElementInEditor<PsiElement>()
-        assertTrue(pattern.accepts(element, null))
-    }
-
-    private fun testPatternNegative(@Language("Rust") code: String, pattern: PatternCondition<PsiElement>) {
+    private fun <T> testPatternNegative(@Language("Rust") code: String, pattern: ElementPattern<T>) {
         InlineFile(code)
         val element = findElementInEditor<PsiElement>()
         assertFalse(pattern.accepts(element, null))
