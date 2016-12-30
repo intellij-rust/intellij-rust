@@ -14,7 +14,6 @@ class RustPartialParsingTestCase : RustParsingTestCaseBase("partial") {
     fun testShifts() = doTest(true)
     fun testStructPat() = doTest(true)
     fun testStructDef() = doTest(true)
-    fun testIfExpr() = doTest(true)
     fun testEnumVis() = doTest(true)
     fun testImplBody() = doTest(true)
     fun testTraitBody() = doTest(true)
