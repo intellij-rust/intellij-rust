@@ -6,7 +6,7 @@ import org.rust.lang.core.psi.RustBlockElement
 import org.rust.lang.core.psi.RustLoopExprElement
 import org.rust.lang.core.psi.RustPsiFactory
 
-class RustWithLoopSurrounder : RustStatementsSurrounderBase() {
+class RustWithLoopSurrounder : RustStatementsSurrounderBase.SimpleBlock() {
     override fun getTemplateDescription(): String = "loop { }"
 
     override fun createTemplate(project: Project): Pair<PsiElement, RustBlockElement> {
