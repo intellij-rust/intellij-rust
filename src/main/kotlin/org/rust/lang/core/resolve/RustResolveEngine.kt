@@ -245,6 +245,12 @@ private fun innerDeclarations(
         .takeWhileInclusive { it !is RustMod && !stop(it) }
         .flatMap { innerDeclarationsIn(it, place, context) }
 
+private fun preludeSymbols(module: Module?, context: Context): Sequence<ScopeEntry> {
+    return module?.preludeModule?.rustMod?.let {
+        outerDeclarations(it, context)
+    } ?: emptySequence()
+}
+
 private fun innerDeclarationsIn(
     scope: PsiElement,
     place: RustCompositeElement,
@@ -252,18 +258,19 @@ private fun innerDeclarationsIn(
 ): Sequence<ScopeEntry> {
     return when (scope) {
         is RustFile -> {
-            val preludeSymbols = scope.module?.preludeModule?.rustMod?.let {
-                outerDeclarations(it, context)
-            } ?: emptySequence()
-
             sequenceOf(
                 itemDeclarations(scope, true, context),
                 injectedCrates(scope),
-                preludeSymbols
+                preludeSymbols(scope.module, context)
             ).flatten()
         }
 
-        is RustModItemElement -> itemDeclarations(scope, true, context)
+        is RustModItemElement -> {
+            sequenceOf(
+                itemDeclarations(scope, true, context),
+                preludeSymbols(scope.module, context)
+            ).flatten()
+        }
 
         is RustStructItemElement,
         is RustEnumItemElement,

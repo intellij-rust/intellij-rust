@@ -48,6 +48,16 @@ class RustStdlibResolveTest : RustMultiFileResolveTestBase() {
         }
     """)
 
+    fun testResolvePreludeInModule() = stubOnlyResolve("""
+    //- main.rs
+        mod tests {
+            fn test() {
+                let _ = String::new();
+                        //^  ...libcollections/string.rs
+            }
+        }
+    """)
+
     fun testResolveBox() = stubOnlyResolve("""
     //- main.rs
         fn main() {
