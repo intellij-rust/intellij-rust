@@ -48,6 +48,7 @@ object RustIcons {
     val ABSTRACT_FUNCTION       = IconLoader.getIcon("/icons/nodes/abstractFunction.png")
     val ABSTRACT_ASSOC_FUNCTION = ABSTRACT_FUNCTION.addStaticMark()
 
+    val ATTRIBUTE       = AllIcons.Nodes.Annotationtype!!
     val MUT_ARGUMENT    = AllIcons.Nodes.Parameter!!
     val ARGUMENT        = MUT_ARGUMENT.addFinalMark()
     val FIELD           = AllIcons.Nodes.Field!!
