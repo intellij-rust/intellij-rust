@@ -66,6 +66,12 @@ class RustStdlibResolveTest : RustMultiFileResolveTestBase() {
         }
     """)
 
+    fun testDontPutStdInStd() = stubOnlyResolve("""
+    //- main.rs
+        use std::std;
+                //^ unresolved
+    """)
+
     fun testResolveOption() = doTestResolved("option/main.rs")
 
     fun testPreludeVisibility1() = doTestUnresolved("prelude_visibility1/main.rs")

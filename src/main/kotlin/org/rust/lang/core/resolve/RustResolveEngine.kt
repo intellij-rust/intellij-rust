@@ -334,7 +334,7 @@ private fun innerDeclarationsIn(
         }
 
         is RustForExprElement -> {
-            if (scope.expr?.isStrictAncestorOf(place) ==  true) return emptySequence()
+            if (scope.expr?.isStrictAncestorOf(place) == true) return emptySequence()
             scope.pat?.boundNames ?: emptySequence()
         }
 
@@ -431,14 +431,16 @@ private fun injectedCrates(file: RustFile): Sequence<ScopeEntry> {
 
     // Rust injects implicit `extern crate std` in every crate root module unless it is
     // a `#![no_std]` crate, in which case `extern crate core` is injected.
+    // https://doc.rust-lang.org/book/using-rust-without-the-standard-library.html
     // The stdlib lib itself is `#![no_std]`.
-    // We inject both crates for simplicity for now.
-    return sequenceOf(AutoInjectedCrates.std, AutoInjectedCrates.core).mapNotNull { crateName ->
-        ScopeEntry.lazy(crateName) {
-            val crate = cargoProject.findExternCrateRootByName(crateName)
-            module.project.getPsiFor(crate)?.rustMod
-        }
-    }
+    val injected = if (file.hasNoStdAttr)
+        AutoInjectedCrates.core
+    else
+        AutoInjectedCrates.std
+    return sequenceOfNotNull(ScopeEntry.lazy(injected) {
+        val crate = cargoProject.findExternCrateRootByName(injected)
+        module.project.getPsiFor(crate)?.rustMod
+    })
 }
 
 private fun RustUseItemElement.wildcardEntries(context: Context): Sequence<ScopeEntry> {

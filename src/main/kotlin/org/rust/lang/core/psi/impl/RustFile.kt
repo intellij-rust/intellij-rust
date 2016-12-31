@@ -19,6 +19,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.ref.RustReference
+import org.rust.lang.core.stubs.RustFileStub
 import org.rust.lang.core.stubs.index.RustModulesIndex
 import org.rust.lang.core.symbols.RustPath
 
@@ -31,6 +32,8 @@ class RustFile(
     override fun getReference(): RustReference? = null
 
     override fun getFileType(): FileType = RustFileType
+
+    override fun getStub(): RustFileStub? = super.getStub() as RustFileStub?
 
     override val `super`: RustMod? get() {
         val original = originalFile as RustFile
@@ -59,6 +62,8 @@ class RustFile(
 
     override val innerAttrList: List<RustInnerAttrElement>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)
+
+    val hasNoStdAttr: Boolean get() = stub?.hasNoStdAttr ?: queryAttributes.hasAtomAttribute("no_std")
 
     override val functionList: List<RustFunctionElement> get() = findItems(FUNCTION)
     override val modItemList: List<RustModItemElement> get() = findItems(MOD_ITEM)
