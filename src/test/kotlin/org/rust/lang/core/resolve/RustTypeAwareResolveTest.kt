@@ -337,4 +337,14 @@ class RustTypeAwareResolveTest : RustResolveTestBase() {
         fn foo<T>(x: T) where T: Spam { x.eggs() }
                                           //^
     """)
+
+    fun testSelfImplementsTrait() = checkByCode("""
+        trait Foo {
+        fn foo(&self);
+          //X
+
+        fn bar(&self) { self.foo(); }
+                            //^
+        }
+    """)
 }

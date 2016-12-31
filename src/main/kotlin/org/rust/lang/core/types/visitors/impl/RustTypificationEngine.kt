@@ -248,7 +248,14 @@ private fun deviseBoundPatType(binding: RustPatBindingElement): RustType {
  * Devises type for the given (implicit) self-argument
  */
 private fun deviseSelfType(self: RustSelfArgumentElement): RustType {
-    var Self = self.parentOfType<RustImplItemElement>()?.type?.resolvedType ?: return RustUnknownType
+    val impl = self.parentOfType<RustImplItemElement>()
+    var Self: RustType = if (impl != null) {
+        impl.type?.resolvedType ?: return RustUnknownType
+    } else {
+        val trait = self.parentOfType<RustTraitItemElement>()
+            ?: return RustUnknownType
+        RustTraitType(trait)
+    }
 
     if (self.and != null) {
         Self = RustReferenceType(Self, mutable = self.mut != null)

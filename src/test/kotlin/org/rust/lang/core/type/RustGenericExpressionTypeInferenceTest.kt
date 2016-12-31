@@ -113,5 +113,12 @@ class RustGenericExpressionTypeInferenceTest : RustTypificationTestBase() {
           //^ char
         }
     """)
+
+    fun testSelfType() = testExpr("""
+        trait T {
+            fn foo(&self) { self; }
+                            //^ & T
+        }
+    """)
 }
 
