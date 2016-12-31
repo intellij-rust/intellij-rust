@@ -426,6 +426,9 @@ private fun injectedCrates(file: RustFile): Sequence<ScopeEntry> {
     val cargoProject = module.cargoProject
         ?: return emptySequence()
 
+    if (!file.isCrateRoot)
+        return emptySequence()
+
     // Rust injects implicit `extern crate std` in every crate root module unless it is
     // a `#![no_std]` crate, in which case `extern crate core` is injected.
     // The stdlib lib itself is `#![no_std]`.
