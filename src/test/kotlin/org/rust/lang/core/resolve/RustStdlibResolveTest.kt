@@ -72,6 +72,20 @@ class RustStdlibResolveTest : RustMultiFileResolveTestBase() {
                 //^ unresolved
     """)
 
+    fun testNoCoreExcludesCore() = stubOnlyResolve("""
+    //- main.rs
+        #![no_std]
+        use core::core;
+                  //^ unresolved
+    """)
+
+    fun testNoCoreExcludesStd() = stubOnlyResolve("""
+    //- main.rs
+        #![no_std]
+        use core::std;
+                  //^ unresolved
+    """)
+
     fun testResolveOption() = doTestResolved("option/main.rs")
 
     fun testPreludeVisibility1() = doTestUnresolved("prelude_visibility1/main.rs")

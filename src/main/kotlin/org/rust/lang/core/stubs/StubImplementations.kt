@@ -1,8 +1,12 @@
 package org.rust.lang.core.stubs
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiFile
+import com.intellij.psi.StubBuilder
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.stubs.*
+import com.intellij.psi.tree.IStubFileElementType
+import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.*
 import org.rust.lang.core.psi.impl.mixin.*
@@ -16,6 +20,38 @@ import org.rust.lang.core.types.unresolved.writeRustUnresolvedType
 import org.rust.lang.core.types.util.type
 import org.rust.utils.readNullable
 import org.rust.utils.writeNullable
+
+
+class RustFileStub : PsiFileStubImpl<RustFile> {
+    val attributes: RustFile.Attributes
+
+    constructor(file: RustFile) : this(file, file.attributes)
+
+    constructor(file: RustFile?, attributes: RustFile.Attributes) : super(file) {
+        this.attributes = attributes
+    }
+
+    override fun getType() = Type
+
+    object Type : IStubFileElementType<RustFileStub>(RustLanguage) {
+        // Bump this number if Stub structure changes
+        override fun getStubVersion(): Int = 36
+
+        override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
+            override fun createStubForFile(file: PsiFile): StubElement<*> = RustFileStub(file as RustFile)
+        }
+
+        override fun serialize(stub: RustFileStub, dataStream: StubOutputStream) {
+            dataStream.writeEnum(stub.attributes)
+        }
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustFileStub {
+            return RustFileStub(null, dataStream.readEnum(RustFile.Attributes.values()))
+        }
+
+        override fun getExternalId(): String = "Rust.file"
+    }
+}
 
 
 fun factory(name: String): RustStubElementType<*, *> = when (name) {
@@ -416,7 +452,7 @@ class RustFunctionElementStub(
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
-                RustFunctionRole.values()[dataStream.readByte().toInt()]
+                dataStream.readEnum(RustFunctionRole.values())
             )
 
         override fun serialize(stub: RustFunctionElementStub, dataStream: StubOutputStream) =
@@ -426,7 +462,7 @@ class RustFunctionElementStub(
                 writeBoolean(stub.isAbstract)
                 writeBoolean(stub.isStatic)
                 writeBoolean(stub.isTest)
-                writeByte(stub.role.ordinal)
+                writeEnum(stub.role)
             }
 
         override fun createPsi(stub: RustFunctionElementStub) =
@@ -667,3 +703,9 @@ class RustPathElementStub(
         }
     }
 }
+
+
+private fun StubInputStream.readNameAsString(): String? = readName()?.string
+
+private fun <E : Enum<E>> StubOutputStream.writeEnum(e: E) = writeByte(e.ordinal)
+private fun <E : Enum<E>> StubInputStream.readEnum(values: Array<E>) = values[readByte().toInt()]

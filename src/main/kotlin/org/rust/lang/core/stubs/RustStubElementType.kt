@@ -13,10 +13,6 @@ abstract class RustStubElementType<StubT, PsiT>(
 
     final override fun getExternalId(): String = "rust.${super.toString()}"
 
-    companion object {
-        fun StubInputStream.readNameAsString(): String? = readName()?.string
-    }
-
     abstract class Trivial<StubT, PsiT>(
         debugName: String,
         private val stubCtor: (StubElement<*>?, IStubElementType<*, *>) -> StubT,

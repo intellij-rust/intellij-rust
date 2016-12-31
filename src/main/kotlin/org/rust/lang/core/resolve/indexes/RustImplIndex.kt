@@ -4,9 +4,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.*
 import com.intellij.util.io.KeyDescriptor
-import org.rust.lang.core.RustFileElementType
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.isStatic
+import org.rust.lang.core.stubs.RustFileStub
 import org.rust.lang.core.stubs.RustImplItemElementStub
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.RustStructOrEnumTypeBase
@@ -119,7 +119,7 @@ object RustImplIndex {
 
 
     class ByType : AbstractStubIndex<ByType.Key, RustImplItemElement>() {
-        override fun getVersion(): Int = RustFileElementType.stubVersion
+        override fun getVersion(): Int = RustFileStub.Type.stubVersion
         override fun getKey(): StubIndexKey<Key, RustImplItemElement> = KEY
 
         /**
@@ -184,7 +184,7 @@ object RustImplIndex {
 
 
     class ByName : StringStubIndexExtension<RustImplItemElement>() {
-        override fun getVersion(): Int = RustFileElementType.stubVersion
+        override fun getVersion(): Int = RustFileStub.Type.stubVersion
         override fun getKey(): StubIndexKey<String, RustImplItemElement> = KEY
 
         companion object {
@@ -203,7 +203,7 @@ object RustImplIndex {
 
 
 class RustAliasIndex : StringStubIndexExtension<RustAliasElement>() {
-    override fun getVersion(): Int = RustFileElementType.stubVersion
+    override fun getVersion(): Int = RustFileStub.Type.stubVersion
     override fun getKey(): StubIndexKey<String, RustAliasElement> = KEY
 
     companion object {

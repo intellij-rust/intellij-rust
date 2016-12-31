@@ -63,7 +63,17 @@ class RustFile(
     override val innerAttrList: List<RustInnerAttrElement>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)
 
-    val hasNoStdAttr: Boolean get() = stub?.hasNoStdAttr ?: queryAttributes.hasAtomAttribute("no_std")
+    val attributes: Attributes get() {
+        val stub = stub
+        if (stub != null) return stub.attributes
+        if (queryAttributes.hasAtomAttribute("no_core")) return Attributes.NO_CORE
+        if (queryAttributes.hasAtomAttribute("no_std")) return Attributes.NO_STD
+        return Attributes.NONE
+    }
+
+    enum class Attributes {
+        NO_CORE, NO_STD, NONE
+    }
 
     override val functionList: List<RustFunctionElement> get() = findItems(FUNCTION)
     override val modItemList: List<RustModItemElement> get() = findItems(MOD_ITEM)

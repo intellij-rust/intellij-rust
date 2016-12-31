@@ -12,13 +12,13 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
-import org.rust.lang.core.RustFileElementType
 import org.rust.lang.core.lexer.RustLexer
 import org.rust.lang.core.psi.RustCompositeElementTypes
 import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustTokenElementTypes.EOL_COMMENTS_TOKEN_SET
 import org.rust.lang.core.psi.RustTokenElementTypes.STRING_LITERAL
 import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.stubs.RustFileStub
 
 class RustParserDefinition : ParserDefinition {
 
@@ -30,7 +30,7 @@ class RustParserDefinition : ParserDefinition {
         return LanguageUtil.canStickTokensTogetherByLexer(left, right, RustLexer())
     }
 
-    override fun getFileNodeType(): IFileElementType? = RustFileElementType
+    override fun getFileNodeType(): IFileElementType = RustFileStub.Type
 
     override fun getStringLiteralElements(): TokenSet =
         TokenSet.create(STRING_LITERAL)

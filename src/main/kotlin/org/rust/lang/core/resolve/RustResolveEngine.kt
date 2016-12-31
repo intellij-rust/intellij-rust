@@ -430,13 +430,16 @@ private fun injectedCrates(file: RustFile): Sequence<ScopeEntry> {
         return emptySequence()
 
     // Rust injects implicit `extern crate std` in every crate root module unless it is
-    // a `#![no_std]` crate, in which case `extern crate core` is injected.
+    // a `#![no_std]` crate, in which case `extern crate core` is injected. However, if
+    // there is a (unstable?) `#![no_core` attribute, nothing is injected.
+    //
     // https://doc.rust-lang.org/book/using-rust-without-the-standard-library.html
-    // The stdlib lib itself is `#![no_std]`.
-    val injected = if (file.hasNoStdAttr)
-        AutoInjectedCrates.core
-    else
-        AutoInjectedCrates.std
+    // The stdlib lib itself is `#![no_std]`, and the core is `#![no_core]`
+    val injected = when (file.attributes) {
+        RustFile.Attributes.NONE -> AutoInjectedCrates.std
+        RustFile.Attributes.NO_STD -> AutoInjectedCrates.core
+        RustFile.Attributes.NO_CORE -> return emptySequence()
+    }
     return sequenceOfNotNull(ScopeEntry.lazy(injected) {
         val crate = cargoProject.findExternCrateRootByName(injected)
         module.project.getPsiFor(crate)?.rustMod

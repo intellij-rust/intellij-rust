@@ -4,14 +4,14 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
-import org.rust.lang.core.RustFileElementType
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.RustModDeclItemElement
 import org.rust.lang.core.psi.containingMod
 import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.stubs.RustFileStub
 
 class RustModulesIndex : StringStubIndexExtension<RustModDeclItemElement>() {
-    override fun getVersion(): Int = RustFileElementType.stubVersion
+    override fun getVersion(): Int = RustFileStub.Type.stubVersion
     override fun getKey(): StubIndexKey<String, RustModDeclItemElement> = KEY
 
     companion object {
