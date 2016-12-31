@@ -317,6 +317,11 @@
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.RustTryMacroInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="println!(&quot;&quot;) usage"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="org.rust.ide.inspections.RustSimplifyPrintInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
