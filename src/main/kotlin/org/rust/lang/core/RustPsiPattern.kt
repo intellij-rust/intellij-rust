@@ -1,6 +1,7 @@
 package org.rust.lang.core
 
 import com.intellij.patterns.*
+import com.intellij.patterns.StandardPatterns.or
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
@@ -79,6 +80,12 @@ object RustPsiPattern {
 
     val onTestFn: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RustFunctionElement>()
         .withChild(psiElement<RustOuterAttrElement>().withText("#[test]")))
+
+    val inAnyLoop: PsiElementPattern.Capture<PsiElement> =
+        psiElement().inside(true, psiElement<RustBlockElement>().withParent(or(
+            psiElement<RustForExprElement>(),
+            psiElement<RustLoopExprElement>(),
+            psiElement<RustWhileExprElement>())))
 
     inline fun <reified I : RustDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
         return psiElement().withSuperParent<I>(3)
