@@ -27,7 +27,9 @@ class CargoCommandConfiguration(
     var command: String = CargoConstants.Commands.RUN
     var additionalArguments: String = ""
     var environmentVariables: Map<String, String> = mutableMapOf()
-    var printBacktrace: Boolean = true
+    // Should be `true`, but see https://github.com/intellij-rust/intellij-rust/issues/867.
+    // TLDR: rust 1.14.0 takes ags to compile if we enable backtraces
+    var printBacktrace: Boolean = false
 
     init {
         configurationModule.module = project.modulesWithCargoProject.firstOrNull()
