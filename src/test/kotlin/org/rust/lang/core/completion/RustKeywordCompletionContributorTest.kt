@@ -144,6 +144,12 @@ class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
         extern cr/*caret*/
     """)
 
+    fun testCrateNotAppliedAtFileBeginning() = checkNoCompletion("crat/*caret*/")
+
+    fun testCrateNotAppliedWithoutPrefix() = checkNoCompletion("""
+        crat/*caret*/
+    """)
+
     fun testFn() = checkContainsCompletion("fn", """
         f/*caret*/
     """)

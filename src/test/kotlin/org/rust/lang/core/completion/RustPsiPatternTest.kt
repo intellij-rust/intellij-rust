@@ -201,6 +201,18 @@ class RustPsiPatternTest : RustTestCaseBase() {
              //^
     """, RustPsiPattern.onStatementBeginning)
 
+    fun testOnStmtBeginningWithWords() = testPattern("""
+        word2
+            //^
+    """, RustPsiPattern.onStatementBeginning("word1", "word2"))
+
+    fun testOnStmtBeginningWithWordsNegativeWhenWordDoesntFit() = testPatternNegative("""
+        word3
+            //^
+    """, RustPsiPattern.onStatementBeginning("word1", "word2"))
+
+    fun testOnStmtBeginningWithWordsNegativeAtVeryBeginning() = testPatternNegative("   \n//^", RustPsiPattern.onStatementBeginning("word1"))
+
     fun testInAnyLoopWithinFor() = testPattern("""
         fn foo() {
             for _ in 1..5 { }
