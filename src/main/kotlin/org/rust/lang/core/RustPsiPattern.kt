@@ -100,10 +100,11 @@ object RustPsiPattern {
     private class OnStatementBeginning(vararg startWords: String) : PatternCondition<PsiElement>("on statement beginning") {
         val myStartWords = startWords
         override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
-            val prev = t.prevVisibleOrNewLine ?: return true
-            if (prev is PsiWhiteSpace) return true
-            return myStartWords.isEmpty() && prev.node.elementType in STATEMENT_BOUNDARIES
-                || myStartWords.isNotEmpty() && prev.node.text in myStartWords
+            val prev = t.prevVisibleOrNewLine
+            return if (myStartWords.isEmpty())
+                prev == null || prev is PsiWhiteSpace || prev.node.elementType in STATEMENT_BOUNDARIES
+            else
+                prev != null && prev.node.text in myStartWords
         }
     }
 }
