@@ -243,6 +243,13 @@ class RustPsiPatternTest : RustTestCaseBase() {
         }
     """, RustPsiPattern.inAnyLoop)
 
+    fun testInAnyLoopNegativeInsideClosure() = testPatternNegative("""
+        fn foo() {
+            while true { let _ = |x| { x + 1 }; }   // Infinite loop
+                                       //^
+        }
+    """, RustPsiPattern.inAnyLoop)
+
     private fun <T> testPattern(@Language("Rust") code: String, pattern: ElementPattern<T>) {
         InlineFile(code)
         val element = findElementInEditor<PsiElement>()
