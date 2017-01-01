@@ -11,7 +11,7 @@ class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
         }
     """)
 
-    fun testBreakInLoopLoop() = checkSingleCompletion("break", """
+    fun testBreakInLoop() = checkSingleCompletion("break", """
         fn foo() {
             loop {
                 br/*caret*/
@@ -38,6 +38,14 @@ class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
     fun testBreakNotAppliedOutsideLoop() = checkNoCompletion("""
         fn foo() {
             bre/*caret*/
+        }
+    """)
+
+    fun testBreakNotAppliedWithinClosure() = checkNoCompletion("""
+        fn bar() {
+            loop {
+                let _ = || { bre/*caret*/ }
+            }
         }
     """)
 

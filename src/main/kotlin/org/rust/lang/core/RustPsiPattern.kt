@@ -82,10 +82,12 @@ object RustPsiPattern {
         .withChild(psiElement<RustOuterAttrElement>().withText("#[test]")))
 
     val inAnyLoop: PsiElementPattern.Capture<PsiElement> =
-        psiElement().inside(true, psiElement<RustBlockElement>().withParent(or(
-            psiElement<RustForExprElement>(),
-            psiElement<RustLoopExprElement>(),
-            psiElement<RustWhileExprElement>())))
+        psiElement().inside(true,
+            psiElement<RustBlockElement>().withParent(or(
+                psiElement<RustForExprElement>(),
+                psiElement<RustLoopExprElement>(),
+                psiElement<RustWhileExprElement>())),
+            psiElement<RustLambdaExprElement>())
 
     inline fun <reified I : RustDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
         return psiElement().withSuperParent<I>(3)
