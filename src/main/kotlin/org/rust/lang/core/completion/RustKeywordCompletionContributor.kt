@@ -33,6 +33,8 @@ class RustKeywordCompletionContributor : CompletionContributor(), DumbAware {
             RustKeywordCompletionProvider("return", "let"))
         extend(CompletionType.BASIC, letPattern(),
             RustKeywordCompletionProvider("mut"))
+        extend(CompletionType.BASIC, loopFlowCommandPatern(),
+            RustKeywordCompletionProvider("break", "continue"))
     }
 
     private fun declarationPattern(): PsiElementPattern.Capture<PsiElement> =
@@ -52,6 +54,9 @@ class RustKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     private fun letPattern(): PsiElementPattern.Capture<PsiElement> =
         baseCodeStatementPattern().and(statementBeginningPattern("let"))
+
+    private fun loopFlowCommandPatern() : PsiElementPattern.Capture<PsiElement> =
+        RustPsiPattern.inAnyLoop.and(newCodeStatementPattern())
 
     private fun baseDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
         psiElement<PsiElement>().andOr(

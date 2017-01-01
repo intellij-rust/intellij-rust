@@ -3,6 +3,68 @@ package org.rust.lang.core.completion
 class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
     override val dataPath = ""
 
+    fun testBreakInForLoop() = checkSingleCompletion("break", """
+        fn foo() {
+            for _ in 0..4 {
+                bre/*caret*/
+            }
+        }
+    """)
+
+    fun testBreakInLoopLoop() = checkSingleCompletion("break", """
+        fn foo() {
+            loop {
+                br/*caret*/
+            }
+        }
+    """)
+
+    fun testBreakInWhileLoop() = checkSingleCompletion("break", """
+        fn foo() {
+            while true {
+                brea/*caret*/
+            }
+        }
+    """)
+
+    fun testBreakNotAppliedIfDoesntStartStmt() = checkNoCompletion("""
+        fn foo() {
+            while true {
+                let brea/*caret*/
+            }
+        }
+    """)
+
+    fun testBreakNotAppliedOutsideLoop() = checkNoCompletion("""
+        fn foo() {
+            bre/*caret*/
+        }
+    """)
+
+    fun testContinueInForLoop() = checkSingleCompletion("continue", """
+        fn foo() {
+            for _ in 0..4 {
+                con/*caret*/
+            }
+        }
+    """)
+
+    fun testContinueInLoop() = checkSingleCompletion("continue", """
+        fn foo() {
+            loop {
+                cont/*caret*/
+            }
+        }
+    """)
+
+    fun testContinueInWhileLoop() = checkSingleCompletion("continue", """
+        fn foo() {
+            while true {
+                conti/*caret*/
+            }
+        }
+    """)
+
     fun testEnum() = checkSingleCompletion("enum", """
         enu/*caret*/
     """)

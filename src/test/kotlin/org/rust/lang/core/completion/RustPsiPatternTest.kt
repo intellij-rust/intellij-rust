@@ -201,6 +201,48 @@ class RustPsiPatternTest : RustTestCaseBase() {
              //^
     """, RustPsiPattern.onStatementBeginning)
 
+    fun testInAnyLoopWithinFor() = testPattern("""
+        fn foo() {
+            for _ in 1..5 { }
+                         //^
+        }
+    """, RustPsiPattern.inAnyLoop)
+
+    fun testInAnyLoopWithinWhile() = testPattern("""
+        fn foo() {
+            while true { }
+                      //^
+        }
+    """, RustPsiPattern.inAnyLoop)
+
+    fun testInAnyLoopWithinLoop() = testPattern("""
+        fn foo() {
+            loop { }
+                //^
+        }
+    """, RustPsiPattern.inAnyLoop)
+
+    fun testInAnyLoopWithinForNestedBlock() = testPattern("""
+        fn foo() {
+            for _ in 1..5 {{ }}
+                          //^
+        }
+    """, RustPsiPattern.inAnyLoop)
+
+    fun testInAnyLoopNegativeBeforeBlock() = testPatternNegative("""
+        fn foo() {
+            for _ in 1..5 {}
+                     //^
+        }
+    """, RustPsiPattern.inAnyLoop)
+
+    fun testInAnyLoopNegativeAfterBlock() = testPatternNegative("""
+        fn foo() {
+            while true {}   // Infinite loop
+                       //^
+        }
+    """, RustPsiPattern.inAnyLoop)
+
     private fun <T> testPattern(@Language("Rust") code: String, pattern: ElementPattern<T>) {
         InlineFile(code)
         val element = findElementInEditor<PsiElement>()
