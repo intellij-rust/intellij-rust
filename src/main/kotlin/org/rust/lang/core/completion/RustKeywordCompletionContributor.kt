@@ -22,9 +22,9 @@ class RustKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     init {
         extend(CompletionType.BASIC, declarationPattern(),
-            RustKeywordCompletionProvider("enum", "extern", "fn", "impl", "mod", "pub", "struct", "trait", "type", "unsafe", "use"))
+            RustKeywordCompletionProvider("const", "enum", "extern", "fn", "impl", "mod", "pub", "static", "struct", "trait", "type", "unsafe", "use"))
         extend(CompletionType.BASIC, pubDeclarationPattern(),
-            RustKeywordCompletionProvider("enum", "extern", "fn", "mod", "struct", "trait", "type", "unsafe", "use"))
+            RustKeywordCompletionProvider("const", "enum", "extern", "fn", "mod", "static", "struct", "trait", "type", "unsafe", "use"))
         extend(CompletionType.BASIC, externDeclarationPattern(),
             RustKeywordCompletionProvider("crate", "fn"))
         extend(CompletionType.BASIC, unsafeDeclarationPattern(),

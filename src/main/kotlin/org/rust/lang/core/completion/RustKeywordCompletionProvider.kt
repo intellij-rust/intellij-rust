@@ -26,6 +26,6 @@ class RustKeywordCompletionProvider(
     }
 
     private companion object {
-        val ADD_SPACE = listOf("crate", "enum", "extern", "fn", "impl", "let", "mod", "mut", "pub", "struct", "trait", "type", "unsafe", "use")
+        val ADD_SPACE = listOf("const", "crate", "enum", "extern", "fn", "impl", "let", "mod", "mut", "pub", "static", "struct", "trait", "type", "unsafe", "use")
     }
 }
