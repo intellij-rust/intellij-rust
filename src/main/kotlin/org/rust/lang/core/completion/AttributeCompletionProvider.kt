@@ -38,7 +38,7 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
         onCrate to "crate_name crate_type feature() no_builtins no_main no_start no_std plugin recursion_limit",
         onExternCrate to "macro_use macro_reexport no_link",
         onMod to "no_implicit_prelude path macro_use",
-        onFn to "main plugin_registrar start test cold naked export_name link_section cfg() lang inline",
+        onFn to "main plugin_registrar start test cold naked export_name link_section lang inline",
         onTestFn to "should_panic",
         onStaticMut to "thread_local",
         onExternBlock to "link_args link() linked_from",
@@ -48,7 +48,7 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
         onTrait to "rustc_on_unimplemented",
         onMacro to "macro_export",
         onStatic to "export_name link_section",
-        onAnyItem to "no_mangle doc cfg_attr() allow() warn() forbid() deny()",
+        onAnyItem to "no_mangle doc cfg() cfg_attr() allow() warn() forbid() deny()",
         onTupleStruct to "simd",
         onDropFn to "unsafe_destructor_blind_to_params"
     ).flatMap { entry -> entry.value.split(' ').map { attrName -> RustAttribute(attrName, entry.key) } }
