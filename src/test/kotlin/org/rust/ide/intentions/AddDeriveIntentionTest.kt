@@ -1,28 +1,38 @@
 package org.rust.ide.intentions
 
-import org.rust.lang.RustTestCaseBase
+class AddDeriveIntentionTest : RustIntentionTestBase(AddDeriveIntention()) {
 
-class AddDeriveIntentionTest : RustTestCaseBase() {
-    override val dataPath = "org/rust/ide/intentions/fixtures/add_derive/"
+    fun testAddDeriveStruct() = doAvailableTest("""
+        struct Te/*caret*/st {}
+    """, """
+        #[derive(/*caret*/)]
+        struct Test {}
+    """)
 
-    fun testAddDeriveStruct() = checkByFile {
-        openFileInEditor("add_derive_struct.rs")
-        myFixture.launchAction(AddDeriveIntention())
-    }
+    fun testAddDerivePubStruct() = doAvailableTest("""
+        pub struct Te/*caret*/st {}
+    """, """
+        #[derive(/*caret*/)]
+        pub struct Test {}
+    """)
 
-    fun testAddDerivePubStruct() = checkByFile {
-        openFileInEditor("add_derive_pub_struct.rs")
-        myFixture.launchAction(AddDeriveIntention())
-    }
+    // FIXME: there is something weird with enum re-formatting, for some reason it adds more indentation
+    fun testAddDeriveEnum() = doAvailableTest("""
+        enum Test /*caret*/{
+            Something
+        }
+    """, """
+        #[derive(/*caret*/)]
+        enum Test {
+    Something
+}
+    """)
 
-    fun testAddDeriveEnum() = checkByFile {
-        // FIXME: there is something weird with enum re-formatting, for some reason it adds more indentation
-        openFileInEditor("add_derive_enum.rs")
-        myFixture.launchAction(AddDeriveIntention())
-    }
-
-    fun testAddDeriveExistingAttr() = checkByFile {
-        openFileInEditor("add_derive_existing_attr.rs")
-        myFixture.launchAction(AddDeriveIntention())
-    }
+    fun testAddDeriveExistingAttr() = doAvailableTest("""
+        #[derive(Something)]
+        struct Test/*caret*/ {}
+    """, """
+        #[derive(Something/*caret*/)]
+struct Test {}
+    """)
 }

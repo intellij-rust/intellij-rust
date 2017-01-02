@@ -1,24 +1,114 @@
 package org.rust.ide.intentions
 
-import org.rust.lang.RustTestCaseBase
+class DemorgansLawIntentionTest : RustIntentionTestBase(DemorgansLawIntention()) {
 
-class DemorgansLawIntentionTest : RustTestCaseBase() {
-    override val dataPath = "org/rust/ide/intentions/fixtures/demorgan_law/"
+    fun testOr() = doAvailableTest("""
+        fn main() {
+            if a /*caret*/|| b {}
+        }
+    """, """
+        fn main() {
+            if !(!a && !b) {}
+        }
+    """)
 
-    private fun doTest() = checkByFile {
-        openFileInEditor(fileName)
-        myFixture.launchAction(DemorgansLawIntention())
-    }
+    fun testOrNot() = doAvailableTest("""
+        fn main() {
+            if !(a /*caret*/|| b) {}
+        }
+    """, """
+        fn main() {
+            if !a && !b {}
+        }
+    """)
 
-    fun testOr() = doTest()
-    fun testOrNot() = doTest()
-    fun testNotOr() = doTest()
-    fun testComplex1() = doTest()
-    fun testReverseComplex1() = doTest()
-    fun testComplex2() = doTest()
-    fun testReverseComplex2() = doTest()
-    fun testComplex3() = doTest()
-    fun testReverseComplex3() = doTest()
-    fun testComplex4() = doTest()
-    fun testReverseComplex4() = doTest()
+    fun testNotOr() = doAvailableTest("""
+        fn main() {
+            if !a /*caret*/|| !b {}
+        }
+    """, """
+        fn main() {
+            if !(a && b) {}
+        }
+    """)
+
+    fun testComplex1() = doAvailableTest("""
+        fn main() {
+            if (a && b && c) /*caret*/|| d {}
+        }
+    """, """
+        fn main() {
+            if !(!(a && b && c) && !d) {}
+        }
+    """)
+
+    fun testReverseComplex1() = doAvailableTest("""
+        fn main() {
+            if !(!(a && b && c) /*caret*/&& !d) {}
+        }
+    """, """
+        fn main() {
+            if (a && b && c) || d {}
+        }
+    """)
+
+    fun testComplex2() = doAvailableTest("""
+        fn main() {
+            if (20 >= 50) /*caret*/&& 40 != 20 {}
+        }
+    """, """
+        fn main() {
+            if !((20 < 50) || 40 == 20) {}
+        }
+    """)
+
+    fun testReverseComplex2() = doAvailableTest("""
+        fn main() {
+            if !((20 < 50) /*caret*/|| 40 == 20) {}
+        }
+    """, """
+        fn main() {
+            if (20 >= 50) && 40 != 20 {}
+        }
+    """)
+
+    fun testComplex3() = doAvailableTest("""
+        fn main() {
+            if !(2 + 2 == 2 /*caret*/&& (foo.bar() || !(78 < 90 || 90 > 78)) || (20 >= 50 && ((40 != 20)))) {}
+        }
+    """, """
+        fn main() {
+            if !(!(2 + 2 != 2 || !(foo.bar() || !(78 < 90 || 90 > 78))) || (!(20 < 50 || ((40 == 20))))) {}
+        }
+    """)
+
+    fun testReverseComplex3() = doAvailableTest("""
+        fn main() {
+            if !(!(2 + 2 != 2 /*caret*/|| !(foo.bar() || !(78 < 90 || 90 > 78))) || (!(20 < 50 || !((40 != 20))))) {}
+        }
+    """, """
+        fn main() {
+            if !(2 + 2 == 2 && (foo.bar() || !(78 < 90 || 90 > 78)) || (20 >= 50 && ((40 != 20)))) {}
+        }
+    """)
+
+    fun testComplex4() = doAvailableTest("""
+        fn main() {
+            if 20 >= 50 /*caret*/&& 40 != 20 {}
+        }
+    """, """
+        fn main() {
+            if !(20 < 50 || 40 == 20) {}
+        }
+    """)
+
+    fun testReverseComplex4() = doAvailableTest("""
+        fn main() {
+            if !(20 < 50 /*caret*/|| 40 == 20) {}
+        }
+    """, """
+        fn main() {
+            if 20 >= 50 && 40 != 20 {}
+        }
+    """)
 }
