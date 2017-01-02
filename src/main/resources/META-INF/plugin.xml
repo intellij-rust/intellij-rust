@@ -9,11 +9,8 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        This is the last release to support IDEA 15. If you want to continue to receive updates, please upgrade your IDE.
-        <br>
-        <a href="https://intellij-rust.github.io/2016/12/26/changelog-23.html">
-                 https://intellij-rust.github.io/2016/12/26/changelog-23.html
-        </a>
+        <a href="https://intellij-rust.github.io/2017/01/02/changelog-24.html">
+                 https://intellij-rust.github.io/2017/01/02/changelog-24.html
     ]]>
     </change-notes>
 
