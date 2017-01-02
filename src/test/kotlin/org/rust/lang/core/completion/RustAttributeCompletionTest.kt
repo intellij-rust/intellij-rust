@@ -97,4 +97,13 @@ class RustAttributeCompletionTest : RustCompletionTestBase() {
         #[macr/*caret*/]
         macro_rules! bar {}
     """)
+
+    fun testCfgOnMod() = checkContainsCompletion("cfg", """
+        #[cf/*caret*/]
+        mod foo {}
+    """)
+
+    fun testCfgOnFileInner() = checkContainsCompletion("cfg", """
+        #![cf/*caret*/]
+    """)
 }
