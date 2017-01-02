@@ -52,7 +52,7 @@ class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
     fun testContinueInForLoop() = checkSingleCompletion("continue", """
         fn foo() {
             for _ in 0..4 {
-                con/*caret*/
+                cont/*caret*/
             }
         }
     """)
@@ -71,6 +71,14 @@ class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
                 conti/*caret*/
             }
         }
+    """)
+
+    fun testConst() = checkSingleCompletion("const", """
+        con/*caret*/
+    """)
+
+    fun testPubConst() = checkSingleCompletion("const", """
+        pub con/*caret*/
     """)
 
     fun testEnum() = checkSingleCompletion("enum", """
@@ -251,6 +259,14 @@ class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
 
     fun testReturnNotAppliedIfDoesntStartStatement() = checkNoCompletion("""
         const retu/*caret*/
+    """)
+
+    fun testStatic() = checkSingleCompletion("static", """
+        sta/*caret*/
+    """)
+
+    fun testPubStatic() = checkSingleCompletion("static", """
+        pub stat/*caret*/
     """)
 
     fun testStruct() = checkSingleCompletion("struct", """
