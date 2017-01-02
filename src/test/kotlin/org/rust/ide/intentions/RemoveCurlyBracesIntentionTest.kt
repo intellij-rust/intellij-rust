@@ -1,27 +1,24 @@
 package org.rust.ide.intentions
 
-import org.rust.lang.RustTestCaseBase
+class RemoveCurlyBracesIntentionTest : RustIntentionTestBase(RemoveCurlyBracesIntention()) {
 
-class RemoveCurlyBracesIntentionTest : RustTestCaseBase() {
-    override val dataPath = "org/rust/ide/intentions/fixtures/remove_curly_braces/"
+    fun testRemoveCurlyBracesSimple() = doAvailableTest(
+        "use std::{m/*caret*/em};",
+        "use std::m/*caret*/em;"
+    )
 
-    fun testRemoveCurlyBracesSimple() = checkByFile {
-        openFileInEditor("remove_curly_braces_simple.rs")
-        myFixture.launchAction(RemoveCurlyBracesIntention())
-    }
+    fun testRemoveCurlyBracesLonger() = doAvailableTest(
+        "use foo::bar::/*caret*/baz::{qux};",
+        "use foo::bar::/*caret*/baz::qux;"
+    )
 
-    fun testRemoveCurlyBracesLonger() = checkByFile {
-        openFileInEditor("remove_curly_braces_longer.rs")
-        myFixture.launchAction(RemoveCurlyBracesIntention())
-    }
+    fun testRemoveCurlyBracesAlias() = doAvailableTest(
+        "use std::{mem as mem/*caret*/ory};",
+        "use std::mem as mem/*caret*/ory;"
+    )
 
-    fun testRemoveCurlyBracesAlias() = checkByFile {
-        openFileInEditor("remove_curly_braces_alias.rs")
-        myFixture.launchAction(RemoveCurlyBracesIntention())
-    }
-
-    fun testRemoveCurlyBracesExtra() = checkByFile {
-        openFileInEditor("remove_curly_braces_extra.rs")
-        myFixture.launchAction(RemoveCurlyBracesIntention())
-    }
+    fun testRemoveCurlyBracesExtra() = doAvailableTest(
+        "#[macro_use] pub use /*comment*/ std::{me/*caret*/m};",
+        "#[macro_use] pub use /*comment*/ std::me/*caret*/m;"
+    )
 }

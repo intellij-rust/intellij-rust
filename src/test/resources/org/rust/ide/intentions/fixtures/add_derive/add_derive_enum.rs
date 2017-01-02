@@ -1,3 +1,0 @@
-enum Test <caret>{
-    Something
-}

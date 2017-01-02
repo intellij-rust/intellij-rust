@@ -1,27 +1,24 @@
 package org.rust.ide.intentions
 
-import org.rust.lang.RustTestCaseBase
+class AddCurlyBracesIntentionTest : RustIntentionTestBase(AddCurlyBracesIntention()) {
 
-class AddCurlyBracesIntentionTest : RustTestCaseBase() {
-    override val dataPath = "org/rust/ide/intentions/fixtures/add_curly_braces/"
+    fun testAddCurlyBracesSimple() = doAvailableTest(
+        "use std::m/*caret*/em;",
+        "use std::{m/*caret*/em};"
+    )
 
-    fun testAddCurlyBracesSimple() = checkByFile {
-        openFileInEditor("add_curly_braces_simple.rs")
-        myFixture.launchAction(AddCurlyBracesIntention())
-    }
+    fun testAddCurlyBracesLonger() = doAvailableTest(
+        "use foo::bar::/*caret*/baz::qux;",
+        "use foo::bar::/*caret*/baz::{qux};"
+    )
 
-    fun testAddCurlyBracesLonger() = checkByFile {
-        openFileInEditor("add_curly_braces_longer.rs")
-        myFixture.launchAction(AddCurlyBracesIntention())
-    }
+    fun testAddCurlyBracesAlias() = doAvailableTest(
+        "use std::mem as mem/*caret*/ory;",
+        "use std::{mem as mem/*caret*/ory};"
+    )
 
-    fun testAddCurlyBracesAlias() = checkByFile {
-        openFileInEditor("add_curly_braces_alias.rs")
-        myFixture.launchAction(AddCurlyBracesIntention())
-    }
-
-    fun testAddCurlyBracesExtra() = checkByFile {
-        openFileInEditor("add_curly_braces_extra.rs")
-        myFixture.launchAction(AddCurlyBracesIntention())
-    }
+    fun testAddCurlyBracesExtra() = doAvailableTest(
+        "#[macro_use] pub use /*comment*/ std::me/*caret*/m;",
+        "#[macro_use] pub use /*comment*/ std::{me/*caret*/m};"
+    )
 }

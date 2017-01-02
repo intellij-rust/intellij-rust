@@ -1,12 +1,13 @@
 package org.rust.ide.intentions
 
-import org.rust.lang.RustTestCaseBase
-
-class RemoveParenthesesFromExprIntentionTest : RustTestCaseBase() {
-    override val dataPath: String = "org/rust/ide/intentions/fixtures/remove_parentheses_from_expr/"
-
-    fun testRemoveParenthesesFromExpr() = checkByFile {
-        openFileInEditor("remove_parentheses_from_expr.rs")
-        myFixture.launchAction(RemoveParenthesesFromExprIntention())
-    }
+class RemoveParenthesesFromExprIntentionTest : RustIntentionTestBase(RemoveParenthesesFromExprIntention()) {
+    fun testRemoveParenthesesFromExpr() = doAvailableTest("""
+        fn test() {
+            let a = (4 + 3/*caret*/);
+        }
+    """, """
+        fn test() {
+            let a = 4 + 3/*caret*/;
+        }
+    """)
 }
