@@ -10,22 +10,29 @@ import org.rust.lang.core.completion.RustCompletionEngine.KEYWORD_PRIORITY
 class RustKeywordCompletionProvider(
     private vararg val keywords: String
 ) : CompletionProvider<CompletionParameters>() {
-    val addSpaceHandler = InsertHandler<LookupElement> { context, el ->
-        context.document.insertString(context.selectionEndOffset, " ")
-        EditorModificationUtil.moveCaretRelatively(context.editor, 1)
-    }
-
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
         for (keyword in keywords) {
             var builder = LookupElementBuilder.create(keyword)
-            if (keyword in ADD_SPACE) {
-                builder = builder.withInsertHandler(addSpaceHandler)
-            }
+            SUFFIXES
+                .filter { keyword in it.second }
+                .firstOrNull()
+                ?.let { builder = builder.withInsertHandler(it.first) }
             result.addElement(PrioritizedLookupElement.withPriority(builder, KEYWORD_PRIORITY))
         }
     }
 
     private companion object {
-        val ADD_SPACE = listOf("const", "crate", "enum", "extern", "fn", "impl", "let", "mod", "mut", "pub", "static", "struct", "trait", "type", "unsafe", "use")
+        val SUFFIXES = listOf(
+            AddSuffix(" ") to listOf("crate", "const", "enum", "extern", "fn", "impl", "let", "mod", "mut", "pub",
+                "static", "struct", "trait", "type", "unsafe", "use"),
+            AddSuffix("::") to listOf("self", "super")
+        )
+    }
+
+    private class AddSuffix(val suffix: String) : InsertHandler<LookupElement> {
+        override fun handleInsert(context: InsertionContext, item: LookupElement) {
+            context.document.insertString(context.selectionEndOffset, suffix)
+            EditorModificationUtil.moveCaretRelatively(context.editor, suffix.length)
+        }
     }
 }
