@@ -803,7 +803,7 @@ fake type_alias ::=
   outer_attr* DEFAULT? vis? TYPE_KW IDENTIFIER ( generic_params where_clause? | where_clause | type_param_bounds )? [ '=' type ] ';'
 {
   pin = 'IDENTIFIER'
-  implements = [ "org.rust.lang.core.psi.RustNamedElement"
+  implements = [ "org.rust.lang.core.psi.RustQualifiedNameOwner"
                  "org.rust.lang.core.psi.RustTypeBearingItemElement"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustTypeAliasImplMixin"

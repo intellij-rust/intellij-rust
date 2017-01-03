@@ -35,7 +35,7 @@ class RustFileStub : PsiFileStubImpl<RustFile> {
 
     object Type : IStubFileElementType<RustFileStub>(RustLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 36
+        override fun getStubVersion(): Int = 37
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RustFileStub(file as RustFile)
@@ -512,7 +512,8 @@ class RustConstantElementStub(
 class RustTypeAliasElementStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    override val isPublic: Boolean
+    override val isPublic: Boolean,
+    val role: RustTypeAliasRole
 ) : StubBase<RustTypeAliasElement>(parent, elementType),
     RustNamedStub,
     RustVisibilityStub {
@@ -522,20 +523,22 @@ class RustTypeAliasElementStub(
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RustTypeAliasElementStub(parentStub, this,
                 dataStream.readNameAsString(),
-                dataStream.readBoolean()
+                dataStream.readBoolean(),
+                dataStream.readEnum(RustTypeAliasRole.values())
             )
 
         override fun serialize(stub: RustTypeAliasElementStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
                 writeBoolean(stub.isPublic)
+                writeEnum(stub.role)
             }
 
         override fun createPsi(stub: RustTypeAliasElementStub) =
             RustTypeAliasElementImpl(stub, this)
 
         override fun createStub(psi: RustTypeAliasElement, parentStub: StubElement<*>?) =
-            RustTypeAliasElementStub(parentStub, this, psi.name, psi.isPublic)
+            RustTypeAliasElementStub(parentStub, this, psi.name, psi.isPublic, psi.role)
 
         override fun indexStub(stub: RustTypeAliasElementStub, sink: IndexSink) = sink.indexTypeAlias(stub)
     }
