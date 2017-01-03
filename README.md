@@ -36,7 +36,7 @@ The plugin should be compatible with any Intellij based IDE starting from 2016.1
 
 You're encouraged to contribute to the plugin in any form if you've found any
 issues or missing functionality that you'd want to see. Check out
-[CONTRIBUTING.md] to learn how to setup the project and [ARCHITECTURE] to
+[CONTRIBUTING.md] to learn how to setup the project and [ARCHITECTURE.md] to
 understand the high level structure of the code base. Good first bugs are tagged
 with [up-for-grab].
 
