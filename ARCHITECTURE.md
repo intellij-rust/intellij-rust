@@ -160,15 +160,15 @@ currently opened in the editor and its dependencies, ignoring most of the
 crates. The major chunk of resolve is handled by the `innerDeclarations` and
 `outerDeclarations` functions. 
 
-`innerdeclarations` takes a reference and walks the AST tree upwords, collecting
-all the let declarations, function parameters, item definitions and other
+`innerDeclarations` takes a reference and walks the AST tree upwards, collecting
+all the `let` declarations, function parameters, item definitions and other
 "local" declarations. This is the function which does the work of resolving a
 local variable or a first component `foo` of the `foo::bar::baz` path.
 
 `outerDeclarations` takes a module and lists all items defined in it. It handles
 resolution of all the subsequent components of the `foo::bar::baz` path.
 
-This functions allow to list *all* visible declarations and are used in
+These functions allow to list *all* visible declarations and are used in
 completion as well.
 
 The result of resolve is cached. The caches are flushed after every PSI
@@ -189,8 +189,8 @@ grandparent module. This restriction allows fast recalculation of the index:
 only the part corresponding to the changed files needs to be flushed.
 
 These indexes power go to class and go to symbol functionality. They are also
-used during resolve to find parent module for a file and to get the list of
-impls for a type.
+used during resolve to find the parent module for a file and to get the list of
+`impl`s for a type.
 
 But the main use of indexes is for building a stub tree. Stub tree is a
 condensed AST, which includes information necessary for the resolve and nothing
