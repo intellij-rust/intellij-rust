@@ -6,9 +6,9 @@ the following sections:
   * custom language [tutorial][lang-tutorial]
   * custom language support [reference][lang-reference].
 
-If you find any piece of SDK docs missing or unclear, do open an issue at
-[sdk-YouTrack]. You can also [contribute directly][sdk-contributing] to the
-plugin development docs.
+If you find any piece of SDK docs missing or unclear, do open an issue
+at [YouTrack][sdk-YouTrack]. You can
+also [contribute directly][sdk-contributing] to the plugin development docs.
 
 It's also very inspirational to browse existing plugins. Check out [Erlang] and
 [Go] plugins. There is also [plugin repository] and, of course, [Kotlin plugin].
@@ -199,7 +199,7 @@ function bodies and local variables are omitted. Stubs are build from source
 files during indexing and are stored in binary format. The cool thing is that
 PSI can
 dynamically
-[switch](https://github.com/intellij-rust/intellij-rust/blob/c7769a68d14a02ced8fd4b307b5ae1f0443e1fd4/src/main/kotlin/org/rust/lang/core/psi/impl/RustStubbedNamedElementImpl.kt#L21) between
+[switch](https://github.com/intellij-rust/intellij-rust/blob/1cc9e40248bd36e43cc016d008270d0e0f4d7f8a/src/main/kotlin/org/rust/lang/core/psi/impl/RustStubbedNamedElementImpl.kt#L27) between
 stub based and AST based implementation. That means that a lot of resolve
 operations do not need to actually parse the files. Instead, they use only stub
 trees, which is much faster. Rust stubs are in `org.rust.lang.core.stubs`
