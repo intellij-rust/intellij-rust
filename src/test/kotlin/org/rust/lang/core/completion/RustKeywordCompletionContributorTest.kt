@@ -312,4 +312,12 @@ class RustKeywordCompletionContributorTest : RustCompletionTestBase() {
     fun testPubUse() = checkSingleCompletion("use", """
         pub us/*caret*/
     """)
+
+    fun testUseSelf() = checkSingleCompletion("self::", """
+        use se/*caret*/
+    """)
+
+    fun testUseSuper() = checkSingleCompletion("super::", """
+        use su/*caret*/
+    """)
 }

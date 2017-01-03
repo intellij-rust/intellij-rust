@@ -29,6 +29,8 @@ class RustKeywordCompletionContributor : CompletionContributor(), DumbAware {
             RustKeywordCompletionProvider("crate", "fn"))
         extend(CompletionType.BASIC, unsafeDeclarationPattern(),
             RustKeywordCompletionProvider("fn", "impl", "trait", "extern"))
+        extend(CompletionType.BASIC, usePattern(),
+            RustKeywordCompletionProvider("self", "super"))
         extend(CompletionType.BASIC, newCodeStatementPattern(),
             RustKeywordCompletionProvider("return", "let"))
         extend(CompletionType.BASIC, letPattern(),
@@ -45,6 +47,9 @@ class RustKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     private fun externDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
         baseDeclarationPattern().and(statementBeginningPattern("extern"))
+
+    private fun usePattern(): PsiElementPattern.Capture<PsiElement> =
+        baseDeclarationPattern().and(statementBeginningPattern("use"))
 
     private fun unsafeDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
         baseDeclarationPattern().and(statementBeginningPattern("unsafe"))

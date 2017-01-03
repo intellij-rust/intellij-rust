@@ -1,7 +1,7 @@
 package org.rust.lang.core.completion
 
 import com.intellij.psi.PsiElement
-import junit.framework.TestCase
+import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RustTestCaseBase
 
@@ -23,12 +23,12 @@ abstract class RustCompletionTestBase : RustTestCaseBase() {
             .substringAfterLast("::")
             .substringAfterLast(".")
         val shift = when {
-            target.endsWith("()") -> 3
+            target.endsWith("()") || target.endsWith("::") -> 3
             target.endsWith(" {}") -> 4
             else -> 2
         }
         val element = myFixture.file.findElementAt(myFixture.caretOffset - shift)!!
-        val skipTextCheck = normName.contains(' ')
+        val skipTextCheck = normName.isEmpty() || normName.contains(' ')
         check((skipTextCheck || element.text == normName) && (element.fitsHierarchically(target) || element.fitsLinearly(target))) {
             "Wrong completion, expected `$target`, but got `${element.text}`"
         }
@@ -71,14 +71,22 @@ abstract class RustCompletionTestBase : RustTestCaseBase() {
             else -> false
         }
 
-    private fun PsiElement.fitsLinearly(target: String): Boolean {
+    private fun PsiElement.fitsLinearly(target: String) =
+        checkLinearly(target, Direction.LEFT) || checkLinearly(target, Direction.RIGHT)
+
+    private fun PsiElement.checkLinearly(target: String, direction: Direction): Boolean {
         var el = this
         var text = ""
         while (text.length < target.length) {
-            text = el.text + text
+            text = if (direction == Direction.LEFT) el.text + text else text + el.text
             if (text == target) return true
-            el = el.prevSibling ?: break
+            el = (if (direction == Direction.LEFT) PsiTreeUtil.prevVisibleLeaf(el) else PsiTreeUtil.nextVisibleLeaf(el)) ?: break
         }
         return false
+    }
+
+    private enum class Direction {
+        LEFT,
+        RIGHT
     }
 }
