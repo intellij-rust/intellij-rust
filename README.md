@@ -35,13 +35,15 @@ The plugin should be compatible with any Intellij based IDE starting from 2016.1
 ## Contributing
 
 You're encouraged to contribute to the plugin in any form if you've found any
-issues or missing functionality that you'd want to see. In order to get started
-and to learn about plugin architecture check out [CONTRIBUTING.md] guide. Good
-first bugs are tagged with [up-for-grab].
+issues or missing functionality that you'd want to see. Check out
+[CONTRIBUTING.md] to learn how to setup the project and [ARCHITECTURE] to
+understand the high level structure of the code base. Good first bugs are tagged
+with [up-for-grab].
 
 [intellij-rust.github.io]: https://intellij-rust.github.io/docs/
 [up-for-grab]: https://github.com/intellij-rust/intellij-rust/labels/up%20for%20grab
 [CONTRIBUTING.md]: CONTRIBUTING.md
+[ARCHITECTURE.md]: ARCHITECTURE.md
 [TeamCity]: https://teamcity.jetbrains.com/repository/download/IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust/.lastSuccessful/intellij-rust-0.1.0.%7Bbuild.number%7D.zip
 [toml]: toml/
 
