@@ -41,12 +41,11 @@ Import the plugin project as you would do with any other gradle based project.
 For example, `Ctrl + Shift + A`, `Import project` and select `build.gradle` from
 the root directory of the plugin.
 
-To run or debug plugin from within the IDE use "gradle task" run configuration
-for `:runIdea` task.
-
-To run tests, execute `:test` gradle task, or navigate to the interesting test
-method, class or package and press `Ctrl+Shift+F10`.
-
+There are `Test`, `Run` and `Generate Parser` run configurations for the most
+common tasks. However try executing `./gradlew :test` first, to download all
+necessary dependencies and launch all code generation tasks. Unfortunately
+during import IDEA may delete `.idea/runConfigurations`, just revert changes in
+the directory if this happens.
 
 You might want to install the following plugins:
   - Grammar Kit to get highlighting for the files with BNFish grammar.
