@@ -100,6 +100,19 @@ class RustStdlibResolveTest : RustMultiFileResolveTestBase() {
         }
     """)
 
-    fun testPreludeVisibility1() = doTestUnresolved("prelude_visibility1/main.rs")
-    fun testPreludeVisibility2() = doTestUnresolved("prelude_visibility2/main.rs")
+    fun testPreludeVisibility1() = stubOnlyResolve("""
+    //- main.rs
+        mod m { }
+
+        fn main() { m::Some; }
+                      //^ unresolved
+    """)
+
+    fun testPreludeVisibility2() = stubOnlyResolve("""
+    //- main.rs
+        mod m { }
+
+        fn main() { use self::m::Some; }
+                                //^ unresolved
+    """)
 }
