@@ -3,15 +3,88 @@ package org.rust.lang.core.resolve
 class RustTypeParametersResolveTest : RustResolveTestBase() {
     override val dataPath = "org/rust/lang/core/resolve/fixtures/type_parameters"
 
-    fun testFn() = checkIsBound()
-    fun testImplMethod() = checkIsBound()
-    fun testTraitMethod() = checkIsBound()
-    fun testStruct() = checkIsBound()
-    fun testEnum() = checkIsBound()
-    fun testTrait() = checkIsBound()
-    fun testImpl() = checkIsBound(atOffset = 31)
-    fun testTypeAlias() = checkIsBound()
+    fun testFn() = checkByCode("""
+        fn foo<T>() -> T {
+             //X
+            let x: T = unimplemented!();
+                 //^
+            }
+    """)
 
-    fun testNoLeakInEnum() = checkIsUnbound()
-    fun testNoLeakInStruct() = checkIsUnbound()
+    fun testImplMethod() = checkByCode("""
+        struct S;
+
+        impl S {
+            fn foo<Param>(
+                    //X
+                param: Param
+            ) {}      //^
+        }
+    """)
+
+    fun testTraitMethod() = checkByCode("""
+        trait T {
+            fn f<Param>()
+                //X
+                -> Param;
+                    //^
+        }
+    """)
+
+    fun testStruct() = checkByCode("""
+        struct S<Thing> {
+                //X
+            field: Vec<Thing>
+                      //^
+        }
+    """)
+
+    fun testEnum() = checkByCode("""
+        enum E<T> {
+             //X
+            V(T)
+            //^
+        }
+    """)
+
+    fun testTrait() = checkByCode("""
+        trait T<Param> {
+                //X
+            fn new() -> Param;
+                        //^
+        }
+    """)
+
+    fun testImpl() = checkByCode("""
+        struct S<T> { field: T }
+
+        impl<T> S<T> {
+           //X
+            fn foo() -> T { }
+                      //^
+        }
+    """)
+
+    fun testTypeAlias() = checkByCode("""
+        use std::result;
+
+        pub type Result<T> =
+                      //X
+            result::Result<T, Error>;
+                         //^
+    """)
+
+    fun testNoLeakInEnum() = checkByCode("""
+        enum E<T> { X }
+
+        fn main() { let _ = E::T; }
+                             //^ unresolved
+    """)
+
+    fun testNoLeakInStruct() = checkByCode("""
+        struct S<T>;
+
+        fn main() { let _: S::T = unreachable!(); }
+                            //^ unresolved
+        """)
 }
