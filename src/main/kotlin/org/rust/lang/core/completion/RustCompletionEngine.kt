@@ -47,14 +47,19 @@ object RustCompletionEngine {
             .completionsFromNamedElements()
 
     fun completeFieldOrMethod(field: RustFieldExprElement): Array<out LookupElement> {
-        val dispatchType = field.expr.resolvedType.stripAllRefsIfAny()
+        val receiverType = field.expr.resolvedType.stripAllRefsIfAny()
 
         // Needs type ascription to please Kotlin's type checker, https://youtrack.jetbrains.com/issue/KT-12696.
-        val fields: List<RustNamedElement> = (dispatchType as? RustStructType)?.item?.namedFields.orEmpty()
+        val fields: List<RustNamedElement> = (receiverType as? RustStructType)?.item?.namedFields.orEmpty()
 
-        val methods = dispatchType.getNonStaticMethodsIn(field.project).toList()
+        val methods = receiverType.getNonStaticMethodsIn(field.project).toList()
 
         return (fields + methods).completionsFromNamedElements()
+    }
+
+    fun completeMethod(call: RustMethodCallExprElement): Array<out LookupElement> {
+        val receiverType = call.expr.resolvedType.stripAllRefsIfAny()
+        return receiverType.getNonStaticMethodsIn(call.project).toList().completionsFromNamedElements()
     }
 
     fun completeExternCrate(extCrate: RustExternCrateItemElement): Array<out LookupElement> =

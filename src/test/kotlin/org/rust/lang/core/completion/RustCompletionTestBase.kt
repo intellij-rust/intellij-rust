@@ -1,5 +1,6 @@
 package org.rust.lang.core.completion
 
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.lang.annotations.Language
@@ -14,8 +15,11 @@ abstract class RustCompletionTestBase : RustTestCaseBase() {
     protected fun checkSingleCompletion(target: String, @Language("Rust") code: String) {
         InlineFile(code).withCaret()
         val variants = myFixture.completeBasic()
+
+        fun LookupElement.debug(): String = "$lookupString ($psiElement)"
         check(variants == null) {
-            "Expected a single completion, but got ${variants.size}\n" + "${variants.toList()}"
+            "Expected a single completion, but got ${variants.size}:\n" +
+                variants.map { it.debug() }.joinToString("\n")
         }
         val normName = target
             .substringBeforeLast("()")
