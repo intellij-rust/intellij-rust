@@ -186,26 +186,65 @@ mapping always stays fresh. The crucial restriction is that for each file the
 mapping must be computed independently. That is, you can store a mapping from
 struct names to struct definitions, but you can't map a struct to the
 grandparent module. This restriction allows fast recalculation of the index:
-only the part corresponding to the changed files needs to be flushed.
+only the part corresponding to the changed files needs to be flushed. This also
+allows to persist indexes to disk between IDE invocations. 
 
 These indexes power go to class and go to symbol functionality. They are also
 used during resolve to find the parent module for a file and to get the list of
 `impl`s for a type.
 
-But the main use of indexes is for building a stub tree. Stub tree is a
-condensed AST, which includes information necessary for the resolve and nothing
-more. That is, `struct`s and functions declarations are present in stubs, but
-function bodies and local variables are omitted. Stubs are build from source
-files during indexing and are stored in binary format. The cool thing is that
-PSI can
-dynamically
-[switch](https://github.com/intellij-rust/intellij-rust/blob/1cc9e40248bd36e43cc016d008270d0e0f4d7f8a/src/main/kotlin/org/rust/lang/core/psi/impl/RustStubbedNamedElementImpl.kt#L27) between
-stub based and AST based implementation. That means that a lot of resolve
-operations do not need to actually parse the files. Instead, they use only stub
-trees, which is much faster. Rust stubs are in `org.rust.lang.core.stubs`
-package.
+## Stubs
 
+The main use of indexes is for building a stub tree. Stub tree is a condensed
+AST, which includes information necessary for the resolve and nothing more. That
+is, `struct`s and functions declarations are present in stubs, but function
+bodies and local variables are omitted. That way, you can list declarations
+inside a file without parsing it, which saves a lot of CPU time, because stubs
+are stored in the compact binary format.
+
+The cool thing is that PSI can dynamically [switch](stub-switch) between stub
+based and AST based implementation. It provides a nice unified programming API
+(as opposed to separate APIs for AST and stub-based implementation), but means
+that you can accidentally cause a file reparse if you use some API which is
+implemented only by AST.
+
+Rust stubs are in defined `org.rust.lang.core.stubs` package.
+
+All other indexes are implemented on top of the stubs. When constructing a stub
+tree, you may associated current stub-based PSI element with some key. Latter,
+you can use this key to retrieve the element.
+
+## RustModuleIndex
+
+RustModulesIndex is an example of simple but useful stub-based index. It is used
+to answer the question: "given the `foo.rs` file, what is its parent
+module?". Search for the usages of `RustModulesIndex.KEY` to see how the index
+is populated and queried.
+
+The naive solution is to find a `mod.rs` file in the containing directory, but
+this won't always work because of the `#[path]` attributes, which can associate
+`foo.rs` with arbitrary mod declaration.
+
+The working brute force solution is to go through all the mod declarations in
+the project and find the one that points to `foo.rs`, either implicitly or via
+the `path` attribute. To make this solution faster, we need to employ the index.
+
+The first attempt at indexing might look like this: "let's associate each mod
+declaration with the file it refers to". This doesn't quite work because it
+violates the prime contract of indexes: you can only use one file. If you
+actually implement this, you'll see stale information in the index after you
+edit some files.
+
+The current implementation uses the following trick. When indexing `mod foo;`,
+we associated the declaration with the potential name of the file. In this case,
+it would be `"foo"`, for `#[path=bar/baz.rs]` it would be `baz`. Then, when we
+want to find the parent of the `foo.rs` or `foo/mod.rs` file, we query the index
+for all mod decls with the `foo` key. This may give us some false positives, if
+there are several `foo` modules in the different parts of the project, but it
+will definitely include the correct answer. To find the true mod decl, we then
+resolve each candidate and check if it indeed points to our file.
 
 Read more about [indexing].
 
 [indexing]: http://www.jetbrains.org/intellij/sdk/docs/basics/indexing_and_psi_stubs.html
+[stub-switch]: https://github.com/intellij-rust/intellij-rust/blob/1cc9e40248bd36e43cc016d008270d0e0f4d7f8a/src/main/kotlin/org/rust/lang/core/psi/impl/RustStubbedNamedElementImpl.kt#L27
