@@ -18,18 +18,18 @@ class RustPathReferenceImpl(
 
     override fun resolveInner(): List<RustCompositeElement> {
         val path = element.asRustPath ?: return emptyList()
-        return RustResolveEngine.resolve(path, element, namespace)
+        return RustResolveEngine.resolve(path, element, namespaceForResolve)
     }
 
     override fun getVariants(): Array<out Any> =
-        RustCompletionEngine.completePath(element, namespace)
+        RustCompletionEngine.completePath(element, namespaceForCompletion)
 
     override fun isReferenceTo(element: PsiElement): Boolean {
         val target = resolve()
         return element.manager.areElementsEquivalent(target, element)
     }
 
-    private val namespace: Namespace? get() {
+    private val namespaceForResolve: Namespace? get() {
         val parent = element.parent
         return when (parent) {
             is RustPathElement, is RustTypeElement -> Namespace.Types
@@ -38,4 +38,7 @@ class RustPathReferenceImpl(
             else -> null
         }
     }
+
+    private val namespaceForCompletion: Namespace?
+        get() = if (element.parent is RustPathExprElement) null else namespaceForResolve
 }

@@ -238,4 +238,12 @@ class RustCompletionTest : RustCompletionTestBase() {
             use Foo::{BAR/*caret*/}
         }
     """)
+
+    fun testTypeNamespaceIsCompletedForPathHead() = checkSingleCompletion("FooBar", """
+        struct FooBar { f: i32 }
+
+        fn main() {
+            Foo/*caret*/
+        }
+    """)
 }
