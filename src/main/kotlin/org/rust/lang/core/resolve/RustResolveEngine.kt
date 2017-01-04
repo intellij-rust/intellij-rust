@@ -20,10 +20,7 @@ import org.rust.lang.core.psi.impl.mixin.isSelf
 import org.rust.lang.core.psi.impl.mixin.isStarImport
 import org.rust.lang.core.psi.impl.mixin.possiblePaths
 import org.rust.lang.core.psi.impl.rustMod
-import org.rust.lang.core.psi.util.ancestors
-import org.rust.lang.core.psi.util.fields
-import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.psi.util.typeParams
+import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
@@ -127,7 +124,7 @@ object RustResolveEngine {
             ref.isSelf && baseItem != null -> listOf(baseItem)
 
         // `use foo::{bar}`
-            baseItem != null -> (outerDeclarations(baseItem) ?: emptySequence())
+            baseItem != null -> (outerDeclarations(baseItem, withMethods = false) ?: emptySequence())
                 .filter { it.name == ref.referenceName }
                 .mapNotNull { it.element }
                 .toList()
@@ -182,8 +179,8 @@ object RustResolveEngine {
  * that `scope::thing` is a valid path. Return `null` if scope can't have outer declarations
  * (for example, this will return `null` for functions and some sequence for a moudle)
  */
-fun outerDeclarations(scope: RustCompositeElement): Sequence<ScopeEntry>? =
-    outerDeclarations(scope, Context())
+fun outerDeclarations(scope: RustCompositeElement, withMethods: Boolean): Sequence<ScopeEntry>? =
+    outerDeclarations(scope, Context(), withMethods)
 
 /**
  * Walk the tree up starting at [place] and collect all visible declarations
@@ -209,12 +206,13 @@ private fun resolveAllNamespaces(path: RustPath, pivot: RustCompositeElement): S
             .filter { it.name == path.head.name }
     }
 
+    val withMethods = pivot.parentOfType<RustUseItemElement>() == null
     var current: Sequence<ScopeEntry> = start
     for ((name) in path.segments) {
         val scope = current
             .filterByNamespace(Namespace.Types)
             .mapNotNull { it.element }
-            .mapNotNull(::outerDeclarations)
+            .mapNotNull { outerDeclarations(it, withMethods) }
             .firstOrNull() ?: return emptySequence()
 
         current = scope.filter { it.name == name }
@@ -227,12 +225,23 @@ private data class Context(
     val visitedStarImports: Set<RustUseItemElement> = emptySet()
 )
 
-private fun outerDeclarations(scope: RustCompositeElement, context: Context = Context()): Sequence<ScopeEntry>? = when (scope) {
-    is RustFile -> itemDeclarations(scope, false, context) + injectedCrates(scope)
-    is RustMod -> itemDeclarations(scope, false, context)
-    is RustStructItemElement -> methods(scope)
+private fun outerDeclarations(
+    scope: RustCompositeElement,
+    context: Context = Context(),
+    withMethods: Boolean
+): Sequence<ScopeEntry>? = when (scope) {
+
+    is RustFile ->
+        itemDeclarations(scope, false, context) + injectedCrates(scope)
+
+    is RustMod ->
+        itemDeclarations(scope, false, context)
+
+    is RustStructItemElement ->
+        if (withMethods) methods(scope) else emptySequence()
+
     is RustEnumItemElement ->
-        scope.enumBody.enumVariantList.asScopeEntries() + methods(scope)
+        scope.enumBody.enumVariantList.asScopeEntries() + (if (withMethods) methods(scope) else emptySequence())
     else -> null
 }
 
@@ -247,7 +256,7 @@ private fun innerDeclarations(
 
 private fun preludeSymbols(module: Module?, context: Context): Sequence<ScopeEntry> {
     return module?.preludeModule?.rustMod?.let {
-        outerDeclarations(it, context)
+        outerDeclarations(it, context, withMethods = false)
     } ?: emptySequence()
 }
 
@@ -451,7 +460,7 @@ private fun RustUseItemElement.wildcardEntries(context: Context): Sequence<Scope
     // Recursively step into `use foo::*`
     val mod = path?.reference?.resolve() ?: return emptySequence()
     val newCtx = context.copy(visitedStarImports = context.visitedStarImports + this)
-    return outerDeclarations(mod, newCtx) ?: emptySequence()
+    return outerDeclarations(mod, newCtx, withMethods = false) ?: emptySequence()
 }
 
 private fun RustUseItemElement.nonWildcardEntries(): Sequence<ScopeEntry> {

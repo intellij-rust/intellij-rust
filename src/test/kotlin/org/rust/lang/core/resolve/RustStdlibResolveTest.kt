@@ -86,7 +86,19 @@ class RustStdlibResolveTest : RustMultiFileResolveTestBase() {
                   //^ unresolved
     """)
 
-    fun testResolveOption() = doTestResolved("option/main.rs")
+    fun testResolveOption() = stubOnlyResolve("""
+    //- main.rs
+        fn f(i: i32) -> Option<i32> {}
+
+        fn bar() {
+            if let Some(x) = f() {
+                if let Some(y) = f(x) {
+                      //^ ...libcore/option.rs
+                    if let Some(z) = f(y) {}
+                }
+            }
+        }
+    """)
 
     fun testPreludeVisibility1() = doTestUnresolved("prelude_visibility1/main.rs")
     fun testPreludeVisibility2() = doTestUnresolved("prelude_visibility2/main.rs")

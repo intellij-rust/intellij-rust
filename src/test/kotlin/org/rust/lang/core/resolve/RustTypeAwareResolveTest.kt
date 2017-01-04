@@ -347,4 +347,17 @@ class RustTypeAwareResolveTest : RustResolveTestBase() {
                             //^
         }
     """)
+
+    fun testCantImportMethods() = checkByCode("""
+        mod m {
+            pub enum E {}
+
+            impl E {
+                pub fn foo() {}
+            }
+        }
+
+        use self::m::E::foo;
+                        //^ unresolved
+    """)
 }

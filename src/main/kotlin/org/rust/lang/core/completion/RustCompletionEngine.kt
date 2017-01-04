@@ -69,7 +69,7 @@ private fun RustCompositeElement?.completionsFromResolveScope(): Array<LookupEle
     if (this == null)
         emptyArray()
     else
-        (outerDeclarations(this) ?: emptySequence()).completionsFromScopeEntries()
+        (outerDeclarations(this, withMethods = true) ?: emptySequence()).completionsFromScopeEntries()
 
 private fun Sequence<ScopeEntry>.completionsFromScopeEntries(): Array<LookupElement> =
     mapNotNull {

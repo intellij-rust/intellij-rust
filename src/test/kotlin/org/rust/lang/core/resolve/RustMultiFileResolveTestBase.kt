@@ -43,7 +43,9 @@ abstract class RustMultiFileResolveTestBase : RustResolveTestBase() {
         val fileNames = fileSeparator.findAll(code).map { it.groupValues[1] }.toList()
         val fileTexts = fileSeparator.split(code).filter(String::isNotBlank)
 
-        check(fileNames.size == fileTexts.size)
+        check(fileNames.size == fileTexts.size) {
+            "Have you placed `//- filename.rs` markers?"
+        }
         for ((name, text) in fileNames.zip(fileTexts)) {
             myFixture.tempDirFixture.createFile(name, text)
         }
