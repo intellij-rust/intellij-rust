@@ -49,20 +49,17 @@ class RustInvalidSyntaxAnnotatorTest : RustAnnotatorTestBase() {
         <error descr="Static constant `DEF_BAR` cannot have the `default` qualifier">default</error> static DEF_BAR: u16 = 9;
     """)
 
-    // TODO: Add lines when grammar is fixed
-    // <error descr="Constant `DEF_BAR` cannot have the `default` qualifier">default</error> const DEF_BAR: u16 = 9;
-    // <error descr="Static constants are not allowed in traits">static</error> ST_FOO: u32 = 18;
     fun testConstInTrait() = checkErrors("""
         trait Foo {
             const FOO_1: u16 = 10;
             const FOO_2: f64;
 
             <error descr="Constant `PUB_BAZ` cannot have the `pub` qualifier">pub</error> const PUB_BAZ: bool;
+            <error descr="Constant `DEF_BAR` cannot have the `default` qualifier">default</error> const DEF_BAR: u16 = 9;
+            <error descr="Static constants are not allowed in traits">static</error> ST_FOO: u32 = 18;
         }
     """)
 
-    // TODO: Add the line when grammar is fixed
-    // <error descr="Static constants are not allowed in impl blocks">static</error> ST_FOO: u32 = 18;
     fun testConstInImpl() = checkErrors("""
         struct Foo;
         impl Foo {
@@ -71,6 +68,7 @@ class RustInvalidSyntaxAnnotatorTest : RustAnnotatorTestBase() {
             default const DEF_FOO: u8 = 1;
 
             <error descr="Constant `BAR` must have a value">const BAR: u8;</error>
+            <error descr="Static constants are not allowed in impl blocks">static</error> ST_FOO: u32 = 18;
         }
     """)
 

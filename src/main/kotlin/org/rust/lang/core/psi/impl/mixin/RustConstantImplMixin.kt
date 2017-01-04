@@ -53,4 +53,4 @@ val RustConstantElement.role: RustConstantRole get() {
 }
 
 val RustConstantElement.default: PsiElement?
-    get() = node.findChildByType(RustTokenElementTypes.DEFAULT) as? PsiElement
+    get() = node.findChildByType(RustTokenElementTypes.DEFAULT)?.psi

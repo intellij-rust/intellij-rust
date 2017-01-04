@@ -51,18 +51,17 @@ class RustInvalidSyntaxAnnotator : Annotator {
         }
 
         private fun require(el: PsiElement?, message: String, vararg highlightElements: PsiElement?): Annotation? =
-            if (el != null) null else holder.createErrorAnnotation(highlightElements.combinedRange() ?: TextRange.EMPTY_RANGE, message)
+            if (el != null) null else holder.createErrorAnnotation(highlightElements.combinedRange ?: TextRange.EMPTY_RANGE, message)
 
         private fun deny(el: PsiElement?, message: String, vararg highlightElements: PsiElement?): Annotation? =
-            if (el == null) null else holder.createErrorAnnotation(highlightElements.combinedRange() ?: el.textRange, message)
+            if (el == null) null else holder.createErrorAnnotation(highlightElements.combinedRange ?: el.textRange, message)
 
-        private fun Array<out PsiElement?>.combinedRange(): TextRange? {
-            var range: TextRange? = null
-            filterNotNull()
+        private val Array<out PsiElement?>.combinedRange: TextRange?
+            get() = if (isEmpty())
+                null
+            else filterNotNull()
                 .map { it.textRange }
-                .forEach { range = range?.union(it) ?: it }
-            return range
-        }
+                .reduce(TextRange::union)
     })
 
     private fun isInTraitImpl(o: RustVisElement): Boolean {
