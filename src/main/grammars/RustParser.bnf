@@ -466,6 +466,7 @@ constant ::=
                  "org.rust.lang.core.psi.RustItemElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustConstantImplMixin"
   stubClass = "org.rust.lang.core.stubs.RustConstantElementStub"
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
@@ -694,7 +695,7 @@ private trait_member ::= !'}' ( constant | trait_type_member | trait_method_memb
   recoverWhile = trait_member_recover
 }
 
-private trait_member_recover ::= !('#' | vis | EXTERN | CONST | UNSAFE | FN | TYPE_KW | '}')
+private trait_member_recover ::= !('#' | vis | EXTERN | CONST | STATIC | UNSAFE | FN | TYPE_KW | '}' | "default")
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -723,7 +724,7 @@ private impl_member ::= !'}' ( impl_method_member | constant | impl_macro_member
   pin = 1
   recoverWhile = impl_member_recover
 }
-private impl_member_recover ::= !('#' | vis | EXTERN | CONST | UNSAFE | FN | (IDENTIFIER '!') | TYPE_KW | "default" | '}')
+private impl_member_recover ::= !('#' | vis | EXTERN | CONST | STATIC | UNSAFE | FN | (IDENTIFIER '!') | TYPE_KW | "default" | '}')
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
