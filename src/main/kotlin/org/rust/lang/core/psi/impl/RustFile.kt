@@ -35,15 +35,15 @@ class RustFile(
 
     override fun getStub(): RustFileStub? = super.getStub() as RustFileStub?
 
-    override val `super`: RustMod? get() {
-        val original = originalFile as RustFile
-        return CachedValuesManager.getCachedValue(original, CachedValueProvider {
+    override fun getOriginalFile(): RustFile = super.getOriginalFile() as RustFile
+
+    override val `super`: RustMod?
+        get() = CachedValuesManager.getCachedValue(originalFile, CachedValueProvider {
             CachedValueProvider.Result.create(
-                RustModulesIndex.getSuperFor(original),
+                RustModulesIndex.getSuperFor(originalFile),
                 PsiModificationTracker.MODIFICATION_COUNT
             )
         })
-    }
 
     override val modName: String? = if (name != RustMod.MOD_RS) FileUtil.getNameWithoutExtension(name) else parent?.name
 

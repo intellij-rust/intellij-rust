@@ -5,12 +5,10 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
-import com.intellij.psi.stubs.StubIndex
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspace
 import org.rust.cargo.project.workspace.cargoProject
-import org.rust.lang.core.stubs.index.RustModulesIndex
 
 class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
@@ -28,9 +26,6 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
     private fun resolveRefInFile(project: String, fileWithRef: String, unresolved: Boolean = false) =
         withProject(project) {
-            // make sure that indexes do not depend on cargo project
-            populateIndexes()
-
             CargoProjectWorkspace.forModule(module).syncUpdate(module.project.toolchain!!)
 
             if (module.cargoProject == null) {
@@ -46,8 +41,6 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
                 }
             }
         }
-
-    private fun populateIndexes() = StubIndex.getInstance().getAllKeys(RustModulesIndex.KEY, myProject)
 
     private fun extractReference(path: String): PsiReference {
         val vFile = LocalFileSystem.getInstance().findFileByPath("${myProject.basePath}/$path")!!
