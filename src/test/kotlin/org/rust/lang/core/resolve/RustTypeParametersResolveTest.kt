@@ -1,8 +1,6 @@
 package org.rust.lang.core.resolve
 
 class RustTypeParametersResolveTest : RustResolveTestBase() {
-    override val dataPath = "org/rust/lang/core/resolve/fixtures/type_parameters"
-
     fun testFn() = checkByCode("""
         fn foo<T>() -> T {
              //X
