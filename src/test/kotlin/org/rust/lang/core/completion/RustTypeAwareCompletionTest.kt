@@ -57,4 +57,11 @@ class RustTypeAwareCompletionTest : RustCompletionTestBase() {
             let _ = S::cr/*caret*/;
         }
     """)
+
+    fun testSelfMethod() = checkSingleCompletion("frobnicate()", """
+        trait Foo {
+            fn frobnicate(&self);
+            fn bar(&self) { self.frob/*caret*/ }
+        }
+    """)
 }

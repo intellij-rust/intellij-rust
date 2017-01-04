@@ -15,7 +15,6 @@ import org.rust.lang.core.psi.util.fields
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.*
-import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.RustStructType
 import org.rust.lang.core.types.util.resolvedType
@@ -53,9 +52,9 @@ object RustCompletionEngine {
         // Needs type ascription to please Kotlin's type checker, https://youtrack.jetbrains.com/issue/KT-12696.
         val fields: List<RustNamedElement> = (dispatchType as? RustStructType)?.item?.namedFields.orEmpty()
 
-        val methods = RustImplIndex.findNonStaticMethodsFor(dispatchType, field.project)
+        val methods = dispatchType.getNonStaticMethodsIn(field.project).toList()
 
-        return (fields + methods.toList()).completionsFromNamedElements()
+        return (fields + methods).completionsFromNamedElements()
     }
 
     fun completeExternCrate(extCrate: RustExternCrateItemElement): Array<out LookupElement> =
