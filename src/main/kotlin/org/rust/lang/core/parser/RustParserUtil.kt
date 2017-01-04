@@ -156,7 +156,8 @@ object RustParserUtil : GeneratedParserUtilBase() {
             '{' == b.originalText.subSequence(startOffset, endOffset).find { it == '{' || it == '[' || it == '(' }
 
     private fun contextualKeyword(b: PsiBuilder, keyword: String, elementType: RustTokenType): Boolean {
-        if (b.tokenType == RustTokenElementTypes.IDENTIFIER && b.tokenText == keyword) {
+        // Tricky: the token can be already remapped by some previous rule that was backtracked
+        if ((b.tokenType == RustTokenElementTypes.IDENTIFIER && b.tokenText == keyword) || b.tokenType == elementType) {
             b.remapCurrentToken(elementType)
             b.advanceLexer()
             return true

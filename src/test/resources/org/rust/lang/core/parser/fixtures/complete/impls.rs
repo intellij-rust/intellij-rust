@@ -43,4 +43,5 @@ impl<T: fmt::Display + ?Sized> ToString for T {
     default fn to_string(&self) -> String { }
     default fn a() {}
     default fn b() {}
+    default const BAR: u32 = 81;
 }
