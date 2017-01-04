@@ -1,7 +1,7 @@
 package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
-import com.intellij.psi.impl.PsiImplUtil
+import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.*
@@ -41,3 +41,6 @@ val RustTypeAliasElement.role: RustTypeAliasRole get() {
         else -> error("Unexpected parent of type alias: $parent")
     }
 }
+
+val RustTypeAliasElement.default: PsiElement?
+    get() = node.findChildByType(RustTokenElementTypes.DEFAULT)?.psi
