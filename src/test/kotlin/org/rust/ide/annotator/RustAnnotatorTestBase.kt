@@ -20,6 +20,11 @@ abstract class RustAnnotatorTestBase : RustTestCaseBase() {
         myFixture.testHighlighting(true, false, true)
     }
 
+    protected fun checkErrors(text: String) {
+        myFixture.configureByText("main.rs", text)
+        myFixture.testHighlighting(false, false, false)
+    }
+
     protected fun checkQuickFix(
         fixName: String,
         @Language("Rust") before: String,

@@ -268,7 +268,7 @@ private UNION ::= <<unionKeyword>>
 private attrs_and_vis ::= outer_attr* vis?
 private attrs_default_vis ::= outer_attr* DEFAULT? vis?
 
-private item ::= static_item
+private item ::= constant
                | type_item
                | fn_item
                | trait_item
@@ -458,7 +458,7 @@ pat_field ::= IDENTIFIER ':' pat
 
 binding_mode ::= REF MUT? | MUT
 
-fake constant ::=
+constant ::=
   outer_attr* DEFAULT? vis? (STATIC MUT? | CONST) IDENTIFIER type_ascription [ '=' any_expr ] ';'
 {
   pin = 'IDENTIFIER'
@@ -467,38 +467,6 @@ fake constant ::=
   mixin = "org.rust.lang.core.psi.impl.mixin.RustConstantImplMixin"
   stubClass = "org.rust.lang.core.stubs.RustConstantElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
-
-static_item ::=
-  outer_attr*          vis? (STATIC MUT? | CONST) IDENTIFIER type_ascription '=' any_expr ';'
-{
-  pin = 'IDENTIFIER'
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = constant
-}
-
-trait_const_member ::=
-  outer_attr*                              CONST  IDENTIFIER type_ascription [ '=' any_expr ] ';'
-{
-  pin =  'IDENTIFIER'
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = constant
-}
-
-impl_const_member ::=
-  outer_attr* DEFAULT* vis?                CONST  IDENTIFIER type_ascription '=' any_expr ';'
-{
-  pin = 'IDENTIFIER'
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = constant
-}
-
-foreign_static_decl ::=
-  outer_attr*          vis?  STATIC MUT?          IDENTIFIER type_ascription ';'
-{
-  pin = 'IDENTIFIER'
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = constant
 }
 
 private view_item ::= use_item
@@ -595,7 +563,7 @@ foreign_mod_item ::= attrs_and_vis extern_abi '{' inner_attr* foreign_decl* '}' 
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private foreign_decl ::= foreign_static_decl | foreign_fn_decl
+private foreign_decl ::= constant | foreign_fn_decl
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -721,7 +689,7 @@ trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER generic_params? type_param
 private trait_body ::= '{' trait_member* '}' { pin = 1 }
 
 // TODO: use upper rules and inheritance here
-private trait_member ::= !'}' ( trait_const_member | trait_type_member | trait_method_member ) {
+private trait_member ::= !'}' ( constant | trait_type_member | trait_method_member ) {
   pin = 1
   recoverWhile = trait_member_recover
 }
@@ -751,7 +719,7 @@ private type_trait_impl ::= type where_clause? impl_body { pin = 1 }
 private impl_body ::= '{' inner_attr* impl_member* '}' { pin = 1 }
 
 // TODO: unify with trait_member?
-private impl_member ::= !'}' ( impl_method_member | impl_const_member | impl_macro_member | impl_type_member ) {
+private impl_member ::= !'}' ( impl_method_member | constant | impl_macro_member | impl_type_member ) {
   pin = 1
   recoverWhile = impl_member_recover
 }
