@@ -5,7 +5,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 
-class RustPackageLibraryResolveTest : RustMultiFileResolveTestBase() {
+class RustPackageLibraryResolveTest : RustResolveTestBase() {
 
     fun testLibraryAsCrate() = stubOnlyResolve("""
     //- main.rs

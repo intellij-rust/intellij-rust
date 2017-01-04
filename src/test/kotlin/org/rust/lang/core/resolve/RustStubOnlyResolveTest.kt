@@ -1,6 +1,6 @@
 package org.rust.lang.core.resolve
 
-class RustStubOnlyResolveTest : RustMultiFileResolveTestBase() {
+class RustStubOnlyResolveTest : RustResolveTestBase() {
     fun testChildMod() = stubOnlyResolve("""
     //- main.rs
         mod child;

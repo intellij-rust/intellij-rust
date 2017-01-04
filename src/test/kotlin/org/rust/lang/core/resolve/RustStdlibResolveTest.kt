@@ -1,18 +1,15 @@
 package org.rust.lang.core.resolve
 
-import com.intellij.testFramework.LightProjectDescriptor
 import org.rust.cargo.project.workspace.cargoProject
 
-class RustStdlibResolveTest : RustMultiFileResolveTestBase() {
+class RustStdlibResolveTest : RustResolveTestBase() {
 
-    override val dataPath = "org/rust/lang/core/resolve/fixtures/stdlib"
-
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
+    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
     fun testHasStdlibSources() {
         val cargoProject = myModule.cargoProject
         cargoProject?.findExternCrateRootByName("std")
-            ?: error("No Rust SDK sources found during test.\nTry running `rustup component add rust-src`")
+            ?: error("No Rust sources found during test.\nTry running `rustup component add rust-src`")
     }
 
     fun testResolveFs() = stubOnlyResolve("""

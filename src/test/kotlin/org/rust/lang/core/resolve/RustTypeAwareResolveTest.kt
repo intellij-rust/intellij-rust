@@ -1,8 +1,6 @@
 package org.rust.lang.core.resolve
 
 class RustTypeAwareResolveTest : RustResolveTestBase() {
-    override val dataPath = "org/rust/lang/core/resolve/fixtures/type_aware"
-
     fun testSelfMethodCallExpr() = checkByCode("""
         struct S;
 
