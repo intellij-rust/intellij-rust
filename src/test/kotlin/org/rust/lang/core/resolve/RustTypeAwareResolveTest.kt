@@ -344,7 +344,7 @@ class RustTypeAwareResolveTest : RustResolveTestBase() {
               //X
 
             fn bar(&self) { self.foo(); }
-                            //^
+                                //^
         }
     """)
 
