@@ -340,10 +340,10 @@ class RustTypeAwareResolveTest : RustResolveTestBase() {
 
     fun testSelfImplementsTrait() = checkByCode("""
         trait Foo {
-        fn foo(&self);
-          //X
+            fn foo(&self);
+              //X
 
-        fn bar(&self) { self.foo(); }
+            fn bar(&self) { self.foo(); }
                             //^
         }
     """)
