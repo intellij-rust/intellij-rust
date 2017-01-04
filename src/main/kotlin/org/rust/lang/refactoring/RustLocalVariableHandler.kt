@@ -117,6 +117,9 @@ class RustIntroduceVariableRefactoring(
     }
 
     fun replaceElementForAllExpr(chosenExpr: RustExprElement, exprs: List<PsiElement>) {
+        val anchor = findAnchor(exprs.minBy { it.textRange.startOffset } ?: chosenExpr)
+            ?: return
+
         val suggestNames = chosenExpr.suggestNames()
 
         val (let, name) = createLet(chosenExpr, suggestNames.firstName()) ?: return
@@ -124,7 +127,7 @@ class RustIntroduceVariableRefactoring(
         var nameElem: RustPatBindingElement? = null
 
         WriteCommandAction.runWriteCommandAction(project) {
-            val newElement = introduceLet(project, chosenExpr, let)
+            val newElement = introduceLet(project, anchor, let)
             exprs.forEach { it.replace(name) }
             nameElem = moveEditorToNameElement(editor, newElement)
         }
@@ -149,9 +152,8 @@ class RustIntroduceVariableRefactoring(
         return let to binding.identifier
     }
 
-    private fun introduceLet(project: Project, expr: PsiElement, let: RustLetDeclElement): PsiElement? {
-        val anchor = findAnchor(expr)
-        val context = anchor?.context
+    private fun introduceLet(project: Project, anchor: PsiElement, let: RustLetDeclElement): PsiElement? {
+        val context = anchor.parent
         val newline = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n")
 
         return context?.addBefore(let, context.addBefore(newline, anchor))

@@ -54,6 +54,26 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
         ref.replaceElementForAllExpr(expr, occurrences)
     }
 
+    fun testMultipleOccurrences2() = doTest("""
+        fn main() {
+            let a = 1;
+            let b = a + 1;
+            let c = a +/*caret*/ 1;
+        }""", """
+        fn main() {
+            let a = 1;
+            let x = a + 1;
+            let b = x;
+            let c = x;
+        }""")
+    {
+        val ref = refactoring()
+        val expr = ref.getTarget(0, 1)
+        val occurrences = findOccurrences(expr)
+        ref.replaceElementForAllExpr(expr, occurrences)
+    }
+
+
     fun testCaretAfterElement() = doTest("""
         fn main() {
             1/*caret*/;
@@ -158,7 +178,7 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
         RustIntroduceVariableRefactoring(project, myFixture.editor, myFixture.file as RustFile)
 
     fun RustIntroduceVariableRefactoring.getTarget(idx: Int, total: Int): RustExprElement {
-        check(idx < total)
+        check(idx < total) { "Can't select $idx target out of $total" }
         val targets = possibleTargets()
         check(targets.size == total) {
             "Expected $total targets, got ${targets.size}:\n\n${targets.map { it.text }.joinToString("\n\n")}"
