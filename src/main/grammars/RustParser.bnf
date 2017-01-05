@@ -269,7 +269,7 @@ private attrs_and_vis ::= outer_attr* vis?
 private attrs_default_vis ::= outer_attr* DEFAULT? vis?
 
 private item ::= constant
-               | type_item
+               | type_alias
                | fn_item
                | trait_item
                | impl_item
@@ -690,7 +690,7 @@ trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER generic_params? type_param
 private trait_body ::= '{' trait_member* '}' { pin = 1 }
 
 // TODO: use upper rules and inheritance here
-private trait_member ::= !'}' ( constant | trait_type_member | trait_method_member ) {
+private trait_member ::= !'}' ( constant | type_alias | trait_method_member ) {
   pin = 1
   recoverWhile = trait_member_recover
 }
@@ -720,7 +720,7 @@ private type_trait_impl ::= type where_clause? impl_body { pin = 1 }
 private impl_body ::= '{' inner_attr* impl_member* '}' { pin = 1 }
 
 // TODO: unify with trait_member?
-private impl_member ::= !'}' ( impl_method_member | constant | impl_macro_member | impl_type_member ) {
+private impl_member ::= !'}' ( impl_method_member | constant | impl_macro_member | type_alias ) {
   pin = 1
   recoverWhile = impl_member_recover
 }
@@ -768,7 +768,7 @@ impl_trait_type ::= IMPL polybound ('+' polybound)*
 wildcard_type ::= '_'
 never_type ::= '!'
 
-fake type_alias ::=
+type_alias ::=
   outer_attr* DEFAULT? vis? TYPE_KW IDENTIFIER ( generic_params where_clause? | where_clause | type_param_bounds )? [ '=' type ] ';'
 {
   pin = 'IDENTIFIER'
@@ -776,32 +776,9 @@ fake type_alias ::=
                  "org.rust.lang.core.psi.RustTypeBearingItemElement"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustTypeAliasImplMixin"
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   stubClass = "org.rust.lang.core.stubs.RustTypeAliasElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
-
-type_item ::=
-  outer_attr*          vis? TYPE_KW IDENTIFIER generic_params? where_clause? '=' type ';'
-{
-  pin = 'IDENTIFIER'
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = type_alias
-}
-
-trait_type_member ::=
-  outer_attr*               TYPE_KW IDENTIFIER type_param_bounds? [ '=' type ] ';'
-{
-  pin = 'IDENTIFIER'
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = type_alias
-}
-
-impl_type_member ::=
-  outer_attr* DEFAULT? vis? TYPE_KW IDENTIFIER generic_params? '=' type ';'
-{
-  pin = 'IDENTIFIER'
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = type_alias
 }
 
 type_qual_path ::= <<qualified_path path_without_types>>

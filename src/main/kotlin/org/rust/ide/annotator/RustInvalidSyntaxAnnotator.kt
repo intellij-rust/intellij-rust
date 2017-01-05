@@ -6,10 +6,7 @@ import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.RustConstantRole
-import org.rust.lang.core.psi.impl.mixin.asRustPath
-import org.rust.lang.core.psi.impl.mixin.default
-import org.rust.lang.core.psi.impl.mixin.role
+import org.rust.lang.core.psi.impl.mixin.*
 
 class RustInvalidSyntaxAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) = element.accept(object : RustElementVisitor() {
@@ -21,7 +18,35 @@ class RustInvalidSyntaxAnnotator : Annotator {
 
         override fun visitVis(o: RustVisElement) {
             if (o.parent is RustImplItemElement || o.parent is RustForeignModItemElement || isInTraitImpl(o)) {
-                holder.createErrorAnnotation(o, "Visibility modifier is not allowed here")
+                holder.createErrorAnnotation(o, "Unnecessary visibility qualifier [E0449]")
+            }
+        }
+
+        override fun visitTypeAlias(o: RustTypeAliasElement) {
+            val title = "Type `${o.identifier.text}`"
+            when (o.role) {
+                RustTypeAliasRole.FREE -> {
+                    deny(o.default, "$title cannot have the `default` qualifier")
+                    deny(o.typeParamBounds, "$title cannot have type parameter bounds")
+                    require(o.type, "Aliased type must be provided for type `${o.identifier.text}`", o)
+                }
+                RustTypeAliasRole.TRAIT_ASSOC_TYPE -> {
+                    deny(o.default, "$title cannot have the `default` qualifier")
+                    deny(o.vis, "$title cannot have the `pub` qualifier")
+                    deny(o.genericParams, "$title cannot have generic parameters")
+                    deny(o.whereClause, "$title cannot have `where` clause")
+                }
+                RustTypeAliasRole.IMPL_ASSOC_TYPE -> {
+                    val impl = o.parent as? RustImplItemElement ?: return
+                    if (impl.`for` == null) {
+                        holder.createErrorAnnotation(o, "Associated types are not allowed in inherent impls [E0202]")
+                    } else {
+                        deny(o.genericParams, "$title cannot have generic parameters")
+                        deny(o.whereClause, "$title cannot have `where` clause")
+                        deny(o.typeParamBounds, "$title cannot have type parameter bounds")
+                        require(o.type, "Aliased type must be provided for type `${o.identifier.text}`", o)
+                    }
+                }
             }
         }
 

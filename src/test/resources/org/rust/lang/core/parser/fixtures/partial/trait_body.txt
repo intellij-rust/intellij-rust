@@ -17,7 +17,7 @@ FILE
         PsiWhiteSpace(' ')
         PsiElement({)('{')
         PsiWhiteSpace('\n        ')
-        PsiErrorElement:'intellijidearulezz' unexpected
+        PsiErrorElement:type expected, got 'intellijidearulezz'
           PsiElement(<IDENTIFIER>)('intellijidearulezz')
         PsiWhiteSpace('\n    ')
         PsiElement(})('}')
@@ -29,7 +29,7 @@ FILE
         PsiWhiteSpace(' ')
         PsiElement({)('{')
         PsiWhiteSpace('\n        ')
-        PsiErrorElement:'intellijidearulezzz' unexpected
+        PsiErrorElement:type expected, got 'intellijidearulezzz'
           PsiElement(<IDENTIFIER>)('intellijidearulezzz')
         PsiWhiteSpace('\n        ')
         RustFunctionElementImpl(FUNCTION)
