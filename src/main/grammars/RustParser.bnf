@@ -176,8 +176,6 @@
     consumeTokenMethod("inner_attrs_and_block") = "consumeToken"
 
     consumeTokenMethod(".*") = "consumeTokenFast"
-
-    //recoverWhile = skip_until_eol_rec
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
