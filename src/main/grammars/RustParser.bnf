@@ -361,7 +361,7 @@ fake function ::=
   outer_attr* DEFAULT? vis? fn_attrs fn_header fn_parameters fn_tail (';' | inner_attrs_and_block)
 {
   pin = fn_header
-  implements = [ "org.rust.lang.core.psi.RustQualifiedNameOwner"
+  implements = [ "org.rust.lang.core.psi.RustQualifiedNamedElement"
                  "org.rust.lang.core.psi.RustGenericDeclaration"
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustInnerAttributeOwner"
@@ -582,7 +582,7 @@ struct_item ::= attrs_and_vis STRUCT IDENTIFIER generic_params? (tuple_fields? w
 union_item ::= attrs_and_vis UNION IDENTIFIER generic_params? where_clause? block_fields {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustItemElement"
-                 "org.rust.lang.core.psi.RustQualifiedNameOwner"
+                 "org.rust.lang.core.psi.RustQualifiedNamedElement"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustUnionItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RustUnionItemElementStub"
@@ -606,7 +606,7 @@ enum_body ::= '{' [ <<comma_separated_list enum_variant>> ] '}' {
 enum_variant ::= outer_attr* IDENTIFIER variant_args? {
   pin = 2
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustQualifiedNameOwner"
+  implements = [ "org.rust.lang.core.psi.RustQualifiedNamedElement"
                  "org.rust.lang.core.psi.RustNamedElement"
                  "org.rust.lang.core.psi.RustOuterAttributeOwner"
                  "org.rust.lang.core.psi.RustFieldsOwner" ]
@@ -677,7 +677,7 @@ private meta mk_tuple_fields ::= '(' <<comma_separated_list <<param>> >> ')' { p
 
 trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER generic_params? type_param_bounds? where_clause? trait_body {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustQualifiedNameOwner"
+  implements = [ "org.rust.lang.core.psi.RustQualifiedNamedElement"
                  "org.rust.lang.core.psi.RustTypeBearingItemElement"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustTraitItemImplMixin"
@@ -761,7 +761,7 @@ type_alias ::=
   outer_attr* DEFAULT? vis? TYPE_KW IDENTIFIER ( generic_params where_clause? | where_clause | type_param_bounds )? [ '=' type ] ';'
 {
   pin = 'IDENTIFIER'
-  implements = [ "org.rust.lang.core.psi.RustQualifiedNameOwner"
+  implements = [ "org.rust.lang.core.psi.RustQualifiedNamedElement"
                  "org.rust.lang.core.psi.RustTypeBearingItemElement"
                  "org.rust.lang.core.psi.RustGenericDeclaration" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustTypeAliasImplMixin"

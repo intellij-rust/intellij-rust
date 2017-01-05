@@ -48,7 +48,7 @@ class MatchPostfixTemplate : StringBasedPostfixTemplate(
 
         val allDeclaration = innerDeclarations(element)
             .mapNotNull {
-                val path = (it.element as? RustQualifiedNameOwner)?.crateRelativePath ?: return@mapNotNull null
+                val path = (it.element as? RustQualifiedNamedElement)?.crateRelativePath ?: return@mapNotNull null
                 if (path.segments.lastOrNull()?.name == it.name)
                     return@mapNotNull path
                 else
