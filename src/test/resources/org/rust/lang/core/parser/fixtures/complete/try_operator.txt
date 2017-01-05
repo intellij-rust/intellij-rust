@@ -22,7 +22,7 @@ FILE
             RustGenericArgsElementImpl(GENERIC_ARGS)
               PsiElement(::)('::')
               PsiElement(<)('<')
-              RustPathTypeElementImpl(PATH_TYPE)
+              RustBaseTypeElementImpl(BASE_TYPE)
                 RustPathElementImpl(PATH)
                   PsiElement(<IDENTIFIER>)('i32')
               PsiElement(>)('>')

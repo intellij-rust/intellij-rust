@@ -16,7 +16,7 @@ FILE
             PsiElement(<IDENTIFIER>)('x')
         PsiElement(:)(':')
         PsiWhiteSpace(' ')
-        RustPathTypeElementImpl(PATH_TYPE)
+        RustBaseTypeElementImpl(BASE_TYPE)
           RustPathElementImpl(PATH)
             PsiElement(<IDENTIFIER>)('String')
       PsiElement())(')')

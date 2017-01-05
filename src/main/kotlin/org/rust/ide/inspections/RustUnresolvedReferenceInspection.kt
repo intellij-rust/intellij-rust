@@ -13,7 +13,7 @@ class RustUnresolvedReferenceInspection : RustLocalInspectionTool() {
             override fun visitPath(o: RustPathElement) {
                 val p = o.parent
                 val isPrimitiveType = o is RustPathElement &&
-                    p is RustPathTypeElement &&
+                    p is RustBaseTypeElement &&
                     RustTypificationEngine.typifyType(p).isPrimitive
 
                 if (isPrimitiveType || o.reference.resolve() != null) return

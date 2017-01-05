@@ -5,9 +5,9 @@ import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
+import org.rust.lang.core.psi.RustBaseTypeElement
 import org.rust.lang.core.psi.RustImplItemElement
 import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustPathTypeElement
 import org.rust.lang.core.psi.impl.RustStubbedElementImpl
 import org.rust.lang.core.stubs.RustImplItemElementStub
 
@@ -22,7 +22,7 @@ abstract class RustImplItemImplMixin : RustStubbedElementImpl<RustImplItemElemen
 
     override fun getPresentation(): ItemPresentation {
         val t = type
-        if (t is RustPathTypeElement) {
+        if (t is RustBaseTypeElement) {
             val pres = (t.path?.reference?.resolve() as? RustNamedElement)?.presentation
             if (pres != null) {
                 return PresentationData(pres.presentableText, pres.locationString, RustIcons.IMPL, null)

@@ -4,9 +4,9 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustPathTypeElement
+import org.rust.lang.core.psi.RustBaseTypeElement
 import org.rust.lang.core.psi.RustPsiFactory
-import org.rust.lang.core.psi.RustRefTypeElement
+import org.rust.lang.core.psi.RustRefLikeTypeElement
 import org.rust.lang.core.psi.util.parentOfType
 
 /**
@@ -29,17 +29,27 @@ open class SetMutableIntention : PsiElementBaseIntentionAction() {
 
     open val mutable = true
 
-    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
-        val ref = element.parentOfType<RustRefTypeElement>() ?: return false
-
-        return (ref.mut == null) == mutable
-    }
+    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean =
+        findContext(element) != null
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
-        val ref = element.parentOfType<RustRefTypeElement>() ?: return
-        val path = ref.type as? RustPathTypeElement ?: return
+        val ctx = findContext(element) ?: return
 
-        val newType = RustPsiFactory(project).createReferenceType(path.text, mutable)
-        ref.replace(newType)
+
+        val newType = RustPsiFactory(project).createReferenceType(ctx.baseType.text, mutable)
+        ctx.refType.replace(newType)
+    }
+
+    private data class Context(
+        val refType: RustRefLikeTypeElement,
+        val baseType: RustBaseTypeElement
+    )
+
+    private fun findContext(element: PsiElement): Context? {
+        val refType = element.parentOfType<RustRefLikeTypeElement>() ?: return null
+        if (refType.and == null) return null
+        val baseType = refType.type as? RustBaseTypeElement ?: return null
+        if ((refType.mut == null) != mutable) return null
+        return Context(refType, baseType)
     }
 }

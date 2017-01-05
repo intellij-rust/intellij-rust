@@ -296,7 +296,7 @@ private fun innerDeclarationsIn(
             scope.typeParams.asScopeEntries() +
                 sequenceOfNotNull(ScopeEntry.lazy(RustPath.CSELF) {
                     //TODO: handle types which are not `NamedElements` (e.g. tuples)
-                    (scope.type as? RustPathTypeElement)?.path?.reference?.resolve()
+                    (scope.type as? RustBaseTypeElement)?.path?.reference?.resolve()
                 })
         }
 

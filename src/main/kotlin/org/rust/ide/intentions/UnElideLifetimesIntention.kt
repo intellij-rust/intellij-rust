@@ -23,7 +23,7 @@ class UnElideLifetimesIntention : PsiElementBaseIntentionAction() {
     override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
         val fnDecl = findFnDecl(element) ?: return false
 
-        if ((fnDecl.retType?.type as? RustRefTypeElement)?.lifetime != null)
+        if ((fnDecl.retType?.type as? RustRefLikeTypeElement)?.lifetime != null)
             return false
 
         val args = fnDecl.allRefArgs
@@ -47,14 +47,14 @@ class UnElideLifetimesIntention : PsiElementBaseIntentionAction() {
         fnDecl.genericParams?.replace(genericParams) ?: fnDecl.addAfter(genericParams, fnDecl.identifier)
 
         // return type
-        val retType = fnDecl.retType?.type as? RustRefTypeElement ?: return
+        val retType = fnDecl.retType?.type as? RustRefLikeTypeElement ?: return
 
         val parameters = checkNotNull(fnDecl.parameters)
         if ((parameters.selfArgument != null) || (fnDecl.allRefArgs.drop(1).none())) {
             retType.replace(createRefType(project, retType, fnDecl.allRefArgs.first().lifetime!!.text))
         } else {
             val lifeTime = (retType.replace(createRefType(project, retType, "'unknown"))
-                as RustRefTypeElement).lifetime ?: return
+                as RustRefLikeTypeElement).lifetime ?: return
             editor.selectionModel.setSelection(lifeTime.textRange.startOffset + 1, lifeTime.textRange.endOffset)
         }
     }
@@ -66,22 +66,26 @@ class UnElideLifetimesIntention : PsiElementBaseIntentionAction() {
         return if (fnItem.contains(scope)) null else fnItem
     }
 
-    private fun createRefType(project: Project, origin: RustRefTypeElement, lifeTimeName: String): RustRefTypeElement =
-        RustPsiFactory(project).createType(origin.text.replaceFirst("&", "&$lifeTimeName ")) as RustRefTypeElement
+    private fun createRefType(project: Project, origin: RustRefLikeTypeElement, lifeTimeName: String): RustRefLikeTypeElement =
+        RustPsiFactory(project).createType(origin.text.replaceFirst("&", "&$lifeTimeName ")) as RustRefLikeTypeElement
 
     private fun createParam(project: Project, origin: PsiElement, lifeTimeName: String): PsiElement =
         RustPsiFactory(project).createMethodParam(origin.text.replaceFirst("&", "&$lifeTimeName "))
 
     private val RustFunctionElement.allRefArgs: Sequence<PsiElement> get() {
         val selfAfg: Sequence<PsiElement?> = sequenceOf(parameters?.selfArgument)
-        val params:  Sequence<PsiElement?> = parameters?.parameterList?.asSequence()?.filter { it.type is RustRefTypeElement } ?: emptySequence()
+        val params: Sequence<PsiElement?> = parameters?.parameterList?.asSequence()
+            ?.filter { param ->
+                val type = param.type
+                type is RustRefLikeTypeElement && type.and != null
+            } ?: emptySequence()
         return (selfAfg + params).filterNotNull()
     }
 
     private val PsiElement.lifetime: PsiElement? get() =
         when (this) {
             is RustSelfArgumentElement -> lifetime
-            is RustParameterElement -> (type as? RustRefTypeElement)?.lifetime
+            is RustParameterElement -> (type as? RustRefLikeTypeElement)?.lifetime
             else -> null
         }
 }

@@ -41,8 +41,8 @@ class RustPsiFactory(private val project: Project) {
             error("Failed to create type from text: `$text`")
     }
 
-    fun createReferenceType(innerTypeText: String, mutable: Boolean): RustRefTypeElement =
-        createType("&${if (mutable) "mut " else ""}$innerTypeText") as RustRefTypeElement
+    fun createReferenceType(innerTypeText: String, mutable: Boolean): RustRefLikeTypeElement =
+        createType("&${if (mutable) "mut " else ""}$innerTypeText") as RustRefLikeTypeElement
 
     fun createModDeclItem(modName: String): RustModDeclItemElement =
         createFromText("mod $modName;")

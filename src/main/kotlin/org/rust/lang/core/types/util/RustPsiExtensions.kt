@@ -52,7 +52,7 @@ val RustTypeParamElement.bounds: Sequence<RustPolyboundElement>
         val whereBounds =
             owner?.whereClause?.wherePredList.orEmpty()
                 .asSequence()
-                .filter     { (it.type as? RustPathTypeElement)?.path?.reference?.resolve() == this }
+                .filter { (it.type as? RustBaseTypeElement)?.path?.reference?.resolve() == this }
                 .flatMap    { it.typeParamBounds?.polyboundList.orEmpty().asSequence() }
 
         return typeParamBounds?.polyboundList.orEmpty().asSequence() + whereBounds

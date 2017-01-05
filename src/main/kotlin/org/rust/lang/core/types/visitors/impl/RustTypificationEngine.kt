@@ -210,7 +210,7 @@ private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedT
             RustUnitType
     }
 
-    override fun visitPathType(o: RustPathTypeElement) = set {
+    override fun visitBaseType(o: RustBaseTypeElement) = set {
         val path = o.path?.asRustPath ?: return@set RustUnknownType
         if (path is RustPath.Named && path.segments.isEmpty()) {
             val primitiveType = RustPrimitiveTypeBase.fromTypeName(path.head.name)
@@ -219,8 +219,10 @@ private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedT
         RustUnresolvedPathType(path)
     }
 
-    override fun visitRefType(o: RustRefTypeElement) = set {
-        o.type?.let { RustUnresolvedReferenceType(it.type, o.mut != null) } ?: RustUnknownType
+    override fun visitRefLikeType(o: RustRefLikeTypeElement) = set {
+        if (o.and == null) return@set RustUnknownType //FIXME: handle pointer types
+        val base = o.type ?: return@set RustUnknownType
+        RustUnresolvedReferenceType(base.type, o.mut != null)
     }
 }
 

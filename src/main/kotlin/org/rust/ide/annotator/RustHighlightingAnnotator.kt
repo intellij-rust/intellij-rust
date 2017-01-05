@@ -27,7 +27,7 @@ class RustHighlightingAnnotator : Annotator {
                 val parent = element.parent
                 val isPrimitiveType =
                     element is RustPathElement &&
-                        parent is RustPathTypeElement &&
+                        parent is RustBaseTypeElement &&
                         RustTypificationEngine.typifyType(parent).isPrimitive
 
                 val color =
