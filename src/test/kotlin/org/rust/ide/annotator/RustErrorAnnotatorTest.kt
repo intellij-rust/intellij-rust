@@ -1,7 +1,33 @@
 package org.rust.ide.annotator
 
-class RustInvalidSyntaxAnnotatorTest : RustAnnotatorTestBase() {
-    override val dataPath = ""
+class RustErrorAnnotatorTest: RustAnnotatorTestBase() {
+    override val dataPath = "org/rust/ide/annotator/fixtures/errors"
+
+    fun testInvalidModuleDeclarations() = doTest("helper.rs")
+    fun testInvalidTraitImplFix() = checkQuickFix("Implement methods")
+
+    fun testCreateFileQuickFix() = checkByDirectory {
+        openFileInEditor("mod.rs")
+        applyQuickFix("Create module file")
+    }
+
+    fun testCreateFileAndExpandModuleQuickFix() = checkByDirectory {
+        openFileInEditor("foo.rs")
+        applyQuickFix("Create module file")
+    }
+
+    fun testInvalidTraitImpl() = checkErrors("""
+        trait T {
+            fn foo() {}
+            fn bar();
+            fn baz();
+        }
+
+        <error descr="Not all trait items implemented, missing: `bar`">impl T for ()</error> {
+            fn baz() {}
+            fn <error descr="Method is not a member of trait `T`">quux</error>() {}
+        }
+    """)
 
     fun testPaths() = checkErrors("""
         fn main() {
@@ -133,4 +159,5 @@ class RustInvalidSyntaxAnnotatorTest : RustAnnotatorTestBase() {
             <error descr="Unnecessary visibility qualifier [E0449]">pub</error> const C: u32 = 10;
         }
     """)
+
 }
