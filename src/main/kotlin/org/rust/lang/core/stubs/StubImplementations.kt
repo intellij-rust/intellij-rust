@@ -49,6 +49,19 @@ class RustFileStub : PsiFileStubImpl<RustFile> {
         }
 
         override fun getExternalId(): String = "Rust.file"
+
+//        Uncomment to find out what causes switch to the AST
+
+//        private val PARESED = ContainerUtil.newConcurrentSet<String>()
+//        override fun doParseContents(chameleon: ASTNode, psi: PsiElement): ASTNode? {
+//            val path = psi.containingFile?.virtualFile?.path
+//            if (path != null && PARESED.add(path)) {
+//                println("Parsing (${PARESED.size}) ${path}")
+//                //Exception().printStackTrace(System.out)
+//                println()
+//            }
+//            return super.doParseContents(chameleon, psi)
+//        }
     }
 }
 
