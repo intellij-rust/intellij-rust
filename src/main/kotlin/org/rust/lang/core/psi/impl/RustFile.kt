@@ -38,12 +38,18 @@ class RustFile(
     override fun getOriginalFile(): RustFile = super.getOriginalFile() as RustFile
 
     override val `super`: RustMod?
-        get() = CachedValuesManager.getCachedValue(originalFile, CachedValueProvider {
-            CachedValueProvider.Result.create(
-                RustModulesIndex.getSuperFor(originalFile),
-                PsiModificationTracker.MODIFICATION_COUNT
-            )
-        })
+        get() {
+            // XXX: without this we'll close over `thisFile`, and it's verboten
+            // to store references to PSI inside `CachedValueProvider` other than
+            // the key PSI element
+            val originalFile = originalFile
+            return CachedValuesManager.getCachedValue(originalFile, CachedValueProvider {
+                CachedValueProvider.Result.create(
+                    RustModulesIndex.getSuperFor(originalFile),
+                    PsiModificationTracker.MODIFICATION_COUNT
+                )
+            })
+        }
 
     override val modName: String? = if (name != RustMod.MOD_RS) FileUtil.getNameWithoutExtension(name) else parent?.name
 
