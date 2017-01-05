@@ -3,7 +3,6 @@ package org.rust.lang.core.stubs
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiFile
 import com.intellij.psi.StubBuilder
-import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.stubs.*
 import com.intellij.psi.tree.IStubFileElementType
 import org.rust.lang.RustLanguage
@@ -35,7 +34,7 @@ class RustFileStub : PsiFileStubImpl<RustFile> {
 
     object Type : IStubFileElementType<RustFileStub>(RustLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 37
+        override fun getStubVersion(): Int = 40
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RustFileStub(file as RustFile)
@@ -83,6 +82,18 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "USE_GLOB" -> RustUseGlobElementStub.Type
 
     "PATH" -> RustPathElementStub.Type
+
+    "VEC_TYPE" -> RustTypeElementStub.VecType
+    "REF_LIKE_TYPE" -> RustTypeElementStub.RefLikeType
+    "BARE_FN_TYPE" -> RustTypeElementStub.BareFnType
+    "TUPLE_TYPE" -> RustTypeElementStub.TupleType
+    "BASE_TYPE" -> RustTypeElementStub.BaseType
+    "TYPE_WITH_BOUNDS_TYPE" -> RustTypeElementStub.TypeWithBoundsType
+    "FOR_IN_TYPE" -> RustTypeElementStub.ForInType
+    "IMPL_TRAIT_TYPE" -> RustTypeElementStub.ImplTraitType
+
+    "GENERIC_PARAMS" -> RustGenericParamsElementStub.Type
+    "TYPE_PARAM" -> RustTypeParamElementStub.Type
 
     else -> error("Unknown element $name")
 }
@@ -678,8 +689,7 @@ class RustPathElementStub(
 ) : StubBase<RustPathElement>(parent, elementType) {
 
     object Type : RustStubElementType<RustPathElementStub, RustPathElement>("PATH") {
-        override fun shouldCreateStub(node: ASTNode): Boolean =
-            TreeUtil.findParent(node, RustCompositeElementTypes.USE_ITEM) != null
+        override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
         override fun createPsi(stub: RustPathElementStub) =
             RustPathElementImpl(stub, this)
@@ -703,6 +713,99 @@ class RustPathElementStub(
 
         override fun indexStub(stub: RustPathElementStub, sink: IndexSink) {
             //NOP
+        }
+    }
+}
+
+
+class RustTypeElementStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>
+) : StubBase<RustTypeElement>(parent, elementType) {
+
+    abstract class Type<PsiT : RustCompositeElement>(
+        debugName: String,
+        psiCtor: (RustTypeElementStub, IStubElementType<*, *>) -> PsiT
+    ) : RustStubElementType.Trivial<RustTypeElementStub, PsiT>(debugName, ::RustTypeElementStub, psiCtor) {
+        override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
+    }
+
+    object VecType : Type<RustVecTypeElement>(
+        "VEC_TYPE",
+        ::RustVecTypeElementImpl
+    )
+
+    object RefLikeType : Type<RustRefLikeTypeElement>(
+        "REF_LIKE_TYPE",
+        ::RustRefLikeTypeElementImpl
+    )
+
+    object BareFnType : Type<RustBareFnTypeElement>(
+        "BARE_FN_TYPE",
+        ::RustBareFnTypeElementImpl
+    )
+
+    object TupleType : Type<RustTupleTypeElement>(
+        "TUPLE_TYPE",
+        ::RustTupleTypeElementImpl
+    )
+
+    object BaseType : Type<RustBaseTypeElement>(
+        "BASE_TYPE",
+        ::RustBaseTypeElementImpl
+    )
+
+    object TypeWithBoundsType : Type<RustTypeWithBoundsTypeElement>(
+        "TYPE_WITH_BOUNDS_TYPE",
+        ::RustTypeWithBoundsTypeElementImpl
+    )
+
+    object ForInType : Type<RustForInTypeElement>(
+        "FOR_IN_TYPE",
+        ::RustForInTypeElementImpl
+    )
+
+    object ImplTraitType : Type<RustImplTraitTypeElement>(
+        "IMPL_TRAIT_TYPE",
+        ::RustImplTraitTypeElementImpl
+    )
+}
+
+class RustGenericParamsElementStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>
+) : StubBase<RustGenericParamsElement>(parent, elementType) {
+    object Type : RustStubElementType.Trivial<RustGenericParamsElementStub, RustGenericParamsElement>(
+        "GENERIC_PARAMS",
+        ::RustGenericParamsElementStub,
+        ::RustGenericParamsElementImpl
+    )
+}
+
+
+class RustTypeParamElementStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    override val name: String?
+) : StubBase<RustTypeParamElement>(parent, elementType),
+    RustNamedStub {
+
+    object Type : RustStubElementType<RustTypeParamElementStub, RustTypeParamElement>("TYPE_PARAM") {
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RustTypeParamElementStub(parentStub, this,
+                dataStream.readNameAsString()
+            )
+
+        override fun serialize(stub: RustTypeParamElementStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.name)
+            }
+
+        override fun createPsi(stub: RustTypeParamElementStub): RustTypeParamElement =
+            RustTypeParamElementImpl(stub, this)
+
+        override fun createStub(psi: RustTypeParamElement, parentStub: StubElement<*>?) =
+            RustTypeParamElementStub(parentStub, this, psi.name)
+
+        override fun indexStub(stub: RustTypeParamElementStub, sink: IndexSink) {
+            // NOP
         }
     }
 }

@@ -13,45 +13,58 @@ class RustTypeAwareResolveTest : RustResolveTestBase() {
         }
     """)
 
-    fun testMethodCallExpr1() = checkByCode("""
-        struct S;
+    fun testMethodCallExpr1() = stubOnlyResolve("""
+    //- main.rs
+        mod aux;
+        use aux::S;
+
+        fn main() {
+            let s: S = S;
+
+            s.foo();
+            //^ aux.rs
+        }
+
+    //- aux.rs
+        pub struct S;
 
         impl S {
-            fn bar(&self) {}
              //X
-            fn foo(&self) {
-                let s: S = S;
-
-                s.bar();
-                //^
-            }
+            pub fn foo(&self) { }
         }
     """)
 
-    fun testMethodCallExpr2() = checkByCode("""
+    fun testMethodCallExpr2() = stubOnlyResolve("""
+    //- main.rs
+        mod aux;
+        use aux::S;
+
+        fn main() {
+            let s: S = S;
+
+            s.foo();
+            //^ aux.rs
+        }
+
+    //- aux.rs
         enum S { X }
 
         impl S {
-            fn bar(&self) {}
-              //X
-            fn foo(&self) {
-                let s = S::X;
-
-                s.bar();
-                //^
-            }
+            fn foo(&self) { }
         }
     """)
 
-    fun testMethodCallOnTraitObject() = checkByCode("""
+    fun testMethodCallOnTraitObject() = stubOnlyResolve("""
+    //- main.rs
+        mod aux;
+        use aux::T;
+
+        fn call_virtually(obj: &T) { obj.virtual_function() }
+                                                //^ aux.rs
+
+    //- aux.rs
         trait T {
             fn virtual_function(&self) {}
-                //X
-        }
-
-        fn call_virtually(obj: &T) {
-            obj.virtual_function()
-                //^
         }
     """)
 
@@ -65,17 +78,18 @@ class RustTypeAwareResolveTest : RustResolveTestBase() {
         }
     """)
 
-    fun testFieldExpr() = checkByCode("""
-        struct S { x: f32 }
-                 //X
-
-        impl S {
-            fn foo(&self) {
-                let s: S = S { x: 0. };
-                s.x;
-                //^
-            }
+    fun testFieldExpr() = stubOnlyResolve("""
+    //- main.rs
+        mod aux;
+        use aux::S;
+        fn main() {
+            let s: S = S { x: 0. };
+            s.x;
+            //^ aux.rs
         }
+
+    //- aux.rs
+        struct S { x: f32 }
     """)
 
     fun testTupleFieldExpr() = checkByCode("""
@@ -357,5 +371,23 @@ class RustTypeAwareResolveTest : RustResolveTestBase() {
 
         use self::m::E::foo;
                         //^ unresolved
+    """)
+
+    fun testMethodReference() = stubOnlyResolve("""
+    //- main.rs
+        mod x;
+        use self::x::Stdin;
+
+        fn main() {
+            Stdin::read_line;
+                     //^ x.rs
+        }
+
+    //- x.rs
+        pub struct Stdin { }
+
+        impl Stdin {
+            pub fn read_line(&self) { }
+        }
     """)
 }

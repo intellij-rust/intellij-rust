@@ -327,7 +327,11 @@ private restricted_pat ::= &( IDENTIFIER
                             | MUT IDENTIFIER
                             ) pat
 
-generic_params ::= '<' lifetimes_params type_params '>'
+generic_params ::= '<' lifetimes_params type_params '>' {
+  extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RustGenericParamsElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 private lifetimes_params ::= <<list_element lifetime_param>>*
 private type_params      ::= <<list_element type_param>>*
@@ -337,8 +341,11 @@ lifetime_param_bounds ::= ':' LIFETIME ('+' LIFETIME)*
 
 type_param ::= IDENTIFIER type_param_bounds? [ '=' type ] {
   implements = [ "org.rust.lang.core.psi.RustNamedElement" ]
-  extends = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
+  extends = "org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RustTypeParamElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+
 type_param_bounds ::= ':' polybound ('+' polybound)*
 polybound ::= [ for_lifetimes | '?' ] bound
 
@@ -738,24 +745,52 @@ type ::= vec_type
        | base_type
        | type_with_bounds_type
        | for_in_type
-       | impl_trait_type
+       | impl_trait_type {
 
-vec_type ::= '[' type [';' any_expr] ']'
+  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl<?>"
+}
 
-ref_like_type ::= ( '&' LIFETIME? MUT? | '*' [ CONST | MUT ] ) type
+vec_type ::= '[' type [';' any_expr] ']' {
+  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-bare_fn_type ::= [ UNSAFE? extern_abi? ] FN fn_type_parameters ret_type?
+ref_like_type ::= ( '&' LIFETIME? MUT? | '*' [ CONST | MUT ] ) type {
+  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-tuple_type ::= '(' [ <<comma_separated_list type>> ] ')'
+bare_fn_type ::= [ UNSAFE? extern_abi? ] FN fn_type_parameters ret_type? {
+  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-type_with_bounds_type ::= type ('+' bound)+
+tuple_type ::= '(' [ <<comma_separated_list type>> ] ')' {
+  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+type_with_bounds_type ::= type ('+' bound)+ {
+  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 bound ::= LIFETIME | trait_ref
 
-for_in_type ::= for_lifetimes (bare_fn_type | trait_ref)
+for_in_type ::= for_lifetimes (bare_fn_type | trait_ref) {
+  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-impl_trait_type ::= IMPL polybound ('+' polybound)*
+impl_trait_type ::= IMPL polybound ('+' polybound)* {
+  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-base_type ::= '_' | '!' | !'<' path_generic_args_without_colons | &'<' type_qual_path
+base_type ::= '_' | '!' | !'<' path_generic_args_without_colons | &'<' type_qual_path {
+  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 type_alias ::=
   outer_attr* DEFAULT? vis? TYPE_KW IDENTIFIER ( generic_params where_clause? | where_clause | type_param_bounds )? [ '=' type ] ';'
