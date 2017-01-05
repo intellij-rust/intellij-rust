@@ -37,7 +37,7 @@ class RustLiteralAnnotator : Annotator {
                 BYTE_LITERAL, CHAR_LITERAL -> {
                     val value = literal.value
                     when {
-                        value == null || value.length == 0 -> "empty ${literal.displayName}"
+                        value == null || value.isEmpty() -> "empty ${literal.displayName}"
                         value.length > 1 -> "too many characters in ${literal.displayName}"
                         else -> null
                     }?.let { holder.literalError(literal, it) }

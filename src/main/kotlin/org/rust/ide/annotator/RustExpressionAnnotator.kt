@@ -1,13 +1,10 @@
 package org.rust.ide.annotator
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
+import org.rust.ide.annotator.fixes.AddStructFieldsFix
 import org.rust.ide.inspections.duplicates.findDuplicateReferences
 import org.rust.ide.intentions.RemoveParenthesesFromExprIntention
 import org.rust.lang.core.psi.*
@@ -46,38 +43,11 @@ class RustExpressionAnnotator : Annotator {
 
         if (missingFields.isNotEmpty()) {
             holder.createErrorAnnotation(expr.rbrace ?: expr, "Some fields are missing")
-                .registerFix(AddStructFieldsQuickFix(missingFields, expr), expr.textRange)
+                .registerFix(AddStructFieldsFix(missingFields, expr), expr.textRange)
         }
     }
 }
 
-private class AddStructFieldsQuickFix(
-    val fieldsToAdd: List<RustFieldDeclElement>,
-    expr: RustStructExprBodyElement
-) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
-    override fun getText(): String = "Add missing fields"
-
-    override fun getFamilyName(): String = text
-
-    override fun invoke(
-        project: Project,
-        file: PsiFile,
-        editor: Editor?,
-        startElement: PsiElement,
-        endElement: PsiElement
-    ) {
-        val expr = startElement as RustStructExprBodyElement
-        val newBody = RustPsiFactory(project).createStructExprBody(fieldsToAdd.mapNotNull { it.name })
-        val firstNewField = newBody.lbrace.nextSibling ?: return
-        val lastNewField = newBody.rbrace?.prevSibling ?: return
-        expr.addRangeAfter(firstNewField, lastNewField, expr.lbrace)
-        if (editor != null) {
-            val firstExpression = expr.structExprFieldList.first().expr
-                ?: error("Invalid struct expr body: `${expr.text}`")
-            editor.caretModel.moveToOffset(firstExpression.textOffset)
-        }
-    }
-}
 
 private class RedundantParenthesisVisitor(private val holder: AnnotationHolder) : RustElementVisitor() {
     override fun visitCondition(o: RustConditionElement) =
