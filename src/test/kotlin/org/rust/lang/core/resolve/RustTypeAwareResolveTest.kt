@@ -13,7 +13,8 @@ class RustTypeAwareResolveTest : RustResolveTestBase() {
         }
     """)
 
-    fun testMethodCallExpr1() = stubOnlyResolve("""
+    // TODO: change the following tests to `stubOnlyResolve` after 2016.1
+    fun testMethodCallExpr1() = checkByCode("""
     //- main.rs
         mod aux;
         use aux::S;
@@ -22,19 +23,19 @@ class RustTypeAwareResolveTest : RustResolveTestBase() {
             let s: S = S;
 
             s.foo();
-            //^ aux.rs
+            //^
         }
 
     //- aux.rs
         pub struct S;
 
         impl S {
-             //X
             pub fn foo(&self) { }
+                  //X
         }
     """)
 
-    fun testMethodCallExpr2() = stubOnlyResolve("""
+    fun testMethodCallExpr2() = checkByCode("""
     //- main.rs
         mod aux;
         use aux::S;
@@ -43,7 +44,7 @@ class RustTypeAwareResolveTest : RustResolveTestBase() {
             let s: S = S;
 
             s.foo();
-            //^ aux.rs
+            //^
         }
 
     //- aux.rs
@@ -51,6 +52,26 @@ class RustTypeAwareResolveTest : RustResolveTestBase() {
 
         impl S {
             fn foo(&self) { }
+              //X
+        }
+    """)
+
+    fun testMethodReference() = checkByCode("""
+    //- main.rs
+        mod x;
+        use self::x::Stdin;
+
+        fn main() {
+            Stdin::read_line;
+                     //^
+        }
+
+    //- x.rs
+        pub struct Stdin { }
+
+        impl Stdin {
+            pub fn read_line(&self) { }
+                   //X
         }
     """)
 
@@ -371,23 +392,5 @@ class RustTypeAwareResolveTest : RustResolveTestBase() {
 
         use self::m::E::foo;
                         //^ unresolved
-    """)
-
-    fun testMethodReference() = stubOnlyResolve("""
-    //- main.rs
-        mod x;
-        use self::x::Stdin;
-
-        fn main() {
-            Stdin::read_line;
-                     //^ x.rs
-        }
-
-    //- x.rs
-        pub struct Stdin { }
-
-        impl Stdin {
-            pub fn read_line(&self) { }
-        }
     """)
 }
