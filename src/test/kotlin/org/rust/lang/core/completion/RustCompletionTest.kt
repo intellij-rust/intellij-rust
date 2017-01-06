@@ -8,10 +8,16 @@ class RustCompletionTest : RustCompletionTestBase() {
         fn foo(quux: i32) { qu/*caret*/ }
     """)
 
-    fun testFunctionName() = checkSingleCompletion("frobnicate()", """
+    fun testFunctionCall() = checkSingleCompletion("frobnicate()", """
         fn frobnicate() {}
 
         fn main() { frob/*caret*/ }
+    """)
+
+    fun testFunctionWithParens() = checkSingleCompletion("frobnicate", """
+        fn frobnicate() {}
+
+        fn main() { frob/*caret*/() }
     """)
 
     fun testPath() = checkSingleCompletion("foo::bar::frobnicate()", """

@@ -13,7 +13,7 @@ class RustTypeAwareCompletionTest : RustCompletionTestBase() {
         }
     """)
 
-    fun testMethodCallExprWithParens() = checkSingleCompletion("x.transmogrify()", """
+    fun testMethodCallExprWithParens() = checkSingleCompletion("x.transmogrify", """
         struct S {
             transmogrificator: i32
         }
@@ -25,7 +25,6 @@ class RustTypeAwareCompletionTest : RustCompletionTestBase() {
             x.trans/*caret*/()
         }
     """)
-
 
     fun testMethodCallExprRef() = checkSingleCompletion("self.transmogrify()", """
         struct S;

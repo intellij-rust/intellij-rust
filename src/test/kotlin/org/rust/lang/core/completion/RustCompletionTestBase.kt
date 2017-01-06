@@ -34,7 +34,7 @@ abstract class RustCompletionTestBase : RustTestCaseBase() {
         val element = myFixture.file.findElementAt(myFixture.caretOffset - shift)!!
         val skipTextCheck = normName.isEmpty() || normName.contains(' ')
         check((skipTextCheck || element.text == normName) && (element.fitsHierarchically(target) || element.fitsLinearly(target))) {
-            "Wrong completion, expected `$target`, but got `${element.text}`"
+            "Wrong completion, expected `$target`, but got\n${myFixture.file.text}"
         }
     }
 
