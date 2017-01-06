@@ -4,7 +4,6 @@ class RustErrorAnnotatorTest: RustAnnotatorTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/errors"
 
     fun testInvalidModuleDeclarations() = doTest("helper.rs")
-    fun testInvalidTraitImplFix() = checkQuickFix("Implement methods")
 
     fun testCreateFileQuickFix() = checkByDirectory {
         openFileInEditor("mod.rs")
@@ -15,19 +14,6 @@ class RustErrorAnnotatorTest: RustAnnotatorTestBase() {
         openFileInEditor("foo.rs")
         applyQuickFix("Create module file")
     }
-
-    fun testInvalidTraitImpl() = checkErrors("""
-        trait T {
-            fn foo() {}
-            fn bar();
-            fn baz();
-        }
-
-        <error descr="Not all trait items implemented, missing: `bar`">impl T for ()</error> {
-            fn baz() {}
-            fn <error descr="Method is not a member of trait `T`">quux</error>() {}
-        }
-    """)
 
     fun testPaths() = checkErrors("""
         fn main() {
@@ -134,10 +120,103 @@ class RustErrorAnnotatorTest: RustAnnotatorTestBase() {
             }
     """)
 
+    fun testE0046_AbsentMethodInTraitImpl() = checkErrors("""
+        trait TError {
+            fn bar();
+            fn baz();
+            fn boo();
+        }
+        <error descr="Not all trait items implemented, missing: `bar`, `boo` [E0046]">impl TError for ()</error> {
+            fn baz() {}
+        }
+    """)
+
+    fun testE0046_NotApplied() = checkErrors("""
+        trait T {
+            fn foo() {}
+            fn bar();
+        }
+        impl T for() {
+            fn bar() {}
+        }
+    """)
+
+    fun testE0046_ImplementMethodsFix() = checkQuickFix("Implement methods")
+
+    fun testE0050_IncorrectParamsNumberInTraitImpl() = checkErrors("""
+        trait T {
+            fn ok_foo();
+            fn ok_bar(a: u32, b: f64);
+            fn foo();
+            fn bar(a: u32);
+            fn baz(a: u32, b: bool, c: f64);
+            fn boo(&self, o: isize);
+        }
+        struct S;
+        impl T for S {
+            fn ok_foo() {}
+            fn ok_bar(a: u32, b: f64) {}
+            fn foo<error descr="Method `foo` has 1 parameter but the declaration in trait `T` has 0 [E0050]">(a: u32)</error> {}
+            fn bar<error descr="Method `bar` has 2 parameters but the declaration in trait `T` has 1 [E0050]">(a: u32, b: bool)</error> {}
+            fn baz<error descr="Method `baz` has 0 parameters but the declaration in trait `T` has 3 [E0050]">()</error> {}
+            fn boo<error descr="Method `boo` has 2 parameters but the declaration in trait `T` has 1 [E0050]">(&self, o: isize, x: f16)</error> {}
+        }
+    """)
+
+    fun testE0185_SelfInImplNotInTrait() = checkErrors("""
+        trait T {
+            fn ok_foo(&self, x: u32);
+            fn ok_bar(&mut self);
+            fn ok_baz(self);
+            fn foo(x: u32);
+            fn bar();
+            fn baz(o: bool);
+        }
+        struct S;
+        impl T for S {
+            fn ok_foo(&self, x: u32) {}
+            fn ok_bar(&mut self) {}
+            fn ok_baz(self) {}
+            fn foo(<error descr="Method `foo` has a `&self` declaration in the impl, but not in the trait [E0185]">&self</error>, x: u32) {}
+            fn bar(<error descr="Method `bar` has a `&mut self` declaration in the impl, but not in the trait [E0185]">&mut self</error>) {}
+            fn baz(<error descr="Method `baz` has a `self` declaration in the impl, but not in the trait [E0185]">self</error>, o: bool) {}
+        }
+    """)
+
+    fun testE0186_SelfInTraitNotInImpl() = checkErrors("""
+        trait T {
+            fn ok_foo(&self, x: u32);
+            fn ok_bar(&mut self);
+            fn ok_baz(self);
+            fn foo(&self, x: u32);
+            fn bar(&mut self);
+            fn baz(self, o: bool);
+        }
+        struct S;
+        impl T for S {
+            fn ok_foo(&self, x: u32) {}
+            fn ok_bar(&mut self) {}
+            fn ok_baz(self) {}
+            fn foo<error descr="Method `foo` has a `&self` declaration in the trait, but not in the impl [E0186]">(x: u32)</error> {}
+            fn bar<error descr="Method `bar` has a `&mut self` declaration in the trait, but not in the impl [E0186]">()</error> {}
+            fn baz<error descr="Method `baz` has a `self` declaration in the trait, but not in the impl [E0186]">(o: bool)</error> {}
+        }
+    """)
+
     fun testE0202_TypeAliasInInherentImpl() = checkErrors("""
         struct Foo;
         impl Foo {
             <error descr="Associated types are not allowed in inherent impls [E0202]">type Long = i64;</error>
+        }
+    """)
+
+    fun testE0407_UnknownMethodInTraitImpl() = checkErrors("""
+        trait T {
+            fn foo();
+        }
+        impl T for () {
+            fn foo() {}
+            fn <error descr="Method `quux` is not a member of trait `T` [E0407]">quux</error>() {}
         }
     """)
 
