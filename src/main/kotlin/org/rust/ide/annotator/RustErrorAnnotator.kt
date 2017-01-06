@@ -94,10 +94,7 @@ class RustErrorAnnotator : Annotator {
 
     private fun checkImpl(holder: AnnotationHolder, impl: RustImplItemElement) {
         val trait = impl.traitRef?.trait ?: return
-        val implHeaderTextRange = TextRange.create(
-            impl.textRange.startOffset,
-            impl.type?.textRange?.endOffset ?: impl.textRange.endOffset
-        )
+        val traitName = trait.name ?: return
 
         val canImplement = trait.functionList.associateBy { it.name }
         val mustImplement = canImplement.filterValues { it.isAbstract }
@@ -106,18 +103,26 @@ class RustErrorAnnotator : Annotator {
         val notImplemented = mustImplement.keys - implemented.keys
         if (!notImplemented.isEmpty()) {
             val toImplement = trait.functionList.filter { it.name in notImplemented }
+            val implHeaderTextRange = TextRange.create(
+                impl.textRange.startOffset,
+                impl.type?.textRange?.endOffset ?: impl.textRange.endOffset
+            )
 
             holder.createErrorAnnotation(implHeaderTextRange,
-                "Not all trait items implemented, missing: `${notImplemented.first()}`"
+                "Not all trait items implemented, missing: ${notImplemented.namesList} [E0046]"
             ).registerFix(ImplementMethodsFix(impl, toImplement))
-
         }
 
         val notMembers = implemented.filterKeys { it !in canImplement }
         for (method in notMembers.values) {
             holder.createErrorAnnotation(method.identifier,
-                "Method is not a member of trait `${trait.name}`")
+                "Method `${method.name}` is not a member of trait `$traitName` [E0407]")
         }
+
+        implemented
+            .map { it.value to canImplement[it.key] }
+            .filter { it.second != null }
+            .forEach { checkTraitFnImplParams(holder, it.first, it.second!!, traitName) }
     }
 
     private fun checkTypeAlias(holder: AnnotationHolder, ta: RustTypeAliasElement) {
@@ -148,11 +153,37 @@ class RustErrorAnnotator : Annotator {
         }
     }
 
+    private fun checkTraitFnImplParams(holder: AnnotationHolder, fn: RustFunctionElement, superFn: RustFunctionElement, traitName: String) {
+        val params = fn.parameters ?: return
+        val superParams = superFn.parameters ?: return
+        val selfArg = params.selfArgument
+
+        if (selfArg != null && superParams.selfArgument == null) {
+            holder.createErrorAnnotation(selfArg,
+                "Method `${fn.name}` has a `${selfArg.canonicalDecl}` declaration in the impl, but not in the trait [E0185]")
+        } else if (selfArg == null && superParams.selfArgument != null) {
+            holder.createErrorAnnotation(params,
+                "Method `${fn.name}` has a `${superParams.selfArgument?.canonicalDecl}` declaration in the trait, but not in the impl [E0186]")
+        }
+
+        val paramsCount = params.parameterList.size
+        val superParamsCount = superParams.parameterList.size
+        if (paramsCount != superParamsCount) {
+            holder.createErrorAnnotation(params,
+                "Method `${fn.name}` has $paramsCount ${pluralise(paramsCount, "parameter", "parameters")} but the declaration in trait `$traitName` has $superParamsCount [E0050]")
+        }
+    }
+
     private fun require(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
         if (el != null) null else holder.createErrorAnnotation(highlightElements.combinedRange ?: TextRange.EMPTY_RANGE, message)
 
     private fun deny(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
         if (el == null) null else holder.createErrorAnnotation(highlightElements.combinedRange ?: el.textRange, message)
+
+    private fun isInTraitImpl(o: RustVisElement): Boolean {
+        val impl = o.parent?.parent
+        return impl is RustImplItemElement && impl.traitRef != null
+    }
 
     private val Array<out PsiElement?>.combinedRange: TextRange?
         get() = if (isEmpty())
@@ -161,8 +192,16 @@ class RustErrorAnnotator : Annotator {
             .map { it.textRange }
             .reduce(TextRange::union)
 
-    private fun isInTraitImpl(o: RustVisElement): Boolean {
-        val impl = o.parent?.parent
-        return impl is RustImplItemElement && impl.traitRef != null
-    }
+    private val Collection<String?>.namesList: String
+        get() = mapNotNull{ "`$it`" }.joinToString(", ")
+
+    private val RustSelfArgumentElement.canonicalDecl: String
+        get() = buildString {
+            and?.let { append('&') }
+            mut?.let { append("mut ") }
+            append("self")
+        }
+
+    private fun pluralise(count: Int, singular: String, plural: String): String =
+        if (count == 1) singular else plural
 }
