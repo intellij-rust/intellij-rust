@@ -89,6 +89,22 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
         myFixture.configureFromExistingVirtualFile(myFixture.findFileInTempDir(path))
     }
 
+    data class ProjectFile(val path: String, val text: String) {
+        companion object {
+            fun parseFileCollection(text: String): List<ProjectFile> {
+                val fileSeparator = """^\s* //- (\S+)\s*$""".toRegex(RegexOption.MULTILINE)
+                val fileNames = fileSeparator.findAll(text).map { it.groupValues[1] }.toList()
+                val fileTexts = fileSeparator.split(text).filter(String::isNotBlank)
+
+                check(fileNames.size == fileTexts.size) {
+                    "Have you placed `//- filename.rs` markers?"
+                }
+
+                return fileNames.zip(fileTexts).map({ ProjectFile(it.first, it.second) })
+            }
+        }
+    }
+
     protected fun getVirtualFileByName(path: String): VirtualFile? =
         LocalFileSystem.getInstance().findFileByPath(path)
 

@@ -12,7 +12,6 @@ import org.rust.lang.core.psi.impl.mixin.isStatic
 import org.rust.lang.core.psi.impl.mixin.role
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.psi.visitors.RustComputingVisitor
 import org.rust.lang.core.types.util.isPrimitive
 import org.rust.lang.core.types.visitors.impl.RustTypificationEngine
 
@@ -20,98 +19,110 @@ import org.rust.lang.core.types.visitors.impl.RustTypificationEngine
 class RustHighlightingAnnotator : Annotator {
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-        val highlightingInfo =
-            // TODO(XXX): Much better would be to incorporate
-            //            that behaviour into visitor
-            if (element is RustReferenceElement) {
-                val parent = element.parent
-                val isPrimitiveType =
-                    element is RustPathElement &&
-                        parent is RustBaseTypeElement &&
-                        RustTypificationEngine.typifyType(parent).isPrimitive
+        val (partToHighlight, color) = if (element is RustReferenceElement) {
+            highlightReference(element)
+        } else {
+            highlightNotReference(element)
+        } ?: return
 
-                val color =
-                    if (isPrimitiveType) {
-                        RustColor.PRIMITIVE_TYPE
-                    } else {
-                        val ref = element.reference.resolve() ?: return
-                        // Highlight the element dependent on what it's referencing.
-                        HighlightingVisitor().compute(ref).color
-                    }
-
-                HighlightingInfo(element.referenceNameElement, color)
-            } else {
-                HighlightingVisitor().compute(element)
-            }
-
-        highlightingInfo.apply(holder)
+        holder.createInfoAnnotation(partToHighlight, null).textAttributes = color.textAttributesKey
     }
 
-    private data class HighlightingInfo(val element: PsiElement?, val color: RustColor?) {
-        fun apply(holder: AnnotationHolder) {
-            if (element != null && color != null) {
-                holder.createInfoAnnotation(element, null).textAttributes = color.textAttributesKey
-            }
+    private fun highlightReference(element: RustReferenceElement): Pair<PsiElement, RustColor>? {
+        val parent = element.parent
+        val isPrimitiveType = element is RustPathElement && parent is RustBaseTypeElement &&
+            RustTypificationEngine.typifyType(parent).isPrimitive
+
+        val color = if (isPrimitiveType) {
+            RustColor.PRIMITIVE_TYPE
+        } else {
+            val ref = element.reference.resolve() ?: return null
+            // Highlight the element dependent on what it's referencing.
+            colorFor(ref)
         }
+        return color?.let { element.referenceNameElement to it }
     }
 
-    private class HighlightingVisitor : RustComputingVisitor<HighlightingInfo>(default = HighlightingInfo(null, null)) {
-
-        fun highlight(element: PsiElement?, color: RustColor?) = set { HighlightingInfo(element, color) }
-
-        override fun visitLitExpr(o: RustLitExprElement) {
-            // Re-highlight literals in attributes
-            if (o.parent is RustMetaItemElement) {
-                val literal = o.firstChild
-                highlight(literal, RustHighlighter.map(literal.elementType))
+    private fun highlightNotReference(element: PsiElement): Pair<PsiElement, RustColor>? {
+        if (element is RustLitExprElement) {
+            if (element.parent is RustMetaItemElement) {
+                val literal = element.firstChild
+                val color = RustHighlighter.map(literal.elementType)
+                    ?: return null // FIXME: `error` here perhaps?
+                return literal to color
             }
+            return null
         }
 
-        override fun visitElement(element: PsiElement) {
-            if (element.elementType in RustTokenElementTypes.CONTEXTUAL_KEYWORDS) {
-                highlight(element, RustColor.KEYWORD)
-            }
+        // Although we remap tokens from identifier to keyword, this happens in the
+        // parser's pass, so we can't use HighlightingLexer to color these
+        if (element.elementType in RustTokenElementTypes.CONTEXTUAL_KEYWORDS) {
+            return element to RustColor.KEYWORD
         }
 
-        override fun visitTypeParam(o: RustTypeParamElement) = highlight(o.identifier, RustColor.TYPE_PARAMETER)
-
-        override fun visitAttr(o: RustAttrElement) = highlight(o, RustColor.ATTRIBUTE)
-
-        override fun visitTraitRef(o: RustTraitRefElement) = highlight(o.path.identifier, RustColor.TRAIT)
-
-        override fun visitPatBinding(o: RustPatBindingElement) {
-            when {
-                o.parentOfType<RustParameterElement>() != null -> highlight(o.identifier, RustColor.PARAMETER)
-                o.isMut -> highlight(o.identifier, RustColor.MUT_BINDING)
+        if (element is RustCompositeElement) {
+            val color = colorFor(element)
+            val part = partToHighlight(element)
+            if (color != null && part != null) {
+                return part to color
             }
         }
-
-        override fun visitEnumItem(o: RustEnumItemElement)       = highlight(o.identifier, RustColor.ENUM)
-        override fun visitEnumVariant(o: RustEnumVariantElement) = highlight(o.identifier, RustColor.ENUM_VARIANT)
-
-        override fun visitStructItem(o: RustStructItemElement)   = highlight(o.identifier, RustColor.STRUCT)
-        override fun visitTraitItem(o: RustTraitItemElement)     = highlight(o.identifier, RustColor.TRAIT)
-        override fun visitTypeAlias(o: RustTypeAliasElement)     = highlight(o.identifier, RustColor.TYPE_ALIAS)
-        override fun visitModDeclItem(o: RustModDeclItemElement) = highlight(o.identifier, RustColor.MODULE)
-        override fun visitModItem(o: RustModItemElement)         = highlight(o.identifier, RustColor.MODULE)
-
-        override fun visitFieldDecl(o: RustFieldDeclElement)     = highlight(o.identifier, RustColor.FIELD)
-
-        override fun visitExternCrateItem(o: RustExternCrateItemElement) = highlight(o.identifier, RustColor.CRATE)
-
-        override fun visitMacroInvocation(m: RustMacroInvocationElement) = highlight(m, RustColor.MACRO)
-        override fun visitMethodCallExpr(o: RustMethodCallExprElement)   = highlight(o.identifier, RustColor.METHOD)
-        override fun visitTryExpr(o: RustTryExprElement)                 = highlight(o.q, RustColor.Q_OPERATOR)
-
-        override fun visitFunction(o: RustFunctionElement) {
-            val color = when (o.role) {
-                RustFunctionRole.FOREIGN, RustFunctionRole.FREE -> RustColor.FUNCTION
-                RustFunctionRole.TRAIT_METHOD, RustFunctionRole.IMPL_METHOD ->
-                    if (o.isStatic) RustColor.ASSOC_FUNCTION else RustColor.METHOD
-            }
-            highlight(o.identifier, color)
-        }
-
-        override fun visitSelfArgument(o: RustSelfArgumentElement) = highlight(o.self, RustColor.SELF_PARAMETER)
+        return null
     }
+}
+
+// If possible, this should use only stubs because this will be called
+// on elements in other files when highlighting references.
+private fun colorFor(element: RustCompositeElement): RustColor? = when (element) {
+    is RustAttrElement -> RustColor.ATTRIBUTE
+    is RustMacroInvocationElement -> RustColor.MACRO
+    is RustSelfArgumentElement -> RustColor.SELF_PARAMETER
+    is RustTryExprElement -> RustColor.Q_OPERATOR
+    is RustTraitRefElement -> RustColor.TRAIT
+
+    is RustEnumItemElement -> RustColor.ENUM
+    is RustEnumVariantElement -> RustColor.ENUM_VARIANT
+    is RustExternCrateItemElement -> RustColor.CRATE
+    is RustFieldDeclElement -> RustColor.FIELD
+    is RustFunctionElement -> when (element.role) {
+        RustFunctionRole.FOREIGN, RustFunctionRole.FREE -> RustColor.FUNCTION
+        RustFunctionRole.TRAIT_METHOD, RustFunctionRole.IMPL_METHOD ->
+            if (element.isStatic) RustColor.ASSOC_FUNCTION else RustColor.METHOD
+    }
+    is RustMethodCallExprElement -> RustColor.METHOD
+    is RustModDeclItemElement -> RustColor.MODULE
+    is RustModItemElement -> RustColor.MODULE
+    is RustPatBindingElement -> when {
+        element.parentOfType<RustParameterElement>() != null -> RustColor.PARAMETER
+        element.isMut -> RustColor.MUT_BINDING
+        else -> null
+    }
+    is RustStructItemElement -> RustColor.STRUCT
+    is RustTraitItemElement -> RustColor.TRAIT
+    is RustTypeAliasElement -> RustColor.TYPE_ALIAS
+    is RustTypeParamElement -> RustColor.TYPE_PARAMETER
+    else -> null
+}
+
+private fun partToHighlight(element: RustCompositeElement): PsiElement? = when (element) {
+    is RustAttrElement -> element
+    is RustMacroInvocationElement -> element
+    is RustSelfArgumentElement -> element.self
+    is RustTryExprElement -> element.q
+    is RustTraitRefElement -> element.path.identifier
+
+    is RustEnumItemElement -> element.identifier
+    is RustEnumVariantElement -> element.identifier
+    is RustExternCrateItemElement -> element.identifier
+    is RustFieldDeclElement -> element.identifier
+    is RustFunctionElement -> element.identifier
+    is RustMethodCallExprElement -> element.identifier
+    is RustModDeclItemElement -> element.identifier
+    is RustModItemElement -> element.identifier
+    is RustPatBindingElement -> element.identifier
+    is RustStructItemElement -> element.identifier
+    is RustTraitItemElement -> element.identifier
+    is RustTypeAliasElement -> element.identifier
+    is RustTypeParamElement -> element.identifier
+    else -> null
 }

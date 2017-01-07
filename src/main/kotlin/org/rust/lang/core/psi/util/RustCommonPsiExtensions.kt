@@ -6,6 +6,9 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.util.PsiUtilCore
+import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.stubs.RustFileStub
 
 
 /**
@@ -61,5 +64,6 @@ val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) { 
  * Extracts node's element type
  */
 val PsiElement.elementType: IElementType
-    get() = node.elementType
+    // XXX: be careful not to switch to AST
+    get() = if (this is RustFile) RustFileStub.Type else PsiUtilCore.getElementType(this)
 

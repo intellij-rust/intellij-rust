@@ -1,5 +1,7 @@
 package org.rust.ide.annotator
 
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+
 class RustHighlightingAnnotatorTest : RustAnnotatorTestBase() {
 
     fun testAttributes() = checkInfo("""
@@ -93,4 +95,32 @@ class RustHighlightingAnnotatorTest : RustAnnotatorTestBase() {
             let a: <info>Bar</info> = 10;
         }
     """)
+
+    fun testDontTouchAstInOtherFiles() {
+        val files = ProjectFile.parseFileCollection("""
+        //- main.rs
+            mod aux;
+
+            fn <info>main</info>() {
+                let _ = aux::<info>S</info>::<info>new</info>();
+            }
+
+        //- aux.rs
+            pub struct S;
+
+            impl S {
+                pub fn new() ->S { S }
+            }
+        """)
+
+        for ((path, text) in files) {
+            myFixture.tempDirFixture.createFile(path, text)
+        }
+
+        (myFixture as CodeInsightTestFixtureImpl) // meh
+            .setVirtualFileFilter { !it.path.endsWith(files[0].path) }
+
+        myFixture.configureFromTempProjectFile(files[0].path)
+        myFixture.testHighlighting(false, true, false)
+    }
 }

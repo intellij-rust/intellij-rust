@@ -1,7 +1,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.psi.impl.PsiManagerImpl
+import com.intellij.psi.impl.PsiManagerEx
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RustTestCaseBase
@@ -35,22 +35,17 @@ abstract class RustResolveTestBase : RustTestCaseBase() {
     }
 
     protected fun stubOnlyResolve(@Language("Rust") code: String) {
-        val fileSeparator = """^\s* //- (\S+)\s*$""".toRegex(RegexOption.MULTILINE)
-        val fileNames = fileSeparator.findAll(code).map { it.groupValues[1] }.toList()
-        val fileTexts = fileSeparator.split(code).filter(String::isNotBlank)
-
-        check(fileNames.size == fileTexts.size) {
-            "Have you placed `//- filename.rs` markers?"
+        val files = ProjectFile.parseFileCollection(code)
+        for ((path, text) in files) {
+            myFixture.tempDirFixture.createFile(path, text)
         }
-        for ((name, text) in fileNames.zip(fileTexts)) {
-            myFixture.tempDirFixture.createFile(name, text)
-        }
-        (psiManager as PsiManagerImpl)
+        PsiManagerEx.getInstanceEx(project)
             .setAssertOnFileLoadingFilter(VirtualFileFilter { file ->
-                !file.path.endsWith(fileNames[0])
+                !file.path.endsWith(files[0].path)
             }, testRootDisposable)
 
-        myFixture.configureFromTempProjectFile(fileNames[0])
+        myFixture.configureFromTempProjectFile(files[0].path)
+
         val (reference, resolveFile) = findElementAndDataInEditor<RustReferenceElement>()
 
         if (resolveFile == "unresolved") {
