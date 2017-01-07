@@ -102,15 +102,11 @@ class RustHighlightingAnnotatorTest : RustAnnotatorTestBase() {
             mod aux;
 
             fn <info>main</info>() {
-                let _ = aux::<info>S</info>::<info>new</info>();
+                let _ = aux::<info>S</info>;
             }
 
         //- aux.rs
             pub struct S;
-
-            impl S {
-                pub fn new() ->S { S }
-            }
         """)
 
         for ((path, text) in files) {
