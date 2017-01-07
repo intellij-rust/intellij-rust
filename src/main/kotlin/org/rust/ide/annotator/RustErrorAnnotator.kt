@@ -12,6 +12,9 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.trait
+import org.rust.lang.core.resolve.Namespace
+import org.rust.lang.core.resolve.namespaces
+import java.util.*
 
 class RustErrorAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
@@ -24,6 +27,8 @@ class RustErrorAnnotator : Annotator {
             override fun visitModDeclItem(o: RustModDeclItemElement) = checkModDecl(holder, o)
             override fun visitModItem(o: RustModItemElement) = checkModItem(holder, o)
             override fun visitPath(o: RustPathElement) = checkPath(holder, o)
+            override fun visitBlockFields(o: RustBlockFieldsElement) = checkBlockFields(holder, o)
+            override fun visitTraitItem(o: RustTraitItemElement) = checkTraitItem(holder, o)
             override fun visitTypeAlias(o: RustTypeAliasElement) = checkTypeAlias(holder, o)
             override fun visitVis(o: RustVisElement) = checkVis(holder, o)
         }
@@ -32,8 +37,13 @@ class RustErrorAnnotator : Annotator {
     }
 
     private fun checkBlock(holder: AnnotationHolder, block: RustBlockElement) =
-        findDuplicates(holder, block, { name ->
-            "An element named `$name` has already been defined in this block [E0428]"
+        findDuplicates(holder, block, { ns, name ->
+            "A ${ns.itemName} named `$name` has already been defined in this block [E0428]"
+        })
+
+    private fun checkBlockFields(holder: AnnotationHolder, block: RustBlockFieldsElement) =
+        findDuplicates(holder, block, { ns, name ->
+            "Field `$name` is already declared [E0124]"
         })
 
     private fun checkPath(holder: AnnotationHolder, path: RustPathElement) {
@@ -49,8 +59,8 @@ class RustErrorAnnotator : Annotator {
     }
 
     private fun checkEnumBody(holder: AnnotationHolder, enum: RustEnumBodyElement) =
-        findDuplicates(holder, enum, { name ->
-            "A type named `$name` has already been defined in this enum [E0428]"
+        findDuplicates(holder, enum, { ns, name ->
+            "A ${ns.itemName} named `$name` has already been defined in this enum [E0428]"
         })
 
     private fun checkConstant(holder: AnnotationHolder, const: RustConstantElement) {
@@ -107,17 +117,17 @@ class RustErrorAnnotator : Annotator {
     }
 
     private fun checkModItem(holder: AnnotationHolder, modItem: RustModItemElement) =
-        findDuplicates(holder, modItem, { name ->
-            "An element named `$name` has already been defined in this module [E0428]"
+        findDuplicates(holder, modItem, { ns, name ->
+            "A ${ns.itemName} named `$name` has already been defined in this module [E0428]"
         })
 
     private fun checkForeignModItem(holder: AnnotationHolder, mod: RustForeignModItemElement) =
-        findDuplicates(holder, mod, { name ->
-            "An element named `$name` has already been defined in this module [E0428]"
+        findDuplicates(holder, mod, { ns, name ->
+            "A ${ns.itemName} named `$name` has already been defined in this module [E0428]"
         })
 
     private fun checkImpl(holder: AnnotationHolder, impl: RustImplItemElement) {
-        findDuplicates(holder, impl, { name ->
+        findDuplicates(holder, impl, { ns, name ->
             "Duplicate definitions with name `$name` [E0201]"
         })
 
@@ -152,6 +162,11 @@ class RustErrorAnnotator : Annotator {
             .filter { it.second != null }
             .forEach { checkTraitFnImplParams(holder, it.first, it.second!!, traitName) }
     }
+
+    private fun checkTraitItem(holder: AnnotationHolder, trait: RustTraitItemElement) =
+        findDuplicates(holder, trait, { ns, name ->
+            "A ${ns.itemName} named `$name` has already been defined in this trait [E0428]"
+        })
 
     private fun checkTypeAlias(holder: AnnotationHolder, ta: RustTypeAliasElement) {
         val title = "Type `${ta.identifier.text}`"
@@ -213,16 +228,27 @@ class RustErrorAnnotator : Annotator {
         return impl is RustImplItemElement && impl.traitRef != null
     }
 
-    private fun findDuplicates(holder: AnnotationHolder, owner: RustCompositeElement, messageGenerator: (name: String) -> String) {
+    private fun findDuplicates(holder: AnnotationHolder, owner: RustCompositeElement, messageGenerator: (ns: Namespace, name: String) -> String) {
+        val marked = HashSet<RustNamedElement>()
         owner.children.asSequence()
             .filterIsInstance<RustNamedElement>()
             .filter { it.name != null }
-            .groupBy { it.name }
-            .map { it.value }
-            .filter { it.size > 1 && it.any { !it.isCfgDependent } }
-            .flatMap { it.drop(1) }
-            .forEach {
-                holder.createErrorAnnotation(it.navigationElement, messageGenerator(it.name!!))
+            .flatMap { it.namespaced }
+            .groupBy { it.first }       // Group by namespace
+            .forEach { entry ->
+                val namespace = entry.key
+                val items = entry.value
+                items.asSequence()
+                    .map { it.second }
+                    .groupBy { it.name }
+                    .map { it.value }
+                    .filter { it.size > 1 && it.any { !it.isCfgDependent } }
+                    .flatMap { it.drop(1) }
+                    .filterNot { marked.contains(it) }
+                    .forEach {
+                        holder.createErrorAnnotation(it.navigationElement, messageGenerator(namespace, it.name!!))
+                        marked.add(it)
+                    }
             }
     }
 
@@ -245,6 +271,9 @@ class RustErrorAnnotator : Annotator {
 
     private val RustCompositeElement.isCfgDependent: Boolean
         get() = this is RustDocAndAttributeOwner && queryAttributes.hasAttribute("cfg")
+
+    private val RustNamedElement.namespaced: Sequence<Pair<Namespace, RustNamedElement>>
+        get() = namespaces.asSequence().map { Pair(it, this) }
 
     private fun pluralise(count: Int, singular: String, plural: String): String =
         if (count == 1) singular else plural

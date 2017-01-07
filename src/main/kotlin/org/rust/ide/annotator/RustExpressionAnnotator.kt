@@ -4,10 +4,11 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.psi.PsiElement
+import com.intellij.util.SmartList
 import org.rust.ide.annotator.fixes.AddStructFieldsFix
-import org.rust.ide.inspections.duplicates.findDuplicateReferences
 import org.rust.ide.intentions.RemoveParenthesesFromExprIntention
 import org.rust.lang.core.psi.*
+import java.util.*
 
 class RustExpressionAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
@@ -71,4 +72,17 @@ private class RedundantParenthesisVisitor(private val holder: AnnotationHolder) 
                 .registerFix(RemoveParenthesesFromExprIntention())
         }
     }
+}
+
+private fun <T : RustReferenceElement> Collection<T>.findDuplicateReferences(): Collection<T>  {
+    val names = HashSet<String>(size)
+    val result = SmartList<T>()
+    for (item in this) {
+        val name = item.referenceName
+        if (name in names) {
+            result += item
+        }
+        names += name
+    }
+    return result
 }

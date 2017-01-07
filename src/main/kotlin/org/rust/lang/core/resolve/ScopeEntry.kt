@@ -70,8 +70,8 @@ private class LazyMultiEntry(
     override fun toString(): String = "LazyMultiEntry($name, $elements)"
 }
 
-enum class Namespace {
-    Values, Types
+enum class Namespace(val itemName: String) {
+    Values("value"), Types("type")
 }
 
 fun Sequence<ScopeEntry>.filterByNamespace(namespace: Namespace?): Sequence<ScopeEntry> {
@@ -83,9 +83,11 @@ private val TYPES = EnumSet.of(Namespace.Types)
 private val VALUES = EnumSet.of(Namespace.Values)
 private val BOTH = TYPES + VALUES
 
-private val RustNamedElement.namespaces: Set<Namespace> get() = when (this) {
-    is RustMod -> TYPES
-    is RustEnumItemElement -> TYPES
+val RustNamedElement.namespaces: Set<Namespace> get() = when (this) {
+    is RustMod,
+    is RustEnumItemElement,
+    is RustTraitItemElement,
+    is RustTypeAliasElement -> TYPES
 
     is RustPatBindingElement,
     is RustConstantElement,
