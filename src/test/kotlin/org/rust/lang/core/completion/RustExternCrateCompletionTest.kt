@@ -7,7 +7,7 @@ class RustExternCrateCompletionTest : RustCompletionTestBase() {
     override val dataPath = ""
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibAndDependencyRustProjectDescriptor
 
-    fun testExternCrate() = checkSingleCompletion("dep_lib", """
+    fun testExternCrate() = checkSingleCompletion("dep_lib_target", """
         extern crate dep_l/*caret*/
     """)
 

@@ -65,6 +65,7 @@ object RustCompletionEngine {
     fun completeExternCrate(extCrate: RustExternCrateItemElement): Array<out LookupElement> =
         extCrate.module?.cargoProject?.packages
             ?.filter { it.origin == PackageOrigin.DEPENDENCY }
+            ?.mapNotNull { it.libTarget }
             ?.map { LookupElementBuilder.create(extCrate, it.normName).withIcon(extCrate.getIcon(0)) }
             ?.toTypedArray() ?: emptyArray()
 }
