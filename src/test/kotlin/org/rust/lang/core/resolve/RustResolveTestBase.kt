@@ -1,7 +1,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.psi.impl.PsiManagerImpl
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RustTestCaseBase
@@ -39,7 +39,8 @@ abstract class RustResolveTestBase : RustTestCaseBase() {
         for ((path, text) in files) {
             myFixture.tempDirFixture.createFile(path, text)
         }
-        PsiManagerEx.getInstanceEx(project)
+        // TODO: use `PsiManagerEx.getInstanceEx(project)` after 2016.1
+        (psiManager as PsiManagerImpl)
             .setAssertOnFileLoadingFilter(VirtualFileFilter { file ->
                 !file.path.endsWith(files[0].path)
             }, testRootDisposable)
