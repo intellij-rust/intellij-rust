@@ -183,6 +183,13 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         }
     """)
 
+    fun testI128() = testExpr("""
+        fn main() {
+            let a = 42i128;
+                   //^ i128
+        }
+    """)
+
     fun testISize() = testExpr("""
         fn main() {
             let a = 42isize;
@@ -215,6 +222,13 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
         fn main() {
             let a = 42u64;
                    //^ u64
+        }
+    """)
+
+    fun testU128() = testExpr("""
+        fn main() {
+            let a = 42u128;
+                   //^ u128
         }
     """)
 
