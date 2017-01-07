@@ -25,6 +25,8 @@ val RustDocAndAttributeOwner.queryAttributes: QueryAttributes
  * **Do not instantiate directly**, use [RustDocAndAttributeOwner.queryAttributes] instead.
  */
 class QueryAttributes(private val attributes: Sequence<RustAttrElement>) {
+    fun hasAttribute(attributeName: String) = metaItems.any { it.identifier.text == attributeName }
+
     fun hasAtomAttribute(attributeName: String): Boolean {
         val attr = attrByName(attributeName)
         return attr != null && (attr.eq == null && attr.metaItemArgs == null)
