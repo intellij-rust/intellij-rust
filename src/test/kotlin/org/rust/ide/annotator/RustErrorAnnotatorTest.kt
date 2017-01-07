@@ -274,6 +274,19 @@ class RustErrorAnnotatorTest: RustAnnotatorTestBase() {
         }
     """)
 
+    fun testE0428_NameDuplicationInForeignMod() = checkErrors("""
+        extern "C" {
+            static mut UNIQUE: u16;
+            fn unique();
+
+            static mut DUP: u32;
+            static mut <error descr="An element named `DUP` has already been defined in this module [E0428]">DUP</error>: u32;
+
+            fn dup();
+            fn <error descr="An element named `dup` has already been defined in this module [E0428]">dup</error>();
+        }
+    """)
+
     fun testE0428_NameDuplicationInModule() = checkErrors("""
         mod foo {
             const UNIQUE_CONST: i32 = 10;
