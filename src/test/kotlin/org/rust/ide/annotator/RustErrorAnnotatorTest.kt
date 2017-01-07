@@ -203,6 +203,30 @@ class RustErrorAnnotatorTest: RustAnnotatorTestBase() {
         }
     """)
 
+    fun testE0201_NameDuplicationInImpl() = checkErrors("""
+        struct Foo;
+        impl Foo {
+            fn fn_unique() {}
+            fn dup() {}
+            fn <error descr="Duplicate definitions with name `dup` [E0201]">dup</error>(&self, a: u32) {}
+        }
+
+        trait Bar {
+            const UNIQUE: u32;
+            const TRAIT_DUP: u32;
+            fn unique() {}
+            fn trait_dup() {}
+        }
+        impl Bar for Foo {
+            const UNIQUE: u32 = 14;
+            const TRAIT_DUP: u32 = 100;
+            const <error descr="Duplicate definitions with name `TRAIT_DUP` [E0201]">TRAIT_DUP</error>: u32 = 101;
+            fn unique() {}
+            fn trait_dup() {}
+            fn <error descr="Duplicate definitions with name `trait_dup` [E0201]">trait_dup</error>() {}
+        }
+    """)
+
     fun testE0202_TypeAliasInInherentImpl() = checkErrors("""
         struct Foo;
         impl Foo {
@@ -217,6 +241,91 @@ class RustErrorAnnotatorTest: RustAnnotatorTestBase() {
         impl T for () {
             fn foo() {}
             fn <error descr="Method `quux` is not a member of trait `T` [E0407]">quux</error>() {}
+        }
+    """)
+
+    fun testE0428_NameDuplicationInCodeBlock() = checkErrors("""
+        fn abc() {
+            const UNIQUE_CONST: i32 = 10;
+            static UNIQUE_STATIC: f64 = 0.72;
+            fn unique_fn() {}
+            struct UniqueStruct;
+            trait UniqueTrait {}
+            enum UniqueEnum {}
+            mod unique_mod {}
+
+            const  Dup: u32 = 20;
+            static <error descr="An element named `Dup` has already been defined in this block [E0428]">Dup</error>: i64 = -1.3;
+            fn     <error descr="An element named `Dup` has already been defined in this block [E0428]">Dup</error>() {}
+            struct <error descr="An element named `Dup` has already been defined in this block [E0428]">Dup</error>;
+            trait  <error descr="An element named `Dup` has already been defined in this block [E0428]">Dup</error> {}
+            enum   <error descr="An element named `Dup` has already been defined in this block [E0428]">Dup</error> {}
+            mod    <error descr="An element named `Dup` has already been defined in this block [E0428]">Dup</error> {}
+        }
+    """)
+
+    fun testE0428_NameDuplicationInEnum() = checkErrors("""
+        enum Directions {
+            NORTH,
+            SOUTH,
+            WEST,
+            <error descr="A type named `SOUTH` has already been defined in this enum [E0428]">SOUTH</error> { distance: f64 },
+            EAST
+        }
+    """)
+
+    fun testE0428_NameDuplicationInModule() = checkErrors("""
+        mod foo {
+            const UNIQUE_CONST: i32 = 10;
+            static UNIQUE_STATIC: f64 = 0.72;
+            fn unique_fn() {}
+            struct UniqueStruct;
+            trait UniqueTrait {}
+            enum UniqueEnum {}
+            mod unique_mod {}
+
+            const Dup: u32 = 20;
+            static <error descr="An element named `Dup` has already been defined in this module [E0428]">Dup</error>: i64 = -1.3;
+            fn     <error descr="An element named `Dup` has already been defined in this module [E0428]">Dup</error>() {}
+            struct <error descr="An element named `Dup` has already been defined in this module [E0428]">Dup</error>;
+            trait  <error descr="An element named `Dup` has already been defined in this module [E0428]">Dup</error> {}
+            enum   <error descr="An element named `Dup` has already been defined in this module [E0428]">Dup</error> {}
+            mod    <error descr="An element named `Dup` has already been defined in this module [E0428]">Dup</error> {}
+        }
+    """)
+
+    fun testE0428_IgnoresLocalBindings() = checkErrors("""
+        mod no_dup {
+            fn no_dup() {
+                let no_dup: bool = false;
+                fn no_dup(no_dup: u23) {
+                    mod no_dup {}
+                }
+            }
+        }
+    """)
+
+    fun testE0428_IgnoresInnerContainers() = checkErrors("""
+        mod foo {
+            const NO_DUP: u8 = 4;
+            fn f() {
+                const NO_DUP: u8 = 7;
+                { const NO_DUP: u8 = 9; }
+            }
+            struct S { NO_DUP: u8 }
+            trait T { const NO_DUP: u8 = 3; }
+            enum E { NO_DUP }
+            mod m { const NO_DUP: u8 = 1; }
+        }
+    """)
+
+    fun testE0428_RespectsCfgAttribute() = checkErrors("""
+        mod opt {
+            #[cfg(no(windows))] mod foo {}
+            #[cfg(windows)]     mod foo {}
+
+            #[cfg(windows)] fn hello_world() {}
+            fn <error descr="An element named `hello_world` has already been defined in this module [E0428]">hello_world</error>() {}
         }
     """)
 

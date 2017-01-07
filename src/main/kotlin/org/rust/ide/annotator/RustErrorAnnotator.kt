@@ -16,9 +16,12 @@ import org.rust.lang.core.psi.util.trait
 class RustErrorAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val visitor = object : RustElementVisitor() {
+            override fun visitBlock(o: RustBlockElement) = checkBlock(holder, o)
             override fun visitConstant(o: RustConstantElement) = checkConstant(holder, o)
+            override fun visitEnumBody(o: RustEnumBodyElement) = checkEnumBody(holder, o)
             override fun visitImplItem(o: RustImplItemElement) = checkImpl(holder, o)
             override fun visitModDeclItem(o: RustModDeclItemElement) = checkModDecl(holder, o)
+            override fun visitModItem(o: RustModItemElement) = checkModItem(holder, o)
             override fun visitPath(o: RustPathElement) = checkPath(holder, o)
             override fun visitTypeAlias(o: RustTypeAliasElement) = checkTypeAlias(holder, o)
             override fun visitVis(o: RustVisElement) = checkVis(holder, o)
@@ -26,6 +29,11 @@ class RustErrorAnnotator : Annotator {
 
         element.accept(visitor)
     }
+
+    private fun checkBlock(holder: AnnotationHolder, block: RustBlockElement) =
+        findDuplicates(holder, block, { name ->
+            "An element named `$name` has already been defined in this block [E0428]"
+        })
 
     private fun checkPath(holder: AnnotationHolder, path: RustPathElement) {
         if (path.asRustPath == null) {
@@ -38,6 +46,11 @@ class RustErrorAnnotator : Annotator {
             holder.createErrorAnnotation(vis, "Unnecessary visibility qualifier [E0449]")
         }
     }
+
+    private fun checkEnumBody(holder: AnnotationHolder, enum: RustEnumBodyElement) =
+        findDuplicates(holder, enum, { name ->
+            "A type named `$name` has already been defined in this enum [E0428]"
+        })
 
     private fun checkConstant(holder: AnnotationHolder, const: RustConstantElement) {
         val title = if (const.static != null) "Static constant `${const.identifier.text}`" else "Constant `${const.identifier.text}`"
@@ -92,7 +105,16 @@ class RustErrorAnnotator : Annotator {
         }
     }
 
+    private fun checkModItem(holder: AnnotationHolder, modItem: RustModItemElement) =
+        findDuplicates(holder, modItem, { name ->
+            "An element named `$name` has already been defined in this module [E0428]"
+        })
+
     private fun checkImpl(holder: AnnotationHolder, impl: RustImplItemElement) {
+        findDuplicates(holder, impl, { name ->
+            "Duplicate definitions with name `$name` [E0201]"
+        })
+
         val trait = impl.traitRef?.trait ?: return
         val traitName = trait.name ?: return
 
@@ -185,6 +207,19 @@ class RustErrorAnnotator : Annotator {
         return impl is RustImplItemElement && impl.traitRef != null
     }
 
+    private fun findDuplicates(holder: AnnotationHolder, owner: RustCompositeElement, messageGenerator: (name: String) -> String) {
+        owner.children.asSequence()
+            .filterIsInstance<RustNamedElement>()
+            .filter { it.name != null }
+            .groupBy { it.name }
+            .map { it.value }
+            .filter { it.size > 1 && it.any { !it.isCfgDependent } }
+            .flatMap { it.drop(1) }
+            .forEach {
+                holder.createErrorAnnotation(it.navigationElement, messageGenerator(it.name!!))
+            }
+    }
+
     private val Array<out PsiElement?>.combinedRange: TextRange?
         get() = if (isEmpty())
             null
@@ -201,6 +236,9 @@ class RustErrorAnnotator : Annotator {
             mut?.let { append("mut ") }
             append("self")
         }
+
+    private val RustCompositeElement.isCfgDependent: Boolean
+        get() = this is RustDocAndAttributeOwner && queryAttributes.hasAttribute("cfg")
 
     private fun pluralise(count: Int, singular: String, plural: String): String =
         if (count == 1) singular else plural
