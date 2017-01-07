@@ -27,9 +27,6 @@ class CargoProjectDescription private constructor(
         val source: String?,
         val origin: PackageOrigin
     ) {
-        // crate name must be a valid Rust identifier, so normalize it by mapping `-` to `_`
-        // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
-        val normName = name.replace('-', '_')
         val libTarget: Target? get() = targets.find { it.isLib }
         val contentRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
 
@@ -44,6 +41,8 @@ class CargoProjectDescription private constructor(
         val name: String,
         val kind: TargetKind
     ) {
+        // target name must be a valid Rust identifier, so normalize it by mapping `-` to `_`
+        // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
         val normName = name.replace('-', '_')
         val isLib: Boolean get() = kind == TargetKind.LIB
         val isBin: Boolean get() = kind == TargetKind.BIN

@@ -220,12 +220,12 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             isWorkspaceMember = true
         )
 
-        protected fun externalPackage(name: String) = CleanCargoMetadata.Package(
+        protected fun externalPackage(name: String, targetName: String = name) = CleanCargoMetadata.Package(
             "",
             name = name,
             version = "0.0.1",
             targets = listOf(
-                CleanCargoMetadata.Target("", name, CargoProjectDescription.TargetKind.LIB)
+                CleanCargoMetadata.Target("", targetName, CargoProjectDescription.TargetKind.LIB)
             ),
             source = null,
             isWorkspaceMember = false
@@ -254,7 +254,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
             val packages = listOf(
                 testCargoPackage(contentRoot),
-                externalPackage("dep-lib"),
+                externalPackage("dep-lib", "dep-lib-target"),
                 externalPackage("trans-lib"))
 
             val depNodes = ArrayList<CleanCargoMetadata.DependencyNode>()
