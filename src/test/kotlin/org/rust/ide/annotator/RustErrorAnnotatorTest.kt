@@ -163,6 +163,25 @@ class RustErrorAnnotatorTest: RustAnnotatorTestBase() {
         }
     """)
 
+    fun testE0124_NameDuplicationInStruct() = checkErrors("""
+        struct S {
+            no_dup: bool,
+            dup: u32,
+            <error descr="Field `dup` is already declared [E0124]">dup</error>: f64
+        }
+
+        enum E {
+            VAR1 {
+                no_dup: bool
+            },
+            VAR2 {
+                no_dup: bool,
+                dup: u32,
+                <error descr="Field `dup` is already declared [E0124]">dup</error>: f64
+            }
+        }
+    """)
+
     fun testE0185_SelfInImplNotInTrait() = checkErrors("""
         trait T {
             fn ok_foo(&self, x: u32);
@@ -255,12 +274,12 @@ class RustErrorAnnotatorTest: RustAnnotatorTestBase() {
             mod unique_mod {}
 
             const  Dup: u32 = 20;
-            static <error descr="An element named `Dup` has already been defined in this block [E0428]">Dup</error>: i64 = -1.3;
-            fn     <error descr="An element named `Dup` has already been defined in this block [E0428]">Dup</error>() {}
-            struct <error descr="An element named `Dup` has already been defined in this block [E0428]">Dup</error>;
-            trait  <error descr="An element named `Dup` has already been defined in this block [E0428]">Dup</error> {}
-            enum   <error descr="An element named `Dup` has already been defined in this block [E0428]">Dup</error> {}
-            mod    <error descr="An element named `Dup` has already been defined in this block [E0428]">Dup</error> {}
+            static <error descr="A value named `Dup` has already been defined in this block [E0428]">Dup</error>: i64 = -1.3;
+            fn     <error descr="A value named `Dup` has already been defined in this block [E0428]">Dup</error>() {}
+            struct <error descr="A value named `Dup` has already been defined in this block [E0428]">Dup</error>;
+            trait  <error descr="A type named `Dup` has already been defined in this block [E0428]">Dup</error> {}
+            enum   <error descr="A type named `Dup` has already been defined in this block [E0428]">Dup</error> {}
+            mod    <error descr="A type named `Dup` has already been defined in this block [E0428]">Dup</error> {}
         }
     """)
 
@@ -269,7 +288,7 @@ class RustErrorAnnotatorTest: RustAnnotatorTestBase() {
             NORTH,
             SOUTH,
             WEST,
-            <error descr="A type named `SOUTH` has already been defined in this enum [E0428]">SOUTH</error> { distance: f64 },
+            <error descr="A value named `SOUTH` has already been defined in this enum [E0428]">SOUTH</error> { distance: f64 },
             EAST
         }
     """)
@@ -280,10 +299,10 @@ class RustErrorAnnotatorTest: RustAnnotatorTestBase() {
             fn unique();
 
             static mut DUP: u32;
-            static mut <error descr="An element named `DUP` has already been defined in this module [E0428]">DUP</error>: u32;
+            static mut <error descr="A value named `DUP` has already been defined in this module [E0428]">DUP</error>: u32;
 
             fn dup();
-            fn <error descr="An element named `dup` has already been defined in this module [E0428]">dup</error>();
+            fn <error descr="A value named `dup` has already been defined in this module [E0428]">dup</error>();
         }
     """)
 
@@ -298,12 +317,45 @@ class RustErrorAnnotatorTest: RustAnnotatorTestBase() {
             mod unique_mod {}
 
             const Dup: u32 = 20;
-            static <error descr="An element named `Dup` has already been defined in this module [E0428]">Dup</error>: i64 = -1.3;
-            fn     <error descr="An element named `Dup` has already been defined in this module [E0428]">Dup</error>() {}
-            struct <error descr="An element named `Dup` has already been defined in this module [E0428]">Dup</error>;
-            trait  <error descr="An element named `Dup` has already been defined in this module [E0428]">Dup</error> {}
-            enum   <error descr="An element named `Dup` has already been defined in this module [E0428]">Dup</error> {}
-            mod    <error descr="An element named `Dup` has already been defined in this module [E0428]">Dup</error> {}
+            static <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>: i64 = -1.3;
+            fn     <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>() {}
+            struct <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>;
+            trait  <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
+            enum   <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
+            mod    <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
+        }
+    """)
+
+    fun testE0428_NameDuplicationInTrait() = checkErrors("""
+        trait T {
+            type NO_DUP_T;
+            const NO_DUP_C: u8;
+            fn no_dup_f();
+
+            type DUP_T;
+            type <error descr="A type named `DUP_T` has already been defined in this trait [E0428]">DUP_T</error>;
+
+            const DUP_C: bool;
+            const <error descr="A value named `DUP_C` has already been defined in this trait [E0428]">DUP_C</error>: u32;
+
+            fn dup();
+            fn <error descr="A value named `dup` has already been defined in this trait [E0428]">dup</error>(&self);
+        }
+    """)
+
+    fun testE0428_RespectsNamespaces() = checkErrors("""
+        mod m {
+            type T_NO_C_DUP = bool;  // Consts and types are in different namespaces
+            const NO_C_DUP: u32 = 10;
+
+            type NO_F_DUP = u8;      // Functions and types are in different namespaces
+            fn NO_F_DUP() {}
+
+            const DUP_V: u8 = 1;     // Consts and functions are in the same namespace (values)
+            fn <error descr="A value named `DUP_V` has already been defined in this module [E0428]">DUP_V</error>() {}
+
+            enum DUP_T {}            // enums and traits are in the same namespace (types)
+            trait <error descr="A type named `DUP_T` has already been defined in this module [E0428]">DUP_T</error> {}
         }
     """)
 
@@ -338,7 +390,7 @@ class RustErrorAnnotatorTest: RustAnnotatorTestBase() {
             #[cfg(windows)]     mod foo {}
 
             #[cfg(windows)] fn hello_world() {}
-            fn <error descr="An element named `hello_world` has already been defined in this module [E0428]">hello_world</error>() {}
+            fn <error descr="A value named `hello_world` has already been defined in this module [E0428]">hello_world</error>() {}
         }
     """)
 

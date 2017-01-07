@@ -188,26 +188,6 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RustMissingElseInspection"/>
 
-        <localInspection language="Rust" groupName="Redeclared symbols"
-                         displayName="Duplicate field"
-                         enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.duplicates.RustDuplicateStructFieldInspection"/>
-
-        <localInspection language="Rust" groupName="Redeclared symbols"
-                         displayName="Duplicate trait constant"
-                         enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.duplicates.RustDuplicateTraitConstantInspection"/>
-
-        <localInspection language="Rust" groupName="Redeclared symbols"
-                         displayName="Duplicate trait method"
-                         enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.duplicates.RustDuplicateTraitMethodInspection"/>
-
-        <localInspection language="Rust" groupName="Redeclared symbols"
-                         displayName="Duplicate trait associated type"
-                         enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.duplicates.RustDuplicateTraitTypeInspection"/>
-
         <localInspection language="Rust" groupName="Rust"
                          displayName="Dropping reference"
                          enabledByDefault="true" level="WARNING"
