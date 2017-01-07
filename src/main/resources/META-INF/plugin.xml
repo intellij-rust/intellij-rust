@@ -164,6 +164,11 @@
                          implementationClass="org.rust.ide.inspections.RustCStringPointerInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
+                         displayName="Deprecated API usage"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RustDeprecatedInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
                          displayName="Unresolved reference"
                          enabledByDefault="false" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RustUnresolvedReferenceInspection"/>
