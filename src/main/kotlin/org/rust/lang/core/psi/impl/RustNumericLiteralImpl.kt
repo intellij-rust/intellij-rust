@@ -85,7 +85,7 @@ class RustNumericLiteralImpl(type: IElementType, text: CharSequence) : RustLiter
     }
 
     companion object {
-        private val VALID_INTEGER_SUFFIXES = listOf("u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "isize", "usize")
+        private val VALID_INTEGER_SUFFIXES = listOf("u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "u128", "i128", "isize", "usize")
         private val VALID_FLOAT_SUFFIXES = listOf("f32", "f64")
         private const val DEC_DIGIT = "0123456789"
         private const val BIN_DIGIT = "01"
