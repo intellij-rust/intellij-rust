@@ -34,7 +34,7 @@ class RustFileStub : PsiFileStubImpl<RustFile> {
 
     object Type : IStubFileElementType<RustFileStub>(RustLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 40
+        override fun getStubVersion(): Int = 41
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RustFileStub(file as RustFile)
@@ -73,7 +73,7 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "STRUCT_ITEM" -> RustStructItemElementStub.Type
     "UNION_ITEM" -> RustUnionItemElementStub.Type
     "ENUM_ITEM" -> RustEnumItemElementStub.Type
-    "ENUM_BODY" -> RustEnumBodyElementStub.Type
+    "ENUM_BODY" -> RustPlaceholderStub.Type("ENUM_BODY", ::RustEnumBodyElementImpl)
     "ENUM_VARIANT" -> RustEnumVariantElementStub.Type
 
     "MOD_DECL_ITEM" -> RustModDeclItemElementStub.Type
@@ -85,27 +85,27 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "FUNCTION" -> RustFunctionElementStub.Type
     "CONSTANT" -> RustConstantElementStub.Type
     "TYPE_ALIAS" -> RustTypeAliasElementStub.Type
-    "FOREIGN_MOD_ITEM" -> RustForeignModItemElementStub.Type
+    "FOREIGN_MOD_ITEM" -> RustPlaceholderStub.Type("FOREIGN_MOD_ITEM", ::RustForeignModItemElementImpl)
 
-    "BLOCK_FIELDS" -> RustBlockFieldsElementStub.Type
+    "BLOCK_FIELDS" -> RustPlaceholderStub.Type("BLOCK_FIELDS", ::RustBlockFieldsElementImpl)
     "FIELD_DECL" -> RustFieldDeclElementStub.Type
     "ALIAS" -> RustAliasElementStub.Type
 
-    "USE_GLOB_LIST" -> RustUseGlobListElementStub.Type
+    "USE_GLOB_LIST" -> RustPlaceholderStub.Type("USE_GLOB_LIST", ::RustUseGlobListElementImpl)
     "USE_GLOB" -> RustUseGlobElementStub.Type
 
     "PATH" -> RustPathElementStub.Type
 
-    "VEC_TYPE" -> RustTypeElementStub.VecType
-    "REF_LIKE_TYPE" -> RustTypeElementStub.RefLikeType
-    "BARE_FN_TYPE" -> RustTypeElementStub.BareFnType
-    "TUPLE_TYPE" -> RustTypeElementStub.TupleType
-    "BASE_TYPE" -> RustTypeElementStub.BaseType
-    "TYPE_WITH_BOUNDS_TYPE" -> RustTypeElementStub.TypeWithBoundsType
-    "FOR_IN_TYPE" -> RustTypeElementStub.ForInType
-    "IMPL_TRAIT_TYPE" -> RustTypeElementStub.ImplTraitType
+    "VEC_TYPE" -> RustPlaceholderStub.Type("VEC_TYPE", ::RustVecTypeElementImpl)
+    "REF_LIKE_TYPE" -> RustPlaceholderStub.Type("REF_LIKE_TYPE", ::RustRefLikeTypeElementImpl)
+    "BARE_FN_TYPE" -> RustPlaceholderStub.Type("BARE_FN_TYPE", ::RustBareFnTypeElementImpl)
+    "TUPLE_TYPE" -> RustPlaceholderStub.Type("TUPLE_TYPE", ::RustTupleTypeElementImpl)
+    "BASE_TYPE" -> RustPlaceholderStub.Type("BASE_TYPE", ::RustBaseTypeElementImpl)
+    "TYPE_WITH_BOUNDS_TYPE" -> RustPlaceholderStub.Type("TYPE_WITH_BOUNDS_TYPE", ::RustTypeWithBoundsTypeElementImpl)
+    "FOR_IN_TYPE" -> RustPlaceholderStub.Type("FOR_IN_TYPE", ::RustForInTypeElementImpl)
+    "IMPL_TRAIT_TYPE" -> RustPlaceholderStub.Type("IMPL_TRAIT_TYPE", ::RustImplTraitTypeElementImpl)
 
-    "GENERIC_PARAMS" -> RustGenericParamsElementStub.Type
+    "GENERIC_PARAMS" -> RustPlaceholderStub.Type("GENERIC_PARAMS", ::RustGenericParamsElementImpl)
     "TYPE_PARAM" -> RustTypeParamElementStub.Type
 
     else -> error("Unknown element $name")
@@ -275,18 +275,6 @@ class RustEnumItemElementStub(
         override fun indexStub(stub: RustEnumItemElementStub, sink: IndexSink) = sink.indexEnumItem(stub)
 
     }
-}
-
-
-class RustEnumBodyElementStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>
-) : StubBase<RustEnumBodyElement>(parent, elementType) {
-
-    object Type : RustStubElementType.Trivial<RustEnumBodyElementStub, RustEnumBodyElement>(
-        "ENUM_BODY",
-        ::RustEnumBodyElementStub,
-        ::RustEnumBodyElementImpl
-    )
 }
 
 
@@ -569,30 +557,6 @@ class RustTypeAliasElementStub(
 }
 
 
-class RustForeignModItemElementStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>
-) : StubBase<RustForeignModItemElement>(parent, elementType) {
-
-    object Type : RustStubElementType.Trivial<RustForeignModItemElementStub, RustForeignModItemElement>(
-        "FOREIGN_MOD_ITEM",
-        ::RustForeignModItemElementStub,
-        ::RustForeignModItemElementImpl
-    )
-}
-
-
-class RustBlockFieldsElementStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>
-) : StubBase<RustBlockFieldsElement>(parent, elementType) {
-
-    object Type : RustStubElementType.Trivial<RustBlockFieldsElementStub, RustBlockFieldsElement>(
-        "BLOCK_FIELDS",
-        ::RustBlockFieldsElementStub,
-        ::RustBlockFieldsElementImpl
-    )
-}
-
-
 class RustFieldDeclElementStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
@@ -650,18 +614,6 @@ class RustAliasElementStub(
 
         override fun indexStub(stub: RustAliasElementStub, sink: IndexSink) = sink.indexAlias(stub)
     }
-}
-
-
-class RustUseGlobListElementStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>
-) : StubBase<RustUseGlobListElement>(parent, elementType) {
-
-    object Type : RustStubElementType.Trivial<RustUseGlobListElementStub, RustUseGlobListElement>(
-        "USE_GLOB_LIST",
-        ::RustUseGlobListElementStub,
-        ::RustUseGlobListElementImpl
-    )
 }
 
 
@@ -728,69 +680,6 @@ class RustPathElementStub(
             //NOP
         }
     }
-}
-
-
-class RustTypeElementStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>
-) : StubBase<RustTypeElement>(parent, elementType) {
-
-    abstract class Type<PsiT : RustCompositeElement>(
-        debugName: String,
-        psiCtor: (RustTypeElementStub, IStubElementType<*, *>) -> PsiT
-    ) : RustStubElementType.Trivial<RustTypeElementStub, PsiT>(debugName, ::RustTypeElementStub, psiCtor) {
-        override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
-    }
-
-    object VecType : Type<RustVecTypeElement>(
-        "VEC_TYPE",
-        ::RustVecTypeElementImpl
-    )
-
-    object RefLikeType : Type<RustRefLikeTypeElement>(
-        "REF_LIKE_TYPE",
-        ::RustRefLikeTypeElementImpl
-    )
-
-    object BareFnType : Type<RustBareFnTypeElement>(
-        "BARE_FN_TYPE",
-        ::RustBareFnTypeElementImpl
-    )
-
-    object TupleType : Type<RustTupleTypeElement>(
-        "TUPLE_TYPE",
-        ::RustTupleTypeElementImpl
-    )
-
-    object BaseType : Type<RustBaseTypeElement>(
-        "BASE_TYPE",
-        ::RustBaseTypeElementImpl
-    )
-
-    object TypeWithBoundsType : Type<RustTypeWithBoundsTypeElement>(
-        "TYPE_WITH_BOUNDS_TYPE",
-        ::RustTypeWithBoundsTypeElementImpl
-    )
-
-    object ForInType : Type<RustForInTypeElement>(
-        "FOR_IN_TYPE",
-        ::RustForInTypeElementImpl
-    )
-
-    object ImplTraitType : Type<RustImplTraitTypeElement>(
-        "IMPL_TRAIT_TYPE",
-        ::RustImplTraitTypeElementImpl
-    )
-}
-
-class RustGenericParamsElementStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>
-) : StubBase<RustGenericParamsElement>(parent, elementType) {
-    object Type : RustStubElementType.Trivial<RustGenericParamsElementStub, RustGenericParamsElement>(
-        "GENERIC_PARAMS",
-        ::RustGenericParamsElementStub,
-        ::RustGenericParamsElementImpl
-    )
 }
 
 

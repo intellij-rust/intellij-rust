@@ -329,7 +329,7 @@ private restricted_pat ::= &( IDENTIFIER
 
 generic_params ::= '<' lifetimes_params type_params '>' {
   extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RustGenericParamsElementStub"
+  stubClass = "org.rust.lang.core.stubs.RustPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
@@ -500,7 +500,7 @@ private use_path ::=
 use_glob_list ::= '{' use_glob_with_recover* '}' {
   pin = 1
   extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl.WithParent<?>"
-  stubClass = "org.rust.lang.core.stubs.RustUseGlobListElementStub"
+  stubClass = "org.rust.lang.core.stubs.RustPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
@@ -565,7 +565,7 @@ foreign_mod_item ::= attrs_and_vis extern_abi '{' inner_attr* foreign_decl* '}' 
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustItemElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustForeignModItemImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RustForeignModItemElementStub"
+  stubClass = "org.rust.lang.core.stubs.RustPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
@@ -607,7 +607,7 @@ enum_item ::= attrs_and_vis ENUM IDENTIFIER generic_params? where_clause? enum_b
 enum_body ::= '{' [ <<comma_separated_list enum_variant>> ] '}' {
   pin = 1
   extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl.WithParent<?>"
-  stubClass = "org.rust.lang.core.stubs.RustEnumBodyElementStub"
+  stubClass = "org.rust.lang.core.stubs.RustPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 enum_variant ::= outer_attr* IDENTIFIER variant_args? {
@@ -628,7 +628,7 @@ private variant_args ::= variant_block_fields
 
 block_fields ::= <<mk_block_fileds field_decl>> {
   extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl.WithParent<?>"
-  stubClass = "org.rust.lang.core.stubs.RustBlockFieldsElementStub"
+  stubClass = "org.rust.lang.core.stubs.RustPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 tuple_fields ::= <<mk_tuple_fields tuple_field_decl>>
@@ -747,48 +747,48 @@ type ::= vec_type
        | for_in_type
        | impl_trait_type {
 
-  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  stubClass = "org.rust.lang.core.stubs.RustPlaceholderStub"
   extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl<?>"
 }
 
 vec_type ::= '[' type [';' any_expr] ']' {
-  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  stubClass = "org.rust.lang.core.stubs.RustPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 ref_like_type ::= ( '&' LIFETIME? MUT? | '*' [ CONST | MUT ] ) type {
-  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  stubClass = "org.rust.lang.core.stubs.RustPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 bare_fn_type ::= [ UNSAFE? extern_abi? ] FN fn_type_parameters ret_type? {
-  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  stubClass = "org.rust.lang.core.stubs.RustPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 tuple_type ::= '(' [ <<comma_separated_list type>> ] ')' {
-  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  stubClass = "org.rust.lang.core.stubs.RustPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 type_with_bounds_type ::= type ('+' bound)+ {
-  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  stubClass = "org.rust.lang.core.stubs.RustPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 bound ::= LIFETIME | trait_ref
 
 for_in_type ::= for_lifetimes (bare_fn_type | trait_ref) {
-  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  stubClass = "org.rust.lang.core.stubs.RustPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 impl_trait_type ::= IMPL polybound ('+' polybound)* {
-  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  stubClass = "org.rust.lang.core.stubs.RustPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 base_type ::= '_' | '!' | !'<' path_generic_args_without_colons | &'<' type_qual_path {
-  stubClass = "org.rust.lang.core.stubs.RustTypeElementStub"
+  stubClass = "org.rust.lang.core.stubs.RustPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
