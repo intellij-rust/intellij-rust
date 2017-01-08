@@ -253,6 +253,20 @@ class RustErrorAnnotatorTest: RustAnnotatorTestBase() {
         }
     """)
 
+    fun testE0403_NameDuplicationInGenericParams() = checkErrors("""
+        fn sub<T, P>() {}
+        struct Str<T, P> { t: T, p: P }
+        impl<T, P> Str<T, P> {}
+        enum Direction<T, P> { LEFT(T), RIGHT(P) }
+        trait Trait<T, P> {}
+
+        fn add<T,   <error descr="The name `T` is already used for a type parameter in this type parameter list [E0403]">T</error>, P>() {}
+        struct S<T, <error descr="The name `T` is already used for a type parameter in this type parameter list [E0403]">T</error>, P> { t: T, p: P }
+        impl<T,     <error descr="The name `T` is already used for a type parameter in this type parameter list [E0403]">T</error>, P> S<T, P> {}
+        enum En<T,  <error descr="The name `T` is already used for a type parameter in this type parameter list [E0403]">T</error>, P> { LEFT(T), RIGHT(P) }
+        trait Tr<T, <error descr="The name `T` is already used for a type parameter in this type parameter list [E0403]">T</error>, P> { fn foo(t: T) -> P; }
+    """)
+
     fun testE0407_UnknownMethodInTraitImpl() = checkErrors("""
         trait T {
             fn foo();

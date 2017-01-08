@@ -23,6 +23,7 @@ class RustErrorAnnotator : Annotator {
             override fun visitConstant(o: RustConstantElement) = checkConstant(holder, o)
             override fun visitEnumBody(o: RustEnumBodyElement) = checkEnumBody(holder, o)
             override fun visitForeignModItem(o: RustForeignModItemElement) = checkForeignModItem(holder, o)
+            override fun visitGenericParams(o: RustGenericParamsElement) = checkGenericParams(holder, o)
             override fun visitImplItem(o: RustImplItemElement) = checkImpl(holder, o)
             override fun visitModDeclItem(o: RustModDeclItemElement) = checkModDecl(holder, o)
             override fun visitModItem(o: RustModItemElement) = checkModItem(holder, o)
@@ -124,6 +125,11 @@ class RustErrorAnnotator : Annotator {
     private fun checkForeignModItem(holder: AnnotationHolder, mod: RustForeignModItemElement) =
         findDuplicates(holder, mod, { ns, name ->
             "A ${ns.itemName} named `$name` has already been defined in this module [E0428]"
+        })
+
+    private fun checkGenericParams(holder: AnnotationHolder, params: RustGenericParamsElement) =
+        findDuplicates(holder, params, { ns, name ->
+            "The name `$name` is already used for a type parameter in this type parameter list [E0403]"
         })
 
     private fun checkImpl(holder: AnnotationHolder, impl: RustImplItemElement) {
