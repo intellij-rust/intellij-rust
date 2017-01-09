@@ -186,6 +186,6 @@ def parserTask(project, parserName, pkg) {
         args = [dstRoot, file(src)]
 
         inputs.file file(src)
-        outputs.dir fileTree(dir: dst, include: '**/*.java')
+        outputs.dir dst
     })
 }
