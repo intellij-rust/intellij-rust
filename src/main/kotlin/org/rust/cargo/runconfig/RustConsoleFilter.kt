@@ -1,6 +1,5 @@
 package org.rust.cargo.runconfig
 
-import com.intellij.execution.filters.RegexpFilter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -13,5 +12,5 @@ class RustConsoleFilter(
 ) : RegexpFileLinkFilter(
     project,
     cargoProjectDir,
-    "(?: --> )?${RegexpFilter.FILE_PATH_MACROS}:${RegexpFilter.LINE_MACROS}:${RegexpFilter.COLUMN_MACROS}") {
-}
+    "^(?: --> )?$FILE_POSITION_RE.*$"
+)

@@ -2,7 +2,6 @@ package org.rust.cargo.runconfig
 
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
-import com.intellij.execution.filters.RegexpFilter
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.EffectType
@@ -12,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import org.rust.cargo.project.PackageOrigin
+import org.rust.cargo.runconfig.RegexpFileLinkFilter.Companion.FILE_POSITION_RE
 import org.rust.lang.core.resolve.RustResolveEngine
 import java.awt.Color
 import java.awt.Font
@@ -29,7 +29,8 @@ class RustBacktraceFilter(
     cargoProjectDir: VirtualFile,
     module: Module
 ) : Filter {
-    private val sourceLinkFilter = RegexpFileLinkFilter(project, cargoProjectDir, "^\\s+at ${RegexpFilter.FILE_PATH_MACROS}:${RegexpFilter.LINE_MACROS}$")
+
+    private val sourceLinkFilter = RegexpFileLinkFilter(project, cargoProjectDir, "^\\s+at $FILE_POSITION_RE$")
     private val backtraceItemFilter = RustBacktraceItemFilter(project, module)
 
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {

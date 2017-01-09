@@ -1,6 +1,5 @@
 package org.rust.cargo.runconfig
 
-import com.intellij.execution.filters.RegexpFilter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -10,8 +9,4 @@ import com.intellij.openapi.vfs.VirtualFile
 class RustPanicFilter(
     project: Project,
     cargoProjectDir: VirtualFile
-) : RegexpFileLinkFilter(
-    project,
-    cargoProjectDir,
-    "^\\s*thread '.+' panicked at '.+', ${RegexpFilter.FILE_PATH_MACROS}:${RegexpFilter.LINE_MACROS}$") {
-}
+) : RegexpFileLinkFilter(project, cargoProjectDir, "^\\s*thread '.+' panicked at '.+', $FILE_POSITION_RE$")

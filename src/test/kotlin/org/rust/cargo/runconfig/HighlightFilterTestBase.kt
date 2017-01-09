@@ -28,7 +28,7 @@ abstract class HighlightFilterTestBase : RustTestCaseBase() {
     protected fun checkHighlights(filter: Filter, before: String, after: String, lineIndex: Int = 0) {
         val line = before.split('\n')[lineIndex]
         val result = checkNotNull(filter.applyFilter(line, before.length)) {
-            "No match in $before"
+            "No match in `$before`"
         }
         var checkText = before
         val items = ArrayList(result.resultItems)
