@@ -38,12 +38,12 @@ class RustErrorAnnotator : Annotator {
     }
 
     private fun checkBlock(holder: AnnotationHolder, block: RustBlockElement) =
-        findDuplicates(holder, block, { ns, name ->
+        findNamespacedDuplicates(holder, block, { ns, name ->
             "A ${ns.itemName} named `$name` has already been defined in this block [E0428]"
         })
 
     private fun checkBlockFields(holder: AnnotationHolder, block: RustBlockFieldsElement) =
-        findDuplicates(holder, block, { ns, name ->
+        findNamespacedDuplicates(holder, block, { ns, name ->
             "Field `$name` is already declared [E0124]"
         })
 
@@ -60,7 +60,7 @@ class RustErrorAnnotator : Annotator {
     }
 
     private fun checkEnumBody(holder: AnnotationHolder, enum: RustEnumBodyElement) =
-        findDuplicates(holder, enum, { ns, name ->
+        findNamespacedDuplicates(holder, enum, { ns, name ->
             "A ${ns.itemName} named `$name` has already been defined in this enum [E0428]"
         })
 
@@ -118,22 +118,26 @@ class RustErrorAnnotator : Annotator {
     }
 
     private fun checkModItem(holder: AnnotationHolder, modItem: RustModItemElement) =
-        findDuplicates(holder, modItem, { ns, name ->
+        findNamespacedDuplicates(holder, modItem, { ns, name ->
             "A ${ns.itemName} named `$name` has already been defined in this module [E0428]"
         })
 
     private fun checkForeignModItem(holder: AnnotationHolder, mod: RustForeignModItemElement) =
-        findDuplicates(holder, mod, { ns, name ->
+        findNamespacedDuplicates(holder, mod, { ns, name ->
             "A ${ns.itemName} named `$name` has already been defined in this module [E0428]"
         })
 
-    private fun checkGenericParams(holder: AnnotationHolder, params: RustGenericParamsElement) =
-        findDuplicates(holder, params, { ns, name ->
+    private fun checkGenericParams(holder: AnnotationHolder, params: RustGenericParamsElement) {
+        findNamespacedDuplicates(holder, params, { ns, name ->
             "The name `$name` is already used for a type parameter in this type parameter list [E0403]"
         })
+        findDuplicates<RustLifetimeParamElement>(holder, params, { name ->
+            "Lifetime name `$name` declared twice in the same scope [E0263]"
+        })
+    }
 
     private fun checkImpl(holder: AnnotationHolder, impl: RustImplItemElement) {
-        findDuplicates(holder, impl, { ns, name ->
+        findNamespacedDuplicates(holder, impl, { ns, name ->
             "Duplicate definitions with name `$name` [E0201]"
         })
 
@@ -170,7 +174,7 @@ class RustErrorAnnotator : Annotator {
     }
 
     private fun checkTraitItem(holder: AnnotationHolder, trait: RustTraitItemElement) =
-        findDuplicates(holder, trait, { ns, name ->
+        findNamespacedDuplicates(holder, trait, { ns, name ->
             "A ${ns.itemName} named `$name` has already been defined in this trait [E0428]"
         })
 
@@ -234,7 +238,7 @@ class RustErrorAnnotator : Annotator {
         return impl is RustImplItemElement && impl.traitRef != null
     }
 
-    private fun findDuplicates(holder: AnnotationHolder, owner: RustCompositeElement, messageGenerator: (ns: Namespace, name: String) -> String) {
+    private fun findNamespacedDuplicates(holder: AnnotationHolder, owner: RustCompositeElement, messageGenerator: (ns: Namespace, name: String) -> String) {
         val marked = HashSet<RustNamedElement>()
         owner.children.asSequence()
             .filterIsInstance<RustNamedElement>()
@@ -258,6 +262,19 @@ class RustErrorAnnotator : Annotator {
             }
     }
 
+    inline private fun <reified T: RustCompositeElement>findDuplicates(holder: AnnotationHolder, owner: RustCompositeElement, messageGenerator: (name: String) -> String) {
+        owner.children.asSequence()
+            .filterIsInstance<RustCompositeElement>()
+            .filter { it is T && it.uniqueName != null }
+            .groupBy { it.uniqueName }
+            .map { it.value }
+            .filter { it.size > 1 }
+            .flatMap { it.drop(1) }
+            .forEach {
+                holder.createErrorAnnotation(it.uniqueNameElement, messageGenerator(it.uniqueName!!))
+            }
+    }
+
     private val Array<out PsiElement?>.combinedRange: TextRange?
         get() = if (isEmpty())
             null
@@ -277,6 +294,18 @@ class RustErrorAnnotator : Annotator {
 
     private val RustCompositeElement.isCfgDependent: Boolean
         get() = this is RustDocAndAttributeOwner && queryAttributes.hasAttribute("cfg")
+
+    private val RustCompositeElement.uniqueName: String?
+        get() = when (this) {
+            is RustLifetimeParamElement -> lifetime.text
+            else -> null
+        }
+
+    private val RustCompositeElement.uniqueNameElement: PsiElement
+        get() = when (this) {
+            is RustLifetimeParamElement -> lifetime
+            else -> error("Unexpected name element request for $this: `$text`")
+        }
 
     private val RustNamedElement.namespaced: Sequence<Pair<Namespace, RustNamedElement>>
         get() = namespaces.asSequence().map { Pair(it, this) }
