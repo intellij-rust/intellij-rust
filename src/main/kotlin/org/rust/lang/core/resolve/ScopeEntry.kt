@@ -71,7 +71,7 @@ private class LazyMultiEntry(
 }
 
 enum class Namespace(val itemName: String) {
-    Values("value"), Types("type")
+    Values("value"), Types("type"), Lifetimes("lifetime")
 }
 
 fun Sequence<ScopeEntry>.filterByNamespace(namespace: Namespace?): Sequence<ScopeEntry> {
@@ -81,12 +81,14 @@ fun Sequence<ScopeEntry>.filterByNamespace(namespace: Namespace?): Sequence<Scop
 
 private val TYPES = EnumSet.of(Namespace.Types)
 private val VALUES = EnumSet.of(Namespace.Values)
-private val BOTH = TYPES + VALUES
+private val LIFETIMES = EnumSet.of(Namespace.Lifetimes)
+private val TYPES_N_VALUES = TYPES + VALUES
 
 val RustNamedElement.namespaces: Set<Namespace> get() = when (this) {
     is RustMod,
     is RustEnumItemElement,
     is RustTraitItemElement,
+    is RustTypeParamElement,
     is RustTypeAliasElement -> TYPES
 
     is RustPatBindingElement,
@@ -94,9 +96,11 @@ val RustNamedElement.namespaces: Set<Namespace> get() = when (this) {
     is RustFunctionElement,
     is RustEnumVariantElement -> VALUES
 
-    is RustStructItemElement -> if (blockFields == null) BOTH else TYPES
+    is RustStructItemElement -> if (blockFields == null) TYPES_N_VALUES else TYPES
 
-    else -> BOTH
+    is RustLifetimeParamElement -> LIFETIMES
+
+    else -> TYPES_N_VALUES
 }
 
 

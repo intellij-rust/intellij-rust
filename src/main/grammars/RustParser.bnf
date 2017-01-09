@@ -336,7 +336,11 @@ generic_params ::= '<' lifetimes_params type_params '>' {
 private lifetimes_params ::= <<list_element lifetime_param>>*
 private type_params      ::= <<list_element type_param>>*
 
-lifetime_param ::= LIFETIME lifetime_param_bounds?
+lifetime_param ::= LIFETIME lifetime_param_bounds? {
+  implements = [ "org.rust.lang.core.psi.RustNamedElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustLifetimeParamElementImplMixin"
+}
+
 lifetime_param_bounds ::= ':' LIFETIME ('+' LIFETIME)*
 
 type_param ::= IDENTIFIER type_param_bounds? [ '=' type ] {

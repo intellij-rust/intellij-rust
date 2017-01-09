@@ -253,6 +253,20 @@ class RustErrorAnnotatorTest: RustAnnotatorTestBase() {
         }
     """)
 
+    fun testE0263_LifetimeNameDuplicationInGenericParams() = checkErrors("""
+        fn foo<'a, 'b>(x: &'a str, y: &'b str) { }
+        struct Str<'a, 'b> { a: &'a u32, b: &'b f64 }
+        impl<'a, 'b> Str<'a, 'b> {}
+        enum Direction<'a, 'b> { LEFT(&'a str), RIGHT(&'b str) }
+        trait Trait<'a, 'b> {}
+
+        fn foo<'a, 'b, <error descr="Lifetime name `'a` declared twice in the same scope [E0263]">'a</error>>(x: &'a str, y: &'b str) { }
+        struct Str<'a, 'b, <error>'a</error>> { a: &'a u32, b: &'b f64 }
+        impl<'a, 'b, <error>'a</error>> Str<'a, 'b> {}
+        enum Direction<'a, 'b, <error>'a</error>> { LEFT(&'a str), RIGHT(&'b str) }
+        trait Trait<'a, 'b, <error>'a</error>> {}
+    """)
+
     fun testE0403_NameDuplicationInGenericParams() = checkErrors("""
         fn sub<T, P>() {}
         struct Str<T, P> { t: T, p: P }
