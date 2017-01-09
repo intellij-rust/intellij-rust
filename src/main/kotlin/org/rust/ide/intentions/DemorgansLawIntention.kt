@@ -1,6 +1,5 @@
 package org.rust.ide.intentions
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -11,12 +10,11 @@ import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.utils.isNegation
 import org.rust.lang.utils.negateToString
 
-class DemorgansLawIntention : PsiElementBaseIntentionAction() {
+class DemorgansLawIntention : RustElementBaseIntentionAction() {
     override fun getFamilyName() = "DeMorgan's Law"
-    override fun startInWriteAction() = true
 
-    private fun setTextForElement(element: PsiElement) {
-        val binaryExpression = element as RustBinaryExprElement
+    private fun setTextForElement(element: RustBinaryExprElement) {
+        val binaryExpression = element
         text = when (binaryExpression.operatorType) {
             RustTokenElementTypes.ANDAND -> "DeMorgan's Law, Replace '&&' with '||'"
             RustTokenElementTypes.OROR -> "DeMorgan's Law, Replace '||' with '&&'"
@@ -24,31 +22,16 @@ class DemorgansLawIntention : PsiElementBaseIntentionAction() {
         }
     }
 
-    private data class Context(
-        val binaryExpr: RustBinaryExprElement,
-        val binaryOpType: IElementType
-    )
-
-    private fun findContext(element: PsiElement): Context? {
-        if (!element.isWritable) return null
-
-        val binExpr = element.parentOfType<RustBinaryExprElement>() ?: return null
-        val opType = binExpr.operatorType
-        if (opType == RustTokenElementTypes.ANDAND || opType == RustTokenElementTypes.OROR) {
-            return Context(binExpr, opType)
-        }
-        return null
-    }
-
-    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
-        if (findContext(element) != null) {
-            setTextForElement(findContext(element)?.binaryExpr as PsiElement)
+    override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
+        val ctx = findContext(element)
+        if (ctx != null) {
+            setTextForElement(ctx.binaryExpr)
             return true
         }
         return false
     }
 
-    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
+    override fun invokeImpl(project: Project, editor: Editor, element: PsiElement) {
         val (binExpr, opType) = findContext(element) ?: return
 
         var topBinExpr = binExpr
@@ -72,6 +55,20 @@ class DemorgansLawIntention : PsiElementBaseIntentionAction() {
                 applyDemorgan(project, it, opType)
             }
         }
+    }
+
+    private data class Context(
+        val binaryExpr: RustBinaryExprElement,
+        val binaryOpType: IElementType
+    )
+
+    private fun findContext(element: PsiElement): Context? {
+        val binExpr = element.parentOfType<RustBinaryExprElement>() ?: return null
+        val opType = binExpr.operatorType
+        if (opType == RustTokenElementTypes.ANDAND || opType == RustTokenElementTypes.OROR) {
+            return Context(binExpr, opType)
+        }
+        return null
     }
 
     private fun applyDemorgan(project: Project, topBinExpr: RustBinaryExprElement, opType: IElementType) {

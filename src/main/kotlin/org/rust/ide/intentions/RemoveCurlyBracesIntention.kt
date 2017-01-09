@@ -1,6 +1,5 @@
 package org.rust.ide.intentions
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -23,12 +22,11 @@ import org.rust.lang.core.psi.util.parentOfType
  * import std::mem;
  * ```
  */
-class RemoveCurlyBracesIntention : PsiElementBaseIntentionAction() {
+class RemoveCurlyBracesIntention : RustElementBaseIntentionAction() {
     override fun getText() = "Remove curly braces"
     override fun getFamilyName() = text
-    override fun startInWriteAction() = true
 
-    override fun invoke(project: Project, editor: Editor, element: PsiElement) {
+    override fun invokeImpl(project: Project, editor: Editor, element: PsiElement) {
         // Get our hands on the various parts of the use item:
         val useItem = element.parentOfType<RustUseItemElement>() ?: return
         val path = useItem.path ?: return
@@ -61,9 +59,7 @@ class RemoveCurlyBracesIntention : PsiElementBaseIntentionAction() {
         editor.caretModel.moveToOffset(newOffset)
     }
 
-    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
-        if (!element.isWritable) return false
-
+    override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
         val useItem = element.parentOfType<RustUseItemElement>() ?: return false
         val list = useItem.useGlobList ?: return false
         if (list.children.size != 1) return false

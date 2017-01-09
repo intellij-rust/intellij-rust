@@ -1,6 +1,5 @@
 package org.rust.ide.intentions
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -8,14 +7,14 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.getNextNonCommentSibling
 import org.rust.lang.core.psi.util.parentOfType
 
-class MatchToIfLetIntention : PsiElementBaseIntentionAction() {
+class MatchToIfLetIntention : RustElementBaseIntentionAction() {
     override fun getText() = "Convert match statement to if let"
     override fun getFamilyName(): String = text
 
-    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean =
+    override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean =
         findMatchExpr(element) != null
 
-    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
+    override fun invokeImpl(project: Project, editor: Editor, element: PsiElement) {
         val (matchExpr, matchTarget, matchBody, arm) = findMatchExpr(element)
             ?: error("Unavailable intention invoked")
 
@@ -38,8 +37,6 @@ class MatchToIfLetIntention : PsiElementBaseIntentionAction() {
     )
 
     private fun findMatchExpr(element: PsiElement): Context? {
-        if (!element.isWritable) return null
-
         val matchExpr = element.parentOfType<RustMatchExprElement>() ?: return null
         val matchTarget = matchExpr.expr ?: return null
         val matchBody = matchExpr.matchBody ?: return null

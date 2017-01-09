@@ -15,11 +15,6 @@ class ContractModuleIntention : IntentionAction {
     override fun getText() = "Contract module"
     override fun startInWriteAction() = true
 
-    override fun isAvailable(project: Project, editor: Editor, file: PsiFile) =
-        file is RustFile
-            && file.name == RustMod.MOD_RS
-            && file.containingDirectory?.children?.size == 1
-
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
         val parent = file.parent ?: return
         val dst = parent.parent ?: return
@@ -28,4 +23,9 @@ class ContractModuleIntention : IntentionAction {
         MoveFilesOrDirectoriesUtil.doMoveFile(file, dst)
         parent.delete()
     }
+
+    override fun isAvailable(project: Project, editor: Editor, file: PsiFile) =
+        file is RustFile
+            && file.name == RustMod.MOD_RS
+            && file.containingDirectory?.children?.size == 1
 }

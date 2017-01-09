@@ -1,6 +1,5 @@
 package org.rust.ide.intentions
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -22,23 +21,21 @@ import org.rust.lang.core.psi.util.parentOfType
  * &mut type
  * ```
  */
-open class SetMutableIntention : PsiElementBaseIntentionAction() {
+open class SetMutableIntention : RustElementBaseIntentionAction() {
     override fun getText() = "Set reference mutable"
     override fun getFamilyName() = text
-    override fun startInWriteAction() = true
 
     open val mutable = true
 
-    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean =
-        findContext(element) != null
-
-    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
+    override fun invokeImpl(project: Project, editor: Editor, element: PsiElement) {
         val ctx = findContext(element) ?: return
-
 
         val newType = RustPsiFactory(project).createReferenceType(ctx.baseType.text, mutable)
         ctx.refType.replace(newType)
     }
+
+    override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean =
+        findContext(element) != null
 
     private data class Context(
         val refType: RustRefLikeTypeElement,

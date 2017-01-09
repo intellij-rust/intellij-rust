@@ -1,6 +1,5 @@
 package org.rust.ide.intentions
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -9,12 +8,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
 
-class AddDeriveIntention : PsiElementBaseIntentionAction() {
+class AddDeriveIntention : RustElementBaseIntentionAction() {
     override fun getFamilyName() = "Add derive clause"
     override fun getText() = "Add derive clause"
-    override fun startInWriteAction() = true
 
-    override fun invoke(project: Project, editor: Editor, element: PsiElement) {
+    override fun invokeImpl(project: Project, editor: Editor, element: PsiElement) {
         val (item, keyword) = getTarget(element) ?: return
         val deriveAttr = findOrCreateDeriveAttr(project, item, keyword) ?: return
         val reformattedDeriveAttr = reformat(project, item, deriveAttr)
@@ -22,7 +20,7 @@ class AddDeriveIntention : PsiElementBaseIntentionAction() {
     }
 
     override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean =
-        element.isWritable && getTarget(element) != null
+        getTarget(element) != null
 
     private fun getTarget(element: PsiElement): Pair<RustStructOrEnumItemElement, PsiElement>? {
         val item = element.parentOfType<RustStructOrEnumItemElement>() ?: return null

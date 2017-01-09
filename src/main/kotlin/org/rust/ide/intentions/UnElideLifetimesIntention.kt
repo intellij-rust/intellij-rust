@@ -1,6 +1,5 @@
 package org.rust.ide.intentions
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -8,30 +7,11 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.contains
 import org.rust.lang.core.psi.util.parentOfType
 
-class UnElideLifetimesIntention : PsiElementBaseIntentionAction() {
+class UnElideLifetimesIntention : RustElementBaseIntentionAction() {
     override fun getText() = "Un-elide lifetimes"
-
     override fun getFamilyName(): String = text
 
-    private val nameGenerator = generateSequence(0) { it + 1 }.map {
-        val abcSize = 'z' - 'a' + 1
-        val letter = 'a' + it % abcSize
-        val index = it / abcSize
-        return@map if (index == 0) "'$letter" else "'$letter$index"
-    }
-
-    override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
-        val fnDecl = findFnDecl(element) ?: return false
-
-        if ((fnDecl.retType?.type as? RustRefLikeTypeElement)?.lifetime != null)
-            return false
-
-        val args = fnDecl.allRefArgs
-
-        return args.any() && args.all { it.lifetime == null }
-    }
-
-    override fun invoke(project: Project, editor: Editor, element: PsiElement) {
+    override fun invokeImpl(project: Project, editor: Editor, element: PsiElement) {
         val fnDecl = checkNotNull(findFnDecl(element))
 
         fnDecl.allRefArgs.zip(nameGenerator).forEach {
@@ -57,6 +37,24 @@ class UnElideLifetimesIntention : PsiElementBaseIntentionAction() {
                 as RustRefLikeTypeElement).lifetime ?: return
             editor.selectionModel.setSelection(lifeTime.textRange.startOffset + 1, lifeTime.textRange.endOffset)
         }
+    }
+
+    override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
+        val fnDecl = findFnDecl(element) ?: return false
+
+        if ((fnDecl.retType?.type as? RustRefLikeTypeElement)?.lifetime != null)
+            return false
+
+        val args = fnDecl.allRefArgs
+
+        return args.any() && args.all { it.lifetime == null }
+    }
+
+    private val nameGenerator = generateSequence(0) { it + 1 }.map {
+        val abcSize = 'z' - 'a' + 1
+        val letter = 'a' + it % abcSize
+        val index = it / abcSize
+        return@map if (index == 0) "'$letter" else "'$letter$index"
     }
 
     fun findFnDecl(element: PsiElement): RustFunctionElement? {
