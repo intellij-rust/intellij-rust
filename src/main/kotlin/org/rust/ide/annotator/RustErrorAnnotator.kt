@@ -129,7 +129,10 @@ class RustErrorAnnotator : Annotator {
 
     private fun checkGenericParams(holder: AnnotationHolder, params: RustGenericParamsElement) =
         findDuplicates(holder, params, { ns, name ->
-            "The name `$name` is already used for a type parameter in this type parameter list [E0403]"
+            if (ns == Namespace.Lifetimes)
+                "Lifetime name `$name` declared twice in the same scope [E0263]"
+            else
+                "The name `$name` is already used for a type parameter in this type parameter list [E0403]"
         })
 
     private fun checkImpl(holder: AnnotationHolder, impl: RustImplItemElement) {
