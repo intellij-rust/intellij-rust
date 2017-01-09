@@ -19,7 +19,8 @@ abstract class RustStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElem
 
     override fun toString(): String = "${javaClass.simpleName}($elementType)"
 
-    // Remove when drop support for 2016.1
+    // BACKCOMPAT: 2016.1
+    // 2016.2 has shiny green stubs
     abstract class WithParent<StubT : StubElement<*>> : RustStubbedElementImpl<StubT> {
         constructor(node: ASTNode) : super(node)
 

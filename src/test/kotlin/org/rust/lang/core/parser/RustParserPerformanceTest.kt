@@ -63,9 +63,9 @@ class RustParserPerformanceTest : RustTestCaseBase() {
                 override fun visitFileEx(file: VirtualFile): Result {
                     if (file.isDirectory && file.name in ignored) return SKIP_CHILDREN
 
+                    // BACKCOMPAT: Rust 1.14.0
                     // There is a syntax error in this file
                     // https://github.com/rust-lang/rust/pull/37278
-                    // TODO: remove after rust 1.14.0
                     if (file.path.endsWith("dataflow/graphviz.rs")) return CONTINUE
 
                     if (file.fileType != RustFileType) return CONTINUE
