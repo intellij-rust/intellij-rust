@@ -30,7 +30,7 @@ class RustBacktraceFilter(
     module: Module
 ) : Filter {
 
-    private val sourceLinkFilter = RegexpFileLinkFilter(project, cargoProjectDir, "^\\s+at $FILE_POSITION_RE$")
+    private val sourceLinkFilter = RegexpFileLinkFilter(project, cargoProjectDir, "\\s+at $FILE_POSITION_RE")
     private val backtraceItemFilter = RustBacktraceItemFilter(project, module)
 
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {

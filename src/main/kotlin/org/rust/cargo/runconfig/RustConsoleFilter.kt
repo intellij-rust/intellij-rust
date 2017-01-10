@@ -12,5 +12,5 @@ class RustConsoleFilter(
 ) : RegexpFileLinkFilter(
     project,
     cargoProjectDir,
-    "^(?: --> )?$FILE_POSITION_RE.*$"
+    "(?: --> )?$FILE_POSITION_RE.*"
 )

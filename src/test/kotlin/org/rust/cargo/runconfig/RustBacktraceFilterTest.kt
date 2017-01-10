@@ -7,6 +7,7 @@ import org.rust.cargo.util.modules
  * Tests for RustBacktraceFilter
  */
 class RustBacktraceFilterTest : HighlightFilterTestBase() {
+    private val filter: RustBacktraceFilter get() = RustBacktraceFilter(project, projectDir, project.modules.first())
 
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
@@ -69,6 +70,5 @@ stack backtrace:
                         at src/main.rs:22""",
             "                        at [src/main.rs -> main.rs]:22", 14)
 
-    private val filter: RustBacktraceFilter get() = RustBacktraceFilter(project, projectDir, project.modules.first())
 
 }

@@ -12,6 +12,11 @@ class RustPanicFilterTest : HighlightFilterTestBase() {
             "thread 'main' panicked at 'something went wrong', src/main.rs:24",
             "thread 'main' panicked at 'something went wrong', [src/main.rs -> main.rs]:24")
 
+    fun testOneLineWithLineSeparator() =
+        checkHighlights(filter,
+            "thread 'main' panicked at 'something went wrong', src/main.rs:24\n",
+            "thread 'main' panicked at 'something went wrong', [src/main.rs -> main.rs]:24\n")
+
     fun testFullOuput() =
         checkHighlights(filter,
             """/Users/user/.cargo/bin/cargo run

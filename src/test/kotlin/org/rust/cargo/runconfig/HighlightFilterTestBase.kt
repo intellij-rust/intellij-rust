@@ -3,6 +3,7 @@ package org.rust.cargo.runconfig
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.assertj.core.api.Assertions
 import org.rust.lang.RustTestCaseBase
@@ -32,9 +33,9 @@ abstract class HighlightFilterTestBase : RustTestCaseBase() {
     }
 
     protected fun checkHighlights(filter: Filter, before: String, after: String, lineIndex: Int = 0) {
-        val line = before.split('\n')[lineIndex]
+        val line = before.splitLinesKeepSeparators()[lineIndex]
         val result = checkNotNull(filter.applyFilter(line, before.length)) {
-            "No match in `$before`"
+            "No match in \"${StringUtil.escapeStringCharacters(line)}\""
         }
         var checkText = before
         val items = ArrayList(result.resultItems)
@@ -47,7 +48,9 @@ abstract class HighlightFilterTestBase : RustTestCaseBase() {
             }
             checkText = checkText.replaceRange(range, "[$itemText]")
         }
-        checkText = checkText.split('\n')[lineIndex]
+        checkText = checkText.splitLinesKeepSeparators()[lineIndex]
         Assertions.assertThat(checkText).isEqualTo(after)
     }
+
+    private fun String.splitLinesKeepSeparators() = split("(?<=\n)".toRegex())
 }

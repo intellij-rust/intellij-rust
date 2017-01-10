@@ -20,7 +20,7 @@ import java.io.File
 open class RegexpFileLinkFilter(
     private val project: Project,
     private val cargoProjectDirectory: VirtualFile,
-    regExp: String
+    lineRegExp: String
 ) : Filter, DumbAware {
 
     companion object {
@@ -30,13 +30,15 @@ open class RegexpFileLinkFilter(
     }
 
     init {
-        require(FILE_POSITION_RE in regExp)
+        require(FILE_POSITION_RE in lineRegExp)
+        require('^' !in lineRegExp && '$' !in lineRegExp)
     }
 
-    private val pattern = regExp.toRegex()
+    private val linePattern = ("^$lineRegExp\\R?$").toRegex()
 
+    // Line is a single sine, with line separator included
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
-        val match = pattern.matchEntire(line)
+        val match = linePattern.matchEntire(line)
             ?: return null
         val fileGroup = match.groups[1]!!
         val lineNumber = match.groups[2]?.let { zeroBasedNumber(it.value) } ?: 0
