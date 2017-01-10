@@ -58,8 +58,6 @@ fn test() -> u32 {
 
     let _ = 1 as i32 <= 1;
 
-    // TBA(kudinkin)
-
     return (x = y)  /* return */
             + 1
 }

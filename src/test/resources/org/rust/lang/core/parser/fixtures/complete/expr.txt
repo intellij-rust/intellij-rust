@@ -612,8 +612,6 @@ FILE
             RustNumericLiteralImpl(<INTEGER>)('1')
         PsiElement(;)(';')
       PsiWhiteSpace('\n\n    ')
-      PsiComment(<EOL_COMMENT>)('// TBA(kudinkin)')
-      PsiWhiteSpace('\n\n    ')
       RustRetExprElementImpl(RET_EXPR)
         PsiElement(return)('return')
         PsiWhiteSpace(' ')

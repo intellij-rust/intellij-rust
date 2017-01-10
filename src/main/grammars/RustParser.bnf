@@ -845,7 +845,7 @@ expr ::= ret_expr
        | atom_expr
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
-no_struct_lit_expr ::= <<structLiterals 'OFF' expr>> { elementType = expr }
+no_struct_lit_expr ::= <<structLiterals 'OFF' <<stmtMode 'OFF' expr>> >> { elementType = expr }
 any_expr ::= <<structLiterals 'ON' <<stmtMode 'OFF' expr>> >> { elementType = expr }
 stmt_mode_expr ::= <<structLiterals 'ON' <<stmtMode 'ON' expr>> >> { elementType = expr }
 stmt_mode_expr_off ::= <<stmtMode 'OFF' expr>> { elementType = expr }
