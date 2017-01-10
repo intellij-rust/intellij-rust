@@ -76,6 +76,10 @@ class RustErrorAnnotatorTest: RustAnnotatorTestBase() {
         }
     """)
 
+    fun testUnionTuple() = checkErrors("""
+        union U<error descr="Union cannot be tuple-like">(i32, f32)</error>;
+    """)
+
     fun testTypeAliasFree() = checkErrors("""
         type Int = i32;
         pub type UInt = u32;

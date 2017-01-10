@@ -1,9 +1,11 @@
 package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.RustStructItemElement
+import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
@@ -23,4 +25,18 @@ abstract class RustStructItemImplMixin : RustStubbedNamedElementImpl<RustStructI
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 
     override val crateRelativePath: RustPath.CrateRelative? get() = RustPsiImplUtil.crateRelativePath(this)
+}
+
+val RustStructItemElement.union: PsiElement?
+    get() = node.findChildByType(RustTokenElementTypes.UNION)?.psi
+
+
+enum class RustStructKind {
+    STRUCT,
+    UNION
+}
+
+val RustStructItemElement.kind: RustStructKind get() = when {
+    union != null -> RustStructKind.UNION
+    else -> RustStructKind.STRUCT
 }

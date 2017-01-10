@@ -6,7 +6,6 @@ interface RustItemsOwner : RustCompositeElement {
     val constantList: List<RustConstantElement>
     val structItemList: List<RustStructItemElement>
     val enumItemList: List<RustEnumItemElement>
-    val unionItemList: List<RustUnionItemElement>
     val implItemList: List<RustImplItemElement>
     val traitItemList: List<RustTraitItemElement>
     val typeAliasList: List<RustTypeAliasElement>

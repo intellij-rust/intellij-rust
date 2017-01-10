@@ -283,7 +283,6 @@ private fun innerDeclarationsIn(
 
         is RustStructItemElement,
         is RustEnumItemElement,
-        is RustUnionItemElement,
         is RustTypeAliasElement -> {
             scope as RustGenericDeclaration
             scope.typeParams.asScopeEntries()
@@ -389,7 +388,6 @@ private fun definedItems(scope: RustItemsOwner): Sequence<Pair<String, RustNamed
     val inlineItems: Sequence<RustNamedElement> = sequenceOf(
         scope.functionList.asSequence(),
         scope.enumItemList.asSequence(),
-        scope.unionItemList.asSequence(),
         scope.modItemList.asSequence(),
         scope.constantList.asSequence(),
         scope.structItemList.asSequence(),

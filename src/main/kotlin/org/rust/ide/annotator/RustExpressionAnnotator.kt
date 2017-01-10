@@ -8,6 +8,8 @@ import com.intellij.util.SmartList
 import org.rust.ide.annotator.fixes.AddStructFieldsFix
 import org.rust.ide.intentions.RemoveParenthesesFromExprIntention
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.mixin.RustStructKind
+import org.rust.lang.core.psi.impl.mixin.kind
 import java.util.*
 
 class RustExpressionAnnotator : Annotator {
@@ -42,10 +44,17 @@ class RustExpressionAnnotator : Annotator {
         val declaredFields = expr.structExprFieldList.map { it.referenceName }.toSet()
         val missingFields = decl.namedFields.filter { it.name !in declaredFields }
 
-        if (missingFields.isNotEmpty()) {
-            holder.createErrorAnnotation(expr.rbrace ?: expr, "Some fields are missing")
-                .registerFix(AddStructFieldsFix(missingFields, expr), expr.textRange)
+        if (decl is RustStructItemElement && decl.kind == RustStructKind.UNION) {
+            if (expr.structExprFieldList.size > 1) {
+                holder.createErrorAnnotation(expr, "Union expressions should have exactly one field")
+            }
+        } else {
+            if (missingFields.isNotEmpty()) {
+                holder.createErrorAnnotation(expr.rbrace ?: expr, "Some fields are missing")
+                    .registerFix(AddStructFieldsFix(missingFields, expr), expr.textRange)
+            }
         }
+
     }
 }
 
@@ -74,7 +83,7 @@ private class RedundantParenthesisVisitor(private val holder: AnnotationHolder) 
     }
 }
 
-private fun <T : RustReferenceElement> Collection<T>.findDuplicateReferences(): Collection<T>  {
+private fun <T : RustReferenceElement> Collection<T>.findDuplicateReferences(): Collection<T> {
     val names = HashSet<String>(size)
     val result = SmartList<T>()
     for (item in this) {

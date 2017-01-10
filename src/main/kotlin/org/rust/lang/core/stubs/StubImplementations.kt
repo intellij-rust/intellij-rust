@@ -34,7 +34,7 @@ class RustFileStub : PsiFileStubImpl<RustFile> {
 
     object Type : IStubFileElementType<RustFileStub>(RustLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 41
+        override fun getStubVersion(): Int = 42
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RustFileStub(file as RustFile)
@@ -71,7 +71,6 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "USE_ITEM" -> RustUseItemElementStub.Type
 
     "STRUCT_ITEM" -> RustStructItemElementStub.Type
-    "UNION_ITEM" -> RustUnionItemElementStub.Type
     "ENUM_ITEM" -> RustEnumItemElementStub.Type
     "ENUM_BODY" -> RustPlaceholderStub.Type("ENUM_BODY", ::RustEnumBodyElementImpl)
     "ENUM_VARIANT" -> RustEnumVariantElementStub.Type
@@ -208,38 +207,6 @@ class RustStructItemElementStub(
 
 
         override fun indexStub(stub: RustStructItemElementStub, sink: IndexSink) = sink.indexStructItem(stub)
-    }
-}
-
-
-class RustUnionItemElementStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    override val name: String?,
-    override val isPublic: Boolean
-) : StubBase<RustUnionItemElement>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub {
-
-    object Type : RustStubElementType<RustUnionItemElementStub, RustUnionItemElement>("UNION_ITEM") {
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RustUnionItemElementStub(parentStub, this,
-                dataStream.readNameAsString(),
-                dataStream.readBoolean()
-            )
-
-        override fun serialize(stub: RustUnionItemElementStub, dataStream: StubOutputStream) =
-            with(dataStream) {
-                writeName(stub.name)
-                writeBoolean(stub.isPublic)
-            }
-
-        override fun createPsi(stub: RustUnionItemElementStub) =
-            RustUnionItemElementImpl(stub, this)
-
-        override fun createStub(psi: RustUnionItemElement, parentStub: StubElement<*>?) =
-            RustUnionItemElementStub(parentStub, this, psi.name, psi.isPublic)
-
-        override fun indexStub(stub: RustUnionItemElementStub, sink: IndexSink) = sink.indexUnionItem(stub)
     }
 }
 

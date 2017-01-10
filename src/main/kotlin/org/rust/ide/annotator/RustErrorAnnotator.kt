@@ -21,6 +21,7 @@ class RustErrorAnnotator : Annotator {
         val visitor = object : RustElementVisitor() {
             override fun visitBlock(o: RustBlockElement) = checkBlock(holder, o)
             override fun visitConstant(o: RustConstantElement) = checkConstant(holder, o)
+            override fun visitStructItem(o: RustStructItemElement) = checkStructItem(holder, o)
             override fun visitEnumBody(o: RustEnumBodyElement) = checkEnumBody(holder, o)
             override fun visitForeignModItem(o: RustForeignModItemElement) = checkForeignModItem(holder, o)
             override fun visitGenericParams(o: RustGenericParamsElement) = checkGenericParams(holder, o)
@@ -86,6 +87,12 @@ class RustErrorAnnotator : Annotator {
                     ?: require(const.mut, holder, "Non mutable static constants are not allowed in extern blocks", const.static, const.identifier)
                 deny(const.expr, holder, "Static constants in extern blocks cannot have values", const.eq, const.expr)
             }
+        }
+    }
+
+    private fun checkStructItem(holder: AnnotationHolder, struct: RustStructItemElement) {
+        if (struct.kind == RustStructKind.UNION && struct.tupleFields != null) {
+            deny(struct.tupleFields, holder, "Union cannot be tuple-like")
         }
     }
 

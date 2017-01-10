@@ -264,7 +264,6 @@ private DEFAULT ::= <<defaultKeyword>>
 private UNION ::= <<unionKeyword>>
 
 private attrs_and_vis ::= outer_attr* vis?
-private attrs_default_vis ::= outer_attr* DEFAULT? vis?
 
 private item ::= constant
                | type_alias
@@ -275,7 +274,6 @@ private item ::= constant
                | mod_item
                | foreign_mod_item
                | struct_item
-               | union_item
                | enum_item
                | view_item
                | macro_item
@@ -580,23 +578,12 @@ private foreign_decl ::= constant | foreign_fn_decl
 // Struct & Enums
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct_item ::= attrs_and_vis STRUCT IDENTIFIER generic_params? (tuple_fields? where_clause? ';' | where_clause? block_fields) {
+struct_item ::= attrs_and_vis (STRUCT | UNION) IDENTIFIER generic_params? (tuple_fields? where_clause? ';' | where_clause? block_fields) {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustStructOrEnumItemElement"
                  "org.rust.lang.core.psi.RustFieldsOwner" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustStructItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RustStructItemElementStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
-
-// RFC 1444
-union_item ::= attrs_and_vis UNION IDENTIFIER generic_params? where_clause? block_fields {
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RustItemElement"
-                 "org.rust.lang.core.psi.RustQualifiedNamedElement"
-                 "org.rust.lang.core.psi.RustGenericDeclaration" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RustUnionItemImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RustUnionItemElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 

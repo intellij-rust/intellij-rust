@@ -77,8 +77,8 @@ class RustHighlightingAnnotatorTest : RustAnnotatorTestBase() {
     """)
 
     fun testContextualKeywords() = checkInfo("""
-        <info>union</info> U { }
-        impl <info>T</info> for U {
+        <info>union</info> <info>U</info> { }
+        impl <info>T</info> for <info>U</info> {
             <info>default</info> fn <info>foo</info>() {}
         }
     """)

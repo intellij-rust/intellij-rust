@@ -80,6 +80,15 @@ class RustExpressionAnnotatorTest : RustAnnotatorTestBase() {
         }
     """)
 
+    fun testUnion() = checkWarnings("""
+        union U { a: i32, b: f32 }
+
+        fn main() {
+            let _ = U { a: 92 };
+            let _ = U <error descr="Union expressions should have exactly one field">{ a: 92, b: 92.0}</error>;
+        }
+    """)
+
     fun testStructExprQuickFix() = checkQuickFix("Add missing fields", """
         struct S {
             foo: i32,
