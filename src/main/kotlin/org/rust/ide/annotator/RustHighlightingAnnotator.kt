@@ -76,7 +76,7 @@ class RustHighlightingAnnotator : Annotator {
 private fun colorFor(element: RustCompositeElement): RustColor? = when (element) {
     is RustAttrElement -> RustColor.ATTRIBUTE
     is RustMacroInvocationElement -> RustColor.MACRO
-    is RustSelfArgumentElement -> RustColor.SELF_PARAMETER
+    is RustSelfParameterElement -> RustColor.SELF_PARAMETER
     is RustTryExprElement -> RustColor.Q_OPERATOR
     is RustTraitRefElement -> RustColor.TRAIT
 
@@ -107,7 +107,7 @@ private fun colorFor(element: RustCompositeElement): RustColor? = when (element)
 private fun partToHighlight(element: RustCompositeElement): PsiElement? = when (element) {
     is RustAttrElement -> element
     is RustMacroInvocationElement -> element
-    is RustSelfArgumentElement -> element.self
+    is RustSelfParameterElement -> element.self
     is RustTryExprElement -> element.q
     is RustTraitRefElement -> element.path.identifier
 

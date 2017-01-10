@@ -300,7 +300,7 @@ private fun innerDeclarationsIn(
         }
 
         is RustFunctionElement -> {
-            val selfArgument = scope.parameters?.selfArgument
+            val selfArgument = scope.parameters?.selfParameter
             val arguments = scope.parameters?.parameterList.orEmpty().asSequence()
 
             sequenceOf(

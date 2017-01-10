@@ -31,7 +31,7 @@ object RustTypificationEngine {
         return when (named) {
             is RustItemElement -> typifyItem(named)
 
-            is RustSelfArgumentElement -> deviseSelfType(named)
+            is RustSelfParameterElement -> deviseSelfType(named)
 
             is RustPatBindingElement -> deviseBoundPatType(named)
 
@@ -249,7 +249,7 @@ private fun deviseBoundPatType(binding: RustPatBindingElement): RustType {
 /**
  * Devises type for the given (implicit) self-argument
  */
-private fun deviseSelfType(self: RustSelfArgumentElement): RustType {
+private fun deviseSelfType(self: RustSelfParameterElement): RustType {
     val impl = self.parentOfType<RustImplItemElement>()
     var Self: RustType = if (impl != null) {
         impl.type?.resolvedType ?: return RustUnknownType
@@ -274,7 +274,7 @@ private fun deviseFunctionType(fn: RustFunctionElement): RustFunctionType {
 
     val params = fn.parameters
     if (params != null) {
-        val self = params.selfArgument
+        val self = params.selfParameter
         if (self != null) {
             paramTypes += deviseSelfType(self)
         }

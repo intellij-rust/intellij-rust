@@ -215,14 +215,14 @@ class RustErrorAnnotator : Annotator {
     private fun checkTraitFnImplParams(holder: AnnotationHolder, fn: RustFunctionElement, superFn: RustFunctionElement, traitName: String) {
         val params = fn.parameters ?: return
         val superParams = superFn.parameters ?: return
-        val selfArg = params.selfArgument
+        val selfArg = params.selfParameter
 
-        if (selfArg != null && superParams.selfArgument == null) {
+        if (selfArg != null && superParams.selfParameter == null) {
             holder.createErrorAnnotation(selfArg,
                 "Method `${fn.name}` has a `${selfArg.canonicalDecl}` declaration in the impl, but not in the trait [E0185]")
-        } else if (selfArg == null && superParams.selfArgument != null) {
+        } else if (selfArg == null && superParams.selfParameter != null) {
             holder.createErrorAnnotation(params,
-                "Method `${fn.name}` has a `${superParams.selfArgument?.canonicalDecl}` declaration in the trait, but not in the impl [E0186]")
+                "Method `${fn.name}` has a `${superParams.selfParameter?.canonicalDecl}` declaration in the trait, but not in the impl [E0186]")
         }
 
         val paramsCount = params.parameterList.size
@@ -278,7 +278,7 @@ class RustErrorAnnotator : Annotator {
     private val Collection<String?>.namesList: String
         get() = mapNotNull{ "`$it`" }.joinToString(", ")
 
-    private val RustSelfArgumentElement.canonicalDecl: String
+    private val RustSelfParameterElement.canonicalDecl: String
         get() = buildString {
             and?.let { append('&') }
             mut?.let { append("mut ") }

@@ -45,7 +45,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         .before(COLON).spaceIf(false)
         .after(SEMICOLON).spaceIf(true)
         .before(SEMICOLON).spaceIf(false)
-        .afterInside(AND, ts(REF_LIKE_TYPE, SELF_ARGUMENT, PAT_REF, PARAMETER)).spaces(0)
+        .afterInside(AND, ts(REF_LIKE_TYPE, SELF_PARAMETER, PAT_REF, PARAMETER)).spaces(0)
         .beforeInside(Q, TRY_EXPR).spaces(0)
         .afterInside(UNARY_OPS, UNARY_EXPR).spaces(0)
         // `use ::{bar}`

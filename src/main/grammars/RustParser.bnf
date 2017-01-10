@@ -147,8 +147,8 @@
     implements  ("alias") = "org.rust.lang.core.psi.RustNamedElement"
     extends     ("alias") = "org.rust.lang.core.psi.impl.RustNamedElementImpl"
 
-    implements  ("self_argument") = [ "org.rust.lang.core.psi.RustNamedElement" ]
-    mixin       ("self_argument") = "org.rust.lang.core.psi.impl.mixin.RustSelfArgumentImplMixin"
+    implements  ("self_parameter") = [ "org.rust.lang.core.psi.RustNamedElement" ]
+    mixin       ("self_parameter") = "org.rust.lang.core.psi.impl.mixin.RustSelfParameterImplMixin"
 
     mixin       ("use_glob") = "org.rust.lang.core.psi.impl.mixin.RustUseGlobImplMixin"
 
@@ -300,8 +300,8 @@ lambda_parameter ::= pat type_ascription?
 anon_parameter ::= [ restricted_pat ':' ] type
 path_parameter ::= type !'='
 
-fake parameters          ::= self_argument? parameter*
-fake variadic_parameters ::= self_argument? parameter* '...'? { extends = parameters }
+fake parameters          ::= self_parameter? parameter*
+fake variadic_parameters ::= self_parameter? parameter* '...'? { extends = parameters }
 
 fn_parameters          ::= '(' !',' [ <<comma_separated_list fn_parameter>> ] ')' { pin = 1 }
 lambda_parameters      ::= '|' !',' [ <<comma_separated_list lambda_parameter>> ] '|'
@@ -314,10 +314,10 @@ fn_type_parameters     ::= <<variadic_params_impl anon_parameter>>
 path_parameters        ::= '(' [ <<comma_separated_list path_parameter>> ] ')' { pin = 1 }
 
 private meta variadic_params_impl ::= '(' [ <<param>> (',' <<param>>)*  [ ',' '...'? ] ] ')' { pin = 1 }
-private meta method_params_impl ::= '(' ( self_argument [ ',' [ <<comma_separated_list <<param>>>> ] ]
+private meta method_params_impl ::= '(' ( self_parameter [ ',' [ <<comma_separated_list <<param>>>> ] ]
                                         | [ <<comma_separated_list <<param>>>> ] ) ')' { pin = 1 }
 
-self_argument ::= [ '&' LIFETIME? ] MUT? SELF type_ascription?
+self_parameter ::= [ '&' LIFETIME? ] MUT? SELF type_ascription?
 private restricted_pat ::= &( IDENTIFIER
                             | '_'
                             | '&' (IDENTIFIER | '_')

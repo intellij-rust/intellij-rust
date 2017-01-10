@@ -41,7 +41,7 @@ class UnElideLifetimesIntention : RustElementBaseIntentionAction<RustFunctionEle
         val retType = ctx.retType?.type as? RustRefLikeTypeElement ?: return
 
         val parameters = checkNotNull(ctx.parameters)
-        if ((parameters.selfArgument != null) || (ctx.allRefArgs.drop(1).none())) {
+        if ((parameters.selfParameter != null) || (ctx.allRefArgs.drop(1).none())) {
             retType.replace(createRefType(project, retType, ctx.allRefArgs.first().lifetime!!.text))
         } else {
             val lifeTime = (retType.replace(createRefType(project, retType, "'unknown"))
@@ -64,7 +64,7 @@ class UnElideLifetimesIntention : RustElementBaseIntentionAction<RustFunctionEle
         RustPsiFactory(project).createMethodParam(origin.text.replaceFirst("&", "&$lifeTimeName "))
 
     private val RustFunctionElement.allRefArgs: List<PsiElement> get() {
-        val selfAfg: List<PsiElement> = listOfNotNull(parameters?.selfArgument)
+        val selfAfg: List<PsiElement> = listOfNotNull(parameters?.selfParameter)
         val params: List<PsiElement> = parameters?.parameterList.orEmpty()
             .filter { param ->
                 val type = param.type
@@ -75,7 +75,7 @@ class UnElideLifetimesIntention : RustElementBaseIntentionAction<RustFunctionEle
 
     private val PsiElement.lifetime: PsiElement? get() =
     when (this) {
-        is RustSelfArgumentElement -> lifetime
+        is RustSelfParameterElement -> lifetime
         is RustParameterElement -> (type as? RustRefLikeTypeElement)?.lifetime
         else -> null
     }

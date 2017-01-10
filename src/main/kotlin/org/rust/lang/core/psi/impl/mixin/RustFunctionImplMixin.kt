@@ -40,7 +40,7 @@ abstract class RustFunctionImplMixin : RustStubbedNamedElementImpl<RustFunctionE
 }
 
 val RustFunctionElement.isAbstract: Boolean get() = stub?.isAbstract ?: block == null
-val RustFunctionElement.isStatic: Boolean get() = stub?.isStatic ?: parameters?.selfArgument == null
+val RustFunctionElement.isStatic: Boolean get() = stub?.isStatic ?: parameters?.selfParameter == null
 val RustFunctionElement.isTest: Boolean get() = stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
 
 
