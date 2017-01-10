@@ -93,7 +93,7 @@ private fun colorFor(element: RustCompositeElement): RustColor? = when (element)
     is RustModDeclItemElement -> RustColor.MODULE
     is RustModItemElement -> RustColor.MODULE
     is RustPatBindingElement -> when {
-        element.parentOfType<RustParameterElement>() != null -> RustColor.PARAMETER
+        element.parentOfType<RustValueParameterElement>() != null -> RustColor.PARAMETER
         element.isMut -> RustColor.MUT_BINDING
         else -> null
     }

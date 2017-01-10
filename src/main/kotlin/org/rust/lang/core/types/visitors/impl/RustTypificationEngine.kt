@@ -238,7 +238,7 @@ private fun deviseBoundPatType(binding: RustPatBindingElement): RustType {
             // use type ascription, if present or fallback to the type of the initializer expression
             parent.type?.resolvedType ?: parent.expr?.resolvedType
 
-        is RustParameterElement -> parent.type?.resolvedType
+        is RustValueParameterElement -> parent.type?.resolvedType
         is RustConditionElement -> parent.expr.resolvedType
         else -> null
     } ?: return RustUnknownType
@@ -279,7 +279,7 @@ private fun deviseFunctionType(fn: RustFunctionElement): RustFunctionType {
             paramTypes += deviseSelfType(self)
         }
 
-        paramTypes += params.parameterList.orEmpty().map { it.type?.resolvedType ?: RustUnknownType }
+        paramTypes += params.valueParameterList.orEmpty().map { it.type?.resolvedType ?: RustUnknownType }
     }
 
     return RustFunctionType(paramTypes, fn.retType?.type?.resolvedType ?: RustUnitType)

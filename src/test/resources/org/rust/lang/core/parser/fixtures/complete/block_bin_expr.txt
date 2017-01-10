@@ -10,7 +10,7 @@ FILE
     PsiElement(<IDENTIFIER>)('foo')
     RustValueParameterListElementImpl(VALUE_PARAMETER_LIST)
       PsiElement(()('(')
-      RustParameterElementImpl(PARAMETER)
+      RustValueParameterElementImpl(VALUE_PARAMETER)
         RustPatIdentElementImpl(PAT_IDENT)
           RustPatBindingElementImpl(PAT_BINDING)
             PsiElement(<IDENTIFIER>)('x')

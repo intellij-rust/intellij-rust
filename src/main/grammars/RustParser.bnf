@@ -155,7 +155,7 @@
     elementType (".*_bin_expr")   = binary_expr
     elementType (".*_range_expr") = range_expr
 
-    elementType ("(fn|anon|lambda|path)_parameter") = parameter
+    elementType ("(fn|anon|lambda|path)_parameter") = value_parameter
     elementType ("(fn|lambda|path|fn_type|foreign_fn|method|method_decl)_parameters") = value_parameter_list
 
     extends     (".*_expr") = expr
@@ -291,15 +291,14 @@ private items ::= item_with_recover*
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Parameters
-// TODO: Maybe enforce @NotNull's in specific cases
-fake parameter  ::= pat? type?
+fake value_parameter  ::= pat? type?
 
 fn_parameter ::= pat type_ascription
 lambda_parameter ::= pat type_ascription?
 anon_parameter ::= [ restricted_pat ':' ] type
 path_parameter ::= type !'='
 
-fake value_parameter_list ::= self_parameter? parameter* '...'?
+fake value_parameter_list ::= self_parameter? value_parameter* '...'?
 
 fn_parameters          ::= '(' !',' [ <<comma_separated_list fn_parameter>> ] ')' { pin = 1 }
 lambda_parameters      ::= '|' !',' [ <<comma_separated_list lambda_parameter>> ] '|'

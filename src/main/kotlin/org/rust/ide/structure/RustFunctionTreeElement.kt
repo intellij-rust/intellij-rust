@@ -9,7 +9,7 @@ class RustFunctionTreeElement(element: RustFunctionElement) : PsiTreeElementBase
     override fun getPresentableText(): String? {
         var text = element?.name
 
-        val params = element?.valueParameterList?.parameterList?.map { it.type?.text }?.joinToString()
+        val params = element?.valueParameterList?.valueParameterList?.map { it.type?.text }?.joinToString()
         if (params != null)
             text += "($params)"
 

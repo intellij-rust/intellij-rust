@@ -6,7 +6,6 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustParameterElementImpl
 import org.rust.lang.core.psi.impl.mixin.*
 
 /**
@@ -140,7 +139,7 @@ class RustArgumentNamingInspection : RustSnakeCaseNamingInspection("Argument") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
             override fun visitPatBinding(el: RustPatBindingElement) {
-                if (el.parent?.parent is RustParameterElementImpl) {
+                if (el.parent?.parent is RustValueParameterElement) {
                     inspect(el.identifier, holder)
                 }
             }

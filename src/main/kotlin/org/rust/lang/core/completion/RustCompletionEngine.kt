@@ -101,7 +101,7 @@ fun RustCompositeElement.createLookupElement(scopeName: String): LookupElement {
             .withInsertHandler handler@ { context: InsertionContext, lookupElement: LookupElement ->
                 if (context.isInUseBlock) return@handler
                 if (context.alreadyHasParens) return@handler
-                val argsCount = valueParameterList?.parameterList?.size ?: 0
+                val argsCount = valueParameterList?.valueParameterList?.size ?: 0
                 context.document.insertString(context.selectionEndOffset, "()")
                 EditorModificationUtil.moveCaretRelatively(context.editor, if (argsCount > 0) 1 else 2)
             }

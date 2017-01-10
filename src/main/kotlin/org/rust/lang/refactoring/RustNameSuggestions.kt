@@ -73,7 +73,7 @@ fun PsiElement.nameForArgument(): String {
     val parameterIndex = call.argList.children.indexOf(this)
     val fn = call.findFnImpl()
 
-    return fn?.valueParameterList?.parameterList?.get(parameterIndex)?.pat?.text ?: ""
+    return fn?.valueParameterList?.valueParameterList?.get(parameterIndex)?.pat?.text ?: ""
 }
 
 private fun RustCallExprElement.findFnImpl(): RustFunctionElement? {

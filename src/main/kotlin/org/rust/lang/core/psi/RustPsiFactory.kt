@@ -37,7 +37,7 @@ class RustPsiFactory(private val project: Project) {
     fun createMethodParam(text: String): PsiElement {
         val fnItem: RustFunctionElement = createTraitMethodMember("fn foo($text);")
         return fnItem.valueParameterList?.selfParameter ?:
-            fnItem.valueParameterList?.parameterList?.firstOrNull() ?:
+            fnItem.valueParameterList?.valueParameterList?.firstOrNull() ?:
             error("Failed to create type from text: `$text`")
     }
 
@@ -117,7 +117,7 @@ private val RustFunctionElement.signatureText: String? get() {
     val generics = genericParams?.text ?: ""
 
     val parameters = valueParameterList ?: return null
-    val allArguments = listOfNotNull(parameters.selfParameter?.text) + parameters.parameterList.map {
+    val allArguments = listOfNotNull(parameters.selfParameter?.text) + parameters.valueParameterList.map {
         // fix possible anon parameter
         "${it.pat?.text ?: "_"}: ${it.type?.text ?: "()"}"
     }

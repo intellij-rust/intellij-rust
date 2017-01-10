@@ -129,7 +129,7 @@ class RustArgumentsDescription(
                 is RustCallExprElement -> call.declaration?.valueParameterList
                 is RustMethodCallExprElement -> call.declaration?.valueParameterList
                 else -> null
-            }?.parameterList ?: return null
+            }?.valueParameterList ?: return null
             val params = paramsList
                 .map { "${it.pat?.text ?: "?"}: ${it.type?.text ?: "?"}" }
                 .toTypedArray()

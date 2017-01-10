@@ -225,8 +225,8 @@ class RustErrorAnnotator : Annotator {
                 "Method `${fn.name}` has a `${superParams.selfParameter?.canonicalDecl}` declaration in the trait, but not in the impl [E0186]")
         }
 
-        val paramsCount = params.parameterList.size
-        val superParamsCount = superParams.parameterList.size
+        val paramsCount = params.valueParameterList.size
+        val superParamsCount = superParams.valueParameterList.size
         if (paramsCount != superParamsCount) {
             holder.createErrorAnnotation(params,
                 "Method `${fn.name}` has $paramsCount ${pluralise(paramsCount, "parameter", "parameters")} but the declaration in trait `$traitName` has $superParamsCount [E0050]")

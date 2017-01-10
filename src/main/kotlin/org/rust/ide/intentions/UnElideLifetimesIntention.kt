@@ -64,7 +64,7 @@ class UnElideLifetimesIntention : RustElementBaseIntentionAction<RustFunctionEle
 
     private val RustFunctionElement.allRefArgs: List<PsiElement> get() {
         val selfAfg: List<PsiElement> = listOfNotNull(valueParameterList?.selfParameter)
-        val params: List<PsiElement> = valueParameterList?.parameterList.orEmpty()
+        val params: List<PsiElement> = valueParameterList?.valueParameterList.orEmpty()
             .filter { param ->
                 val type = param.type
                 type is RustRefLikeTypeElement && type.and != null
@@ -75,7 +75,7 @@ class UnElideLifetimesIntention : RustElementBaseIntentionAction<RustFunctionEle
     private val PsiElement.lifetime: PsiElement? get() =
     when (this) {
         is RustSelfParameterElement -> lifetime
-        is RustParameterElement -> (type as? RustRefLikeTypeElement)?.lifetime
+        is RustValueParameterElement -> (type as? RustRefLikeTypeElement)?.lifetime
         else -> null
     }
 }

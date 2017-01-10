@@ -301,7 +301,7 @@ private fun innerDeclarationsIn(
 
         is RustFunctionElement -> {
             val selfArgument = scope.valueParameterList?.selfParameter
-            val arguments = scope.valueParameterList?.parameterList.orEmpty().asSequence()
+            val arguments = scope.valueParameterList?.valueParameterList.orEmpty().asSequence()
 
             sequenceOf(
                 sequenceOfNotNull(selfArgument?.let { ScopeEntry.of(it) }),
@@ -350,7 +350,7 @@ private fun innerDeclarationsIn(
         is RustWhileExprElement -> scope.condition?.boundNames(place) ?: emptySequence()
 
         is RustLambdaExprElement -> scope
-            .valueParameterList.parameterList.asSequence()
+            .valueParameterList.valueParameterList.asSequence()
             .mapNotNull { it.pat }
             .flatMap { it.boundNames }
 
