@@ -15,10 +15,7 @@ import org.rust.cargo.util.getPsiFor
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
-import org.rust.lang.core.psi.impl.mixin.basePath
-import org.rust.lang.core.psi.impl.mixin.isSelf
-import org.rust.lang.core.psi.impl.mixin.isStarImport
-import org.rust.lang.core.psi.impl.mixin.possiblePaths
+import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.resolve.indexes.RustImplIndex
@@ -299,16 +296,12 @@ private fun innerDeclarationsIn(
                 })
         }
 
-        is RustFunctionElement -> {
-            val selfArgument = scope.valueParameterList?.selfParameter
-            val arguments = scope.valueParameterList?.valueParameterList.orEmpty().asSequence()
-
+        is RustFunctionElement ->
             sequenceOf(
-                sequenceOfNotNull(selfArgument?.let { ScopeEntry.of(it) }),
-                arguments.mapNotNull { it.pat }.flatMap { it.boundNames },
+                sequenceOfNotNull(scope.selfParameter?.let { ScopeEntry.of(it) }),
+                scope.valueParameters.asSequence().mapNotNull { it.pat }.flatMap { it.boundNames },
                 scope.typeParams.asScopeEntries()
             ).flatten()
-        }
 
         is RustBlockElement -> {
             // We want to filter out

@@ -40,7 +40,7 @@ abstract class RustFunctionImplMixin : RustStubbedNamedElementImpl<RustFunctionE
 }
 
 val RustFunctionElement.isAbstract: Boolean get() = stub?.isAbstract ?: block == null
-val RustFunctionElement.isStatic: Boolean get() = stub?.isStatic ?: valueParameterList?.selfParameter == null
+val RustFunctionElement.isStatic: Boolean get() = stub?.isStatic ?: selfParameter == null
 val RustFunctionElement.isTest: Boolean get() = stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
 
 
@@ -70,3 +70,9 @@ val RustFunctionElement.superMethod: RustFunctionElement? get() {
 
     return superTrait.functionList.find { it.name == this.name }
 }
+
+val RustFunctionElement.valueParameters: List<RustValueParameterElement>
+    get() = valueParameterList?.valueParameterList.orEmpty()
+
+val RustFunctionElement.selfParameter: RustSelfParameterElement?
+    get() = valueParameterList?.selfParameter

@@ -5,6 +5,7 @@ import com.intellij.lang.parameterInfo.*
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.mixin.valueParameters
 import org.rust.lang.core.psi.util.parentOfType
 
 /**
@@ -126,10 +127,10 @@ class RustArgumentsDescription(
         fun findDescription(args: RustArgListElement): RustArgumentsDescription? {
             val call = args.parent
             val paramsList = when (call) {
-                is RustCallExprElement -> call.declaration?.valueParameterList
-                is RustMethodCallExprElement -> call.declaration?.valueParameterList
+                is RustCallExprElement -> call.declaration?.valueParameters
+                is RustMethodCallExprElement -> call.declaration?.valueParameters
                 else -> null
-            }?.valueParameterList ?: return null
+            } ?: return null
             val params = paramsList
                 .map { "${it.pat?.text ?: "?"}: ${it.type?.text ?: "?"}" }
                 .toTypedArray()

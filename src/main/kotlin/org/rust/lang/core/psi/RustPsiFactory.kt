@@ -4,6 +4,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import org.rust.lang.RustLanguage
+import org.rust.lang.core.psi.impl.mixin.selfParameter
+import org.rust.lang.core.psi.impl.mixin.valueParameters
 import org.rust.lang.core.psi.util.childOfType
 
 class RustPsiFactory(private val project: Project) {
@@ -36,9 +38,8 @@ class RustPsiFactory(private val project: Project) {
 
     fun createMethodParam(text: String): PsiElement {
         val fnItem: RustFunctionElement = createTraitMethodMember("fn foo($text);")
-        return fnItem.valueParameterList?.selfParameter ?:
-            fnItem.valueParameterList?.valueParameterList?.firstOrNull() ?:
-            error("Failed to create type from text: `$text`")
+        return fnItem.selfParameter ?: fnItem.valueParameters.firstOrNull()
+            ?: error("Failed to create type from text: `$text`")
     }
 
     fun createReferenceType(innerTypeText: String, mutable: Boolean): RustRefLikeTypeElement =
@@ -94,7 +95,7 @@ class RustPsiFactory(private val project: Project) {
     fun createGenericParams(
         params: Iterable<String>
     ): RustGenericParamsElement {
-        val text = params.joinToString (prefix = "<", separator = ", ", postfix = ">")
+        val text = params.joinToString(prefix = "<", separator = ", ", postfix = ">")
 
         return createFromText<RustFunctionElement>("fn foo$text() {}")?.genericParams
             ?: error("Failed to create type from text: `$text`")
@@ -116,8 +117,7 @@ private val RustFunctionElement.signatureText: String? get() {
     val name = name ?: return null
     val generics = genericParams?.text ?: ""
 
-    val parameters = valueParameterList ?: return null
-    val allArguments = listOfNotNull(parameters.selfParameter?.text) + parameters.valueParameterList.map {
+    val allArguments = listOfNotNull(selfParameter?.text) + valueParameters.map {
         // fix possible anon parameter
         "${it.pat?.text ?: "_"}: ${it.type?.text ?: "()"}"
     }

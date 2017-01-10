@@ -4,6 +4,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.mixin.selfParameter
+import org.rust.lang.core.psi.impl.mixin.valueParameters
 import org.rust.lang.core.psi.util.contains
 import org.rust.lang.core.psi.util.parentOfType
 
@@ -39,8 +41,7 @@ class UnElideLifetimesIntention : RustElementBaseIntentionAction<RustFunctionEle
         // return type
         val retType = ctx.retType?.type as? RustRefLikeTypeElement ?: return
 
-        val parameters = checkNotNull(ctx.valueParameterList)
-        if ((parameters.selfParameter != null) || (ctx.allRefArgs.drop(1).none())) {
+        if ((ctx.selfParameter != null) || (ctx.allRefArgs.drop(1).none())) {
             retType.replace(createRefType(project, retType, ctx.allRefArgs.first().lifetime!!.text))
         } else {
             val lifeTime = (retType.replace(createRefType(project, retType, "'unknown"))
@@ -63,8 +64,8 @@ class UnElideLifetimesIntention : RustElementBaseIntentionAction<RustFunctionEle
         RustPsiFactory(project).createMethodParam(origin.text.replaceFirst("&", "&$lifeTimeName "))
 
     private val RustFunctionElement.allRefArgs: List<PsiElement> get() {
-        val selfAfg: List<PsiElement> = listOfNotNull(valueParameterList?.selfParameter)
-        val params: List<PsiElement> = valueParameterList?.valueParameterList.orEmpty()
+        val selfAfg: List<PsiElement> = listOfNotNull(selfParameter)
+        val params: List<PsiElement> = valueParameters
             .filter { param ->
                 val type = param.type
                 type is RustRefLikeTypeElement && type.and != null

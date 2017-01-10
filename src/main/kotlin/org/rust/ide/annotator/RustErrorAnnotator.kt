@@ -214,19 +214,18 @@ class RustErrorAnnotator : Annotator {
 
     private fun checkTraitFnImplParams(holder: AnnotationHolder, fn: RustFunctionElement, superFn: RustFunctionElement, traitName: String) {
         val params = fn.valueParameterList ?: return
-        val superParams = superFn.valueParameterList ?: return
-        val selfArg = params.selfParameter
+        val selfArg = fn.selfParameter
 
-        if (selfArg != null && superParams.selfParameter == null) {
+        if (selfArg != null && superFn.selfParameter == null) {
             holder.createErrorAnnotation(selfArg,
                 "Method `${fn.name}` has a `${selfArg.canonicalDecl}` declaration in the impl, but not in the trait [E0185]")
-        } else if (selfArg == null && superParams.selfParameter != null) {
+        } else if (selfArg == null && superFn.selfParameter != null) {
             holder.createErrorAnnotation(params,
-                "Method `${fn.name}` has a `${superParams.selfParameter?.canonicalDecl}` declaration in the trait, but not in the impl [E0186]")
+                "Method `${fn.name}` has a `${superFn.selfParameter?.canonicalDecl}` declaration in the trait, but not in the impl [E0186]")
         }
 
-        val paramsCount = params.valueParameterList.size
-        val superParamsCount = superParams.valueParameterList.size
+        val paramsCount = fn.valueParameters.size
+        val superParamsCount = superFn.valueParameters.size
         if (paramsCount != superParamsCount) {
             holder.createErrorAnnotation(params,
                 "Method `${fn.name}` has $paramsCount ${pluralise(paramsCount, "parameter", "parameters")} but the declaration in trait `$traitName` has $superParamsCount [E0050]")

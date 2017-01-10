@@ -5,6 +5,7 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.toSnakeCase
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.mixin.valueParameters
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.types.RustUnknownType
 import org.rust.lang.core.types.util.resolvedType
@@ -73,7 +74,7 @@ fun PsiElement.nameForArgument(): String {
     val parameterIndex = call.argList.children.indexOf(this)
     val fn = call.findFnImpl()
 
-    return fn?.valueParameterList?.valueParameterList?.get(parameterIndex)?.pat?.text ?: ""
+    return fn?.valueParameters?.get(parameterIndex)?.pat?.text ?: ""
 }
 
 private fun RustCallExprElement.findFnImpl(): RustFunctionElement? {

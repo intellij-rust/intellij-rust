@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.RustFunctionRole
 import org.rust.lang.core.psi.impl.mixin.role
+import org.rust.lang.core.psi.impl.mixin.selfParameter
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.types.RustStructOrEnumTypeBase
 import org.rust.lang.core.types.util.resolvedType
@@ -20,7 +21,7 @@ class RustSelfConventionInspection : RustLocalInspectionTool() {
                 val convention = SELF_CONVENTIONS.find { m.identifier.text.startsWith(it.prefix) } ?: return
                 if (m.selfType in convention.selfTypes) return
                 if (m.selfType == SelfType.SELF && m.isOwnerCopyable()) return
-                holder.registerProblem(m.valueParameterList?.selfParameter ?: m.identifier, convention)
+                holder.registerProblem(m.selfParameter ?: m.identifier, convention)
             }
         }
 
@@ -49,7 +50,7 @@ enum class SelfType(val description: String) {
 }
 
 private val RustFunctionElement.selfType: SelfType get() {
-    val self = valueParameterList?.selfParameter
+    val self = selfParameter
     return when {
         self == null -> SelfType.NO_SELF
         self.and == null -> SelfType.SELF

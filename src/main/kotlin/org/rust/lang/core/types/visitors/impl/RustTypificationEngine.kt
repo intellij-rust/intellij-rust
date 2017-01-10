@@ -5,6 +5,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.asRustPath
 import org.rust.lang.core.psi.impl.mixin.parentEnum
+import org.rust.lang.core.psi.impl.mixin.selfParameter
+import org.rust.lang.core.psi.impl.mixin.valueParameters
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
 import org.rust.lang.core.symbols.RustPath
@@ -272,15 +274,12 @@ private fun deviseEnumType(variant: RustEnumVariantElement): RustType =
 private fun deviseFunctionType(fn: RustFunctionElement): RustFunctionType {
     val paramTypes = mutableListOf<RustType>()
 
-    val params = fn.valueParameterList
-    if (params != null) {
-        val self = params.selfParameter
-        if (self != null) {
-            paramTypes += deviseSelfType(self)
-        }
-
-        paramTypes += params.valueParameterList.orEmpty().map { it.type?.resolvedType ?: RustUnknownType }
+    val self = fn.selfParameter
+    if (self != null) {
+        paramTypes += deviseSelfType(self)
     }
+
+    paramTypes += fn.valueParameters.map { it.type?.resolvedType ?: RustUnknownType }
 
     return RustFunctionType(paramTypes, fn.retType?.type?.resolvedType ?: RustUnitType)
 }
