@@ -21,32 +21,28 @@ import org.rust.lang.core.psi.util.parentOfType
  * &mut type
  * ```
  */
-open class SetMutableIntention : RustElementBaseIntentionAction() {
+open class SetMutableIntention : RustElementBaseIntentionAction<SetMutableIntention.Context>() {
     override fun getText() = "Set reference mutable"
     override fun getFamilyName() = text
 
     open val mutable = true
 
-    override fun invokeImpl(project: Project, editor: Editor, element: PsiElement) {
-        val ctx = findContext(element) ?: return
-
-        val newType = RustPsiFactory(project).createReferenceType(ctx.baseType.text, mutable)
-        ctx.refType.replace(newType)
-    }
-
-    override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean =
-        findContext(element) != null
-
-    private data class Context(
+    data class Context(
         val refType: RustRefLikeTypeElement,
         val baseType: RustBaseTypeElement
     )
 
-    private fun findContext(element: PsiElement): Context? {
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val refType = element.parentOfType<RustRefLikeTypeElement>() ?: return null
         if (refType.and == null) return null
         val baseType = refType.type as? RustBaseTypeElement ?: return null
         if ((refType.mut == null) != mutable) return null
         return Context(refType, baseType)
+
+    }
+
+    override fun invoke(project: Project, editor: Editor, ctx: Context) {
+        val newType = RustPsiFactory(project).createReferenceType(ctx.baseType.text, mutable)
+        ctx.refType.replace(newType)
     }
 }

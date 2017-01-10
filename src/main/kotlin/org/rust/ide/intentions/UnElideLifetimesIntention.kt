@@ -7,47 +7,47 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.contains
 import org.rust.lang.core.psi.util.parentOfType
 
-class UnElideLifetimesIntention : RustElementBaseIntentionAction() {
+class UnElideLifetimesIntention : RustElementBaseIntentionAction<RustFunctionElement>() {
     override fun getText() = "Un-elide lifetimes"
     override fun getFamilyName(): String = text
 
-    override fun invokeImpl(project: Project, editor: Editor, element: PsiElement) {
-        val fnDecl = checkNotNull(findFnDecl(element))
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RustFunctionElement? {
+        val fn = element.parentOfType<RustFunctionElement>() ?: return null
+        val scope = element.parentOfType<RustBlockElement>()
+        if (fn.contains(scope)) return null
 
-        fnDecl.allRefArgs.zip(nameGenerator).forEach {
+        if ((fn.retType?.type as? RustRefLikeTypeElement)?.lifetime != null) return null
+
+        val args = fn.allRefArgs
+
+        if (args.isEmpty() || args.any { it.lifetime != null }) return null
+        return fn
+    }
+
+    override fun invoke(project: Project, editor: Editor, ctx: RustFunctionElement) {
+        ctx.allRefArgs.asSequence().zip(nameGenerator).forEach {
             it.first.replace(createParam(project, it.first, it.second))
         }
 
         // generic params
         val genericParams = RustPsiFactory(project).createGenericParams(
-            (fnDecl.allRefArgs.mapNotNull { it.lifetime?.text } +
-                (fnDecl.genericParams?.typeParamList?.asSequence()?.map { it.text } ?: emptySequence()))
+            (ctx.allRefArgs.mapNotNull { it.lifetime?.text } +
+                (ctx.genericParams?.typeParamList?.asSequence()?.map { it.text } ?: emptySequence()))
                 .toList()
         )
-        fnDecl.genericParams?.replace(genericParams) ?: fnDecl.addAfter(genericParams, fnDecl.identifier)
+        ctx.genericParams?.replace(genericParams) ?: ctx.addAfter(genericParams, ctx.identifier)
 
         // return type
-        val retType = fnDecl.retType?.type as? RustRefLikeTypeElement ?: return
+        val retType = ctx.retType?.type as? RustRefLikeTypeElement ?: return
 
-        val parameters = checkNotNull(fnDecl.parameters)
-        if ((parameters.selfArgument != null) || (fnDecl.allRefArgs.drop(1).none())) {
-            retType.replace(createRefType(project, retType, fnDecl.allRefArgs.first().lifetime!!.text))
+        val parameters = checkNotNull(ctx.parameters)
+        if ((parameters.selfArgument != null) || (ctx.allRefArgs.drop(1).none())) {
+            retType.replace(createRefType(project, retType, ctx.allRefArgs.first().lifetime!!.text))
         } else {
             val lifeTime = (retType.replace(createRefType(project, retType, "'unknown"))
                 as RustRefLikeTypeElement).lifetime ?: return
             editor.selectionModel.setSelection(lifeTime.textRange.startOffset + 1, lifeTime.textRange.endOffset)
         }
-    }
-
-    override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
-        val fnDecl = findFnDecl(element) ?: return false
-
-        if ((fnDecl.retType?.type as? RustRefLikeTypeElement)?.lifetime != null)
-            return false
-
-        val args = fnDecl.allRefArgs
-
-        return args.any() && args.all { it.lifetime == null }
     }
 
     private val nameGenerator = generateSequence(0) { it + 1 }.map {
@@ -57,33 +57,26 @@ class UnElideLifetimesIntention : RustElementBaseIntentionAction() {
         return@map if (index == 0) "'$letter" else "'$letter$index"
     }
 
-    fun findFnDecl(element: PsiElement): RustFunctionElement? {
-        val fnItem = element.parentOfType<RustFunctionElement>() ?: return null
-        val scope = element.parentOfType<RustBlockElement>()
-
-        return if (fnItem.contains(scope)) null else fnItem
-    }
-
     private fun createRefType(project: Project, origin: RustRefLikeTypeElement, lifeTimeName: String): RustRefLikeTypeElement =
         RustPsiFactory(project).createType(origin.text.replaceFirst("&", "&$lifeTimeName ")) as RustRefLikeTypeElement
 
     private fun createParam(project: Project, origin: PsiElement, lifeTimeName: String): PsiElement =
         RustPsiFactory(project).createMethodParam(origin.text.replaceFirst("&", "&$lifeTimeName "))
 
-    private val RustFunctionElement.allRefArgs: Sequence<PsiElement> get() {
-        val selfAfg: Sequence<PsiElement?> = sequenceOf(parameters?.selfArgument)
-        val params: Sequence<PsiElement?> = parameters?.parameterList?.asSequence()
-            ?.filter { param ->
+    private val RustFunctionElement.allRefArgs: List<PsiElement> get() {
+        val selfAfg: List<PsiElement> = listOfNotNull(parameters?.selfArgument)
+        val params: List<PsiElement> = parameters?.parameterList.orEmpty()
+            .filter { param ->
                 val type = param.type
                 type is RustRefLikeTypeElement && type.and != null
-            } ?: emptySequence()
+            }
         return (selfAfg + params).filterNotNull()
     }
 
     private val PsiElement.lifetime: PsiElement? get() =
-        when (this) {
-            is RustSelfArgumentElement -> lifetime
-            is RustParameterElement -> (type as? RustRefLikeTypeElement)?.lifetime
-            else -> null
-        }
+    when (this) {
+        is RustSelfArgumentElement -> lifetime
+        is RustParameterElement -> (type as? RustRefLikeTypeElement)?.lifetime
+        else -> null
+    }
 }

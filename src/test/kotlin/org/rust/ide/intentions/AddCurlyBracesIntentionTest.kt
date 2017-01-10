@@ -7,6 +7,11 @@ class AddCurlyBracesIntentionTest : RustIntentionTestBase(AddCurlyBracesIntentio
         "use std::{m/*caret*/em};"
     )
 
+    fun testAddCurlyBraceSuper() = doAvailableTest(
+        "use super/*caret*/::qux;",
+        "use super::{qux};"
+    )
+
     fun testAddCurlyBracesLonger() = doAvailableTest(
         "use foo::bar::/*caret*/baz::qux;",
         "use foo::bar::/*caret*/baz::{qux};"

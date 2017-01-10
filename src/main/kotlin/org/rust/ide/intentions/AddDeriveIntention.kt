@@ -8,31 +8,34 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
 
-class AddDeriveIntention : RustElementBaseIntentionAction() {
+class AddDeriveIntention : RustElementBaseIntentionAction<AddDeriveIntention.Context>() {
     override fun getFamilyName() = "Add derive clause"
     override fun getText() = "Add derive clause"
 
-    override fun invokeImpl(project: Project, editor: Editor, element: PsiElement) {
-        val (item, keyword) = getTarget(element) ?: return
-        val deriveAttr = findOrCreateDeriveAttr(project, item, keyword) ?: return
-        val reformattedDeriveAttr = reformat(project, item, deriveAttr)
-        moveCaret(editor, reformattedDeriveAttr)
-    }
+    class Context(
+        val item : RustStructOrEnumItemElement,
+        val itemStart: PsiElement
+    )
 
-    override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean =
-        getTarget(element) != null
-
-    private fun getTarget(element: PsiElement): Pair<RustStructOrEnumItemElement, PsiElement>? {
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val item = element.parentOfType<RustStructOrEnumItemElement>() ?: return null
         val keyword = when (item) {
             is RustStructItemElement -> item.vis ?: item.struct
             is RustEnumItemElement -> item.vis ?: item.enum
             else -> null
         } ?: return null
-        return item to keyword
+        return Context(item, keyword)
+
     }
 
-    private fun findOrCreateDeriveAttr(project: Project, item: RustStructOrEnumItemElement, keyword: PsiElement): RustOuterAttrElement? {
+    override fun invoke(project: Project, editor: Editor, ctx: Context) {
+        val deriveAttr = findOrCreateDeriveAttr(project, ctx.item, ctx.itemStart) ?: return
+        val reformattedDeriveAttr = reformat(project, ctx.item, deriveAttr)
+        moveCaret(editor, reformattedDeriveAttr)
+
+    }
+
+    private fun findOrCreateDeriveAttr(project: Project, item: RustStructOrEnumItemElement, keyword: PsiElement): RustOuterAttrElement {
         val existingDeriveAttr = item.findOuterAttr("derive")
         if (existingDeriveAttr != null) {
             return existingDeriveAttr

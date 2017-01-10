@@ -4,6 +4,7 @@ import com.intellij.ProjectTopics
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileEditor
@@ -26,7 +27,6 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.cargoProjectRoot
-import backcompat.runWriteAction
 import org.rust.cargo.project.workspace.cargoProject
 import org.rust.ide.utils.service
 import org.rust.lang.core.psi.impl.isNotRustFile

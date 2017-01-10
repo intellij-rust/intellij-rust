@@ -3,9 +3,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustPsiFactory
-import org.rust.lang.core.psi.RustUseGlobElement
-import org.rust.lang.core.psi.RustUseItemElement
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.isSelf
 import org.rust.lang.core.psi.util.parentOfType
 
@@ -22,16 +20,36 @@ import org.rust.lang.core.psi.util.parentOfType
  * import std::mem;
  * ```
  */
-class RemoveCurlyBracesIntention : RustElementBaseIntentionAction() {
+class RemoveCurlyBracesIntention : RustElementBaseIntentionAction<RemoveCurlyBracesIntention.Context>() {
     override fun getText() = "Remove curly braces"
     override fun getFamilyName() = text
 
-    override fun invokeImpl(project: Project, editor: Editor, element: PsiElement) {
-        // Get our hands on the various parts of the use item:
-        val useItem = element.parentOfType<RustUseItemElement>() ?: return
-        val path = useItem.path ?: return
-        val globList = useItem.useGlobList ?: return
-        val identifier = globList.children[0]
+    data class Context(
+        val useItem: RustUseItemElement,
+        val usePath: RustPathElement,
+        val useGlobList: RustUseGlobListElement,
+        val useGlobIdentifier: PsiElement
+    )
+
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RemoveCurlyBracesIntention.Context? {
+        val useItem = element.parentOfType<RustUseItemElement>() ?: return null
+        val useItemPath = useItem.path ?: return null
+        val useGlobList = useItem.useGlobList ?: return null
+        if (useGlobList.children.size != 1) return null
+
+        val listItem = useGlobList.children[0]
+        if (listItem !is RustUseGlobElement || listItem.isSelf) return null
+
+        return Context(
+            useItem,
+            useItemPath,
+            useGlobList,
+            listItem
+        )
+    }
+
+    override fun invoke(project: Project, editor: Editor, ctx: Context) {
+        val (useItem, path, globList, identifier) = ctx
 
         // Save the cursor position, adjusting for curly brace removal
         val caret = editor.caretModel.offset
@@ -54,21 +72,8 @@ class RemoveCurlyBracesIntention : RustElementBaseIntentionAction() {
         path.replace(newPath)
         useItem.coloncolon?.delete()
         globList.delete()
-        newAlias?.let { it -> useItem.addBefore(it, useItem.semicolon) }
+        newAlias?.let { useItem.addBefore(it, useItem.semicolon) }
 
         editor.caretModel.moveToOffset(newOffset)
-    }
-
-    override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
-        val useItem = element.parentOfType<RustUseItemElement>() ?: return false
-        val list = useItem.useGlobList ?: return false
-        if (list.children.size != 1) return false
-
-        val listItem = list.children[0]
-        if (listItem is RustUseGlobElement) {
-            return !listItem.isSelf
-        } else {
-            return false
-        }
     }
 }

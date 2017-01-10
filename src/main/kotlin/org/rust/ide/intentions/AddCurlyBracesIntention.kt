@@ -3,7 +3,9 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.RustPathElement
 import org.rust.lang.core.psi.RustPsiFactory
+import org.rust.lang.core.psi.RustUseGlobListElement
 import org.rust.lang.core.psi.RustUseItemElement
 import org.rust.lang.core.psi.util.parentOfType
 
@@ -20,19 +22,27 @@ import org.rust.lang.core.psi.util.parentOfType
  * import std::{mem};
  * ```
  */
-class AddCurlyBracesIntention : RustElementBaseIntentionAction() {
+class AddCurlyBracesIntention : RustElementBaseIntentionAction<AddCurlyBracesIntention.Context>() {
     override fun getText() = "Add curly braces"
     override fun getFamilyName() = text
 
-    override fun invokeImpl(project: Project, editor: Editor, element: PsiElement) {
-        // Get our hands on the pieces:
-        val useItem = element.parentOfType<RustUseItemElement>() ?: return
-        val path = useItem.path ?: return
-        val identifier = path.identifier ?: return
-        val alias = useItem.alias
+    class Context(
+        val useItem: RustUseItemElement,
+        val path: RustPathElement
+    )
 
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
+        val useItem = element.parentOfType<RustUseItemElement>() ?: return null
+        val path = useItem.path ?: return null
+        if (useItem.useGlobList != null) return null
+        return Context(useItem, path)
+    }
+
+    override fun invoke(project: Project, editor: Editor, ctx: Context) {
+        val identifier = ctx.path.referenceNameElement
         // Remember the caret position, adjusting by the new curly braces
         val caret = editor.caretModel.offset
+
         val newOffset = when {
             caret < identifier.textOffset -> caret
             caret < identifier.textOffset + identifier.textLength -> caret + 1
@@ -45,25 +55,24 @@ class AddCurlyBracesIntention : RustElementBaseIntentionAction() {
         val newGlobList = newUseItem.useGlobList ?: return
         val newColonColon = newUseItem.coloncolon ?: return
 
+        val alias = ctx.useItem.alias
+
         // If there was an alias before, insert it into the new glob item
-        alias?.let { it ->
+        if (alias != null) {
             val newGlobItem = newGlobList.children[0]
-            newGlobItem.addAfter(it, newGlobItem.lastChild)
+            newGlobItem.addAfter(alias, newGlobItem.lastChild)
         }
 
         // Remove the identifier from the path by replacing it with its subpath
-        path.replace(path.path ?: return)
+        ctx.path.replace(ctx.path.path ?: return)
+
         // Delete the alias of the identifier, if any
-        useItem.alias?.delete()
+        alias?.delete()
+
         // Insert the double colon and glob list into the use item
-        useItem.addBefore(newColonColon, useItem.semicolon)
-        useItem.addBefore(newGlobList, useItem.semicolon)
+        ctx.useItem.addBefore(newColonColon, ctx.useItem.semicolon)
+        ctx.useItem.addBefore(newGlobList, ctx.useItem.semicolon)
 
         editor.caretModel.moveToOffset(newOffset)
-    }
-
-    override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
-        val useItem = element.parentOfType<RustUseItemElement>() ?: return false
-        return useItem.useGlobList == null && useItem.path != null
     }
 }

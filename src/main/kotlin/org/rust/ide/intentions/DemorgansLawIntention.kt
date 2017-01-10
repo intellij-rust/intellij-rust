@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.utils.isNegation
 import org.rust.lang.utils.negateToString
 
-class DemorgansLawIntention : RustElementBaseIntentionAction() {
+class DemorgansLawIntention : RustElementBaseIntentionAction<DemorgansLawIntention.Context>() {
     override fun getFamilyName() = "DeMorgan's Law"
 
     private fun setTextForElement(element: RustBinaryExprElement) {
@@ -22,17 +22,23 @@ class DemorgansLawIntention : RustElementBaseIntentionAction() {
         }
     }
 
-    override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
-        val ctx = findContext(element)
-        if (ctx != null) {
-            setTextForElement(ctx.binaryExpr)
-            return true
+    data class Context(
+        val binaryExpr: RustBinaryExprElement,
+        val binaryOpType: IElementType
+    )
+
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
+        val binExpr = element.parentOfType<RustBinaryExprElement>() ?: return null
+        val opType = binExpr.operatorType
+        if (opType == RustTokenElementTypes.ANDAND || opType == RustTokenElementTypes.OROR) {
+            setTextForElement(binExpr)
+            return Context(binExpr, opType)
         }
-        return false
+        return null
     }
 
-    override fun invokeImpl(project: Project, editor: Editor, element: PsiElement) {
-        val (binExpr, opType) = findContext(element) ?: return
+    override fun invoke(project: Project, editor: Editor, ctx: Context) {
+        val (binExpr, opType) = ctx
 
         var topBinExpr = binExpr
         var isAllSameOpType = true
@@ -57,19 +63,6 @@ class DemorgansLawIntention : RustElementBaseIntentionAction() {
         }
     }
 
-    private data class Context(
-        val binaryExpr: RustBinaryExprElement,
-        val binaryOpType: IElementType
-    )
-
-    private fun findContext(element: PsiElement): Context? {
-        val binExpr = element.parentOfType<RustBinaryExprElement>() ?: return null
-        val opType = binExpr.operatorType
-        if (opType == RustTokenElementTypes.ANDAND || opType == RustTokenElementTypes.OROR) {
-            return Context(binExpr, opType)
-        }
-        return null
-    }
 
     private fun applyDemorgan(project: Project, topBinExpr: RustBinaryExprElement, opType: IElementType) {
         val converted = convertConjunctionExpression(topBinExpr, opType) ?: return

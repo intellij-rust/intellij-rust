@@ -1,8 +1,8 @@
 package org.rust.cargo.runconfig
 
-import backcompat.runWriteAction
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.VirtualFile
 import org.assertj.core.api.Assertions
 import org.rust.lang.RustTestCaseBase

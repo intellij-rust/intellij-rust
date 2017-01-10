@@ -3,6 +3,7 @@ package org.rust.cargo.project.configurable
 import backcompat.ui.components.Label
 import backcompat.ui.components.textFieldWithHistoryWithBrowseButton
 import backcompat.ui.layout.panel
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
@@ -16,7 +17,6 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
-import backcompat.runWriteAction
 import org.rust.cargo.project.workspace.cargoProject
 import javax.swing.JComponent
 

@@ -6,30 +6,29 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
 
-class MoveTypeConstraintToWhereClauseIntention : RustElementBaseIntentionAction() {
+class MoveTypeConstraintToWhereClauseIntention : RustElementBaseIntentionAction<RustGenericParamsElement>() {
     override fun getText() = "Move type constraint to where clause"
     override fun getFamilyName() = text
 
-    override fun invokeImpl(project: Project, editor: Editor, element: PsiElement) {
-        val genericParams = element.parentOfType<RustGenericParamsElement>() ?: return
-        val lifetimeBounds = genericParams.lifetimeParamList
-        val typeBounds = genericParams.typeParamList
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RustGenericParamsElement? {
+        val genericParams = element.parentOfType<RustGenericParamsElement>() ?: return null
+        val hasTypeBounds = genericParams.typeParamList.any { it.typeParamBounds != null }
+        val hasLifetimeBounds = genericParams.lifetimeParamList.any { it.lifetimeParamBounds != null }
+        return if (hasTypeBounds || hasLifetimeBounds) genericParams else null
+    }
+
+    override fun invoke(project: Project, editor: Editor, ctx: RustGenericParamsElement) {
+        val lifetimeBounds = ctx.lifetimeParamList
+        val typeBounds = ctx.typeParamList
         val whereClause = RustPsiFactory(project).createWhereClause(lifetimeBounds, typeBounds)
 
-        val declaration = element.parentOfType<RustGenericDeclaration>() ?: return
+        val declaration = ctx.parentOfType<RustGenericDeclaration>() ?: return
         val addedClause = declaration.addWhereClause(whereClause) ?: return
         val offset = addedClause.textOffset + whereClause.textLength
         editor.caretModel.moveToOffset(offset)
         typeBounds.forEach { it.typeParamBounds?.delete() }
         lifetimeBounds.forEach { it.lifetimeParamBounds?.delete() }
-    }
-
-    override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
-        val genericParams = element.parentOfType<RustGenericParamsElement>() ?: return false
-        val hasTypeBounds = genericParams.typeParamList.any { it.typeParamBounds != null }
-        val hasLifetimeBounds = genericParams.lifetimeParamList.any { it.lifetimeParamBounds != null }
-        return hasTypeBounds || hasLifetimeBounds
-    }
+       }
 }
 
 private fun RustGenericDeclaration.addWhereClause(whereClause: RustWhereClauseElement): PsiElement? {

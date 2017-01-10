@@ -2,6 +2,7 @@ package org.rust.ide.actions
 
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -12,7 +13,6 @@ import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.actions.BaseRefactoringAction
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import org.rust.ide.utils.checkWriteAccessAllowed
-import backcompat.runWriteAction
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.impl.RustFile
