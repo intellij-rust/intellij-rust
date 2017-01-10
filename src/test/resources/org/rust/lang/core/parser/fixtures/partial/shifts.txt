@@ -3,7 +3,7 @@ FILE
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('expressions')
-    RustParametersElementImpl(PARAMETERS)
+    RustValueParameterListElementImpl(VALUE_PARAMETER_LIST)
       PsiElement(()('(')
       PsiElement())(')')
     PsiWhiteSpace(' ')

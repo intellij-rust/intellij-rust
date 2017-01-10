@@ -97,11 +97,11 @@ fun RustCompositeElement.createLookupElement(scopeName: String): LookupElement {
 
         is RustFunctionElement -> base
             .withTypeText(retType?.type?.text ?: "()")
-            .withTailText(parameters?.text?.replace("\\s+".toRegex(), " ") ?: "()")
+            .withTailText(valueParameterList?.text?.replace("\\s+".toRegex(), " ") ?: "()")
             .withInsertHandler handler@ { context: InsertionContext, lookupElement: LookupElement ->
                 if (context.isInUseBlock) return@handler
                 if (context.alreadyHasParens) return@handler
-                val argsCount = parameters?.parameterList?.size ?: 0
+                val argsCount = valueParameterList?.parameterList?.size ?: 0
                 context.document.insertString(context.selectionEndOffset, "()")
                 EditorModificationUtil.moveCaretRelatively(context.editor, if (argsCount > 0) 1 else 2)
             }

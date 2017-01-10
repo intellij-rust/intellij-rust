@@ -272,7 +272,7 @@ private fun deviseEnumType(variant: RustEnumVariantElement): RustType =
 private fun deviseFunctionType(fn: RustFunctionElement): RustFunctionType {
     val paramTypes = mutableListOf<RustType>()
 
-    val params = fn.parameters
+    val params = fn.valueParameterList
     if (params != null) {
         val self = params.selfParameter
         if (self != null) {

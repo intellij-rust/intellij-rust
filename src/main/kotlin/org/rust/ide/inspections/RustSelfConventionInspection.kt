@@ -20,7 +20,7 @@ class RustSelfConventionInspection : RustLocalInspectionTool() {
                 val convention = SELF_CONVENTIONS.find { m.identifier.text.startsWith(it.prefix) } ?: return
                 if (m.selfType in convention.selfTypes) return
                 if (m.selfType == SelfType.SELF && m.isOwnerCopyable()) return
-                holder.registerProblem(m.parameters?.selfParameter ?: m.identifier, convention)
+                holder.registerProblem(m.valueParameterList?.selfParameter ?: m.identifier, convention)
             }
         }
 
@@ -49,7 +49,7 @@ enum class SelfType(val description: String) {
 }
 
 private val RustFunctionElement.selfType: SelfType get() {
-    val self = parameters?.selfParameter
+    val self = valueParameterList?.selfParameter
     return when {
         self == null -> SelfType.NO_SELF
         self.and == null -> SelfType.SELF

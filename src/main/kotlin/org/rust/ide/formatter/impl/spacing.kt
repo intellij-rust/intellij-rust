@@ -73,20 +73,20 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         .beforeInside(RBRACE, BRACE_LISTS).spacing(0, 0, 0, true, 0)
         .afterInside(LT, ANGLE_LISTS).spacing(0, 0, 0, true, 0)
         .beforeInside(GT, ANGLE_LISTS).spacing(0, 0, 0, true, 0)
-        .aroundInside(OR, PARAMETERS).spacing(0, 0, 0, false, 0)
+        .aroundInside(OR, VALUE_PARAMETER_LIST).spacing(0, 0, 0, false, 0)
 
     val sb2 = sb1
         //== items
-        .between(PARAMETERS, RET_TYPE).spacing(1, 1, 0, true, 0)
+        .between(VALUE_PARAMETER_LIST, RET_TYPE).spacing(1, 1, 0, true, 0)
         .before(WHERE_CLAUSE).spacing(1, 1, 0, true, 0)
         .beforeInside(LBRACE, FLAT_BRACE_BLOCKS).spaces(1)
 
-        .between(ts(IDENTIFIER, FN), PARAMETERS).spaceIf(false)
+        .between(ts(IDENTIFIER, FN), VALUE_PARAMETER_LIST).spaceIf(false)
         .between(IDENTIFIER, TUPLE_FIELDS).spaces(0)
         .between(IDENTIFIER, GENERIC_PARAMS).spaceIf(false)
         .between(IDENTIFIER, GENERIC_ARGS).spaceIf(false)
         .between(IDENTIFIER, ARG_LIST).spaceIf(false)
-        .between(GENERIC_PARAMS, PARAMETERS).spaceIf(false)
+        .between(GENERIC_PARAMS, VALUE_PARAMETER_LIST).spaceIf(false)
         .before(ARG_LIST).spaceIf(false)
 
         .between(BINDING_MODE, IDENTIFIER).spaces(1)
@@ -119,7 +119,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         //== expressions
         .beforeInside(LPAREN, PAT_ENUM).spaces(0)
         .beforeInside(LBRACK, INDEX_EXPR).spaces(0)
-        .afterInside(PARAMETERS, LAMBDA_EXPR).spacing(1, 1, 0, true, 1)
+        .afterInside(VALUE_PARAMETER_LIST, LAMBDA_EXPR).spacing(1, 1, 0, true, 1)
         .between(MATCH_ARM, MATCH_ARM).spacing(1, 1, if (rustSettings.ALLOW_ONE_LINE_MATCH) 0 else 1, true, 1)
         .before(ELSE_BRANCH).spacing(1, 1, 0, false, 0)
         .betweenInside(ELSE, BLOCK, ELSE_BRANCH).spacing(1, 1, 0, false, 0)

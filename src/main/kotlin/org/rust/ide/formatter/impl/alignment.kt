@@ -39,7 +39,7 @@ fun RustFmtBlock.getAlignmentStrategy(): RustAlignmentStrategy = when (node.elem
             .alignUnlessBlockDelim()
             .alignIf(ctx.commonSettings.ALIGN_MULTILINE_PARAMETERS)
 
-    PARAMETERS ->
+    VALUE_PARAMETER_LIST ->
         RustAlignmentStrategy.shared()
             .alignUnlessBlockDelim()
             .alignIf(ctx.commonSettings.ALIGN_MULTILINE_PARAMETERS)

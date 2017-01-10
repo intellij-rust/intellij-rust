@@ -126,8 +126,8 @@ class RustArgumentsDescription(
         fun findDescription(args: RustArgListElement): RustArgumentsDescription? {
             val call = args.parent
             val paramsList = when (call) {
-                is RustCallExprElement -> call.declaration?.parameters
-                is RustMethodCallExprElement -> call.declaration?.parameters
+                is RustCallExprElement -> call.declaration?.valueParameterList
+                is RustMethodCallExprElement -> call.declaration?.valueParameterList
                 else -> null
             }?.parameterList ?: return null
             val params = paramsList

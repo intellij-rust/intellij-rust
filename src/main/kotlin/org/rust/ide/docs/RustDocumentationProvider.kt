@@ -65,7 +65,7 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
 
         // pick (in order) where clause, return type, or closing brace of the parameters
         // if all else fails, drop down to the length of the current element
-        val functionElements = listOf(whereClause, retType, parameters)
+        val functionElements = listOf(whereClause, retType, valueParameterList)
         val signatureEnd = functionElements
             .filterNotNull().firstOrNull()
             ?.let { it.startOffsetInParent + it.textLength }

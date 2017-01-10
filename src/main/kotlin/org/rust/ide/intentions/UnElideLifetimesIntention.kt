@@ -33,14 +33,13 @@ class UnElideLifetimesIntention : RustElementBaseIntentionAction<RustFunctionEle
         val genericParams = RustPsiFactory(project).createGenericParams(
             (ctx.allRefArgs.mapNotNull { it.lifetime?.text } +
                 (ctx.genericParams?.typeParamList?.asSequence()?.map { it.text } ?: emptySequence()))
-                .toList()
         )
         ctx.genericParams?.replace(genericParams) ?: ctx.addAfter(genericParams, ctx.identifier)
 
         // return type
         val retType = ctx.retType?.type as? RustRefLikeTypeElement ?: return
 
-        val parameters = checkNotNull(ctx.parameters)
+        val parameters = checkNotNull(ctx.valueParameterList)
         if ((parameters.selfParameter != null) || (ctx.allRefArgs.drop(1).none())) {
             retType.replace(createRefType(project, retType, ctx.allRefArgs.first().lifetime!!.text))
         } else {
@@ -64,8 +63,8 @@ class UnElideLifetimesIntention : RustElementBaseIntentionAction<RustFunctionEle
         RustPsiFactory(project).createMethodParam(origin.text.replaceFirst("&", "&$lifeTimeName "))
 
     private val RustFunctionElement.allRefArgs: List<PsiElement> get() {
-        val selfAfg: List<PsiElement> = listOfNotNull(parameters?.selfParameter)
-        val params: List<PsiElement> = parameters?.parameterList.orEmpty()
+        val selfAfg: List<PsiElement> = listOfNotNull(valueParameterList?.selfParameter)
+        val params: List<PsiElement> = valueParameterList?.parameterList.orEmpty()
             .filter { param ->
                 val type = param.type
                 type is RustRefLikeTypeElement && type.and != null

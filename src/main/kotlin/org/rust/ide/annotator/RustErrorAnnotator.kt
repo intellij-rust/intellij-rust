@@ -213,8 +213,8 @@ class RustErrorAnnotator : Annotator {
     }
 
     private fun checkTraitFnImplParams(holder: AnnotationHolder, fn: RustFunctionElement, superFn: RustFunctionElement, traitName: String) {
-        val params = fn.parameters ?: return
-        val superParams = superFn.parameters ?: return
+        val params = fn.valueParameterList ?: return
+        val superParams = superFn.valueParameterList ?: return
         val selfArg = params.selfParameter
 
         if (selfArg != null && superParams.selfParameter == null) {

@@ -12,7 +12,7 @@ FILE
       RustLifetimeParamElementImpl(LIFETIME_PARAM)
         PsiElement(<LIFETIME>)(''b')
       PsiElement(>)('>')
-    RustParametersElementImpl(PARAMETERS)
+    RustValueParameterListElementImpl(VALUE_PARAMETER_LIST)
       PsiElement(()('(')
       PsiElement())(')')
   PsiWhiteSpace(' ')
