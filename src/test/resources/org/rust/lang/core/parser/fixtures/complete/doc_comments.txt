@@ -183,7 +183,7 @@ FILE
       PsiElement(fn)('fn')
       PsiWhiteSpace(' ')
       PsiElement(<IDENTIFIER>)('foo')
-      RustVariadicParametersElementImpl(VARIADIC_PARAMETERS)
+      RustParametersElementImpl(PARAMETERS)
         PsiElement(()('(')
         PsiElement())(')')
       PsiElement(;)(';')

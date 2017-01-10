@@ -25,3 +25,7 @@ abstract class RustEnumVariantImplMixin : RustStubbedNamedElementImpl<RustEnumVa
 }
 
 val RustEnumVariantElement.parentEnum: RustEnumItemElement get() = parent?.parent as RustEnumItemElement
+
+fun foo(f: (String, String) -> Unit) {
+    f("", "")
+}

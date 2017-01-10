@@ -8,6 +8,7 @@ import org.rust.ide.formatter.RustFmtContext
 import org.rust.ide.formatter.RustFormattingModelBuilder
 import org.rust.ide.formatter.impl.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.METHOD_CALL_EXPR
+import org.rust.lang.core.psi.RustCompositeElementTypes.PARAMETERS
 import org.rust.lang.core.psi.RustTokenElementTypes.DOT
 
 class RustFmtBlock(
@@ -30,7 +31,7 @@ class RustFmtBlock(
     private fun buildChildren(): List<Block> {
         val sharedAlignment = when (node.elementType) {
             in FN_DECLS -> Alignment.createAlignment()
-            in PARAMS_LIKE -> ctx.sharedAlignment
+            PARAMETERS -> ctx.sharedAlignment
             METHOD_CALL_EXPR ->
                 if (node.treeParent.elementType == METHOD_CALL_EXPR)
                     ctx.sharedAlignment

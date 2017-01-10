@@ -336,7 +336,7 @@ FILE
         RustStringLiteralImpl(<STRING>)('"system"')
       PsiWhiteSpace(' ')
       PsiElement(fn)('fn')
-      RustVariadicParametersElementImpl(VARIADIC_PARAMETERS)
+      RustParametersElementImpl(PARAMETERS)
         PsiElement(()('(')
         RustParameterElementImpl(PARAMETER)
           RustPatIdentElementImpl(PAT_IDENT)
