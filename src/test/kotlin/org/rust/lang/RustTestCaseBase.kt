@@ -203,6 +203,11 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             }
         }
 
+        // Override to enforce non-nullability
+        final override fun createSourcesRoot(module: Module): VirtualFile = createSourceRoot(module, "src")
+
+        final override fun createSourceRoot(module: Module, srcPath: String?): VirtualFile = super.createSourceRoot(module, srcPath)
+
         open protected fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
             val packages = listOf(testCargoPackage(contentRoot))
             return CargoProjectDescription.deserialize(CleanCargoMetadata(packages, ArrayList()))!!

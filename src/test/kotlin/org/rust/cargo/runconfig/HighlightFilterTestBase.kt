@@ -13,11 +13,17 @@ import java.util.*
  */
 abstract class HighlightFilterTestBase : RustTestCaseBase() {
     override val dataPath = ""
-    lateinit var projectDir: VirtualFile
+
+    val projectDir: VirtualFile get() = myFixture.tempDirFixture.getFile("")
+        ?: error("Can't get temp directory for console filter tests")
 
     override fun setUp() {
         super.setUp()
-        projectDir = createTestDirectoryAndFile()
+        runWriteAction {
+            projectDir
+                .createChildDirectory(this, "src")
+                .createChildData(this, "main.rs")
+        }
     }
 
     protected fun checkNoHighlights(filter: Filter, text: String) {
@@ -43,11 +49,5 @@ abstract class HighlightFilterTestBase : RustTestCaseBase() {
         }
         checkText = checkText.split('\n')[lineIndex]
         Assertions.assertThat(checkText).isEqualTo(after)
-    }
-
-    private fun createTestDirectoryAndFile(): VirtualFile = runWriteAction {
-        val baseDir = myFixture.tempDirFixture.findOrCreateDir("consoleFilterTest")
-        baseDir.createChildDirectory(this, "src").createChildData(this, "main.rs")
-        baseDir
     }
 }
