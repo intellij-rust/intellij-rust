@@ -6,7 +6,7 @@ import org.rust.lang.RustTestCaseBase
 
 class RustExplainFilterTest : RustTestCaseBase() {
     override val dataPath = ""
-    private var filter: Filter = RustExplainFilter()
+    private val filter: Filter get() = RustExplainFilter()
 
     fun testOldExplainFormat() {
         val text = "src/lib.rs:57:17: 57:25 help: run `rustc --explain E0282` to see a detailed explanation"

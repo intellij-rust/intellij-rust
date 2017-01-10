@@ -5,12 +5,7 @@ package org.rust.cargo.runconfig
  */
 class RustPanicFilterTest : HighlightFilterTestBase() {
 
-    private lateinit var filter: RustPanicFilter
-
-    override fun setUp() {
-        super.setUp()
-        filter = RustPanicFilter(project, projectDir)
-    }
+    private val filter: RustPanicFilter get() = RustPanicFilter(project, projectDir)
 
     fun testOneLine() =
         checkHighlights(filter,
