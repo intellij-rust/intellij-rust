@@ -164,6 +164,18 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
         }
     }
 
+    override fun visitTryExpr(o: RustTryExprElement) = set {
+        val base = o.expr.resolvedType
+        // This is super hackish. Need to figure out how to
+        // identify known types (See also the CString inspection).
+        // Java uses fully qualified names for this, perhaps we
+        // can do this as well? Will be harder to test though :(
+        if (base is RustEnumType && base.item.name == "Result")
+            base.typeArguments.firstOrNull() ?: RustUnknownType
+        else
+            RustUnknownType
+    }
+
     private val RustBlockElement.resolvedType: RustType get() = expr?.resolvedType ?: RustUnitType
 }
 

@@ -393,4 +393,17 @@ class RustTypeAwareResolveTest : RustResolveTestBase() {
         use self::m::E::foo;
                         //^ unresolved
     """)
+
+    fun testTryOperator() = checkByCode("""
+        enum Result<T, E> { Ok(T), Err(E)}
+        struct S { field: u32 }
+                    //X
+        fn foo() -> Result<S, ()> { unimplemented!() }
+
+        fn main() {
+            let s = foo()?;
+            s.field;
+            //^
+        }
+    """)
 }
