@@ -3,12 +3,12 @@ package org.rust.lang.core.types
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RustFunctionElement
 import org.rust.lang.core.psi.RustTraitItemElement
-import org.rust.lang.core.psi.RustTypeParamElement
+import org.rust.lang.core.psi.RustTypeParameterElement
 import org.rust.lang.core.psi.util.trait
 import org.rust.lang.core.types.util.bounds
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 
-class RustTypeParameterType(val parameter: RustTypeParamElement) : RustTypeBase() {
+class RustTypeParameterType(val parameter: RustTypeParameterElement) : RustTypeBase() {
 
     override fun getTraitsImplementedIn(project: Project): Sequence<RustTraitItemElement> =
         parameter.bounds.mapNotNull { it.bound.traitRef?.trait }

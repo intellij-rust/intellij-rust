@@ -29,7 +29,7 @@ class AddDeriveIntention : RustElementBaseIntentionAction<AddDeriveIntention.Con
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val deriveAttr = findOrCreateDeriveAttr(project, ctx.item, ctx.itemStart) ?: return
+        val deriveAttr = findOrCreateDeriveAttr(project, ctx.item, ctx.itemStart)
         val reformattedDeriveAttr = reformat(project, ctx.item, deriveAttr)
         moveCaret(editor, reformattedDeriveAttr)
 

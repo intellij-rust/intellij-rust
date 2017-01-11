@@ -7,7 +7,7 @@ abstract class RustStructOrEnumTypeBase(val typeArguments: List<RustType>) : Rus
     abstract val item: RustStructOrEnumItemElement
 
     override val typeParameterValues: Map<RustTypeParameterType, RustType>
-        get() = item.typeParameterList?.typeParamList.orEmpty()
+        get() = item.typeParameterList?.typeParameterList.orEmpty()
             .zip(typeArguments)
             .mapNotNull {
                 val (param, arg) = it

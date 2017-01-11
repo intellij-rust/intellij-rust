@@ -88,7 +88,7 @@ val RustNamedElement.namespaces: Set<Namespace> get() = when (this) {
     is RustMod,
     is RustEnumItemElement,
     is RustTraitItemElement,
-    is RustTypeParamElement,
+    is RustTypeParameterElement,
     is RustTypeAliasElement -> TYPES
 
     is RustPatBindingElement,
@@ -98,7 +98,7 @@ val RustNamedElement.namespaces: Set<Namespace> get() = when (this) {
 
     is RustStructItemElement -> if (blockFields == null) TYPES_N_VALUES else TYPES
 
-    is RustLifetimeParamElement -> LIFETIMES
+    is RustLifetimeParameterElement -> LIFETIMES
 
     else -> TYPES_N_VALUES
 }

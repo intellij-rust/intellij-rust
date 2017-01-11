@@ -46,7 +46,7 @@ val RustTypeBearingItemElement.resolvedType: RustType
 /**
  * Helper property to extract (type-)bounds imposed onto this particular type-parameter
  */
-val RustTypeParamElement.bounds: Sequence<RustPolyboundElement>
+val RustTypeParameterElement.bounds: Sequence<RustPolyboundElement>
     get() {
         val owner = parent?.parent as? RustGenericDeclaration
         val whereBounds =

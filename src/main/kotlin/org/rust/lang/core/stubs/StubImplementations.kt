@@ -34,7 +34,7 @@ class RustFileStub : PsiFileStubImpl<RustFile> {
 
     object Type : IStubFileElementType<RustFileStub>(RustLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 43
+        override fun getStubVersion(): Int = 44
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RustFileStub(file as RustFile)
@@ -105,7 +105,7 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "IMPL_TRAIT_TYPE" -> RustPlaceholderStub.Type("IMPL_TRAIT_TYPE", ::RustImplTraitTypeElementImpl)
 
     "TYPE_PARAMETER_LIST" -> RustPlaceholderStub.Type("TYPE_PARAMETER_LIST", ::RustTypeParameterListElementImpl)
-    "TYPE_PARAM" -> RustTypeParamElementStub.Type
+    "TYPE_PARAMETER" -> RustTypeParameterElementStub.Type
 
     else -> error("Unknown element $name")
 }
@@ -650,30 +650,30 @@ class RustPathElementStub(
 }
 
 
-class RustTypeParamElementStub(
+class RustTypeParameterElementStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?
-) : StubBase<RustTypeParamElement>(parent, elementType),
+) : StubBase<RustTypeParameterElement>(parent, elementType),
     RustNamedStub {
 
-    object Type : RustStubElementType<RustTypeParamElementStub, RustTypeParamElement>("TYPE_PARAM") {
+    object Type : RustStubElementType<RustTypeParameterElementStub, RustTypeParameterElement>("TYPE_PARAMETER") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RustTypeParamElementStub(parentStub, this,
+            RustTypeParameterElementStub(parentStub, this,
                 dataStream.readNameAsString()
             )
 
-        override fun serialize(stub: RustTypeParamElementStub, dataStream: StubOutputStream) =
+        override fun serialize(stub: RustTypeParameterElementStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
             }
 
-        override fun createPsi(stub: RustTypeParamElementStub): RustTypeParamElement =
-            RustTypeParamElementImpl(stub, this)
+        override fun createPsi(stub: RustTypeParameterElementStub): RustTypeParameterElement =
+            RustTypeParameterElementImpl(stub, this)
 
-        override fun createStub(psi: RustTypeParamElement, parentStub: StubElement<*>?) =
-            RustTypeParamElementStub(parentStub, this, psi.name)
+        override fun createStub(psi: RustTypeParameterElement, parentStub: StubElement<*>?) =
+            RustTypeParameterElementStub(parentStub, this, psi.name)
 
-        override fun indexStub(stub: RustTypeParamElementStub, sink: IndexSink) {
+        override fun indexStub(stub: RustTypeParameterElementStub, sink: IndexSink) {
             // NOP
         }
     }

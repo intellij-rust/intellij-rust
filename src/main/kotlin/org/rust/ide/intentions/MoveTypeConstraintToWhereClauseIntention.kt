@@ -12,14 +12,14 @@ class MoveTypeConstraintToWhereClauseIntention : RustElementBaseIntentionAction<
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RustTypeParameterListElement? {
         val genericParams = element.parentOfType<RustTypeParameterListElement>() ?: return null
-        val hasTypeBounds = genericParams.typeParamList.any { it.typeParamBounds != null }
-        val hasLifetimeBounds = genericParams.lifetimeParamList.any { it.lifetimeParamBounds != null }
+        val hasTypeBounds = genericParams.typeParameterList.any { it.typeParamBounds != null }
+        val hasLifetimeBounds = genericParams.lifetimeParameterList.any { it.lifetimeParamBounds != null }
         return if (hasTypeBounds || hasLifetimeBounds) genericParams else null
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: RustTypeParameterListElement) {
-        val lifetimeBounds = ctx.lifetimeParamList
-        val typeBounds = ctx.typeParamList
+        val lifetimeBounds = ctx.lifetimeParameterList
+        val typeBounds = ctx.typeParameterList
         val whereClause = RustPsiFactory(project).createWhereClause(lifetimeBounds, typeBounds)
 
         val declaration = ctx.parentOfType<RustGenericDeclaration>() ?: return

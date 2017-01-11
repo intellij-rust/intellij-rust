@@ -73,8 +73,8 @@ class RustPsiFactory(private val project: Project) {
             ?: error("Failed to create an inherent impl with name: `$name`")
 
     fun createWhereClause(
-        lifetimeBounds: List<RustLifetimeParamElement>,
-        typeBounds: List<RustTypeParamElement>
+        lifetimeBounds: List<RustLifetimeParameterElement>,
+        typeBounds: List<RustTypeParameterElement>
     ): RustWhereClauseElement {
 
         val lifetimes = lifetimeBounds

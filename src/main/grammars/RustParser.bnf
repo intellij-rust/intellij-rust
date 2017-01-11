@@ -328,20 +328,20 @@ type_parameter_list ::= '<' lifetimes_params type_params '>' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private lifetimes_params ::= <<list_element lifetime_param>>*
-private type_params      ::= <<list_element type_param>>*
+private lifetimes_params ::= <<list_element lifetime_parameter>>*
+private type_params      ::= <<list_element type_parameter>>*
 
-lifetime_param ::= LIFETIME lifetime_param_bounds? {
+lifetime_parameter ::= LIFETIME lifetime_param_bounds? {
   implements = [ "org.rust.lang.core.psi.RustNamedElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RustLifetimeParamElementImplMixin"
+  mixin = "org.rust.lang.core.psi.impl.mixin.RustLifetimeParameterElementImplMixin"
 }
 
 lifetime_param_bounds ::= ':' LIFETIME ('+' LIFETIME)*
 
-type_param ::= IDENTIFIER type_param_bounds? [ '=' type ] {
+type_parameter ::= IDENTIFIER type_param_bounds? [ '=' type ] {
   implements = [ "org.rust.lang.core.psi.RustNamedElement" ]
   extends = "org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RustTypeParamElementStub"
+  stubClass = "org.rust.lang.core.stubs.RustTypeParameterElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 

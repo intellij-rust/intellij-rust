@@ -207,7 +207,7 @@ class RustMethodNamingInspection : RustSnakeCaseNamingInspection("Method") {
 class RustLifetimeNamingInspection : RustSnakeCaseNamingInspection("Lifetime") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
-            override fun visitLifetimeParam(el: RustLifetimeParamElement) = inspect(el, holder, false)
+            override fun visitLifetimeParameter(el: RustLifetimeParameterElement) = inspect(el, holder, false)
         }
 }
 
@@ -273,7 +273,7 @@ class RustAssocTypeNamingInspection : RustCamelCaseNamingInspection("Type", "Ass
 class RustTypeParameterNamingInspection : RustCamelCaseNamingInspection("Type parameter") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RustElementVisitor() {
-            override fun visitTypeParam(el: RustTypeParamElement) = inspect(el.identifier, holder)
+            override fun visitTypeParameter(el: RustTypeParameterElement) = inspect(el.identifier, holder)
         }
 }
 

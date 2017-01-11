@@ -100,7 +100,7 @@ private fun colorFor(element: RustCompositeElement): RustColor? = when (element)
     is RustStructItemElement -> RustColor.STRUCT
     is RustTraitItemElement -> RustColor.TRAIT
     is RustTypeAliasElement -> RustColor.TYPE_ALIAS
-    is RustTypeParamElement -> RustColor.TYPE_PARAMETER
+    is RustTypeParameterElement -> RustColor.TYPE_PARAMETER
     else -> null
 }
 
@@ -123,6 +123,6 @@ private fun partToHighlight(element: RustCompositeElement): PsiElement? = when (
     is RustStructItemElement -> element.identifier
     is RustTraitItemElement -> element.identifier
     is RustTypeAliasElement -> element.identifier
-    is RustTypeParamElement -> element.identifier
+    is RustTypeParameterElement -> element.identifier
     else -> null
 }

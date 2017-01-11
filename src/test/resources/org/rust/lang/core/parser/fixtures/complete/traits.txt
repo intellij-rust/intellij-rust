@@ -141,7 +141,7 @@ FILE
     PsiElement(<IDENTIFIER>)('bar')
     RustTypeParameterListElementImpl(TYPE_PARAMETER_LIST)
       PsiElement(<)('<')
-      RustTypeParamElementImpl(TYPE_PARAM)
+      RustTypeParameterElementImpl(TYPE_PARAMETER)
         PsiElement(<IDENTIFIER>)('T')
       PsiElement(>)('>')
     PsiWhiteSpace(' ')
