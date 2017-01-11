@@ -8,6 +8,8 @@ env:
         - ORG_GRADLE_PROJECT_ideaVersion=2016.1
 
 before_script:
+  # We want to use the nightly toolchain because we want to check
+  # if some new syntax breaks our parser.
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
   - export PATH=$HOME/.cargo/bin:$PATH
   - cargo install rustfmt
