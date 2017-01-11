@@ -202,7 +202,7 @@ meta_item_args ::= '(' [ <<comma_separated_list (meta_item | lit_expr)>> ] ')'
 // Paths
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private path_ident ::= IDENTIFIER | SELF | SUPER | CSELF
+private path_ident ::= !("union" IDENTIFIER) IDENTIFIER | SELF | SUPER | CSELF
 fake path ::= (path '::')? path_ident path_type_arguments? {
   stubClass = "org.rust.lang.core.stubs.RustPathElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -256,7 +256,8 @@ trait_ref ::= path_generic_args_without_colons
 // Items
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-vis ::= PUB
+vis ::= PUB vis_restriction?
+vis_restriction ::= '(' ( CRATE | path_without_types ) ')'
 
 //XXX: don't use contextual keywords in recover, because they remap tokens.
 private DEFAULT ::= <<defaultKeyword>>

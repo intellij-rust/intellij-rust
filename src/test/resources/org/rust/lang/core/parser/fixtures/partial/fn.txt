@@ -35,7 +35,7 @@ FILE
           RustPathElementImpl(PATH)
             PsiElement(<IDENTIFIER>)('i32')
       PsiElement(,)(',')
-      PsiErrorElement:')' or <IDENTIFIER> expected, got ','
+      PsiErrorElement:')' or <pat> expected, got ','
         <empty list>
   PsiElement(,)(',')
   PsiElement(DUMMY_BLOCK)
@@ -84,7 +84,7 @@ FILE
     RustBlockElementImpl(BLOCK)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      PsiErrorElement:<expr>, enum, extern, impl, mod, trait, type or use expected, got '+'
+      PsiErrorElement:<stmt mode expr>, enum, extern, impl, mod, trait, type or use expected, got '+'
         PsiElement(+)('+')
       PsiWhiteSpace('\n')
       PsiElement(})('}')

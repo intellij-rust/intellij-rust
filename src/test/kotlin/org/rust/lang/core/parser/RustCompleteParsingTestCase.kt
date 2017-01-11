@@ -38,6 +38,7 @@ class RustCompleteParsingTestCase : RustParsingTestCaseBase("complete") {
     fun testLabels() = doTest(true)
     fun testBlockBinExpr() = doTest(true)
     fun testMatchCallAmbiguity() = doTest(true)
+    fun testVisibility() = doTest(true)
 
     fun testIssue320() = doTest(true)
 

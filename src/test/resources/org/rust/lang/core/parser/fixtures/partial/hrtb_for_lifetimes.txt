@@ -23,7 +23,7 @@ FILE
   PsiElement(<LIFETIME>)(''c')
   PsiElement(>)('>')
   PsiWhiteSpace(' ')
-  PsiErrorElement:<type> or fn expected, got ''a'
+  PsiErrorElement:<type> expected, got ''a'
     PsiElement(<LIFETIME>)(''a')
   PsiElement(DUMMY_BLOCK)
     PsiWhiteSpace(' ')

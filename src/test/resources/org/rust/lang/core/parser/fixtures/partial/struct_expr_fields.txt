@@ -104,7 +104,7 @@ FILE
             RustStructExprFieldElementImpl(STRUCT_EXPR_FIELD)
               PsiElement(<IDENTIFIER>)('quux')
               PsiElement(:)(':')
-            PsiErrorElement:<expr> expected, got ','
+            PsiErrorElement:<any expr> expected, got ','
               <empty list>
             PsiWhiteSpace(' ')
             PsiElement(,)(',')
