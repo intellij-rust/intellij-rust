@@ -36,7 +36,8 @@ class RustRecursiveCallLineMarkerProvider : LineMarkerProvider {
                     el,
                     el.textRange,
                     RustIcons.RECURSIVE_CALL,
-                    Pass.LINE_MARKERS,
+                    // BACKCOMPAT: 2016.2
+                    Pass.UPDATE_OVERRIDDEN_MARKERS,
                     FunctionUtil.constant("Recursive call"),
                     null,
                     GutterIconRenderer.Alignment.RIGHT))
