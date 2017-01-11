@@ -88,8 +88,6 @@ allprojects {
     }
 
     dependencies {
-        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
-        compile "org.jetbrains.kotlin:kotlin-runtime:$kotlinVersion"
         compile('com.github.matklad:miglayout:afbdb74067') {
             exclude module: 'org-netbeans-api-annotations-common'
         }
