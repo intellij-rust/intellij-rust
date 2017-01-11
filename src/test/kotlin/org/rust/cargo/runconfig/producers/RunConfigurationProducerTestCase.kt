@@ -313,7 +313,7 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
                 )
             )
 
-            metadataService.setState(projectDescription!!)
+            metadataService.setState(projectDescription)
         }
 
         private fun addTarget(name: String, kind: CargoProjectDescription.TargetKind, path: String, code: String) {

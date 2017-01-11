@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.workspace.cargoProject
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.runconfig.CargoCommandRunConfigurationType
@@ -46,9 +45,12 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         return true
     }
 
-    private class ExecutableTarget(target: CargoProjectDescription.Target) {
-        val configurationName: String = "Run ${target.name}"
-        val additionalArguments: String = target.cargoArgumentSpeck
+    private class ExecutableTarget(
+        name: String,
+        kind: String
+    ) {
+        val configurationName: String = "Run $name"
+        val additionalArguments: String = "--$kind $name"
     }
 
     companion object {
@@ -64,9 +66,15 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         }
 
         private fun findBinaryTarget(module: Module, file: VirtualFile): ExecutableTarget? {
+            // TODO: specify workspace package here once
+            // https://github.com/rust-lang/cargo/issues/3529
+            // is fixed
             val target = module.cargoProject?.findTargetForCrateRootFile(file) ?: return null
-            if (!(target.isBin || target.isExample)) return null
-            return ExecutableTarget(target)
+            return when {
+                target.isBin -> ExecutableTarget(target.name, "bin")
+                target.isExample -> ExecutableTarget(target.name, "example")
+                else -> null
+            }
         }
     }
 }

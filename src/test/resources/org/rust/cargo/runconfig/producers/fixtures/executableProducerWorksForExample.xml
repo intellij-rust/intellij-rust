@@ -1,6 +1,6 @@
 <configurations>
   <configuration name="Run hello" class="CargoCommandConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
-    <option name="additionalArguments" value="--package test-package --example hello" />
+    <option name="additionalArguments" value="--example hello" />
     <option name="command" value="run" />
     <option name="environmentVariables">
       <map />
