@@ -92,7 +92,7 @@ class RustPsiFactory(private val project: Project) {
             ?: error("Failed to create a where clause from text: `$text`")
     }
 
-    fun createGenericParams(
+    fun createTypeParameterList(
         params: Iterable<String>
     ): RustTypeParameterListElement {
         val text = params.joinToString(prefix = "<", separator = ", ", postfix = ">")

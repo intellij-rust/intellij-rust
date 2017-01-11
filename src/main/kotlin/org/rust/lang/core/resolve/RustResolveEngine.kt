@@ -282,14 +282,14 @@ private fun innerDeclarationsIn(
         is RustEnumItemElement,
         is RustTypeAliasElement -> {
             scope as RustGenericDeclaration
-            scope.typeParams.asScopeEntries()
+            scope.typeParameters.asScopeEntries()
         }
 
         is RustTraitItemElement ->
-            scope.typeParams.asScopeEntries() + ScopeEntry.of(RustPath.CSELF, scope)
+            scope.typeParameters.asScopeEntries() + ScopeEntry.of(RustPath.CSELF, scope)
 
         is RustImplItemElement -> {
-            scope.typeParams.asScopeEntries() +
+            scope.typeParameters.asScopeEntries() +
                 sequenceOfNotNull(ScopeEntry.lazy(RustPath.CSELF) {
                     //TODO: handle types which are not `NamedElements` (e.g. tuples)
                     (scope.type as? RustBaseTypeElement)?.path?.reference?.resolve()
@@ -300,7 +300,7 @@ private fun innerDeclarationsIn(
             sequenceOf(
                 sequenceOfNotNull(scope.selfParameter?.let { ScopeEntry.of(it) }),
                 scope.valueParameters.asSequence().mapNotNull { it.pat }.flatMap { it.boundNames },
-                scope.typeParams.asScopeEntries()
+                scope.typeParameters.asScopeEntries()
             ).flatten()
 
         is RustBlockElement -> {

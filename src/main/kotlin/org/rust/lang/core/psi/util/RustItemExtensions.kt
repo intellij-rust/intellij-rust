@@ -9,8 +9,6 @@ import org.rust.lang.core.psi.RustTypeParameterElement
  *  `RustItemElement` related extensions
  */
 
-val RustGenericDeclaration.typeParams: List<RustTypeParameterElement>
-    get() = typeParameterList?.typeParameterList.orEmpty()
 
 val RustTraitRefElement.trait: RustTraitItemElement?
     get() = path.reference.resolve() as? RustTraitItemElement
