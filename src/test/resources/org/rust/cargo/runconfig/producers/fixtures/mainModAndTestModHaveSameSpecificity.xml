@@ -1,6 +1,6 @@
 <configurations>
   <configuration name="Run foo" class="CargoCommandConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
-    <option name="additionalArguments" value="--bin foo" />
+    <option name="additionalArguments" value="--package test-package --bin foo" />
     <option name="command" value="run" />
     <option name="environmentVariables">
       <map />
@@ -9,7 +9,7 @@
     <module name="light_idea_test_case" />
   </configuration>
   <configuration name="Test main" class="CargoCommandConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
-    <option name="additionalArguments" value="--bin foo " />
+    <option name="additionalArguments" value="--package test-package --bin foo " />
     <option name="command" value="test" />
     <option name="environmentVariables">
       <map />
