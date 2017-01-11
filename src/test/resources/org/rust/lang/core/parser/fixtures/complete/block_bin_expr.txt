@@ -259,7 +259,7 @@ FILE
                 RustPathElementImpl(PATH)
                   PsiElement(<IDENTIFIER>)('bar')
               PsiElement(})('}')
-          RustArgListElementImpl(ARG_LIST)
+          RustValueArgumentListElementImpl(VALUE_ARGUMENT_LIST)
             PsiElement(()('(')
             PsiElement())(')')
         PsiElement(;)(';')

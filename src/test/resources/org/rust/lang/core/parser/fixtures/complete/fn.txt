@@ -240,7 +240,7 @@ FILE
         RustPathExprElementImpl(PATH_EXPR)
           RustPathElementImpl(PATH)
             PsiElement(<IDENTIFIER>)('panic')
-        RustArgListElementImpl(ARG_LIST)
+        RustValueArgumentListElementImpl(VALUE_ARGUMENT_LIST)
           PsiElement(()('(')
           RustLitExprElementImpl(LIT_EXPR)
             RustStringLiteralImpl(<STRING>)('"! is a type"')

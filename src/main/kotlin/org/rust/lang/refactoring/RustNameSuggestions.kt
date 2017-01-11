@@ -71,7 +71,7 @@ private fun List<String>.reverseNew() = if (this.firstOrNull() == "new") {
 fun PsiElement.nameForArgument(): String {
     val call = this.parentOfType<RustCallExprElement>(strict = true) ?: return ""
 
-    val parameterIndex = call.argList.children.indexOf(this)
+    val parameterIndex = call.valueArgumentList.children.indexOf(this)
     val fn = call.findFnImpl()
 
     return fn?.valueParameters?.get(parameterIndex)?.pat?.text ?: ""
@@ -90,7 +90,7 @@ fun findNamesInLocalScope(expr: PsiElement): List<String> {
     return letDecls.map { it.pat?.text }.filterNotNull()
 }
 
-private fun PsiElement.isArgument() = this.parent is RustArgListElement
+private fun PsiElement.isArgument() = this.parent is RustValueArgumentListElement
 private fun PsiElement.isStructField() = this.parent is RustStructExprFieldElement
 
 private fun rustNameUtil(name: String) = NameUtil.getSuggestionsByName(name, "", "", false, false, false).map { it.toSnakeCase(false) }

@@ -184,7 +184,7 @@ FILE
                         PsiElement(>)('>')
                   PsiElement(>)('>')
             PsiElement(>)('>')
-          RustArgListElementImpl(ARG_LIST)
+          RustValueArgumentListElementImpl(VALUE_ARGUMENT_LIST)
             PsiElement(()('(')
             PsiElement())(')')
         PsiElement(;)(';')

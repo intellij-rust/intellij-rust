@@ -6,7 +6,7 @@ import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustTokenElementTypes.DOT
 
 fun RustFmtBlock.getAlignmentStrategy(): RustAlignmentStrategy = when (node.elementType) {
-    TUPLE_EXPR, ARG_LIST, FORMAT_MACRO_ARGS, TRY_MACRO_ARGS, VEC_MACRO_ARGS ->
+    TUPLE_EXPR, VALUE_ARGUMENT_LIST, FORMAT_MACRO_ARGS, TRY_MACRO_ARGS, VEC_MACRO_ARGS ->
         RustAlignmentStrategy.wrap()
             .alignIf { child, parent, ctx ->
                 // Do not align if we have only one argument as this may lead to

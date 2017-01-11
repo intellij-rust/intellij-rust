@@ -33,7 +33,7 @@ FILE
             RustPathExprElementImpl(PATH_EXPR)
               RustPathElementImpl(PATH)
                 PsiElement(<IDENTIFIER>)('Some')
-            RustArgListElementImpl(ARG_LIST)
+            RustValueArgumentListElementImpl(VALUE_ARGUMENT_LIST)
               PsiElement(()('(')
               RustLitExprElementImpl(LIT_EXPR)
                 RustNumericLiteralImpl(<INTEGER>)('92')

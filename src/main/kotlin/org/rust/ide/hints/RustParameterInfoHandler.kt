@@ -36,13 +36,13 @@ class RustParameterInfoHandler : ParameterInfoHandler<PsiElement, RustArgumentsD
     }
 
     fun findElementForParameterInfo(contextElement: PsiElement) =
-        contextElement.parentOfType<RustArgListElement>()
+        contextElement.parentOfType<RustValueArgumentListElement>()
 
     override fun findElementForUpdatingParameterInfo(context: UpdateParameterInfoContext) =
         context.file.findElementAt(context.editor.caretModel.offset)
 
     override fun showParameterInfo(element: PsiElement, context: CreateParameterInfoContext) {
-        if (element !is RustArgListElement) return
+        if (element !is RustValueArgumentListElement) return
         val argsDescr = RustArgumentsDescription.findDescription(element) ?: return
         context.itemsToShow = arrayOf(argsDescr)
         context.showHint(element, element.textRange.startOffset, this)
@@ -86,7 +86,7 @@ class RustParameterInfoHandler : ParameterInfoHandler<PsiElement, RustArgumentsD
      * Finds index of the argument in the given place
      */
     private fun findArgumentIndex(place: PsiElement): Int {
-        val callArgs = place.parentOfType<RustArgListElement>() ?: return INVALID_INDEX
+        val callArgs = place.parentOfType<RustValueArgumentListElement>() ?: return INVALID_INDEX
         val descr = RustArgumentsDescription.findDescription(callArgs) ?: return INVALID_INDEX
         var index = -1
         if (descr.arguments.isNotEmpty()) {
@@ -124,7 +124,7 @@ class RustArgumentsDescription(
         /**
          * Finds declaration of the func/method and creates description of its arguments
          */
-        fun findDescription(args: RustArgListElement): RustArgumentsDescription? {
+        fun findDescription(args: RustValueArgumentListElement): RustArgumentsDescription? {
             val call = args.parent
             val paramsList = when (call) {
                 is RustCallExprElement -> call.declaration?.valueParameters

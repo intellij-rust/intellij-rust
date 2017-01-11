@@ -981,14 +981,14 @@ index_expr ::= expr index_arg
 // Do not inline this rule, it breaks expression parsing
 private index_arg ::= '[' expr ']'
 
-call_expr ::= expr !<<isCompleteBlockExpr>> arg_list
+call_expr ::= expr !<<isCompleteBlockExpr>> value_argument_list
 
-method_call_expr ::= expr '.' IDENTIFIER colon_generic_args? arg_list {
+method_call_expr ::= expr '.' IDENTIFIER colon_generic_args? value_argument_list {
   implements = [ "org.rust.lang.core.psi.RustReferenceElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustMethodCallExprImplMixin"
 }
 
-arg_list ::= '(' expr_list? ')' { pin = 1 }
+value_argument_list ::= '(' expr_list? ')' { pin = 1 }
 
 private expr_list ::= <<comma_separated_list any_expr>>
 

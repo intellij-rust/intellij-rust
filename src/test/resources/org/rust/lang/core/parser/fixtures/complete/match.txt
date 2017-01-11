@@ -63,7 +63,7 @@ FILE
                   PsiElement(})('}')
               PsiElement(.)('.')
               PsiElement(<IDENTIFIER>)('to_string')
-              RustArgListElementImpl(ARG_LIST)
+              RustValueArgumentListElementImpl(VALUE_ARGUMENT_LIST)
                 PsiElement(()('(')
                 PsiElement())(')')
             PsiElement(,)(',')
