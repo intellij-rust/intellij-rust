@@ -13,7 +13,7 @@ FILE
       RustPathExprElementImpl(PATH_EXPR)
         RustPathElementImpl(PATH)
           PsiElement(<IDENTIFIER>)('foo')
-          RustGenericArgsElementImpl(GENERIC_ARGS)
+          RustTypeArgumentListElementImpl(TYPE_ARGUMENT_LIST)
             PsiElement(::)('::')
             PsiElement(<)('<')
             PsiElement(<LIFETIME>)(''static')

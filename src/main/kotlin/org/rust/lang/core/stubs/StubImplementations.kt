@@ -627,7 +627,7 @@ class RustPathElementStub(
             RustPathElementImpl(stub, this)
 
         override fun createStub(psi: RustPathElement, parentStub: StubElement<*>?) =
-            RustPathElementStub(parentStub, this, psi.referenceName, psi.isCrateRelative, psi.genericArgs != null)
+            RustPathElementStub(parentStub, this, psi.referenceName, psi.isCrateRelative, psi.typeArgumentList != null)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RustPathElementStub(parentStub, this,

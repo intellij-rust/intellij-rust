@@ -19,7 +19,7 @@ FILE
               RustStringLiteralImpl(<STRING>)('"1"')
             PsiElement(.)('.')
             PsiElement(<IDENTIFIER>)('parse')
-            RustGenericArgsElementImpl(GENERIC_ARGS)
+            RustTypeArgumentListElementImpl(TYPE_ARGUMENT_LIST)
               PsiElement(::)('::')
               PsiElement(<)('<')
               RustBaseTypeElementImpl(BASE_TYPE)

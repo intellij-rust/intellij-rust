@@ -203,25 +203,25 @@ meta_item_args ::= '(' [ <<comma_separated_list (meta_item | lit_expr)>> ] ')'
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 private path_ident ::= IDENTIFIER | SELF | SUPER | CSELF
-fake path ::= (path '::')? path_ident path_generics? {
+fake path ::= (path '::')? path_ident path_type_arguments? {
   stubClass = "org.rust.lang.core.stubs.RustPathElementStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 private path_impl ::= path_start path_segment*
 
-path_start ::= '::'?  path_ident path_generics? { elementType = path }
-left path_segment ::= '::' path_ident path_generics? { elementType = path }
+path_start ::= '::'?  path_ident path_type_arguments? { elementType = path }
+left path_segment ::= '::' path_ident path_type_arguments? { elementType = path }
 
-private path_generics ::= <<isPathMode 'COLONS'>> colon_generic_args
-                        | <<isPathMode 'NO_COLONS '>> ( generic_args | path_parameters ret_type? ) // Fn(i32) -> i32 sugar
+private path_type_arguments ::= <<isPathMode 'COLONS'>> colon_type_argument_list
+                              | <<isPathMode 'NO_COLONS '>> ( type_argument_list | path_parameters ret_type? ) // Fn(i32) -> i32 sugar
 
-generic_args ::= generic_args_impl
-colon_generic_args ::= '::' generic_args_impl { elementType = generic_args }
+type_argument_list ::= type_argument_list_impl
+colon_type_argument_list ::= '::' type_argument_list_impl { elementType = type_argument_list }
 
-private generic_args_impl ::= '<' !'=' ( <<list_element (LIFETIME)>>*
-                                         <<list_element (!(IDENTIFIER '=') type)>>*
-                                         <<list_element assoc_type_binding>>*) '>' { pin = 2 }
+private type_argument_list_impl ::= '<' !'=' ( <<list_element (LIFETIME)>>*
+                                               <<list_element (!(IDENTIFIER '=') type)>>*
+                                               <<list_element assoc_type_binding>>*) '>' { pin = 2 }
 
 assoc_type_binding ::= IDENTIFIER '=' type
 
@@ -983,7 +983,7 @@ private index_arg ::= '[' expr ']'
 
 call_expr ::= expr !<<isCompleteBlockExpr>> value_argument_list
 
-method_call_expr ::= expr '.' IDENTIFIER colon_generic_args? value_argument_list {
+method_call_expr ::= expr '.' IDENTIFIER colon_type_argument_list? value_argument_list {
   implements = [ "org.rust.lang.core.psi.RustReferenceElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RustMethodCallExprImplMixin"
 }

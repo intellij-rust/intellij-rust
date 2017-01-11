@@ -749,7 +749,7 @@ FILE
         RustBaseTypeElementImpl(BASE_TYPE)
           RustPathElementImpl(PATH)
             PsiElement(<IDENTIFIER>)('Vec')
-            RustGenericArgsElementImpl(GENERIC_ARGS)
+            RustTypeArgumentListElementImpl(TYPE_ARGUMENT_LIST)
               PsiElement(<)('<')
               RustBaseTypeElementImpl(BASE_TYPE)
                 RustPathElementImpl(PATH)

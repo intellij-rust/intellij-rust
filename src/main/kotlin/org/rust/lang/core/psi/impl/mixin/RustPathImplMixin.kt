@@ -101,6 +101,6 @@ private val RustPathElement.segment: RustPathSegment get() {
     val generics = if (stub?.hasGenericArgs == false)
         emptyList()
     else
-        genericArgs?.typeList.orEmpty().map { it.type }
+        typeArgumentList?.typeList.orEmpty().map { it.type }
     return RustPathSegment(referenceName, generics)
 }
