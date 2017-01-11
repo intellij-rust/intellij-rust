@@ -9,7 +9,7 @@ class RustTraitTreeElement(element: RustTraitItemElement) : PsiTreeElementBase<R
     override fun getPresentableText(): String {
         var text = element?.identifier?.text ?: return "<unknown>"
 
-        val generics = element?.genericParams?.text
+        val generics = element?.typeParameterList?.text
         if (generics != null)
             text += generics
 

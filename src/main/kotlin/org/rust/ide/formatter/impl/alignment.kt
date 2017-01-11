@@ -66,7 +66,7 @@ fun RustFmtBlock.getAlignmentStrategy(): RustAlignmentStrategy = when (node.elem
             .alignIf(WHERE_PRED)
             .alignIf(ctx.rustSettings.ALIGN_WHERE_BOUNDS)
 
-    GENERIC_PARAMS ->
+    TYPE_PARAMETER_LIST ->
         RustAlignmentStrategy.wrap()
             .alignIf(TYPE_PARAM, LIFETIME_PARAM)
             .alignIf(ctx.rustSettings.ALIGN_TYPE_PARAMS)

@@ -24,7 +24,7 @@ class RustErrorAnnotator : Annotator {
             override fun visitStructItem(o: RustStructItemElement) = checkStructItem(holder, o)
             override fun visitEnumBody(o: RustEnumBodyElement) = checkEnumBody(holder, o)
             override fun visitForeignModItem(o: RustForeignModItemElement) = checkForeignModItem(holder, o)
-            override fun visitGenericParams(o: RustGenericParamsElement) = checkGenericParams(holder, o)
+            override fun visitTypeParameterList(o: RustTypeParameterListElement) = checkTypeParameterList(holder, o)
             override fun visitImplItem(o: RustImplItemElement) = checkImpl(holder, o)
             override fun visitModDeclItem(o: RustModDeclItemElement) = checkModDecl(holder, o)
             override fun visitModItem(o: RustModItemElement) = checkModItem(holder, o)
@@ -134,7 +134,7 @@ class RustErrorAnnotator : Annotator {
             "A ${ns.itemName} named `$name` has already been defined in this module [E0428]"
         })
 
-    private fun checkGenericParams(holder: AnnotationHolder, params: RustGenericParamsElement) =
+    private fun checkTypeParameterList(holder: AnnotationHolder, params: RustTypeParameterListElement) =
         findDuplicates(holder, params, { ns, name ->
             if (ns == Namespace.Lifetimes)
                 "Lifetime name `$name` declared twice in the same scope [E0263]"
@@ -195,7 +195,7 @@ class RustErrorAnnotator : Annotator {
             RustTypeAliasRole.TRAIT_ASSOC_TYPE -> {
                 deny(ta.default, holder, "$title cannot have the `default` qualifier")
                 deny(ta.vis, holder, "$title cannot have the `pub` qualifier")
-                deny(ta.genericParams, holder, "$title cannot have generic parameters")
+                deny(ta.typeParameterList, holder, "$title cannot have generic parameters")
                 deny(ta.whereClause, holder, "$title cannot have `where` clause")
             }
             RustTypeAliasRole.IMPL_ASSOC_TYPE -> {
@@ -203,7 +203,7 @@ class RustErrorAnnotator : Annotator {
                 if (impl.`for` == null) {
                     holder.createErrorAnnotation(ta, "Associated types are not allowed in inherent impls [E0202]")
                 } else {
-                    deny(ta.genericParams, holder, "$title cannot have generic parameters")
+                    deny(ta.typeParameterList, holder, "$title cannot have generic parameters")
                     deny(ta.whereClause, holder, "$title cannot have `where` clause")
                     deny(ta.typeParamBounds, holder, "$title cannot have type parameter bounds")
                     require(ta.type, holder, "Aliased type must be provided for type `${ta.identifier.text}`", ta)

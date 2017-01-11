@@ -139,7 +139,7 @@ FILE
     PsiElement(trait)('trait')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('bar')
-    RustGenericParamsElementImpl(GENERIC_PARAMS)
+    RustTypeParameterListElementImpl(TYPE_PARAMETER_LIST)
       PsiElement(<)('<')
       RustTypeParamElementImpl(TYPE_PARAM)
         PsiElement(<IDENTIFIER>)('T')

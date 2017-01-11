@@ -322,7 +322,7 @@ private restricted_pat ::= &( IDENTIFIER
                             | MUT IDENTIFIER
                             ) pat
 
-generic_params ::= '<' lifetimes_params type_params '>' {
+type_parameter_list ::= '<' lifetimes_params type_params '>' {
   extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RustPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -356,7 +356,7 @@ for_lifetimes ::= FOR '<' lifetimes_params '>'
 
 
 private fn_attrs ::= CONST? UNSAFE? extern_abi?
-private fn_header ::= FN IDENTIFIER generic_params?
+private fn_header ::= FN IDENTIFIER type_parameter_list?
 private fn_tail ::= ret_type? where_clause?
 
 extern_abi ::= EXTERN STRING_LITERAL?
@@ -575,7 +575,7 @@ private foreign_decl ::= constant | foreign_fn_decl
 // Struct & Enums
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct_item ::= attrs_and_vis (STRUCT | UNION) IDENTIFIER generic_params? (tuple_fields? where_clause? ';' | where_clause? block_fields) {
+struct_item ::= attrs_and_vis (STRUCT | UNION) IDENTIFIER type_parameter_list? (tuple_fields? where_clause? ';' | where_clause? block_fields) {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustStructOrEnumItemElement"
                  "org.rust.lang.core.psi.RustFieldsOwner" ]
@@ -584,7 +584,7 @@ struct_item ::= attrs_and_vis (STRUCT | UNION) IDENTIFIER generic_params? (tuple
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-enum_item ::= attrs_and_vis ENUM IDENTIFIER generic_params? where_clause? enum_body {
+enum_item ::= attrs_and_vis ENUM IDENTIFIER type_parameter_list? where_clause? enum_body {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = "org.rust.lang.core.psi.RustStructOrEnumItemElement"
   mixin = "org.rust.lang.core.psi.impl.mixin.RustEnumItemImplMixin"
@@ -670,7 +670,7 @@ private meta mk_tuple_fields ::= '(' <<comma_separated_list <<param>> >> ')' { p
 // Trait
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER generic_params? type_param_bounds? where_clause? trait_body {
+trait_item ::= attrs_and_vis UNSAFE? TRAIT IDENTIFIER type_parameter_list? type_param_bounds? where_clause? trait_body {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustQualifiedNamedElement"
                  "org.rust.lang.core.psi.RustTypeBearingItemElement"
@@ -695,7 +695,7 @@ private trait_member_recover ::= !('#' | vis | EXTERN | CONST | STATIC | UNSAFE 
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl_item ::= attrs_and_vis UNSAFE? IMPL generic_params? (for_impl | bare_impl) {
+impl_item ::= attrs_and_vis UNSAFE? IMPL type_parameter_list? (for_impl | bare_impl) {
   pin = "IMPL"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RustItemElement"
@@ -781,7 +781,7 @@ base_type ::= '_' | '!' | !'<' path_generic_args_without_colons | &'<' type_qual
 }
 
 type_alias ::=
-  outer_attr* DEFAULT? vis? TYPE_KW IDENTIFIER ( generic_params where_clause? | where_clause | type_param_bounds )? [ '=' type ] ';'
+  outer_attr* DEFAULT? vis? TYPE_KW IDENTIFIER ( type_parameter_list where_clause? | where_clause | type_param_bounds )? [ '=' type ] ';'
 {
   pin = 'IDENTIFIER'
   implements = [ "org.rust.lang.core.psi.RustQualifiedNamedElement"

@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.RustTypeParamElement
  */
 
 val RustGenericDeclaration.typeParams: List<RustTypeParamElement>
-    get() = genericParams?.typeParamList.orEmpty()
+    get() = typeParameterList?.typeParamList.orEmpty()
 
 val RustTraitRefElement.trait: RustTraitItemElement?
     get() = path.reference.resolve() as? RustTraitItemElement

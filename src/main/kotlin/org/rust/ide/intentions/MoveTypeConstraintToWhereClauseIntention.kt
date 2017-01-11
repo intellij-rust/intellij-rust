@@ -6,18 +6,18 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
 
-class MoveTypeConstraintToWhereClauseIntention : RustElementBaseIntentionAction<RustGenericParamsElement>() {
+class MoveTypeConstraintToWhereClauseIntention : RustElementBaseIntentionAction<RustTypeParameterListElement>() {
     override fun getText() = "Move type constraint to where clause"
     override fun getFamilyName() = text
 
-    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RustGenericParamsElement? {
-        val genericParams = element.parentOfType<RustGenericParamsElement>() ?: return null
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RustTypeParameterListElement? {
+        val genericParams = element.parentOfType<RustTypeParameterListElement>() ?: return null
         val hasTypeBounds = genericParams.typeParamList.any { it.typeParamBounds != null }
         val hasLifetimeBounds = genericParams.lifetimeParamList.any { it.lifetimeParamBounds != null }
         return if (hasTypeBounds || hasLifetimeBounds) genericParams else null
     }
 
-    override fun invoke(project: Project, editor: Editor, ctx: RustGenericParamsElement) {
+    override fun invoke(project: Project, editor: Editor, ctx: RustTypeParameterListElement) {
         val lifetimeBounds = ctx.lifetimeParamList
         val typeBounds = ctx.typeParamList
         val whereClause = RustPsiFactory(project).createWhereClause(lifetimeBounds, typeBounds)

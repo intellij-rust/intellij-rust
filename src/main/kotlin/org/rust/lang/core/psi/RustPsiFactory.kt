@@ -94,10 +94,10 @@ class RustPsiFactory(private val project: Project) {
 
     fun createGenericParams(
         params: Iterable<String>
-    ): RustGenericParamsElement {
+    ): RustTypeParameterListElement {
         val text = params.joinToString(prefix = "<", separator = ", ", postfix = ">")
 
-        return createFromText<RustFunctionElement>("fn foo$text() {}")?.genericParams
+        return createFromText<RustFunctionElement>("fn foo$text() {}")?.typeParameterList
             ?: error("Failed to create type from text: `$text`")
     }
 
@@ -115,7 +115,7 @@ private val RustFunctionElement.signatureText: String? get() {
     // We can't simply take a substring of original method declaration
     // because of anonymous parameters.
     val name = name ?: return null
-    val generics = genericParams?.text ?: ""
+    val generics = typeParameterList?.text ?: ""
 
     val allArguments = listOfNotNull(selfParameter?.text) + valueParameters.map {
         // fix possible anon parameter

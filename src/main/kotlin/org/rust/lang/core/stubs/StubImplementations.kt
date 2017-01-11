@@ -34,7 +34,7 @@ class RustFileStub : PsiFileStubImpl<RustFile> {
 
     object Type : IStubFileElementType<RustFileStub>(RustLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 42
+        override fun getStubVersion(): Int = 43
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RustFileStub(file as RustFile)
@@ -104,7 +104,7 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "FOR_IN_TYPE" -> RustPlaceholderStub.Type("FOR_IN_TYPE", ::RustForInTypeElementImpl)
     "IMPL_TRAIT_TYPE" -> RustPlaceholderStub.Type("IMPL_TRAIT_TYPE", ::RustImplTraitTypeElementImpl)
 
-    "GENERIC_PARAMS" -> RustPlaceholderStub.Type("GENERIC_PARAMS", ::RustGenericParamsElementImpl)
+    "TYPE_PARAMETER_LIST" -> RustPlaceholderStub.Type("TYPE_PARAMETER_LIST", ::RustTypeParameterListElementImpl)
     "TYPE_PARAM" -> RustTypeParamElementStub.Type
 
     else -> error("Unknown element $name")

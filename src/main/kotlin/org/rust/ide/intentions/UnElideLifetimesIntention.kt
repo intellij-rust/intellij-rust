@@ -34,9 +34,9 @@ class UnElideLifetimesIntention : RustElementBaseIntentionAction<RustFunctionEle
         // generic params
         val genericParams = RustPsiFactory(project).createGenericParams(
             (ctx.allRefArgs.mapNotNull { it.lifetime?.text } +
-                (ctx.genericParams?.typeParamList?.asSequence()?.map { it.text } ?: emptySequence()))
+                (ctx.typeParameterList?.typeParamList?.asSequence()?.map { it.text } ?: emptySequence()))
         )
-        ctx.genericParams?.replace(genericParams) ?: ctx.addAfter(genericParams, ctx.identifier)
+        ctx.typeParameterList?.replace(genericParams) ?: ctx.addAfter(genericParams, ctx.identifier)
 
         // return type
         val retType = ctx.retType?.type as? RustRefLikeTypeElement ?: return

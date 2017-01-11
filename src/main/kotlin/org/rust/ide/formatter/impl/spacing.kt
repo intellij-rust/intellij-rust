@@ -83,16 +83,16 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
 
         .between(ts(IDENTIFIER, FN), VALUE_PARAMETER_LIST).spaceIf(false)
         .between(IDENTIFIER, TUPLE_FIELDS).spaces(0)
-        .between(IDENTIFIER, GENERIC_PARAMS).spaceIf(false)
+        .between(IDENTIFIER, TYPE_PARAMETER_LIST).spaceIf(false)
         .between(IDENTIFIER, GENERIC_ARGS).spaceIf(false)
         .between(IDENTIFIER, VALUE_ARGUMENT_LIST).spaceIf(false)
-        .between(GENERIC_PARAMS, VALUE_PARAMETER_LIST).spaceIf(false)
+        .between(TYPE_PARAMETER_LIST, VALUE_PARAMETER_LIST).spaceIf(false)
         .before(VALUE_ARGUMENT_LIST).spaceIf(false)
 
         .between(BINDING_MODE, IDENTIFIER).spaces(1)
-        .between(IMPL, GENERIC_PARAMS).spaces(0)
-        .afterInside(GENERIC_PARAMS, IMPL_ITEM).spaces(1)
-        .betweenInside(ts(GENERIC_PARAMS), TYPES, IMPL_ITEM).spaces(1)
+        .between(IMPL, TYPE_PARAMETER_LIST).spaces(0)
+        .afterInside(TYPE_PARAMETER_LIST, IMPL_ITEM).spaces(1)
+        .betweenInside(ts(TYPE_PARAMETER_LIST), TYPES, IMPL_ITEM).spaces(1)
 
         // Handling blocks is pretty complicated. Do not tamper with
         // them too much and let rustfmt do all the pesky work.

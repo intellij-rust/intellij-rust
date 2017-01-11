@@ -3,7 +3,7 @@ FILE
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('foo')
-    RustGenericParamsElementImpl(GENERIC_PARAMS)
+    RustTypeParameterListElementImpl(TYPE_PARAMETER_LIST)
       PsiElement(<)('<')
       RustLifetimeParamElementImpl(LIFETIME_PARAM)
         PsiElement(<LIFETIME>)(''a')
