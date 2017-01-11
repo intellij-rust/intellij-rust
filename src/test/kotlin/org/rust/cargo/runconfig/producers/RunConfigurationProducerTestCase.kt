@@ -13,6 +13,10 @@ import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.lang.RustTestCaseBase
+import org.rust.lang.core.psi.RustFunctionElement
+import org.rust.lang.core.psi.RustMod
+import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.util.parentOfType
 
 class RunConfigurationProducerTestCase : RustTestCaseBase() {
     override val dataPath: String get() = "org/rust/cargo/runconfig/producers/fixtures"
@@ -30,7 +34,7 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
         testProject {
             bin("hello", "src/main.rs").open()
         }
-        doTestProducedConfigurations(wholeFileIsContext = true)
+        doTestProducedConfigurationsOn<RustFile>()
     }
 
 
@@ -66,6 +70,13 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
             lib("foo", "src/lib.rs", "#[test]\nfn test_foo() { as<caret>sert!(true); }").open()
         }
         doTestProducedConfigurations()
+    }
+
+    fun testTestProducerWorksForAnnotatedFunctionsStrict() {
+        testProject {
+            lib("foo", "src/lib.rs", "#[test]\nfn test_foo() { as<caret>sert!(true); }").open()
+        }
+        doTestProducedConfigurationsOn<RustFunctionElement>()
     }
 
     fun testTestProducerDisableForNonAnnotatedFunctions() {
@@ -110,11 +121,26 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
         doTestProducedConfigurations()
     }
 
+    fun testTestProducerWorksForModulesStrict() {
+        testProject {
+            lib("foo", "src/lib.rs", """
+                mod foo {
+                    #[test] fn bar() {}
+
+                    #[test] fn baz() {}
+
+                    fn quux() {<caret>}
+                }
+            """).open()
+        }
+        doTestProducedConfigurationsOn<RustMod>()
+    }
+
     fun testTestProducerWorksForFiles() {
         testProject {
             test("foo", "tests/foo.rs").open()
         }
-        doTestProducedConfigurations(wholeFileIsContext = true)
+        doTestProducedConfigurationsOn<RustFile>()
     }
 
     fun testTestProducerWorksForRootModule() {
@@ -182,9 +208,11 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
         doTestProducedConfigurations()
     }
 
-    private fun doTestProducedConfigurations(wholeFileIsContext: Boolean = false) {
+    private fun doTestProducedConfigurations() = doTestProducedConfigurationsOn<PsiElement>()
+
+    private inline fun<reified T: PsiElement> doTestProducedConfigurationsOn() {
         val configurationContext = ConfigurationContext(
-            if (wholeFileIsContext) myFixture.file else myFixture.file.findElementAt(myFixture.caretOffset)
+            myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<T>(strict = false)
         )
 
         val configurations = configurationContext.configurationsFromContext.orEmpty().map { it.configuration }

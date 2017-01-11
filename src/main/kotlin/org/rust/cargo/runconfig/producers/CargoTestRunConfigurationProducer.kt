@@ -60,7 +60,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
             ?: findTestMod(location)
 
     private fun findTestFunction(location: Location<*>): TestConfig? {
-        val fn = location.psiElement.parentOfType<RustFunctionElement>() ?: return null
+        val fn = location.psiElement.parentOfType<RustFunctionElement>(strict = false) ?: return null
         val name = fn.name ?: return null
         val target = fn.containingCargoTarget ?: return null
         return if (fn.isTest) TestConfig(fn, "Test $name", name, target) else null
