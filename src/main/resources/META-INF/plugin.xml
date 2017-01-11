@@ -362,6 +362,10 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
+            <className>org.rust.ide.intentions.SimplifyBooleanExpressionIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.AddElseIntention</className>
             <category>Rust</category>
         </intentionAction>
