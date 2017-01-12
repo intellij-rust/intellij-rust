@@ -14,12 +14,10 @@ class ParenPostfixTemplateTest : PostfixTemplateTestCase(ParenPostfixTemplate())
             fn foo() {
                 4.par/*caret*/;
             }
-            """
-        ,
-        """
+        """, """
             fn foo() {
                 (4)/*caret*/;
             }
-            """
+        """
     )
 }
