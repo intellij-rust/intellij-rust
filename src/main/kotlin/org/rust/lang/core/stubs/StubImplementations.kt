@@ -11,12 +11,12 @@ import org.rust.lang.core.psi.impl.*
 import org.rust.lang.core.psi.impl.mixin.*
 
 
-class RustFileStub : PsiFileStubImpl<RustFile> {
-    val attributes: RustFile.Attributes
+class RustFileStub : PsiFileStubImpl<RsFile> {
+    val attributes: RsFile.Attributes
 
-    constructor(file: RustFile) : this(file, file.attributes)
+    constructor(file: RsFile) : this(file, file.attributes)
 
-    constructor(file: RustFile?, attributes: RustFile.Attributes) : super(file) {
+    constructor(file: RsFile?, attributes: RsFile.Attributes) : super(file) {
         this.attributes = attributes
     }
 
@@ -27,7 +27,7 @@ class RustFileStub : PsiFileStubImpl<RustFile> {
         override fun getStubVersion(): Int = 52
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
-            override fun createStubForFile(file: PsiFile): StubElement<*> = RustFileStub(file as RustFile)
+            override fun createStubForFile(file: PsiFile): StubElement<*> = RustFileStub(file as RsFile)
         }
 
         override fun serialize(stub: RustFileStub, dataStream: StubOutputStream) {
@@ -35,7 +35,7 @@ class RustFileStub : PsiFileStubImpl<RustFile> {
         }
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustFileStub {
-            return RustFileStub(null, dataStream.readEnum(RustFile.Attributes.values()))
+            return RustFileStub(null, dataStream.readEnum(RsFile.Attributes.values()))
         }
 
         override fun getExternalId(): String = "Rust.file"

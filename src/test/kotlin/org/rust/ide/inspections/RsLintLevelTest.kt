@@ -5,55 +5,55 @@ package org.rust.ide.inspections
  */
 class RsLintLevelTest : RsInspectionsTestBase(true) {
 
-    fun testDirrectAllow() = checkByText<RustStructNamingInspection>("""
+    fun testDirrectAllow() = checkByText<RsStructNamingInspection>("""
         #[allow(non_camel_case_types)]
         struct foo;
     """)
 
-    fun testDirrectWarn() = checkByText<RustStructNamingInspection>("""
+    fun testDirrectWarn() = checkByText<RsStructNamingInspection>("""
         #[warn(non_camel_case_types)]
         struct <warning>foo</warning>;
     """)
 
-    fun testDirrectDeny() = checkByText<RustStructNamingInspection>("""
+    fun testDirrectDeny() = checkByText<RsStructNamingInspection>("""
         #[deny(non_camel_case_types)]
         struct <warning>foo</warning>;
     """)
 
-    fun testParentAllow() = checkByText<RustFieldNamingInspection>("""
+    fun testParentAllow() = checkByText<RsFieldNamingInspection>("""
         #[allow(non_snake_case)]
         struct Foo {
             Bar: u32
         }
     """)
 
-    fun testParentWarn() = checkByText<RustFieldNamingInspection>("""
+    fun testParentWarn() = checkByText<RsFieldNamingInspection>("""
         #[warn(non_snake_case)]
         struct Foo {
             <warning>Bar</warning>: u32
         }
     """)
 
-    fun testParentDeny() = checkByText<RustFieldNamingInspection>("""
+    fun testParentDeny() = checkByText<RsFieldNamingInspection>("""
         #[deny(non_snake_case)]
         struct Foo {
             <warning>Bar</warning>: u32
         }
     """)
 
-    fun testModuleOuterAllow() = checkByText<RustStructNamingInspection>("""
+    fun testModuleOuterAllow() = checkByText<RsStructNamingInspection>("""
         #[allow(non_camel_case_types)]
         mod space {
             struct planet;
         }
     """)
 
-    fun testModuleInnerAllow() = checkByText<RustStructNamingInspection>("""
+    fun testModuleInnerAllow() = checkByText<RsStructNamingInspection>("""
         #![allow(non_camel_case_types)]
         struct planet;
     """)
 
-    fun testGrandParentAllow() = checkByText<RustStructNamingInspection>("""
+    fun testGrandParentAllow() = checkByText<RsStructNamingInspection>("""
         #[allow(non_camel_case_types)]
         mod space {
             mod planet {
@@ -62,7 +62,7 @@ class RsLintLevelTest : RsInspectionsTestBase(true) {
         }
     """)
 
-    fun testInnerTakesPrecedence() = checkByText<RustStructNamingInspection>("""
+    fun testInnerTakesPrecedence() = checkByText<RsStructNamingInspection>("""
         #[warn(non_camel_case_types)]
         mod space {
             #![allow(non_camel_case_types)]
@@ -75,17 +75,17 @@ class RsLintLevelTest : RsInspectionsTestBase(true) {
         }
     """)
 
-    fun testIgnoresOtherItems() = checkByText<RustStructNamingInspection>("""
+    fun testIgnoresOtherItems() = checkByText<RsStructNamingInspection>("""
         #[allow(non_snake_case)]
         struct <warning>foo</warning>;
     """)
 
-    fun testMultipleMetaItems() = checkByText<RustStructNamingInspection>("""
+    fun testMultipleMetaItems() = checkByText<RsStructNamingInspection>("""
         #[allow(non_snake_case, non_camel_case_types, non_upper_case_globals)]
         struct foo;
     """)
 
-    fun testMixedAttributes() = checkByText<RustStructNamingInspection>("""
+    fun testMixedAttributes() = checkByText<RsStructNamingInspection>("""
         #[allow(non_camel_case_types, non_upper_case_globals)]
         mod space {
             #[allow(non_snake_case)]
@@ -96,7 +96,7 @@ class RsLintLevelTest : RsInspectionsTestBase(true) {
         }
     """)
 
-    fun testWorksWithNonLevelAttributes() = checkByText<RustStructNamingInspection>("""
+    fun testWorksWithNonLevelAttributes() = checkByText<RsStructNamingInspection>("""
         #[allow(non_camel_case_types)]
         #[derive(Debug)]
         struct inhabitant;

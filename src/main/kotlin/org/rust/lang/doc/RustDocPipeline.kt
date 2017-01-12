@@ -16,20 +16,20 @@ import org.rust.lang.core.psi.util.stringLiteralValue
 import org.rust.lang.doc.psi.RustDocKind
 import java.net.URI
 
-fun RustDocAndAttributeOwner.documentation(): String? =
+fun RsDocAndAttributeOwner.documentation(): String? =
     (outerDocs() + innerDocs())
         .map { it.first to it.second.splitToSequence("\r\n", "\r", "\n") }
         .flatMap { it.first.removeDecoration(it.second) }
         .joinToString("\n")
 
-fun RustDocAndAttributeOwner.documentationAsHtml(): String? {
+fun RsDocAndAttributeOwner.documentationAsHtml(): String? {
     val text = documentation() ?: return null
     val flavour = RustDocMarkdownFlavourDescriptor()
     val root = MarkdownParser(flavour).buildMarkdownTreeFromString(text)
     return HtmlGenerator(text, root, flavour).generateHtml()
 }
 
-private fun RustDocAndAttributeOwner.outerDocs(): Sequence<Pair<RustDocKind, String>> {
+private fun RsDocAndAttributeOwner.outerDocs(): Sequence<Pair<RustDocKind, String>> {
     // rustdoc appends the contents of each doc comment and doc attribute in order
     // so we have to resolve these attributes that are edge-bound at the top of the
     // children list.
@@ -48,7 +48,7 @@ private fun RustDocAndAttributeOwner.outerDocs(): Sequence<Pair<RustDocKind, Str
         }
 }
 
-private fun RustDocAndAttributeOwner.innerDocs(): Sequence<Pair<RustDocKind, String>> {
+private fun RsDocAndAttributeOwner.innerDocs(): Sequence<Pair<RustDocKind, String>> {
     // Next, we have to consider inner comments and meta. These, like the outer case, are appended in
     // lexical order, after the outer elements. This only applies to functions and modules.
     val childBlock = PsiTreeUtil.getChildOfType(this, RsBlock::class.java) ?: this

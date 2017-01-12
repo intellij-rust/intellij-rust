@@ -11,18 +11,18 @@ import org.rust.lang.core.symbols.RustPathSegment
  * default methods in interfaces with mixed Kotlin-Java hierarchies (KT-9073 ).
  */
 object RustPsiImplUtil {
-    fun isPublic(psi: RustVisibilityOwner, stub: RustVisibilityStub?): Boolean =
+    fun isPublic(psi: RsVisibilityOwner, stub: RustVisibilityStub?): Boolean =
         stub?.isPublic ?: isPublicNonStubbed(psi)
 
-    fun isPublicNonStubbed(element: RustVisibilityOwner): Boolean =
+    fun isPublicNonStubbed(element: RsVisibilityOwner): Boolean =
         element.vis != null
 
-    fun crateRelativePath(element: RustNamedElement): RustPath.CrateRelative? {
+    fun crateRelativePath(element: RsNamedElement): RustPath.CrateRelative? {
         val segment = element.name?.let { RustPathSegment.withoutGenerics(it) } ?: return null
         return element.containingMod?.crateRelativePath?.join(segment)
     }
 
-    fun modCrateRelativePath(mod: RustMod): RustPath.CrateRelative? {
+    fun modCrateRelativePath(mod: RsMod): RustPath.CrateRelative? {
         val segments = mod.superMods.asReversed().drop(1).map {
             RustPathSegment.withoutGenerics(it.modName ?: return null)
         }

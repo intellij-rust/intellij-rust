@@ -1,6 +1,6 @@
 package org.rust.lang.core.resolve
 
-import org.rust.lang.core.psi.RustReferenceElement
+import org.rust.lang.core.psi.RsReferenceElement
 
 
 class RsMultiResolveTest : RsResolveTestBase() {
@@ -32,7 +32,7 @@ class RsMultiResolveTest : RsResolveTestBase() {
 
     private fun doTest(code: String) {
         InlineFile(code)
-        val ref = findElementInEditor<RustReferenceElement>().reference
+        val ref = findElementInEditor<RsReferenceElement>().reference
         check(ref.multiResolve().size == 2)
     }
 }

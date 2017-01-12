@@ -31,7 +31,7 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
                     "KEEP_BLANK_LINES_IN_DECLARATIONS",
                     "KEEP_BLANK_LINES_IN_CODE")
 
-                consumer.showCustomOption(RustCodeStyleSettings::class.java,
+                consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "MIN_NUMBER_OF_BLANKS_BETWEEN_ITEMS",
                     "Between declarations:",
                     CodeStyleSettingsCustomizable.BLANK_LINES)
@@ -44,27 +44,27 @@ class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
                     "ALIGN_MULTILINE_PARAMETERS",
                     "ALIGN_MULTILINE_PARAMETERS_IN_CALLS")
 
-                consumer.showCustomOption(RustCodeStyleSettings::class.java,
+                consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALLOW_ONE_LINE_MATCH",
                     "Match expressions in one line",
                     CodeStyleSettingsCustomizable.WRAPPING_KEEP)
 
-                consumer.showCustomOption(RustCodeStyleSettings::class.java,
+                consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALIGN_RET_TYPE",
                     "Align return type to function parameters",
                     CodeStyleSettingsCustomizable.WRAPPING_METHOD_PARAMETERS)
 
-                consumer.showCustomOption(RustCodeStyleSettings::class.java,
+                consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALIGN_WHERE_CLAUSE",
                     "Align where clause to function parameters",
                     CodeStyleSettingsCustomizable.WRAPPING_METHOD_PARAMETERS)
 
-                consumer.showCustomOption(RustCodeStyleSettings::class.java,
+                consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALIGN_TYPE_PARAMS",
                     ApplicationBundle.message("wrapping.align.when.multiline"),
                     "Type parameters")
 
-                consumer.showCustomOption(RustCodeStyleSettings::class.java,
+                consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALIGN_WHERE_BOUNDS",
                     "Align where clause bounds",
                     "Type parameters")

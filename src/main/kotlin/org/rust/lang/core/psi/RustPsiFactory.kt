@@ -105,7 +105,7 @@ class RustPsiFactory(private val project: Project) {
         createFromText("#[$text] struct Dummy;")
             ?: error("Failed to create an outer attribute from text: `$text`")
 
-    private inline fun <reified T : RustCompositeElement> createFromText(code: String): T? =
+    private inline fun <reified T : RsCompositeElement> createFromText(code: String): T? =
         PsiFileFactory.getInstance(project)
             .createFileFromText("DUMMY.rs", RustLanguage, code)
             ?.childOfType<T>()

@@ -15,7 +15,7 @@ import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.util.ancestors
 import org.rust.lang.core.psi.util.findExpressionAtCaret
 import org.rust.lang.core.psi.util.findExpressionInRange
@@ -34,11 +34,11 @@ class RustLocalVariableHandler : RefactoringActionHandler {
      * Entry point for the ui, can't be called in unit tests.
      */
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext) {
-        if (file !is RustFile) return
+        if (file !is RsFile) return
         doRefactoring(editor, project, file)
     }
 
-    fun doRefactoring(editor: Editor, project: Project, file: RustFile, expr: RsExpr? = null) {
+    fun doRefactoring(editor: Editor, project: Project, file: RsFile, expr: RsExpr? = null) {
         val refactoring = RustIntroduceVariableRefactoring(project, editor, file)
         val exprs = if (expr == null) refactoring.possibleTargets() else listOf(expr)
 
@@ -75,7 +75,7 @@ class RustLocalVariableHandler : RefactoringActionHandler {
 class RustIntroduceVariableRefactoring(
     private val project: Project,
     private val editor: Editor,
-    private val file: RustFile
+    private val file: RsFile
 ) {
 
     private val psiFactory = RustPsiFactory(project)

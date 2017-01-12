@@ -9,7 +9,7 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RustStructOrEnumItemElement
+import org.rust.lang.core.psi.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.impl.mixin.isStatic
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.stubs.RustFileStub
@@ -42,7 +42,7 @@ object RustImplIndex {
             } + inherentImpls
     }
 
-    private fun findInherentImplsForInternal(target: RustStructOrEnumItemElement): Sequence<RsImplItem> {
+    private fun findInherentImplsForInternal(target: RsStructOrEnumItemElement): Sequence<RsImplItem> {
         val fingerprint = RustTypeFingerprint.create(target.resolvedType)
             ?: return emptySequence()
 

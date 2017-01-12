@@ -17,13 +17,13 @@ import org.rust.lang.core.psi.RustCompositeElementTypes
 import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustTokenElementTypes.EOL_COMMENTS_TOKEN_SET
 import org.rust.lang.core.psi.RustTokenElementTypes.STRING_LITERAL
-import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.stubs.RustFileStub
 
 class RustParserDefinition : ParserDefinition {
 
     override fun createFile(viewProvider: FileViewProvider): PsiFile? =
-        RustFile(viewProvider)
+        RsFile(viewProvider)
 
     override fun spaceExistanceTypeBetweenTokens(left: ASTNode, right: ASTNode): ParserDefinition.SpaceRequirements {
         if (left.elementType in EOL_COMMENTS_TOKEN_SET) return ParserDefinition.SpaceRequirements.MUST_LINE_BREAK

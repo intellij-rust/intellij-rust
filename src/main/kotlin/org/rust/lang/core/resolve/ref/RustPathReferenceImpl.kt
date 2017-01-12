@@ -16,7 +16,7 @@ class RustPathReferenceImpl(
 
     override val RsPath.referenceAnchor: PsiElement get() = referenceNameElement
 
-    override fun resolveInner(): List<RustCompositeElement> {
+    override fun resolveInner(): List<RsCompositeElement> {
         val path = element.asRustPath ?: return emptyList()
         return RustResolveEngine.resolve(path, element, namespaceForResolve)
     }

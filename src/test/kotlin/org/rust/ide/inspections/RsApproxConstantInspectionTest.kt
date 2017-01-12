@@ -5,7 +5,7 @@ package org.rust.ide.inspections;
  */
 class RsApproxConstantInspectionTest : RsInspectionsTestBase() {
 
-    fun testConstants() = checkByText<RustApproxConstantInspection>("""
+    fun testConstants() = checkByText<RsApproxConstantInspection>("""
         fn main() {
             let pi = 3.1;
             let pi = 3.14;

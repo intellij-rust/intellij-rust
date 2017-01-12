@@ -2,7 +2,7 @@ package org.rust.ide.surroundWith.expression
 
 import org.rust.ide.surroundWith.RsSurrounderTestBase
 
-class RsWithNotSurrounderTest : RsSurrounderTestBase(RustWithNotSurrounder()) {
+class RsWithNotSurrounderTest : RsSurrounderTestBase(RsWithNotSurrounder()) {
     fun testSimple() {
         doTest(
             """

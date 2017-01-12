@@ -11,12 +11,12 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RustTokenElementTypes.RAW_LITERALS
-import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.RustRawStringLiteralImpl
 
-class RustRawLiteralHashesInserter : TypedHandlerDelegate() {
+class RsRawLiteralHashesInserter : TypedHandlerDelegate() {
     override fun beforeCharTyped(c: Char, project: Project, editor: Editor, file: PsiFile, fileType: FileType): Result {
-        if (file !is RustFile) return Result.CONTINUE
+        if (file !is RsFile) return Result.CONTINUE
 
         // We are only interested in handling typing '#'
         if (c != '#') return Result.CONTINUE
@@ -52,7 +52,7 @@ class RustRawLiteralHashesInserter : TypedHandlerDelegate() {
     }
 }
 
-class RustRawLiteralHashesDeleter : RustEnableableBackspaceHandlerDelegate() {
+class RsRawLiteralHashesDeleter : RsEnableableBackspaceHandlerDelegate() {
     private var offsets: Pair<TextRange, TextRange>? = null
 
     override fun deleting(c: Char, file: PsiFile, editor: Editor): Boolean {

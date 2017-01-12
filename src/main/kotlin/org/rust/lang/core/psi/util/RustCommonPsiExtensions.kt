@@ -7,7 +7,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiUtilCore
-import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.stubs.RustFileStub
 
 
@@ -65,5 +65,5 @@ val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) { 
  */
 val PsiElement.elementType: IElementType
     // XXX: be careful not to switch to AST
-    get() = if (this is RustFile) RustFileStub.Type else PsiUtilCore.getElementType(this)
+    get() = if (this is RsFile) RustFileStub.Type else PsiUtilCore.getElementType(this)
 

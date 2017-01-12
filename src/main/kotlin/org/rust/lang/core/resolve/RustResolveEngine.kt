@@ -14,7 +14,7 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.getPsiFor
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.impl.rustMod
 import org.rust.lang.core.psi.util.ancestors
@@ -33,7 +33,7 @@ import java.util.*
 
 object RustResolveEngine {
     data class Result(
-        val element: RustNamedElement,
+        val element: RsNamedElement,
         val pkg: CargoProjectDescription.Package
     )
 
@@ -41,7 +41,7 @@ object RustResolveEngine {
      * Resolves abstract qualified-path [path] in such a way, like it was a qualified-reference
      * used at [pivot]
      */
-    fun resolve(path: RustPath, pivot: RustCompositeElement, namespace: Namespace? = null): List<RustCompositeElement> {
+    fun resolve(path: RustPath, pivot: RsCompositeElement, namespace: Namespace? = null): List<RsCompositeElement> {
         val allNs = resolveAllNamespaces(path, pivot)
         val filteredByNs = if (namespace == null) allNs else allNs.filterByNamespace(namespace).take(1)
         return filteredByNs
@@ -61,9 +61,9 @@ object RustResolveEngine {
         val rustPath = RustPath.CrateRelative(segments.drop(1))
         val el = pkg.targets.asSequence()
             .mapNotNull { vfm.findFileByUrl(it.crateRootUrl) }
-            .mapNotNull { module.project.getPsiFor(it) as? RustCompositeElement }
+            .mapNotNull { module.project.getPsiFor(it) as? RsCompositeElement }
             .flatMap { RustResolveEngine.resolve(rustPath, it).asSequence() }
-            .filterIsInstance(RustNamedElement::class.java)
+            .filterIsInstance(RsNamedElement::class.java)
             .firstOrNull() ?: return null
         return Result(el, pkg)
     }
@@ -71,13 +71,13 @@ object RustResolveEngine {
     /**
      * Resolves references to struct's fields inside destructuring [RsStructExpr]
      */
-    fun resolveStructExprField(structExpr: RsStructExpr, fieldName: String): List<RustNamedElement> =
+    fun resolveStructExprField(structExpr: RsStructExpr, fieldName: String): List<RsNamedElement> =
         structExpr.fields.filter { it.name == fieldName }
 
     /**
      * Resolves references to struct's fields inside [RsFieldExpr]
      */
-    fun resolveFieldExpr(fieldExpr: RsFieldExpr): List<RustCompositeElement> {
+    fun resolveFieldExpr(fieldExpr: RsFieldExpr): List<RsCompositeElement> {
         val receiverType = fieldExpr.expr.resolvedType.stripAllRefsIfAny()
         val struct = (receiverType as? RustStructType)?.item ?: return emptyList()
 
@@ -93,7 +93,7 @@ object RustResolveEngine {
     /**
      * Resolves method-call expressions
      */
-    fun resolveMethodCallExpr(call: RsMethodCallExpr): RustNamedElement? {
+    fun resolveMethodCallExpr(call: RsMethodCallExpr): RsNamedElement? {
         val receiverType = call.expr.resolvedType
         val name = call.identifier.text
 
@@ -101,7 +101,7 @@ object RustResolveEngine {
             .find { it.name == name }
     }
 
-    fun resolveUseGlob(ref: RsUseGlob): List<RustCompositeElement> = recursionGuard(ref, Computable {
+    fun resolveUseGlob(ref: RsUseGlob): List<RsCompositeElement> = recursionGuard(ref, Computable {
         val basePath = ref.basePath
 
         // This is not necessarily a module, e.g.
@@ -152,7 +152,7 @@ object RustResolveEngine {
      * Reference:
      *      https://github.com/rust-lang/rust/blob/master/src/doc/reference.md#modules
      */
-    fun resolveModDecl(modDecl: RsModDeclItem): RustNamedElement? {
+    fun resolveModDecl(modDecl: RsModDeclItem): RsNamedElement? {
         val dir = modDecl.containingMod.ownedDirectory ?: return null
 
         val psiManager = PsiManager.getInstance(modDecl.project)
@@ -161,7 +161,7 @@ object RustResolveEngine {
         }.singleOrNull()
     }
 
-    fun resolveExternCrate(crate: RsExternCrateItem): RustNamedElement? {
+    fun resolveExternCrate(crate: RsExternCrateItem): RsNamedElement? {
         val name = crate.name ?: return null
         val module = crate.module ?: return null
         return module.project.getPsiFor(module.cargoProject?.findExternCrateRootByName(name))?.rustMod
@@ -179,18 +179,18 @@ object RustResolveEngine {
  * that `scope::thing` is a valid path. Return `null` if scope can't have outer declarations
  * (for example, this will return `null` for functions and some sequence for a moudle)
  */
-fun outerDeclarations(scope: RustCompositeElement, withMethods: Boolean): Sequence<ScopeEntry>? =
+fun outerDeclarations(scope: RsCompositeElement, withMethods: Boolean): Sequence<ScopeEntry>? =
     outerDeclarations(scope, Context(), withMethods)
 
 /**
  * Walk the tree up starting at [place] and collect all visible declarations
  * (local variables, items, imports)
  */
-fun innerDeclarations(place: RustCompositeElement, stop: (PsiElement) -> Boolean = { false }): Sequence<ScopeEntry> =
+fun innerDeclarations(place: RsCompositeElement, stop: (PsiElement) -> Boolean = { false }): Sequence<ScopeEntry> =
     innerDeclarations(place, Context(), stop)
 
 
-private fun resolveAllNamespaces(path: RustPath, pivot: RustCompositeElement): Sequence<ScopeEntry> {
+private fun resolveAllNamespaces(path: RustPath, pivot: RsCompositeElement): Sequence<ScopeEntry> {
     val start: Sequence<ScopeEntry> = when (path) {
         is RustPath.CrateRelative -> sequenceOfNotNull(
             pivot.crateRoot?.let { ScopeEntry.of(it) }
@@ -226,15 +226,15 @@ private data class Context(
 )
 
 private fun outerDeclarations(
-    scope: RustCompositeElement,
+    scope: RsCompositeElement,
     context: Context = Context(),
     withMethods: Boolean
 ): Sequence<ScopeEntry>? = when (scope) {
 
-    is RustFile ->
+    is RsFile ->
         itemDeclarations(scope, false, context) + injectedCrates(scope)
 
-    is RustMod ->
+    is RsMod ->
         itemDeclarations(scope, false, context)
 
     is RsStructItem ->
@@ -246,12 +246,12 @@ private fun outerDeclarations(
 }
 
 private fun innerDeclarations(
-    place: RustCompositeElement,
+    place: RsCompositeElement,
     context: Context = Context(),
     stop: (PsiElement) -> Boolean
 ): Sequence<ScopeEntry> =
     place.ancestors
-        .takeWhileInclusive { it !is RustMod && !stop(it) }
+        .takeWhileInclusive { it !is RsMod && !stop(it) }
         .flatMap { innerDeclarationsIn(it, place, context) }
 
 private fun preludeSymbols(module: Module?, context: Context): Sequence<ScopeEntry> {
@@ -262,11 +262,11 @@ private fun preludeSymbols(module: Module?, context: Context): Sequence<ScopeEnt
 
 private fun innerDeclarationsIn(
     scope: PsiElement,
-    place: RustCompositeElement,
+    place: RsCompositeElement,
     context: Context
 ): Sequence<ScopeEntry> {
     return when (scope) {
-        is RustFile -> {
+        is RsFile -> {
             sequenceOf(
                 itemDeclarations(scope, true, context),
                 injectedCrates(scope),
@@ -284,7 +284,7 @@ private fun innerDeclarationsIn(
         is RsStructItem,
         is RsEnumItem,
         is RsTypeAlias -> {
-            scope as RustGenericDeclaration
+            scope as RsGenericDeclaration
             scope.typeParameters.asScopeEntries()
         }
 
@@ -362,7 +362,7 @@ private fun innerDeclarationsIn(
 }
 
 private fun itemDeclarations(
-    scope: RustItemsOwner,
+    scope: RsItemsOwner,
     isLocal: Boolean,
     context: Context
 ): Sequence<ScopeEntry> {
@@ -380,8 +380,8 @@ private fun itemDeclarations(
     ).flatten()
 }
 
-private fun definedItems(scope: RustItemsOwner): Sequence<Pair<String, RustNamedElement>> {
-    val inlineItems: Sequence<RustNamedElement> = sequenceOf(
+private fun definedItems(scope: RsItemsOwner): Sequence<Pair<String, RsNamedElement>> {
+    val inlineItems: Sequence<RsNamedElement> = sequenceOf(
         scope.functionList.asSequence(),
         scope.enumItemList.asSequence(),
         scope.modItemList.asSequence(),
@@ -390,7 +390,7 @@ private fun definedItems(scope: RustItemsOwner): Sequence<Pair<String, RustNamed
         scope.traitItemList.asSequence(),
         scope.typeAliasList.asSequence(),
         scope.foreignModItemList.asSequence().flatMap {
-            it.functionList.asSequence<RustNamedElement>() + it.constantList.asSequence()
+            it.functionList.asSequence<RsNamedElement>() + it.constantList.asSequence()
         }
     ).flatten()
 
@@ -399,7 +399,7 @@ private fun definedItems(scope: RustItemsOwner): Sequence<Pair<String, RustNamed
         // fix this properly
         scope.modDeclItemList.asSequence().mapNotNull { modDecl ->
             val name = modDecl.name
-            val mod = modDecl.reference.resolve() as? RustMod
+            val mod = modDecl.reference.resolve() as? RsMod
             if (name != null && mod != null) name to mod else null
         },
 
@@ -409,7 +409,7 @@ private fun definedItems(scope: RustItemsOwner): Sequence<Pair<String, RustNamed
 
         scope.externCrateItemList.asSequence().mapNotNull { crate ->
             val name = crate.alias?.name ?: crate.name
-            val mod = crate.reference.resolve() as? RustMod
+            val mod = crate.reference.resolve() as? RsMod
             if (name != null && mod != null) name to mod else null
         }
     ).flatten()
@@ -419,11 +419,11 @@ private val RsPat.boundNames: Sequence<ScopeEntry>
     get() = PsiTreeUtil.findChildrenOfType(this, RsPatBinding::class.java)
         .asScopeEntries()
 
-private fun RsCondition.boundNames(place: RustCompositeElement): Sequence<ScopeEntry> =
+private fun RsCondition.boundNames(place: RsCompositeElement): Sequence<ScopeEntry> =
     if (this.isStrictAncestorOf(place)) emptySequence()
     else pat?.boundNames ?: emptySequence()
 
-private fun injectedCrates(file: RustFile): Sequence<ScopeEntry> {
+private fun injectedCrates(file: RsFile): Sequence<ScopeEntry> {
     val module = file.module
         ?: return emptySequence()
     val cargoProject = module.cargoProject
@@ -439,9 +439,9 @@ private fun injectedCrates(file: RustFile): Sequence<ScopeEntry> {
     // https://doc.rust-lang.org/book/using-rust-without-the-standard-library.html
     // The stdlib lib itself is `#![no_std]`, and the core is `#![no_core]`
     val injected = when (file.attributes) {
-        RustFile.Attributes.NONE -> AutoInjectedCrates.std
-        RustFile.Attributes.NO_STD -> AutoInjectedCrates.core
-        RustFile.Attributes.NO_CORE -> return emptySequence()
+        RsFile.Attributes.NONE -> AutoInjectedCrates.std
+        RsFile.Attributes.NO_STD -> AutoInjectedCrates.core
+        RsFile.Attributes.NO_CORE -> return emptySequence()
     }
     return sequenceOfNotNull(ScopeEntry.lazy(injected) {
         val crate = cargoProject.findExternCrateRootByName(injected)
@@ -479,7 +479,7 @@ private fun RsUseItem.nonWildcardEntries(): Sequence<ScopeEntry> {
     }
 }
 
-private fun methods(o: RustTypeBearingItemElement): Sequence<ScopeEntry> =
+private fun methods(o: RsTypeBearingItemElement): Sequence<ScopeEntry> =
     RustImplIndex
         .findMethodsFor(o.resolvedType, o.project)
         .mapNotNull { ScopeEntry.of(it) }
@@ -492,7 +492,7 @@ private val Module.preludeModule: PsiFile? get() {
     return project.getPsiFor(preludeFile)
 }
 
-private fun Collection<RustNamedElement>.asScopeEntries(): Sequence<ScopeEntry> =
+private fun Collection<RsNamedElement>.asScopeEntries(): Sequence<ScopeEntry> =
     asSequence().mapNotNull { ScopeEntry.Companion.of(it) }
 
 

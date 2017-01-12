@@ -10,12 +10,12 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.parentRelativeRange
 
-abstract class RustReferenceBase<T : RustReferenceElement>(
+abstract class RustReferenceBase<T : RsReferenceElement>(
     element: T
 ) : PsiPolyVariantReferenceBase<T>(element),
     RustReference {
 
-    abstract fun resolveInner(): List<RustCompositeElement>
+    abstract fun resolveInner(): List<RsCompositeElement>
 
     final override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
         ResolveCache.getInstance(element.project)
@@ -25,8 +25,8 @@ abstract class RustReferenceBase<T : RustReferenceElement>(
                 /* needToPreventRecursion = */ true,
                 /* incompleteCode = */ false)
 
-    final override fun multiResolve(): List<RustNamedElement> =
-        multiResolve(false).asList().mapNotNull { it.element as? RustNamedElement }
+    final override fun multiResolve(): List<RsNamedElement> =
+        multiResolve(false).asList().mapNotNull { it.element as? RsNamedElement }
 
     abstract val T.referenceAnchor: PsiElement
 

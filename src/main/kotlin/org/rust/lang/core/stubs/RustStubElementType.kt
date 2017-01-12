@@ -5,9 +5,9 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.tree.IStubFileElementType
 import org.rust.lang.RustLanguage
-import org.rust.lang.core.psi.RustCompositeElement
+import org.rust.lang.core.psi.RsCompositeElement
 
-abstract class RustStubElementType<StubT : StubElement<*>, PsiT : RustCompositeElement>(
+abstract class RustStubElementType<StubT : StubElement<*>, PsiT : RsCompositeElement>(
     debugName: String
 ) : IStubElementType<StubT, PsiT>(debugName, RustLanguage) {
 

@@ -5,23 +5,23 @@ package org.rust.ide.inspections
  */
 class RsInspectionSuppressorTest : RsInspectionsTestBase() {
 
-    fun testWithoutSuppression() = checkByText<RustSelfConventionInspection>("""
+    fun testWithoutSuppression() = checkByText<RsSelfConventionInspection>("""
         struct S;
         impl S {
             fn is_foo(<warning>s<caret>elf</warning>) { }
         }
     """)
 
-    fun testSuppression() = checkByText<RustSelfConventionInspection>("""
+    fun testSuppression() = checkByText<RsSelfConventionInspection>("""
         struct S;
         impl S {
-            //noinspection RustSelfConvention
+            //noinspection RsSelfConvention
             fn is_foo(self) { }
             fn is_bar(<warning>s<caret>elf</warning>) { }
         }
 
         struct T;
-        //noinspection RustSelfConvention
+        //noinspection RsSelfConvention
         impl T {
             fn is_foo(self) { }
             fn is_bar(self) { }

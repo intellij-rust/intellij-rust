@@ -6,9 +6,9 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import org.rust.cargo.project.PackageOrigin
 import org.rust.cargo.project.workspace.cargoProject
-import org.rust.ide.icons.RustIcons
+import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.mixin.asRustPath
 import org.rust.lang.core.psi.impl.mixin.basePath
 import org.rust.lang.core.psi.impl.mixin.valueParameters
@@ -51,7 +51,7 @@ object RustCompletionEngine {
         val receiverType = field.expr.resolvedType.stripAllRefsIfAny()
 
         // Needs type ascription to please Kotlin's type checker, https://youtrack.jetbrains.com/issue/KT-12696.
-        val fields: List<RustNamedElement> = (receiverType as? RustStructType)?.item?.namedFields.orEmpty()
+        val fields: List<RsNamedElement> = (receiverType as? RustStructType)?.item?.namedFields.orEmpty()
 
         val methods = receiverType.getNonStaticMethodsIn(field.project).toList()
 
@@ -71,7 +71,7 @@ object RustCompletionEngine {
             ?.toTypedArray() ?: emptyArray()
 }
 
-private fun RustCompositeElement?.completionsFromResolveScope(): Array<LookupElement> =
+private fun RsCompositeElement?.completionsFromResolveScope(): Array<LookupElement> =
     if (this == null)
         emptyArray()
     else
@@ -82,15 +82,15 @@ private fun Sequence<ScopeEntry>.completionsFromScopeEntries(): Array<LookupElem
         it.element?.createLookupElement(it.name)
     }.toList().toTypedArray()
 
-private fun Collection<RustNamedElement>.completionsFromNamedElements(): Array<LookupElement> =
+private fun Collection<RsNamedElement>.completionsFromNamedElements(): Array<LookupElement> =
     mapNotNull {
         val name = it.name ?: return@mapNotNull null
         it.createLookupElement(name)
     }.toTypedArray()
 
-fun RustCompositeElement.createLookupElement(scopeName: String): LookupElement {
+fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
     val base = LookupElementBuilder.create(this, scopeName)
-        .withIcon(if (this is RustFile) RustIcons.MODULE else getIcon(0))
+        .withIcon(if (this is RsFile) RsIcons.MODULE else getIcon(0))
 
     return when (this) {
         is RsConstant -> base.withTypeText(type?.text)

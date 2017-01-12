@@ -3,13 +3,13 @@ package org.rust.ide.formatter.impl
 import com.intellij.formatting.ASTBlock
 import com.intellij.formatting.Indent
 import com.intellij.lang.ASTNode
-import org.rust.ide.formatter.RustFmtContext
-import org.rust.ide.formatter.blocks.RustFmtBlock
+import org.rust.ide.formatter.RsFmtContext
+import org.rust.ide.formatter.blocks.RsFmtBlock
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustTokenElementTypes.LBRACE
 
-fun RustFmtBlock.newChildIndent(childIndex: Int): Indent? = when {
+fun RsFmtBlock.newChildIndent(childIndex: Int): Indent? = when {
 // Flat brace blocks do not have separate PSI node for content blocks
 // so we have to manually decide whether new child is before (no indent)
 // or after (normal indent) left brace node.
@@ -32,7 +32,7 @@ fun RustFmtBlock.newChildIndent(childIndex: Int): Indent? = when {
     else -> Indent.getNoneIndent()
 }
 
-fun RustFmtBlock.computeIndent(child: ASTNode, childCtx: RustFmtContext): Indent? {
+fun RsFmtBlock.computeIndent(child: ASTNode, childCtx: RsFmtContext): Indent? {
     val parentType = node.elementType
     val parentPsi = node.psi
     val childType = child.elementType

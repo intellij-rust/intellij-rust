@@ -11,7 +11,7 @@ import org.rust.lang.core.completion.or
 import org.rust.lang.core.completion.psiElement
 import org.rust.lang.core.completion.withSuperParent
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.mixin.RustConstantKind
 import org.rust.lang.core.psi.impl.mixin.kind
 
@@ -55,7 +55,7 @@ object RustPsiPattern {
 
     val onCrate: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement().withSuperParent<PsiFile>(3)
         .with("onCrateCondition") {
-            val file = it.containingFile.originalFile as RustFile
+            val file = it.containingFile.originalFile as RsFile
             file.isCrateRoot
         }
 
@@ -66,7 +66,7 @@ object RustPsiPattern {
             onItem<RsConstant>() or
             onItem<RsForeignModItem>()
 
-    val onAnyItem: PsiElementPattern.Capture<PsiElement> = onItem<RustDocAndAttributeOwner>()
+    val onAnyItem: PsiElementPattern.Capture<PsiElement> = onItem<RsDocAndAttributeOwner>()
 
     val onExternCrate: PsiElementPattern.Capture<PsiElement> = onItem<RsExternCrateItem>()
 
@@ -89,11 +89,11 @@ object RustPsiPattern {
                 psiElement<RsWhileExpr>())),
             psiElement<RsLambdaExpr>())
 
-    inline fun <reified I : RustDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
+    inline fun <reified I : RsDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
         return psiElement().withSuperParent<I>(3)
     }
 
-    private fun onItem(pattern: ElementPattern<out RustDocAndAttributeOwner>): PsiElementPattern.Capture<PsiElement> {
+    private fun onItem(pattern: ElementPattern<out RsDocAndAttributeOwner>): PsiElementPattern.Capture<PsiElement> {
         return psiElement().withSuperParent(3, pattern)
     }
 

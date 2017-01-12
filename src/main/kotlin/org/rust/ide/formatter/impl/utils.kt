@@ -49,7 +49,7 @@ val FN_DECLS = ts(FUNCTION, BARE_FN_TYPE, LAMBDA_EXPR)
 val ONE_LINE_ITEMS = ts(USE_ITEM, CONSTANT, MOD_DECL_ITEM, EXTERN_CRATE_ITEM, TYPE_ALIAS, INNER_ATTR)
 
 val PsiElement.isTopLevelItem: Boolean
-    get() = (this is RustItemElement || this is RsAttr) && parent is RustMod
+    get() = (this is RsItemElement || this is RsAttr) && parent is RsMod
 
 val PsiElement.isStmtOrExpr: Boolean
     get() = this is RsStmt || this is RsExpr

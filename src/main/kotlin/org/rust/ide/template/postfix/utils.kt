@@ -14,7 +14,7 @@ import org.rust.lang.core.types.RustEnumType
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.utils.negate
 
-internal object RustPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
+internal object RsPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
     override fun getNegatedExpression(element: PsiElement): PsiElement =
         element.negate()
 
@@ -22,13 +22,13 @@ internal object RustPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
         RustPsiFactory(context.project).createExpression("$prefix${context.text}$suffix")
 }
 
-abstract class RustExprParentsSelectorBase(val pred: (RsExpr) -> Boolean) : PostfixTemplateExpressionSelector {
+abstract class RsExprParentsSelectorBase(val pred: (RsExpr) -> Boolean) : PostfixTemplateExpressionSelector {
     override fun getRenderer(): Function<PsiElement, String> = Function { it.text }
 
     abstract override fun getExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement>
 }
 
-class RustTopMostInScopeSelector(pred: (RsExpr) -> Boolean) : RustExprParentsSelectorBase(pred) {
+class RsTopMostInScopeSelector(pred: (RsExpr) -> Boolean) : RsExprParentsSelectorBase(pred) {
     override fun getExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> =
         listOf(
             context
@@ -45,7 +45,7 @@ class RustTopMostInScopeSelector(pred: (RsExpr) -> Boolean) : RustExprParentsSel
             .any { it is RsExpr && pred(it) }
 }
 
-class RustAllParentsSelector(pred: (RsExpr) -> Boolean) : RustExprParentsSelectorBase(pred) {
+class RsAllParentsSelector(pred: (RsExpr) -> Boolean) : RsExprParentsSelectorBase(pred) {
     override fun getExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> =
         context
             .ancestors

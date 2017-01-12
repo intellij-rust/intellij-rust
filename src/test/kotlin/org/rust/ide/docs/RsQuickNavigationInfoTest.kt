@@ -14,6 +14,6 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
     fun testExpandedSignature() = checkNavigationInfo()
 
     private fun checkNavigationInfo() = compareByHtml { element, originalElement ->
-        RustDocumentationProvider().getQuickNavigateInfo(element, originalElement)
+        RsDocumentationProvider().getQuickNavigateInfo(element, originalElement)
     }
 }

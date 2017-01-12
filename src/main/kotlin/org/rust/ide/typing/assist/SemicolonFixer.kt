@@ -9,8 +9,8 @@ import org.rust.lang.core.psi.RsStmt
 /**
  * Fixer that adds missing semicolons at the end of statements.
  */
-class SemicolonFixer : SmartEnterProcessorWithFixers.Fixer<RustSmartEnterProcessor>() {
-    override fun apply(editor: Editor, processor: RustSmartEnterProcessor, element: PsiElement) {
+class SemicolonFixer : SmartEnterProcessorWithFixers.Fixer<RsSmartEnterProcessor>() {
+    override fun apply(editor: Editor, processor: RsSmartEnterProcessor, element: PsiElement) {
         fixStatement(editor, element)
         fixLastExprInBlock(editor, element)
     }

@@ -2,7 +2,7 @@ package org.rust.ide.surroundWith.statement
 
 import org.rust.ide.surroundWith.RsSurrounderTestBase
 
-class RsWithBlockSurrounderTest : RsSurrounderTestBase(RustWithBlockSurrounder()) {
+class RsWithBlockSurrounderTest : RsSurrounderTestBase(RsWithBlockSurrounder()) {
     fun testNotApplicable1() {
         doTestNotApplicable(
             """

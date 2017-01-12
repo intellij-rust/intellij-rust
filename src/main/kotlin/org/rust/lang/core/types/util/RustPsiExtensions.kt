@@ -23,7 +23,7 @@ val RsType.resolvedType: RustType
         RustTypificationEngine.typifyType(this)
     }) ?: RustUnknownType
 
-val RustTypeBearingItemElement.resolvedType: RustType
+val RsTypeBearingItemElement.resolvedType: RustType
     get() =
     CachedValuesManager.getCachedValue(this,
         CachedValueProvider {
@@ -35,7 +35,7 @@ val RustTypeBearingItemElement.resolvedType: RustType
  */
 val RsTypeParameter.bounds: Sequence<RsPolybound>
     get() {
-        val owner = parent?.parent as? RustGenericDeclaration
+        val owner = parent?.parent as? RsGenericDeclaration
         val whereBounds =
             owner?.whereClause?.wherePredList.orEmpty()
                 .asSequence()

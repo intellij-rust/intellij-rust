@@ -22,7 +22,7 @@ class MoveTypeConstraintToWhereClauseIntention : RsElementBaseIntentionAction<Rs
         val typeBounds = ctx.typeParameterList
         val whereClause = RustPsiFactory(project).createWhereClause(lifetimeBounds, typeBounds)
 
-        val declaration = ctx.parentOfType<RustGenericDeclaration>() ?: return
+        val declaration = ctx.parentOfType<RsGenericDeclaration>() ?: return
         val addedClause = declaration.addWhereClause(whereClause) ?: return
         val offset = addedClause.textOffset + whereClause.textLength
         editor.caretModel.moveToOffset(offset)
@@ -31,7 +31,7 @@ class MoveTypeConstraintToWhereClauseIntention : RsElementBaseIntentionAction<Rs
     }
 }
 
-private fun RustGenericDeclaration.addWhereClause(whereClause: RsWhereClause): PsiElement? {
+private fun RsGenericDeclaration.addWhereClause(whereClause: RsWhereClause): PsiElement? {
     val anchor = when (this) {
         is RsTypeAlias -> eq
         is RsImplItem -> lbrace

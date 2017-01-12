@@ -20,12 +20,12 @@ object RustTypificationEngine {
     fun typifyExpr(expr: RsExpr): RustType =
         RustExprTypificationVisitor().compute(expr)
 
-    fun typifyItem(item: RustItemElement): RustType =
+    fun typifyItem(item: RsItemElement): RustType =
         RustItemTypificationVisitor().compute(item)
 
-    fun typify(named: RustNamedElement): RustType {
+    fun typify(named: RsNamedElement): RustType {
         return when (named) {
-            is RustItemElement -> typifyItem(named)
+            is RsItemElement -> typifyItem(named)
 
             is RsSelfParameter -> deviseSelfType(named)
 
@@ -59,7 +59,7 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 
     override fun visitPathExpr(o: RsPathExpr) = set {
-        val resolve = o.path.reference.resolve() as? RustNamedElement
+        val resolve = o.path.reference.resolve() as? RsNamedElement
         resolve?.let { RustTypificationEngine.typify(it) } ?: RustUnknownType
     }
 
@@ -176,7 +176,7 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
 private class RustItemTypificationVisitor : RustComputingVisitor<RustType>() {
 
     override fun visitElement(element: PsiElement) = set {
-        check(element is RustItemElement) {
+        check(element is RsItemElement) {
             "Panic! Should not be used with anything except the inheritors of `RustItemElement` hierarchy!"
         }
 
@@ -225,7 +225,7 @@ private class RustTypeTypificationVisitor(val pivot: RsType) : RustComputingVisi
             if (primitiveType != null) return@set primitiveType
         }
         val target = RustResolveEngine.resolve(path, pivot, Namespace.Types)
-            .filterIsInstance<RustNamedElement>()
+            .filterIsInstance<RsNamedElement>()
             .firstOrNull() ?: return@set RustUnknownType
         val typeArguments = (path as? RustPath.Named)?.head?.typeArguments.orEmpty()
         RustTypificationEngine.typify(target)

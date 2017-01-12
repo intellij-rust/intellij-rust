@@ -2,12 +2,12 @@ package org.rust.lang.core.stubs
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.stubs.*
-import org.rust.lang.core.psi.RustCompositeElement
+import org.rust.lang.core.psi.RsCompositeElement
 
 class RustPlaceholderStub(parent: StubElement<*>?, elementType: IStubElementType<*, *>)
-    : StubBase<RustCompositeElement>(parent, elementType) {
+    : StubBase<RsCompositeElement>(parent, elementType) {
 
-    class Type<PsiT : RustCompositeElement>(
+    class Type<PsiT : RsCompositeElement>(
         debugName: String,
         private val psiCtor: (RustPlaceholderStub, IStubElementType<*, *>) -> PsiT
     ) : RustStubElementType<RustPlaceholderStub, PsiT>(debugName) {

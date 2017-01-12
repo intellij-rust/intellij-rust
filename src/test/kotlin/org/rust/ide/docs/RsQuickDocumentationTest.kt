@@ -17,6 +17,6 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
     fun testIssue495() = checkDoc()     // https://github.com/intellij-rust/intellij-rust/issues/495
 
     private fun checkDoc() = compareByHtml { element, originalElement ->
-        RustDocumentationProvider().generateDoc(element, originalElement)
+        RsDocumentationProvider().generateDoc(element, originalElement)
     }
 }

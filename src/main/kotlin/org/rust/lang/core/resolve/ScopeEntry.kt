@@ -13,24 +13,24 @@ interface ScopeEntry {
     /**
      * Potentially lazy evaluated element this entry points to.
      */
-    val element: RustCompositeElement?
+    val element: RsCompositeElement?
 
     fun filterByNamespace(namespace: Namespace): ScopeEntry? {
-        val element = element as? RustNamedElement ?: return null
+        val element = element as? RsNamedElement ?: return null
         return if (namespace in element.namespaces.orEmpty()) this else null
     }
 
     companion object {
-        fun of(name: String, element: RustNamedElement): ScopeEntry = SingleEntry(name, element)
+        fun of(name: String, element: RsNamedElement): ScopeEntry = SingleEntry(name, element)
 
-        fun of(element: RustNamedElement): ScopeEntry? = element.name?.let { ScopeEntry.of(it, element) }
+        fun of(element: RsNamedElement): ScopeEntry? = element.name?.let { ScopeEntry.of(it, element) }
 
-        fun lazy(name: String?, thunk: () -> RustCompositeElement?): ScopeEntry? =
+        fun lazy(name: String?, thunk: () -> RsCompositeElement?): ScopeEntry? =
             name?.let {
                 LazyEntry(name, lazy(thunk))
             }
 
-        fun multiLazy(name: String?, thunk: () -> List<RustCompositeElement>): ScopeEntry? =
+        fun multiLazy(name: String?, thunk: () -> List<RsCompositeElement>): ScopeEntry? =
             name?.let {
                 LazyMultiEntry(name, kotlin.lazy(thunk))
             }
@@ -39,30 +39,30 @@ interface ScopeEntry {
 
 private class SingleEntry(
     override val name: String,
-    override val element: RustCompositeElement
+    override val element: RsCompositeElement
 ) : ScopeEntry {
     override fun toString(): String = "SingleEntry($name, $element)"
 }
 
 private class LazyEntry(
     override val name: String,
-    thunk: Lazy<RustCompositeElement?>
+    thunk: Lazy<RsCompositeElement?>
 ) : ScopeEntry {
-    override val element: RustCompositeElement? by thunk
+    override val element: RsCompositeElement? by thunk
 
     override fun toString(): String = "LazyEntry($name, $element)"
 }
 
 private class LazyMultiEntry(
     override val name: String,
-    thunk: Lazy<List<RustCompositeElement>>
+    thunk: Lazy<List<RsCompositeElement>>
 ) : ScopeEntry {
-    private val elements: List<RustCompositeElement> by thunk
-    override val element: RustCompositeElement? get() = elements.firstOrNull()
+    private val elements: List<RsCompositeElement> by thunk
+    override val element: RsCompositeElement? get() = elements.firstOrNull()
 
     override fun filterByNamespace(namespace: Namespace): ScopeEntry? =
         elements
-            .filterIsInstance<RustNamedElement>()
+            .filterIsInstance<RsNamedElement>()
             .find { namespace in it.namespaces }?.let {
             SingleEntry(name, it)
         }
@@ -84,8 +84,8 @@ private val VALUES = EnumSet.of(Namespace.Values)
 private val LIFETIMES = EnumSet.of(Namespace.Lifetimes)
 private val TYPES_N_VALUES = TYPES + VALUES
 
-val RustNamedElement.namespaces: Set<Namespace> get() = when (this) {
-    is RustMod,
+val RsNamedElement.namespaces: Set<Namespace> get() = when (this) {
+    is RsMod,
     is RsEnumItem,
     is RsTraitItem,
     is RsTypeParameter,

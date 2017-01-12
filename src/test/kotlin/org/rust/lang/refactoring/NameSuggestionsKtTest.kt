@@ -3,7 +3,7 @@ package org.rust.lang.refactoring
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.impl.RsFile
 
 class RsNameSuggestionsKtTest : RsTestBase() {
     override val dataPath = "org/rust/lang/refactoring/fixtures/introduce_variable/"
@@ -109,7 +109,7 @@ class RsNameSuggestionsKtTest : RsTestBase() {
     private fun doTest(@Language("Rust") before: String, action: (Set<String>) -> Unit) {
         InlineFile(before).withCaret()
         openFileInEditor("main.rs")
-        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RustFile)
+        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RsFile)
         val expr = refactoring.possibleTargets().first()
         action(expr.suggestNames())
     }

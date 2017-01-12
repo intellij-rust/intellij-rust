@@ -15,8 +15,8 @@ import com.intellij.psi.formatter.FormatterUtil
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
-import org.rust.ide.formatter.RustFmtContext
-import org.rust.ide.formatter.settings.RustCodeStyleSettings
+import org.rust.ide.formatter.RsFmtContext
+import org.rust.ide.formatter.settings.RsCodeStyleSettings
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustTokenElementTypes.*
@@ -26,7 +26,7 @@ import org.rust.lang.core.psi.util.getNextNonCommentSibling
 import org.rust.lang.core.psi.util.getPrevNonCommentSibling
 import com.intellij.psi.tree.TokenSet.create as ts
 
-fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: RustCodeStyleSettings): SpacingBuilder {
+fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: RsCodeStyleSettings): SpacingBuilder {
 
     // Use `sbX` temporaries to work around
     // https://youtrack.jetbrains.com/issue/KT-12239
@@ -136,7 +136,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         .applyForEach(BLOCK_LIKE) { before(it).spaces(1) }
 }
 
-fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtContext): Spacing? {
+fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RsFmtContext): Spacing? {
     if (child1 is ASTBlock && child2 is ASTBlock) SpacingContext.create(child1, child2, ctx).apply {
         when {
         // #[attr]\n<comment>\n => #[attr] <comment>\n etc.
@@ -152,7 +152,7 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtContext): Sp
             }
 
         // Ensure that each attribute is in separate line; comment aware
-            psi1 is RsOuterAttr && (psi2 is RsOuterAttr || psi1.parent is RustItemElement)
+            psi1 is RsOuterAttr && (psi2 is RsOuterAttr || psi1.parent is RsItemElement)
                 || psi1 is PsiComment && (psi2 is RsOuterAttr || psi1.getPrevNonCommentSibling() is RsOuterAttr)
             -> return lineBreak(keepBlankLines = 0)
 
@@ -168,7 +168,7 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtContext): Sp
 
         // Format blank lines between impl & trait members
             (parentPsi is RsTraitItem || parentPsi is RsImplItem)
-                && ncPsi1 is RustNamedElement && ncPsi2 is RustNamedElement
+                && ncPsi1 is RsNamedElement && ncPsi2 is RsNamedElement
             -> return lineBreak(
                 keepLineBreaks = ctx.commonSettings.KEEP_LINE_BREAKS,
                 keepBlankLines = ctx.commonSettings.KEEP_BLANK_LINES_IN_DECLARATIONS)
@@ -197,9 +197,9 @@ private data class SpacingContext(val node1: ASTNode,
                                   val parentPsi: PsiElement?,
                                   val ncPsi1: PsiElement,
                                   val ncPsi2: PsiElement,
-                                  val ctx: RustFmtContext) {
+                                  val ctx: RsFmtContext) {
     companion object {
-        fun create(child1: ASTBlock, child2: ASTBlock, ctx: RustFmtContext): SpacingContext {
+        fun create(child1: ASTBlock, child2: ASTBlock, ctx: RsFmtContext): SpacingContext {
             val node1 = child1.node
             val node2 = child2.node
             val psi1 = node1.psi
@@ -283,7 +283,7 @@ private fun SpacingContext.blockMustBeMultiLine(): Boolean {
     }
 
     return when (parentPsi) {
-        is RsBlock -> childrenCount != 0 && (childrenCount >= 2 || parentPsi.parent is RustItemElement) // 2
+        is RsBlock -> childrenCount != 0 && (childrenCount >= 2 || parentPsi.parent is RsItemElement) // 2
 
         is RsBlockFields,
         is RsEnumBody,

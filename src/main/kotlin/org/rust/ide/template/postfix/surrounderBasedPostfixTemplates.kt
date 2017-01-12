@@ -3,28 +3,28 @@ package org.rust.ide.template.postfix
 import com.intellij.codeInsight.template.postfix.templates.SurroundPostfixTemplateBase
 import com.intellij.lang.surroundWith.Surrounder
 import com.intellij.psi.PsiElement
-import org.rust.ide.surroundWith.expression.RustWithIfExpSurrounder
-import org.rust.ide.surroundWith.expression.RustWithParenthesesSurrounder
-import org.rust.ide.surroundWith.expression.RustWithWhileExpSurrounder
+import org.rust.ide.surroundWith.expression.RsWithIfExpSurrounder
+import org.rust.ide.surroundWith.expression.RsWithParenthesesSurrounder
+import org.rust.ide.surroundWith.expression.RsWithWhileExpSurrounder
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.utils.negate
 
 class IfExpressionPostfixTemplate : SurroundPostfixTemplateBase(
     "if",
     "if exp {}",
-    RustPostfixTemplatePsiInfo,
-    RustTopMostInScopeSelector(RsExpr::isBool)
+    RsPostfixTemplatePsiInfo,
+    RsTopMostInScopeSelector(RsExpr::isBool)
 ) {
-    override fun getSurrounder(): Surrounder = RustWithIfExpSurrounder()
+    override fun getSurrounder(): Surrounder = RsWithIfExpSurrounder()
 }
 
 class ElseExpressionPostfixTemplate : SurroundPostfixTemplateBase(
     "else",
     "if !exp {}",
-    RustPostfixTemplatePsiInfo,
-    RustTopMostInScopeSelector(RsExpr::isBool)
+    RsPostfixTemplatePsiInfo,
+    RsTopMostInScopeSelector(RsExpr::isBool)
 ) {
-    override fun getSurrounder(): Surrounder = RustWithIfExpSurrounder()
+    override fun getSurrounder(): Surrounder = RsWithIfExpSurrounder()
 
     override fun getWrappedExpression(expression: PsiElement?): PsiElement = checkNotNull(expression).negate()
 }
@@ -32,19 +32,19 @@ class ElseExpressionPostfixTemplate : SurroundPostfixTemplateBase(
 class WhileExpressionPostfixTemplate : SurroundPostfixTemplateBase(
     "while",
     "while exp {}",
-    RustPostfixTemplatePsiInfo,
-    RustTopMostInScopeSelector(RsExpr::isBool)
+    RsPostfixTemplatePsiInfo,
+    RsTopMostInScopeSelector(RsExpr::isBool)
 ) {
-    override fun getSurrounder(): Surrounder = RustWithWhileExpSurrounder()
+    override fun getSurrounder(): Surrounder = RsWithWhileExpSurrounder()
 }
 
 class WhileNotExpressionPostfixTemplate : SurroundPostfixTemplateBase(
     "whilenot",
     "while !exp {}",
-    RustPostfixTemplatePsiInfo,
-    RustTopMostInScopeSelector(RsExpr::isBool)
+    RsPostfixTemplatePsiInfo,
+    RsTopMostInScopeSelector(RsExpr::isBool)
 ) {
-    override fun getSurrounder(): Surrounder = RustWithWhileExpSurrounder()
+    override fun getSurrounder(): Surrounder = RsWithWhileExpSurrounder()
 
     override fun getWrappedExpression(expression: PsiElement?): PsiElement = checkNotNull(expression).negate()
 }
@@ -52,8 +52,8 @@ class WhileNotExpressionPostfixTemplate : SurroundPostfixTemplateBase(
 class ParenPostfixTemplate : SurroundPostfixTemplateBase(
     "par",
     "(expr)",
-    RustPostfixTemplatePsiInfo,
-    RustAllParentsSelector(RsExpr::any)
+    RsPostfixTemplatePsiInfo,
+    RsAllParentsSelector(RsExpr::any)
 ) {
-    override fun getSurrounder(): Surrounder = RustWithParenthesesSurrounder()
+    override fun getSurrounder(): Surrounder = RsWithParenthesesSurrounder()
 }

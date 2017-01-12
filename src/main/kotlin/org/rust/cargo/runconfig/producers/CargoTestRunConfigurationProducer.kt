@@ -10,8 +10,8 @@ import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.runconfig.CargoCommandRunConfigurationType
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RustCompositeElement
-import org.rust.lang.core.psi.RustMod
+import org.rust.lang.core.psi.RsCompositeElement
+import org.rust.lang.core.psi.RsMod
 import org.rust.lang.core.psi.containingCargoTarget
 import org.rust.lang.core.psi.impl.mixin.isTest
 import org.rust.lang.core.psi.util.parentOfType
@@ -45,7 +45,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
     }
 
     private data class TestConfig(
-        val sourceElement: RustCompositeElement,
+        val sourceElement: RsCompositeElement,
         val configurationName: String,
         val testPath: String,
         val target: CargoProjectDescription.Target
@@ -67,7 +67,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
     }
 
     private fun findTestMod(location: Location<*>): TestConfig? {
-        val mod = location.psiElement.parentOfType<RustMod>(strict = false) ?: return null
+        val mod = location.psiElement.parentOfType<RsMod>(strict = false) ?: return null
         val testName = if (mod.modName == "test" || mod.modName == "tests")
             "Test ${mod.`super`?.modName}::${mod.modName}"
         else

@@ -2,7 +2,7 @@ package org.rust.lang
 
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.vfs.VirtualFile
-import org.rust.ide.icons.RustIcons
+import org.rust.ide.icons.RsIcons
 import javax.swing.Icon
 
 object RustFileType : LanguageFileType(RustLanguage) {
@@ -13,7 +13,7 @@ object RustFileType : LanguageFileType(RustLanguage) {
 
     override fun getName(): String = "Rust"
 
-    override fun getIcon(): Icon = RustIcons.RUST_FILE
+    override fun getIcon(): Icon = RsIcons.RUST_FILE
 
     override fun getDefaultExtension(): String = DEFAULTS.EXTENSION
 

@@ -13,12 +13,12 @@ class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Conte
     override fun getText() = "Add derive clause"
 
     class Context(
-        val item: RustStructOrEnumItemElement,
+        val item: RsStructOrEnumItemElement,
         val itemStart: PsiElement
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val item = element.parentOfType<RustStructOrEnumItemElement>() ?: return null
+        val item = element.parentOfType<RsStructOrEnumItemElement>() ?: return null
         val keyword = when (item) {
             is RsStructItem -> item.vis ?: item.struct
             is RsEnumItem -> item.vis ?: item.enum
@@ -35,7 +35,7 @@ class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Conte
 
     }
 
-    private fun findOrCreateDeriveAttr(project: Project, item: RustStructOrEnumItemElement, keyword: PsiElement): RsOuterAttr {
+    private fun findOrCreateDeriveAttr(project: Project, item: RsStructOrEnumItemElement, keyword: PsiElement): RsOuterAttr {
         val existingDeriveAttr = item.findOuterAttr("derive")
         if (existingDeriveAttr != null) {
             return existingDeriveAttr
@@ -45,7 +45,7 @@ class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Conte
         return item.addBefore(attr, keyword) as RsOuterAttr
     }
 
-    private fun reformat(project: Project, item: RustStructOrEnumItemElement, deriveAttr: RsOuterAttr): RsOuterAttr {
+    private fun reformat(project: Project, item: RsStructOrEnumItemElement, deriveAttr: RsOuterAttr): RsOuterAttr {
         val marker = Object()
         PsiTreeUtil.mark(deriveAttr, marker)
         val reformattedItem = CodeStyleManager.getInstance(project).reformat(item)

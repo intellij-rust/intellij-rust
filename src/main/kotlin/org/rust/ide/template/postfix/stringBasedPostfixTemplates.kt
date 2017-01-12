@@ -13,7 +13,7 @@ import org.rust.lang.core.types.util.resolvedType
 open class AssertPostfixTemplateBase(name: String) : StringBasedPostfixTemplate(
     name,
     "$name!(exp);",
-    RustTopMostInScopeSelector(RsExpr::isBool)) {
+    RsTopMostInScopeSelector(RsExpr::isBool)) {
 
     override fun getTemplateString(element: PsiElement): String =
         if (element is RsBinaryExpr && element.operatorType == RustTokenElementTypes.EQEQ) {
@@ -31,7 +31,7 @@ class DebugAssertPostfixTemplate : AssertPostfixTemplateBase("debug_assert")
 class LambdaPostfixTemplate : StringBasedPostfixTemplate(
     "lambda",
     "|| expr",
-    RustTopMostInScopeSelector(RsExpr::any)) {
+    RsTopMostInScopeSelector(RsExpr::any)) {
 
     override fun getTemplateString(element: PsiElement): String = "|| ${element.text}"
 
@@ -41,14 +41,14 @@ class LambdaPostfixTemplate : StringBasedPostfixTemplate(
 class MatchPostfixTemplate : StringBasedPostfixTemplate(
     "match",
     "match expr {...}",
-    RustTopMostInScopeSelector(RsExpr::isEnum)
+    RsTopMostInScopeSelector(RsExpr::isEnum)
 ) {
     override fun getTemplateString(element: PsiElement): String? {
         val enumType = (element as RsExpr).resolvedType as RustEnumType
 
         val allDeclaration = innerDeclarations(element)
             .mapNotNull {
-                val path = (it.element as? RustQualifiedNamedElement)?.crateRelativePath ?: return@mapNotNull null
+                val path = (it.element as? RsQualifiedNamedElement)?.crateRelativePath ?: return@mapNotNull null
                 if (path.segments.lastOrNull()?.name == it.name)
                     return@mapNotNull path
                 else

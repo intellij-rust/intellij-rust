@@ -10,7 +10,7 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
-import org.rust.ide.icons.RustIcons
+import org.rust.ide.icons.RsIcons
 import org.rust.lang.RustLanguage
 import org.rust.lang.core.RustPsiPattern.onAnyItem
 import org.rust.lang.core.RustPsiPattern.onCrate
@@ -83,10 +83,10 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
         } else {
             LookupElementBuilder.create(name)
         }
-            .withIcon(RustIcons.ATTRIBUTE)
+            .withIcon(RsIcons.ATTRIBUTE)
 
     private val PsiElement?.attrMetaItems: Sequence<String>
-        get() = if (this is RustDocAndAttributeOwner)
+        get() = if (this is RsDocAndAttributeOwner)
             queryAttributes.metaItems.map { it.identifier.text }
         else
             emptySequence()

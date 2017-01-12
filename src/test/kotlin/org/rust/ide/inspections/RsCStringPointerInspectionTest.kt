@@ -5,7 +5,7 @@ package org.rust.ide.inspections
  */
 class RsCStringPointerInspectionTest : RsInspectionsTestBase(true) {
 
-    fun testInspection() = checkByText<RustCStringPointerInspection>("""
+    fun testInspection() = checkByText<RsCStringPointerInspection>("""
         use std::ffi::{CString};
 
         fn main() {

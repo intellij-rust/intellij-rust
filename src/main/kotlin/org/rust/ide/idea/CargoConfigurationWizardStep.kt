@@ -32,7 +32,7 @@ class CargoConfigurationWizardStep(
         ConfigurationUpdater.data = rustProjectSettings.data
 
         val projectBuilder = context.projectBuilder
-        if (projectBuilder is RustModuleBuilder) {
+        if (projectBuilder is RsModuleBuilder) {
             projectBuilder.rustProjectData = rustProjectSettings.data
             projectBuilder.addModuleConfigurationUpdater(ConfigurationUpdater)
         } else {

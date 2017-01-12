@@ -3,7 +3,7 @@ package org.rust.ide.search
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RsNamedElement
 
 class RsFindUsagesTest : RsTestBase() {
     override val dataPath: String get() = ""
@@ -37,7 +37,7 @@ class RsFindUsagesTest : RsTestBase() {
 
     private fun doTest(@Language("Rust") code: String, expectedUsages: Int) {
         InlineFile(code)
-        val source = findElementInEditor<RustNamedElement>()
+        val source = findElementInEditor<RsNamedElement>()
 
         val usages = myFixture.findUsages(source)
 

@@ -2,15 +2,15 @@ package org.rust.lang.core.stubs.index
 
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
-import org.rust.lang.core.psi.RustNamedElement
+import org.rust.lang.core.psi.RsNamedElement
 import org.rust.lang.core.stubs.RustFileStub
 
-class RustGotoClassIndex : StringStubIndexExtension<RustNamedElement>() {
+class RustGotoClassIndex : StringStubIndexExtension<RsNamedElement>() {
     override fun getVersion(): Int = RustFileStub.Type.stubVersion
-    override fun getKey(): StubIndexKey<String, RustNamedElement> = KEY
+    override fun getKey(): StubIndexKey<String, RsNamedElement> = KEY
 
     companion object {
-        val KEY: StubIndexKey<String, RustNamedElement> =
+        val KEY: StubIndexKey<String, RsNamedElement> =
             StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustGotoClassIndex")
     }
 }

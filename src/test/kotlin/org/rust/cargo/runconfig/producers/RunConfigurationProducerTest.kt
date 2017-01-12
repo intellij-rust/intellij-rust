@@ -14,8 +14,8 @@ import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RustMod
-import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.RsMod
+import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.util.parentOfType
 
 class RunConfigurationProducerTest : RsTestBase() {
@@ -27,7 +27,7 @@ class RunConfigurationProducerTest : RsTestBase() {
         testProject {
             bin("hello", "src/main.rs").open()
         }
-        checkOnTopLevel<RustFile>()
+        checkOnTopLevel<RsFile>()
     }
 
     fun testExecutableProducerWorksForExample() {
@@ -103,14 +103,14 @@ class RunConfigurationProducerTest : RsTestBase() {
                 }
             """).open()
         }
-        checkOnTopLevel<RustMod>()
+        checkOnTopLevel<RsMod>()
     }
 
     fun testTestProducerWorksForFiles() {
         testProject {
             test("foo", "tests/foo.rs").open()
         }
-        checkOnElement<RustFile>()
+        checkOnElement<RsFile>()
     }
 
     fun testTestProducerWorksForRootModule() {

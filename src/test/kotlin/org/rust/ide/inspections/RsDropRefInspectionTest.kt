@@ -5,21 +5,21 @@ package org.rust.ide.inspections
  */
 class RsDropRefInspectionTest : RsInspectionsTestBase(true) {
 
-    fun testDropRefSimple() = checkByText<RustDropRefInspection>("""
+    fun testDropRefSimple() = checkByText<RsDropRefInspection>("""
         fn main() {
             let val1 = Box::new(10);
             <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">drop(&val1)</warning>;
         }
     """)
 
-    fun testDropRefFullPath() = checkByText<RustDropRefInspection>("""
+    fun testDropRefFullPath() = checkByText<RsDropRefInspection>("""
         fn main() {
             let val1 = Box::new(20);
             <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">std::mem::drop(&val1)</warning>;
         }
     """)
 
-    fun testDropRefAliased() = checkByText<RustDropRefInspection>("""
+    fun testDropRefAliased() = checkByText<RsDropRefInspection>("""
         use std::mem::drop as free;
         fn main() {
             let val1 = Box::new(30);
@@ -27,7 +27,7 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(true) {
         }
     """)
 
-    fun testDropRefRefType() = checkByText<RustDropRefInspection>("""
+    fun testDropRefRefType() = checkByText<RsDropRefInspection>("""
         fn foo() {}
         fn main() {
             let val = &foo();
@@ -35,7 +35,7 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(true) {
         }
     """)
 
-    fun testDropRefShadowed() = checkByText<RustDropRefInspection>("""
+    fun testDropRefShadowed() = checkByText<RsDropRefInspection>("""
         fn drop(val: &Box<u32>) {}
         fn main() {
             let val = Box::new(84);
@@ -43,7 +43,7 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(true) {
         }
     """)
 
-    fun testDropRefMethodCall() = checkByText<RustDropRefInspection>("""
+    fun testDropRefMethodCall() = checkByText<RsDropRefInspection>("""
         struct Foo;
         impl Foo {
             pub fn drop(&self, val: &Foo) {}
@@ -54,7 +54,7 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(true) {
         }
     """)
 
-    fun testDropRefFix() = checkFixByText<RustDropRefInspection>("Call with owned value", """
+    fun testDropRefFix() = checkFixByText<RsDropRefInspection>("Call with owned value", """
         fn main() {
             let val1 = Box::new(40);
             <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">drop(&va<caret>l1)</warning>;

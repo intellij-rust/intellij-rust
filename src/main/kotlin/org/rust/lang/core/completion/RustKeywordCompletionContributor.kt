@@ -13,7 +13,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RustTokenElementTypes
-import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.impl.RsFile
 
 /**
  * Completes Rust keywords
@@ -66,7 +66,7 @@ class RustKeywordCompletionContributor : CompletionContributor(), DumbAware {
     private fun baseDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
         psiElement<PsiElement>().andOr(
             psiElement().withParent(RsPath::class.java),
-            psiElement().withParent(or(psiElement<RsModItem>(), psiElement<RustFile>()))
+            psiElement().withParent(or(psiElement<RsModItem>(), psiElement<RsFile>()))
         )
 
     private fun baseCodeStatementPattern(): PsiElementPattern.Capture<PsiElement> =

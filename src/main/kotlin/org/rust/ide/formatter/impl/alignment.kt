@@ -1,13 +1,13 @@
 package org.rust.ide.formatter.impl
 
-import org.rust.ide.formatter.RustAlignmentStrategy
-import org.rust.ide.formatter.blocks.RustFmtBlock
+import org.rust.ide.formatter.RsAlignmentStrategy
+import org.rust.ide.formatter.blocks.RsFmtBlock
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.RustTokenElementTypes.DOT
 
-fun RustFmtBlock.getAlignmentStrategy(): RustAlignmentStrategy = when (node.elementType) {
+fun RsFmtBlock.getAlignmentStrategy(): RsAlignmentStrategy = when (node.elementType) {
     TUPLE_EXPR, VALUE_ARGUMENT_LIST, FORMAT_MACRO_ARGS, TRY_MACRO_ARGS, VEC_MACRO_ARGS ->
-        RustAlignmentStrategy.wrap()
+        RsAlignmentStrategy.wrap()
             .alignIf { child, parent, ctx ->
                 // Do not align if we have only one argument as this may lead to
                 // some quirks when that argument is tuple expr.
@@ -35,48 +35,48 @@ fun RustFmtBlock.getAlignmentStrategy(): RustAlignmentStrategy = when (node.elem
             .alignIf(ctx.commonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS)
 
     TUPLE_TYPE, TUPLE_FIELDS ->
-        RustAlignmentStrategy.wrap()
+        RsAlignmentStrategy.wrap()
             .alignUnlessBlockDelim()
             .alignIf(ctx.commonSettings.ALIGN_MULTILINE_PARAMETERS)
 
     VALUE_PARAMETER_LIST ->
-        RustAlignmentStrategy.shared()
+        RsAlignmentStrategy.shared()
             .alignUnlessBlockDelim()
             .alignIf(ctx.commonSettings.ALIGN_MULTILINE_PARAMETERS)
 
     in FN_DECLS ->
-        RustAlignmentStrategy.shared()
+        RsAlignmentStrategy.shared()
             .alignIf { c, p, rustFmtContext ->
                 c.elementType == RET_TYPE && ctx.rustSettings.ALIGN_RET_TYPE ||
                     c.elementType == WHERE_CLAUSE && ctx.rustSettings.ALIGN_WHERE_CLAUSE
             }
 
     PAT_ENUM ->
-        RustAlignmentStrategy.wrap()
+        RsAlignmentStrategy.wrap()
             .alignIf { c, p, x -> x.metLBrace && !c.isBlockDelim(p) }
             .alignIf(ctx.commonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS)
 
     METHOD_CALL_EXPR ->
-        RustAlignmentStrategy.shared()
+        RsAlignmentStrategy.shared()
             .alignIf(DOT) // DOT is synthetic's block representative
             .alignIf(ctx.commonSettings.ALIGN_MULTILINE_CHAINED_METHODS)
 
     WHERE_CLAUSE ->
-        RustAlignmentStrategy.wrap()
+        RsAlignmentStrategy.wrap()
             .alignIf(WHERE_PRED)
             .alignIf(ctx.rustSettings.ALIGN_WHERE_BOUNDS)
 
     TYPE_PARAMETER_LIST ->
-        RustAlignmentStrategy.wrap()
+        RsAlignmentStrategy.wrap()
             .alignIf(TYPE_PARAMETER, LIFETIME_PARAMETER)
             .alignIf(ctx.rustSettings.ALIGN_TYPE_PARAMS)
 
     FOR_LIFETIMES ->
-        RustAlignmentStrategy.wrap()
+        RsAlignmentStrategy.wrap()
             .alignIf(LIFETIME_PARAMETER)
             .alignIf(ctx.rustSettings.ALIGN_TYPE_PARAMS)
 
-    else -> RustAlignmentStrategy.NullStrategy
+    else -> RsAlignmentStrategy.NullStrategy
 }
 
-fun RustAlignmentStrategy.alignUnlessBlockDelim(): RustAlignmentStrategy = alignIf { c, p, x -> !c.isBlockDelim(p) }
+fun RsAlignmentStrategy.alignUnlessBlockDelim(): RsAlignmentStrategy = alignIf { c, p, x -> !c.isBlockDelim(p) }

@@ -2,7 +2,7 @@ package org.rust.ide.surroundWith.expression
 
 import org.rust.ide.surroundWith.RsSurrounderTestBase
 
-class RsWithParenthesesSurrounderTest : RsSurrounderTestBase(RustWithParenthesesSurrounder()) {
+class RsWithParenthesesSurrounderTest : RsSurrounderTestBase(RsWithParenthesesSurrounder()) {
     fun testSelectPartOfExpression() {
         doTestNotApplicable(
             """

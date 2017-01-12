@@ -149,7 +149,7 @@ class RsParameterInfoHandlerTest : RsTestBase() {
 
     private fun checkByText(code: String, hint: String, index: Int) {
         myFixture.configureByText("main.rs", code)
-        val handler = RustParameterInfoHandler()
+        val handler = RsParameterInfoHandler()
         val createContext = MockCreateParameterInfoContext(myFixture.editor, myFixture.file)
 
         // Check hint
@@ -160,7 +160,7 @@ class RsParameterInfoHandlerTest : RsTestBase() {
             val items = createContext.itemsToShow ?: throw AssertionFailedError("Parameters are not shown")
             if (items.isEmpty()) throw AssertionFailedError("Parameters are empty")
             val context = MockParameterInfoUIContext(elt)
-            handler.updateUI(items[0] as RustArgumentsDescription, context)
+            handler.updateUI(items[0] as RsArgumentsDescription, context)
             TestCase.assertEquals(hint, handler.hintText)
 
             // Check parameter index

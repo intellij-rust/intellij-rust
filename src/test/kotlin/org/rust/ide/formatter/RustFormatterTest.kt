@@ -1,7 +1,7 @@
 package org.rust.ide.formatter
 
 import com.intellij.psi.formatter.FormatterTestCase
-import org.rust.ide.formatter.settings.RustCodeStyleSettings
+import org.rust.ide.formatter.settings.RsCodeStyleSettings
 import org.rust.lang.RustLanguage
 import org.rust.lang.RsTestBase
 
@@ -100,6 +100,6 @@ class RustFormatterTest : FormatterTestCase() {
     fun testSpecialMacros() = doTest()
 
     private fun common() = getSettings(RustLanguage)
-    private fun custom() = settings.getCustomSettings(RustCodeStyleSettings::class.java)
+    private fun custom() = settings.getCustomSettings(RsCodeStyleSettings::class.java)
 }
 

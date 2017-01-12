@@ -4,8 +4,8 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.RsNamedElement
+import org.rust.lang.core.psi.impl.RsFile
 
 class RsLookupElementTest : RsTestBase() {
     override val dataPath: String get() = ""
@@ -64,7 +64,7 @@ class RsLookupElementTest : RsTestBase() {
 
     fun testMod() {
         myFixture.configureByText("foo.rs", "")
-        val lookup = (myFixture.file as RustFile).createLookupElement("foo")
+        val lookup = (myFixture.file as RsFile).createLookupElement("foo")
         val presentation = LookupElementPresentation()
 
         lookup.renderElement(presentation)
@@ -74,7 +74,7 @@ class RsLookupElementTest : RsTestBase() {
 
     private fun check(@Language("Rust") code: String, tailText: String? = null, typeText: String? = null) {
         InlineFile(code)
-        val element = findElementInEditor<RustNamedElement>()
+        val element = findElementInEditor<RsNamedElement>()
         val lookup = element.createLookupElement(element.name!!)
         val presentation = LookupElementPresentation()
 

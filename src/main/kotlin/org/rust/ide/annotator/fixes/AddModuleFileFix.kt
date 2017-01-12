@@ -5,9 +5,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.ide.actions.RustExpandModuleAction
+import org.rust.ide.actions.RsExpandModuleAction
 import org.rust.lang.core.psi.RsModDeclItem
-import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
 
 /**
@@ -30,8 +30,8 @@ class AddModuleFileFix(
     ) {
         val modDecl = startElement as RsModDeclItem
         if (expandModuleFirst) {
-            val containingFile = modDecl.containingFile as RustFile
-            RustExpandModuleAction.expandModule(containingFile)
+            val containingFile = modDecl.containingFile as RsFile
+            RsExpandModuleAction.expandModule(containingFile)
         }
         modDecl.getOrCreateModuleFile()?.navigate(true)
     }

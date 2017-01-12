@@ -5,8 +5,8 @@ import com.intellij.psi.impl.PsiManagerImpl
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.RustNamedElement
-import org.rust.lang.core.psi.RustReferenceElement
+import org.rust.lang.core.psi.RsNamedElement
+import org.rust.lang.core.psi.RsReferenceElement
 
 abstract class RsResolveTestBase : RsTestBase() {
 
@@ -15,7 +15,7 @@ abstract class RsResolveTestBase : RsTestBase() {
     protected fun checkByCode(@Language("Rust") code: String) {
         InlineFile(code)
 
-        val (refElement, data) = findElementAndDataInEditor<RustReferenceElement>("^")
+        val (refElement, data) = findElementAndDataInEditor<RsReferenceElement>("^")
 
         if (data == "unresolved") {
             val resolved = refElement.reference.resolve()
@@ -29,7 +29,7 @@ abstract class RsResolveTestBase : RsTestBase() {
             "Failed to resolve ${refElement.text}"
         }
 
-        val target = findElementInEditor<RustNamedElement>("X")
+        val target = findElementInEditor<RsNamedElement>("X")
 
         assertThat(resolved).isEqualTo(target)
     }
@@ -47,7 +47,7 @@ abstract class RsResolveTestBase : RsTestBase() {
 
         myFixture.configureFromTempProjectFile(files[0].path)
 
-        val (reference, resolveFile) = findElementAndDataInEditor<RustReferenceElement>()
+        val (reference, resolveFile) = findElementAndDataInEditor<RsReferenceElement>()
 
         if (resolveFile == "unresolved") {
             val element = reference.reference.resolve()

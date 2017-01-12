@@ -3,7 +3,7 @@ package org.rust.lang.refactoring
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.impl.RustFile
+import org.rust.lang.core.psi.impl.RsFile
 
 class RsLocalVariableHandlerTest : RsTestBase() {
     override val dataPath = "org/rust/lang/refactoring/fixtures/introduce_variable/"
@@ -175,7 +175,7 @@ class RsLocalVariableHandlerTest : RsTestBase() {
     }
 
     private fun refactoring(): RustIntroduceVariableRefactoring =
-        RustIntroduceVariableRefactoring(project, myFixture.editor, myFixture.file as RustFile)
+        RustIntroduceVariableRefactoring(project, myFixture.editor, myFixture.file as RsFile)
 
     fun RustIntroduceVariableRefactoring.getTarget(idx: Int, total: Int): RsExpr {
         check(idx < total) { "Can't select $idx target out of $total" }

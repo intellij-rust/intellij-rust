@@ -8,7 +8,7 @@ import org.rust.lang.RustLanguage
 import org.rust.lang.RsTestBase
 
 /**
- * Unit tests for [RustSmartEnterProcessor]
+ * Unit tests for [RsSmartEnterProcessor]
  */
 class RsSmartEnterProcessorTest : RsTestBase() {
 
@@ -20,8 +20,8 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         myFixture.configureByFile("$fileName")
         val processors = getSmartProcessors(RustLanguage)
 
-        val writeCommand = object : WriteCommandAction<RustSmartEnterProcessor>(project) {
-            override fun run(result: Result<RustSmartEnterProcessor>) {
+        val writeCommand = object : WriteCommandAction<RsSmartEnterProcessor>(project) {
+            override fun run(result: Result<RsSmartEnterProcessor>) {
                 val editor = myFixture.editor
                 for (processor in processors) {
                     processor.process(project, editor, myFixture.file)
