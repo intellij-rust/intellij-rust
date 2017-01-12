@@ -22,9 +22,6 @@ object RustTypeInferenceEngine {
         }
     }
 
-    fun matches(pat: RustPatElement, type: RustType): Boolean =
-        run(pat, type).let { it is Result.Ok }
-
     private fun run(pat: RustPatElement, type: RustType): Result<Map<RustPatBindingElement, RustType>> =
         RustTypeInferencingVisitor(type).let {
             if (it.compute(pat)) Result.Ok(it.bindings) else Result.Failure

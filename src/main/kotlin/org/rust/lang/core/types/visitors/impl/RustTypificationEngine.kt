@@ -6,18 +6,16 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
+import org.rust.lang.core.resolve.Namespace
+import org.rust.lang.core.resolve.RustResolveEngine
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.*
-import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
-import org.rust.lang.core.types.unresolved.RustUnresolvedReferenceType
-import org.rust.lang.core.types.unresolved.RustUnresolvedTupleType
-import org.rust.lang.core.types.unresolved.RustUnresolvedType
 import org.rust.lang.core.types.util.resolvedType
 
 object RustTypificationEngine {
 
-    fun typifyType(type: RustTypeElement): RustUnresolvedType =
-        RustTypeTypificationVisitor().compute(type)
+    fun typifyType(type: RustTypeElement): RustType =
+        RustTypeTypificationVisitor(type).compute(type)
 
     fun typifyExpr(expr: RustExprElement): RustType =
         RustExprTypificationVisitor().compute(expr)
@@ -206,7 +204,7 @@ private class RustItemTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 }
 
-private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedType>() {
+private class RustTypeTypificationVisitor(val pivot: RustTypeElement) : RustComputingVisitor<RustType>() {
 
     override fun visitType(o: RustTypeElement) = set {
         RustUnknownType
@@ -215,7 +213,7 @@ private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedT
     override fun visitTupleType(o: RustTupleTypeElement) = set {
         // Perhaps introduce tuple_type to PSI?
         if (o.typeList.size > 0)
-            RustUnresolvedTupleType(o.typeList.map { RustTypificationEngine.typifyType(it) })
+            RustTupleType(o.typeList.map { RustTypificationEngine.typifyType(it) })
         else
             RustUnitType
     }
@@ -226,13 +224,18 @@ private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedT
             val primitiveType = RustPrimitiveTypeBase.fromTypeName(path.head.name)
             if (primitiveType != null) return@set primitiveType
         }
-        RustUnresolvedPathType(path)
+        val target = RustResolveEngine.resolve(path, pivot, Namespace.Types)
+            .filterIsInstance<RustNamedElement>()
+            .firstOrNull() ?: return@set RustUnknownType
+        val typeArguments = (path as? RustPath.Named)?.head?.typeArguments.orEmpty()
+        RustTypificationEngine.typify(target)
+            .withTypeArguments(typeArguments.map { it.resolvedType  })
     }
 
     override fun visitRefLikeType(o: RustRefLikeTypeElement) = set {
         if (o.and == null) return@set RustUnknownType //FIXME: handle pointer types
         val base = o.type ?: return@set RustUnknownType
-        RustUnresolvedReferenceType(RustTypificationEngine.typifyType(base), o.mut != null)
+        RustReferenceType(RustTypificationEngine.typifyType(base), o.mut != null)
     }
 }
 

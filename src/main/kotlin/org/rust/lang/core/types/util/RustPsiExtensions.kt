@@ -8,7 +8,6 @@ import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustUnknownType
-import org.rust.lang.core.types.visitors.impl.RustTypeResolvingVisitor
 import org.rust.lang.core.types.visitors.impl.RustTypificationEngine
 
 val RustExprElement.resolvedType: RustType
@@ -22,7 +21,6 @@ val RustExprElement.resolvedType: RustType
 val RustTypeElement.resolvedType: RustType
     get() = recursionGuard(this, Computable {
         RustTypificationEngine.typifyType(this)
-            .accept(RustTypeResolvingVisitor(this))
     }) ?: RustUnknownType
 
 val RustTypeBearingItemElement.resolvedType: RustType
