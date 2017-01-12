@@ -29,7 +29,7 @@ class RustFileStub : PsiFileStubImpl<RustFile> {
 
     object Type : IStubFileElementType<RustFileStub>(RustLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 50
+        override fun getStubVersion(): Int = 51
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RustFileStub(file as RustFile)
@@ -613,8 +613,7 @@ class RustUseGlobElementStub(
 class RustPathElementStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val referenceName: String,
-    val isCrateRelative: Boolean,
-    val hasGenericArgs: Boolean
+    val isCrateRelative: Boolean
 ) : StubBase<RustPathElement>(parent, elementType) {
 
     object Type : RustStubElementType<RustPathElementStub, RustPathElement>("PATH") {
@@ -624,12 +623,11 @@ class RustPathElementStub(
             RustPathElementImpl(stub, this)
 
         override fun createStub(psi: RustPathElement, parentStub: StubElement<*>?) =
-            RustPathElementStub(parentStub, this, psi.referenceName, psi.isCrateRelative, psi.typeArgumentList != null)
+            RustPathElementStub(parentStub, this, psi.referenceName, psi.isCrateRelative)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RustPathElementStub(parentStub, this,
                 dataStream.readName()!!.string,
-                dataStream.readBoolean(),
                 dataStream.readBoolean()
             )
 
@@ -637,7 +635,6 @@ class RustPathElementStub(
             with(dataStream) {
                 writeName(stub.referenceName)
                 writeBoolean(stub.isCrateRelative)
-                writeBoolean(stub.hasGenericArgs)
             }
 
         override fun indexStub(stub: RustPathElementStub, sink: IndexSink) {
