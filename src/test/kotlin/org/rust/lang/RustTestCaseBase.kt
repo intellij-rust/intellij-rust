@@ -205,7 +205,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
 
         open protected fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
             val packages = listOf(testCargoPackage(contentRoot))
-            return CargoProjectDescription.deserialize(CleanCargoMetadata(packages, ArrayList()))!!
+            return CargoProjectDescription.deserialize(CleanCargoMetadata(packages, ArrayList()))
         }
 
         protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CleanCargoMetadata.Package(
@@ -242,7 +242,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             val packages = listOf(testCargoPackage(contentRoot))
 
             return CleanCargoMetadata(packages, emptyList()).let {
-                CargoProjectDescription.deserialize(it)!!
+                CargoProjectDescription.deserialize(it)
             }
         }
     }
@@ -261,7 +261,7 @@ abstract class RustTestCaseBase : LightPlatformCodeInsightFixtureTestCase(), Rus
             depNodes.add(CleanCargoMetadata.DependencyNode(0, listOf(1)))   // Our package depends on test_dep
 
             return CleanCargoMetadata(packages, depNodes).let {
-                CargoProjectDescription.deserialize(it)!!
+                CargoProjectDescription.deserialize(it)
             }
         }
     }

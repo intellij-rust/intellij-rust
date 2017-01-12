@@ -36,7 +36,7 @@ class RustPackageLibraryResolveTest : RustResolveTestBase() {
     private object WithLibraryProjectDescriptor : RustProjectDescriptorBase() {
         override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
             return CleanCargoMetadata(listOf(testCargoPackage(contentRoot, name = "my_lib")), emptyList()).let {
-                CargoProjectDescription.deserialize(it)!!
+                CargoProjectDescription.deserialize(it)
             }
         }
     }
