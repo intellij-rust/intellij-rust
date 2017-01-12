@@ -275,12 +275,12 @@ class RustErrorAnnotator : Annotator {
             .reduce(TextRange::union)
 
     private val Collection<String?>.namesList: String
-        get() = mapNotNull{ "`$it`" }.joinToString(", ")
+        get() = mapNotNull { "`$it`" }.joinToString(", ")
 
     private val RustSelfParameterElement.canonicalDecl: String
         get() = buildString {
-            and?.let { append('&') }
-            mut?.let { append("mut ") }
+            if (isRef) append('&')
+            if (isMut) append("mut ")
             append("self")
         }
 

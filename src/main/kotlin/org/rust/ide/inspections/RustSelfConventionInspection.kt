@@ -2,10 +2,11 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.RustFunctionRole
-import org.rust.lang.core.psi.impl.mixin.role
-import org.rust.lang.core.psi.impl.mixin.selfParameter
+import org.rust.lang.core.psi.RustElementVisitor
+import org.rust.lang.core.psi.RustFunctionElement
+import org.rust.lang.core.psi.RustImplItemElement
+import org.rust.lang.core.psi.impl.mixin.*
+import org.rust.lang.core.psi.queryAttributes
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.types.RustStructOrEnumTypeBase
 import org.rust.lang.core.types.util.resolvedType
@@ -53,8 +54,8 @@ private val RustFunctionElement.selfType: SelfType get() {
     val self = selfParameter
     return when {
         self == null -> SelfType.NO_SELF
-        self.and == null -> SelfType.SELF
-        self.mut == null -> SelfType.REF_SELF
+        !self.isRef -> SelfType.SELF
+        self.isMut -> SelfType.REF_SELF
         else -> SelfType.REF_MUT_SELF
     }
 }

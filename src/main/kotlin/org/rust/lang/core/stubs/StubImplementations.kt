@@ -34,7 +34,7 @@ class RustFileStub : PsiFileStubImpl<RustFile> {
 
     object Type : IStubFileElementType<RustFileStub>(RustLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 44
+        override fun getStubVersion(): Int = 47
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RustFileStub(file as RustFile)
@@ -104,8 +104,12 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "FOR_IN_TYPE" -> RustPlaceholderStub.Type("FOR_IN_TYPE", ::RustForInTypeElementImpl)
     "IMPL_TRAIT_TYPE" -> RustPlaceholderStub.Type("IMPL_TRAIT_TYPE", ::RustImplTraitTypeElementImpl)
 
-    "TYPE_PARAMETER_LIST" -> RustPlaceholderStub.Type("TYPE_PARAMETER_LIST", ::RustTypeParameterListElementImpl)
+    "VALUE_PARAMETER_LIST" -> RustPlaceholderStub.Type("VALUE_PARAMETER_LIST", ::RustValueParameterListElementImpl)
+    "VALUE_PARAMETER" -> RustPlaceholderStub.Type("VALUE_PARAMETER", ::RustValueParameterElementImpl)
+    "SELF_PARAMETER" -> RustSelfParameterElementStub.Type
     "TYPE_PARAMETER" -> RustTypeParameterElementStub.Type
+    "TYPE_PARAMETER_LIST" -> RustPlaceholderStub.Type("TYPE_PARAMETER_LIST", ::RustTypeParameterListElementImpl)
+    "TYPE_ARGUMENT_LIST" -> RustPlaceholderStub.Type("TYPE_ARGUMENT_LIST", ::RustTypeArgumentListElementImpl)
 
     else -> error("Unknown element $name")
 }
@@ -674,6 +678,38 @@ class RustTypeParameterElementStub(
             RustTypeParameterElementStub(parentStub, this, psi.name)
 
         override fun indexStub(stub: RustTypeParameterElementStub, sink: IndexSink) {
+            // NOP
+        }
+    }
+}
+
+
+class RustSelfParameterElementStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val isMut: Boolean,
+    val isRef: Boolean
+) : StubBase<RustSelfParameterElement>(parent, elementType) {
+
+    object Type : RustStubElementType<RustSelfParameterElementStub, RustSelfParameterElement>("SELF_PARAMETER") {
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RustSelfParameterElementStub(parentStub, this,
+                dataStream.readBoolean(),
+                dataStream.readBoolean()
+            )
+
+        override fun serialize(stub: RustSelfParameterElementStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                dataStream.writeBoolean(stub.isMut)
+                dataStream.writeBoolean(stub.isRef)
+            }
+
+        override fun createPsi(stub: RustSelfParameterElementStub): RustSelfParameterElement =
+            RustSelfParameterElementImpl(stub, this)
+
+        override fun createStub(psi: RustSelfParameterElement, parentStub: StubElement<*>?) =
+            RustSelfParameterElementStub(parentStub, this, psi.isRef, psi.isMut)
+
+        override fun indexStub(stub: RustSelfParameterElementStub, sink: IndexSink) {
             // NOP
         }
     }
