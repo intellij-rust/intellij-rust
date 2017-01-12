@@ -9,11 +9,6 @@ import org.rust.lang.RustLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.*
 import org.rust.lang.core.psi.impl.mixin.*
-import org.rust.lang.core.symbols.RustPath
-import org.rust.lang.core.symbols.readRustPath
-import org.rust.lang.core.symbols.writeRustPath
-import org.rust.utils.readNullable
-import org.rust.utils.writeNullable
 
 
 class RustFileStub : PsiFileStubImpl<RustFile> {
@@ -29,7 +24,7 @@ class RustFileStub : PsiFileStubImpl<RustFile> {
 
     object Type : IStubFileElementType<RustFileStub>(RustLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 51
+        override fun getStubVersion(): Int = 52
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RustFileStub(file as RustFile)
@@ -90,6 +85,7 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
 
     "PATH" -> RustPathElementStub.Type
 
+    "TRAIT_REF" -> RustPlaceholderStub.Type("TRAIT_REF", ::RustTraitRefElementImpl)
     "VEC_TYPE" -> RustPlaceholderStub.Type("VEC_TYPE", ::RustVecTypeElementImpl)
     "REF_LIKE_TYPE" -> RustPlaceholderStub.Type("REF_LIKE_TYPE", ::RustRefLikeTypeElementImpl)
     "BARE_FN_TYPE" -> RustPlaceholderStub.Type("BARE_FN_TYPE", ::RustBareFnTypeElementImpl)
@@ -379,26 +375,20 @@ class RustTraitItemElementStub(
 
 
 class RustImplItemElementStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val traitRef: RustPath?
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>
 ) : RustElementStub<RustImplItemElement>(parent, elementType) {
     object Type : RustStubElementType<RustImplItemElementStub, RustImplItemElement>("IMPL_ITEM") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RustImplItemElementStub(parentStub, this,
-                dataStream.readNullable { readRustPath() }
-            )
+            RustImplItemElementStub(parentStub, this)
 
-        override fun serialize(stub: RustImplItemElementStub, dataStream: StubOutputStream) =
-            with(dataStream) {
-                writeNullable(stub.traitRef) { writeRustPath(it) }
-            }
+        override fun serialize(stub: RustImplItemElementStub, dataStream: StubOutputStream) {}
 
         override fun createPsi(stub: RustImplItemElementStub): RustImplItemElement =
             RustImplItemElementImpl(stub, this)
 
         override fun createStub(psi: RustImplItemElement, parentStub: StubElement<*>?) =
-            RustImplItemElementStub(parentStub, this, psi.traitRef?.path?.asRustPath)
+            RustImplItemElementStub(parentStub, this)
 
         override fun indexStub(stub: RustImplItemElementStub, sink: IndexSink) = sink.indexImplItem(stub)
     }

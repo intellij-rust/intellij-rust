@@ -250,7 +250,11 @@ path_generic_args_with_colons ::= <<pathMode 'COLONS' path_impl>> { elementType 
 private meta qualified_path ::= '<' type [ AS trait_ref ] '>' '::' <<param>>
 
 // Path semantically constrained to resolve to a trait
-trait_ref ::= path_generic_args_without_colons
+trait_ref ::= path_generic_args_without_colons {
+  extends = "org.rust.lang.core.psi.impl.RustStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RustPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

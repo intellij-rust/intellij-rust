@@ -101,7 +101,7 @@ object RustImplIndex {
             fun index(stub: RustImplItemElementStub, sink: IndexSink) {
                 val type = stub.psi.type ?: return
                 val key = RustTypeFingerprint.create(type)
-                if (stub.traitRef != null && key != null) {
+                if (stub.psi.traitRef != null && key != null) {
                     sink.occurrence(KEY, key)
                 }
             }
