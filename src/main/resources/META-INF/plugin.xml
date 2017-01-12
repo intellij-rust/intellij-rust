@@ -56,7 +56,7 @@
 
         <!-- Matchers -->
 
-        <lang.braceMatcher language="Rust" implementationClass="org.rust.ide.typing.RsBraceMatcher"/>
+        <lang.braceMatcher language="Rust" implementationClass="org.rust.ide.typing.RsPairedBraceMatcher"/>
         <lang.quoteHandler language="Rust" implementationClass="org.rust.ide.typing.RsQuoteHandler"/>
 
         <!-- Doc-Provider -->

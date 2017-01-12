@@ -8,6 +8,8 @@ import org.rust.lang.core.psi.impl.RsNumericLiteralImpl;
 import org.rust.lang.core.psi.impl.RsRawStringLiteralImpl;
 import org.rust.lang.core.psi.impl.RsStringLiteralImpl;
 
+import static com.intellij.psi.TokenType.WHITE_SPACE;
+
 public interface RsTokenElementTypes {
 
     // Keywords
@@ -175,6 +177,12 @@ public interface RsTokenElementTypes {
     TokenSet COMMENTS_TOKEN_SET = TokenSet.orSet(
         TokenSet.create(BLOCK_COMMENT, EOL_COMMENT),
         DOC_COMMENTS_TOKEN_SET);
+
+    @NotNull
+    TokenSet COMMENTS_OR_WHITE_SPACE_TOKEN_SET = TokenSet.orSet(
+        COMMENTS_TOKEN_SET,
+        TokenSet.create(WHITE_SPACE)
+    );
 
     @NotNull
     TokenSet EOL_COMMENTS_TOKEN_SET = TokenSet.create(EOL_COMMENT, INNER_EOL_DOC_COMMENT, OUTER_EOL_DOC_COMMENT);

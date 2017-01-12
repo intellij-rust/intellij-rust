@@ -9,7 +9,7 @@ import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.psi.RsTokenElementTypes
 import org.rust.lang.core.psi.RsTokenElementTypes.*
 
-class RsBraceMatcher() : PairedBraceMatcher {
+class RsBraceMatcher : PairedBraceMatcher {
 
     override fun getPairs() = PAIRS
 
@@ -22,7 +22,8 @@ class RsBraceMatcher() : PairedBraceMatcher {
         private val PAIRS: Array<BracePair> = arrayOf(
             BracePair(RsTokenElementTypes.LBRACE, RsTokenElementTypes.RBRACE, true /* structural */),
             BracePair(RsTokenElementTypes.LPAREN, RsTokenElementTypes.RPAREN, false),
-            BracePair(RsTokenElementTypes.LBRACK, RsTokenElementTypes.RBRACK, false)
+            BracePair(RsTokenElementTypes.LBRACK, RsTokenElementTypes.RBRACK, false),
+            BracePair(RsTokenElementTypes.LT, RsTokenElementTypes.GT, false)
         )
 
         private val InsertPairBraceBefore = TokenSet.orSet(
