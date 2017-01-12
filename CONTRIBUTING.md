@@ -89,17 +89,25 @@ proactively use `?:` and `?.let` to deal with nullable values.
 
 ### Commit Messages
 
-Consider prefixing commit with a `(TAG):` which describes the area of the
+Consider prefixing commit with a `TAG:` which describes the area of the
 change. Common tags are:
 
-  * PSI
-  * CARGO
-  * GRD for build changes
+  * GRAM for changes to `.bnf` files
+  * PSI for other PSI related changes
+  * RES for name resolution
+  * TY for type inference
+  * COMP for code completion
+  
   * FMT for formatter
-  * GRAM for grammar changes
+  * TYPE for editor-related functions
+  * ANN for error highlighting and annotators
+  * INSP for inspections
+  * INT for intentions
+
+  * CARGO 
+  * GRD for build changes
   * T for tests
-  * RES for resolve
-  * TYPE for type iference
+  * DOC for documentation
 
 Try to keep the summary line of a commit message under 50 characters.
 
