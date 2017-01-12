@@ -9,6 +9,7 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase() {
         struct Foo;
         impl Foo {
             fn from_nothing(<warning descr="methods called `from_*` usually take no self; consider choosing a less ambiguous name">self</warning>) -> T { T() }
+            fn from_ok(x: i32) -> T { T() }
         }
     """)
 
@@ -25,6 +26,7 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase() {
         struct Foo;
         impl Foo {
             fn to_something(<warning descr="methods called `to_*` usually take self by reference; consider choosing a less ambiguous name">self</warning>) -> u32 { 0 }
+            fn to_something_else(&self) -> u32 { 92 }
         }
     """)
 
@@ -32,6 +34,7 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase() {
         struct Foo;
         impl Foo {
             fn is_awesome(<warning descr="methods called `is_*` usually take self by reference or no self; consider choosing a less ambiguous name">self</warning>) {}
+            fn is_awesome_ref(&self) {}
         }
     """)
 

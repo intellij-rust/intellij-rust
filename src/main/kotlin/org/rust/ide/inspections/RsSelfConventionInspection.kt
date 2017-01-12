@@ -54,9 +54,9 @@ private val RsFunction.selfType: SelfType get() {
     val self = selfParameter
     return when {
         self == null -> SelfType.NO_SELF
-        !self.isRef -> SelfType.SELF
-        self.isMut -> SelfType.REF_SELF
-        else -> SelfType.REF_MUT_SELF
+        self.isMut -> SelfType.REF_MUT_SELF
+        self.isRef -> SelfType.REF_SELF
+        else -> SelfType.SELF
     }
 }
 
