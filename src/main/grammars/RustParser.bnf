@@ -130,23 +130,8 @@
     ]
 
     //
-    // References
-    //
-
-    mixin       ("path") = "org.rust.lang.core.psi.impl.mixin.RsPathImplMixin"
-    implements  ("path") = "org.rust.lang.core.psi.RsReferenceElement"
-
-    //
     //  Misc
     //
-
-    implements  ("pat_binding") = [ "org.rust.lang.core.psi.RsNamedElement" ]
-    mixin       ("pat_binding") = "org.rust.lang.core.psi.impl.mixin.RsPatBindingImplMixin"
-
-    implements  ("alias") = "org.rust.lang.core.psi.RsNamedElement"
-    extends     ("alias") = "org.rust.lang.core.psi.impl.RsNamedElementImpl"
-
-    mixin       ("use_glob") = "org.rust.lang.core.psi.impl.mixin.RsUseGlobImplMixin"
 
     elementType (".*_bin_expr")   = binary_expr
     elementType (".*_range_expr") = range_expr
@@ -200,6 +185,8 @@ meta_item_args ::= '(' [ <<comma_separated_list (meta_item | lit_expr)>> ] ')'
 
 private path_ident ::= !("union" IDENTIFIER) IDENTIFIER | SELF | SUPER | CSELF
 fake path ::= (path '::')? path_ident path_type_arguments? {
+  implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RsPathImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPathStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -474,7 +461,10 @@ private seq_pat ::= pat_with_recover* ['..' [',' pat_with_recover+] ]
 pat_ref ::= '&' MUT? pat
 
 pat_wild ::= '_'
-pat_binding ::= binding_mode? IDENTIFIER !'...' !'::'
+pat_binding ::= binding_mode? IDENTIFIER !'...' !'::' {
+  implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RsPatBindingImplMixin"
+}
 
 pat_field ::= IDENTIFIER ':' pat
             | BOX? pat_binding
@@ -524,7 +514,7 @@ use_glob_list ::= '{' use_glob_with_recover* '}' {
 
 use_glob ::= (IDENTIFIER | SELF) alias? {
   implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
-  extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
+  mixin = "org.rust.lang.core.psi.impl.mixin.RsUseGlobImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsUseGlobStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -537,6 +527,7 @@ private use_glob_with_recover ::= !'}' use_glob (',' | &'}') {
 private use_glob_recover ::= !('}' | SELF | IDENTIFIER)
 
 alias ::= AS IDENTIFIER {
+  implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
   extends = "org.rust.lang.core.psi.impl.RsStubbedNamedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsAliasStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
