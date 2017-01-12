@@ -1,13 +1,11 @@
 package org.rust.lang.core.types.visitors.impl
 
 import org.rust.lang.core.types.*
-import org.rust.lang.core.types.visitors.RustInvariantTypeVisitor
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 import org.rust.utils.safely
 
-open class RustEqualityTypeVisitor(override var lop: RustType)
-    : RustEqualityTypeVisitorBase<RustType>()
-    , RustTypeVisitor<Boolean> {
+class RustEqualityTypeVisitor(var lop: RustType)
+    : RustTypeVisitor<Boolean> {
 
     protected fun visit(lop: RustType, rop: RustType): Boolean {
         val prev = this.lop
@@ -16,6 +14,36 @@ open class RustEqualityTypeVisitor(override var lop: RustType)
         return safely({ rop.accept(this) }) {
             this.lop = prev
         }
+    }
+
+    override fun visitInteger(type: RustIntegerType): Boolean {
+        val lop = lop
+        return lop is RustIntegerType && lop.kind === type.kind
+    }
+
+    override fun visitFloat(type: RustFloatType): Boolean {
+        val lop = lop
+        return lop is RustFloatType && lop.kind == type.kind
+    }
+
+    override fun visitUnknown(type: RustUnknownType): Boolean {
+        return lop === type
+    }
+
+    override fun visitUnitType(type: RustUnitType): Boolean {
+        return lop === type
+    }
+
+    override fun visitString(type: RustStringSliceType): Boolean {
+        return lop === type
+    }
+
+    override fun visitChar(type: RustCharacterType): Boolean {
+        return lop === type
+    }
+
+    override fun visitBoolean(type: RustBooleanType): Boolean {
+        return lop === type
     }
 
     protected fun visitTypeList(lop: Iterable<RustType>, rop: Iterable<RustType>): Boolean =
@@ -75,41 +103,5 @@ open class RustEqualityTypeVisitor(override var lop: RustType)
             return false
 
         return lop.mutable == type.mutable && visit(lop.referenced, type.referenced)
-    }
-}
-
-
-abstract class RustEqualityTypeVisitorBase<T>() : RustInvariantTypeVisitor<Boolean> {
-
-    protected abstract var lop: T
-
-    override fun visitInteger(type: RustIntegerType): Boolean {
-        val lop = lop
-        return lop is RustIntegerType && lop.kind === type.kind
-    }
-
-    override fun visitFloat(type: RustFloatType): Boolean {
-        val lop = lop
-        return lop is RustFloatType && lop.kind == type.kind
-    }
-
-    override fun visitUnknown(type: RustUnknownType): Boolean {
-        return lop === type
-    }
-
-    override fun visitUnitType(type: RustUnitType): Boolean {
-        return lop === type
-    }
-
-    override fun visitString(type: RustStringSliceType): Boolean {
-        return lop === type
-    }
-
-    override fun visitChar(type: RustCharacterType): Boolean {
-        return lop === type
-    }
-
-    override fun visitBoolean(type: RustBooleanType): Boolean {
-        return lop === type
     }
 }

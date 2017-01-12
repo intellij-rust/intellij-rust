@@ -1,14 +1,27 @@
 package org.rust.lang.core.types.visitors.impl
 
 import org.rust.lang.core.types.*
-import org.rust.lang.core.types.visitors.RustInvariantTypeVisitor
 import org.rust.lang.core.types.visitors.RustTypeVisitor
 
 
-open class RustHashCodeComputingTypeVisitor
-    : RustHashCodeComputingTypeVisitorBase()
-    , RustTypeVisitor<Int> {
-    protected fun visit(type: RustType): Int = type.accept(this)
+class RustHashCodeComputingTypeVisitor
+    : RustTypeVisitor<Int> {
+
+    fun visit(type: RustType): Int = type.accept(this)
+
+    override fun visitInteger(type: RustIntegerType): Int = type.kind.hashCode()
+
+    override fun visitFloat(type: RustFloatType): Int = type.kind.hashCode()
+
+    override fun visitUnitType(type: RustUnitType): Int = 9049
+
+    override fun visitString(type: RustStringSliceType): Int = 10709
+
+    override fun visitChar(type: RustCharacterType): Int = 10099
+
+    override fun visitBoolean(type: RustBooleanType): Int = 10427
+
+    override fun visitUnknown(type: RustUnknownType): Int = 10499
 
     override fun visitStruct(type: RustStructType): Int = type.item.hashCode() * 10067 + 9631
 
@@ -26,24 +39,4 @@ open class RustHashCodeComputingTypeVisitor
 
     override fun visitReference(type: RustReferenceType): Int =
         visit(type.referenced) * 13577 + (if (type.mutable) 3331 else 0) + 9901
-
-}
-
-
-open class RustHashCodeComputingTypeVisitorBase : RustInvariantTypeVisitor<Int> {
-
-    override fun visitInteger(type: RustIntegerType): Int = type.kind.hashCode()
-
-    override fun visitFloat(type: RustFloatType): Int = type.kind.hashCode()
-
-    override fun visitUnitType(type: RustUnitType): Int = 9049
-
-    override fun visitString(type: RustStringSliceType): Int = 10709
-
-    override fun visitChar(type: RustCharacterType): Int = 10099
-
-    override fun visitBoolean(type: RustBooleanType): Int = 10427
-
-    override fun visitUnknown(type: RustUnknownType): Int = 10499
-
 }
