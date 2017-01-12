@@ -3,7 +3,7 @@ package org.rust.ide.intentions
 /**
  * @author Moklev Vyacheslav
  */
-class SimplifyBooleanExpressionIntentionTest : RustIntentionTestBase(SimplifyBooleanExpressionIntention()) {
+class SimplifyBooleanExpressionIntentionTest : RsIntentionTestBase(SimplifyBooleanExpressionIntention()) {
     fun testOr() = doAvailableTest("""
         fn main() {
             let a = true /*caret*/|| false;
@@ -156,4 +156,13 @@ class SimplifyBooleanExpressionIntentionTest : RustIntentionTestBase(SimplifyBoo
         }
     """)
 
+    fun testFindLast() = doAvailableTest("""
+        fn main() {
+            let a = true || x > 0 ||/*caret*/ x < 0 || y > 2 || y < 2 || flag;
+        }
+    """, """
+        fn main() {
+            let a = true;
+        }
+    """)
 }
