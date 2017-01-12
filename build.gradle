@@ -132,7 +132,10 @@ check.dependsOn performanceTest
 
 
 dependencies {
-    compile 'org.jetbrains:markdown:0.1.12'
+    compile('org.jetbrains:markdown:0.1.12') {
+        exclude module: 'kotlin-runtime'
+        exclude module: 'kotlin-stdlib'
+    }
 }
 
 lexerTask(project, 'RustLexer', 'org/rust/lang/core/lexer')
