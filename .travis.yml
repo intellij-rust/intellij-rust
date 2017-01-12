@@ -4,13 +4,13 @@ jdk: oraclejdk8
 env:
   global: ORG_GRADLE_PROJECT_downloadIdeaSources=false
   matrix:
-        - ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT
-        - ORG_GRADLE_PROJECT_ideaVersion=2016.1
+        - ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT RUST_VERSION=nightly
+        - ORG_GRADLE_PROJECT_ideaVersion=2016.1              RUST_VERSION=1.13.0
 
 before_script:
   # We want to use the nightly toolchain because we want to check
   # if some new syntax breaks our parser.
-  - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
+  - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION -y
   - export PATH=$HOME/.cargo/bin:$PATH
   - cargo install rustfmt
 
