@@ -7,12 +7,12 @@ fun RsBinaryExpr.negateToString(): String {
     val lhs = left.text
     val rhs = right?.text ?: ""
     val op = when (operatorType) {
-        RustTokenElementTypes.EQEQ -> "!="
-        RustTokenElementTypes.EXCLEQ -> "=="
-        RustTokenElementTypes.GT -> "<="
-        RustTokenElementTypes.LT -> ">="
-        RustTokenElementTypes.GTEQ -> "<"
-        RustTokenElementTypes.LTEQ -> ">"
+        RsTokenElementTypes.EQEQ -> "!="
+        RsTokenElementTypes.EXCLEQ -> "=="
+        RsTokenElementTypes.GT -> "<="
+        RsTokenElementTypes.LT -> ">="
+        RsTokenElementTypes.GTEQ -> "<"
+        RsTokenElementTypes.LTEQ -> ">"
         else -> null
     }
     return if (op != null) "$lhs $op $rhs" else "!($text)"

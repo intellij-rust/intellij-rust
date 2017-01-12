@@ -5,13 +5,13 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
-import org.rust.lang.core.psi.RustLiteral
-import org.rust.lang.core.psi.RustTokenElementTypes.*
+import org.rust.lang.core.psi.RsLiteral
+import org.rust.lang.core.psi.RsTokenElementTypes.*
 import org.rust.lang.core.psi.visitors.RustVisitorEx
 
 class RustLiteralAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) = element.accept(object : RustVisitorEx() {
-        fun visit(literal: RustLiteral) {
+        fun visit(literal: RsLiteral) {
             // Check suffix
             val suffix = literal.suffix
             val possibleSuffixes = literal.possibleSuffixes
@@ -26,12 +26,12 @@ class RustLiteralAnnotator : Annotator {
             }
         }
 
-        override fun visitNumericLiteral(literal: RustLiteral.Number) {
+        override fun visitNumericLiteral(literal: RsLiteral.Number) {
             // TODO: Check numeric literals boundaries
             visit(literal)
         }
 
-        override fun visitTextLiteral(literal: RustLiteral.Text) {
+        override fun visitTextLiteral(literal: RsLiteral.Text) {
             // Check char literal length
             when (literal.elementType) {
                 BYTE_LITERAL, CHAR_LITERAL -> {
@@ -54,7 +54,7 @@ class RustLiteralAnnotator : Annotator {
     })
 }
 
-private fun AnnotationHolder.literalError(literal: RustLiteral, errorMessage: String): Annotation? =
+private fun AnnotationHolder.literalError(literal: RsLiteral, errorMessage: String): Annotation? =
     createErrorAnnotation(literal as PsiElement, errorMessage)
 
 private val PsiElement.displayName: String

@@ -49,7 +49,7 @@ class RsFoldingBuilder() : FoldingBuilderEx(), DumbAware {
         override fun visitImplItem(o: RsImplItem) = foldBetween(o, o.lbrace, o.rbrace)
 
         override fun visitComment(comment: PsiComment) {
-            if (comment.tokenType == RustTokenElementTypes.BLOCK_COMMENT) {
+            if (comment.tokenType == RsTokenElementTypes.BLOCK_COMMENT) {
                 fold(comment)
             }
         }

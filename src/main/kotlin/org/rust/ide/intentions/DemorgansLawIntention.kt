@@ -16,8 +16,8 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
     private fun setTextForElement(element: RsBinaryExpr) {
         val binaryExpression = element
         text = when (binaryExpression.operatorType) {
-            RustTokenElementTypes.ANDAND -> "DeMorgan's Law, Replace '&&' with '||'"
-            RustTokenElementTypes.OROR -> "DeMorgan's Law, Replace '||' with '&&'"
+            RsTokenElementTypes.ANDAND -> "DeMorgan's Law, Replace '&&' with '||'"
+            RsTokenElementTypes.OROR -> "DeMorgan's Law, Replace '||' with '&&'"
             else -> ""
         }
     }
@@ -30,7 +30,7 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val binExpr = element.parentOfType<RsBinaryExpr>() ?: return null
         val opType = binExpr.operatorType
-        if (opType == RustTokenElementTypes.ANDAND || opType == RustTokenElementTypes.OROR) {
+        if (opType == RsTokenElementTypes.ANDAND || opType == RsTokenElementTypes.OROR) {
             setTextForElement(binExpr)
             return Context(binExpr, opType)
         }
@@ -96,8 +96,8 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
                     c = c.expr
                 }
                 return if (c is RsBinaryExpr
-                    && c.operatorType != RustTokenElementTypes.ANDAND
-                    && c.operatorType != RustTokenElementTypes.OROR) {
+                    && c.operatorType != RsTokenElementTypes.ANDAND
+                    && c.operatorType != RsTokenElementTypes.OROR) {
                     "${"(".repeat(level)}${c.negateToString()}${")".repeat(level)}"
                 } else {
                     "!" + condition.text
@@ -128,7 +128,7 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
         }
 
         val flippedConjunction = if (exp.operatorType == opType) {
-            if (opType == RustTokenElementTypes.ANDAND) "||" else "&&"
+            if (opType == RsTokenElementTypes.ANDAND) "||" else "&&"
         } else {
             exp.operator.text
         }

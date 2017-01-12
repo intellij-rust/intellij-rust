@@ -5,20 +5,20 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import org.rust.lang.core.psi.impl.RustNumericLiteralImpl
-import org.rust.lang.core.psi.impl.RustRawStringLiteralImpl
-import org.rust.lang.core.psi.impl.RustStringLiteralImpl
-import org.rust.lang.core.psi.RustTokenElementTypes.BYTE_LITERAL as BCH
-import org.rust.lang.core.psi.RustTokenElementTypes.CHAR_LITERAL as CHR
-import org.rust.lang.core.psi.RustTokenElementTypes.FLOAT_LITERAL as FLT
-import org.rust.lang.core.psi.RustTokenElementTypes.INTEGER_LITERAL as INT
-import org.rust.lang.core.psi.RustTokenElementTypes.RAW_BYTE_STRING_LITERAL as BRW
-import org.rust.lang.core.psi.RustTokenElementTypes.RAW_STRING_LITERAL as RAW
+import org.rust.lang.core.psi.impl.RsNumericLiteralImpl
+import org.rust.lang.core.psi.impl.RsRawStringLiteralImpl
+import org.rust.lang.core.psi.impl.RsStringLiteralImpl
+import org.rust.lang.core.psi.RsTokenElementTypes.BYTE_LITERAL as BCH
+import org.rust.lang.core.psi.RsTokenElementTypes.CHAR_LITERAL as CHR
+import org.rust.lang.core.psi.RsTokenElementTypes.FLOAT_LITERAL as FLT
+import org.rust.lang.core.psi.RsTokenElementTypes.INTEGER_LITERAL as INT
+import org.rust.lang.core.psi.RsTokenElementTypes.RAW_BYTE_STRING_LITERAL as BRW
+import org.rust.lang.core.psi.RsTokenElementTypes.RAW_STRING_LITERAL as RAW
 
 abstract class RustLiteralOffsetsTestCase(
     private val type: IElementType,
     private val text: String,
-    private val constructor: (IElementType, CharSequence) -> RustLiteral) {
+    private val constructor: (IElementType, CharSequence) -> RsLiteral) {
 
     protected fun doTest() {
         val literal = constructor(type, text.replace("|", ""))
@@ -26,7 +26,7 @@ abstract class RustLiteralOffsetsTestCase(
         assertEquals(expected, literal.offsets)
     }
 
-    private fun makeOffsets(text: String): RustLiteral.Offsets {
+    private fun makeOffsets(text: String): RsLiteral.Offsets {
         val parts = text.split('|')
         assert(parts.size == 5)
         val prefixEnd = parts[0].length
@@ -34,7 +34,7 @@ abstract class RustLiteralOffsetsTestCase(
         val valueEnd = openDelimEnd + parts[2].length
         val closeDelimEnd = valueEnd + parts[3].length
         val suffixEnd = closeDelimEnd + parts[4].length
-        return RustLiteral.Offsets.fromEndOffsets(prefixEnd, openDelimEnd, valueEnd, closeDelimEnd, suffixEnd)
+        return RsLiteral.Offsets.fromEndOffsets(prefixEnd, openDelimEnd, valueEnd, closeDelimEnd, suffixEnd)
     }
 }
 
@@ -42,7 +42,7 @@ abstract class RustLiteralOffsetsTestCase(
 class RustNumericLiteralOffsetsTest(
     type: IElementType,
     text: String
-) : RustLiteralOffsetsTestCase(type, text, ::RustNumericLiteralImpl) {
+) : RustLiteralOffsetsTestCase(type, text, ::RsNumericLiteralImpl) {
 
     @Test
     fun test() = doTest()
@@ -70,7 +70,7 @@ class RustNumericLiteralOffsetsTest(
 
 @RunWith(Parameterized::class)
 class RustStringLiteralOffsetsTest(type: IElementType, text: String) :
-    RustLiteralOffsetsTestCase(type, text, ::RustStringLiteralImpl) {
+    RustLiteralOffsetsTestCase(type, text, ::RsStringLiteralImpl) {
     @Test
     fun test() = doTest()
 
@@ -94,7 +94,7 @@ class RustStringLiteralOffsetsTest(type: IElementType, text: String) :
 
 @RunWith(Parameterized::class)
 class RustRawStringLiteralOffsetsTest(type: IElementType, text: String) :
-    RustLiteralOffsetsTestCase(type, text, ::RustRawStringLiteralImpl) {
+    RustLiteralOffsetsTestCase(type, text, ::RsRawStringLiteralImpl) {
     @Test
     fun test() = doTest()
 

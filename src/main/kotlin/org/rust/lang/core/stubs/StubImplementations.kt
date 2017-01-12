@@ -24,7 +24,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 52
+        override fun getStubVersion(): Int = 53
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -111,8 +111,8 @@ class RsExternCrateItemStub(
     override val name: String?,
     override val isPublic: Boolean
 ) : StubBase<RsExternCrateItem>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub {
+    RsNamedStub,
+    RsVisibilityStub {
 
     object Type : RsStubElementType<RsExternCrateItemStub, RsExternCrateItem>("EXTERN_CRATE_ITEM") {
 
@@ -144,7 +144,7 @@ class RsUseItemStub(
     override val isPublic: Boolean,
     val isStarImport: Boolean
 ) : RsElementStub<RsUseItem>(parent, elementType),
-    RustVisibilityStub {
+    RsVisibilityStub {
 
     object Type : RsStubElementType<RsUseItemStub, RsUseItem>("USE_ITEM") {
 
@@ -178,8 +178,8 @@ class RsStructItemStub(
     override val name: String?,
     override val isPublic: Boolean
 ) : StubBase<RsStructItem>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub {
+    RsNamedStub,
+    RsVisibilityStub {
 
     object Type : RsStubElementType<RsStructItemStub, RsStructItem>("STRUCT_ITEM") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
@@ -211,8 +211,8 @@ class RsEnumItemStub(
     override val name: String?,
     override val isPublic: Boolean
 ) : StubBase<RsEnumItem>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub {
+    RsNamedStub,
+    RsVisibilityStub {
 
     object Type : RsStubElementType<RsEnumItemStub, RsEnumItem>("ENUM_ITEM") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsEnumItemStub =
@@ -244,7 +244,7 @@ class RsEnumVariantStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?
 ) : StubBase<RsEnumVariant>(parent, elementType),
-    RustNamedStub {
+    RsNamedStub {
 
     object Type : RsStubElementType<RsEnumVariantStub, RsEnumVariant>("ENUM_VARIANT") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsEnumVariantStub =
@@ -278,8 +278,8 @@ class RsModDeclItemStub(
     val pathAttribute: String?,
     val isLocal: Boolean
 ) : StubBase<RsModDeclItem>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub {
+    RsNamedStub,
+    RsVisibilityStub {
 
     object Type : RsStubElementType<RsModDeclItemStub, RsModDeclItem>("MOD_DECL_ITEM") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
@@ -314,8 +314,8 @@ class RsModItemStub(
     override val name: String?,
     override val isPublic: Boolean
 ) : StubBase<RsModItem>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub {
+    RsNamedStub,
+    RsVisibilityStub {
 
     object Type : RsStubElementType<RsModItemStub, RsModItem>("MOD_ITEM") {
 
@@ -347,8 +347,8 @@ class RsTraitItemStub(
     override val name: String?,
     override val isPublic: Boolean
 ) : StubBase<RsTraitItem>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub {
+    RsNamedStub,
+    RsVisibilityStub {
 
     object Type : RsStubElementType<RsTraitItemStub, RsTraitItem>("TRAIT_ITEM") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
@@ -403,10 +403,10 @@ class RsFunctionStub(
     val isAbstract: Boolean,
     val isStatic: Boolean,
     val isTest: Boolean,
-    val role: RustFunctionRole
+    val role: RsFunctionRole
 ) : StubBase<RsFunction>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub {
+    RsNamedStub,
+    RsVisibilityStub {
 
     object Type : RsStubElementType<RsFunctionStub, RsFunction>("FUNCTION") {
 
@@ -417,7 +417,7 @@ class RsFunctionStub(
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
-                dataStream.readEnum(RustFunctionRole.values())
+                dataStream.readEnum(RsFunctionRole.values())
             )
 
         override fun serialize(stub: RsFunctionStub, dataStream: StubOutputStream) =
@@ -447,8 +447,8 @@ class RsConstantStub(
     override val name: String?,
     override val isPublic: Boolean
 ) : StubBase<RsConstant>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub {
+    RsNamedStub,
+    RsVisibilityStub {
 
     object Type : RsStubElementType<RsConstantStub, RsConstant>("CONSTANT") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
@@ -478,10 +478,10 @@ class RsTypeAliasStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
     override val isPublic: Boolean,
-    val role: RustTypeAliasRole
+    val role: RsTypeAliasRole
 ) : StubBase<RsTypeAlias>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub {
+    RsNamedStub,
+    RsVisibilityStub {
 
     object Type : RsStubElementType<RsTypeAliasStub, RsTypeAlias>("TYPE_ALIAS") {
 
@@ -489,7 +489,7 @@ class RsTypeAliasStub(
             RsTypeAliasStub(parentStub, this,
                 dataStream.readNameAsString(),
                 dataStream.readBoolean(),
-                dataStream.readEnum(RustTypeAliasRole.values())
+                dataStream.readEnum(RsTypeAliasRole.values())
             )
 
         override fun serialize(stub: RsTypeAliasStub, dataStream: StubOutputStream) =
@@ -515,8 +515,8 @@ class RsFieldDeclStub(
     override val name: String?,
     override val isPublic: Boolean
 ) : StubBase<RsFieldDecl>(parent, elementType),
-    RustNamedStub,
-    RustVisibilityStub {
+    RsNamedStub,
+    RsVisibilityStub {
 
     object Type : RsStubElementType<RsFieldDeclStub, RsFieldDecl>("FIELD_DECL") {
         override fun createPsi(stub: RsFieldDeclStub) =
@@ -546,7 +546,7 @@ class RsAliasStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?
 ) : StubBase<RsAlias>(parent, elementType),
-    RustNamedStub {
+    RsNamedStub {
 
     object Type : RsStubElementType<RsAliasStub, RsAlias>("ALIAS") {
         override fun createPsi(stub: RsAliasStub) =
@@ -639,7 +639,7 @@ class RsTypeParameterStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?
 ) : StubBase<RsTypeParameter>(parent, elementType),
-    RustNamedStub {
+    RsNamedStub {
 
     object Type : RsStubElementType<RsTypeParameterStub, RsTypeParameter>("TYPE_PARAMETER") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =

@@ -24,23 +24,23 @@ abstract class RsTypeAliasImplMixin : RsStubbedNamedElementImpl<RsTypeAliasStub>
     override val crateRelativePath: RustPath.CrateRelative? get() = RustPsiImplUtil.crateRelativePath(this)
 }
 
-enum class RustTypeAliasRole {
+enum class RsTypeAliasRole {
     // Bump stub version if reorder fields
     FREE,
     TRAIT_ASSOC_TYPE,
     IMPL_ASSOC_TYPE
 }
 
-val RsTypeAlias.role: RustTypeAliasRole get() {
+val RsTypeAlias.role: RsTypeAliasRole get() {
     val stub = stub
     if (stub != null) return stub.role
     return when (parent) {
-        is RsItemsOwner -> RustTypeAliasRole.FREE
-        is RsTraitItem -> RustTypeAliasRole.TRAIT_ASSOC_TYPE
-        is RsImplItem -> RustTypeAliasRole.IMPL_ASSOC_TYPE
+        is RsItemsOwner -> RsTypeAliasRole.FREE
+        is RsTraitItem -> RsTypeAliasRole.TRAIT_ASSOC_TYPE
+        is RsImplItem -> RsTypeAliasRole.IMPL_ASSOC_TYPE
         else -> error("Unexpected parent of type alias: $parent")
     }
 }
 
 val RsTypeAlias.default: PsiElement?
-    get() = node.findChildByType(RustTokenElementTypes.DEFAULT)?.psi
+    get() = node.findChildByType(RsTokenElementTypes.DEFAULT)?.psi

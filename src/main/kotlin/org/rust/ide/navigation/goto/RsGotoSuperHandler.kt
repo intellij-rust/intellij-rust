@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsCompositeElement
 import org.rust.lang.core.psi.RsMod
 import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.impl.mixin.RustFunctionRole
+import org.rust.lang.core.psi.impl.mixin.RsFunctionRole
 import org.rust.lang.core.psi.impl.mixin.role
 import org.rust.lang.core.psi.impl.mixin.superMethod
 
@@ -36,7 +36,7 @@ class RsGotoSuperHandler : LanguageCodeInsightActionHandler {
             RsMod::class.java
         ) ?: return null
 
-        if (modOrMethod is RsFunction && modOrMethod.role != RustFunctionRole.IMPL_METHOD) {
+        if (modOrMethod is RsFunction && modOrMethod.role != RsFunctionRole.IMPL_METHOD) {
             return findTarget(modOrMethod)
         }
 

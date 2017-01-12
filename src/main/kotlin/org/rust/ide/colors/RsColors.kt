@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Default
 /**
  * See [RsColorSettingsPage] and [org.rust.ide.highlight.syntax.RustHighlighter]
  */
-enum class RustColor(humanName: String, val default: TextAttributesKey) {
+enum class RsColor(humanName: String, val default: TextAttributesKey) {
     IDENTIFIER("Identifier", Default.IDENTIFIER),
     FUNCTION("Function", Default.FUNCTION_DECLARATION),
     METHOD("Method", Default.INSTANCE_METHOD),

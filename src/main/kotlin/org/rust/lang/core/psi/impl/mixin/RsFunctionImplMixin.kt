@@ -27,10 +27,10 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
         get() = block?.innerAttrList.orEmpty()
 
     override fun getIcon(flags: Int): Icon = when (role) {
-        RustFunctionRole.FREE, RustFunctionRole.FOREIGN ->
+        RsFunctionRole.FREE, RsFunctionRole.FOREIGN ->
             if (isTest) RsIcons.FUNCTION.addTestMark() else RsIcons.FUNCTION
 
-        RustFunctionRole.TRAIT_METHOD, RustFunctionRole.IMPL_METHOD -> when {
+        RsFunctionRole.TRAIT_METHOD, RsFunctionRole.IMPL_METHOD -> when {
             isStatic && isAbstract -> RsIcons.ABSTRACT_ASSOC_FUNCTION
             isStatic -> RsIcons.ASSOC_FUNCTION
             isAbstract -> RsIcons.ABSTRACT_METHOD
@@ -44,7 +44,7 @@ val RsFunction.isStatic: Boolean get() = stub?.isStatic ?: selfParameter == null
 val RsFunction.isTest: Boolean get() = stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
 
 
-enum class RustFunctionRole {
+enum class RsFunctionRole {
     // Bump stub version if reorder fields
     FREE,
     TRAIT_METHOD,
@@ -52,14 +52,14 @@ enum class RustFunctionRole {
     FOREIGN
 }
 
-val RsFunction.role: RustFunctionRole get() {
+val RsFunction.role: RsFunctionRole get() {
     val stub = stub
     if (stub != null) return stub.role
     return when (parent) {
-        is RsItemsOwner -> RustFunctionRole.FREE
-        is RsTraitItem -> RustFunctionRole.TRAIT_METHOD
-        is RsImplItem -> RustFunctionRole.IMPL_METHOD
-        is RsForeignModItem -> RustFunctionRole.FOREIGN
+        is RsItemsOwner -> RsFunctionRole.FREE
+        is RsTraitItem -> RsFunctionRole.TRAIT_METHOD
+        is RsImplItem -> RsFunctionRole.IMPL_METHOD
+        is RsForeignModItem -> RsFunctionRole.FOREIGN
         else -> error("Unexpected function parent: $parent")
     }
 }

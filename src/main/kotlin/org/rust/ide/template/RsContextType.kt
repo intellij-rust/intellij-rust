@@ -27,7 +27,7 @@ sealed class RsContextType(
         }
 
         val element = file.findElementAt(offset)
-        if (element == null || element is PsiComment || element is RustLiteral) {
+        if (element == null || element is PsiComment || element is RsLiteral) {
             return false
         }
 

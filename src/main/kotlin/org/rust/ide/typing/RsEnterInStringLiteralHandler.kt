@@ -9,8 +9,8 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
 import com.intellij.psi.StringEscapesTokenTypes.STRING_LITERAL_ESCAPES
-import org.rust.lang.core.psi.RustTokenElementTypes.RAW_LITERALS
-import org.rust.lang.core.psi.RustTokenElementTypes.STRING_LITERALS
+import org.rust.lang.core.psi.RsTokenElementTypes.RAW_LITERALS
+import org.rust.lang.core.psi.RsTokenElementTypes.STRING_LITERALS
 import org.rust.lang.core.psi.impl.RsFile
 
 class RsEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {

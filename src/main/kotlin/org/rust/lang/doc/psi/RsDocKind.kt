@@ -1,7 +1,7 @@
 package org.rust.lang.doc.psi
 
 import com.intellij.psi.tree.IElementType
-import org.rust.lang.core.psi.RustTokenElementTypes.*
+import org.rust.lang.core.psi.RsTokenElementTypes.*
 
 enum class RsDocKind {
     Attr {

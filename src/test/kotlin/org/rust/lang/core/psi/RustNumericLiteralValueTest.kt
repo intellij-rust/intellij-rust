@@ -6,13 +6,13 @@ import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import org.rust.lang.core.psi.RustTokenElementTypes.FLOAT_LITERAL
-import org.rust.lang.core.psi.RustTokenElementTypes.INTEGER_LITERAL
-import org.rust.lang.core.psi.impl.RustNumericLiteralImpl
+import org.rust.lang.core.psi.RsTokenElementTypes.FLOAT_LITERAL
+import org.rust.lang.core.psi.RsTokenElementTypes.INTEGER_LITERAL
+import org.rust.lang.core.psi.impl.RsNumericLiteralImpl
 import java.util.*
 
 @RunWith(Parameterized::class)
-class RustNumericLiteralValueTest(private val constructor: (String) -> RustLiteral.Number,
+class RustNumericLiteralValueTest(private val constructor: (String) -> RsLiteral.Number,
                                   private val input: String,
                                   private val expectedOutput: Any?) {
     @Test
@@ -39,8 +39,8 @@ class RustNumericLiteralValueTest(private val constructor: (String) -> RustLiter
             arrayOf(u64, "0x1${"0".repeat(15)}1", null) // 2^64+1
         )
 
-        val u64 = { s: String -> RustNumericLiteralImpl(INTEGER_LITERAL, s) }
-        val f64 = { s: String -> RustNumericLiteralImpl(FLOAT_LITERAL, s) }
+        val u64 = { s: String -> RsNumericLiteralImpl(INTEGER_LITERAL, s) }
+        val f64 = { s: String -> RsNumericLiteralImpl(FLOAT_LITERAL, s) }
     }
 }
 
@@ -61,7 +61,7 @@ class RustNumericLiteralValueFuzzyTest {
 
     private fun doTest(elementType: IElementType, text: String) {
         try {
-            val elem = RustNumericLiteralImpl(elementType, text)
+            val elem = RsNumericLiteralImpl(elementType, text)
             if (elem.isInt) {
                 elem.valueAsLong
             } else {

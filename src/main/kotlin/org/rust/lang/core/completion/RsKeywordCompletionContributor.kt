@@ -12,7 +12,7 @@ import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RustTokenElementTypes
+import org.rust.lang.core.psi.RsTokenElementTypes
 import org.rust.lang.core.psi.impl.RsFile
 
 /**
@@ -76,6 +76,6 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     private fun statementBeginningPattern(vararg startWords: String): PsiElementPattern.Capture<PsiElement> =
         psiElement<PsiElement>()
-            .withElementType(TokenSet.create(RustTokenElementTypes.IDENTIFIER))
+            .withElementType(TokenSet.create(RsTokenElementTypes.IDENTIFIER))
             .and(RsPsiPattern.onStatementBeginning(*startWords))
 }

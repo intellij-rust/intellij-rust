@@ -1,4 +1,3 @@
-
 {
     parserClass='org.rust.lang.core.parser.RustParser'
     parserUtilClass='org.rust.lang.core.parser.RustParserUtil'
@@ -7,10 +6,10 @@
     implements='org.rust.lang.core.psi.RsCompositeElement'
     extends='org.rust.lang.core.psi.impl.RsCompositeElementImpl'
 
-    elementTypeHolderClass='org.rust.lang.core.psi.RustCompositeElementTypes'
+    elementTypeHolderClass='org.rust.lang.core.psi.RsCompositeElementTypes'
 
-    elementTypeClass='org.rust.lang.core.psi.RustCompositeElementType'
-    tokenTypeClass='org.rust.lang.core.psi.RustTokenType'
+    elementTypeClass='org.rust.lang.core.psi.RsCompositeElementType'
+    tokenTypeClass='org.rust.lang.core.psi.RsTokenType'
 
     psiClassPrefix='Rs'
     psiImplClassSuffix='Impl'
@@ -18,7 +17,7 @@
     psiImplPackage='org.rust.lang.core.psi.impl'
 
     parserImports=[
-      'static org.rust.lang.core.psi.RustTokenElementTypes.*'
+      'static org.rust.lang.core.psi.RsTokenElementTypes.*'
       'static org.rust.lang.core.parser.RustParserUtil.PathParsingMode.*'
       'static org.rust.lang.core.parser.RustParserUtil.BinaryMode.*'
     ]

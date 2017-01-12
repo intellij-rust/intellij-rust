@@ -2,10 +2,10 @@ package org.rust.lang.core.psi.impl
 
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.tree.IElementType
-import org.rust.lang.core.psi.RustLiteral
+import org.rust.lang.core.psi.RsLiteral
 import org.rust.lang.core.psi.visitors.RustVisitorEx
 
-abstract class RustTextLiteralImplBase(type: IElementType, text: CharSequence) : RustLiteral.Text(type, text) {
+abstract class RsTextLiteralImplBase(type: IElementType, text: CharSequence) : RsLiteral.Text(type, text) {
     override val possibleSuffixes: Collection<String>
         get() = emptyList()
 

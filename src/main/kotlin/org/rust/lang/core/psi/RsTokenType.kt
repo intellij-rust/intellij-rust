@@ -10,21 +10,21 @@ import org.rust.lang.RsLanguage
 
 private val defaultASTFactory by lazy { service<DefaultASTFactory>() }
 
-open class RustTokenType(debugName: String) : IElementType(debugName, RsLanguage), ILeafElementType {
+open class RsTokenType(debugName: String) : IElementType(debugName, RsLanguage), ILeafElementType {
     override fun createLeafNode(leafText: CharSequence): ASTNode = LeafPsiElement(this, leafText)
 }
 
-class RustCommentTokenType(debugName: String) : RustTokenType(debugName) {
+class RsCommentTokenType(debugName: String) : RsTokenType(debugName) {
     override fun createLeafNode(leafText: CharSequence): ASTNode = defaultASTFactory.createComment(this, leafText)
 }
 
-class RustKeywordTokenType(debugName: String) : RustTokenType(debugName)
+class RsKeywordTokenType(debugName: String) : RsTokenType(debugName)
 
-class RustOperatorTokenType(debugName: String) : RustTokenType(debugName)
+class RsOperatorTokenType(debugName: String) : RsTokenType(debugName)
 
-class RustLiteralTokenType(
+class RsLiteralTokenType(
     debugName: String,
-    private val implConstructor: (IElementType, CharSequence) -> RustLiteral
-) : RustTokenType(debugName) {
+    private val implConstructor: (IElementType, CharSequence) -> RsLiteral
+) : RsTokenType(debugName) {
     override fun createLeafNode(leafText: CharSequence): ASTNode = implConstructor(this, leafText)
 }

@@ -68,20 +68,20 @@ class RsErrorAnnotator : Annotator {
     private fun checkConstant(holder: AnnotationHolder, const: RsConstant) {
         val title = if (const.static != null) "Static constant `${const.identifier.text}`" else "Constant `${const.identifier.text}`"
         when (const.role) {
-            RustConstantRole.FREE -> {
+            RsConstantRole.FREE -> {
                 deny(const.default, holder, "$title cannot have the `default` qualifier")
                 require(const.expr, holder, "$title must have a value", const)
             }
-            RustConstantRole.TRAIT_CONSTANT -> {
+            RsConstantRole.TRAIT_CONSTANT -> {
                 deny(const.vis, holder, "$title cannot have the `pub` qualifier")
                 deny(const.default, holder, "$title cannot have the `default` qualifier")
                 deny(const.static, holder, "Static constants are not allowed in traits")
             }
-            RustConstantRole.IMPL_CONSTANT -> {
+            RsConstantRole.IMPL_CONSTANT -> {
                 deny(const.static, holder, "Static constants are not allowed in impl blocks")
                 require(const.expr, holder, "$title must have a value", const)
             }
-            RustConstantRole.FOREIGN -> {
+            RsConstantRole.FOREIGN -> {
                 deny(const.default, holder, "$title cannot have the `default` qualifier")
                 require(const.static, holder, "Only static constants are allowed in extern blocks", const.const)
                     ?: require(const.mut, holder, "Non mutable static constants are not allowed in extern blocks", const.static, const.identifier)
@@ -91,7 +91,7 @@ class RsErrorAnnotator : Annotator {
     }
 
     private fun checkStructItem(holder: AnnotationHolder, struct: RsStructItem) {
-        if (struct.kind == RustStructKind.UNION && struct.tupleFields != null) {
+        if (struct.kind == RsStructKind.UNION && struct.tupleFields != null) {
             deny(struct.tupleFields, holder, "Union cannot be tuple-like")
         }
     }
@@ -187,18 +187,18 @@ class RsErrorAnnotator : Annotator {
     private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
         val title = "Type `${ta.identifier.text}`"
         when (ta.role) {
-            RustTypeAliasRole.FREE -> {
+            RsTypeAliasRole.FREE -> {
                 deny(ta.default, holder, "$title cannot have the `default` qualifier")
                 deny(ta.typeParamBounds, holder, "$title cannot have type parameter bounds")
                 require(ta.type, holder, "Aliased type must be provided for type `${ta.identifier.text}`", ta)
             }
-            RustTypeAliasRole.TRAIT_ASSOC_TYPE -> {
+            RsTypeAliasRole.TRAIT_ASSOC_TYPE -> {
                 deny(ta.default, holder, "$title cannot have the `default` qualifier")
                 deny(ta.vis, holder, "$title cannot have the `pub` qualifier")
                 deny(ta.typeParameterList, holder, "$title cannot have generic parameters")
                 deny(ta.whereClause, holder, "$title cannot have `where` clause")
             }
-            RustTypeAliasRole.IMPL_ASSOC_TYPE -> {
+            RsTypeAliasRole.IMPL_ASSOC_TYPE -> {
                 val impl = ta.parent as? RsImplItem ?: return
                 if (impl.`for` == null) {
                     holder.createErrorAnnotation(ta, "Associated types are not allowed in inherent impls [E0202]")

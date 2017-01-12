@@ -1,7 +1,7 @@
 package org.rust.lang.core.lexer
 
 import com.intellij.lexer.Lexer
-import org.rust.lang.core.psi.RustTokenElementTypes.*
+import org.rust.lang.core.psi.RsTokenElementTypes.*
 import java.util.*
 
 class RsEscapesLexingTestCase : RsLexingTestCaseBase() {

@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
 import com.intellij.util.text.CharSequenceSubSequence
 import org.rust.ide.typing.endsWithUnescapedBackslash
-import org.rust.lang.core.psi.RustTokenElementTypes
+import org.rust.lang.core.psi.RsTokenElementTypes
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.util.elementType
 
@@ -20,10 +20,10 @@ class RsJoinLinesHandler : JoinLinesHandlerDelegate {
         val elementType = leftPsi.elementType
 
         return when (elementType) {
-            in RustTokenElementTypes.STRING_LITERALS ->
+            in RsTokenElementTypes.STRING_LITERALS ->
                 joinStringLiteral(document, offsetNear, end)
 
-            RustTokenElementTypes.INNER_EOL_DOC_COMMENT, RustTokenElementTypes.OUTER_EOL_DOC_COMMENT ->
+            RsTokenElementTypes.INNER_EOL_DOC_COMMENT, RsTokenElementTypes.OUTER_EOL_DOC_COMMENT ->
                 joinLineDocComment(document, offsetNear, end)
 
             else -> CANNOT_JOIN

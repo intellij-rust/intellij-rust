@@ -150,7 +150,7 @@ class RsConstNamingInspection : RsUpperCaseNamingInspection("Constant") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitConstant(el: RsConstant) {
-                if (el.kind == RustConstantKind.CONST) {
+                if (el.kind == RsConstantKind.CONST) {
                     inspect(el.identifier, holder)
                 }
             }
@@ -161,7 +161,7 @@ class RsStaticConstNamingInspection : RsUpperCaseNamingInspection("Static consta
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitConstant(el: RsConstant) {
-                if (el.kind != RustConstantKind.CONST) {
+                if (el.kind != RsConstantKind.CONST) {
                     inspect(el.identifier, holder)
                 }
             }
@@ -186,7 +186,7 @@ class RsFunctionNamingInspection : RsSnakeCaseNamingInspection("Function") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitFunction(el: RsFunction) {
-                if (el.role == RustFunctionRole.FREE) {
+                if (el.role == RsFunctionRole.FREE) {
                     inspect(el.identifier, holder)
                 }
             }
@@ -197,8 +197,8 @@ class RsMethodNamingInspection : RsSnakeCaseNamingInspection("Method") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitFunction(el: RsFunction) = when (el.role) {
-                RustFunctionRole.TRAIT_METHOD,
-                RustFunctionRole.IMPL_METHOD -> inspect(el.identifier, holder)
+                RsFunctionRole.TRAIT_METHOD,
+                RsFunctionRole.IMPL_METHOD -> inspect(el.identifier, holder)
                 else -> Unit
             }
         }
@@ -251,7 +251,7 @@ class RsTypeAliasNamingInspection : RsCamelCaseNamingInspection("Type", "Type al
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitTypeAlias(el: RsTypeAlias) {
-                if (el.role == RustTypeAliasRole.FREE) {
+                if (el.role == RsTypeAliasRole.FREE) {
                     inspect(el.identifier, holder)
                 }
             }
@@ -262,7 +262,7 @@ class RsAssocTypeNamingInspection : RsCamelCaseNamingInspection("Type", "Associa
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitTypeAlias(el: RsTypeAlias) {
-                if (el.role == RustTypeAliasRole.TRAIT_ASSOC_TYPE) {
+                if (el.role == RsTypeAliasRole.TRAIT_ASSOC_TYPE) {
                     inspect(el.identifier, holder, false)
                 }
             }

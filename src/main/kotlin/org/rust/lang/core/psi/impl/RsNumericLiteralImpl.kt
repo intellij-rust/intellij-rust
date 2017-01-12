@@ -3,13 +3,13 @@ package org.rust.lang.core.psi.impl
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.tree.IElementType
-import org.rust.lang.core.psi.RustLiteral
-import org.rust.lang.core.psi.RustLiteralTokenType
-import org.rust.lang.core.psi.RustTokenElementTypes.FLOAT_LITERAL
-import org.rust.lang.core.psi.RustTokenElementTypes.INTEGER_LITERAL
+import org.rust.lang.core.psi.RsLiteral
+import org.rust.lang.core.psi.RsLiteralTokenType
+import org.rust.lang.core.psi.RsTokenElementTypes.FLOAT_LITERAL
+import org.rust.lang.core.psi.RsTokenElementTypes.INTEGER_LITERAL
 import org.rust.lang.core.psi.visitors.RustVisitorEx
 
-class RustNumericLiteralImpl(type: IElementType, text: CharSequence) : RustLiteral.Number(type, text) {
+class RsNumericLiteralImpl(type: IElementType, text: CharSequence) : RsLiteral.Number(type, text) {
     override val valueAsLong: Long?
         get() = this.valueString
             ?.filter { it != '_' }
@@ -94,7 +94,7 @@ class RustNumericLiteralImpl(type: IElementType, text: CharSequence) : RustLiter
         private const val NUM_OTHER_CHARS = "+-_."
         private const val EXP_CHARS = "eE"
 
-        @JvmStatic fun createTokenType(debugName: String): RustLiteralTokenType =
-            RustLiteralTokenType(debugName, ::RustNumericLiteralImpl)
+        @JvmStatic fun createTokenType(debugName: String): RsLiteralTokenType =
+            RsLiteralTokenType(debugName, ::RsNumericLiteralImpl)
     }
 }

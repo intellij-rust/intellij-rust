@@ -48,7 +48,7 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
 
     companion object {
         @JvmStatic protected fun doRename(identifier: PsiElement, newName: String) {
-            check(identifier.elementType == RustTokenElementTypes.IDENTIFIER)
+            check(identifier.elementType == RsTokenElementTypes.IDENTIFIER)
             identifier.replace(RustPsiFactory(identifier.project).createIdentifier(newName.replace(".rs", "")))
         }
     }

@@ -1,9 +1,9 @@
 package org.rust.lang.core.stubs
 
-interface RustNamedStub {
+interface RsNamedStub {
     val name: String?
 }
 
-interface RustVisibilityStub {
+interface RsVisibilityStub {
     val isPublic: Boolean
 }

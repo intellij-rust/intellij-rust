@@ -17,7 +17,7 @@ class RsSelfConventionInspection : RsLocalInspectionTool() {
         object : RsVisitor() {
             override fun visitFunction(m: RsFunction) {
                 // Should this handle traits as well perhaps?
-                if (m.role != RustFunctionRole.IMPL_METHOD) return
+                if (m.role != RsFunctionRole.IMPL_METHOD) return
 
                 val convention = SELF_CONVENTIONS.find { m.identifier.text.startsWith(it.prefix) } ?: return
                 if (m.selfType in convention.selfTypes) return

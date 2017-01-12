@@ -1,9 +1,9 @@
 package org.rust.lang.core.psi.impl
 
 import com.intellij.psi.tree.IElementType
-import org.rust.lang.core.psi.RustLiteralTokenType
+import org.rust.lang.core.psi.RsLiteralTokenType
 
-class RustRawStringLiteralImpl(type: IElementType, text: CharSequence) : RustTextLiteralImplBase(type, text) {
+class RsRawStringLiteralImpl(type: IElementType, text: CharSequence) : RsTextLiteralImplBase(type, text) {
     val hashes: Int
         get() = offsets.openDelim?.length?.let { it - 1 } ?: 0
 
@@ -52,7 +52,7 @@ class RustRawStringLiteralImpl(type: IElementType, text: CharSequence) : RustTex
     }
 
     companion object {
-        @JvmStatic fun createTokenType(debugName: String): RustLiteralTokenType =
-            RustLiteralTokenType(debugName, ::RustRawStringLiteralImpl)
+        @JvmStatic fun createTokenType(debugName: String): RsLiteralTokenType =
+            RsLiteralTokenType(debugName, ::RsRawStringLiteralImpl)
     }
 }

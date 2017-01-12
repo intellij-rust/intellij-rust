@@ -3,10 +3,10 @@ package org.rust.ide.annotator
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.psi.PsiElement
-import org.rust.ide.colors.RustColor
+import org.rust.ide.colors.RsColor
 import org.rust.ide.highlight.RsHighlighter
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.RustFunctionRole
+import org.rust.lang.core.psi.impl.mixin.RsFunctionRole
 import org.rust.lang.core.psi.impl.mixin.isMut
 import org.rust.lang.core.psi.impl.mixin.isStatic
 import org.rust.lang.core.psi.impl.mixin.role
@@ -28,13 +28,13 @@ class RustHighlightingAnnotator : Annotator {
         holder.createInfoAnnotation(partToHighlight, null).textAttributes = color.textAttributesKey
     }
 
-    private fun highlightReference(element: RsReferenceElement): Pair<PsiElement, RustColor>? {
+    private fun highlightReference(element: RsReferenceElement): Pair<PsiElement, RsColor>? {
         val parent = element.parent
         val isPrimitiveType = element is RsPath && parent is RsBaseType &&
             parent.resolvedType.isPrimitive
 
         val color = if (isPrimitiveType) {
-            RustColor.PRIMITIVE_TYPE
+            RsColor.PRIMITIVE_TYPE
         } else {
             val ref = element.reference.resolve() ?: return null
             // Highlight the element dependent on what it's referencing.
@@ -43,7 +43,7 @@ class RustHighlightingAnnotator : Annotator {
         return color?.let { element.referenceNameElement to it }
     }
 
-    private fun highlightNotReference(element: PsiElement): Pair<PsiElement, RustColor>? {
+    private fun highlightNotReference(element: PsiElement): Pair<PsiElement, RsColor>? {
         if (element is RsLitExpr) {
             if (element.parent is RsMetaItem) {
                 val literal = element.firstChild
@@ -56,8 +56,8 @@ class RustHighlightingAnnotator : Annotator {
 
         // Although we remap tokens from identifier to keyword, this happens in the
         // parser's pass, so we can't use HighlightingLexer to color these
-        if (element.elementType in RustTokenElementTypes.CONTEXTUAL_KEYWORDS) {
-            return element to RustColor.KEYWORD
+        if (element.elementType in RsTokenElementTypes.CONTEXTUAL_KEYWORDS) {
+            return element to RsColor.KEYWORD
         }
 
         if (element is RsCompositeElement) {
@@ -73,34 +73,34 @@ class RustHighlightingAnnotator : Annotator {
 
 // If possible, this should use only stubs because this will be called
 // on elements in other files when highlighting references.
-private fun colorFor(element: RsCompositeElement): RustColor? = when (element) {
-    is RsAttr -> RustColor.ATTRIBUTE
-    is RsMacroInvocation -> RustColor.MACRO
-    is RsSelfParameter -> RustColor.SELF_PARAMETER
-    is RsTryExpr -> RustColor.Q_OPERATOR
-    is RsTraitRef -> RustColor.TRAIT
+private fun colorFor(element: RsCompositeElement): RsColor? = when (element) {
+    is RsAttr -> RsColor.ATTRIBUTE
+    is RsMacroInvocation -> RsColor.MACRO
+    is RsSelfParameter -> RsColor.SELF_PARAMETER
+    is RsTryExpr -> RsColor.Q_OPERATOR
+    is RsTraitRef -> RsColor.TRAIT
 
-    is RsEnumItem -> RustColor.ENUM
-    is RsEnumVariant -> RustColor.ENUM_VARIANT
-    is RsExternCrateItem -> RustColor.CRATE
-    is RsFieldDecl -> RustColor.FIELD
+    is RsEnumItem -> RsColor.ENUM
+    is RsEnumVariant -> RsColor.ENUM_VARIANT
+    is RsExternCrateItem -> RsColor.CRATE
+    is RsFieldDecl -> RsColor.FIELD
     is RsFunction -> when (element.role) {
-        RustFunctionRole.FOREIGN, RustFunctionRole.FREE -> RustColor.FUNCTION
-        RustFunctionRole.TRAIT_METHOD, RustFunctionRole.IMPL_METHOD ->
-            if (element.isStatic) RustColor.ASSOC_FUNCTION else RustColor.METHOD
+        RsFunctionRole.FOREIGN, RsFunctionRole.FREE -> RsColor.FUNCTION
+        RsFunctionRole.TRAIT_METHOD, RsFunctionRole.IMPL_METHOD ->
+            if (element.isStatic) RsColor.ASSOC_FUNCTION else RsColor.METHOD
     }
-    is RsMethodCallExpr -> RustColor.METHOD
-    is RsModDeclItem -> RustColor.MODULE
-    is RsModItem -> RustColor.MODULE
+    is RsMethodCallExpr -> RsColor.METHOD
+    is RsModDeclItem -> RsColor.MODULE
+    is RsModItem -> RsColor.MODULE
     is RsPatBinding -> when {
-        element.parentOfType<RsValueParameter>() != null -> RustColor.PARAMETER
-        element.isMut -> RustColor.MUT_BINDING
+        element.parentOfType<RsValueParameter>() != null -> RsColor.PARAMETER
+        element.isMut -> RsColor.MUT_BINDING
         else -> null
     }
-    is RsStructItem -> RustColor.STRUCT
-    is RsTraitItem -> RustColor.TRAIT
-    is RsTypeAlias -> RustColor.TYPE_ALIAS
-    is RsTypeParameter -> RustColor.TYPE_PARAMETER
+    is RsStructItem -> RsColor.STRUCT
+    is RsTraitItem -> RsColor.TRAIT
+    is RsTypeAlias -> RsColor.TYPE_ALIAS
+    is RsTypeParameter -> RsColor.TYPE_PARAMETER
     else -> null
 }
 

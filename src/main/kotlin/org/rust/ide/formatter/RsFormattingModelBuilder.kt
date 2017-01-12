@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import org.rust.ide.formatter.blocks.RsFmtBlock
 import org.rust.ide.formatter.blocks.RsMacroArgFmtBlock
-import org.rust.lang.core.psi.RustCompositeElementTypes.MACRO_ARG
+import org.rust.lang.core.psi.RsCompositeElementTypes.MACRO_ARG
 
 class RsFormattingModelBuilder : FormattingModelBuilder {
     override fun getRangeAffectingIndent(file: PsiFile?, offset: Int, elementAtOffset: ASTNode?): TextRange? = null

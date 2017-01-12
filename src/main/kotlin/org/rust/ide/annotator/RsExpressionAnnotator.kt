@@ -8,7 +8,7 @@ import com.intellij.util.SmartList
 import org.rust.ide.annotator.fixes.AddStructFieldsFix
 import org.rust.ide.intentions.RemoveParenthesesFromExprIntention
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.RustStructKind
+import org.rust.lang.core.psi.impl.mixin.RsStructKind
 import org.rust.lang.core.psi.impl.mixin.kind
 import java.util.*
 
@@ -44,7 +44,7 @@ class RustExpressionAnnotator : Annotator {
         val declaredFields = expr.structExprFieldList.map { it.referenceName }.toSet()
         val missingFields = decl.namedFields.filter { it.name !in declaredFields }
 
-        if (decl is RsStructItem && decl.kind == RustStructKind.UNION) {
+        if (decl is RsStructItem && decl.kind == RsStructKind.UNION) {
             if (expr.structExprFieldList.size > 1) {
                 holder.createErrorAnnotation(expr, "Union expressions should have exactly one field")
             }

@@ -1,6 +1,6 @@
 package org.rust.lang.doc.psi;
 
-public interface RustDocElementTypes {
+public interface RsDocElementTypes {
     RsDocTokenType DOC_TEXT = new RsDocTokenType("<DOC_TEXT>");
 
     RsDocTokenType DOC_HEADING = new RsDocTokenType("<DOC_HEADING>");

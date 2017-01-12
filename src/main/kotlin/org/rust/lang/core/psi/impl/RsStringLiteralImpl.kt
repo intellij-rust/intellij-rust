@@ -2,12 +2,12 @@ package org.rust.lang.core.psi.impl
 
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.lexer.RustEscapesLexer
-import org.rust.lang.core.psi.RustLiteralTokenType
-import org.rust.lang.core.psi.RustTokenElementTypes.BYTE_LITERAL
-import org.rust.lang.core.psi.RustTokenElementTypes.CHAR_LITERAL
+import org.rust.lang.core.psi.RsLiteralTokenType
+import org.rust.lang.core.psi.RsTokenElementTypes.BYTE_LITERAL
+import org.rust.lang.core.psi.RsTokenElementTypes.CHAR_LITERAL
 import org.rust.lang.utils.unescapeRust
 
-class RustStringLiteralImpl(type: IElementType, text: CharSequence) : RustTextLiteralImplBase(type, text) {
+class RsStringLiteralImpl(type: IElementType, text: CharSequence) : RsTextLiteralImplBase(type, text) {
     override val value: String?
         get() = valueString?.unescapeRust(RustEscapesLexer.of(elementType))
 
@@ -50,7 +50,7 @@ class RustStringLiteralImpl(type: IElementType, text: CharSequence) : RustTextLi
     }
 
     companion object {
-        @JvmStatic fun createTokenType(debugName: String): RustLiteralTokenType =
-            RustLiteralTokenType(debugName, ::RustStringLiteralImpl)
+        @JvmStatic fun createTokenType(debugName: String): RsLiteralTokenType =
+            RsLiteralTokenType(debugName, ::RsStringLiteralImpl)
     }
 }

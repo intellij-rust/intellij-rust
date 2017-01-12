@@ -5,7 +5,7 @@ import org.rust.ide.formatter.settings.RsCodeStyleSettings
 import org.rust.lang.RsLanguage
 import org.rust.lang.RsTestBase
 
-class RustFormatterTest : FormatterTestCase() {
+class RsFormatterTest : FormatterTestCase() {
     override fun getTestDataPath() = "src/test/resources"
 
     override fun getBasePath() = "org/rust/ide/formatter/fixtures"

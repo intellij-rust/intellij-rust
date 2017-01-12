@@ -15,42 +15,42 @@ abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, 
     constructor(stub: RsConstantStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int) = iconWithVisibility(flags, when (kind) {
-        RustConstantKind.CONST -> RsIcons.CONSTANT
-        RustConstantKind.MUT_STATIC -> RsIcons.MUT_STATIC
-        RustConstantKind.STATIC -> RsIcons.STATIC
+        RsConstantKind.CONST -> RsIcons.CONSTANT
+        RsConstantKind.MUT_STATIC -> RsIcons.MUT_STATIC
+        RsConstantKind.STATIC -> RsIcons.STATIC
     })
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 }
 
-enum class RustConstantKind {
+enum class RsConstantKind {
     STATIC,
     MUT_STATIC,
     CONST
 }
 
-val RsConstant.kind: RustConstantKind get() = when {
-    mut != null -> RustConstantKind.MUT_STATIC
-    const != null -> RustConstantKind.CONST
-    else -> RustConstantKind.STATIC
+val RsConstant.kind: RsConstantKind get() = when {
+    mut != null -> RsConstantKind.MUT_STATIC
+    const != null -> RsConstantKind.CONST
+    else -> RsConstantKind.STATIC
 }
 
-enum class RustConstantRole {
+enum class RsConstantRole {
     FREE,
     TRAIT_CONSTANT,
     IMPL_CONSTANT,
     FOREIGN
 }
 
-val RsConstant.role: RustConstantRole get() {
+val RsConstant.role: RsConstantRole get() {
     return when (parent) {
-        is RsItemsOwner -> RustConstantRole.FREE
-        is RsTraitItem -> RustConstantRole.TRAIT_CONSTANT
-        is RsImplItem -> RustConstantRole.IMPL_CONSTANT
-        is RsForeignModItem -> RustConstantRole.FOREIGN
+        is RsItemsOwner -> RsConstantRole.FREE
+        is RsTraitItem -> RsConstantRole.TRAIT_CONSTANT
+        is RsImplItem -> RsConstantRole.IMPL_CONSTANT
+        is RsForeignModItem -> RsConstantRole.FOREIGN
         else -> error("Unexpected constant parent: $parent")
     }
 }
 
 val RsConstant.default: PsiElement?
-    get() = node.findChildByType(RustTokenElementTypes.DEFAULT)?.psi
+    get() = node.findChildByType(RsTokenElementTypes.DEFAULT)?.psi

@@ -145,14 +145,14 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
 
     override fun visitBinaryExpr(o: RsBinaryExpr) = set {
         when (o.operatorType) {
-            RustTokenElementTypes.ANDAND,
-            RustTokenElementTypes.OROR,
-            RustTokenElementTypes.EQEQ,
-            RustTokenElementTypes.EXCLEQ,
-            RustTokenElementTypes.LT,
-            RustTokenElementTypes.GT,
-            RustTokenElementTypes.GTEQ,
-            RustTokenElementTypes.LTEQ -> RustBooleanType
+            RsTokenElementTypes.ANDAND,
+            RsTokenElementTypes.OROR,
+            RsTokenElementTypes.EQEQ,
+            RsTokenElementTypes.EXCLEQ,
+            RsTokenElementTypes.LT,
+            RsTokenElementTypes.GT,
+            RsTokenElementTypes.GTEQ,
+            RsTokenElementTypes.LTEQ -> RustBooleanType
 
             else -> RustUnknownType
         }

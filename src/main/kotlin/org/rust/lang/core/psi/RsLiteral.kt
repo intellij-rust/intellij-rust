@@ -4,7 +4,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
 
-sealed class RustLiteral(type: IElementType, text: CharSequence) : LeafPsiElement(type, text) {
+sealed class RsLiteral(type: IElementType, text: CharSequence) : LeafPsiElement(type, text) {
     /**
      * Get a list of possible suffixes for given literal type.
      */
@@ -31,7 +31,7 @@ sealed class RustLiteral(type: IElementType, text: CharSequence) : LeafPsiElemen
     /**
      * Base class for numeric literals: integers and floats.
      */
-    abstract class Number(type: IElementType, text: CharSequence) : RustLiteral(type, text) {
+    abstract class Number(type: IElementType, text: CharSequence) : RsLiteral(type, text) {
         abstract val valueAsLong: Long?
         abstract val valueAsDouble: Double?
         abstract val isInt: Boolean
@@ -41,7 +41,7 @@ sealed class RustLiteral(type: IElementType, text: CharSequence) : LeafPsiElemen
     /**
      * Base class for character and string literals.
      */
-    abstract class Text(type: IElementType, text: CharSequence) : RustLiteral(type, text) {
+    abstract class Text(type: IElementType, text: CharSequence) : RsLiteral(type, text) {
         abstract val value: String?
         abstract val hasUnpairedQuotes: Boolean
     }

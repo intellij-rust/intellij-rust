@@ -4,15 +4,15 @@ import com.intellij.lang.refactoring.NamesValidator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.lexer.RustLexer
-import org.rust.lang.core.psi.RustKeywordTokenType
-import org.rust.lang.core.psi.RustTokenElementTypes.IDENTIFIER
+import org.rust.lang.core.psi.RsKeywordTokenType
+import org.rust.lang.core.psi.RsTokenElementTypes.IDENTIFIER
 
 class RsNamesValidator : NamesValidator {
     override fun isKeyword(name: String, project: Project?): Boolean =
         isKeyword(name, project, true)
 
     fun isKeyword(name: String, @Suppress("UNUSED_PARAMETER") project: Project?, withPrimitives: Boolean): Boolean =
-        getLexerType(name) is RustKeywordTokenType || (withPrimitives && name in PrimitiveTypes)
+        getLexerType(name) is RsKeywordTokenType || (withPrimitives && name in PrimitiveTypes)
 
     override fun isIdentifier(name: String, project: Project?): Boolean =
         isIdentifier(name, project, true)

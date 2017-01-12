@@ -3,7 +3,7 @@ package org.rust.lang.core.stubs
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.util.PathUtil
-import org.rust.lang.core.psi.impl.mixin.RustTypeAliasRole
+import org.rust.lang.core.psi.impl.mixin.RsTypeAliasRole
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.stubs.index.RsGotoClassIndex
 import org.rust.lang.core.stubs.index.RsModulesIndex
@@ -57,7 +57,7 @@ fun IndexSink.indexConstant(stub: RsConstantStub) {
 
 fun IndexSink.indexTypeAlias(stub: RsTypeAliasStub) {
     indexNamedStub(stub)
-    if (stub.role != RustTypeAliasRole.IMPL_ASSOC_TYPE) {
+    if (stub.role != RsTypeAliasRole.IMPL_ASSOC_TYPE) {
         indexGotoClass(stub)
     }
 }
@@ -66,13 +66,13 @@ fun IndexSink.indexFieldDecl(stub: RsFieldDeclStub) {
     indexNamedStub(stub)
 }
 
-private fun IndexSink.indexNamedStub(stub: RustNamedStub) {
+private fun IndexSink.indexNamedStub(stub: RsNamedStub) {
     stub.name?.let {
         occurrence(RsNamedElementIndex.KEY, it)
     }
 }
 
-private fun IndexSink.indexGotoClass(stub: RustNamedStub) {
+private fun IndexSink.indexGotoClass(stub: RsNamedStub) {
     stub.name?.let {
         occurrence(RsGotoClassIndex.KEY, it)
     }

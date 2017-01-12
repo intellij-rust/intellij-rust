@@ -12,7 +12,7 @@ import org.rust.lang.core.completion.psiElement
 import org.rust.lang.core.completion.withSuperParent
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.impl.mixin.RustConstantKind
+import org.rust.lang.core.psi.impl.mixin.RsConstantKind
 import org.rust.lang.core.psi.impl.mixin.kind
 
 /**
@@ -20,7 +20,7 @@ import org.rust.lang.core.psi.impl.mixin.kind
  */
 object RsPsiPattern {
     private val STATEMENT_BOUNDARIES = TokenSet.create(
-        RustTokenElementTypes.SEMICOLON, RustTokenElementTypes.LBRACE, RustTokenElementTypes.RBRACE)
+        RsTokenElementTypes.SEMICOLON, RsTokenElementTypes.LBRACE, RsTokenElementTypes.RBRACE)
 
     val onStatementBeginning: PsiElementPattern.Capture<PsiElement> = psiElement().with(OnStatementBeginning())
 
@@ -38,14 +38,14 @@ object RsPsiPattern {
     val onStatic: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement()
         .with("onStaticCondition") {
             val elem = it.parent?.parent?.parent
-            (elem is RsConstant) && elem.kind == RustConstantKind.STATIC
+            (elem is RsConstant) && elem.kind == RsConstantKind.STATIC
         }
 
 
     val onStaticMut: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement()
         .with("onStaticMutCondition") {
             val elem = it.parent?.parent?.parent
-            (elem is RsConstant) && elem.kind == RustConstantKind.MUT_STATIC
+            (elem is RsConstant) && elem.kind == RsConstantKind.MUT_STATIC
         }
 
     val onMacro: PsiElementPattern.Capture<PsiElement> = onItem<RsMacroItem>()

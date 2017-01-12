@@ -34,7 +34,7 @@
         <!-- Parser -->
 
         <lang.parserDefinition language="Rust" implementationClass="org.rust.lang.core.parser.RustParserDefinition"/>
-        <stubElementTypeHolder class="org.rust.lang.core.psi.RustCompositeElementTypes"/>
+        <stubElementTypeHolder class="org.rust.lang.core.psi.RsCompositeElementTypes"/>
 
         <!-- Syntax Highlighter -->
 
@@ -139,7 +139,7 @@
 
         <codeStyleSettingsProvider implementation="org.rust.ide.formatter.settings.RsCodeStyleSettingsProvider"/>
         <langCodeStyleSettingsProvider
-            implementation="org.rust.ide.formatter.settings.RustLanguageCodeStyleSettingsProvider"/>
+            implementation="org.rust.ide.formatter.settings.RsLanguageCodeStyleSettingsProvider"/>
 
         <!-- Color Settings -->
 

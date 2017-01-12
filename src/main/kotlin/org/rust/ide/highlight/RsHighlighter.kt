@@ -4,12 +4,12 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
-import org.rust.ide.colors.RustColor
+import org.rust.ide.colors.RsColor
 import org.rust.lang.core.lexer.RustHighlightingLexer
-import org.rust.lang.core.psi.RustKeywordTokenType
-import org.rust.lang.core.psi.RustOperatorTokenType
-import org.rust.lang.core.psi.RustTokenElementTypes.*
-import org.rust.lang.doc.psi.RustDocElementTypes.*
+import org.rust.lang.core.psi.RsKeywordTokenType
+import org.rust.lang.core.psi.RsOperatorTokenType
+import org.rust.lang.core.psi.RsTokenElementTypes.*
+import org.rust.lang.doc.psi.RsDocElementTypes.*
 
 class RsHighlighter : SyntaxHighlighterBase() {
 
@@ -19,46 +19,46 @@ class RsHighlighter : SyntaxHighlighterBase() {
         pack(map(tokenType)?.textAttributesKey)
 
     companion object {
-        fun map(tokenType: IElementType?): RustColor? = when (tokenType) {
-            IDENTIFIER -> RustColor.IDENTIFIER
-            UNDERSCORE -> RustColor.IDENTIFIER
+        fun map(tokenType: IElementType?): RsColor? = when (tokenType) {
+            IDENTIFIER -> RsColor.IDENTIFIER
+            UNDERSCORE -> RsColor.IDENTIFIER
 
-            LIFETIME -> RustColor.LIFETIME
+            LIFETIME -> RsColor.LIFETIME
 
-            CHAR_LITERAL -> RustColor.CHAR
-            BYTE_LITERAL -> RustColor.CHAR
-            STRING_LITERAL -> RustColor.STRING
-            BYTE_STRING_LITERAL -> RustColor.STRING
-            RAW_STRING_LITERAL -> RustColor.STRING
-            RAW_BYTE_STRING_LITERAL -> RustColor.STRING
-            INTEGER_LITERAL -> RustColor.NUMBER
-            FLOAT_LITERAL -> RustColor.NUMBER
+            CHAR_LITERAL -> RsColor.CHAR
+            BYTE_LITERAL -> RsColor.CHAR
+            STRING_LITERAL -> RsColor.STRING
+            BYTE_STRING_LITERAL -> RsColor.STRING
+            RAW_STRING_LITERAL -> RsColor.STRING
+            RAW_BYTE_STRING_LITERAL -> RsColor.STRING
+            INTEGER_LITERAL -> RsColor.NUMBER
+            FLOAT_LITERAL -> RsColor.NUMBER
 
-            BLOCK_COMMENT -> RustColor.BLOCK_COMMENT
-            EOL_COMMENT -> RustColor.EOL_COMMENT
+            BLOCK_COMMENT -> RsColor.BLOCK_COMMENT
+            EOL_COMMENT -> RsColor.EOL_COMMENT
 
-            DOC_TEXT -> RustColor.DOC_COMMENT
-            DOC_HEADING -> RustColor.DOC_HEADING
-            DOC_INLINE_LINK -> RustColor.DOC_LINK
-            DOC_REF_LINK -> RustColor.DOC_LINK
-            DOC_LINK_REF_DEF -> RustColor.DOC_LINK
-            DOC_CODE_SPAN -> RustColor.DOC_CODE
-            DOC_CODE_FENCE -> RustColor.DOC_CODE
+            DOC_TEXT -> RsColor.DOC_COMMENT
+            DOC_HEADING -> RsColor.DOC_HEADING
+            DOC_INLINE_LINK -> RsColor.DOC_LINK
+            DOC_REF_LINK -> RsColor.DOC_LINK
+            DOC_LINK_REF_DEF -> RsColor.DOC_LINK
+            DOC_CODE_SPAN -> RsColor.DOC_CODE
+            DOC_CODE_FENCE -> RsColor.DOC_CODE
 
-            LPAREN, RPAREN -> RustColor.PARENTHESIS
-            LBRACE, RBRACE -> RustColor.BRACES
-            LBRACK, RBRACK -> RustColor.BRACKETS
+            LPAREN, RPAREN -> RsColor.PARENTHESIS
+            LBRACE, RBRACE -> RsColor.BRACES
+            LBRACK, RBRACK -> RsColor.BRACKETS
 
-            SEMICOLON -> RustColor.SEMICOLON
-            DOT -> RustColor.DOT
-            COMMA -> RustColor.COMMA
+            SEMICOLON -> RsColor.SEMICOLON
+            DOT -> RsColor.DOT
+            COMMA -> RsColor.COMMA
 
-            VALID_STRING_ESCAPE_TOKEN -> RustColor.VALID_STRING_ESCAPE
-            INVALID_CHARACTER_ESCAPE_TOKEN -> RustColor.INVALID_STRING_ESCAPE
-            INVALID_UNICODE_ESCAPE_TOKEN -> RustColor.INVALID_STRING_ESCAPE
+            VALID_STRING_ESCAPE_TOKEN -> RsColor.VALID_STRING_ESCAPE
+            INVALID_CHARACTER_ESCAPE_TOKEN -> RsColor.INVALID_STRING_ESCAPE
+            INVALID_UNICODE_ESCAPE_TOKEN -> RsColor.INVALID_STRING_ESCAPE
 
-            is RustKeywordTokenType -> RustColor.KEYWORD
-            is RustOperatorTokenType -> RustColor.OPERATORS
+            is RsKeywordTokenType -> RsColor.KEYWORD
+            is RsOperatorTokenType -> RsColor.OPERATORS
 
             else -> null
         }

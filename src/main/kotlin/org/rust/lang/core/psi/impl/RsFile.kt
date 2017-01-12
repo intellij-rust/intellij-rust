@@ -16,7 +16,7 @@ import org.rust.cargo.project.workspace.cargoProject
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RustCompositeElementTypes.*
+import org.rust.lang.core.psi.RsCompositeElementTypes.*
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsFileStub

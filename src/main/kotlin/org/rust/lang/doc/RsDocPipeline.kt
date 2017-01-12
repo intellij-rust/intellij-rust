@@ -11,7 +11,7 @@ import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.LinkMap
 import org.intellij.markdown.parser.MarkdownParser
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RustTokenElementTypes.*
+import org.rust.lang.core.psi.RsTokenElementTypes.*
 import org.rust.lang.core.psi.util.stringLiteralValue
 import org.rust.lang.doc.psi.RsDocKind
 import java.net.URI

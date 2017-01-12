@@ -3,18 +3,18 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import org.rust.lang.core.psi.RustLiteral
+import org.rust.lang.core.psi.RsLiteral
 import org.rust.lang.core.psi.visitors.RustVisitorEx
 
 class RsApproxConstantInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RustVisitorEx() {
-            override fun visitNumericLiteral(literal: RustLiteral.Number) {
+            override fun visitNumericLiteral(literal: RsLiteral.Number) {
                 if (literal.isFloat) analyzeLiteral(literal, holder)
             }
         }
 
-    private fun analyzeLiteral(literal: RustLiteral.Number, holder: ProblemsHolder) {
+    private fun analyzeLiteral(literal: RsLiteral.Number, holder: ProblemsHolder) {
         check(literal.isFloat)
         val value = literal.valueAsDouble ?: return
         val constant = KNOWN_CONSTS.find { it.matches(value) } ?: return

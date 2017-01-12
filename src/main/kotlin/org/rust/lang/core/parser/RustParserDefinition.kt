@@ -13,10 +13,10 @@ import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.lexer.RustLexer
-import org.rust.lang.core.psi.RustCompositeElementTypes
-import org.rust.lang.core.psi.RustTokenElementTypes
-import org.rust.lang.core.psi.RustTokenElementTypes.EOL_COMMENTS_TOKEN_SET
-import org.rust.lang.core.psi.RustTokenElementTypes.STRING_LITERAL
+import org.rust.lang.core.psi.RsCompositeElementTypes
+import org.rust.lang.core.psi.RsTokenElementTypes
+import org.rust.lang.core.psi.RsTokenElementTypes.EOL_COMMENTS_TOKEN_SET
+import org.rust.lang.core.psi.RsTokenElementTypes.STRING_LITERAL
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.stubs.RsFileStub
 
@@ -38,10 +38,10 @@ class RustParserDefinition : ParserDefinition {
     override fun getWhitespaceTokens(): TokenSet =
         TokenSet.create(TokenType.WHITE_SPACE)
 
-    override fun getCommentTokens() = RustTokenElementTypes.COMMENTS_TOKEN_SET
+    override fun getCommentTokens() = RsTokenElementTypes.COMMENTS_TOKEN_SET
 
     override fun createElement(node: ASTNode?): PsiElement =
-        RustCompositeElementTypes.Factory.createElement(node)
+        RsCompositeElementTypes.Factory.createElement(node)
 
     override fun createLexer(project: Project?): Lexer = RustLexer()
 

@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.util.text.CharArrayUtil
-import org.rust.lang.core.psi.RustTokenElementTypes.*
+import org.rust.lang.core.psi.RsTokenElementTypes.*
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.doc.psi.RsDocKind

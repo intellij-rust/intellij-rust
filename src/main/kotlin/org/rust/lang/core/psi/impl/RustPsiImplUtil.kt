@@ -1,7 +1,7 @@
 package org.rust.lang.core.psi.impl
 
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.stubs.RustVisibilityStub
+import org.rust.lang.core.stubs.RsVisibilityStub
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
 
@@ -11,7 +11,7 @@ import org.rust.lang.core.symbols.RustPathSegment
  * default methods in interfaces with mixed Kotlin-Java hierarchies (KT-9073 ).
  */
 object RustPsiImplUtil {
-    fun isPublic(psi: RsVisibilityOwner, stub: RustVisibilityStub?): Boolean =
+    fun isPublic(psi: RsVisibilityOwner, stub: RsVisibilityStub?): Boolean =
         stub?.isPublic ?: isPublicNonStubbed(psi)
 
     fun isPublicNonStubbed(element: RsVisibilityOwner): Boolean =

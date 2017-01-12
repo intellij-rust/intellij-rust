@@ -8,11 +8,11 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.tree.TokenSet.orSet
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RustCompositeElementTypes.*
-import org.rust.lang.core.psi.RustTokenElementTypes.*
+import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsTokenElementTypes.*
 import com.intellij.psi.tree.TokenSet.create as ts
 
-val KEYWORDS = ts(*IElementType.enumerate { it is RustKeywordTokenType })
+val KEYWORDS = ts(*IElementType.enumerate { it is RsKeywordTokenType })
 
 val NO_SPACE_AROUND_OPS = ts(COLONCOLON, DOT, DOTDOT)
 val SPACE_AROUND_OPS = TokenSet.andNot(ALL_OPS, NO_SPACE_AROUND_OPS)

@@ -16,7 +16,7 @@ open class AssertPostfixTemplateBase(name: String) : StringBasedPostfixTemplate(
     RsTopMostInScopeSelector(RsExpr::isBool)) {
 
     override fun getTemplateString(element: PsiElement): String =
-        if (element is RsBinaryExpr && element.operatorType == RustTokenElementTypes.EQEQ) {
+        if (element is RsBinaryExpr && element.operatorType == RsTokenElementTypes.EQEQ) {
             "${this.presentableName}_eq!(${element.left.text}, ${element.right?.text});\$END$"
         } else {
             "$presentableName!(${element.text});\$END$"
