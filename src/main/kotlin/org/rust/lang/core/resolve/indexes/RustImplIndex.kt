@@ -4,24 +4,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.*
 import com.intellij.util.io.KeyDescriptor
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RustFunctionElement
+import org.rust.lang.core.psi.RustImplItemElement
+import org.rust.lang.core.psi.RustStructOrEnumItemElement
 import org.rust.lang.core.psi.impl.mixin.isStatic
 import org.rust.lang.core.stubs.RustFileStub
 import org.rust.lang.core.stubs.RustImplItemElementStub
-import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.RustStructOrEnumTypeBase
 import org.rust.lang.core.types.RustType
-import org.rust.lang.core.types.RustUnknownType
-import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
-import org.rust.lang.core.types.unresolved.RustUnresolvedType
-import org.rust.lang.core.types.unresolved.readRustUnresolvedType
-import org.rust.lang.core.types.unresolved.writeRustUnresolvedType
-import org.rust.lang.core.types.util.decay
+import org.rust.lang.core.types.RustTypeFingerprint
 import org.rust.lang.core.types.util.resolvedType
-import org.rust.lang.core.types.visitors.impl.RustEqualityUnresolvedTypeVisitor
-import org.rust.lang.core.types.visitors.impl.RustHashCodeComputingUnresolvedTypeVisitor
-import java.io.DataInput
-import java.io.DataOutput
+import java.util.*
 
 
 object RustImplIndex {
@@ -29,10 +22,6 @@ object RustImplIndex {
     fun findNonStaticMethodsFor(target: RustType, project: Project): Sequence<RustFunctionElement> =
         findMethodsFor(target, project)
             .filter { !it.isStatic }
-
-    fun findStaticMethodsFor(target: RustType, project: Project): Sequence<RustFunctionElement> =
-        findMethodsFor(target, project)
-            .filter { it.isStatic }
 
     fun findMethodsFor(target: RustType, project: Project): Sequence<RustFunctionElement> =
         findImplsFor(target, project)
@@ -44,48 +33,30 @@ object RustImplIndex {
         else
             emptySequence()
 
-        return findNonInherentImplsForInternal(target.decay, project)
+        return findNonInherentImplsForInternal(target, project)
             .filter {
                 it.type?.resolvedType == target
             } + inherentImpls
     }
 
     private fun findInherentImplsForInternal(target: RustStructOrEnumItemElement): Sequence<RustImplItemElement> {
-        val found = arrayListOf<RustImplItemElement>()
+        val fingerprint = RustTypeFingerprint.create(target.resolvedType)
+            ?: return emptySequence()
 
-        val aliases = arrayListOf(target.name!!)
+        val found = ArrayList<RustImplItemElement>()
 
         StubIndex
             .getInstance()
             .processElements(
-                RustAliasIndex.KEY,
-                target.name!!,
+                InherentImpls.KEY,
+                fingerprint,
                 target.project,
                 GlobalSearchScope.allScope(target.project),
-                RustAliasElement::class.java,
+                RustImplItemElement::class.java,
                 {
-                    it.name?.let {
-                        aliases.add(it)
-                    }
-
+                    found.add(it)
                     true /* continue */
                 })
-
-
-        aliases.forEach { alias ->
-            StubIndex
-                .getInstance()
-                .processElements(
-                    ByName.KEY,
-                    alias,
-                    target.project,
-                    GlobalSearchScope.allScope(target.project),
-                    RustImplItemElement::class.java,
-                    {
-                        found.add(it)
-                        true /* continue */
-                    })
-        }
 
         return found.asSequence()
             .filter { impl ->
@@ -94,17 +65,17 @@ object RustImplIndex {
             }
     }
 
-    private fun findNonInherentImplsForInternal(target: RustUnresolvedType, project: Project): Sequence<RustImplItemElement> {
-        if (target is RustUnknownType)
-            return emptySequence()
+    private fun findNonInherentImplsForInternal(target: RustType, project: Project): Sequence<RustImplItemElement> {
+        val fingerprint = RustTypeFingerprint.create(target)
+            ?: return emptySequence()
 
         val found = arrayListOf<RustImplItemElement>()
 
         StubIndex
             .getInstance()
             .processElements(
-                ByType.KEY,
-                ByType.Key(target),
+                TraitImpls.KEY,
+                fingerprint,
                 project,
                 GlobalSearchScope.allScope(project),
                 RustImplItemElement::class.java,
@@ -118,81 +89,38 @@ object RustImplIndex {
     }
 
 
-    class ByType : AbstractStubIndex<ByType.Key, RustImplItemElement>() {
+    class TraitImpls : AbstractStubIndex<RustTypeFingerprint, RustImplItemElement>() {
         override fun getVersion(): Int = RustFileStub.Type.stubVersion
-        override fun getKey(): StubIndexKey<Key, RustImplItemElement> = KEY
-
-        /**
-         * This wrapper is required due to a subtle bug in the [com.intellij.util.indexing.MemoryIndexStorage], involving
-         * use of the object's `hashCode`, while [com.intellij.util.indexing.MapIndexStorage] being using the one
-         * impose by the [KeyDescriptor]
-         */
-        data class Key(val type: RustUnresolvedType) {
-
-            override fun equals(other: Any?): Boolean =
-                other is Key &&
-                    other.type.accept(
-                        object : RustEqualityUnresolvedTypeVisitor(type) {
-                            /**
-                             * Compare hole-containing types
-                             */
-                            override fun visitPathType(type: RustUnresolvedPathType): Boolean {
-                                val lop = lop
-                                return lop is RustUnresolvedPathType && lop.path.nameSegment == type.path.nameSegment
-                            }
-                        }
-                    ) && (hashCode() == other.hashCode() || throw Exception("WTF"))
-
-            override fun hashCode(): Int =
-                type.accept(
-                    object : RustHashCodeComputingUnresolvedTypeVisitor() {
-                        override fun visitPathType(type: RustUnresolvedPathType): Int =
-                            type.path.nameSegment?.hashCode() ?: 0
-                    }
-                )
-
-        }
+        override fun getKey(): StubIndexKey<RustTypeFingerprint, RustImplItemElement> = KEY
+        override fun getKeyDescriptor(): KeyDescriptor<RustTypeFingerprint> = RustTypeFingerprint.KeyDescriptor
 
         companion object {
-            val KEY: StubIndexKey<Key, RustImplItemElement> =
-                StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.ByType")
+            val KEY: StubIndexKey<RustTypeFingerprint, RustImplItemElement> =
+                StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.TraitImpls")
 
             fun index(stub: RustImplItemElementStub, sink: IndexSink) {
-                if (stub.traitRef != null && stub.type != RustUnknownType) {
-                    sink.occurrence(KEY, Key(stub.type))
+                val type = stub.psi.type ?: return
+                val key = RustTypeFingerprint.create(type)
+                if (stub.traitRef != null && key != null) {
+                    sink.occurrence(KEY, key)
                 }
             }
         }
-
-        override fun getKeyDescriptor(): KeyDescriptor<Key> =
-            object : KeyDescriptor<Key> {
-
-                override fun isEqual(lop: Key?, rop: Key?): Boolean =
-                    lop === rop || lop?.equals(rop) ?: false
-
-                override fun getHashCode(value: Key?): Int =
-                    value?.hashCode() ?: -1
-
-                override fun save(out: DataOutput, value: Key) {
-                    out.writeRustUnresolvedType(value.type)
-                }
-
-                override fun read(`in`: DataInput): Key =
-                    Key(`in`.readRustUnresolvedType())
-            }
     }
 
 
-    class ByName : StringStubIndexExtension<RustImplItemElement>() {
+    class InherentImpls : AbstractStubIndex<RustTypeFingerprint, RustImplItemElement>() {
         override fun getVersion(): Int = RustFileStub.Type.stubVersion
-        override fun getKey(): StubIndexKey<String, RustImplItemElement> = KEY
+        override fun getKey(): StubIndexKey<RustTypeFingerprint, RustImplItemElement> = KEY
+        override fun getKeyDescriptor(): KeyDescriptor<RustTypeFingerprint> = RustTypeFingerprint.KeyDescriptor
 
         companion object {
-            val KEY: StubIndexKey<String, RustImplItemElement> =
-                StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.ByName")
+            val KEY: StubIndexKey<RustTypeFingerprint, RustImplItemElement> =
+                StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.InherentImpls")
 
             fun index(stub: RustImplItemElementStub, sink: IndexSink) {
-                val key = (stub.type as? RustUnresolvedPathType)?.path?.nameSegment
+                val type = stub.psi.type ?: return
+                val key = RustTypeFingerprint.create(type)
                 if (key != null) {
                     sink.occurrence(KEY, key)
                 }
@@ -200,20 +128,3 @@ object RustImplIndex {
         }
     }
 }
-
-
-class RustAliasIndex : StringStubIndexExtension<RustAliasElement>() {
-    override fun getVersion(): Int = RustFileStub.Type.stubVersion
-    override fun getKey(): StubIndexKey<String, RustAliasElement> = KEY
-
-    companion object {
-        val KEY: StubIndexKey<String, RustAliasElement> =
-            StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustAliasIndex")
-    }
-}
-
-private val RustPath.nameSegment: String? get() {
-    val lastSegment = segments.lastOrNull() ?: (this as? RustPath.Named)?.head
-    return lastSegment?.name
-}
-

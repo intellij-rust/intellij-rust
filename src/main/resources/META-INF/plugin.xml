@@ -420,9 +420,8 @@
         <stubIndex implementation="org.rust.lang.core.stubs.index.RustNamedElementIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RustGotoClassIndex"/>
 
-        <stubIndex implementation="org.rust.lang.core.resolve.indexes.RustImplIndex$ByType"/>
-        <stubIndex implementation="org.rust.lang.core.resolve.indexes.RustImplIndex$ByName"/>
-        <stubIndex implementation="org.rust.lang.core.resolve.indexes.RustAliasIndex"/>
+        <stubIndex implementation="org.rust.lang.core.resolve.indexes.RustImplIndex$TraitImpls"/>
+        <stubIndex implementation="org.rust.lang.core.resolve.indexes.RustImplIndex$InherentImpls"/>
 
         <!-- Notification Providers -->
 

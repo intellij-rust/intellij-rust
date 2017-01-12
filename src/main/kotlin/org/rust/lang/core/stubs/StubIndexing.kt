@@ -4,7 +4,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.util.PathUtil
 import org.rust.lang.core.psi.impl.mixin.RustTypeAliasRole
-import org.rust.lang.core.resolve.indexes.RustAliasIndex
 import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.stubs.index.RustGotoClassIndex
 import org.rust.lang.core.stubs.index.RustModulesIndex
@@ -44,8 +43,8 @@ fun IndexSink.indexTraitItem(stub: RustTraitItemElementStub) {
 }
 
 fun IndexSink.indexImplItem(stub: RustImplItemElementStub) {
-    RustImplIndex.ByType.index(stub, this)
-    RustImplIndex.ByName.index(stub, this)
+    RustImplIndex.TraitImpls.index(stub, this)
+    RustImplIndex.InherentImpls.index(stub, this)
 }
 
 fun IndexSink.indexFunction(stub: RustFunctionElementStub) {
@@ -65,12 +64,6 @@ fun IndexSink.indexTypeAlias(stub: RustTypeAliasElementStub) {
 
 fun IndexSink.indexFieldDecl(stub: RustFieldDeclElementStub) {
     indexNamedStub(stub)
-}
-
-fun IndexSink.indexAlias(stub: RustAliasElementStub) {
-    stub.name?.let {
-        occurrence(RustAliasIndex.KEY, it)
-    }
 }
 
 private fun IndexSink.indexNamedStub(stub: RustNamedStub) {
