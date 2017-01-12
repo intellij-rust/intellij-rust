@@ -6,14 +6,14 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RustIcons
-import org.rust.lang.core.psi.RustBlockElement
-import org.rust.lang.core.psi.RustFunctionElement
-import org.rust.lang.core.psi.RustPatBindingElement
-import org.rust.lang.core.psi.RustValueParameterElement
+import org.rust.lang.core.psi.RsBlock
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsPatBinding
+import org.rust.lang.core.psi.RsValueParameter
 import org.rust.lang.core.psi.impl.RustNamedElementImpl
 
 abstract class RustPatBindingImplMixin(node: ASTNode) : RustNamedElementImpl(node),
-                                                        RustPatBindingElement {
+                                                        RsPatBinding {
 
     override fun getNavigationElement(): PsiElement = identifier
 
@@ -26,8 +26,8 @@ abstract class RustPatBindingImplMixin(node: ASTNode) : RustNamedElementImpl(nod
 
     override fun getUseScope(): SearchScope {
         val owner = PsiTreeUtil.getParentOfType(this,
-            RustBlockElement::class.java,
-            RustFunctionElement::class.java
+            RsBlock::class.java,
+            RsFunction::class.java
         )
 
         if (owner != null) return LocalSearchScope(owner)
@@ -36,8 +36,8 @@ abstract class RustPatBindingImplMixin(node: ASTNode) : RustNamedElementImpl(nod
     }
 }
 
-val RustPatBindingElement.isMut: Boolean
+val RsPatBinding.isMut: Boolean
     get() = bindingMode?.mut != null
 
-val RustPatBindingElement.isArg: Boolean
-    get() = parent?.parent is RustValueParameterElement
+val RsPatBinding.isArg: Boolean
+    get() = parent?.parent is RsValueParameter

@@ -20,15 +20,15 @@ import java.util.*
  * If the expression is in a struct literal (Foo {x: 5, y: 6}) suggest the tag for the expression as a name
  * If a name is already bound in the local scope do not suggest it.
  */
-fun RustExprElement.suggestNames(): LinkedHashSet<String> {
+fun RsExpr.suggestNames(): LinkedHashSet<String> {
     val names = LinkedHashSet<String>()
     nameForType(this)?.let { names.addAll(rustNameUtil(it)) }
     val parent = this.parent
 
     val foundNames = when {
         this.isArgument() -> rustNameUtil(nameForArgument())
-        this is RustCallExprElement -> nameForCall(this).flatMap(::rustNameUtil)
-        parent is RustStructExprFieldElement -> rustNameUtil(parent.identifier.text)
+        this is RsCallExpr -> nameForCall(this).flatMap(::rustNameUtil)
+        parent is RsStructExprField -> rustNameUtil(parent.identifier.text)
         else -> emptyList()
     }
 
@@ -41,7 +41,7 @@ fun RustExprElement.suggestNames(): LinkedHashSet<String> {
 }
 
 
-private fun nameForType(expr: RustExprElement): String? {
+private fun nameForType(expr: RsExpr): String? {
     val type = expr.resolvedType
 
     if (type is RustUnknownType) {
@@ -51,9 +51,9 @@ private fun nameForType(expr: RustExprElement): String? {
     return type.toString().take(1)
 }
 
-private fun nameForCall(expr: RustCallExprElement): List<String> {
+private fun nameForCall(expr: RsCallExpr): List<String> {
     val pathElement = expr.expr
-    if (pathElement is RustPathExprElement) {
+    if (pathElement is RsPathExpr) {
         val path = pathElement.path
 
         //path.path.identifier gives us the x's out of: Xxx::<T>::yyy
@@ -69,7 +69,7 @@ private fun List<String>.reverseNew() = if (this.firstOrNull() == "new") {
 }
 
 fun PsiElement.nameForArgument(): String {
-    val call = this.parentOfType<RustCallExprElement>(strict = true) ?: return ""
+    val call = this.parentOfType<RsCallExpr>(strict = true) ?: return ""
 
     val parameterIndex = call.valueArgumentList.children.indexOf(this)
     val fn = call.findFnImpl()
@@ -77,20 +77,20 @@ fun PsiElement.nameForArgument(): String {
     return fn?.valueParameters?.get(parameterIndex)?.pat?.text ?: ""
 }
 
-private fun RustCallExprElement.findFnImpl(): RustFunctionElement? {
-    val path = expr as? RustPathExprElement
-    return path?.path?.reference?.resolve() as? RustFunctionElement
+private fun RsCallExpr.findFnImpl(): RsFunction? {
+    val path = expr as? RsPathExpr
+    return path?.path?.reference?.resolve() as? RsFunction
 }
 
 
 fun findNamesInLocalScope(expr: PsiElement): List<String> {
-    val blockScope = expr.parentOfType<RustBlockElement>(strict = false)
-    val letDecls = PsiTreeUtil.findChildrenOfType(blockScope, RustLetDeclElement::class.java)
+    val blockScope = expr.parentOfType<RsBlock>(strict = false)
+    val letDecls = PsiTreeUtil.findChildrenOfType(blockScope, RsLetDecl::class.java)
 
     return letDecls.map { it.pat?.text }.filterNotNull()
 }
 
-private fun PsiElement.isArgument() = this.parent is RustValueArgumentListElement
-private fun PsiElement.isStructField() = this.parent is RustStructExprFieldElement
+private fun PsiElement.isArgument() = this.parent is RsValueArgumentList
+private fun PsiElement.isStructField() = this.parent is RsStructExprField
 
 private fun rustNameUtil(name: String) = NameUtil.getSuggestionsByName(name, "", "", false, false, false).map { it.toSnakeCase(false) }

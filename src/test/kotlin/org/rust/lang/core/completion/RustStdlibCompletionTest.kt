@@ -2,7 +2,7 @@ package org.rust.lang.core.completion
 
 import com.intellij.testFramework.LightProjectDescriptor
 
-class RustStdlibCompletionTest: RustCompletionTestBase() {
+class RustStdlibCompletionTest : RustCompletionTestBase() {
     override val dataPath: String get() = ""
 
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor

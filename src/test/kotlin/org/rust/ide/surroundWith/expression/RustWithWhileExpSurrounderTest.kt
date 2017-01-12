@@ -18,6 +18,7 @@ class RustWithWhileExpSurrounderTest : RustSurrounderTestCaseBase(RustWithWhileE
             """
         )
     }
+
     fun testCall() {
         doTest(
             """

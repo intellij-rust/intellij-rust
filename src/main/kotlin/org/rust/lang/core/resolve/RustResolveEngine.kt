@@ -17,7 +17,10 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.impl.rustMod
-import org.rust.lang.core.psi.util.*
+import org.rust.lang.core.psi.util.ancestors
+import org.rust.lang.core.psi.util.fields
+import org.rust.lang.core.psi.util.module
+import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
@@ -66,15 +69,15 @@ object RustResolveEngine {
     }
 
     /**
-     * Resolves references to struct's fields inside destructuring [RustStructExprElement]
+     * Resolves references to struct's fields inside destructuring [RsStructExpr]
      */
-    fun resolveStructExprField(structExpr: RustStructExprElement, fieldName: String): List<RustNamedElement> =
+    fun resolveStructExprField(structExpr: RsStructExpr, fieldName: String): List<RustNamedElement> =
         structExpr.fields.filter { it.name == fieldName }
 
     /**
-     * Resolves references to struct's fields inside [RustFieldExprElement]
+     * Resolves references to struct's fields inside [RsFieldExpr]
      */
-    fun resolveFieldExpr(fieldExpr: RustFieldExprElement): List<RustCompositeElement> {
+    fun resolveFieldExpr(fieldExpr: RsFieldExpr): List<RustCompositeElement> {
         val receiverType = fieldExpr.expr.resolvedType.stripAllRefsIfAny()
         val struct = (receiverType as? RustStructType)?.item ?: return emptyList()
 
@@ -90,7 +93,7 @@ object RustResolveEngine {
     /**
      * Resolves method-call expressions
      */
-    fun resolveMethodCallExpr(call: RustMethodCallExprElement): RustNamedElement? {
+    fun resolveMethodCallExpr(call: RsMethodCallExpr): RustNamedElement? {
         val receiverType = call.expr.resolvedType
         val name = call.identifier.text
 
@@ -98,7 +101,7 @@ object RustResolveEngine {
             .find { it.name == name }
     }
 
-    fun resolveUseGlob(ref: RustUseGlobElement): List<RustCompositeElement> = recursionGuard(ref, Computable {
+    fun resolveUseGlob(ref: RsUseGlob): List<RustCompositeElement> = recursionGuard(ref, Computable {
         val basePath = ref.basePath
 
         // This is not necessarily a module, e.g.
@@ -149,7 +152,7 @@ object RustResolveEngine {
      * Reference:
      *      https://github.com/rust-lang/rust/blob/master/src/doc/reference.md#modules
      */
-    fun resolveModDecl(modDecl: RustModDeclItemElement): RustNamedElement? {
+    fun resolveModDecl(modDecl: RsModDeclItem): RustNamedElement? {
         val dir = modDecl.containingMod.ownedDirectory ?: return null
 
         val psiManager = PsiManager.getInstance(modDecl.project)
@@ -158,7 +161,7 @@ object RustResolveEngine {
         }.singleOrNull()
     }
 
-    fun resolveExternCrate(crate: RustExternCrateItemElement): RustNamedElement? {
+    fun resolveExternCrate(crate: RsExternCrateItem): RustNamedElement? {
         val name = crate.name ?: return null
         val module = crate.module ?: return null
         return module.project.getPsiFor(module.cargoProject?.findExternCrateRootByName(name))?.rustMod
@@ -203,7 +206,7 @@ private fun resolveAllNamespaces(path: RustPath, pivot: RustCompositeElement): S
             .filter { it.name == path.head.name }
     }
 
-    val withMethods = pivot.parentOfType<RustUseItemElement>() == null
+    val withMethods = pivot.parentOfType<RsUseItem>() == null
     var current: Sequence<ScopeEntry> = start
     for ((name) in path.segments) {
         val scope = current
@@ -219,7 +222,7 @@ private fun resolveAllNamespaces(path: RustPath, pivot: RustCompositeElement): S
 }
 
 private data class Context(
-    val visitedStarImports: Set<RustUseItemElement> = emptySet()
+    val visitedStarImports: Set<RsUseItem> = emptySet()
 )
 
 private fun outerDeclarations(
@@ -234,10 +237,10 @@ private fun outerDeclarations(
     is RustMod ->
         itemDeclarations(scope, false, context)
 
-    is RustStructItemElement ->
+    is RsStructItem ->
         if (withMethods) methods(scope) else emptySequence()
 
-    is RustEnumItemElement ->
+    is RsEnumItem ->
         scope.enumBody.enumVariantList.asScopeEntries() + (if (withMethods) methods(scope) else emptySequence())
     else -> null
 }
@@ -271,39 +274,39 @@ private fun innerDeclarationsIn(
             ).flatten()
         }
 
-        is RustModItemElement -> {
+        is RsModItem -> {
             sequenceOf(
                 itemDeclarations(scope, true, context),
                 preludeSymbols(scope.module, context)
             ).flatten()
         }
 
-        is RustStructItemElement,
-        is RustEnumItemElement,
-        is RustTypeAliasElement -> {
+        is RsStructItem,
+        is RsEnumItem,
+        is RsTypeAlias -> {
             scope as RustGenericDeclaration
             scope.typeParameters.asScopeEntries()
         }
 
-        is RustTraitItemElement ->
+        is RsTraitItem ->
             scope.typeParameters.asScopeEntries() + ScopeEntry.of(RustPath.CSELF, scope)
 
-        is RustImplItemElement -> {
+        is RsImplItem -> {
             scope.typeParameters.asScopeEntries() +
                 sequenceOfNotNull(ScopeEntry.lazy(RustPath.CSELF) {
                     //TODO: handle types which are not `NamedElements` (e.g. tuples)
-                    (scope.type as? RustBaseTypeElement)?.path?.reference?.resolve()
+                    (scope.type as? RsBaseType)?.path?.reference?.resolve()
                 })
         }
 
-        is RustFunctionElement ->
+        is RsFunction ->
             sequenceOf(
                 sequenceOfNotNull(scope.selfParameter?.let { ScopeEntry.of(it) }),
                 scope.valueParameters.asSequence().mapNotNull { it.pat }.flatMap { it.boundNames },
                 scope.typeParameters.asScopeEntries()
             ).flatten()
 
-        is RustBlockElement -> {
+        is RsBlock -> {
             // We want to filter out
             // all non strictly preceding let declarations.
             //
@@ -315,7 +318,7 @@ private fun innerDeclarationsIn(
             // ```
             val visiblePatterns = scope
                 .stmtList.asReversed().asSequence()
-                .filterIsInstance<RustLetDeclElement>()
+                .filterIsInstance<RsLetDecl>()
                 .dropWhile { PsiUtilCore.compareElementsByPosition(place, it) < 0 }
                 // Drops at most one element
                 .dropWhile { it.isStrictAncestorOf(place) }
@@ -334,20 +337,20 @@ private fun innerDeclarationsIn(
             nonShadowed.asSequence() + itemDeclarations(scope, true, context)
         }
 
-        is RustForExprElement -> {
+        is RsForExpr -> {
             if (scope.expr?.isStrictAncestorOf(place) == true) return emptySequence()
             scope.pat?.boundNames ?: emptySequence()
         }
 
-        is RustIfExprElement -> scope.condition?.boundNames(place) ?: emptySequence()
-        is RustWhileExprElement -> scope.condition?.boundNames(place) ?: emptySequence()
+        is RsIfExpr -> scope.condition?.boundNames(place) ?: emptySequence()
+        is RsWhileExpr -> scope.condition?.boundNames(place) ?: emptySequence()
 
-        is RustLambdaExprElement -> scope
+        is RsLambdaExpr -> scope
             .valueParameterList.valueParameterList.asSequence()
             .mapNotNull { it.pat }
             .flatMap { it.boundNames }
 
-        is RustMatchArmElement -> scope
+        is RsMatchArm -> scope
             // Rust allows to defined several patterns in the single match arm,
             // but they all must bind the same variables, hence we can inspect
             // only the first one.
@@ -412,11 +415,11 @@ private fun definedItems(scope: RustItemsOwner): Sequence<Pair<String, RustNamed
     ).flatten()
 }
 
-private val RustPatElement.boundNames: Sequence<ScopeEntry>
-    get() = PsiTreeUtil.findChildrenOfType(this, RustPatBindingElement::class.java)
+private val RsPat.boundNames: Sequence<ScopeEntry>
+    get() = PsiTreeUtil.findChildrenOfType(this, RsPatBinding::class.java)
         .asScopeEntries()
 
-private fun RustConditionElement.boundNames(place: RustCompositeElement): Sequence<ScopeEntry> =
+private fun RsCondition.boundNames(place: RustCompositeElement): Sequence<ScopeEntry> =
     if (this.isStrictAncestorOf(place)) emptySequence()
     else pat?.boundNames ?: emptySequence()
 
@@ -446,7 +449,7 @@ private fun injectedCrates(file: RustFile): Sequence<ScopeEntry> {
     })
 }
 
-private fun RustUseItemElement.wildcardEntries(context: Context): Sequence<ScopeEntry> {
+private fun RsUseItem.wildcardEntries(context: Context): Sequence<ScopeEntry> {
     if (this in context.visitedStarImports) return emptySequence()
     // Recursively step into `use foo::*`
     val mod = path?.reference?.resolve() ?: return emptySequence()
@@ -454,7 +457,7 @@ private fun RustUseItemElement.wildcardEntries(context: Context): Sequence<Scope
     return outerDeclarations(mod, newCtx, withMethods = false) ?: emptySequence()
 }
 
-private fun RustUseItemElement.nonWildcardEntries(): Sequence<ScopeEntry> {
+private fun RsUseItem.nonWildcardEntries(): Sequence<ScopeEntry> {
     val globList = useGlobList
     if (globList == null) {
         val path = path ?: return emptySequence()

@@ -15,7 +15,7 @@ interface RustCompositeElement : PsiElement {
 val RustCompositeElement.containingMod: RustMod?
     get() = PsiTreeUtil.getStubOrPsiParentOfType(this, RustMod::class.java)
 
-val RustModDeclItemElement.containingMod: RustMod
+val RsModDeclItem.containingMod: RustMod
     get() = (this as RustCompositeElement).containingMod
         ?: error("Rust mod decl outside of a module")
 

@@ -1,5 +1,4 @@
-#[macro<caret>]
+# [ macro < caret>]
 extern crate std;
 
-fn main() {
-}
+fn main() {}

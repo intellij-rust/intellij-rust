@@ -20,7 +20,7 @@ class RustMacroArgFmtBlock(
 
     override fun getSubBlocks(): List<Block> = emptyList()
 
-    override fun getSpacing(child1: Block?, child2: Block): Spacing?  = Spacing.getReadOnlySpacing()
+    override fun getSpacing(child1: Block?, child2: Block): Spacing? = Spacing.getReadOnlySpacing()
     override fun getChildAttributes(newChildIndex: Int): ChildAttributes = ChildAttributes(null, null)
 
     override fun isLeaf(): Boolean = node.firstChildNode == null

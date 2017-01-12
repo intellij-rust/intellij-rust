@@ -1,11 +1,11 @@
 package org.rust.lang.core.types
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.RustTraitItemElement
+import org.rust.lang.core.psi.RsTraitItem
 
 interface RustPrimitiveType : RustType {
 
-    override fun getTraitsImplementedIn(project: Project): Sequence<RustTraitItemElement> =
+    override fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
         emptySequence()
 
     companion object {

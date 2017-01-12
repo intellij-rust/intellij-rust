@@ -5,15 +5,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
-import org.rust.lang.core.psi.RustSelfParameterElement
+import org.rust.lang.core.psi.RsSelfParameter
 import org.rust.lang.core.psi.impl.RustStubbedElementImpl
-import org.rust.lang.core.stubs.RustSelfParameterElementStub
+import org.rust.lang.core.stubs.RsSelfParameterStub
 
-abstract class RustSelfParameterImplMixin : RustStubbedElementImpl<RustSelfParameterElementStub>,
+abstract class RustSelfParameterImplMixin : RustStubbedElementImpl<RsSelfParameterStub>,
                                             PsiNameIdentifierOwner,
-                                            RustSelfParameterElement {
+                                            RsSelfParameter {
     constructor(node: ASTNode) : super(node)
-    constructor(stub: RustSelfParameterElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RsSelfParameterStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getNameIdentifier(): PsiElement = self
     override fun getName(): String = "self"
@@ -27,5 +27,5 @@ abstract class RustSelfParameterImplMixin : RustStubbedElementImpl<RustSelfParam
 }
 
 
-val RustSelfParameterElement.isMut: Boolean get() = stub?.isMut ?: (mut != null)
-val RustSelfParameterElement.isRef: Boolean get() = stub?.isRef ?: (and != null)
+val RsSelfParameter.isMut: Boolean get() = stub?.isMut ?: (mut != null)
+val RsSelfParameter.isRef: Boolean get() = stub?.isRef ?: (and != null)

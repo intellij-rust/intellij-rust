@@ -1,6 +1,6 @@
 package org.rust.lang.core.type
 
-class RustEnumPatternTypeInferenceTest: RustTypificationTestBase() {
+class RustEnumPatternTypeInferenceTest : RustTypificationTestBase() {
     fun testEnumPattern() = testExpr("""
         enum E {
             X

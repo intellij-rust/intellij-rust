@@ -3,7 +3,7 @@ package org.rust.lang.utils
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 
-fun RustBinaryExprElement.negateToString(): String {
+fun RsBinaryExpr.negateToString(): String {
     val lhs = left.text
     val rhs = right?.text ?: ""
     val op = when (operatorType) {
@@ -19,20 +19,20 @@ fun RustBinaryExprElement.negateToString(): String {
 }
 
 fun PsiElement.isNegation(): Boolean =
-    this is RustUnaryExprElement && excl != null
+    this is RsUnaryExpr && excl != null
 
 fun PsiElement.negate(): PsiElement {
     val psiFactory = RustPsiFactory(project)
     return when {
         isNegation() -> {
-            val inner = (this as RustUnaryExprElement).expr!!
-            (inner as? RustParenExprElement)?.expr ?: inner
+            val inner = (this as RsUnaryExpr).expr!!
+            (inner as? RsParenExpr)?.expr ?: inner
         }
 
-        this is RustBinaryExprElement ->
+        this is RsBinaryExpr ->
             psiFactory.createExpression(negateToString())
 
-        this is RustParenExprElement || this is RustPathExprElement || this is RustCallExprElement ->
+        this is RsParenExpr || this is RsPathExpr || this is RsCallExpr ->
             psiFactory.createExpression("!$text")
 
         else ->

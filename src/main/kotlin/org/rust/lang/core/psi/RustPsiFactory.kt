@@ -10,50 +10,50 @@ import org.rust.lang.core.psi.util.childOfType
 
 class RustPsiFactory(private val project: Project) {
     fun createIdentifier(text: String): PsiElement =
-        createFromText<RustModDeclItemElement>("mod $text;")?.identifier
+        createFromText<RsModDeclItem>("mod $text;")?.identifier
             ?: error("Failed to create identifier: `$text`")
 
-    fun createExpression(text: String): RustExprElement =
+    fun createExpression(text: String): RsExpr =
         createFromText("fn main() { $text; }")
             ?: error("Failed to create expression from text: `$text`")
 
-    fun createBlockExpr(body: String): RustBlockExprElement =
-        createExpression("{ $body }") as RustBlockExprElement
+    fun createBlockExpr(body: String): RsBlockExpr =
+        createExpression("{ $body }") as RsBlockExpr
 
-    fun createStructExprBody(fieldNames: List<String>): RustStructExprBodyElement {
+    fun createStructExprBody(fieldNames: List<String>): RsStructExprBody {
         val fields = fieldNames.map { "$it: ()," }.joinToString("\n")
-        return (createExpression("S { $fields }") as RustStructExprElement).structExprBody
+        return (createExpression("S { $fields }") as RsStructExpr).structExprBody
     }
 
-    fun createStatement(text: String): RustStmtElement =
+    fun createStatement(text: String): RsStmt =
         createFromText("fn main() { $text 92; }")
             ?: error("Failed to create statement from text: `$text`")
 
-    fun createLetDeclaration(name: String, expr: RustExprElement, mutable: Boolean = false): RustLetDeclElement =
-        createStatement("let ${if (mutable) "mut " else ""}$name = ${expr.text};") as RustLetDeclElement
+    fun createLetDeclaration(name: String, expr: RsExpr, mutable: Boolean = false): RsLetDecl =
+        createStatement("let ${if (mutable) "mut " else ""}$name = ${expr.text};") as RsLetDecl
 
-    fun createType(text: String): RustTypeElement =
+    fun createType(text: String): RsType =
         createFromText("fn main() { let a : $text; }")
             ?: error("Failed to create type from text: `$text`")
 
     fun createMethodParam(text: String): PsiElement {
-        val fnItem: RustFunctionElement = createTraitMethodMember("fn foo($text);")
+        val fnItem: RsFunction = createTraitMethodMember("fn foo($text);")
         return fnItem.selfParameter ?: fnItem.valueParameters.firstOrNull()
             ?: error("Failed to create type from text: `$text`")
     }
 
-    fun createReferenceType(innerTypeText: String, mutable: Boolean): RustRefLikeTypeElement =
-        createType("&${if (mutable) "mut " else ""}$innerTypeText") as RustRefLikeTypeElement
+    fun createReferenceType(innerTypeText: String, mutable: Boolean): RsRefLikeType =
+        createType("&${if (mutable) "mut " else ""}$innerTypeText") as RsRefLikeType
 
-    fun createModDeclItem(modName: String): RustModDeclItemElement =
+    fun createModDeclItem(modName: String): RsModDeclItem =
         createFromText("mod $modName;")
             ?: error("Failed to crate mod decl with name: `$modName`")
 
-    fun createUseItem(text: String): RustUseItemElement =
+    fun createUseItem(text: String): RsUseItem =
         createFromText("use $text;")
             ?: error("Failed to create use item from text: `$text`")
 
-    fun createTraitImplItem(traitMethods: List<RustFunctionElement>): RustImplItemElement {
+    fun createTraitImplItem(traitMethods: List<RsFunction>): RsImplItem {
         val methods = traitMethods
             .mapNotNull { " ${it.signatureText} {\nunimplemented!()\n}" }
             .joinToString("\n\n")
@@ -62,20 +62,20 @@ class RustPsiFactory(private val project: Project) {
             ?: error("Failed to create an impl from text: `$text`")
     }
 
-    fun createTraitMethodMember(text: String): RustFunctionElement {
-        val traitImpl: RustTraitItemElement = createFromText("trait Foo { $text }") ?:
+    fun createTraitMethodMember(text: String): RsFunction {
+        val traitImpl: RsTraitItem = createFromText("trait Foo { $text }") ?:
             error("Failed to create an method member from text: `$text`")
         return traitImpl.functionList.first()
     }
 
-    fun createInherentImplItem(name: String): RustImplItemElement =
+    fun createInherentImplItem(name: String): RsImplItem =
         createFromText("impl $name {  }")
             ?: error("Failed to create an inherent impl with name: `$name`")
 
     fun createWhereClause(
-        lifetimeBounds: List<RustLifetimeParameterElement>,
-        typeBounds: List<RustTypeParameterElement>
-    ): RustWhereClauseElement {
+        lifetimeBounds: List<RsLifetimeParameter>,
+        typeBounds: List<RsTypeParameter>
+    ): RsWhereClause {
 
         val lifetimes = lifetimeBounds
             .filter { it.lifetimeParamBounds != null }
@@ -94,14 +94,14 @@ class RustPsiFactory(private val project: Project) {
 
     fun createTypeParameterList(
         params: Iterable<String>
-    ): RustTypeParameterListElement {
+    ): RsTypeParameterList {
         val text = params.joinToString(prefix = "<", separator = ", ", postfix = ">")
 
-        return createFromText<RustFunctionElement>("fn foo$text() {}")?.typeParameterList
+        return createFromText<RsFunction>("fn foo$text() {}")?.typeParameterList
             ?: error("Failed to create type from text: `$text`")
     }
 
-    fun createOuterAttr(text: String): RustOuterAttrElement =
+    fun createOuterAttr(text: String): RsOuterAttr =
         createFromText("#[$text] struct Dummy;")
             ?: error("Failed to create an outer attribute from text: `$text`")
 
@@ -111,7 +111,7 @@ class RustPsiFactory(private val project: Project) {
             ?.childOfType<T>()
 }
 
-private val RustFunctionElement.signatureText: String? get() {
+private val RsFunction.signatureText: String? get() {
     // We can't simply take a substring of original method declaration
     // because of anonymous parameters.
     val name = name ?: return null

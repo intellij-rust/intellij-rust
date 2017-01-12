@@ -5,8 +5,8 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInf
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
-import org.rust.lang.core.psi.RustBlockElement
-import org.rust.lang.core.psi.RustExprElement
+import org.rust.lang.core.psi.RsBlock
+import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.psi.util.ancestors
 import org.rust.lang.core.types.RustBooleanType
@@ -22,44 +22,44 @@ internal object RustPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
         RustPsiFactory(context.project).createExpression("$prefix${context.text}$suffix")
 }
 
-abstract class RustExprParentsSelectorBase(val pred: (RustExprElement) -> Boolean) : PostfixTemplateExpressionSelector {
+abstract class RustExprParentsSelectorBase(val pred: (RsExpr) -> Boolean) : PostfixTemplateExpressionSelector {
     override fun getRenderer(): Function<PsiElement, String> = Function { it.text }
 
     abstract override fun getExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement>
 }
 
-class RustTopMostInScopeSelector(pred: (RustExprElement) -> Boolean) : RustExprParentsSelectorBase(pred) {
+class RustTopMostInScopeSelector(pred: (RsExpr) -> Boolean) : RustExprParentsSelectorBase(pred) {
     override fun getExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> =
         listOf(
             context
                 .ancestors
-                .takeWhile { it !is RustBlockElement }
-                .filter { it is RustExprElement && pred(it) }
+                .takeWhile { it !is RsBlock }
+                .filter { it is RsExpr && pred(it) }
                 .last()
         )
 
     override fun hasExpression(context: PsiElement, copyDocument: Document, newOffset: Int): Boolean =
         context
             .ancestors
-            .takeWhile { it !is RustBlockElement }
-            .any { it is RustExprElement && pred(it) }
+            .takeWhile { it !is RsBlock }
+            .any { it is RsExpr && pred(it) }
 }
 
-class RustAllParentsSelector(pred: (RustExprElement) -> Boolean) : RustExprParentsSelectorBase(pred) {
+class RustAllParentsSelector(pred: (RsExpr) -> Boolean) : RustExprParentsSelectorBase(pred) {
     override fun getExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> =
         context
             .ancestors
-            .takeWhile { it !is RustBlockElement }
-            .filter { it is RustExprElement && pred(it) }
+            .takeWhile { it !is RsBlock }
+            .filter { it is RsExpr && pred(it) }
             .toList()
 
     override fun hasExpression(context: PsiElement, copyDocument: Document, newOffset: Int): Boolean =
         context
             .ancestors
-            .takeWhile { it !is RustBlockElement }
-            .any { it is RustExprElement && pred(it) }
+            .takeWhile { it !is RsBlock }
+            .any { it is RsExpr && pred(it) }
 }
 
-fun RustExprElement.isBool() = resolvedType == RustBooleanType
-fun RustExprElement.isEnum() = resolvedType is RustEnumType
-fun RustExprElement.any() = true
+fun RsExpr.isBool() = resolvedType == RustBooleanType
+fun RsExpr.isEnum() = resolvedType is RustEnumType
+fun RsExpr.any() = true

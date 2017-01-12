@@ -2,9 +2,9 @@ package org.rust.ide.structure
 
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
-import org.rust.lang.core.psi.RustFieldDeclElement
+import org.rust.lang.core.psi.RsFieldDecl
 
-class RustStructDeclFieldTreeElement(element: RustFieldDeclElement) : PsiTreeElementBase<RustFieldDeclElement>(element) {
+class RustStructDeclFieldTreeElement(element: RsFieldDecl) : PsiTreeElementBase<RsFieldDecl>(element) {
 
     override fun getPresentableText() = "${element?.identifier?.text}: ${element?.type?.text}"
 

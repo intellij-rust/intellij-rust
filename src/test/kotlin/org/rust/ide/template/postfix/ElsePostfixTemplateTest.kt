@@ -2,16 +2,16 @@ package org.rust.ide.template.postfix
 
 class ElsePostfixTemplateTest : PostfixTemplateTestCase(ElseExpressionPostfixTemplate()) {
     fun testNumber() = doTestNotApplicable(
-            """
+        """
             fn main() {
                 let a = 4;
                 a.else/*caret*/
             }
             """
-        )
+    )
 
     fun testNumberCall() = doTestNotApplicable(
-            """
+        """
             fn func() -> i32 {
                 1234
             }
@@ -20,71 +20,71 @@ class ElsePostfixTemplateTest : PostfixTemplateTestCase(ElseExpressionPostfixTem
                 func().else/*caret*/
             }
             """
-        )
+    )
 
     fun testSimple() = doTest(
-            """
+        """
             fn main() {
                 let a = 4 == 2;
                 a.else/*caret*/
             }
             """
-            ,
-            """
+        ,
+        """
             fn main() {
                 let a = 4 == 2;
                 if !a {/*caret*/}
             }
             """
-        )
+    )
 
     fun testSimpleNegatedExpr() = doTest(
-            """
+        """
             fn main() {
                 let a = 4 == 2;
                 !a.else/*caret*/
             }
             """
-            ,
-            """
+        ,
+        """
             fn main() {
                 let a = 4 == 2;
                 if a {/*caret*/}
             }
             """
-        )
+    )
 
     fun testFunArg() = doTest(
-            """
+        """
             fn foo(a: bool) {
                 a.else/*caret*/
             }
             """
-            ,
-            """
+        ,
+        """
             fn foo(a: bool) {
                 if !a {/*caret*/}
             }
             """
-        )
+    )
 
     fun testSimpleEqExpr() = doTest(
-            """
+        """
             fn main() {
                 true == true.else/*caret*/
             }
             """
-            ,
-            """
+        ,
+        """
             fn main() {
                 if true != true {/*caret*/}
             }
             """
-        )
+    )
 
 
     fun testSelector() = doTest(
-            """
+        """
             fn main() {
                 let a = if (true) {
                     42 < 43.else/*caret*/
@@ -93,8 +93,8 @@ class ElsePostfixTemplateTest : PostfixTemplateTestCase(ElseExpressionPostfixTem
                 };
             }
             """
-            ,
-            """
+        ,
+        """
             fn main() {
                 let a = if (true) {
                     if 42 >= 43 {/*caret*/}
@@ -103,7 +103,7 @@ class ElsePostfixTemplateTest : PostfixTemplateTestCase(ElseExpressionPostfixTem
                 };
             }
             """
-        )
+    )
 
     fun testCall() = doTest(
         """
@@ -129,14 +129,14 @@ class ElsePostfixTemplateTest : PostfixTemplateTestCase(ElseExpressionPostfixTem
 
     fun testBinOperatorsBool() {
         val cases = listOf(
-            Pair("1 == 2",      "1 != 2"),
-            Pair("1 != 2",      "1 == 2"),
-            Pair("1 <= 2",      "1 > 2"),
-            Pair("1 >= 2",      "1 < 2"),
-            Pair("1 < 2",       "1 >= 2"),
-            Pair("1 > 2",       "1 <= 2"),
-            Pair("!(1 == 2)",   "1 == 2"),
-            Pair("(1 == 2)",    "!(1 == 2)")
+            Pair("1 == 2", "1 != 2"),
+            Pair("1 != 2", "1 == 2"),
+            Pair("1 <= 2", "1 > 2"),
+            Pair("1 >= 2", "1 < 2"),
+            Pair("1 < 2", "1 >= 2"),
+            Pair("1 > 2", "1 <= 2"),
+            Pair("!(1 == 2)", "1 == 2"),
+            Pair("(1 == 2)", "!(1 == 2)")
         )
 
         for (case in cases) {

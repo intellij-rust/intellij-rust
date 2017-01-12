@@ -1,3 +1,3 @@
 fn main() {
-    p<caret>
+    p < caret >
 }

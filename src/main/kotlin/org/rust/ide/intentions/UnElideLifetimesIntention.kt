@@ -9,16 +9,16 @@ import org.rust.lang.core.psi.impl.mixin.valueParameters
 import org.rust.lang.core.psi.util.contains
 import org.rust.lang.core.psi.util.parentOfType
 
-class UnElideLifetimesIntention : RustElementBaseIntentionAction<RustFunctionElement>() {
+class UnElideLifetimesIntention : RustElementBaseIntentionAction<RsFunction>() {
     override fun getText() = "Un-elide lifetimes"
     override fun getFamilyName(): String = text
 
-    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RustFunctionElement? {
-        val fn = element.parentOfType<RustFunctionElement>() ?: return null
-        val scope = element.parentOfType<RustBlockElement>()
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsFunction? {
+        val fn = element.parentOfType<RsFunction>() ?: return null
+        val scope = element.parentOfType<RsBlock>()
         if (fn.contains(scope)) return null
 
-        if ((fn.retType?.type as? RustRefLikeTypeElement)?.lifetime != null) return null
+        if ((fn.retType?.type as? RsRefLikeType)?.lifetime != null) return null
 
         val args = fn.allRefArgs
 
@@ -26,7 +26,7 @@ class UnElideLifetimesIntention : RustElementBaseIntentionAction<RustFunctionEle
         return fn
     }
 
-    override fun invoke(project: Project, editor: Editor, ctx: RustFunctionElement) {
+    override fun invoke(project: Project, editor: Editor, ctx: RsFunction) {
         ctx.allRefArgs.asSequence().zip(nameGenerator).forEach {
             it.first.replace(createParam(project, it.first, it.second))
         }
@@ -38,13 +38,13 @@ class UnElideLifetimesIntention : RustElementBaseIntentionAction<RustFunctionEle
         ctx.typeParameterList?.replace(genericParams) ?: ctx.addAfter(genericParams, ctx.identifier)
 
         // return type
-        val retType = ctx.retType?.type as? RustRefLikeTypeElement ?: return
+        val retType = ctx.retType?.type as? RsRefLikeType ?: return
 
         if ((ctx.selfParameter != null) || (ctx.allRefArgs.drop(1).none())) {
             retType.replace(createRefType(project, retType, ctx.allRefArgs.first().lifetime!!.text))
         } else {
             val lifeTime = (retType.replace(createRefType(project, retType, "'unknown"))
-                as RustRefLikeTypeElement).lifetime ?: return
+                as RsRefLikeType).lifetime ?: return
             editor.selectionModel.setSelection(lifeTime.textRange.startOffset + 1, lifeTime.textRange.endOffset)
         }
     }
@@ -56,26 +56,26 @@ class UnElideLifetimesIntention : RustElementBaseIntentionAction<RustFunctionEle
         return@map if (index == 0) "'$letter" else "'$letter$index"
     }
 
-    private fun createRefType(project: Project, origin: RustRefLikeTypeElement, lifeTimeName: String): RustRefLikeTypeElement =
-        RustPsiFactory(project).createType(origin.text.replaceFirst("&", "&$lifeTimeName ")) as RustRefLikeTypeElement
+    private fun createRefType(project: Project, origin: RsRefLikeType, lifeTimeName: String): RsRefLikeType =
+        RustPsiFactory(project).createType(origin.text.replaceFirst("&", "&$lifeTimeName ")) as RsRefLikeType
 
     private fun createParam(project: Project, origin: PsiElement, lifeTimeName: String): PsiElement =
         RustPsiFactory(project).createMethodParam(origin.text.replaceFirst("&", "&$lifeTimeName "))
 
-    private val RustFunctionElement.allRefArgs: List<PsiElement> get() {
+    private val RsFunction.allRefArgs: List<PsiElement> get() {
         val selfAfg: List<PsiElement> = listOfNotNull(selfParameter)
         val params: List<PsiElement> = valueParameters
             .filter { param ->
                 val type = param.type
-                type is RustRefLikeTypeElement && type.and != null
+                type is RsRefLikeType && type.and != null
             }
         return (selfAfg + params).filterNotNull()
     }
 
     private val PsiElement.lifetime: PsiElement? get() =
     when (this) {
-        is RustSelfParameterElement -> lifetime
-        is RustValueParameterElement -> (type as? RustRefLikeTypeElement)?.lifetime
+        is RsSelfParameter -> lifetime
+        is RsValueParameter -> (type as? RsRefLikeType)?.lifetime
         else -> null
     }
 }

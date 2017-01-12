@@ -16,32 +16,32 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
 
         val name = if (element is RustMod) element.modName else element.name
         val header = if (name != null) "<pre>$name</pre>\n" else ""
-        val functionSignature = (element as? RustFunctionElement)?.formatSignature()
+        val functionSignature = (element as? RsFunction)?.formatSignature()
         val signature = if (functionSignature != null) "<pre>$functionSignature</pre>\n" else ""
         val doc = element.documentationAsHtml() ?: ""
         return header + signature + doc
     }
 
     override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?) = when (element) {
-        is RustPatBindingElement -> getQuickNavigateInfo(element)
-        is RustFunctionElement -> getQuickNavigateInfo(element)
+        is RsPatBinding -> getQuickNavigateInfo(element)
+        is RsFunction -> getQuickNavigateInfo(element)
         else -> null
     }
 
-    private fun getQuickNavigateInfo(element: RustPatBindingElement): String {
+    private fun getQuickNavigateInfo(element: RsPatBinding): String {
         val location = element.locationString
         val bindingMode = if (element.isMut) "mut " else ""
 
         return "let $bindingMode<b>${element.identifier.text}</b>$location"
     }
 
-    private fun getQuickNavigateInfo(element: RustFunctionElement): String {
+    private fun getQuickNavigateInfo(element: RsFunction): String {
         val signature = element.formatSignature()
         val location = element.locationString
         return "$signature$location"
     }
 
-    private fun RustFunctionElement.formatSignature(): String {
+    private fun RsFunction.formatSignature(): String {
         // fn item looks like this:
         // ```
         //     ///doc comment
@@ -52,9 +52,9 @@ class RustDocumentationProvider : AbstractDocumentationProvider() {
         // we want to show only the signature, and make the name bold
 
         var signatureStartElement = firstChild
-        loop@while (true) {
+        loop@ while (true) {
             when (signatureStartElement) {
-                is PsiWhiteSpace, is PsiComment, is RustOuterAttrElement -> {
+                is PsiWhiteSpace, is PsiComment, is RsOuterAttr -> {
                     signatureStartElement = signatureStartElement.nextSibling
                 }
                 else -> break@loop

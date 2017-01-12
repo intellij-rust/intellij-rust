@@ -7,15 +7,15 @@ import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
-import org.rust.lang.core.stubs.RustTypeAliasElementStub
+import org.rust.lang.core.stubs.RsTypeAliasStub
 import org.rust.lang.core.symbols.RustPath
 import javax.swing.Icon
 
-abstract class RustTypeAliasImplMixin : RustStubbedNamedElementImpl<RustTypeAliasElementStub>, RustTypeAliasElement {
+abstract class RustTypeAliasImplMixin : RustStubbedNamedElementImpl<RsTypeAliasStub>, RsTypeAlias {
 
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RustTypeAliasElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RsTypeAliasStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int): Icon? = iconWithVisibility(flags, RustIcons.TYPE)
 
@@ -31,16 +31,16 @@ enum class RustTypeAliasRole {
     IMPL_ASSOC_TYPE
 }
 
-val RustTypeAliasElement.role: RustTypeAliasRole get() {
+val RsTypeAlias.role: RustTypeAliasRole get() {
     val stub = stub
     if (stub != null) return stub.role
     return when (parent) {
         is RustItemsOwner -> RustTypeAliasRole.FREE
-        is RustTraitItemElement -> RustTypeAliasRole.TRAIT_ASSOC_TYPE
-        is RustImplItemElement -> RustTypeAliasRole.IMPL_ASSOC_TYPE
+        is RsTraitItem -> RustTypeAliasRole.TRAIT_ASSOC_TYPE
+        is RsImplItem -> RustTypeAliasRole.IMPL_ASSOC_TYPE
         else -> error("Unexpected parent of type alias: $parent")
     }
 }
 
-val RustTypeAliasElement.default: PsiElement?
+val RsTypeAlias.default: PsiElement?
     get() = node.findChildByType(RustTokenElementTypes.DEFAULT)?.psi

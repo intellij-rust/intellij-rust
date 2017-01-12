@@ -20,21 +20,21 @@ class RustExtraSemicolonInspection : RustLocalInspectionTool() {
     override fun getDisplayName() = "Extra semicolon"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
-        object : RustElementVisitor() {
-            override fun visitFunction(o: RustFunctionElement) = inspect(holder, o)
+        object : RsVisitor() {
+            override fun visitFunction(o: RsFunction) = inspect(holder, o)
         }
 }
 
 
-private fun inspect(holder: ProblemsHolder, fn: RustFunctionElement) {
+private fun inspect(holder: ProblemsHolder, fn: RsFunction) {
     val block = fn.block ?: return
     val retType = fn.retType?.type ?: return
     if (retType.resolvedType == RustUnitType) return
     if (block.expr != null) return
-    val lastStatement = block.stmtList.lastOrNull() as? RustExprStmtElement ?: return
+    val lastStatement = block.stmtList.lastOrNull() as? RsExprStmt ?: return
 
     when (lastStatement.expr) {
-        is RustRetExprElement, is RustMacroExprElement, is RustLoopExprElement -> return
+        is RsRetExpr, is RsMacroExpr, is RsLoopExpr -> return
     }
 
     holder.registerProblem(
@@ -46,7 +46,7 @@ private fun inspect(holder: ProblemsHolder, fn: RustFunctionElement) {
             override fun getFamilyName() = name
 
             override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-                val statement = (descriptor.psiElement as RustExprStmtElement)
+                val statement = (descriptor.psiElement as RsExprStmt)
                 statement.replace(statement.expr)
             }
         }

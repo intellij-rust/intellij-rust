@@ -1,4 +1,4 @@
-use test::<fold text='{...}'>{
-    one,
-    two
-}</fold>;
+use test::<fold text='{ ... }'>{
+one,
+two
+} < / fold >;

@@ -26,27 +26,27 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
         return descriptors.toTypedArray()
     }
 
-    private class FoldingVisitor(private val descriptors: MutableList<FoldingDescriptor>) : RustElementVisitor() {
+    private class FoldingVisitor(private val descriptors: MutableList<FoldingDescriptor>) : RsVisitor() {
 
-        override fun visitStructExprBody(o: RustStructExprBodyElement) = fold(o)
+        override fun visitStructExprBody(o: RsStructExprBody) = fold(o)
 
-        override fun visitEnumBody(o: RustEnumBodyElement) = fold(o)
+        override fun visitEnumBody(o: RsEnumBody) = fold(o)
 
-        override fun visitBlockFields(o: RustBlockFieldsElement) = fold(o)
+        override fun visitBlockFields(o: RsBlockFields) = fold(o)
 
-        override fun visitBlock(o: RustBlockElement) = fold(o)
+        override fun visitBlock(o: RsBlock) = fold(o)
 
-        override fun visitMatchBody(o: RustMatchBodyElement) = fold(o)
+        override fun visitMatchBody(o: RsMatchBody) = fold(o)
 
-        override fun visitUseGlobList(o: RustUseGlobListElement) = fold(o)
+        override fun visitUseGlobList(o: RsUseGlobList) = fold(o)
 
-        override fun visitTraitItem(o: RustTraitItemElement) = foldBetween(o, o.lbrace, o.rbrace)
+        override fun visitTraitItem(o: RsTraitItem) = foldBetween(o, o.lbrace, o.rbrace)
 
-        override fun visitModItem(o: RustModItemElement) = foldBetween(o, o.lbrace, o.rbrace)
+        override fun visitModItem(o: RsModItem) = foldBetween(o, o.lbrace, o.rbrace)
 
-        override fun visitMacroArg(o: RustMacroArgElement) = foldBetween(o, o.lbrace, o.rbrace)
+        override fun visitMacroArg(o: RsMacroArg) = foldBetween(o, o.lbrace, o.rbrace)
 
-        override fun visitImplItem(o: RustImplItemElement) = foldBetween(o, o.lbrace, o.rbrace)
+        override fun visitImplItem(o: RsImplItem) = foldBetween(o, o.lbrace, o.rbrace)
 
         override fun visitComment(comment: PsiComment) {
             if (comment.tokenType == RustTokenElementTypes.BLOCK_COMMENT) {
@@ -54,7 +54,7 @@ class RustFoldingBuilder() : FoldingBuilderEx(), DumbAware {
             }
         }
 
-        override fun visitStructItem(o: RustStructItemElement) {
+        override fun visitStructItem(o: RsStructItem) {
             val blockFields = o.blockFields
             if (blockFields != null) {
                 fold(blockFields)

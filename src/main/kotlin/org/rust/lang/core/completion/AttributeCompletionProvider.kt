@@ -66,9 +66,9 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
     }
 
     val elementPattern: ElementPattern<PsiElement> get() {
-        val outerAttrElem = psiElement<RustOuterAttrElement>()
-        val innerAttrElem = psiElement<RustInnerAttrElement>()
-        val metaItemElem = psiElement<RustMetaItemElement>()
+        val outerAttrElem = psiElement<RsOuterAttr>()
+        val innerAttrElem = psiElement<RsInnerAttr>()
+        val metaItemElem = psiElement<RsMetaItem>()
             .and(PlatformPatterns.psiElement().withParent(outerAttrElem) or PlatformPatterns.psiElement().withParent(innerAttrElem))
         return PlatformPatterns.psiElement().withParent(metaItemElem).withLanguage(RustLanguage)
     }

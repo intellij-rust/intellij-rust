@@ -18,6 +18,7 @@ class RustWithIfExpSurrounderTest : RustSurrounderTestCaseBase(RustWithIfExpSurr
             """
         )
     }
+
     fun testCall() {
         doTest(
             """

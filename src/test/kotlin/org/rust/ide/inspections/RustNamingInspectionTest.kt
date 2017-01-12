@@ -431,7 +431,7 @@ class RustNamingInspectionTest : RustInspectionsTestBase(true) {
         trait trait_foo {}
     """)
 
-     fun testTraitsFix() = checkFixByText<RustTraitNamingInspection>("Rename to `HotFix`", """
+    fun testTraitsFix() = checkFixByText<RustTraitNamingInspection>("Rename to `HotFix`", """
          trait <warning descr="Trait `hot_fix` should have a camel case name such as `HotFix`">ho<caret>t_fix</warning> {}
          struct Patch {}
          impl hot_fix for Patch {}

@@ -7,10 +7,10 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.FunctionUtil
 import org.rust.ide.icons.RustIcons
-import org.rust.lang.core.psi.RustCallExprElement
-import org.rust.lang.core.psi.RustFunctionElement
-import org.rust.lang.core.psi.RustMethodCallExprElement
-import org.rust.lang.core.psi.RustPathExprElement
+import org.rust.lang.core.psi.RsCallExpr
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsMethodCallExpr
+import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.util.parentOfType
 import java.util.*
 
@@ -48,16 +48,16 @@ class RustRecursiveCallLineMarkerProvider : LineMarkerProvider {
         }
     }
 
-    private val RustCallExprElement.pathExpr: RustPathExprElement?
-        get() = expr as? RustPathExprElement
+    private val RsCallExpr.pathExpr: RsPathExpr?
+        get() = expr as? RsPathExpr
 
     private val PsiElement.isRecursive: Boolean get() {
         val def = when (this) {
-            is RustCallExprElement -> pathExpr?.path?.reference?.resolve()
-            is RustMethodCallExprElement -> reference.resolve()
+            is RsCallExpr -> pathExpr?.path?.reference?.resolve()
+            is RsMethodCallExpr -> reference.resolve()
             else -> null
         } ?: return false
 
-        return parentOfType<RustFunctionElement>() == def
+        return parentOfType<RsFunction>() == def
     }
 }

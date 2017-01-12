@@ -5,9 +5,9 @@ import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.codeInsight.template.macro.MacroBase
+import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RustCompositeElement
 import org.rust.lang.core.psi.RustItemElement
-import org.rust.lang.core.psi.RustPatBindingElement
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.innerDeclarations
 
@@ -28,5 +28,5 @@ private fun getPatBindingNamesVisibleAt(pivot: RustCompositeElement): Set<String
         // we are only interested in local scopes
         stop = { scope -> scope is RustItemElement }
     )
-        .mapNotNull { (it.element as? RustPatBindingElement)?.name }
+        .mapNotNull { (it.element as? RsPatBinding)?.name }
         .toHashSet()

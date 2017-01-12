@@ -20,7 +20,7 @@ public class RustPsiTreeUtil extends PsiTreeUtil {
     @Nullable
     public static <T extends PsiElement> T getStubChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
         if (element == null) return null;
-        StubElement<?> stub = element instanceof StubBasedPsiElement ? ((StubBasedPsiElement)element).getStub() : null;
+        StubElement<?> stub = element instanceof StubBasedPsiElement ? ((StubBasedPsiElement) element).getStub() : null;
         if (stub == null) {
             return getChildOfType(element, aClass);
         }
@@ -28,7 +28,7 @@ public class RustPsiTreeUtil extends PsiTreeUtil {
             PsiElement child = childStub.getPsi();
             if (aClass.isInstance(child)) {
                 //noinspection unchecked
-                return (T)child;
+                return (T) child;
             }
         }
         return null;
@@ -43,7 +43,7 @@ public class RustPsiTreeUtil extends PsiTreeUtil {
         if (element instanceof PsiFileImpl)
             stub = ((PsiFileImpl) element).getStub();
         else if (element instanceof StubBasedPsiElement)
-            stub = ((StubBasedPsiElement)element).getStub();
+            stub = ((StubBasedPsiElement) element).getStub();
 
         if (stub == null) {
             return getChildrenOfTypeAsList(element, aClass);
@@ -54,7 +54,7 @@ public class RustPsiTreeUtil extends PsiTreeUtil {
             PsiElement child = childStub.getPsi();
             if (aClass.isInstance(child)) {
                 //noinspection unchecked
-                result.add((T)child);
+                result.add((T) child);
             }
         }
         return result;

@@ -38,14 +38,14 @@ class RustLocalVariableHandler : RefactoringActionHandler {
         doRefactoring(editor, project, file)
     }
 
-    fun doRefactoring(editor: Editor, project: Project, file: RustFile, expr: RustExprElement? = null) {
+    fun doRefactoring(editor: Editor, project: Project, file: RustFile, expr: RsExpr? = null) {
         val refactoring = RustIntroduceVariableRefactoring(project, editor, file)
         val exprs = if (expr == null) refactoring.possibleTargets() else listOf(expr)
 
-        fun extractExpression(expr: RustExprElement) {
+        fun extractExpression(expr: RsExpr) {
             if (!expr.isValid) return
             val occurrences = findOccurrences(expr)
-            OccurrencesChooser.simpleChooser<RustExprElement>(editor).showChooser(expr, occurrences, pass { choice ->
+            OccurrencesChooser.simpleChooser<RsExpr>(editor).showChooser(expr, occurrences, pass { choice ->
                 val toReplace = if (choice == OccurrencesChooser.ReplaceChoice.ALL) occurrences else listOf(expr)
                 refactoring.replaceElement(expr, toReplace)
             })
@@ -80,7 +80,7 @@ class RustIntroduceVariableRefactoring(
 
     private val psiFactory = RustPsiFactory(project)
 
-    fun possibleTargets(): List<RustExprElement> {
+    fun possibleTargets(): List<RsExpr> {
         val selection = editor.selectionModel
         return if (selection.hasSelection()) {
             // If there's an explicit selection, suggest only one expression
@@ -92,9 +92,9 @@ class RustIntroduceVariableRefactoring(
             // We don't go further than the current block scope,
             // further more path expressions don't make sense to bind to a local variable so we exclude them.
             expr.ancestors
-                .takeWhile { it !is RustBlockElement }
-                .filterIsInstance<RustExprElement>()
-                .filter { it !is RustPathExprElement }
+                .takeWhile { it !is RsBlock }
+                .filterIsInstance<RsExpr>()
+                .filter { it !is RsPathExpr }
                 .toList()
         }
     }
@@ -105,18 +105,18 @@ class RustIntroduceVariableRefactoring(
      * Either we need to put a let in front of a statement on the same line.
      * Or we extract an expression and put that in a let on the line above.
      */
-    fun replaceElement(chosenExpr: RustExprElement, exprs: List<PsiElement>) {
+    fun replaceElement(chosenExpr: RsExpr, exprs: List<PsiElement>) {
         val anchor = findAnchor(chosenExpr)
         val parent = chosenExpr.parent
 
         when {
             anchor == chosenExpr -> inlineLet(project, editor, chosenExpr, chosenExpr)
-            parent is RustExprStmtElement -> inlineLet(project, editor, chosenExpr, chosenExpr.parent)
+            parent is RsExprStmt -> inlineLet(project, editor, chosenExpr, chosenExpr.parent)
             else -> replaceElementForAllExpr(chosenExpr, exprs)
         }
     }
 
-    fun replaceElementForAllExpr(chosenExpr: RustExprElement, exprs: List<PsiElement>) {
+    fun replaceElementForAllExpr(chosenExpr: RsExpr, exprs: List<PsiElement>) {
         val anchor = findAnchor(exprs.minBy { it.textRange.startOffset } ?: chosenExpr)
             ?: return
 
@@ -124,7 +124,7 @@ class RustIntroduceVariableRefactoring(
 
         val (let, name) = createLet(chosenExpr, suggestNames.firstName()) ?: return
 
-        var nameElem: RustPatBindingElement? = null
+        var nameElem: RsPatBinding? = null
 
         WriteCommandAction.runWriteCommandAction(project) {
             val newElement = introduceLet(project, anchor, let)
@@ -140,10 +140,10 @@ class RustIntroduceVariableRefactoring(
      * Creates a let binding for the found expression.
      * Returning handles to the complete let expr and the identifier inside the newly created let binding.
      */
-    private fun createLet(expr: RustExprElement, name: String): Pair<RustLetDeclElement, PsiElement>? {
+    private fun createLet(expr: RsExpr, name: String): Pair<RsLetDecl, PsiElement>? {
         val parent = expr.parent
 
-        val mutable = parent is RustUnaryExprElement && parent.mut != null
+        val mutable = parent is RsUnaryExpr && parent.mut != null
         val let = psiFactory.createLetDeclaration(name, expr, mutable = mutable)
 
         val binding = let.findBinding()
@@ -152,7 +152,7 @@ class RustIntroduceVariableRefactoring(
         return let to binding.identifier
     }
 
-    private fun introduceLet(project: Project, anchor: PsiElement, let: RustLetDeclElement): PsiElement? {
+    private fun introduceLet(project: Project, anchor: PsiElement, let: RsLetDecl): PsiElement? {
         val context = anchor.parent
         val newline = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n")
 
@@ -165,8 +165,8 @@ class RustIntroduceVariableRefactoring(
      *         this can be either the expression its self if it had no semicolon at the end.
      *         or the statement surrounding the entire expression if it already had a semicolon.
      */
-    private fun inlineLet(project: Project, editor: Editor, expr: RustExprElement, elementToReplace: PsiElement) {
-        var newNameElem: RustPatBindingElement? = null
+    private fun inlineLet(project: Project, editor: Editor, expr: RsExpr, elementToReplace: PsiElement) {
+        var newNameElem: RsPatBinding? = null
         val suggestNames = expr.suggestNames()
         WriteCommandAction.runWriteCommandAction(project) {
             val statement = psiFactory.createLetDeclaration(suggestNames.firstName(), expr)
@@ -179,7 +179,7 @@ class RustIntroduceVariableRefactoring(
         newNameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(suggestNames) }
     }
 
-    private fun moveEditorToNameElement(editor: Editor, element: PsiElement?): RustPatBindingElement? {
+    private fun moveEditorToNameElement(editor: Editor, element: PsiElement?): RsPatBinding? {
         val newName = element?.findBinding()
 
         editor.caretModel.moveToOffset(newName?.identifier?.textRange?.startOffset ?: 0)
@@ -192,7 +192,7 @@ class RustIntroduceVariableRefactoring(
  * An anchor point is surrounding element before the block scope, which is used to scope the insertion of the new let binding.
  */
 private fun findAnchor(expr: PsiElement): PsiElement? {
-    val block = expr.parentOfType<RustBlockElement>(strict = false)
+    val block = expr.parentOfType<RsBlock>(strict = false)
         ?: return null
 
     var anchor = expr
@@ -203,17 +203,17 @@ private fun findAnchor(expr: PsiElement): PsiElement? {
     return anchor
 }
 
-private fun findBlock(expr: PsiElement) = PsiTreeUtil.getNonStrictParentOfType(expr, RustBlockElement::class.java)
+private fun findBlock(expr: PsiElement) = PsiTreeUtil.getNonStrictParentOfType(expr, RsBlock::class.java)
 
 /**
  * Finds occurrences in the sub scope of expr, so that all will be replaced if replace all is selected.
  */
-fun findOccurrences(expr: RustExprElement): List<RustExprElement> {
+fun findOccurrences(expr: RsExpr): List<RsExpr> {
     val visitor = object : PsiRecursiveElementVisitor() {
-        val foundOccurrences = ArrayList<RustExprElement>()
+        val foundOccurrences = ArrayList<RsExpr>()
 
         override fun visitElement(element: PsiElement) {
-            if (element is RustExprElement && PsiEquivalenceUtil.areElementsEquivalent(expr, element)) {
+            if (element is RsExpr && PsiEquivalenceUtil.areElementsEquivalent(expr, element)) {
                 foundOccurrences.add(element)
             } else {
                 super.visitElement(element)
@@ -236,7 +236,7 @@ private fun <T> pass(pass: (T) -> Unit): Pass<T> {
 
 private fun LinkedHashSet<String>.firstName() = this.firstOrNull() ?: "x"
 
-private fun PsiElement.findBinding() = PsiTreeUtil.findChildOfType(this, RustPatBindingElement::class.java)
+private fun PsiElement.findBinding() = PsiTreeUtil.findChildOfType(this, RsPatBinding::class.java)
 
 private class RustInPlaceVariableIntroducer(
     elementToRename: PsiNamedElement,

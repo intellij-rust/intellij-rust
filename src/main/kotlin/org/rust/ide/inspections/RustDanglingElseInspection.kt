@@ -6,9 +6,9 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.ide.inspections.fixes.SubstituteTextFix
-import org.rust.lang.core.psi.RustElementVisitor
-import org.rust.lang.core.psi.RustElseBranchElement
-import org.rust.lang.core.psi.RustIfExprElement
+import org.rust.lang.core.psi.RsElseBranch
+import org.rust.lang.core.psi.RsIfExpr
+import org.rust.lang.core.psi.RsVisitor
 
 /**
  * Detects `else if` statements broken by new lines. A partial analogue
@@ -20,14 +20,14 @@ class RustDanglingElseInspection : RustLocalInspectionTool() {
     override fun getDisplayName() = "Dangling else"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitElseBranch(expr: RustElseBranchElement) {
+        object : RsVisitor() {
+            override fun visitElseBranch(expr: RsElseBranch) {
                 val elseEl = expr.`else`
                 val breakEl = elseEl.rightSiblings
                     .dropWhile { (it is PsiWhiteSpace || it is PsiComment) && '\n' !in it.text }
                     .firstOrNull() ?: return
                 val ifEl = breakEl.rightSiblings
-                    .dropWhile { it !is RustIfExprElement }
+                    .dropWhile { it !is RsIfExpr }
                     .firstOrNull() ?: return
                 val range = TextRange(0, ifEl.startOffsetInParent + 2)
                 val fix2Range = TextRange(elseEl.textRange.endOffset, ifEl.textRange.startOffset)
@@ -40,7 +40,7 @@ class RustDanglingElseInspection : RustLocalInspectionTool() {
             }
         }
 
-    private fun PsiElement.rangeWithPrevSpace(prev: PsiElement?) = when(prev) {
+    private fun PsiElement.rangeWithPrevSpace(prev: PsiElement?) = when (prev) {
         is PsiWhiteSpace -> textRange.union(prev.textRange)
         else -> textRange
     }

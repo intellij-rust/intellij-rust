@@ -1,3 +1,3 @@
-<fold text='/* ... */'>/*
+<fold text='/ * ... * / '>/*
 hello
-*/</fold>
+*/ < / fold>

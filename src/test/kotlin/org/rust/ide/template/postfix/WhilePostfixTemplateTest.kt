@@ -2,16 +2,16 @@ package org.rust.ide.template.postfix
 
 class WhilePostfixTemplateTest : PostfixTemplateTestCase(WhileExpressionPostfixTemplate()) {
     fun testNumber() = doTestNotApplicable(
-            """
+        """
             fn main() {
                 let a = 4;
                 a.while/*caret*/
             }
             """
-        )
+    )
 
     fun testNumberCall() = doTestNotApplicable(
-            """
+        """
             fn func() -> i32 {
                 1234
             }
@@ -20,71 +20,71 @@ class WhilePostfixTemplateTest : PostfixTemplateTestCase(WhileExpressionPostfixT
                 func().while/*caret*/
             }
             """
-        )
+    )
 
     fun testSimple() = doTest(
-            """
+        """
             fn main() {
                 let a = 4 == 2;
                 a.while/*caret*/
             }
             """
-            ,
-            """
+        ,
+        """
             fn main() {
                 let a = 4 == 2;
                 while a {/*caret*/}
             }
             """
-        )
+    )
 
     fun testFunArg() = doTest(
-            """
+        """
             fn foo(a: bool) {
                 a.while/*caret*/
             }
             """
-            ,
-            """
+        ,
+        """
             fn foo(a: bool) {
                 while a {/*caret*/}
             }
             """
-        )
+    )
 
     fun testSimpleNegatedExpr() = doTest(
-            """
+        """
             fn main() {
                 let a = 4 == 2;
                 !a.while/*caret*/
             }
             """
-            ,
-            """
+        ,
+        """
             fn main() {
                 let a = 4 == 2;
                 while !a {/*caret*/}
             }
             """
-        )
+    )
 
     fun testSimpleEqExpr() = doTest(
-            """
+        """
             fn main() {
                 true == true.while/*caret*/
             }
             """
-            ,
-            """
+        ,
+        """
             fn main() {
                 while true == true {/*caret*/}
             }
             """
-        )
+    )
 
 
     fun testSelector() = doTest(
-            """
+        """
             fn main() {
                 let a = if true {
                     true == false.while/*caret*/
@@ -93,8 +93,8 @@ class WhilePostfixTemplateTest : PostfixTemplateTestCase(WhileExpressionPostfixT
                 };
             }
             """
-            ,
-            """
+        ,
+        """
             fn main() {
                 let a = if true {
                     while true == false {/*caret*/}
@@ -103,7 +103,7 @@ class WhilePostfixTemplateTest : PostfixTemplateTestCase(WhileExpressionPostfixT
                 };
             }
             """
-        )
+    )
 
     fun testCall() = doTest(
         """

@@ -7,20 +7,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.surroundWith.addStatements
-import org.rust.lang.core.psi.RustBlockElement
-import org.rust.lang.core.psi.RustExprElement
+import org.rust.lang.core.psi.RsBlock
+import org.rust.lang.core.psi.RsExpr
 
-sealed class RustStatementsSurrounderBase<out T : RustExprElement> : Surrounder {
-    protected abstract fun createTemplate(project: Project): Pair<T, RustBlockElement>
+sealed class RustStatementsSurrounderBase<out T : RsExpr> : Surrounder {
+    protected abstract fun createTemplate(project: Project): Pair<T, RsBlock>
 
-    abstract class SimpleBlock<out T : RustExprElement> : RustStatementsSurrounderBase<T>() {
+    abstract class SimpleBlock<out T : RsExpr> : RustStatementsSurrounderBase<T>() {
         final override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange? {
             val template = surroundWithTemplate(project, elements)
             return TextRange.from(template.firstChild.textRange.endOffset, 0)
         }
     }
 
-    abstract class BlockWithCondition<T : RustExprElement> : RustStatementsSurrounderBase<T>() {
+    abstract class BlockWithCondition<T : RsExpr> : RustStatementsSurrounderBase<T>() {
         protected abstract fun conditionRange(expression: T): TextRange
 
         final override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange? {

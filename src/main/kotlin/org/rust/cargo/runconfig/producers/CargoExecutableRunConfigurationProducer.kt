@@ -11,7 +11,7 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.workspace.cargoProject
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.runconfig.CargoCommandRunConfigurationType
-import org.rust.lang.core.psi.RustFunctionElement
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.parentOfType
 
@@ -35,7 +35,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
     ): Boolean {
         val location = context.location ?: return false
         val target = findBinaryTarget(location) ?: return false
-        val fn = location.psiElement.parentOfType<RustFunctionElement>()
+        val fn = location.psiElement.parentOfType<RsFunction>()
         val source = if (fn != null && isMainFunction(fn)) fn else context.psiLocation?.containingFile
         sourceElement.set(source)
 
@@ -54,7 +54,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
     }
 
     companion object {
-        fun isMainFunction(fn: RustFunctionElement): Boolean {
+        fun isMainFunction(fn: RsFunction): Boolean {
             val module = fn.module ?: return false
             return fn.name == "main" && findBinaryTarget(module, fn.containingFile.virtualFile) != null
         }

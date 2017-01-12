@@ -26,10 +26,12 @@ abstract class RustLineMarkerProviderTestBase : RustTestCaseBase() {
 
     private fun markersFrom(editor: Editor, project: Project) =
         DaemonCodeAnalyzerImpl.getLineMarkers(editor.document, project)
-        .map { Pair(editor.document.getLineNumber(it.element?.textRange?.startOffset as Int),
-                    it.lineMarkerTooltip) }
-        .sortedBy { it.first }
-        .toList()
+            .map {
+                Pair(editor.document.getLineNumber(it.element?.textRange?.startOffset as Int),
+                    it.lineMarkerTooltip)
+            }
+            .sortedBy { it.first }
+            .toList()
 
     private companion object {
         val MARKER = "// - "

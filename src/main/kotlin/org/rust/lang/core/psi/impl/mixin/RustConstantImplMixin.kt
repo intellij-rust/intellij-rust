@@ -7,12 +7,12 @@ import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
-import org.rust.lang.core.stubs.RustConstantElementStub
+import org.rust.lang.core.stubs.RsConstantStub
 
-abstract class RustConstantImplMixin : RustStubbedNamedElementImpl<RustConstantElementStub>, RustConstantElement {
+abstract class RustConstantImplMixin : RustStubbedNamedElementImpl<RsConstantStub>, RsConstant {
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RustConstantElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RsConstantStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int) = iconWithVisibility(flags, when (kind) {
         RustConstantKind.CONST -> RustIcons.CONSTANT
@@ -29,7 +29,7 @@ enum class RustConstantKind {
     CONST
 }
 
-val RustConstantElement.kind: RustConstantKind get() = when {
+val RsConstant.kind: RustConstantKind get() = when {
     mut != null -> RustConstantKind.MUT_STATIC
     const != null -> RustConstantKind.CONST
     else -> RustConstantKind.STATIC
@@ -42,15 +42,15 @@ enum class RustConstantRole {
     FOREIGN
 }
 
-val RustConstantElement.role: RustConstantRole get() {
+val RsConstant.role: RustConstantRole get() {
     return when (parent) {
         is RustItemsOwner -> RustConstantRole.FREE
-        is RustTraitItemElement -> RustConstantRole.TRAIT_CONSTANT
-        is RustImplItemElement -> RustConstantRole.IMPL_CONSTANT
-        is RustForeignModItemElement -> RustConstantRole.FOREIGN
+        is RsTraitItem -> RustConstantRole.TRAIT_CONSTANT
+        is RsImplItem -> RustConstantRole.IMPL_CONSTANT
+        is RsForeignModItem -> RustConstantRole.FOREIGN
         else -> error("Unexpected constant parent: $parent")
     }
 }
 
-val RustConstantElement.default: PsiElement?
+val RsConstant.default: PsiElement?
     get() = node.findChildByType(RustTokenElementTypes.DEFAULT)?.psi

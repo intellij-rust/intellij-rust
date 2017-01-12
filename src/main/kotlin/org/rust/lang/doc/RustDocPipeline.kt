@@ -37,10 +37,10 @@ private fun RustDocAndAttributeOwner.outerDocs(): Sequence<Pair<RustDocKind, Str
     return childOuterIterator.asSequence()
         // All these outer elements have been edge bound; if we reach something that isn't one
         // of these, we have reached the actual parse children of this item.
-        .takeWhile { it is RustOuterAttrElement || it is PsiComment || it is PsiWhiteSpace }
+        .takeWhile { it is RsOuterAttr || it is PsiComment || it is PsiWhiteSpace }
         .mapNotNull {
             when {
-                it is RustOuterAttrElement -> it.metaItem.docAttr?.let { RustDocKind.Attr to it }
+                it is RsOuterAttr -> it.metaItem.docAttr?.let { RustDocKind.Attr to it }
                 it is PsiComment && (it.tokenType == OUTER_EOL_DOC_COMMENT
                     || it.tokenType == OUTER_BLOCK_DOC_COMMENT) -> RustDocKind.of(it.tokenType) to it.text
                 else -> null
@@ -51,14 +51,14 @@ private fun RustDocAndAttributeOwner.outerDocs(): Sequence<Pair<RustDocKind, Str
 private fun RustDocAndAttributeOwner.innerDocs(): Sequence<Pair<RustDocKind, String>> {
     // Next, we have to consider inner comments and meta. These, like the outer case, are appended in
     // lexical order, after the outer elements. This only applies to functions and modules.
-    val childBlock = PsiTreeUtil.getChildOfType(this, RustBlockElement::class.java) ?: this
+    val childBlock = PsiTreeUtil.getChildOfType(this, RsBlock::class.java) ?: this
 
     val childInnerIterator = PsiTreeUtil.childIterator(childBlock, PsiElement::class.java)
 
     return childInnerIterator.asSequence()
         .mapNotNull {
             when {
-                it is RustInnerAttrElement -> it.metaItem.docAttr?.let { RustDocKind.Attr to it }
+                it is RsInnerAttr -> it.metaItem.docAttr?.let { RustDocKind.Attr to it }
                 it is PsiComment && (it.tokenType == INNER_EOL_DOC_COMMENT
                     || it.tokenType == INNER_BLOCK_DOC_COMMENT) -> RustDocKind.of(it.tokenType) to it.text
                 else -> null
@@ -66,7 +66,7 @@ private fun RustDocAndAttributeOwner.innerDocs(): Sequence<Pair<RustDocKind, Str
         }
 }
 
-private val RustMetaItemElement.docAttr: String?
+private val RsMetaItem.docAttr: String?
     get() = if (identifier.text == "doc") litExpr?.stringLiteralValue else null
 
 private class RustDocMarkdownFlavourDescriptor(

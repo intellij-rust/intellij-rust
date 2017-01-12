@@ -1,3 +1,3 @@
-struct A <fold text='{...}'>{
-    a: i32
-}</fold>
+struct A <fold text='{ ... }'>{
+a: i32
+} < / fold >

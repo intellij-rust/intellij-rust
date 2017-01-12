@@ -1,9 +1,9 @@
 package org.rust.ide.structure
 
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
-import org.rust.lang.core.psi.RustEnumItemElement
+import org.rust.lang.core.psi.RsEnumItem
 
-class RustEnumTreeElement(element: RustEnumItemElement) : PsiTreeElementBase<RustEnumItemElement>(element) {
+class RustEnumTreeElement(element: RsEnumItem) : PsiTreeElementBase<RsEnumItem>(element) {
 
     override fun getPresentableText() = element?.name
 

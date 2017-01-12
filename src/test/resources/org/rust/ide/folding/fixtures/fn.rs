@@ -1,2 +1,1 @@
-fn main() <fold text='{...}'>{
-}</fold>
+fn main() < fold text='{ ... }'>{} < / fold >

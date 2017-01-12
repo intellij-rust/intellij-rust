@@ -1,18 +1,18 @@
 package org.rust.lang.core.types
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.RustFunctionElement
-import org.rust.lang.core.psi.RustTraitItemElement
-import org.rust.lang.core.psi.RustTypeParameterElement
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.util.trait
 import org.rust.lang.core.types.util.bounds
 
-data class RustTypeParameterType(val parameter: RustTypeParameterElement) : RustType {
+data class RustTypeParameterType(val parameter: RsTypeParameter) : RustType {
 
-    override fun getTraitsImplementedIn(project: Project): Sequence<RustTraitItemElement> =
+    override fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
         parameter.bounds.mapNotNull { it.bound.traitRef?.trait }
 
-    override fun getNonStaticMethodsIn(project: Project): Sequence<RustFunctionElement> =
+    override fun getNonStaticMethodsIn(project: Project): Sequence<RsFunction> =
         getTraitsImplementedIn(project).flatMap { it.functionList.asSequence() }
 
     override fun substitute(map: Map<RustTypeParameterType, RustType>): RustType = map[this] ?: this

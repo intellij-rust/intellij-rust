@@ -18,54 +18,54 @@ import java.util.*
 
 class RustErrorAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-        val visitor = object : RustElementVisitor() {
-            override fun visitBlock(o: RustBlockElement) = checkBlock(holder, o)
-            override fun visitConstant(o: RustConstantElement) = checkConstant(holder, o)
-            override fun visitStructItem(o: RustStructItemElement) = checkStructItem(holder, o)
-            override fun visitEnumBody(o: RustEnumBodyElement) = checkEnumBody(holder, o)
-            override fun visitForeignModItem(o: RustForeignModItemElement) = checkForeignModItem(holder, o)
-            override fun visitTypeParameterList(o: RustTypeParameterListElement) = checkTypeParameterList(holder, o)
-            override fun visitImplItem(o: RustImplItemElement) = checkImpl(holder, o)
-            override fun visitModDeclItem(o: RustModDeclItemElement) = checkModDecl(holder, o)
-            override fun visitModItem(o: RustModItemElement) = checkModItem(holder, o)
-            override fun visitPath(o: RustPathElement) = checkPath(holder, o)
-            override fun visitBlockFields(o: RustBlockFieldsElement) = checkBlockFields(holder, o)
-            override fun visitTraitItem(o: RustTraitItemElement) = checkTraitItem(holder, o)
-            override fun visitTypeAlias(o: RustTypeAliasElement) = checkTypeAlias(holder, o)
-            override fun visitVis(o: RustVisElement) = checkVis(holder, o)
+        val visitor = object : RsVisitor() {
+            override fun visitBlock(o: RsBlock) = checkBlock(holder, o)
+            override fun visitConstant(o: RsConstant) = checkConstant(holder, o)
+            override fun visitStructItem(o: RsStructItem) = checkStructItem(holder, o)
+            override fun visitEnumBody(o: RsEnumBody) = checkEnumBody(holder, o)
+            override fun visitForeignModItem(o: RsForeignModItem) = checkForeignModItem(holder, o)
+            override fun visitTypeParameterList(o: RsTypeParameterList) = checkTypeParameterList(holder, o)
+            override fun visitImplItem(o: RsImplItem) = checkImpl(holder, o)
+            override fun visitModDeclItem(o: RsModDeclItem) = checkModDecl(holder, o)
+            override fun visitModItem(o: RsModItem) = checkModItem(holder, o)
+            override fun visitPath(o: RsPath) = checkPath(holder, o)
+            override fun visitBlockFields(o: RsBlockFields) = checkBlockFields(holder, o)
+            override fun visitTraitItem(o: RsTraitItem) = checkTraitItem(holder, o)
+            override fun visitTypeAlias(o: RsTypeAlias) = checkTypeAlias(holder, o)
+            override fun visitVis(o: RsVis) = checkVis(holder, o)
         }
 
         element.accept(visitor)
     }
 
-    private fun checkBlock(holder: AnnotationHolder, block: RustBlockElement) =
+    private fun checkBlock(holder: AnnotationHolder, block: RsBlock) =
         findDuplicates(holder, block, { ns, name ->
             "A ${ns.itemName} named `$name` has already been defined in this block [E0428]"
         })
 
-    private fun checkBlockFields(holder: AnnotationHolder, block: RustBlockFieldsElement) =
+    private fun checkBlockFields(holder: AnnotationHolder, block: RsBlockFields) =
         findDuplicates(holder, block, { ns, name ->
             "Field `$name` is already declared [E0124]"
         })
 
-    private fun checkPath(holder: AnnotationHolder, path: RustPathElement) {
+    private fun checkPath(holder: AnnotationHolder, path: RsPath) {
         if (path.asRustPath == null) {
             holder.createErrorAnnotation(path, "Invalid path: self and super are allowed only at the beginning")
         }
     }
 
-    private fun checkVis(holder: AnnotationHolder, vis: RustVisElement) {
-        if (vis.parent is RustImplItemElement || vis.parent is RustForeignModItemElement || isInTraitImpl(vis)) {
+    private fun checkVis(holder: AnnotationHolder, vis: RsVis) {
+        if (vis.parent is RsImplItem || vis.parent is RsForeignModItem || isInTraitImpl(vis)) {
             holder.createErrorAnnotation(vis, "Unnecessary visibility qualifier [E0449]")
         }
     }
 
-    private fun checkEnumBody(holder: AnnotationHolder, enum: RustEnumBodyElement) =
+    private fun checkEnumBody(holder: AnnotationHolder, enum: RsEnumBody) =
         findDuplicates(holder, enum, { ns, name ->
             "A ${ns.itemName} named `$name` has already been defined in this enum [E0428]"
         })
 
-    private fun checkConstant(holder: AnnotationHolder, const: RustConstantElement) {
+    private fun checkConstant(holder: AnnotationHolder, const: RsConstant) {
         val title = if (const.static != null) "Static constant `${const.identifier.text}`" else "Constant `${const.identifier.text}`"
         when (const.role) {
             RustConstantRole.FREE -> {
@@ -90,13 +90,13 @@ class RustErrorAnnotator : Annotator {
         }
     }
 
-    private fun checkStructItem(holder: AnnotationHolder, struct: RustStructItemElement) {
+    private fun checkStructItem(holder: AnnotationHolder, struct: RsStructItem) {
         if (struct.kind == RustStructKind.UNION && struct.tupleFields != null) {
             deny(struct.tupleFields, holder, "Union cannot be tuple-like")
         }
     }
 
-    private fun checkModDecl(holder: AnnotationHolder, modDecl: RustModDeclItemElement) {
+    private fun checkModDecl(holder: AnnotationHolder, modDecl: RsModDeclItem) {
         val pathAttribute = modDecl.pathAttribute
 
         // mods inside blocks require explicit path  attribute
@@ -124,17 +124,17 @@ class RustErrorAnnotator : Annotator {
         }
     }
 
-    private fun checkModItem(holder: AnnotationHolder, modItem: RustModItemElement) =
+    private fun checkModItem(holder: AnnotationHolder, modItem: RsModItem) =
         findDuplicates(holder, modItem, { ns, name ->
             "A ${ns.itemName} named `$name` has already been defined in this module [E0428]"
         })
 
-    private fun checkForeignModItem(holder: AnnotationHolder, mod: RustForeignModItemElement) =
+    private fun checkForeignModItem(holder: AnnotationHolder, mod: RsForeignModItem) =
         findDuplicates(holder, mod, { ns, name ->
             "A ${ns.itemName} named `$name` has already been defined in this module [E0428]"
         })
 
-    private fun checkTypeParameterList(holder: AnnotationHolder, params: RustTypeParameterListElement) =
+    private fun checkTypeParameterList(holder: AnnotationHolder, params: RsTypeParameterList) =
         findDuplicates(holder, params, { ns, name ->
             if (ns == Namespace.Lifetimes)
                 "Lifetime name `$name` declared twice in the same scope [E0263]"
@@ -142,7 +142,7 @@ class RustErrorAnnotator : Annotator {
                 "The name `$name` is already used for a type parameter in this type parameter list [E0403]"
         })
 
-    private fun checkImpl(holder: AnnotationHolder, impl: RustImplItemElement) {
+    private fun checkImpl(holder: AnnotationHolder, impl: RsImplItem) {
         findDuplicates(holder, impl, { ns, name ->
             "Duplicate definitions with name `$name` [E0201]"
         })
@@ -179,12 +179,12 @@ class RustErrorAnnotator : Annotator {
             .forEach { checkTraitFnImplParams(holder, it.first, it.second!!, traitName) }
     }
 
-    private fun checkTraitItem(holder: AnnotationHolder, trait: RustTraitItemElement) =
+    private fun checkTraitItem(holder: AnnotationHolder, trait: RsTraitItem) =
         findDuplicates(holder, trait, { ns, name ->
             "A ${ns.itemName} named `$name` has already been defined in this trait [E0428]"
         })
 
-    private fun checkTypeAlias(holder: AnnotationHolder, ta: RustTypeAliasElement) {
+    private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
         val title = "Type `${ta.identifier.text}`"
         when (ta.role) {
             RustTypeAliasRole.FREE -> {
@@ -199,7 +199,7 @@ class RustErrorAnnotator : Annotator {
                 deny(ta.whereClause, holder, "$title cannot have `where` clause")
             }
             RustTypeAliasRole.IMPL_ASSOC_TYPE -> {
-                val impl = ta.parent as? RustImplItemElement ?: return
+                val impl = ta.parent as? RsImplItem ?: return
                 if (impl.`for` == null) {
                     holder.createErrorAnnotation(ta, "Associated types are not allowed in inherent impls [E0202]")
                 } else {
@@ -212,7 +212,7 @@ class RustErrorAnnotator : Annotator {
         }
     }
 
-    private fun checkTraitFnImplParams(holder: AnnotationHolder, fn: RustFunctionElement, superFn: RustFunctionElement, traitName: String) {
+    private fun checkTraitFnImplParams(holder: AnnotationHolder, fn: RsFunction, superFn: RsFunction, traitName: String) {
         val params = fn.valueParameterList ?: return
         val selfArg = fn.selfParameter
 
@@ -238,9 +238,9 @@ class RustErrorAnnotator : Annotator {
     private fun deny(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
         if (el == null) null else holder.createErrorAnnotation(highlightElements.combinedRange ?: el.textRange, message)
 
-    private fun isInTraitImpl(o: RustVisElement): Boolean {
+    private fun isInTraitImpl(o: RsVis): Boolean {
         val impl = o.parent?.parent
-        return impl is RustImplItemElement && impl.traitRef != null
+        return impl is RsImplItem && impl.traitRef != null
     }
 
     private fun findDuplicates(holder: AnnotationHolder, owner: RustCompositeElement, messageGenerator: (ns: Namespace, name: String) -> String) {
@@ -277,7 +277,7 @@ class RustErrorAnnotator : Annotator {
     private val Collection<String?>.namesList: String
         get() = mapNotNull { "`$it`" }.joinToString(", ")
 
-    private val RustSelfParameterElement.canonicalDecl: String
+    private val RsSelfParameter.canonicalDecl: String
         get() = buildString {
             if (isRef) append('&')
             if (isMut) append("mut ")

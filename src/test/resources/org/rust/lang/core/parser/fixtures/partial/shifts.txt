@@ -1,16 +1,16 @@
 FILE
-  RustFunctionElementImpl(FUNCTION)
+  RsFunctionImpl(FUNCTION)
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('expressions')
-    RustValueParameterListElementImpl(VALUE_PARAMETER_LIST)
+    RsValueParameterListImpl(VALUE_PARAMETER_LIST)
       PsiElement(()('(')
       PsiElement())(')')
     PsiWhiteSpace(' ')
-    RustBlockElementImpl(BLOCK)
+    RsBlockImpl(BLOCK)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      RustLitExprElementImpl(LIT_EXPR)
+      RsLitExprImpl(LIT_EXPR)
         RustNumericLiteralImpl(<INTEGER>)('1')
         PsiErrorElement:'&', '^' or '|' expected, got '>'
           <empty list>

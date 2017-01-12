@@ -1,10 +1,10 @@
 FILE
-  RustEnumItemElementImpl(ENUM_ITEM)
+  RsEnumItemImpl(ENUM_ITEM)
     PsiElement(enum)('enum')
     PsiWhiteSpace(' ')
     PsiElement(<IDENTIFIER>)('E')
     PsiWhiteSpace(' ')
-    RustEnumBodyElementImpl(ENUM_BODY)
+    RsEnumBodyImpl(ENUM_BODY)
       PsiElement({)('{')
       PsiErrorElement:'}' expected, got 'pub'
         <empty list>

@@ -318,14 +318,14 @@ class RustExpressionTypeInferenceTest : RustTypificationTestBase() {
 
     fun testBinOperatorsBool() {
         val cases = listOf(
-            Pair("1 == 2",          "bool"),
-            Pair("1 != 2",          "bool"),
-            Pair("1 <= 2",          "bool"),
-            Pair("1 >= 2",          "bool"),
-            Pair("1 < 2",           "bool"),
-            Pair("1 > 2",           "bool"),
-            Pair("true && false",   "bool"),
-            Pair("true || false",   "bool")
+            Pair("1 == 2", "bool"),
+            Pair("1 != 2", "bool"),
+            Pair("1 <= 2", "bool"),
+            Pair("1 >= 2", "bool"),
+            Pair("1 < 2", "bool"),
+            Pair("1 > 2", "bool"),
+            Pair("true && false", "bool"),
+            Pair("true || false", "bool")
         )
 
         for ((i, case) in cases.withIndex()) {

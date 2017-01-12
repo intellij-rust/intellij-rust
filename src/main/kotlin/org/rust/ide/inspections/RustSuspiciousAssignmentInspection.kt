@@ -17,11 +17,11 @@ class RustSuspiciousAssignmentInspection : RustLocalInspectionTool() {
     override fun getDisplayName() = "Suspicious assignment"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
-        object : RustElementVisitor() {
-            override fun visitBinaryExpr(expr: RustBinaryExprElement) {
+        object : RsVisitor() {
+            override fun visitBinaryExpr(expr: RsBinaryExpr) {
                 if (expr.operator.text != "=") return
                 val unaryExpr = findUnaryExpr(expr.right)
-                if (unaryExpr !is RustUnaryExprElement || unaryExpr.expr == null) return
+                if (unaryExpr !is RsUnaryExpr || unaryExpr.expr == null) return
                 val unaryBody = unaryExpr.expr
                 val op = unaryExpr.text[0]
                 if (unaryBody != null
@@ -63,9 +63,9 @@ class RustSuspiciousAssignmentInspection : RustLocalInspectionTool() {
     /**
      * Finds the first unary expression on the left side of the given expression.
      */
-    private fun findUnaryExpr(el: RustExprElement?): RustUnaryExprElement? = when (el) {
-        is RustUnaryExprElement -> el
-        is RustBinaryExprElement -> findUnaryExpr(el.left)
+    private fun findUnaryExpr(el: RsExpr?): RsUnaryExpr? = when (el) {
+        is RsUnaryExpr -> el
+        is RsBinaryExpr -> findUnaryExpr(el.left)
         else -> null
     }
 

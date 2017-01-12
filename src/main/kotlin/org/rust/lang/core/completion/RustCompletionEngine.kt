@@ -24,7 +24,7 @@ import org.rust.lang.core.types.util.resolvedType
 object RustCompletionEngine {
     const val KEYWORD_PRIORITY = 10.0
 
-    fun completePath(ref: RustPathElement, namespace: Namespace?): Array<out LookupElement> {
+    fun completePath(ref: RsPath, namespace: Namespace?): Array<out LookupElement> {
         val path = ref.asRustPath ?: return emptyArray()
 
         return if (path.segments.isNotEmpty()) {
@@ -38,16 +38,16 @@ object RustCompletionEngine {
         }
     }
 
-    fun completeUseGlob(glob: RustUseGlobElement): Array<out LookupElement> =
+    fun completeUseGlob(glob: RsUseGlob): Array<out LookupElement> =
         glob.basePath?.reference?.resolve()
             .completionsFromResolveScope()
 
-    fun completeFieldName(field: RustStructExprFieldElement): Array<out LookupElement> =
-        field.parentOfType<RustStructExprElement>()
+    fun completeFieldName(field: RsStructExprField): Array<out LookupElement> =
+        field.parentOfType<RsStructExpr>()
             ?.fields.orEmpty()
             .completionsFromNamedElements()
 
-    fun completeFieldOrMethod(field: RustFieldExprElement): Array<out LookupElement> {
+    fun completeFieldOrMethod(field: RsFieldExpr): Array<out LookupElement> {
         val receiverType = field.expr.resolvedType.stripAllRefsIfAny()
 
         // Needs type ascription to please Kotlin's type checker, https://youtrack.jetbrains.com/issue/KT-12696.
@@ -58,12 +58,12 @@ object RustCompletionEngine {
         return (fields + methods).completionsFromNamedElements()
     }
 
-    fun completeMethod(call: RustMethodCallExprElement): Array<out LookupElement> {
+    fun completeMethod(call: RsMethodCallExpr): Array<out LookupElement> {
         val receiverType = call.expr.resolvedType.stripAllRefsIfAny()
         return receiverType.getNonStaticMethodsIn(call.project).toList().completionsFromNamedElements()
     }
 
-    fun completeExternCrate(extCrate: RustExternCrateItemElement): Array<out LookupElement> =
+    fun completeExternCrate(extCrate: RsExternCrateItem): Array<out LookupElement> =
         extCrate.module?.cargoProject?.packages
             ?.filter { it.origin == PackageOrigin.DEPENDENCY }
             ?.mapNotNull { it.libTarget }
@@ -93,10 +93,10 @@ fun RustCompositeElement.createLookupElement(scopeName: String): LookupElement {
         .withIcon(if (this is RustFile) RustIcons.MODULE else getIcon(0))
 
     return when (this) {
-        is RustConstantElement -> base.withTypeText(type?.text)
-        is RustFieldDeclElement -> base.withTypeText(type?.text)
+        is RsConstant -> base.withTypeText(type?.text)
+        is RsFieldDecl -> base.withTypeText(type?.text)
 
-        is RustFunctionElement -> base
+        is RsFunction -> base
             .withTypeText(retType?.type?.text ?: "()")
             .withTailText(valueParameterList?.text?.replace("\\s+".toRegex(), " ") ?: "()")
             .withInsertHandler handler@ { context: InsertionContext, lookupElement: LookupElement ->
@@ -106,15 +106,15 @@ fun RustCompositeElement.createLookupElement(scopeName: String): LookupElement {
                 EditorModificationUtil.moveCaretRelatively(context.editor, if (valueParameters.isEmpty()) 2 else 1)
             }
 
-        is RustStructItemElement -> base
+        is RsStructItem -> base
             .withTailText(when {
                 blockFields != null -> " { ... }"
                 tupleFields != null -> tupleFields!!.text
                 else -> ""
             })
 
-        is RustEnumVariantElement -> base
-            .withTypeText(parentOfType<RustEnumItemElement>()?.name ?: "")
+        is RsEnumVariant -> base
+            .withTypeText(parentOfType<RsEnumItem>()?.name ?: "")
             .withTailText(when {
                 blockFields != null -> " { ... }"
                 tupleFields != null ->
@@ -147,9 +147,9 @@ private fun RustPath.dropLastSegment(): RustPath {
 }
 
 private val InsertionContext.isInUseBlock: Boolean
-    get() = file.findElementAt(startOffset - 1)!!.parentOfType<RustUseItemElement>() != null
+    get() = file.findElementAt(startOffset - 1)!!.parentOfType<RsUseItem>() != null
 
 private val InsertionContext.alreadyHasParens: Boolean get() {
-    val parent = file.findElementAt(startOffset)!!.parentOfType<RustExprElement>()
-    return (parent is RustMethodCallExprElement) || parent?.parent is RustCallExprElement
+    val parent = file.findElementAt(startOffset)!!.parentOfType<RsExpr>()
+    return (parent is RsMethodCallExpr) || parent?.parent is RsCallExpr
 }

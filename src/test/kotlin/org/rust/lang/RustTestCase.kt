@@ -13,7 +13,6 @@ interface RustTestCase {
 }
 
 
-
 // Extensions
 
 fun RustTestCase.pathToSourceTestFile(name: String): Path =

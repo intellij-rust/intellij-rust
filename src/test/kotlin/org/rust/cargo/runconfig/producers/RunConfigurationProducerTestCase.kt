@@ -13,7 +13,7 @@ import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.lang.RustTestCaseBase
-import org.rust.lang.core.psi.RustFunctionElement
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.core.psi.util.parentOfType
@@ -61,7 +61,7 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
         testProject {
             lib("foo", "src/lib.rs", "#[test]\nfn test_foo() { as<caret>sert!(true); }").open()
         }
-        checkOnTopLevel<RustFunctionElement>()
+        checkOnTopLevel<RsFunction>()
     }
 
     fun testTestProducerDisableForNonAnnotatedFunctions() {
@@ -180,12 +180,12 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
 
     private fun checkOnLeaf() = checkOnElement<PsiElement>()
 
-    inline private fun <reified T: PsiElement> checkOnTopLevel() {
+    inline private fun <reified T : PsiElement> checkOnTopLevel() {
         checkOnElement<T>()
         checkOnElement<PsiElement>()
     }
 
-    private inline fun<reified T: PsiElement> checkOnElement() {
+    private inline fun <reified T : PsiElement> checkOnElement() {
         val configurationContext = ConfigurationContext(
             myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<T>(strict = false)
         )

@@ -5,8 +5,8 @@ import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
 import com.intellij.psi.PsiElement
 import org.rust.ide.icons.RustIcons
-import org.rust.lang.core.psi.RustFunctionElement
-import org.rust.lang.core.psi.RustTraitItemElement
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.impl.mixin.RustFunctionRole
 import org.rust.lang.core.psi.impl.mixin.isAbstract
 import org.rust.lang.core.psi.impl.mixin.role
@@ -19,10 +19,10 @@ import javax.swing.Icon
  */
 class RustTraitMethodImplLineMarkerProvider : RelatedItemLineMarkerProvider() {
     override fun collectNavigationMarkers(el: PsiElement, result: MutableCollection<in RelatedItemLineMarkerInfo<PsiElement>>) {
-        if (!(el is RustFunctionElement && el.role == RustFunctionRole.IMPL_METHOD)) return
+        if (!(el is RsFunction && el.role == RustFunctionRole.IMPL_METHOD)) return
 
         val traitMethod = el.superMethod ?: return
-        val trait = traitMethod.parentOfType<RustTraitItemElement>() ?: return
+        val trait = traitMethod.parentOfType<RsTraitItem>() ?: return
 
         val action: String
         val icon: Icon

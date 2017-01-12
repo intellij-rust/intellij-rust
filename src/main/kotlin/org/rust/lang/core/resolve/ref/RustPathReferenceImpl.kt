@@ -10,11 +10,11 @@ import org.rust.lang.core.resolve.RustResolveEngine
 
 
 class RustPathReferenceImpl(
-    element: RustPathElement
-) : RustReferenceBase<RustPathElement>(element),
+    element: RsPath
+) : RustReferenceBase<RsPath>(element),
     RustReference {
 
-    override val RustPathElement.referenceAnchor: PsiElement get() = referenceNameElement
+    override val RsPath.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun resolveInner(): List<RustCompositeElement> {
         val path = element.asRustPath ?: return emptyList()
@@ -32,13 +32,13 @@ class RustPathReferenceImpl(
     private val namespaceForResolve: Namespace? get() {
         val parent = element.parent
         return when (parent) {
-            is RustPathElement, is RustTypeElement -> Namespace.Types
-            is RustUseItemElement -> if (parent.isStarImport) Namespace.Types else null
-            is RustPathExprElement -> Namespace.Values
+            is RsPath, is RsType -> Namespace.Types
+            is RsUseItem -> if (parent.isStarImport) Namespace.Types else null
+            is RsPathExpr -> Namespace.Values
             else -> null
         }
     }
 
     private val namespaceForCompletion: Namespace?
-        get() = if (element.parent is RustPathExprElement) null else namespaceForResolve
+        get() = if (element.parent is RsPathExpr) null else namespaceForResolve
 }

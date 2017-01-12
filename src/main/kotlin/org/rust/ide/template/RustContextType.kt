@@ -45,7 +45,7 @@ sealed class RustContextType(
     class Statement : RustContextType("RUST_STATEMENT", "Statement", Generic::class) {
         override fun isInContext(element: PsiElement): Boolean =
             // We are inside block but there is no item nor attr between
-            PsiTreeUtil.findFirstParent(element, blockOrItem) is RustBlockElement
+            PsiTreeUtil.findFirstParent(element, blockOrItem) is RsBlock
     }
 
     class Item : RustContextType("RUST_ITEM", "Item", Generic::class) {
@@ -58,23 +58,23 @@ sealed class RustContextType(
         override fun isInContext(element: PsiElement): Boolean =
             // Structs can't be nested or contain other expressions,
             // so it is ok to look for any Struct ancestor.
-            element.parentOfType<RustStructItemElement>() != null
+            element.parentOfType<RsStructItem>() != null
     }
 
     class Mod : RustContextType("RUST_MOD", "Module", Item::class) {
         override fun isInContext(element: PsiElement): Boolean =
-            // We are inside RustModItemElement
-            PsiTreeUtil.findFirstParent(element, blockOrItem) is RustModItemElement
+            // We are inside RsModItem
+            PsiTreeUtil.findFirstParent(element, blockOrItem) is RsModItem
     }
 
     class Attribute : RustContextType("RUST_ATTRIBUTE", "Attribute", Item::class) {
         override fun isInContext(element: PsiElement): Boolean =
-            element.parentOfType<RustAttrElement>() != null
+            element.parentOfType<RsAttr>() != null
     }
 
     companion object {
         private val blockOrItem = Condition<PsiElement> { element ->
-            element is RustBlockElement || element is RustItemElement || element is RustAttrElement
+            element is RsBlock || element is RustItemElement || element is RsAttr
         }
     }
 }

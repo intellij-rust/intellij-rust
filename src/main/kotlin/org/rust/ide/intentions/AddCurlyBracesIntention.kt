@@ -3,10 +3,9 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustPathElement
+import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.RustPsiFactory
-import org.rust.lang.core.psi.RustUseGlobListElement
-import org.rust.lang.core.psi.RustUseItemElement
 import org.rust.lang.core.psi.util.parentOfType
 
 /**
@@ -27,12 +26,12 @@ class AddCurlyBracesIntention : RustElementBaseIntentionAction<AddCurlyBracesInt
     override fun getFamilyName() = text
 
     class Context(
-        val useItem: RustUseItemElement,
-        val path: RustPathElement
+        val useItem: RsUseItem,
+        val path: RsPath
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val useItem = element.parentOfType<RustUseItemElement>() ?: return null
+        val useItem = element.parentOfType<RsUseItem>() ?: return null
         val path = useItem.path ?: return null
         if (useItem.useGlobList != null) return null
         return Context(useItem, path)

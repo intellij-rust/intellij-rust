@@ -45,8 +45,8 @@ class RustNumericLiteralImpl(type: IElementType, text: CharSequence) : RustLiter
     override val possibleSuffixes: Collection<String>
         get() = when (elementType) {
             INTEGER_LITERAL -> VALID_INTEGER_SUFFIXES
-            FLOAT_LITERAL   -> VALID_FLOAT_SUFFIXES
-            else            -> error("unreachable")
+            FLOAT_LITERAL -> VALID_FLOAT_SUFFIXES
+            else -> error("unreachable")
         }
 
     override val isInt: Boolean
@@ -81,7 +81,7 @@ class RustNumericLiteralImpl(type: IElementType, text: CharSequence) : RustLiter
 
     override fun accept(visitor: PsiElementVisitor) = when (visitor) {
         is RustVisitorEx -> visitor.visitNumericLiteral(this)
-        else             -> super.accept(visitor)
+        else -> super.accept(visitor)
     }
 
     companion object {

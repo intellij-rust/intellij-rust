@@ -15,7 +15,7 @@ import java.util.*
 class RustExpressionAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         element.accept(RedundantParenthesisVisitor(holder))
-        if (element is RustStructExprElement) {
+        if (element is RsStructExpr) {
             val decl = element.path.reference.resolve() as? RustFieldsOwner
             if (decl != null) {
                 checkStructExpr(holder, decl, element.structExprBody)
@@ -26,7 +26,7 @@ class RustExpressionAnnotator : Annotator {
     private fun checkStructExpr(
         holder: AnnotationHolder,
         decl: RustFieldsOwner,
-        expr: RustStructExprBodyElement
+        expr: RsStructExprBody
     ) {
         expr.structExprFieldList
             .filter { it.reference.resolve() == null }
@@ -44,7 +44,7 @@ class RustExpressionAnnotator : Annotator {
         val declaredFields = expr.structExprFieldList.map { it.referenceName }.toSet()
         val missingFields = decl.namedFields.filter { it.name !in declaredFields }
 
-        if (decl is RustStructItemElement && decl.kind == RustStructKind.UNION) {
+        if (decl is RsStructItem && decl.kind == RustStructKind.UNION) {
             if (expr.structExprFieldList.size > 1) {
                 holder.createErrorAnnotation(expr, "Union expressions should have exactly one field")
             }
@@ -59,24 +59,24 @@ class RustExpressionAnnotator : Annotator {
 }
 
 
-private class RedundantParenthesisVisitor(private val holder: AnnotationHolder) : RustElementVisitor() {
-    override fun visitCondition(o: RustConditionElement) =
+private class RedundantParenthesisVisitor(private val holder: AnnotationHolder) : RsVisitor() {
+    override fun visitCondition(o: RsCondition) =
         o.expr.warnIfParens("Predicate expression has unnecessary parentheses")
 
-    override fun visitRetExpr(o: RustRetExprElement) =
+    override fun visitRetExpr(o: RsRetExpr) =
         o.expr.warnIfParens("Return expression has unnecessary parentheses")
 
-    override fun visitMatchExpr(o: RustMatchExprElement) =
+    override fun visitMatchExpr(o: RsMatchExpr) =
         o.expr.warnIfParens("Match expression has unnecessary parentheses")
 
-    override fun visitForExpr(o: RustForExprElement) =
+    override fun visitForExpr(o: RsForExpr) =
         o.expr.warnIfParens("For loop expression has unnecessary parentheses")
 
-    override fun visitParenExpr(o: RustParenExprElement) =
+    override fun visitParenExpr(o: RsParenExpr) =
         o.expr.warnIfParens("Redundant parentheses in expression")
 
-    private fun RustExprElement?.warnIfParens(message: String) {
-        if (this is RustParenExprElement) {
+    private fun RsExpr?.warnIfParens(message: String) {
+        if (this is RsParenExpr) {
             holder.createWeakWarningAnnotation(this, message)
                 .registerFix(RemoveParenthesesFromExprIntention())
         }

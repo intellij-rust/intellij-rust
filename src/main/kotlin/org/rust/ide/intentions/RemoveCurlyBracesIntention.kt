@@ -25,20 +25,20 @@ class RemoveCurlyBracesIntention : RustElementBaseIntentionAction<RemoveCurlyBra
     override fun getFamilyName() = text
 
     data class Context(
-        val useItem: RustUseItemElement,
-        val usePath: RustPathElement,
-        val useGlobList: RustUseGlobListElement,
+        val useItem: RsUseItem,
+        val usePath: RsPath,
+        val useGlobList: RsUseGlobList,
         val useGlobIdentifier: PsiElement
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RemoveCurlyBracesIntention.Context? {
-        val useItem = element.parentOfType<RustUseItemElement>() ?: return null
+        val useItem = element.parentOfType<RsUseItem>() ?: return null
         val useItemPath = useItem.path ?: return null
         val useGlobList = useItem.useGlobList ?: return null
         if (useGlobList.children.size != 1) return null
 
         val listItem = useGlobList.children[0]
-        if (listItem !is RustUseGlobElement || listItem.isSelf) return null
+        if (listItem !is RsUseGlob || listItem.isSelf) return null
 
         return Context(
             useItem,

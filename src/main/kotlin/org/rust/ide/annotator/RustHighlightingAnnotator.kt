@@ -30,7 +30,7 @@ class RustHighlightingAnnotator : Annotator {
 
     private fun highlightReference(element: RustReferenceElement): Pair<PsiElement, RustColor>? {
         val parent = element.parent
-        val isPrimitiveType = element is RustPathElement && parent is RustBaseTypeElement &&
+        val isPrimitiveType = element is RsPath && parent is RsBaseType &&
             parent.resolvedType.isPrimitive
 
         val color = if (isPrimitiveType) {
@@ -44,8 +44,8 @@ class RustHighlightingAnnotator : Annotator {
     }
 
     private fun highlightNotReference(element: PsiElement): Pair<PsiElement, RustColor>? {
-        if (element is RustLitExprElement) {
-            if (element.parent is RustMetaItemElement) {
+        if (element is RsLitExpr) {
+            if (element.parent is RsMetaItem) {
                 val literal = element.firstChild
                 val color = RustHighlighter.map(literal.elementType)
                     ?: return null // FIXME: `error` here perhaps?
@@ -74,55 +74,55 @@ class RustHighlightingAnnotator : Annotator {
 // If possible, this should use only stubs because this will be called
 // on elements in other files when highlighting references.
 private fun colorFor(element: RustCompositeElement): RustColor? = when (element) {
-    is RustAttrElement -> RustColor.ATTRIBUTE
-    is RustMacroInvocationElement -> RustColor.MACRO
-    is RustSelfParameterElement -> RustColor.SELF_PARAMETER
-    is RustTryExprElement -> RustColor.Q_OPERATOR
-    is RustTraitRefElement -> RustColor.TRAIT
+    is RsAttr -> RustColor.ATTRIBUTE
+    is RsMacroInvocation -> RustColor.MACRO
+    is RsSelfParameter -> RustColor.SELF_PARAMETER
+    is RsTryExpr -> RustColor.Q_OPERATOR
+    is RsTraitRef -> RustColor.TRAIT
 
-    is RustEnumItemElement -> RustColor.ENUM
-    is RustEnumVariantElement -> RustColor.ENUM_VARIANT
-    is RustExternCrateItemElement -> RustColor.CRATE
-    is RustFieldDeclElement -> RustColor.FIELD
-    is RustFunctionElement -> when (element.role) {
+    is RsEnumItem -> RustColor.ENUM
+    is RsEnumVariant -> RustColor.ENUM_VARIANT
+    is RsExternCrateItem -> RustColor.CRATE
+    is RsFieldDecl -> RustColor.FIELD
+    is RsFunction -> when (element.role) {
         RustFunctionRole.FOREIGN, RustFunctionRole.FREE -> RustColor.FUNCTION
         RustFunctionRole.TRAIT_METHOD, RustFunctionRole.IMPL_METHOD ->
             if (element.isStatic) RustColor.ASSOC_FUNCTION else RustColor.METHOD
     }
-    is RustMethodCallExprElement -> RustColor.METHOD
-    is RustModDeclItemElement -> RustColor.MODULE
-    is RustModItemElement -> RustColor.MODULE
-    is RustPatBindingElement -> when {
-        element.parentOfType<RustValueParameterElement>() != null -> RustColor.PARAMETER
+    is RsMethodCallExpr -> RustColor.METHOD
+    is RsModDeclItem -> RustColor.MODULE
+    is RsModItem -> RustColor.MODULE
+    is RsPatBinding -> when {
+        element.parentOfType<RsValueParameter>() != null -> RustColor.PARAMETER
         element.isMut -> RustColor.MUT_BINDING
         else -> null
     }
-    is RustStructItemElement -> RustColor.STRUCT
-    is RustTraitItemElement -> RustColor.TRAIT
-    is RustTypeAliasElement -> RustColor.TYPE_ALIAS
-    is RustTypeParameterElement -> RustColor.TYPE_PARAMETER
+    is RsStructItem -> RustColor.STRUCT
+    is RsTraitItem -> RustColor.TRAIT
+    is RsTypeAlias -> RustColor.TYPE_ALIAS
+    is RsTypeParameter -> RustColor.TYPE_PARAMETER
     else -> null
 }
 
 private fun partToHighlight(element: RustCompositeElement): PsiElement? = when (element) {
-    is RustAttrElement -> element
-    is RustMacroInvocationElement -> element
-    is RustSelfParameterElement -> element.self
-    is RustTryExprElement -> element.q
-    is RustTraitRefElement -> element.path.identifier
+    is RsAttr -> element
+    is RsMacroInvocation -> element
+    is RsSelfParameter -> element.self
+    is RsTryExpr -> element.q
+    is RsTraitRef -> element.path.identifier
 
-    is RustEnumItemElement -> element.identifier
-    is RustEnumVariantElement -> element.identifier
-    is RustExternCrateItemElement -> element.identifier
-    is RustFieldDeclElement -> element.identifier
-    is RustFunctionElement -> element.identifier
-    is RustMethodCallExprElement -> element.identifier
-    is RustModDeclItemElement -> element.identifier
-    is RustModItemElement -> element.identifier
-    is RustPatBindingElement -> element.identifier
-    is RustStructItemElement -> element.identifier
-    is RustTraitItemElement -> element.identifier
-    is RustTypeAliasElement -> element.identifier
-    is RustTypeParameterElement -> element.identifier
+    is RsEnumItem -> element.identifier
+    is RsEnumVariant -> element.identifier
+    is RsExternCrateItem -> element.identifier
+    is RsFieldDecl -> element.identifier
+    is RsFunction -> element.identifier
+    is RsMethodCallExpr -> element.identifier
+    is RsModDeclItem -> element.identifier
+    is RsModItem -> element.identifier
+    is RsPatBinding -> element.identifier
+    is RsStructItem -> element.identifier
+    is RsTraitItem -> element.identifier
+    is RsTypeAlias -> element.identifier
+    is RsTypeParameter -> element.identifier
     else -> null
 }

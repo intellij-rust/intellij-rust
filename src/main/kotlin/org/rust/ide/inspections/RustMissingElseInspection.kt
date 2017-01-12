@@ -6,9 +6,9 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.ide.inspections.fixes.SubstituteTextFix
-import org.rust.lang.core.psi.RustElementVisitor
-import org.rust.lang.core.psi.RustExprStmtElement
-import org.rust.lang.core.psi.RustIfExprElement
+import org.rust.lang.core.psi.RsExprStmt
+import org.rust.lang.core.psi.RsIfExpr
+import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.rightSiblings
 
 /**
@@ -20,8 +20,8 @@ class RustMissingElseInspection : RustLocalInspectionTool() {
     override fun getDisplayName() = "Missing else"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitExprStmt(expr: RustExprStmtElement) {
+        object : RsVisitor() {
+            override fun visitExprStmt(expr: RsExprStmt) {
                 val firstIf = expr.extractIf() ?: return
                 val nextIf = expr.rightSiblings
                     .dropWhile { (it is PsiWhiteSpace || it is PsiComment) && '\n' !in it.text }
@@ -39,9 +39,9 @@ class RustMissingElseInspection : RustLocalInspectionTool() {
             }
         }
 
-    private fun PsiElement?.extractIf(): RustIfExprElement? = when(this) {
-        is RustIfExprElement -> this
-        is RustExprStmtElement -> firstChild.extractIf()
+    private fun PsiElement?.extractIf(): RsIfExpr? = when (this) {
+        is RsIfExpr -> this
+        is RsExprStmt -> firstChild.extractIf()
         else -> null
     }
 }

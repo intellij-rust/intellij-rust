@@ -33,7 +33,7 @@ abstract class NamingNotationTest : TestCase() {
 /**
  * CamelCase notation tests.
  */
-class CamelCaseNotationTest: NamingNotationTest() {
+class CamelCaseNotationTest : NamingNotationTest() {
     override val inspection = RustCamelCaseNamingInspection("Camel")
 
     fun testAcceptable() {
@@ -71,7 +71,7 @@ class CamelCaseNotationTest: NamingNotationTest() {
 /**
  * snake_case notation tests.
  */
-class SnakeCaseNotationTest: NamingNotationTest() {
+class SnakeCaseNotationTest : NamingNotationTest() {
     override val inspection = RustSnakeCaseNamingInspection("Snake")
 
     fun testAcceptable() {
@@ -115,7 +115,7 @@ class SnakeCaseNotationTest: NamingNotationTest() {
 /**
  * UPPER_CASE notation tests.
  */
-class UpperCaseNotationTest: NamingNotationTest() {
+class UpperCaseNotationTest : NamingNotationTest() {
     override val inspection = RustUpperCaseNamingInspection("Upper")
 
     fun testAcceptable() {

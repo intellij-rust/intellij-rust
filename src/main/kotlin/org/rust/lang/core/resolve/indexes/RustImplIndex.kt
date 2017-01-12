@@ -2,14 +2,17 @@ package org.rust.lang.core.resolve.indexes
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.*
+import com.intellij.psi.stubs.AbstractStubIndex
+import com.intellij.psi.stubs.IndexSink
+import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.KeyDescriptor
-import org.rust.lang.core.psi.RustFunctionElement
-import org.rust.lang.core.psi.RustImplItemElement
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RustStructOrEnumItemElement
 import org.rust.lang.core.psi.impl.mixin.isStatic
+import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.stubs.RustFileStub
-import org.rust.lang.core.stubs.RustImplItemElementStub
 import org.rust.lang.core.types.RustStructOrEnumTypeBase
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustTypeFingerprint
@@ -19,15 +22,15 @@ import java.util.*
 
 object RustImplIndex {
 
-    fun findNonStaticMethodsFor(target: RustType, project: Project): Sequence<RustFunctionElement> =
+    fun findNonStaticMethodsFor(target: RustType, project: Project): Sequence<RsFunction> =
         findMethodsFor(target, project)
             .filter { !it.isStatic }
 
-    fun findMethodsFor(target: RustType, project: Project): Sequence<RustFunctionElement> =
+    fun findMethodsFor(target: RustType, project: Project): Sequence<RsFunction> =
         findImplsFor(target, project)
             .flatMap { it.functionList.orEmpty().asSequence() }
 
-    fun findImplsFor(target: RustType, project: Project): Sequence<RustImplItemElement> {
+    fun findImplsFor(target: RustType, project: Project): Sequence<RsImplItem> {
         val inherentImpls = if (target is RustStructOrEnumTypeBase)
             findInherentImplsForInternal(target.item)
         else
@@ -39,11 +42,11 @@ object RustImplIndex {
             } + inherentImpls
     }
 
-    private fun findInherentImplsForInternal(target: RustStructOrEnumItemElement): Sequence<RustImplItemElement> {
+    private fun findInherentImplsForInternal(target: RustStructOrEnumItemElement): Sequence<RsImplItem> {
         val fingerprint = RustTypeFingerprint.create(target.resolvedType)
             ?: return emptySequence()
 
-        val found = ArrayList<RustImplItemElement>()
+        val found = ArrayList<RsImplItem>()
 
         StubIndex
             .getInstance()
@@ -52,7 +55,7 @@ object RustImplIndex {
                 fingerprint,
                 target.project,
                 GlobalSearchScope.allScope(target.project),
-                RustImplItemElement::class.java,
+                RsImplItem::class.java,
                 {
                     found.add(it)
                     true /* continue */
@@ -65,11 +68,11 @@ object RustImplIndex {
             }
     }
 
-    private fun findNonInherentImplsForInternal(target: RustType, project: Project): Sequence<RustImplItemElement> {
+    private fun findNonInherentImplsForInternal(target: RustType, project: Project): Sequence<RsImplItem> {
         val fingerprint = RustTypeFingerprint.create(target)
             ?: return emptySequence()
 
-        val found = arrayListOf<RustImplItemElement>()
+        val found = arrayListOf<RsImplItem>()
 
         StubIndex
             .getInstance()
@@ -78,7 +81,7 @@ object RustImplIndex {
                 fingerprint,
                 project,
                 GlobalSearchScope.allScope(project),
-                RustImplItemElement::class.java,
+                RsImplItem::class.java,
                 {
                     found.add(it)
                     true /* continue */
@@ -89,16 +92,16 @@ object RustImplIndex {
     }
 
 
-    class TraitImpls : AbstractStubIndex<RustTypeFingerprint, RustImplItemElement>() {
+    class TraitImpls : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
         override fun getVersion(): Int = RustFileStub.Type.stubVersion
-        override fun getKey(): StubIndexKey<RustTypeFingerprint, RustImplItemElement> = KEY
+        override fun getKey(): StubIndexKey<RustTypeFingerprint, RsImplItem> = KEY
         override fun getKeyDescriptor(): KeyDescriptor<RustTypeFingerprint> = RustTypeFingerprint.KeyDescriptor
 
         companion object {
-            val KEY: StubIndexKey<RustTypeFingerprint, RustImplItemElement> =
+            val KEY: StubIndexKey<RustTypeFingerprint, RsImplItem> =
                 StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.TraitImpls")
 
-            fun index(stub: RustImplItemElementStub, sink: IndexSink) {
+            fun index(stub: RsImplItemStub, sink: IndexSink) {
                 val type = stub.psi.type ?: return
                 val key = RustTypeFingerprint.create(type)
                 if (stub.psi.traitRef != null && key != null) {
@@ -109,16 +112,16 @@ object RustImplIndex {
     }
 
 
-    class InherentImpls : AbstractStubIndex<RustTypeFingerprint, RustImplItemElement>() {
+    class InherentImpls : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
         override fun getVersion(): Int = RustFileStub.Type.stubVersion
-        override fun getKey(): StubIndexKey<RustTypeFingerprint, RustImplItemElement> = KEY
+        override fun getKey(): StubIndexKey<RustTypeFingerprint, RsImplItem> = KEY
         override fun getKeyDescriptor(): KeyDescriptor<RustTypeFingerprint> = RustTypeFingerprint.KeyDescriptor
 
         companion object {
-            val KEY: StubIndexKey<RustTypeFingerprint, RustImplItemElement> =
+            val KEY: StubIndexKey<RustTypeFingerprint, RsImplItem> =
                 StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.InherentImpls")
 
-            fun index(stub: RustImplItemElementStub, sink: IndexSink) {
+            fun index(stub: RsImplItemStub, sink: IndexSink) {
                 val type = stub.psi.type ?: return
                 val key = RustTypeFingerprint.create(type)
                 if (key != null) {

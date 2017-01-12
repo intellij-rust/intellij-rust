@@ -3,21 +3,21 @@ package org.rust.lang.core.psi.impl.mixin
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
-import org.rust.lang.core.psi.RustPathElement
-import org.rust.lang.core.psi.RustUseItemElement
+import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.impl.RustStubbedElementImpl
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ref.RustPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
-import org.rust.lang.core.stubs.RustPathElementStub
+import org.rust.lang.core.stubs.RsPathStub
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
 
-abstract class RustPathImplMixin : RustStubbedElementImpl<RustPathElementStub>,
-                                   RustPathElement {
+abstract class RustPathImplMixin : RustStubbedElementImpl<RsPathStub>,
+                                   RsPath {
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RustPathElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RsPathStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getReference(): RustReference = RustPathReferenceImpl(this)
 
@@ -31,7 +31,7 @@ abstract class RustPathImplMixin : RustStubbedElementImpl<RustPathElementStub>,
     override fun getParent(): PsiElement? = parentByStub
 }
 
-val RustPathElement.isCrateRelative: Boolean get() = stub?.isCrateRelative ?: (coloncolon != null)
+val RsPath.isCrateRelative: Boolean get() = stub?.isCrateRelative ?: (coloncolon != null)
 
 /**
  * Convert path PSI element into PSI independent representation.
@@ -44,7 +44,7 @@ val RustPathElement.isCrateRelative: Boolean get() = stub?.isCrateRelative ?: (c
  * Reference:
  *   https://doc.rust-lang.org/reference.html#paths
  */
-val RustPathElement.asRustPath: RustPath? get() {
+val RsPath.asRustPath: RustPath? get() {
     val qualifier = path
     val isSelf = referenceName == "self"
     val isSuper = referenceName == "super"
@@ -79,7 +79,7 @@ val RustPathElement.asRustPath: RustPath? get() {
     //  * if it is the only segment of path, then it is an identifier,
         isSelf ->
             when (parent) {
-                is RustPathElement, is RustUseItemElement ->
+                is RsPath, is RsUseItem ->
                     RustPath.ModRelative(0, emptyList())
                 else -> RustPath.Named(segment)
             }
@@ -88,7 +88,7 @@ val RustPathElement.asRustPath: RustPath? get() {
             RustPath.ModRelative(1, emptyList())
 
     // Paths in use items are implicitly global.
-        parentOfType<RustUseItemElement>() != null ->
+        parentOfType<RsUseItem>() != null ->
             RustPath.CrateRelative(listOf(segment))
 
         else ->
@@ -96,5 +96,5 @@ val RustPathElement.asRustPath: RustPath? get() {
     }
 }
 
-private val RustPathElement.segment: RustPathSegment
+private val RsPath.segment: RustPathSegment
     get() = RustPathSegment(referenceName, typeArgumentList?.typeList.orEmpty())

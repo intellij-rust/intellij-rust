@@ -4,7 +4,6 @@ import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors
 import com.intellij.lang.Language
 import com.intellij.openapi.application.Result
 import com.intellij.openapi.command.WriteCommandAction
-import org.rust.ide.typing.assist.RustSmartEnterProcessor
 import org.rust.lang.RustLanguage
 import org.rust.lang.RustTestCaseBase
 

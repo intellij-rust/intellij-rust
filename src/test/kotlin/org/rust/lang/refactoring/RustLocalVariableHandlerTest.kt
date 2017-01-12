@@ -2,7 +2,7 @@ package org.rust.lang.refactoring
 
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RustTestCaseBase
-import org.rust.lang.core.psi.RustExprElement
+import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.impl.RustFile
 
 class RustLocalVariableHandlerTest : RustTestCaseBase() {
@@ -177,7 +177,7 @@ class RustLocalVariableHandlerTest : RustTestCaseBase() {
     private fun refactoring(): RustIntroduceVariableRefactoring =
         RustIntroduceVariableRefactoring(project, myFixture.editor, myFixture.file as RustFile)
 
-    fun RustIntroduceVariableRefactoring.getTarget(idx: Int, total: Int): RustExprElement {
+    fun RustIntroduceVariableRefactoring.getTarget(idx: Int, total: Int): RsExpr {
         check(idx < total) { "Can't select $idx target out of $total" }
         val targets = possibleTargets()
         check(targets.size == total) {

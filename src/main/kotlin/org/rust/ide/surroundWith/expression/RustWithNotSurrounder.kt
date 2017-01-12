@@ -4,23 +4,23 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustExprElement
-import org.rust.lang.core.psi.RustParenExprElement
+import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsParenExpr
+import org.rust.lang.core.psi.RsUnaryExpr
 import org.rust.lang.core.psi.RustPsiFactory
-import org.rust.lang.core.psi.RustUnaryExprElement
 import org.rust.lang.core.types.RustBooleanType
 import org.rust.lang.core.types.util.resolvedType
 
-class RustWithNotSurrounder : RustExpressionSurrounderBase<RustUnaryExprElement>() {
+class RustWithNotSurrounder : RustExpressionSurrounderBase<RsUnaryExpr>() {
     override fun getTemplateDescription(): String = "!(expr)"
 
-    override fun createTemplate(project: Project): RustUnaryExprElement =
-        RustPsiFactory(project).createExpression("!(a)") as RustUnaryExprElement
+    override fun createTemplate(project: Project): RsUnaryExpr =
+        RustPsiFactory(project).createExpression("!(a)") as RsUnaryExpr
 
-    override fun getWrappedExpression(expression: RustUnaryExprElement): RustExprElement =
-        (expression.expr as RustParenExprElement).expr
+    override fun getWrappedExpression(expression: RsUnaryExpr): RsExpr =
+        (expression.expr as RsParenExpr).expr
 
-    override fun isApplicable(expression: RustExprElement): Boolean =
+    override fun isApplicable(expression: RsExpr): Boolean =
         expression.resolvedType == RustBooleanType
 
     override fun doPostprocessAndGetSelectionRange(editor: Editor, expression: PsiElement): TextRange {

@@ -1,8 +1,8 @@
 package org.rust.lang.core
 
 import com.intellij.patterns.*
-import com.intellij.patterns.StandardPatterns.or
 import com.intellij.patterns.PlatformPatterns.psiElement
+import com.intellij.patterns.StandardPatterns.or
 import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
@@ -27,31 +27,31 @@ object RustPsiPattern {
     fun onStatementBeginning(vararg startWords: String): PsiElementPattern.Capture<PsiElement> =
         psiElement().with(OnStatementBeginning(*startWords))
 
-    val onStruct: PsiElementPattern.Capture<PsiElement> = onItem<RustStructItemElement>()
+    val onStruct: PsiElementPattern.Capture<PsiElement> = onItem<RsStructItem>()
 
-    val onEnum: PsiElementPattern.Capture<PsiElement> = onItem<RustEnumItemElement>()
+    val onEnum: PsiElementPattern.Capture<PsiElement> = onItem<RsEnumItem>()
 
-    val onFn: PsiElementPattern.Capture<PsiElement> = onItem<RustFunctionElement>()
+    val onFn: PsiElementPattern.Capture<PsiElement> = onItem<RsFunction>()
 
-    val onMod: PsiElementPattern.Capture<PsiElement> = onItem<RustModItemElement>()
+    val onMod: PsiElementPattern.Capture<PsiElement> = onItem<RsModItem>()
 
     val onStatic: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement()
         .with("onStaticCondition") {
             val elem = it.parent?.parent?.parent
-            (elem is RustConstantElement) && elem.kind == RustConstantKind.STATIC
+            (elem is RsConstant) && elem.kind == RustConstantKind.STATIC
         }
 
 
     val onStaticMut: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement()
         .with("onStaticMutCondition") {
             val elem = it.parent?.parent?.parent
-            (elem is RustConstantElement) && elem.kind == RustConstantKind.MUT_STATIC
+            (elem is RsConstant) && elem.kind == RustConstantKind.MUT_STATIC
         }
 
-    val onMacro: PsiElementPattern.Capture<PsiElement> = onItem<RustMacroItemElement>()
+    val onMacro: PsiElementPattern.Capture<PsiElement> = onItem<RsMacroItem>()
 
     val onTupleStruct: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement()
-        .withSuperParent(3, PlatformPatterns.psiElement().withChild(psiElement<RustTupleFieldsElement>()))
+        .withSuperParent(3, PlatformPatterns.psiElement().withChild(psiElement<RsTupleFields>()))
 
     val onCrate: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement().withSuperParent<PsiFile>(3)
         .with("onCrateCondition") {
@@ -59,35 +59,35 @@ object RustPsiPattern {
             file.isCrateRoot
         }
 
-    val onExternBlock: PsiElementPattern.Capture<PsiElement> = onItem<RustForeignModItemElement>()
+    val onExternBlock: PsiElementPattern.Capture<PsiElement> = onItem<RsForeignModItem>()
 
     val onExternBlockDecl: PsiElementPattern.Capture<PsiElement> =
-            onItem<RustFunctionElement>() or //FIXME: check if this is indeed a foreign function
-            onItem<RustConstantElement>() or
-            onItem<RustForeignModItemElement>()
+        onItem<RsFunction>() or //FIXME: check if this is indeed a foreign function
+            onItem<RsConstant>() or
+            onItem<RsForeignModItem>()
 
     val onAnyItem: PsiElementPattern.Capture<PsiElement> = onItem<RustDocAndAttributeOwner>()
 
-    val onExternCrate: PsiElementPattern.Capture<PsiElement> = onItem<RustExternCrateItemElement>()
+    val onExternCrate: PsiElementPattern.Capture<PsiElement> = onItem<RsExternCrateItem>()
 
-    val onTrait: PsiElementPattern.Capture<PsiElement> = onItem<RustTraitItemElement>()
+    val onTrait: PsiElementPattern.Capture<PsiElement> = onItem<RsTraitItem>()
 
     val onDropFn: PsiElementPattern.Capture<PsiElement> get() {
-        val dropTraitRef = psiElement<RustTraitRefElement>().withText("Drop")
-        val implBlock = psiElement<RustImplItemElement>().withChild(dropTraitRef)
+        val dropTraitRef = psiElement<RsTraitRef>().withText("Drop")
+        val implBlock = psiElement<RsImplItem>().withChild(dropTraitRef)
         return psiElement().withSuperParent(4, implBlock)
     }
 
-    val onTestFn: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RustFunctionElement>()
-        .withChild(psiElement<RustOuterAttrElement>().withText("#[test]")))
+    val onTestFn: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RsFunction>()
+        .withChild(psiElement<RsOuterAttr>().withText("#[test]")))
 
     val inAnyLoop: PsiElementPattern.Capture<PsiElement> =
         psiElement().inside(true,
-            psiElement<RustBlockElement>().withParent(or(
-                psiElement<RustForExprElement>(),
-                psiElement<RustLoopExprElement>(),
-                psiElement<RustWhileExprElement>())),
-            psiElement<RustLambdaExprElement>())
+            psiElement<RsBlock>().withParent(or(
+                psiElement<RsForExpr>(),
+                psiElement<RsLoopExpr>(),
+                psiElement<RsWhileExpr>())),
+            psiElement<RsLambdaExpr>())
 
     inline fun <reified I : RustDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
         return psiElement().withSuperParent<I>(3)

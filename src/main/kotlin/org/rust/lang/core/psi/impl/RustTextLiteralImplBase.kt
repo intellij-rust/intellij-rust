@@ -14,7 +14,7 @@ abstract class RustTextLiteralImplBase(type: IElementType, text: CharSequence) :
 
     override fun accept(visitor: PsiElementVisitor) = when (visitor) {
         is RustVisitorEx -> visitor.visitTextLiteral(this)
-        else             -> super.accept(visitor)
+        else -> super.accept(visitor)
     }
 
     protected fun locatePrefix(): Int {

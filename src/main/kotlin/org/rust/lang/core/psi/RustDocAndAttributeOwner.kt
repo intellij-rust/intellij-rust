@@ -9,7 +9,7 @@ interface RustDocAndAttributeOwner : RustCompositeElement, NavigatablePsiElement
  * Get sequence of all item's inner and outer attributes.
  * Inner attributes take precedence, so they must go first.
  */
-val RustDocAndAttributeOwner.allAttributes: Sequence<RustAttrElement>
+val RustDocAndAttributeOwner.allAttributes: Sequence<RsAttr>
     get() = Sequence { (this as? RustInnerAttributeOwner)?.innerAttrList.orEmpty().iterator() } +
         Sequence { (this as? RustOuterAttributeOwner)?.outerAttrList.orEmpty().iterator() }
 
@@ -24,7 +24,7 @@ val RustDocAndAttributeOwner.queryAttributes: QueryAttributes
  *
  * **Do not instantiate directly**, use [RustDocAndAttributeOwner.queryAttributes] instead.
  */
-class QueryAttributes(private val attributes: Sequence<RustAttrElement>) {
+class QueryAttributes(private val attributes: Sequence<RsAttr>) {
     fun hasAttribute(attributeName: String) = metaItems.any { it.identifier.text == attributeName }
 
     fun hasAtomAttribute(attributeName: String): Boolean {
@@ -44,7 +44,7 @@ class QueryAttributes(private val attributes: Sequence<RustAttrElement>) {
             .mapNotNull { it.litExpr?.stringLiteralValue }
             .singleOrNull()
 
-    val metaItems: Sequence<RustMetaItemElement>
+    val metaItems: Sequence<RsMetaItem>
         get() = attributes.mapNotNull { it.metaItem }
 
     private fun attrByName(name: String) = metaItems.find { it.identifier.text == name }

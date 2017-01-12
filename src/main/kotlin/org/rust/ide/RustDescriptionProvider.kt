@@ -8,45 +8,45 @@ import com.intellij.usageView.UsageViewLongNameLocation
 import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewShortNameLocation
 import com.intellij.usageView.UsageViewTypeLocation
-import org.rust.lang.core.psi.RustPatBindingElement
+import org.rust.lang.core.psi.RsPatBinding
 
 class RustDescriptionProvider : ElementDescriptionProvider {
     override fun getElementDescription(element: PsiElement, location: ElementDescriptionLocation): String? {
         return when (location) {
-            is UsageViewNodeTextLocation          -> getNodeText(element)
-            is UsageViewShortNameLocation         -> getShortName(element)
-            is UsageViewLongNameLocation          -> getLongName(element)
-            is UsageViewTypeLocation              -> getType(element)
+            is UsageViewNodeTextLocation -> getNodeText(element)
+            is UsageViewShortNameLocation -> getShortName(element)
+            is UsageViewLongNameLocation -> getLongName(element)
+            is UsageViewTypeLocation -> getType(element)
             is HighlightUsagesDescriptionLocation -> getLongName(element)
-            else                                  -> null
+            else -> null
         }
     }
 
     private fun getNodeText(element: PsiElement): String? {
         return when (element) {
-            is RustPatBindingElement    -> element.identifier.text
-            else                        -> null
+            is RsPatBinding -> element.identifier.text
+            else -> null
         }
     }
 
     private fun getShortName(element: PsiElement): String? {
         return when (element) {
-            is RustPatBindingElement    -> element.identifier.text
-            else                        -> null
+            is RsPatBinding -> element.identifier.text
+            else -> null
         }
     }
 
     private fun getLongName(element: PsiElement): String? {
         return when (element) {
-            is RustPatBindingElement    -> getShortName(element)
-            else                        -> null
+            is RsPatBinding -> getShortName(element)
+            else -> null
         }
     }
 
     private fun getType(element: PsiElement): String? {
         return when (element) {
-            is RustPatBindingElement    -> "variable"
-            else                        -> null
+            is RsPatBinding -> "variable"
+            else -> null
         }
     }
 }

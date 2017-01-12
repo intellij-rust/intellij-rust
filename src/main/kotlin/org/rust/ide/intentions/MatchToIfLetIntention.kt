@@ -12,14 +12,14 @@ class MatchToIfLetIntention : RustElementBaseIntentionAction<MatchToIfLetIntenti
     override fun getFamilyName(): String = text
 
     data class Context(
-        val match: RustMatchExprElement,
-        val matchTarget: RustExprElement,
-        val matchBody: RustMatchBodyElement,
-        val nonVoidArm: RustMatchArmElement
+        val match: RsMatchExpr,
+        val matchTarget: RsExpr,
+        val matchBody: RsMatchBody,
+        val nonVoidArm: RsMatchArm
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val matchExpr = element.parentOfType<RustMatchExprElement>() ?: return null
+        val matchExpr = element.parentOfType<RsMatchExpr>() ?: return null
         val matchTarget = matchExpr.expr ?: return null
         val matchBody = matchExpr.matchBody ?: return null
         val matchArmList = matchBody.matchArmList
@@ -38,17 +38,17 @@ class MatchToIfLetIntention : RustElementBaseIntentionAction<MatchToIfLetIntenti
         val (matchExpr, matchTarget, matchBody, arm) = ctx
 
         var bodyText = arm.expr?.text ?: return
-        if (arm.expr !is RustBlockExprElement) {
+        if (arm.expr !is RsBlockExpr) {
             bodyText = "{\n$bodyText\n}"
         }
 
         val rustIfLetExprElement =
             RustPsiFactory(project).createExpression("if let ${arm.matchPat.text} = ${matchTarget.text} $bodyText")
-                as RustIfExprElement
+                as RsIfExpr
         matchExpr.replace(rustIfLetExprElement)
     }
 
-    private val RustExprElement.isVoid: Boolean
-        get() = (this is RustBlockExprElement && block?.lbrace.getNextNonCommentSibling() == block?.rbrace)
-            || this is RustUnitExprElement
+    private val RsExpr.isVoid: Boolean
+        get() = (this is RsBlockExpr && block?.lbrace.getNextNonCommentSibling() == block?.rbrace)
+            || this is RsUnitExpr
 }

@@ -6,7 +6,7 @@ class RustIntentionsTest : RustTestCaseBase() {
 
     override val dataPath = "org/rust/ide/intentions/fixtures/"
 
-    fun testContractModule()  = checkByDirectory {
+    fun testContractModule() = checkByDirectory {
         openFileInEditor("other/mod.rs")
         myFixture.launchAction(ContractModuleIntention())
     }

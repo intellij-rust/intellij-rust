@@ -90,9 +90,9 @@ enum class RustDocKind {
         fun of(tokenType: IElementType): RustDocKind = when (tokenType) {
             INNER_BLOCK_DOC_COMMENT -> InnerBlock
             OUTER_BLOCK_DOC_COMMENT -> OuterBlock
-            INNER_EOL_DOC_COMMENT   -> InnerEol
-            OUTER_EOL_DOC_COMMENT   -> OuterEol
-            else                    -> throw IllegalArgumentException("unsupported token type")
+            INNER_EOL_DOC_COMMENT -> InnerEol
+            OUTER_EOL_DOC_COMMENT -> OuterEol
+            else -> throw IllegalArgumentException("unsupported token type")
         }
 
         private inline fun String.dropWhileAtMost(n: Int, predicate: (Char) -> Boolean): String {

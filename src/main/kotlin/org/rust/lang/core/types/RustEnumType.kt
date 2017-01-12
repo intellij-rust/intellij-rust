@@ -1,10 +1,10 @@
 package org.rust.lang.core.types
 
 import com.intellij.codeInsight.completion.CompletionUtil
-import org.rust.lang.core.psi.RustEnumItemElement
+import org.rust.lang.core.psi.RsEnumItem
 
 data class RustEnumType(
-    val enum: RustEnumItemElement,
+    val enum: RsEnumItem,
     override val typeArguments: List<RustType> = emptyList()
 ) : RustStructOrEnumTypeBase {
 

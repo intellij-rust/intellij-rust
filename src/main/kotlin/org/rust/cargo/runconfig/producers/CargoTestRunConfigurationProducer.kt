@@ -9,8 +9,8 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.runconfig.CargoCommandRunConfigurationType
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RustCompositeElement
-import org.rust.lang.core.psi.RustFunctionElement
 import org.rust.lang.core.psi.RustMod
 import org.rust.lang.core.psi.containingCargoTarget
 import org.rust.lang.core.psi.impl.mixin.isTest
@@ -60,7 +60,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
             ?: findTestMod(location)
 
     private fun findTestFunction(location: Location<*>): TestConfig? {
-        val fn = location.psiElement.parentOfType<RustFunctionElement>(strict = false) ?: return null
+        val fn = location.psiElement.parentOfType<RsFunction>(strict = false) ?: return null
         val name = fn.name ?: return null
         val target = fn.containingCargoTarget ?: return null
         return if (fn.isTest) TestConfig(fn, "Test $name", name, target) else null

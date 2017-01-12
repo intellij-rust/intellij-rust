@@ -80,12 +80,14 @@ class RustFormatterTest : FormatterTestCase() {
 
     // FIXME: these two guys are way too big
     fun testSpacing() = doTest()
+
     fun testIssue451() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/451
     fun testIssue526() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/526
     fun testIssue569() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/569
 
     // https://github.com/intellij-rust/intellij-rust/issues/543
     fun testIssue543a() = doTest()
+
     fun testIssue543b() = doTest()
     fun testIssue543c() = doTest()
 

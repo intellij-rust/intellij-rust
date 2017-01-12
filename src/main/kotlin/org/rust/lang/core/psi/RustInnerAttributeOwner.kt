@@ -6,5 +6,5 @@ interface RustInnerAttributeOwner : RustDocAndAttributeOwner {
      * In contrast, inner attributes can be either direct
      * children or grandchildren.
      */
-    val innerAttrList: List<RustInnerAttrElement>
+    val innerAttrList: List<RsInnerAttr>
 }

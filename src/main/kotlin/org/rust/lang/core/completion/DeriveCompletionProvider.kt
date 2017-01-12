@@ -11,8 +11,8 @@ import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.lang.RustLanguage
+import org.rust.lang.core.psi.RsOuterAttr
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
-import org.rust.lang.core.psi.RustOuterAttrElement
 import org.rust.lang.core.psi.util.parentOfType
 
 object DeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
@@ -30,7 +30,7 @@ object DeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
                                 context: ProcessingContext?,
                                 result: CompletionResultSet) {
 
-        val outerAttrElem = parameters.position.parentOfType<RustOuterAttrElement>()
+        val outerAttrElem = parameters.position.parentOfType<RsOuterAttr>()
             ?: return
         val alreadyDerived = outerAttrElem.metaItem.metaItemArgs?.metaItemList.orEmpty()
             .mapNotNull { it.identifier.text }

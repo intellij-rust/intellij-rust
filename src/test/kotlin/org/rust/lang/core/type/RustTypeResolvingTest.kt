@@ -2,10 +2,10 @@ package org.rust.lang.core.type
 
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
-import org.rust.lang.core.psi.RustTypeElement
+import org.rust.lang.core.psi.RsType
 import org.rust.lang.core.types.util.resolvedType
 
-class RustTypeResolvingTest: RustTypificationTestBase() {
+class RustTypeResolvingTest : RustTypificationTestBase() {
     fun testPath() = testType("""
         struct Spam;
 
@@ -161,7 +161,7 @@ class RustTypeResolvingTest: RustTypificationTestBase() {
      */
     private fun testType(@Language("Rust") code: String) {
         InlineFile(code)
-        val (typeAtCaret, expectedType) = findElementAndDataInEditor<RustTypeElement>()
+        val (typeAtCaret, expectedType) = findElementAndDataInEditor<RsType>()
 
         assertThat(typeAtCaret.resolvedType.toString())
             .isEqualTo(expectedType)

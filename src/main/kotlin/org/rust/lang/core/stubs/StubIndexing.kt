@@ -9,21 +9,21 @@ import org.rust.lang.core.stubs.index.RustGotoClassIndex
 import org.rust.lang.core.stubs.index.RustModulesIndex
 import org.rust.lang.core.stubs.index.RustNamedElementIndex
 
-fun IndexSink.indexExternCrate(stub: RustExternCrateItemElementStub) {
+fun IndexSink.indexExternCrate(stub: RsExternCrateItemStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexStructItem(stub: RustStructItemElementStub) {
-    indexNamedStub(stub)
-    indexGotoClass(stub)
-}
-
-fun IndexSink.indexEnumItem(stub: RustEnumItemElementStub) {
+fun IndexSink.indexStructItem(stub: RsStructItemStub) {
     indexNamedStub(stub)
     indexGotoClass(stub)
 }
 
-fun IndexSink.indexModDeclItem(stub: RustModDeclItemElementStub) {
+fun IndexSink.indexEnumItem(stub: RsEnumItemStub) {
+    indexNamedStub(stub)
+    indexGotoClass(stub)
+}
+
+fun IndexSink.indexModDeclItem(stub: RsModDeclItemStub) {
     indexNamedStub(stub)
     val pathKey = stub.pathAttribute?.let { FileUtil.getNameWithoutExtension(PathUtil.getFileName(it)) }
         ?: stub.name
@@ -33,36 +33,36 @@ fun IndexSink.indexModDeclItem(stub: RustModDeclItemElementStub) {
     }
 }
 
-fun IndexSink.indexModItem(stub: RustModItemElementStub) {
+fun IndexSink.indexModItem(stub: RsModItemStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexTraitItem(stub: RustTraitItemElementStub) {
+fun IndexSink.indexTraitItem(stub: RsTraitItemStub) {
     indexNamedStub(stub)
     indexGotoClass(stub)
 }
 
-fun IndexSink.indexImplItem(stub: RustImplItemElementStub) {
+fun IndexSink.indexImplItem(stub: RsImplItemStub) {
     RustImplIndex.TraitImpls.index(stub, this)
     RustImplIndex.InherentImpls.index(stub, this)
 }
 
-fun IndexSink.indexFunction(stub: RustFunctionElementStub) {
+fun IndexSink.indexFunction(stub: RsFunctionStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexConstant(stub: RustConstantElementStub) {
+fun IndexSink.indexConstant(stub: RsConstantStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexTypeAlias(stub: RustTypeAliasElementStub) {
+fun IndexSink.indexTypeAlias(stub: RsTypeAliasStub) {
     indexNamedStub(stub)
     if (stub.role != RustTypeAliasRole.IMPL_ASSOC_TYPE) {
         indexGotoClass(stub)
     }
 }
 
-fun IndexSink.indexFieldDecl(stub: RustFieldDeclElementStub) {
+fun IndexSink.indexFieldDecl(stub: RsFieldDeclStub) {
     indexNamedStub(stub)
 }
 

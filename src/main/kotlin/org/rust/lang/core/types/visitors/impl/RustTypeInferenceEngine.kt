@@ -11,7 +11,7 @@ import org.rust.utils.Result
 
 object RustTypeInferenceEngine {
 
-    fun inferPatBindingTypeFrom(binding: RustPatBindingElement, pat: RustPatElement, type: RustType): RustType {
+    fun inferPatBindingTypeFrom(binding: RsPatBinding, pat: RsPat, type: RustType): RustType {
         check(pat.contains(binding))
 
         return run(pat, type).let {
@@ -22,7 +22,7 @@ object RustTypeInferenceEngine {
         }
     }
 
-    private fun run(pat: RustPatElement, type: RustType): Result<Map<RustPatBindingElement, RustType>> =
+    private fun run(pat: RsPat, type: RustType): Result<Map<RsPatBinding, RustType>> =
         RustTypeInferencingVisitor(type).let {
             if (it.compute(pat)) Result.Ok(it.bindings) else Result.Failure
         }
@@ -31,9 +31,9 @@ object RustTypeInferenceEngine {
 @Suppress("IfNullToElvis")
 private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisitor<Boolean>() {
 
-    val bindings: MutableMap<RustPatBindingElement, RustType> = hashMapOf()
+    val bindings: MutableMap<RsPatBinding, RustType> = hashMapOf()
 
-    private fun match(pat: RustPatElement, type: RustType): Boolean {
+    private fun match(pat: RsPat, type: RustType): Boolean {
         val prev = this.type
 
         this.type = type
@@ -48,7 +48,7 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
         throw UnsupportedOperationException("Panic! Unhandled pattern detected!")
     }
 
-    override fun visitPatIdent(o: RustPatIdentElement) = set(fun(): Boolean {
+    override fun visitPatIdent(o: RsPatIdent) = set(fun(): Boolean {
         val pat = o.pat
         if (pat == null || match(pat, type)) {
             bindings += o.patBinding to type
@@ -58,9 +58,9 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
         return false
     })
 
-    override fun visitPatWild(o: RustPatWildElement) = set({ true })
+    override fun visitPatWild(o: RsPatWild) = set({ true })
 
-    override fun visitPatTup(o: RustPatTupElement) = set(fun(): Boolean {
+    override fun visitPatTup(o: RsPatTup) = set(fun(): Boolean {
         val type = type
         if (type !is RustTupleType)
             return false
@@ -69,7 +69,7 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
         if (pats.size != type.size)
             return false
 
-        for (i in 0 .. type.size - 1) {
+        for (i in 0..type.size - 1) {
             if (!match(pats[i], type[i]))
                 return false
         }
@@ -77,10 +77,10 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
         return true
     })
 
-    private fun getEnumByVariant(e: RustEnumVariantElement): RustEnumItemElement? =
-        (e.parent as RustEnumBodyElement).parent as? RustEnumItemElement
+    private fun getEnumByVariant(e: RsEnumVariant): RsEnumItem? =
+        (e.parent as RsEnumBody).parent as? RsEnumItem
 
-    override fun visitPatEnum(o: RustPatEnumElement) = set(fun(): Boolean {
+    override fun visitPatEnum(o: RsPatEnum) = set(fun(): Boolean {
         //
         // `pat_enum` perfectly covers 2 following destructuring scenarios:
         //
@@ -108,14 +108,14 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
 
         val e = o.path.reference.resolve()
         val tupleFields = when (e) {
-            is RustStructItemElement -> {
+            is RsStructItem -> {
                 if (type !is RustStructType || type.item !== e)
                     return false
 
                 e.tupleFields?.tupleFieldDeclList
             }
 
-            is RustEnumVariantElement -> {
+            is RsEnumVariant -> {
                 if (type !is RustEnumType || type.item !== getEnumByVariant(e))
                     return false
 
@@ -136,7 +136,7 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
         return true
     })
 
-    override fun visitPatStruct(o: RustPatStructElement) = set(fun(): Boolean {
+    override fun visitPatStruct(o: RsPatStruct) = set(fun(): Boolean {
         val type = type
         if (type !is RustStructType || type.item !== o.path.reference.resolve())
             return false
@@ -176,19 +176,19 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
         return true
     })
 
-    override fun visitPatRef(o: RustPatRefElement) = set(fun(): Boolean {
+    override fun visitPatRef(o: RsPatRef) = set(fun(): Boolean {
         val type = type
         return type is RustReferenceType
             && type.mutable == (o.mut != null)
             && match(o.pat, type.referenced)
     })
 
-    override fun visitPatUniq(o: RustPatUniqElement) = set(fun(): Boolean {
+    override fun visitPatUniq(o: RsPatUniq) = set(fun(): Boolean {
         // FIXME
         return false
     })
 
-    override fun visitPatVec(o: RustPatVecElement) = set(fun(): Boolean {
+    override fun visitPatVec(o: RsPatVec) = set(fun(): Boolean {
         // FIXME
         return false
     })

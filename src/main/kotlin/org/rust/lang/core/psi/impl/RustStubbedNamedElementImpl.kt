@@ -13,7 +13,7 @@ import org.rust.lang.core.stubs.RustNamedStub
 abstract class RustStubbedNamedElementImpl<StubT> : RustStubbedElementImpl<StubT>,
                                                     RustNamedElement,
                                                     PsiNameIdentifierOwner
-    where StubT : RustNamedStub, StubT : StubElement<*> {
+where StubT : RustNamedStub, StubT : StubElement<*> {
 
     constructor(node: ASTNode) : super(node)
 

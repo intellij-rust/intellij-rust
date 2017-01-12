@@ -10,7 +10,7 @@ class RustWithNotSurrounderTest : RustSurrounderTestCaseBase(RustWithNotSurround
                 <selection>true</selection>
             }
             """
-        ,
+            ,
             """
             fn main() {
                 !(true)<caret>
@@ -18,6 +18,7 @@ class RustWithNotSurrounderTest : RustSurrounderTestCaseBase(RustWithNotSurround
             """
         )
     }
+
     fun testCall() {
         doTest(
             """
@@ -29,7 +30,7 @@ class RustWithNotSurrounderTest : RustSurrounderTestCaseBase(RustWithNotSurround
                 <selection>func()</selection>
             }
             """
-        ,
+            ,
             """
             fn func() -> bool {
                 false

@@ -69,11 +69,11 @@ abstract class RustCompletionTestBase : RustTestCaseBase() {
     }
 
     private fun PsiElement.fitsHierarchically(target: String): Boolean = when {
-            text == target -> true
-            text.length > target.length -> false
-            parent != null -> parent.fitsHierarchically(target)
-            else -> false
-        }
+        text == target -> true
+        text.length > target.length -> false
+        parent != null -> parent.fitsHierarchically(target)
+        else -> false
+    }
 
     private fun PsiElement.fitsLinearly(target: String) =
         checkLinearly(target, Direction.LEFT) || checkLinearly(target, Direction.RIGHT)

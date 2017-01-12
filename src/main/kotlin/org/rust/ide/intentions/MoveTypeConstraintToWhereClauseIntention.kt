@@ -6,18 +6,18 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
 
-class MoveTypeConstraintToWhereClauseIntention : RustElementBaseIntentionAction<RustTypeParameterListElement>() {
+class MoveTypeConstraintToWhereClauseIntention : RustElementBaseIntentionAction<RsTypeParameterList>() {
     override fun getText() = "Move type constraint to where clause"
     override fun getFamilyName() = text
 
-    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RustTypeParameterListElement? {
-        val genericParams = element.parentOfType<RustTypeParameterListElement>() ?: return null
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsTypeParameterList? {
+        val genericParams = element.parentOfType<RsTypeParameterList>() ?: return null
         val hasTypeBounds = genericParams.typeParameterList.any { it.typeParamBounds != null }
         val hasLifetimeBounds = genericParams.lifetimeParameterList.any { it.lifetimeParamBounds != null }
         return if (hasTypeBounds || hasLifetimeBounds) genericParams else null
     }
 
-    override fun invoke(project: Project, editor: Editor, ctx: RustTypeParameterListElement) {
+    override fun invoke(project: Project, editor: Editor, ctx: RsTypeParameterList) {
         val lifetimeBounds = ctx.lifetimeParameterList
         val typeBounds = ctx.typeParameterList
         val whereClause = RustPsiFactory(project).createWhereClause(lifetimeBounds, typeBounds)
@@ -28,17 +28,17 @@ class MoveTypeConstraintToWhereClauseIntention : RustElementBaseIntentionAction<
         editor.caretModel.moveToOffset(offset)
         typeBounds.forEach { it.typeParamBounds?.delete() }
         lifetimeBounds.forEach { it.lifetimeParamBounds?.delete() }
-       }
+    }
 }
 
-private fun RustGenericDeclaration.addWhereClause(whereClause: RustWhereClauseElement): PsiElement? {
+private fun RustGenericDeclaration.addWhereClause(whereClause: RsWhereClause): PsiElement? {
     val anchor = when (this) {
-        is RustTypeAliasElement -> eq
-        is RustImplItemElement -> lbrace
-        is RustTraitItemElement -> lbrace
-        is RustFunctionElement -> block
-        is RustStructItemElement -> semicolon ?: blockFields
-        is RustEnumItemElement -> enumBody
+        is RsTypeAlias -> eq
+        is RsImplItem -> lbrace
+        is RsTraitItem -> lbrace
+        is RsFunction -> block
+        is RsStructItem -> semicolon ?: blockFields
+        is RsEnumItem -> enumBody
         else -> error("Unhandled RustGenericDeclaration: $this")
     } ?: return null
 

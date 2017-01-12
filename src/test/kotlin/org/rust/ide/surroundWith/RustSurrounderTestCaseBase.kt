@@ -12,7 +12,7 @@ import org.rust.lang.RustTestCaseBase
 import java.util.*
 
 abstract class RustSurrounderTestCaseBase(val surrounder: Surrounder) : RustTestCaseBase() {
-    override val dataPath: String  = ""
+    override val dataPath: String = ""
 
     protected fun doTest(@Language("Rust") before: String,
                          @Language("Rust") after: String,

@@ -137,9 +137,9 @@ fun String.toSnakeCase(upper: Boolean): String {
 
 class RustArgumentNamingInspection : RustSnakeCaseNamingInspection("Argument") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitPatBinding(el: RustPatBindingElement) {
-                if (el.parent?.parent is RustValueParameterElement) {
+        object : RsVisitor() {
+            override fun visitPatBinding(el: RsPatBinding) {
+                if (el.parent?.parent is RsValueParameter) {
                     inspect(el.identifier, holder)
                 }
             }
@@ -148,8 +148,8 @@ class RustArgumentNamingInspection : RustSnakeCaseNamingInspection("Argument") {
 
 class RustConstNamingInspection : RustUpperCaseNamingInspection("Constant") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitConstant(el: RustConstantElement) {
+        object : RsVisitor() {
+            override fun visitConstant(el: RsConstant) {
                 if (el.kind == RustConstantKind.CONST) {
                     inspect(el.identifier, holder)
                 }
@@ -159,8 +159,8 @@ class RustConstNamingInspection : RustUpperCaseNamingInspection("Constant") {
 
 class RustStaticConstNamingInspection : RustUpperCaseNamingInspection("Static constant") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitConstant(el: RustConstantElement) {
+        object : RsVisitor() {
+            override fun visitConstant(el: RsConstant) {
                 if (el.kind != RustConstantKind.CONST) {
                     inspect(el.identifier, holder)
                 }
@@ -170,22 +170,22 @@ class RustStaticConstNamingInspection : RustUpperCaseNamingInspection("Static co
 
 class RustEnumNamingInspection : RustCamelCaseNamingInspection("Type", "Enum") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitEnumItem(el: RustEnumItemElement) = inspect(el.identifier, holder)
+        object : RsVisitor() {
+            override fun visitEnumItem(el: RsEnumItem) = inspect(el.identifier, holder)
         }
 }
 
 class RustEnumVariantNamingInspection : RustCamelCaseNamingInspection("Enum variant") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitEnumVariant(el: RustEnumVariantElement) = inspect(el.identifier, holder)
+        object : RsVisitor() {
+            override fun visitEnumVariant(el: RsEnumVariant) = inspect(el.identifier, holder)
         }
 }
 
 class RustFunctionNamingInspection : RustSnakeCaseNamingInspection("Function") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitFunction(el: RustFunctionElement) {
+        object : RsVisitor() {
+            override fun visitFunction(el: RsFunction) {
                 if (el.role == RustFunctionRole.FREE) {
                     inspect(el.identifier, holder)
                 }
@@ -195,8 +195,8 @@ class RustFunctionNamingInspection : RustSnakeCaseNamingInspection("Function") {
 
 class RustMethodNamingInspection : RustSnakeCaseNamingInspection("Method") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitFunction(el: RustFunctionElement) = when (el.role) {
+        object : RsVisitor() {
+            override fun visitFunction(el: RsFunction) = when (el.role) {
                 RustFunctionRole.TRAIT_METHOD,
                 RustFunctionRole.IMPL_METHOD -> inspect(el.identifier, holder)
                 else -> Unit
@@ -206,51 +206,51 @@ class RustMethodNamingInspection : RustSnakeCaseNamingInspection("Method") {
 
 class RustLifetimeNamingInspection : RustSnakeCaseNamingInspection("Lifetime") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitLifetimeParameter(el: RustLifetimeParameterElement) = inspect(el, holder, false)
+        object : RsVisitor() {
+            override fun visitLifetimeParameter(el: RsLifetimeParameter) = inspect(el, holder, false)
         }
 }
 
 class RustMacroNamingInspection : RustSnakeCaseNamingInspection("Macro") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitMacroDefinition(el: RustMacroDefinitionElement) = inspect(el.identifier, holder, false)
+        object : RsVisitor() {
+            override fun visitMacroDefinition(el: RsMacroDefinition) = inspect(el.identifier, holder, false)
         }
 }
 
 class RustModuleNamingInspection : RustSnakeCaseNamingInspection("Module") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitModDeclItem(el: RustModDeclItemElement) = inspect(el.identifier, holder)
-            override fun visitModItem(el: RustModItemElement) = inspect(el.identifier, holder)
+        object : RsVisitor() {
+            override fun visitModDeclItem(el: RsModDeclItem) = inspect(el.identifier, holder)
+            override fun visitModItem(el: RsModItem) = inspect(el.identifier, holder)
         }
 }
 
 class RustStructNamingInspection : RustCamelCaseNamingInspection("Type", "Struct") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitStructItem(el: RustStructItemElement) = inspect(el.identifier, holder)
+        object : RsVisitor() {
+            override fun visitStructItem(el: RsStructItem) = inspect(el.identifier, holder)
         }
 }
 
 class RustFieldNamingInspection : RustSnakeCaseNamingInspection("Field") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitFieldDecl(el: RustFieldDeclElement) = inspect(el.identifier, holder)
+        object : RsVisitor() {
+            override fun visitFieldDecl(el: RsFieldDecl) = inspect(el.identifier, holder)
         }
 }
 
 class RustTraitNamingInspection : RustCamelCaseNamingInspection("Trait") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitTraitItem(el: RustTraitItemElement) = inspect(el.identifier, holder)
+        object : RsVisitor() {
+            override fun visitTraitItem(el: RsTraitItem) = inspect(el.identifier, holder)
         }
 }
 
 class RustTypeAliasNamingInspection : RustCamelCaseNamingInspection("Type", "Type alias") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitTypeAlias(el: RustTypeAliasElement) {
+        object : RsVisitor() {
+            override fun visitTypeAlias(el: RsTypeAlias) {
                 if (el.role == RustTypeAliasRole.FREE) {
                     inspect(el.identifier, holder)
                 }
@@ -260,8 +260,8 @@ class RustTypeAliasNamingInspection : RustCamelCaseNamingInspection("Type", "Typ
 
 class RustAssocTypeNamingInspection : RustCamelCaseNamingInspection("Type", "Associated type") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitTypeAlias(el: RustTypeAliasElement) {
+        object : RsVisitor() {
+            override fun visitTypeAlias(el: RsTypeAlias) {
                 if (el.role == RustTypeAliasRole.TRAIT_ASSOC_TYPE) {
                     inspect(el.identifier, holder, false)
                 }
@@ -272,18 +272,18 @@ class RustAssocTypeNamingInspection : RustCamelCaseNamingInspection("Type", "Ass
 
 class RustTypeParameterNamingInspection : RustCamelCaseNamingInspection("Type parameter") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitTypeParameter(el: RustTypeParameterElement) = inspect(el.identifier, holder)
+        object : RsVisitor() {
+            override fun visitTypeParameter(el: RsTypeParameter) = inspect(el.identifier, holder)
         }
 }
 
 class RustVariableNamingInspection : RustSnakeCaseNamingInspection("Variable") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitPatBinding(el: RustPatBindingElement) {
-                val pattern = PsiTreeUtil.getTopmostParentOfType(el, RustPatElement::class.java) ?: return
+        object : RsVisitor() {
+            override fun visitPatBinding(el: RsPatBinding) {
+                val pattern = PsiTreeUtil.getTopmostParentOfType(el, RsPat::class.java) ?: return
                 when (pattern.parent) {
-                    is RustLetDeclElement -> inspect(el.identifier, holder)
+                    is RsLetDecl -> inspect(el.identifier, holder)
                 }
             }
         }

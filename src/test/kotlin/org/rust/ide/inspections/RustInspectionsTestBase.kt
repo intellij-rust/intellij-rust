@@ -9,7 +9,7 @@ abstract class RustInspectionsTestBase(val useStdLib: Boolean = false) : RustTes
 
     override fun getProjectDescriptor() = if (useStdLib) WithStdlibRustProjectDescriptor else super.getProjectDescriptor()
 
-    protected inline fun<reified T : LocalInspectionTool> enableInspection() =
+    protected inline fun <reified T : LocalInspectionTool> enableInspection() =
         myFixture.enableInspections(T::class.java)
 
     protected inline fun <reified T : LocalInspectionTool> doTest() {
@@ -23,7 +23,7 @@ abstract class RustInspectionsTestBase(val useStdLib: Boolean = false) : RustTes
         myFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn)
     }
 
-    protected inline fun <reified T: LocalInspectionTool> checkFixByText(fixName: String, before: String, after: String, checkWarn: Boolean = true, checkInfo: Boolean = false, checkWeakWarn: Boolean = false) {
+    protected inline fun <reified T : LocalInspectionTool> checkFixByText(fixName: String, before: String, after: String, checkWarn: Boolean = true, checkInfo: Boolean = false, checkWeakWarn: Boolean = false) {
         myFixture.configureByText("main.rs", before)
         enableInspection<T>()
         myFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn)

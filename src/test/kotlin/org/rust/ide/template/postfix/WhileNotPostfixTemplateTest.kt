@@ -2,16 +2,16 @@ package org.rust.ide.template.postfix
 
 class WhileNotPostfixTemplateTest : PostfixTemplateTestCase(WhileNotExpressionPostfixTemplate()) {
     fun testNumber() = doTestNotApplicable(
-            """
+        """
             fn main() {
                 let a = 4;
                 a.whilenot/*caret*/
             }
             """
-        )
+    )
 
     fun testNumberCall() = doTestNotApplicable(
-            """
+        """
             fn func() -> i32 {
                 1234
             }
@@ -20,71 +20,71 @@ class WhileNotPostfixTemplateTest : PostfixTemplateTestCase(WhileNotExpressionPo
                 func().whilenot/*caret*/
             }
             """
-        )
+    )
 
     fun testSimple() = doTest(
-            """
+        """
             fn main() {
                 let a = 4 == 2;
                 a.whilenot/*caret*/
             }
             """
-            ,
-            """
+        ,
+        """
             fn main() {
                 let a = 4 == 2;
                 while !a {/*caret*/}
             }
             """
-        )
+    )
 
     fun testSimpleNegatedExpr() = doTest(
-            """
+        """
             fn main() {
                 let a = 4 == 2;
                 !a.whilenot/*caret*/
             }
             """
-            ,
-            """
+        ,
+        """
             fn main() {
                 let a = 4 == 2;
                 while a {/*caret*/}
             }
             """
-        )
+    )
 
     fun testFunArg() = doTest(
-            """
+        """
             fn foo(a: bool) {
                 a.whilenot/*caret*/
             }
             """
-            ,
-            """
+        ,
+        """
             fn foo(a: bool) {
                 while !a {/*caret*/}
             }
             """
-        )
+    )
 
     fun testSimpleEqExpr() = doTest(
-            """
+        """
             fn main() {
                 true == true.whilenot/*caret*/
             }
             """
-            ,
-            """
+        ,
+        """
             fn main() {
                 while true != true {/*caret*/}
             }
             """
-        )
+    )
 
 
     fun testSelector() = doTest(
-            """
+        """
             fn main() {
                 let a = if (true) {
                     42 < 43.whilenot/*caret*/
@@ -93,8 +93,8 @@ class WhileNotPostfixTemplateTest : PostfixTemplateTestCase(WhileNotExpressionPo
                 };
             }
             """
-            ,
-            """
+        ,
+        """
             fn main() {
                 let a = if (true) {
                     while 42 >= 43 {/*caret*/}
@@ -103,7 +103,7 @@ class WhileNotPostfixTemplateTest : PostfixTemplateTestCase(WhileNotExpressionPo
                 };
             }
             """
-        )
+    )
 
     fun testCall() = doTest(
         """
@@ -129,14 +129,14 @@ class WhileNotPostfixTemplateTest : PostfixTemplateTestCase(WhileNotExpressionPo
 
     fun testBinOperatorsBool() {
         val cases = listOf(
-            Pair("1 == 2",      "1 != 2"),
-            Pair("1 != 2",      "1 == 2"),
-            Pair("1 <= 2",      "1 > 2"),
-            Pair("1 >= 2",      "1 < 2"),
-            Pair("1 < 2",       "1 >= 2"),
-            Pair("1 > 2",       "1 <= 2"),
-            Pair("!(1 == 2)",   "1 == 2"),
-            Pair("(1 == 2)",    "!(1 == 2)")
+            Pair("1 == 2", "1 != 2"),
+            Pair("1 != 2", "1 == 2"),
+            Pair("1 <= 2", "1 > 2"),
+            Pair("1 >= 2", "1 < 2"),
+            Pair("1 < 2", "1 >= 2"),
+            Pair("1 > 2", "1 <= 2"),
+            Pair("!(1 == 2)", "1 == 2"),
+            Pair("(1 == 2)", "!(1 == 2)")
         )
 
         for (case in cases) {

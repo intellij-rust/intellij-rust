@@ -6,7 +6,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateWithEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.lang.core.psi.RustExprElement
+import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.impl.RustFile
 import org.rust.lang.refactoring.RustLocalVariableHandler
 
@@ -41,11 +41,11 @@ class RustPostfixTemplateProvider : PostfixTemplateProvider {
 class LetPostfixTemplate : PostfixTemplateWithExpressionSelector(
     "let",
     "let name = expr;",
-    RustAllParentsSelector(RustExprElement::any)
+    RustAllParentsSelector(RsExpr::any)
 ) {
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
         var rustFile = expression.containingFile as? RustFile ?: return
-        if (expression !is RustExprElement) return
+        if (expression !is RsExpr) return
         RustLocalVariableHandler().doRefactoring(editor, expression.project, rustFile, expression)
     }
 }

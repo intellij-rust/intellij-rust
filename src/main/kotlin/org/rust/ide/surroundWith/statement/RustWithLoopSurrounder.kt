@@ -1,15 +1,15 @@
 package org.rust.ide.surroundWith.statement
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.RustBlockElement
-import org.rust.lang.core.psi.RustLoopExprElement
+import org.rust.lang.core.psi.RsBlock
+import org.rust.lang.core.psi.RsLoopExpr
 import org.rust.lang.core.psi.RustPsiFactory
 
-class RustWithLoopSurrounder : RustStatementsSurrounderBase.SimpleBlock<RustLoopExprElement>() {
+class RustWithLoopSurrounder : RustStatementsSurrounderBase.SimpleBlock<RsLoopExpr>() {
     override fun getTemplateDescription(): String = "loop { }"
 
-    override fun createTemplate(project: Project): Pair<RustLoopExprElement, RustBlockElement> {
-        val l = RustPsiFactory(project).createExpression("loop {\n}") as RustLoopExprElement
+    override fun createTemplate(project: Project): Pair<RsLoopExpr, RsBlock> {
+        val l = RustPsiFactory(project).createExpression("loop {\n}") as RsLoopExpr
         return l to l.block!!
     }
 

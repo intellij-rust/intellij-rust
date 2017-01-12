@@ -40,7 +40,7 @@
         </context>
     </template>
 
-        <template name="ifl" description="if let ... statement" toReformat="true" toShortenFQNames="true"
+    <template name="ifl" description="if let ... statement" toReformat="true" toShortenFQNames="true"
               value="if let $PATTERN$ = $EXPRESSION$ {&#10;    $END$&#10;}">
         <variable name="EXPRESSION" expression="" defaultValue="" alwaysStopAt="true"/>
         <variable name="PATTERN" expression="" defaultValue="" alwaysStopAt="true"/>

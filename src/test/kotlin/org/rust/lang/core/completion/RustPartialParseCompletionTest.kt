@@ -1,6 +1,6 @@
 package org.rust.lang.core.completion
 
-class RustPartialParseCompletionTest: RustCompletionTestBase() {
+class RustPartialParseCompletionTest : RustCompletionTestBase() {
     override val dataPath = "org/rust/lang/core/completion/fixtures/partial_parse"
 
     fun testMatch() = checkSingleCompletionByFile()

@@ -5,26 +5,26 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustExprElement
-import org.rust.lang.core.psi.RustIfExprElement
+import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.types.RustBooleanType
 import org.rust.lang.core.types.util.resolvedType
 
-class RustWithIfExpSurrounder : RustExpressionSurrounderBase<RustIfExprElement>() {
+class RustWithIfExpSurrounder : RustExpressionSurrounderBase<RsIfExpr>() {
     override fun getTemplateDescription(): String = "if expr"
 
-    override fun createTemplate(project: Project): RustIfExprElement =
-        RustPsiFactory(project).createExpression("if a {stmnt;}") as RustIfExprElement
+    override fun createTemplate(project: Project): RsIfExpr =
+        RustPsiFactory(project).createExpression("if a {stmnt;}") as RsIfExpr
 
-    override fun getWrappedExpression(expression: RustIfExprElement): RustExprElement =
+    override fun getWrappedExpression(expression: RsIfExpr): RsExpr =
         expression.condition!!.expr
 
-    override fun isApplicable(expression: RustExprElement): Boolean =
+    override fun isApplicable(expression: RsExpr): Boolean =
         expression.resolvedType == RustBooleanType
 
     override fun doPostprocessAndGetSelectionRange(editor: Editor, expression: PsiElement): TextRange? {
-        var block = (expression as? RustIfExprElement)?.block ?: return null
+        var block = (expression as? RsIfExpr)?.block ?: return null
         block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block)
         val rbrace = checkNotNull(block.rbrace) {
             "Incomplete block in if surrounder"

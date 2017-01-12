@@ -2,12 +2,11 @@ package org.rust.lang.refactoring
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.RefactoringActionHandler
-import org.rust.lang.core.psi.RustPatBindingElement
+import org.rust.lang.core.psi.RsPatBinding
 
 class RustRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun isInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean {
-        return element is RustPatBindingElement
+        return element is RsPatBinding
     }
 
     override fun getIntroduceVariableHandler() = RustLocalVariableHandler()

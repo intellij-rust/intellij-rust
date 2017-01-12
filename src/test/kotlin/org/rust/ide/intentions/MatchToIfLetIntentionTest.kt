@@ -92,7 +92,9 @@ class MatchToIfLetIntentionTest : RustIntentionTestBase(MatchToIfLetIntention())
             }
         }
         """
-    )    fun testSimple2() = doAvailableTest(
+    )
+
+    fun testSimple2() = doAvailableTest(
         """
         enum OptionColor {
             NoColor,

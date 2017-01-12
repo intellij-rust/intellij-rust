@@ -1,5 +1,6 @@
-fn test() <fold text='{...}'>{
-    awesome! <fold text='{...}'>{ }</fold>
-}</fold>
+fn test() < fold text='{ ... }'>{
+awesome ! < fold text = '{ ...
+}'>{}< / fold >
+} < / fold >
 
-awesome_invoke! <fold text='{...}'>{ }</fold>
+awesome_invoke! < fold text = '{ ... }'>{} < / fold >

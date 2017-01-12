@@ -2,9 +2,9 @@ package org.rust.ide.structure
 
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
-import org.rust.lang.core.psi.RustEnumVariantElement
+import org.rust.lang.core.psi.RsEnumVariant
 
-class RustEnumVariantTreeElement(element: RustEnumVariantElement) : PsiTreeElementBase<RustEnumVariantElement>(element) {
+class RustEnumVariantTreeElement(element: RsEnumVariant) : PsiTreeElementBase<RsEnumVariant>(element) {
 
     override fun getPresentableText(): String? {
         var text = element?.name

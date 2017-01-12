@@ -12,16 +12,16 @@ import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ref.RustModReferenceImpl
 import org.rust.lang.core.resolve.ref.RustReference
-import org.rust.lang.core.stubs.RustModDeclItemElementStub
+import org.rust.lang.core.stubs.RsModDeclItemStub
 import java.io.File
 import javax.swing.Icon
 
-abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RustModDeclItemElementStub>,
-                                          RustModDeclItemElement {
+abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RsModDeclItemStub>,
+                                          RsModDeclItem {
 
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RustModDeclItemElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RsModDeclItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getReference(): RustReference = RustModReferenceImpl(this)
 
@@ -39,7 +39,7 @@ abstract class RustModDeclItemImplMixin : RustStubbedNamedElementImpl<RustModDec
     }
 }
 
-fun RustModDeclItemElement.getOrCreateModuleFile(): PsiFile? {
+fun RsModDeclItem.getOrCreateModuleFile(): PsiFile? {
     val existing = reference.resolve()?.containingFile
     if (existing != null) return existing
     return suggestChildFileName?.let { containingMod.ownedDirectory?.createFile(it) }
@@ -52,7 +52,7 @@ fun RustModDeclItemElement.getOrCreateModuleFile(): PsiFile? {
  *
  * Can be of length 0, 1 or 2.
  */
-val RustModDeclItemElement.possiblePaths: List<String> get() {
+val RsModDeclItem.possiblePaths: List<String> get() {
     val path = pathAttribute
     return if (path != null)
         if (!File(path).isAbsolute) listOf(path) else emptyList()
@@ -60,22 +60,22 @@ val RustModDeclItemElement.possiblePaths: List<String> get() {
         implicitPaths
 }
 
-val RustModDeclItemElement.isLocal: Boolean
-    get() = stub?.isLocal ?: (parentOfType<RustBlockElement>() != null)
+val RsModDeclItem.isLocal: Boolean
+    get() = stub?.isLocal ?: (parentOfType<RsBlock>() != null)
 
 
 //TODO: use explicit path if present.
-private val RustModDeclItemElement.suggestChildFileName: String?
+private val RsModDeclItem.suggestChildFileName: String?
     get() = implicitPaths.firstOrNull()
 
 
-private val RustModDeclItemElement.implicitPaths: List<String> get() {
+private val RsModDeclItem.implicitPaths: List<String> get() {
     val name = name ?: return emptyList()
     return if (isLocal) emptyList() else listOf("$name.rs", "$name/mod.rs")
 }
 
 
-val RustModDeclItemElement.pathAttribute: String? get() {
+val RsModDeclItem.pathAttribute: String? get() {
     val stub = stub
     return if (stub != null)
         stub.pathAttribute

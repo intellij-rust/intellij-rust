@@ -1,8 +1,8 @@
 package org.rust.lang.core.types
 
-import org.rust.lang.core.psi.RustBaseTypeElement
-import org.rust.lang.core.psi.RustRefLikeTypeElement
-import org.rust.lang.core.psi.RustTypeElement
+import org.rust.lang.core.psi.RsBaseType
+import org.rust.lang.core.psi.RsRefLikeType
+import org.rust.lang.core.psi.RsType
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -10,9 +10,9 @@ data class RustTypeFingerprint private constructor(
     private val name: String
 ) {
     companion object {
-        fun create(type: RustTypeElement): RustTypeFingerprint? = when (type) {
-            is RustBaseTypeElement -> type.path?.referenceName?.let(::RustTypeFingerprint)
-            is RustRefLikeTypeElement -> type.type?.let { create(it) }
+        fun create(type: RsType): RustTypeFingerprint? = when (type) {
+            is RsBaseType -> type.path?.referenceName?.let(::RustTypeFingerprint)
+            is RsRefLikeType -> type.type?.let { create(it) }
             else -> null
         }
 

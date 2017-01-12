@@ -26,16 +26,16 @@ enum class RustLint(
 
     private fun explicitLevel(el: PsiElement)
         = el.ancestors
-            .filterIsInstance<RustDocAndAttributeOwner>()
-            .flatMap { it.queryAttributes.metaItems }
-            .filter { it.metaItemArgs?.metaItemList.orEmpty().any { it.text == id } }
-            .mapNotNull { RustLintLevel.valueForId(it.identifier.text) }
-            .firstOrNull()
+        .filterIsInstance<RustDocAndAttributeOwner>()
+        .flatMap { it.queryAttributes.metaItems }
+        .filter { it.metaItemArgs?.metaItemList.orEmpty().any { it.text == id } }
+        .mapNotNull { RustLintLevel.valueForId(it.identifier.text) }
+        .firstOrNull()
 
     private fun superModsLevel(el: PsiElement)
         = el.ancestors
-            .filterIsInstance<RustMod>()
-            .lastOrNull()
-            ?.superMods
-            ?.mapNotNull { explicitLevel(it) }?.firstOrNull()
+        .filterIsInstance<RustMod>()
+        .lastOrNull()
+        ?.superMods
+        ?.mapNotNull { explicitLevel(it) }?.firstOrNull()
 }

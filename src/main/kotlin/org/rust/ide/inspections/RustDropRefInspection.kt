@@ -2,10 +2,10 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import org.rust.ide.inspections.fixes.RemoveRefFix
-import org.rust.lang.core.psi.RustCallExprElement
-import org.rust.lang.core.psi.RustElementVisitor
-import org.rust.lang.core.psi.RustFunctionElement
-import org.rust.lang.core.psi.RustPathExprElement
+import org.rust.lang.core.psi.RsCallExpr
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsPathExpr
+import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.types.RustReferenceType
 import org.rust.lang.core.types.util.resolvedType
 
@@ -17,15 +17,15 @@ class RustDropRefInspection : RustLocalInspectionTool() {
     override fun getDisplayName(): String = "Drop reference"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        object : RustElementVisitor() {
-            override fun visitCallExpr(expr: RustCallExprElement) = inspectExpr(expr, holder)
+        object : RsVisitor() {
+            override fun visitCallExpr(expr: RsCallExpr) = inspectExpr(expr, holder)
         }
 
-    fun inspectExpr(expr: RustCallExprElement, holder: ProblemsHolder) {
-        val pathExpr = expr.expr as? RustPathExprElement ?: return
+    fun inspectExpr(expr: RsCallExpr, holder: ProblemsHolder) {
+        val pathExpr = expr.expr as? RsPathExpr ?: return
 
         val resEl = pathExpr.path.reference.resolve()
-        if (resEl !is RustFunctionElement || resEl.crateRelativePath.toString() != "::mem::drop") return
+        if (resEl !is RsFunction || resEl.crateRelativePath.toString() != "::mem::drop") return
 
         val args = expr.valueArgumentList.exprList
         if (args.size != 1) return

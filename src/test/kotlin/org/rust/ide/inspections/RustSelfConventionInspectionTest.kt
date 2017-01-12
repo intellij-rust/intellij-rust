@@ -3,7 +3,7 @@ package org.rust.ide.inspections
 /**
  * Tests for Self Convention inspection
  */
-class RustSelfConventionInspectionTest: RustInspectionsTestBase() {
+class RustSelfConventionInspectionTest : RustInspectionsTestBase() {
 
     fun testFrom() = checkByText<RustSelfConventionInspection>("""
         struct Foo;

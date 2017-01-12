@@ -66,8 +66,8 @@ class RustFile(
         return module?.cargoProject?.isCrateRoot(file) ?: false
     }
 
-    override val innerAttrList: List<RustInnerAttrElement>
-        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)
+    override val innerAttrList: List<RsInnerAttr>
+        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RsInnerAttr::class.java)
 
     val attributes: Attributes get() {
         val stub = stub
@@ -81,18 +81,18 @@ class RustFile(
         NO_CORE, NO_STD, NONE
     }
 
-    override val functionList: List<RustFunctionElement> get() = findItems(FUNCTION)
-    override val modItemList: List<RustModItemElement> get() = findItems(MOD_ITEM)
-    override val constantList: List<RustConstantElement> get() = findItems(CONSTANT)
-    override val structItemList: List<RustStructItemElement> get() = findItems(STRUCT_ITEM)
-    override val enumItemList: List<RustEnumItemElement> get() = findItems(ENUM_ITEM)
-    override val implItemList: List<RustImplItemElement> get() = findItems(IMPL_ITEM)
-    override val traitItemList: List<RustTraitItemElement> get() = findItems(TRAIT_ITEM)
-    override val typeAliasList: List<RustTypeAliasElement> get() = findItems(TYPE_ALIAS)
-    override val useItemList: List<RustUseItemElement> get() = findItems(USE_ITEM)
-    override val modDeclItemList: List<RustModDeclItemElement> get() = findItems(MOD_DECL_ITEM)
-    override val externCrateItemList: List<RustExternCrateItemElement> get() = findItems(EXTERN_CRATE_ITEM)
-    override val foreignModItemList: List<RustForeignModItemElement> get() = findItems(FOREIGN_MOD_ITEM)
+    override val functionList: List<RsFunction> get() = findItems(FUNCTION)
+    override val modItemList: List<RsModItem> get() = findItems(MOD_ITEM)
+    override val constantList: List<RsConstant> get() = findItems(CONSTANT)
+    override val structItemList: List<RsStructItem> get() = findItems(STRUCT_ITEM)
+    override val enumItemList: List<RsEnumItem> get() = findItems(ENUM_ITEM)
+    override val implItemList: List<RsImplItem> get() = findItems(IMPL_ITEM)
+    override val traitItemList: List<RsTraitItem> get() = findItems(TRAIT_ITEM)
+    override val typeAliasList: List<RsTypeAlias> get() = findItems(TYPE_ALIAS)
+    override val useItemList: List<RsUseItem> get() = findItems(USE_ITEM)
+    override val modDeclItemList: List<RsModDeclItem> get() = findItems(MOD_DECL_ITEM)
+    override val externCrateItemList: List<RsExternCrateItem> get() = findItems(EXTERN_CRATE_ITEM)
+    override val foreignModItemList: List<RsForeignModItem> get() = findItems(FOREIGN_MOD_ITEM)
 
     private inline fun <reified T : RustCompositeElement> findItems(elementType: IElementType): List<T> {
         val stub = stub

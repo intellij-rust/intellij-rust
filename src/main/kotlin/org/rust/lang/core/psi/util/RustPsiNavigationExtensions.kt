@@ -6,9 +6,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
-import org.rust.lang.core.psi.RustBlockElement
-import org.rust.lang.core.psi.RustExprElement
-import org.rust.lang.core.psi.RustStmtElement
+import org.rust.lang.core.psi.RsBlock
+import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsStmt
 import org.rust.lang.core.psi.impl.RustFile
 
 inline fun <reified T : PsiElement> PsiElement.parentOfType(strict: Boolean = true, minStartOffset: Int = -1): T? =
@@ -33,7 +33,7 @@ fun PsiElement?.getPrevNonCommentSibling(): PsiElement? =
 fun PsiElement?.getNextNonCommentSibling(): PsiElement? =
     PsiTreeUtil.skipSiblingsForward(this, PsiWhiteSpace::class.java, PsiComment::class.java)
 
-fun findExpressionAtCaret(file: RustFile, offset: Int): RustExprElement? {
+fun findExpressionAtCaret(file: RustFile, offset: Int): RsExpr? {
     val expr = file.expressionAtOffset(offset)
     val exprBefore = file.expressionAtOffset(offset - 1)
     return when {
@@ -44,21 +44,21 @@ fun findExpressionAtCaret(file: RustFile, offset: Int): RustExprElement? {
     }
 }
 
-private fun RustFile.expressionAtOffset(offset: Int): RustExprElement? =
-    findElementAt(offset)?.parentOfType<RustExprElement>(strict = false)
+private fun RustFile.expressionAtOffset(offset: Int): RsExpr? =
+    findElementAt(offset)?.parentOfType<RsExpr>(strict = false)
 
 
 /**
- * Finds top-most [RustExprElement] within selected range.
+ * Finds top-most [RsExpr] within selected range.
  * Supports such cases: `ident&lt;if&gt;ier` (or keyword if applicable),
  * `&lt;&nbsp;&nbsp;&nbsp;expression&nbsp;&nbsp;&nbsp;&gt;`.
  */
-fun findExpressionInRange(file: PsiFile, startOffset: Int, endOffset: Int): RustExprElement? {
+fun findExpressionInRange(file: PsiFile, startOffset: Int, endOffset: Int): RsExpr? {
     val (element1, element2) = file.getElementRange(startOffset, endOffset) ?: return null
 
     // Get common expression parent.
     var parent = PsiTreeUtil.findCommonParent(element1, element2) ?: return null
-    parent = parent.parentOfType<RustExprElement>(strict = false) ?: return null
+    parent = parent.parentOfType<RsExpr>(strict = false) ?: return null
 
     // If our parent's deepest first child is element1 and deepest last - element 2,
     // then is is completely within selection, so this is our sought expression.
@@ -72,15 +72,15 @@ fun findExpressionInRange(file: PsiFile, startOffset: Int, endOffset: Int): Rust
 // FIXME: Maybe items are ok?
 // FIXME: What about macros?
 /**
- * Finds statements (mostly [RustStmtElement]s, [PsiComment]s and [RustExprElement]
+ * Finds statements (mostly [RsStmt]s, [PsiComment]s and [RsExpr]
  * as return expression, doesn't allow attrs and items) within selected range.
  */
 fun findStatementsInRange(file: PsiFile, startOffset: Int, endOffset: Int): Array<out PsiElement> {
     var (element1, element2) = file.getElementRange(startOffset, endOffset) ?: return emptyArray()
 
-    // Find parent of selected statement list (syntactically only RustBlockElement is possible)
+    // Find parent of selected statement list (syntactically only RsBlock is possible)
     val parent = PsiTreeUtil.findCommonParent(element1, element2)
-        ?.parentOfType<RustBlockElement>(strict = false)
+        ?.parentOfType<RsBlock>(strict = false)
         ?: return emptyArray()
 
     // Find edge direct children of parent within selection.
@@ -99,8 +99,8 @@ fun findStatementsInRange(file: PsiFile, startOffset: Int, endOffset: Int): Arra
 
     // Finally check if found elements meet requirements, and return result
     elements.forEachIndexed { idx, element ->
-        if (!(element is RustStmtElement
-            || (idx == elements.size - 1 && element is RustExprElement)
+        if (!(element is RsStmt
+            || (idx == elements.size - 1 && element is RsExpr)
             || element is PsiComment
             )) return emptyArray()
     }

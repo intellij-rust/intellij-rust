@@ -6,8 +6,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.lang.core.psi.RustBlockElement
-import org.rust.lang.core.psi.RustStmtElement
+import org.rust.lang.core.psi.RsBlock
+import org.rust.lang.core.psi.RsStmt
 
 /**
  * Smart enter implementation for the Rust language.
@@ -27,7 +27,7 @@ class RustSmartEnterProcessor : SmartEnterProcessorWithFixers() {
         val atCaret = super.getStatementAtCaret(editor, psiFile)
         if (atCaret is PsiWhiteSpace) return null
 
-        return PsiTreeUtil.getParentOfType(atCaret, RustStmtElement::class.java, RustBlockElement::class.java)
+        return PsiTreeUtil.getParentOfType(atCaret, RsStmt::class.java, RsBlock::class.java)
     }
 
     private inner class PlainEnterProcessor : FixEnterProcessor() {

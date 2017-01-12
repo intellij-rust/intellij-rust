@@ -31,14 +31,14 @@ import javax.swing.JPanel
  * ToolbarDecorator component automatically has [CCFlags.grow] and [CCFlags.push].
  */
 inline fun panel(vararg constraints: LCFlags, title: String? = null, init: LayoutBuilder.() -> Unit): JPanel {
-  val builder = createLayoutBuilder()
-  builder.init()
+    val builder = createLayoutBuilder()
+    builder.init()
 
-  val panel = Panel(title, layout = null)
-  builder.`$`.build(panel, constraints)
-  return panel
+    val panel = Panel(title, layout = null)
+    builder.`$`.build(panel, constraints)
+    return panel
 }
 
 inline fun verticalPanel(init: Row.() -> Unit) = panel(noGrid, flowY, fillX) {
-  row(init = init)
+    row(init = init)
 }

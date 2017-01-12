@@ -3,9 +3,9 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RustBaseTypeElement
+import org.rust.lang.core.psi.RsBaseType
+import org.rust.lang.core.psi.RsRefLikeType
 import org.rust.lang.core.psi.RustPsiFactory
-import org.rust.lang.core.psi.RustRefLikeTypeElement
 import org.rust.lang.core.psi.util.parentOfType
 
 /**
@@ -28,14 +28,14 @@ open class SetMutableIntention : RustElementBaseIntentionAction<SetMutableIntent
     open val mutable = true
 
     data class Context(
-        val refType: RustRefLikeTypeElement,
-        val baseType: RustBaseTypeElement
+        val refType: RsRefLikeType,
+        val baseType: RsBaseType
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val refType = element.parentOfType<RustRefLikeTypeElement>() ?: return null
+        val refType = element.parentOfType<RsRefLikeType>() ?: return null
         if (refType.and == null) return null
-        val baseType = refType.type as? RustBaseTypeElement ?: return null
+        val baseType = refType.type as? RsBaseType ?: return null
         if ((refType.mut == null) != mutable) return null
         return Context(refType, baseType)
 

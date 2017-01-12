@@ -10,7 +10,7 @@ import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustUnknownType
 import org.rust.lang.core.types.visitors.impl.RustTypificationEngine
 
-val RustExprElement.resolvedType: RustType
+val RsExpr.resolvedType: RustType
     get() =
     CachedValuesManager.getCachedValue(this,
         CachedValueProvider {
@@ -18,7 +18,7 @@ val RustExprElement.resolvedType: RustType
         }
     )
 
-val RustTypeElement.resolvedType: RustType
+val RsType.resolvedType: RustType
     get() = recursionGuard(this, Computable {
         RustTypificationEngine.typifyType(this)
     }) ?: RustUnknownType
@@ -33,13 +33,13 @@ val RustTypeBearingItemElement.resolvedType: RustType
 /**
  * Helper property to extract (type-)bounds imposed onto this particular type-parameter
  */
-val RustTypeParameterElement.bounds: Sequence<RustPolyboundElement>
+val RsTypeParameter.bounds: Sequence<RsPolybound>
     get() {
         val owner = parent?.parent as? RustGenericDeclaration
         val whereBounds =
             owner?.whereClause?.wherePredList.orEmpty()
                 .asSequence()
-                .filter { (it.type as? RustBaseTypeElement)?.path?.reference?.resolve() == this }
+                .filter { (it.type as? RsBaseType)?.path?.reference?.resolve() == this }
                 .flatMap { it.typeParamBounds?.polyboundList.orEmpty().asSequence() }
 
         return typeParamBounds?.polyboundList.orEmpty().asSequence() + whereBounds

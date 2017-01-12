@@ -1,8 +1,8 @@
 package org.rust.lang.core.types
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.RustFunctionElement
-import org.rust.lang.core.psi.RustTraitItemElement
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.util.trait
 import org.rust.lang.core.resolve.indexes.RustImplIndex
 
@@ -11,13 +11,13 @@ interface RustType {
     /**
      * Traits explicitly (or implicitly) implemented for this particular type
      */
-    fun getTraitsImplementedIn(project: Project): Sequence<RustTraitItemElement> =
+    fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
         RustImplIndex.findImplsFor(this, project).mapNotNull { it.traitRef?.trait }
 
     /**
      * Non-static methods accessible for this particular type
      */
-    fun getNonStaticMethodsIn(project: Project): Sequence<RustFunctionElement> =
+    fun getNonStaticMethodsIn(project: Project): Sequence<RsFunction> =
         RustImplIndex.findNonStaticMethodsFor(this, project)
 
     /**

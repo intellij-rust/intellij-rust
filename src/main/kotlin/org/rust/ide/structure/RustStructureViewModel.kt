@@ -18,11 +18,11 @@ class RustStructureViewModel(editor: Editor?, file: RustFile) : TextEditorBasedS
 
     override fun isAlwaysLeaf(element: StructureViewTreeElement) =
         when (element.value) {
-            is RustFieldDeclElement,
-            is RustFunctionElement,
-            is RustModDeclItemElement,
-            is RustConstantElement,
-            is RustTypeAliasElement -> true
+            is RsFieldDecl,
+            is RsFunction,
+            is RsModDeclItem,
+            is RsConstant,
+            is RsTypeAlias -> true
             else -> false
         }
 }

@@ -9,9 +9,9 @@ import com.intellij.patterns.StandardPatterns.or
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.RustPsiPattern
-import org.rust.lang.core.psi.RustFunctionElement
-import org.rust.lang.core.psi.RustModItemElement
-import org.rust.lang.core.psi.RustPathElement
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsModItem
+import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.impl.RustFile
 
@@ -60,19 +60,19 @@ class RustKeywordCompletionContributor : CompletionContributor(), DumbAware {
     private fun letPattern(): PsiElementPattern.Capture<PsiElement> =
         baseCodeStatementPattern().and(statementBeginningPattern("let"))
 
-    private fun loopFlowCommandPatern() : PsiElementPattern.Capture<PsiElement> =
+    private fun loopFlowCommandPatern(): PsiElementPattern.Capture<PsiElement> =
         RustPsiPattern.inAnyLoop.and(newCodeStatementPattern())
 
     private fun baseDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
         psiElement<PsiElement>().andOr(
-            psiElement().withParent(RustPathElement::class.java),
-            psiElement().withParent(or(psiElement<RustModItemElement>(), psiElement<RustFile>()))
+            psiElement().withParent(RsPath::class.java),
+            psiElement().withParent(or(psiElement<RsModItem>(), psiElement<RustFile>()))
         )
 
     private fun baseCodeStatementPattern(): PsiElementPattern.Capture<PsiElement> =
         psiElement<PsiElement>()
-            .inside(psiElement<RustFunctionElement>())
-            .andNot(psiElement().withParent(RustModItemElement::class.java))
+            .inside(psiElement<RsFunction>())
+            .andNot(psiElement().withParent(RsModItem::class.java))
 
     private fun statementBeginningPattern(vararg startWords: String): PsiElementPattern.Capture<PsiElement> =
         psiElement<PsiElement>()

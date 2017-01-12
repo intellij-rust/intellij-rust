@@ -10,7 +10,7 @@ class RustModTabTitleProvider : UniqueNameEditorTabTitleProvider() {
 
     override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
         if (file.isRustFile && MOD_FILE_NAME == file.name) {
-            return  super.getEditorTabTitle(project, file) ?:
+            return super.getEditorTabTitle(project, file) ?:
                 "${file.parent.name}/${file.name}"
         }
 

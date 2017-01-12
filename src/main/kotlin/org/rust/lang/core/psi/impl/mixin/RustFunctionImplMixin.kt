@@ -9,21 +9,21 @@ import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.util.trait
-import org.rust.lang.core.stubs.RustFunctionElementStub
+import org.rust.lang.core.stubs.RsFunctionStub
 import org.rust.lang.core.symbols.RustPath
 import javax.swing.Icon
 
-abstract class RustFunctionImplMixin : RustStubbedNamedElementImpl<RustFunctionElementStub>, RustFunctionElement {
+abstract class RustFunctionImplMixin : RustStubbedNamedElementImpl<RsFunctionStub>, RsFunction {
 
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RustFunctionElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RsFunctionStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublicNonStubbed(this)
 
     override val crateRelativePath: RustPath.CrateRelative? get() = RustPsiImplUtil.crateRelativePath(this)
 
-    final override val innerAttrList: List<RustInnerAttrElement>
+    final override val innerAttrList: List<RsInnerAttr>
         get() = block?.innerAttrList.orEmpty()
 
     override fun getIcon(flags: Int): Icon = when (role) {
@@ -39,9 +39,9 @@ abstract class RustFunctionImplMixin : RustStubbedNamedElementImpl<RustFunctionE
     }
 }
 
-val RustFunctionElement.isAbstract: Boolean get() = stub?.isAbstract ?: block == null
-val RustFunctionElement.isStatic: Boolean get() = stub?.isStatic ?: selfParameter == null
-val RustFunctionElement.isTest: Boolean get() = stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
+val RsFunction.isAbstract: Boolean get() = stub?.isAbstract ?: block == null
+val RsFunction.isStatic: Boolean get() = stub?.isStatic ?: selfParameter == null
+val RsFunction.isTest: Boolean get() = stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
 
 
 enum class RustFunctionRole {
@@ -52,27 +52,27 @@ enum class RustFunctionRole {
     FOREIGN
 }
 
-val RustFunctionElement.role: RustFunctionRole get() {
+val RsFunction.role: RustFunctionRole get() {
     val stub = stub
     if (stub != null) return stub.role
     return when (parent) {
         is RustItemsOwner -> RustFunctionRole.FREE
-        is RustTraitItemElement -> RustFunctionRole.TRAIT_METHOD
-        is RustImplItemElement -> RustFunctionRole.IMPL_METHOD
-        is RustForeignModItemElement -> RustFunctionRole.FOREIGN
+        is RsTraitItem -> RustFunctionRole.TRAIT_METHOD
+        is RsImplItem -> RustFunctionRole.IMPL_METHOD
+        is RsForeignModItem -> RustFunctionRole.FOREIGN
         else -> error("Unexpected function parent: $parent")
     }
 }
 
-val RustFunctionElement.superMethod: RustFunctionElement? get() {
-    val rustImplItem = parentOfType<RustImplItemElement>() ?: return null
+val RsFunction.superMethod: RsFunction? get() {
+    val rustImplItem = parentOfType<RsImplItem>() ?: return null
     val superTrait = rustImplItem.traitRef?.trait ?: return null
 
     return superTrait.functionList.find { it.name == this.name }
 }
 
-val RustFunctionElement.valueParameters: List<RustValueParameterElement>
+val RsFunction.valueParameters: List<RsValueParameter>
     get() = valueParameterList?.valueParameterList.orEmpty()
 
-val RustFunctionElement.selfParameter: RustSelfParameterElement?
+val RsFunction.selfParameter: RsSelfParameter?
     get() = valueParameterList?.selfParameter

@@ -8,16 +8,16 @@ import org.rust.ide.icons.RustIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RustStubbedNamedElementImpl
-import org.rust.lang.core.stubs.RustModItemElementStub
+import org.rust.lang.core.stubs.RsModItemStub
 import org.rust.lang.core.symbols.RustPath
 import javax.swing.Icon
 
-abstract class RustModItemImplMixin : RustStubbedNamedElementImpl<RustModItemElementStub>,
-                                      RustModItemElement {
+abstract class RustModItemImplMixin : RustStubbedNamedElementImpl<RsModItemStub>,
+                                      RsModItem {
 
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RustModItemElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RsModItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RustIcons.MODULE)
@@ -39,10 +39,10 @@ abstract class RustModItemImplMixin : RustStubbedNamedElementImpl<RustModItemEle
 
     override val isCrateRoot: Boolean = false
 
-    override val innerAttrList: List<RustInnerAttrElement>
-        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustInnerAttrElement::class.java)
+    override val innerAttrList: List<RsInnerAttr>
+        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RsInnerAttr::class.java)
 
-    override val outerAttrList: List<RustOuterAttrElement>
-        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RustOuterAttrElement::class.java)
+    override val outerAttrList: List<RsOuterAttr>
+        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RsOuterAttr::class.java)
 
 }

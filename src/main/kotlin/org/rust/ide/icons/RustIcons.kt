@@ -16,7 +16,7 @@ import javax.swing.Icon
 object RustIcons {
     // Logos
 
-    val RUST     = IconLoader.getIcon("/icons/rust.png")
+    val RUST = IconLoader.getIcon("/icons/rust.png")
     val RUST_BIG = IconLoader.getIcon("/icons/rust-big.png")
 
     // File types
@@ -25,47 +25,47 @@ object RustIcons {
 
     // Marks
 
-    val FINAL_MARK   = AllIcons.Nodes.FinalMark!!
-    val STATIC_MARK  = AllIcons.Nodes.StaticMark!!
-    val TEST_MARK    = AllIcons.Nodes.JunitTestMark!!
+    val FINAL_MARK = AllIcons.Nodes.FinalMark!!
+    val STATIC_MARK = AllIcons.Nodes.StaticMark!!
+    val TEST_MARK = AllIcons.Nodes.JunitTestMark!!
 
     // Source code elements
 
-    val CRATE    = AllIcons.Nodes.PpLib!!
-    val MODULE   = AllIcons.Nodes.Package!!
+    val CRATE = AllIcons.Nodes.PpLib!!
+    val MODULE = AllIcons.Nodes.Package!!
 
-    val TRAIT    = AllIcons.Nodes.Interface!!
-    val STRUCT   = AllIcons.Nodes.Class!!
-    val TYPE     = AllIcons.Nodes.Class!!
-    val IMPL     = AllIcons.Nodes.AbstractClass!!
-    val ENUM     = AllIcons.Nodes.Enum!!
+    val TRAIT = AllIcons.Nodes.Interface!!
+    val STRUCT = AllIcons.Nodes.Class!!
+    val TYPE = AllIcons.Nodes.Class!!
+    val IMPL = AllIcons.Nodes.AbstractClass!!
+    val ENUM = AllIcons.Nodes.Enum!!
 
-    val METHOD          = AllIcons.Nodes.Method!!
-    val FUNCTION        = IconLoader.getIcon("/icons/nodes/function.png")
-    val ASSOC_FUNCTION  = FUNCTION.addStaticMark()
+    val METHOD = AllIcons.Nodes.Method!!
+    val FUNCTION = IconLoader.getIcon("/icons/nodes/function.png")
+    val ASSOC_FUNCTION = FUNCTION.addStaticMark()
 
-    val ABSTRACT_METHOD         = AllIcons.Nodes.AbstractMethod!!
-    val ABSTRACT_FUNCTION       = IconLoader.getIcon("/icons/nodes/abstractFunction.png")
+    val ABSTRACT_METHOD = AllIcons.Nodes.AbstractMethod!!
+    val ABSTRACT_FUNCTION = IconLoader.getIcon("/icons/nodes/abstractFunction.png")
     val ABSTRACT_ASSOC_FUNCTION = ABSTRACT_FUNCTION.addStaticMark()
 
-    val ATTRIBUTE       = AllIcons.Nodes.Annotationtype!!
-    val MUT_ARGUMENT    = AllIcons.Nodes.Parameter!!
-    val ARGUMENT        = MUT_ARGUMENT.addFinalMark()
-    val FIELD           = AllIcons.Nodes.Field!!
-    val MUT_BINDING     = AllIcons.Nodes.Variable!!
-    val BINDING         = MUT_BINDING.addFinalMark()
-    val GLOBAL_BINDING  = IconLoader.getIcon("/icons/nodes/globalBinding.png")
-    val CONSTANT        = GLOBAL_BINDING.addFinalMark()
-    val MUT_STATIC      = GLOBAL_BINDING.addStaticMark()
-    val STATIC          = MUT_STATIC.addFinalMark()
-    val ENUM_VARIANT    = FIELD.addFinalMark().addStaticMark()
+    val ATTRIBUTE = AllIcons.Nodes.Annotationtype!!
+    val MUT_ARGUMENT = AllIcons.Nodes.Parameter!!
+    val ARGUMENT = MUT_ARGUMENT.addFinalMark()
+    val FIELD = AllIcons.Nodes.Field!!
+    val MUT_BINDING = AllIcons.Nodes.Variable!!
+    val BINDING = MUT_BINDING.addFinalMark()
+    val GLOBAL_BINDING = IconLoader.getIcon("/icons/nodes/globalBinding.png")
+    val CONSTANT = GLOBAL_BINDING.addFinalMark()
+    val MUT_STATIC = GLOBAL_BINDING.addStaticMark()
+    val STATIC = MUT_STATIC.addFinalMark()
+    val ENUM_VARIANT = FIELD.addFinalMark().addStaticMark()
 
     // Gutter
 
-    val IMPLEMENTED         = AllIcons.Gutter.ImplementedMethod!!
+    val IMPLEMENTED = AllIcons.Gutter.ImplementedMethod!!
     val IMPLEMENTING_METHOD = AllIcons.Gutter.ImplementingMethod!!
-    val OVERRIDING_METHOD   = AllIcons.Gutter.OverridingMethod!!
-    val RECURSIVE_CALL      = AllIcons.Gutter.RecursiveMethod!!
+    val OVERRIDING_METHOD = AllIcons.Gutter.OverridingMethod!!
+    val RECURSIVE_CALL = AllIcons.Gutter.RecursiveMethod!!
 }
 
 fun Icon.addFinalMark(): Icon = LayeredIcon(this, RustIcons.FINAL_MARK)

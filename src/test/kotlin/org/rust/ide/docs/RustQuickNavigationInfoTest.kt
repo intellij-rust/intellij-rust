@@ -1,6 +1,6 @@
 package org.rust.ide.docs
 
-class RustQuickNavigationInfoTest: RustDocumentationProviderTest() {
+class RustQuickNavigationInfoTest : RustDocumentationProviderTest() {
     override val dataPath = "org/rust/ide/docs/fixtures/nav"
 
     fun testVariable1() = checkNavigationInfo()

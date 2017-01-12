@@ -5,7 +5,6 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.RecursionManager
-import kotlin.reflect.KProperty
 
 /**
  * Recursion guard

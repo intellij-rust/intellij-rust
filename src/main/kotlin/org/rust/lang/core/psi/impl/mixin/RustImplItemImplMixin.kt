@@ -5,16 +5,16 @@ import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RustIcons
-import org.rust.lang.core.psi.RustBaseTypeElement
-import org.rust.lang.core.psi.RustImplItemElement
+import org.rust.lang.core.psi.RsBaseType
+import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RustNamedElement
 import org.rust.lang.core.psi.impl.RustStubbedElementImpl
-import org.rust.lang.core.stubs.RustImplItemElementStub
+import org.rust.lang.core.stubs.RsImplItemStub
 
-abstract class RustImplItemImplMixin : RustStubbedElementImpl<RustImplItemElementStub>, RustImplItemElement {
+abstract class RustImplItemImplMixin : RustStubbedElementImpl<RsImplItemStub>, RsImplItem {
 
     constructor(node: ASTNode) : super(node)
-    constructor(stub: RustImplItemElementStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RsImplItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int) = RustIcons.IMPL
 
@@ -22,7 +22,7 @@ abstract class RustImplItemImplMixin : RustStubbedElementImpl<RustImplItemElemen
 
     override fun getPresentation(): ItemPresentation {
         val t = type
-        if (t is RustBaseTypeElement) {
+        if (t is RsBaseType) {
             val pres = (t.path?.reference?.resolve() as? RustNamedElement)?.presentation
             if (pres != null) {
                 return PresentationData(pres.presentableText, pres.locationString, RustIcons.IMPL, null)

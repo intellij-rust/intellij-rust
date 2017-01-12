@@ -4,10 +4,6 @@ import com.intellij.codeInsight.editorActions.MultiCharQuoteHandler
 import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.psi.StringEscapesTokenTypes.STRING_LITERAL_ESCAPES
-import com.intellij.psi.tree.IElementType
-import com.intellij.util.text.CharSequenceSubSequence
-import org.rust.lang.core.psi.RustLiteral
-import org.rust.lang.core.psi.RustLiteralTokenType
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.core.psi.impl.RustRawStringLiteralImpl
 
