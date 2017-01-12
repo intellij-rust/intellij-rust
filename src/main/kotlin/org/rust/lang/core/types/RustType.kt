@@ -46,3 +46,24 @@ interface RustType {
     override fun toString(): String
 
 }
+
+/**
+ * Util to get through reference-types if any present
+ */
+fun RustType.stripAllRefsIfAny(): RustType = when (this) {
+    is RustReferenceType -> referenced.stripAllRefsIfAny()
+    else -> this
+}
+
+
+/**
+ * Checks whether this particular type is a primitive one
+ */
+val RustType.isPrimitive: Boolean get() = when (this) {
+    is RustFloatType,
+    is RustIntegerType,
+    is RustBooleanType,
+    is RustCharacterType,
+    is RustStringSliceType -> true
+    else -> false
+}

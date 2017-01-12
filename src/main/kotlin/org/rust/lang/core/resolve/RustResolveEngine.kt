@@ -22,8 +22,8 @@ import org.rust.lang.core.resolve.indexes.RustImplIndex
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
 import org.rust.lang.core.types.RustStructType
+import org.rust.lang.core.types.stripAllRefsIfAny
 import org.rust.lang.core.types.util.resolvedType
-import org.rust.lang.core.types.util.stripAllRefsIfAny
 import org.rust.utils.sequenceOfNotNull
 import java.util.*
 

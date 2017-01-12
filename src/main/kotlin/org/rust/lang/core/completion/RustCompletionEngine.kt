@@ -18,8 +18,8 @@ import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.RustStructType
+import org.rust.lang.core.types.stripAllRefsIfAny
 import org.rust.lang.core.types.util.resolvedType
-import org.rust.lang.core.types.util.stripAllRefsIfAny
 
 object RustCompletionEngine {
     const val KEYWORD_PRIORITY = 10.0

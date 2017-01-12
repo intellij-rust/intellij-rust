@@ -12,8 +12,8 @@ import org.rust.lang.core.psi.impl.mixin.isStatic
 import org.rust.lang.core.psi.impl.mixin.role
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.types.util.isPrimitive
-import org.rust.lang.core.types.visitors.impl.RustTypificationEngine
+import org.rust.lang.core.types.isPrimitive
+import org.rust.lang.core.types.util.resolvedType
 
 // Highlighting logic here should be kept in sync with tags in RustColorSettingsPage
 class RustHighlightingAnnotator : Annotator {
@@ -31,7 +31,7 @@ class RustHighlightingAnnotator : Annotator {
     private fun highlightReference(element: RustReferenceElement): Pair<PsiElement, RustColor>? {
         val parent = element.parent
         val isPrimitiveType = element is RustPathElement && parent is RustBaseTypeElement &&
-            RustTypificationEngine.typifyType(parent).isPrimitive
+            parent.resolvedType.isPrimitive
 
         val color = if (isPrimitiveType) {
             RustColor.PRIMITIVE_TYPE

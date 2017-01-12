@@ -2,7 +2,8 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.types.util.isPrimitive
+import org.rust.lang.core.types.isPrimitive
+import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.visitors.impl.RustTypificationEngine
 
 class RustUnresolvedReferenceInspection : RustLocalInspectionTool() {
@@ -14,7 +15,7 @@ class RustUnresolvedReferenceInspection : RustLocalInspectionTool() {
                 val p = o.parent
                 val isPrimitiveType = o is RustPathElement &&
                     p is RustBaseTypeElement &&
-                    RustTypificationEngine.typifyType(p).isPrimitive
+                    p.resolvedType.isPrimitive
 
                 if (isPrimitiveType || o.reference.resolve() != null) return
 
