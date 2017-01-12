@@ -5,12 +5,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import org.rust.lang.doc.psi.RustDocKind
-import org.rust.lang.doc.psi.RustDocKind.*
+import org.rust.lang.doc.psi.RsDocKind
+import org.rust.lang.doc.psi.RsDocKind.*
 
 @RunWith(Parameterized::class)
 class RustDocRemoveDecorationTest(
-    private val kind: RustDocKind,
+    private val kind: RsDocKind,
     private val comment: String,
     private val content: String
 ) {

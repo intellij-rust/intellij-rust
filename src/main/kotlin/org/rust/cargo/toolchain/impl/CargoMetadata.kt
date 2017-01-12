@@ -32,7 +32,7 @@ object CargoMetadata {
         /**
          * Ids of packages that are members of the cargo workspace
          */
-        val workspace_members: List<String>
+        val workspace_members: List<String>?
     )
 
 
@@ -112,8 +112,11 @@ object CargoMetadata {
     fun clean(project: Project): CleanCargoMetadata {
         val packageIdToIndex = project.packages.mapIndexed { i, p -> p.id to i }.toMap()
         val fs = LocalFileSystem.getInstance()
+        val members = project.workspace_members
+            ?: error("No `members` key in the `cargo metadata` output.\n" +
+            "Your version of Cargo is no longer supported, please upgrade Cargo.")
         return CleanCargoMetadata(
-            project.packages.mapNotNull { it.clean(fs, it.id in project.workspace_members) },
+            project.packages.mapNotNull { it.clean(fs, it.id in members) },
             project.resolve.nodes.map { node ->
                 CleanCargoMetadata.DependencyNode(
                     packageIdToIndex[node.id]!!,
@@ -139,11 +142,11 @@ object CargoMetadata {
 
     private fun Target.clean(root: VirtualFile): CleanCargoMetadata.Target? {
         val kind = when (kind) {
-            listOf("bin")     -> CargoProjectDescription.TargetKind.BIN
+            listOf("bin") -> CargoProjectDescription.TargetKind.BIN
             listOf("example") -> CargoProjectDescription.TargetKind.EXAMPLE
-            listOf("test")    -> CargoProjectDescription.TargetKind.TEST
-            listOf("bench")   -> CargoProjectDescription.TargetKind.BENCH
-            else              ->
+            listOf("test") -> CargoProjectDescription.TargetKind.TEST
+            listOf("bench") -> CargoProjectDescription.TargetKind.BENCH
+            else ->
                 if (kind.any { it.endsWith("lib") })
                     CargoProjectDescription.TargetKind.LIB
                 else

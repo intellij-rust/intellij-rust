@@ -13,11 +13,11 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.ui.JBColor
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
+import org.rust.cargo.project.workspace.cargoProject
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
-import org.rust.cargo.project.workspace.cargoProject
 import javax.swing.JComponent
 
 class RustProjectConfigurable(

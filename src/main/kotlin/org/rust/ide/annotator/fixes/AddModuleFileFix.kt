@@ -5,16 +5,16 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.ide.actions.RustExpandModuleAction
-import org.rust.lang.core.psi.RustModDeclItemElement
-import org.rust.lang.core.psi.impl.RustFile
+import org.rust.ide.actions.RsExpandModuleAction
+import org.rust.lang.core.psi.RsModDeclItem
+import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
 
 /**
  * Creates module file by the given module declaration.
  */
 class AddModuleFileFix(
-    modDecl: RustModDeclItemElement,
+    modDecl: RsModDeclItem,
     private val expandModuleFirst: Boolean
 ) : LocalQuickFixAndIntentionActionOnPsiElement(modDecl) {
     override fun getText(): String = "Create module file"
@@ -28,10 +28,10 @@ class AddModuleFileFix(
         startElement: PsiElement,
         endElement: PsiElement
     ) {
-        val modDecl = startElement as RustModDeclItemElement
+        val modDecl = startElement as RsModDeclItem
         if (expandModuleFirst) {
-            val containingFile = modDecl.containingFile as RustFile
-            RustExpandModuleAction.expandModule(containingFile)
+            val containingFile = modDecl.containingFile as RsFile
+            RsExpandModuleAction.expandModule(containingFile)
         }
         modDecl.getOrCreateModuleFile()?.navigate(true)
     }

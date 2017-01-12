@@ -13,10 +13,10 @@ import org.rust.lang.core.types.util.resolvedType
 open class AssertPostfixTemplateBase(name: String) : StringBasedPostfixTemplate(
     name,
     "$name!(exp);",
-    RustTopMostInScopeSelector(RustExprElement::isBool)) {
+    RsTopMostInScopeSelector(RsExpr::isBool)) {
 
     override fun getTemplateString(element: PsiElement): String =
-        if (element is RustBinaryExprElement && element.operatorType == RustTokenElementTypes.EQEQ) {
+        if (element is RsBinaryExpr && element.operatorType == RsTokenElementTypes.EQEQ) {
             "${this.presentableName}_eq!(${element.left.text}, ${element.right?.text});\$END$"
         } else {
             "$presentableName!(${element.text});\$END$"
@@ -31,7 +31,7 @@ class DebugAssertPostfixTemplate : AssertPostfixTemplateBase("debug_assert")
 class LambdaPostfixTemplate : StringBasedPostfixTemplate(
     "lambda",
     "|| expr",
-    RustTopMostInScopeSelector(RustExprElement::any)) {
+    RsTopMostInScopeSelector(RsExpr::any)) {
 
     override fun getTemplateString(element: PsiElement): String = "|| ${element.text}"
 
@@ -41,14 +41,14 @@ class LambdaPostfixTemplate : StringBasedPostfixTemplate(
 class MatchPostfixTemplate : StringBasedPostfixTemplate(
     "match",
     "match expr {...}",
-    RustTopMostInScopeSelector(RustExprElement::isEnum)
+    RsTopMostInScopeSelector(RsExpr::isEnum)
 ) {
     override fun getTemplateString(element: PsiElement): String? {
-        val enumType = (element as RustExprElement).resolvedType as RustEnumType
+        val enumType = (element as RsExpr).resolvedType as RustEnumType
 
         val allDeclaration = innerDeclarations(element)
             .mapNotNull {
-                val path = (it.element as? RustQualifiedNamedElement)?.crateRelativePath ?: return@mapNotNull null
+                val path = (it.element as? RsQualifiedNamedElement)?.crateRelativePath ?: return@mapNotNull null
                 if (path.segments.lastOrNull()?.name == it.name)
                     return@mapNotNull path
                 else
@@ -61,15 +61,18 @@ class MatchPostfixTemplate : StringBasedPostfixTemplate(
 
         val variantList = enumType.item.enumBody.enumVariantList
 
-        val createName: (item: RustEnumVariantElement) -> String = when {
+        val createName: (item: RsEnumVariant) -> String = when {
             variantList.all { it.crateRelativePath in allDeclaration } -> {
-                x -> x.name ?: ""
+                x ->
+                x.name ?: ""
             }
             enumType.item.crateRelativePath in allDeclaration -> {
-                x -> "${enumType.item.name ?: "UnknownEnumName"}::${x.name ?: "UnknownVariantName"}"
+                x ->
+                "${enumType.item.name ?: "UnknownEnumName"}::${x.name ?: "UnknownVariantName"}"
             }
             else -> {
-                x -> x.crateRelativePath.toString()
+                x ->
+                x.crateRelativePath.toString()
             }
         }
 
@@ -86,7 +89,7 @@ class MatchPostfixTemplate : StringBasedPostfixTemplate(
                         .joinToString(prefix = "{", separator = ", ", postfix = "}")
                 }
 
-                tupleFields != null -> (0 until tupleFields.descendentsOfType<RustTupleFieldDeclElement>().size)
+                tupleFields != null -> (0 until tupleFields.descendentsOfType<RsTupleFieldDecl>().size)
                     .map { "v$it" }
                     .joinToString(prefix = "(", separator = ", ", postfix = ")")
 
@@ -103,7 +106,7 @@ class MatchPostfixTemplate : StringBasedPostfixTemplate(
 
     override fun setVariables(template: Template, element: PsiElement) {
         super.setVariables(template, element)
-        val itemsCount = ((element as RustExprElement).resolvedType as RustEnumType).item.enumBody.enumVariantList.size
+        val itemsCount = ((element as RsExpr).resolvedType as RustEnumType).item.enumBody.enumVariantList.size
 
         for (i in 0 until itemsCount) {
             template.addVariable("VAR$i", TextExpression("{}"), true)

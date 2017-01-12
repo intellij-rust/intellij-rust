@@ -3,84 +3,77 @@ package org.rust.lang.core.stubs
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.util.PathUtil
-import org.rust.lang.core.psi.impl.mixin.RustTypeAliasRole
-import org.rust.lang.core.resolve.indexes.RustAliasIndex
-import org.rust.lang.core.resolve.indexes.RustImplIndex
-import org.rust.lang.core.stubs.index.RustGotoClassIndex
-import org.rust.lang.core.stubs.index.RustModulesIndex
-import org.rust.lang.core.stubs.index.RustNamedElementIndex
+import org.rust.lang.core.psi.impl.mixin.RsTypeAliasRole
+import org.rust.lang.core.resolve.indexes.RsImplIndex
+import org.rust.lang.core.stubs.index.RsGotoClassIndex
+import org.rust.lang.core.stubs.index.RsModulesIndex
+import org.rust.lang.core.stubs.index.RsNamedElementIndex
 
-fun IndexSink.indexExternCrate(stub: RustExternCrateItemElementStub) {
+fun IndexSink.indexExternCrate(stub: RsExternCrateItemStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexStructItem(stub: RustStructItemElementStub) {
-    indexNamedStub(stub)
-    indexGotoClass(stub)
-}
-
-fun IndexSink.indexEnumItem(stub: RustEnumItemElementStub) {
+fun IndexSink.indexStructItem(stub: RsStructItemStub) {
     indexNamedStub(stub)
     indexGotoClass(stub)
 }
 
-fun IndexSink.indexModDeclItem(stub: RustModDeclItemElementStub) {
+fun IndexSink.indexEnumItem(stub: RsEnumItemStub) {
+    indexNamedStub(stub)
+    indexGotoClass(stub)
+}
+
+fun IndexSink.indexModDeclItem(stub: RsModDeclItemStub) {
     indexNamedStub(stub)
     val pathKey = stub.pathAttribute?.let { FileUtil.getNameWithoutExtension(PathUtil.getFileName(it)) }
         ?: stub.name
 
     if (pathKey != null) {
-        occurrence(RustModulesIndex.KEY, pathKey)
+        occurrence(RsModulesIndex.KEY, pathKey)
     }
 }
 
-fun IndexSink.indexModItem(stub: RustModItemElementStub) {
+fun IndexSink.indexModItem(stub: RsModItemStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexTraitItem(stub: RustTraitItemElementStub) {
+fun IndexSink.indexTraitItem(stub: RsTraitItemStub) {
     indexNamedStub(stub)
     indexGotoClass(stub)
 }
 
-fun IndexSink.indexImplItem(stub: RustImplItemElementStub) {
-    RustImplIndex.ByType.index(stub, this)
-    RustImplIndex.ByName.index(stub, this)
+fun IndexSink.indexImplItem(stub: RsImplItemStub) {
+    RsImplIndex.TraitImpls.index(stub, this)
+    RsImplIndex.InherentImpls.index(stub, this)
 }
 
-fun IndexSink.indexFunction(stub: RustFunctionElementStub) {
+fun IndexSink.indexFunction(stub: RsFunctionStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexConstant(stub: RustConstantElementStub) {
+fun IndexSink.indexConstant(stub: RsConstantStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexTypeAlias(stub: RustTypeAliasElementStub) {
+fun IndexSink.indexTypeAlias(stub: RsTypeAliasStub) {
     indexNamedStub(stub)
-    if (stub.role != RustTypeAliasRole.IMPL_ASSOC_TYPE) {
+    if (stub.role != RsTypeAliasRole.IMPL_ASSOC_TYPE) {
         indexGotoClass(stub)
     }
 }
 
-fun IndexSink.indexFieldDecl(stub: RustFieldDeclElementStub) {
+fun IndexSink.indexFieldDecl(stub: RsFieldDeclStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexAlias(stub: RustAliasElementStub) {
+private fun IndexSink.indexNamedStub(stub: RsNamedStub) {
     stub.name?.let {
-        occurrence(RustAliasIndex.KEY, it)
+        occurrence(RsNamedElementIndex.KEY, it)
     }
 }
 
-private fun IndexSink.indexNamedStub(stub: RustNamedStub) {
+private fun IndexSink.indexGotoClass(stub: RsNamedStub) {
     stub.name?.let {
-        occurrence(RustNamedElementIndex.KEY, it)
-    }
-}
-
-private fun IndexSink.indexGotoClass(stub: RustNamedStub) {
-    stub.name?.let {
-        occurrence(RustGotoClassIndex.KEY, it)
+        occurrence(RsGotoClassIndex.KEY, it)
     }
 }

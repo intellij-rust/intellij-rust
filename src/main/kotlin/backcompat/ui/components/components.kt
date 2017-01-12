@@ -43,83 +43,81 @@ import javax.swing.text.Segment
 private val HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>")
 
 private val LINK_TEXT_ATTRIBUTES: SimpleTextAttributes
-  get() = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UI.getColor("link.foreground"))
+    get() = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UI.getColor("link.foreground"))
 
 fun Label(text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false): JLabel {
-  val finalText = BundleBase.replaceMnemonicAmpersand(text)
-  val label: JLabel
-  if (fontColor == null) {
-    label = if (finalText.contains('\n')) MultiLineLabel(finalText) else JLabel(finalText)
-    style?.let { UIUtil.applyStyle(it, label) }
-  }
-  else {
-    label = JBLabel(finalText, style ?: UIUtil.ComponentStyle.REGULAR, fontColor)
-  }
+    val finalText = BundleBase.replaceMnemonicAmpersand(text)
+    val label: JLabel
+    if (fontColor == null) {
+        label = if (finalText.contains('\n')) MultiLineLabel(finalText) else JLabel(finalText)
+        style?.let { UIUtil.applyStyle(it, label) }
+    } else {
+        label = JBLabel(finalText, style ?: UIUtil.ComponentStyle.REGULAR, fontColor)
+    }
 
-  if (bold) {
-    label.font = label.font.deriveFont(Font.BOLD)
-  }
+    if (bold) {
+        label.font = label.font.deriveFont(Font.BOLD)
+    }
 
-  return label
+    return label
 }
 
 fun noteComponent(note: String): JComponent {
-  val matcher = HREF_PATTERN.matcher(note)
-  if (!matcher.find()) {
-    return Label(note)
-  }
-
-  val noteComponent = SimpleColoredComponent()
-  var prev = 0
-  do {
-    if (matcher.start() != prev) {
-      noteComponent.append(note.substring(prev, matcher.start()))
+    val matcher = HREF_PATTERN.matcher(note)
+    if (!matcher.find()) {
+        return Label(note)
     }
-    noteComponent.append(matcher.group(2), LINK_TEXT_ATTRIBUTES, SimpleColoredComponent.BrowserLauncherTag(matcher.group(1)))
-    prev = matcher.end()
-  }
-  while (matcher.find())
 
-  LinkMouseListenerBase.installSingleTagOn(noteComponent)
+    val noteComponent = SimpleColoredComponent()
+    var prev = 0
+    do {
+        if (matcher.start() != prev) {
+            noteComponent.append(note.substring(prev, matcher.start()))
+        }
+        noteComponent.append(matcher.group(2), LINK_TEXT_ATTRIBUTES, SimpleColoredComponent.BrowserLauncherTag(matcher.group(1)))
+        prev = matcher.end()
+    } while (matcher.find())
 
-  if (prev < note.length) {
-    noteComponent.append(note.substring(prev))
-  }
+    LinkMouseListenerBase.installSingleTagOn(noteComponent)
 
-  return noteComponent
+    if (prev < note.length) {
+        noteComponent.append(note.substring(prev))
+    }
+
+    return noteComponent
 }
 
 @JvmOverloads
 fun htmlComponent(text: String = "", font: Font = UIUtil.getLabelFont(), background: Color? = null, foreground: Color? = null, lineWrap: Boolean = false): JEditorPane {
-  val pane = SwingHelper.createHtmlViewer(lineWrap, font, background, foreground)
-  if (!text.isNullOrEmpty()) {
-    pane.text = "<html><head>${UIUtil.getCssFontDeclaration(font, UIUtil.getLabelForeground(), null, null)}</head><body>$text</body></html>"
-  }
-  pane.border = null
-  pane.disabledTextColor = UIUtil.getLabelDisabledForeground()
-  pane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
-  return pane
+    val pane = SwingHelper.createHtmlViewer(lineWrap, font, background, foreground)
+    if (!text.isNullOrEmpty()) {
+        pane.text = "<html><head>${UIUtil.getCssFontDeclaration(font, UIUtil.getLabelForeground(), null, null)}</head><body>$text</body></html>"
+    }
+    pane.border = null
+    pane.disabledTextColor = UIUtil.getLabelDisabledForeground()
+    pane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+    return pane
 }
 
 fun RadioButton(text: String) = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))
 
 fun CheckBox(text: String, selected: Boolean = false, toolTip: String? = null): JCheckBox {
-  val component = JCheckBox(BundleBase.replaceMnemonicAmpersand(text), selected)
-  toolTip?.let { component.toolTipText = it }
-  return component
+    val component = JCheckBox(BundleBase.replaceMnemonicAmpersand(text), selected)
+    toolTip?.let { component.toolTipText = it }
+    return component
 }
 
 @JvmOverloads
 fun Panel(title: String? = null, layout: LayoutManager2? = BorderLayout()): JPanel {
-  val panel = JPanel(layout)
-  title?.let { setTitledBorder(it, panel) }
-  return panel
+    val panel = JPanel(layout)
+    title?.let { setTitledBorder(it, panel) }
+    return panel
 }
 
 private fun setTitledBorder(title: String, panel: JPanel) {
-  val border = IdeBorderFactory.createTitledBorder(title, false)
-  panel.border = border
-  border.acceptMinimumSize(panel)
+    val border = IdeBorderFactory.createTitledBorder(title, false)
+    panel.border = border
+    border.acceptMinimumSize(panel)
 }
 
 @JvmOverloads
@@ -130,18 +128,17 @@ fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
                                                           fileChooserDescriptor: FileChooserDescriptor,
                                                           textComponentAccessor: TextComponentAccessor<T>,
                                                           fileChoosen: ((chosenFile: VirtualFile) -> String)? = null) {
-  component.addActionListener(
-      object : BrowseFolderActionListener<T>(browseDialogTitle, null, component, project, fileChooserDescriptor, textComponentAccessor) {
-        override fun onFileChosen(chosenFile: VirtualFile) {
-          if (fileChoosen == null) {
-            super.onFileChosen(chosenFile)
-          }
-          else {
-            textComponentAccessor.setText(myTextComponent.childComponent, fileChoosen(chosenFile))
-          }
-        }
-      })
-  FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true, project)
+    component.addActionListener(
+        object : BrowseFolderActionListener<T>(browseDialogTitle, null, component, project, fileChooserDescriptor, textComponentAccessor) {
+            override fun onFileChosen(chosenFile: VirtualFile) {
+                if (fileChoosen == null) {
+                    super.onFileChosen(chosenFile)
+                } else {
+                    textComponentAccessor.setText(myTextComponent.childComponent, fileChoosen(chosenFile))
+                }
+            }
+        })
+    FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true, project)
 }
 
 @JvmOverloads
@@ -150,38 +147,37 @@ fun textFieldWithHistoryWithBrowseButton(project: Project?,
                                          fileChooserDescriptor: FileChooserDescriptor,
                                          historyProvider: (() -> List<String>)? = null,
                                          fileChoosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithHistoryWithBrowseButton {
-  val component = TextFieldWithHistoryWithBrowseButton()
-  val textFieldWithHistory = component.childComponent
-  textFieldWithHistory.setHistorySize(-1)
-  textFieldWithHistory.setMinimumAndPreferredWidth(0)
-  if (historyProvider != null) {
-    addHistoryOnExpansion(textFieldWithHistory, historyProvider)
-  }
-  installFileCompletionAndBrowseDialog(
-      project,
-      component,
-      component.childComponent.textEditor,
-      browseDialogTitle,
-      fileChooserDescriptor,
-      TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
-      fileChoosen = fileChoosen
-  )
-  return component
+    val component = TextFieldWithHistoryWithBrowseButton()
+    val textFieldWithHistory = component.childComponent
+    textFieldWithHistory.setHistorySize(-1)
+    textFieldWithHistory.setMinimumAndPreferredWidth(0)
+    if (historyProvider != null) {
+        addHistoryOnExpansion(textFieldWithHistory, historyProvider)
+    }
+    installFileCompletionAndBrowseDialog(
+        project,
+        component,
+        component.childComponent.textEditor,
+        browseDialogTitle,
+        fileChooserDescriptor,
+        TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
+        fileChoosen = fileChoosen
+    )
+    return component
 }
 
 val JPasswordField.chars: CharSequence?
-  get() {
-    val doc = document
-    if (doc.length == 0) {
-      return ""
-    }
+    get() {
+        val doc = document
+        if (doc.length == 0) {
+            return ""
+        }
 
-    val segment = Segment()
-    try {
-      doc.getText(0, doc.length, segment)
+        val segment = Segment()
+        try {
+            doc.getText(0, doc.length, segment)
+        } catch (e: BadLocationException) {
+            return null
+        }
+        return segment
     }
-    catch (e: BadLocationException) {
-      return null
-    }
-    return segment
-  }

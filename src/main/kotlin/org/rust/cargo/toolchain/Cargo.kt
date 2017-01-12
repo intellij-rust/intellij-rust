@@ -51,7 +51,6 @@ class Cargo(
         val rawData = parse(output.stdout)
         val projectDescriptionData = CargoMetadata.clean(rawData)
         return CargoProjectDescription.deserialize(projectDescriptionData)
-            ?: throw ExecutionException("Failed to understand cargo output:\n${output.stdout}\n${output.stderr}")
     }
 
     @Throws(ExecutionException::class)

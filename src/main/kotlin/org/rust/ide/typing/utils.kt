@@ -4,8 +4,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.psi.tree.IElementType
 import com.intellij.util.text.CharSequenceSubSequence
-import org.rust.lang.core.psi.RustLiteral
-import org.rust.lang.core.psi.RustLiteralTokenType
+import org.rust.lang.core.psi.RsLiteral
+import org.rust.lang.core.psi.RsLiteralTokenType
 
 fun isValidOffset(offset: Int, text: CharSequence): Boolean =
     0 <= offset && offset <= text.length
@@ -32,11 +32,11 @@ fun getSiblingTokens(iterator: HighlighterIterator): Pair<IElementType?, IElemen
 }
 
 /**
- * Creates virtual [RustLiteral] PSI element assuming that it is represented as
+ * Creates virtual [RsLiteral] PSI element assuming that it is represented as
  * single, contiguous token in highlighter, in other words - it doesn't contain
  * any escape sequences etc. (hence 'dumb').
  */
-fun getLiteralDumb(iterator: HighlighterIterator): RustLiteral? {
+fun getLiteralDumb(iterator: HighlighterIterator): RsLiteral? {
     val start = iterator.start
     val end = iterator.end
 
@@ -44,8 +44,8 @@ fun getLiteralDumb(iterator: HighlighterIterator): RustLiteral? {
     val text = document.charsSequence
     val literalText = CharSequenceSubSequence(text, start, end)
 
-    val elementType = iterator.tokenType as? RustLiteralTokenType ?: return null
-    return elementType.createLeafNode(literalText) as RustLiteral
+    val elementType = iterator.tokenType as? RsLiteralTokenType ?: return null
+    return elementType.createLeafNode(literalText) as RsLiteral
 }
 
 fun Document.deleteChar(offset: Int) {

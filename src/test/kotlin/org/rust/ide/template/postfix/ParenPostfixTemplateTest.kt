@@ -1,6 +1,6 @@
 package org.rust.ide.template.postfix
 
-class ParenPostfixTemplateTest : PostfixTemplateTestCase(ParenPostfixTemplate()) {
+class ParenPostfixTemplateTest : PostfixTemplateTest(ParenPostfixTemplate()) {
     fun testNotApplicable() = doTestNotApplicable(
         """
         fn main() {
@@ -14,12 +14,10 @@ class ParenPostfixTemplateTest : PostfixTemplateTestCase(ParenPostfixTemplate())
             fn foo() {
                 4.par/*caret*/;
             }
-            """
-        ,
-        """
+        """, """
             fn foo() {
                 (4)/*caret*/;
             }
-            """
+        """
     )
 }

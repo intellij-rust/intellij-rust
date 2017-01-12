@@ -1,9 +1,8 @@
 package org.rust.lang.core.types
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.RustFunctionElement
-import org.rust.lang.core.psi.RustTraitItemElement
-import org.rust.lang.core.types.visitors.RustTypeVisitor
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsTraitItem
 
 
 /**
@@ -11,15 +10,13 @@ import org.rust.lang.core.types.visitors.RustTypeVisitor
  * Though you use the same path to denote both traits and trait objects,
  * only the latter are types.
  */
-class RustTraitType(val trait: RustTraitItemElement) : RustTypeBase() {
+data class RustTraitType(val trait: RsTraitItem) : RustType {
 
-    override fun getTraitsImplementedIn(project: Project): Sequence<RustTraitItemElement> =
+    override fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
         sequenceOf(trait)
 
-    override fun getNonStaticMethodsIn(project: Project): Sequence<RustFunctionElement> =
+    override fun getNonStaticMethodsIn(project: Project): Sequence<RsFunction> =
         getTraitsImplementedIn(project).flatMap { it.functionList.asSequence() }
-
-    override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitTrait(this)
 
     override fun toString(): String = trait.name ?: "<anonymous>"
 }

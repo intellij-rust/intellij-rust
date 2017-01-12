@@ -1,6 +1,6 @@
 package org.rust.ide.intentions
 
-class DemorgansLawIntentionTest : RustIntentionTestBase(DemorgansLawIntention()) {
+class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention()) {
 
     fun testOr() = doAvailableTest("""
         fn main() {

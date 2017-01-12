@@ -1,6 +1,6 @@
 package org.rust.ide.intentions
 
-class ImplementStructIntentionTest : RustIntentionTestBase(ImplementStructIntention()) {
+class ImplementStructIntentionTest : RsIntentionTestBase(ImplementStructIntention()) {
     fun testImplementStruct() = doAvailableTest(
         """
 struct Hey/*caret*/ {

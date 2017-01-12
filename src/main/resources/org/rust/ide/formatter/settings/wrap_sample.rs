@@ -1,4 +1,5 @@
-#[macro_use] extern crate foo;
+#[macro_use]
+extern crate foo;
 
 enum Foo<T: A + B + 'c,
     K: X + Y + 'z> {
@@ -11,8 +12,8 @@ fn foo(a: i32,
        b: i32,
        c: i32)
        -> i32
-       where T: 'static,
-             K: 'a {
+    where T: 'static,
+          K: 'a {
     let foo: (i32,
               i32,
               i32) = ();
@@ -34,5 +35,8 @@ fn main() {
             .bar().baz())
         .baz().moo();
 
-    let x = match func() { Ok(v) => v.unwrap_or(0), Err(_) => ()};
+    let x = match func() {
+        Ok(v) => v.unwrap_or(0),
+        Err(_) => ()
+    };
 }

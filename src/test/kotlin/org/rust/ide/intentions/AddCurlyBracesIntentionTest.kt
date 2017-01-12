@@ -1,6 +1,6 @@
 package org.rust.ide.intentions
 
-class AddCurlyBracesIntentionTest : RustIntentionTestBase(AddCurlyBracesIntention()) {
+class AddCurlyBracesIntentionTest : RsIntentionTestBase(AddCurlyBracesIntention()) {
 
     fun testAddCurlyBracesSimple() = doAvailableTest(
         "use std::m/*caret*/em;",

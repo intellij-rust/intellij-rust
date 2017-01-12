@@ -54,7 +54,7 @@ with [up-for-grab].
 [travis-build-status]: https://travis-ci.org/intellij-rust/intellij-rust
 [travis-build-status-svg]: https://img.shields.io/travis/intellij-rust/intellij-rust.svg?style=flat-square
 
-[appveyor-build-status]: https://ci.appveyor.com/project/matklad/intellij-rust
+[appveyor-build-status]: https://ci.appveyor.com/project/matklad/intellij-rust/branch/master
 [appveyor-build-status-svg]: https://img.shields.io/appveyor/ci/matklad/intellij-rust.svg?style=flat-square
 
 [teamcity-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust&guest=1

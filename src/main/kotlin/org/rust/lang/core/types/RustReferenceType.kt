@@ -1,16 +1,12 @@
 package org.rust.lang.core.types
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.RustFunctionElement
-import org.rust.lang.core.types.util.stripAllRefsIfAny
-import org.rust.lang.core.types.visitors.RustTypeVisitor
+import org.rust.lang.core.psi.RsFunction
 
-class RustReferenceType(val referenced: RustType, val mutable: Boolean = false) : RustTypeBase() {
+data class RustReferenceType(val referenced: RustType, val mutable: Boolean = false) : RustType {
 
-    override fun getNonStaticMethodsIn(project: Project): Sequence<RustFunctionElement> =
+    override fun getNonStaticMethodsIn(project: Project): Sequence<RsFunction> =
         super.getNonStaticMethodsIn(project) + stripAllRefsIfAny().getNonStaticMethodsIn(project)
-
-    override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitReference(this)
 
     override fun toString(): String = "${if (mutable) "&mut" else "&"} $referenced"
 }

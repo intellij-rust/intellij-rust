@@ -6,7 +6,7 @@ import junit.framework.TestCase
  * Base class for naming notations tests.
  */
 abstract class NamingNotationTest : TestCase() {
-    protected abstract val inspection: RustNamingInspection
+    protected abstract val inspection: RsNamingInspection
 
     /**
      * Checks that the given name is acceptable in the notation.
@@ -33,8 +33,8 @@ abstract class NamingNotationTest : TestCase() {
 /**
  * CamelCase notation tests.
  */
-class CamelCaseNotationTest: NamingNotationTest() {
-    override val inspection = RustCamelCaseNamingInspection("Camel")
+class CamelCaseNotationTest : NamingNotationTest() {
+    override val inspection = RsCamelCaseNamingInspection("Camel")
 
     fun testAcceptable() {
         testOk("_0")
@@ -71,8 +71,8 @@ class CamelCaseNotationTest: NamingNotationTest() {
 /**
  * snake_case notation tests.
  */
-class SnakeCaseNotationTest: NamingNotationTest() {
-    override val inspection = RustSnakeCaseNamingInspection("Snake")
+class SnakeCaseNotationTest : NamingNotationTest() {
+    override val inspection = RsSnakeCaseNamingInspection("Snake")
 
     fun testAcceptable() {
         testOk("_0")
@@ -115,8 +115,8 @@ class SnakeCaseNotationTest: NamingNotationTest() {
 /**
  * UPPER_CASE notation tests.
  */
-class UpperCaseNotationTest: NamingNotationTest() {
-    override val inspection = RustUpperCaseNamingInspection("Upper")
+class UpperCaseNotationTest : NamingNotationTest() {
+    override val inspection = RsUpperCaseNamingInspection("Upper")
 
     fun testAcceptable() {
         testOk("_0")

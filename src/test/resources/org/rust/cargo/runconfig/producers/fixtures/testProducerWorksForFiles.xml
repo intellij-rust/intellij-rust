@@ -1,6 +1,6 @@
 <configurations>
   <configuration name="Test foo" class="CargoCommandConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
-    <option name="additionalArguments" value="--test foo " />
+    <option name="additionalArguments" value="--package test-package --test foo " />
     <option name="command" value="test" />
     <option name="environmentVariables">
       <map />

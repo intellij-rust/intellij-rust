@@ -1,6 +1,6 @@
 package org.rust.ide.template.postfix
 
-class MatchPostfixTemplateTest : PostfixTemplateTestCase(MatchPostfixTemplate()) {
+class MatchPostfixTemplateTest : PostfixTemplateTest(MatchPostfixTemplate()) {
     fun testTypename() = doTestNotApplicable(
         """
             enum Message {

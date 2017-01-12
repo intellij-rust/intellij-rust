@@ -10,24 +10,24 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
-import org.rust.ide.icons.RustIcons
-import org.rust.lang.RustLanguage
-import org.rust.lang.core.RustPsiPattern.onAnyItem
-import org.rust.lang.core.RustPsiPattern.onCrate
-import org.rust.lang.core.RustPsiPattern.onDropFn
-import org.rust.lang.core.RustPsiPattern.onEnum
-import org.rust.lang.core.RustPsiPattern.onExternBlock
-import org.rust.lang.core.RustPsiPattern.onExternBlockDecl
-import org.rust.lang.core.RustPsiPattern.onExternCrate
-import org.rust.lang.core.RustPsiPattern.onFn
-import org.rust.lang.core.RustPsiPattern.onMacro
-import org.rust.lang.core.RustPsiPattern.onMod
-import org.rust.lang.core.RustPsiPattern.onStatic
-import org.rust.lang.core.RustPsiPattern.onStaticMut
-import org.rust.lang.core.RustPsiPattern.onStruct
-import org.rust.lang.core.RustPsiPattern.onTestFn
-import org.rust.lang.core.RustPsiPattern.onTrait
-import org.rust.lang.core.RustPsiPattern.onTupleStruct
+import org.rust.ide.icons.RsIcons
+import org.rust.lang.RsLanguage
+import org.rust.lang.core.RsPsiPattern.onAnyItem
+import org.rust.lang.core.RsPsiPattern.onCrate
+import org.rust.lang.core.RsPsiPattern.onDropFn
+import org.rust.lang.core.RsPsiPattern.onEnum
+import org.rust.lang.core.RsPsiPattern.onExternBlock
+import org.rust.lang.core.RsPsiPattern.onExternBlockDecl
+import org.rust.lang.core.RsPsiPattern.onExternCrate
+import org.rust.lang.core.RsPsiPattern.onFn
+import org.rust.lang.core.RsPsiPattern.onMacro
+import org.rust.lang.core.RsPsiPattern.onMod
+import org.rust.lang.core.RsPsiPattern.onStatic
+import org.rust.lang.core.RsPsiPattern.onStaticMut
+import org.rust.lang.core.RsPsiPattern.onStruct
+import org.rust.lang.core.RsPsiPattern.onTestFn
+import org.rust.lang.core.RsPsiPattern.onTrait
+import org.rust.lang.core.RsPsiPattern.onTupleStruct
 import org.rust.lang.core.psi.*
 
 object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() {
@@ -66,11 +66,11 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
     }
 
     val elementPattern: ElementPattern<PsiElement> get() {
-        val outerAttrElem = psiElement<RustOuterAttrElement>()
-        val innerAttrElem = psiElement<RustInnerAttrElement>()
-        val metaItemElem = psiElement<RustMetaItemElement>()
+        val outerAttrElem = psiElement<RsOuterAttr>()
+        val innerAttrElem = psiElement<RsInnerAttr>()
+        val metaItemElem = psiElement<RsMetaItem>()
             .and(PlatformPatterns.psiElement().withParent(outerAttrElem) or PlatformPatterns.psiElement().withParent(innerAttrElem))
-        return PlatformPatterns.psiElement().withParent(metaItemElem).withLanguage(RustLanguage)
+        return PlatformPatterns.psiElement().withParent(metaItemElem).withLanguage(RsLanguage)
     }
 
     private fun createLookupElement(name: String): LookupElement =
@@ -83,10 +83,10 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
         } else {
             LookupElementBuilder.create(name)
         }
-            .withIcon(RustIcons.ATTRIBUTE)
+            .withIcon(RsIcons.ATTRIBUTE)
 
     private val PsiElement?.attrMetaItems: Sequence<String>
-        get() = if (this is RustDocAndAttributeOwner)
+        get() = if (this is RsDocAndAttributeOwner)
             queryAttributes.metaItems.map { it.identifier.text }
         else
             emptySequence()

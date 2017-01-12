@@ -3,45 +3,39 @@ package org.rust.lang.core.types.visitors.impl
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.asRustPath
-import org.rust.lang.core.psi.impl.mixin.parentEnum
-import org.rust.lang.core.psi.impl.mixin.selfParameter
-import org.rust.lang.core.psi.impl.mixin.valueParameters
+import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
+import org.rust.lang.core.resolve.Namespace
+import org.rust.lang.core.resolve.ResolveEngine
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.*
-import org.rust.lang.core.types.unresolved.RustUnresolvedPathType
-import org.rust.lang.core.types.unresolved.RustUnresolvedReferenceType
-import org.rust.lang.core.types.unresolved.RustUnresolvedTupleType
-import org.rust.lang.core.types.unresolved.RustUnresolvedType
 import org.rust.lang.core.types.util.resolvedType
-import org.rust.lang.core.types.util.type
 
 object RustTypificationEngine {
 
-    fun typifyType(type: RustTypeElement): RustUnresolvedType =
-        RustTypeTypificationVisitor().compute(type)
+    fun typifyType(type: RsType): RustType =
+        RustTypeTypificationVisitor(type).compute(type)
 
-    fun typifyExpr(expr: RustExprElement): RustType =
+    fun typifyExpr(expr: RsExpr): RustType =
         RustExprTypificationVisitor().compute(expr)
 
-    fun typifyItem(item: RustItemElement): RustType =
+    fun typifyItem(item: RsItemElement): RustType =
         RustItemTypificationVisitor().compute(item)
 
-    fun typify(named: RustNamedElement): RustType {
+    fun typify(named: RsNamedElement): RustType {
         return when (named) {
-            is RustItemElement -> typifyItem(named)
+            is RsItemElement -> typifyItem(named)
 
-            is RustSelfParameterElement -> deviseSelfType(named)
+            is RsSelfParameter -> deviseSelfType(named)
 
-            is RustPatBindingElement -> deviseBoundPatType(named)
+            is RsPatBinding -> deviseBoundPatType(named)
 
-            is RustEnumVariantElement -> deviseEnumType(named)
+            is RsEnumVariant -> deviseEnumType(named)
 
-            is RustFunctionElement -> deviseFunctionType(named)
+            is RsFunction -> deviseFunctionType(named)
 
-            is RustTypeParameterElement -> RustTypeParameterType(named)
+            is RsTypeParameter -> RustTypeParameterType(named)
 
             else -> RustUnknownType
         }
@@ -50,12 +44,12 @@ object RustTypificationEngine {
 
 private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
 
-    override fun visitExpr(o: RustExprElement) = set {
+    override fun visitExpr(o: RsExpr) = set {
         // Default until we handle all the cases explicitly
         RustUnknownType
     }
 
-    override fun visitUnaryExpr(o: RustUnaryExprElement) = set {
+    override fun visitUnaryExpr(o: RsUnaryExpr) = set {
         if (o.box != null)
             RustUnknownType
         else
@@ -64,33 +58,33 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
             } ?: RustUnknownType
     }
 
-    override fun visitPathExpr(o: RustPathExprElement) = set {
-        val resolve = o.path.reference.resolve() as? RustNamedElement
+    override fun visitPathExpr(o: RsPathExpr) = set {
+        val resolve = o.path.reference.resolve() as? RsNamedElement
         resolve?.let { RustTypificationEngine.typify(it) } ?: RustUnknownType
     }
 
-    override fun visitStructExpr(o: RustStructExprElement) = set {
+    override fun visitStructExpr(o: RsStructExpr) = set {
         val base = o.path.reference.resolve()
         when (base) {
-            is RustStructItemElement -> base.resolvedType
-            is RustEnumVariantElement -> base.parentEnum.resolvedType
+            is RsStructItem -> base.resolvedType
+            is RsEnumVariant -> base.parentEnum.resolvedType
             else -> RustUnknownType
         }
     }
 
-    override fun visitTupleExpr(o: RustTupleExprElement) = set {
+    override fun visitTupleExpr(o: RsTupleExpr) = set {
         RustTupleType(o.exprList.map { RustTypificationEngine.typifyExpr(it) })
     }
 
-    override fun visitUnitExpr(o: RustUnitExprElement) = set {
+    override fun visitUnitExpr(o: RsUnitExpr) = set {
         RustUnitType
     }
 
-    override fun visitCallExpr(o: RustCallExprElement) = set {
+    override fun visitCallExpr(o: RsCallExpr) = set {
         val fn = o.expr
-        if (fn is RustPathExprElement) {
+        if (fn is RsPathExpr) {
             val variant = fn.path.reference.resolve()
-            if (variant is RustEnumVariantElement) {
+            if (variant is RsEnumVariant) {
                 return@set variant.parentEnum.resolvedType
             }
         }
@@ -99,27 +93,27 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
         (calleeType as? RustFunctionType)?.retType ?: RustUnknownType
     }
 
-    override fun visitMethodCallExpr(o: RustMethodCallExprElement) = set {
-        val method = o.reference.resolve() as? RustFunctionElement
+    override fun visitMethodCallExpr(o: RsMethodCallExpr) = set {
+        val method = o.reference.resolve() as? RsFunction
             ?: return@set RustUnknownType
 
-        val impl = method.parentOfType<RustImplItemElement>()
+        val impl = method.parentOfType<RsImplItem>()
         val typeParameterMap = impl?.remapTypeParameters(o.expr.resolvedType.typeParameterValues).orEmpty()
 
         deviseFunctionType(method).retType.substitute(typeParameterMap)
     }
 
-    override fun visitFieldExpr(o: RustFieldExprElement) = set {
+    override fun visitFieldExpr(o: RsFieldExpr) = set {
         val field = o.reference.resolve()
         val raw = when (field) {
-            is RustFieldDeclElement -> field.type?.resolvedType
-            is RustTupleFieldDeclElement -> field.type.resolvedType
+            is RsFieldDecl -> field.type?.resolvedType
+            is RsTupleFieldDecl -> field.type.resolvedType
             else -> null
         } ?: RustUnknownType
         raw.substitute(o.expr.resolvedType.typeParameterValues)
     }
 
-    override fun visitLitExpr(o: RustLitExprElement) = set {
+    override fun visitLitExpr(o: RsLitExpr) = set {
         when {
             o.integerLiteral != null -> RustIntegerType.fromLiteral(o.integerLiteral!!)
             o.floatLiteral != null -> RustFloatType.fromLiteral(o.floatLiteral!!)
@@ -132,39 +126,39 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
         }
     }
 
-    override fun visitBlockExpr(o: RustBlockExprElement) = set {
+    override fun visitBlockExpr(o: RsBlockExpr) = set {
         o.block?.resolvedType ?: RustUnknownType
     }
 
-    override fun visitIfExpr(o: RustIfExprElement) = set {
+    override fun visitIfExpr(o: RsIfExpr) = set {
         if (o.elseBranch == null)
             RustUnitType
         else
             o.block?.resolvedType ?: RustUnknownType
     }
 
-    override fun visitWhileExpr(o: RustWhileExprElement) = set { RustUnitType }
-    override fun visitLoopExpr(o: RustLoopExprElement) = set { RustUnitType }
-    override fun visitForExpr(o: RustForExprElement) = set { RustUnitType }
+    override fun visitWhileExpr(o: RsWhileExpr) = set { RustUnitType }
+    override fun visitLoopExpr(o: RsLoopExpr) = set { RustUnitType }
+    override fun visitForExpr(o: RsForExpr) = set { RustUnitType }
 
-    override fun visitParenExpr(o: RustParenExprElement) = set { o.expr.resolvedType }
+    override fun visitParenExpr(o: RsParenExpr) = set { o.expr.resolvedType }
 
-    override fun visitBinaryExpr(o: RustBinaryExprElement) = set {
+    override fun visitBinaryExpr(o: RsBinaryExpr) = set {
         when (o.operatorType) {
-            RustTokenElementTypes.ANDAND,
-            RustTokenElementTypes.OROR,
-            RustTokenElementTypes.EQEQ,
-            RustTokenElementTypes.EXCLEQ,
-            RustTokenElementTypes.LT,
-            RustTokenElementTypes.GT,
-            RustTokenElementTypes.GTEQ,
-            RustTokenElementTypes.LTEQ -> RustBooleanType
+            RsTokenElementTypes.ANDAND,
+            RsTokenElementTypes.OROR,
+            RsTokenElementTypes.EQEQ,
+            RsTokenElementTypes.EXCLEQ,
+            RsTokenElementTypes.LT,
+            RsTokenElementTypes.GT,
+            RsTokenElementTypes.GTEQ,
+            RsTokenElementTypes.LTEQ -> RustBooleanType
 
             else -> RustUnknownType
         }
     }
 
-    override fun visitTryExpr(o: RustTryExprElement) = set {
+    override fun visitTryExpr(o: RsTryExpr) = set {
         val base = o.expr.resolvedType
         // This is super hackish. Need to figure out how to
         // identify known types (See also the CString inspection).
@@ -176,84 +170,89 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
             RustUnknownType
     }
 
-    private val RustBlockElement.resolvedType: RustType get() = expr?.resolvedType ?: RustUnitType
+    private val RsBlock.resolvedType: RustType get() = expr?.resolvedType ?: RustUnitType
 }
 
 private class RustItemTypificationVisitor : RustComputingVisitor<RustType>() {
 
     override fun visitElement(element: PsiElement) = set {
-        check(element is RustItemElement) {
+        check(element is RsItemElement) {
             "Panic! Should not be used with anything except the inheritors of `RustItemElement` hierarchy!"
         }
 
         RustUnknownType
     }
 
-    override fun visitStructItem(o: RustStructItemElement) = set {
+    override fun visitStructItem(o: RsStructItem) = set {
         RustStructType(o)
     }
 
-    override fun visitEnumItem(o: RustEnumItemElement) = set {
+    override fun visitEnumItem(o: RsEnumItem) = set {
         RustEnumType(o)
     }
 
-    override fun visitTypeAlias(o: RustTypeAliasElement) = set {
+    override fun visitTypeAlias(o: RsTypeAlias) = set {
         o.type?.resolvedType ?: RustUnknownType
     }
 
-    override fun visitFunction(o: RustFunctionElement) = set {
+    override fun visitFunction(o: RsFunction) = set {
         deviseFunctionType(o)
     }
 
-    override fun visitTraitItem(o: RustTraitItemElement) = set {
+    override fun visitTraitItem(o: RsTraitItem) = set {
         RustTraitType(o)
     }
 }
 
-private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedType>() {
+private class RustTypeTypificationVisitor(val pivot: RsType) : RustComputingVisitor<RustType>() {
 
-    override fun visitType(o: RustTypeElement) = set {
+    override fun visitType(o: RsType) = set {
         RustUnknownType
     }
 
-    override fun visitTupleType(o: RustTupleTypeElement) = set {
+    override fun visitTupleType(o: RsTupleType) = set {
         // Perhaps introduce tuple_type to PSI?
         if (o.typeList.size > 0)
-            RustUnresolvedTupleType(o.typeList.map { it.type })
+            RustTupleType(o.typeList.map { RustTypificationEngine.typifyType(it) })
         else
             RustUnitType
     }
 
-    override fun visitBaseType(o: RustBaseTypeElement) = set {
+    override fun visitBaseType(o: RsBaseType) = set {
         val path = o.path?.asRustPath ?: return@set RustUnknownType
         if (path is RustPath.Named && path.segments.isEmpty()) {
-            val primitiveType = RustPrimitiveTypeBase.fromTypeName(path.head.name)
+            val primitiveType = RustPrimitiveType.fromTypeName(path.head.name)
             if (primitiveType != null) return@set primitiveType
         }
-        RustUnresolvedPathType(path)
+        val target = ResolveEngine.resolve(path, pivot, Namespace.Types)
+            .filterIsInstance<RsNamedElement>()
+            .firstOrNull() ?: return@set RustUnknownType
+        val typeArguments = (path as? RustPath.Named)?.head?.typeArguments.orEmpty()
+        RustTypificationEngine.typify(target)
+            .withTypeArguments(typeArguments.map { it.resolvedType })
     }
 
-    override fun visitRefLikeType(o: RustRefLikeTypeElement) = set {
+    override fun visitRefLikeType(o: RsRefLikeType) = set {
         if (o.and == null) return@set RustUnknownType //FIXME: handle pointer types
         val base = o.type ?: return@set RustUnknownType
-        RustUnresolvedReferenceType(base.type, o.mut != null)
+        RustReferenceType(RustTypificationEngine.typifyType(base), o.mut != null)
     }
 }
 
 /**
  * NOTA BENE: That's far from complete
  */
-private fun deviseBoundPatType(binding: RustPatBindingElement): RustType {
+private fun deviseBoundPatType(binding: RsPatBinding): RustType {
     //TODO: probably want something more precise than `getTopmostParentOfType` here
-    val pattern = PsiTreeUtil.getTopmostParentOfType(binding, RustPatElement::class.java) ?: return RustUnknownType
+    val pattern = PsiTreeUtil.getTopmostParentOfType(binding, RsPat::class.java) ?: return RustUnknownType
     val parent = pattern.parent
     val type = when (parent) {
-        is RustLetDeclElement ->
+        is RsLetDecl ->
             // use type ascription, if present or fallback to the type of the initializer expression
             parent.type?.resolvedType ?: parent.expr?.resolvedType
 
-        is RustValueParameterElement -> parent.type?.resolvedType
-        is RustConditionElement -> parent.expr.resolvedType
+        is RsValueParameter -> parent.type?.resolvedType
+        is RsCondition -> parent.expr.resolvedType
         else -> null
     } ?: return RustUnknownType
 
@@ -263,27 +262,27 @@ private fun deviseBoundPatType(binding: RustPatBindingElement): RustType {
 /**
  * Devises type for the given (implicit) self-argument
  */
-private fun deviseSelfType(self: RustSelfParameterElement): RustType {
-    val impl = self.parentOfType<RustImplItemElement>()
+private fun deviseSelfType(self: RsSelfParameter): RustType {
+    val impl = self.parentOfType<RsImplItem>()
     var Self: RustType = if (impl != null) {
         impl.type?.resolvedType ?: return RustUnknownType
     } else {
-        val trait = self.parentOfType<RustTraitItemElement>()
+        val trait = self.parentOfType<RsTraitItem>()
             ?: return RustUnknownType
         RustTraitType(trait)
     }
 
-    if (self.and != null) {
-        Self = RustReferenceType(Self, mutable = self.mut != null)
+    if (self.isRef) {
+        Self = RustReferenceType(Self, mutable = self.isMut)
     }
 
     return Self
 }
 
-private fun deviseEnumType(variant: RustEnumVariantElement): RustType =
-    RustTypificationEngine.typifyItem((variant.parent as RustEnumBodyElement).parent as RustEnumItemElement)
+private fun deviseEnumType(variant: RsEnumVariant): RustType =
+    RustTypificationEngine.typifyItem((variant.parent as RsEnumBody).parent as RsEnumItem)
 
-private fun deviseFunctionType(fn: RustFunctionElement): RustFunctionType {
+private fun deviseFunctionType(fn: RsFunction): RustFunctionType {
     val paramTypes = mutableListOf<RustType>()
 
     val self = fn.selfParameter
@@ -305,7 +304,7 @@ private fun deviseFunctionType(fn: RustFunctionElement): RustFunctionType {
  * impl<X, Y> Flip<Y, X> { ... }
  * ```
  */
-private fun RustImplItemElement.remapTypeParameters(
+private fun RsImplItem.remapTypeParameters(
     map: Map<RustTypeParameterType, RustType>
 ): Map<RustTypeParameterType, RustType> =
     type?.resolvedType?.typeParameterValues.orEmpty()

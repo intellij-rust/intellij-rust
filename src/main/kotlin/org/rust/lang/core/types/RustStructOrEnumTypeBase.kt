@@ -1,11 +1,12 @@
 package org.rust.lang.core.types
 
-import org.rust.lang.core.psi.RustStructOrEnumItemElement
+import org.rust.lang.core.psi.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.typeParameters
 
-abstract class RustStructOrEnumTypeBase(val typeArguments: List<RustType>) : RustTypeBase() {
+interface RustStructOrEnumTypeBase : RustType {
+    val typeArguments: List<RustType>
 
-    abstract val item: RustStructOrEnumItemElement
+    val item: RsStructOrEnumItemElement
 
     override val typeParameterValues: Map<RustTypeParameterType, RustType>
         get() = item.typeParameters.zip(typeArguments)

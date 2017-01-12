@@ -4,7 +4,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
-import org.rust.lang.core.psi.RustExprElement
+import org.rust.lang.core.psi.RsExpr
 
 
 /**
@@ -14,7 +14,7 @@ import org.rust.lang.core.psi.RustExprElement
  * @param fixName A name to use for the fix instead of the default one to better fit the inspection.
  */
 class RemoveRefFix(
-    val argEl: RustExprElement,
+    val argEl: RsExpr,
     val fixName: String = "Change reference to owned value"
 ) : LocalQuickFix {
     override fun getName() = fixName

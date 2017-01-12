@@ -1,8 +1,8 @@
 package org.rust.ide.intentions
 
-import org.rust.lang.RustTestCaseBase
+import org.rust.lang.RsTestBase
 
-class ExtractInlineModuleIntentionTest : RustTestCaseBase() {
+class ExtractInlineModuleIntentionTest : RsTestBase() {
     override val dataPath = "org/rust/ide/intentions/fixtures/"
 
     fun testValidExtractInlineModule() = extractInlineModule()

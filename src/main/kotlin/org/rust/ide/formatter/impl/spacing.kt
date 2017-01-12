@@ -15,18 +15,18 @@ import com.intellij.psi.formatter.FormatterUtil
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
-import org.rust.ide.formatter.RustFmtContext
-import org.rust.ide.formatter.settings.RustCodeStyleSettings
+import org.rust.ide.formatter.RsFmtContext
+import org.rust.ide.formatter.settings.RsCodeStyleSettings
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RustCompositeElementTypes.*
-import org.rust.lang.core.psi.RustTokenElementTypes.*
+import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsTokenElementTypes.*
 import org.rust.lang.core.psi.util.containsEOL
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.getNextNonCommentSibling
 import org.rust.lang.core.psi.util.getPrevNonCommentSibling
 import com.intellij.psi.tree.TokenSet.create as ts
 
-fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: RustCodeStyleSettings): SpacingBuilder {
+fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: RsCodeStyleSettings): SpacingBuilder {
 
     // Use `sbX` temporaries to work around
     // https://youtrack.jetbrains.com/issue/KT-12239
@@ -136,44 +136,44 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         .applyForEach(BLOCK_LIKE) { before(it).spaces(1) }
 }
 
-fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RustFmtContext): Spacing? {
+fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RsFmtContext): Spacing? {
     if (child1 is ASTBlock && child2 is ASTBlock) SpacingContext.create(child1, child2, ctx).apply {
         when {
-            // #[attr]\n<comment>\n => #[attr] <comment>\n etc.
-            psi1 is RustOuterAttrElement && psi2 is PsiComment
+        // #[attr]\n<comment>\n => #[attr] <comment>\n etc.
+            psi1 is RsOuterAttr && psi2 is PsiComment
             -> return createSpacing(1, 1, 0, true, 0)
 
-            // Determine spacing between macro invocation and it's arguments
-            psi1 is RustMacroInvocationElement && psi2.elementType in MACRO_ARGS
+        // Determine spacing between macro invocation and it's arguments
+            psi1 is RsMacroInvocation && psi2.elementType in MACRO_ARGS
             -> return if (child2.node.firstChildNode.elementType == LBRACE) {
                 createSpacing(1, 1, 0, false, 0)
             } else {
                 createSpacing(0, 0, 0, false, 0)
             }
 
-            // Ensure that each attribute is in separate line; comment aware
-            psi1 is RustOuterAttrElement && (psi2 is RustOuterAttrElement || psi1.parent is RustItemElement)
-                || psi1 is PsiComment && (psi2 is RustOuterAttrElement || psi1.getPrevNonCommentSibling() is RustOuterAttrElement)
+        // Ensure that each attribute is in separate line; comment aware
+            psi1 is RsOuterAttr && (psi2 is RsOuterAttr || psi1.parent is RsItemElement)
+                || psi1 is PsiComment && (psi2 is RsOuterAttr || psi1.getPrevNonCommentSibling() is RsOuterAttr)
             -> return lineBreak(keepBlankLines = 0)
 
-            // { ... } => {\n ...\n }, see blockMustBeMultiLine docs for details
+        // { ... } => {\n ...\n }, see blockMustBeMultiLine docs for details
             blockMustBeMultiLine()
             -> return lineBreak(keepBlankLines = 0)
 
-            // Format blank lines between statements (or return expression)
-            ncPsi1 is RustStmtElement && ncPsi2.isStmtOrExpr
+        // Format blank lines between statements (or return expression)
+            ncPsi1 is RsStmt && ncPsi2.isStmtOrExpr
             -> return lineBreak(
                 keepLineBreaks = ctx.commonSettings.KEEP_LINE_BREAKS,
                 keepBlankLines = ctx.commonSettings.KEEP_BLANK_LINES_IN_CODE)
 
-            // Format blank lines between impl & trait members
-            (parentPsi is RustTraitItemElement || parentPsi is RustImplItemElement)
-                && ncPsi1 is RustNamedElement && ncPsi2 is RustNamedElement
+        // Format blank lines between impl & trait members
+            (parentPsi is RsTraitItem || parentPsi is RsImplItem)
+                && ncPsi1 is RsNamedElement && ncPsi2 is RsNamedElement
             -> return lineBreak(
                 keepLineBreaks = ctx.commonSettings.KEEP_LINE_BREAKS,
                 keepBlankLines = ctx.commonSettings.KEEP_BLANK_LINES_IN_DECLARATIONS)
 
-            // Format blank lines between top level items
+        // Format blank lines between top level items
             ncPsi1.isTopLevelItem && ncPsi2.isTopLevelItem
             -> return lineBreak(
                 minLineFeeds = 1 +
@@ -197,9 +197,9 @@ private data class SpacingContext(val node1: ASTNode,
                                   val parentPsi: PsiElement?,
                                   val ncPsi1: PsiElement,
                                   val ncPsi2: PsiElement,
-                                  val ctx: RustFmtContext) {
+                                  val ctx: RsFmtContext) {
     companion object {
-        fun create(child1: ASTBlock, child2: ASTBlock, ctx: RustFmtContext): SpacingContext {
+        fun create(child1: ASTBlock, child2: ASTBlock, ctx: RsFmtContext): SpacingContext {
             val node1 = child1.node
             val node2 = child2.node
             val psi1 = node1.psi
@@ -283,15 +283,15 @@ private fun SpacingContext.blockMustBeMultiLine(): Boolean {
     }
 
     return when (parentPsi) {
-        is RustBlockElement -> childrenCount != 0 && (childrenCount >= 2 || parentPsi.parent is RustItemElement) // 2
+        is RsBlock -> childrenCount != 0 && (childrenCount >= 2 || parentPsi.parent is RsItemElement) // 2
 
-        is RustBlockFieldsElement,
-        is RustEnumBodyElement,
-        is RustTraitItemElement,
-        is RustModItemElement,
-        is RustForeignModItemElement -> childrenCount != 0 // 3
+        is RsBlockFields,
+        is RsEnumBody,
+        is RsTraitItem,
+        is RsModItem,
+        is RsForeignModItem -> childrenCount != 0 // 3
 
-        is RustMatchBodyElement -> childrenCount != 0 && !ctx.rustSettings.ALLOW_ONE_LINE_MATCH
+        is RsMatchBody -> childrenCount != 0 && !ctx.rustSettings.ALLOW_ONE_LINE_MATCH
 
         else -> false
     }

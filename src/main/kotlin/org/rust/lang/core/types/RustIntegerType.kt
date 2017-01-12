@@ -1,10 +1,8 @@
 package org.rust.lang.core.types
 
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.types.visitors.RustTypeVisitor
-import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 
-class RustIntegerType(val kind: Kind) : RustPrimitiveTypeBase() {
+data class RustIntegerType(val kind: Kind) : RustPrimitiveType {
 
     companion object {
         fun fromLiteral(literal: PsiElement): RustIntegerType {
@@ -22,10 +20,6 @@ class RustIntegerType(val kind: Kind) : RustPrimitiveTypeBase() {
         u8, u16, u32, u64, u128, usize,
         i8, i16, i32, i64, i128, isize
     }
-
-    override fun <T> accept(visitor: RustUnresolvedTypeVisitor<T>): T = visitor.visitInteger(this)
-
-    override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitInteger(this)
 
     override fun toString(): String = kind.toString()
 

@@ -8,11 +8,11 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.tree.TokenSet.orSet
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RustCompositeElementTypes.*
-import org.rust.lang.core.psi.RustTokenElementTypes.*
+import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsTokenElementTypes.*
 import com.intellij.psi.tree.TokenSet.create as ts
 
-val KEYWORDS = ts(*IElementType.enumerate { it is RustKeywordTokenType })
+val KEYWORDS = ts(*IElementType.enumerate { it is RsKeywordTokenType })
 
 val NO_SPACE_AROUND_OPS = ts(COLONCOLON, DOT, DOTDOT)
 val SPACE_AROUND_OPS = TokenSet.andNot(ALL_OPS, NO_SPACE_AROUND_OPS)
@@ -49,10 +49,10 @@ val FN_DECLS = ts(FUNCTION, BARE_FN_TYPE, LAMBDA_EXPR)
 val ONE_LINE_ITEMS = ts(USE_ITEM, CONSTANT, MOD_DECL_ITEM, EXTERN_CRATE_ITEM, TYPE_ALIAS, INNER_ATTR)
 
 val PsiElement.isTopLevelItem: Boolean
-    get() = (this is RustItemElement || this is RustAttrElement) && parent is RustMod
+    get() = (this is RsItemElement || this is RsAttr) && parent is RsMod
 
 val PsiElement.isStmtOrExpr: Boolean
-    get() = this is RustStmtElement || this is RustExprElement
+    get() = this is RsStmt || this is RsExpr
 
 val PsiElement.isBlockDelim: Boolean
     get() = node.isBlockDelim

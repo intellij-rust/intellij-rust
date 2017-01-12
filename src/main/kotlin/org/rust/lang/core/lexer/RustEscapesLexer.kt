@@ -4,7 +4,7 @@ import com.intellij.openapi.util.text.StringUtil.isHexDigit
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
 import com.intellij.util.text.CharArrayUtil.indexOf
-import org.rust.lang.core.psi.RustTokenElementTypes.*
+import org.rust.lang.core.psi.RsTokenElementTypes.*
 
 private const val BYTE_ESCAPE_LENGTH = "\\x00".length
 private const val UNICODE_ESCAPE_MIN_LENGTH = "\\u{0}".length

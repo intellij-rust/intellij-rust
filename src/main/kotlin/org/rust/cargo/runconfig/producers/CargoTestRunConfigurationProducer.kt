@@ -9,7 +9,10 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.runconfig.CargoCommandRunConfigurationType
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsCompositeElement
+import org.rust.lang.core.psi.RsMod
+import org.rust.lang.core.psi.containingCargoTarget
 import org.rust.lang.core.psi.impl.mixin.isTest
 import org.rust.lang.core.psi.util.parentOfType
 
@@ -42,39 +45,29 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
     }
 
     private data class TestConfig(
-        val sourceElement: RustCompositeElement,
+        val sourceElement: RsCompositeElement,
         val configurationName: String,
         val testPath: String,
         val target: CargoProjectDescription.Target
     ) {
         val commandLineParameters: String get() {
-            val targetKind = when (target.kind) {
-                CargoProjectDescription.TargetKind.BIN -> "bin"
-                CargoProjectDescription.TargetKind.TEST -> "test"
-                CargoProjectDescription.TargetKind.EXAMPLE -> "example"
-                CargoProjectDescription.TargetKind.BENCH -> "bench"
-                CargoProjectDescription.TargetKind.LIB -> return "--lib $testPath"
-                CargoProjectDescription.TargetKind.UNKNOWN -> return testPath
-            }
-
-            return "--$targetKind ${target.name} $testPath"
+            return "${target.cargoArgumentSpeck} $testPath"
         }
     }
 
-    private fun findTest(location: Location<*>): TestConfig? = listOfNotNull(
-        findTestFunction(location),
-        findTestMod(location)
-    ).firstOrNull()
+    private fun findTest(location: Location<*>): TestConfig? =
+        findTestFunction(location)
+            ?: findTestMod(location)
 
     private fun findTestFunction(location: Location<*>): TestConfig? {
-        val fn = location.psiElement.parentOfType<RustFunctionElement>() ?: return null
+        val fn = location.psiElement.parentOfType<RsFunction>(strict = false) ?: return null
         val name = fn.name ?: return null
         val target = fn.containingCargoTarget ?: return null
         return if (fn.isTest) TestConfig(fn, "Test $name", name, target) else null
     }
 
     private fun findTestMod(location: Location<*>): TestConfig? {
-        val mod = location.psiElement.parentOfType<RustMod>(strict = false) ?: return null
+        val mod = location.psiElement.parentOfType<RsMod>(strict = false) ?: return null
         val testName = if (mod.modName == "test" || mod.modName == "tests")
             "Test ${mod.`super`?.modName}::${mod.modName}"
         else
@@ -84,6 +77,8 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         // always returns fully-qualified path
         val testPath = (mod.crateRelativePath ?: "").toString().removePrefix("::")
         val target = mod.containingCargoTarget ?: return null
-        return if (mod.functionList.any { it.isTest }) TestConfig(mod, testName, testPath, target) else null
+        if (!mod.functionList.any { it.isTest }) return null
+
+        return TestConfig(mod, testName, testPath, target)
     }
 }

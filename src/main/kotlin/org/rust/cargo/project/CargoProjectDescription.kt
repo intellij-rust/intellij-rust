@@ -48,6 +48,7 @@ class CargoProjectDescription private constructor(
         val isBin: Boolean get() = kind == TargetKind.BIN
         val isExample: Boolean get() = kind == TargetKind.EXAMPLE
 
+        private val crateRootCache = AtomicReference<VirtualFile>()
         val crateRoot: VirtualFile? get() {
             val cached = crateRootCache.get()
             if (cached != null && cached.isValid) return cached
@@ -56,7 +57,15 @@ class CargoProjectDescription private constructor(
             return file
         }
 
-        private val crateRootCache = AtomicReference<VirtualFile>()
+        private lateinit var myPackage: Package
+        fun initPackage(pkg: Package) {
+            myPackage = pkg
+        }
+
+        val pkg: Package get() = myPackage
+
+        override fun toString(): String
+            = "Target(crateRootUrl='$crateRootUrl', name='$name', kind=$kind)"
     }
 
     enum class TargetKind {
@@ -134,7 +143,7 @@ class CargoProjectDescription private constructor(
     fun findPackage(name: String): Package? = packages.find { it.name == name }
 
     companion object {
-        fun deserialize(data: CleanCargoMetadata): CargoProjectDescription? {
+        fun deserialize(data: CleanCargoMetadata): CargoProjectDescription {
             // Packages form mostly a DAG. "Why mostly?", you say.
             // Well, a dev-dependency `X` of package `P` can depend on the `P` itself.
             // This is ok, because cargo can compile `P` (without `X`, because dev-deps
@@ -169,7 +178,11 @@ class CargoProjectDescription private constructor(
                     pkg.targets.map { Target(it.url, it.name, it.kind) },
                     pkg.source,
                     origin
-                )
+                ).apply {
+                    for (target in targets) {
+                        target.initPackage(this)
+                    }
+                }
             }
 
             return CargoProjectDescription(packages)
