@@ -27,29 +27,21 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
         testProject {
             bin("hello", "src/main.rs").open()
         }
-        doTestProducedConfigurations()
+        checkOnTopLevel<RustFile>()
     }
-
-    fun testExecutableProducerWorksForBinFile() {
-        testProject {
-            bin("hello", "src/main.rs").open()
-        }
-        doTestProducedConfigurationsOn<RustFile>()
-    }
-
 
     fun testExecutableProducerWorksForExample() {
         testProject {
             example("hello", "example/hello.rs").open()
         }
-        doTestProducedConfigurations()
+        checkOnLeaf()
     }
 
     fun testExecutableProducerDisabledForLib() {
         testProject {
             lib("hello", "src/lib.rs").open()
         }
-        doTestProducedConfigurations()
+        checkOnLeaf()
     }
 
     fun testExecutableProducerRemembersContext() {
@@ -69,21 +61,14 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
         testProject {
             lib("foo", "src/lib.rs", "#[test]\nfn test_foo() { as<caret>sert!(true); }").open()
         }
-        doTestProducedConfigurations()
-    }
-
-    fun testTestProducerWorksForAnnotatedFunctionsStrict() {
-        testProject {
-            lib("foo", "src/lib.rs", "#[test]\nfn test_foo() { as<caret>sert!(true); }").open()
-        }
-        doTestProducedConfigurationsOn<RustFunctionElement>()
+        checkOnTopLevel<RustFunctionElement>()
     }
 
     fun testTestProducerDisableForNonAnnotatedFunctions() {
         testProject {
             lib("foo", "src/lib.rs", "fn test_foo() { <caret>assert!(true); }").open()
         }
-        doTestProducedConfigurations()
+        checkOnLeaf()
     }
 
     fun testTestProducerRemembersContext() {
@@ -118,29 +103,14 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
                 }
             """).open()
         }
-        doTestProducedConfigurations()
-    }
-
-    fun testTestProducerWorksForModulesStrict() {
-        testProject {
-            lib("foo", "src/lib.rs", """
-                mod foo {
-                    #[test] fn bar() {}
-
-                    #[test] fn baz() {}
-
-                    fn quux() {<caret>}
-                }
-            """).open()
-        }
-        doTestProducedConfigurationsOn<RustMod>()
+        checkOnTopLevel<RustMod>()
     }
 
     fun testTestProducerWorksForFiles() {
         testProject {
             test("foo", "tests/foo.rs").open()
         }
-        doTestProducedConfigurationsOn<RustFile>()
+        checkOnElement<RustFile>()
     }
 
     fun testTestProducerWorksForRootModule() {
@@ -153,7 +123,7 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
                 fn quux() {<caret>}
             """).open()
         }
-        doTestProducedConfigurations()
+        checkOnLeaf()
     }
 
     fun testMeaningfulConfigurationName() {
@@ -167,14 +137,14 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
                 }
             """).open()
         }
-        doTestProducedConfigurations()
+        checkOnLeaf()
     }
 
     fun testTestProducerAddsBinName() {
         testProject {
             bin("foo", "src/bin/foo.rs", "#[test]\nfn test_foo() { as<caret>sert!(true); }").open()
         }
-        doTestProducedConfigurations()
+        checkOnLeaf()
     }
 
     fun testMainFnIsMoreSpecificThanTestMod() {
@@ -186,7 +156,7 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
                 fn test_foo() {}
             """).open()
         }
-        doTestProducedConfigurations()
+        checkOnLeaf()
     }
 
     fun testMainModAndTestModHaveSameSpecificity() {
@@ -198,19 +168,24 @@ class RunConfigurationProducerTestCase : RustTestCaseBase() {
                 fn test_foo() {}
             """).open()
         }
-        doTestProducedConfigurations()
+        checkOnLeaf()
     }
 
     fun testHyphenInNameWorks() {
         testProject {
             example("hello-world", "example/hello.rs").open()
         }
-        doTestProducedConfigurations()
+        checkOnLeaf()
     }
 
-    private fun doTestProducedConfigurations() = doTestProducedConfigurationsOn<PsiElement>()
+    private fun checkOnLeaf() = checkOnElement<PsiElement>()
 
-    private inline fun<reified T: PsiElement> doTestProducedConfigurationsOn() {
+    inline private fun <reified T: PsiElement> checkOnTopLevel() {
+        checkOnElement<T>()
+        checkOnElement<PsiElement>()
+    }
+
+    private inline fun<reified T: PsiElement> checkOnElement() {
         val configurationContext = ConfigurationContext(
             myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<T>(strict = false)
         )
