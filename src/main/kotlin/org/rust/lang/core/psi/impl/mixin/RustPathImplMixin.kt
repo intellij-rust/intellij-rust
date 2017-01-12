@@ -12,7 +12,6 @@ import org.rust.lang.core.resolve.ref.RustReference
 import org.rust.lang.core.stubs.RustPathElementStub
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
-import org.rust.lang.core.types.util.type
 
 abstract class RustPathImplMixin : RustStubbedElementImpl<RustPathElementStub>,
                                    RustPathElement {
@@ -97,7 +96,5 @@ val RustPathElement.asRustPath: RustPath? get() {
     }
 }
 
-private val RustPathElement.segment: RustPathSegment get() {
-    val generics = typeArgumentList?.typeList.orEmpty().map { it.type }
-    return RustPathSegment(referenceName, generics)
-}
+private val RustPathElement.segment: RustPathSegment
+    get() = RustPathSegment(referenceName, typeArgumentList?.typeList.orEmpty())

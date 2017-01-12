@@ -7,6 +7,7 @@ import org.rust.lang.core.resolve.RustResolveEngine
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.unresolved.*
+import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 
 open class RustTypeResolvingVisitor(private val pivot: RustCompositeElement) : RustUnresolvedTypeVisitor<RustType> {
@@ -26,7 +27,7 @@ open class RustTypeResolvingVisitor(private val pivot: RustCompositeElement) : R
             .firstOrNull() ?: return RustUnknownType
         val typeArguments = (type.path as? RustPath.Named)?.head?.typeArguments.orEmpty()
         return RustTypificationEngine.typify(target)
-            .withTypeArguments(typeArguments.map { it.accept(RustTypeResolvingVisitor(pivot))  })
+            .withTypeArguments(typeArguments.map { it.resolvedType  })
     }
 
     override fun visitFunctionType(type: RustUnresolvedFunctionType): RustType =

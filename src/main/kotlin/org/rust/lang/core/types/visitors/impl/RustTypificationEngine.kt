@@ -13,7 +13,6 @@ import org.rust.lang.core.types.unresolved.RustUnresolvedReferenceType
 import org.rust.lang.core.types.unresolved.RustUnresolvedTupleType
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
 import org.rust.lang.core.types.util.resolvedType
-import org.rust.lang.core.types.util.type
 
 object RustTypificationEngine {
 
@@ -216,7 +215,7 @@ private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedT
     override fun visitTupleType(o: RustTupleTypeElement) = set {
         // Perhaps introduce tuple_type to PSI?
         if (o.typeList.size > 0)
-            RustUnresolvedTupleType(o.typeList.map { it.type })
+            RustUnresolvedTupleType(o.typeList.map { RustTypificationEngine.typifyType(it) })
         else
             RustUnitType
     }
@@ -233,7 +232,7 @@ private class RustTypeTypificationVisitor : RustComputingVisitor<RustUnresolvedT
     override fun visitRefLikeType(o: RustRefLikeTypeElement) = set {
         if (o.and == null) return@set RustUnknownType //FIXME: handle pointer types
         val base = o.type ?: return@set RustUnknownType
-        RustUnresolvedReferenceType(base.type, o.mut != null)
+        RustUnresolvedReferenceType(RustTypificationEngine.typifyType(base), o.mut != null)
     }
 }
 
