@@ -1,5 +1,13 @@
 fn main() {
     let _ = if 1 {
         1
-    } else { 2 };
+    }
+
+
+
+    else
+
+
+        {2};
+
 }

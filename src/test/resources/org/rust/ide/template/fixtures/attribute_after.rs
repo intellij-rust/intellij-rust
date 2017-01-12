@@ -1,4 +1,5 @@
-# [ macro ]
+#[macro]
 extern crate std;
 
-fn main() {}
+fn main() {
+}

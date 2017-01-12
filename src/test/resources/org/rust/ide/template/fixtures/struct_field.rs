@@ -1,3 +1,3 @@
 struct S {
-    f < caret >
+    f<caret>
 }

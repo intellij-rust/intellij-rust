@@ -1,3 +1,5 @@
 struct A;
 
-impl A<fold text='{ ... }'>{} < / fold >
+impl A <fold text='{...}'>{
+
+}</fold>

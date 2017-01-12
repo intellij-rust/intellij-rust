@@ -1,3 +1,3 @@
 trait T {
-    fn foo() {}
+fn foo() { }
 }

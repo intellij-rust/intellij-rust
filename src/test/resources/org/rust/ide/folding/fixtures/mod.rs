@@ -1,1 +1,3 @@
-mod a <fold text='{ ... }'>{} < / fold >
+mod a <fold text='{...}'>{
+
+}</fold>

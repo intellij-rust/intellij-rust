@@ -1,10 +1,17 @@
-fn main() < fold text='{ ... }'>{
-loop < fold text = '{ ...
-}'>{}< / fold >
+fn main() <fold text='{...}'>{
+    loop <fold text='{...}'>{
 
-for _ in 0..10 < fold text = '{ ... }'>{}< / fold >
+    }</fold>
 
-while true < fold text ='{ ... }'>{}< / fold >
+    for _ in 0..10 <fold text='{...}'>{
 
-while let Some(_) = None < fold text = '{ ... }'>{} < / fold >
-} < / fold >
+    }</fold>
+
+    while true <fold text='{...}'>{
+
+    }</fold>
+
+    while let Some(_) = None <fold text='{...}'>{
+
+    }</fold>
+}</fold>
