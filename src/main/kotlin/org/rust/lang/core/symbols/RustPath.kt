@@ -1,12 +1,6 @@
 package org.rust.lang.core.symbols
 
 import org.rust.lang.core.types.unresolved.RustUnresolvedType
-import org.rust.lang.core.types.unresolved.readRustUnresolvedType
-import org.rust.lang.core.types.unresolved.writeRustUnresolvedType
-import org.rust.utils.readList
-import org.rust.utils.writeList
-import java.io.DataInput
-import java.io.DataOutput
 
 sealed class RustPath(val segments: List<RustPathSegment>) {
     abstract fun join(segment: RustPathSegment): RustPath
@@ -58,37 +52,6 @@ sealed class RustPath(val segments: List<RustPathSegment>) {
     }
 }
 
-fun DataOutput.writeRustPath(value: RustPath) {
-    when (value) {
-        is RustPath.CrateRelative -> writeInt(-1)
-        is RustPath.ModRelative -> writeInt(value.level)
-        is RustPath.Named -> {
-            writeInt(-2)
-            writeRustPathSegment(value.head)
-        }
-    }
-
-    writeInt(value.segments.size)
-    for (segment in value.segments) {
-        writeRustPathSegment(segment)
-    }
-}
-
-fun DataInput.readRustPath(): RustPath {
-    fun readSegments(): List<RustPathSegment> {
-        val parts = readInt()
-        return (0 until parts).map { readRustPathSegment() }
-    }
-
-    val tag = readInt()
-    return when {
-        tag == -1 -> RustPath.CrateRelative(readSegments())
-        tag == -2 -> RustPath.Named(readRustPathSegment(), readSegments())
-        tag >= 0 -> RustPath.ModRelative(tag, readSegments())
-        else -> error("Corrupted DataInput, bad RustPath")
-    }
-}
-
 
 data class RustPathSegment(
     val name: String,
@@ -101,15 +64,4 @@ data class RustPathSegment(
     companion object {
         fun withoutGenerics(name: String) = RustPathSegment(name, emptyList())
     }
-}
-
-fun DataOutput.writeRustPathSegment(value: RustPathSegment) {
-    writeUTF(value.name)
-    writeList(value.typeArguments) { writeRustUnresolvedType(it) }
-}
-
-fun DataInput.readRustPathSegment(): RustPathSegment {
-    val name = readUTF()
-    val genericArguments = readList { readRustUnresolvedType() }
-    return RustPathSegment(name, genericArguments)
 }
