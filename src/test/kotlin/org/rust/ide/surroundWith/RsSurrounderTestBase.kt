@@ -6,8 +6,8 @@ import com.intellij.lang.surroundWith.Surrounder
 import com.intellij.openapi.command.WriteCommandAction
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RustFileType
-import org.rust.lang.RustLanguage
+import org.rust.lang.RsFileType
+import org.rust.lang.RsLanguage
 import org.rust.lang.RsTestBase
 import java.util.*
 
@@ -17,7 +17,7 @@ abstract class RsSurrounderTestBase(val surrounder: Surrounder) : RsTestBase() {
     protected fun doTest(@Language("Rust") before: String,
                          @Language("Rust") after: String,
                          checkSyntaxErrors: Boolean = true) {
-        myFixture.configureByText(RustFileType, before)
+        myFixture.configureByText(RsFileType, before)
 
         checkApplicability(fileName, true)
         WriteCommandAction.runWriteCommandAction(myFixture.project) {
@@ -29,12 +29,12 @@ abstract class RsSurrounderTestBase(val surrounder: Surrounder) : RsTestBase() {
     }
 
     protected fun doTestNotApplicable(@Language("Rust") before: String) {
-        myFixture.configureByText(RustFileType, before)
+        myFixture.configureByText(RsFileType, before)
         checkApplicability(before, false)
     }
 
     private fun checkApplicability(testCase: String, isApplicable: Boolean) {
-        val descriptor = LanguageSurrounders.INSTANCE.allForLanguage(RustLanguage)
+        val descriptor = LanguageSurrounders.INSTANCE.allForLanguage(RsLanguage)
             .first { descriptor ->
                 descriptor.surrounders.any { surrounder ->
                     surrounder.javaClass == this.surrounder.javaClass

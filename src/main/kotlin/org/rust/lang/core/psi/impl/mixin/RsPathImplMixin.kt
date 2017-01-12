@@ -7,8 +7,8 @@ import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.impl.RsStubbedElementImpl
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.resolve.ref.RustPathReferenceImpl
-import org.rust.lang.core.resolve.ref.RustReference
+import org.rust.lang.core.resolve.ref.RsPathReferenceImpl
+import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsPathStub
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
@@ -19,7 +19,7 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
 
     constructor(stub: RsPathStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getReference(): RustReference = RustPathReferenceImpl(this)
+    override fun getReference(): RsReference = RsPathReferenceImpl(this)
 
     override val referenceNameElement: PsiElement
         get() = checkNotNull(identifier ?: self ?: `super` ?: cself) {

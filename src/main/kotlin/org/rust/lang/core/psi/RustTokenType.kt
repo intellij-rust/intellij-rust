@@ -6,11 +6,11 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.ILeafElementType
 import org.rust.ide.utils.service
-import org.rust.lang.RustLanguage
+import org.rust.lang.RsLanguage
 
 private val defaultASTFactory by lazy { service<DefaultASTFactory>() }
 
-open class RustTokenType(debugName: String) : IElementType(debugName, RustLanguage), ILeafElementType {
+open class RustTokenType(debugName: String) : IElementType(debugName, RsLanguage), ILeafElementType {
     override fun createLeafNode(leafText: CharSequence): ASTNode = LeafPsiElement(this, leafText)
 }
 

@@ -5,13 +5,13 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.StubBuilder
 import com.intellij.psi.stubs.*
 import com.intellij.psi.tree.IStubFileElementType
-import org.rust.lang.RustLanguage
+import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.*
 import org.rust.lang.core.psi.impl.mixin.*
 
 
-class RustFileStub : PsiFileStubImpl<RsFile> {
+class RsFileStub : PsiFileStubImpl<RsFile> {
     val attributes: RsFile.Attributes
 
     constructor(file: RsFile) : this(file, file.attributes)
@@ -22,20 +22,20 @@ class RustFileStub : PsiFileStubImpl<RsFile> {
 
     override fun getType() = Type
 
-    object Type : IStubFileElementType<RustFileStub>(RustLanguage) {
+    object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = 52
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
-            override fun createStubForFile(file: PsiFile): StubElement<*> = RustFileStub(file as RsFile)
+            override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
         }
 
-        override fun serialize(stub: RustFileStub, dataStream: StubOutputStream) {
+        override fun serialize(stub: RsFileStub, dataStream: StubOutputStream) {
             dataStream.writeEnum(stub.attributes)
         }
 
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RustFileStub {
-            return RustFileStub(null, dataStream.readEnum(RsFile.Attributes.values()))
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsFileStub {
+            return RsFileStub(null, dataStream.readEnum(RsFile.Attributes.values()))
         }
 
         override fun getExternalId(): String = "Rust.file"
@@ -56,13 +56,13 @@ class RustFileStub : PsiFileStubImpl<RsFile> {
 }
 
 
-fun factory(name: String): RustStubElementType<*, *> = when (name) {
+fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "EXTERN_CRATE_ITEM" -> RsExternCrateItemStub.Type
     "USE_ITEM" -> RsUseItemStub.Type
 
     "STRUCT_ITEM" -> RsStructItemStub.Type
     "ENUM_ITEM" -> RsEnumItemStub.Type
-    "ENUM_BODY" -> RustPlaceholderStub.Type("ENUM_BODY", ::RsEnumBodyImpl)
+    "ENUM_BODY" -> RsPlaceholderStub.Type("ENUM_BODY", ::RsEnumBodyImpl)
     "ENUM_VARIANT" -> RsEnumVariantStub.Type
 
     "MOD_DECL_ITEM" -> RsModDeclItemStub.Type
@@ -74,33 +74,33 @@ fun factory(name: String): RustStubElementType<*, *> = when (name) {
     "FUNCTION" -> RsFunctionStub.Type
     "CONSTANT" -> RsConstantStub.Type
     "TYPE_ALIAS" -> RsTypeAliasStub.Type
-    "FOREIGN_MOD_ITEM" -> RustPlaceholderStub.Type("FOREIGN_MOD_ITEM", ::RsForeignModItemImpl)
+    "FOREIGN_MOD_ITEM" -> RsPlaceholderStub.Type("FOREIGN_MOD_ITEM", ::RsForeignModItemImpl)
 
-    "BLOCK_FIELDS" -> RustPlaceholderStub.Type("BLOCK_FIELDS", ::RsBlockFieldsImpl)
+    "BLOCK_FIELDS" -> RsPlaceholderStub.Type("BLOCK_FIELDS", ::RsBlockFieldsImpl)
     "FIELD_DECL" -> RsFieldDeclStub.Type
     "ALIAS" -> RsAliasStub.Type
 
-    "USE_GLOB_LIST" -> RustPlaceholderStub.Type("USE_GLOB_LIST", ::RsUseGlobListImpl)
+    "USE_GLOB_LIST" -> RsPlaceholderStub.Type("USE_GLOB_LIST", ::RsUseGlobListImpl)
     "USE_GLOB" -> RsUseGlobStub.Type
 
     "PATH" -> RsPathStub.Type
 
-    "TRAIT_REF" -> RustPlaceholderStub.Type("TRAIT_REF", ::RsTraitRefImpl)
-    "VEC_TYPE" -> RustPlaceholderStub.Type("VEC_TYPE", ::RsVecTypeImpl)
-    "REF_LIKE_TYPE" -> RustPlaceholderStub.Type("REF_LIKE_TYPE", ::RsRefLikeTypeImpl)
-    "BARE_FN_TYPE" -> RustPlaceholderStub.Type("BARE_FN_TYPE", ::RsBareFnTypeImpl)
-    "TUPLE_TYPE" -> RustPlaceholderStub.Type("TUPLE_TYPE", ::RsTupleTypeImpl)
-    "BASE_TYPE" -> RustPlaceholderStub.Type("BASE_TYPE", ::RsBaseTypeImpl)
-    "TYPE_WITH_BOUNDS_TYPE" -> RustPlaceholderStub.Type("TYPE_WITH_BOUNDS_TYPE", ::RsTypeWithBoundsTypeImpl)
-    "FOR_IN_TYPE" -> RustPlaceholderStub.Type("FOR_IN_TYPE", ::RsForInTypeImpl)
-    "IMPL_TRAIT_TYPE" -> RustPlaceholderStub.Type("IMPL_TRAIT_TYPE", ::RsImplTraitTypeImpl)
+    "TRAIT_REF" -> RsPlaceholderStub.Type("TRAIT_REF", ::RsTraitRefImpl)
+    "VEC_TYPE" -> RsPlaceholderStub.Type("VEC_TYPE", ::RsVecTypeImpl)
+    "REF_LIKE_TYPE" -> RsPlaceholderStub.Type("REF_LIKE_TYPE", ::RsRefLikeTypeImpl)
+    "BARE_FN_TYPE" -> RsPlaceholderStub.Type("BARE_FN_TYPE", ::RsBareFnTypeImpl)
+    "TUPLE_TYPE" -> RsPlaceholderStub.Type("TUPLE_TYPE", ::RsTupleTypeImpl)
+    "BASE_TYPE" -> RsPlaceholderStub.Type("BASE_TYPE", ::RsBaseTypeImpl)
+    "TYPE_WITH_BOUNDS_TYPE" -> RsPlaceholderStub.Type("TYPE_WITH_BOUNDS_TYPE", ::RsTypeWithBoundsTypeImpl)
+    "FOR_IN_TYPE" -> RsPlaceholderStub.Type("FOR_IN_TYPE", ::RsForInTypeImpl)
+    "IMPL_TRAIT_TYPE" -> RsPlaceholderStub.Type("IMPL_TRAIT_TYPE", ::RsImplTraitTypeImpl)
 
-    "VALUE_PARAMETER_LIST" -> RustPlaceholderStub.Type("VALUE_PARAMETER_LIST", ::RsValueParameterListImpl)
-    "VALUE_PARAMETER" -> RustPlaceholderStub.Type("VALUE_PARAMETER", ::RsValueParameterImpl)
+    "VALUE_PARAMETER_LIST" -> RsPlaceholderStub.Type("VALUE_PARAMETER_LIST", ::RsValueParameterListImpl)
+    "VALUE_PARAMETER" -> RsPlaceholderStub.Type("VALUE_PARAMETER", ::RsValueParameterImpl)
     "SELF_PARAMETER" -> RsSelfParameterStub.Type
     "TYPE_PARAMETER" -> RsTypeParameterStub.Type
-    "TYPE_PARAMETER_LIST" -> RustPlaceholderStub.Type("TYPE_PARAMETER_LIST", ::RsTypeParameterListImpl)
-    "TYPE_ARGUMENT_LIST" -> RustPlaceholderStub.Type("TYPE_ARGUMENT_LIST", ::RsTypeArgumentListImpl)
+    "TYPE_PARAMETER_LIST" -> RsPlaceholderStub.Type("TYPE_PARAMETER_LIST", ::RsTypeParameterListImpl)
+    "TYPE_ARGUMENT_LIST" -> RsPlaceholderStub.Type("TYPE_ARGUMENT_LIST", ::RsTypeArgumentListImpl)
 
     else -> error("Unknown element $name")
 }
@@ -114,7 +114,7 @@ class RsExternCrateItemStub(
     RustNamedStub,
     RustVisibilityStub {
 
-    object Type : RustStubElementType<RsExternCrateItemStub, RsExternCrateItem>("EXTERN_CRATE_ITEM") {
+    object Type : RsStubElementType<RsExternCrateItemStub, RsExternCrateItem>("EXTERN_CRATE_ITEM") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsExternCrateItemStub(parentStub, this,
@@ -143,10 +143,10 @@ class RsUseItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val isPublic: Boolean,
     val isStarImport: Boolean
-) : RustElementStub<RsUseItem>(parent, elementType),
+) : RsElementStub<RsUseItem>(parent, elementType),
     RustVisibilityStub {
 
-    object Type : RustStubElementType<RsUseItemStub, RsUseItem>("USE_ITEM") {
+    object Type : RsStubElementType<RsUseItemStub, RsUseItem>("USE_ITEM") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsUseItemStub(parentStub, this,
@@ -181,7 +181,7 @@ class RsStructItemStub(
     RustNamedStub,
     RustVisibilityStub {
 
-    object Type : RustStubElementType<RsStructItemStub, RsStructItem>("STRUCT_ITEM") {
+    object Type : RsStubElementType<RsStructItemStub, RsStructItem>("STRUCT_ITEM") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsStructItemStub(parentStub, this,
                 dataStream.readNameAsString(),
@@ -214,7 +214,7 @@ class RsEnumItemStub(
     RustNamedStub,
     RustVisibilityStub {
 
-    object Type : RustStubElementType<RsEnumItemStub, RsEnumItem>("ENUM_ITEM") {
+    object Type : RsStubElementType<RsEnumItemStub, RsEnumItem>("ENUM_ITEM") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsEnumItemStub =
             RsEnumItemStub(parentStub, this,
                 dataStream.readNameAsString(),
@@ -246,7 +246,7 @@ class RsEnumVariantStub(
 ) : StubBase<RsEnumVariant>(parent, elementType),
     RustNamedStub {
 
-    object Type : RustStubElementType<RsEnumVariantStub, RsEnumVariant>("ENUM_VARIANT") {
+    object Type : RsStubElementType<RsEnumVariantStub, RsEnumVariant>("ENUM_VARIANT") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsEnumVariantStub =
             RsEnumVariantStub(parentStub, this,
                 dataStream.readNameAsString()
@@ -281,7 +281,7 @@ class RsModDeclItemStub(
     RustNamedStub,
     RustVisibilityStub {
 
-    object Type : RustStubElementType<RsModDeclItemStub, RsModDeclItem>("MOD_DECL_ITEM") {
+    object Type : RsStubElementType<RsModDeclItemStub, RsModDeclItem>("MOD_DECL_ITEM") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsModDeclItemStub(parentStub, this,
                 dataStream.readNameAsString(),
@@ -317,7 +317,7 @@ class RsModItemStub(
     RustNamedStub,
     RustVisibilityStub {
 
-    object Type : RustStubElementType<RsModItemStub, RsModItem>("MOD_ITEM") {
+    object Type : RsStubElementType<RsModItemStub, RsModItem>("MOD_ITEM") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsModItemStub(parentStub, this,
@@ -350,7 +350,7 @@ class RsTraitItemStub(
     RustNamedStub,
     RustVisibilityStub {
 
-    object Type : RustStubElementType<RsTraitItemStub, RsTraitItem>("TRAIT_ITEM") {
+    object Type : RsStubElementType<RsTraitItemStub, RsTraitItem>("TRAIT_ITEM") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsTraitItemStub(parentStub, this,
                 dataStream.readNameAsString(),
@@ -376,8 +376,8 @@ class RsTraitItemStub(
 
 class RsImplItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>
-) : RustElementStub<RsImplItem>(parent, elementType) {
-    object Type : RustStubElementType<RsImplItemStub, RsImplItem>("IMPL_ITEM") {
+) : RsElementStub<RsImplItem>(parent, elementType) {
+    object Type : RsStubElementType<RsImplItemStub, RsImplItem>("IMPL_ITEM") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsImplItemStub(parentStub, this)
@@ -408,7 +408,7 @@ class RsFunctionStub(
     RustNamedStub,
     RustVisibilityStub {
 
-    object Type : RustStubElementType<RsFunctionStub, RsFunction>("FUNCTION") {
+    object Type : RsStubElementType<RsFunctionStub, RsFunction>("FUNCTION") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsFunctionStub(parentStub, this,
@@ -450,7 +450,7 @@ class RsConstantStub(
     RustNamedStub,
     RustVisibilityStub {
 
-    object Type : RustStubElementType<RsConstantStub, RsConstant>("CONSTANT") {
+    object Type : RsStubElementType<RsConstantStub, RsConstant>("CONSTANT") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsConstantStub(parentStub, this,
                 dataStream.readNameAsString(),
@@ -483,7 +483,7 @@ class RsTypeAliasStub(
     RustNamedStub,
     RustVisibilityStub {
 
-    object Type : RustStubElementType<RsTypeAliasStub, RsTypeAlias>("TYPE_ALIAS") {
+    object Type : RsStubElementType<RsTypeAliasStub, RsTypeAlias>("TYPE_ALIAS") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsTypeAliasStub(parentStub, this,
@@ -518,7 +518,7 @@ class RsFieldDeclStub(
     RustNamedStub,
     RustVisibilityStub {
 
-    object Type : RustStubElementType<RsFieldDeclStub, RsFieldDecl>("FIELD_DECL") {
+    object Type : RsStubElementType<RsFieldDeclStub, RsFieldDecl>("FIELD_DECL") {
         override fun createPsi(stub: RsFieldDeclStub) =
             RsFieldDeclImpl(stub, this)
 
@@ -548,7 +548,7 @@ class RsAliasStub(
 ) : StubBase<RsAlias>(parent, elementType),
     RustNamedStub {
 
-    object Type : RustStubElementType<RsAliasStub, RsAlias>("ALIAS") {
+    object Type : RsStubElementType<RsAliasStub, RsAlias>("ALIAS") {
         override fun createPsi(stub: RsAliasStub) =
             RsAliasImpl(stub, this)
 
@@ -577,7 +577,7 @@ class RsUseGlobStub(
     val referenceName: String
 ) : StubBase<RsUseGlob>(parent, elementType) {
 
-    object Type : RustStubElementType<RsUseGlobStub, RsUseGlob>("USE_GLOB") {
+    object Type : RsStubElementType<RsUseGlobStub, RsUseGlob>("USE_GLOB") {
         override fun createPsi(stub: RsUseGlobStub) =
             RsUseGlobImpl(stub, this)
 
@@ -607,7 +607,7 @@ class RsPathStub(
     val isCrateRelative: Boolean
 ) : StubBase<RsPath>(parent, elementType) {
 
-    object Type : RustStubElementType<RsPathStub, RsPath>("PATH") {
+    object Type : RsStubElementType<RsPathStub, RsPath>("PATH") {
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
         override fun createPsi(stub: RsPathStub) =
@@ -641,7 +641,7 @@ class RsTypeParameterStub(
 ) : StubBase<RsTypeParameter>(parent, elementType),
     RustNamedStub {
 
-    object Type : RustStubElementType<RsTypeParameterStub, RsTypeParameter>("TYPE_PARAMETER") {
+    object Type : RsStubElementType<RsTypeParameterStub, RsTypeParameter>("TYPE_PARAMETER") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsTypeParameterStub(parentStub, this,
                 dataStream.readNameAsString()
@@ -671,7 +671,7 @@ class RsSelfParameterStub(
     val isRef: Boolean
 ) : StubBase<RsSelfParameter>(parent, elementType) {
 
-    object Type : RustStubElementType<RsSelfParameterStub, RsSelfParameter>("SELF_PARAMETER") {
+    object Type : RsStubElementType<RsSelfParameterStub, RsSelfParameter>("SELF_PARAMETER") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsSelfParameterStub(parentStub, this,
                 dataStream.readBoolean(),

@@ -7,7 +7,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.rust.ide.formatter.impl.createSpacingBuilder
 import org.rust.ide.formatter.impl.isFlatBlock
 import org.rust.ide.formatter.settings.RsCodeStyleSettings
-import org.rust.lang.RustLanguage
+import org.rust.lang.RsLanguage
 
 data class RsFmtContext private constructor(
     val commonSettings: CommonCodeStyleSettings,
@@ -33,7 +33,7 @@ data class RsFmtContext private constructor(
 ) {
     companion object {
         fun create(settings: CodeStyleSettings): RsFmtContext {
-            val commonSettings = settings.getCommonSettings(RustLanguage)
+            val commonSettings = settings.getCommonSettings(RsLanguage)
             val rustSettings = settings.getCustomSettings(RsCodeStyleSettings::class.java)
             return RsFmtContext(commonSettings, rustSettings, createSpacingBuilder(commonSettings, rustSettings))
         }

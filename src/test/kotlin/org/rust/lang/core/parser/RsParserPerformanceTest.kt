@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.DebugUtil
 import org.junit.experimental.categories.Category
 import org.rust.Performance
-import org.rust.lang.RustFileType
+import org.rust.lang.RsFileType
 import org.rust.lang.RsTestBase
 import java.util.*
 import kotlin.system.measureTimeMillis
@@ -68,7 +68,7 @@ class RsParserPerformanceTest : RsTestBase() {
                     // https://github.com/rust-lang/rust/pull/37278
                     if (file.path.endsWith("dataflow/graphviz.rs")) return CONTINUE
 
-                    if (file.fileType != RustFileType) return CONTINUE
+                    if (file.fileType != RsFileType) return CONTINUE
                     val fileContent = String(file.contentsToByteArray())
 
                     val time = measureTimeMillis {

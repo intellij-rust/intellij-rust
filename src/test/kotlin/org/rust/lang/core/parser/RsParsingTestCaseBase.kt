@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ParsingTestCase
 import org.jetbrains.annotations.NonNls
 import org.rust.ide.typing.RsBraceMatcher
-import org.rust.lang.RustLanguage
+import org.rust.lang.RsLanguage
 import org.rust.lang.RsTestCase
 import org.rust.lang.RsTestBase
 
@@ -40,7 +40,7 @@ abstract class RsParsingTestCaseBase(@NonNls dataPath: String)
 
     override fun setUp() {
         super.setUp()
-        addExplicitExtension(LanguageBraceMatching.INSTANCE, RustLanguage, RsBraceMatcher())
+        addExplicitExtension(LanguageBraceMatching.INSTANCE, RsLanguage, RsBraceMatcher())
     }
 
     override fun tearDown() {

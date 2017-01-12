@@ -10,8 +10,8 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RsStubbedNamedElementImpl
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.resolve.ref.RustModReferenceImpl
-import org.rust.lang.core.resolve.ref.RustReference
+import org.rust.lang.core.resolve.ref.RsModReferenceImpl
+import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsModDeclItemStub
 import java.io.File
 import javax.swing.Icon
@@ -23,7 +23,7 @@ abstract class RsModDeclItemImplMixin : RsStubbedNamedElementImpl<RsModDeclItemS
 
     constructor(stub: RsModDeclItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getReference(): RustReference = RustModReferenceImpl(this)
+    override fun getReference(): RsReference = RsModReferenceImpl(this)
 
     override val referenceNameElement: PsiElement get() = identifier
 

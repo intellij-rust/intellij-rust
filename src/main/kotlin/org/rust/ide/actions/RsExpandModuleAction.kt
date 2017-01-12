@@ -13,7 +13,7 @@ import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.actions.BaseRefactoringAction
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import org.rust.ide.utils.checkWriteAccessAllowed
-import org.rust.lang.RustLanguage
+import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsMod
 import org.rust.lang.core.psi.impl.RsFile
 
@@ -24,7 +24,7 @@ class RsExpandModuleAction : BaseRefactoringAction() {
 
     override fun isAvailableInEditorOnly(): Boolean = false
 
-    override fun isAvailableForLanguage(language: Language): Boolean = language.`is`(RustLanguage)
+    override fun isAvailableForLanguage(language: Language): Boolean = language.`is`(RsLanguage)
 
 
     private object Handler : RefactoringActionHandler {

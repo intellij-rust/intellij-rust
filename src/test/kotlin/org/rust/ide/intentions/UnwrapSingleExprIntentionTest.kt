@@ -1,6 +1,6 @@
 package org.rust.ide.intentions
 
-import org.rust.lang.RustFileType
+import org.rust.lang.RsFileType
 import org.rust.lang.RsTestBase
 
 class UnwrapSingleExprIntentionTest : RsTestBase() {
@@ -89,13 +89,13 @@ class UnwrapSingleExprIntentionTest : RsTestBase() {
     )
 
     private fun doAvailableTest(before: String, after: String) {
-        myFixture.configureByText(RustFileType, before)
+        myFixture.configureByText(RsFileType, before)
         myFixture.launchAction(UnwrapSingleExprIntention())
         myFixture.checkResult(after)
     }
 
     private fun doUnavailableTest(before: String) {
-        myFixture.configureByText(RustFileType, before)
+        myFixture.configureByText(RsFileType, before)
         myFixture.launchAction(UnwrapSingleExprIntention())
         myFixture.checkResult(before)
     }

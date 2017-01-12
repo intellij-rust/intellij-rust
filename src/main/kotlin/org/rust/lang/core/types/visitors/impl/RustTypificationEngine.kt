@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
 import org.rust.lang.core.resolve.Namespace
-import org.rust.lang.core.resolve.RustResolveEngine
+import org.rust.lang.core.resolve.ResolveEngine
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.util.resolvedType
@@ -224,7 +224,7 @@ private class RustTypeTypificationVisitor(val pivot: RsType) : RustComputingVisi
             val primitiveType = RustPrimitiveType.fromTypeName(path.head.name)
             if (primitiveType != null) return@set primitiveType
         }
-        val target = RustResolveEngine.resolve(path, pivot, Namespace.Types)
+        val target = ResolveEngine.resolve(path, pivot, Namespace.Types)
             .filterIsInstance<RsNamedElement>()
             .firstOrNull() ?: return@set RustUnknownType
         val typeArguments = (path as? RustPath.Named)?.head?.typeArguments.orEmpty()

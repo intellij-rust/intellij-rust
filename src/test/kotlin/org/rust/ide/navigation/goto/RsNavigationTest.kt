@@ -2,7 +2,7 @@ package org.rust.ide.navigation.goto
 
 import com.intellij.lang.CodeInsightActions
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RustLanguage
+import org.rust.lang.RsLanguage
 import org.rust.lang.RsTestBase
 
 class RsNavigationTest : RsTestBase() {
@@ -40,7 +40,7 @@ class RsNavigationTest : RsTestBase() {
 
     private fun checkNavigation(@Language("Rust") before: String, @Language("Rust") after: String) {
         InlineFile(before)
-        val handler = CodeInsightActions.GOTO_SUPER.forLanguage(RustLanguage)
+        val handler = CodeInsightActions.GOTO_SUPER.forLanguage(RsLanguage)
         assertNotNull("GotoSuperHandler for Rust was not found.", handler)
         handler.invoke(project, myFixture.editor, myFixture.file)
         myFixture.checkResult(replaceCaretMarker(after))

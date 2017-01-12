@@ -18,7 +18,7 @@ import org.rust.lang.core.psi.RustTokenElementTypes
 import org.rust.lang.core.psi.RustTokenElementTypes.EOL_COMMENTS_TOKEN_SET
 import org.rust.lang.core.psi.RustTokenElementTypes.STRING_LITERAL
 import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.stubs.RustFileStub
+import org.rust.lang.core.stubs.RsFileStub
 
 class RustParserDefinition : ParserDefinition {
 
@@ -30,7 +30,7 @@ class RustParserDefinition : ParserDefinition {
         return LanguageUtil.canStickTokensTogetherByLexer(left, right, RustLexer())
     }
 
-    override fun getFileNodeType(): IFileElementType = RustFileStub.Type
+    override fun getFileNodeType(): IFileElementType = RsFileStub.Type
 
     override fun getStringLiteralElements(): TokenSet =
         TokenSet.create(STRING_LITERAL)

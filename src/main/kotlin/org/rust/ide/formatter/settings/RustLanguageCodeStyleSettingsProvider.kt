@@ -9,10 +9,10 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.*
 import org.rust.ide.utils.loadCodeSampleResource
-import org.rust.lang.RustLanguage
+import org.rust.lang.RsLanguage
 
 class RustLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() {
-    override fun getLanguage(): Language = RustLanguage
+    override fun getLanguage(): Language = RsLanguage
 
     override fun getCodeSample(settingsType: SettingsType): String =
         when (settingsType) {

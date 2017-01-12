@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
 import org.rust.lang.core.psi.RsCompositeElement
-import org.rust.lang.core.resolve.ref.RustReference
+import org.rust.lang.core.resolve.ref.RsReference
 
 abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElementBase<StubT>,
                                                               RsCompositeElement {
@@ -15,7 +15,7 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
 
     constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getReference(): RustReference? = null
+    override fun getReference(): RsReference? = null
 
     override fun toString(): String = "${javaClass.simpleName}($elementType)"
 

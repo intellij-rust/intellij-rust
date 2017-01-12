@@ -14,7 +14,7 @@ import com.intellij.util.text.CharArrayUtil
 import org.rust.lang.core.psi.RustTokenElementTypes.*
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.util.elementType
-import org.rust.lang.doc.psi.RustDocKind
+import org.rust.lang.doc.psi.RsDocKind
 
 class RsEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
     override fun preprocessEnter(
@@ -53,8 +53,8 @@ class RsEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
         // check if the element at the caret is a line comment
         // and extract the comment token (//, /// or //!) from the comment text
         val prefix = when (elementAtCaret.elementType) {
-            OUTER_EOL_DOC_COMMENT -> RustDocKind.OuterEol.prefix
-            INNER_EOL_DOC_COMMENT -> RustDocKind.InnerEol.prefix
+            OUTER_EOL_DOC_COMMENT -> RsDocKind.OuterEol.prefix
+            INNER_EOL_DOC_COMMENT -> RsDocKind.InnerEol.prefix
             EOL_COMMENT -> {
                 // return if caret is at end of line for a non-documentation comment
                 if (isEOL) {

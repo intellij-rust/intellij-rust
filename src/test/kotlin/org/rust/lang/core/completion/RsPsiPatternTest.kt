@@ -4,7 +4,7 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
-import org.rust.lang.core.RustPsiPattern
+import org.rust.lang.core.RsPsiPattern
 
 class RsPsiPatternTest : RsTestBase() {
     override val dataPath: String get() = ""
@@ -13,26 +13,26 @@ class RsPsiPatternTest : RsTestBase() {
         #[foo]
         //^
         struct Bar;
-    """, RustPsiPattern.onStruct)
+    """, RsPsiPattern.onStruct)
 
     fun testOnTraitAttr() = testPattern("""
         #[foo]
         //^
         trait Foo {}
-    """, RustPsiPattern.onTrait)
+    """, RsPsiPattern.onTrait)
 
     fun testOnFnAttr() = testPattern("""
         #[foo]
         //^
         fn bar() {
         }
-    """, RustPsiPattern.onFn)
+    """, RsPsiPattern.onFn)
 
     fun testOnTupleStructAttr() = testPattern("""
         #[foo]
         //^
         struct Bar(u8, u8);
-    """, RustPsiPattern.onTupleStruct)
+    """, RsPsiPattern.onTupleStruct)
 
     fun testOnAnyItemStructAttr() = testPattern("""
         #[foo]
@@ -40,13 +40,13 @@ class RsPsiPatternTest : RsTestBase() {
         struct Bar {
             baz: u8
         }
-    """, RustPsiPattern.onAnyItem)
+    """, RsPsiPattern.onAnyItem)
 
     fun testOnAnyItemStaticAttr() = testPattern("""
         #[foo]
         //^
         static BAR: u8 = 1;
-    """, RustPsiPattern.onAnyItem)
+    """, RsPsiPattern.onAnyItem)
 
     fun testOnAnyItemEnumAttr() = testPattern("""
         #[foo]
@@ -55,39 +55,39 @@ class RsPsiPatternTest : RsTestBase() {
             Baz,
             Bat
         }
-    """, RustPsiPattern.onAnyItem)
+    """, RsPsiPattern.onAnyItem)
 
     fun testOnAnyItemFnAttr() = testPattern("""
         #[foo]
         //^
         fn bar() {
         }
-    """, RustPsiPattern.onAnyItem)
+    """, RsPsiPattern.onAnyItem)
 
     fun testOnAnyItemModAttr() = testPattern("""
         #[foo]
         //^
         mod bar {
         }
-    """, RustPsiPattern.onAnyItem)
+    """, RsPsiPattern.onAnyItem)
 
     fun testOnAnyItemTraitAttr() = testPattern("""
         #[foo]
         //^
         trait Bar {
         }
-    """, RustPsiPattern.onAnyItem)
+    """, RsPsiPattern.onAnyItem)
 
     fun testOnAnyItemCrateAttr() = testPattern("""
         #![foo]
          //^
-    """, RustPsiPattern.onAnyItem)
+    """, RsPsiPattern.onAnyItem)
 
     fun testOnCrateAttr() = testPattern("""
         #![foo]
          //^
         struct Foo(u8, u8);
-    """, RustPsiPattern.onCrate)
+    """, RsPsiPattern.onCrate)
 
     fun testOnDropFnAttr() = testPattern("""
         struct HasDrop;
@@ -99,7 +99,7 @@ class RsPsiPatternTest : RsTestBase() {
                 println!("Dropping!");
             }
         }
-    """, RustPsiPattern.onDropFn)
+    """, RsPsiPattern.onDropFn)
 
     fun testOnEnumAttr() = testPattern("""
         #[foo]
@@ -108,7 +108,7 @@ class RsPsiPatternTest : RsTestBase() {
             Bar,
             Baz
         }
-    """, RustPsiPattern.onEnum)
+    """, RsPsiPattern.onEnum)
 
     fun testOnExternBlockAttr() = testPattern("""
         #[foo]
@@ -116,7 +116,7 @@ class RsPsiPatternTest : RsTestBase() {
         extern {
             fn bar(baz: size_t) -> size_t;
         }
-    """, RustPsiPattern.onExternBlock)
+    """, RsPsiPattern.onExternBlock)
 
     fun testOnExternBlockDeclAttr() = testPattern("""
         extern {
@@ -124,39 +124,39 @@ class RsPsiPatternTest : RsTestBase() {
             //^
             fn bar(baz: size_t) -> size_t;
         }
-    """, RustPsiPattern.onExternBlockDecl)
+    """, RsPsiPattern.onExternBlockDecl)
 
     fun testOnExternCrateAttr() = testPattern("""
         #[foo]
         //^
         extern crate bar;
-    """, RustPsiPattern.onExternCrate)
+    """, RsPsiPattern.onExternCrate)
 
     fun testOnMacroAttr() = testPattern("""
         #[foo]
         //^
         macro_rules! bar {
         }
-    """, RustPsiPattern.onMacro)
+    """, RsPsiPattern.onMacro)
 
     fun testOnModAttr() = testPattern("""
         #[foo]
         //^
         mod bar {
         }
-    """, RustPsiPattern.onMod)
+    """, RsPsiPattern.onMod)
 
     fun testOnStaticAttr() = testPattern("""
         #[foo]
         //^
         static BAR: u8 = 5;
-    """, RustPsiPattern.onStatic)
+    """, RsPsiPattern.onStatic)
 
     fun testOnStaticMutAttr() = testPattern("""
         #[foo]
         //^
         static mut BAR: u8 = 5;
-    """, RustPsiPattern.onStaticMut)
+    """, RsPsiPattern.onStaticMut)
 
     fun testOnTestFnAttr() = testPattern("""
         #[test]
@@ -165,102 +165,102 @@ class RsPsiPatternTest : RsTestBase() {
         fn test_bar() {
 
         }
-    """, RustPsiPattern.onTestFn)
+    """, RsPsiPattern.onTestFn)
 
     fun testOnStmtBeginning() = testPattern("""
         //^
-    """, RustPsiPattern.onStatementBeginning)
+    """, RsPsiPattern.onStatementBeginning)
 
     fun testOnStmtBeginningWithinMod() = testPattern("""
         mod foo {    }
                 //^
-    """, RustPsiPattern.onStatementBeginning)
+    """, RsPsiPattern.onStatementBeginning)
 
     fun testOnStmtBeginningAfterOtherStmt() = testPattern("""
         extern crate foo;
                        //^
-    """, RustPsiPattern.onStatementBeginning)
+    """, RsPsiPattern.onStatementBeginning)
 
     fun testOnStmtBeginningAfterBlock() = testPattern("""
         mod foo {}
                 //^
-    """, RustPsiPattern.onStatementBeginning)
+    """, RsPsiPattern.onStatementBeginning)
 
     fun testOnStmtBeginningIgnoresComments() = testPattern("""
         const A: u8 = 3; /* three */    /* it's greater than two */
                                     //^
-    """, RustPsiPattern.onStatementBeginning)
+    """, RsPsiPattern.onStatementBeginning)
 
     fun testOnStmtBeginningNegativeWhenFollowsVisible() = testPatternNegative("""
         abc
           //^
-    """, RustPsiPattern.onStatementBeginning)
+    """, RsPsiPattern.onStatementBeginning)
 
     fun testOnStmtBeginningNegativeInMiddleOfOtherStmt() = testPatternNegative("""
         mod abc {}
              //^
-    """, RustPsiPattern.onStatementBeginning)
+    """, RsPsiPattern.onStatementBeginning)
 
     fun testOnStmtBeginningWithWords() = testPattern("""
         word2
             //^
-    """, RustPsiPattern.onStatementBeginning("word1", "word2"))
+    """, RsPsiPattern.onStatementBeginning("word1", "word2"))
 
     fun testOnStmtBeginningWithWordsNegativeWhenWordDoesntFit() = testPatternNegative("""
         word3
             //^
-    """, RustPsiPattern.onStatementBeginning("word1", "word2"))
+    """, RsPsiPattern.onStatementBeginning("word1", "word2"))
 
-    fun testOnStmtBeginningWithWordsNegativeAtVeryBeginning() = testPatternNegative("   \n//^", RustPsiPattern.onStatementBeginning("word1"))
+    fun testOnStmtBeginningWithWordsNegativeAtVeryBeginning() = testPatternNegative("   \n//^", RsPsiPattern.onStatementBeginning("word1"))
 
     fun testInAnyLoopWithinFor() = testPattern("""
         fn foo() {
             for _ in 1..5 { }
                          //^
         }
-    """, RustPsiPattern.inAnyLoop)
+    """, RsPsiPattern.inAnyLoop)
 
     fun testInAnyLoopWithinWhile() = testPattern("""
         fn foo() {
             while true { }
                       //^
         }
-    """, RustPsiPattern.inAnyLoop)
+    """, RsPsiPattern.inAnyLoop)
 
     fun testInAnyLoopWithinLoop() = testPattern("""
         fn foo() {
             loop { }
                 //^
         }
-    """, RustPsiPattern.inAnyLoop)
+    """, RsPsiPattern.inAnyLoop)
 
     fun testInAnyLoopWithinForNestedBlock() = testPattern("""
         fn foo() {
             for _ in 1..5 {{ }}
                           //^
         }
-    """, RustPsiPattern.inAnyLoop)
+    """, RsPsiPattern.inAnyLoop)
 
     fun testInAnyLoopNegativeBeforeBlock() = testPatternNegative("""
         fn foo() {
             for _ in 1..5 {}
                      //^
         }
-    """, RustPsiPattern.inAnyLoop)
+    """, RsPsiPattern.inAnyLoop)
 
     fun testInAnyLoopNegativeAfterBlock() = testPatternNegative("""
         fn foo() {
             while true {}   // Infinite loop
                        //^
         }
-    """, RustPsiPattern.inAnyLoop)
+    """, RsPsiPattern.inAnyLoop)
 
     fun testInAnyLoopNegativeInsideClosure() = testPatternNegative("""
         fn foo() {
             while true { let _ = |x| { x + 1 }; }   // Infinite loop
                                        //^
         }
-    """, RustPsiPattern.inAnyLoop)
+    """, RsPsiPattern.inAnyLoop)
 
     private fun <T> testPattern(@Language("Rust") code: String, pattern: ElementPattern<T>) {
         InlineFile(code)

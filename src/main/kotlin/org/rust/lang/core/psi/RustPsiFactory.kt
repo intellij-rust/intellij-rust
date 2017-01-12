@@ -3,7 +3,7 @@ package org.rust.lang.core.psi
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
-import org.rust.lang.RustLanguage
+import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.impl.mixin.selfParameter
 import org.rust.lang.core.psi.impl.mixin.valueParameters
 import org.rust.lang.core.psi.util.childOfType
@@ -107,7 +107,7 @@ class RustPsiFactory(private val project: Project) {
 
     private inline fun <reified T : RsCompositeElement> createFromText(code: String): T? =
         PsiFileFactory.getInstance(project)
-            .createFileFromText("DUMMY.rs", RustLanguage, code)
+            .createFileFromText("DUMMY.rs", RsLanguage, code)
             ?.childOfType<T>()
 }
 

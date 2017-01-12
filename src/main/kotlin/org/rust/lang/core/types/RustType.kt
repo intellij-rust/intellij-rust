@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.util.trait
-import org.rust.lang.core.resolve.indexes.RustImplIndex
+import org.rust.lang.core.resolve.indexes.RsImplIndex
 
 interface RustType {
 
@@ -12,13 +12,13 @@ interface RustType {
      * Traits explicitly (or implicitly) implemented for this particular type
      */
     fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
-        RustImplIndex.findImplsFor(this, project).mapNotNull { it.traitRef?.trait }
+        RsImplIndex.findImplsFor(this, project).mapNotNull { it.traitRef?.trait }
 
     /**
      * Non-static methods accessible for this particular type
      */
     fun getNonStaticMethodsIn(project: Project): Sequence<RsFunction> =
-        RustImplIndex.findNonStaticMethodsFor(this, project)
+        RsImplIndex.findNonStaticMethodsFor(this, project)
 
     /**
      * Apply positional type arguments to a generic type.

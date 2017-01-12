@@ -109,7 +109,7 @@ class RsNameSuggestionsKtTest : RsTestBase() {
     private fun doTest(@Language("Rust") before: String, action: (Set<String>) -> Unit) {
         InlineFile(before).withCaret()
         openFileInEditor("main.rs")
-        val refactoring = RustIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RsFile)
+        val refactoring = RsIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RsFile)
         val expr = refactoring.possibleTargets().first()
         action(expr.suggestNames())
     }

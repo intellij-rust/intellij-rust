@@ -16,7 +16,7 @@ interface RsTestCase {
 // Extensions
 
 fun RsTestCase.pathToSourceTestFile(name: String): Path =
-    Paths.get("${RsTestCase.testResourcesPath}/${getTestDataPath()}/$name.${RustFileType.DEFAULTS.EXTENSION}")
+    Paths.get("${RsTestCase.testResourcesPath}/${getTestDataPath()}/$name.${RsFileType.DEFAULTS.EXTENSION}")
 
 fun RsTestCase.pathToGoldTestFile(name: String): Path =
     Paths.get("${RsTestCase.testResourcesPath}/${getTestDataPath()}/$name.txt")

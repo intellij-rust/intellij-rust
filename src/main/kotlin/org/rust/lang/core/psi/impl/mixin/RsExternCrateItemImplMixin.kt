@@ -7,8 +7,8 @@ import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsExternCrateItem
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RsStubbedNamedElementImpl
-import org.rust.lang.core.resolve.ref.RustExternCrateReferenceImpl
-import org.rust.lang.core.resolve.ref.RustReference
+import org.rust.lang.core.resolve.ref.RsExternCrateReferenceImpl
+import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsExternCrateItemStub
 
 abstract class RsExternCrateItemImplMixin : RsStubbedNamedElementImpl<RsExternCrateItemStub>,
@@ -18,7 +18,7 @@ abstract class RsExternCrateItemImplMixin : RsStubbedNamedElementImpl<RsExternCr
 
     constructor(stub: RsExternCrateItemStub, elementType: IStubElementType<*, *>) : super(stub, elementType)
 
-    override fun getReference(): RustReference = RustExternCrateReferenceImpl(this)
+    override fun getReference(): RsReference = RsExternCrateReferenceImpl(this)
 
     override val referenceNameElement: PsiElement get() = identifier
 

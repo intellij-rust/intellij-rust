@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.refactoring.RustLocalVariableHandler
+import org.rust.lang.refactoring.RsLocalVariableHandler
 
 class RsPostfixTemplateProvider : PostfixTemplateProvider {
     private val templates: Set<PostfixTemplate> = setOf(
@@ -46,6 +46,6 @@ class LetPostfixTemplate : PostfixTemplateWithExpressionSelector(
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
         var rustFile = expression.containingFile as? RsFile ?: return
         if (expression !is RsExpr) return
-        RustLocalVariableHandler().doRefactoring(editor, expression.project, rustFile, expression)
+        RsLocalVariableHandler().doRefactoring(editor, expression.project, rustFile, expression)
     }
 }

@@ -1,6 +1,6 @@
 package org.rust.ide.typing
 
-import org.rust.lang.RustFileType
+import org.rust.lang.RsFileType
 import org.rust.lang.RsTestBase
 
 class RsBraceMatcherTest : RsTestBase() {
@@ -25,7 +25,7 @@ class RsBraceMatcherTest : RsTestBase() {
     )
 
     private fun doTest(before: String, type: Char, after: String) {
-        myFixture.configureByText(RustFileType, before)
+        myFixture.configureByText(RsFileType, before)
         myFixture.type(type)
         myFixture.checkResult(after)
     }

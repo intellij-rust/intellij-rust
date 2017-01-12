@@ -13,27 +13,27 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.cargoProject
-import org.rust.lang.RustFileType
-import org.rust.lang.RustLanguage
+import org.rust.lang.RsFileType
+import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.resolve.ref.RustReference
-import org.rust.lang.core.stubs.RustFileStub
-import org.rust.lang.core.stubs.index.RustModulesIndex
+import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.lang.core.stubs.RsFileStub
+import org.rust.lang.core.stubs.index.RsModulesIndex
 import org.rust.lang.core.symbols.RustPath
 
 class RsFile(
     fileViewProvider: FileViewProvider
-) : PsiFileBase(fileViewProvider, RustLanguage),
+) : PsiFileBase(fileViewProvider, RsLanguage),
     RsMod,
     RsInnerAttributeOwner {
 
-    override fun getReference(): RustReference? = null
+    override fun getReference(): RsReference? = null
 
-    override fun getFileType(): FileType = RustFileType
+    override fun getFileType(): FileType = RsFileType
 
-    override fun getStub(): RustFileStub? = super.getStub() as RustFileStub?
+    override fun getStub(): RsFileStub? = super.getStub() as RsFileStub?
 
     override fun getOriginalFile(): RsFile = super.getOriginalFile() as RsFile
 
@@ -45,7 +45,7 @@ class RsFile(
             val originalFile = originalFile
             return CachedValuesManager.getCachedValue(originalFile, CachedValueProvider {
                 CachedValueProvider.Result.create(
-                    RustModulesIndex.getSuperFor(originalFile),
+                    RsModulesIndex.getSuperFor(originalFile),
                     PsiModificationTracker.MODIFICATION_COUNT
                 )
             })
@@ -110,4 +110,4 @@ class RsFile(
 val PsiFile.rustMod: RsMod? get() = this as? RsFile
 
 val VirtualFile.isNotRustFile: Boolean get() = !isRustFile
-val VirtualFile.isRustFile: Boolean get() = fileType == RustFileType
+val VirtualFile.isRustFile: Boolean get() = fileType == RsFileType

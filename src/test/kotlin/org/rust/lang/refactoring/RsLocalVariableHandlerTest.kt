@@ -174,10 +174,10 @@ class RsLocalVariableHandlerTest : RsTestBase() {
         myFixture.checkResult(after)
     }
 
-    private fun refactoring(): RustIntroduceVariableRefactoring =
-        RustIntroduceVariableRefactoring(project, myFixture.editor, myFixture.file as RsFile)
+    private fun refactoring(): RsIntroduceVariableRefactoring =
+        RsIntroduceVariableRefactoring(project, myFixture.editor, myFixture.file as RsFile)
 
-    fun RustIntroduceVariableRefactoring.getTarget(idx: Int, total: Int): RsExpr {
+    fun RsIntroduceVariableRefactoring.getTarget(idx: Int, total: Int): RsExpr {
         check(idx < total) { "Can't select $idx target out of $total" }
         val targets = possibleTargets()
         check(targets.size == total) {

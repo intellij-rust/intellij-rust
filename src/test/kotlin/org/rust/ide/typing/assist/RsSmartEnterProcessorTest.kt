@@ -4,7 +4,7 @@ import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors
 import com.intellij.lang.Language
 import com.intellij.openapi.application.Result
 import com.intellij.openapi.command.WriteCommandAction
-import org.rust.lang.RustLanguage
+import org.rust.lang.RsLanguage
 import org.rust.lang.RsTestBase
 
 /**
@@ -18,7 +18,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
 
     private fun doTest() {
         myFixture.configureByFile("$fileName")
-        val processors = getSmartProcessors(RustLanguage)
+        val processors = getSmartProcessors(RsLanguage)
 
         val writeCommand = object : WriteCommandAction<RsSmartEnterProcessor>(project) {
             override fun run(result: Result<RsSmartEnterProcessor>) {

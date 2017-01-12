@@ -6,14 +6,14 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RsForeignModItem
 import org.rust.lang.core.psi.RsOuterAttr
 import org.rust.lang.core.psi.impl.RsStubbedElementImpl
-import org.rust.lang.core.stubs.RustPlaceholderStub
+import org.rust.lang.core.stubs.RsPlaceholderStub
 
-abstract class RsForeignModItemImplMixin : RsStubbedElementImpl<RustPlaceholderStub>,
+abstract class RsForeignModItemImplMixin : RsStubbedElementImpl<RsPlaceholderStub>,
                                            RsForeignModItem {
 
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RustPlaceholderStub, elementType: IStubElementType<*, *>) : super(stub, elementType)
+    constructor(stub: RsPlaceholderStub, elementType: IStubElementType<*, *>) : super(stub, elementType)
 
     override val outerAttrList: List<RsOuterAttr>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RsOuterAttr::class.java)

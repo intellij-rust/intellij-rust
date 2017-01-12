@@ -8,8 +8,8 @@ import org.rust.lang.core.psi.RsUseGlob
 import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.impl.RsStubbedElementImpl
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.resolve.ref.RustReference
-import org.rust.lang.core.resolve.ref.RustUseGlobReferenceImpl
+import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.lang.core.resolve.ref.RsUseGlobReferenceImpl
 import org.rust.lang.core.stubs.RsUseGlobStub
 
 abstract class RsUseGlobImplMixin : RsStubbedElementImpl<RsUseGlobStub>, RsUseGlob {
@@ -18,8 +18,8 @@ abstract class RsUseGlobImplMixin : RsStubbedElementImpl<RsUseGlobStub>, RsUseGl
 
     constructor(stub: RsUseGlobStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getReference(): RustReference =
-        RustUseGlobReferenceImpl(this)
+    override fun getReference(): RsReference =
+        RsUseGlobReferenceImpl(this)
 
     override val referenceNameElement: PsiElement
         get() = requireNotNull(identifier ?: self) {

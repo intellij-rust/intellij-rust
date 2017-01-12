@@ -6,10 +6,10 @@ import org.rust.cargo.project.CargoProjectDescription
 import org.rust.cargo.project.workspace.cargoProject
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.resolve.ref.RustReference
+import org.rust.lang.core.resolve.ref.RsReference
 
 interface RsCompositeElement : PsiElement {
-    override fun getReference(): RustReference?
+    override fun getReference(): RsReference?
 }
 
 val RsCompositeElement.containingMod: RsMod?

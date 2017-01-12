@@ -10,7 +10,7 @@ import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
-import org.rust.lang.RustLanguage
+import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsOuterAttr
 import org.rust.lang.core.psi.RustCompositeElementTypes.*
 import org.rust.lang.core.psi.util.parentOfType
@@ -58,7 +58,7 @@ object DeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
 
         return psiElement()
             .inside(traitMetaItem)
-            .withLanguage(RustLanguage)
+            .withLanguage(RsLanguage)
     }
 }
 

@@ -3,14 +3,14 @@ package org.rust.ide.annotator
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.rust.lang.RustFileType
+import org.rust.lang.RsFileType
 import org.rust.lang.RsTestBase
 
 abstract class RsLineMarkerProviderTestBase : RsTestBase() {
     override val dataPath = ""
 
     protected fun doTestByText(source: String) {
-        myFixture.configureByText(RustFileType, source)
+        myFixture.configureByText(RsFileType, source)
         myFixture.doHighlighting()
         val expected = markersFrom(source)
         val actual = markersFrom(myFixture.editor, myFixture.project)

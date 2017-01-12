@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.rust.ide.highlight.RsHighlighter
-import org.rust.lang.RustLanguage
+import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
 import kotlin.reflect.KClass
@@ -22,7 +22,7 @@ sealed class RsContextType(
 ) : TemplateContextType(id, presentableName, baseContextType.java) {
 
     final override fun isInContext(file: PsiFile, offset: Int): Boolean {
-        if (!PsiUtilCore.getLanguageAtOffset(file, offset).isKindOf(RustLanguage)) {
+        if (!PsiUtilCore.getLanguageAtOffset(file, offset).isKindOf(RsLanguage)) {
             return false
         }
 

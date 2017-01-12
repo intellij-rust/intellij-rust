@@ -5,7 +5,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 import org.assertj.core.api.Assertions
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RustLanguage
+import org.rust.lang.RsLanguage
 import org.rust.lang.RsTestBase
 
 abstract class PostfixTemplateTest(val postfixTemplate: PostfixTemplate) : RsTestBase() {
@@ -31,7 +31,7 @@ abstract class PostfixTemplateTest(val postfixTemplate: PostfixTemplate) : RsTes
     }
 
     private fun checkApplicability(testCase: String, isApplicable: Boolean) {
-        val provider = LanguagePostfixTemplate.LANG_EP.allForLanguage(RustLanguage)
+        val provider = LanguagePostfixTemplate.LANG_EP.allForLanguage(RsLanguage)
             .first { descriptor ->
                 descriptor.templates.any { template ->
                     template.javaClass == this.postfixTemplate.javaClass

@@ -4,12 +4,12 @@ import com.intellij.application.options.CodeStyleAbstractConfigurable
 import com.intellij.application.options.TabbedLanguageCodeStylePanel
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider
-import org.rust.lang.RustLanguage
+import org.rust.lang.RsLanguage
 
 class RsCodeStyleSettingsProvider : CodeStyleSettingsProvider() {
     override fun createCustomSettings(settings: CodeStyleSettings) = RsCodeStyleSettings(settings)
 
-    override fun getConfigurableDisplayName() = RustLanguage.displayName
+    override fun getConfigurableDisplayName() = RsLanguage.displayName
 
     override fun createSettingsPage(settings: CodeStyleSettings, originalSettings: CodeStyleSettings) =
         object : CodeStyleAbstractConfigurable(settings, originalSettings, configurableDisplayName) {
@@ -18,7 +18,7 @@ class RsCodeStyleSettingsProvider : CodeStyleSettingsProvider() {
         }
 
     private class RustCodeStyleMainPanel(currentSettings: CodeStyleSettings, settings: CodeStyleSettings) :
-        TabbedLanguageCodeStylePanel(RustLanguage, currentSettings, settings) {
+        TabbedLanguageCodeStylePanel(RsLanguage, currentSettings, settings) {
 
         override fun initTabs(settings: CodeStyleSettings?) {
             addIndentOptionsTab(settings)

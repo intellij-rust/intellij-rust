@@ -4,10 +4,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.util.PathUtil
 import org.rust.lang.core.psi.impl.mixin.RustTypeAliasRole
-import org.rust.lang.core.resolve.indexes.RustImplIndex
-import org.rust.lang.core.stubs.index.RustGotoClassIndex
-import org.rust.lang.core.stubs.index.RustModulesIndex
-import org.rust.lang.core.stubs.index.RustNamedElementIndex
+import org.rust.lang.core.resolve.indexes.RsImplIndex
+import org.rust.lang.core.stubs.index.RsGotoClassIndex
+import org.rust.lang.core.stubs.index.RsModulesIndex
+import org.rust.lang.core.stubs.index.RsNamedElementIndex
 
 fun IndexSink.indexExternCrate(stub: RsExternCrateItemStub) {
     indexNamedStub(stub)
@@ -29,7 +29,7 @@ fun IndexSink.indexModDeclItem(stub: RsModDeclItemStub) {
         ?: stub.name
 
     if (pathKey != null) {
-        occurrence(RustModulesIndex.KEY, pathKey)
+        occurrence(RsModulesIndex.KEY, pathKey)
     }
 }
 
@@ -43,8 +43,8 @@ fun IndexSink.indexTraitItem(stub: RsTraitItemStub) {
 }
 
 fun IndexSink.indexImplItem(stub: RsImplItemStub) {
-    RustImplIndex.TraitImpls.index(stub, this)
-    RustImplIndex.InherentImpls.index(stub, this)
+    RsImplIndex.TraitImpls.index(stub, this)
+    RsImplIndex.InherentImpls.index(stub, this)
 }
 
 fun IndexSink.indexFunction(stub: RsFunctionStub) {
@@ -68,12 +68,12 @@ fun IndexSink.indexFieldDecl(stub: RsFieldDeclStub) {
 
 private fun IndexSink.indexNamedStub(stub: RustNamedStub) {
     stub.name?.let {
-        occurrence(RustNamedElementIndex.KEY, it)
+        occurrence(RsNamedElementIndex.KEY, it)
     }
 }
 
 private fun IndexSink.indexGotoClass(stub: RustNamedStub) {
     stub.name?.let {
-        occurrence(RustGotoClassIndex.KEY, it)
+        occurrence(RsGotoClassIndex.KEY, it)
     }
 }

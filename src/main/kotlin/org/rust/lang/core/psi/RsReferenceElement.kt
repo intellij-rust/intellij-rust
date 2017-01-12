@@ -1,7 +1,7 @@
 package org.rust.lang.core.psi
 
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.resolve.ref.RustReference
+import org.rust.lang.core.resolve.ref.RsReference
 
 interface RsReferenceElement : RsCompositeElement {
 
@@ -9,5 +9,5 @@ interface RsReferenceElement : RsCompositeElement {
 
     val referenceName: String
 
-    override fun getReference(): RustReference
+    override fun getReference(): RsReference
 }
