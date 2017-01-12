@@ -1,6 +1,6 @@
 package org.rust.ide.template.postfix
 
-class WhilePostfixTemplateTest : PostfixTemplateTestCase(WhileExpressionPostfixTemplate()) {
+class WhilePostfixTemplateTest : PostfixTemplateTest(WhileExpressionPostfixTemplate()) {
     fun testNumber() = doTestNotApplicable(
         """
             fn main() {

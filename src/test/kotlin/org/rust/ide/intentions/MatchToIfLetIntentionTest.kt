@@ -1,6 +1,6 @@
 package org.rust.ide.intentions
 
-class MatchToIfLetIntentionTest : RustIntentionTestBase(MatchToIfLetIntention()) {
+class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
     fun testUnavailableAllVoidArms() = doUnavailableTest(
         """
         enum MyOption {

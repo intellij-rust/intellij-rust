@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.RsLambdaExpr
 import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.psi.util.parentOfType
 
-class WrapLambdaExprIntention : RustElementBaseIntentionAction<RsExpr>() {
+class WrapLambdaExprIntention : RsElementBaseIntentionAction<RsExpr>() {
     override fun getText() = "Add braces to lambda expression"
     override fun getFamilyName() = text
 

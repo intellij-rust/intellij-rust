@@ -21,7 +21,7 @@ import org.rust.lang.core.psi.util.parentOfType
  * &mut type
  * ```
  */
-open class SetMutableIntention : RustElementBaseIntentionAction<SetMutableIntention.Context>() {
+open class SetMutableIntention : RsElementBaseIntentionAction<SetMutableIntention.Context>() {
     override fun getText() = "Set reference mutable"
     override fun getFamilyName() = text
 

@@ -1,8 +1,8 @@
 package org.rust.ide.refactoring
 
-import org.rust.lang.RustTestCaseBase
+import org.rust.lang.RsTestBase
 
-class RenameTest : RustTestCaseBase() {
+class RenameTest : RsTestBase() {
     override val dataPath = "org/rust/ide/refactoring/fixtures/rename"
 
     fun testFunction() = doTest()

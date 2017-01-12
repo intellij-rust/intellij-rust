@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.psi.util.parentOfType
 
-class AddElseIntention : RustElementBaseIntentionAction<RsIfExpr>() {
+class AddElseIntention : RsElementBaseIntentionAction<RsIfExpr>() {
     override fun getText() = "Add else branch to is if statement"
     override fun getFamilyName(): String = text
 

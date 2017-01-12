@@ -8,7 +8,7 @@ import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.psi.util.parentOfType
 
-class ImplementStructIntention : RustElementBaseIntentionAction<RsStructItem>() {
+class ImplementStructIntention : RsElementBaseIntentionAction<RsStructItem>() {
     override fun getText() = "Implement struct"
     override fun getFamilyName() = text
 

@@ -1,9 +1,9 @@
 package org.rust.ide.intentions
 
 import org.rust.lang.RustFileType
-import org.rust.lang.RustTestCaseBase
+import org.rust.lang.RsTestBase
 
-class UnwrapSingleExprIntentionTest : RustTestCaseBase() {
+class UnwrapSingleExprIntentionTest : RsTestBase() {
     override val dataPath = ""
 
     fun testAvailableLambdaUnwrapBracesSingleExpression() = doAvailableTest(

@@ -8,7 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
 
-class AddDeriveIntention : RustElementBaseIntentionAction<AddDeriveIntention.Context>() {
+class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Context>() {
     override fun getFamilyName() = "Add derive clause"
     override fun getText() = "Add derive clause"
 

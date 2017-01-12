@@ -1,6 +1,6 @@
 package org.rust.ide.intentions
 
-class AddElseIntentionTest : RustIntentionTestBase(AddElseIntention()) {
+class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention()) {
 
     fun test1() = doUnavailableTest(
         """

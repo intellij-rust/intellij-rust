@@ -2,10 +2,10 @@ package org.rust.lang.refactoring
 
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RustTestCaseBase
+import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.impl.RustFile
 
-class RustNameSuggestionsKtTest : RustTestCaseBase() {
+class RsNameSuggestionsKtTest : RsTestBase() {
     override val dataPath = "org/rust/lang/refactoring/fixtures/introduce_variable/"
 
     fun testArgumentNames() = doTest("""

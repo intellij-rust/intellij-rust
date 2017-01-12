@@ -8,7 +8,7 @@ import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.util.getNextNonCommentSibling
 import org.rust.lang.core.psi.util.parentOfType
 
-class UnwrapSingleExprIntention : RustElementBaseIntentionAction<RsBlockExpr>() {
+class UnwrapSingleExprIntention : RsElementBaseIntentionAction<RsBlockExpr>() {
     override fun getText() = "Remove braces from single expression"
     override fun getFamilyName() = text
 

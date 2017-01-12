@@ -1,6 +1,6 @@
 package org.rust.ide.intentions
 
-class MoveTypeConstraintToWhereClauseIntentionTest : RustIntentionTestBase(MoveTypeConstraintToWhereClauseIntention()) {
+class MoveTypeConstraintToWhereClauseIntentionTest : RsIntentionTestBase(MoveTypeConstraintToWhereClauseIntention()) {
     fun testFunctionWithReturn() = doAvailableTest(
         """ fn foo<T: Send,/*caret*/ F: Sync>(t: T, f: F) -> i32 { 0 } """,
         """ fn foo<T, F>(t: T, f: F) -> i32 where T: Send, F: Sync/*caret*/ { 0 } """

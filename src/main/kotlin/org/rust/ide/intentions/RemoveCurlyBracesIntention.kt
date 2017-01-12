@@ -20,7 +20,7 @@ import org.rust.lang.core.psi.util.parentOfType
  * import std::mem;
  * ```
  */
-class RemoveCurlyBracesIntention : RustElementBaseIntentionAction<RemoveCurlyBracesIntention.Context>() {
+class RemoveCurlyBracesIntention : RsElementBaseIntentionAction<RemoveCurlyBracesIntention.Context>() {
     override fun getText() = "Remove curly braces"
     override fun getFamilyName() = text
 

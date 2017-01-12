@@ -1,6 +1,6 @@
 package org.rust.ide.template.postfix
 
-class IfPostfixTemplateTest : PostfixTemplateTestCase(IfExpressionPostfixTemplate()) {
+class IfPostfixTemplateTest : PostfixTemplateTest(IfExpressionPostfixTemplate()) {
     fun testNumber() = doTestNotApplicable(
         """
             fn main() {

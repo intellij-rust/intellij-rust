@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.impl.mixin.valueParameters
 import org.rust.lang.core.psi.util.contains
 import org.rust.lang.core.psi.util.parentOfType
 
-class UnElideLifetimesIntention : RustElementBaseIntentionAction<RsFunction>() {
+class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
     override fun getText() = "Un-elide lifetimes"
     override fun getFamilyName(): String = text
 

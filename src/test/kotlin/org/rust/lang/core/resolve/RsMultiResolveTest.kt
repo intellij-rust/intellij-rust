@@ -1,0 +1,38 @@
+package org.rust.lang.core.resolve
+
+import org.rust.lang.core.psi.RustReferenceElement
+
+
+class RsMultiResolveTest : RsResolveTestBase() {
+    fun testStructExpr() = doTest("""
+        struct S { foo: i32, foo: () }
+        fn main() {
+            let _ = S { foo: 1 };
+                       //^
+        }
+    """)
+
+    fun testFieldExpr() = doTest("""
+        struct S { foo: i32, foo: () }
+        fn f(s: S) {
+            s.foo
+             //^
+        }
+    """)
+
+    fun testUseMultiReference() = doTest("""
+        use m::foo;
+              //^
+
+        mod m {
+            fn foo() {}
+            mod foo {}
+        }
+    """)
+
+    private fun doTest(code: String) {
+        InlineFile(code)
+        val ref = findElementInEditor<RustReferenceElement>().reference
+        check(ref.multiResolve().size == 2)
+    }
+}

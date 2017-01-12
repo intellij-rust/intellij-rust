@@ -6,13 +6,13 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.assertj.core.api.Assertions
-import org.rust.lang.RustTestCaseBase
+import org.rust.lang.RsTestBase
 import java.util.*
 
 /**
  * Base class for tests of output highlighting filters.
  */
-abstract class HighlightFilterTestBase : RustTestCaseBase() {
+abstract class HighlightFilterTestBase : RsTestBase() {
     override val dataPath = ""
 
     val projectDir: VirtualFile get() = myFixture.tempDirFixture.getFile("")

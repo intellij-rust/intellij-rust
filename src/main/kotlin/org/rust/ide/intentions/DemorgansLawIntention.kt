@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.utils.isNegation
 import org.rust.lang.utils.negateToString
 
-class DemorgansLawIntention : RustElementBaseIntentionAction<DemorgansLawIntention.Context>() {
+class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention.Context>() {
     override fun getFamilyName() = "DeMorgan's Law"
 
     private fun setTextForElement(element: RsBinaryExpr) {

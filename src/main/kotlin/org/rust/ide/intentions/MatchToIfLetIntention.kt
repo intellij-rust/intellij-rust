@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.getNextNonCommentSibling
 import org.rust.lang.core.psi.util.parentOfType
 
-class MatchToIfLetIntention : RustElementBaseIntentionAction<MatchToIfLetIntention.Context>() {
+class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention.Context>() {
     override fun getText() = "Convert match statement to if let"
     override fun getFamilyName(): String = text
 

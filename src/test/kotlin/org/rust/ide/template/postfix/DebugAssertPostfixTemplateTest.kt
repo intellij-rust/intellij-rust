@@ -1,6 +1,6 @@
 package org.rust.ide.template.postfix
 
-class DebugAssertPostfixTemplateTest : PostfixTemplateTestCase(DebugAssertPostfixTemplate()) {
+class DebugAssertPostfixTemplateTest : PostfixTemplateTest(DebugAssertPostfixTemplate()) {
     fun testNumber() = doTestNotApplicable(
         """
         fn main() {

@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
 import org.rust.lang.core.psi.util.parentOfType
 
 //TODO: make context more precise here
-class ExtractInlineModuleIntention : RustElementBaseIntentionAction<RsModItem>() {
+class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
     override fun getFamilyName() = "Extract inline module structure"
     override fun getText() = "Extract inline module"
 

@@ -1,6 +1,6 @@
 package org.rust.ide.intentions
 
-class RemoveParenthesesFromExprIntentionTest : RustIntentionTestBase(RemoveParenthesesFromExprIntention()) {
+class RemoveParenthesesFromExprIntentionTest : RsIntentionTestBase(RemoveParenthesesFromExprIntention()) {
     fun testRemoveParenthesesFromExpr() = doAvailableTest("""
         fn test() {
             let a = (4 + 3/*caret*/);

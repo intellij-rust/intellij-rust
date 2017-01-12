@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsParenExpr
 import org.rust.lang.core.psi.util.parentOfType
 
-class RemoveParenthesesFromExprIntention : RustElementBaseIntentionAction<RsParenExpr>() {
+class RemoveParenthesesFromExprIntention : RsElementBaseIntentionAction<RsParenExpr>() {
     override fun getText(): String = "Remove parentheses from expression"
     override fun getFamilyName(): String = text
 

@@ -21,7 +21,7 @@ import org.rust.lang.core.psi.util.parentOfType
  * import std::{mem};
  * ```
  */
-class AddCurlyBracesIntention : RustElementBaseIntentionAction<AddCurlyBracesIntention.Context>() {
+class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesIntention.Context>() {
     override fun getText() = "Add curly braces"
     override fun getFamilyName() = text
 
