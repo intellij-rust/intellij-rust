@@ -97,12 +97,16 @@ change. Common tags are:
   * RES for name resolution
   * TY for type inference
   * COMP for code completion
+  * STUB for PSI stubs
+  
   
   * FMT for formatter
   * TYPE for editor-related functions
   * ANN for error highlighting and annotators
   * INSP for inspections
   * INT for intentions
+  * RUN for run configurations
+
 
   * CARGO 
   * GRD for build changes
