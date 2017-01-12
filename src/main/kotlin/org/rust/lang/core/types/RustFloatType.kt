@@ -1,9 +1,8 @@
 package org.rust.lang.core.types
 
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.types.visitors.RustTypeVisitor
 
-class RustFloatType(val kind: Kind) : RustPrimitiveTypeBase() {
+data class RustFloatType(val kind: Kind) : RustPrimitiveType {
 
     companion object {
         fun fromLiteral(literal: PsiElement): RustFloatType {
@@ -17,8 +16,6 @@ class RustFloatType(val kind: Kind) : RustPrimitiveTypeBase() {
     }
 
     enum class Kind { f32, f64 }
-
-    override fun <T> accept(visitor: RustTypeVisitor<T>): T = visitor.visitFloat(this)
 
     override fun toString(): String = kind.toString()
 

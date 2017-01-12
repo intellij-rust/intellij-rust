@@ -221,7 +221,7 @@ private class RustTypeTypificationVisitor(val pivot: RustTypeElement) : RustComp
     override fun visitBaseType(o: RustBaseTypeElement) = set {
         val path = o.path?.asRustPath ?: return@set RustUnknownType
         if (path is RustPath.Named && path.segments.isEmpty()) {
-            val primitiveType = RustPrimitiveTypeBase.fromTypeName(path.head.name)
+            val primitiveType = RustPrimitiveType.fromTypeName(path.head.name)
             if (primitiveType != null) return@set primitiveType
         }
         val target = RustResolveEngine.resolve(path, pivot, Namespace.Types)

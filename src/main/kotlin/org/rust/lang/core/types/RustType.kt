@@ -3,19 +3,22 @@ package org.rust.lang.core.types
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RustFunctionElement
 import org.rust.lang.core.psi.RustTraitItemElement
-import org.rust.lang.core.types.visitors.RustTypeVisitor
+import org.rust.lang.core.psi.util.trait
+import org.rust.lang.core.resolve.indexes.RustImplIndex
 
 interface RustType {
 
     /**
      * Traits explicitly (or implicitly) implemented for this particular type
      */
-    fun getTraitsImplementedIn(project: Project): Sequence<RustTraitItemElement>
+    fun getTraitsImplementedIn(project: Project): Sequence<RustTraitItemElement> =
+        RustImplIndex.findImplsFor(this, project).mapNotNull { it.traitRef?.trait }
 
     /**
      * Non-static methods accessible for this particular type
      */
-    fun getNonStaticMethodsIn(project: Project): Sequence<RustFunctionElement>
+    fun getNonStaticMethodsIn(project: Project): Sequence<RustFunctionElement> =
+        RustImplIndex.findNonStaticMethodsFor(this, project)
 
     /**
      * Apply positional type arguments to a generic type.
@@ -36,12 +39,6 @@ interface RustType {
      * Bindings between formal type parameters and actual type arguments.
      */
     val typeParameterValues: Map<RustTypeParameterType, RustType> get() = emptyMap()
-
-    fun <T> accept(visitor: RustTypeVisitor<T>): T
-
-    override fun equals(other: Any?): Boolean
-
-    override fun hashCode(): Int
 
     override fun toString(): String
 

@@ -1,20 +1,15 @@
 package org.rust.lang.core.types
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.RustFunctionElement
 import org.rust.lang.core.psi.RustTraitItemElement
-import org.rust.lang.core.resolve.indexes.RustImplIndex
 
-abstract class RustPrimitiveTypeBase : RustTypeBase() {
-
-    override fun getNonStaticMethodsIn(project: Project): Sequence<RustFunctionElement> =
-        RustImplIndex.findNonStaticMethodsFor(this, project)
+interface RustPrimitiveType : RustType {
 
     override fun getTraitsImplementedIn(project: Project): Sequence<RustTraitItemElement> =
         emptySequence()
 
     companion object {
-        fun fromTypeName(name: String): RustPrimitiveTypeBase? {
+        fun fromTypeName(name: String): RustPrimitiveType? {
             val integerKind = RustIntegerType.Kind.values().find { it.name == name }
             if (integerKind != null) return RustIntegerType(integerKind)
 
