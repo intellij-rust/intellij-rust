@@ -4,9 +4,8 @@ import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RustFunctionElement
 import org.rust.lang.core.psi.RustTraitItemElement
 import org.rust.lang.core.resolve.indexes.RustImplIndex
-import org.rust.lang.core.types.unresolved.RustUnresolvedTypeBase
 
-abstract class RustPrimitiveTypeBase : RustUnresolvedTypeBase(), RustType {
+abstract class RustPrimitiveTypeBase : RustTypeBase() {
 
     override fun getNonStaticMethodsIn(project: Project): Sequence<RustFunctionElement> =
         RustImplIndex.findNonStaticMethodsFor(this, project)

@@ -1,10 +1,8 @@
 package org.rust.lang.core.types.visitors.impl
 
 import org.rust.lang.core.types.*
-import org.rust.lang.core.types.unresolved.*
 import org.rust.lang.core.types.visitors.RustInvariantTypeVisitor
 import org.rust.lang.core.types.visitors.RustTypeVisitor
-import org.rust.lang.core.types.visitors.RustUnresolvedTypeVisitor
 import org.rust.utils.safely
 
 open class RustEqualityTypeVisitor(override var lop: RustType)
@@ -80,55 +78,6 @@ open class RustEqualityTypeVisitor(override var lop: RustType)
     }
 }
 
-
-open class RustEqualityUnresolvedTypeVisitor(override var lop: RustUnresolvedType)
-    : RustEqualityTypeVisitorBase<RustUnresolvedType>()
-    , RustUnresolvedTypeVisitor<Boolean> {
-
-    fun visit(lop: RustUnresolvedType, rop: RustUnresolvedType): Boolean {
-        val prev = this.lop
-        this.lop = lop
-
-        return safely({ rop.accept(this) }) {
-            this.lop = prev
-        }
-    }
-
-    fun visitTypeList(lop: Iterable<RustUnresolvedType>, rop: Iterable<RustUnresolvedType>): Boolean =
-        lop.count() == rop.count() && lop.zip(rop).all({ visit(it.first, it.second) })
-
-    override fun visitPathType(type: RustUnresolvedPathType): Boolean {
-        val lop = lop
-        if (lop !is RustUnresolvedPathType)
-            return false
-
-        return lop.path == type.path
-    }
-
-    override fun visitTupleType(type: RustUnresolvedTupleType): Boolean {
-        val lop = lop
-        if (lop !is RustUnresolvedTupleType)
-            return false
-
-        return visitTypeList(lop.types, type.types)
-    }
-
-    override fun visitFunctionType(type: RustUnresolvedFunctionType): Boolean {
-        val lop = lop
-        if (lop !is RustUnresolvedFunctionType)
-            return false
-
-        return visit(lop.retType, type.retType) && visitTypeList(lop.paramTypes, type.paramTypes)
-    }
-
-    override fun visitReference(type: RustUnresolvedReferenceType): Boolean {
-        val lop = lop
-        if (lop !is RustUnresolvedReferenceType)
-            return false
-
-        return lop.mutable == type.mutable && visit(lop.referenced, type.referenced)
-    }
-}
 
 abstract class RustEqualityTypeVisitorBase<T>() : RustInvariantTypeVisitor<Boolean> {
 

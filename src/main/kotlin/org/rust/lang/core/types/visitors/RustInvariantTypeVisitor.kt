@@ -1,7 +1,6 @@
 package org.rust.lang.core.types.visitors
 
 import org.rust.lang.core.types.*
-import org.rust.lang.core.types.unresolved.RustUnresolvedTupleType
 
 interface RustInvariantTypeVisitor<T> {
 
