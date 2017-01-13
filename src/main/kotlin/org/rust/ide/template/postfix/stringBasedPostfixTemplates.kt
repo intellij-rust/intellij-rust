@@ -5,7 +5,7 @@ import com.intellij.codeInsight.template.impl.TextExpression
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.util.descendentsOfType
+import org.rust.lang.core.psi.util.descendantsOfType
 import org.rust.lang.core.resolve.innerDeclarations
 import org.rust.lang.core.types.RustEnumType
 import org.rust.lang.core.types.util.resolvedType
@@ -89,7 +89,7 @@ class MatchPostfixTemplate : StringBasedPostfixTemplate(
                         .joinToString(prefix = "{", separator = ", ", postfix = "}")
                 }
 
-                tupleFields != null -> (0 until tupleFields.descendentsOfType<RsTupleFieldDecl>().size)
+                tupleFields != null -> (0 until tupleFields.descendantsOfType<RsTupleFieldDecl>().size)
                     .map { "v$it" }
                     .joinToString(prefix = "(", separator = ", ", postfix = ")")
 

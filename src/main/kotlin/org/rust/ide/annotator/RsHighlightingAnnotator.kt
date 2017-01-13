@@ -16,7 +16,7 @@ import org.rust.lang.core.types.isPrimitive
 import org.rust.lang.core.types.util.resolvedType
 
 // Highlighting logic here should be kept in sync with tags in RustColorSettingsPage
-class RustHighlightingAnnotator : Annotator {
+class RsHighlightingAnnotator : Annotator {
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val (partToHighlight, color) = if (element is RsReferenceElement) {
@@ -29,9 +29,11 @@ class RustHighlightingAnnotator : Annotator {
     }
 
     private fun highlightReference(element: RsReferenceElement): Pair<PsiElement, RsColor>? {
+        // These should be highlighted as keywords by the lexer
+        if (element is RsPath && (element.self != null || element.`super` != null)) return null
+
         val parent = element.parent
-        val isPrimitiveType = element is RsPath && parent is RsBaseType &&
-            parent.resolvedType.isPrimitive
+        val isPrimitiveType = element is RsPath && parent is RsBaseType && parent.resolvedType.isPrimitive
 
         val color = if (isPrimitiveType) {
             RsColor.PRIMITIVE_TYPE
@@ -46,7 +48,7 @@ class RustHighlightingAnnotator : Annotator {
     private fun highlightNotReference(element: PsiElement): Pair<PsiElement, RsColor>? {
         if (element is RsLitExpr) {
             if (element.parent is RsMetaItem) {
-                val literal = element.firstChild
+                val literal = element.lit.firstChild
                 val color = RsHighlighter.map(literal.elementType)
                     ?: return null // FIXME: `error` here perhaps?
                 return literal to color

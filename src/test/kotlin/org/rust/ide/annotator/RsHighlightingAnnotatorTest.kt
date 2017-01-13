@@ -96,6 +96,16 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun testSelfIsNotOverAnnotated() = checkInfo("""
+        pub use self::<info>foo</info>;
+
+        mod <info>foo</info> {
+            pub use self::<info>bar</info>;
+
+            pub mod <info>bar</info> {}
+        }
+    """)
+
     fun testDontTouchAstInOtherFiles() {
         val files = ProjectFile.parseFileCollection("""
         //- main.rs

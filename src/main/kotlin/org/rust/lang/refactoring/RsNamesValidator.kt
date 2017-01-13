@@ -3,8 +3,8 @@ package org.rust.lang.refactoring
 import com.intellij.lang.refactoring.NamesValidator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.tree.IElementType
-import org.rust.lang.core.lexer.RustLexer
-import org.rust.lang.core.psi.RsKeywordTokenType
+import org.rust.lang.core.lexer.RsLexer
+import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RsTokenElementTypes.IDENTIFIER
 
 class RsNamesValidator : NamesValidator {
@@ -12,7 +12,7 @@ class RsNamesValidator : NamesValidator {
         isKeyword(name, project, true)
 
     fun isKeyword(name: String, @Suppress("UNUSED_PARAMETER") project: Project?, withPrimitives: Boolean): Boolean =
-        getLexerType(name) is RsKeywordTokenType || (withPrimitives && name in PrimitiveTypes)
+        getLexerType(name) in RS_KEYWORDS || (withPrimitives && name in PrimitiveTypes)
 
     override fun isIdentifier(name: String, project: Project?): Boolean =
         isIdentifier(name, project, true)
@@ -25,7 +25,7 @@ class RsNamesValidator : NamesValidator {
         }
 
     private fun getLexerType(text: String): IElementType? {
-        val lexer = RustLexer()
+        val lexer = RsLexer()
         lexer.start(text)
         if (lexer.tokenEnd == text.length) {
             return lexer.tokenType
