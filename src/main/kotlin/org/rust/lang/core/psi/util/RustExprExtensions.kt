@@ -13,5 +13,4 @@ val RsStructExpr.fields: List<RsNamedElement>
 /**
  * Extracts [RsLitExpr] raw value
  */
-val RsLitExpr.stringLiteralValue: String?
-    get() = ((lit.stringLiteral ?: lit.rawStringLiteral) as? RsLiteral.Text)?.value
+val RsLitExpr.stringLiteralValue: String? get() = (lit.kind as? RsTextLiteral)?.value

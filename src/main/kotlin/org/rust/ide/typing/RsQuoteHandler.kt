@@ -5,7 +5,6 @@ import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.psi.StringEscapesTokenTypes.STRING_LITERAL_ESCAPES
 import org.rust.lang.core.psi.RsTokenElementTypes.*
-import org.rust.lang.core.psi.impl.RsRawStringLiteralImpl
 
 // Remember not to auto-pair `'` in char literals because of lifetimes, which use single `'`: `'a`
 class RsQuoteHandler : SimpleTokenSetQuoteHandler(
@@ -76,15 +75,14 @@ class RsQuoteHandler : SimpleTokenSetQuoteHandler(
 
     override fun getClosingQuote(iterator: HighlighterIterator, offset: Int): CharSequence? {
         val literal = getLiteralDumb(iterator) ?: return null
-        if (literal is RsRawStringLiteralImpl) {
-            val valueOffsets = literal.offsets.value?.shiftRight(iterator.start) ?: return null
-            if (offset !in valueOffsets || offset == valueOffsets.startOffset || offset == valueOffsets.endOffset) {
-                return '"' + "#".repeat(literal.hashes)
-            } else {
-                return null
-            }
-        }
+        if (literal.node.elementType !in RAW_LITERALS) return null
 
-        return null
+        val valueOffsets = literal.offsets.value?.shiftRight(iterator.start) ?: return null
+        if (offset !in valueOffsets || offset == valueOffsets.startOffset || offset == valueOffsets.endOffset) {
+            val hashes = literal.offsets.openDelim?.length?.let { it - 1 } ?: 0
+            return '"' + "#".repeat(hashes)
+        } else {
+            return null
+        }
     }
 }

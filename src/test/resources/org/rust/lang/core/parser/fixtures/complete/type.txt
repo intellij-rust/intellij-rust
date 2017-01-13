@@ -333,7 +333,7 @@ FILE
       RsExternAbiImpl(EXTERN_ABI)
         PsiElement(extern)('extern')
         PsiWhiteSpace(' ')
-        RustStringLiteralImpl(<STRING>)('"system"')
+        PsiElement(<STRING>)('"system"')
       PsiWhiteSpace(' ')
       PsiElement(fn)('fn')
       RsValueParameterListImpl(VALUE_PARAMETER_LIST)

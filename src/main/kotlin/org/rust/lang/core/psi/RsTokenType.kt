@@ -1,21 +1,11 @@
 package org.rust.lang.core.psi
 
-import com.intellij.lang.ASTNode
-import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.tree.ILeafElementType
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsTokenElementTypes.*
 
 open class RsTokenType(debugName: String) : IElementType(debugName, RsLanguage)
-
-class RsLiteralTokenType(
-    debugName: String,
-    private val implConstructor: (IElementType, CharSequence) -> RsLiteral
-) : RsTokenType(debugName), ILeafElementType {
-    override fun createLeafNode(leafText: CharSequence): ASTNode = implConstructor(this, leafText)
-}
 
 private fun tokenSetOf(vararg tokens: RsTokenType) = TokenSet.create(*tokens)
 

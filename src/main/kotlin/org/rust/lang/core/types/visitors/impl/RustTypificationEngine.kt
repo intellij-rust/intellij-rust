@@ -114,14 +114,12 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 
     override fun visitLitExpr(o: RsLitExpr) = set {
-        val l = o.lit
-        when {
-            l.integerLiteral != null -> RustIntegerType.fromLiteral(l.integerLiteral!!)
-            l.floatLiteral != null -> RustFloatType.fromLiteral(l.floatLiteral!!)
-            l.stringLiteral != null -> RustStringSliceType
-            l.charLiteral != null -> RustCharacterType
-            l.`true` != null || l.`false` != null -> RustBooleanType
-            else -> RustUnknownType
+        when (o.lit.kind) {
+            is RsLiteralKind.Boolean -> RustBooleanType
+            is RsLiteralKind.Integer -> RustIntegerType.fromLiteral(o.lit.integerLiteral!!)
+            is RsLiteralKind.Float -> RustFloatType.fromLiteral(o.lit.floatLiteral!!)
+            is RsLiteralKind.String -> RustStringSliceType
+            is RsLiteralKind.Char -> RustCharacterType
         }
     }
 

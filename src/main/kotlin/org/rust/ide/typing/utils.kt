@@ -2,10 +2,11 @@ package org.rust.ide.typing
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.util.text.CharSequenceSubSequence
-import org.rust.lang.core.psi.RsLiteral
-import org.rust.lang.core.psi.RsLiteralTokenType
+import org.rust.lang.core.psi.RsComplexLiteral
+import org.rust.lang.core.psi.RsLiteralKind
 
 fun isValidOffset(offset: Int, text: CharSequence): Boolean =
     0 <= offset && offset <= text.length
@@ -32,11 +33,11 @@ fun getSiblingTokens(iterator: HighlighterIterator): Pair<IElementType?, IElemen
 }
 
 /**
- * Creates virtual [RsLiteral] PSI element assuming that it is represented as
+ * Creates virtual [RsLiteralKind] PSI element assuming that it is represented as
  * single, contiguous token in highlighter, in other words - it doesn't contain
  * any escape sequences etc. (hence 'dumb').
  */
-fun getLiteralDumb(iterator: HighlighterIterator): RsLiteral? {
+fun getLiteralDumb(iterator: HighlighterIterator): RsComplexLiteral? {
     val start = iterator.start
     val end = iterator.end
 
@@ -44,8 +45,8 @@ fun getLiteralDumb(iterator: HighlighterIterator): RsLiteral? {
     val text = document.charsSequence
     val literalText = CharSequenceSubSequence(text, start, end)
 
-    val elementType = iterator.tokenType as? RsLiteralTokenType ?: return null
-    return elementType.createLeafNode(literalText) as RsLiteral
+    val elementType = iterator.tokenType ?: return null
+    return RsLiteralKind.fromAstNode(LeafPsiElement(elementType, literalText)) as? RsComplexLiteral
 }
 
 fun Document.deleteChar(offset: Int) {

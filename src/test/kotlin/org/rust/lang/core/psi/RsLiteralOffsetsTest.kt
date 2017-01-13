@@ -1,13 +1,11 @@
 package org.rust.lang.core.psi
 
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import org.rust.lang.core.psi.impl.RsNumericLiteralImpl
-import org.rust.lang.core.psi.impl.RsRawStringLiteralImpl
-import org.rust.lang.core.psi.impl.RsStringLiteralImpl
 import org.rust.lang.core.psi.RsTokenElementTypes.BYTE_LITERAL as BCH
 import org.rust.lang.core.psi.RsTokenElementTypes.CHAR_LITERAL as CHR
 import org.rust.lang.core.psi.RsTokenElementTypes.FLOAT_LITERAL as FLT
@@ -18,15 +16,16 @@ import org.rust.lang.core.psi.RsTokenElementTypes.RAW_STRING_LITERAL as RAW
 abstract class RsLiteralOffsetsTestCase(
     private val type: IElementType,
     private val text: String,
-    private val constructor: (IElementType, CharSequence) -> RsLiteral) {
+    private val constructor: (IElementType, CharSequence) -> LiteralOffsets
+) {
 
     protected fun doTest() {
-        val literal = constructor(type, text.replace("|", ""))
+        val offsets = constructor(type, text.replace("|", ""))
         val expected = makeOffsets(text)
-        assertEquals(expected, literal.offsets)
+        assertEquals(expected, offsets)
     }
 
-    private fun makeOffsets(text: String): RsLiteral.Offsets {
+    private fun makeOffsets(text: String): LiteralOffsets {
         val parts = text.split('|')
         assert(parts.size == 5)
         val prefixEnd = parts[0].length
@@ -34,7 +33,7 @@ abstract class RsLiteralOffsetsTestCase(
         val valueEnd = openDelimEnd + parts[2].length
         val closeDelimEnd = valueEnd + parts[3].length
         val suffixEnd = closeDelimEnd + parts[4].length
-        return RsLiteral.Offsets.fromEndOffsets(prefixEnd, openDelimEnd, valueEnd, closeDelimEnd, suffixEnd)
+        return LiteralOffsets.fromEndOffsets(prefixEnd, openDelimEnd, valueEnd, closeDelimEnd, suffixEnd)
     }
 }
 
@@ -42,7 +41,7 @@ abstract class RsLiteralOffsetsTestCase(
 class RsNumericLiteralOffsetsTest(
     type: IElementType,
     text: String
-) : RsLiteralOffsetsTestCase(type, text, ::RsNumericLiteralImpl) {
+) : RsLiteralOffsetsTestCase(type, text, { type, text -> offsetsForNumber(LeafPsiElement(type, text)) }) {
 
     @Test
     fun test() = doTest()
@@ -70,7 +69,7 @@ class RsNumericLiteralOffsetsTest(
 
 @RunWith(Parameterized::class)
 class RsStringLiteralOffsetsTest(type: IElementType, text: String) :
-    RsLiteralOffsetsTestCase(type, text, ::RsStringLiteralImpl) {
+    RsLiteralOffsetsTestCase(type, text, { type, text -> offsetsForText(LeafPsiElement(type, text)) }) {
     @Test
     fun test() = doTest()
 
@@ -94,7 +93,7 @@ class RsStringLiteralOffsetsTest(type: IElementType, text: String) :
 
 @RunWith(Parameterized::class)
 class RsRawStringLiteralOffsetsTest(type: IElementType, text: String) :
-    RsLiteralOffsetsTestCase(type, text, ::RsRawStringLiteralImpl) {
+    RsLiteralOffsetsTestCase(type, text, { type, text -> offsetsForText(LeafPsiElement(type, text)) }) {
     @Test
     fun test() = doTest()
 

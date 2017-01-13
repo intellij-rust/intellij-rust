@@ -57,7 +57,7 @@ FILE
         PsiWhiteSpace(' ')
         RsLitExprImpl(LIT_EXPR)
           RsLitImpl(LIT)
-            RustNumericLiteralImpl(<INTEGER>)('92')
+            PsiElement(<INTEGER>)('92')
         PsiElement(;)(';')
       PsiWhiteSpace('\n')
       PsiElement(})('}')

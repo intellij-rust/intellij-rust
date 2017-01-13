@@ -17,7 +17,7 @@ FILE
           RsMethodCallExprImpl(METHOD_CALL_EXPR)
             RsLitExprImpl(LIT_EXPR)
               RsLitImpl(LIT)
-                RustStringLiteralImpl(<STRING>)('"1"')
+                PsiElement(<STRING>)('"1"')
             PsiElement(.)('.')
             PsiElement(<IDENTIFIER>)('parse')
             RsTypeArgumentListImpl(TYPE_ARGUMENT_LIST)

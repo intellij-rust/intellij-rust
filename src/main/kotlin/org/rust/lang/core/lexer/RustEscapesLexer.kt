@@ -126,7 +126,7 @@ class RustEscapesLexer private constructor(
             CHAR_LITERAL -> RustEscapesLexer(CHAR_LITERAL, unicode = true)
             BYTE_STRING_LITERAL -> RustEscapesLexer(BYTE_STRING_LITERAL, eol = true, extendedByte = true)
             STRING_LITERAL -> RustEscapesLexer(STRING_LITERAL, unicode = true, eol = true)
-            else -> throw IllegalArgumentException("unsupported literal type")
+            else -> throw IllegalArgumentException("unsupported literal type: $tokenType")
         }
 
         /**

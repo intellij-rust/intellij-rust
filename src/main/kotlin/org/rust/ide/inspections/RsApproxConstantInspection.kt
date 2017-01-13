@@ -2,23 +2,21 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
-import org.rust.lang.core.psi.RsLiteral
-import org.rust.lang.core.psi.visitors.RustVisitorEx
+import org.rust.lang.core.psi.RsLit
+import org.rust.lang.core.psi.RsLiteralKind
+import org.rust.lang.core.psi.RsVisitor
+import org.rust.lang.core.psi.kind
 
 class RsApproxConstantInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
-        object : RustVisitorEx() {
-            override fun visitNumericLiteral(literal: RsLiteral.Number) {
-                if (literal.isFloat) analyzeLiteral(literal, holder)
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+        override fun visitLit(o: RsLit) {
+            val literal = o.kind
+            if (literal is RsLiteralKind.Float) {
+                val value = literal.value ?: return
+                val constant = KNOWN_CONSTS.find { it.matches(value) } ?: return
+                holder.registerProblem(o, literal.suffix ?: "f64", constant)
             }
         }
-
-    private fun analyzeLiteral(literal: RsLiteral.Number, holder: ProblemsHolder) {
-        check(literal.isFloat)
-        val value = literal.valueAsDouble ?: return
-        val constant = KNOWN_CONSTS.find { it.matches(value) } ?: return
-        holder.registerProblem(literal, literal.suffix ?: "f64", constant)
     }
 
     private companion object {

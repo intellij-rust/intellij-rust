@@ -4,9 +4,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.rust.lang.core.lexer.RustEscapesLexer;
-import org.rust.lang.core.psi.impl.RsNumericLiteralImpl;
-import org.rust.lang.core.psi.impl.RsRawStringLiteralImpl;
-import org.rust.lang.core.psi.impl.RsStringLiteralImpl;
 
 public interface RsTokenElementTypes {
 
@@ -77,14 +74,14 @@ public interface RsTokenElementTypes {
 
     // Literals
 
-    RsTokenType INTEGER_LITERAL = RsNumericLiteralImpl.createTokenType("<INTEGER>");
-    RsTokenType FLOAT_LITERAL = RsNumericLiteralImpl.createTokenType("<FLOAT>");
-    RsTokenType BYTE_LITERAL = RsStringLiteralImpl.createTokenType("<BYTE>");
-    RsTokenType CHAR_LITERAL = RsStringLiteralImpl.createTokenType("<CHAR>");
-    RsTokenType STRING_LITERAL = RsStringLiteralImpl.createTokenType("<STRING>");
-    RsTokenType BYTE_STRING_LITERAL = RsStringLiteralImpl.createTokenType("<BYTE_STRING>");
-    RsTokenType RAW_STRING_LITERAL = RsRawStringLiteralImpl.createTokenType("<RAW_STRING>");
-    RsTokenType RAW_BYTE_STRING_LITERAL = RsRawStringLiteralImpl.createTokenType("<RAW_BYTE_STRING>");
+    RsTokenType INTEGER_LITERAL = new RsTokenType("<INTEGER>");
+    RsTokenType FLOAT_LITERAL = new RsTokenType("<FLOAT>");
+    RsTokenType BYTE_LITERAL = new RsTokenType("<BYTE>");
+    RsTokenType CHAR_LITERAL = new RsTokenType("<CHAR>");
+    RsTokenType STRING_LITERAL = new RsTokenType("<STRING>");
+    RsTokenType BYTE_STRING_LITERAL = new RsTokenType("<BYTE_STRING>");
+    RsTokenType RAW_STRING_LITERAL = new RsTokenType("<RAW_STRING>");
+    RsTokenType RAW_BYTE_STRING_LITERAL = new RsTokenType("<RAW_BYTE_STRING>");
 
     // Comments
 

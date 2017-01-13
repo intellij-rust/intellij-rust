@@ -37,7 +37,7 @@ FILE
     RsExternAbiImpl(EXTERN_ABI)
       PsiElement(extern)('extern')
       PsiWhiteSpace(' ')
-      RustStringLiteralImpl(<STRING>)('"C"')
+      PsiElement(<STRING>)('"C"')
     PsiWhiteSpace(' ')
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')

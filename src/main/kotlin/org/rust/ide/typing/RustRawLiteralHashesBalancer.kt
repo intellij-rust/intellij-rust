@@ -10,9 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
+import org.rust.lang.core.psi.RsComplexLiteral
 import org.rust.lang.core.psi.RsTokenElementTypes.RAW_LITERALS
 import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.impl.RsRawStringLiteralImpl
 
 class RsRawLiteralHashesInserter : TypedHandlerDelegate() {
     override fun beforeCharTyped(c: Char, project: Project, editor: Editor, file: PsiFile, fileType: FileType): Result {
@@ -94,7 +94,8 @@ class RsRawLiteralHashesDeleter : RsEnableableBackspaceHandlerDelegate() {
 
 private fun getHashesOffsets(iterator: HighlighterIterator): Pair<TextRange, TextRange>? {
     // We are only interested in valid raw literals
-    val literal = getLiteralDumb(iterator) as? RsRawStringLiteralImpl ?: return null
+    val literal = getLiteralDumb(iterator) ?: return null
+    if (literal.node.elementType !in RAW_LITERALS) return null
     val openDelim = literal.offsets.openDelim ?: return null
     val closeDelim = literal.offsets.closeDelim ?: return null
 
