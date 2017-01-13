@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.RsLiteral
 import org.rust.lang.core.psi.RsTokenElementTypes.*
 import org.rust.lang.core.psi.visitors.RustVisitorEx
 
-class RustLiteralAnnotator : Annotator {
+class RsLiteralAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) = element.accept(object : RustVisitorEx() {
         fun visit(literal: RsLiteral) {
             // Check suffix

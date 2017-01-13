@@ -12,7 +12,7 @@ import org.rust.lang.core.psi.impl.mixin.RsStructKind
 import org.rust.lang.core.psi.impl.mixin.kind
 import java.util.*
 
-class RustExpressionAnnotator : Annotator {
+class RsExpressionAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         element.accept(RedundantParenthesisVisitor(holder))
         if (element is RsStructExpr) {
