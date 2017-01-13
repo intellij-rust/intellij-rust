@@ -970,8 +970,8 @@ private ArrayInitializer ::= [ AnyExpr ( ';' AnyExpr | (',' AnyExpr)* ','? ) ]
 
 fake RangeExpr ::= Expr + {
   methods=[
-    from="/expr[0]"
-    to="/expr[1]"
+    from="/Expr[0]"
+    to="/Expr[1]"
   ]
 }
 
