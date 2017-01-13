@@ -12,7 +12,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
-import org.rust.lang.core.lexer.RustLexer
+import org.rust.lang.core.lexer.RsLexer
 import org.rust.lang.core.psi.RsCompositeElementTypes
 import org.rust.lang.core.psi.RsTokenElementTypes
 import org.rust.lang.core.psi.RsTokenElementTypes.EOL_COMMENTS_TOKEN_SET
@@ -27,7 +27,7 @@ class RustParserDefinition : ParserDefinition {
 
     override fun spaceExistanceTypeBetweenTokens(left: ASTNode, right: ASTNode): ParserDefinition.SpaceRequirements {
         if (left.elementType in EOL_COMMENTS_TOKEN_SET) return ParserDefinition.SpaceRequirements.MUST_LINE_BREAK
-        return LanguageUtil.canStickTokensTogetherByLexer(left, right, RustLexer())
+        return LanguageUtil.canStickTokensTogetherByLexer(left, right, RsLexer())
     }
 
     override fun getFileNodeType(): IFileElementType = RsFileStub.Type
@@ -43,7 +43,7 @@ class RustParserDefinition : ParserDefinition {
     override fun createElement(node: ASTNode?): PsiElement =
         RsCompositeElementTypes.Factory.createElement(node)
 
-    override fun createLexer(project: Project?): Lexer = RustLexer()
+    override fun createLexer(project: Project?): Lexer = RsLexer()
 
     override fun createParser(project: Project?): PsiParser = RustParser()
 }

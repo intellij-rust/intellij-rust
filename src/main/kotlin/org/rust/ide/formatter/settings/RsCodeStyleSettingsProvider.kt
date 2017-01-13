@@ -13,11 +13,11 @@ class RsCodeStyleSettingsProvider : CodeStyleSettingsProvider() {
 
     override fun createSettingsPage(settings: CodeStyleSettings, originalSettings: CodeStyleSettings) =
         object : CodeStyleAbstractConfigurable(settings, originalSettings, configurableDisplayName) {
-            override fun createPanel(settings: CodeStyleSettings) = RustCodeStyleMainPanel(currentSettings, settings)
+            override fun createPanel(settings: CodeStyleSettings) = RsCodeStyleMainPanel(currentSettings, settings)
             override fun getHelpTopic() = null
         }
 
-    private class RustCodeStyleMainPanel(currentSettings: CodeStyleSettings, settings: CodeStyleSettings) :
+    private class RsCodeStyleMainPanel(currentSettings: CodeStyleSettings, settings: CodeStyleSettings) :
         TabbedLanguageCodeStylePanel(RsLanguage, currentSettings, settings) {
 
         override fun initTabs(settings: CodeStyleSettings?) {

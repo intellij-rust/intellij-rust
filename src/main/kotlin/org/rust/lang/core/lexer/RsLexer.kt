@@ -2,4 +2,4 @@ package org.rust.lang.core.lexer
 
 import com.intellij.lexer.FlexAdapter
 
-class RustLexer : FlexAdapter(_RustLexer())
+class RsLexer : FlexAdapter(_RustLexer())

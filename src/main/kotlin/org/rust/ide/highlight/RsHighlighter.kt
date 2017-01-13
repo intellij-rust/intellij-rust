@@ -5,7 +5,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
 import org.rust.ide.colors.RsColor
-import org.rust.lang.core.lexer.RustHighlightingLexer
+import org.rust.lang.core.lexer.RsHighlightingLexer
 import org.rust.lang.core.psi.RsKeywordTokenType
 import org.rust.lang.core.psi.RsOperatorTokenType
 import org.rust.lang.core.psi.RsTokenElementTypes.*
@@ -13,7 +13,7 @@ import org.rust.lang.doc.psi.RsDocElementTypes.*
 
 class RsHighlighter : SyntaxHighlighterBase() {
 
-    override fun getHighlightingLexer() = RustHighlightingLexer()
+    override fun getHighlightingLexer() = RsHighlightingLexer()
 
     override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> =
         pack(map(tokenType)?.textAttributesKey)

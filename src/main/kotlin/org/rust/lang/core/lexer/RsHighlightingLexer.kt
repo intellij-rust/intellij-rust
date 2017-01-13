@@ -6,7 +6,7 @@ import org.rust.lang.core.psi.RsTokenElementTypes.ESCAPABLE_LITERALS_TOKEN_SET
 import org.rust.lang.doc.lexer.RsDocHighlightingLexer
 import org.rust.lang.doc.psi.RsDocKind
 
-class RustHighlightingLexer : LayeredLexer(RustLexer()) {
+class RsHighlightingLexer : LayeredLexer(RsLexer()) {
     init {
         ESCAPABLE_LITERALS_TOKEN_SET.types.forEach {
             registerLayer(RustEscapesLexer.of(it), it)

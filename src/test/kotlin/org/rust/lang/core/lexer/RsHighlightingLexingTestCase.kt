@@ -5,7 +5,7 @@ import com.intellij.lexer.Lexer
 class RsHighlightingLexingTestCase : RsLexingTestCaseBase() {
     override fun getTestDataPath(): String = "org/rust/lang/core/lexer/fixtures/highlighting"
 
-    override fun createLexer(): Lexer = RustHighlightingLexer()
+    override fun createLexer(): Lexer = RsHighlightingLexer()
 
     fun testEol() = doTest()
     fun testRawLiterals() = doTest()
