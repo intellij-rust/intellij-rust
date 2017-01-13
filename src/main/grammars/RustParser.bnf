@@ -133,9 +133,6 @@
     //  Misc
     //
 
-    elementType (".*_bin_expr")   = binary_expr
-    elementType (".*_range_expr") = range_expr
-
     elementType ("(fn|anon|lambda|path)_parameter") = value_parameter
     elementType ("(fn|lambda|path|fn_type|foreign_fn|method|method_decl)_parameters") = value_parameter_list
 
@@ -972,19 +969,15 @@ private paren_expr_end ::= ')'
 array_expr ::= '[' array_initializer ']' { pin = 1 }
 private array_initializer ::= [ any_expr ( ';' any_expr | (',' any_expr)* ','? ) ]
 
-
-//private range_expr_group ::= open_range_expr
-//                           | full_range_expr
-
-full_range_expr ::= expr ( '..' (&<<checkBraceAllowed>> expr)? | '...' (&<<checkBraceAllowed>> expr) )
-open_range_expr ::=      ( '..' (&<<checkBraceAllowed>> expr)? | '...' (&<<checkBraceAllowed>> expr) )
-
 fake range_expr ::= expr + {
   methods=[
     from="/expr[0]"
     to="/expr[1]"
   ]
 }
+
+full_range_expr ::= expr ( '..' (&<<checkBraceAllowed>> expr)? | '...' (&<<checkBraceAllowed>> expr) ) { elementType = range_expr }
+open_range_expr ::=      ( '..' (&<<checkBraceAllowed>> expr)? | '...' (&<<checkBraceAllowed>> expr) ) { elementType = range_expr }
 
 
 index_expr ::= expr index_arg
