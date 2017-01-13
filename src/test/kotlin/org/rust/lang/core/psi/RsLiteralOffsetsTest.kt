@@ -15,7 +15,7 @@ import org.rust.lang.core.psi.RsTokenElementTypes.INTEGER_LITERAL as INT
 import org.rust.lang.core.psi.RsTokenElementTypes.RAW_BYTE_STRING_LITERAL as BRW
 import org.rust.lang.core.psi.RsTokenElementTypes.RAW_STRING_LITERAL as RAW
 
-abstract class RustLiteralOffsetsTestCase(
+abstract class RsLiteralOffsetsTestCase(
     private val type: IElementType,
     private val text: String,
     private val constructor: (IElementType, CharSequence) -> RsLiteral) {
@@ -39,10 +39,10 @@ abstract class RustLiteralOffsetsTestCase(
 }
 
 @RunWith(Parameterized::class)
-class RustNumericLiteralOffsetsTest(
+class RsNumericLiteralOffsetsTest(
     type: IElementType,
     text: String
-) : RustLiteralOffsetsTestCase(type, text, ::RsNumericLiteralImpl) {
+) : RsLiteralOffsetsTestCase(type, text, ::RsNumericLiteralImpl) {
 
     @Test
     fun test() = doTest()
@@ -69,8 +69,8 @@ class RustNumericLiteralOffsetsTest(
 }
 
 @RunWith(Parameterized::class)
-class RustStringLiteralOffsetsTest(type: IElementType, text: String) :
-    RustLiteralOffsetsTestCase(type, text, ::RsStringLiteralImpl) {
+class RsStringLiteralOffsetsTest(type: IElementType, text: String) :
+    RsLiteralOffsetsTestCase(type, text, ::RsStringLiteralImpl) {
     @Test
     fun test() = doTest()
 
@@ -93,8 +93,8 @@ class RustStringLiteralOffsetsTest(type: IElementType, text: String) :
 }
 
 @RunWith(Parameterized::class)
-class RustRawStringLiteralOffsetsTest(type: IElementType, text: String) :
-    RustLiteralOffsetsTestCase(type, text, ::RsRawStringLiteralImpl) {
+class RsRawStringLiteralOffsetsTest(type: IElementType, text: String) :
+    RsLiteralOffsetsTestCase(type, text, ::RsRawStringLiteralImpl) {
     @Test
     fun test() = doTest()
 
