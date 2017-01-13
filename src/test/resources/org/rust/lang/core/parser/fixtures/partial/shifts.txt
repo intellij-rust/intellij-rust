@@ -11,7 +11,8 @@ FILE
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
       RsLitExprImpl(LIT_EXPR)
-        RustNumericLiteralImpl(<INTEGER>)('1')
+        RsLitImpl(LIT)
+          RustNumericLiteralImpl(<INTEGER>)('1')
         PsiErrorElement:'&', '^' or '|' expected, got '>'
           <empty list>
       PsiWhiteSpace(' ')

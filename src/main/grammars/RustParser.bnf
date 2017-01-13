@@ -1102,7 +1102,6 @@ MacroItem ::= AttrsAndVis ZzMacroItem {
 }
 ImplMacroMember ::= ZzMacroItem
 
-// Utils
 private TokenTrees ::= TokenTree*
 
 TokenTree ::= '(' TokenTrees ')'
@@ -1111,19 +1110,11 @@ TokenTree ::= '(' TokenTrees ')'
              | << unpairedToken >> +
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Literals
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-private Lit ::= ( STRING_LITERAL
-                | CHAR_LITERAL
-                | BYTE_STRING_LITERAL
-                | BYTE_LITERAL
-                | RAW_STRING_LITERAL
-                | RAW_BYTE_STRING_LITERAL
-                | INTEGER_LITERAL
-                | FLOAT_LITERAL
-                | FALSE | TRUE )
+Lit ::= STRING_LITERAL | BYTE_STRING_LITERAL
+      | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL
+      | CHAR_LITERAL | BYTE_LITERAL
+      | INTEGER_LITERAL | FLOAT_LITERAL
+      | FALSE | TRUE
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
