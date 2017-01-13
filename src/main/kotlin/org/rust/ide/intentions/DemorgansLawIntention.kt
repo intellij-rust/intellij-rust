@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.util.descendentsOfType
+import org.rust.lang.core.psi.util.descendantsOfType
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.utils.isNegation
 import org.rust.lang.utils.negateToString
@@ -53,7 +53,7 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
         if (isAllSameOpType) {
             applyDemorgan(project, topBinExpr, opType)
         } else {
-            val binaryExprs = topBinExpr.descendentsOfType<RsBinaryExpr>().filter { e ->
+            val binaryExprs = topBinExpr.descendantsOfType<RsBinaryExpr>().filter { e ->
                 !(e.operatorType != opType || e.parent is RsBinaryExpr && (e.parent as RsBinaryExpr).operatorType == opType)
             }
 
