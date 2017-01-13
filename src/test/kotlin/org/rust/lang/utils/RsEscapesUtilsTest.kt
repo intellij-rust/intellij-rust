@@ -6,11 +6,11 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
-class UnescapeRustTest(private val input: String,
-                       private val expected: String,
-                       private val unicode: Boolean,
-                       private val eol: Boolean,
-                       private val extendedByte: Boolean) {
+class UnescapeRsTest(private val input: String,
+                     private val expected: String,
+                     private val unicode: Boolean,
+                     private val eol: Boolean,
+                     private val extendedByte: Boolean) {
     @Test
     fun test() = assertEquals(expected, input.unescapeRust(unicode, eol, extendedByte))
 

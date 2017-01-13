@@ -12,9 +12,9 @@ import org.rust.lang.core.psi.impl.RsNumericLiteralImpl
 import java.util.*
 
 @RunWith(Parameterized::class)
-class RustNumericLiteralValueTest(private val constructor: (String) -> RsLiteral.Number,
-                                  private val input: String,
-                                  private val expectedOutput: Any?) {
+class RsNumericLiteralValueTest(private val constructor: (String) -> RsLiteral.Number,
+                                private val input: String,
+                                private val expectedOutput: Any?) {
     @Test
     fun test() {
         val elem = constructor(input)
@@ -44,7 +44,7 @@ class RustNumericLiteralValueTest(private val constructor: (String) -> RsLiteral
     }
 }
 
-class RustNumericLiteralValueFuzzyTest {
+class RsNumericLiteralValueFuzzyTest {
     @Test
     fun testFuzzyIntegers() {
         repeat(10000) {

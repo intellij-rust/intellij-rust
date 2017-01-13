@@ -9,7 +9,7 @@ import org.rust.lang.doc.psi.RsDocKind
 import org.rust.lang.doc.psi.RsDocKind.*
 
 @RunWith(Parameterized::class)
-class RustDocRemoveDecorationTest(
+class RsDocRemoveDecorationTest(
     private val kind: RsDocKind,
     private val comment: String,
     private val content: String

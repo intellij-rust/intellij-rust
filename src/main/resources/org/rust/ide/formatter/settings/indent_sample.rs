@@ -10,16 +10,14 @@ impl Bar {
     fn moo(func: F, a: i32,
            b: i32, c: i32)
            -> Bar
-        where F: Fn(i32) -> i32 {
+           where F: Fn(i32) -> i32 {
         Bar {
             abra: 1234,
             kada: "foo",
         }
     }
 
-    fn bar() -> ! {
-        panic!("bar");
-    }
+    fn bar() -> ! { panic!("bar"); }
 }
 
 fn main() {

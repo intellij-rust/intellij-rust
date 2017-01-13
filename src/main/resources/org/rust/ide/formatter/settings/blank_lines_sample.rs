@@ -1,14 +1,19 @@
 #![allow(dead_code)]
 
 
+
 use std::cmp::{max, min};
+
 
 
 struct Rectangle {
     p1: (i32, i32),
 
+
+
     p2: (i32, i32),
 }
+
 
 
 impl Rectangle {
@@ -17,8 +22,10 @@ impl Rectangle {
         let (x2, y2) = self.p2;
 
 
+
         ((x1 - x2).abs(), (y1 - y2).abs())
     }
+
 
 
     fn area(&self) -> i32 {
