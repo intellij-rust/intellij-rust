@@ -88,13 +88,13 @@ public interface RsTokenElementTypes {
 
     // Comments
 
-    RsTokenType BLOCK_COMMENT = new RsCommentTokenType("<BLOCK_COMMENT>");
-    RsTokenType EOL_COMMENT = new RsCommentTokenType("<EOL_COMMENT>");
+    RsTokenType BLOCK_COMMENT = new RsTokenType("<BLOCK_COMMENT>");
+    RsTokenType EOL_COMMENT = new RsTokenType("<EOL_COMMENT>");
 
-    RsTokenType INNER_BLOCK_DOC_COMMENT = new RsCommentTokenType("<INNER_BLOCK_DOC_COMMENT>");
-    RsTokenType OUTER_BLOCK_DOC_COMMENT = new RsCommentTokenType("<OUTER_BLOCK_DOC_COMMENT>");
-    RsTokenType INNER_EOL_DOC_COMMENT = new RsCommentTokenType("<INNER_EOL_DOC_COMMENT>");
-    RsTokenType OUTER_EOL_DOC_COMMENT = new RsCommentTokenType("<OUTER_EOL_DOC_COMMENT>");
+    RsTokenType INNER_BLOCK_DOC_COMMENT = new RsTokenType("<INNER_BLOCK_DOC_COMMENT>");
+    RsTokenType OUTER_BLOCK_DOC_COMMENT = new RsTokenType("<OUTER_BLOCK_DOC_COMMENT>");
+    RsTokenType INNER_EOL_DOC_COMMENT = new RsTokenType("<INNER_EOL_DOC_COMMENT>");
+    RsTokenType OUTER_EOL_DOC_COMMENT = new RsTokenType("<OUTER_EOL_DOC_COMMENT>");
 
     RsTokenType SHEBANG_LINE = new RsTokenType("<SHEBANG_LINE>");
 
