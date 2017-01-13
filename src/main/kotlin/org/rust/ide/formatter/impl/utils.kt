@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType.WHITE_SPACE
-import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.tree.TokenSet.orSet
 import org.rust.lang.core.psi.*
@@ -12,10 +11,8 @@ import org.rust.lang.core.psi.RsCompositeElementTypes.*
 import org.rust.lang.core.psi.RsTokenElementTypes.*
 import com.intellij.psi.tree.TokenSet.create as ts
 
-val KEYWORDS = ts(*IElementType.enumerate { it is RsKeywordTokenType })
-
 val NO_SPACE_AROUND_OPS = ts(COLONCOLON, DOT, DOTDOT)
-val SPACE_AROUND_OPS = TokenSet.andNot(ALL_OPS, NO_SPACE_AROUND_OPS)
+val SPACE_AROUND_OPS = TokenSet.andNot(RS_OPERATORS, NO_SPACE_AROUND_OPS)
 val UNARY_OPS = ts(MINUS, MUL, EXCL, AND, ANDAND)
 
 val PAREN_DELIMITED_BLOCKS =

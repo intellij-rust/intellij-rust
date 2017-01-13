@@ -12,62 +12,62 @@ public interface RsTokenElementTypes {
 
     // Keywords
 
-    RsTokenType ABSTRACT = new RsKeywordTokenType("abstract");
-    RsTokenType ALIGNOF = new RsKeywordTokenType("alignof");
-    RsTokenType AS = new RsKeywordTokenType("as");
-    RsTokenType BECOME = new RsKeywordTokenType("become");
-    RsTokenType BOX = new RsKeywordTokenType("box");
-    RsTokenType BREAK = new RsKeywordTokenType("break");
-    RsTokenType CONST = new RsKeywordTokenType("const");
-    RsTokenType CONTINUE = new RsKeywordTokenType("continue");
-    RsTokenType CRATE = new RsKeywordTokenType("crate");
-    RsTokenType CSELF = new RsKeywordTokenType("Self");
-    RsTokenType DO = new RsKeywordTokenType("do");
-    RsTokenType ELSE = new RsKeywordTokenType("else");
-    RsTokenType ENUM = new RsKeywordTokenType("enum");
-    RsTokenType EXTERN = new RsKeywordTokenType("extern");
-    RsTokenType FALSE = new RsKeywordTokenType("false");
-    RsTokenType FINAL = new RsKeywordTokenType("final");
-    RsTokenType FN = new RsKeywordTokenType("fn");
-    RsTokenType FOR = new RsKeywordTokenType("for");
-    RsTokenType IF = new RsKeywordTokenType("if");
-    RsTokenType IMPL = new RsKeywordTokenType("impl");
-    RsTokenType IN = new RsKeywordTokenType("in");
-    RsTokenType LET = new RsKeywordTokenType("let");
-    RsTokenType LOOP = new RsKeywordTokenType("loop");
-    RsTokenType KW_MACRO = new RsKeywordTokenType("macro");
-    RsTokenType MATCH = new RsKeywordTokenType("match");
-    RsTokenType MOD = new RsKeywordTokenType("mod");
-    RsTokenType MOVE = new RsKeywordTokenType("move");
-    RsTokenType MUT = new RsKeywordTokenType("mut");
-    RsTokenType OFFSETOF = new RsKeywordTokenType("offsetof");
-    RsTokenType OVERRIDE = new RsKeywordTokenType("override");
-    RsTokenType PRIV = new RsKeywordTokenType("priv");
-    RsTokenType PROC = new RsKeywordTokenType("proc");
-    RsTokenType PUB = new RsKeywordTokenType("pub");
-    RsTokenType PURE = new RsKeywordTokenType("pure");
-    RsTokenType REF = new RsKeywordTokenType("ref");
-    RsTokenType RETURN = new RsKeywordTokenType("return");
-    RsTokenType SELF = new RsKeywordTokenType("self");
-    RsTokenType SIZEOF = new RsKeywordTokenType("sizeof");
-    RsTokenType STATIC = new RsKeywordTokenType("static");
-    RsTokenType STRUCT = new RsKeywordTokenType("struct");
-    RsTokenType SUPER = new RsKeywordTokenType("super");
-    RsTokenType TRAIT = new RsKeywordTokenType("trait");
-    RsTokenType TRUE = new RsKeywordTokenType("true");
-    RsTokenType TYPE_KW = new RsKeywordTokenType("type");
-    RsTokenType TYPEOF = new RsKeywordTokenType("typeof");
-    RsTokenType UNSAFE = new RsKeywordTokenType("unsafe");
-    RsTokenType UNSIZED = new RsKeywordTokenType("unsized");
-    RsTokenType USE = new RsKeywordTokenType("use");
-    RsTokenType VIRTUAL = new RsKeywordTokenType("virtual");
-    RsTokenType WHERE = new RsKeywordTokenType("where");
-    RsTokenType WHILE = new RsKeywordTokenType("while");
-    RsTokenType YIELD = new RsKeywordTokenType("yield");
+    RsTokenType ABSTRACT = new RsTokenType("abstract");
+    RsTokenType ALIGNOF = new RsTokenType("alignof");
+    RsTokenType AS = new RsTokenType("as");
+    RsTokenType BECOME = new RsTokenType("become");
+    RsTokenType BOX = new RsTokenType("box");
+    RsTokenType BREAK = new RsTokenType("break");
+    RsTokenType CONST = new RsTokenType("const");
+    RsTokenType CONTINUE = new RsTokenType("continue");
+    RsTokenType CRATE = new RsTokenType("crate");
+    RsTokenType CSELF = new RsTokenType("Self");
+    RsTokenType DO = new RsTokenType("do");
+    RsTokenType ELSE = new RsTokenType("else");
+    RsTokenType ENUM = new RsTokenType("enum");
+    RsTokenType EXTERN = new RsTokenType("extern");
+    RsTokenType FALSE = new RsTokenType("false");
+    RsTokenType FINAL = new RsTokenType("final");
+    RsTokenType FN = new RsTokenType("fn");
+    RsTokenType FOR = new RsTokenType("for");
+    RsTokenType IF = new RsTokenType("if");
+    RsTokenType IMPL = new RsTokenType("impl");
+    RsTokenType IN = new RsTokenType("in");
+    RsTokenType LET = new RsTokenType("let");
+    RsTokenType LOOP = new RsTokenType("loop");
+    RsTokenType KW_MACRO = new RsTokenType("macro");
+    RsTokenType MATCH = new RsTokenType("match");
+    RsTokenType MOD = new RsTokenType("mod");
+    RsTokenType MOVE = new RsTokenType("move");
+    RsTokenType MUT = new RsTokenType("mut");
+    RsTokenType OFFSETOF = new RsTokenType("offsetof");
+    RsTokenType OVERRIDE = new RsTokenType("override");
+    RsTokenType PRIV = new RsTokenType("priv");
+    RsTokenType PROC = new RsTokenType("proc");
+    RsTokenType PUB = new RsTokenType("pub");
+    RsTokenType PURE = new RsTokenType("pure");
+    RsTokenType REF = new RsTokenType("ref");
+    RsTokenType RETURN = new RsTokenType("return");
+    RsTokenType SELF = new RsTokenType("self");
+    RsTokenType SIZEOF = new RsTokenType("sizeof");
+    RsTokenType STATIC = new RsTokenType("static");
+    RsTokenType STRUCT = new RsTokenType("struct");
+    RsTokenType SUPER = new RsTokenType("super");
+    RsTokenType TRAIT = new RsTokenType("trait");
+    RsTokenType TRUE = new RsTokenType("true");
+    RsTokenType TYPE_KW = new RsTokenType("type");
+    RsTokenType TYPEOF = new RsTokenType("typeof");
+    RsTokenType UNSAFE = new RsTokenType("unsafe");
+    RsTokenType UNSIZED = new RsTokenType("unsized");
+    RsTokenType USE = new RsTokenType("use");
+    RsTokenType VIRTUAL = new RsTokenType("virtual");
+    RsTokenType WHERE = new RsTokenType("where");
+    RsTokenType WHILE = new RsTokenType("while");
+    RsTokenType YIELD = new RsTokenType("yield");
 
     // Context keywords
-    RsTokenType DEFAULT = new RsKeywordTokenType("default");
-    RsTokenType UNION = new RsKeywordTokenType("union");
+    RsTokenType DEFAULT = new RsTokenType("default");
+    RsTokenType UNION = new RsTokenType("union");
 
     // Identifiers
 
@@ -111,54 +111,54 @@ public interface RsTokenElementTypes {
 
     // Operators
 
-    RsTokenType AND = new RsOperatorTokenType("&");
-    RsTokenType ANDEQ = new RsOperatorTokenType("&=");
-    RsTokenType ARROW = new RsOperatorTokenType("->");
-    RsTokenType FAT_ARROW = new RsOperatorTokenType("=>");
-    RsTokenType SHA = new RsOperatorTokenType("#");
-    RsTokenType COLON = new RsOperatorTokenType(":");
-    RsTokenType COLONCOLON = new RsOperatorTokenType("::");
-    RsTokenType COMMA = new RsOperatorTokenType(",");
-    RsTokenType DIV = new RsOperatorTokenType("/");
-    RsTokenType DIVEQ = new RsOperatorTokenType("/=");
-    RsTokenType DOT = new RsOperatorTokenType(".");
-    RsTokenType DOTDOT = new RsOperatorTokenType("..");
-    RsTokenType DOTDOTDOT = new RsOperatorTokenType("...");
-    RsTokenType EQ = new RsOperatorTokenType("=");
-    RsTokenType EQEQ = new RsOperatorTokenType("==");
-    RsTokenType EXCL = new RsOperatorTokenType("!");
-    RsTokenType EXCLEQ = new RsOperatorTokenType("!=");
-    RsTokenType GT = new RsOperatorTokenType(">");
-    RsTokenType LT = new RsOperatorTokenType("<");
-    RsTokenType MINUS = new RsOperatorTokenType("-");
-    RsTokenType MINUSEQ = new RsOperatorTokenType("-=");
-    RsTokenType MUL = new RsOperatorTokenType("*");
-    RsTokenType MULEQ = new RsOperatorTokenType("*=");
-    RsTokenType OR = new RsOperatorTokenType("|");
-    RsTokenType OREQ = new RsOperatorTokenType("|=");
-    RsTokenType PLUS = new RsOperatorTokenType("+");
-    RsTokenType PLUSEQ = new RsOperatorTokenType("+=");
-    RsTokenType REM = new RsOperatorTokenType("%");
-    RsTokenType REMEQ = new RsOperatorTokenType("%=");
-    RsTokenType SEMICOLON = new RsOperatorTokenType(";");
-    RsTokenType XOR = new RsOperatorTokenType("^");
-    RsTokenType XOREQ = new RsOperatorTokenType("^=");
-    RsTokenType Q = new RsOperatorTokenType("?");
-    RsTokenType AT = new RsOperatorTokenType("@");
-    RsTokenType DOLLAR = new RsOperatorTokenType("$");
+    RsTokenType AND = new RsTokenType("&");
+    RsTokenType ANDEQ = new RsTokenType("&=");
+    RsTokenType ARROW = new RsTokenType("->");
+    RsTokenType FAT_ARROW = new RsTokenType("=>");
+    RsTokenType SHA = new RsTokenType("#");
+    RsTokenType COLON = new RsTokenType(":");
+    RsTokenType COLONCOLON = new RsTokenType("::");
+    RsTokenType COMMA = new RsTokenType(",");
+    RsTokenType DIV = new RsTokenType("/");
+    RsTokenType DIVEQ = new RsTokenType("/=");
+    RsTokenType DOT = new RsTokenType(".");
+    RsTokenType DOTDOT = new RsTokenType("..");
+    RsTokenType DOTDOTDOT = new RsTokenType("...");
+    RsTokenType EQ = new RsTokenType("=");
+    RsTokenType EQEQ = new RsTokenType("==");
+    RsTokenType EXCL = new RsTokenType("!");
+    RsTokenType EXCLEQ = new RsTokenType("!=");
+    RsTokenType GT = new RsTokenType(">");
+    RsTokenType LT = new RsTokenType("<");
+    RsTokenType MINUS = new RsTokenType("-");
+    RsTokenType MINUSEQ = new RsTokenType("-=");
+    RsTokenType MUL = new RsTokenType("*");
+    RsTokenType MULEQ = new RsTokenType("*=");
+    RsTokenType OR = new RsTokenType("|");
+    RsTokenType OREQ = new RsTokenType("|=");
+    RsTokenType PLUS = new RsTokenType("+");
+    RsTokenType PLUSEQ = new RsTokenType("+=");
+    RsTokenType REM = new RsTokenType("%");
+    RsTokenType REMEQ = new RsTokenType("%=");
+    RsTokenType SEMICOLON = new RsTokenType(";");
+    RsTokenType XOR = new RsTokenType("^");
+    RsTokenType XOREQ = new RsTokenType("^=");
+    RsTokenType Q = new RsTokenType("?");
+    RsTokenType AT = new RsTokenType("@");
+    RsTokenType DOLLAR = new RsTokenType("$");
 
     //
     // Operators created in parser by collapsing
     //
 
-    RsTokenType GTGTEQ = new RsOperatorTokenType(">>=");
-    RsTokenType GTGT = new RsOperatorTokenType(">>");
-    RsTokenType GTEQ = new RsOperatorTokenType(">=");
-    RsTokenType LTLTEQ = new RsOperatorTokenType("<<=");
-    RsTokenType LTLT = new RsOperatorTokenType("<<");
-    RsTokenType LTEQ = new RsOperatorTokenType("<=");
-    RsTokenType OROR = new RsOperatorTokenType("||");
-    RsTokenType ANDAND = new RsOperatorTokenType("&&");
+    RsTokenType GTGTEQ = new RsTokenType(">>=");
+    RsTokenType GTGT = new RsTokenType(">>");
+    RsTokenType GTEQ = new RsTokenType(">=");
+    RsTokenType LTLTEQ = new RsTokenType("<<=");
+    RsTokenType LTLT = new RsTokenType("<<");
+    RsTokenType LTEQ = new RsTokenType("<=");
+    RsTokenType OROR = new RsTokenType("||");
+    RsTokenType ANDAND = new RsTokenType("&&");
 
     //
     // Token Sets
@@ -210,18 +210,6 @@ public interface RsTokenElementTypes {
         LTEQ,
         OROR,
         ANDAND
-    );
-
-    @NotNull
-    TokenSet ALL_OPS = TokenSet.create(
-        IElementType.enumerate(
-            new IElementType.Predicate() {
-                @Override
-                public boolean matches(@NotNull IElementType type) {
-                    return type instanceof RsOperatorTokenType;
-                }
-            }
-        )
     );
 
     /**

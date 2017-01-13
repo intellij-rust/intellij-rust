@@ -6,8 +6,8 @@ import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
 import org.rust.ide.colors.RsColor
 import org.rust.lang.core.lexer.RsHighlightingLexer
-import org.rust.lang.core.psi.RsKeywordTokenType
-import org.rust.lang.core.psi.RsOperatorTokenType
+import org.rust.lang.core.psi.RS_KEYWORDS
+import org.rust.lang.core.psi.RS_OPERATORS
 import org.rust.lang.core.psi.RsTokenElementTypes.*
 import org.rust.lang.doc.psi.RsDocElementTypes.*
 
@@ -57,8 +57,8 @@ class RsHighlighter : SyntaxHighlighterBase() {
             INVALID_CHARACTER_ESCAPE_TOKEN -> RsColor.INVALID_STRING_ESCAPE
             INVALID_UNICODE_ESCAPE_TOKEN -> RsColor.INVALID_STRING_ESCAPE
 
-            is RsKeywordTokenType -> RsColor.KEYWORD
-            is RsOperatorTokenType -> RsColor.OPERATORS
+            in RS_KEYWORDS -> RsColor.KEYWORD
+            in RS_OPERATORS -> RsColor.OPERATORS
 
             else -> null
         }
