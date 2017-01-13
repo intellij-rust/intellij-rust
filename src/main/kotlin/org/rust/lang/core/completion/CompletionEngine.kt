@@ -18,8 +18,10 @@ import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.RustStructType
+import org.rust.lang.core.types.RustUnknownType
 import org.rust.lang.core.types.stripAllRefsIfAny
 import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.visitors.impl.RustTypificationEngine
 
 object CompletionEngine {
     const val KEYWORD_PRIORITY = 10.0
@@ -131,6 +133,12 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
                 context.document.insertString(context.selectionEndOffset, text)
                 EditorModificationUtil.moveCaretRelatively(context.editor, shift)
             }
+
+        is RsPatBinding -> base
+            .withTypeText(RustTypificationEngine.typify(this).let { when (it) {
+                is RustUnknownType -> ""
+                else -> it.toString()
+            }})
 
         else -> base
     }
