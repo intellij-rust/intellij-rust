@@ -60,7 +60,7 @@ sealed class RsLiteralKind(val node: ASTNode) {
         override val value: kotlin.String? get() {
             val rawValue = offsets.value?.substring(node.text)
 
-            return if (node.elementType in RAW_LITERALS)
+            return if (node.elementType in RS_RAW_LITERALS)
                 rawValue
             else
                 rawValue?.unescapeRust(RustEscapesLexer.of(node.elementType))

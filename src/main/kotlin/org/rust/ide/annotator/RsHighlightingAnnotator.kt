@@ -58,7 +58,7 @@ class RsHighlightingAnnotator : Annotator {
 
         // Although we remap tokens from identifier to keyword, this happens in the
         // parser's pass, so we can't use HighlightingLexer to color these
-        if (element.elementType in RsTokenElementTypes.CONTEXTUAL_KEYWORDS) {
+        if (element.elementType in RS_CONTEXTUAL_KEYWORDS) {
             return element to RsColor.KEYWORD
         }
 

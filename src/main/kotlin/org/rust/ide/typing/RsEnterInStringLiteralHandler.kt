@@ -9,8 +9,8 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
 import com.intellij.psi.StringEscapesTokenTypes.STRING_LITERAL_ESCAPES
-import org.rust.lang.core.psi.RsTokenElementTypes.RAW_LITERALS
-import org.rust.lang.core.psi.RsTokenElementTypes.STRING_LITERALS
+import org.rust.lang.core.psi.RS_RAW_LITERALS
+import org.rust.lang.core.psi.RS_STRING_LITERALS
 import org.rust.lang.core.psi.impl.RsFile
 
 class RsEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
@@ -45,7 +45,7 @@ class RsEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
         }
 
         return when (iterator.tokenType) {
-            in STRING_LITERALS -> {
+            in RS_STRING_LITERALS -> {
                 // In Rust, an unescaped newline inside a string literal is perfectly valid,
                 // and can be used to format multiline text. So if there is at least one such
                 // newline, don't try to be smart.
@@ -57,7 +57,7 @@ class RsEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
                 Result.DefaultForceIndent
             }
 
-            in RAW_LITERALS ->
+            in RS_RAW_LITERALS ->
                 Result.DefaultSkipIndent
 
             else -> Result.Continue

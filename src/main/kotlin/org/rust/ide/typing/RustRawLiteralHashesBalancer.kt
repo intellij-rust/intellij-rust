@@ -10,8 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
-import org.rust.lang.core.psi.RsComplexLiteral
-import org.rust.lang.core.psi.RsTokenElementTypes.RAW_LITERALS
+import org.rust.lang.core.psi.RS_RAW_LITERALS
 import org.rust.lang.core.psi.impl.RsFile
 
 class RsRawLiteralHashesInserter : TypedHandlerDelegate() {
@@ -63,7 +62,7 @@ class RsRawLiteralHashesDeleter : RsEnableableBackspaceHandlerDelegate() {
         val iterator = highlighter.createIterator(caretOffset - 1)
 
         // [getHashesOffsets] is O(n) (n is literal length), so do not evaluate it when it's not needed.
-        if (c != '#' || iterator.tokenType !in RAW_LITERALS) return false
+        if (c != '#' || iterator.tokenType !in RS_RAW_LITERALS) return false
 
         // We have to compute offsets here, because we still have our '#' in document.
         offsets = getHashesOffsets(iterator)
@@ -95,7 +94,7 @@ class RsRawLiteralHashesDeleter : RsEnableableBackspaceHandlerDelegate() {
 private fun getHashesOffsets(iterator: HighlighterIterator): Pair<TextRange, TextRange>? {
     // We are only interested in valid raw literals
     val literal = getLiteralDumb(iterator) ?: return null
-    if (literal.node.elementType !in RAW_LITERALS) return null
+    if (literal.node.elementType !in RS_RAW_LITERALS) return null
     val openDelim = literal.offsets.openDelim ?: return null
     val closeDelim = literal.offsets.closeDelim ?: return null
 

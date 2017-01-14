@@ -3,6 +3,7 @@ package org.rust.lang.core.lexer
 import com.intellij.openapi.util.text.StringUtil.isHexDigit
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.TokenSet
 import com.intellij.util.text.CharArrayUtil.indexOf
 import org.rust.lang.core.psi.RsTokenElementTypes.*
 
@@ -137,6 +138,17 @@ class RustEscapesLexer private constructor(
          */
         fun dummy(unicode: Boolean = true, eol: Boolean = true, extendedByte: Boolean = true): RustEscapesLexer =
             RustEscapesLexer(STRING_LITERAL, unicode, eol, extendedByte)
+
+        /**
+         * Set of possible arguments for [of]
+         */
+        val ESCAPABLE_LITERALS_TOKEN_SET = TokenSet.create(
+            BYTE_LITERAL,
+            CHAR_LITERAL,
+            STRING_LITERAL,
+            BYTE_STRING_LITERAL
+        )
+
     }
 }
 

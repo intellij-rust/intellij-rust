@@ -4,6 +4,7 @@ import com.intellij.codeInsight.editorActions.MultiCharQuoteHandler
 import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.psi.StringEscapesTokenTypes.STRING_LITERAL_ESCAPES
+import org.rust.lang.core.psi.RS_RAW_LITERALS
 import org.rust.lang.core.psi.RsTokenElementTypes.*
 
 // Remember not to auto-pair `'` in char literals because of lifetimes, which use single `'`: `'a`
@@ -75,7 +76,7 @@ class RsQuoteHandler : SimpleTokenSetQuoteHandler(
 
     override fun getClosingQuote(iterator: HighlighterIterator, offset: Int): CharSequence? {
         val literal = getLiteralDumb(iterator) ?: return null
-        if (literal.node.elementType !in RAW_LITERALS) return null
+        if (literal.node.elementType !in RS_RAW_LITERALS) return null
 
         val valueOffsets = literal.offsets.value?.shiftRight(iterator.start) ?: return null
         if (offset !in valueOffsets || offset == valueOffsets.startOffset || offset == valueOffsets.endOffset) {
