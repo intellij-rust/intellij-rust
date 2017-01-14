@@ -76,21 +76,19 @@
         RESERVED_KEYWORD = 'reserved_keyword'
     ]
 
-    //
-    //  Misc
-    //
+    elementType("(Fn|Anon|Lambda|Path)Parameter") = ValueParameter
+    elementType("(Fn|Lambda|Path|FnType|ForeignFn|Method|MethodDecl)Parameters") = ValueParameterList
 
-    elementType ("(Fn|Anon|Lambda|Path)Parameter") = ValueParameter
-    elementType ("(Fn|Lambda|Path|FnType|ForeignFn|Method|MethodDecl)Parameters") = ValueParameterList
+    extends(".+Expr") = Expr
+    elementType(".+BinExpr") = BinaryExpr
 
-    extends     (".+Expr") = Expr
-    elementType (".+BinExpr") = BinaryExpr
-    extends     ("(?!RetType).*Type") = Type
-    extends     ("Pat(Wild|Ref|Tup|Vec|Macro|Struct|Enum|Ident|Range|Uniq|QualPath)") = Pat
+    extends("(?!RetType).*Type") = Type
 
-    elementType ("ExprLikeMacro|ItemLikeMacro") = Macro
-    extends     ("(Try|FormatLike|Assert|AssertEq)Macro") = Macro
-    elementType (".+MacroInvocation|MacroRulesInvocation") = MacroInvocation
+    extends("Pat(Wild|Ref|Tup|Vec|Macro|Struct|Enum|Ident|Range|Uniq|QualPath)") = Pat
+
+    elementType("ExprLikeMacro|ItemLikeMacro") = Macro
+    extends("(Try|FormatLike|Assert|AssertEq)Macro") = Macro
+    elementType(".+MacroInvocation|MacroRulesInvocation") = MacroInvocation
 
     generateTokenAccessors=true
 
@@ -101,9 +99,6 @@
     consumeTokenMethod(".*") = "consumeTokenFast"
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Root
-///////////////////////////////////////////////////////////////////////////////////////////////////
 
 File ::= [ SHEBANG_LINE ] InnerAttr* Items
 
@@ -127,7 +122,8 @@ MetaItemArgs ::= '(' [ <<comma_separated_list (MetaItem | LitExpr)>> ] ')'
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 private PathIdent ::= !("union" identifier) identifier | self | super | 'Self'
-fake Path ::= (Path '::')? PathIdent PathTypeArguments? {
+
+fake Path ::= [ Path '::' ] PathIdent PathTypeArguments? {
   implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsPathImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPathStub"
@@ -140,7 +136,7 @@ PathStart ::= '::'?  PathIdent PathTypeArguments? { elementType = Path }
 left PathSegment ::= '::' PathIdent PathTypeArguments? { elementType = Path }
 
 private PathTypeArguments ::= <<isPathMode 'COLONS'>> ColonTypeArgumentList
-                              | <<isPathMode 'NO_COLONS '>> ( TypeArgumentList | PathParameters RetType? ) // Fn(i32) -> i32 sugar
+                            | <<isPathMode 'NO_COLONS '>> ( TypeArgumentList | PathParameters RetType? ) // Fn(i32) -> i32 sugar
 
 TypeArgumentList ::= TypeArgumentListImpl {
   extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
@@ -150,30 +146,28 @@ TypeArgumentList ::= TypeArgumentListImpl {
 ColonTypeArgumentList ::= '::' TypeArgumentListImpl { elementType = TypeArgumentList }
 
 private TypeArgumentListImpl ::= '<' !'=' ( <<list_element (LIFETIME)>>*
-                                               <<list_element (!(identifier '=') Type)>>*
-                                               <<list_element AssocTypeBinding>>*) '>' { pin = 2 }
-
+                                            <<list_element (!(identifier '=') Type)>>*
+                                            <<list_element AssocTypeBinding>>*) '>' { pin = 2 }
 AssocTypeBinding ::= identifier '=' Type
 
 
-// Paths (with `::` separating `generic_args` from actual name) used in expression contexts:
-//    a::b::<T,U>::c
+// Paths for expressions:
+//     a::b::<T,U>::c
 PathGenericArgsWithoutColons ::= <<pathMode 'NO_COLONS' PathImpl>> { elementType = Path }
 
-// Paths (w/o types and therefore `generic_args`, containing only identifiers, `self`, etc.):
-//    a::b::c
+// Paths without type arguments, for use declarations:
+//     a::b::c
 PathWithoutTypes ::= <<pathMode 'NO_TYPES' PathImpl>> { elementType = Path }
 
-// Paths (w/o `::` separating `generic_args` from actual name) used in type contexts:
+// Paths for types:
 //    a::b<T,U>::c<V,W>
 //    a::b<T,U>::c(V) -> W
 //    a::b<T,U>::c(V)
 PathGenericArgsWithColons ::= <<pathMode 'COLONS' PathImpl>> { elementType = Path }
 
-// Qualified paths
+// Qualified paths, formerly know as UFCS
 //
 //    <TYPE [as TRAIT_REF]> :: (path_without_types | path_generic_args_with_colons)
-//
 //    <T>::c<V,W>
 //    <T as Foo>::c(V) -> W
 private meta qualified_path ::= '<' Type [ as TraitRef ] '>' '::' <<param>>
@@ -209,16 +203,17 @@ private Item ::= Constant
                | ForeignModItem
                | StructItem
                | EnumItem
-               | ViewItem
+               | UseItem
+               | ExternCrateItem
                | MacroItem
 
-private ItemWithRecover ::= !('}' | <<eof>>) Item {
+private Item_with_recover ::= !('}' | <<eof>>) Item {
   pin = 1
-  recoverWhile = ItemRecover
+  recoverWhile = Item_recover
 }
-private ItemRecover ::= !('}' | '#' | pub | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait | static | TYPE_KW | impl | "union")
+private Item_recover ::= !('}' | '#' | pub | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait | static | TYPE_KW | impl | "union")
 
-private Items ::= ItemWithRecover*
+private Items ::= Item_with_recover*
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -226,7 +221,7 @@ private Items ::= ItemWithRecover*
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Parameters
-fake ValueParameter  ::= Pat? Type? {
+fake ValueParameter ::= Pat? Type? {
   extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -236,6 +231,13 @@ FnParameter ::= Pat TypeAscription
 LambdaParameter ::= Pat TypeAscription?
 AnonParameter ::= [ RestrictedPat ':' ] Type
 PathParameter ::= Type !'='
+
+SelfParameter ::= [ '&' LIFETIME? ] mut? self TypeAscription? {
+  implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RsSelfParameterImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsSelfParameterStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 fake ValueParameterList ::= SelfParameter? ValueParameter* '...'? {
   extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
@@ -247,29 +249,17 @@ FnParameters          ::= '(' !',' [ <<comma_separated_list FnParameter>> ] ')' 
 LambdaParameters      ::= '|' !',' [ <<comma_separated_list LambdaParameter>> ] '|'
 
 MethodParameters      ::= <<method_params_impl FnParameter>>
-MethodDeclParameters ::= <<method_params_impl AnonParameter>>
+MethodDeclParameters  ::= <<method_params_impl AnonParameter>>
 
-ForeignFnParameters  ::= <<variadic_params_impl FnParameter>>
-FnTypeParameters     ::= <<variadic_params_impl AnonParameter>>
+ForeignFnParameters   ::= <<variadic_params_impl FnParameter>>
+FnTypeParameters      ::= <<variadic_params_impl AnonParameter>>
 PathParameters        ::= '(' [ <<comma_separated_list PathParameter>> ] ')' { pin = 1 }
 
 private meta variadic_params_impl ::= '(' [ <<param>> (',' <<param>>)*  [ ',' '...'? ] ] ')' { pin = 1 }
 private meta method_params_impl ::= '(' ( SelfParameter [ ',' [ <<comma_separated_list <<param>>>> ] ]
                                         | [ <<comma_separated_list <<param>>>> ] ) ')' { pin = 1 }
 
-SelfParameter ::= [ '&' LIFETIME? ] mut? self TypeAscription? {
-  implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsSelfParameterImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RsSelfParameterStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
-
-private RestrictedPat ::= &( identifier
-                            | '_'
-                            | '&' (identifier | '_')
-                            | '&' '&' (identifier | '_')
-                            | mut identifier
-                            ) Pat
+private RestrictedPat ::= &( [ mut | '&' '&'? ] ( identifier | '_' ) ) Pat
 
 TypeParameterList ::= '<' LifetimesParams TypeParams '>' {
   extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
@@ -327,7 +317,7 @@ fake Function ::=
 }
 
 ForeignFnDecl ::=
-  OuterAttr*          Vis?          FnHeader ForeignFnParameters FnTail ';'
+  OuterAttr*           Vis?         FnHeader ForeignFnParameters FnTail ';'
 {
   pin = FnHeader
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
@@ -335,7 +325,7 @@ ForeignFnDecl ::=
 }
 
 FnItem ::=
-  OuterAttr*          Vis? FnAttrs FnHeader FnParameters FnTail InnerAttrsAndBlock
+  OuterAttr*           Vis? FnAttrs FnHeader FnParameters FnTail InnerAttrsAndBlock
 {
   pin = FnHeader
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
@@ -343,7 +333,7 @@ FnItem ::=
 }
 
 TraitMethodMember ::=
-  OuterAttr*               FnAttrs FnHeader MethodDeclParameters FnTail (';' | InnerAttrsAndBlock)
+  OuterAttr*                FnAttrs FnHeader MethodDeclParameters FnTail (';' | InnerAttrsAndBlock)
 {
   pin = FnHeader
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
@@ -373,8 +363,8 @@ Pat ::= PatWild
 private Pat_first ::= '_' | '&' | '(' | '[' | identifier | self | 'Self' | super | Lit | '::' | box | '<' | '-' | ref | mut
 
 
-PatQualPath   ::= <<qualified_path PathWithoutTypes>>
-PatUniq        ::= box Pat
+PatQualPath ::= <<qualified_path PathWithoutTypes>>
+PatUniq ::= box Pat
 
 // XXX(matklad): it is impossible to distinguish between nullary enum variants
 // and identifiers during parsing.
@@ -383,15 +373,14 @@ PatUniq        ::= box Pat
 //       None => { } // match enum variant
 //       Name => { } // bind Name to x
 //   }
-PatIdent       ::= PatBinding [ '@' Pat ]
+PatIdent ::= PatBinding [ '@' Pat ]
 
-
-PatStruct      ::= PathGenericArgsWithColons '{' PatFieldWithRecover* '..'? '}'
-PatEnum        ::= PathGenericArgsWithColons '(' SeqPat ')'
+PatStruct ::= PathGenericArgsWithColons '{' PatField_with_recover* '..'? '}'
+PatEnum   ::= PathGenericArgsWithColons '(' SeqPat ')'
 
 // TODO: actual recover
-private PatWithRecover ::= Pat (',' | &(')' | ']' | '..'))
-private PatFieldWithRecover ::= PatField (',' | & '}')
+private Pat_with_recover ::= Pat (',' | &(')' | ']' | '..'))
+private PatField_with_recover ::= PatField (',' | & '}')
 
 PatRange ::= LitOrPath [ '...' LitOrPath ]
 private LitOrPath ::= '-'? Lit | PathExpr
@@ -399,7 +388,7 @@ private LitOrPath ::= '-'? Lit | PathExpr
 PatTup ::= '(' SeqPat ')'
 PatVec ::= '[' SeqPat ']'
 // NB: there are `[x, .. , y]` and `[x, z.. , y]`
-private SeqPat ::= PatWithRecover* ['..' [',' PatWithRecover+] ]
+private SeqPat ::= Pat_with_recover* ['..' [',' Pat_with_recover+] ]
 
 PatRef ::= '&' mut? Pat
 
@@ -409,14 +398,11 @@ PatBinding ::= BindingMode? identifier !'...' !'::' {
   mixin = "org.rust.lang.core.psi.impl.mixin.RsPatBindingImplMixin"
 }
 
-PatField ::= identifier ':' Pat
-            | box? PatBinding
+PatField ::= identifier ':' Pat | box? PatBinding
 
 BindingMode ::= ref mut? | mut
 
-Constant ::=
-  OuterAttr* default_? Vis? (static mut? | const) identifier TypeAscription [ '=' AnyExpr ] ';'
-{
+Constant ::= OuterAttr* default_? Vis? (static mut? | const) identifier TypeAscription [ '=' AnyExpr ] ';' {
   pin = 'identifier'
   implements = [ "org.rust.lang.core.psi.RsNamedElement"
                  "org.rust.lang.core.psi.RsItemElement" ]
@@ -425,9 +411,6 @@ Constant ::=
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-
-private ViewItem ::= UseItem
-                    | ExternCrateItem
 
 UseItem ::= AttrsAndVis use UsePath ';' {
   pin = "use"
@@ -438,17 +421,17 @@ UseItem ::= AttrsAndVis use UsePath ';' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private UsePath ::=
-                  //  use ::{};
-                  //  use {foo, bar};
-                    '::'? UseGlobList
-                  //  use foo::bar as baz;
-                  //  use foo::bar::{self, foo};
-                  //  use foo::{};
-                  //  use ::foo::*;
-                  | PathWithoutTypes ( Alias | '::' ( UseGlobList | '*' ) )?
+// You can see the following after the `use`:
+//  ::{};
+//  {foo, bar};
+//  foo::bar as baz;
+//  foo::bar::{self, foo};
+//  foo::{};
+//  ::foo::*;
+private UsePath ::= '::'? UseGlobList
+                  | PathWithoutTypes [ Alias | '::' ( UseGlobList | '*' ) ]
 
-UseGlobList ::= '{' UseGlobWithRecover* '}' {
+UseGlobList ::= '{' UseGlob_with_recover* '}' {
   pin = 1
   extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
@@ -462,12 +445,11 @@ UseGlob ::= (identifier | self) Alias? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private UseGlobWithRecover ::= !'}' UseGlob (',' | &'}') {
+private UseGlob_with_recover ::= !'}' UseGlob (',' | &'}') {
   pin = 1
-  recoverWhile = UseGlobRecover
+  recoverWhile = UseGlob_recover
 }
-
-private UseGlobRecover ::= !('}' | self | identifier)
+private UseGlob_recover ::= !('}' | self | identifier)
 
 Alias ::= as identifier {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
@@ -486,10 +468,6 @@ ExternCrateItem ::= AttrsAndVis extern crate identifier Alias? ';' {
   stubClass = "org.rust.lang.core.stubs.RsExternCrateItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Mods
-///////////////////////////////////////////////////////////////////////////////////////////////////
 
 ModDeclItem ::= AttrsAndVis mod identifier ';' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
@@ -528,7 +506,8 @@ private ForeignDecl ::= Constant | ForeignFnDecl
 // Struct & Enums
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-StructItem ::= AttrsAndVis (struct | union) identifier TypeParameterList? (TupleFields? WhereClause? ';' | WhereClause? BlockFields) {
+StructItem ::= AttrsAndVis (struct | union) identifier TypeParameterList?
+               ( TupleFields? WhereClause? ';' | WhereClause? BlockFields ) {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RsStructOrEnumItemElement"
                  "org.rust.lang.core.psi.RsFieldsOwner" ]
@@ -551,6 +530,7 @@ EnumBody ::= '{' [ <<comma_separated_list EnumVariant>> ] '}' {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+
 EnumVariant ::= OuterAttr* identifier VariantArgs? {
   pin = 2
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
@@ -563,9 +543,7 @@ EnumVariant ::= OuterAttr* identifier VariantArgs? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private VariantArgs ::= VariantBlockFields
-                       | VariantTupleFields
-                       | VariantDiscriminant
+private VariantArgs ::= VariantBlockFields | VariantTupleFields | VariantDiscriminant
 
 BlockFields ::= <<mk_block_fileds FieldDecl>> {
   extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent<?>"
@@ -612,9 +590,9 @@ VariantTupleFieldDecl ::= OuterAttr* Type {
 private meta mk_block_fileds ::= '{' <<field_with_recover <<param>> >>* '}' { pin = 1}
 private meta field_with_recover ::= !'}' <<param>> (',' | &'}') {
   pin = 1
-  recoverWhile = FieldRecover
+  recoverWhile = Field_recover
 }
-private FieldRecover ::= !('}' | '#' | pub | identifier)
+private Field_recover ::= !('}' | '#' | pub | identifier)
 
 private meta mk_tuple_fields ::= '(' <<comma_separated_list <<param>> >> ')' { pin = 1}
 
@@ -635,20 +613,19 @@ TraitItem ::= AttrsAndVis unsafe? trait identifier TypeParameterList? TypeParamB
 
 private TraitBody ::= '{' TraitMember* '}' { pin = 1 }
 
-// TODO: use upper rules and inheritance here
 private TraitMember ::= !'}' ( Constant | TypeAlias | TraitMethodMember ) {
   pin = 1
-  recoverWhile = TraitMemberRecover
+  recoverWhile = TraitMember_recover
 }
 
-private TraitMemberRecover ::= !('#' | Vis | extern | const | static | unsafe | fn | TYPE_KW | '}' | "default")
+private TraitMember_recover ::= !('#' | Vis | extern | const | static | unsafe | fn | TYPE_KW | '}' | "default")
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-ImplItem ::= AttrsAndVis unsafe? impl TypeParameterList? (ForImpl | BareImpl) {
+ImplItem ::= AttrsAndVis unsafe? impl TypeParameterList? ( TraitImpl | InherentImpl ) {
   pin = "impl"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RsItemElement"
@@ -658,8 +635,8 @@ ImplItem ::= AttrsAndVis unsafe? impl TypeParameterList? (ForImpl | BareImpl) {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private BareImpl ::= Type !for WhereClause? ImplBody { pin = 2 }
-private ForImpl ::= '!'? TraitRef for (AutoTraitImpl | TypeTraitImpl) { pin = 3 }
+private InherentImpl ::= Type !for WhereClause? ImplBody { pin = 2 }
+private TraitImpl ::= '!'? TraitRef for (AutoTraitImpl | TypeTraitImpl) { pin = 3 }
 private AutoTraitImpl ::= '..' '{' '}' { pin = 1 }
 private TypeTraitImpl ::= Type WhereClause? ImplBody { pin = 1 }
 
@@ -667,9 +644,9 @@ private ImplBody ::= '{' InnerAttr* ImplMember* '}' { pin = 1 }
 
 private ImplMember ::= !'}' ( ImplMethodMember | Constant | ImplMacroMember | TypeAlias ) {
   pin = 1
-  recoverWhile = ImplMemberRecover
+  recoverWhile = ImplMember_recover
 }
-private ImplMemberRecover ::= !('#' | Vis | extern | const | static | unsafe | fn | (identifier '!') | TYPE_KW | "default" | '}')
+private ImplMember_recover ::= !('#' | Vis | extern | const | static | unsafe | fn | (identifier '!') | TYPE_KW | "default" | '}')
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -686,7 +663,6 @@ Type ::= VecType
        | TypeWithBoundsType
        | ForInType
        | ImplTraitType {
-
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
 }
@@ -732,9 +708,9 @@ BaseType ::= '_' | '!' | !'<' PathGenericArgsWithoutColons | &'<' TypeQualPath {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-TypeAlias ::=
-  OuterAttr* default_? Vis? TYPE_KW identifier ( TypeParameterList WhereClause? | WhereClause | TypeParamBounds )? [ '=' Type ] ';'
-{
+TypeAlias ::= OuterAttr* default_? Vis? TYPE_KW identifier
+              [ TypeParameterList WhereClause? | WhereClause | TypeParamBounds ]
+              [ '=' Type ] ';' {
   pin = 'identifier'
   implements = [ "org.rust.lang.core.psi.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.RsTypeBearingItemElement"
@@ -786,14 +762,12 @@ AnyExpr ::= <<structLiterals 'ON' <<stmtMode 'OFF' Expr>> >> { elementType = Exp
 StmtModeExpr ::= <<structLiterals 'ON' <<stmtMode 'ON' Expr>> >> { elementType = Expr }
 StmtModeExprOff ::= <<stmtMode 'OFF' Expr>> { elementType = Expr }
 
-
 BlockExpr ::= WhileExpr
-             | IfExpr
-             | ForExpr
-             | LoopExpr
-             | MatchExpr
-             | (unsafe &'{')? SimpleBlock
-
+            | IfExpr
+            | ForExpr
+            | LoopExpr
+            | MatchExpr
+            | [ unsafe &'{' ] SimpleBlock
 
 private AtomExpr ::= LitExpr
                     | MacroExpr
@@ -808,7 +782,6 @@ private AtomExpr ::= LitExpr
                     | UnitExpr
                     | TupleOrParenExpr
 
-
 fake BinaryExpr ::= Expr+ {
   methods=[
     left="/Expr[0]"
@@ -816,25 +789,14 @@ fake BinaryExpr ::= Expr+ {
   ]
 }
 
-AssignBinExpr ::= Expr
-                  ( gtgteq
-                  | ltlteq
-                  | '|='
-                  | '^='
-                  | '&='
-                  | '='
-                  | '+='
-                  | '-='
-                  | '*='
-                  | '/='
-                  | '%='
-                  ) Expr    { rightAssociative = true }
+AssignBinExpr ::= Expr BinAssignOp Expr    { rightAssociative = true }
+private BinAssignOp ::= gtgteq | ltlteq | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' | '/=' | '%='
 
-CompBinExpr       ::= Expr !<<isCompleteBlockExpr>> ('==' | '!=') StmtModeExprOff
+CompBinExpr      ::= Expr !<<isCompleteBlockExpr>> ('==' | '!=') StmtModeExprOff
 RelCompBinExpr   ::= Expr !<<isCompleteBlockExpr>> ('<' !('<' | '=') | '>' !('>' | '=') | lteq | gteq) StmtModeExprOff
 BitShiftBinExpr  ::= Expr !<<isCompleteBlockExpr>> (ltlt | gtgt) StmtModeExprOff
-AddBinExpr        ::= Expr !<<isCompleteBlockExpr>> ('+' | '-') StmtModeExprOff
-MulBinExpr        ::= Expr !<<isCompleteBlockExpr>> ('*' | '/' | '%') StmtModeExprOff
+AddBinExpr       ::= Expr !<<isCompleteBlockExpr>> ('+' | '-') StmtModeExprOff
+MulBinExpr       ::= Expr !<<isCompleteBlockExpr>> ('*' | '/' | '%') StmtModeExprOff
 
 // <expr> | <expr> has higher priority than <expr> || <expr>
 BoolOrBinExpr    ::= Expr !<<isCompleteBlockExpr>> oror StmtModeExprOff
@@ -842,7 +804,6 @@ BoolAndBinExpr   ::= Expr !<<isCompleteBlockExpr>> andand StmtModeExprOff
 BitOrBinExpr     ::= Expr !(<<isCompleteBlockExpr>> | oror)   '|' StmtModeExprOff
 BitAndBinExpr    ::= Expr !(<<isCompleteBlockExpr>> | andand) '&' StmtModeExprOff
 BitXorBinExpr    ::= Expr !<<isCompleteBlockExpr>> '^' StmtModeExprOff
-
 
 CastExpr ::= Expr as Type
 
@@ -854,24 +815,22 @@ LambdaExpr ::= move? LambdaParameters RetType? AnyExpr
 
 StructExpr ::= <<checkStructAllowed>> PathGenericArgsWithColons StructExprBody
 
-StructExprBody ::= '{' [ <<comma_separated_list StructExprField>> ] ('..'  AnyExpr)? '}' {
-  pin = 1
-}
+StructExprBody ::= '{' [ <<comma_separated_list StructExprField>> ] ('..'  AnyExpr)? '}' { pin = 1 }
 
 StructExprField ::= identifier ':' AnyExpr {
   pin = 1
-  recoverWhile = StructExprFieldRecover
+  recoverWhile = StructExprField_recover
   implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsStructExprFieldImplMixin"
 }
-private StructExprFieldRecover ::= !(identifier | ',' | '}' | '..')
+private StructExprField_recover ::= !(identifier | ',' | '}' | '..')
 
 PathExpr ::= PathGenericArgsWithColons
 
 QualPathExpr ::= << qualified_path PathGenericArgsWithColons >>
 
 WhileExpr ::= Label? while Condition SimpleBlock { pin = 'while' }
-Condition ::= (let Pat '=')? NoStructLitExpr
+Condition ::= [ let Pat '=' ] NoStructLitExpr
 
 LoopExpr ::= Label? loop SimpleBlock { pin = 'loop' }
 private Label ::= LIFETIME ':'
@@ -921,9 +880,8 @@ fake RangeExpr ::= Expr + {
   ]
 }
 
-FullRangeExpr ::= Expr ( '..' (&<<checkBraceAllowed>> Expr)? | '...' (&<<checkBraceAllowed>> Expr) ) { elementType = RangeExpr }
-OpenRangeExpr ::=      ( '..' (&<<checkBraceAllowed>> Expr)? | '...' (&<<checkBraceAllowed>> Expr) ) { elementType = RangeExpr }
-
+FullRangeExpr ::= Expr ( '..' (<<checkBraceAllowed>> Expr)? | '...' (<<checkBraceAllowed>> Expr) ) { elementType = RangeExpr }
+OpenRangeExpr ::=      ( '..' (<<checkBraceAllowed>> Expr)? | '...' (<<checkBraceAllowed>> Expr) ) { elementType = RangeExpr }
 
 IndexExpr ::= Expr IndexArg
 // Do not inline this rule, it breaks expression parsing
@@ -936,9 +894,7 @@ MethodCallExpr ::= Expr '.' identifier ColonTypeArgumentList? ValueArgumentList 
   mixin = "org.rust.lang.core.psi.impl.mixin.RsMethodCallExprImplMixin"
 }
 
-ValueArgumentList ::= '(' ExprList? ')' { pin = 1 }
-
-private ExprList ::= <<comma_separated_list AnyExpr>>
+ValueArgumentList ::= '(' <<comma_separated_list AnyExpr>>? ')' { pin = 1 }
 
 FieldId ::= identifier | INTEGER_LITERAL
 
@@ -974,11 +930,11 @@ MacroDefinition ::= MacroRulesInvocation identifier ItemMacroArg {
 }
 
 private BuildInMacro ::= TryMacro
-                         | FormatLikeMacro
-                         | AssertMacro
-                         | AssertEqMacro
-                         | VecMacro
-                         | LogMacro
+                       | FormatLikeMacro
+                       | AssertMacro
+                       | AssertEqMacro
+                       | VecMacro
+                       | LogMacro
 
 private ZzMacroCall ::= BuildInMacro | ExprLikeMacro { pin(".*") = MacroInvocation }
 private ZzMacroItem ::= MacroDefinition | ItemLikeMacro {
@@ -995,33 +951,32 @@ MacroRulesInvocation ::= "macro_rules" '!'
 
 // https://doc.rust-lang.org/std/fmt/
 FormatLikeMacroInvocation ::= ( "format"
-                                 | "format_args"
-                                 | "write"
-                                 | "writeln"
-                                 | "print"
-                                 | "println"
-                                 | "panic") '!'
+                              | "format_args"
+                              | "write"
+                              | "writeln"
+                              | "print"
+                              | "println"
+                              | "panic") '!'
 
-AssertMacroInvocation ::= ( "assert"
-                            | "debug_assert") '!'
+AssertMacroInvocation ::= ( "assert" | "debug_assert" ) '!'
 
 AssertEqMacroInvocation ::= ( "assert_eq"
-                               | "assert_ne"
-                               | "debug_assert_eq"
-                               | "debug_assert_ne") '!'
+                            | "assert_ne"
+                            | "debug_assert_eq"
+                            | "debug_assert_ne") '!'
 
 // Arguments
 MacroArg ::= <<macro_args_delim TokenTrees>>
 
 ItemMacroArg ::= '(' TokenTrees ')' ';'
-                 | '{' TokenTrees '}'
-                 | '[' TokenTrees ']' ';' {
+               | '{' TokenTrees '}'
+               | '[' TokenTrees ']' ';' {
   pin = 1
   elementType = MacroArg
 }
 
 TryMacroArgs ::= <<macro_args_delim AnyExpr>>
-VecMacroArgs ::= '[' ArrayInitializer ']'  { pin = 1 }
+VecMacroArgs ::= '[' ArrayInitializer ']' { pin = 1 }
 
 private ZzLogMacroArgs ::= ('target' ':' Expr ','?)? (<<comma_separated_list FormatMacroArg>>)?
 LogMacroArgs ::=  <<macro_args_delim ZzLogMacroArgs>>
@@ -1051,9 +1006,9 @@ ImplMacroMember ::= ZzMacroItem
 private TokenTrees ::= TokenTree*
 
 TokenTree ::= '(' TokenTrees ')'
-             | '{' TokenTrees '}'
-             | '[' TokenTrees ']'
-             | << unpairedToken >> +
+            | '{' TokenTrees '}'
+            | '[' TokenTrees ']'
+            | << unpairedToken >> +
 
 
 Lit ::= STRING_LITERAL | BYTE_STRING_LITERAL
@@ -1099,9 +1054,7 @@ LetDecl ::= OuterAttr? let Pat TypeAscription? [ '=' AnyExpr ] ';' {
   pin = "let"
 }
 
-EmptyStmt ::= ';' {
-  extends = Stmt
-}
+EmptyStmt ::= ';' { extends = Stmt }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
