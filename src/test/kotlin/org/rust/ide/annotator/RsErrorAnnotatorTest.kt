@@ -125,7 +125,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
     """)
 
 
-
     fun testE0046_AbsentMethodInTraitImpl() = checkErrors("""
         trait TError {
             fn bar();

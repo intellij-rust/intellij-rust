@@ -36,7 +36,7 @@ class RsErrorAnnotator : Annotator {
             override fun visitVis(o: RsVis) = checkVis(holder, o)
             override fun visitBinaryExpr(o: RsBinaryExpr) = checkBinary(holder, o)
 
-            }
+        }
 
         element.accept(visitor)
     }
@@ -236,7 +236,7 @@ class RsErrorAnnotator : Annotator {
     }
 
     private fun checkBinary(holder: AnnotationHolder, o: RsBinaryExpr) {
-        if (isOrderBinaryExpr(o) && isOrderBinaryExpr(o.left)){
+        if (isOrderBinaryExpr(o) && isOrderBinaryExpr(o.left)) {
             holder.createErrorAnnotation(o, "Chained comparison operator require parentheses [E0308]")
         }
     }
