@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RsFile
 import java.util.*
@@ -49,7 +50,7 @@ class RsFoldingBuilder() : FoldingBuilderEx(), DumbAware {
         override fun visitImplItem(o: RsImplItem) = foldBetween(o, o.lbrace, o.rbrace)
 
         override fun visitComment(comment: PsiComment) {
-            if (comment.tokenType == RsTokenElementTypes.BLOCK_COMMENT) {
+            if (comment.tokenType == BLOCK_COMMENT) {
                 fold(comment)
             }
         }

@@ -4,6 +4,8 @@ import com.intellij.lang.*
 import com.intellij.openapi.util.Key
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
+import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.RsCompositeElementTypes
 import org.rust.lang.core.psi.RsTokenElementTypes
 import org.rust.lang.core.psi.RsTokenElementTypes.*

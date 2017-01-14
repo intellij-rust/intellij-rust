@@ -1,7 +1,10 @@
 package org.rust.lang.doc.psi
 
 import com.intellij.psi.tree.IElementType
-import org.rust.lang.core.psi.RsTokenElementTypes.*
+import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_BLOCK_DOC_COMMENT
+import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
+import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
+import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 
 enum class RsDocKind {
     Attr {
@@ -83,7 +86,7 @@ enum class RsDocKind {
         /**
          * Get [RsDocKind] of given doc comment token [IElementType].
          *
-         * For the set of supported token types see [DOC_COMMENTS_TOKEN_SET].
+         * For the set of supported token types see [org.rust.lang.core.psi.RS_DOC_COMMENTS].
          *
          * @throws IllegalArgumentException when given token type is unsupported
          */

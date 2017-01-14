@@ -6,6 +6,8 @@ import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
 import org.rust.ide.colors.RsColor
 import org.rust.lang.core.lexer.RsHighlightingLexer
+import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
+import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
 import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RS_OPERATORS
 import org.rust.lang.core.psi.RsTokenElementTypes.*

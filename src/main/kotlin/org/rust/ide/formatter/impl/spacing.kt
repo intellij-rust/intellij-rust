@@ -298,7 +298,7 @@ private fun SpacingContext.blockMustBeMultiLine(): Boolean {
 }
 
 private fun SpacingContext.needsBlankLineBetweenItems(): Boolean {
-    if (elementType1 in COMMENTS_TOKEN_SET || elementType2 in COMMENTS_TOKEN_SET)
+    if (elementType1 in RS_COMMENTS || elementType2 in RS_COMMENTS)
         return false
 
     // Allow to keep consecutive runs of `use`, `const` or other "one line" items without blank lines

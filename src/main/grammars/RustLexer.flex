@@ -4,6 +4,7 @@ import com.intellij.lexer.*;
 import com.intellij.psi.tree.IElementType;
 
 import static org.rust.lang.core.psi.RsTokenElementTypes.*;
+import static org.rust.lang.core.parser.RustParserDefinition.*;
 import static com.intellij.psi.TokenType.*;
 
 %%

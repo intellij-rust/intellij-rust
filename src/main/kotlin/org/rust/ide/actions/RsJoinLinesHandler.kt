@@ -6,6 +6,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
 import com.intellij.util.text.CharSequenceSubSequence
 import org.rust.ide.typing.endsWithUnescapedBackslash
+import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
+import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.RsTokenElementTypes
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.util.elementType
@@ -23,7 +25,7 @@ class RsJoinLinesHandler : JoinLinesHandlerDelegate {
             in RsTokenElementTypes.STRING_LITERALS ->
                 joinStringLiteral(document, offsetNear, end)
 
-            RsTokenElementTypes.INNER_EOL_DOC_COMMENT, RsTokenElementTypes.OUTER_EOL_DOC_COMMENT ->
+            INNER_EOL_DOC_COMMENT, OUTER_EOL_DOC_COMMENT ->
                 joinLineDocComment(document, offsetNear, end)
 
             else -> CANNOT_JOIN

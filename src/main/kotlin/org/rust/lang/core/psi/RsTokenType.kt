@@ -3,6 +3,12 @@ package org.rust.lang.core.psi
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
+import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
+import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_BLOCK_DOC_COMMENT
+import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
+import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
+import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.RsTokenElementTypes.*
 
 open class RsTokenType(debugName: String) : IElementType(debugName, RsLanguage)
@@ -36,3 +42,14 @@ val RS_OPERATORS = tokenSetOf(
     EXCLEQ, GT, LT, MINUS, MINUSEQ, MUL, MULEQ, OR, OREQ, PLUS, PLUSEQ, REM, REMEQ, SEMICOLON, XOR, XOREQ, Q, AT,
     DOLLAR, GTGTEQ, GTGT, GTEQ, LTLTEQ, LTLT, LTEQ, OROR, ANDAND
 )
+
+val RS_DOC_COMMENTS = tokenSetOf(
+    INNER_BLOCK_DOC_COMMENT, OUTER_BLOCK_DOC_COMMENT,
+    INNER_EOL_DOC_COMMENT, OUTER_EOL_DOC_COMMENT
+)
+
+val RS_COMMENTS = TokenSet.orSet(
+    tokenSetOf(BLOCK_COMMENT, EOL_COMMENT),
+    RS_DOC_COMMENTS)
+
+val RS_EOL_COMMENTS = tokenSetOf(EOL_COMMENT, INNER_EOL_DOC_COMMENT, OUTER_EOL_DOC_COMMENT)

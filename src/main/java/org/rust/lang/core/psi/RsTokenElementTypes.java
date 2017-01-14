@@ -85,14 +85,6 @@ public interface RsTokenElementTypes {
 
     // Comments
 
-    RsTokenType BLOCK_COMMENT = new RsTokenType("<BLOCK_COMMENT>");
-    RsTokenType EOL_COMMENT = new RsTokenType("<EOL_COMMENT>");
-
-    RsTokenType INNER_BLOCK_DOC_COMMENT = new RsTokenType("<INNER_BLOCK_DOC_COMMENT>");
-    RsTokenType OUTER_BLOCK_DOC_COMMENT = new RsTokenType("<OUTER_BLOCK_DOC_COMMENT>");
-    RsTokenType INNER_EOL_DOC_COMMENT = new RsTokenType("<INNER_EOL_DOC_COMMENT>");
-    RsTokenType OUTER_EOL_DOC_COMMENT = new RsTokenType("<OUTER_EOL_DOC_COMMENT>");
-
     RsTokenType SHEBANG_LINE = new RsTokenType("<SHEBANG_LINE>");
 
     //
@@ -161,20 +153,6 @@ public interface RsTokenElementTypes {
     // Token Sets
     //
 
-    @NotNull
-    TokenSet DOC_COMMENTS_TOKEN_SET = TokenSet.create(
-        INNER_BLOCK_DOC_COMMENT,
-        OUTER_BLOCK_DOC_COMMENT,
-        INNER_EOL_DOC_COMMENT,
-        OUTER_EOL_DOC_COMMENT);
-
-    @NotNull
-    TokenSet COMMENTS_TOKEN_SET = TokenSet.orSet(
-        TokenSet.create(BLOCK_COMMENT, EOL_COMMENT),
-        DOC_COMMENTS_TOKEN_SET);
-
-    @NotNull
-    TokenSet EOL_COMMENTS_TOKEN_SET = TokenSet.create(EOL_COMMENT, INNER_EOL_DOC_COMMENT, OUTER_EOL_DOC_COMMENT);
 
     @NotNull
     TokenSet BINARY_OPS = TokenSet.create(
