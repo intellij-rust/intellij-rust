@@ -11,8 +11,7 @@ FILE
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
       RsLitExprImpl(LIT_EXPR)
-        RsLitImpl(LIT)
-          PsiElement(INTEGER_LITERAL)('1')
+        PsiElement(INTEGER_LITERAL)('1')
         PsiErrorElement:'&', '^' or '|' expected, got '>'
           <empty list>
       PsiWhiteSpace(' ')

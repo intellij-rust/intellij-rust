@@ -48,7 +48,7 @@ class RsHighlightingAnnotator : Annotator {
     private fun highlightNotReference(element: PsiElement): Pair<PsiElement, RsColor>? {
         if (element is RsLitExpr) {
             if (element.parent is RsMetaItem) {
-                val literal = element.lit.firstChild
+                val literal = element.firstChild
                 val color = RsHighlighter.map(literal.elementType)
                     ?: return null // FIXME: `error` here perhaps?
                 return literal to color

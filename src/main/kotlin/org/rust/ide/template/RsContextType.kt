@@ -27,7 +27,7 @@ sealed class RsContextType(
         }
 
         val element = file.findElementAt(offset)
-        if (element == null || element is PsiComment || element.parent is RsLit) {
+        if (element == null || element is PsiComment || element.parent is RsLitExpr) {
             return false
         }
 

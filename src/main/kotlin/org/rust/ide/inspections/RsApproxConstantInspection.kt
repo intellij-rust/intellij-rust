@@ -2,14 +2,14 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsLit
+import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.RsLiteralKind
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.kind
 
 class RsApproxConstantInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
-        override fun visitLit(o: RsLit) {
+        override fun visitLitExpr(o: RsLitExpr) {
             val literal = o.kind
             if (literal is RsLiteralKind.Float) {
                 val value = literal.value ?: return

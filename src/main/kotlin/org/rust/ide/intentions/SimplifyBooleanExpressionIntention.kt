@@ -22,7 +22,7 @@ class SimplifyBooleanExpressionIntention : RsElementBaseIntentionAction<RsExpr>(
     private fun isSimplifiableExpression(psi: PsiElement): Boolean {
         return when (psi) {
             is RsLitExpr ->
-                psi.lit.`true` != null || psi.lit.`false` != null
+                psi.`true` != null || psi.`false` != null
             is RsBinaryExpr -> {
                 val leftSimplifiable = isSimplifiableExpression(psi.left)
                 val fullSimplifiable =
@@ -88,9 +88,9 @@ class SimplifyBooleanExpressionIntention : RsElementBaseIntentionAction<RsExpr>(
             is RsParenExpr ->
                 calculateExpression(expr.expr)
             is RsLitExpr -> {
-                if (expr.lit.`false` != null)
+                if (expr.`false` != null)
                     return false
-                if (expr.lit.`true` != null)
+                if (expr.`true` != null)
                     return true
                 null
             }

@@ -96,7 +96,7 @@ sealed class RsLiteralKind(val node: ASTNode) {
 
 }
 
-val RsLit.kind: RsLiteralKind
+val RsLitExpr.kind: RsLiteralKind
     get() = RsLiteralKind.fromAstNode(firstChild.node)
         ?: error("Unknown literal: $firstChild (`$text`)")
 

@@ -371,7 +371,7 @@ Pat ::= PatWild
       | PatUniq
       | PatQualPath
 
-private Pat_first ::= '_' | '&' | '(' | '[' | identifier | self | 'Self' | super | Lit | '::' | box | '<' | '-' | ref | mut
+private Pat_first ::= '_' | '&' | '(' | '[' | identifier | self | 'Self' | super | LitExpr | '::' | box | '<' | '-' | ref | mut
 
 
 PatQualPath ::= <<qualified_path PathWithoutTypes>>
@@ -394,7 +394,7 @@ private Pat_with_recover ::= Pat (',' | &(')' | ']' | '..'))
 private PatField_with_recover ::= PatField (',' | & '}')
 
 PatRange ::= LitOrPath [ '...' LitOrPath ]
-private LitOrPath ::= '-'? Lit | PathExpr
+private LitOrPath ::= '-'? LitExpr | PathExpr
 
 PatTup ::= '(' SeqPat ')'
 PatVec ::= '[' SeqPat ']'
@@ -914,8 +914,11 @@ FieldExpr ::= Expr '.' FieldId {
   mixin = "org.rust.lang.core.psi.impl.mixin.RsFieldExprImplMixin"
 }
 
-LitExpr ::= Lit
-
+LitExpr ::= STRING_LITERAL | BYTE_STRING_LITERAL
+          | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL
+          | CHAR_LITERAL | BYTE_LITERAL
+          | INTEGER_LITERAL | FLOAT_LITERAL
+          | false | true
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Macros
@@ -1020,13 +1023,6 @@ TokenTree ::= '(' TokenTrees ')'
             | '{' TokenTrees '}'
             | '[' TokenTrees ']'
             | << unpairedToken >> +
-
-
-Lit ::= STRING_LITERAL | BYTE_STRING_LITERAL
-      | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL
-      | CHAR_LITERAL | BYTE_LITERAL
-      | INTEGER_LITERAL | FLOAT_LITERAL
-      | false | true
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

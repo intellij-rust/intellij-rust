@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.RsElementTypes.*
 
 class RsLiteralAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-        if (element !is RsLit) return
+        if (element !is RsLitExpr) return
         val literal = element.kind
 
         // Check suffix
