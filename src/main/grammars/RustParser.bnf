@@ -91,7 +91,7 @@
         IN        = 'in'
         LET       = 'let'
         LOOP      = 'loop'
-        MACRO     = 'macro'
+        MACRO_KW  = 'macro'
         MATCH     = 'match'
         MOD       = 'mod'
         MOVE      = 'move'
