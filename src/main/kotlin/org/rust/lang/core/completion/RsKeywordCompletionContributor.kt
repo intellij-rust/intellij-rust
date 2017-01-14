@@ -9,10 +9,10 @@ import com.intellij.patterns.StandardPatterns.or
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.RsPsiPattern
+import org.rust.lang.core.psi.RsCompositeElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RsTokenElementTypes
 import org.rust.lang.core.psi.impl.RsFile
 
 /**
@@ -76,6 +76,6 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     private fun statementBeginningPattern(vararg startWords: String): PsiElementPattern.Capture<PsiElement> =
         psiElement<PsiElement>()
-            .withElementType(TokenSet.create(RsTokenElementTypes.IDENTIFIER))
+            .withElementType(TokenSet.create(IDENTIFIER))
             .and(RsPsiPattern.onStatementBeginning(*startWords))
 }

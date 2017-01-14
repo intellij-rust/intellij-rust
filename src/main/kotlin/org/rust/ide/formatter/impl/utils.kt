@@ -8,7 +8,6 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.tree.TokenSet.orSet
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsCompositeElementTypes.*
-import org.rust.lang.core.psi.RsTokenElementTypes.*
 import com.intellij.psi.tree.TokenSet.create as ts
 
 val NO_SPACE_AROUND_OPS = ts(COLONCOLON, DOT, DOTDOT)

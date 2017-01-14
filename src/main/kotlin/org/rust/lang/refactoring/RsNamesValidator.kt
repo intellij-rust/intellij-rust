@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.lexer.RsLexer
 import org.rust.lang.core.psi.RS_KEYWORDS
-import org.rust.lang.core.psi.RsTokenElementTypes.IDENTIFIER
+import org.rust.lang.core.psi.RsCompositeElementTypes.IDENTIFIER
 
 class RsNamesValidator : NamesValidator {
     override fun isKeyword(name: String, project: Project?): Boolean =

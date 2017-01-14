@@ -2,7 +2,7 @@ FILE
   RsFunctionImpl(FUNCTION)
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
-    PsiElement(<IDENTIFIER>)('main')
+    PsiElement(IDENTIFIER)('main')
     RsValueParameterListImpl(VALUE_PARAMETER_LIST)
       PsiElement(()('(')
       PsiElement())(')')

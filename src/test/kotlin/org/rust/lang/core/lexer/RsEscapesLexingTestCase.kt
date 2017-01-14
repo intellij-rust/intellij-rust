@@ -2,7 +2,7 @@ package org.rust.lang.core.lexer
 
 import com.intellij.lexer.Lexer
 import org.rust.lang.core.lexer.RustEscapesLexer.Companion.ESCAPABLE_LITERALS_TOKEN_SET
-import org.rust.lang.core.psi.RsTokenElementTypes.*
+import org.rust.lang.core.psi.RsCompositeElementTypes.*
 import java.util.*
 
 class RsEscapesLexingTestCase : RsLexingTestCaseBase() {

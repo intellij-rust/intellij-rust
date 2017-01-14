@@ -1,5 +1,5 @@
-<CHAR> (''x'')
+CHAR_LITERAL (''x'')
 WHITE_SPACE ('\n')
-<CHAR> (''💕'')
+CHAR_LITERAL (''💕'')
 WHITE_SPACE ('\n')
-<CHAR> (''a'x')
+CHAR_LITERAL (''a'x')

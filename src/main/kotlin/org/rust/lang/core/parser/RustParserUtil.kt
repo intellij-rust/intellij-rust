@@ -7,9 +7,7 @@ import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.RsCompositeElementTypes
-import org.rust.lang.core.psi.RsTokenElementTypes
-import org.rust.lang.core.psi.RsTokenElementTypes.*
-import org.rust.lang.core.psi.RsTokenType
+import org.rust.lang.core.psi.RsCompositeElementTypes.*
 
 @Suppress("UNUSED_PARAMETER")
 object RustParserUtil : GeneratedParserUtilBase() {
@@ -120,8 +118,8 @@ object RustParserUtil : GeneratedParserUtilBase() {
     @JvmStatic fun ororImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, OROR, OR, OR)
     @JvmStatic fun andandImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, ANDAND, AND, AND)
 
-    @JvmStatic fun defaultKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeyword(b, "default", RsTokenElementTypes.DEFAULT)
-    @JvmStatic fun unionKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeyword(b, "union", RsTokenElementTypes.UNION)
+    @JvmStatic fun defaultKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeyword(b, "default", DEFAULT)
+    @JvmStatic fun unionKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeyword(b, "union", UNION)
 
 
     private @JvmStatic fun collapse(b: PsiBuilder, tokenType: IElementType, vararg parts: IElementType): Boolean {
@@ -137,12 +135,12 @@ object RustParserUtil : GeneratedParserUtilBase() {
     }
 
     private val BLOCK_LIKE = TokenSet.create(
-        RsCompositeElementTypes.WHILE_EXPR,
-        RsCompositeElementTypes.IF_EXPR,
-        RsCompositeElementTypes.FOR_EXPR,
-        RsCompositeElementTypes.LOOP_EXPR,
-        RsCompositeElementTypes.MATCH_EXPR,
-        RsCompositeElementTypes.BLOCK_EXPR
+        WHILE_EXPR,
+        IF_EXPR,
+        FOR_EXPR,
+        LOOP_EXPR,
+        MATCH_EXPR,
+        BLOCK_EXPR
     )
 
     private fun <T> PsiBuilder.withContext(key: Key<T>, value: T, block: PsiBuilder.() -> Boolean): Boolean {
@@ -157,9 +155,9 @@ object RustParserUtil : GeneratedParserUtilBase() {
         tokenType == RsCompositeElementTypes.MACRO_EXPR &&
             '{' == b.originalText.subSequence(startOffset, endOffset).find { it == '{' || it == '[' || it == '(' }
 
-    private fun contextualKeyword(b: PsiBuilder, keyword: String, elementType: RsTokenType): Boolean {
+    private fun contextualKeyword(b: PsiBuilder, keyword: String, elementType: IElementType): Boolean {
         // Tricky: the token can be already remapped by some previous rule that was backtracked
-        if ((b.tokenType == RsTokenElementTypes.IDENTIFIER && b.tokenText == keyword) || b.tokenType == elementType) {
+        if ((b.tokenType == IDENTIFIER && b.tokenText == keyword) || b.tokenType == elementType) {
             b.remapCurrentToken(elementType)
             b.advanceLexer()
             return true

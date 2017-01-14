@@ -1,1 +1,1 @@
-<SHEBANG_LINE> ('#! BANG')
+shebang_line ('#! BANG')

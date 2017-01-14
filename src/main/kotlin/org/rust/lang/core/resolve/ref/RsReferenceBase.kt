@@ -7,6 +7,7 @@ import com.intellij.psi.PsiPolyVariantReferenceBase
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.ResolveCache
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsCompositeElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.parentRelativeRange
 
@@ -48,7 +49,7 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
 
     companion object {
         @JvmStatic protected fun doRename(identifier: PsiElement, newName: String) {
-            check(identifier.elementType == RsTokenElementTypes.IDENTIFIER)
+            check(identifier.elementType == IDENTIFIER)
             identifier.replace(RustPsiFactory(identifier.project).createIdentifier(newName.replace(".rs", "")))
         }
     }

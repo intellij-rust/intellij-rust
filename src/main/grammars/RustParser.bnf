@@ -17,7 +17,6 @@
     psiImplPackage='org.rust.lang.core.psi.impl'
 
     parserImports=[
-      'static org.rust.lang.core.psi.RsTokenElementTypes.*'
       'static org.rust.lang.core.parser.RustParserUtil.PathParsingMode.*'
       'static org.rust.lang.core.parser.RustParserUtil.BinaryMode.*'
     ]
@@ -66,6 +65,7 @@
         Q                    =  '?'
         AT                   =  '@'
         UNDERSCORE           =  '_'
+        DOLLAR               =  '$'
 
         // DEBUG
 
@@ -121,12 +121,10 @@
         WHERE     = 'where'
         WHILE     = 'while'
         YIELD     = 'yield'
+        UNION     = 'union_kw'
+        DEFAULT   = 'default_kw'
 
-        SHEBANG_LINE = '#!/bin/bash'
-
-        // _DBG
-        identifier  = 'regexp:\p{Alpha}\w*'
-        space       = 'regexp:\s+'
+        SHEBANG_LINE = 'shebang_line'
     ]
 
     //
@@ -145,7 +143,6 @@
     extends     ("(Try|FormatLike|Assert|AssertEq)Macro") = Macro
     elementType (".+MacroInvocation|MacroRulesInvocation") = MacroInvocation
 
-    generateTokens=false
     generateTokenAccessors=true
 
     // Fast method sometimes fails to report syntax errors,

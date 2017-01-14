@@ -4,8 +4,8 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
+import org.rust.lang.core.psi.RsCompositeElementTypes.UNION
 import org.rust.lang.core.psi.RsStructItem
-import org.rust.lang.core.psi.RsTokenElementTypes
 import org.rust.lang.core.psi.iconWithVisibility
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RsStubbedNamedElementImpl
@@ -28,7 +28,7 @@ abstract class RsStructItemImplMixin : RsStubbedNamedElementImpl<RsStructItemStu
 }
 
 val RsStructItem.union: PsiElement?
-    get() = node.findChildByType(RsTokenElementTypes.UNION)?.psi
+    get() = node.findChildByType(UNION)?.psi
 
 
 enum class RsStructKind {

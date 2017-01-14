@@ -8,6 +8,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsCompositeElementTypes.IDENTIFIER
 import org.rust.lang.core.stubs.RsNamedStub
 
 abstract class RsStubbedNamedElementImpl<StubT> : RsStubbedElementImpl<StubT>,
@@ -20,7 +21,7 @@ where StubT : RsNamedStub, StubT : StubElement<*> {
     constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getNameIdentifier(): PsiElement?
-        = findChildByType(RsTokenElementTypes.IDENTIFIER)
+        = findChildByType(IDENTIFIER)
 
     override fun getName(): String? {
         val stub = stub

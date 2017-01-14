@@ -3,15 +3,15 @@ package org.rust.lang.core.psi.impl
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
+import org.rust.lang.core.psi.RsCompositeElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsNamedElement
 import org.rust.lang.core.psi.RustPsiFactory
-import org.rust.lang.core.psi.RsTokenElementTypes
 
 abstract class RsNamedElementImpl(node: ASTNode) : RsCompositeElementImpl(node),
                                                    RsNamedElement,
                                                    PsiNameIdentifierOwner {
 
-    override fun getNameIdentifier(): PsiElement? = findChildByType(RsTokenElementTypes.IDENTIFIER)
+    override fun getNameIdentifier(): PsiElement? = findChildByType(IDENTIFIER)
 
     override fun getName(): String? = nameIdentifier?.text
 

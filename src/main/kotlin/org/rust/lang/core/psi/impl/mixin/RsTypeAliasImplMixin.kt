@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsCompositeElementTypes.DEFAULT
 import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RsStubbedNamedElementImpl
 import org.rust.lang.core.stubs.RsTypeAliasStub
@@ -43,4 +44,4 @@ val RsTypeAlias.role: RsTypeAliasRole get() {
 }
 
 val RsTypeAlias.default: PsiElement?
-    get() = node.findChildByType(RsTokenElementTypes.DEFAULT)?.psi
+    get() = node.findChildByType(DEFAULT)?.psi

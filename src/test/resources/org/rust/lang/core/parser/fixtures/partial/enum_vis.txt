@@ -2,7 +2,7 @@ FILE
   RsEnumItemImpl(ENUM_ITEM)
     PsiElement(enum)('enum')
     PsiWhiteSpace(' ')
-    PsiElement(<IDENTIFIER>)('E')
+    PsiElement(IDENTIFIER)('E')
     PsiWhiteSpace(' ')
     RsEnumBodyImpl(ENUM_BODY)
       PsiElement({)('{')
@@ -13,7 +13,7 @@ FILE
   PsiErrorElement:enum, extern, impl, mod, trait, type or use expected, got 'F'
     <empty list>
   PsiWhiteSpace(' ')
-  PsiElement(<IDENTIFIER>)('F')
+  PsiElement(IDENTIFIER)('F')
   PsiErrorElement:'!' expected, got '}'
     <empty list>
   PsiWhiteSpace(' ')

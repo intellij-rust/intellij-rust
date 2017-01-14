@@ -3,7 +3,7 @@ package org.rust.lang.core.psi
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
-import org.rust.lang.core.psi.RsTokenElementTypes.*
+import org.rust.lang.core.psi.RsCompositeElementTypes.*
 import org.rust.lang.core.psi.util.elementType
 
 val RsBinaryExpr.operator: PsiElement

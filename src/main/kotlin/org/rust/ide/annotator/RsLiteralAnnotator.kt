@@ -5,7 +5,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsTokenElementTypes.*
+import org.rust.lang.core.psi.RsCompositeElementTypes.*
 
 class RsLiteralAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {

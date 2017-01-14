@@ -2,17 +2,18 @@ package org.rust.lang.utils
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsCompositeElementTypes.*
 
 fun RsBinaryExpr.negateToString(): String {
     val lhs = left.text
     val rhs = right?.text ?: ""
     val op = when (operatorType) {
-        RsTokenElementTypes.EQEQ -> "!="
-        RsTokenElementTypes.EXCLEQ -> "=="
-        RsTokenElementTypes.GT -> "<="
-        RsTokenElementTypes.LT -> ">="
-        RsTokenElementTypes.GTEQ -> "<"
-        RsTokenElementTypes.LTEQ -> ">"
+        EQEQ -> "!="
+        EXCLEQ -> "=="
+        GT -> "<="
+        LT -> ">="
+        GTEQ -> "<"
+        LTEQ -> ">"
         else -> null
     }
     return if (op != null) "$lhs $op $rhs" else "!($text)"

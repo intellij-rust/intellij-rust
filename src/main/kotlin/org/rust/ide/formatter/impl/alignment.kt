@@ -3,7 +3,6 @@ package org.rust.ide.formatter.impl
 import org.rust.ide.formatter.RsAlignmentStrategy
 import org.rust.ide.formatter.blocks.RsFmtBlock
 import org.rust.lang.core.psi.RsCompositeElementTypes.*
-import org.rust.lang.core.psi.RsTokenElementTypes.DOT
 
 fun RsFmtBlock.getAlignmentStrategy(): RsAlignmentStrategy = when (node.elementType) {
     TUPLE_EXPR, VALUE_ARGUMENT_LIST, FORMAT_MACRO_ARGS, TRY_MACRO_ARGS, VEC_MACRO_ARGS ->

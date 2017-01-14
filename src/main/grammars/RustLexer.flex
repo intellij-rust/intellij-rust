@@ -3,7 +3,7 @@ package org.rust.lang.core.lexer;
 import com.intellij.lexer.*;
 import com.intellij.psi.tree.IElementType;
 
-import static org.rust.lang.core.psi.RsTokenElementTypes.*;
+import static org.rust.lang.core.psi.RsCompositeElementTypes.*;
 import static org.rust.lang.core.parser.RustParserDefinition.*;
 import static com.intellij.psi.TokenType.*;
 
@@ -205,7 +205,7 @@ OUTER_EOL_DOC = ({EOL_DOC_LINE}{EOL_WS})*{EOL_DOC_LINE}
   "in"                            { return IN; }
   "let"                           { return LET; }
   "loop"                          { return LOOP; }
-  "macro"                         { return KW_MACRO; }
+  "macro"                         { return MACRO_KW; }
   "match"                         { return MATCH; }
   "mod"                           { return MOD; }
   "move"                          { return MOVE; }

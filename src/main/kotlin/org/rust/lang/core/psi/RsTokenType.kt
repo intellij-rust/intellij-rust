@@ -9,11 +9,11 @@ import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_BLOCK_DOC_
 import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
-import org.rust.lang.core.psi.RsTokenElementTypes.*
+import org.rust.lang.core.psi.RsCompositeElementTypes.*
 
 open class RsTokenType(debugName: String) : IElementType(debugName, RsLanguage)
 
-private fun tokenSetOf(vararg tokens: RsTokenType) = TokenSet.create(*tokens)
+private fun tokenSetOf(vararg tokens: IElementType) = TokenSet.create(*tokens)
 
 val RS_KEYWORDS = tokenSetOf(
     ABSTRACT, ALIGNOF, AS,
@@ -23,7 +23,7 @@ val RS_KEYWORDS = tokenSetOf(
     ELSE, ENUM, EXTERN,
     FALSE, FINAL, FN, FOR,
     IF, IMPL, IN,
-    KW_MACRO,
+    MACRO_KW,
     LET, LOOP,
     MATCH, MOD, MOVE, MUT,
     OFFSETOF, OVERRIDE,

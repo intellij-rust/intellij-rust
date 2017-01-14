@@ -5,7 +5,7 @@ import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.text.CharArrayUtil.indexOf
-import org.rust.lang.core.psi.RsTokenElementTypes.*
+import org.rust.lang.core.psi.RsCompositeElementTypes.*
 
 private const val BYTE_ESCAPE_LENGTH = "\\x00".length
 private const val UNICODE_ESCAPE_MIN_LENGTH = "\\u{0}".length

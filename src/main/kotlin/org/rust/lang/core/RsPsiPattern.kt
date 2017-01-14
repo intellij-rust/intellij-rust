@@ -11,6 +11,7 @@ import org.rust.lang.core.completion.or
 import org.rust.lang.core.completion.psiElement
 import org.rust.lang.core.completion.withSuperParent
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsCompositeElementTypes.*
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.mixin.RsConstantKind
 import org.rust.lang.core.psi.impl.mixin.kind
@@ -19,8 +20,7 @@ import org.rust.lang.core.psi.impl.mixin.kind
  * Rust PSI tree patterns.
  */
 object RsPsiPattern {
-    private val STATEMENT_BOUNDARIES = TokenSet.create(
-        RsTokenElementTypes.SEMICOLON, RsTokenElementTypes.LBRACE, RsTokenElementTypes.RBRACE)
+    private val STATEMENT_BOUNDARIES = TokenSet.create(SEMICOLON, LBRACE, RBRACE)
 
     val onStatementBeginning: PsiElementPattern.Capture<PsiElement> = psiElement().with(OnStatementBeginning())
 

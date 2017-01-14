@@ -16,7 +16,7 @@ import org.rust.lang.core.lexer.RsLexer
 import org.rust.lang.core.psi.RS_COMMENTS
 import org.rust.lang.core.psi.RS_EOL_COMMENTS
 import org.rust.lang.core.psi.RsCompositeElementTypes
-import org.rust.lang.core.psi.RsTokenElementTypes.STRING_LITERAL
+import org.rust.lang.core.psi.RsCompositeElementTypes.STRING_LITERAL
 import org.rust.lang.core.psi.RsTokenType
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.stubs.RsFileStub

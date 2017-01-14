@@ -14,7 +14,6 @@ import com.intellij.util.text.CharArrayUtil
 import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
-import org.rust.lang.core.psi.RsTokenElementTypes.*
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.doc.psi.RsDocKind

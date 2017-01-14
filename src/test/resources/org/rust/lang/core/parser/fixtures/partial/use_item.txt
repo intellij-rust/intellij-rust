@@ -10,7 +10,7 @@ FILE
       PsiWhiteSpace(' ')
       PsiElement(::)('::')
       PsiWhiteSpace(' ')
-      PsiElement(<IDENTIFIER>)('y')
+      PsiElement(IDENTIFIER)('y')
     PsiWhiteSpace(' ')
     PsiElement(::)('::')
     PsiWhiteSpace(' ')

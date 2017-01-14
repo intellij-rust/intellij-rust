@@ -6,12 +6,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import org.rust.lang.core.psi.RsTokenElementTypes.BYTE_LITERAL as BCH
-import org.rust.lang.core.psi.RsTokenElementTypes.CHAR_LITERAL as CHR
-import org.rust.lang.core.psi.RsTokenElementTypes.FLOAT_LITERAL as FLT
-import org.rust.lang.core.psi.RsTokenElementTypes.INTEGER_LITERAL as INT
-import org.rust.lang.core.psi.RsTokenElementTypes.RAW_BYTE_STRING_LITERAL as BRW
-import org.rust.lang.core.psi.RsTokenElementTypes.RAW_STRING_LITERAL as RAW
+import org.rust.lang.core.psi.RsCompositeElementTypes.BYTE_LITERAL as BCH
+import org.rust.lang.core.psi.RsCompositeElementTypes.CHAR_LITERAL as CHR
+import org.rust.lang.core.psi.RsCompositeElementTypes.FLOAT_LITERAL as FLT
+import org.rust.lang.core.psi.RsCompositeElementTypes.INTEGER_LITERAL as INT
+import org.rust.lang.core.psi.RsCompositeElementTypes.RAW_BYTE_STRING_LITERAL as BRW
+import org.rust.lang.core.psi.RsCompositeElementTypes.RAW_STRING_LITERAL as RAW
 
 abstract class RsLiteralOffsetsTestCase(
     private val type: IElementType,
