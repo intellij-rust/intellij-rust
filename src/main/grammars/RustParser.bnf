@@ -67,28 +67,14 @@
         UNDERSCORE  =  '_'
         DOLLAR      =  '$'
 
-        ABSTRACT  = 'abstract'
-        ALIGNOF   = 'alignof'
-        BECOME    = 'become'
-        DO        = 'do'
-        FINAL     = 'final'
         MACRO_KW  = 'macro'
-        OFFSETOF  = 'offsetof'
-        OVERRIDE  = 'override'
-        PRIV      = 'priv'
-        PROC      = 'proc'
-        PURE      = 'pure'
         CSELF     = 'Self'
-        SIZEOF    = 'sizeof'
         TYPE_KW   = 'type'
-        TYPEOF    = 'typeof'
-        UNSIZED   = 'unsized'
-        VIRTUAL   = 'virtual'
-        YIELD     = 'yield'
         UNION     = 'union_kw'
         DEFAULT   = 'default_kw'
 
         SHEBANG_LINE = 'shebang_line'
+        RESERVED_KEYWORD = 'reserved_keyword'
     ]
 
     //

@@ -183,21 +183,19 @@ OUTER_EOL_DOC = ({EOL_DOC_LINE}{EOL_WS})*{EOL_DOC_LINE}
   "_"                             { return UNDERSCORE; }
   "$"                             { return DOLLAR; }
 
-  "abstract"                      { return ABSTRACT; }
-  "alignof"                       { return ALIGNOF; }
+  "abstract"|"alignof"|"become"|"do"|"final"|"offsetof"|"override"|"priv"|"proc"|"pure"|"sizeof"|"typeof"|"unsized"|"virtual"|"yield"
+                                  { return RESERVED_KEYWORD; }
+
   "as"                            { return AS; }
-  "become"                        { return BECOME; }
   "box"                           { return BOX; }
   "break"                         { return BREAK; }
   "const"                         { return CONST; }
   "continue"                      { return CONTINUE; }
   "crate"                         { return CRATE; }
-  "do"                            { return DO; }
   "else"                          { return ELSE; }
   "enum"                          { return ENUM; }
   "extern"                        { return EXTERN; }
   "false"                         { return FALSE; }
-  "final"                         { return FINAL; }
   "fn"                            { return FN; }
   "for"                           { return FOR; }
   "if"                            { return IF; }
@@ -210,31 +208,21 @@ OUTER_EOL_DOC = ({EOL_DOC_LINE}{EOL_WS})*{EOL_DOC_LINE}
   "mod"                           { return MOD; }
   "move"                          { return MOVE; }
   "mut"                           { return MUT; }
-  "offsetof"                      { return OFFSETOF; }
-  "override"                      { return OVERRIDE; }
-  "priv"                          { return PRIV; }
-  "proc"                          { return PROC; }
   "pub"                           { return PUB; }
-  "pure"                          { return PURE; }
   "ref"                           { return REF; }
   "return"                        { return RETURN; }
   "Self"                          { return CSELF; }
   "self"                          { return SELF; }
-  "sizeof"                        { return SIZEOF; }
   "static"                        { return STATIC; }
   "struct"                        { return STRUCT; }
   "super"                         { return SUPER; }
   "trait"                         { return TRAIT; }
   "true"                          { return TRUE; }
   "type"                          { return TYPE_KW; }
-  "typeof"                        { return TYPEOF; }
   "unsafe"                        { return UNSAFE; }
-  "unsized"                       { return UNSIZED; }
   "use"                           { return USE; }
-  "virtual"                       { return VIRTUAL; }
   "where"                         { return WHERE; }
   "while"                         { return WHILE; }
-  "yield"                         { return YIELD; }
 
   "/*"                            { yybegin(IN_BLOCK_COMMENT); yypushback(2); }
 

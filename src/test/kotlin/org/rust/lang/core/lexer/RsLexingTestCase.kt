@@ -20,4 +20,5 @@ class RsLexingTestCase : RsLexingTestCaseBase() {
     fun testByteLiterals() = doTest()
     fun testInvalidEscape() = doTest()
     fun testDocCommentMerging() = doTest()
+    fun testKeywords() = doTest()
 }

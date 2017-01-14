@@ -16,25 +16,22 @@ open class RsTokenType(debugName: String) : IElementType(debugName, RsLanguage)
 private fun tokenSetOf(vararg tokens: IElementType) = TokenSet.create(*tokens)
 
 val RS_KEYWORDS = tokenSetOf(
-    ABSTRACT, ALIGNOF, AS,
-    BECOME, BOX, BREAK,
+    AS,
+    BOX, BREAK,
     CONST, CONTINUE, CRATE, CSELF,
-    DO, DEFAULT,
+    DEFAULT,
     ELSE, ENUM, EXTERN,
-    FALSE, FINAL, FN, FOR,
+    FALSE, FN, FOR,
     IF, IMPL, IN,
     MACRO_KW,
     LET, LOOP,
     MATCH, MOD, MOVE, MUT,
-    OFFSETOF, OVERRIDE,
-    PRIV, PROC, PUB, PURE,
+    PUB,
     REF, RETURN,
-    SELF, SIZEOF, STATIC, STRUCT, SUPER,
-    TRAIT, TRUE, TYPE_KW, TYPEOF,
-    UNION, UNSAFE, UNSIZED, USE,
-    VIRTUAL,
-    WHERE, WHILE,
-    YIELD
+    SELF, STATIC, STRUCT, SUPER,
+    TRAIT, TRUE, TYPE_KW,
+    UNION, UNSAFE, USE,
+    WHERE, WHILE
 )
 
 val RS_OPERATORS = tokenSetOf(
