@@ -21,7 +21,7 @@ val RS_KEYWORDS = tokenSetOf(
     CONST, CONTINUE, CRATE, CSELF,
     DEFAULT,
     ELSE, ENUM, EXTERN,
-    FALSE, FN, FOR,
+    FN, FOR,
     IF, IMPL, IN,
     MACRO_KW,
     LET, LOOP,
@@ -29,7 +29,7 @@ val RS_KEYWORDS = tokenSetOf(
     PUB,
     REF, RETURN,
     SELF, STATIC, STRUCT, SUPER,
-    TRAIT, TRUE, TYPE_KW,
+    TRAIT, TYPE_KW,
     UNION, UNSAFE, USE,
     WHERE, WHILE
 )

@@ -59,7 +59,7 @@ class RsHighlighter : SyntaxHighlighterBase() {
             INVALID_CHARACTER_ESCAPE_TOKEN -> RsColor.INVALID_STRING_ESCAPE
             INVALID_UNICODE_ESCAPE_TOKEN -> RsColor.INVALID_STRING_ESCAPE
 
-            in RS_KEYWORDS -> RsColor.KEYWORD
+            in RS_KEYWORDS, BOOL_LITERAL -> RsColor.KEYWORD
             in RS_OPERATORS -> RsColor.OPERATORS
 
             else -> null

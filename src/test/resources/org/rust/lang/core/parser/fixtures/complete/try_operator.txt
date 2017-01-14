@@ -80,7 +80,7 @@ FILE
           RsValueArgumentListImpl(VALUE_ARGUMENT_LIST)
             PsiElement(()('(')
             RsLitExprImpl(LIT_EXPR)
-              PsiElement(true)('true')
+              PsiElement(BOOL_LITERAL)('true')
             PsiElement())(')')
         PsiElement(;)(';')
       PsiWhiteSpace('\n    ')

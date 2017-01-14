@@ -918,7 +918,7 @@ LitExpr ::= STRING_LITERAL | BYTE_STRING_LITERAL
           | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL
           | CHAR_LITERAL | BYTE_LITERAL
           | INTEGER_LITERAL | FLOAT_LITERAL
-          | false | true
+          | BOOL_LITERAL
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Macros

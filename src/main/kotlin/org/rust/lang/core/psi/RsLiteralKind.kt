@@ -22,7 +22,9 @@ interface RsTextLiteral {
 }
 
 sealed class RsLiteralKind(val node: ASTNode) {
-    class Boolean(node: ASTNode) : RsLiteralKind(node)
+    class Boolean(node: ASTNode) : RsLiteralKind(node) {
+        val value: kotlin.Boolean = node.chars == "true"
+    }
 
     class Integer(node: ASTNode) : RsLiteralKind(node), RsLiteralWithSuffix {
         override val validSuffixes: List<kotlin.String>
@@ -82,7 +84,7 @@ sealed class RsLiteralKind(val node: ASTNode) {
 
     companion object {
         fun fromAstNode(node: ASTNode): RsLiteralKind? = when (node.elementType) {
-            TRUE, FALSE -> Boolean(node)
+            BOOL_LITERAL -> Boolean(node)
             INTEGER_LITERAL -> Integer(node)
             FLOAT_LITERAL -> Float(node)
 

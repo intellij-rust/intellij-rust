@@ -186,6 +186,7 @@ OUTER_EOL_DOC = ({EOL_DOC_LINE}{EOL_WS})*{EOL_DOC_LINE}
   "abstract"|"alignof"|"become"|"do"|"final"|"offsetof"|"override"|"priv"|"proc"|"pure"|"sizeof"|"typeof"|"unsized"|"virtual"|"yield"
                                   { return RESERVED_KEYWORD; }
 
+  "true"|"false"                  { return BOOL_LITERAL; }
   "as"                            { return AS; }
   "box"                           { return BOX; }
   "break"                         { return BREAK; }
@@ -195,7 +196,6 @@ OUTER_EOL_DOC = ({EOL_DOC_LINE}{EOL_WS})*{EOL_DOC_LINE}
   "else"                          { return ELSE; }
   "enum"                          { return ENUM; }
   "extern"                        { return EXTERN; }
-  "false"                         { return FALSE; }
   "fn"                            { return FN; }
   "for"                           { return FOR; }
   "if"                            { return IF; }
@@ -217,7 +217,6 @@ OUTER_EOL_DOC = ({EOL_DOC_LINE}{EOL_WS})*{EOL_DOC_LINE}
   "struct"                        { return STRUCT; }
   "super"                         { return SUPER; }
   "trait"                         { return TRAIT; }
-  "true"                          { return TRUE; }
   "type"                          { return TYPE_KW; }
   "unsafe"                        { return UNSAFE; }
   "use"                           { return USE; }

@@ -82,7 +82,7 @@ FILE
           PsiWhiteSpace(' ')
           RsConditionImpl(CONDITION)
             RsLitExprImpl(LIT_EXPR)
-              PsiElement(true)('true')
+              PsiElement(BOOL_LITERAL)('true')
           PsiWhiteSpace(' ')
           RsBlockImpl(BLOCK)
             PsiElement({)('{')
