@@ -395,7 +395,7 @@
         </intentionAction>
         <!-- Run Configurations -->
 
-        <programRunner implementation="org.rust.cargo.runconfig.RustRunner"/>
+        <programRunner implementation="org.rust.cargo.runconfig.RsRunner"/>
         <configurationType implementation="org.rust.cargo.runconfig.CargoCommandRunConfigurationType"/>
         <runConfigurationProducer
             implementation="org.rust.cargo.runconfig.producers.CargoExecutableRunConfigurationProducer"/>
@@ -403,7 +403,7 @@
             implementation="org.rust.cargo.runconfig.producers.CargoTestRunConfigurationProducer"/>
 
         <runLineMarkerContributor language="Rust"
-                                  implementationClass="org.rust.cargo.runconfig.RustRunLineMarkerContributor"/>
+                                  implementationClass="org.rust.cargo.runconfig.RsRunLineMarkerContributor"/>
 
         <!-- Cargo -->
 

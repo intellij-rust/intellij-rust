@@ -2,7 +2,7 @@ package org.rust.cargo.runconfig
 
 class RsConsoleFilterTest : HighlightFilterTestBase() {
 
-    private val filter: RustConsoleFilter get() = RustConsoleFilter(project, projectDir)
+    private val filter: RsConsoleFilter get() = RsConsoleFilter(project, projectDir)
 
     fun testTypeError() =
         checkHighlights(filter,

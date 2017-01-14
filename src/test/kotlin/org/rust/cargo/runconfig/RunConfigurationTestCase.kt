@@ -35,7 +35,7 @@ class RunConfigurationTestCase : RustWithToolchainTestBase() {
             .build()
             .state!!
 
-        val result = state.execute(executor, RustRunner())!!
+        val result = state.execute(executor, RsRunner())!!
 
         val listener = AnsiAwareCapturingProcessAdapter()
         with(result.processHandler) {

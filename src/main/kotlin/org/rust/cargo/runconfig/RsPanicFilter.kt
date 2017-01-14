@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 /**
  * Detects messages about panics and adds source code links to them.
  */
-class RustPanicFilter(
+class RsPanicFilter(
     project: Project,
     cargoProjectDir: VirtualFile
 ) : RegexpFileLinkFilter(project, cargoProjectDir, "\\s*thread '.+' panicked at '.+', $FILE_POSITION_RE")

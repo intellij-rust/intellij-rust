@@ -24,14 +24,14 @@ import java.util.regex.Pattern
  * - Turn source code links into hyperlinks.
  * - Dims function hash codes to reduce noise.
  */
-class RustBacktraceFilter(
+class RsBacktraceFilter(
     project: Project,
     cargoProjectDir: VirtualFile,
     module: Module
 ) : Filter {
 
     private val sourceLinkFilter = RegexpFileLinkFilter(project, cargoProjectDir, "\\s+at $FILE_POSITION_RE")
-    private val backtraceItemFilter = RustBacktraceItemFilter(project, module)
+    private val backtraceItemFilter = RsBacktraceItemFilter(project, module)
 
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
         return backtraceItemFilter.applyFilter(line, entireLength)
@@ -42,7 +42,7 @@ class RustBacktraceFilter(
 /**
  * Adds hyperlinks to function names in backtraces
  */
-private class RustBacktraceItemFilter(
+private class RsBacktraceItemFilter(
     val project: Project,
     val module: Module
 ) : Filter {

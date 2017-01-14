@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.impl.mixin.isTest
 import org.rust.lang.core.psi.util.elementType
 
-class RustRunLineMarkerContributor : RunLineMarkerContributor() {
+class RsRunLineMarkerContributor : RunLineMarkerContributor() {
 
     override fun getInfo(element: PsiElement): Info? {
         if (element.elementType != IDENTIFIER) return null

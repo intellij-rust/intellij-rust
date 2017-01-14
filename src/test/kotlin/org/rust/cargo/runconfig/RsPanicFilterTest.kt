@@ -5,7 +5,7 @@ package org.rust.cargo.runconfig
  */
 class RsPanicFilterTest : HighlightFilterTestBase() {
 
-    private val filter: RustPanicFilter get() = RustPanicFilter(project, projectDir)
+    private val filter: RsPanicFilter get() = RsPanicFilter(project, projectDir)
 
     fun testOneLine() =
         checkHighlights(filter,

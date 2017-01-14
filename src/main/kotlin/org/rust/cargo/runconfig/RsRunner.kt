@@ -4,7 +4,7 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.DefaultProgramRunner
 
-class RustRunner : DefaultProgramRunner() {
+class RsRunner : DefaultProgramRunner() {
     override fun canRun(executorId: String, profile: RunProfile): Boolean =
         DefaultRunExecutor.EXECUTOR_ID == executorId && profile is CargoCommandConfiguration
 

@@ -7,8 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 
-object ProjectUtil
-
 /**
  * Extracts modules for the given project
  */
