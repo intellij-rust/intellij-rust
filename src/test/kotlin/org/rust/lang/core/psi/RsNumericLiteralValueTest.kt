@@ -6,7 +6,7 @@ import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import org.rust.lang.core.psi.RsCompositeElementTypes.FLOAT_LITERAL
+import org.rust.lang.core.psi.RsElementTypes.FLOAT_LITERAL
 import java.util.*
 
 @RunWith(Parameterized::class)

@@ -2,7 +2,7 @@ package org.rust.lang.utils
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.*
 
 fun RsBinaryExpr.negateToString(): String {
     val lhs = left.text

@@ -7,7 +7,7 @@ import com.intellij.psi.formatter.FormatterUtil
 import org.rust.ide.formatter.RsFmtContext
 import org.rust.ide.formatter.RsFormattingModelBuilder
 import org.rust.ide.formatter.impl.*
-import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.*
 
 class RsFmtBlock(
     private val node: ASTNode,

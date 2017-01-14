@@ -9,7 +9,7 @@ import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_BLOCK_DOC_
 import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
-import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.*
 
 open class RsTokenType(debugName: String) : IElementType(debugName, RsLanguage)
 

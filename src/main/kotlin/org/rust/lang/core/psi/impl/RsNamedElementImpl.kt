@@ -3,7 +3,7 @@ package org.rust.lang.core.psi.impl
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
-import org.rust.lang.core.psi.RsCompositeElementTypes.IDENTIFIER
+import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsNamedElement
 import org.rust.lang.core.psi.RustPsiFactory
 

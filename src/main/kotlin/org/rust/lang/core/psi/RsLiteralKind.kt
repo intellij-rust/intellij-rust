@@ -3,7 +3,7 @@ package org.rust.lang.core.psi
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import org.rust.lang.core.lexer.RustEscapesLexer
-import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.utils.unescapeRust
 
 interface RsComplexLiteral {

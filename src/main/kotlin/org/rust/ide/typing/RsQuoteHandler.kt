@@ -5,7 +5,7 @@ import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.psi.StringEscapesTokenTypes.STRING_LITERAL_ESCAPES
 import org.rust.lang.core.psi.RS_RAW_LITERALS
-import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.*
 
 // Remember not to auto-pair `'` in char literals because of lifetimes, which use single `'`: `'a`
 class RsQuoteHandler : SimpleTokenSetQuoteHandler(

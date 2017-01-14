@@ -8,7 +8,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsCompositeElementTypes.IDENTIFIER
+import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.stubs.RsNamedStub
 
 abstract class RsStubbedNamedElementImpl<StubT> : RsStubbedElementImpl<StubT>,

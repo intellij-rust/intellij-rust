@@ -11,7 +11,7 @@ import org.rust.lang.core.completion.or
 import org.rust.lang.core.completion.psiElement
 import org.rust.lang.core.completion.withSuperParent
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.mixin.RsConstantKind
 import org.rust.lang.core.psi.impl.mixin.kind

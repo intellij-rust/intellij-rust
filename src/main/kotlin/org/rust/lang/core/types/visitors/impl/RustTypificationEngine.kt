@@ -3,7 +3,7 @@ package org.rust.lang.core.types.visitors.impl
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor

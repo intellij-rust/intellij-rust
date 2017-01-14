@@ -9,7 +9,7 @@ import com.intellij.patterns.StandardPatterns.or
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.RsPsiPattern
-import org.rust.lang.core.psi.RsCompositeElementTypes.IDENTIFIER
+import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPath

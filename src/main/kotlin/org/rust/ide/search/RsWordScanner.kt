@@ -4,7 +4,7 @@ import com.intellij.lang.cacheBuilder.DefaultWordsScanner
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.lexer.RsLexer
 import org.rust.lang.core.psi.RS_COMMENTS
-import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.*
 
 class RsWordScanner : DefaultWordsScanner(
     RsLexer(),

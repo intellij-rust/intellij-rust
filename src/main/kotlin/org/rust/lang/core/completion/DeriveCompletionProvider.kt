@@ -12,7 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsOuterAttr
-import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.util.parentOfType
 
 object DeriveCompletionProvider : CompletionProvider<CompletionParameters>() {

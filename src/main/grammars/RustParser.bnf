@@ -6,7 +6,7 @@
     implements='org.rust.lang.core.psi.RsCompositeElement'
     extends='org.rust.lang.core.psi.impl.RsCompositeElementImpl'
 
-    elementTypeHolderClass='org.rust.lang.core.psi.RsCompositeElementTypes'
+    elementTypeHolderClass='org.rust.lang.core.psi.RsElementTypes'
 
     elementTypeClass='org.rust.lang.core.psi.RsCompositeElementType'
     tokenTypeClass='org.rust.lang.core.psi.RsTokenType'
@@ -20,7 +20,6 @@
       'static org.rust.lang.core.parser.RustParserUtil.PathParsingMode.*'
       'static org.rust.lang.core.parser.RustParserUtil.BinaryMode.*'
     ]
-
 
     tokens = [
         LBRACE      =  '{'

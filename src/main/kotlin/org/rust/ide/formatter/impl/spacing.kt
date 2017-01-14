@@ -18,7 +18,7 @@ import com.intellij.psi.tree.TokenSet
 import org.rust.ide.formatter.RsFmtContext
 import org.rust.ide.formatter.settings.RsCodeStyleSettings
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.util.containsEOL
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.getNextNonCommentSibling

@@ -3,7 +3,7 @@ package org.rust.lang.core.completion
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsCompositeElementTypes.COLON
+import org.rust.lang.core.psi.RsElementTypes.COLON
 import org.rust.lang.core.psi.util.elementType
 
 class RsCompletionContributor : CompletionContributor() {

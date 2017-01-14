@@ -4,7 +4,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy
 import com.intellij.spellchecker.tokenizer.Tokenizer
 import org.rust.lang.RsLanguage
-import org.rust.lang.core.psi.RsCompositeElementTypes.STRING_LITERAL
+import org.rust.lang.core.psi.RsElementTypes.STRING_LITERAL
 
 class RsSpellcheckingStrategy : SpellcheckingStrategy() {
 

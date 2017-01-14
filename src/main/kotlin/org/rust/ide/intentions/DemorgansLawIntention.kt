@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.util.descendantsOfType
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.utils.isNegation

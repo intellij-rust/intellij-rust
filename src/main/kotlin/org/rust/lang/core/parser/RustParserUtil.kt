@@ -6,8 +6,8 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
-import org.rust.lang.core.psi.RsCompositeElementTypes
-import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes
+import org.rust.lang.core.psi.RsElementTypes.*
 
 @Suppress("UNUSED_PARAMETER")
 object RustParserUtil : GeneratedParserUtilBase() {
@@ -50,7 +50,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         } else {
             parenExprEnd.parse(builder, level + 1)
         }
-        val elementType = if (hasComma) RsCompositeElementTypes.TUPLE_EXPR else RsCompositeElementTypes.PAREN_EXPR
+        val elementType = if (hasComma) RsElementTypes.TUPLE_EXPR else RsElementTypes.PAREN_EXPR
 
         exit_section_(builder, marker, elementType, result)
         return result
@@ -152,7 +152,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
     }
 
     private fun LighterASTNode.isBracedMacro(b: PsiBuilder): Boolean =
-        tokenType == RsCompositeElementTypes.MACRO_EXPR &&
+        tokenType == RsElementTypes.MACRO_EXPR &&
             '{' == b.originalText.subSequence(startOffset, endOffset).find { it == '{' || it == '[' || it == '(' }
 
     private fun contextualKeyword(b: PsiBuilder, keyword: String, elementType: IElementType): Boolean {

@@ -6,7 +6,7 @@ import com.intellij.lang.ASTNode
 import org.rust.ide.formatter.RsFmtContext
 import org.rust.ide.formatter.blocks.RsFmtBlock
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.*
 
 fun RsFmtBlock.newChildIndent(childIndex: Int): Indent? = when {
 // Flat brace blocks do not have separate PSI node for content blocks

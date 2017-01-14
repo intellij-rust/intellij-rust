@@ -7,7 +7,7 @@ import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.psi.RS_COMMENTS
-import org.rust.lang.core.psi.RsCompositeElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.*
 
 class RsBraceMatcher() : PairedBraceMatcher {
 

@@ -5,7 +5,7 @@ import com.intellij.codeInsight.template.impl.TextExpression
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsCompositeElementTypes.EQEQ
+import org.rust.lang.core.psi.RsElementTypes.EQEQ
 import org.rust.lang.core.psi.util.descendantsOfType
 import org.rust.lang.core.resolve.innerDeclarations
 import org.rust.lang.core.types.RustEnumType
