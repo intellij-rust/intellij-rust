@@ -334,14 +334,14 @@ TypeParameterList ::= '<' LifetimesParams TypeParams '>' {
 private LifetimesParams ::= <<list_element LifetimeParameter>>*
 private TypeParams      ::= <<list_element TypeParameter>>*
 
-LifetimeParameter ::= LIFETIME LifetimeParamBounds? {
+LifetimeParameter ::= OuterAttr* LIFETIME LifetimeParamBounds? {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsLifetimeParameterImplMixin"
 }
 
 LifetimeParamBounds ::= ':' LIFETIME ('+' LIFETIME)*
 
-TypeParameter ::= IDENTIFIER TypeParamBounds? [ '=' Type ] {
+TypeParameter ::= OuterAttr* IDENTIFIER TypeParamBounds? [ '=' Type ] {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
   extends = "org.rust.lang.core.psi.impl.RsStubbedNamedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsTypeParameterStub"

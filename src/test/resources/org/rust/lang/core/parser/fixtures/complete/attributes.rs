@@ -30,6 +30,10 @@ fn attrs_on_statements() {
    1 + 1;
 }
 
+struct S<#[foo]'a, #[may_dangle] T> {
+
+}
+
 #[macro_export]
 macro_rules! give_me_struct {
     ($name:ident) => {
