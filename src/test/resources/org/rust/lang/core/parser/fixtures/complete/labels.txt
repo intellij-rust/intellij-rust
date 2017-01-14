@@ -11,7 +11,7 @@ FILE
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
       RsWhileExprImpl(WHILE_EXPR)
-        PsiElement(LIFETIME)(''label')
+        PsiElement(lifetime)(''label')
         PsiElement(:)(':')
         PsiWhiteSpace(' ')
         PsiElement(while)('while')

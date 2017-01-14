@@ -16,12 +16,12 @@ FILE
           RsTypeArgumentListImpl(TYPE_ARGUMENT_LIST)
             PsiElement(::)('::')
             PsiElement(<)('<')
-            PsiElement(LIFETIME)(''static')
+            PsiElement(lifetime)(''static')
             PsiErrorElement:<type> or '>' expected, got ':'
               <empty list>
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
-      PsiElement(LIFETIME)(''static')
+      PsiElement(lifetime)(''static')
       PsiElement(>)('>')
       PsiElement(()('(')
       PsiElement())(')')

@@ -235,7 +235,7 @@ FILE
           RsMetaItemImpl(META_ITEM)
             PsiElement(identifier)('foo')
           PsiElement(])(']')
-        PsiElement(LIFETIME)(''a')
+        PsiElement(lifetime)(''a')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       RsTypeParameterImpl(TYPE_PARAMETER)

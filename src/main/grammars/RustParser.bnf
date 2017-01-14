@@ -99,6 +99,17 @@
     consumeTokenMethod(".*") = "consumeTokenFast"
 }
 
+// This is the grammar of the Rust language which is used by Grammar Kit
+// to generate the parser and the PSI classes. Rule `FooBar` corresponds
+// to `RsFooBar` PSI class.
+//
+// Naming convention:
+//
+//   * tokens are lowercase: for, if, identifier, lifetime
+//   * rules are PascalCase: StructItem, EnumVariant
+//   * macro rules are snake_cased: list_item
+//   * recovery related rules ara PascalCase_with_snake_suffix: Item_recover
+
 
 File ::= [ SHEBANG_LINE ] InnerAttr* Items
 
@@ -145,7 +156,7 @@ TypeArgumentList ::= TypeArgumentListImpl {
 }
 ColonTypeArgumentList ::= '::' TypeArgumentListImpl { elementType = TypeArgumentList }
 
-private TypeArgumentListImpl ::= '<' !'=' ( <<list_element (LIFETIME)>>*
+private TypeArgumentListImpl ::= '<' !'=' ( <<list_element lifetime>>*
                                             <<list_element (!(identifier '=') Type)>>*
                                             <<list_element AssocTypeBinding>>*) '>' { pin = 2 }
 AssocTypeBinding ::= identifier '=' Type
@@ -232,7 +243,7 @@ LambdaParameter ::= Pat TypeAscription?
 AnonParameter ::= [ RestrictedPat ':' ] Type
 PathParameter ::= Type !'='
 
-SelfParameter ::= [ '&' LIFETIME? ] mut? self TypeAscription? {
+SelfParameter ::= [ '&' lifetime? ] mut? self TypeAscription? {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsSelfParameterImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsSelfParameterStub"
@@ -270,12 +281,12 @@ TypeParameterList ::= '<' LifetimesParams TypeParams '>' {
 private LifetimesParams ::= <<list_element LifetimeParameter>>*
 private TypeParams      ::= <<list_element TypeParameter>>*
 
-LifetimeParameter ::= OuterAttr* LIFETIME LifetimeParamBounds? {
+LifetimeParameter ::= OuterAttr* lifetime LifetimeParamBounds? {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsLifetimeParameterImplMixin"
 }
 
-LifetimeParamBounds ::= ':' LIFETIME ('+' LIFETIME)*
+LifetimeParamBounds ::= ':' lifetime ('+' lifetime)*
 
 TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' Type ] {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
@@ -289,7 +300,7 @@ Polybound ::= [ ForLifetimes | '?' ] Bound
 
 WhereClause ::= where <<comma_separated_list WherePred>>
 
-WherePred ::= LIFETIME LifetimeParamBounds | ForLifetimes? Type TypeParamBounds
+WherePred ::= lifetime LifetimeParamBounds | ForLifetimes? Type TypeParamBounds
 
 ForLifetimes ::= for '<' LifetimesParams '>'
 
@@ -672,7 +683,7 @@ VecType ::= '[' Type [';' AnyExpr] ']' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-RefLikeType ::= ( '&' LIFETIME? mut? | '*' [ const | mut ] ) Type {
+RefLikeType ::= ( '&' lifetime? mut? | '*' [ const | mut ] ) Type {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -691,7 +702,7 @@ TypeWithBoundsType ::= Type ('+' Bound)+ {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-Bound ::= LIFETIME | TraitRef
+Bound ::= lifetime | TraitRef
 
 ForInType ::= ForLifetimes (BareFnType | TraitRef) {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
@@ -833,11 +844,11 @@ WhileExpr ::= Label? while Condition SimpleBlock { pin = 'while' }
 Condition ::= [ let Pat '=' ] NoStructLitExpr
 
 LoopExpr ::= Label? loop SimpleBlock { pin = 'loop' }
-private Label ::= LIFETIME ':'
+private Label ::= lifetime ':'
 
-ContExpr ::= continue LIFETIME?
+ContExpr ::= continue lifetime?
 
-BreakExpr ::= break LIFETIME?
+BreakExpr ::= break lifetime?
 
 ForExpr ::= Label? for Pat in NoStructLitExpr SimpleBlock { pin = "for" }
 
