@@ -209,6 +209,14 @@ public interface RsTokenElementTypes {
         ANDAND
     );
 
+    @NotNull
+    TokenSet ORDER_OPS = TokenSet.create(
+        GT,
+        GTEQ,
+        LT,
+        LTEQ
+    );
+
     /**
      * Set of possible arguments for {@link RustEscapesLexer.Companion#of(IElementType)}
      */

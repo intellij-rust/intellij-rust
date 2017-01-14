@@ -9,6 +9,7 @@ import org.rust.cargo.project.workspace.cargoProject
 import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.ImplementMethodsFix
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsTokenElementTypes.ORDER_OPS
 import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.trait
@@ -33,7 +34,9 @@ class RsErrorAnnotator : Annotator {
             override fun visitTraitItem(o: RsTraitItem) = checkTraitItem(holder, o)
             override fun visitTypeAlias(o: RsTypeAlias) = checkTypeAlias(holder, o)
             override fun visitVis(o: RsVis) = checkVis(holder, o)
-        }
+            override fun visitBinaryExpr(o: RsBinaryExpr) = checkBinary(holder, o)
+
+            }
 
         element.accept(visitor)
     }
@@ -230,6 +233,16 @@ class RsErrorAnnotator : Annotator {
             holder.createErrorAnnotation(params,
                 "Method `${fn.name}` has $paramsCount ${pluralise(paramsCount, "parameter", "parameters")} but the declaration in trait `$traitName` has $superParamsCount [E0050]")
         }
+    }
+
+    private fun checkBinary(holder: AnnotationHolder, o: RsBinaryExpr) {
+        if (isOrderBinaryExpr(o) && isOrderBinaryExpr(o.left)){
+            holder.createErrorAnnotation(o, "Chained comparison operator require parentheses [E0308]")
+        }
+    }
+
+    private fun isOrderBinaryExpr(o: RsExpr): Boolean {
+        return o is RsBinaryExpr && ORDER_OPS.contains(o.operatorType)
     }
 
     private fun require(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =

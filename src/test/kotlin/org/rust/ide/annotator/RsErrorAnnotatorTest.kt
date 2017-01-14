@@ -124,6 +124,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             }
     """)
 
+
+
     fun testE0046_AbsentMethodInTraitImpl() = checkErrors("""
         trait TError {
             fn bar();
@@ -444,5 +446,17 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             <error descr="Unnecessary visibility qualifier [E0449]">pub</error> const C: u32 = 10;
         }
     """)
+
+    fun testE0308_InvalidChainComparison() = checkErrors("""
+        fn foo(x: i32) {
+            <error descr="Chained comparison operator require parentheses [E0308]">1 < x < 3</error>;
+            <error descr="Chained comparison operator require parentheses [E0308]">1 > x < 3</error>;
+            <error descr="Chained comparison operator require parentheses [E0308]">1 > x > 3</error>;
+            <error descr="Chained comparison operator require parentheses [E0308]">1 < x > 3</error>;
+            <error descr="Chained comparison operator require parentheses [E0308]">1 <= x < 3</error>;
+            <error descr="Chained comparison operator require parentheses [E0308]">1 < x <= 3</error>;
+        }
+    """)
+
 
 }
