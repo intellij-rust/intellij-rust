@@ -108,7 +108,7 @@
 //   * tokens are lowercase: for, if, identifier, lifetime
 //   * rules are PascalCase: StructItem, EnumVariant
 //   * macro rules are snake_cased: list_item
-//   * recovery related rules ara PascalCase_with_snake_suffix: Item_recover
+//   * recovery related rules are PascalCase_with_snake_suffix: Item_recover
 
 
 File ::= [ SHEBANG_LINE ] InnerAttr* Items
