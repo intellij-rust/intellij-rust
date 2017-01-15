@@ -534,8 +534,22 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
     fun testE0449_UnnecessaryPub() = checkErrors("""
         <error descr="Unnecessary visibility qualifier [E0449]">pub</error> extern "C" { }
 
-        pub struct S;
-        <error descr="Unnecessary visibility qualifier [E0449]">pub</error> impl S {}
+        pub struct S {
+            foo: bool,
+            pub bar: u8,
+            pub baz: (u32, f64)
+        }
+        <error>pub</error> impl S {}
+
+        struct STuple (pub u32, f64);
+
+        pub enum E {
+            FOO {
+                bar: u32,
+                <error>pub</error> baz: u32
+            },
+            BAR(<error>pub</error> u32, f64)
+        }
 
         pub trait Foo {
             type A;
@@ -543,10 +557,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             const C: u32;
         }
         struct Bar;
-        <error descr="Unnecessary visibility qualifier [E0449]">pub</error> impl Foo for Bar {
-            <error descr="Unnecessary visibility qualifier [E0449]">pub</error> type A = u32;
-            <error descr="Unnecessary visibility qualifier [E0449]">pub</error> fn b() {}
-            <error descr="Unnecessary visibility qualifier [E0449]">pub</error> const C: u32 = 10;
+        <error>pub</error> impl Foo for Bar {
+            <error>pub</error> type A = u32;
+            <error>pub</error> fn b() {}
+            <error>pub</error> const C: u32 = 10;
         }
     """)
 

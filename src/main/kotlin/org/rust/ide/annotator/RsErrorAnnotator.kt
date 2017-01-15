@@ -65,7 +65,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkVis(holder: AnnotationHolder, vis: RsVis) {
-        if (vis.parent is RsImplItem || vis.parent is RsForeignModItem || isInTraitImpl(vis)) {
+        if (vis.parent is RsImplItem || vis.parent is RsForeignModItem || isInTraitImpl(vis) || isInEnumVariantField(vis) ) {
             holder.createErrorAnnotation(vis, "Unnecessary visibility qualifier [E0449]")
         }
     }
@@ -324,6 +324,13 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun isInTraitImpl(o: RsVis): Boolean {
         val impl = o.parent?.parent
         return impl is RsImplItem && impl.traitRef != null
+    }
+
+    private fun isInEnumVariantField(o: RsVis): Boolean {
+        val field = o.parent as? RsFieldDecl
+                    ?: o.parent as? RsTupleFieldDecl
+                    ?: return false
+        return field.parent.parent is RsEnumVariant
     }
 
     private fun findDuplicates(holder: AnnotationHolder, owner: RsCompositeElement, messageGenerator: (ns: Namespace, name: String) -> String) {

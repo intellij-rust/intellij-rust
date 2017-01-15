@@ -523,17 +523,16 @@ EnumVariant ::= OuterAttr* identifier VariantArgs? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private VariantArgs ::= VariantBlockFields | VariantTupleFields | VariantDiscriminant
+private VariantArgs ::= BlockFields | TupleFields | VariantDiscriminant
 
-BlockFields ::= <<mk_block_fileds FieldDecl>> {
+BlockFields ::= '{' FieldDecl_with_recover* '}' {
+  pin = 1
   extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-TupleFields ::= <<mk_tuple_fields TupleFieldDecl>>
 
-VariantBlockFields ::= <<mk_block_fileds VariantFieldDecl>> { elementType = BlockFields }
-VariantTupleFields ::= <<mk_tuple_fields VariantTupleFieldDecl>> { elementType = TupleFields }
+TupleFields ::= '(' <<comma_separated_list TupleFieldDecl>> ')' { pin = 1 }
 
 VariantDiscriminant ::= '=' AnyExpr { pin = 1 }
 
@@ -548,12 +547,6 @@ FieldDecl ::= AttrsAndVis identifier TypeAscription {
   stubClass = "org.rust.lang.core.stubs.RsFieldDeclStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-// unlike structs, enum variants can't have `pub` visibility applied to fields
-VariantFieldDecl ::= OuterAttr* identifier TypeAscription {
-  pin = 2
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = FieldDecl
-}
 
 TupleFieldDecl ::= AttrsAndVis Type {
   implements = [ "org.rust.lang.core.psi.RsOuterAttributeOwner"
@@ -562,20 +555,12 @@ TupleFieldDecl ::= AttrsAndVis Type {
   mixin = "org.rust.lang.core.psi.impl.mixin.RsTupleFieldDeclImplMixin"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
-VariantTupleFieldDecl ::= OuterAttr* Type {
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = TupleFieldDecl
-}
 
-private meta mk_block_fileds ::= '{' <<field_with_recover <<param>> >>* '}' { pin = 1}
-private meta field_with_recover ::= !'}' <<param>> (',' | &'}') {
+private FieldDecl_with_recover ::= !'}' FieldDecl (',' | &'}') {
   pin = 1
   recoverWhile = Field_recover
 }
 private Field_recover ::= !('}' | '#' | pub | identifier)
-
-private meta mk_tuple_fields ::= '(' <<comma_separated_list <<param>> >> ')' { pin = 1}
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Trait
