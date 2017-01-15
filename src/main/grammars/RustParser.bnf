@@ -525,13 +525,14 @@ EnumVariant ::= OuterAttr* identifier VariantArgs? {
 
 private VariantArgs ::= BlockFields | TupleFields | VariantDiscriminant
 
-BlockFields ::= '{' <<field_with_recover FieldDecl>>* '}' {
+BlockFields ::= '{' FieldDecl_with_recover* '}' {
   pin = 1
   extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-TupleFields ::= '(' <<comma_separated_list TupleFieldDecl >> ')' { pin = 1 }
+
+TupleFields ::= '(' <<comma_separated_list TupleFieldDecl>> ')' { pin = 1 }
 
 VariantDiscriminant ::= '=' AnyExpr { pin = 1 }
 
@@ -555,12 +556,11 @@ TupleFieldDecl ::= AttrsAndVis Type {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
-private meta field_with_recover ::= !'}' <<param>> (',' | &'}') {
+private FieldDecl_with_recover ::= !'}' FieldDecl (',' | &'}') {
   pin = 1
   recoverWhile = Field_recover
 }
 private Field_recover ::= !('}' | '#' | pub | identifier)
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Trait
