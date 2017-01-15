@@ -152,6 +152,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             RsFunctionRole.TRAIT_METHOD -> {
                 deny(fn.default, holder, "${fn.title} cannot have the `default` qualifier")
                 deny(fn.vis, holder, "${fn.title} cannot have the `pub` qualifier")
+                deny(fn.const, holder, "Trait functions cannot be declared const [E0379]")
             }
             RsFunctionRole.IMPL_METHOD -> {
                 require(fn.block, holder, "${fn.title} must have a body", fn.lastChild)
@@ -162,6 +163,9 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             RsFunctionRole.FOREIGN -> {
                 deny(fn.default, holder, "${fn.title} cannot have the `default` qualifier")
                 deny(fn.block, holder, "${fn.title} cannot have a body")
+                deny(fn.const, holder, "${fn.title} cannot have the `const` qualifier")
+                deny(fn.unsafe, holder, "${fn.title} cannot have the `unsafe` qualifier")
+                deny(fn.externAbi, holder, "${fn.title} cannot have an extern ABI")
             }
         }
     }
