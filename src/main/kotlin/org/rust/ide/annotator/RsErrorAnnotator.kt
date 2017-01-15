@@ -57,7 +57,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         })
 
     private fun checkPath(holder: AnnotationHolder, path: RsPath) {
-        if (path.asRustPath == null) {
+        val child = path.path
+        if ((child == null || child.asRustPath != null) && path.asRustPath == null) {
             holder.createErrorAnnotation(path, "Invalid path: self and super are allowed only at the beginning")
         }
     }
