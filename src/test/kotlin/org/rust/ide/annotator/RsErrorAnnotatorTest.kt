@@ -86,7 +86,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         <error descr="Function `foo_default` cannot have the `default` qualifier">default</error> fn foo_default(f: u32) {}
         fn ref_self(<error descr="Function `ref_self` cannot have `self` parameter">&mut self</error>, f: u32) {}
         fn no_body()<error descr="Function `no_body` must have a body">;</error>
-        fn anon_param(<error descr="Function `anon_param` cannot have anonymous parameters">u8</error>, a: i16) {}
+
+        <error>default</error> fn anon_param(
+            <error descr="Function `anon_param` cannot have anonymous parameters">u8</error>, a: i16
+        ) {}
     """)
 
     fun testImplAssocFunction() = checkErrors("""

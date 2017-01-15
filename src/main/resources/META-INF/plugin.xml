@@ -93,6 +93,7 @@
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsLiteralAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsExpressionAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsErrorAnnotator"/>
+        <highlightRangeExtension implementation="org.rust.ide.annotator.RsErrorAnnotator"/>
 
         <!-- Line Marker Providers -->
 

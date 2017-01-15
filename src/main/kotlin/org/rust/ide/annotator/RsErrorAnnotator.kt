@@ -1,14 +1,17 @@
 package org.rust.ide.annotator
 
+import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.cargoProject
 import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.ImplementMethodsFix
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.trait
@@ -16,7 +19,9 @@ import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 import java.util.*
 
-class RsErrorAnnotator : Annotator {
+class RsErrorAnnotator : Annotator, HighlightRangeExtension {
+    override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
+
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val visitor = object : RsVisitor() {
             override fun visitBlock(o: RsBlock) = checkBlock(holder, o)
