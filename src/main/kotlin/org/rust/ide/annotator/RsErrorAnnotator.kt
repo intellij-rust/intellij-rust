@@ -1,14 +1,17 @@
 package org.rust.ide.annotator
 
+import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.cargoProject
 import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.ImplementMethodsFix
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.trait
@@ -16,7 +19,9 @@ import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 import java.util.*
 
-class RsErrorAnnotator : Annotator {
+class RsErrorAnnotator : Annotator, HighlightRangeExtension {
+    override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
+
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val visitor = object : RsVisitor() {
             override fun visitBlock(o: RsBlock) = checkBlock(holder, o)
@@ -24,7 +29,7 @@ class RsErrorAnnotator : Annotator {
             override fun visitStructItem(o: RsStructItem) = checkStructItem(holder, o)
             override fun visitEnumBody(o: RsEnumBody) = checkEnumBody(holder, o)
             override fun visitForeignModItem(o: RsForeignModItem) = checkForeignModItem(holder, o)
-            override fun visitTypeParameterList(o: RsTypeParameterList) = checkTypeParameterList(holder, o)
+            override fun visitFunction(o: RsFunction) = checkFunction(holder, o)
             override fun visitImplItem(o: RsImplItem) = checkImpl(holder, o)
             override fun visitModDeclItem(o: RsModDeclItem) = checkModDecl(holder, o)
             override fun visitModItem(o: RsModItem) = checkModItem(holder, o)
@@ -32,6 +37,9 @@ class RsErrorAnnotator : Annotator {
             override fun visitBlockFields(o: RsBlockFields) = checkBlockFields(holder, o)
             override fun visitTraitItem(o: RsTraitItem) = checkTraitItem(holder, o)
             override fun visitTypeAlias(o: RsTypeAlias) = checkTypeAlias(holder, o)
+            override fun visitTypeParameterList(o: RsTypeParameterList) = checkTypeParameterList(holder, o)
+            override fun visitValueParameterList(o: RsValueParameterList) = checkValueParameterList(holder, o)
+            override fun visitValueParameter(o: RsValueParameter) = checkValueParameter(holder, o)
             override fun visitVis(o: RsVis) = checkVis(holder, o)
         }
 
@@ -87,6 +95,46 @@ class RsErrorAnnotator : Annotator {
                     ?: require(const.mut, holder, "Non mutable static constants are not allowed in extern blocks", const.static, const.identifier)
                 deny(const.expr, holder, "Static constants in extern blocks cannot have values", const.eq, const.expr)
             }
+        }
+    }
+
+    private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParameter) {
+        val fn = param.parent.parent as? RsFunction ?: return
+        when (fn.role) {
+            RsFunctionRole.FREE, RsFunctionRole.IMPL_METHOD -> {
+                require(param.pat, holder, "${fn.title} cannot have anonymous parameters", param)
+            }
+            RsFunctionRole.TRAIT_METHOD -> {
+                denyType<RsPatTup>(param.pat, holder, "${fn.title} cannot have tuple parameters", param)
+            }
+            RsFunctionRole.FOREIGN -> {}
+        }
+    }
+
+    private fun checkValueParameterList(holder: AnnotationHolder, params: RsValueParameterList) {
+        val fn = params.parent as? RsFunction ?: return
+        if (fn.role == RsFunctionRole.FREE) {
+            deny(params.selfParameter, holder, "${fn.title} cannot have `self` parameter")
+        }
+    }
+
+    private fun checkFunction(holder: AnnotationHolder, fn: RsFunction) {
+        when (fn.role) {
+            RsFunctionRole.FREE -> {
+                require(fn.block, holder, "${fn.title} must have a body", fn.lastChild)
+                deny(fn.default, holder, "${fn.title} cannot have the `default` qualifier")
+            }
+            RsFunctionRole.TRAIT_METHOD -> {
+                deny(fn.default, holder, "${fn.title} cannot have the `default` qualifier")
+                deny(fn.vis, holder, "${fn.title} cannot have the `pub` qualifier")
+            }
+            RsFunctionRole.IMPL_METHOD -> {
+                require(fn.block, holder, "${fn.title} must have a body", fn.lastChild)
+                if (fn.default != null) {
+                    deny(fn.vis, holder, "Default ${fn.title.firstLower} cannot have the `pub` qualifier")
+                }
+            }
+            RsFunctionRole.FOREIGN -> {}
         }
     }
 
@@ -238,6 +286,9 @@ class RsErrorAnnotator : Annotator {
     private fun deny(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
         if (el == null) null else holder.createErrorAnnotation(highlightElements.combinedRange ?: el.textRange, message)
 
+    private inline fun <reified T: RsCompositeElement>denyType(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
+        if (el !is T) null else holder.createErrorAnnotation(highlightElements.combinedRange ?: el.textRange, message)
+
     private fun isInTraitImpl(o: RsVis): Boolean {
         val impl = o.parent?.parent
         return impl is RsImplItem && impl.traitRef != null
@@ -267,6 +318,9 @@ class RsErrorAnnotator : Annotator {
             }
     }
 
+    private fun pluralise(count: Int, singular: String, plural: String): String =
+        if (count == 1) singular else plural
+
     private val Array<out PsiElement?>.combinedRange: TextRange?
         get() = if (isEmpty())
             null
@@ -290,6 +344,6 @@ class RsErrorAnnotator : Annotator {
     private val RsNamedElement.namespaced: Sequence<Pair<Namespace, RsNamedElement>>
         get() = namespaces.asSequence().map { Pair(it, this) }
 
-    private fun pluralise(count: Int, singular: String, plural: String): String =
-        if (count == 1) singular else plural
+    private val String.firstLower: String
+        get() = if (isEmpty()) this else this[0].toLowerCase() + substring(1)
 }

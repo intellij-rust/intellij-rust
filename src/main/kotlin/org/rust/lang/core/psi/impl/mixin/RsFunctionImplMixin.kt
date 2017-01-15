@@ -1,12 +1,13 @@
 package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.icons.addTestMark
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.impl.RsStubbedNamedElementImpl
+import org.rust.lang.core.psi.impl.RustPsiImplUtil
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.util.trait
 import org.rust.lang.core.stubs.RsFunctionStub
@@ -76,3 +77,15 @@ val RsFunction.valueParameters: List<RsValueParameter>
 
 val RsFunction.selfParameter: RsSelfParameter?
     get() = valueParameterList?.selfParameter
+
+val RsFunction.default: PsiElement?
+    get() = node.findChildByType(RsElementTypes.DEFAULT)?.psi
+
+val RsFunction.title: String
+    get() = when (role) {
+        RsFunctionRole.TRAIT_METHOD ->
+            if (selfParameter == null) "Trait function `$name`" else "Trait method `$name`"
+        RsFunctionRole.IMPL_METHOD ->
+            if (selfParameter == null) "Associated function `$name`" else "Method `$name`"
+        else -> "Function `$name`"
+    }

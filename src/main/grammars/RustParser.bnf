@@ -77,7 +77,7 @@
     ]
 
     elementType("(Fn|Anon|Lambda|Path)Parameter") = ValueParameter
-    elementType("(Fn|Lambda|Path|FnType|ForeignFn|Method|MethodDecl)Parameters") = ValueParameterList
+    elementType("(Fn|Lambda|Path|FnType|ForeignFn)Parameters") = ValueParameterList
 
     extends(".+Expr") = Expr
     elementType(".+BinExpr") = BinaryExpr
@@ -238,7 +238,7 @@ fake ValueParameter ::= Pat? Type? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-FnParameter ::= Pat TypeAscription
+FnParameter ::= [ Pat ':' ] Type
 LambdaParameter ::= Pat TypeAscription?
 AnonParameter ::= [ RestrictedPat ':' ] Type
 PathParameter ::= Type !'='
@@ -256,19 +256,14 @@ fake ValueParameterList ::= SelfParameter? ValueParameter* '...'? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-FnParameters          ::= '(' !',' [ <<comma_separated_list FnParameter>> ] ')' { pin = 1 }
+FnParameters          ::= '(' !',' [ SelfParameter (',' | &')') ] [ <<comma_separated_list FnParameter>> ] ')' { pin = 1 }
 LambdaParameters      ::= '|' !',' [ <<comma_separated_list LambdaParameter>> ] '|'
-
-MethodParameters      ::= <<method_params_impl FnParameter>>
-MethodDeclParameters  ::= <<method_params_impl AnonParameter>>
 
 ForeignFnParameters   ::= <<variadic_params_impl FnParameter>>
 FnTypeParameters      ::= <<variadic_params_impl AnonParameter>>
 PathParameters        ::= '(' [ <<comma_separated_list PathParameter>> ] ')' { pin = 1 }
 
 private meta variadic_params_impl ::= '(' [ <<param>> (',' <<param>>)*  [ ',' '...'? ] ] ')' { pin = 1 }
-private meta method_params_impl ::= '(' ( SelfParameter [ ',' [ <<comma_separated_list <<param>>>> ] ]
-                                        | [ <<comma_separated_list <<param>>>> ] ) ')' { pin = 1 }
 
 private RestrictedPat ::= &( [ mut | '&' '&'? ] ( identifier | '_' ) ) Pat
 
@@ -336,23 +331,7 @@ ForeignFnDecl ::=
 }
 
 FnItem ::=
-  OuterAttr*           Vis? FnAttrs FnHeader FnParameters FnTail InnerAttrsAndBlock
-{
-  pin = FnHeader
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = Function
-}
-
-TraitMethodMember ::=
-  OuterAttr*                FnAttrs FnHeader MethodDeclParameters FnTail (';' | InnerAttrsAndBlock)
-{
-  pin = FnHeader
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = Function
-}
-
-ImplMethodMember ::=
-  OuterAttr* default_? Vis? FnAttrs FnHeader MethodParameters FnTail InnerAttrsAndBlock
+  OuterAttr* default_? Vis? FnAttrs FnHeader FnParameters FnTail (';' | InnerAttrsAndBlock)
 {
   pin = FnHeader
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
@@ -624,7 +603,7 @@ TraitItem ::= AttrsAndVis unsafe? trait identifier TypeParameterList? TypeParamB
 
 private TraitBody ::= '{' TraitMember* '}' { pin = 1 }
 
-private TraitMember ::= !'}' ( Constant | TypeAlias | TraitMethodMember ) {
+private TraitMember ::= !'}' ( Constant | TypeAlias | FnItem ) {
   pin = 1
   recoverWhile = TraitMember_recover
 }
@@ -653,7 +632,7 @@ private TypeTraitImpl ::= Type WhereClause? ImplBody { pin = 1 }
 
 private ImplBody ::= '{' InnerAttr* ImplMember* '}' { pin = 1 }
 
-private ImplMember ::= !'}' ( ImplMethodMember | Constant | ImplMacroMember | TypeAlias ) {
+private ImplMember ::= !'}' ( FnItem | Constant | ImplMacroMember | TypeAlias ) {
   pin = 1
   recoverWhile = ImplMember_recover
 }

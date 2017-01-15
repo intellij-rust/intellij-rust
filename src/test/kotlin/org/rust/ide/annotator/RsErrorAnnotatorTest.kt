@@ -76,6 +76,86 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun testFunction() = checkErrors("""
+        #[inline]
+        pub fn full<'a, T>(id: u32, name: &'a str, data: &T, _: &mut FnMut(Display)) -> Option<u32> where T: Sized {
+            #![cold]
+            None
+        }
+
+        <error descr="Function `foo_default` cannot have the `default` qualifier">default</error> fn foo_default(f: u32) {}
+        fn ref_self(<error descr="Function `ref_self` cannot have `self` parameter">&mut self</error>, f: u32) {}
+        fn no_body()<error descr="Function `no_body` must have a body">;</error>
+
+        <error>default</error> fn anon_param(
+            <error descr="Function `anon_param` cannot have anonymous parameters">u8</error>, a: i16
+        ) {}
+    """)
+
+    fun testImplAssocFunction() = checkErrors("""
+        struct Person<D> { data: D }
+
+        impl<D> Person<D> {
+            #[inline]
+            pub fn new<'a>(id: u32, name: &'a str, data: D, _: bool) -> Person<D> where D: Sized {
+                #![cold]
+                Person { data: data }
+            }
+            default fn def() {}
+
+            default <error descr="Default associated function `def_pub` cannot have the `pub` qualifier">pub</error> fn def_pub() {}
+            fn no_body()<error descr="Associated function `no_body` must have a body">;</error>
+            fn anon_param(<error descr="Associated function `anon_param` cannot have anonymous parameters">u8</error>, a: i16) {}
+        }
+    """)
+
+    fun testImplMethod() = checkErrors("""
+        struct Person<D> { data: D }
+
+        impl<D> Person<D> {
+            #[inline]
+            pub fn check<'a>(&self, s: &'a str) -> bool where D: Sized {
+                #![cold]
+                false
+            }
+            default fn def(&self) {}
+
+            default <error descr="Default method `def_pub` cannot have the `pub` qualifier">pub</error> fn def_pub(&self) {}
+            fn no_body(&self)<error descr="Method `no_body` must have a body">;</error>
+            fn anon_param(&self, <error descr="Method `anon_param` cannot have anonymous parameters">u8</error>, a: i16) {}
+        }
+    """)
+
+    fun testTraitAssocFunction() = checkErrors("""
+        trait Animal<T> {
+            #[inline]
+            fn feed<'a>(food: T, d: &'a str, _: bool, f32) -> Option<f64> where T: Sized {
+                #![cold]
+                None
+            }
+            fn no_body();
+
+            <error descr="Trait function `default_foo` cannot have the `default` qualifier">default</error> fn default_foo();
+            <error descr="Trait function `pub_foo` cannot have the `pub` qualifier">pub</error> fn pub_foo();
+            fn tup_param(<error descr="Trait function `tup_param` cannot have tuple parameters">(x, y): (u8, u8)</error>, a: bool);
+        }
+    """)
+
+    fun testTraitMethod() = checkErrors("""
+        trait Animal<T> {
+            #[inline]
+            fn feed<'a>(&mut self, food: T, d: &'a str, _: bool, f32) -> Option<f64> where T: Sized {
+                #![cold]
+                None
+            }
+            fn no_body(self);
+
+            <error descr="Trait method `default_foo` cannot have the `default` qualifier">default</error> fn default_foo(&self);
+            <error descr="Trait method `pub_foo` cannot have the `pub` qualifier">pub</error> fn pub_foo(&mut self);
+            fn tup_param(&self, <error descr="Trait method `tup_param` cannot have tuple parameters">(x, y): (u8, u8)</error>, a: bool);
+        }
+    """)
+
     fun testUnionTuple() = checkErrors("""
         union U<error descr="Union cannot be tuple-like">(i32, f32)</error>;
     """)
