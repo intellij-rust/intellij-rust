@@ -35,7 +35,7 @@ FILE
           RsPathImpl(PATH)
             PsiElement(identifier)('i32')
       PsiElement(,)(',')
-      PsiErrorElement:')' or <pat> expected, got ','
+      PsiErrorElement:')' or <fn parameter> expected, got ','
         <empty list>
   PsiElement(,)(',')
   PsiElement(DUMMY_BLOCK)
