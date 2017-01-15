@@ -77,7 +77,7 @@
     ]
 
     elementType("(Fn|Anon|Lambda|Path)Parameter") = ValueParameter
-    elementType("(Fn|Lambda|Path|FnType|ForeignFn)Parameters") = ValueParameterList
+    elementType("(Fn|Lambda|Path|FnType)Parameters") = ValueParameterList
 
     extends(".+Expr") = Expr
     elementType(".+BinExpr") = BinaryExpr
@@ -206,7 +206,7 @@ private AttrsAndVis ::= OuterAttr* Vis?
 
 private Item ::= Constant
                | TypeAlias
-               | FnItem
+               | Function
                | TraitItem
                | ImplItem
                | ModDeclItem
@@ -256,13 +256,14 @@ fake ValueParameterList ::= SelfParameter? ValueParameter* '...'? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-FnParameters          ::= '(' !',' [ SelfParameter (',' | &')') ] [ <<comma_separated_list FnParameter>> ] ')' { pin = 1 }
+FnParameters          ::= '(' !',' [ SelfParameter (',' | &')') ] [ <<fn_params_list FnParameter>> ] ')' { pin = 1 }
 LambdaParameters      ::= '|' !',' [ <<comma_separated_list LambdaParameter>> ] '|'
 
-ForeignFnParameters   ::= <<variadic_params_impl FnParameter>>
 FnTypeParameters      ::= <<variadic_params_impl AnonParameter>>
 PathParameters        ::= '(' [ <<comma_separated_list PathParameter>> ] ')' { pin = 1 }
 
+
+private meta fn_params_list ::= <<param>> (',' <<param>>)* [ ',' '...'? ] ','?
 private meta variadic_params_impl ::= '(' [ <<param>> (',' <<param>>)*  [ ',' '...'? ] ] ')' { pin = 1 }
 
 private RestrictedPat ::= &( [ mut | '&' '&'? ] ( identifier | '_' ) ) Pat
@@ -308,7 +309,7 @@ ExternAbi ::= extern STRING_LITERAL?
 
 RetType ::= '->' Type { pin = 1 }
 
-fake Function ::=
+Function ::=
   OuterAttr* default_? Vis? FnAttrs FnHeader FnParameters FnTail (';' | InnerAttrsAndBlock)
 {
   pin = FnHeader
@@ -320,22 +321,7 @@ fake Function ::=
   mixin = "org.rust.lang.core.psi.impl.mixin.RsFunctionImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsFunctionStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
-
-ForeignFnDecl ::=
-  OuterAttr*           Vis?         FnHeader ForeignFnParameters FnTail ';'
-{
-  pin = FnHeader
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = Function
-}
-
-FnItem ::=
-  OuterAttr* default_? Vis? FnAttrs FnHeader FnParameters FnTail (';' | InnerAttrsAndBlock)
-{
-  pin = FnHeader
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  elementType = Function
 }
 
 Pat ::= PatWild
@@ -489,7 +475,7 @@ ForeignModItem ::= AttrsAndVis ExternAbi '{' InnerAttr* ForeignDecl* '}' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private ForeignDecl ::= Constant | ForeignFnDecl
+private ForeignDecl ::= Constant | Function
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -603,7 +589,7 @@ TraitItem ::= AttrsAndVis unsafe? trait identifier TypeParameterList? TypeParamB
 
 private TraitBody ::= '{' TraitMember* '}' { pin = 1 }
 
-private TraitMember ::= !'}' ( Constant | TypeAlias | FnItem ) {
+private TraitMember ::= !'}' ( Constant | TypeAlias | Function ) {
   pin = 1
   recoverWhile = TraitMember_recover
 }
@@ -632,7 +618,7 @@ private TypeTraitImpl ::= Type WhereClause? ImplBody { pin = 1 }
 
 private ImplBody ::= '{' InnerAttr* ImplMember* '}' { pin = 1 }
 
-private ImplMember ::= !'}' ( FnItem | Constant | ImplMacroMember | TypeAlias ) {
+private ImplMember ::= !'}' ( Function | Constant | ImplMacroMember | TypeAlias ) {
   pin = 1
   recoverWhile = ImplMember_recover
 }

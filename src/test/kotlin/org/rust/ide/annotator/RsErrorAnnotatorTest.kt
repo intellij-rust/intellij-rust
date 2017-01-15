@@ -82,19 +82,18 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             #![cold]
             None
         }
+        fn trailing_comma(a: u32,) {}
 
         <error descr="Function `foo_default` cannot have the `default` qualifier">default</error> fn foo_default(f: u32) {}
         fn ref_self(<error descr="Function `ref_self` cannot have `self` parameter">&mut self</error>, f: u32) {}
         fn no_body()<error descr="Function `no_body` must have a body">;</error>
-
-        <error>default</error> fn anon_param(
-            <error descr="Function `anon_param` cannot have anonymous parameters">u8</error>, a: i16
-        ) {}
+        fn anon_param(<error descr="Function `anon_param` cannot have anonymous parameters">u8</error>, a: i16) {}
+        fn var_foo(a: bool, <error descr="Function `var_foo` cannot be variadic">...</error>) {}
+        <error>default</error> fn two_errors(<error>u8</error>, a: i16) {}
     """)
 
     fun testImplAssocFunction() = checkErrors("""
         struct Person<D> { data: D }
-
         impl<D> Person<D> {
             #[inline]
             pub fn new<'a>(id: u32, name: &'a str, data: D, _: bool) -> Person<D> where D: Sized {
@@ -106,12 +105,12 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             default <error descr="Default associated function `def_pub` cannot have the `pub` qualifier">pub</error> fn def_pub() {}
             fn no_body()<error descr="Associated function `no_body` must have a body">;</error>
             fn anon_param(<error descr="Associated function `anon_param` cannot have anonymous parameters">u8</error>, a: i16) {}
+            fn var_foo(a: bool, <error descr="Associated function `var_foo` cannot be variadic">...</error>) {}
         }
     """)
 
     fun testImplMethod() = checkErrors("""
         struct Person<D> { data: D }
-
         impl<D> Person<D> {
             #[inline]
             pub fn check<'a>(&self, s: &'a str) -> bool where D: Sized {
@@ -123,6 +122,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             default <error descr="Default method `def_pub` cannot have the `pub` qualifier">pub</error> fn def_pub(&self) {}
             fn no_body(&self)<error descr="Method `no_body` must have a body">;</error>
             fn anon_param(&self, <error descr="Method `anon_param` cannot have anonymous parameters">u8</error>, a: i16) {}
+            fn var_foo(&self, a: bool, <error descr="Method `var_foo` cannot be variadic">...</error>) {}
         }
     """)
 
@@ -138,6 +138,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             <error descr="Trait function `default_foo` cannot have the `default` qualifier">default</error> fn default_foo();
             <error descr="Trait function `pub_foo` cannot have the `pub` qualifier">pub</error> fn pub_foo();
             fn tup_param(<error descr="Trait function `tup_param` cannot have tuple parameters">(x, y): (u8, u8)</error>, a: bool);
+            fn var_foo(a: bool, <error descr="Trait function `var_foo` cannot be variadic">...</error>);
         }
     """)
 
@@ -153,6 +154,20 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             <error descr="Trait method `default_foo` cannot have the `default` qualifier">default</error> fn default_foo(&self);
             <error descr="Trait method `pub_foo` cannot have the `pub` qualifier">pub</error> fn pub_foo(&mut self);
             fn tup_param(&self, <error descr="Trait method `tup_param` cannot have tuple parameters">(x, y): (u8, u8)</error>, a: bool);
+            fn var_foo(&self, a: bool, <error descr="Trait method `var_foo` cannot be variadic">...</error>);
+        }
+    """)
+
+    fun testForeignFunction() = checkErrors("""
+        extern {
+            #[cold]
+            pub fn full(len: size_t, ...) -> size_t;
+
+            <error descr="Foreign function `default_foo` cannot have the `default` qualifier">default</error> fn default_foo();
+            fn with_self(<error descr="Foreign function `with_self` cannot have `self` parameter">&self</error>, s: size_t);
+            fn anon_param(<error descr="Foreign function `anon_param` cannot have anonymous parameters">u8</error>, a: i8);
+            fn with_body() <error descr="Foreign function `with_body` cannot have a body">{ let _ = 1; }</error>
+            fn var_coma(a: size_t, ...<error descr="`...` must be last in argument list for variadic function">,</error>);
         }
     """)
 

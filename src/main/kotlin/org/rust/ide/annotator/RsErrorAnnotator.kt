@@ -7,6 +7,7 @@ import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.cargoProject
 import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.ImplementMethodsFix
@@ -102,21 +103,44 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParameter) {
         val fn = param.parent.parent as? RsFunction ?: return
         when (fn.role) {
-            RsFunctionRole.FREE, RsFunctionRole.IMPL_METHOD -> {
+            RsFunctionRole.FREE,
+            RsFunctionRole.IMPL_METHOD,
+            RsFunctionRole.FOREIGN -> {
                 require(param.pat, holder, "${fn.title} cannot have anonymous parameters", param)
             }
             RsFunctionRole.TRAIT_METHOD -> {
                 denyType<RsPatTup>(param.pat, holder, "${fn.title} cannot have tuple parameters", param)
             }
-            RsFunctionRole.FOREIGN -> {}
         }
     }
 
     private fun checkValueParameterList(holder: AnnotationHolder, params: RsValueParameterList) {
         val fn = params.parent as? RsFunction ?: return
-        if (fn.role == RsFunctionRole.FREE) {
-            deny(params.selfParameter, holder, "${fn.title} cannot have `self` parameter")
+        when (fn.role) {
+            RsFunctionRole.FREE -> {
+                deny(params.selfParameter, holder, "${fn.title} cannot have `self` parameter")
+                deny(params.dotdotdot, holder, "${fn.title} cannot be variadic")
+            }
+            RsFunctionRole.TRAIT_METHOD,
+            RsFunctionRole.IMPL_METHOD -> {
+                deny(params.dotdotdot, holder, "${fn.title} cannot be variadic")
+            }
+            RsFunctionRole.FOREIGN -> {
+                deny(params.selfParameter, holder, "${fn.title} cannot have `self` parameter")
+                checkDot3Parameter(holder, params.dotdotdot)
+            }
         }
+    }
+
+    private fun checkDot3Parameter(holder: AnnotationHolder, dot3: PsiElement?) {
+        if (dot3 == null) return
+        dot3.rightVisibleLeaves
+            .first {
+                if (it.text != ")") {
+                    holder.createErrorAnnotation(it, "`...` must be last in argument list for variadic function")
+                }
+                return
+            }
     }
 
     private fun checkFunction(holder: AnnotationHolder, fn: RsFunction) {
@@ -135,7 +159,10 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
                     deny(fn.vis, holder, "Default ${fn.title.firstLower} cannot have the `pub` qualifier")
                 }
             }
-            RsFunctionRole.FOREIGN -> {}
+            RsFunctionRole.FOREIGN -> {
+                deny(fn.default, holder, "${fn.title} cannot have the `default` qualifier")
+                deny(fn.block, holder, "${fn.title} cannot have a body")
+            }
         }
     }
 
@@ -344,6 +371,9 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private val RsNamedElement.namespaced: Sequence<Pair<Namespace, RsNamedElement>>
         get() = namespaces.asSequence().map { Pair(it, this) }
+
+    private val PsiElement.rightVisibleLeaves: Sequence<PsiElement>
+        get() = generateSequence(PsiTreeUtil.nextVisibleLeaf(this), { el -> PsiTreeUtil.nextVisibleLeaf(el) })
 
     private val String.firstLower: String
         get() = if (isEmpty()) this else this[0].toLowerCase() + substring(1)
