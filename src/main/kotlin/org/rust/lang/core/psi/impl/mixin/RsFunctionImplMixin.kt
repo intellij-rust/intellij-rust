@@ -87,5 +87,6 @@ val RsFunction.title: String
             if (selfParameter == null) "Trait function `$name`" else "Trait method `$name`"
         RsFunctionRole.IMPL_METHOD ->
             if (selfParameter == null) "Associated function `$name`" else "Method `$name`"
+        RsFunctionRole.FOREIGN -> "Foreign function `$name`"
         else -> "Function `$name`"
     }
