@@ -256,14 +256,15 @@ fake ValueParameterList ::= SelfParameter? ValueParameter* '...'? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-FnParameters          ::= '(' !',' [ SelfParameter (',' | &')') ] [ <<fn_params_list FnParameter>> ] ')' { pin = 1 }
+FnParameters          ::= '(' !',' [ SelfParameter (',' | &')') ]
+                                   [ FnParameter (',' FnParameter)* [ ',' '...'? ] ','? ]
+                          ')' { pin = 1 }
 LambdaParameters      ::= '|' !',' [ <<comma_separated_list LambdaParameter>> ] '|'
 
 FnTypeParameters      ::= <<variadic_params_impl AnonParameter>>
 PathParameters        ::= '(' [ <<comma_separated_list PathParameter>> ] ')' { pin = 1 }
 
 
-private meta fn_params_list ::= <<param>> (',' <<param>>)* [ ',' '...'? ] ','?
 private meta variadic_params_impl ::= '(' [ <<param>> (',' <<param>>)*  [ ',' '...'? ] ] ')' { pin = 1 }
 
 private RestrictedPat ::= &( [ mut | '&' '&'? ] ( identifier | '_' ) ) Pat
@@ -300,19 +301,22 @@ WherePred ::= lifetime LifetimeParamBounds | ForLifetimes? Type TypeParamBounds
 
 ForLifetimes ::= for '<' LifetimesParams '>'
 
-
-private FnAttrs ::= const? unsafe? ExternAbi?
-private FnHeader ::= fn identifier TypeParameterList?
-private FnTail ::= RetType? WhereClause?
-
 ExternAbi ::= extern STRING_LITERAL?
 
 RetType ::= '->' Type { pin = 1 }
 
-Function ::=
-  OuterAttr* default_? Vis? FnAttrs FnHeader FnParameters FnTail (';' | InnerAttrsAndBlock)
+Function ::= OuterAttr*
+             default_?
+             Vis?
+             const? unsafe? ExternAbi?
+             fn identifier
+             TypeParameterList?
+             FnParameters
+             RetType?
+             WhereClause?
+             (';' | InnerAttrsAndBlock)
 {
-  pin = FnHeader
+  pin = 'identifier'
   implements = [ "org.rust.lang.core.psi.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.RsGenericDeclaration"
                  "org.rust.lang.core.psi.RsOuterAttributeOwner"

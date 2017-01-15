@@ -78,11 +78,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
 
     fun testFunction() = checkErrors("""
         #[inline]
-        pub fn full<'a, T>(id: u32, name: &'a str, data: &T, _: &mut FnMut(Display)) -> Option<u32> where T: Sized {
-            #![cold]
+        pub const unsafe fn full<'a, T>(id: u32, name: &'a str, data: &T, _: &mut FnMut(Display)) -> Option<u32> where T: Sized {
             None
         }
         fn trailing_comma(a: u32,) {}
+        extern "C" fn ext_fn() {}
 
         <error descr="Function `foo_default` cannot have the `default` qualifier">default</error> fn foo_default(f: u32) {}
         fn ref_self(<error descr="Function `ref_self` cannot have `self` parameter">&mut self</error>, f: u32) {}
@@ -96,11 +96,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         struct Person<D> { data: D }
         impl<D> Person<D> {
             #[inline]
-            pub fn new<'a>(id: u32, name: &'a str, data: D, _: bool) -> Person<D> where D: Sized {
-                #![cold]
+            pub const unsafe fn new<'a>(id: u32, name: &'a str, data: D, _: bool) -> Person<D> where D: Sized {
                 Person { data: data }
             }
             default fn def() {}
+            extern "C" fn ext_fn() {}
 
             default <error descr="Default associated function `def_pub` cannot have the `pub` qualifier">pub</error> fn def_pub() {}
             fn no_body()<error descr="Associated function `no_body` must have a body">;</error>
@@ -113,11 +113,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         struct Person<D> { data: D }
         impl<D> Person<D> {
             #[inline]
-            pub fn check<'a>(&self, s: &'a str) -> bool where D: Sized {
-                #![cold]
+            pub const unsafe fn check<'a>(&self, s: &'a str) -> bool where D: Sized {
                 false
             }
             default fn def(&self) {}
+            extern "C" fn ext_m(&self) {}
 
             default <error descr="Default method `def_pub` cannot have the `pub` qualifier">pub</error> fn def_pub(&self) {}
             fn no_body(&self)<error descr="Method `no_body` must have a body">;</error>
@@ -129,11 +129,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
     fun testTraitAssocFunction() = checkErrors("""
         trait Animal<T> {
             #[inline]
-            fn feed<'a>(food: T, d: &'a str, _: bool, f32) -> Option<f64> where T: Sized {
-                #![cold]
+            unsafe fn feed<'a>(food: T, d: &'a str, _: bool, f32) -> Option<f64> where T: Sized {
                 None
             }
             fn no_body();
+            extern "C" fn ext_fn();
 
             <error descr="Trait function `default_foo` cannot have the `default` qualifier">default</error> fn default_foo();
             <error descr="Trait function `pub_foo` cannot have the `pub` qualifier">pub</error> fn pub_foo();
@@ -146,10 +146,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         trait Animal<T> {
             #[inline]
             fn feed<'a>(&mut self, food: T, d: &'a str, _: bool, f32) -> Option<f64> where T: Sized {
-                #![cold]
                 None
             }
             fn no_body(self);
+            extern "C" fn ext_m();
 
             <error descr="Trait method `default_foo` cannot have the `default` qualifier">default</error> fn default_foo(&self);
             <error descr="Trait method `pub_foo` cannot have the `pub` qualifier">pub</error> fn pub_foo(&mut self);
@@ -164,6 +164,9 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             pub fn full(len: size_t, ...) -> size_t;
 
             <error descr="Foreign function `default_foo` cannot have the `default` qualifier">default</error> fn default_foo();
+            <error descr="Foreign function `with_const` cannot have the `const` qualifier">const</error> fn with_const();
+            <error descr="Foreign function `with_unsafe` cannot have the `unsafe` qualifier">unsafe</error> fn with_unsafe();
+            <error descr="Foreign function `with_ext_abi` cannot have an extern ABI">extern "C"</error> fn with_ext_abi();
             fn with_self(<error descr="Foreign function `with_self` cannot have `self` parameter">&self</error>, s: size_t);
             fn anon_param(<error descr="Foreign function `anon_param` cannot have anonymous parameters">u8</error>, a: i8);
             fn with_body() <error descr="Foreign function `with_body` cannot have a body">{ let _ = 1; }</error>
@@ -364,6 +367,13 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         impl<'a, 'b, <error>'a</error>> Str<'a, 'b> {}
         enum Direction<'a, 'b, <error>'a</error>> { LEFT(&'a str), RIGHT(&'b str) }
         trait Trait<'a, 'b, <error>'a</error>> {}
+    """)
+
+    fun testE0379_ConstTraitFunction() = checkErrors("""
+        trait Foo {
+            fn foo();
+            <error descr="Trait functions cannot be declared const [E0379]">const</error> fn bar();
+        }
     """)
 
     fun testE0403_NameDuplicationInGenericParams() = checkErrors("""
