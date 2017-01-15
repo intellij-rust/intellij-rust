@@ -525,12 +525,13 @@ EnumVariant ::= OuterAttr* identifier VariantArgs? {
 
 private VariantArgs ::= BlockFields | TupleFields | VariantDiscriminant
 
-BlockFields ::= <<mk_block_fileds FieldDecl>> {
+BlockFields ::= '{' <<field_with_recover FieldDecl>>* '}' {
+  pin = 1
   extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-TupleFields ::= <<mk_tuple_fields TupleFieldDecl>>
+TupleFields ::= '(' <<comma_separated_list TupleFieldDecl >> ')' { pin = 1 }
 
 VariantDiscriminant ::= '=' AnyExpr { pin = 1 }
 
@@ -554,14 +555,11 @@ TupleFieldDecl ::= AttrsAndVis Type {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
-private meta mk_block_fileds ::= '{' <<field_with_recover <<param>> >>* '}' { pin = 1}
 private meta field_with_recover ::= !'}' <<param>> (',' | &'}') {
   pin = 1
   recoverWhile = Field_recover
 }
 private Field_recover ::= !('}' | '#' | pub | identifier)
-
-private meta mk_tuple_fields ::= '(' <<comma_separated_list <<param>> >> ')' { pin = 1}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
