@@ -4,8 +4,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
-import org.rust.lang.core.psi.RsModDeclItem
+import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor
+import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.psi.RsMod
+import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.containingMod
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.stubs.RsFileStub
@@ -13,6 +15,10 @@ import org.rust.lang.core.stubs.RsFileStub
 class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
     override fun getKey(): StubIndexKey<String, RsModDeclItem> = KEY
+
+    // Case insensitive because some file systems are like this.
+//    override fun getKeyDescriptor(): KeyDescriptor<String> =
+//        CaseInsensitiveEnumeratorStringDescriptor.INSTANCE
 
     companion object {
         val KEY: StubIndexKey<String, RsModDeclItem> =
