@@ -362,11 +362,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         enum Direction<'a, 'b> { LEFT(&'a str), RIGHT(&'b str) }
         trait Trait<'a, 'b> {}
 
-        fn foo<'a, 'b, <error descr="Lifetime name `'a` declared twice in the same scope [E0263]">'a</error>>(x: &'a str, y: &'b str) { }
-        struct Str<'a, 'b, <error>'a</error>> { a: &'a u32, b: &'b f64 }
+        fn bar<'a, 'b, <error descr="Lifetime name `'a` declared twice in the same scope [E0263]">'a</error>>(x: &'a str, y: &'b str) { }
+        struct St<'a, 'b, <error>'a</error>> { a: &'a u32, b: &'b f64 }
         impl<'a, 'b, <error>'a</error>> Str<'a, 'b> {}
-        enum Direction<'a, 'b, <error>'a</error>> { LEFT(&'a str), RIGHT(&'b str) }
-        trait Trait<'a, 'b, <error>'a</error>> {}
+        enum Dir<'a, 'b, <error>'a</error>> { LEFT(&'a str), RIGHT(&'b str) }
+        trait Tr<'a, 'b, <error>'a</error>> {}
     """)
 
     fun testE0379_ConstTraitFunction() = checkErrors("""
@@ -441,6 +441,24 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             fn dup();
             fn <error descr="A value named `dup` has already been defined in this module [E0428]">dup</error>();
         }
+    """)
+
+    fun testE0428_NameDuplicationInFile() = checkErrors("""
+        const UNIQUE_CONST: i32 = 10;
+        static UNIQUE_STATIC: f64 = 0.72;
+        fn unique_fn() {}
+        struct UniqueStruct;
+        trait UniqueTrait {}
+        enum UniqueEnum {}
+        mod unique_mod {}
+
+        const Dup: u32 = 20;
+        static <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>: i64 = -1.3;
+        fn     <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>() {}
+        struct <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>;
+        trait  <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
+        enum   <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
+        mod    <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
     """)
 
     fun testE0428_NameDuplicationInModule() = checkErrors("""
