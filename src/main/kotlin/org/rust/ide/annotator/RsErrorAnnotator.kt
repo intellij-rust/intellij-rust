@@ -28,6 +28,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitConstant(o: RsConstant) = checkConstant(holder, o)
             override fun visitStructItem(o: RsStructItem) = checkStructItem(holder, o)
             override fun visitEnumBody(o: RsEnumBody) = checkEnumBody(holder, o)
+            override fun visitFile(o: PsiFile) = checkFile(holder, o)
             override fun visitForeignModItem(o: RsForeignModItem) = checkForeignModItem(holder, o)
             override fun visitFunction(o: RsFunction) = checkFunction(holder, o)
             override fun visitImplItem(o: RsImplItem) = checkImpl(holder, o)
@@ -178,6 +179,11 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             "A ${ns.itemName} named `$name` has already been defined in this module [E0428]"
         })
 
+    private fun checkFile(holder: AnnotationHolder, file: PsiFile) =
+        findDuplicates(holder, file, { ns, name ->
+            "A ${ns.itemName} named `$name` has already been defined in this module [E0428]"
+        })
+
     private fun checkForeignModItem(holder: AnnotationHolder, mod: RsForeignModItem) =
         findDuplicates(holder, mod, { ns, name ->
             "A ${ns.itemName} named `$name` has already been defined in this module [E0428]"
@@ -295,7 +301,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         return impl is RsImplItem && impl.traitRef != null
     }
 
-    private fun findDuplicates(holder: AnnotationHolder, owner: RsCompositeElement, messageGenerator: (ns: Namespace, name: String) -> String) {
+    private fun findDuplicates(holder: AnnotationHolder, owner: PsiElement, messageGenerator: (ns: Namespace, name: String) -> String) {
         val marked = HashSet<RsNamedElement>()
         owner.children.asSequence()
             .filterIsInstance<RsNamedElement>()
