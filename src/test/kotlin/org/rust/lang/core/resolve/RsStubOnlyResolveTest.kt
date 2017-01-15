@@ -14,6 +14,19 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         pub fn foo() {}
     """)
 
+    fun testChildModCaseInsensitive() = stubOnlyResolve("""
+    //- main.rs
+        mod child;
+
+        fn main() {
+            child::foo();
+                  //^ child.rs
+        }
+
+    //- child.rs
+        pub fn foo() {}
+    """)
+
     fun testNestedChildMod() = stubOnlyResolve("""
     //- main.rs
         mod inner {
