@@ -145,6 +145,9 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             val text = myFixture.file.text
             val markerOffset = text.indexOf(caretMarker)
             check(markerOffset != -1) { "No `$marker` marker:\n$text" }
+            check(text.indexOf(caretMarker, startIndex = markerOffset + 1) == -1) {
+                "More than one `$marker` marker:\n$text"
+            }
 
             val data = text.drop(markerOffset).removePrefix(caretMarker).takeWhile { it != '\n' }.trim()
             val markerPosition = myFixture.editor.offsetToLogicalPosition(markerOffset + caretMarker.length - 1)

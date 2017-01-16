@@ -117,7 +117,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun testSelfType() = testExpr("""
         trait T {
             fn foo(&self) { self; }
-                            //^ & T
+                            //^ & Self
         }
     """)
 }

@@ -267,7 +267,7 @@ private fun deviseSelfType(self: RsSelfParameter): RustType {
     } else {
         val trait = self.parentOfType<RsTraitItem>()
             ?: return RustUnknownType
-        RustTraitType(trait)
+        RustTypeParameterType(trait)
     }
 
     if (self.isRef) {

@@ -381,6 +381,17 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun testSelfImplementsTraitFromBound() = checkByCode("""
+        trait Bar {
+            fn bar(&self);
+             //X
+        }
+        trait Foo : Bar {
+            fn foo(&self) { self.bar(); }
+                                //^
+        }
+    """)
+
     fun testCantImportMethods() = checkByCode("""
         mod m {
             pub enum E {}
