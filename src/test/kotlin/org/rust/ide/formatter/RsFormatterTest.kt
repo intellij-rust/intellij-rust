@@ -1,6 +1,7 @@
 package org.rust.ide.formatter
 
 import com.intellij.psi.formatter.FormatterTestCase
+import org.intellij.lang.annotations.Language
 import org.rust.ide.formatter.settings.RsCodeStyleSettings
 import org.rust.lang.RsLanguage
 import org.rust.lang.RsTestBase
@@ -99,7 +100,19 @@ class RsFormatterTest : FormatterTestCase() {
 
     fun testSpecialMacros() = doTest()
 
+    fun testImportGlobAlignment() = doTextTest("""
+        use piston_window::{Button,
+        Transformed};
+    """, """
+        use piston_window::{Button,
+                            Transformed};
+    """)
+
     private fun common() = getSettings(RsLanguage)
     private fun custom() = settings.getCustomSettings(RsCodeStyleSettings::class.java)
+
+    override fun doTextTest(@Language("Rust") text: String, @Language("Rust") textAfter: String) {
+        super.doTextTest(text.trimIndent(), textAfter.trimIndent())
+    }
 }
 
