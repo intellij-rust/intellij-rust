@@ -240,7 +240,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testStaticFnFromInherentImpl() = checkByCode("""
+    fun testAssociatedFnFromInherentImpl() = checkByCode("""
         struct S;
 
         impl S { fn test() { } }
@@ -250,7 +250,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
                       //^
     """)
 
-    fun testNonStaticFnFromInherentImpl() = checkByCode("""
+    fun testMethodFromInherentImpl() = checkByCode("""
         struct S;
 
         impl S { fn test(&self) { } }
