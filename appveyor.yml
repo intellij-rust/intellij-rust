@@ -13,6 +13,9 @@ build_script:
 test_script:
   - gradlew.bat check --no-daemon
 
-# Appveyor does not allow cache folder greater then 500 MB
-# cache:
-#   - C:\Users\appveyor\.gradle
+cache:
+  - C:\Users\appveyor\.cargo
+
+# Appveyor does not allow huge cache folders
+# https://www.appveyor.com/docs/build-cache/
+# - C:\Users\appveyor\.gradle
