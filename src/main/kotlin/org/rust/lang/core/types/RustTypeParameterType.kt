@@ -13,7 +13,7 @@ data class RustTypeParameterType private constructor(
     constructor(trait: RsTraitItem) : this(Self(trait))
 
     override fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
-        parameter.bounds
+        transitiveClosure(parameter.bounds)
 
     override fun getMethodsIn(project: Project): Sequence<RsFunction> =
         getTraitsImplementedIn(project).flatMap { it.functionList.asSequence() }
@@ -46,9 +46,23 @@ data class RustTypeParameterType private constructor(
     private data class Self(val trait: RsTraitItem) : TypeParameter {
         override val name: String? get() = "Self"
 
-        override val bounds: Sequence<RsTraitItem> get() {
-            val bounds = trait.typeParamBounds?.polyboundList.orEmpty().asSequence()
-            return bounds.mapNotNull { it.bound.traitRef?.trait } + trait
-        }
+        override val bounds: Sequence<RsTraitItem> get() = sequenceOf(trait)
     }
+}
+
+private val RsTraitItem.superTraits: Sequence<RsTraitItem> get() {
+    val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence()
+    return bounds.mapNotNull { it.bound.traitRef?.trait } + this
+}
+
+private fun transitiveClosure(traits: Sequence<RsTraitItem>): Sequence<RsTraitItem> {
+    val result = mutableSetOf<RsTraitItem>()
+    fun dfs(trait: RsTraitItem) {
+        if (trait in result) return
+        result += trait
+        trait.superTraits.forEach(::dfs)
+    }
+    traits.forEach(::dfs)
+
+    return result.asSequence()
 }

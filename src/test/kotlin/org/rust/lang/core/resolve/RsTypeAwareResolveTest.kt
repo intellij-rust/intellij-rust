@@ -392,6 +392,28 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun testChainedBounds() = checkByCode("""
+        trait A { fn foo(&self) {} }
+                    //X
+        trait B : A {}
+        trait C : B {}
+        trait D : C {}
+
+        struct X;
+        impl D for X {}
+
+        fn bar<T: D>(x: T) { x.foo() }
+                              //^
+""")
+
+    fun testChainedBoundsCycle() = checkByCode("""
+        trait A: B {}
+        trait B: A {}
+
+        fn bar<T: A>(x: T) { x.foo() }
+                              //^ unresolved
+    """)
+
     fun testCantImportMethods() = checkByCode("""
         mod m {
             pub enum E {}
