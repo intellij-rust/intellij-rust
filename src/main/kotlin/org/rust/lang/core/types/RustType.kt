@@ -14,11 +14,8 @@ interface RustType {
     fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
         RsImplIndex.findImplsFor(this, project).mapNotNull { it.traitRef?.trait }
 
-    /**
-     * Non-static methods accessible for this particular type
-     */
-    fun getNonStaticMethodsIn(project: Project): Sequence<RsFunction> =
-        RsImplIndex.findNonStaticMethodsFor(this, project)
+    fun getMethodsIn(project: Project): Sequence<RsFunction> =
+        RsImplIndex.findMethodsFor(this, project)
 
     /**
      * Apply positional type arguments to a generic type.

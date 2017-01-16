@@ -32,8 +32,8 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
             if (isTest) RsIcons.FUNCTION.addTestMark() else RsIcons.FUNCTION
 
         RsFunctionRole.TRAIT_METHOD, RsFunctionRole.IMPL_METHOD -> when {
-            isStatic && isAbstract -> RsIcons.ABSTRACT_ASSOC_FUNCTION
-            isStatic -> RsIcons.ASSOC_FUNCTION
+            isAssocFn && isAbstract -> RsIcons.ABSTRACT_ASSOC_FUNCTION
+            isAssocFn -> RsIcons.ASSOC_FUNCTION
             isAbstract -> RsIcons.ABSTRACT_METHOD
             else -> RsIcons.METHOD
         }
@@ -41,7 +41,7 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
 }
 
 val RsFunction.isAbstract: Boolean get() = stub?.isAbstract ?: block == null
-val RsFunction.isStatic: Boolean get() = stub?.isStatic ?: selfParameter == null
+val RsFunction.isAssocFn: Boolean get() = stub?.isStatic ?: selfParameter == null
 val RsFunction.isTest: Boolean get() = stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
 
 

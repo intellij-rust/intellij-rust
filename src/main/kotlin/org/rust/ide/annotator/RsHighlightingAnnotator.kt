@@ -8,7 +8,7 @@ import org.rust.ide.highlight.RsHighlighter
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.RsFunctionRole
 import org.rust.lang.core.psi.impl.mixin.isMut
-import org.rust.lang.core.psi.impl.mixin.isStatic
+import org.rust.lang.core.psi.impl.mixin.isAssocFn
 import org.rust.lang.core.psi.impl.mixin.role
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.parentOfType
@@ -89,7 +89,7 @@ private fun colorFor(element: RsCompositeElement): RsColor? = when (element) {
     is RsFunction -> when (element.role) {
         RsFunctionRole.FOREIGN, RsFunctionRole.FREE -> RsColor.FUNCTION
         RsFunctionRole.TRAIT_METHOD, RsFunctionRole.IMPL_METHOD ->
-            if (element.isStatic) RsColor.ASSOC_FUNCTION else RsColor.METHOD
+            if (element.isAssocFn) RsColor.ASSOC_FUNCTION else RsColor.METHOD
     }
     is RsMethodCallExpr -> RsColor.METHOD
     is RsModDeclItem -> RsColor.MODULE

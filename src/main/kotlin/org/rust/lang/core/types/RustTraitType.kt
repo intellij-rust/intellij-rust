@@ -15,7 +15,7 @@ data class RustTraitType(val trait: RsTraitItem) : RustType {
     override fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
         sequenceOf(trait)
 
-    override fun getNonStaticMethodsIn(project: Project): Sequence<RsFunction> =
+    override fun getMethodsIn(project: Project): Sequence<RsFunction> =
         getTraitsImplementedIn(project).flatMap { it.functionList.asSequence() }
 
     override fun toString(): String = trait.name ?: "<anonymous>"

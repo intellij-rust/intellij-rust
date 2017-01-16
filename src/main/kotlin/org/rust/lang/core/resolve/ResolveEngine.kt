@@ -131,7 +131,7 @@ object ResolveEngine {
         val receiverType = call.expr.resolvedType
         val name = call.identifier.text
 
-        return receiverType.getNonStaticMethodsIn(call.project)
+        return receiverType.getMethodsIn(call.project)
             .find { it.name == name }
     }
 
@@ -242,7 +242,7 @@ fun associatedDeclarations(scope: RsCompositeElement): Sequence<ScopeEntry>? {
     }
 
     return RsImplIndex
-        .findMethodsFor(type, scope.project)
+        .findMethodsAndAssociatedFunctionsFor(type, scope.project)
         .mapNotNull { ScopeEntry.of(it) }
 }
 

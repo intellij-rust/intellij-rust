@@ -56,14 +56,14 @@ object CompletionEngine {
         // Needs type ascription to please Kotlin's type checker, https://youtrack.jetbrains.com/issue/KT-12696.
         val fields: List<RsNamedElement> = (receiverType as? RustStructType)?.item?.namedFields.orEmpty()
 
-        val methods = receiverType.getNonStaticMethodsIn(field.project).toList()
+        val methods = receiverType.getMethodsIn(field.project).toList()
 
         return (fields + methods).completionsFromNamedElements()
     }
 
     fun completeMethod(call: RsMethodCallExpr): Array<out LookupElement> {
         val receiverType = call.expr.resolvedType.stripAllRefsIfAny()
-        return receiverType.getNonStaticMethodsIn(call.project).toList().completionsFromNamedElements()
+        return receiverType.getMethodsIn(call.project).toList().completionsFromNamedElements()
     }
 
     fun completeExternCrate(extCrate: RsExternCrateItem): Array<out LookupElement> =

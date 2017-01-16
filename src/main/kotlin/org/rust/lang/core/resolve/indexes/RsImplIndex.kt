@@ -10,7 +10,7 @@ import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsStructOrEnumItemElement
-import org.rust.lang.core.psi.impl.mixin.isStatic
+import org.rust.lang.core.psi.impl.mixin.isAssocFn
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.types.RustStructOrEnumTypeBase
@@ -22,11 +22,11 @@ import java.util.*
 
 object RsImplIndex {
 
-    fun findNonStaticMethodsFor(target: RustType, project: Project): Sequence<RsFunction> =
-        findMethodsFor(target, project)
-            .filter { !it.isStatic }
-
     fun findMethodsFor(target: RustType, project: Project): Sequence<RsFunction> =
+        findMethodsAndAssociatedFunctionsFor(target, project)
+            .filter { !it.isAssocFn }
+
+    fun findMethodsAndAssociatedFunctionsFor(target: RustType, project: Project): Sequence<RsFunction> =
         findImplsFor(target, project)
             .flatMap { it.functionList.orEmpty().asSequence() }
 

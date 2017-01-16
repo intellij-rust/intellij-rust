@@ -12,7 +12,7 @@ data class RustTypeParameterType(val parameter: RsTypeParameter) : RustType {
     override fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
         parameter.bounds.mapNotNull { it.bound.traitRef?.trait }
 
-    override fun getNonStaticMethodsIn(project: Project): Sequence<RsFunction> =
+    override fun getMethodsIn(project: Project): Sequence<RsFunction> =
         getTraitsImplementedIn(project).flatMap { it.functionList.asSequence() }
 
     override fun substitute(map: Map<RustTypeParameterType, RustType>): RustType = map[this] ?: this

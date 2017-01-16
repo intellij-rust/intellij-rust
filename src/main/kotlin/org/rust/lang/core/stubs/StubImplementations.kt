@@ -435,7 +435,7 @@ class RsFunctionStub(
 
         override fun createStub(psi: RsFunction, parentStub: StubElement<*>?) =
             RsFunctionStub(parentStub, this,
-                psi.name, psi.isPublic, psi.isAbstract, psi.isStatic, psi.isTest, psi.role)
+                psi.name, psi.isPublic, psi.isAbstract, psi.isAssocFn, psi.isTest, psi.role)
 
         override fun indexStub(stub: RsFunctionStub, sink: IndexSink) = sink.indexFunction(stub)
     }
