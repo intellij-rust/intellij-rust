@@ -142,6 +142,16 @@ class CargoProjectDescription private constructor(
 
     fun findPackage(name: String): Package? = packages.find { it.name == name }
 
+    fun findLibTargetByNormName(normName: String): Pair<Package, Target>? =
+        packages.asSequence()
+            .mapNotNull { pkg ->
+                pkg.targets.asSequence()
+                    .filter { it.normName == normName }
+                    .map { Pair(pkg, it) }
+                    .firstOrNull()
+            }
+            .firstOrNull()
+
     companion object {
         fun deserialize(data: CleanCargoMetadata): CargoProjectDescription {
             // Packages form mostly a DAG. "Why mostly?", you say.
