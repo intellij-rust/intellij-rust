@@ -145,10 +145,7 @@ class CargoProjectDescription private constructor(
     fun findLibTargetByNormName(normName: String): Pair<Package, Target>? =
         packages.asSequence()
             .mapNotNull { pkg ->
-                pkg.targets.asSequence()
-                    .filter { it.normName == normName }
-                    .map { Pair(pkg, it) }
-                    .firstOrNull()
+                pkg.libTarget?.let { if (it.normName == normName) Pair(pkg, it) else null }
             }
             .firstOrNull()
 

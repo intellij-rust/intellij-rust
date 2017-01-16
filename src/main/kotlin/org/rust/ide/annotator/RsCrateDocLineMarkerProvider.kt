@@ -18,23 +18,22 @@ class RsCrateDocLineMarkerProvider : LineMarkerProvider {
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<PsiElement>? = null
 
-    override fun collectSlowLineMarkers(elements: MutableList<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {
-        elements.asSequence()
-            .filterIsInstance<RsExternCrateItem>()
-            .forEach { crateItem ->
-                val cargoProject = crateItem.module?.cargoProject ?: return@forEach
-                val (pkg, crate) = cargoProject.findLibTargetByNormName(crateItem.identifier.text)?: return@forEach
-                result.add(LineMarkerInfo(
-                    crateItem.crate,
-                    crateItem.crate.textRange,
-                    RsIcons.DOCS_MARK,
-                    Pass.LINE_MARKERS,
-                    { "Open documentation" },
-                    { e, c ->
-                        BrowserHyperlinkInfo.openUrl("https://docs.rs/${pkg.name}/${pkg.version}/${crate.normName}")
-                    },
-                    GutterIconRenderer.Alignment.LEFT)
-                )
-            }
+    override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {
+        for (el in elements) {
+            val crateItem = el as? RsExternCrateItem ?: continue
+            val cargoProject = crateItem.module?.cargoProject ?: continue
+            val (pkg, crate) = cargoProject.findLibTargetByNormName(crateItem.identifier.text) ?: continue
+            result.add(LineMarkerInfo(
+                crateItem.crate,
+                crateItem.crate.textRange,
+                RsIcons.DOCS_MARK,
+                Pass.LINE_MARKERS,
+                { "Open documentation" },
+                { e, c ->
+                    BrowserHyperlinkInfo.openUrl("https://docs.rs/${pkg.name}/${pkg.version}/${crate.normName}")
+                },
+                GutterIconRenderer.Alignment.LEFT)
+            )
+        }
     }
 }

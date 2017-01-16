@@ -22,7 +22,6 @@ abstract class RsLineMarkerProviderTestBase : RsTestBase() {
             .withIndex()
             .filter { it.value.contains(MARKER) }
             .map { Pair(it.index, it.value.substring(it.value.indexOf(MARKER) + MARKER.length).trim()) }
-            .toList()
 
     private fun markersFrom(editor: Editor, project: Project) =
         DaemonCodeAnalyzerImpl.getLineMarkers(editor.document, project)
@@ -31,7 +30,6 @@ abstract class RsLineMarkerProviderTestBase : RsTestBase() {
                     it.lineMarkerTooltip)
             }
             .sortedBy { it.first }
-            .toList()
 
     private companion object {
         val MARKER = "// - "
