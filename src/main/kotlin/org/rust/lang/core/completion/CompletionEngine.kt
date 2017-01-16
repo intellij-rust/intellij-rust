@@ -22,6 +22,7 @@ import org.rust.lang.core.types.RustUnknownType
 import org.rust.lang.core.types.stripAllRefsIfAny
 import org.rust.lang.core.types.util.resolvedType
 import org.rust.lang.core.types.visitors.impl.RustTypificationEngine
+import org.rust.utils.sequenceOfNotNull
 
 object CompletionEngine {
     const val KEYWORD_PRIORITY = 10.0
@@ -34,7 +35,7 @@ object CompletionEngine {
             ResolveEngine.resolve(qual, ref, Namespace.Types).firstOrNull()
                 .completionsFromResolveScope()
         } else {
-            innerDeclarations(ref)
+            lexicalDeclarations(ref)
                 .filterByNamespace(namespace)
                 .completionsFromScopeEntries()
         }
@@ -77,7 +78,10 @@ private fun RsCompositeElement?.completionsFromResolveScope(): Array<LookupEleme
     if (this == null)
         emptyArray()
     else
-        (outerDeclarations(this, withMethods = true) ?: emptySequence()).completionsFromScopeEntries()
+        sequenceOfNotNull(
+            containingDeclarations(this),
+            associatedDeclarations(this)
+        ).flatten().completionsFromScopeEntries()
 
 private fun Sequence<ScopeEntry>.completionsFromScopeEntries(): Array<LookupElement> =
     mapNotNull {

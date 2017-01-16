@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsCompositeElement
 import org.rust.lang.core.psi.RsItemElement
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.resolve.innerDeclarations
+import org.rust.lang.core.resolve.lexicalDeclarations
 
 class RsSuggestIndexNameMacro : MacroBase("rustSuggestIndexName", "rustSuggestIndexName()") {
     override fun calculateResult(params: Array<out Expression>, context: ExpressionContext, quick: Boolean): Result? {
@@ -24,7 +24,7 @@ class RsSuggestIndexNameMacro : MacroBase("rustSuggestIndexName", "rustSuggestIn
 }
 
 private fun getPatBindingNamesVisibleAt(pivot: RsCompositeElement): Set<String> =
-    innerDeclarations(pivot,
+    lexicalDeclarations(pivot,
         // we are only interested in local scopes
         stop = { scope -> scope is RsItemElement }
     )

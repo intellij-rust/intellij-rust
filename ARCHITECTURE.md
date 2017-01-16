@@ -46,7 +46,7 @@ are
 * `inspections`: warnings and quick fixes,
 * `navigation.goto`: leverages `lang.core.stubs.index` to provide GoToSymbol
   action.
-  
+
 # Lexer
 
 The lexer is specified in the `RustLexer.flex` file. Refer to the [JFlex]
@@ -79,13 +79,13 @@ accessor to be nullable, and `*` or `+` will result in the accessor returning a
 `List` of elements.
 
 As the IDE often works with incomplete code, a good parser recovery is
-mandatory. The parser recovery consists of two parts. 
+mandatory. The parser recovery consists of two parts.
 
 Let's say that the user has typed `fn foo`. The parser must understand that this
 is a function, despite the fact that argument list and body are missing. This is
 handled with the `pin` attribute. For example, `pin = 'FN'` will cause parser to
 produce a function AST node as soon as `fn` keyword is parsed. Consequently, the
-accessor for the identifier in the AST interface will be nullable. 
+accessor for the identifier in the AST interface will be nullable.
 
 The second part of parser recovery is token skipping. Suppose the user added `fn
 foo` to some existing code and got
@@ -146,7 +146,7 @@ reference element refers to. The definitions usually implement
 fn foo() {}
 
 fn bar() {
-    // This `foo` is actually a reference to the function defined above. 
+    // This `foo` is actually a reference to the function defined above.
     // So, `this_foo.reference.resolve()` will return `above_foo`
     foo()
 }
@@ -157,10 +157,10 @@ rustc. Compiler resolves the whole crate at once, walking the tree of modules in
 the top-down fashion. Intellij-Rust lazily resolves names by walking the PSI
 tree upwards from the reference. This allows to do resolve only in the file
 currently opened in the editor and its dependencies, ignoring most of the
-crates. The major chunk of resolve is handled by the `innerDeclarations` and
-`outerDeclarations` functions. 
+crates. The major chunk of resolve is handled by the `lexicalDeclarations`,
+`containingDeclarations` and `associatedDeclarations` functions.
 
-`innerDeclarations` takes a reference and walks the AST tree upwards, collecting
+`lexicalDeclarations` takes a reference and walks the AST tree upwards, collecting
 all the `let` declarations, function parameters, item definitions and other
 "local" declarations. This is the function which does the work of resolving a
 local variable or a first component `foo` of the `foo::bar::baz` path.
@@ -187,7 +187,7 @@ mapping must be computed independently. That is, you can store a mapping from
 struct names to struct definitions, but you can't map a struct to the
 grandparent module. This restriction allows fast recalculation of the index:
 only the part corresponding to the changed files needs to be flushed. This also
-allows to persist indexes to disk between IDE invocations. 
+allows to persist indexes to disk between IDE invocations.
 
 These indexes power go to class and go to symbol functionality. They are also
 used during resolve to find the parent module for a file and to get the list of

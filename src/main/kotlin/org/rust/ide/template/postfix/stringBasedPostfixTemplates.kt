@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.EQEQ
 import org.rust.lang.core.psi.util.descendantsOfType
-import org.rust.lang.core.resolve.innerDeclarations
+import org.rust.lang.core.resolve.lexicalDeclarations
 import org.rust.lang.core.types.RustEnumType
 import org.rust.lang.core.types.util.resolvedType
 
@@ -47,7 +47,7 @@ class MatchPostfixTemplate : StringBasedPostfixTemplate(
     override fun getTemplateString(element: PsiElement): String? {
         val enumType = (element as RsExpr).resolvedType as RustEnumType
 
-        val allDeclaration = innerDeclarations(element)
+        val allDeclaration = lexicalDeclarations(element)
             .mapNotNull {
                 val path = (it.element as? RsQualifiedNamedElement)?.crateRelativePath ?: return@mapNotNull null
                 if (path.segments.lastOrNull()?.name == it.name)

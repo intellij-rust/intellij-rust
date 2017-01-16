@@ -32,22 +32,56 @@ import java.util.*
 
 
 object ResolveEngine {
-    data class Result(
-        val element: RsNamedElement,
-        val pkg: CargoProjectDescription.Package
-    )
-
     /**
      * Resolves abstract qualified-path [path] in such a way, like it was a qualified-reference
      * used at [pivot]
      */
     fun resolve(path: RustPath, pivot: RsCompositeElement, namespace: Namespace? = null): List<RsCompositeElement> {
-        val allNs = resolveAllNamespaces(path, pivot)
-        val filteredByNs = if (namespace == null) allNs else allNs.filterByNamespace(namespace).take(1)
+        val start: Sequence<ScopeEntry> = when (path) {
+            is RustPath.CrateRelative -> sequenceOfNotNull(
+                pivot.crateRoot?.let { ScopeEntry.of(it) }
+            )
+
+            is RustPath.ModRelative -> sequenceOfNotNull(
+                generateSequence(pivot.containingMod, { it.`super` })
+                    .elementAtOrNull(path.level)
+                    ?.let { ScopeEntry.of(it) }
+            )
+
+            is RustPath.Named -> lexicalDeclarations(pivot)
+                .filter { it.name == path.head.name }
+        }
+
+        val inUseDeclaration = pivot.parentOfType<RsUseItem>() != null
+        var current: Sequence<ScopeEntry> = start
+        for ((name) in path.segments) {
+            val scope = current
+                .filterByNamespace(Namespace.Types)
+                .mapNotNull { it.element }
+                .mapNotNull {
+                    val containing = containingDeclarations(it)
+                    val associated = if (inUseDeclaration) null else associatedDeclarations(it)
+                    when {
+                        containing != null && associated != null -> containing + associated
+                        containing != null -> containing
+                        else -> associated
+                    }
+                }
+                .firstOrNull() ?: return emptyList()
+
+            current = scope.filter { it.name == name }
+        }
+
+        val filteredByNs = if (namespace == null) current else current.filterByNamespace(namespace).take(1)
         return filteredByNs
             .mapNotNull { it.element }
             .toList()
     }
+
+    data class Result(
+        val element: RsNamedElement,
+        val pkg: CargoProjectDescription.Package
+    )
 
     /**
      * Resolves an absolute path.
@@ -124,7 +158,7 @@ object ResolveEngine {
             ref.isSelf && baseItem != null -> listOf(baseItem)
 
         // `use foo::{bar}`
-            baseItem != null -> (outerDeclarations(baseItem, withMethods = false) ?: emptySequence())
+            baseItem != null -> (containingDeclarations(baseItem) ?: emptySequence())
                 .filter { it.name == ref.referenceName }
                 .mapNotNull { it.element }
                 .toList()
@@ -173,113 +207,69 @@ object ResolveEngine {
             .toList()
 }
 
-
-/**
- * Collect the name visible at [scope] from outside. In other words, find all things,
- * that `scope::thing` is a valid path. Return `null` if scope can't have outer declarations
- * (for example, this will return `null` for functions and some sequence for a moudle)
- */
-fun outerDeclarations(scope: RsCompositeElement, withMethods: Boolean): Sequence<ScopeEntry>? =
-    outerDeclarations(scope, Context(), withMethods)
-
 /**
  * Walk the tree up starting at [place] and collect all visible declarations
  * (local variables, items, imports)
  */
-fun innerDeclarations(place: RsCompositeElement, stop: (PsiElement) -> Boolean = { false }): Sequence<ScopeEntry> =
-    innerDeclarations(place, Context(), stop)
+fun lexicalDeclarations(place: RsCompositeElement, stop: (PsiElement) -> Boolean = { false }): Sequence<ScopeEntry> =
+    place.ancestors
+        .takeWhileInclusive { it !is RsMod && !stop(it) }
+        .flatMap { lexicalDeclarations(it, place, Context()) }
 
+/**
+ * Collect non-associated items declared inside [scope].
+ * That is, collect structs, enums, enum variants, but not methods.
+ */
+fun containingDeclarations(scope: RsCompositeElement): Sequence<ScopeEntry>? =
+    containingDeclarations(scope, Context())
 
-private fun resolveAllNamespaces(path: RustPath, pivot: RsCompositeElement): Sequence<ScopeEntry> {
-    val start: Sequence<ScopeEntry> = when (path) {
-        is RustPath.CrateRelative -> sequenceOfNotNull(
-            pivot.crateRoot?.let { ScopeEntry.of(it) }
-        )
-
-        is RustPath.ModRelative -> sequenceOfNotNull(
-            generateSequence(pivot.containingMod, { it.`super` })
-                .elementAtOrNull(path.level)
-                ?.let { ScopeEntry.of(it) }
-        )
-
-        is RustPath.Named -> innerDeclarations(pivot)
-            .filter { it.name == path.head.name }
+private fun containingDeclarations(scope: RsCompositeElement, context: Context): Sequence<ScopeEntry>? =
+    when (scope) {
+        is RsFile -> itemDeclarations(scope, false, context) + injectedCrates(scope)
+        is RsMod -> itemDeclarations(scope, false, context)
+        is RsEnumItem -> scope.enumBody.enumVariantList.asScopeEntries()
+        else -> null
     }
 
-    val withMethods = pivot.parentOfType<RsUseItem>() == null
-    var current: Sequence<ScopeEntry> = start
-    for ((name) in path.segments) {
-        val scope = current
-            .filterByNamespace(Namespace.Types)
-            .mapNotNull { it.element }
-            .mapNotNull { outerDeclarations(it, withMethods) }
-            .firstOrNull() ?: return emptySequence()
-
-        current = scope.filter { it.name == name }
+/**
+ * Collect associated declarations, like methods and types (types are not handled yet).
+ */
+fun associatedDeclarations(scope: RsCompositeElement): Sequence<ScopeEntry>? {
+    val type = when (scope) {
+        is RsStructItem -> scope.resolvedType
+        is RsEnumItem -> scope.resolvedType
+        else -> return null
     }
 
-    return current
+    return RsImplIndex
+        .findMethodsFor(type, scope.project)
+        .mapNotNull { ScopeEntry.of(it) }
 }
+
 
 private data class Context(
     val visitedStarImports: Set<RsUseItem> = emptySet()
 )
 
-private fun outerDeclarations(
-    scope: RsCompositeElement,
-    context: Context = Context(),
-    withMethods: Boolean
-): Sequence<ScopeEntry>? = when (scope) {
 
-    is RsFile ->
-        itemDeclarations(scope, false, context) + injectedCrates(scope)
-
-    is RsMod ->
-        itemDeclarations(scope, false, context)
-
-    is RsStructItem ->
-        if (withMethods) methods(scope) else emptySequence()
-
-    is RsEnumItem ->
-        scope.enumBody.enumVariantList.asScopeEntries() + (if (withMethods) methods(scope) else emptySequence())
-    else -> null
-}
-
-private fun innerDeclarations(
-    place: RsCompositeElement,
-    context: Context = Context(),
-    stop: (PsiElement) -> Boolean
-): Sequence<ScopeEntry> =
-    place.ancestors
-        .takeWhileInclusive { it !is RsMod && !stop(it) }
-        .flatMap { innerDeclarationsIn(it, place, context) }
-
-private fun preludeSymbols(module: Module?, context: Context): Sequence<ScopeEntry> {
-    return module?.preludeModule?.rustMod?.let {
-        outerDeclarations(it, context, withMethods = false)
-    } ?: emptySequence()
-}
-
-private fun innerDeclarationsIn(
+private fun lexicalDeclarations(
     scope: PsiElement,
     place: RsCompositeElement,
     context: Context
 ): Sequence<ScopeEntry> {
     return when (scope) {
-        is RsFile -> {
+        is RsFile ->
             sequenceOf(
                 itemDeclarations(scope, true, context),
                 injectedCrates(scope),
                 preludeSymbols(scope.module, context)
             ).flatten()
-        }
 
-        is RsModItem -> {
+        is RsModItem ->
             sequenceOf(
                 itemDeclarations(scope, true, context),
                 preludeSymbols(scope.module, context)
             ).flatten()
-        }
 
         is RsStructItem,
         is RsEnumItem,
@@ -360,6 +350,14 @@ private fun innerDeclarationsIn(
         else -> emptySequence()
     }
 }
+
+
+private fun preludeSymbols(module: Module?, context: Context): Sequence<ScopeEntry> {
+    return module?.preludeModule?.rustMod?.let {
+        containingDeclarations(it, context)
+    } ?: emptySequence()
+}
+
 
 private fun itemDeclarations(
     scope: RsItemsOwner,
@@ -454,7 +452,7 @@ private fun RsUseItem.wildcardEntries(context: Context): Sequence<ScopeEntry> {
     // Recursively step into `use foo::*`
     val mod = path?.reference?.resolve() ?: return emptySequence()
     val newCtx = context.copy(visitedStarImports = context.visitedStarImports + this)
-    return outerDeclarations(mod, newCtx, withMethods = false) ?: emptySequence()
+    return containingDeclarations(mod, newCtx) ?: emptySequence()
 }
 
 private fun RsUseItem.nonWildcardEntries(): Sequence<ScopeEntry> {
@@ -478,11 +476,6 @@ private fun RsUseItem.nonWildcardEntries(): Sequence<ScopeEntry> {
         ScopeEntry.multiLazy(name) { glob.reference.multiResolve() }
     }
 }
-
-private fun methods(o: RsTypeBearingItemElement): Sequence<ScopeEntry> =
-    RsImplIndex
-        .findMethodsFor(o.resolvedType, o.project)
-        .mapNotNull { ScopeEntry.of(it) }
 
 private val Module.preludeModule: PsiFile? get() {
     val stdlib = cargoProject?.findExternCrateRootByName(AutoInjectedCrates.std)
