@@ -25,12 +25,7 @@ fun IndexSink.indexEnumItem(stub: RsEnumItemStub) {
 
 fun IndexSink.indexModDeclItem(stub: RsModDeclItemStub) {
     indexNamedStub(stub)
-    val pathKey = stub.pathAttribute?.let { FileUtil.getNameWithoutExtension(PathUtil.getFileName(it)) }
-        ?: stub.name
-
-    if (pathKey != null) {
-        occurrence(RsModulesIndex.KEY, pathKey)
-    }
+    RsModulesIndex.index(stub, this)
 }
 
 fun IndexSink.indexModItem(stub: RsModItemStub) {

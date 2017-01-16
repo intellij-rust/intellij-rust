@@ -1,6 +1,7 @@
 package org.rust.cargo.toolchain
 
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
@@ -19,6 +20,10 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
     fun testResolveLocalPackageMod() = resolveRefInFile("local_package_mod", "src/bar.rs")
     fun testModuleRelations() = resolveRefInFile("mods", "src/foo.rs")
     fun testKebabCase() = resolveRefInFile("kebab-case", "src/main.rs")
+    fun testCaseInsensitiveMods() {
+        if (!SystemInfo.isWindows) return
+        resolveRefInFile("case_insensitive_mods", "src/BAR.rs")
+    }
 
     // Test that we don't choke on winapi crate, which uses **A LOT** of
     // glob imports and is just **ENORMOUS**
