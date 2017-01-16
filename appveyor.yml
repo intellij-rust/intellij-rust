@@ -14,7 +14,7 @@ test_script:
   - gradlew.bat check --no-daemon
 
 cache:
-  - C:\Users\appveyor\.cargo
+  - C:\Users\appveyor\.cargo\registry
 
 # Appveyor does not allow huge cache folders
 # https://www.appveyor.com/docs/build-cache/
