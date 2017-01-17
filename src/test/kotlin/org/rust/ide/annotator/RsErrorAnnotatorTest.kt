@@ -222,6 +222,19 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             }
     """)
 
+    fun testInvalidChainComparison() = checkErrors("""
+        fn foo(x: i32) {
+            <error descr="Chained comparison operator require parentheses">1 < x < 3</error>;
+            <error descr="Chained comparison operator require parentheses">1 > x < 3</error>;
+            <error descr="Chained comparison operator require parentheses">1 > x > 3</error>;
+            <error descr="Chained comparison operator require parentheses">1 < x > 3</error>;
+            <error descr="Chained comparison operator require parentheses">1 <= x < 3</error>;
+            <error descr="Chained comparison operator require parentheses">1 < x <= 3</error>;
+            <error descr="Chained comparison operator require parentheses">1 == x < 3</error>;
+            <error descr="Chained comparison operator require parentheses">1 < x == 3</error>;
+        }
+    """)
+
     fun testE0046_AbsentMethodInTraitImpl() = checkErrors("""
         trait TError {
             fn bar();
@@ -594,5 +607,4 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             <error>pub</error> const C: u32 = 10;
         }
     """)
-
 }
