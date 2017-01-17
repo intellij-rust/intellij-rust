@@ -359,6 +359,7 @@ private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement): Map<Name
     val duplicates: Map<Namespace, Set<PsiElement>> =
         owner.children.asSequence()
             .filterIsInstance<RsNamedElement>()
+            .filter { it !is RsExternCrateItem } // extern crates can have aliases.
             .filter { it.name != null }
             .flatMap { it.namespaced }
             .groupBy { it.first }       // Group by namespace
