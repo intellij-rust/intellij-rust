@@ -3,7 +3,9 @@ package org.rust.ide.annotator
 import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.lang.annotation.Annotator
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -18,28 +20,26 @@ import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.trait
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
-import java.util.*
 
 class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val visitor = object : RsVisitor() {
-            override fun visitBlock(o: RsBlock) = checkBlock(holder, o)
             override fun visitConstant(o: RsConstant) = checkConstant(holder, o)
             override fun visitStructItem(o: RsStructItem) = checkStructItem(holder, o)
-            override fun visitEnumBody(o: RsEnumBody) = checkEnumBody(holder, o)
-            override fun visitFile(o: PsiFile) = checkFile(holder, o)
-            override fun visitForeignModItem(o: RsForeignModItem) = checkForeignModItem(holder, o)
+            override fun visitEnumItem(o: RsEnumItem) = checkDuplicates(holder, o)
+            override fun visitEnumVariant(o: RsEnumVariant) = checkDuplicates(holder, o)
             override fun visitFunction(o: RsFunction) = checkFunction(holder, o)
             override fun visitImplItem(o: RsImplItem) = checkImpl(holder, o)
             override fun visitModDeclItem(o: RsModDeclItem) = checkModDecl(holder, o)
-            override fun visitModItem(o: RsModItem) = checkModItem(holder, o)
+            override fun visitModItem(o: RsModItem) = checkDuplicates(holder, o)
             override fun visitPath(o: RsPath) = checkPath(holder, o)
-            override fun visitBlockFields(o: RsBlockFields) = checkBlockFields(holder, o)
-            override fun visitTraitItem(o: RsTraitItem) = checkTraitItem(holder, o)
+            override fun visitFieldDecl(o: RsFieldDecl) = checkDuplicates(holder, o)
+            override fun visitTraitItem(o: RsTraitItem) = checkDuplicates(holder, o)
             override fun visitTypeAlias(o: RsTypeAlias) = checkTypeAlias(holder, o)
-            override fun visitTypeParameterList(o: RsTypeParameterList) = checkTypeParameterList(holder, o)
+            override fun visitTypeParameter(o: RsTypeParameter) = checkDuplicates(holder, o)
+            override fun visitLifetimeParameter(o: RsLifetimeParameter) = checkDuplicates(holder, o)
             override fun visitValueParameterList(o: RsValueParameterList) = checkValueParameterList(holder, o)
             override fun visitValueParameter(o: RsValueParameter) = checkValueParameter(holder, o)
             override fun visitVis(o: RsVis) = checkVis(holder, o)
@@ -47,16 +47,6 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
         element.accept(visitor)
     }
-
-    private fun checkBlock(holder: AnnotationHolder, block: RsBlock) =
-        findDuplicates(holder, block, { ns, name ->
-            "A ${ns.itemName} named `$name` has already been defined in this block [E0428]"
-        })
-
-    private fun checkBlockFields(holder: AnnotationHolder, block: RsBlockFields) =
-        findDuplicates(holder, block, { ns, name ->
-            "Field `$name` is already declared [E0124]"
-        })
 
     private fun checkPath(holder: AnnotationHolder, path: RsPath) {
         val child = path.path
@@ -66,17 +56,13 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkVis(holder: AnnotationHolder, vis: RsVis) {
-        if (vis.parent is RsImplItem || vis.parent is RsForeignModItem || isInTraitImpl(vis) || isInEnumVariantField(vis) ) {
+        if (vis.parent is RsImplItem || vis.parent is RsForeignModItem || isInTraitImpl(vis) || isInEnumVariantField(vis)) {
             holder.createErrorAnnotation(vis, "Unnecessary visibility qualifier [E0449]")
         }
     }
 
-    private fun checkEnumBody(holder: AnnotationHolder, enum: RsEnumBody) =
-        findDuplicates(holder, enum, { ns, name ->
-            "A ${ns.itemName} named `$name` has already been defined in this enum [E0428]"
-        })
-
     private fun checkConstant(holder: AnnotationHolder, const: RsConstant) {
+        checkDuplicates(holder, const)
         val title = if (const.static != null) "Static constant `${const.identifier.text}`" else "Constant `${const.identifier.text}`"
         when (const.role) {
             RsConstantRole.FREE -> {
@@ -145,6 +131,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkFunction(holder: AnnotationHolder, fn: RsFunction) {
+        checkDuplicates(holder, fn)
         when (fn.role) {
             RsFunctionRole.FREE -> {
                 require(fn.block, holder, "${fn.title} must have a body", fn.lastChild)
@@ -172,12 +159,14 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkStructItem(holder: AnnotationHolder, struct: RsStructItem) {
+        checkDuplicates(holder, struct)
         if (struct.kind == RsStructKind.UNION && struct.tupleFields != null) {
             deny(struct.tupleFields, holder, "Union cannot be tuple-like")
         }
     }
 
     private fun checkModDecl(holder: AnnotationHolder, modDecl: RsModDeclItem) {
+        checkDuplicates(holder, modDecl)
         val pathAttribute = modDecl.pathAttribute
 
         // mods inside blocks require explicit path  attribute
@@ -205,34 +194,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
     }
 
-    private fun checkModItem(holder: AnnotationHolder, modItem: RsModItem) =
-        findDuplicates(holder, modItem, { ns, name ->
-            "A ${ns.itemName} named `$name` has already been defined in this module [E0428]"
-        })
-
-    private fun checkFile(holder: AnnotationHolder, file: PsiFile) =
-        findDuplicates(holder, file, { ns, name ->
-            "A ${ns.itemName} named `$name` has already been defined in this module [E0428]"
-        })
-
-    private fun checkForeignModItem(holder: AnnotationHolder, mod: RsForeignModItem) =
-        findDuplicates(holder, mod, { ns, name ->
-            "A ${ns.itemName} named `$name` has already been defined in this module [E0428]"
-        })
-
-    private fun checkTypeParameterList(holder: AnnotationHolder, params: RsTypeParameterList) =
-        findDuplicates(holder, params, { ns, name ->
-            if (ns == Namespace.Lifetimes)
-                "Lifetime name `$name` declared twice in the same scope [E0263]"
-            else
-                "The name `$name` is already used for a type parameter in this type parameter list [E0403]"
-        })
-
     private fun checkImpl(holder: AnnotationHolder, impl: RsImplItem) {
-        findDuplicates(holder, impl, { ns, name ->
-            "Duplicate definitions with name `$name` [E0201]"
-        })
-
         val trait = impl.traitRef?.trait ?: return
         val traitName = trait.name ?: return
 
@@ -265,12 +227,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             .forEach { checkTraitFnImplParams(holder, it.first, it.second!!, traitName) }
     }
 
-    private fun checkTraitItem(holder: AnnotationHolder, trait: RsTraitItem) =
-        findDuplicates(holder, trait, { ns, name ->
-            "A ${ns.itemName} named `$name` has already been defined in this trait [E0428]"
-        })
-
     private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
+        checkDuplicates(holder, ta)
         val title = "Type `${ta.identifier.text}`"
         when (ta.role) {
             RsTypeAliasRole.FREE -> {
@@ -324,7 +282,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun deny(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
         if (el == null) null else holder.createErrorAnnotation(highlightElements.combinedRange ?: el.textRange, message)
 
-    private inline fun <reified T: RsCompositeElement>denyType(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
+    private inline fun <reified T : RsCompositeElement> denyType(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
         if (el !is T) null else holder.createErrorAnnotation(highlightElements.combinedRange ?: el.textRange, message)
 
     private fun isInTraitImpl(o: RsVis): Boolean {
@@ -334,33 +292,9 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun isInEnumVariantField(o: RsVis): Boolean {
         val field = o.parent as? RsFieldDecl
-                    ?: o.parent as? RsTupleFieldDecl
-                    ?: return false
+            ?: o.parent as? RsTupleFieldDecl
+            ?: return false
         return field.parent.parent is RsEnumVariant
-    }
-
-    private fun findDuplicates(holder: AnnotationHolder, owner: PsiElement, messageGenerator: (ns: Namespace, name: String) -> String) {
-        val marked = HashSet<RsNamedElement>()
-        owner.children.asSequence()
-            .filterIsInstance<RsNamedElement>()
-            .filter { it.name != null }
-            .flatMap { it.namespaced }
-            .groupBy { it.first }       // Group by namespace
-            .forEach { entry ->
-                val namespace = entry.key
-                val items = entry.value
-                items.asSequence()
-                    .map { it.second }
-                    .groupBy { it.name }
-                    .map { it.value }
-                    .filter { it.size > 1 && it.any { !it.isCfgDependent } }
-                    .flatMap { it.drop(1) }
-                    .filterNot { marked.contains(it) }
-                    .forEach {
-                        holder.createErrorAnnotation(it.navigationElement, messageGenerator(namespace, it.name!!))
-                        marked.add(it)
-                    }
-            }
     }
 
     private fun pluralise(count: Int, singular: String, plural: String): String =
@@ -383,15 +317,83 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             append("self")
         }
 
-    private val RsCompositeElement.isCfgDependent: Boolean
-        get() = this is RsDocAndAttributeOwner && queryAttributes.hasAttribute("cfg")
-
-    private val RsNamedElement.namespaced: Sequence<Pair<Namespace, RsNamedElement>>
-        get() = namespaces.asSequence().map { Pair(it, this) }
-
     private val PsiElement.rightVisibleLeaves: Sequence<PsiElement>
         get() = generateSequence(PsiTreeUtil.nextVisibleLeaf(this), { el -> PsiTreeUtil.nextVisibleLeaf(el) })
 
     private val String.firstLower: String
         get() = if (isEmpty()) this else this[0].toLowerCase() + substring(1)
 }
+
+
+private fun checkDuplicates(holder: AnnotationHolder, element: RsNamedElement) {
+    val scope = element.parent
+    val duplicates = holder.currentAnnotationSession.duplicatesByNamespace(scope)
+    val ns = element.namespaces.find { element in duplicates[it].orEmpty() }
+        ?: return
+    val name = element.name!!
+    val message = when {
+        element is RsFieldDecl -> "Field `$name` is already declared [E0124]"
+        element is RsEnumVariant -> "Enum variant `$name` is already declared [E0428]"
+        element is RsLifetimeParameter -> "Lifetime name `$name` declared twice in the same scope [E0263]"
+        element is RsTypeParameter -> "The name `$name` is already used for a type parameter in this type parameter list [E0403]"
+        scope is RsImplItem -> "Duplicate definitions with name `$name` [E0201]"
+        else -> {
+            val scopeType = when (scope) {
+                is RsBlock -> "block"
+                is RsMod, is RsForeignModItem -> "module"
+                is RsTraitItem -> "trait"
+                else -> "scope"
+            }
+            "A ${ns.itemName} named `$name` has already been defined in this $scopeType [E0428]"
+        }
+    }
+
+    holder.createErrorAnnotation(element.navigationElement, message)
+}
+
+
+private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement): Map<Namespace, Set<PsiElement>> {
+    val fileMap = fileDuplicatesMap()
+    fileMap[owner]?.let { return it }
+
+    val duplicates: Map<Namespace, Set<PsiElement>> =
+        owner.children.asSequence()
+            .filterIsInstance<RsNamedElement>()
+            .filter { it.name != null }
+            .flatMap { it.namespaced }
+            .groupBy { it.first }       // Group by namespace
+            .map { entry ->
+                val (namespace, items) = entry
+                namespace to items.asSequence()
+                    .map { it.second }
+                    .groupBy { it.name }
+                    .map { it.value }
+                    .filter { it.size > 1 && it.any { !it.isCfgDependent } }
+                    .flatten()
+                    .toSet()
+            }
+            .toMap()
+
+    fileMap[owner] = duplicates
+    return duplicates
+}
+
+private val DUPLICATES_BY_SCOPE = Key<MutableMap<
+    PsiElement,
+    Map<Namespace, Set<PsiElement>>>>("org.rust.ide.annotator.RsErrorAnnotator.duplicates")
+
+private fun AnnotationSession.fileDuplicatesMap(): MutableMap<PsiElement, Map<Namespace, Set<PsiElement>>> {
+    var map = getUserData(DUPLICATES_BY_SCOPE)
+    if (map == null) {
+        map = mutableMapOf()
+        putUserData(DUPLICATES_BY_SCOPE, map)
+    }
+    return map
+}
+
+
+private val RsCompositeElement.isCfgDependent: Boolean
+    get() = this is RsDocAndAttributeOwner && queryAttributes.hasAttribute("cfg")
+
+private val RsNamedElement.namespaced: Sequence<Pair<Namespace, RsNamedElement>>
+    get() = namespaces.asSequence().map { Pair(it, this) }

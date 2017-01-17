@@ -268,7 +268,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
     fun testE0124_NameDuplicationInStruct() = checkErrors("""
         struct S {
             no_dup: bool,
-            dup: u32,
+            <error descr="Field `dup` is already declared [E0124]">dup</error>: f64,
             <error descr="Field `dup` is already declared [E0124]">dup</error>: f64
         }
 
@@ -278,7 +278,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             },
             VAR2 {
                 no_dup: bool,
-                dup: u32,
+                <error descr="Field `dup` is already declared [E0124]">dup</error>: f64,
                 <error descr="Field `dup` is already declared [E0124]">dup</error>: f64
             }
         }
@@ -328,7 +328,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         struct Foo;
         impl Foo {
             fn fn_unique() {}
-            fn dup() {}
+            fn <error descr="Duplicate definitions with name `dup` [E0201]">dup</error>(&self, a: u32) {}
             fn <error descr="Duplicate definitions with name `dup` [E0201]">dup</error>(&self, a: u32) {}
         }
 
@@ -340,10 +340,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
         impl Bar for Foo {
             const UNIQUE: u32 = 14;
-            const TRAIT_DUP: u32 = 100;
+            const <error descr="Duplicate definitions with name `TRAIT_DUP` [E0201]">TRAIT_DUP</error>: u32 = 101;
             const <error descr="Duplicate definitions with name `TRAIT_DUP` [E0201]">TRAIT_DUP</error>: u32 = 101;
             fn unique() {}
-            fn trait_dup() {}
+            fn <error descr="Duplicate definitions with name `trait_dup` [E0201]">trait_dup</error>() {}
             fn <error descr="Duplicate definitions with name `trait_dup` [E0201]">trait_dup</error>() {}
         }
     """)
@@ -362,11 +362,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         enum Direction<'a, 'b> { LEFT(&'a str), RIGHT(&'b str) }
         trait Trait<'a, 'b> {}
 
-        fn bar<'a, 'b, <error descr="Lifetime name `'a` declared twice in the same scope [E0263]">'a</error>>(x: &'a str, y: &'b str) { }
-        struct St<'a, 'b, <error>'a</error>> { a: &'a u32, b: &'b f64 }
-        impl<'a, 'b, <error>'a</error>> Str<'a, 'b> {}
-        enum Dir<'a, 'b, <error>'a</error>> { LEFT(&'a str), RIGHT(&'b str) }
-        trait Tr<'a, 'b, <error>'a</error>> {}
+        fn bar<<error descr="Lifetime name `'a` declared twice in the same scope [E0263]">'a</error>, 'b, <error>'a</error>>(x: &'a str, y: &'b str) { }
+        struct St<<error>'a</error>, 'b, <error>'a</error>> { a: &'a u32, b: &'b f64 }
+        impl<<error>'a</error>, 'b, <error>'a</error>> Str<'a, 'b> {}
+        enum Dir<<error>'a</error>, 'b, <error>'a</error>> { LEFT(&'a str), RIGHT(&'b str) }
+        trait Tr<<error>'a</error>, 'b, <error>'a</error>> {}
     """)
 
     fun testE0379_ConstTraitFunction() = checkErrors("""
@@ -383,11 +383,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         enum Direction<T, P> { LEFT(T), RIGHT(P) }
         trait Trait<T, P> {}
 
-        fn add<T,   <error descr="The name `T` is already used for a type parameter in this type parameter list [E0403]">T</error>, P>() {}
-        struct S<T, <error descr="The name `T` is already used for a type parameter in this type parameter list [E0403]">T</error>, P> { t: T, p: P }
-        impl<T,     <error descr="The name `T` is already used for a type parameter in this type parameter list [E0403]">T</error>, P> S<T, P> {}
-        enum En<T,  <error descr="The name `T` is already used for a type parameter in this type parameter list [E0403]">T</error>, P> { LEFT(T), RIGHT(P) }
-        trait Tr<T, <error descr="The name `T` is already used for a type parameter in this type parameter list [E0403]">T</error>, P> { fn foo(t: T) -> P; }
+        fn add<<error descr="The name `T` is already used for a type parameter in this type parameter list [E0403]">T</error>, <error>T</error>, P>() {}
+        struct S< <error>T</error>, <error>T</error>, P> { t: T, p: P }
+        impl<     <error>T</error>, <error>T</error>, P> S<T, P> {}
+        enum En<  <error>T</error>, <error>T</error>, P> { LEFT(T), RIGHT(P) }
+        trait Tr< <error>T</error>, <error>T</error>, P> { fn foo(t: T) -> P; }
     """)
 
     fun testE0407_UnknownMethodInTraitImpl() = checkErrors("""
@@ -410,10 +410,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             enum UniqueEnum {}
             mod unique_mod {}
 
-            const  Dup: u32 = 20;
+            const  <error descr="A value named `Dup` has already been defined in this block [E0428]">Dup</error>: u32 = 20;
             static <error descr="A value named `Dup` has already been defined in this block [E0428]">Dup</error>: i64 = -1.3;
             fn     <error descr="A value named `Dup` has already been defined in this block [E0428]">Dup</error>() {}
-            struct <error descr="A value named `Dup` has already been defined in this block [E0428]">Dup</error>;
+            struct <error descr="A type named `Dup` has already been defined in this block [E0428]">Dup</error>;
             trait  <error descr="A type named `Dup` has already been defined in this block [E0428]">Dup</error> {}
             enum   <error descr="A type named `Dup` has already been defined in this block [E0428]">Dup</error> {}
             mod    <error descr="A type named `Dup` has already been defined in this block [E0428]">Dup</error> {}
@@ -423,9 +423,9 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
     fun testE0428_NameDuplicationInEnum() = checkErrors("""
         enum Directions {
             NORTH,
-            SOUTH,
+            <error descr="Enum variant `SOUTH` is already declared [E0428]">SOUTH</error> { distance: f64 },
             WEST,
-            <error descr="A value named `SOUTH` has already been defined in this enum [E0428]">SOUTH</error> { distance: f64 },
+            <error descr="Enum variant `SOUTH` is already declared [E0428]">SOUTH</error> { distance: f64 },
             EAST
         }
     """)
@@ -435,10 +435,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             static mut UNIQUE: u16;
             fn unique();
 
-            static mut DUP: u32;
+            static mut <error descr="A value named `DUP` has already been defined in this module [E0428]">DUP</error>: u32;
             static mut <error descr="A value named `DUP` has already been defined in this module [E0428]">DUP</error>: u32;
 
-            fn dup();
+            fn <error descr="A value named `dup` has already been defined in this module [E0428]">dup</error>();
             fn <error descr="A value named `dup` has already been defined in this module [E0428]">dup</error>();
         }
     """)
@@ -452,10 +452,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         enum UniqueEnum {}
         mod unique_mod {}
 
-        const Dup: u32 = 20;
+        const <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>: u32 = 20;
         static <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>: i64 = -1.3;
         fn     <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>() {}
-        struct <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>;
+        struct <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error>;
         trait  <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
         enum   <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
         mod    <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
@@ -471,10 +471,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             enum UniqueEnum {}
             mod unique_mod {}
 
-            const Dup: u32 = 20;
+            const <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>: u32 = 20;
             static <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>: i64 = -1.3;
             fn     <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>() {}
-            struct <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>;
+            struct <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error>;
             trait  <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
             enum   <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
             mod    <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
@@ -487,30 +487,34 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             const NO_DUP_C: u8;
             fn no_dup_f();
 
-            type DUP_T;
+            type <error descr="A type named `DUP_T` has already been defined in this trait [E0428]">DUP_T</error>;
             type <error descr="A type named `DUP_T` has already been defined in this trait [E0428]">DUP_T</error>;
 
-            const DUP_C: bool;
+            const <error descr="A value named `DUP_C` has already been defined in this trait [E0428]">DUP_C</error>: u32;
             const <error descr="A value named `DUP_C` has already been defined in this trait [E0428]">DUP_C</error>: u32;
 
-            fn dup();
+            fn <error descr="A value named `dup` has already been defined in this trait [E0428]">dup</error>(&self);
             fn <error descr="A value named `dup` has already been defined in this trait [E0428]">dup</error>(&self);
         }
     """)
 
     fun testE0428_RespectsNamespaces() = checkErrors("""
         mod m {
-            type T_NO_C_DUP = bool;  // Consts and types are in different namespaces
+            // Consts and types are in different namespaces
+            type T_NO_C_DUP = bool;
             const NO_C_DUP: u32 = 10;
 
-            type NO_F_DUP = u8;      // Functions and types are in different namespaces
+            // Functions and types are in different namespaces
+            type NO_F_DUP = u8;
             fn NO_F_DUP() {}
 
-            const DUP_V: u8 = 1;     // Consts and functions are in the same namespace (values)
+            // Consts and functions are in the same namespace (values)
             fn <error descr="A value named `DUP_V` has already been defined in this module [E0428]">DUP_V</error>() {}
+            const <error>DUP_V</error>: u8 = 1;
 
-            enum DUP_T {}            // enums and traits are in the same namespace (types)
+            // Enums and traits are in the same namespace (types)
             trait <error descr="A type named `DUP_T` has already been defined in this module [E0428]">DUP_T</error> {}
+            enum <error>DUP_T</error> {}
         }
     """)
 
@@ -544,7 +548,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             #[cfg(no(windows))] mod foo {}
             #[cfg(windows)]     mod foo {}
 
-            #[cfg(windows)] fn hello_world() {}
+            #[cfg(windows)] fn <error descr="A value named `hello_world` has already been defined in this module [E0428]">hello_world</error>() {}
             fn <error descr="A value named `hello_world` has already been defined in this module [E0428]">hello_world</error>() {}
         }
     """)
