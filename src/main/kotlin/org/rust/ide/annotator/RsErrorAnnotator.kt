@@ -43,6 +43,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitValueParameterList(o: RsValueParameterList) = checkValueParameterList(holder, o)
             override fun visitValueParameter(o: RsValueParameter) = checkValueParameter(holder, o)
             override fun visitVis(o: RsVis) = checkVis(holder, o)
+            override fun visitBinaryExpr(o: RsBinaryExpr) = checkBinary(holder, o)
         }
 
         element.accept(visitor)
@@ -276,6 +277,13 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
     }
 
+    private fun checkBinary(holder: AnnotationHolder, o: RsBinaryExpr) {
+        if (o.isComparisonBinaryExpr() && (o.left.isComparisonBinaryExpr() || o.right.isComparisonBinaryExpr())) {
+            holder.createErrorAnnotation(o, "Chained comparison operator require parentheses")
+        }
+
+    }
+
     private fun require(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
         if (el != null) null else holder.createErrorAnnotation(highlightElements.combinedRange ?: TextRange.EMPTY_RANGE, message)
 
@@ -324,6 +332,10 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         get() = if (isEmpty()) this else this[0].toLowerCase() + substring(1)
 }
 
+private fun RsExpr?.isComparisonBinaryExpr() : Boolean {
+    val op = this as? RsBinaryExpr ?: return false
+    return RS_COMPARISON_OPERATOR.contains(op.operatorType)
+}
 
 private fun checkDuplicates(holder: AnnotationHolder, element: RsNamedElement) {
     val scope = element.parent
