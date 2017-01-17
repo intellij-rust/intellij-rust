@@ -28,7 +28,7 @@ class RsCrateDocLineMarkerProvider : LineMarkerProvider {
                 crateItem.crate.textRange,
                 RsIcons.DOCS_MARK,
                 Pass.LINE_MARKERS,
-                { "Open documentation" },
+                { "Open documentation for `${crate.normName}`" },
                 { e, c ->
                     BrowserHyperlinkInfo.openUrl("https://docs.rs/${pkg.name}/${pkg.version}/${crate.normName}")
                 },
