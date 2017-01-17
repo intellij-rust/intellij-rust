@@ -1,6 +1,5 @@
 package org.rust.ide.annotator
 
-import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.execution.filters.BrowserHyperlinkInfo
@@ -22,15 +21,17 @@ class RsCrateDocLineMarkerProvider : LineMarkerProvider {
         for (el in elements) {
             val crateItem = el as? RsExternCrateItem ?: continue
             val cargoProject = crateItem.module?.cargoProject ?: continue
-            val (pkg, crate) = cargoProject.findLibTargetByNormName(crateItem.identifier.text) ?: continue
+            val crate = cargoProject.findCrateByName(crateItem.identifier.text) ?: continue
+            if (crate.pkg.source == null) continue
             result.add(LineMarkerInfo(
                 crateItem.crate,
                 crateItem.crate.textRange,
                 RsIcons.DOCS_MARK,
-                Pass.LINE_MARKERS,
+                // TODO: change the `6` to Pass.LINE_MARKERS, when it does not duplicate icons.
+                6,
                 { "Open documentation for `${crate.normName}`" },
                 { e, c ->
-                    BrowserHyperlinkInfo.openUrl("https://docs.rs/${pkg.name}/${pkg.version}/${crate.normName}")
+                    BrowserHyperlinkInfo.openUrl("https://docs.rs/${crate.pkg.name}/${crate.pkg.version}/${crate.normName}")
                 },
                 GutterIconRenderer.Alignment.LEFT)
             )

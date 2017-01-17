@@ -198,7 +198,7 @@ object ResolveEngine {
     fun resolveExternCrate(crate: RsExternCrateItem): RsNamedElement? {
         val name = crate.name ?: return null
         val module = crate.module ?: return null
-        return module.project.getPsiFor(module.cargoProject?.findExternCrateRootByName(name))?.rustMod
+        return module.project.getPsiFor(module.cargoProject?.findCrateByName(name)?.crateRoot)?.rustMod
     }
 
     private val String.segments: List<RustPathSegment>
@@ -442,7 +442,7 @@ private fun injectedCrates(file: RsFile): Sequence<ScopeEntry> {
         RsFile.Attributes.NO_CORE -> return emptySequence()
     }
     return sequenceOfNotNull(ScopeEntry.lazy(injected) {
-        val crate = cargoProject.findExternCrateRootByName(injected)
+        val crate = cargoProject.findCrateByName(injected)?.crateRoot
         module.project.getPsiFor(crate)?.rustMod
     })
 }
@@ -478,7 +478,7 @@ private fun RsUseItem.nonWildcardEntries(): Sequence<ScopeEntry> {
 }
 
 private val Module.preludeModule: PsiFile? get() {
-    val stdlib = cargoProject?.findExternCrateRootByName(AutoInjectedCrates.std)
+    val stdlib = cargoProject?.findCrateByName(AutoInjectedCrates.std)?.crateRoot
         ?: return null
     val preludeFile = stdlib.findFileByRelativePath("../prelude/v1.rs")
         ?: return null
