@@ -6,25 +6,21 @@ import org.rust.lang.core.psi.util.contains
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.util.resolvedType
-import org.rust.utils.Result
 
 
 object RustTypeInferenceEngine {
 
     fun inferPatBindingTypeFrom(binding: RsPatBinding, pat: RsPat, type: RustType): RustType {
         check(pat.contains(binding))
+        val matching = run(pat, type)
+            ?: return RustUnknownType
 
-        return run(pat, type).let {
-            if (it is Result.Ok)
-                it.result.getOrElse(binding, { error("Panic! Successful match should imbue all the bindings!") })
-            else
-                RustUnknownType
-        }
+        return matching.getOrElse(binding, { error("Panic! Successful match should imbue all the bindings!") })
     }
 
-    private fun run(pat: RsPat, type: RustType): Result<Map<RsPatBinding, RustType>> =
+    private fun run(pat: RsPat, type: RustType): Map<RsPatBinding, RustType>? =
         RustTypeInferencingVisitor(type).let {
-            if (it.compute(pat)) Result.Ok(it.bindings) else Result.Failure
+            if (it.compute(pat)) it.bindings else null
         }
 }
 
@@ -61,20 +57,14 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
     override fun visitPatWild(o: RsPatWild) = set({ true })
 
     override fun visitPatTup(o: RsPatTup) = set(fun(): Boolean {
-        val type = type
-        if (type !is RustTupleType)
-            return false
+        val type = type as? RustTupleType
+            ?: return false
 
         val pats = o.patList
         if (pats.size != type.size)
             return false
 
-        for (i in 0..type.size - 1) {
-            if (!match(pats[i], type[i]))
-                return false
-        }
-
-        return true
+        return pats.zip(type.types).all { match(it.first, it.second) }
     })
 
     private fun getEnumByVariant(e: RsEnumVariant): RsEnumItem? =
@@ -128,12 +118,8 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
         if (tupleFields.size != o.patList.size)
             return false
 
-        for (i in 0 until tupleFields.size) {
-            if (!match(o.patList[i], tupleFields[i].type.resolvedType))
-                return false
-        }
-
-        return true
+        return o.patList.zip(tupleFields.map { it.type.resolvedType })
+            .all { match(it.first, it.second) }
     })
 
     override fun visitPatStruct(o: RsPatStruct) = set(fun(): Boolean {
@@ -154,18 +140,15 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
             val patBinding = patField.patBinding
             if (patBinding != null) {
                 val fieldDecl = fieldDecls[patBinding.identifier.text]
-                if (fieldDecl == null)
-                    return false
+                    ?: return false
 
                 bindings += patBinding to fieldDecl.type.resolvedType
             } else {
-                val id = patField.identifier
-                if (id == null)
+                val id = patField.identifier ?:
                     error("Panic! `pat_field` may be either `pat_binding` or should contain identifier!")
 
                 val patFieldPat = patField.pat
-                if (patFieldPat == null)
-                    return false
+                    ?: return false
 
                 val fieldDecl = fieldDecls[id.text]
                 if (fieldDecl == null || !match(patFieldPat, fieldDecl.type.resolvedType))
