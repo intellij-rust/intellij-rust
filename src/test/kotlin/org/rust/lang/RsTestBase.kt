@@ -223,14 +223,14 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             isWorkspaceMember = true
         )
 
-        protected fun externalPackage(name: String, targetName: String = name) = CleanCargoMetadata.Package(
+        protected fun externalPackage(source: String?, name: String, targetName: String = name) = CleanCargoMetadata.Package(
             "",
             name = name,
             version = "0.0.1",
             targets = listOf(
                 CleanCargoMetadata.Target("", targetName, CargoProjectDescription.TargetKind.LIB)
             ),
-            source = null,
+            source = source,
             isWorkspaceMember = false
         )
     }
@@ -257,8 +257,8 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
             val packages = listOf(
                 testCargoPackage(contentRoot),
-                externalPackage("dep-lib", "dep-lib-target"),
-                externalPackage("trans-lib"))
+                externalPackage(null, "dep-lib", "dep-lib-target"),
+                externalPackage("trans-lib/lib.rs", "trans-lib"))
 
             val depNodes = ArrayList<CleanCargoMetadata.DependencyNode>()
             depNodes.add(CleanCargoMetadata.DependencyNode(0, listOf(1)))   // Our package depends on test_dep
