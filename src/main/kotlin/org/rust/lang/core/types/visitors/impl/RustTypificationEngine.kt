@@ -53,10 +53,15 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     override fun visitUnaryExpr(o: RsUnaryExpr) = set {
         if (o.box != null)
             RustUnknownType
-        else
-            o.expr?.resolvedType?.let {
-                if (o.and != null) RustReferenceType(it, o.mut != null) else it
-            } ?: RustUnknownType
+        else {
+            val base = o.expr?.resolvedType
+                ?: return@set RustUnknownType
+            when {
+                (o.and != null) -> RustReferenceType(base, o.mut != null)
+                (o.mul != null && base is RustReferenceType) -> base.referenced
+                else -> base
+            }
+        }
     }
 
     override fun visitPathExpr(o: RsPathExpr) = set {
@@ -251,6 +256,7 @@ private fun deviseBoundPatType(binding: RsPatBinding): RustType {
 
         is RsValueParameter -> parent.type?.resolvedType
         is RsCondition -> parent.expr.resolvedType
+        is RsMatchPat -> parent.parentOfType<RsMatchExpr>()?.expr?.resolvedType
         else -> null
     } ?: return RustUnknownType
 

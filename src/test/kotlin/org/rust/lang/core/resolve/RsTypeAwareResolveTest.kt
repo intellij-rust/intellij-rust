@@ -439,4 +439,19 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             //^
         }
     """)
+
+    fun testMatchEnumTupleVariant() = checkByCode("""
+        enum E { V(S) }
+        struct S;
+
+        impl S { fn frobnicate(&self) {} }
+                    //X
+        impl E {
+            fn foo(&self) {
+                match *self {
+                    E::V(ref s) => s.frobnicate()
+                }                   //^
+            }
+        }
+    """)
 }
