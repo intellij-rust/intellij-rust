@@ -501,12 +501,12 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
     fun testE0428_RespectsNamespaces() = checkErrors("""
         mod m {
             // Consts and types are in different namespaces
-            type T_NO_C_DUP = bool;
+            type  NO_C_DUP = bool;
             const NO_C_DUP: u32 = 10;
 
             // Functions and types are in different namespaces
             type NO_F_DUP = u8;
-            fn NO_F_DUP() {}
+            fn   NO_F_DUP() {}
 
             // Consts and functions are in the same namespace (values)
             fn <error descr="A value named `DUP_V` has already been defined in this module [E0428]">DUP_V</error>() {}
