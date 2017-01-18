@@ -43,7 +43,7 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
         onStaticMut to "thread_local",
         onExternBlock to "link_args link() linked_from",
         onExternBlockDecl to "link_name linkage",
-        onStruct to "repr unsafe_no_drop_flags derive",
+        onStruct to "repr unsafe_no_drop_flags derive()",
         onEnum to "repr derive()",
         onTrait to "rustc_on_unimplemented",
         onMacro to "macro_export",
