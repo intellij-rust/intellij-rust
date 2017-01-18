@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.Alarm
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.TestOnly
@@ -194,16 +193,20 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
             CargoConstants.ProjectLayout.tests
         ).flatten()
 
+        private val INTERESTING_NAMES = listOf(
+            RustToolchain.CARGO_TOML,
+            "build.rs"
+        )
+
         override fun before(events: List<VFileEvent>) {
         }
 
         override fun after(events: List<VFileEvent>) {
-            fun isInterestingEvent(event: VFileEvent): Boolean =
-                event.path.endsWith(RustToolchain.CARGO_TOML) ||
-                    IMPLICIT_TARGET_DIRS.any {
-                        PathUtil.getParentPath(event.path).endsWith(it)
-                    } && (event !is VFileContentChangeEvent) && (event !is VFilePropertyChangeEvent)
-
+            fun isInterestingEvent(event: VFileEvent): Boolean {
+                if (event is VFileContentChangeEvent) return false
+                return INTERESTING_NAMES.any { event.path.endsWith(it) } ||
+                    IMPLICIT_TARGET_DIRS.any { PathUtil.getParentPath(event.path).endsWith(it) }
+            }
 
             if (!module.project.rustSettings.autoUpdateEnabled) return
             val toolchain = module.project.toolchain ?: return
