@@ -331,7 +331,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         get() = if (isEmpty()) this else this[0].toLowerCase() + substring(1)
 }
 
-private fun RsExpr?.isComparisonBinaryExpr() : Boolean {
+private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
     val op = this as? RsBinaryExpr ?: return false
     return op.operatorType in RS_COMPARISON_OPERATOR
 }
@@ -380,7 +380,10 @@ private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement): Map<Name
                     .map { it.second }
                     .groupBy { it.name }
                     .map { it.value }
-                    .filter { it.size > 1 && it.any { !it.isCfgDependent } }
+                    .filter {
+                        it.size > 1 &&
+                            it.any { !(it is RsDocAndAttributeOwner && it.queryAttributes.hasCfgAttr()) }
+                    }
                     .flatten()
                     .toSet()
             }
@@ -402,10 +405,6 @@ private fun AnnotationSession.fileDuplicatesMap(): MutableMap<PsiElement, Map<Na
     }
     return map
 }
-
-
-private val RsCompositeElement.isCfgDependent: Boolean
-    get() = this is RsDocAndAttributeOwner && queryAttributes.hasAttribute("cfg")
 
 private val RsNamedElement.namespaced: Sequence<Pair<Namespace, RsNamedElement>>
     get() = namespaces.asSequence().map { Pair(it, this) }

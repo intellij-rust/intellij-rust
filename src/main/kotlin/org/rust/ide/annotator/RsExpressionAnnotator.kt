@@ -42,7 +42,7 @@ class RsExpressionAnnotator : Annotator {
         if (expr.dotdot != null) return  // functional update, no need to declare all the fields.
 
         val declaredFields = expr.structExprFieldList.map { it.referenceName }.toSet()
-        val missingFields = decl.namedFields.filter { it.name !in declaredFields }
+        val missingFields = decl.namedFields.filter { it.name !in declaredFields && !it.queryAttributes.hasCfgAttr() }
 
         if (decl is RsStructItem && decl.kind == RsStructKind.UNION) {
             if (expr.structExprFieldList.size > 1) {

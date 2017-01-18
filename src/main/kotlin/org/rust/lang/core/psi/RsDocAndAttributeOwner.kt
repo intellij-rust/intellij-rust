@@ -25,6 +25,8 @@ val RsDocAndAttributeOwner.queryAttributes: QueryAttributes
  * **Do not instantiate directly**, use [RsDocAndAttributeOwner.queryAttributes] instead.
  */
 class QueryAttributes(private val attributes: Sequence<RsAttr>) {
+    fun hasCfgAttr(): Boolean = hasAttribute("cfg")
+
     fun hasAttribute(attributeName: String) = metaItems.any { it.identifier.text == attributeName }
 
     fun hasAtomAttribute(attributeName: String): Boolean {

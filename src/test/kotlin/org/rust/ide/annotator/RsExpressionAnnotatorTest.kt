@@ -78,6 +78,16 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
                 <error>bar</error>: 92
             <error>}</error>;
         }
+
+        struct Win {
+            foo: i32,
+            #[cfg(widows)] bar: i32,
+        }
+
+        #[cnf(unix)]
+        fn unix_only() {
+            let w = Win { foo: 92 };
+        }
     """)
 
     fun testUnion() = checkWarnings("""
