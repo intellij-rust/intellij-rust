@@ -235,6 +235,15 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun testValidChainComparison() = checkErrors("""
+        fn foo(x: i32, y: bool) {
+            let _ = 1 < x && x < 10;
+            let _ = 1 < x || x < 10;
+            let _ = (1 == x) == y;
+            let _ = y == (1 == x);
+        }
+    """)
+
     fun testE0046_AbsentMethodInTraitImpl() = checkErrors("""
         trait TError {
             fn bar();
