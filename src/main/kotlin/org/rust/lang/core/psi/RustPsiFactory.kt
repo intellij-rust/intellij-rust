@@ -109,6 +109,9 @@ class RustPsiFactory(private val project: Project) {
         PsiFileFactory.getInstance(project)
             .createFileFromText("DUMMY.rs", RsLanguage, code)
             ?.childOfType<T>()
+
+    fun createComma(): PsiElement =
+        createFromText<RsValueParameter>("fn f(_ : (), )")!!.nextSibling
 }
 
 private val RsFunction.signatureText: String? get() {
