@@ -5,17 +5,16 @@ import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.ElementPattern
-import com.intellij.patterns.ElementPatternCondition
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.lang.RsLanguage
-import org.rust.lang.core.psi.RsOuterAttr
 import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.RsOuterAttr
 import org.rust.lang.core.psi.util.parentOfType
 
-object DeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
+object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
 
     private val DERIVABLE_TRAITS = listOf(
         "Eq", "PartialEq",
@@ -23,7 +22,8 @@ object DeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
         "Copy", "Clone",
         "Hash",
         "Default",
-        "Debug"
+        "Debug",
+        "RustcEncodable", "RustcDecodable"
     )
 
     override fun addCompletions(parameters: CompletionParameters,
@@ -60,25 +60,4 @@ object DeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
             .inside(traitMetaItem)
             .withLanguage(RsLanguage)
     }
-}
-
-fun ElementPattern<PsiElement>.trace(id: String): ElementPattern<PsiElement> {
-    return Pat(this, id)
-}
-
-class Pat(val p: ElementPattern<PsiElement>, val id: String) : ElementPattern<PsiElement> {
-    override fun accepts(o: Any?, context: ProcessingContext?): Boolean {
-        val result = p.accepts(o, context)
-        println("$id for ${(o as PsiElement).text} = $result")
-        return result
-    }
-
-    override fun getCondition(): ElementPatternCondition<PsiElement> {
-        return p.condition
-    }
-
-    override fun accepts(o: Any?): Boolean {
-        return p.accepts(o)
-    }
-
 }
