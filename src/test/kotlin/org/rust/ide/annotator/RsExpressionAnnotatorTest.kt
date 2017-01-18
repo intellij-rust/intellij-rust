@@ -98,45 +98,4 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
             let _ = U <error descr="Union expressions should have exactly one field">{ a: 92, b: 92.0}</error>;
         }
     """)
-
-    fun testStructExprQuickFix() = checkQuickFix("Add missing fields", """
-        struct S { foo: i32, bar: f64 }
-
-        fn main() {
-            let _ = S {
-                /*caret*/
-            };
-        }
-    """, """
-        struct S { foo: i32, bar: f64 }
-
-        fn main() {
-            let _ = S {
-                foo: /*caret*/(),
-                bar: (),
-            };
-        }
-    """)
-
-    fun testStructExprQuickFix2() = checkQuickFix("Add missing fields", """
-        struct S { a: i32, b: i32, c: i32, d: i32 }
-
-        fn main() {
-            let _ = S {
-                a: 92,
-                c: 92/*caret*/
-            };
-        }
-    """, """
-        struct S { a: i32, b: i32, c: i32, d: i32 }
-
-        fn main() {
-            let _ = S {
-                b: /*caret*/(),
-                d: (),
-                a: 92,
-                c: 92
-            };
-        }
-    """)
 }
