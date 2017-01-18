@@ -281,7 +281,6 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         if (o.isComparisonBinaryExpr() && (o.left.isComparisonBinaryExpr() || o.right.isComparisonBinaryExpr())) {
             holder.createErrorAnnotation(o, "Chained comparison operator require parentheses")
         }
-
     }
 
     private fun require(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
@@ -334,7 +333,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
 private fun RsExpr?.isComparisonBinaryExpr() : Boolean {
     val op = this as? RsBinaryExpr ?: return false
-    return RS_COMPARISON_OPERATOR.contains(op.operatorType)
+    return op.operatorType in RS_COMPARISON_OPERATOR
 }
 
 private fun checkDuplicates(holder: AnnotationHolder, element: RsNamedElement) {
