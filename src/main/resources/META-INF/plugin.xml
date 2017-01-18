@@ -103,6 +103,8 @@
                                         implementationClass="org.rust.ide.annotator.RsRecursiveCallLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="Rust"
                                         implementationClass="org.rust.ide.annotator.RsTraitMethodImplLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="Rust"
+                                        implementationClass="org.rust.ide.annotator.RsCrateDocLineMarkerProvider"/>
 
         <!-- Completion -->
 

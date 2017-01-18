@@ -8,7 +8,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
 
     fun testHasStdlibSources() {
         val cargoProject = myModule.cargoProject
-        cargoProject?.findExternCrateRootByName("std")
+        cargoProject?.findCrateByName("std")?.crateRoot
             ?: error("No Rust sources found during test.\nTry running `rustup component add rust-src`")
     }
 

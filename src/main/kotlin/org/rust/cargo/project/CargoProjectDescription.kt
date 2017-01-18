@@ -72,34 +72,12 @@ class CargoProjectDescription private constructor(
         LIB, BIN, TEST, EXAMPLE, BENCH, UNKNOWN
     }
 
-    data class ExternCrate(
-        /**
-         * Name of a crate as appears in `extern crate foo;`
-         */
-        val name: String,
-
-        /**
-         * Root module file (typically `src/lib.rs`)
-         */
-        val virtualFile: VirtualFile
-    ) {
-        init {
-            check('-' !in name)
-        }
-    }
-
     private val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
 
-    private val externCrates: Collection<ExternCrate> get() = packages.mapNotNull { pkg ->
-        val target = pkg.libTarget ?: return@mapNotNull null
-        target.crateRoot?.let { ExternCrate(target.normName, it) }
-    }
-
-    /**
-     * Searches for the `VirtualFile` of the root mod of the crate
-     */
-    fun findExternCrateRootByName(crateName: String): VirtualFile? =
-        externCrates.orEmpty().find { it.name == crateName }?.virtualFile
+    fun findCrateByName(normName: String): Target? =
+        packages
+            .mapNotNull { it.libTarget }
+            .find { it.normName == normName }
 
     /**
      * If the [file] is a crate root, returns the corresponding [Target]
@@ -108,6 +86,8 @@ class CargoProjectDescription private constructor(
         val canonicalFile = file.canonicalFile ?: return null
         return targetByCrateRootUrl[canonicalFile.url]
     }
+
+    fun findPackage(name: String): Package? = packages.find { it.name == name }
 
     fun isCrateRoot(file: VirtualFile): Boolean = findTargetForCrateRootFile(file) != null
 
@@ -139,8 +119,6 @@ class CargoProjectDescription private constructor(
     }
 
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
-
-    fun findPackage(name: String): Package? = packages.find { it.name == name }
 
     companion object {
         fun deserialize(data: CleanCargoMetadata): CargoProjectDescription {
