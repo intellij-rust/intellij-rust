@@ -57,14 +57,14 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
                 ..S::default()
             };
 
-            let _ = S {
+            let _ = S <error descr="Some fields are missing">{
                 foo: 92,
-            <error descr="Some fields are missing">}</error>;
+            }</error>;
 
-            let _ = S {
+            let _ = S <error descr="Some fields are missing">{
                 foo: 1,
                 <error descr="Duplicate field">foo</error>: 2,
-            <error descr="Some fields are missing">}</error>;
+            }</error>;
 
             let _ = S {
                 foo: 1,
@@ -74,9 +74,9 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
 
             let _ = Empty { };
 
-            let _ = E::V {
+            let _ = E::V <error>{
                 <error>bar</error>: 92
-            <error>}</error>;
+            }</error>;
         }
 
         struct Win {
@@ -84,7 +84,7 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
             #[cfg(widows)] bar: i32,
         }
 
-        #[cnf(unix)]
+        #[cfg(unix)]
         fn unix_only() {
             let w = Win { foo: 92 };
         }
@@ -100,10 +100,7 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
     """)
 
     fun testStructExprQuickFix() = checkQuickFix("Add missing fields", """
-        struct S {
-            foo: i32,
-            bar: f64
-        }
+        struct S { foo: i32, bar: f64 }
 
         fn main() {
             let _ = S {
@@ -111,10 +108,7 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
             };
         }
     """, """
-        struct S {
-            foo: i32,
-            bar: f64
-        }
+        struct S { foo: i32, bar: f64 }
 
         fn main() {
             let _ = S {
@@ -125,12 +119,7 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
     """)
 
     fun testStructExprQuickFix2() = checkQuickFix("Add missing fields", """
-        struct S {
-            a: i32,
-            b: i32,
-            c: i32,
-            d: i32
-        }
+        struct S { a: i32, b: i32, c: i32, d: i32 }
 
         fn main() {
             let _ = S {
@@ -139,12 +128,7 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
             };
         }
     """, """
-        struct S {
-            a: i32,
-            b: i32,
-            c: i32,
-            d: i32
-        }
+        struct S { a: i32, b: i32, c: i32, d: i32 }
 
         fn main() {
             let _ = S {
