@@ -52,7 +52,7 @@ interface CargoProjectWorkspaceService {
 /**
  * Extracts Cargo project description out of `Cargo.toml`
  */
-val Module.cargoProject: CargoWorkspace?
+val Module.cargoWorkspace: CargoWorkspace?
     get() = CargoProjectWorkspaceService.getInstance(this).workspace?.let {
         val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(rustLibraryName)
             ?: return it

@@ -5,7 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.project.workspace.cargoProject
+import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RsFile
@@ -67,7 +67,7 @@ object CompletionEngine {
     }
 
     fun completeExternCrate(extCrate: RsExternCrateItem): Array<out LookupElement> =
-        extCrate.module?.cargoProject?.packages
+        extCrate.module?.cargoWorkspace?.packages
             ?.filter { it.origin == PackageOrigin.DEPENDENCY }
             ?.mapNotNull { it.libTarget }
             ?.map { LookupElementBuilder.create(extCrate, it.normName).withIcon(extCrate.getIcon(0)) }

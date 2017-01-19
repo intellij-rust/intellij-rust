@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.execution.filters.BrowserHyperlinkInfo
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
-import org.rust.cargo.project.workspace.cargoProject
+import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsExternCrateItem
 import org.rust.lang.core.psi.util.module
@@ -20,7 +20,7 @@ class RsCrateDocLineMarkerProvider : LineMarkerProvider {
     override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {
         for (el in elements) {
             val crateItem = el as? RsExternCrateItem ?: continue
-            val cargoProject = crateItem.module?.cargoProject ?: continue
+            val cargoProject = crateItem.module?.cargoWorkspace ?: continue
             val crate = cargoProject.findCrateByName(crateItem.identifier.text) ?: continue
             if (crate.pkg.source == null) continue
             result.add(LineMarkerInfo(

@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.ui.JBColor
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
-import org.rust.cargo.project.workspace.cargoProject
+import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.cargoProjectRoot
@@ -93,7 +93,7 @@ class RustProjectConfigurable(
     override fun getHelpTopic(): String? = null
 
     private fun getCurrentStdlibLocation(module: Module): String? {
-        val libRoot = module.cargoProject?.packages?.find { it.name == "std" }?.contentRoot?.parent ?: return null
+        val libRoot = module.cargoWorkspace?.packages?.find { it.name == "std" }?.contentRoot?.parent ?: return null
         // If libRoot is inside a zip file, we want to show the path to the zip itself
         return (JarFileSystem.getInstance().getLocalByEntry(libRoot) ?: libRoot).presentableUrl
     }

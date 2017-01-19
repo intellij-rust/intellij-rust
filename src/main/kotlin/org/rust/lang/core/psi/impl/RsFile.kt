@@ -12,7 +12,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.cargo.project.workspace.cargoProject
+import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
@@ -63,7 +63,7 @@ class RsFile(
 
     override val isCrateRoot: Boolean get() {
         val file = originalFile.virtualFile ?: return false
-        return module?.cargoProject?.isCrateRoot(file) ?: false
+        return module?.cargoWorkspace?.isCrateRoot(file) ?: false
     }
 
     override val innerAttrList: List<RsInnerAttr>

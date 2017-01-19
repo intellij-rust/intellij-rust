@@ -10,7 +10,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.cargo.project.workspace.cargoProject
+import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.ImplementMethodsFix
 import org.rust.lang.core.psi.*
@@ -182,7 +182,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             // We don't want to show the warning if there is no cargo project
             // associated with the current module. Without it we can't know for
             // sure that a mod is not a directory owner.
-            if (modDecl.module?.cargoProject != null) {
+            if (modDecl.module?.cargoWorkspace != null) {
                 holder.createErrorAnnotation(modDecl, "Cannot declare a new module at this location")
                     .registerFix(AddModuleFileFix(modDecl, expandModuleFirst = true))
             }

@@ -9,7 +9,7 @@ import com.intellij.psi.PsiReference
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
-import org.rust.cargo.project.workspace.cargoProject
+import org.rust.cargo.project.workspace.cargoWorkspace
 
 class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
@@ -33,7 +33,7 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
         withProject(project) {
             CargoProjectWorkspaceService.getInstance(module).syncUpdate(module.project.toolchain!!)
 
-            if (module.cargoProject == null) {
+            if (module.cargoWorkspace == null) {
                 error("Failed to update a test Cargo project")
             }
 

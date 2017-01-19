@@ -9,7 +9,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.cargoProject
+import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.getPsiFor
 import org.rust.ide.utils.recursionGuard
@@ -89,7 +89,7 @@ object ResolveEngine {
     fun resolve(path: String, module: Module): Result? {
         val segments = path.segments
         if (segments.isEmpty()) return null
-        val cargoProject = module.cargoProject ?: return null
+        val cargoProject = module.cargoWorkspace ?: return null
         val pkg = cargoProject.findPackage(segments[0].name) ?: return null
         val vfm = VirtualFileManager.getInstance()
         val rustPath = RustPath.CrateRelative(segments.drop(1))
@@ -198,7 +198,7 @@ object ResolveEngine {
     fun resolveExternCrate(crate: RsExternCrateItem): RsNamedElement? {
         val name = crate.name ?: return null
         val module = crate.module ?: return null
-        return module.project.getPsiFor(module.cargoProject?.findCrateByName(name)?.crateRoot)?.rustMod
+        return module.project.getPsiFor(module.cargoWorkspace?.findCrateByName(name)?.crateRoot)?.rustMod
     }
 
     private val String.segments: List<RustPathSegment>
@@ -424,7 +424,7 @@ private fun RsCondition.boundNames(place: RsCompositeElement): Sequence<ScopeEnt
 private fun injectedCrates(file: RsFile): Sequence<ScopeEntry> {
     val module = file.module
         ?: return emptySequence()
-    val cargoProject = module.cargoProject
+    val cargoProject = module.cargoWorkspace
         ?: return emptySequence()
 
     if (!file.isCrateRoot)
@@ -478,7 +478,7 @@ private fun RsUseItem.nonWildcardEntries(): Sequence<ScopeEntry> {
 }
 
 private val Module.preludeModule: PsiFile? get() {
-    val stdlib = cargoProject?.findCrateByName(AutoInjectedCrates.std)?.crateRoot
+    val stdlib = cargoWorkspace?.findCrateByName(AutoInjectedCrates.std)?.crateRoot
         ?: return null
     val preludeFile = stdlib.findFileByRelativePath("../prelude/v1.rs")
         ?: return null

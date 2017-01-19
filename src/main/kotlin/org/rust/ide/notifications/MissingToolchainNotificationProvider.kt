@@ -23,7 +23,7 @@ import com.intellij.ui.EditorNotifications
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.workspace.cargoProject
+import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.util.StandardLibraryRoots
@@ -78,7 +78,7 @@ class MissingToolchainNotificationProvider(
         }
 
         val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
-        if (module.cargoProject?.hasStandardLibrary == false) {
+        if (module.cargoWorkspace?.hasStandardLibrary == false) {
             val rustup = module.cargoProjectRoot?.let { toolchain.rustup(it.path) }
             return if (trySetupLibraryAutomatically(module, rustup)) {
                 null

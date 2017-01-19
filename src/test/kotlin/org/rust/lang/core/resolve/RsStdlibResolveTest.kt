@@ -1,13 +1,13 @@
 package org.rust.lang.core.resolve
 
-import org.rust.cargo.project.workspace.cargoProject
+import org.rust.cargo.project.workspace.cargoWorkspace
 
 class RsStdlibResolveTest : RsResolveTestBase() {
 
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
     fun testHasStdlibSources() {
-        val cargoProject = myModule.cargoProject
+        val cargoProject = myModule.cargoWorkspace
         cargoProject?.findCrateByName("std")?.crateRoot
             ?: error("No Rust sources found during test.\nTry running `rustup component add rust-src`")
     }
