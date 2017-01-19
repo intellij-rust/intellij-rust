@@ -17,6 +17,7 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase() {
         struct Foo;
         impl Foo {
             fn into_u32(self) -> u32 { 0 }
+            fn into_u32_mut(mut self) -> u32 { 0 }
             fn into_u16(<warning descr="methods called `into_*` usually take self by value; consider choosing a less ambiguous name">&self</warning>) -> u16 { 0 }
             fn <warning descr="methods called `into_*` usually take self by value; consider choosing a less ambiguous name">into_without_self</warning>() -> u16 { 0 }
         }
