@@ -174,4 +174,6 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
         // FIXME
         return false
     })
+
+    override fun visitPatRange(o: RsPatRange) = set { false }
 }

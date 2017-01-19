@@ -101,4 +101,11 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
+    fun testLiteralPattern() = testExpr("""
+    fn main() {
+        let x: (i32, String) = unimplemented!();
+        match x { (x, "foo") => x }
+    }                         //^ <unknown>
+    """)
+
 }
