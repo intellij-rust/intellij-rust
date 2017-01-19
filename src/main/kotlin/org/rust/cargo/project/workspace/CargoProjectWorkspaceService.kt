@@ -4,7 +4,6 @@ import com.intellij.execution.ExecutionException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import org.jetbrains.annotations.TestOnly
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.rustLibraryName
 
