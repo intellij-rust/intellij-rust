@@ -35,6 +35,9 @@ class StandardLibraryRoots private constructor(
         module.updateLibrary(module.rustLibraryName, roots)
     }
 
+    fun sameAsLibrary(library: Library): Boolean
+        = roots.toSet() == library.rootProvider.getFiles(OrderRootType.CLASSES).toSet()
+
     companion object {
         fun fromPath(path: String): StandardLibraryRoots? =
             LocalFileSystem.getInstance().findFileByPath(path)?.let { fromFile(it) }

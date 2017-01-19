@@ -22,6 +22,8 @@ import com.intellij.util.Alarm
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.SetupRustStdlibTask
+import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
@@ -54,9 +56,20 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
     override fun getComponentName(): String = "org.rust.cargo.CargoProjectWorkspaceService"
 
     override fun initComponent() {
-        module.messageBus
-            .connect()
-            .subscribe(VirtualFileManager.VFS_CHANGES, FileChangesWatcher())
+        with(module.messageBus.connect()) {
+            subscribe(VirtualFileManager.VFS_CHANGES, FileChangesWatcher())
+
+            subscribe(RustProjectSettingsService.TOOLCHAIN_TOPIC, object : RustProjectSettingsService.ToolchainListener {
+                override fun toolchainChanged(newToolchain: RustToolchain?) {
+                    val projectDirectory = module.cargoProjectRoot?.path
+                        ?: return
+                    val rustup = newToolchain?.rustup(projectDirectory)
+                        ?: return
+
+                    SetupRustStdlibTask(module, rustup).queue()
+                }
+            })
+        }
     }
 
     override fun disposeComponent() {

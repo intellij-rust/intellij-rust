@@ -25,6 +25,7 @@ class RustProjectSettingsServiceImpl(
 
     override fun loadState(newState: State) {
         state = newState
+        notify(toolchain)
     }
 
     override fun configureToolchain() {
@@ -49,8 +50,12 @@ class RustProjectSettingsServiceImpl(
                 }
 
                 state.toolchainHomeDirectory = value?.location
-                project.messageBus.syncPublisher(RustProjectSettingsService.TOOLCHAIN_TOPIC).toolchainChanged(value)
+                notify(value)
             }
         }
+
+    private fun notify(toolchain: RustToolchain?) {
+        project.messageBus.syncPublisher(RustProjectSettingsService.TOOLCHAIN_TOPIC).toolchainChanged(toolchain)
+    }
 }
 

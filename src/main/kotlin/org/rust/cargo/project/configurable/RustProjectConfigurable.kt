@@ -56,9 +56,19 @@ class RustProjectConfigurable(
             stdlibLocation.isEnabled = false
             stdlibLocation.text = ""
         } else {
-            cargoTomlLocation.text = module.cargoProjectRoot?.findChild(RustToolchain.CARGO_TOML)?.presentableUrl
-            cargoTomlLocation.foreground = JBColor.foreground()
+            val projectRoot = module.cargoProjectRoot
+
             stdlibLocation.isEnabled = true
+            if (projectRoot != null) {
+                if (toolchain?.rustup(projectRoot.path) != null) {
+                    stdlibLocation.isEnabled = false
+                }
+                cargoTomlLocation.text = projectRoot.findChild(RustToolchain.CARGO_TOML)?.presentableUrl
+            } else {
+                cargoTomlLocation.text = "N/A"
+            }
+
+            cargoTomlLocation.foreground = JBColor.foreground()
             stdlibLocation.text = getCurrentStdlibLocation(module) ?: ""
         }
     }
