@@ -30,7 +30,7 @@ class RefreshCargoProjectAction : AnAction() {
 
         ApplicationManager.getApplication().saveAll()
         for (module in modules) {
-            val workspace = CargoProjectWorkspaceService.forModule(module)
+            val workspace = CargoProjectWorkspaceService.getInstance(module)
 
             workspace.requestImmediateUpdate(toolchain) { result ->
                 val (type, content) = when (result) {

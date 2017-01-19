@@ -44,7 +44,7 @@ class RustProjectSettingsServiceImpl(
 
                 if (value != null) {
                     for (module in project.modules) {
-                        CargoProjectWorkspaceService.forModule(module).requestUpdate(value)
+                        CargoProjectWorkspaceService.getInstance(module).requestUpdate(value)
                     }
                 }
 

@@ -44,7 +44,7 @@ interface CargoProjectWorkspaceService {
     }
 
     companion object {
-        fun forModule(module: Module): CargoProjectWorkspaceService =
+        fun getInstance(module: Module): CargoProjectWorkspaceService =
             module.getComponent(CargoProjectWorkspaceService::class.java)
                 ?: error("Can't retrieve CargoProjectWorkspaceService component for $this")
     }
@@ -54,7 +54,7 @@ interface CargoProjectWorkspaceService {
  * Extracts Cargo project description out of `Cargo.toml`
  */
 val Module.cargoProject: CargoWorkspace?
-    get() = CargoProjectWorkspaceService.forModule(this).workspace?.let {
+    get() = CargoProjectWorkspaceService.getInstance(this).workspace?.let {
         val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(rustLibraryName)
             ?: return it
         return it.withStdlib(lib)

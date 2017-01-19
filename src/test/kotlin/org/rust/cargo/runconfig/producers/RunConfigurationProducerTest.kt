@@ -292,7 +292,7 @@ class RunConfigurationProducerTest : RsTestBase() {
                 }
             }
 
-            val metadataService = CargoProjectWorkspaceService.forModule(myFixture.module) as CargoProjectWorkspaceServiceImpl
+            val metadataService = CargoProjectWorkspaceService.getInstance(myFixture.module) as CargoProjectWorkspaceServiceImpl
 
             val projectDescription = CargoWorkspace.deserialize(
                 CleanCargoMetadata(

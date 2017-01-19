@@ -194,7 +194,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             super.configureModule(module, model, contentEntry)
 
             val moduleBaseDir = contentEntry.file!!.url
-            val projectWorkspace = CargoProjectWorkspaceService.forModule(module) as CargoProjectWorkspaceServiceImpl
+            val projectWorkspace = CargoProjectWorkspaceService.getInstance(module) as CargoProjectWorkspaceServiceImpl
 
             projectWorkspace.setState(testCargoProject(module, moduleBaseDir))
 

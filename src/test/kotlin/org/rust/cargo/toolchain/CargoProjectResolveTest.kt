@@ -31,7 +31,7 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
     private fun resolveRefInFile(project: String, fileWithRef: String, unresolved: Boolean = false) =
         withProject(project) {
-            CargoProjectWorkspaceService.forModule(module).syncUpdate(module.project.toolchain!!)
+            CargoProjectWorkspaceService.getInstance(module).syncUpdate(module.project.toolchain!!)
 
             if (module.cargoProject == null) {
                 error("Failed to update a test Cargo project")
