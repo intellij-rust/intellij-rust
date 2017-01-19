@@ -24,7 +24,6 @@ object RustTypeInferenceEngine {
         }
 }
 
-@Suppress("IfNullToElvis")
 private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisitor<Boolean>() {
 
     val bindings: MutableMap<RsPatBinding, RustType> = hashMapOf()
@@ -40,8 +39,8 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
         }
     }
 
-    override fun visitElement(element: PsiElement?) {
-        throw UnsupportedOperationException("Panic! Unhandled pattern detected!")
+    override fun visitElement(element: PsiElement) {
+        throw UnsupportedOperationException("Panic! Unhandled pattern detected: $element ${element.text}")
     }
 
     override fun visitPatIdent(o: RsPatIdent) = set(fun(): Boolean {
@@ -145,7 +144,7 @@ private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisi
                 bindings += patBinding to fieldDecl.type.resolvedType
             } else {
                 val id = patField.identifier ?:
-                    error("Panic! `pat_field` may be either `pat_binding` or should contain identifier!")
+                    error("Panic! `pat_field` may be either `pat_binding` or should contain identifier! ${patField.text}")
 
                 val patFieldPat = patField.pat
                     ?: return false
