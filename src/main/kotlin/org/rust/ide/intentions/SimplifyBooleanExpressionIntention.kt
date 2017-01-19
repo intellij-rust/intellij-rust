@@ -3,6 +3,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.SimplifyBooleanExpressionIntention.UnaryOperator.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.util.ancestors

@@ -221,7 +221,7 @@ private class RustTypeTypificationVisitor(val pivot: RsType) : RustComputingVisi
             RustUnitType
     }
 
-    override fun visitBaseType(o: RsBaseType) = set {
+    override fun visitBaseType(o: RsBaseType): Unit = o.baseType?.let { visitBaseType(it) } ?: set {
         val path = o.path?.asRustPath ?: return@set RustUnknownType
         if (path is RustPath.Named && path.segments.isEmpty()) {
             val primitiveType = RustPrimitiveType.fromTypeName(path.head.name)

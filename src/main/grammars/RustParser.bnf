@@ -647,7 +647,7 @@ BareFnType ::= [ unsafe? ExternAbi? ] fn FnTypeParameters RetType? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-TupleType ::= '(' [ <<comma_separated_list Type>> ] ')' {
+TupleType ::= '(' [ <<comma_separated_list_two Type>> ] ')' {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -668,7 +668,7 @@ ImplTraitType ::= impl Polybound ('+' Polybound)* {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-BaseType ::= '_' | '!' | !'<' PathGenericArgsWithoutColons | &'<' TypeQualPath {
+BaseType ::= '_' | '!' | !'<' PathGenericArgsWithoutColons | &'<' TypeQualPath | '(' BaseType ')' {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -1036,3 +1036,7 @@ private never ::= !()
 // Trailing commas are allowed
 private meta comma_separated_list ::= <<param>> ( ',' <<param>> )* ','?
 private meta list_element ::= <<param>> (',' | &'>') { pin = 1 }
+
+// This is comma-separated list with at least 2 elements or with mandatory following comma insted
+// Examples: (a, b) (a, b, c,) (a,) but not (a)
+private meta comma_separated_list_two ::= <<param>> ',' <<param>> ( ',' <<param>> )* ','? | <<param>> ','
