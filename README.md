@@ -24,6 +24,10 @@ install Rust plugin, and use **project from existing sources** action to import 
 
 Unstable master branch builds can be downloaded from [TeamCity].
 
+## FAQ
+
+Frequently asked questions, a.k.a. "Where is Rust SDK?", are on the [website] :)
+
 ## TOML
 
 If you are looking for the TOML plugin, see [toml] directory.
@@ -41,6 +45,7 @@ understand the high level structure of the code base. Good first bugs are tagged
 with [up-for-grab].
 
 [intellij-rust.github.io]: https://intellij-rust.github.io/docs/
+[website]: https://intellij-rust.github.io/docs/faq.html
 [up-for-grab]: https://github.com/intellij-rust/intellij-rust/labels/up%20for%20grab
 [CONTRIBUTING.md]: CONTRIBUTING.md
 [ARCHITECTURE.md]: ARCHITECTURE.md
