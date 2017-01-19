@@ -3,7 +3,7 @@ package org.rust.lang.core.type
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.core.psi.RsType
-import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.resolvedType
 
 class RsTypeResolvingTest : RsTypificationTestBase() {
     fun testPath() = testType("""

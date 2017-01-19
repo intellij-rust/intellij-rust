@@ -53,7 +53,7 @@ class ParenPostfixTemplate : SurroundPostfixTemplateBase(
     "par",
     "(expr)",
     RsPostfixTemplatePsiInfo,
-    RsAllParentsSelector(RsExpr::any)
+    RsAllParentsSelector({ true })
 ) {
     override fun getSurrounder(): Surrounder = RsWithParenthesesSurrounder()
 }

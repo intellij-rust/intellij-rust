@@ -13,10 +13,10 @@ import org.rust.lang.core.psi.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.impl.mixin.isAssocFn
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
-import org.rust.lang.core.types.RustStructOrEnumTypeBase
+import org.rust.lang.core.types.types.RustStructOrEnumTypeBase
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustTypeFingerprint
-import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.resolvedType
 
 
 object RsImplIndex {

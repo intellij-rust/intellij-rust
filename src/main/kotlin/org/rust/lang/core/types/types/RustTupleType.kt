@@ -1,4 +1,6 @@
-package org.rust.lang.core.types
+package org.rust.lang.core.types.types
+
+import org.rust.lang.core.types.RustType
 
 data class RustTupleType(private val elements: List<RustType>) : RustType {
 

@@ -8,8 +8,8 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.EQEQ
 import org.rust.lang.core.psi.util.descendantsOfType
 import org.rust.lang.core.resolve.lexicalDeclarations
-import org.rust.lang.core.types.RustEnumType
-import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.types.RustEnumType
+import org.rust.lang.core.types.resolvedType
 
 open class AssertPostfixTemplateBase(name: String) : StringBasedPostfixTemplate(
     name,
@@ -32,7 +32,7 @@ class DebugAssertPostfixTemplate : AssertPostfixTemplateBase("debug_assert")
 class LambdaPostfixTemplate : StringBasedPostfixTemplate(
     "lambda",
     "|| expr",
-    RsTopMostInScopeSelector(RsExpr::any)) {
+    RsTopMostInScopeSelector({ true })) {
 
     override fun getTemplateString(element: PsiElement): String = "|| ${element.text}"
 

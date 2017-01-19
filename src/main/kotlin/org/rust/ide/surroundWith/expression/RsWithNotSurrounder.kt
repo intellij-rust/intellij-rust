@@ -8,8 +8,8 @@ import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsParenExpr
 import org.rust.lang.core.psi.RsUnaryExpr
 import org.rust.lang.core.psi.RustPsiFactory
-import org.rust.lang.core.types.RustBooleanType
-import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.types.RustBooleanType
+import org.rust.lang.core.types.resolvedType
 
 class RsWithNotSurrounder : RsExpressionSurrounderBase<RsUnaryExpr>() {
     override fun getTemplateDescription(): String = "!(expr)"

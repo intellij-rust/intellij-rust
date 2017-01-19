@@ -9,9 +9,9 @@ import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.psi.util.ancestors
-import org.rust.lang.core.types.RustBooleanType
-import org.rust.lang.core.types.RustEnumType
-import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.types.RustBooleanType
+import org.rust.lang.core.types.types.RustEnumType
+import org.rust.lang.core.types.resolvedType
 import org.rust.lang.utils.negate
 
 internal object RsPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
@@ -62,4 +62,3 @@ class RsAllParentsSelector(pred: (RsExpr) -> Boolean) : RsExprParentsSelectorBas
 
 fun RsExpr.isBool() = resolvedType == RustBooleanType
 fun RsExpr.isEnum() = resolvedType is RustEnumType
-fun RsExpr.any() = true

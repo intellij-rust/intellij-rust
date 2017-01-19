@@ -1,8 +1,9 @@
-package org.rust.lang.core.types
+package org.rust.lang.core.types.types
 
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.trait
+import org.rust.lang.core.types.RustType
 
 data class RustTypeParameterType private constructor(
     private val parameter: TypeParameter

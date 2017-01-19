@@ -8,8 +8,8 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsWhileExpr
 import org.rust.lang.core.psi.RustPsiFactory
-import org.rust.lang.core.types.RustBooleanType
-import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.types.RustBooleanType
+import org.rust.lang.core.types.resolvedType
 
 class RsWithWhileExpSurrounder : RsExpressionSurrounderBase<RsWhileExpr>() {
     override fun getTemplateDescription(): String = "while expr"

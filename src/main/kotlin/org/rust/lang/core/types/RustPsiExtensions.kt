@@ -1,4 +1,4 @@
-package org.rust.lang.core.types.util
+package org.rust.lang.core.types
 
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.util.CachedValueProvider
@@ -9,16 +9,12 @@ import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsType
 import org.rust.lang.core.psi.RsTypeBearingItemElement
 import org.rust.lang.core.types.RustType
-import org.rust.lang.core.types.RustUnknownType
-import org.rust.lang.core.types.visitors.impl.RustTypificationEngine
+import org.rust.lang.core.types.types.RustUnknownType
 
 val RsExpr.resolvedType: RustType
-    get() =
-    CachedValuesManager.getCachedValue(this,
-        CachedValueProvider {
-            CachedValueProvider.Result.create(RustTypificationEngine.typifyExpr(this), PsiModificationTracker.MODIFICATION_COUNT)
-        }
-    )
+    get() = CachedValuesManager.getCachedValue(this, CachedValueProvider {
+        CachedValueProvider.Result.create(RustTypificationEngine.typifyExpr(this), PsiModificationTracker.MODIFICATION_COUNT)
+    })
 
 val RsType.resolvedType: RustType
     get() = recursionGuard(this, Computable {
@@ -26,8 +22,6 @@ val RsType.resolvedType: RustType
     }) ?: RustUnknownType
 
 val RsTypeBearingItemElement.resolvedType: RustType
-    get() =
-    CachedValuesManager.getCachedValue(this,
-        CachedValueProvider {
-            CachedValueProvider.Result.create(RustTypificationEngine.typify(this), PsiModificationTracker.MODIFICATION_COUNT)
-        })
+    get() = CachedValuesManager.getCachedValue(this, CachedValueProvider {
+        CachedValueProvider.Result.create(RustTypificationEngine.typify(this), PsiModificationTracker.MODIFICATION_COUNT)
+    })

@@ -1,4 +1,4 @@
-package org.rust.lang.core.types
+package org.rust.lang.core.types.types
 
 import com.intellij.psi.PsiElement
 

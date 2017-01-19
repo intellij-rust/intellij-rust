@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsItemElement
-import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.resolvedType
 
 
 class RsExpressionTypeProvider : ExpressionTypeProvider<RsExpr>() {

@@ -1,4 +1,4 @@
-package org.rust.lang.core.types
+package org.rust.lang.core.types.types
 
 object RustBooleanType : RustPrimitiveType {
 

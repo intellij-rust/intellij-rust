@@ -1,7 +1,8 @@
-package org.rust.lang.core.types
+package org.rust.lang.core.types.types
 
 import com.intellij.codeInsight.completion.CompletionUtil
 import org.rust.lang.core.psi.RsEnumItem
+import org.rust.lang.core.types.RustType
 
 data class RustEnumType(
     val enum: RsEnumItem,

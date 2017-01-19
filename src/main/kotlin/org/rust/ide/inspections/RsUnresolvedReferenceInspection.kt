@@ -3,7 +3,7 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.isPrimitive
-import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.resolvedType
 
 class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Unresolved reference"

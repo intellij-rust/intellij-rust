@@ -6,8 +6,8 @@ import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.types.RustReferenceType
-import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.types.RustReferenceType
+import org.rust.lang.core.types.resolvedType
 
 /**
  * Checks for calls to std::mem::drop with a reference instead of an owned value. Analogue of Clippy's drop_ref.

@@ -4,7 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.resolvedType
 
 abstract class RsTypificationTestBase : RsTestBase() {
     override val dataPath: String get() = ""

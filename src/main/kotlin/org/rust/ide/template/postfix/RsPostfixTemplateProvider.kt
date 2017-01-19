@@ -41,10 +41,10 @@ class RsPostfixTemplateProvider : PostfixTemplateProvider {
 class LetPostfixTemplate : PostfixTemplateWithExpressionSelector(
     "let",
     "let name = expr;",
-    RsAllParentsSelector(RsExpr::any)
+    RsAllParentsSelector({ true })
 ) {
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
-        var rustFile = expression.containingFile as? RsFile ?: return
+        val rustFile = expression.containingFile as? RsFile ?: return
         if (expression !is RsExpr) return
         RsLocalVariableHandler().doRefactoring(editor, expression.project, rustFile, expression)
     }

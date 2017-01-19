@@ -8,8 +8,8 @@ import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.queryAttributes
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.types.RustStructOrEnumTypeBase
-import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.types.RustStructOrEnumTypeBase
+import org.rust.lang.core.types.resolvedType
 
 class RsSelfConventionInspection : RsLocalInspectionTool() {
 

@@ -5,6 +5,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.util.trait
 import org.rust.lang.core.resolve.indexes.RsImplIndex
+import org.rust.lang.core.types.types.*
 
 interface RustType {
 

@@ -1,7 +1,8 @@
-package org.rust.lang.core.types
+package org.rust.lang.core.types.types
 
 import org.rust.lang.core.psi.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.typeParameters
+import org.rust.lang.core.types.RustType
 
 interface RustStructOrEnumTypeBase : RustType {
     val typeArguments: List<RustType>

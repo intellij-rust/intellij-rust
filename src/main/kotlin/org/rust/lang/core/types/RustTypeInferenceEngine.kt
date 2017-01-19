@@ -1,11 +1,10 @@
-package org.rust.lang.core.types.visitors.impl
+package org.rust.lang.core.types
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.contains
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
-import org.rust.lang.core.types.*
-import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.types.*
 
 
 object RustTypeInferenceEngine {

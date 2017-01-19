@@ -3,6 +3,10 @@ package org.rust.lang.core.types
 import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsRefLikeType
 import org.rust.lang.core.psi.RsType
+import org.rust.lang.core.types.types.RustEnumType
+import org.rust.lang.core.types.types.RustReferenceType
+import org.rust.lang.core.types.types.RustStructType
+import org.rust.lang.core.types.RustType
 import java.io.DataInput
 import java.io.DataOutput
 

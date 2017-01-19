@@ -13,7 +13,7 @@ import org.rust.lang.core.psi.impl.mixin.role
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.types.isPrimitive
-import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.resolvedType
 
 // Highlighting logic here should be kept in sync with tags in RustColorSettingsPage
 class RsHighlightingAnnotator : Annotator {

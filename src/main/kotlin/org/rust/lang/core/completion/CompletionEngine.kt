@@ -17,11 +17,11 @@ import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.symbols.RustPath
-import org.rust.lang.core.types.RustStructType
-import org.rust.lang.core.types.RustUnknownType
+import org.rust.lang.core.types.types.RustStructType
+import org.rust.lang.core.types.types.RustUnknownType
 import org.rust.lang.core.types.stripAllRefsIfAny
-import org.rust.lang.core.types.util.resolvedType
-import org.rust.lang.core.types.visitors.impl.RustTypificationEngine
+import org.rust.lang.core.types.resolvedType
+import org.rust.lang.core.types.RustTypificationEngine
 import org.rust.utils.sequenceOfNotNull
 
 object CompletionEngine {

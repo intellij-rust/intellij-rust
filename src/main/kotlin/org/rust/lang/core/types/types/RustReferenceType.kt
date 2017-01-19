@@ -1,7 +1,9 @@
-package org.rust.lang.core.types
+package org.rust.lang.core.types.types
 
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.stripAllRefsIfAny
 
 data class RustReferenceType(val referenced: RustType, val mutable: Boolean = false) : RustType {
 

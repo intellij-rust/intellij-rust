@@ -6,8 +6,8 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.types.RustUnitType
-import org.rust.lang.core.types.util.resolvedType
+import org.rust.lang.core.types.types.RustUnitType
+import org.rust.lang.core.types.resolvedType
 
 /**
  * Suggest to remove a semicolon in situations like
