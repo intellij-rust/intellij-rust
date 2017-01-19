@@ -1,7 +1,6 @@
 package org.rust.lang.core.types
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.impl.mixin.*
@@ -29,7 +28,7 @@ object RustTypificationEngine {
 
             is RsSelfParameter -> deviseSelfType(named)
 
-            is RsPatBinding -> deviseBoundPatType(named)
+            is RsPatBinding -> inferPatternBindingType(named)
 
             is RsEnumVariant -> deviseEnumType(named)
 
@@ -239,27 +238,6 @@ private class RustTypeTypificationVisitor(val pivot: RsType) : RustComputingVisi
         val base = o.type ?: return@set RustUnknownType
         RustReferenceType(RustTypificationEngine.typifyType(base), o.mut != null)
     }
-}
-
-/**
- * NOTA BENE: That's far from complete
- */
-private fun deviseBoundPatType(binding: RsPatBinding): RustType {
-    //TODO: probably want something more precise than `getTopmostParentOfType` here
-    val pattern = PsiTreeUtil.getTopmostParentOfType(binding, RsPat::class.java) ?: return RustUnknownType
-    val parent = pattern.parent
-    val type = when (parent) {
-        is RsLetDecl ->
-            // use type ascription, if present or fallback to the type of the initializer expression
-            parent.type?.resolvedType ?: parent.expr?.resolvedType
-
-        is RsValueParameter -> parent.type?.resolvedType
-        is RsCondition -> parent.expr.resolvedType
-        is RsMatchPat -> parent.parentOfType<RsMatchExpr>()?.expr?.resolvedType
-        else -> null
-    } ?: return RustUnknownType
-
-    return RustTypeInferenceEngine.inferPatBindingTypeFrom(binding, pattern, type)
 }
 
 /**

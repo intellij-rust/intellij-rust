@@ -54,6 +54,15 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
+    fun testBracedEnumVariant() = testExpr("""
+        enum E { S { foo: i32 }}
+
+        fn main() {
+            let x: E = unimplemented!();
+            match x { E::S { foo } => foo }
+        }                           //^ i32
+    """)
+
     fun testFnArgumentPattern() = testExpr("""
         struct S;
         struct T;
@@ -89,7 +98,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         fn bar(vr: &mut Vec) {
             let &v = vr;
             v;
-          //^ <unknown>
+          //^ Vec
         }
     """)
 
@@ -105,7 +114,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
     fn main() {
         let x: (i32, String) = unimplemented!();
         match x { (x, "foo") => x }
-    }                         //^ <unknown>
+    }                         //^ i32
     """)
 
 }

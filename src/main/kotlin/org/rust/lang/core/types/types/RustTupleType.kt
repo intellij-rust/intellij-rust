@@ -2,22 +2,19 @@ package org.rust.lang.core.types.types
 
 import org.rust.lang.core.types.RustType
 
-data class RustTupleType(private val elements: List<RustType>) : RustType {
+data class RustTupleType(val types: List<RustType>) : RustType {
 
     operator fun get(i: Int): RustType {
         require(i >= 0)
-        return elements.getOrElse(i, { RustUnknownType })
+        return types.getOrElse(i, { RustUnknownType })
     }
 
-    val types: Iterable<RustType>
-        get() = elements
-
-    val size: Int = elements.size
+    val size: Int = types.size
 
     override fun substitute(map: Map<RustTypeParameterType, RustType>): RustTupleType =
-        RustTupleType(elements.map { it.substitute(map) })
+        RustTupleType(types.map { it.substitute(map) })
 
-    override fun toString(): String = elements.joinToString(", ", "(", ")")
+    override fun toString(): String = types.joinToString(", ", "(", ")")
 
 }
 
