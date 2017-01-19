@@ -10,9 +10,7 @@ import org.rust.lang.core.psi.visitors.RustComputingVisitor
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.ResolveEngine
 import org.rust.lang.core.symbols.RustPath
-import org.rust.lang.core.types.*
 import org.rust.lang.core.types.types.*
-import org.rust.lang.core.types.resolvedType
 
 object RustTypificationEngine {
 

@@ -8,7 +8,6 @@ import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsType
 import org.rust.lang.core.psi.RsTypeBearingItemElement
-import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.types.RustUnknownType
 
 val RsExpr.resolvedType: RustType
