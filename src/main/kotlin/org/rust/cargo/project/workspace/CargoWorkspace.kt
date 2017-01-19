@@ -1,4 +1,4 @@
-package org.rust.cargo.project
+package org.rust.cargo.project.workspace
 
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
@@ -12,10 +12,10 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * Rust project model represented roughly in the same way as in Cargo itself.
  *
- * [org.rust.cargo.project.workspace.CargoProjectWorkspace] is responsible for providing a [CargoProjectDescription] for
+ * [CargoProjectWorkspaceService] is responsible for providing a [CargoWorkspace] for
  * an IDEA module.
  */
-class CargoProjectDescription private constructor(
+class CargoWorkspace private constructor(
     val packages: Collection<Package>
 ) {
 
@@ -95,7 +95,7 @@ class CargoProjectDescription private constructor(
      * Combines information about the project structure we got form cargo and information
      * about the standard library that is stored as an IDEA external library
      */
-    fun withStdlib(lib: Library): CargoProjectDescription {
+    fun withStdlib(lib: Library): CargoWorkspace {
         val roots: Map<String, VirtualFile> = lib.getFiles(OrderRootType.CLASSES).associateBy { it.name }
         val stdlibPackages = AutoInjectedCrates.stdlibCrateNames.mapNotNull { name ->
             roots["lib$name"]?.let { libDir ->
@@ -115,13 +115,13 @@ class CargoProjectDescription private constructor(
                 origin = PackageOrigin.STDLIB
             )
         }
-        return CargoProjectDescription(packages + stdlib)
+        return CargoWorkspace(packages + stdlib)
     }
 
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
 
     companion object {
-        fun deserialize(data: CleanCargoMetadata): CargoProjectDescription {
+        fun deserialize(data: CleanCargoMetadata): CargoWorkspace {
             // Packages form mostly a DAG. "Why mostly?", you say.
             // Well, a dev-dependency `X` of package `P` can depend on the `P` itself.
             // This is ok, because cargo can compile `P` (without `X`, because dev-deps
@@ -163,7 +163,7 @@ class CargoProjectDescription private constructor(
                 }
             }
 
-            return CargoProjectDescription(packages)
+            return CargoWorkspace(packages)
         }
     }
 }

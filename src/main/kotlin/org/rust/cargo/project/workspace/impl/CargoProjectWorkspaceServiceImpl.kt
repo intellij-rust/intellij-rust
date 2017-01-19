@@ -22,22 +22,22 @@ import com.intellij.util.Alarm
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.project.PackageOrigin
+import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.workspace.CargoProjectWorkspace
-import org.rust.cargo.project.workspace.CargoProjectWorkspace.UpdateResult
+import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
+import org.rust.cargo.project.workspace.CargoProjectWorkspaceService.UpdateResult
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoLibraryName
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.updateLibrary
 import org.rust.ide.notifications.showBalloon
 
-private val LOG = Logger.getInstance(CargoProjectWorkspaceImpl::class.java)
+private val LOG = Logger.getInstance(CargoProjectWorkspaceServiceImpl::class.java)
 
 
-class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorkspace, ModuleComponent {
+class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjectWorkspaceService, ModuleComponent {
     // First updates go through [debouncer] to be properly throttled,
     // and then via [taskQueue] to be serialized (it should be safe to execute
     // several Cargo's concurrently, but let's avoid that)
@@ -45,13 +45,13 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     private val taskQueue = BackgroundTaskQueue(module.project, "Cargo update")
 
     /**
-     * Cached instance of the latest [CargoProjectDescription] instance synced with `Cargo.toml`
+     * Cached instance of the latest [CargoWorkspace] instance synced with `Cargo.toml`
      *
      * NOTA BENE: It inherently may be null, since there may be no `Cargo.toml` present at all
      */
-    private var cached: CargoProjectDescription? = null
+    private var cached: CargoWorkspace? = null
 
-    override fun getComponentName(): String = "org.rust.cargo.CargoProjectWorkspace"
+    override fun getComponentName(): String = "org.rust.cargo.CargoProjectWorkspaceService"
 
     override fun initComponent() {
         module.messageBus
@@ -106,13 +106,13 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     /**
      * Delivers latest cached project-description instance
      *
-     * NOTA BENE: [CargoProjectWorkspace] is rather low-level abstraction around, `Cargo.toml`-backed projects
+     * NOTA BENE: [CargoProjectWorkspaceService] is rather low-level abstraction around, `Cargo.toml`-backed projects
      *            mapping underpinning state of the `Cargo.toml` workspace _transparently_, i.e. it doesn't provide
      *            any facade atop of the latter insulating itself from inconsistencies in the underlying layer. For
-     *            example, [CargoProjectWorkspace] wouldn't be able to provide a valid [CargoProjectDescription] instance
+     *            example, [CargoProjectWorkspaceService] wouldn't be able to provide a valid [CargoWorkspace] instance
      *            until the `Cargo.toml` becomes sound
      */
-    override val projectDescription: CargoProjectDescription?
+    override val workspace: CargoWorkspace?
         get() {
             check(ApplicationManager.getApplication().isReadAccessAllowed)
             return cached
@@ -124,8 +124,8 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
 
         if (r is UpdateResult.Ok) {
             runWriteAction {
-                cached = r.projectDescription
-                updateModuleDependencies(r.projectDescription)
+                cached = r.workspace
+                updateModuleDependencies(r.workspace)
             }
         }
 
@@ -135,8 +135,8 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
         }
     }
 
-    private fun updateModuleDependencies(projectDescription: CargoProjectDescription) {
-        val libraryRoots = projectDescription.packages
+    private fun updateModuleDependencies(workspace: CargoWorkspace) {
+        val libraryRoots = workspace.packages
             .filter { it.origin != PackageOrigin.WORKSPACE }
             .mapNotNull { it.contentRoot }
 
@@ -217,8 +217,8 @@ class CargoProjectWorkspaceImpl(private val module: Module) : CargoProjectWorksp
     }
 
     @TestOnly
-    fun setState(projectDescription: CargoProjectDescription) {
-        commitUpdate(UpdateResult.Ok(projectDescription))
+    fun setState(workspace: CargoWorkspace) {
+        commitUpdate(UpdateResult.Ok(workspace))
     }
 }
 

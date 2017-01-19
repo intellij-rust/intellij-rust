@@ -10,7 +10,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import org.rust.cargo.project.PackageOrigin
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.RegexpFileLinkFilter.Companion.FILE_POSITION_RE
 import org.rust.lang.core.resolve.ResolveEngine
 import java.awt.Color

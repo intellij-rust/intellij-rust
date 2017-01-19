@@ -11,7 +11,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.project.CargoProjectDescription
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.utils.fullyRefreshDirectory
 import java.io.File
@@ -41,7 +41,7 @@ class Cargo(
      * to resolve dependencies.
      */
     @Throws(ExecutionException::class)
-    fun fullProjectDescription(listener: ProcessListener? = null): CargoProjectDescription {
+    fun fullProjectDescription(listener: ProcessListener? = null): CargoWorkspace {
         val hasAllFeatures = "--all-features" in generalCommand("metadata", listOf("--help")).execute().stdout
         val command = generalCommand("metadata", listOf("--verbose", "--format-version", "1")).apply {
             if (hasAllFeatures) addParameter("--all-features")
@@ -50,7 +50,7 @@ class Cargo(
         val output = command.execute(listener)
         val rawData = parse(output.stdout)
         val projectDescriptionData = CargoMetadata.clean(rawData)
-        return CargoProjectDescription.deserialize(projectDescriptionData)
+        return CargoWorkspace.deserialize(projectDescriptionData)
     }
 
     @Throws(ExecutionException::class)

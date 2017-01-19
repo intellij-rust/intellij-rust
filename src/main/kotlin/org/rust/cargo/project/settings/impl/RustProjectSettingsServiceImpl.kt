@@ -6,7 +6,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.configurable.RustProjectConfigurable
 import org.rust.cargo.project.settings.RustProjectSettingsService
-import org.rust.cargo.project.workspace.CargoProjectWorkspace
+import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.modules
 
@@ -44,7 +44,7 @@ class RustProjectSettingsServiceImpl(
 
                 if (value != null) {
                     for (module in project.modules) {
-                        CargoProjectWorkspace.forModule(module).requestUpdate(value)
+                        CargoProjectWorkspaceService.forModule(module).requestUpdate(value)
                     }
                 }
 

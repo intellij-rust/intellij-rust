@@ -8,7 +8,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.workspace.CargoProjectWorkspace
+import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
 import org.rust.cargo.project.workspace.cargoProject
 
 class CargoProjectResolveTest : RustWithToolchainTestBase() {
@@ -31,7 +31,7 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
     private fun resolveRefInFile(project: String, fileWithRef: String, unresolved: Boolean = false) =
         withProject(project) {
-            CargoProjectWorkspace.forModule(module).syncUpdate(module.project.toolchain!!)
+            CargoProjectWorkspaceService.forModule(module).syncUpdate(module.project.toolchain!!)
 
             if (module.cargoProject == null) {
                 error("Failed to update a test Cargo project")

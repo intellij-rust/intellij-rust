@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.workspace.CargoProjectWorkspace
+import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
 import org.rust.cargo.util.modulesWithCargoProject
 import org.rust.ide.notifications.showBalloon
 import org.rust.ide.utils.isNullOrEmpty
@@ -30,14 +30,14 @@ class RefreshCargoProjectAction : AnAction() {
 
         ApplicationManager.getApplication().saveAll()
         for (module in modules) {
-            val workspace = CargoProjectWorkspace.forModule(module)
+            val workspace = CargoProjectWorkspaceService.forModule(module)
 
             workspace.requestImmediateUpdate(toolchain) { result ->
                 val (type, content) = when (result) {
-                    is CargoProjectWorkspace.UpdateResult.Ok ->
+                    is CargoProjectWorkspaceService.UpdateResult.Ok ->
                         NotificationType.INFORMATION to "Project '${module.name}' successfully updated!"
 
-                    is CargoProjectWorkspace.UpdateResult.Err ->
+                    is CargoProjectWorkspaceService.UpdateResult.Err ->
                         NotificationType.ERROR to "Project '${module.name}' failed to update.<br> ${result.error.message}"
                 }
 

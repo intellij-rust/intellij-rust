@@ -14,9 +14,9 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
-import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.project.workspace.CargoProjectWorkspace
-import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
+import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
+import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
@@ -194,7 +194,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             super.configureModule(module, model, contentEntry)
 
             val moduleBaseDir = contentEntry.file!!.url
-            val projectWorkspace = CargoProjectWorkspace.forModule(module) as CargoProjectWorkspaceImpl
+            val projectWorkspace = CargoProjectWorkspaceService.forModule(module) as CargoProjectWorkspaceServiceImpl
 
             projectWorkspace.setState(testCargoProject(module, moduleBaseDir))
 
@@ -206,9 +206,9 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             }
         }
 
-        open protected fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
+        open protected fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
             val packages = listOf(testCargoPackage(contentRoot))
-            return CargoProjectDescription.deserialize(CleanCargoMetadata(packages, ArrayList()))
+            return CargoWorkspace.deserialize(CleanCargoMetadata(packages, ArrayList()))
         }
 
         protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CleanCargoMetadata.Package(
@@ -216,8 +216,8 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             name = name,
             version = "0.0.1",
             targets = listOf(
-                CleanCargoMetadata.Target("$contentRoot/main.rs", name, CargoProjectDescription.TargetKind.BIN),
-                CleanCargoMetadata.Target("$contentRoot/lib.rs", name, CargoProjectDescription.TargetKind.LIB)
+                CleanCargoMetadata.Target("$contentRoot/main.rs", name, CargoWorkspace.TargetKind.BIN),
+                CleanCargoMetadata.Target("$contentRoot/lib.rs", name, CargoWorkspace.TargetKind.LIB)
             ),
             source = null,
             isWorkspaceMember = true
@@ -228,7 +228,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             name = name,
             version = "0.0.1",
             targets = listOf(
-                CleanCargoMetadata.Target("", targetName, CargoProjectDescription.TargetKind.LIB)
+                CleanCargoMetadata.Target("", targetName, CargoWorkspace.TargetKind.LIB)
             ),
             source = source,
             isWorkspaceMember = false
@@ -238,20 +238,20 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
     protected object DefaultDescriptor : RustProjectDescriptorBase()
 
     protected object WithStdlibRustProjectDescriptor : RustProjectDescriptorBase.WithRustup() {
-        override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
+        override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
 
             StandardLibraryRoots.fromFile(stdlib!!)!!.attachTo(module)
 
             val packages = listOf(testCargoPackage(contentRoot))
 
             return CleanCargoMetadata(packages, emptyList()).let {
-                CargoProjectDescription.deserialize(it)
+                CargoWorkspace.deserialize(it)
             }
         }
     }
 
     protected object WithStdlibAndDependencyRustProjectDescriptor : RustProjectDescriptorBase.WithRustup() {
-        override fun testCargoProject(module: Module, contentRoot: String): CargoProjectDescription {
+        override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
 
             StandardLibraryRoots.fromFile(stdlib!!)!!.attachTo(module)
 
@@ -264,7 +264,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             depNodes.add(CleanCargoMetadata.DependencyNode(0, listOf(1)))   // Our package depends on test_dep
 
             return CleanCargoMetadata(packages, depNodes).let {
-                CargoProjectDescription.deserialize(it)
+                CargoWorkspace.deserialize(it)
             }
         }
     }

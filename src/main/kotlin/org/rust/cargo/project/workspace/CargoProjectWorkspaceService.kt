@@ -4,7 +4,7 @@ import com.intellij.execution.ExecutionException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import org.jetbrains.annotations.TestOnly
-import org.rust.cargo.project.CargoProjectDescription
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.rustLibraryName
 
@@ -13,10 +13,10 @@ import org.rust.cargo.util.rustLibraryName
  * itself. Uses `cargo metadata` sub-command to update IDEA module's & project's model.
  *
  * Quite low-level in its nature & follows a soft-fail policy, i.e. provides access
- * for latest obtained instance of the [CargoProjectDescription], though doesn't assure that this
+ * for latest obtained instance of the [CargoWorkspace], though doesn't assure that this
  * one could be obtained (consider the case with invalid, or missing `Cargo.toml`)
  */
-interface CargoProjectWorkspace {
+interface CargoProjectWorkspaceService {
 
     /**
      * Updates Rust libraries asynchronously. Consecutive requests are coalesced.
@@ -36,25 +36,25 @@ interface CargoProjectWorkspace {
     /**
      * Latest version of the Cargo's project-description obtained
      */
-    val projectDescription: CargoProjectDescription?
+    val workspace: CargoWorkspace?
 
     sealed class UpdateResult {
-        class Ok(val projectDescription: CargoProjectDescription) : UpdateResult()
+        class Ok(val workspace: CargoWorkspace) : UpdateResult()
         class Err(val error: ExecutionException) : UpdateResult()
     }
 
     companion object {
-        fun forModule(module: Module): CargoProjectWorkspace =
-            module.getComponent(CargoProjectWorkspace::class.java)
-                ?: error("Can't retrieve CargoProjectWorkspace component for $this")
+        fun forModule(module: Module): CargoProjectWorkspaceService =
+            module.getComponent(CargoProjectWorkspaceService::class.java)
+                ?: error("Can't retrieve CargoProjectWorkspaceService component for $this")
     }
 }
 
 /**
  * Extracts Cargo project description out of `Cargo.toml`
  */
-val Module.cargoProject: CargoProjectDescription?
-    get() = CargoProjectWorkspace.forModule(this).projectDescription?.let {
+val Module.cargoProject: CargoWorkspace?
+    get() = CargoProjectWorkspaceService.forModule(this).workspace?.let {
         val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(rustLibraryName)
             ?: return it
         return it.withStdlib(lib)

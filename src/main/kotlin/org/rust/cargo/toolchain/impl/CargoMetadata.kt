@@ -3,7 +3,7 @@ package org.rust.cargo.toolchain.impl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
-import org.rust.cargo.project.CargoProjectDescription
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.utils.findFileByMaybeRelativePath
 
 /**
@@ -142,15 +142,15 @@ object CargoMetadata {
 
     private fun Target.clean(root: VirtualFile): CleanCargoMetadata.Target? {
         val kind = when (kind) {
-            listOf("bin") -> CargoProjectDescription.TargetKind.BIN
-            listOf("example") -> CargoProjectDescription.TargetKind.EXAMPLE
-            listOf("test") -> CargoProjectDescription.TargetKind.TEST
-            listOf("bench") -> CargoProjectDescription.TargetKind.BENCH
+            listOf("bin") -> CargoWorkspace.TargetKind.BIN
+            listOf("example") -> CargoWorkspace.TargetKind.EXAMPLE
+            listOf("test") -> CargoWorkspace.TargetKind.TEST
+            listOf("bench") -> CargoWorkspace.TargetKind.BENCH
             else ->
                 if (kind.any { it.endsWith("lib") })
-                    CargoProjectDescription.TargetKind.LIB
+                    CargoWorkspace.TargetKind.LIB
                 else
-                    CargoProjectDescription.TargetKind.UNKNOWN
+                    CargoWorkspace.TargetKind.UNKNOWN
         }
 
         val mainFile = root.findFileByMaybeRelativePath(src_path)
@@ -160,8 +160,8 @@ object CargoMetadata {
 }
 
 /**
- * A POD-style representation of [CargoProjectDescription] used as an intermediate representation
- * between `cargo metadata` JSON and [CargoProjectDescription] object graph.
+ * A POD-style representation of [CargoWorkspace] used as an intermediate representation
+ * between `cargo metadata` JSON and [CargoWorkspace] object graph.
  *
  * Dependency graph is represented via adjacency list, where `Index` is the order of a particular
  * package in `packages` list.
@@ -187,7 +187,7 @@ data class CleanCargoMetadata(
     data class Target(
         val url: String,
         val name: String,
-        val kind: CargoProjectDescription.TargetKind
+        val kind: CargoWorkspace.TargetKind
     )
 }
 

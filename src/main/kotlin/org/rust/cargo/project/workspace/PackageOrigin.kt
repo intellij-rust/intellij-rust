@@ -1,4 +1,4 @@
-package org.rust.cargo.project
+package org.rust.cargo.project.workspace
 
 /**
  * Defines a reason a package is in a project.

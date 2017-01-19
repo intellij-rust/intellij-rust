@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
-import org.rust.cargo.project.CargoProjectDescription
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.cargoProject
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.getPsiFor
@@ -80,7 +80,7 @@ object ResolveEngine {
 
     data class Result(
         val element: RsNamedElement,
-        val pkg: CargoProjectDescription.Package
+        val pkg: CargoWorkspace.Package
     )
 
     /**

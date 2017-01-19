@@ -460,8 +460,8 @@
 
     <module-components>
         <component>
-            <interface-class>org.rust.cargo.project.workspace.CargoProjectWorkspace</interface-class>
-            <implementation-class>org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl</implementation-class>
+            <interface-class>org.rust.cargo.project.workspace.CargoProjectWorkspaceService</interface-class>
+            <implementation-class>org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl</implementation-class>
         </component>
     </module-components>
 

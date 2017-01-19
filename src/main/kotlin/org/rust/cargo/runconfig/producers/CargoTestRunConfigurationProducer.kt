@@ -6,7 +6,7 @@ import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.project.CargoProjectDescription
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.runconfig.CargoCommandRunConfigurationType
 import org.rust.lang.core.psi.RsFunction
@@ -48,7 +48,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         val sourceElement: RsCompositeElement,
         val configurationName: String,
         val testPath: String,
-        val target: CargoProjectDescription.Target
+        val target: CargoWorkspace.Target
     ) {
         val commandLineParameters: String get() {
             return "${target.cargoArgumentSpeck} $testPath"

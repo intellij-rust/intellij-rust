@@ -7,9 +7,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
-import org.rust.cargo.project.CargoProjectDescription
-import org.rust.cargo.project.workspace.CargoProjectWorkspace
-import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceImpl
+import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
+import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.lang.RsTestBase
@@ -20,7 +20,7 @@ import org.rust.lang.core.psi.util.parentOfType
 
 class RunConfigurationProducerTest : RsTestBase() {
     override val dataPath: String get() = "org/rust/cargo/runconfig/producers/fixtures"
-    // We need to override this because we call [CargoProjectWorkspaceImpl.setState].
+    // We need to override this because we call [CargoProjectWorkspaceServiceImpl.setState].
     override fun getProjectDescriptor(): LightProjectDescriptor = LightProjectDescriptor()
 
     fun testExecutableProducerWorksForBin() {
@@ -237,7 +237,7 @@ class RunConfigurationProducerTest : RsTestBase() {
         private inner class Target(
             val name: String,
             val file: File,
-            val kind: CargoProjectDescription.TargetKind
+            val kind: CargoWorkspace.TargetKind
         )
 
         private var targets = arrayListOf<Target>()
@@ -248,22 +248,22 @@ class RunConfigurationProducerTest : RsTestBase() {
         private val hello = """pub fn hello() -> String { return "Hello, World!".to_string() }"""
 
         fun bin(name: String, path: String, code: String = helloWorld): TestProjectBuilder {
-            addTarget(name, CargoProjectDescription.TargetKind.BIN, path, code)
+            addTarget(name, CargoWorkspace.TargetKind.BIN, path, code)
             return this
         }
 
         fun example(name: String, path: String, code: String = helloWorld): TestProjectBuilder {
-            addTarget(name, CargoProjectDescription.TargetKind.EXAMPLE, path, code)
+            addTarget(name, CargoWorkspace.TargetKind.EXAMPLE, path, code)
             return this
         }
 
         fun test(name: String, path: String, code: String = simpleTest): TestProjectBuilder {
-            addTarget(name, CargoProjectDescription.TargetKind.TEST, path, code)
+            addTarget(name, CargoWorkspace.TargetKind.TEST, path, code)
             return this
         }
 
         fun lib(name: String, path: String, code: String = hello): TestProjectBuilder {
-            addTarget(name, CargoProjectDescription.TargetKind.LIB, path, code)
+            addTarget(name, CargoWorkspace.TargetKind.LIB, path, code)
             return this
         }
 
@@ -292,9 +292,9 @@ class RunConfigurationProducerTest : RsTestBase() {
                 }
             }
 
-            val metadataService = CargoProjectWorkspace.forModule(myFixture.module) as CargoProjectWorkspaceImpl
+            val metadataService = CargoProjectWorkspaceService.forModule(myFixture.module) as CargoProjectWorkspaceServiceImpl
 
-            val projectDescription = CargoProjectDescription.deserialize(
+            val projectDescription = CargoWorkspace.deserialize(
                 CleanCargoMetadata(
                     packages = listOf(
                         CleanCargoMetadata.Package(
@@ -319,7 +319,7 @@ class RunConfigurationProducerTest : RsTestBase() {
             metadataService.setState(projectDescription)
         }
 
-        private fun addTarget(name: String, kind: CargoProjectDescription.TargetKind, path: String, code: String) {
+        private fun addTarget(name: String, kind: CargoWorkspace.TargetKind, path: String, code: String) {
             val file = addFile(path, code)
             targets.add(Target(name, file, kind))
         }

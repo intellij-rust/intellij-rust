@@ -4,7 +4,7 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
-import org.rust.cargo.project.PackageOrigin
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.cargoProject
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
