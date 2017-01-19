@@ -11,19 +11,15 @@ object RustTypeInferenceEngine {
 
     fun inferPatBindingTypeFrom(binding: RsPatBinding, pat: RsPat, type: RustType): RustType {
         check(pat.contains(binding))
-        val matching = run(pat, type)
-            ?: return RustUnknownType
+        val visitor = PatternMatchingVisitor(type)
+        if (!visitor.compute(pat)) return RustUnknownType
 
-        return matching.getOrElse(binding, { error("Panic! Successful match should imbue all the bindings!") })
+        return visitor.bindings[binding]
+            ?: error("Panic! Successful match should imbue all the bindings!")
     }
-
-    private fun run(pat: RsPat, type: RustType): Map<RsPatBinding, RustType>? =
-        RustTypeInferencingVisitor(type).let {
-            if (it.compute(pat)) it.bindings else null
-        }
 }
 
-private class RustTypeInferencingVisitor(var type: RustType) : RustComputingVisitor<Boolean>() {
+private class PatternMatchingVisitor(var type: RustType) : RustComputingVisitor<Boolean>() {
 
     val bindings: MutableMap<RsPatBinding, RustType> = hashMapOf()
 
