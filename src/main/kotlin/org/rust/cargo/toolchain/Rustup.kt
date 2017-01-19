@@ -50,19 +50,6 @@ class Rustup(
         return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust/src"))
     }
 
-    @TestOnly
-    fun activeToolchain(): String? {
-        val output = GeneralCommandLine(pathToRustupExecutable)
-            .withWorkDirectory(projectDirectory)
-            // See https://github.com/rust-lang-nursery/rustup.rs/issues/450
-            .withParameters("show")
-            .exec(1.seconds)
-
-        if (output.exitCode != 0) return null
-
-        return output.stdoutLines.dropLastWhile { it.isBlank() }.lastOrNull()
-    }
-
     private fun GeneralCommandLine.exec(timeoutInMilliseconds: Int? = null): ProcessOutput {
         val handler = CapturingProcessHandler(this)
 
