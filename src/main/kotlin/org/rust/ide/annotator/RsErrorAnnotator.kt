@@ -17,6 +17,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.util.module
+import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.util.trait
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
@@ -34,6 +35,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitImplItem(o: RsImplItem) = checkImpl(holder, o)
             override fun visitModDeclItem(o: RsModDeclItem) = checkModDecl(holder, o)
             override fun visitModItem(o: RsModItem) = checkDuplicates(holder, o)
+            override fun visitPatBinding(o: RsPatBinding) = checkPatBinding(holder, o)
             override fun visitPath(o: RsPath) = checkPath(holder, o)
             override fun visitFieldDecl(o: RsFieldDecl) = checkDuplicates(holder, o)
             override fun visitTraitItem(o: RsTraitItem) = checkDuplicates(holder, o)
@@ -47,6 +49,10 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
 
         element.accept(visitor)
+    }
+
+    private fun checkPatBinding(holder: AnnotationHolder, binding: RsPatBinding) {
+        binding.parentOfType<RsValueParameterList>()?.let { checkDuplicates(holder, binding, it, true) }
     }
 
     private fun checkPath(holder: AnnotationHolder, path: RsPath) {
@@ -336,9 +342,8 @@ private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
     return op.operatorType in RS_COMPARISON_OPERATOR
 }
 
-private fun checkDuplicates(holder: AnnotationHolder, element: RsNamedElement) {
-    val scope = element.parent
-    val duplicates = holder.currentAnnotationSession.duplicatesByNamespace(scope)
+private fun checkDuplicates(holder: AnnotationHolder, element: RsNamedElement, scope: PsiElement = element.parent, recursively: Boolean = false) {
+    val duplicates = holder.currentAnnotationSession.duplicatesByNamespace(scope, recursively)
     val ns = element.namespaces.find { element in duplicates[it].orEmpty() }
         ?: return
     val name = element.name!!
@@ -346,6 +351,7 @@ private fun checkDuplicates(holder: AnnotationHolder, element: RsNamedElement) {
         element is RsFieldDecl -> "Field `$name` is already declared [E0124]"
         element is RsEnumVariant -> "Enum variant `$name` is already declared [E0428]"
         element is RsLifetimeParameter -> "Lifetime name `$name` declared twice in the same scope [E0263]"
+        element is RsPatBinding && scope is RsValueParameterList -> "Identifier `$name` is bound more than once in this parameter list [E0415]"
         element is RsTypeParameter -> "The name `$name` is already used for a type parameter in this type parameter list [E0403]"
         scope is RsImplItem -> "Duplicate definitions with name `$name` [E0201]"
         else -> {
@@ -363,12 +369,12 @@ private fun checkDuplicates(holder: AnnotationHolder, element: RsNamedElement) {
 }
 
 
-private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement): Map<Namespace, Set<PsiElement>> {
+private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement, recursively: Boolean): Map<Namespace, Set<PsiElement>> {
     val fileMap = fileDuplicatesMap()
     fileMap[owner]?.let { return it }
 
     val duplicates: Map<Namespace, Set<PsiElement>> =
-        owner.children.asSequence()
+        owner.allChildren(recursively)
             .filterIsInstance<RsNamedElement>()
             .filter { it !is RsExternCrateItem } // extern crates can have aliases.
             .filter { it.name != null }
@@ -391,6 +397,16 @@ private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement): Map<Name
 
     fileMap[owner] = duplicates
     return duplicates
+}
+
+private fun PsiElement.allChildren(recursively: Boolean): Sequence<PsiElement> {
+    var result = children.asSequence()
+    if (recursively) {
+        children
+            .filterNot { it.children.isEmpty() }
+            .forEach { result += it.allChildren(true) }
+    }
+    return result
 }
 
 private val DUPLICATES_BY_SCOPE = Key<MutableMap<

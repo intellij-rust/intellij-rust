@@ -422,6 +422,16 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun testE0415_NameDuplicationInParamList() = checkErrors("""
+        fn foo(x: u32, X: u32) {}
+        fn bar<T>(T: T) {}
+
+        fn simple(<error descr="Identifier `a` is bound more than once in this parameter list [E0415]">a</error>: u32,
+                  b: bool,
+                  <error>a</error>: f64) {}
+        fn tuples(<error>a</error>: u8, (b, (<error>a</error>, c)): (u16, (u32, u64))) {}
+    """)
+
     fun testE0428_NameDuplicationInCodeBlock() = checkErrors("""
         fn abc() {
             const UNIQUE_CONST: i32 = 10;
