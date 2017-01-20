@@ -7,6 +7,8 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
@@ -38,31 +40,33 @@ class Cargo(
      *
      * This is a potentially long running operation which can
      * legitimately fail due to network errors or inability
-     * to resolve dependencies.
+     * to resolve dependencies. Hence it is mandatory to
+     * pass an [owner] to correctly kill the process if it
+     * runs for too long.
      */
     @Throws(ExecutionException::class)
-    fun fullProjectDescription(listener: ProcessListener? = null): CargoWorkspace {
-        val hasAllFeatures = "--all-features" in generalCommand("metadata", listOf("--help")).execute().stdout
+    fun fullProjectDescription(owner: Disposable, listener: ProcessListener? = null): CargoWorkspace {
+        val hasAllFeatures = "--all-features" in generalCommand("metadata", listOf("--help")).execute(owner = owner).stdout
         val command = generalCommand("metadata", listOf("--verbose", "--format-version", "1")).apply {
             if (hasAllFeatures) addParameter("--all-features")
         }
 
-        val output = command.execute(listener)
+        val output = command.execute(owner, listener)
         val rawData = parse(output.stdout)
         val projectDescriptionData = CargoMetadata.clean(rawData)
         return CargoWorkspace.deserialize(projectDescriptionData)
     }
 
     @Throws(ExecutionException::class)
-    fun init(directory: VirtualFile) {
+    fun init(owner: Disposable, directory: VirtualFile) {
         val path = PathUtil.toSystemDependentName(directory.path)
-        generalCommand("init", listOf("--bin", path)).execute()
+        generalCommand("init", listOf("--bin", path)).execute(owner)
         check(File(directory.path, RustToolchain.Companion.CARGO_TOML).exists())
         fullyRefreshDirectory(directory)
     }
 
-    fun reformatFile(filePath: String, listener: ProcessListener? = null) =
-        rustfmtCommandline(filePath).execute(listener)
+    fun reformatFile(owner: Disposable, filePath: String, listener: ProcessListener? = null) =
+        rustfmtCommandline(filePath).execute(owner, listener)
 
     fun generalCommand(
         command: String,
@@ -93,8 +97,11 @@ class Cargo(
     private fun rustfmtCommandline(filePath: String) =
         generalCommand("fmt").withParameters("--", "--write-mode=overwrite", "--skip-children", filePath)
 
-    private fun GeneralCommandLine.execute(listener: ProcessListener? = null): ProcessOutput {
+    private fun GeneralCommandLine.execute(owner: Disposable, listener: ProcessListener? = null): ProcessOutput {
         val handler = CapturingProcessHandler(this)
+        Disposer.register(owner, Disposable {
+            handler.destroyProcess()
+        })
 
         listener?.let { handler.addProcessListener(it) }
 

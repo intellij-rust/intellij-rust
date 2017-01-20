@@ -40,7 +40,7 @@ class RsFmtFileAction : DumbAwareAction() {
         val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
 
         try {
-            module.project.toolchain?.cargo(moduleDirectory)?.reformatFile(file.path) ?: return
+            module.project.toolchain?.cargo(moduleDirectory)?.reformatFile(module, file.path) ?: return
         } catch (e: ExecutionException) {
             project.showBalloon(e.message ?: "", NotificationType.ERROR)
         }

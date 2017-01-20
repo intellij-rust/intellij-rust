@@ -12,7 +12,7 @@ class CargoFmtTest : RustWithToolchainTestBase() {
         val filePath = "src/main.rs"
         val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
 
-        val result = module.project.toolchain!!.cargo(moduleDirectory).reformatFile("./$filePath")
+        val result = module.project.toolchain!!.cargo(moduleDirectory).reformatFile(testRootDisposable, "./$filePath")
         assertThat(result.exitCode).isEqualTo(0)
     }
 }

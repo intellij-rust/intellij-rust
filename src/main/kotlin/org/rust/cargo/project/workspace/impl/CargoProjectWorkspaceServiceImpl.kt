@@ -22,12 +22,12 @@ import com.intellij.util.Alarm
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService.UpdateResult
+import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoLibraryName
 import org.rust.cargo.util.cargoProjectRoot
@@ -161,7 +161,7 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
 
             val cargo = toolchain.cargo(projectDirectory)
             result = try {
-                val description = cargo.fullProjectDescription(object : ProcessAdapter() {
+                val description = cargo.fullProjectDescription(module, object : ProcessAdapter() {
                     override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
                         val text = event.text.trim { it <= ' ' }
                         if (text.startsWith("Updating") || text.startsWith("Downloading")) {
@@ -169,7 +169,6 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
                         }
                     }
                 })
-
                 UpdateResult.Ok(description)
             } catch (e: ExecutionException) {
                 UpdateResult.Err(e)
