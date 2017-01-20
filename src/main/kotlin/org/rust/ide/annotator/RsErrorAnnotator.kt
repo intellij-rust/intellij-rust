@@ -16,6 +16,7 @@ import org.rust.ide.annotator.fixes.ImplementMethodsFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.mixin.*
+import org.rust.lang.core.psi.util.descendantsOfType
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.util.trait
@@ -52,7 +53,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkPatBinding(holder: AnnotationHolder, binding: RsPatBinding) {
-        binding.parentOfType<RsValueParameterList>()?.let { checkDuplicates(holder, binding, it, true) }
+        binding.parentOfType<RsValueParameterList>()?.let { checkDuplicates(holder, binding, it, recursively = true) }
     }
 
     private fun checkPath(holder: AnnotationHolder, path: RsPath) {
@@ -374,8 +375,7 @@ private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement, recursive
     fileMap[owner]?.let { return it }
 
     val duplicates: Map<Namespace, Set<PsiElement>> =
-        owner.allChildren(recursively)
-            .filterIsInstance<RsNamedElement>()
+        owner.namedChildren(recursively)
             .filter { it !is RsExternCrateItem } // extern crates can have aliases.
             .filter { it.name != null }
             .flatMap { it.namespaced }
@@ -399,15 +399,12 @@ private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement, recursive
     return duplicates
 }
 
-private fun PsiElement.allChildren(recursively: Boolean): Sequence<PsiElement> {
-    var result = children.asSequence()
+private fun PsiElement.namedChildren(recursively: Boolean): Sequence<RsNamedElement> =
     if (recursively) {
-        children
-            .filterNot { it.children.isEmpty() }
-            .forEach { result += it.allChildren(true) }
+        descendantsOfType<RsNamedElement>().asSequence()
+    } else {
+        children.asSequence().filterIsInstance<RsNamedElement>()
     }
-    return result
-}
 
 private val DUPLICATES_BY_SCOPE = Key<MutableMap<
     PsiElement,
