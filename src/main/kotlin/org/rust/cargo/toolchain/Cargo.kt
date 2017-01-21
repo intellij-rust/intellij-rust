@@ -100,6 +100,8 @@ class Cargo(
     private fun GeneralCommandLine.execute(owner: Disposable, listener: ProcessListener? = null): ProcessOutput {
         val handler = CapturingProcessHandler(this)
         Disposer.register(owner, Disposable {
+            // Don't attempt a graceful termination, Cargo can be SIGKILLed safely.
+            // https://github.com/rust-lang/cargo/issues/3566
             handler.destroyProcess()
         })
 
