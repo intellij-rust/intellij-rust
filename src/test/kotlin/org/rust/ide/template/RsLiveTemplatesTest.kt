@@ -63,6 +63,24 @@ class RsLiveTemplatesTest : RsTestBase() {
         }
     """)
 
+    fun testFieldExpression() = noSnippet("""
+        fn main() {
+            let _ = foo.p/*caret*/
+        }
+    """)
+
+    fun testMethodExpression() = noSnippet("""
+        fn main() {
+            let _ = foo.p/*caret*/()
+        }
+    """)
+
+    fun testPath() = noSnippet("""
+        fn main() {
+            let _ = foo::p/*caret*/
+        }
+    """)
+
     private fun expandSnippet(@Language("Rust") before: String, @Language("Rust") after: String) =
         checkByText(before, after) {
             myFixture.performEditorAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB)

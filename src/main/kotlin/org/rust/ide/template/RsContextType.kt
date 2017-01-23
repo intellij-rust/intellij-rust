@@ -13,6 +13,7 @@ import org.rust.ide.highlight.RsHighlighter
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.symbols.RustPath
 import kotlin.reflect.KClass
 
 sealed class RsContextType(
@@ -43,9 +44,22 @@ sealed class RsContextType(
     }
 
     class Statement : RsContextType("RUST_STATEMENT", "Statement", Generic::class) {
-        override fun isInContext(element: PsiElement): Boolean =
+        override fun isInContext(element: PsiElement): Boolean {
             // We are inside block but there is no item nor attr between
-            PsiTreeUtil.findFirstParent(element, blockOrItem) is RsBlock
+            if (PsiTreeUtil.findFirstParent(element, blockOrItem) !is RsBlock) return false
+            val parent = element.parent
+
+            // foo::element
+            if (parent is RsPath && parent.coloncolon != null) return false
+
+            // foo.element
+            if (parent is RsFieldId) return false
+
+            // foo.element()
+            if (parent is RsMethodCallExpr) return false
+
+            return true
+        }
     }
 
     class Item : RsContextType("RUST_ITEM", "Item", Generic::class) {
