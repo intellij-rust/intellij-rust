@@ -40,8 +40,8 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
     }
 }
 
-val RsFunction.isAbstract: Boolean get() = stub?.isAbstract ?: block == null
-val RsFunction.isAssocFn: Boolean get() = stub?.isStatic ?: selfParameter == null
+val RsFunction.isAbstract: Boolean get() = stub?.isAbstract ?: (block == null)
+val RsFunction.isAssocFn: Boolean get() = stub?.isStatic ?: (selfParameter == null)
 val RsFunction.isTest: Boolean get() = stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
 
 
