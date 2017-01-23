@@ -1,25 +1,72 @@
 package org.rust.ide.template
 
 import com.intellij.openapi.actionSystem.IdeActions
+import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
 class RsLiveTemplatesTest : RsTestBase() {
     override val dataPath = "org/rust/ide/template/fixtures"
 
-    fun testStructField() = expandAndCompare()
-    fun testPrint() = expandAndCompare()
+    fun testStructField() = expandSnippet("""
+        struct S {
+            f/*caret*/
+        }
+    """, """
+        struct S {
+            foo: u32,
+        }
+    """)
 
-    fun testAttribute() = noSnippetApplicable()
-    fun testComment() = noSnippetApplicable()
-    fun testDocComment() = noSnippetApplicable()
-    fun testStringLiteral() = noSnippetApplicable()
-    fun testRawStringLiteral() = noSnippetApplicable()
-    fun testByteStringLiteral() = noSnippetApplicable()
+    fun testPrint() = expandSnippet("""
+        fn main() {
+            p/*caret*/
+        }
+    """, """
+        fn main() {
+            println!("");
+        }
+    """)
 
-    private fun expandAndCompare() = checkByFile { expandTemplate() }
-    private fun noSnippetApplicable() = checkByFile { expandTemplate() }
+    fun testAttribute() = noSnippet("""
+        #[macro/*caret*/]
+        extern crate std;
 
-    private fun expandTemplate() {
-        myFixture.performEditorAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB)
-    }
+        fn main() { }
+    """)
+
+    fun testComment() = noSnippet("""
+        fn main() {
+            // p/*caret*/
+        }
+    """)
+
+    fun testDocComment() = noSnippet("""
+        /// p/*caret*/
+        fn f() {}
+    """)
+
+    fun testStringLiteral() = noSnippet("""
+        fn main() {
+            let _ = "p/*caret*/";
+        }
+    """)
+
+    fun testRawStringLiteral() = noSnippet("""
+        fn main() {
+            let _ = r##"p/*caret*/"##;
+        }
+    """)
+
+    fun testByteStringLiteral() = noSnippet("""
+        fn main() {
+            let _ = b"p/*caret*/";
+        }
+    """)
+
+    private fun expandSnippet(@Language("Rust") before: String, @Language("Rust") after: String) =
+        checkByText(before, after) {
+            myFixture.performEditorAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB)
+        }
+
+    private fun noSnippet(@Language("Rust") code: String) = expandSnippet(code, code)
 }
