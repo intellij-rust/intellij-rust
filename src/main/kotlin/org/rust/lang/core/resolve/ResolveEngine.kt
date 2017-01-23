@@ -24,9 +24,9 @@ import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
-import org.rust.lang.core.types.types.RustStructType
-import org.rust.lang.core.types.stripAllRefsIfAny
 import org.rust.lang.core.types.resolvedType
+import org.rust.lang.core.types.stripAllRefsIfAny
+import org.rust.lang.core.types.types.RustStructType
 import org.rust.utils.sequenceOfNotNull
 import java.util.*
 
@@ -115,13 +115,17 @@ object ResolveEngine {
         val receiverType = fieldExpr.expr.resolvedType.stripAllRefsIfAny()
         val struct = (receiverType as? RustStructType)?.item ?: return emptyList()
 
-        val name = fieldExpr.fieldId.identifier
-        val index = fieldExpr.fieldId.integerLiteral
-        return when {
-            name != null -> struct.namedFields.filter { it.name == name.text }
-            index != null -> listOfNotNull(struct.positionalFields.getOrNull(index.text.toInt()))
-            else -> error("Field expression without a field $fieldExpr")
+        val name = fieldExpr.fieldName
+        if (name != null) {
+            return struct.namedFields.filter { it.name == name }
         }
+
+        val index = fieldExpr.fieldIndex
+        if (index != null) {
+            return listOfNotNull(struct.positionalFields.getOrNull(index))
+        }
+
+        return emptyList()
     }
 
     /**

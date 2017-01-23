@@ -141,6 +141,18 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun testTupleFieldExprSuffix() = checkByCode("""
+        struct S(f64);
+
+        impl S {
+            fn foo(&self) {
+                let s: S = S(92.0);
+                s.0u32;
+                //^ unresolved
+            }
+        }
+    """)
+
     fun testNestedFieldExpr() = checkByCode("""
         struct Foo { bar: Bar }
 

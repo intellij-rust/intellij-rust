@@ -15,3 +15,10 @@ abstract class RsFieldExprImplMixin(node: ASTNode?) : RsExprImpl(node), RsFieldE
     override fun getReference(): RsReference = RsFieldExprReferenceImpl(this)
 
 }
+
+val RsFieldExpr.fieldName: String? get() = fieldId.identifier?.text
+val RsFieldExpr.fieldIndex: Int? get() = try {
+    fieldId.integerLiteral?.text?.toInt()
+} catch (e: NumberFormatException) {
+    null
+}
