@@ -4,9 +4,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestCase
-import org.rust.cargo.project.settings.RustProjectSettingsService
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.ide.utils.service
 
 // This class allows to execute real Cargo during the tests.
 // Unlike `RustTestCaseBase` it does not use in-memory temporary VFS
@@ -38,12 +37,12 @@ abstract class RustWithToolchainTestBase : PlatformTestCase() {
     override fun setUp() {
         super.setUp()
         if (toolchain != null) {
-            project.service<RustProjectSettingsService>().toolchain = toolchain
+            project.rustSettings.toolchain = toolchain
         }
     }
 
     override fun tearDown() {
-        project.service<RustProjectSettingsService>().toolchain = null
+        project.rustSettings.toolchain = null
         super.tearDown()
     }
 

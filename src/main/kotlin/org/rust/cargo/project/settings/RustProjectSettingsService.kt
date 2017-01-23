@@ -1,9 +1,9 @@
 package org.rust.cargo.project.settings
 
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.ide.utils.service
 
 interface RustProjectSettingsService {
     var toolchain: RustToolchain?
@@ -26,6 +26,9 @@ interface RustProjectSettingsService {
     }
 }
 
-val Project.rustSettings: RustProjectSettingsService get() = service()
+val Project.rustSettings: RustProjectSettingsService
+    get() = ServiceManager.getService(this, RustProjectSettingsService::class.java)
+        ?: error("Failed to get RustProjectSettingsService for $this")
+
 val Project.toolchain: RustToolchain? get() = rustSettings.toolchain
 

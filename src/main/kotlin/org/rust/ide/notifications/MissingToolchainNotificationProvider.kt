@@ -24,7 +24,6 @@ import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.StandardLibraryRoots
 import org.rust.cargo.util.cargoProjectRoot
-import org.rust.ide.utils.service
 import org.rust.lang.core.psi.impl.isNotRustFile
 import java.awt.Component
 
@@ -115,7 +114,7 @@ class MissingToolchainNotificationProvider(
         EditorNotificationPanel().apply {
             setText("No Rust toolchain configured")
             createActionLabel("Setup toolchain") {
-                project.service<RustProjectSettingsService>().configureToolchain()
+                project.rustSettings.configureToolchain()
             }
             createActionLabel("Do not show again") {
                 disableNotification()
