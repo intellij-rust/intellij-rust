@@ -5,7 +5,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.lang.RsLanguage
 import org.rust.lang.RsTestBase
 
-class RsNavigationTest : RsTestBase() {
+class RsGotoSuperHandlerTest : RsTestBase() {
     override val dataPath = ""
 
     fun testGotoSuper() = checkNavigation("""
