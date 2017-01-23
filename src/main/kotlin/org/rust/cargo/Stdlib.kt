@@ -26,7 +26,7 @@ class SetupRustStdlibTask(
     override fun onSuccess() {
         if (module.isDisposed) return
         if (rustStandardLibrary(module) != oldLibrary) {
-            return failWithMessage("Library already updated")
+            return failWithMessage("Rust std library has been updated concurrently")
         }
 
         val result = result

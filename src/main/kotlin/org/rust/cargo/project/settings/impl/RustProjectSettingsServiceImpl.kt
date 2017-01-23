@@ -25,7 +25,6 @@ class RustProjectSettingsServiceImpl(
 
     override fun loadState(newState: State) {
         state = newState
-        notify(toolchain)
     }
 
     override fun configureToolchain() {

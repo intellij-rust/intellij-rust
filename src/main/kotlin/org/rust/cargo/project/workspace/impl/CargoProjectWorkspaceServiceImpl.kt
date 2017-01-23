@@ -56,20 +56,6 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
     override fun getComponentName(): String = "org.rust.cargo.CargoProjectWorkspaceService"
 
     override fun initComponent() {
-        with(module.messageBus.connect()) {
-            subscribe(VirtualFileManager.VFS_CHANGES, FileChangesWatcher())
-
-            subscribe(RustProjectSettingsService.TOOLCHAIN_TOPIC, object : RustProjectSettingsService.ToolchainListener {
-                override fun toolchainChanged(newToolchain: RustToolchain?) {
-                    val projectDirectory = module.cargoProjectRoot?.path
-                        ?: return
-                    val rustup = newToolchain?.rustup(projectDirectory)
-                        ?: return
-
-                    SetupRustStdlibTask(module, rustup).queue()
-                }
-            })
-        }
     }
 
     override fun disposeComponent() {
@@ -82,15 +68,43 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
     override fun projectOpened() {
     }
 
-    override fun moduleAdded() {
-        val toolchain = module.project.toolchain ?: return
-        requestImmediateUpdate(toolchain) { result ->
-            when (result) {
-                is UpdateResult.Err -> module.project.showBalloon(
-                    "Project '${module.name}' failed to update.<br> ${result.error.message}", NotificationType.ERROR
-                )
+    // moduleAdded is called twice for the same value,
+    // so let's use a `lazy` value to guarantee that
+    // initialization is done only once
+    private val INIT = lazy {
+        fun refreshStdlib() {
+            val projectDirectory = module.cargoProjectRoot?.path
+                ?: return
+            val rustup = module.project.toolchain?.rustup(projectDirectory)
+                ?: return
+
+            SetupRustStdlibTask(module, rustup).queue()
+        }
+
+        with(module.messageBus.connect()) {
+            subscribe(VirtualFileManager.VFS_CHANGES, FileChangesWatcher())
+
+            subscribe(RustProjectSettingsService.TOOLCHAIN_TOPIC, object : RustProjectSettingsService.ToolchainListener {
+                override fun toolchainChanged(newToolchain: RustToolchain?) = refreshStdlib()
+            })
+        }
+
+        refreshStdlib()
+
+        val toolchain = module.project.toolchain
+        if (toolchain != null) {
+            requestImmediateUpdate(toolchain) { result ->
+                when (result) {
+                    is UpdateResult.Err -> module.project.showBalloon(
+                        "Project '${module.name}' failed to update.<br> ${result.error.message}", NotificationType.ERROR
+                    )
+                }
             }
         }
+    }
+
+    override fun moduleAdded() {
+        INIT.value
     }
 
     /**
