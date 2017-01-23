@@ -31,6 +31,13 @@ class CargoWorkspace private constructor(
         val contentRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
 
         override fun toString() = "Package(contentRootUrl='$contentRootUrl', name='$name')"
+
+        fun initTargets(): Package {
+            for (it in targets) {
+                it.initPackage(this)
+            }
+            return this
+        }
     }
 
     class Target(
@@ -113,7 +120,7 @@ class CargoWorkspace private constructor(
                 targets = listOf(Target(crateRoot.url, name = crateName, kind = TargetKind.LIB)),
                 source = null,
                 origin = PackageOrigin.STDLIB
-            )
+            ).initTargets()
         }
         return CargoWorkspace(packages + stdlib)
     }
@@ -156,11 +163,7 @@ class CargoWorkspace private constructor(
                     pkg.targets.map { Target(it.url, it.name, it.kind) },
                     pkg.source,
                     origin
-                ).apply {
-                    for (target in targets) {
-                        target.initPackage(this)
-                    }
-                }
+                ).initTargets()
             }
 
             return CargoWorkspace(packages)
