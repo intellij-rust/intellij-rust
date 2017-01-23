@@ -38,10 +38,28 @@ class RsGotoSuperHandlerTest : RsTestBase() {
         }
     """)
 
+    fun testOnFileLevel() {
+        val files = ProjectFile.parseFileCollection("""
+            //- foo.rs
+                // only comment
+
+            //- main.rs
+                mod foo;
+        """)
+
+        for ((path, text) in files) {
+            myFixture.tempDirFixture.createFile(path, text)
+        }
+        myFixture.configureFromTempProjectFile(files[0].path)
+
+        val target = gotoSuperTarget(myFixture.file)
+        check(target?.text == "mod foo;")
+    }
+
     private fun checkNavigation(@Language("Rust") before: String, @Language("Rust") after: String) {
         InlineFile(before)
         val handler = CodeInsightActions.GOTO_SUPER.forLanguage(RsLanguage)
-        assertNotNull("GotoSuperHandler for Rust was not found.", handler)
+            ?: error("GotoSuperHandler for Rust was not found.")
         handler.invoke(project, myFixture.editor, myFixture.file)
         myFixture.checkResult(replaceCaretMarker(after))
     }
