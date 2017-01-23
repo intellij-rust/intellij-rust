@@ -415,7 +415,8 @@
                              groupId="language"/>
         <projectService serviceInterface="org.rust.cargo.project.settings.RustProjectSettingsService"
                         serviceImplementation="org.rust.cargo.project.settings.impl.RustProjectSettingsServiceImpl"/>
-
+        <moduleService serviceInterface="org.rust.cargo.project.workspace.CargoProjectWorkspaceService"
+                       serviceImplementation="org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl"/>
 
         <!-- Icon Provider -->
 
@@ -459,10 +460,7 @@
     </project-components>
 
     <module-components>
-        <component>
-            <interface-class>org.rust.cargo.project.workspace.CargoProjectWorkspaceService</interface-class>
-            <implementation-class>org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl</implementation-class>
-        </component>
+
     </module-components>
 
     <actions>

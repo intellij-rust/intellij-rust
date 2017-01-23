@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleComponent
 import com.intellij.openapi.progress.BackgroundTaskQueue
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -36,10 +35,11 @@ import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.updateLibrary
 import org.rust.ide.notifications.showBalloon
 
+
 private val LOG = Logger.getInstance(CargoProjectWorkspaceServiceImpl::class.java)
 
 
-class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjectWorkspaceService, ModuleComponent {
+class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjectWorkspaceService {
     // First updates go through [debouncer] to be properly throttled,
     // and then via [taskQueue] to be serialized (it should be safe to execute
     // several Cargo's concurrently, but let's avoid that)
@@ -53,25 +53,7 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
      */
     private var cached: CargoWorkspace? = null
 
-    override fun getComponentName(): String = "org.rust.cargo.CargoProjectWorkspaceService"
-
-    override fun initComponent() {
-    }
-
-    override fun disposeComponent() {
-        // Nothing to do here, bind all cleanup to `module`, which is Disposable
-    }
-
-    override fun projectClosed() {
-    }
-
-    override fun projectOpened() {
-    }
-
-    // moduleAdded is called twice for the same value,
-    // so let's use a `lazy` value to guarantee that
-    // initialization is done only once
-    private val INIT = lazy {
+    init {
         fun refreshStdlib() {
             val projectDirectory = module.cargoProjectRoot?.path
                 ?: return
@@ -101,10 +83,6 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
                 }
             }
         }
-    }
-
-    override fun moduleAdded() {
-        INIT.value
     }
 
     /**

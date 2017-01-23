@@ -2,6 +2,7 @@ package org.rust.cargo.project.workspace
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleServiceManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.toolchain.RustToolchain
@@ -43,9 +44,10 @@ interface CargoProjectWorkspaceService {
     }
 
     companion object {
+
         fun getInstance(module: Module): CargoProjectWorkspaceService =
-            module.getComponent(CargoProjectWorkspaceService::class.java)
-                ?: error("Can't retrieve CargoProjectWorkspaceService component for $this")
+            ModuleServiceManager.getService(module, CargoProjectWorkspaceService::class.java)
+                ?: error("Failed to retrieve CargoProjectWorkspaceService for $module")
     }
 }
 
