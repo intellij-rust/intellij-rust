@@ -28,6 +28,7 @@ class RsCommaFormatProcessor : PostFormatProcessor {
 
         source.accept(object : PsiRecursiveElementWalkingVisitor() {
             override fun visitElement(element: PsiElement?) {
+                super.visitElement(element)
                 if (element is RsStructExprBody && helper.isElementFullyInRange(element)) {
                     if (fixStructExprBody(element)) {
                         helper.updateResultRange(1, 0)
