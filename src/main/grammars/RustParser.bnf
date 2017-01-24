@@ -82,7 +82,7 @@
     extends(".+Expr") = Expr
     elementType(".+BinExpr") = BinaryExpr
 
-    extends("(?!RetType).*Type") = Type
+    extends("(?!RetType).*Type") = TypeReference
 
     extends("Pat(Wild|Ref|Tup|Vec|Macro|Struct|Enum|Ident|Range|Uniq|QualPath)") = Pat
 
@@ -157,9 +157,9 @@ TypeArgumentList ::= TypeArgumentListImpl {
 ColonTypeArgumentList ::= '::' TypeArgumentListImpl { elementType = TypeArgumentList }
 
 private TypeArgumentListImpl ::= '<' !'=' ( <<list_element lifetime>>*
-                                            <<list_element (!(identifier '=') Type)>>*
+                                            <<list_element (!(identifier '=') TypeReference)>>*
                                             <<list_element AssocTypeBinding>>*) '>' { pin = 2 }
-AssocTypeBinding ::= identifier '=' Type
+AssocTypeBinding ::= identifier '=' TypeReference
 
 
 // Paths for expressions:
@@ -181,7 +181,7 @@ PathGenericArgsWithColons ::= <<pathMode 'COLONS' PathImpl>> { elementType = Pat
 //    <TYPE [as TRAIT_REF]> :: (path_without_types | path_generic_args_with_colons)
 //    <T>::c<V,W>
 //    <T as Foo>::c(V) -> W
-private meta qualified_path ::= '<' Type [ as TraitRef ] '>' '::' <<param>>
+private meta qualified_path ::= '<' TypeReference [ as TraitRef ] '>' '::' <<param>>
 
 // Path semantically constrained to resolve to a trait
 TraitRef ::= PathGenericArgsWithoutColons {
@@ -232,16 +232,16 @@ private Items ::= Item_with_recover*
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Parameters
-fake ValueParameter ::= Pat? Type? {
+fake ValueParameter ::= Pat? TypeReference? {
   extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-FnParameter ::= [ Pat ':' ] Type
+FnParameter ::= [ Pat ':' ] TypeReference
 LambdaParameter ::= Pat TypeAscription?
-AnonParameter ::= [ RestrictedPat ':' ] Type
-PathParameter ::= Type !'='
+AnonParameter ::= [ RestrictedPat ':' ] TypeReference
+PathParameter ::= TypeReference !'='
 
 SelfParameter ::= [ '&' lifetime? ] mut? self TypeAscription? {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
@@ -285,7 +285,7 @@ LifetimeParameter ::= OuterAttr* lifetime LifetimeParamBounds? {
 
 LifetimeParamBounds ::= ':' lifetime ('+' lifetime)*
 
-TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' Type ] {
+TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' TypeReference ] {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
   extends = "org.rust.lang.core.psi.impl.RsStubbedNamedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsTypeParameterStub"
@@ -297,13 +297,13 @@ Polybound ::= [ ForLifetimes | '?' ] Bound
 
 WhereClause ::= where <<comma_separated_list WherePred>>
 
-WherePred ::= lifetime LifetimeParamBounds | ForLifetimes? Type TypeParamBounds
+WherePred ::= lifetime LifetimeParamBounds | ForLifetimes? TypeReference TypeParamBounds
 
 ForLifetimes ::= for '<' LifetimesParams '>'
 
 ExternAbi ::= extern STRING_LITERAL?
 
-RetType ::= '->' Type { pin = 1 }
+RetType ::= '->' TypeReference { pin = 1 }
 
 Function ::= OuterAttr*
              default_?
@@ -548,7 +548,7 @@ FieldDecl ::= AttrsAndVis identifier TypeAscription {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-TupleFieldDecl ::= AttrsAndVis Type {
+TupleFieldDecl ::= AttrsAndVis TypeReference {
   implements = [ "org.rust.lang.core.psi.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.RsVisibilityOwner"
                  "org.rust.lang.core.psi.RsTupleOrStructFieldDeclElement" ]
@@ -600,10 +600,10 @@ ImplItem ::= AttrsAndVis unsafe? impl TypeParameterList? ( TraitImpl | InherentI
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private InherentImpl ::= Type !for WhereClause? ImplBody { pin = 2 }
+private InherentImpl ::= TypeReference !for WhereClause? ImplBody { pin = 2 }
 private TraitImpl ::= '!'? TraitRef for (AutoTraitImpl | TypeTraitImpl) { pin = 3 }
 private AutoTraitImpl ::= '..' '{' '}' { pin = 1 }
-private TypeTraitImpl ::= Type WhereClause? ImplBody { pin = 1 }
+private TypeTraitImpl ::= TypeReference WhereClause? ImplBody { pin = 1 }
 
 private ImplBody ::= '{' InnerAttr* ImplMember* '}' { pin = 1 }
 
@@ -618,47 +618,47 @@ private ImplMember_recover ::= !('#' | Vis | extern | const | static | unsafe | 
 // Types
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private TypeAscription ::= ':' Type
+private TypeAscription ::= ':' TypeReference
 
-Type ::= VecType
-       | RefLikeType
-       | BareFnType
-       | TupleType
-       | BaseType
-       | TypeWithBoundsType
-       | ForInType
-       | ImplTraitType {
+TypeReference ::= ArrayType
+                | RefLikeType
+                | FnPointerType
+                | TupleType
+                | BaseType
+                | TypeWithBoundsType
+                | ForInType
+                | ImplTraitType {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
 }
 
-VecType ::= '[' Type [';' AnyExpr] ']' {
+ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-RefLikeType ::= ( '&' lifetime? mut? | '*' [ const | mut ] ) Type {
+RefLikeType ::= ( '&' lifetime? mut? | '*' [ const | mut ] ) TypeReference {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-BareFnType ::= [ unsafe? ExternAbi? ] fn FnTypeParameters RetType? {
+FnPointerType ::= [ unsafe? ExternAbi? ] fn FnTypeParameters RetType? {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-TupleType ::= '(' [ <<comma_separated_list Type>> ] ')' {
+TupleType ::= '(' [ <<comma_separated_list TypeReference>> ] ')' {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-TypeWithBoundsType ::= Type ('+' Bound)+ {
+TypeWithBoundsType ::= TypeReference ('+' Bound)+ {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 Bound ::= lifetime | TraitRef
 
-ForInType ::= ForLifetimes (BareFnType | TraitRef) {
+ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -675,7 +675,7 @@ BaseType ::= '_' | '!' | !'<' PathGenericArgsWithoutColons | &'<' TypeQualPath {
 
 TypeAlias ::= OuterAttr* default_? Vis? TYPE_KW identifier
               [ TypeParameterList WhereClause? | WhereClause | TypeParamBounds ]
-              [ '=' Type ] ';' {
+              [ '=' TypeReference ] ';' {
   pin = 'identifier'
   implements = [ "org.rust.lang.core.psi.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.RsTypeBearingItemElement"
@@ -770,7 +770,7 @@ BitOrBinExpr     ::= Expr !(<<isCompleteBlockExpr>> | oror)   '|' StmtModeExprOf
 BitAndBinExpr    ::= Expr !(<<isCompleteBlockExpr>> | andand) '&' StmtModeExprOff
 BitXorBinExpr    ::= Expr !<<isCompleteBlockExpr>> '^' StmtModeExprOff
 
-CastExpr ::= Expr as Type
+CastExpr ::= Expr as TypeReference
 
 TryExpr ::= Expr '?'
 

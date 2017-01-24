@@ -23,7 +23,7 @@ FILE
   PsiElement(lifetime)(''c')
   PsiElement(>)('>')
   PsiWhiteSpace(' ')
-  PsiErrorElement:<type> expected, got ''a'
+  PsiErrorElement:<type reference> expected, got ''a'
     PsiElement(lifetime)(''a')
   PsiElement(DUMMY_BLOCK)
     PsiWhiteSpace(' ')

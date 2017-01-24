@@ -16,11 +16,11 @@ fun inferPatternBindingType(binding: RsPatBinding): RustType {
     val type = when (parent) {
         is RsLetDecl ->
             // use type ascription, if present or fallback to the type of the initializer expression
-            parent.type?.resolvedType ?: parent.expr?.resolvedType
+            parent.typeReference?.type ?: parent.expr?.type
 
-        is RsValueParameter -> parent.type?.resolvedType
-        is RsCondition -> parent.expr.resolvedType
-        is RsMatchPat -> parent.parentOfType<RsMatchExpr>()?.expr?.resolvedType
+        is RsValueParameter -> parent.typeReference?.type
+        is RsCondition -> parent.expr.type
+        is RsMatchPat -> parent.parentOfType<RsMatchExpr>()?.expr?.type
         else -> null
     } ?: RustUnknownType
 
@@ -53,7 +53,7 @@ private fun collectBindings(pattern: RsPat, type: RustType): Map<RsPatBinding, R
                     ?: return
 
                 for ((idx, p) in pat.patList.withIndex()) {
-                    go(p, tupleFields.tupleFieldDeclList.getOrNull(idx)?.type?.resolvedType ?: RustUnknownType)
+                    go(p, tupleFields.tupleFieldDeclList.getOrNull(idx)?.typeReference?.type ?: RustUnknownType)
                 }
             }
             is RsPatStruct -> {
@@ -71,7 +71,7 @@ private fun collectBindings(pattern: RsPat, type: RustType): Map<RsPatBinding, R
                         patField.identifier?.text
                             ?: error("`pat_field` may be either `pat_binding` or should contain identifier! ${patField.text}")
                     }
-                    val fieldType = structFields[fieldName]?.type?.resolvedType ?: RustUnknownType
+                    val fieldType = structFields[fieldName]?.typeReference?.type ?: RustUnknownType
                     patField.pat?.let { go(it, fieldType) }
                     if (fieldPun != null) {
                         bindings[fieldPun] = fieldType

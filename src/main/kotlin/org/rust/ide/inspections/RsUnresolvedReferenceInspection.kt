@@ -3,7 +3,7 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.isPrimitive
-import org.rust.lang.core.types.resolvedType
+import org.rust.lang.core.types.type
 
 class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Unresolved reference"
@@ -14,7 +14,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
                 val p = o.parent
                 val isPrimitiveType = o is RsPath &&
                     p is RsBaseType &&
-                    p.resolvedType.isPrimitive
+                    p.type.isPrimitive
 
                 if (isPrimitiveType || o.reference.resolve() != null) return
 

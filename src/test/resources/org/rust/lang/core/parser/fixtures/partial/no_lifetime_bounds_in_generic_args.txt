@@ -17,7 +17,7 @@ FILE
             PsiElement(::)('::')
             PsiElement(<)('<')
             PsiElement(lifetime)(''static')
-            PsiErrorElement:<type> or '>' expected, got ':'
+            PsiErrorElement:<type reference> or '>' expected, got ':'
               <empty list>
       PsiElement(:)(':')
       PsiWhiteSpace(' ')

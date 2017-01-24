@@ -10,7 +10,7 @@ class RsFunctionTreeElement(element: RsFunction) : PsiTreeElementBase<RsFunction
     override fun getPresentableText(): String? {
         var text = element?.name
 
-        val params = element?.valueParameters?.map { it.type?.text }?.joinToString()
+        val params = element?.valueParameters?.map { it.typeReference?.text }?.joinToString()
         if (params != null)
             text += "($params)"
 

@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.types.types.RustBooleanType
-import org.rust.lang.core.types.resolvedType
+import org.rust.lang.core.types.type
 
 class RsWithIfExpSurrounder : RsExpressionSurrounderBase<RsIfExpr>() {
     override fun getTemplateDescription(): String = "if expr"
@@ -21,7 +21,7 @@ class RsWithIfExpSurrounder : RsExpressionSurrounderBase<RsIfExpr>() {
         expression.condition!!.expr
 
     override fun isApplicable(expression: RsExpr): Boolean =
-        expression.resolvedType == RustBooleanType
+        expression.type == RustBooleanType
 
     override fun doPostprocessAndGetSelectionRange(editor: Editor, expression: PsiElement): TextRange? {
         var block = (expression as? RsIfExpr)?.block ?: return null

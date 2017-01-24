@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsWhileExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.types.types.RustBooleanType
-import org.rust.lang.core.types.resolvedType
+import org.rust.lang.core.types.type
 
 class RsWithWhileExpSurrounder : RsExpressionSurrounderBase<RsWhileExpr>() {
     override fun getTemplateDescription(): String = "while expr"
@@ -21,7 +21,7 @@ class RsWithWhileExpSurrounder : RsExpressionSurrounderBase<RsWhileExpr>() {
         expression.condition!!.expr
 
     override fun isApplicable(expression: RsExpr): Boolean =
-        expression.resolvedType == RustBooleanType
+        expression.type == RustBooleanType
 
     override fun doPostprocessAndGetSelectionRange(editor: Editor, expression: PsiElement): TextRange? {
         var block = (expression as? RsWhileExpr)?.block ?: return null

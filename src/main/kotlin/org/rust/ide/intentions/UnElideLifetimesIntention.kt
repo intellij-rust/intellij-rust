@@ -18,7 +18,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         val scope = element.parentOfType<RsBlock>()
         if (fn.contains(scope)) return null
 
-        if ((fn.retType?.type as? RsRefLikeType)?.lifetime != null) return null
+        if ((fn.retType?.typeReference as? RsRefLikeType)?.lifetime != null) return null
 
         val args = fn.allRefArgs
 
@@ -38,7 +38,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         ctx.typeParameterList?.replace(genericParams) ?: ctx.addAfter(genericParams, ctx.identifier)
 
         // return type
-        val retType = ctx.retType?.type as? RsRefLikeType ?: return
+        val retType = ctx.retType?.typeReference as? RsRefLikeType ?: return
 
         if ((ctx.selfParameter != null) || (ctx.allRefArgs.drop(1).none())) {
             retType.replace(createRefType(project, retType, ctx.allRefArgs.first().lifetime!!.text))
@@ -66,7 +66,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         val selfAfg: List<PsiElement> = listOfNotNull(selfParameter)
         val params: List<PsiElement> = valueParameters
             .filter { param ->
-                val type = param.type
+                val type = param.typeReference
                 type is RsRefLikeType && type.and != null
             }
         return (selfAfg + params).filterNotNull()
@@ -75,7 +75,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
     private val PsiElement.lifetime: PsiElement? get() =
     when (this) {
         is RsSelfParameter -> lifetime
-        is RsValueParameter -> (type as? RsRefLikeType)?.lifetime
+        is RsValueParameter -> (typeReference as? RsRefLikeType)?.lifetime
         else -> null
     }
 }

@@ -4,7 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.types.resolvedType
+import org.rust.lang.core.types.type
 
 abstract class RsTypificationTestBase : RsTestBase() {
     override val dataPath: String get() = ""
@@ -13,7 +13,7 @@ abstract class RsTypificationTestBase : RsTestBase() {
         InlineFile(code)
         val (expr, expectedType) = findElementAndDataInEditor<RsExpr>()
 
-        assertThat(expr.resolvedType.toString())
+        assertThat(expr.type.toString())
             .`as`(description)
             .isEqualTo(expectedType)
     }

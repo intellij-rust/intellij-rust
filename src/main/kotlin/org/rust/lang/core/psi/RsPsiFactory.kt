@@ -31,7 +31,7 @@ class RsPsiFactory(private val project: Project) {
     fun createLetDeclaration(name: String, expr: RsExpr, mutable: Boolean = false): RsLetDecl =
         createStatement("let ${if (mutable) "mut " else ""}$name = ${expr.text};") as RsLetDecl
 
-    fun createType(text: String): RsType =
+    fun createType(text: String): RsTypeReference =
         createFromText("fn main() { let a : $text; }")
             ?: error("Failed to create type from text: `$text`")
 
@@ -125,7 +125,7 @@ private val RsFunction.signatureText: String? get() {
 
     val allArguments = listOfNotNull(selfParameter?.text) + valueParameters.map {
         // fix possible anon parameter
-        "${it.pat?.text ?: "_"}: ${it.type?.text ?: "()"}"
+        "${it.pat?.text ?: "_"}: ${it.typeReference?.text ?: "()"}"
     }
 
     val ret = retType?.text ?: ""

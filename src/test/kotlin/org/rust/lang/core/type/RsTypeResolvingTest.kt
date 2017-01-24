@@ -2,8 +2,8 @@ package org.rust.lang.core.type
 
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
-import org.rust.lang.core.psi.RsType
-import org.rust.lang.core.types.resolvedType
+import org.rust.lang.core.psi.RsTypeReference
+import org.rust.lang.core.types.type
 
 class RsTypeResolvingTest : RsTypificationTestBase() {
     fun testPath() = testType("""
@@ -161,9 +161,9 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
      */
     private fun testType(@Language("Rust") code: String) {
         InlineFile(code)
-        val (typeAtCaret, expectedType) = findElementAndDataInEditor<RsType>()
+        val (typeAtCaret, expectedType) = findElementAndDataInEditor<RsTypeReference>()
 
-        assertThat(typeAtCaret.resolvedType.toString())
+        assertThat(typeAtCaret.type.toString())
             .isEqualTo(expectedType)
     }
 }

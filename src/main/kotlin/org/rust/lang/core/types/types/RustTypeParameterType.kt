@@ -36,7 +36,7 @@ data class RustTypeParameterType private constructor(
             val whereBounds =
                 owner?.whereClause?.wherePredList.orEmpty()
                     .asSequence()
-                    .filter { (it.type as? RsBaseType)?.path?.reference?.resolve() == parameter }
+                    .filter { (it.typeReference as? RsBaseType)?.path?.reference?.resolve() == parameter }
                     .flatMap { it.typeParamBounds?.polyboundList.orEmpty().asSequence() }
 
             return (parameter.typeParamBounds?.polyboundList.orEmpty().asSequence() + whereBounds)

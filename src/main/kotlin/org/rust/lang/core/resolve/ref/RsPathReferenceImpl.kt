@@ -32,7 +32,7 @@ class RsPathReferenceImpl(
     private val namespaceForResolve: Namespace? get() {
         val parent = element.parent
         return when (parent) {
-            is RsPath, is RsType -> Namespace.Types
+            is RsPath, is RsTypeReference -> Namespace.Types
             is RsUseItem -> if (parent.isStarImport) Namespace.Types else null
             is RsPathExpr -> Namespace.Values
             else -> null

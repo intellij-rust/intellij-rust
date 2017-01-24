@@ -9,7 +9,7 @@ class RsEnumVariantTreeElement(element: RsEnumVariant) : PsiTreeElementBase<RsEn
     override fun getPresentableText(): String? {
         var text = element?.name
 
-        val params = element?.tupleFields?.tupleFieldDeclList?.map { it.type.text }?.joinToString()
+        val params = element?.tupleFields?.tupleFieldDeclList?.map { it.typeReference.text }?.joinToString()
         if (params != null)
             text += "($params)"
 

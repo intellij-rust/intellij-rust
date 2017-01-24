@@ -132,7 +132,7 @@ class RsArgumentsDescription(
                 else -> null
             } ?: return null
             val params = paramsList
-                .map { "${it.pat?.text ?: "?"}: ${it.type?.text ?: "?"}" }
+                .map { "${it.pat?.text ?: "?"}: ${it.typeReference?.text ?: "?"}" }
                 .toTypedArray()
             return RsArgumentsDescription(params)
         }

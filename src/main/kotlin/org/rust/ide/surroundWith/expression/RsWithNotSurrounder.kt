@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.RsParenExpr
 import org.rust.lang.core.psi.RsUnaryExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.types.types.RustBooleanType
-import org.rust.lang.core.types.resolvedType
+import org.rust.lang.core.types.type
 
 class RsWithNotSurrounder : RsExpressionSurrounderBase<RsUnaryExpr>() {
     override fun getTemplateDescription(): String = "!(expr)"
@@ -21,7 +21,7 @@ class RsWithNotSurrounder : RsExpressionSurrounderBase<RsUnaryExpr>() {
         (expression.expr as RsParenExpr).expr
 
     override fun isApplicable(expression: RsExpr): Boolean =
-        expression.resolvedType == RustBooleanType
+        expression.type == RustBooleanType
 
     override fun doPostprocessAndGetSelectionRange(editor: Editor, expression: PsiElement): TextRange {
         val offset = expression.textRange.endOffset

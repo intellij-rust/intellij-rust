@@ -3,12 +3,12 @@ package org.rust.ide.structure
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsType
+import org.rust.lang.core.psi.RsTypeReference
 
 class RsImplTreeElement(element: RsImplItem) : PsiTreeElementBase<RsImplItem>(element) {
 
     override fun getPresentableText(): String? {
-        val type: RsType = element?.type ?: return "<unknown>"
+        val type: RsTypeReference = element?.typeReference ?: return "<unknown>"
 
         val traitRef = element?.traitRef ?: return type.text
 

@@ -8,8 +8,8 @@ class RsConstantTreeElement(element: RsConstant) : PsiTreeElementBase<RsConstant
 
     override fun getPresentableText(): String? {
         var text = element?.name
-        if (element?.type != null) {
-            text += ": " + element?.type?.text
+        if (element?.typeReference != null) {
+            text += ": " + element?.typeReference?.text
         }
         return text
     }

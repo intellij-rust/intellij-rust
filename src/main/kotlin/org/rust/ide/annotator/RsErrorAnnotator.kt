@@ -215,7 +215,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             val toImplement = trait.functionList.filter { it.name in notImplemented }
             val implHeaderTextRange = TextRange.create(
                 impl.textRange.startOffset,
-                impl.type?.textRange?.endOffset ?: impl.textRange.endOffset
+                impl.typeReference?.textRange?.endOffset ?: impl.textRange.endOffset
             )
 
             holder.createErrorAnnotation(implHeaderTextRange,
@@ -242,7 +242,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             RsTypeAliasRole.FREE -> {
                 deny(ta.default, holder, "$title cannot have the `default` qualifier")
                 deny(ta.typeParamBounds, holder, "$title cannot have type parameter bounds")
-                require(ta.type, holder, "Aliased type must be provided for type `${ta.identifier.text}`", ta)
+                require(ta.typeReference, holder, "Aliased type must be provided for type `${ta.identifier.text}`", ta)
             }
             RsTypeAliasRole.TRAIT_ASSOC_TYPE -> {
                 deny(ta.default, holder, "$title cannot have the `default` qualifier")
@@ -258,7 +258,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
                     deny(ta.typeParameterList, holder, "$title cannot have generic parameters")
                     deny(ta.whereClause, holder, "$title cannot have `where` clause")
                     deny(ta.typeParamBounds, holder, "$title cannot have type parameter bounds")
-                    require(ta.type, holder, "Aliased type must be provided for type `${ta.identifier.text}`", ta)
+                    require(ta.typeReference, holder, "Aliased type must be provided for type `${ta.identifier.text}`", ta)
                 }
             }
         }

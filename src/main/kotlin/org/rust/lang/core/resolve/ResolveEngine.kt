@@ -24,7 +24,7 @@ import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
-import org.rust.lang.core.types.resolvedType
+import org.rust.lang.core.types.type
 import org.rust.lang.core.types.stripAllRefsIfAny
 import org.rust.lang.core.types.types.RustStructType
 import org.rust.utils.sequenceOfNotNull
@@ -112,7 +112,7 @@ object ResolveEngine {
      * Resolves references to struct's fields inside [RsFieldExpr]
      */
     fun resolveFieldExpr(fieldExpr: RsFieldExpr): List<RsCompositeElement> {
-        val receiverType = fieldExpr.expr.resolvedType.stripAllRefsIfAny()
+        val receiverType = fieldExpr.expr.type.stripAllRefsIfAny()
         val struct = (receiverType as? RustStructType)?.item ?: return emptyList()
 
         val name = fieldExpr.fieldName
@@ -132,7 +132,7 @@ object ResolveEngine {
      * Resolves method-call expressions
      */
     fun resolveMethodCallExpr(call: RsMethodCallExpr): RsNamedElement? {
-        val receiverType = call.expr.resolvedType
+        val receiverType = call.expr.type
         val name = call.identifier.text
 
         return receiverType.getMethodsIn(call.project)
@@ -240,8 +240,8 @@ private fun containingDeclarations(scope: RsCompositeElement, context: Context):
  */
 fun associatedDeclarations(scope: RsCompositeElement): Sequence<ScopeEntry>? {
     val type = when (scope) {
-        is RsStructItem -> scope.resolvedType
-        is RsEnumItem -> scope.resolvedType
+        is RsStructItem -> scope.type
+        is RsEnumItem -> scope.type
         else -> return null
     }
 
@@ -289,7 +289,7 @@ private fun lexicalDeclarations(
             scope.typeParameters.asScopeEntries() +
                 sequenceOfNotNull(ScopeEntry.lazy(RustPath.CSELF) {
                     //TODO: handle types which are not `NamedElements` (e.g. tuples)
-                    (scope.type as? RsBaseType)?.path?.reference?.resolve()
+                    (scope.typeReference as? RsBaseType)?.path?.reference?.resolve()
                 })
         }
 

@@ -17,11 +17,11 @@ import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.symbols.RustPath
+import org.rust.lang.core.types.RustTypificationEngine
+import org.rust.lang.core.types.type
+import org.rust.lang.core.types.stripAllRefsIfAny
 import org.rust.lang.core.types.types.RustStructType
 import org.rust.lang.core.types.types.RustUnknownType
-import org.rust.lang.core.types.stripAllRefsIfAny
-import org.rust.lang.core.types.resolvedType
-import org.rust.lang.core.types.RustTypificationEngine
 import org.rust.utils.sequenceOfNotNull
 
 object CompletionEngine {
@@ -51,7 +51,7 @@ object CompletionEngine {
             .completionsFromNamedElements()
 
     fun completeFieldOrMethod(field: RsFieldExpr): Array<out LookupElement> {
-        val receiverType = field.expr.resolvedType.stripAllRefsIfAny()
+        val receiverType = field.expr.type.stripAllRefsIfAny()
 
         // Needs type ascription to please Kotlin's type checker, https://youtrack.jetbrains.com/issue/KT-12696.
         val fields: List<RsNamedElement> = (receiverType as? RustStructType)?.item?.namedFields.orEmpty()
@@ -62,7 +62,7 @@ object CompletionEngine {
     }
 
     fun completeMethod(call: RsMethodCallExpr): Array<out LookupElement> {
-        val receiverType = call.expr.resolvedType.stripAllRefsIfAny()
+        val receiverType = call.expr.type.stripAllRefsIfAny()
         return receiverType.getMethodsIn(call.project).toList().completionsFromNamedElements()
     }
 
@@ -99,11 +99,11 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
         .withIcon(if (this is RsFile) RsIcons.MODULE else getIcon(0))
 
     return when (this) {
-        is RsConstant -> base.withTypeText(type?.text)
-        is RsFieldDecl -> base.withTypeText(type?.text)
+        is RsConstant -> base.withTypeText(typeReference?.text)
+        is RsFieldDecl -> base.withTypeText(typeReference?.text)
 
         is RsFunction -> base
-            .withTypeText(retType?.type?.text ?: "()")
+            .withTypeText(retType?.typeReference?.text ?: "()")
             .withTailText(valueParameterList?.text?.replace("\\s+".toRegex(), " ") ?: "()")
             .withInsertHandler handler@ { context: InsertionContext, lookupElement: LookupElement ->
                 if (context.isInUseBlock) return@handler
@@ -124,7 +124,9 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
             .withTailText(when {
                 blockFields != null -> " { ... }"
                 tupleFields != null ->
-                    tupleFields!!.tupleFieldDeclList.map { it.type.text }.joinToString(prefix = "(", postfix = ")")
+                    tupleFields!!.tupleFieldDeclList
+                        .map { it.typeReference.text }
+                        .joinToString(prefix = "(", postfix = ")")
                 else -> ""
             })
             .withInsertHandler handler@ { context, lookupElement ->
@@ -139,10 +141,12 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
             }
 
         is RsPatBinding -> base
-            .withTypeText(RustTypificationEngine.typify(this).let { when (it) {
-                is RustUnknownType -> ""
-                else -> it.toString()
-            }})
+            .withTypeText(RustTypificationEngine.typify(this).let {
+                when (it) {
+                    is RustUnknownType -> ""
+                    else -> it.toString()
+                }
+            })
 
         else -> base
     }

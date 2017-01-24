@@ -6,7 +6,7 @@ import org.rust.lang.core.psi.RsFieldDecl
 
 class RsStructDeclFieldTreeElement(element: RsFieldDecl) : PsiTreeElementBase<RsFieldDecl>(element) {
 
-    override fun getPresentableText() = "${element?.identifier?.text}: ${element?.type?.text}"
+    override fun getPresentableText() = "${element?.identifier?.text}: ${element?.typeReference?.text}"
 
     override fun getChildrenBase() = arrayListOf<StructureViewTreeElement>()
 }

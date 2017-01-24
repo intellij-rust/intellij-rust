@@ -21,13 +21,13 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
     override val isPublic: Boolean get() = false // pub does not affect imls at all
 
     override fun getPresentation(): ItemPresentation {
-        val t = type
+        val t = typeReference
         if (t is RsBaseType) {
             val pres = (t.path?.reference?.resolve() as? RsNamedElement)?.presentation
             if (pres != null) {
                 return PresentationData(pres.presentableText, pres.locationString, RsIcons.IMPL, null)
             }
         }
-        return PresentationData(type?.text ?: "Impl", null, RsIcons.IMPL, null)
+        return PresentationData(typeReference?.text ?: "Impl", null, RsIcons.IMPL, null)
     }
 }

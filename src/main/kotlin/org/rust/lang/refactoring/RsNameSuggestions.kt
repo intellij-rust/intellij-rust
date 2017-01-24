@@ -8,7 +8,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.valueParameters
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.types.types.RustUnknownType
-import org.rust.lang.core.types.resolvedType
+import org.rust.lang.core.types.type
 import java.util.*
 
 /**
@@ -42,7 +42,7 @@ fun RsExpr.suggestNames(): LinkedHashSet<String> {
 
 
 private fun nameForType(expr: RsExpr): String? {
-    val type = expr.resolvedType
+    val type = expr.type
 
     if (type is RustUnknownType) {
         return null

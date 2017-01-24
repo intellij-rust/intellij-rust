@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsItemElement
-import org.rust.lang.core.types.resolvedType
+import org.rust.lang.core.types.type
 
 
 class RsExpressionTypeProvider : ExpressionTypeProvider<RsExpr>() {
@@ -20,6 +20,6 @@ class RsExpressionTypeProvider : ExpressionTypeProvider<RsExpr>() {
             .toList()
 
     override fun getInformationHint(element: RsExpr): String =
-        StringUtil.escapeXml(element.resolvedType.toString())
+        StringUtil.escapeXml(element.type.toString())
 
 }

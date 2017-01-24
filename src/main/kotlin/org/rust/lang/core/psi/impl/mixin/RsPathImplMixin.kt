@@ -97,4 +97,4 @@ val RsPath.asRustPath: RustPath? get() {
 }
 
 private val RsPath.segment: RustPathSegment
-    get() = RustPathSegment(referenceName, typeArgumentList?.typeList.orEmpty())
+    get() = RustPathSegment(referenceName, typeArgumentList?.typeReferenceList.orEmpty())

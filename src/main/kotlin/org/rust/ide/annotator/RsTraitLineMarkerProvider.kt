@@ -22,7 +22,7 @@ class RsTraitLineMarkerProvider : LineMarkerProvider {
             if (el !is RsTraitItem) continue
             val targets = ReferencesSearch.search(el, el.useScope)
                 .map { it.element.parent?.parent }
-                .filter { it is RsImplItem && it.type != null }
+                .filter { it is RsImplItem && it.typeReference != null }
 
             if (!targets.isEmpty()) {
                 val builder = NavigationGutterIconBuilder

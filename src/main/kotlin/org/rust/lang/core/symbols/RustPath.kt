@@ -1,6 +1,6 @@
 package org.rust.lang.core.symbols
 
-import org.rust.lang.core.psi.RsType
+import org.rust.lang.core.psi.RsTypeReference
 
 sealed class RustPath(val segments: List<RustPathSegment>) {
     abstract fun join(segment: RustPathSegment): RustPath
@@ -55,7 +55,7 @@ sealed class RustPath(val segments: List<RustPathSegment>) {
 
 data class RustPathSegment(
     val name: String,
-    val typeArguments: List<RsType>
+    val typeArguments: List<RsTypeReference>
 ) {
     init {
         check(name != RustPath.SUPER)

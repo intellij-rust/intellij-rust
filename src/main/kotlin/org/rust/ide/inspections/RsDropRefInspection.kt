@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.types.types.RustReferenceType
-import org.rust.lang.core.types.resolvedType
+import org.rust.lang.core.types.type
 
 /**
  * Checks for calls to std::mem::drop with a reference instead of an owned value. Analogue of Clippy's drop_ref.
@@ -31,7 +31,7 @@ class RsDropRefInspection : RsLocalInspectionTool() {
         if (args.size != 1) return
 
         val arg = args[0]
-        if (arg.resolvedType is RustReferenceType) {
+        if (arg.type is RustReferenceType) {
             val fixes = if (arg.text[0] == '&') arrayOf(RemoveRefFix(arg, "Call with owned value")) else emptyArray()
             holder.registerProblem(
                 expr,

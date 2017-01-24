@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.types.RustUnitType
-import org.rust.lang.core.types.resolvedType
+import org.rust.lang.core.types.type
 
 /**
  * Suggest to remove a semicolon in situations like
@@ -28,8 +28,8 @@ class RsExtraSemicolonInspection : RsLocalInspectionTool() {
 
 private fun inspect(holder: ProblemsHolder, fn: RsFunction) {
     val block = fn.block ?: return
-    val retType = fn.retType?.type ?: return
-    if (retType.resolvedType == RustUnitType) return
+    val retType = fn.retType?.typeReference ?: return
+    if (retType.type == RustUnitType) return
     if (block.expr != null) return
     val lastStatement = block.stmtList.lastOrNull() as? RsExprStmt ?: return
 

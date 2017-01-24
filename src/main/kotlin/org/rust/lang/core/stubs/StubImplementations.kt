@@ -24,7 +24,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 55
+        override fun getStubVersion(): Int = 56
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -86,9 +86,9 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "PATH" -> RsPathStub.Type
 
     "TRAIT_REF" -> RsPlaceholderStub.Type("TRAIT_REF", ::RsTraitRefImpl)
-    "VEC_TYPE" -> RsPlaceholderStub.Type("VEC_TYPE", ::RsVecTypeImpl)
+    "ARRAY_TYPE" -> RsPlaceholderStub.Type("VEC_TYPE", ::RsArrayTypeImpl)
     "REF_LIKE_TYPE" -> RsPlaceholderStub.Type("REF_LIKE_TYPE", ::RsRefLikeTypeImpl)
-    "BARE_FN_TYPE" -> RsPlaceholderStub.Type("BARE_FN_TYPE", ::RsBareFnTypeImpl)
+    "FN_POINTER_TYPE" -> RsPlaceholderStub.Type("BARE_FN_TYPE", ::RsFnPointerTypeImpl)
     "TUPLE_TYPE" -> RsPlaceholderStub.Type("TUPLE_TYPE", ::RsTupleTypeImpl)
     "BASE_TYPE" -> RsPlaceholderStub.Type("BASE_TYPE", ::RsBaseTypeImpl)
     "TYPE_WITH_BOUNDS_TYPE" -> RsPlaceholderStub.Type("TYPE_WITH_BOUNDS_TYPE", ::RsTypeWithBoundsTypeImpl)

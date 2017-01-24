@@ -327,7 +327,7 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    RsBareFnTypeImpl(BARE_FN_TYPE)
+    RsFnPointerTypeImpl(BARE_FN_TYPE)
       PsiElement(unsafe)('unsafe')
       PsiWhiteSpace(' ')
       RsExternAbiImpl(EXTERN_ABI)

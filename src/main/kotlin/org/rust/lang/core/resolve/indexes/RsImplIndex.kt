@@ -16,7 +16,7 @@ import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.types.RustStructOrEnumTypeBase
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustTypeFingerprint
-import org.rust.lang.core.types.resolvedType
+import org.rust.lang.core.types.type
 
 
 object RsImplIndex {
@@ -58,12 +58,12 @@ object RsImplIndex {
                     GlobalSearchScope.allScope(project),
                     RsImplItem::class.java
                 ).asSequence().filter {
-                    it.type?.resolvedType == target
+                    it.typeReference?.type == target
                 }
             }
 
             fun index(stub: RsImplItemStub, sink: IndexSink) {
-                val type = stub.psi.type ?: return
+                val type = stub.psi.typeReference ?: return
                 val key = RustTypeFingerprint.create(type)
                 if (stub.psi.traitRef != null && key != null) {
                     sink.occurrence(KEY, key)
@@ -83,7 +83,7 @@ object RsImplIndex {
                 StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.InherentImpls")
 
             fun find(target: RsStructOrEnumItemElement): Sequence<RsImplItem> {
-                val fingerprint = RustTypeFingerprint.create(target.resolvedType)
+                val fingerprint = RustTypeFingerprint.create(target.type)
                     ?: return emptySequence()
 
                 return StubIndex.getElements(
@@ -93,13 +93,13 @@ object RsImplIndex {
                     GlobalSearchScope.allScope(target.project),
                     RsImplItem::class.java
                 ).asSequence().filter { impl ->
-                    val ty = impl.type?.resolvedType
+                    val ty = impl.typeReference?.type
                     ty is RustStructOrEnumTypeBase && ty.item == target
                 }
             }
 
             fun index(stub: RsImplItemStub, sink: IndexSink) {
-                val type = stub.psi.type ?: return
+                val type = stub.psi.typeReference ?: return
                 val key = RustTypeFingerprint.create(type)
                 if (key != null) {
                     sink.occurrence(KEY, key)

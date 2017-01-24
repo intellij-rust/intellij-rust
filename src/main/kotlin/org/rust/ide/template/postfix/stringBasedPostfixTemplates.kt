@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.RsElementTypes.EQEQ
 import org.rust.lang.core.psi.util.descendantsOfType
 import org.rust.lang.core.resolve.lexicalDeclarations
 import org.rust.lang.core.types.types.RustEnumType
-import org.rust.lang.core.types.resolvedType
+import org.rust.lang.core.types.type
 
 open class AssertPostfixTemplateBase(name: String) : StringBasedPostfixTemplate(
     name,
@@ -45,7 +45,7 @@ class MatchPostfixTemplate : StringBasedPostfixTemplate(
     RsTopMostInScopeSelector(RsExpr::isEnum)
 ) {
     override fun getTemplateString(element: PsiElement): String? {
-        val enumType = (element as RsExpr).resolvedType as RustEnumType
+        val enumType = (element as RsExpr).type as RustEnumType
 
         val allDeclaration = lexicalDeclarations(element)
             .mapNotNull {
@@ -107,7 +107,7 @@ class MatchPostfixTemplate : StringBasedPostfixTemplate(
 
     override fun setVariables(template: Template, element: PsiElement) {
         super.setVariables(template, element)
-        val itemsCount = ((element as RsExpr).resolvedType as RustEnumType).item.enumBody.enumVariantList.size
+        val itemsCount = ((element as RsExpr).type as RustEnumType).item.enumBody.enumVariantList.size
 
         for (i in 0 until itemsCount) {
             template.addVariable("VAR$i", TextExpression("{}"), true)

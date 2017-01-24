@@ -13,7 +13,7 @@ import org.rust.lang.core.psi.impl.mixin.role
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.types.isPrimitive
-import org.rust.lang.core.types.resolvedType
+import org.rust.lang.core.types.type
 
 // Highlighting logic here should be kept in sync with tags in RustColorSettingsPage
 class RsHighlightingAnnotator : Annotator {
@@ -33,7 +33,7 @@ class RsHighlightingAnnotator : Annotator {
         if (element is RsPath && (element.self != null || element.`super` != null)) return null
 
         val parent = element.parent
-        val isPrimitiveType = element is RsPath && parent is RsBaseType && parent.resolvedType.isPrimitive
+        val isPrimitiveType = element is RsPath && parent is RsBaseType && parent.type.isPrimitive
 
         val color = if (isPrimitiveType) {
             RsColor.PRIMITIVE_TYPE
