@@ -3,6 +3,7 @@ package org.rust.lang.core.psi
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiParserFacade
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.impl.mixin.selfParameter
 import org.rust.lang.core.psi.impl.mixin.valueParameters
@@ -20,10 +21,8 @@ class RustPsiFactory(private val project: Project) {
     fun createBlockExpr(body: String): RsBlockExpr =
         createExpression("{ $body }") as RsBlockExpr
 
-    fun createStructExprBody(fieldNames: List<String>): RsStructExprBody {
-        val fields = fieldNames.map { "$it: ()," }.joinToString("\n")
-        return (createExpression("S { $fields }") as RsStructExpr).structExprBody
-    }
+    fun createStructExprField(name: String): RsStructExprField =
+        (createExpression("S { $name: () }") as RsStructExpr).structExprBody.structExprFieldList[0]
 
     fun createStatement(text: String): RsStmt =
         createFromText("fn main() { $text 92; }")
@@ -112,6 +111,10 @@ class RustPsiFactory(private val project: Project) {
 
     fun createComma(): PsiElement =
         createFromText<RsValueParameter>("fn f(_ : (), )")!!.nextSibling
+
+    fun createNewline(): PsiElement =
+        PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n")
+
 }
 
 private val RsFunction.signatureText: String? get() {

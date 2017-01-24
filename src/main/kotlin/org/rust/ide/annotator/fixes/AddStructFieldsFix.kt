@@ -10,6 +10,7 @@ import org.rust.ide.formatter.RsCommaFormatProcessor
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsFieldDecl
 import org.rust.lang.core.psi.RsStructExprBody
+import org.rust.lang.core.psi.RsStructExprField
 import org.rust.lang.core.psi.RustPsiFactory
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.getNextNonCommentSibling
@@ -35,12 +36,14 @@ class AddStructFieldsFix(
         val psiFactory = RustPsiFactory(project)
         var expr = startElement as RsStructExprBody
         val nExistingFields = expr.structExprFieldList.size
-        val newBody = psiFactory.createStructExprBody(fieldsToAdd.mapNotNull { it.name })
-        val firstNewField = newBody.lbrace.nextSibling ?: return
-        val lastNewField = newBody.rbrace?.prevSibling ?: return
+        val multiline = nExistingFields == 0 || expr.textContains('\n')
 
-        expr.ensureTrailingComma()
-        expr.addRangeBefore(firstNewField, lastNewField, expr.rbrace)
+        for (fieldDecl in fieldsToAdd) {
+            val field = psiFactory.createStructExprField(fieldDecl.name!!)
+            expr.ensureTrailingComma()
+            expr.addFieldBefore(field, null, multiline)
+        }
+
         expr = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(expr)
         RsCommaFormatProcessor.fixStructExprBody(expr)
 
@@ -57,5 +60,22 @@ class AddStructFieldsFix(
 
         if (lastField.getNextNonCommentSibling()?.elementType == COMMA) return
         addAfter(RustPsiFactory(project).createComma(), lastField)
+    }
+
+    private fun RsStructExprBody.addFieldBefore(
+        newField: RsStructExprField,
+        anchor: RsStructExprBody?,
+        multiline: Boolean
+    ): RsStructExprField {
+
+        check(anchor == null || anchor.parent == this)
+        val psiFactory = RustPsiFactory(newField.project)
+
+        val comma = addBefore(psiFactory.createComma(), anchor ?: rbrace)
+        val result = addBefore(newField, comma) as RsStructExprField
+        if (multiline) {
+            addBefore(psiFactory.createNewline(), result)
+        }
+        return result
     }
 }
