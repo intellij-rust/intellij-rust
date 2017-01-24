@@ -19,6 +19,7 @@ import org.rust.lang.core.psi.util.getNextNonCommentSibling
  * Adds the given fields to the stricture defined by `expr`
  */
 class AddStructFieldsFix(
+    val declaredFields: List<RsFieldDecl>,
     val fieldsToAdd: List<RsFieldDecl>,
     structBody: RsStructExprBody
 ) : LocalQuickFixAndIntentionActionOnPsiElement(structBody) {
@@ -35,23 +36,65 @@ class AddStructFieldsFix(
     ) {
         val psiFactory = RustPsiFactory(project)
         var expr = startElement as RsStructExprBody
-        val nExistingFields = expr.structExprFieldList.size
-        val multiline = nExistingFields == 0 || expr.textContains('\n')
+        val multiline = (expr.structExprFieldList.isEmpty() && fieldsToAdd.size > 1) || expr.textContains('\n')
 
+        var firstAdded: RsStructExprField? = null
         for (fieldDecl in fieldsToAdd) {
             val field = psiFactory.createStructExprField(fieldDecl.name!!)
+            val addBefore = findPlaceToAdd(field, expr.structExprFieldList, declaredFields)
             expr.ensureTrailingComma()
-            expr.addFieldBefore(field, null, multiline)
+            val added = expr.addFieldBefore(field, addBefore, multiline)
+            if (firstAdded == null) {
+                firstAdded = added
+            }
         }
 
         expr = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(expr)
         RsCommaFormatProcessor.fixStructExprBody(expr)
 
-        if (editor != null) {
-            val firstExpression = expr.structExprFieldList[nExistingFields].expr
-                ?: error("Invalid struct expr body: `${expr.text}`")
-            editor.caretModel.moveToOffset(firstExpression.textOffset)
+        if (editor != null && firstAdded != null) {
+            editor.caretModel.moveToOffset(firstAdded.expr!!.textOffset)
         }
+    }
+
+    private fun findPlaceToAdd(
+        fieldToAdd: RsStructExprField,
+        existingFields: List<RsStructExprField>,
+        declaredFields: List<RsFieldDecl>
+    ): RsStructExprField? {
+        // If `fieldToAdd` is first in the original declaration, add it first
+        if (fieldToAdd.referenceName == declaredFields.firstOrNull()?.name) {
+            return existingFields.firstOrNull()
+        }
+
+        // If it was last, add last
+        if (fieldToAdd.referenceName == declaredFields.lastOrNull()?.name) {
+            return null
+        }
+
+        val pos = declaredFields.indexOfFirst { it.name == fieldToAdd.referenceName }
+        check(pos != -1)
+        val prev = declaredFields[pos - 1]
+        val next = declaredFields[pos + 1]
+        val prevIdx = existingFields.indexOfFirst { it.referenceName == prev.name }
+        val nextIdx = existingFields.indexOfFirst { it.referenceName == next.name }
+
+        // Fit between two existing fields in the same order
+        if (prevIdx != -1 && prevIdx + 1 == nextIdx) {
+            return existingFields[nextIdx]
+        }
+        // We have next field, but the order is different.
+        // It's impossible to guess the best position, so
+        // let's add to the end
+        if (nextIdx != -1) {
+            return null
+        }
+
+        if (prevIdx != -1) {
+            return existingFields.getOrNull(prevIdx + 1)
+        }
+
+        return null
     }
 
     private fun RsStructExprBody.ensureTrailingComma() {
@@ -64,14 +107,19 @@ class AddStructFieldsFix(
 
     private fun RsStructExprBody.addFieldBefore(
         newField: RsStructExprField,
-        anchor: RsStructExprBody?,
+        anchor: RsStructExprField?,
         multiline: Boolean
     ): RsStructExprField {
 
         check(anchor == null || anchor.parent == this)
         val psiFactory = RustPsiFactory(newField.project)
 
-        val comma = addBefore(psiFactory.createComma(), anchor ?: rbrace)
+        val nextLine = if (multiline) {
+            addBefore(psiFactory.createNewline(), anchor ?: rbrace)
+        } else {
+            anchor ?: rbrace
+        }
+        val comma = addBefore(psiFactory.createComma(), nextLine)
         val result = addBefore(newField, comma) as RsStructExprField
         if (multiline) {
             addBefore(psiFactory.createNewline(), result)

@@ -64,10 +64,52 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         fn main() {
             let _ = S {
                 a: 92,
-                c: 92,
                 b: /*caret*/(),
+                c: 92,
                 d: (),
             };
+        }
+    """)
+
+    fun testFirstFieldIsAddedFirst() = checkQuickFix("""
+        struct S { a: i32, b: i32 }
+
+        fn main() {
+            let _ = S { b: 0,/*caret*/ };
+        }
+    """, """
+        struct S { a: i32, b: i32 }
+
+        fn main() {
+            let _ = S { a: /*caret*/(), b: 0 };
+        }
+    """)
+
+    fun testLastFieldIsAddedLast() = checkQuickFix("""
+        struct S { a: i32, b: i32 }
+
+        fn main() {
+            let _ = S { /*caret*/a: 0 };
+        }
+    """, """
+        struct S { a: i32, b: i32 }
+
+        fn main() {
+            let _ = S { a: 0, b: /*caret*/() };
+        }
+    """)
+
+    fun testPreservesOrder() = checkQuickFix("""
+        struct S { a: i32, b: i32, c: i32, d: i32, e: i32}
+
+        fn main() {
+            let _ = S { a: 0, c: 1, e: 2/*caret*/ };
+        }
+    """, """
+        struct S { a: i32, b: i32, c: i32, d: i32, e: i32}
+
+        fn main() {
+            let _ = S { a: 0, b: /*caret*/(), c: 1, d: (), e: 2 };
         }
     """)
 
