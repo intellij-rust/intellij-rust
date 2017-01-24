@@ -7,7 +7,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsIfExpr
-import org.rust.lang.core.psi.RustPsiFactory
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.types.types.RustBooleanType
 import org.rust.lang.core.types.resolvedType
 
@@ -15,7 +15,7 @@ class RsWithIfExpSurrounder : RsExpressionSurrounderBase<RsIfExpr>() {
     override fun getTemplateDescription(): String = "if expr"
 
     override fun createTemplate(project: Project): RsIfExpr =
-        RustPsiFactory(project).createExpression("if a {stmnt;}") as RsIfExpr
+        RsPsiFactory(project).createExpression("if a {stmnt;}") as RsIfExpr
 
     override fun getWrappedExpression(expression: RsIfExpr): RsExpr =
         expression.condition!!.expr

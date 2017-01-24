@@ -61,7 +61,7 @@ class RemoveCurlyBracesIntention : RsElementBaseIntentionAction<RemoveCurlyBrace
 
         // Conjure up a new use item to make a new path containing the
         // identifier we want; then grab the relevant parts
-        val newUseItem = RustPsiFactory(project).createUseItem("dummy::${identifier.text}")
+        val newUseItem = RsPsiFactory(project).createUseItem("dummy::${identifier.text}")
         val newPath = newUseItem.path ?: return
         val newSubPath = newPath.path ?: return
         val newAlias = newUseItem.alias

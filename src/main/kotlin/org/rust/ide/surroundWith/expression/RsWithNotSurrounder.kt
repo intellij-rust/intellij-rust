@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsParenExpr
 import org.rust.lang.core.psi.RsUnaryExpr
-import org.rust.lang.core.psi.RustPsiFactory
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.types.types.RustBooleanType
 import org.rust.lang.core.types.resolvedType
 
@@ -15,7 +15,7 @@ class RsWithNotSurrounder : RsExpressionSurrounderBase<RsUnaryExpr>() {
     override fun getTemplateDescription(): String = "!(expr)"
 
     override fun createTemplate(project: Project): RsUnaryExpr =
-        RustPsiFactory(project).createExpression("!(a)") as RsUnaryExpr
+        RsPsiFactory(project).createExpression("!(a)") as RsUnaryExpr
 
     override fun getWrappedExpression(expression: RsUnaryExpr): RsExpr =
         (expression.expr as RsParenExpr).expr

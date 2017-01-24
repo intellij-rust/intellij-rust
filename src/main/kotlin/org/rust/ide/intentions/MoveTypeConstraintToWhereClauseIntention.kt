@@ -20,7 +20,7 @@ class MoveTypeConstraintToWhereClauseIntention : RsElementBaseIntentionAction<Rs
     override fun invoke(project: Project, editor: Editor, ctx: RsTypeParameterList) {
         val lifetimeBounds = ctx.lifetimeParameterList
         val typeBounds = ctx.typeParameterList
-        val whereClause = RustPsiFactory(project).createWhereClause(lifetimeBounds, typeBounds)
+        val whereClause = RsPsiFactory(project).createWhereClause(lifetimeBounds, typeBounds)
 
         val declaration = ctx.parentOfType<RsGenericDeclaration>() ?: return
         val addedClause = declaration.addWhereClause(whereClause) ?: return

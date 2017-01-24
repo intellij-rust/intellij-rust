@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsStructItem
-import org.rust.lang.core.psi.RustPsiFactory
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.util.parentOfType
 
 class ImplementStructIntention : RsElementBaseIntentionAction<RsStructItem>() {
@@ -18,7 +18,7 @@ class ImplementStructIntention : RsElementBaseIntentionAction<RsStructItem>() {
     override fun invoke(project: Project, editor: Editor, ctx: RsStructItem) {
         val identifier = ctx.identifier.text
 
-        var impl = RustPsiFactory(project).createInherentImplItem(identifier)
+        var impl = RsPsiFactory(project).createInherentImplItem(identifier)
         val file = ctx.containingFile
 
         impl = file.addAfter(impl, ctx) as? RsImplItem ?: return

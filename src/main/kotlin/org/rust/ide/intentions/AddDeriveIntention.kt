@@ -41,7 +41,7 @@ class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Conte
             return existingDeriveAttr
         }
 
-        val attr = RustPsiFactory(project).createOuterAttr("derive()")
+        val attr = RsPsiFactory(project).createOuterAttr("derive()")
         return item.addBefore(attr, keyword) as RsOuterAttr
     }
 

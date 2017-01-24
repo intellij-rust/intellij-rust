@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RustPsiFactory
+import org.rust.lang.core.psi.RsPsiFactory
 
 /**
  * Adds empty impelementations of the given methods to an impl block.
@@ -32,7 +32,7 @@ class ImplementMethodsFix(
         endElement: PsiElement
     ) {
         val impl = (startElement as RsImplItem)
-        val templateImpl = RustPsiFactory(project).createTraitImplItem(methods)
+        val templateImpl = RsPsiFactory(project).createTraitImplItem(methods)
         val lastMethodOrBrace = impl.functionList.lastOrNull() ?: impl.lbrace ?: return
         val firstToAdd = templateImpl.functionList.first()
         val lastToAdd = templateImpl.functionList.last()

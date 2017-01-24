@@ -4,7 +4,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsIfExpr
-import org.rust.lang.core.psi.RustPsiFactory
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.util.parentOfType
 
 class AddElseIntention : RsElementBaseIntentionAction<RsIfExpr>() {
@@ -18,7 +18,7 @@ class AddElseIntention : RsElementBaseIntentionAction<RsIfExpr>() {
 
     override fun invoke(project: Project, editor: Editor, ctx: RsIfExpr) {
         val ifStmnt = ctx
-        val ifExpr = RustPsiFactory(project).createExpression("${ifStmnt.text}\nelse {}") as RsIfExpr
+        val ifExpr = RsPsiFactory(project).createExpression("${ifStmnt.text}\nelse {}") as RsIfExpr
         val elseBlockOffset = (ifStmnt.replace(ifExpr) as RsIfExpr).elseBranch?.block?.textOffset ?: return
         editor.caretModel.moveToOffset(elseBlockOffset + 1)
     }

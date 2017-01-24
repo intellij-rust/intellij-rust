@@ -75,7 +75,7 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
             expressionToReplace = parent as RsExpr
             expString = converted
         }
-        val newExpr = RustPsiFactory(project).createExpression(expString)
+        val newExpr = RsPsiFactory(project).createExpression(expString)
 
         expressionToReplace.replace(newExpr)
     }

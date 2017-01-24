@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsLambdaExpr
-import org.rust.lang.core.psi.RustPsiFactory
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.util.parentOfType
 
 class WrapLambdaExprIntention : RsElementBaseIntentionAction<RsExpr>() {
@@ -23,7 +23,7 @@ class WrapLambdaExprIntention : RsElementBaseIntentionAction<RsExpr>() {
         val relativeCaretPosition = editor.caretModel.offset - ctx.textOffset
 
         val bodyStr = "\n${ctx.text}\n"
-        val blockExpr = RustPsiFactory(project).createBlockExpr(bodyStr)
+        val blockExpr = RsPsiFactory(project).createBlockExpr(bodyStr)
 
         val offset = ((ctx.replace(blockExpr)) as RsBlockExpr).block?.expr?.textOffset ?: return
         editor.caretModel.moveToOffset(offset + relativeCaretPosition)

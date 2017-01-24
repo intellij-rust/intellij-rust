@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsTryExpr
 import org.rust.lang.core.psi.RsTryMacro
 import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.psi.RustPsiFactory
+import org.rust.lang.core.psi.RsPsiFactory
 
 /**
  * Change `try!` macro to `?` operator.
@@ -27,7 +27,7 @@ class RsTryMacroInspection : RsLocalInspectionTool() {
                 override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
                     val macro = descriptor.psiElement.parent as RsTryMacro
                     val body = macro.tryMacroArgs?.expr ?: return
-                    val tryExpr = RustPsiFactory(project).createExpression("${body.text}?") as RsTryExpr
+                    val tryExpr = RsPsiFactory(project).createExpression("${body.text}?") as RsTryExpr
                     macro.replace(tryExpr)
                 }
             }

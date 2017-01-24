@@ -7,7 +7,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsWhileExpr
-import org.rust.lang.core.psi.RustPsiFactory
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.types.types.RustBooleanType
 import org.rust.lang.core.types.resolvedType
 
@@ -15,7 +15,7 @@ class RsWithWhileExpSurrounder : RsExpressionSurrounderBase<RsWhileExpr>() {
     override fun getTemplateDescription(): String = "while expr"
 
     override fun createTemplate(project: Project): RsWhileExpr =
-        RustPsiFactory(project).createExpression("while a {stmnt;}") as RsWhileExpr
+        RsPsiFactory(project).createExpression("while a {stmnt;}") as RsWhileExpr
 
     override fun getWrappedExpression(expression: RsWhileExpr): RsExpr =
         expression.condition!!.expr

@@ -32,7 +32,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         }
 
         // generic params
-        val genericParams = RustPsiFactory(project).createTypeParameterList(
+        val genericParams = RsPsiFactory(project).createTypeParameterList(
             ctx.allRefArgs.mapNotNull { it.lifetime?.text } + ctx.typeParameters.map { it.text }
         )
         ctx.typeParameterList?.replace(genericParams) ?: ctx.addAfter(genericParams, ctx.identifier)
@@ -57,10 +57,10 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
     }
 
     private fun createRefType(project: Project, origin: RsRefLikeType, lifeTimeName: String): RsRefLikeType =
-        RustPsiFactory(project).createType(origin.text.replaceFirst("&", "&$lifeTimeName ")) as RsRefLikeType
+        RsPsiFactory(project).createType(origin.text.replaceFirst("&", "&$lifeTimeName ")) as RsRefLikeType
 
     private fun createParam(project: Project, origin: PsiElement, lifeTimeName: String): PsiElement =
-        RustPsiFactory(project).createMethodParam(origin.text.replaceFirst("&", "&$lifeTimeName "))
+        RsPsiFactory(project).createMethodParam(origin.text.replaceFirst("&", "&$lifeTimeName "))
 
     private val RsFunction.allRefArgs: List<PsiElement> get() {
         val selfAfg: List<PsiElement> = listOfNotNull(selfParameter)

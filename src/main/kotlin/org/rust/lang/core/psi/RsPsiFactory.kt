@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.impl.mixin.selfParameter
 import org.rust.lang.core.psi.impl.mixin.valueParameters
 import org.rust.lang.core.psi.util.childOfType
 
-class RustPsiFactory(private val project: Project) {
+class RsPsiFactory(private val project: Project) {
     fun createIdentifier(text: String): PsiElement =
         createFromText<RsModDeclItem>("mod $text;")?.identifier
             ?: error("Failed to create identifier: `$text`")

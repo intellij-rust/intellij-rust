@@ -29,7 +29,7 @@ where StubT : RsNamedStub, StubT : StubElement<*> {
     }
 
     override fun setName(name: String): PsiElement? {
-        nameIdentifier?.replace(RustPsiFactory(project).createIdentifier(name))
+        nameIdentifier?.replace(RsPsiFactory(project).createIdentifier(name))
         return this
     }
 

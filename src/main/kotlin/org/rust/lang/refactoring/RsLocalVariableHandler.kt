@@ -78,7 +78,7 @@ class RsIntroduceVariableRefactoring(
     private val file: RsFile
 ) {
 
-    private val psiFactory = RustPsiFactory(project)
+    private val psiFactory = RsPsiFactory(project)
 
     fun possibleTargets(): List<RsExpr> {
         val selection = editor.selectionModel

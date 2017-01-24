@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsUseItem
-import org.rust.lang.core.psi.RustPsiFactory
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.util.parentOfType
 
 /**
@@ -50,7 +50,7 @@ class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesInten
 
         // Create a new use item that contains a glob list that we can use.
         // Then extract from it the glob list and the double colon.
-        val newUseItem = RustPsiFactory(project).createUseItem("dummy::{${identifier.text}}")
+        val newUseItem = RsPsiFactory(project).createUseItem("dummy::{${identifier.text}}")
         val newGlobList = newUseItem.useGlobList ?: return
         val newColonColon = newUseItem.coloncolon ?: return
 

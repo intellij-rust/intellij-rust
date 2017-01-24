@@ -50,7 +50,7 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
     companion object {
         @JvmStatic protected fun doRename(identifier: PsiElement, newName: String) {
             check(identifier.elementType == IDENTIFIER)
-            identifier.replace(RustPsiFactory(identifier.project).createIdentifier(newName.replace(".rs", "")))
+            identifier.replace(RsPsiFactory(identifier.project).createIdentifier(newName.replace(".rs", "")))
         }
     }
 }

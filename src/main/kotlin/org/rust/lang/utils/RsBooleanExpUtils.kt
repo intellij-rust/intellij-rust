@@ -23,7 +23,7 @@ fun PsiElement.isNegation(): Boolean =
     this is RsUnaryExpr && excl != null
 
 fun PsiElement.negate(): PsiElement {
-    val psiFactory = RustPsiFactory(project)
+    val psiFactory = RsPsiFactory(project)
     return when {
         isNegation() -> {
             val inner = (this as RsUnaryExpr).expr!!

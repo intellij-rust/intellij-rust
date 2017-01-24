@@ -47,7 +47,7 @@ class SimplifyBooleanExpressionIntention : RsElementBaseIntentionAction<RsExpr>(
 
     override fun invoke(project: Project, editor: Editor, ctx: RsExpr) {
         val value = calculateExpression(ctx) ?: return
-        ctx.replace(RustPsiFactory(project).createExpression("" + value))
+        ctx.replace(RsPsiFactory(project).createExpression("" + value))
     }
 
     private fun calculateExpression(expr: RsExpr): Boolean? {

@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsRefLikeType
-import org.rust.lang.core.psi.RustPsiFactory
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.util.parentOfType
 
 /**
@@ -42,7 +42,7 @@ open class SetMutableIntention : RsElementBaseIntentionAction<SetMutableIntentio
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val newType = RustPsiFactory(project).createReferenceType(ctx.baseType.text, mutable)
+        val newType = RsPsiFactory(project).createReferenceType(ctx.baseType.text, mutable)
         ctx.refType.replace(newType)
     }
 }

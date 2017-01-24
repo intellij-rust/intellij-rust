@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsFieldDecl
 import org.rust.lang.core.psi.RsStructExprBody
 import org.rust.lang.core.psi.RsStructExprField
-import org.rust.lang.core.psi.RustPsiFactory
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.getNextNonCommentSibling
 
@@ -34,7 +34,7 @@ class AddStructFieldsFix(
         startElement: PsiElement,
         endElement: PsiElement
     ) {
-        val psiFactory = RustPsiFactory(project)
+        val psiFactory = RsPsiFactory(project)
         var expr = startElement as RsStructExprBody
         val multiline = (expr.structExprFieldList.isEmpty() && fieldsToAdd.size > 1) || expr.textContains('\n')
 
@@ -102,7 +102,7 @@ class AddStructFieldsFix(
             ?: return
 
         if (lastField.getNextNonCommentSibling()?.elementType == COMMA) return
-        addAfter(RustPsiFactory(project).createComma(), lastField)
+        addAfter(RsPsiFactory(project).createComma(), lastField)
     }
 
     private fun RsStructExprBody.addFieldBefore(
@@ -112,7 +112,7 @@ class AddStructFieldsFix(
     ): RsStructExprField {
 
         check(anchor == null || anchor.parent == this)
-        val psiFactory = RustPsiFactory(newField.project)
+        val psiFactory = RsPsiFactory(newField.project)
 
         val nextLine = if (multiline) {
             addBefore(psiFactory.createNewline(), anchor ?: rbrace)
