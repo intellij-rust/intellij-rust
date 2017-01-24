@@ -293,6 +293,20 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun testMatchExpr() = testExpr("""
+        struct S;
+
+        enum E { A(S), B }
+
+        fn foo(e: &E) {
+            let s = match *e {
+                E::A(ref x) => x,
+                E::B => panic!(),
+            };
+            s
+        } //^ S
+    """)
+
     fun testNoStackOverflow1() = testExpr("""
         pub struct P<T: ?Sized> { ptr: Box<T> }
 

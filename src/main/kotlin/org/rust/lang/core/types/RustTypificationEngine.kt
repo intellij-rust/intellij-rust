@@ -139,6 +139,13 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
             o.block?.type ?: RustUnknownType
     }
 
+    override fun visitMatchExpr(o: RsMatchExpr) = set {
+        o.matchBody?.matchArmList.orEmpty().asSequence()
+            .mapNotNull { it.expr?.type }
+            .firstOrNull { it !is RustUnknownType }
+            ?: RustUnknownType
+    }
+
     override fun visitWhileExpr(o: RsWhileExpr) = set { RustUnitType }
     override fun visitLoopExpr(o: RsLoopExpr) = set { RustUnitType }
     override fun visitForExpr(o: RsForExpr) = set { RustUnitType }

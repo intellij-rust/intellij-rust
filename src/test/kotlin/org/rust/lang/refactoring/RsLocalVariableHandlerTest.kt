@@ -125,7 +125,7 @@ class RsLocalVariableHandlerTest : RsTestBase() {
             };
         }""", """
         fn bar() {
-            let x = match 5 {
+            let i = match 5 {
                 2 => 2,
                 _ => 8,
             };
