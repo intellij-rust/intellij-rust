@@ -44,6 +44,7 @@
         <!-- Formatter -->
 
         <lang.formatter language="Rust" implementationClass="org.rust.ide.formatter.RsFormattingModelBuilder"/>
+        <postFormatProcessor implementation="org.rust.ide.formatter.RsCommaFormatProcessor" />
 
         <!-- Refactoring support -->
 

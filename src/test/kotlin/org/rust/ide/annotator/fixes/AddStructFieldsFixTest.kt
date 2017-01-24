@@ -31,7 +31,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         struct S { a: i32, b: String }
 
         fn main() {
-            S { a: 92, b: /*caret*/(), };
+            S { a: 92, b: /*caret*/() };
         }
         """)
 
@@ -45,7 +45,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         struct S { a: i32, b: String }
 
         fn main() {
-            S { a: 92, b: /*caret*/(), };
+            S { a: 92, b: /*caret*/() };
         }
         """)
 

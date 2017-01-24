@@ -1,10 +1,12 @@
 package org.rust.ide.annotator.fixes
 
+import com.intellij.codeInsight.CodeInsightUtilBase
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.ide.formatter.RsCommaFormatProcessor
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsFieldDecl
 import org.rust.lang.core.psi.RsStructExprBody
@@ -31,7 +33,7 @@ class AddStructFieldsFix(
         endElement: PsiElement
     ) {
         val psiFactory = RustPsiFactory(project)
-        val expr = startElement as RsStructExprBody
+        var expr = startElement as RsStructExprBody
         val nExistingFields = expr.structExprFieldList.size
         val newBody = psiFactory.createStructExprBody(fieldsToAdd.mapNotNull { it.name })
         val firstNewField = newBody.lbrace.nextSibling ?: return
@@ -39,6 +41,8 @@ class AddStructFieldsFix(
 
         expr.ensureTrailingComma()
         expr.addRangeBefore(firstNewField, lastNewField, expr.rbrace)
+        expr = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(expr)
+        RsCommaFormatProcessor.fixStructExprBody(expr)
 
         if (editor != null) {
             val firstExpression = expr.structExprFieldList[nExistingFields].expr
