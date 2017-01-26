@@ -1,8 +1,6 @@
 package org.rust.lang.core.completion
 
 class RsPartialParseCompletionTest : RsCompletionTestBase() {
-    override val dataPath = "org/rust/lang/core/completion/fixtures/partial_parse"
-
     fun testMatch() = checkSingleCompletion("tokenizer", """
             pub fn parse(tokenizer: lexer::Tokenizer) -> ast::Expr {
                 match tok/*caret*/

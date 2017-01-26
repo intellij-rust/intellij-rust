@@ -3,8 +3,6 @@ package org.rust.lang.core.completion
 import com.intellij.testFramework.LightProjectDescriptor
 
 class RsExternCrateCompletionTest : RsCompletionTestBase() {
-
-    override val dataPath = ""
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibAndDependencyRustProjectDescriptor
 
     fun testExternCrate() = checkSingleCompletion("dep_lib_target", """

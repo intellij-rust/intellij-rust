@@ -7,10 +7,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
 abstract class RsCompletionTestBase : RsTestBase() {
-
-    protected fun checkSingleCompletionByFile() = checkByFile {
-        executeSoloCompletion()
-    }
+    override val dataPath: String get() = ""
 
     protected fun checkSingleCompletion(target: String, @Language("Rust") code: String) {
         InlineFile(code).withCaret()

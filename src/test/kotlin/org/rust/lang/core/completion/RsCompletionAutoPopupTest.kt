@@ -4,8 +4,6 @@ import com.intellij.testFramework.fixtures.CompletionAutoPopupTester
 import org.assertj.core.api.Assertions.assertThat
 
 class RsCompletionAutoPopupTest : RsCompletionTestBase() {
-    override val dataPath: String get() = ""
-
     private lateinit var tester: CompletionAutoPopupTester
 
     override fun setUp() {

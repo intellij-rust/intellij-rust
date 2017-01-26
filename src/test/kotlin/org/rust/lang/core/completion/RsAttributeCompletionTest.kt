@@ -1,8 +1,6 @@
 package org.rust.lang.core.completion
 
 class RsAttributeCompletionTest : RsCompletionTestBase() {
-    override val dataPath: String get() = ""
-
     fun testDeriveOnStruct() = checkSingleCompletion("derive", """
         #[der/*caret*/]
         struct Bar;

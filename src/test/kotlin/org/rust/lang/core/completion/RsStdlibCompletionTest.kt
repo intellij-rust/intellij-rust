@@ -3,8 +3,6 @@ package org.rust.lang.core.completion
 import com.intellij.testFramework.LightProjectDescriptor
 
 class RsStdlibCompletionTest : RsCompletionTestBase() {
-    override val dataPath: String get() = ""
-
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
 
     fun testPrelude() = checkSingleCompletion("drop()", """

@@ -1,8 +1,6 @@
 package org.rust.lang.core.completion
 
 class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
-    override val dataPath = ""
-
     fun testCompleteOnStruct() = checkSingleCompletion("PartialEq", """
         #[derive(PartialE/*caret*/)]
         struct Test {

@@ -1,8 +1,6 @@
 package org.rust.lang.core.completion
 
 class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
-    override val dataPath = ""
-
     fun testBreakInForLoop() = checkSingleCompletion("break", """
         fn foo() {
             for _ in 0..4 {

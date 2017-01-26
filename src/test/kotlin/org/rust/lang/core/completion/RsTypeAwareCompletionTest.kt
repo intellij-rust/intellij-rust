@@ -1,8 +1,6 @@
 package org.rust.lang.core.completion
 
 class RsTypeAwareCompletionTest : RsCompletionTestBase() {
-    override val dataPath = ""
-
     fun testMethodCallExpr() = checkSingleCompletion("S.transmogrify()", """
         struct S;
 
