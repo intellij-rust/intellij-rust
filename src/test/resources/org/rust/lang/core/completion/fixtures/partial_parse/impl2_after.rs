@@ -1,3 +1,0 @@
-struct Automaton { }
-
-impl Automaton

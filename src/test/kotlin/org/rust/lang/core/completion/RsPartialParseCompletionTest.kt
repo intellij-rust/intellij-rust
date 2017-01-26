@@ -3,20 +3,124 @@ package org.rust.lang.core.completion
 class RsPartialParseCompletionTest : RsCompletionTestBase() {
     override val dataPath = "org/rust/lang/core/completion/fixtures/partial_parse"
 
-    fun testMatch() = checkSingleCompletionByFile()
-    fun testIfLet() = checkSingleCompletionByFile()
-    fun testWhileLet() = checkSingleCompletionByFile()
-    fun testIf() = checkSingleCompletionByFile()
-    fun testWhile() = checkSingleCompletionByFile()
-    fun testTypeParams() = checkSingleCompletionByFile()
-    fun testImpl() = checkSingleCompletionByFile()
-    fun testImpl2() = checkSingleCompletionByFile()
-    fun testImpl3() = checkSingleCompletionByFile()
-    fun testLet() = checkSingleCompletionByFile()
-    fun testImplMethodType() = checkSingleCompletionByFile()
-    fun testStructField() = checkSingleCompletionByFile()
-    fun testStatic() = checkSingleCompletionByFile()
-    fun testConst() = checkSingleCompletionByFile()
-    fun testUseGlobs() = checkSingleCompletionByFile()
+    fun testMatch() = checkSingleCompletion("tokenizer", """
+            pub fn parse(tokenizer: lexer::Tokenizer) -> ast::Expr {
+                match tok/*caret*/
+            }
+    """)
+
+    fun testIfLet() = checkSingleCompletion("tokenizer", """
+        pub fn parse(tokenizer: lexer::Tokenizer) -> ast::Expr {
+            if let Some(_) = tok/*caret*/
+        }
+    """)
+
+    fun testWhileLet() = checkSingleCompletion("numbers", """
+        fn main() {
+            let numbers = vec![1, 2, 3].iter();
+            while let Some(_) = num/*caret*/
+        }
+    """)
+
+    fun testIf() = checkSingleCompletion("quuz", """
+        fn foo(quuz: bool) {
+            if qu/*caret*/
+        }
+    """)
+
+    fun testWhile() = checkSingleCompletion("condition", """
+        fn foo() {
+            let condition: bool = true;
+
+            while cond/*caret*/
+        }
+    """)
+
+    fun testTypeParams() = checkSingleCompletion("Walrus", """
+        struct Walrus {
+            stomach: Vec<()>
+        }
+
+        fn make_walrus() -> Result<(), Wal/*caret*/
+    """)
+
+    fun testImpl() = checkSingleCompletion("AutomatonTrait", """
+        trait AutomatonTrait { }
+
+        impl Auto/*caret*/
+    """)
+
+    fun testImpl2() = checkSingleCompletion("AutomatonStruct", """
+        struct AutomatonStruct { }
+
+        impl Auto/*caret*/
+    """)
+
+    fun testImpl3() = checkSingleCompletion("FooBar", """
+        trait Automaton { }
+
+        struct FooBar;
+
+        impl Automaton for Foo/*caret*/
+    """)
+
+    fun testLet() = checkSingleCompletion("Spam", """
+        struct Spam;
+
+        fn main() {
+            let x = Sp/*caret*/
+            ()
+        }
+    """)
+
+    fun testImplMethodType() = checkSingleCompletion("FooBar", """
+        pub struct FooBar;
+
+        struct S;
+
+        trait T {
+            fn foo(self, f: &mut FooBar);
+        }
+
+        impl T for S {
+            fn foo(self, f: Fo/*caret*/)
+        }
+    """)
+
+    fun testStructField() = checkSingleCompletion("foobar", """
+        struct S {
+            foobar: i32,
+            frobnicator: i32,
+        }
+
+        fn main() {
+            let _ = S {
+                foo/*caret*/
+                frobnicator: 92
+            };
+        }
+    """)
+
+    fun testStatic() = checkSingleCompletion("FooBar", """
+        struct FooBar;
+
+        static C: Foo/*caret*/
+    """)
+
+    fun testConst() = checkSingleCompletion("FooBar", """
+        struct FooBar;
+
+        const C: Foo/*caret*/
+    """)
+
+    fun testUseGlobs() = checkSingleCompletion("quux", """
+        use self::m::{foo, qu/*caret*/ bar};
+
+        mod m {
+            fn foo() {}
+            fn bar() {}
+            fn quux() {}
+        }
+    """)
 }
 

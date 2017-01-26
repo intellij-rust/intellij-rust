@@ -10,6 +10,7 @@ import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.ResolveEngine
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.types.*
+import java.io.DataInput
 
 object RustTypificationEngine {
 
