@@ -1,3 +1,17 @@
+# Kotlin
+
+We use [Kotlin] language for the plugin. If you can program in Java, you should
+be able to read and write Kotlin code right away. Kotlin is deeply similar to
+Java, but has less verbose syntax and better safety. It also shares some
+characteristics with Rust: type inference, immutability by default, no null
+pointers (apart from those that come from Java).
+
+If you are unsure how to implement something in Kotlin, ask a question in our
+[Gitter], send a PR in Java, or use **Convert Java to Kotlin** action in the
+IDE.
+
+[Kotlin]: https://kotlinlang.org/
+
 # Getting started
 
 ## Clone
@@ -62,7 +76,7 @@ using the plugin.
 To familiarize yourself with the plugin source code, read
 the [architecture](ARCHITECTURE.md) document and look at some existing pull
 requests. Please do ask any questions in
-our [Gitter](https://gitter.im/intellij-rust/intellij-rust)!
+our [Gitter]!
 
 
 Work in progress pull requests are very welcome! It is also a great way to ask
@@ -302,3 +316,6 @@ And now I need to force push the PR branch:
 ```
 $ ./gradlew test && git push --force-with-lease
 ```
+
+
+[Gitter]: https://gitter.im/intellij-rust/intellij-rust

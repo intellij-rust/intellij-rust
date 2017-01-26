@@ -1,5 +1,4 @@
-We use Kotlin language for the plugin. If you can program in Java or Rust, you
-should be able to read/write Kotlin right away. Learn more about [Kotlin].
+# Platform Documentation
 
 See the IDEA platform [documentation][sdk-docs]. Of a particular interest are
 the following sections:
