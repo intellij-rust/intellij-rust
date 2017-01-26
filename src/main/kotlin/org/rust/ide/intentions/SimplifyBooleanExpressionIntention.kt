@@ -3,6 +3,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.SimplifyBooleanExpressionIntention.UnaryOperator.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.util.ancestors
@@ -46,48 +47,43 @@ class SimplifyBooleanExpressionIntention : RsElementBaseIntentionAction<RsExpr>(
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: RsExpr) {
-        val value = calculateExpression(ctx) ?: return
-        ctx.replace(RsPsiFactory(project).createExpression("" + value))
+        val value = ctx.eval() ?: return
+        ctx.replace(RsPsiFactory(project).createExpression(value.toString()))
     }
 
-    private fun calculateExpression(expr: RsExpr): Boolean? {
-        return when (expr) {
-            is RsBinaryExpr ->
-                when (expr.operatorType) {
-                    ANDAND -> {
-                        val rhs = expr.right ?: return null
-                        val leftValue = calculateExpression(expr.left) ?: return null
-                        if (!leftValue)
-                            return false
-                        val rightValue = calculateExpression(rhs) ?: return null
-                        leftValue && rightValue
-                    }
-                    OROR -> {
-                        val rhs = expr.right ?: return null
-                        val leftValue = calculateExpression(expr.left) ?: return null
-                        if (leftValue)
-                            return true
-                        val rightValue = calculateExpression(rhs) ?: return null
-                        leftValue || rightValue
-                    }
-                    XOR -> {
-                        val rhs = expr.right ?: return null
-                        val leftValue = calculateExpression(expr.left) ?: return null
-                        val rightValue = calculateExpression(rhs) ?: return null
-                        leftValue xor rightValue
-                    }
-                    else -> null
-                }
-            is RsUnaryExpr -> {
-                when (expr.operatorType) {
-                    UnaryOperator.NOT -> expr.expr?.let { calculateExpression(it)?.let { !it } }
-                    else -> null
-                }
-            }
-            is RsParenExpr ->
-                calculateExpression(expr.expr)
+    private fun RsExpr.eval(): Boolean? {
+        return when (this) {
             is RsLitExpr ->
-                (expr.kind as? RsLiteralKind.Boolean)?.value
+                (kind as? RsLiteralKind.Boolean)?.value
+
+            is RsBinaryExpr -> when (operatorType) {
+                ANDAND -> {
+                    val lhs = left.eval() ?: return null
+                    if (!lhs) return false
+                    val rhs = right?.eval() ?: return null
+                    lhs && rhs
+                }
+                OROR -> {
+                    val lhs = left.eval() ?: return null
+                    if (lhs) return true
+                    val rhs = right?.eval() ?: return null
+                    lhs || rhs
+                }
+                XOR -> {
+                    val lhs = left.eval() ?: return null
+                    val rhs = right?.eval() ?: return null
+                    lhs xor rhs
+                }
+                else -> null
+            }
+
+            is RsUnaryExpr -> when (operatorType) {
+                UnaryOperator.NOT -> expr?.eval()?.let { !it }
+                else -> null
+            }
+
+            is RsParenExpr -> expr.eval()
+
             else -> null
         }
     }
@@ -108,11 +104,11 @@ class SimplifyBooleanExpressionIntention : RsElementBaseIntentionAction<RsExpr>(
      * [BOX]     is a `box` operator (`box a`)
      */
     enum class UnaryOperator {
-        REF,        // take reference
-        REF_MUT,    // take mutable reference
-        DEREF,      // dereference
-        MINUS,      // unary minus
-        NOT,        // negation
+        REF, // take reference
+        REF_MUT, // take mutable reference
+        DEREF, // dereference
+        MINUS, // unary minus
+        NOT, // negation
         BOX         // boxing
     }
 
@@ -125,12 +121,12 @@ class SimplifyBooleanExpressionIntention : RsElementBaseIntentionAction<RsExpr>(
      */
     val RsUnaryExpr.operatorType: UnaryOperator?
         get() = when {
-            this.and   != null -> UnaryOperator.REF
-            this.mut   != null -> UnaryOperator.REF_MUT
-            this.mul   != null -> UnaryOperator.DEREF
+            this.and != null -> UnaryOperator.REF
+            this.mut != null -> UnaryOperator.REF_MUT
+            this.mul != null -> UnaryOperator.DEREF
             this.minus != null -> UnaryOperator.MINUS
-            this.excl  != null -> UnaryOperator.NOT
-            this.box   != null -> UnaryOperator.BOX
+            this.excl != null -> UnaryOperator.NOT
+            this.box != null -> UnaryOperator.BOX
             else -> null
         }
 
