@@ -54,7 +54,7 @@ class SimplifyBooleanExpressionIntentionTest : RsIntentionTestBase(SimplifyBoole
         }
     """)
 
-    fun testShortCircuitOr() = doAvailableTest("""
+    fun testShortCircuitOr1() = doAvailableTest("""
         fn main() {
             let a = true /*caret*/|| b;
         }
@@ -64,7 +64,17 @@ class SimplifyBooleanExpressionIntentionTest : RsIntentionTestBase(SimplifyBoole
         }
     """)
 
-    fun testShortCircuitAnd() = doAvailableTest("""
+    fun testShortCircuitOr2() = doAvailableTest("""
+        fn main() {
+            let a = false /*caret*/|| a;
+        }
+    """, """
+        fn main() {
+            let a = a;
+        }
+    """)
+
+    fun testShortCircuitAnd1() = doAvailableTest("""
         fn main() {
             let a = false /*caret*/&& b;
         }
@@ -74,15 +84,13 @@ class SimplifyBooleanExpressionIntentionTest : RsIntentionTestBase(SimplifyBoole
         }
     """)
 
-    fun testNotAvailable1() = doUnavailableTest("""
+    fun testShortCircuitAnd2() = doAvailableTest("""
         fn main() {
             let a = true /*caret*/&& a;
         }
-    """)
-
-    fun testNotAvailable2() = doUnavailableTest("""
+    """, """
         fn main() {
-            let a = false /*caret*/|| a;
+            let a = a;
         }
     """)
 

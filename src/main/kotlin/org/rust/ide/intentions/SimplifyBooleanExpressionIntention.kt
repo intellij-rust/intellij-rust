@@ -20,35 +20,38 @@ class SimplifyBooleanExpressionIntention : RsElementBaseIntentionAction<RsExpr>(
             ?.map { it as RsExpr }
             ?.findLast { isSimplifiableExpression(it) }
 
-    private fun isSimplifiableExpression(psi: PsiElement): Boolean {
+    private fun isSimplifiableExpression(psi: RsExpr): Boolean {
+        if (psi !is RsLitExpr && psi.eval() != null) return true
+
         return when (psi) {
-            is RsLitExpr -> psi.boolLiteral != null
-            is RsBinaryExpr -> {
-                val leftSimplifiable = isSimplifiableExpression(psi.left)
-                val fullSimplifiable =
-                    leftSimplifiable && psi.right?.let { isSimplifiableExpression(it) } ?: true
-                if (fullSimplifiable)
-                    return true
-                return when (psi.operatorType) {
-                    ANDAND, OROR -> leftSimplifiable // short-circuit operations
-                    else -> false
-                }
+            is RsBinaryExpr -> when (psi.operatorType) {
+            // short-circuit operations
+                ANDAND, OROR -> psi.left.eval() != null && psi.right != null
+                else -> false
             }
-            is RsUnaryExpr ->
-                when (psi.operatorType) {
-                    UnaryOperator.NOT -> psi.expr?.let { isSimplifiableExpression(it) } ?: false
-                    else -> false
-                }
-            is RsParenExpr ->
-                isSimplifiableExpression(psi.expr)
-            else ->
-                false
+            else -> false
         }
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: RsExpr) {
-        val value = ctx.eval() ?: return
-        ctx.replace(RsPsiFactory(project).createExpression(value.toString()))
+        val value = ctx.eval()
+        if (value != null) {
+            ctx.replace(RsPsiFactory(project).createExpression(value.toString()))
+            return
+        }
+        val expr = ctx as RsBinaryExpr
+        val leftVal = ctx.left.eval()
+            ?: error("Can't simplify expression")
+        when (expr.operatorType) {
+            ANDAND -> {
+                check(leftVal)
+                expr.replace(expr.right!!)
+            }
+            OROR -> {
+                check(!leftVal)
+                expr.replace(expr.right!!)
+            }
+        }
     }
 
     private fun RsExpr.eval(): Boolean? {

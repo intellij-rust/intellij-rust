@@ -13,5 +13,10 @@ abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase(
         myFixture.checkResult(replaceCaretMarker(after))
     }
 
-    protected fun doUnavailableTest(@Language("Rust") before: String) = doAvailableTest(before, before)
+    protected fun doUnavailableTest(@Language("Rust") before: String) {
+        InlineFile(before).withCaret()
+        check(intention.familyName !in myFixture.availableIntentions.mapNotNull { it.familyName }) {
+            "\"$intention\" should not be available"
+        }
+    }
 }
