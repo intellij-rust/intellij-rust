@@ -3,22 +3,12 @@ package org.rust.lang.core.types
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.impl.isMut
-import org.rust.lang.core.psi.impl.isRef
 import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
-import org.rust.lang.core.resolve.Namespace
-import org.rust.lang.core.resolve.ResolveEngine
-import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.types.*
-import java.io.DataInput
 
 object RustTypificationEngine {
-
-    fun typifyType(type: RsTypeReference): RustType =
-        RustTypeTypificationVisitor(type).compute(type)
-
     fun typifyExpr(expr: RsExpr): RustType =
         RustExprTypificationVisitor().compute(expr)
 
@@ -216,40 +206,6 @@ private class RustItemTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 }
 
-private class RustTypeTypificationVisitor(val pivot: RsTypeReference) : RustComputingVisitor<RustType>() {
-
-    override fun visitTypeReference(o: RsTypeReference) = set {
-        RustUnknownType
-    }
-
-    override fun visitTupleType(o: RsTupleType) = set {
-        // Perhaps introduce tuple_type to PSI?
-        if (o.typeReferenceList.size > 0)
-            RustTupleType(o.typeReferenceList.map { RustTypificationEngine.typifyType(it) })
-        else
-            RustUnitType
-    }
-
-    override fun visitBaseType(o: RsBaseType) = set {
-        val path = o.path?.asRustPath ?: return@set RustUnknownType
-        if (path is RustPath.Named && path.segments.isEmpty()) {
-            val primitiveType = RustPrimitiveType.fromTypeName(path.head.name)
-            if (primitiveType != null) return@set primitiveType
-        }
-        val target = ResolveEngine.resolve(path, pivot, Namespace.Types)
-            .filterIsInstance<RsNamedElement>()
-            .firstOrNull() ?: return@set RustUnknownType
-        val typeArguments = (path as? RustPath.Named)?.head?.typeArguments.orEmpty()
-        RustTypificationEngine.typify(target)
-            .withTypeArguments(typeArguments.map { it.type })
-    }
-
-    override fun visitRefLikeType(o: RsRefLikeType) = set {
-        if (!o.isRef) return@set RustUnknownType //FIXME: handle pointer types
-        val base = o.typeReference ?: return@set RustUnknownType
-        RustReferenceType(RustTypificationEngine.typifyType(base), o.isMut)
-    }
-}
 
 /**
  * Devises type for the given (implicit) self-argument

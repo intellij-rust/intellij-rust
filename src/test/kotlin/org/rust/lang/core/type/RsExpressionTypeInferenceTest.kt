@@ -307,6 +307,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ S
     """)
 
+    fun testParens() = testExpr("""
+        type T = (i32);
+        fn foo(x: T) { x }
+                     //^ i32
+    """)
+
     fun testNoStackOverflow1() = testExpr("""
         pub struct P<T: ?Sized> { ptr: Box<T> }
 
