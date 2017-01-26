@@ -93,26 +93,14 @@ class SimplifyBooleanExpressionIntention : RsElementBaseIntentionAction<RsExpr>(
 
     /**
      * Enum class representing unary operator in rust.
-     *
-     * [REF]     is a `&` operator (`&a`)
-     *
-     * [REF_MUT] is a `&mut` operator (`&mut a`)
-     *
-     * [DEREF]   is a `*` operator (`*a`)
-     *
-     * [MINUS]   is a `-` operator (`-a`)
-     *
-     * [NOT]     is a `!` operator (`!a`)
-     *
-     * [BOX]     is a `box` operator (`box a`)
      */
     enum class UnaryOperator {
-        REF, // take reference
-        REF_MUT, // take mutable reference
-        DEREF, // dereference
-        MINUS, // unary minus
-        NOT, // negation
-        BOX         // boxing
+        REF, // `&a`
+        REF_MUT, // `&mut a`
+        DEREF, // `*a`
+        MINUS, // `-a`
+        NOT, // `!a`
+        BOX, // `box a`
     }
 
     /**
