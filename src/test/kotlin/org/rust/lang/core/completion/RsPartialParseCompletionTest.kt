@@ -120,5 +120,10 @@ class RsPartialParseCompletionTest : RsCompletionTestBase() {
             fn quux() {}
         }
     """)
+
+    fun testTupleStruct() = checkSingleCompletion("FooBar", """
+        type FooBar = ();
+        struct S(Fo/*caret*/)
+    """)
 }
 

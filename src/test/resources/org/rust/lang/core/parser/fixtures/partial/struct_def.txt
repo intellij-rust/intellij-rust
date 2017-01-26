@@ -18,8 +18,8 @@ FILE
       PsiWhiteSpace('\n    ')
       RsFieldDeclImpl(FIELD_DECL)
         PsiElement(identifier)('f2')
-        PsiErrorElement:':' expected, got '}'
-          <empty list>
+      PsiErrorElement:':' expected, got '}'
+        <empty list>
       PsiWhiteSpace('\n')
       PsiElement(})('}')
   PsiWhiteSpace('\n\n')
@@ -38,15 +38,11 @@ FILE
         RsBaseTypeImpl(BASE_TYPE)
           RsPathImpl(PATH)
             PsiElement(identifier)('i32')
-      PsiErrorElement:'f2' unexpected
-        <empty list>
-      PsiWhiteSpace('\n    ')
-      RsFieldDeclImpl(FIELD_DECL)
-        PsiElement(identifier)('f2')
+        PsiWhiteSpace('\n    ')
+        PsiErrorElement:'f2' unexpected
+          PsiElement(identifier)('f2')
         PsiElement(:)(':')
         PsiWhiteSpace(' ')
-        RsBaseTypeImpl(BASE_TYPE)
-          RsPathImpl(PATH)
-            PsiElement(identifier)('i32')
+        PsiElement(identifier)('i32')
       PsiWhiteSpace('\n')
       PsiElement(})('}')

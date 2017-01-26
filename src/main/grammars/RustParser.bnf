@@ -140,6 +140,7 @@ fake Path ::= [ Path '::' ] PathIdent PathTypeArguments? {
   stubClass = "org.rust.lang.core.stubs.RsPathStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+private Path_first ::= identifier | self | 'Self' | super | '::' | '<'
 
 private PathImpl ::= PathStart PathSegment*
 
@@ -340,7 +341,7 @@ Pat ::= PatWild
       | PatUniq
       | PatQualPath
 
-private Pat_first ::= '_' | '&' | '(' | '[' | identifier | self | 'Self' | super | LitExpr | '::' | box | '<' | '-' | ref | mut
+private Pat_first ::= '_' | '&' | '(' | '[' | Path_first | LitExpr  | box | '-' | ref | mut
 
 
 PatQualPath ::= <<qualified_path PathWithoutTypes>>
@@ -487,7 +488,8 @@ private ForeignDecl ::= Constant | Function
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 StructItem ::= AttrsAndVis (struct | union) identifier TypeParameterList?
-               ( TupleFields? WhereClause? ';' | WhereClause? BlockFields ) {
+               ( TupleStructTail | BlockStructTail | UnitStructTail ) {
+  pin = 2
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RsStructOrEnumItemElement"
                  "org.rust.lang.core.psi.RsFieldsOwner" ]
@@ -495,6 +497,10 @@ StructItem ::= AttrsAndVis (struct | union) identifier TypeParameterList?
   stubClass = "org.rust.lang.core.stubs.RsStructItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+
+private TupleStructTail ::= TupleFields WhereClause? ';' { pin = 1 }
+private UnitStructTail ::= WhereClause? ';'
+private BlockStructTail ::= WhereClause? BlockFields
 
 EnumItem ::= AttrsAndVis enum identifier TypeParameterList? WhereClause? EnumBody {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
@@ -525,14 +531,14 @@ EnumVariant ::= OuterAttr* identifier VariantArgs? {
 
 private VariantArgs ::= BlockFields | TupleFields | VariantDiscriminant
 
-BlockFields ::= '{' FieldDecl_with_recover* '}' {
+BlockFields ::= '{' (FieldDecl (',' | &'}'))* '}' {
   pin = 1
   extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-TupleFields ::= '(' <<comma_separated_list TupleFieldDecl>> ')' { pin = 1 }
+TupleFields ::= '(' (TupleFieldDecl (',' | &')'))* ')' { pin = 1 }
 
 VariantDiscriminant ::= '=' AnyExpr { pin = 1 }
 
@@ -546,7 +552,9 @@ FieldDecl ::= AttrsAndVis identifier TypeAscription {
   mixin = "org.rust.lang.core.psi.impl.mixin.RsFieldDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsFieldDeclStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+  recoverWhile = Field_recover
 }
+private Field_recover ::= !('}' | ',')
 
 TupleFieldDecl ::= AttrsAndVis TypeReference {
   implements = [ "org.rust.lang.core.psi.RsOuterAttributeOwner"
@@ -554,13 +562,10 @@ TupleFieldDecl ::= AttrsAndVis TypeReference {
                  "org.rust.lang.core.psi.RsTupleOrStructFieldDeclElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsTupleFieldDeclImplMixin"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  recoverWhile = TupleField_recover
 }
+private TupleField_recover ::= !(')' | ',')
 
-private FieldDecl_with_recover ::= !'}' FieldDecl (',' | &'}') {
-  pin = 1
-  recoverWhile = Field_recover
-}
-private Field_recover ::= !('}' | '#' | pub | identifier)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Trait
