@@ -41,10 +41,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo() -> S {}
         fn main() {
-            let x = {
-                foo()
-            };
-
+            let x = { foo() };
             x
           //^ S
         }
@@ -55,10 +52,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo() -> S {}
         fn main() {
-            let x = {
-                foo();
-            };
-
+            let x = { foo(); };
             x
           //^ ()
         }
