@@ -26,4 +26,8 @@ class AddCurlyBracesIntentionTest : RsIntentionTestBase(AddCurlyBracesIntention(
         "#[macro_use] pub use /*comment*/ std::me/*caret*/m;",
         "#[macro_use] pub use /*comment*/ std::{me/*caret*/m};"
     )
+
+    fun testNotAvailableForStarImports() = doUnavailableTest("""
+        use foo::*/*caret*/;
+    """)
 }

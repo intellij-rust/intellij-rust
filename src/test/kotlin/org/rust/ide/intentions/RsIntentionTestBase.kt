@@ -16,7 +16,7 @@ abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase(
     protected fun doUnavailableTest(@Language("Rust") before: String) {
         InlineFile(before).withCaret()
         check(intention.familyName !in myFixture.availableIntentions.mapNotNull { it.familyName }) {
-            "\"$intention\" should not be available"
+            "\"$intention\" intention should not be available"
         }
     }
 }

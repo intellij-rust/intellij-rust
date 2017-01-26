@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.impl.mixin.isStarImport
 import org.rust.lang.core.psi.util.parentOfType
 
 /**
@@ -33,7 +34,7 @@ class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesInten
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val useItem = element.parentOfType<RsUseItem>() ?: return null
         val path = useItem.path ?: return null
-        if (useItem.useGlobList != null) return null
+        if (useItem.useGlobList != null || useItem.isStarImport) return null
         return Context(useItem, path)
     }
 
