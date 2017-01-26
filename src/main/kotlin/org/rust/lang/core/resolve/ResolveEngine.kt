@@ -293,12 +293,19 @@ private fun lexicalDeclarations(
                 })
         }
 
-        is RsFunction ->
-            sequenceOf(
-                sequenceOfNotNull(scope.selfParameter?.let { ScopeEntry.of(it) }),
-                scope.valueParameters.asSequence().mapNotNull { it.pat }.flatMap { it.boundNames },
+        is RsFunction -> {
+            // ugly hack to avoid loading AST when resolving types
+            // Ideally, we should thread namespace information to this point.
+            if (place is RsTypeReference) {
                 scope.typeParameters.asScopeEntries()
-            ).flatten()
+            } else {
+                sequenceOf(
+                    sequenceOfNotNull(scope.selfParameter?.let { ScopeEntry.of(it) }),
+                    scope.valueParameters.asSequence().mapNotNull { it.pat }.flatMap { it.boundNames },
+                    scope.typeParameters.asScopeEntries()
+                ).flatten()
+            }
+        }
 
         is RsBlock -> {
             // We want to filter out

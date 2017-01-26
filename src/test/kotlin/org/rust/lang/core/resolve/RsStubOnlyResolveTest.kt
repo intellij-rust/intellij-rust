@@ -1,5 +1,7 @@
 package org.rust.lang.core.resolve
 
+import com.intellij.openapi.application.ApplicationInfo
+
 class RsStubOnlyResolveTest : RsResolveTestBase() {
     fun testChildMod() = stubOnlyResolve("""
     //- main.rs
@@ -182,5 +184,29 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         #[path="baz.rs"]
         mod baz;
     """)
+
+    fun testFunctionType() {
+        if (is2016_1()) return
+
+        stubOnlyResolve("""
+        //- main.rs
+            mod foo;
+
+            struct S { field: u32, }
+
+            fn main() { foo::id(S { field: 92 }).field }
+                                                 //^ main.rs
+        //- foo.rs
+            use super::S;
+            pub fn id(x: S) -> S { x }
+        """)
+    }
+
+    // BACKCOMPAT: 2016.1
+    // See org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent
+    private fun is2016_1(): Boolean {
+        val info = ApplicationInfo.getInstance()
+        return (info.majorVersion == "2016" && info.minorVersion == "1")
+    }
 
 }
