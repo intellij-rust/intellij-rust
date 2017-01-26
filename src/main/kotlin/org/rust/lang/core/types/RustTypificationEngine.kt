@@ -3,6 +3,8 @@ package org.rust.lang.core.types
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.impl.isMut
+import org.rust.lang.core.psi.impl.isRef
 import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
@@ -243,9 +245,9 @@ private class RustTypeTypificationVisitor(val pivot: RsTypeReference) : RustComp
     }
 
     override fun visitRefLikeType(o: RsRefLikeType) = set {
-        if (o.and == null) return@set RustUnknownType //FIXME: handle pointer types
+        if (!o.isRef) return@set RustUnknownType //FIXME: handle pointer types
         val base = o.typeReference ?: return@set RustUnknownType
-        RustReferenceType(RustTypificationEngine.typifyType(base), o.mut != null)
+        RustReferenceType(RustTypificationEngine.typifyType(base), o.isMut)
     }
 }
 

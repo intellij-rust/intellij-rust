@@ -304,7 +304,12 @@ ForLifetimes ::= for '<' LifetimesParams '>'
 
 ExternAbi ::= extern STRING_LITERAL?
 
-RetType ::= '->' TypeReference { pin = 1 }
+RetType ::= '->' TypeReference {
+  pin = 1
+  extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 Function ::= OuterAttr*
              default_?
@@ -633,48 +638,48 @@ TypeReference ::= ArrayType
                 | TypeWithBoundsType
                 | ForInType
                 | ImplTraitType {
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
   extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
 }
 
 ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 RefLikeType ::= ( '&' lifetime? mut? | '*' [ const | mut ] ) TypeReference {
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 FnPointerType ::= [ unsafe? ExternAbi? ] fn FnTypeParameters RetType? {
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 TupleType ::= '(' [ <<comma_separated_list TypeReference>> ] ')' {
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 TypeWithBoundsType ::= TypeReference ('+' Bound)+ {
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 Bound ::= lifetime | TraitRef
 
 ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 ImplTraitType ::= impl Polybound ('+' Polybound)* {
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 BaseType ::= '_' | '!' | !'<' PathGenericArgsWithoutColons | &'<' TypeQualPath {
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 

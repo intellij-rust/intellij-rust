@@ -1,10 +1,12 @@
 package org.rust.lang.core.stubs
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.StubBuilder
 import com.intellij.psi.stubs.*
 import com.intellij.psi.tree.IStubFileElementType
+import com.intellij.util.containers.ContainerUtil
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.*
@@ -24,7 +26,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 56
+        override fun getStubVersion(): Int = 57
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -86,14 +88,14 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "PATH" -> RsPathStub.Type
 
     "TRAIT_REF" -> RsPlaceholderStub.Type("TRAIT_REF", ::RsTraitRefImpl)
-    "ARRAY_TYPE" -> RsPlaceholderStub.Type("VEC_TYPE", ::RsArrayTypeImpl)
-    "REF_LIKE_TYPE" -> RsPlaceholderStub.Type("REF_LIKE_TYPE", ::RsRefLikeTypeImpl)
-    "FN_POINTER_TYPE" -> RsPlaceholderStub.Type("BARE_FN_TYPE", ::RsFnPointerTypeImpl)
-    "TUPLE_TYPE" -> RsPlaceholderStub.Type("TUPLE_TYPE", ::RsTupleTypeImpl)
-    "BASE_TYPE" -> RsPlaceholderStub.Type("BASE_TYPE", ::RsBaseTypeImpl)
-    "TYPE_WITH_BOUNDS_TYPE" -> RsPlaceholderStub.Type("TYPE_WITH_BOUNDS_TYPE", ::RsTypeWithBoundsTypeImpl)
-    "FOR_IN_TYPE" -> RsPlaceholderStub.Type("FOR_IN_TYPE", ::RsForInTypeImpl)
-    "IMPL_TRAIT_TYPE" -> RsPlaceholderStub.Type("IMPL_TRAIT_TYPE", ::RsImplTraitTypeImpl)
+    "ARRAY_TYPE" -> RsTypeReferenceStub.Type("VEC_TYPE", ::RsArrayTypeImpl)
+    "REF_LIKE_TYPE" -> RsTypeReferenceStub.Type("REF_LIKE_TYPE", ::RsRefLikeTypeImpl)
+    "FN_POINTER_TYPE" -> RsTypeReferenceStub.Type("BARE_FN_TYPE", ::RsFnPointerTypeImpl)
+    "TUPLE_TYPE" -> RsTypeReferenceStub.Type("TUPLE_TYPE", ::RsTupleTypeImpl)
+    "BASE_TYPE" -> RsTypeReferenceStub.Type("BASE_TYPE", ::RsBaseTypeImpl)
+    "TYPE_WITH_BOUNDS_TYPE" -> RsTypeReferenceStub.Type("TYPE_WITH_BOUNDS_TYPE", ::RsTypeWithBoundsTypeImpl)
+    "FOR_IN_TYPE" -> RsTypeReferenceStub.Type("FOR_IN_TYPE", ::RsForInTypeImpl)
+    "IMPL_TRAIT_TYPE" -> RsTypeReferenceStub.Type("IMPL_TRAIT_TYPE", ::RsImplTraitTypeImpl)
 
     "VALUE_PARAMETER_LIST" -> RsPlaceholderStub.Type("VALUE_PARAMETER_LIST", ::RsValueParameterListImpl)
     "VALUE_PARAMETER" -> RsPlaceholderStub.Type("VALUE_PARAMETER", ::RsValueParameterImpl)
@@ -101,6 +103,8 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "TYPE_PARAMETER" -> RsTypeParameterStub.Type
     "TYPE_PARAMETER_LIST" -> RsPlaceholderStub.Type("TYPE_PARAMETER_LIST", ::RsTypeParameterListImpl)
     "TYPE_ARGUMENT_LIST" -> RsPlaceholderStub.Type("TYPE_ARGUMENT_LIST", ::RsTypeArgumentListImpl)
+
+    "RET_TYPE" -> RsPlaceholderStub.Type("RET_TYPE", ::RsRetTypeImpl)
 
     else -> error("Unknown element $name")
 }
@@ -692,6 +696,41 @@ class RsSelfParameterStub(
 
         override fun indexStub(stub: RsSelfParameterStub, sink: IndexSink) {
             // NOP
+        }
+    }
+}
+
+
+class RsTypeReferenceStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val isMut: Boolean,
+    val isRef: Boolean
+) : StubBase<RsTypeReference>(parent, elementType) {
+
+    class Type<PsiT : RsTypeReference>(
+        debugName: String,
+        private val psiCtor: (RsTypeReferenceStub, IStubElementType<*, *>) -> PsiT
+    ) : RsStubElementType<RsTypeReferenceStub, PsiT>(debugName) {
+
+        override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?)
+            = RsTypeReferenceStub(parentStub, this, dataStream.readBoolean(), dataStream.readBoolean())
+
+        override fun serialize(stub: RsTypeReferenceStub, dataStream: StubOutputStream) = with(dataStream) {
+            dataStream.writeBoolean(stub.isMut)
+            dataStream.writeBoolean(stub.isRef)
+        }
+
+        override fun createPsi(stub: RsTypeReferenceStub) = psiCtor(stub, this)
+
+        override fun createStub(psi: PsiT, parentStub: StubElement<*>?) =
+            RsTypeReferenceStub(parentStub, this,
+                (psi as? RsRefLikeType)?.isMut ?: false,
+                (psi as? RsRefLikeType)?.isRef ?: false
+            )
+
+        override fun indexStub(stub: RsTypeReferenceStub, sink: IndexSink) {
         }
     }
 }

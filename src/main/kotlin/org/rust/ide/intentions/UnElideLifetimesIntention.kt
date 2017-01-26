@@ -4,6 +4,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.isMut
+import org.rust.lang.core.psi.impl.isRef
 import org.rust.lang.core.psi.impl.mixin.selfParameter
 import org.rust.lang.core.psi.impl.mixin.valueParameters
 import org.rust.lang.core.psi.util.contains
@@ -67,7 +69,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         val params: List<PsiElement> = valueParameters
             .filter { param ->
                 val type = param.typeReference
-                type is RsRefLikeType && type.and != null
+                type is RsRefLikeType && type.isRef
             }
         return (selfAfg + params).filterNotNull()
     }
