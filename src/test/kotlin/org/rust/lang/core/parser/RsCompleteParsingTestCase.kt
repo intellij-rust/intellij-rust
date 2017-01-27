@@ -33,7 +33,7 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
     fun testDocComments() = doTest(true)
     fun testAssociatedTypes() = doTest(true)
     fun testLastBlockIsExpression() = doTest(true)
-    fun testLabels() = doTest(true)
+    fun testLoops() = doTest(true)
     fun testBlockBinExpr() = doTest(true)
     fun testMatchCallAmbiguity() = doTest(true)
     fun testVisibility() = doTest(true)

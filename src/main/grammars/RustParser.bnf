@@ -812,7 +812,7 @@ private Label ::= lifetime ':'
 
 ContExpr ::= continue lifetime?
 
-BreakExpr ::= break lifetime? AnyExpr
+BreakExpr ::= break lifetime? AnyExpr?
 
 ForExpr ::= Label? for Pat in NoStructLitExpr SimpleBlock { pin = "for" }
 
