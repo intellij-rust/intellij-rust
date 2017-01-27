@@ -552,7 +552,6 @@ FieldDecl ::= AttrsAndVis identifier TypeAscription {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.RsVisibilityOwner"
-                 "org.rust.lang.core.psi.RsTupleOrStructFieldDeclElement"
                  "org.rust.lang.core.psi.RsNamedElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsFieldDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsFieldDeclStub"
@@ -563,8 +562,7 @@ private Field_recover ::= !('}' | ',')
 
 TupleFieldDecl ::= AttrsAndVis TypeReference {
   implements = [ "org.rust.lang.core.psi.RsOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RsVisibilityOwner"
-                 "org.rust.lang.core.psi.RsTupleOrStructFieldDeclElement" ]
+                 "org.rust.lang.core.psi.RsVisibilityOwner" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsTupleFieldDeclImplMixin"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   recoverWhile = TupleField_recover
