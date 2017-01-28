@@ -75,17 +75,42 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testMethodCallOnTraitObject() = stubOnlyResolve("""
-    //- main.rs
-        mod aux;
-        use aux::T;
+    fun testMethodCallOnTraitObject() {
+        if (is2016_1()) return
 
-        fn call_virtually(obj: &T) { obj.virtual_function() }
-                                                //^ aux.rs
+        stubOnlyResolve("""
+        //- main.rs
+            mod aux;
+            use aux::T;
 
-    //- aux.rs
-        trait T {
-            fn virtual_function(&self) {}
+            fn call_virtually(obj: &T) { obj.virtual_function() }
+                                                    //^ aux.rs
+
+        //- aux.rs
+            trait T {
+                fn virtual_function(&self) {}
+            }
+        """)
+    }
+
+    fun testMethodInherentVsTraitConflict() = checkByCode("""
+        struct Foo;
+        impl Foo {
+            fn bar(&self) {}
+               //X
+        }
+
+        trait Bar {
+            fn bar(&self);
+        }
+        impl Bar for Foo {
+            fn bar(&self) {}
+        }
+
+        fn main() {
+            let foo = Foo;
+            foo.bar();
+               //^
         }
     """)
 
@@ -260,6 +285,26 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
 
         fn main() { S::test(); }
                       //^
+    """)
+
+    fun testAssociatedFunctionInherentVsTraitConflict() = checkByCode("""
+        struct Foo;
+        impl Foo {
+            fn bar() {}
+               //X
+        }
+
+        trait Bar {
+            fn bar();
+        }
+        impl Bar for Foo {
+            fn bar() {}
+        }
+
+        fn main() {
+            Foo::bar();
+                //^
+        }
     """)
 
     fun testMethodFromInherentImpl() = checkByCode("""

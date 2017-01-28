@@ -202,11 +202,4 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         """)
     }
 
-    // BACKCOMPAT: 2016.1
-    // See org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent
-    private fun is2016_1(): Boolean {
-        val info = ApplicationInfo.getInstance()
-        return (info.majorVersion == "2016" && info.minorVersion == "1")
-    }
-
 }
