@@ -68,10 +68,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         extern "C" {
             static mut FOO: u32;
             pub static mut PUB_FOO: u8;
+            static NON_MUT_FOO: u32;
 
             <error descr="Static constant `DEF_FOO` cannot have the `default` qualifier">default</error> static mut DEF_FOO: bool;
             <error descr="Only static constants are allowed in extern blocks">const</error> CONST_FOO: u32;
-            <error descr="Non mutable static constants are not allowed in extern blocks">static NON_MUT_FOO</error>: u32;
             static mut VAL_FOO: u32 <error descr="Static constants in extern blocks cannot have values">= 10</error>;
         }
     """)
