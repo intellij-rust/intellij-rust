@@ -134,9 +134,20 @@ object ResolveEngine {
     fun resolveMethodCallExpr(call: RsMethodCallExpr): RsNamedElement? {
         val receiverType = call.expr.type
         val name = call.identifier.text
+        var method: RsFunction? = null
 
-        return receiverType.getMethodsIn(call.project)
-            .find { it.name == name }
+        receiverType.getMethodsIn(call.project)
+            .filter { it.name == name }
+            .forEach {
+                (it.parent as? RsImplItem)?.let {impl ->
+                    if (impl.traitRef == null) return it
+                }
+                if (method == null) {
+                    method = it
+                }
+            }
+
+        return method
     }
 
     fun resolveUseGlob(ref: RsUseGlob): List<RsCompositeElement> = recursionGuard(ref, Computable {

@@ -485,8 +485,8 @@ class RsResolveTest : RsResolveTestBase() {
     """)
 
     fun testForeignStatic() = checkByCode("""
-        extern "C" { static FOO: i32; }
-                            //X
+        extern "C" { static mut FOO: i32; }
+                                //X
 
         fn main() {
             let _ = FOO;
@@ -591,5 +591,73 @@ class RsResolveTest : RsResolveTestBase() {
                 //^ unresolved
         }
     """)
-}
 
+    fun testMethod() = checkByCode("""
+        struct Foo;
+        impl Foo {
+            fn bar(&self) {}
+               //X
+        }
+
+        fn main() {
+            let foo = Foo;
+            foo.bar();
+               //^
+        }
+    """)
+
+    fun testAssocFunction() = checkByCode("""
+        struct Foo;
+        impl Foo {
+            fn bar() {}
+               //X
+        }
+
+        fn main() {
+            Foo::bar();
+                //^
+        }
+    """)
+
+    fun testMethodVsTraitConflict() = checkByCode("""
+        struct Foo;
+        impl Foo {
+            fn bar(&self) {}
+               //X
+        }
+
+        trait Bar {
+            fn bar(&self);
+        }
+        impl Bar for Foo {
+            fn bar(&self) {}
+        }
+
+        fn main() {
+            let foo = Foo;
+            foo.bar();
+               //^
+        }
+    """)
+
+    // TODO: Associated function conflicts are not resolved correctly yet
+    fun ignoreTestAssocFunctionVsTraitConflict() = checkByCode("""
+        struct Foo;
+        impl Foo {
+            fn bar() {}
+               //X
+        }
+
+        trait Bar {
+            fn bar();
+        }
+        impl Bar for Foo {
+            fn bar() {}
+        }
+
+        fn main() {
+            Foo::bar();
+                //^
+        }
+    """)
+}
