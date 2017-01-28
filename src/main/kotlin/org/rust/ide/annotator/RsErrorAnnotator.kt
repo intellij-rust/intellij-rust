@@ -89,7 +89,6 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             RsConstantRole.FOREIGN -> {
                 deny(const.default, holder, "$title cannot have the `default` qualifier")
                 require(const.static, holder, "Only static constants are allowed in extern blocks", const.const)
-                    ?: require(const.mut, holder, "Non mutable static constants are not allowed in extern blocks", const.static, const.identifier)
                 deny(const.expr, holder, "Static constants in extern blocks cannot have values", const.eq, const.expr)
             }
         }
