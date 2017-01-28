@@ -84,8 +84,9 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
         val fn = o.expr
         if (fn is RsPathExpr) {
             val variant = fn.path.reference.resolve()
-            if (variant is RsEnumVariant) {
-                return@set variant.parentEnum.type
+            when (variant) {
+                is RsEnumVariant -> return@set variant.parentEnum.type
+                is RsStructItem -> return@set variant.type
             }
         }
 

@@ -122,7 +122,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
 
         impl S {
             fn foo(&self) {
-                let s: S = S(92.0);
+                let s = S(92.0);
                 s.0.foo();
                    //^
             }
