@@ -466,4 +466,14 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             }
         }
     """)
+
+    fun testStatic() = checkByCode("""
+        struct S { field: i32 }
+                    //X
+        const FOO: S = S { field: 92 };
+
+        fn main() {
+            FOO.field;
+        }       //^
+    """)
 }

@@ -1,6 +1,5 @@
 package org.rust.lang.core.types
 
-import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.impl.mixin.*
@@ -12,20 +11,24 @@ object RustTypificationEngine {
     fun typifyExpr(expr: RsExpr): RustType =
         RustExprTypificationVisitor().compute(expr)
 
-    fun typifyItem(item: RsItemElement): RustType =
-        RustItemTypificationVisitor().compute(item)
-
     fun typify(named: RsNamedElement): RustType {
         return when (named) {
-            is RsItemElement -> typifyItem(named)
+            is RsStructItem -> RustStructType(named)
+
+            is RsEnumItem -> RustEnumType(named)
+            is RsEnumVariant -> RustEnumType((named.parent as RsEnumBody).parent as RsEnumItem)
+
+            is RsTypeAlias -> named.typeReference?.type ?: RustUnknownType
+
+            is RsFunction -> deviseFunctionType(named)
+
+            is RsTraitItem -> RustTraitType(named)
+
+            is RsConstant -> named.typeReference?.type ?: RustUnknownType
 
             is RsSelfParameter -> deviseSelfType(named)
 
             is RsPatBinding -> inferPatternBindingType(named)
-
-            is RsEnumVariant -> deviseEnumType(named)
-
-            is RsFunction -> deviseFunctionType(named)
 
             is RsTypeParameter -> RustTypeParameterType(named)
 
@@ -175,37 +178,6 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     private val RsBlock.type: RustType get() = expr?.type ?: RustUnitType
 }
 
-private class RustItemTypificationVisitor : RustComputingVisitor<RustType>() {
-
-    override fun visitElement(element: PsiElement) = set {
-        check(element is RsItemElement) {
-            "Panic! Should not be used with anything except the inheritors of `RustItemElement` hierarchy!"
-        }
-
-        RustUnknownType
-    }
-
-    override fun visitStructItem(o: RsStructItem) = set {
-        RustStructType(o)
-    }
-
-    override fun visitEnumItem(o: RsEnumItem) = set {
-        RustEnumType(o)
-    }
-
-    override fun visitTypeAlias(o: RsTypeAlias) = set {
-        o.typeReference?.type ?: RustUnknownType
-    }
-
-    override fun visitFunction(o: RsFunction) = set {
-        deviseFunctionType(o)
-    }
-
-    override fun visitTraitItem(o: RsTraitItem) = set {
-        RustTraitType(o)
-    }
-}
-
 
 /**
  * Devises type for the given (implicit) self-argument
@@ -226,9 +198,6 @@ private fun deviseSelfType(self: RsSelfParameter): RustType {
 
     return Self
 }
-
-private fun deviseEnumType(variant: RsEnumVariant): RustType =
-    RustTypificationEngine.typifyItem((variant.parent as RsEnumBody).parent as RsEnumItem)
 
 private fun deviseFunctionType(fn: RsFunction): RustFunctionType {
     val paramTypes = mutableListOf<RustType>()
