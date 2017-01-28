@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
-import org.rust.lang.RsLanguage
+import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.impl.mixin.selfParameter
 import org.rust.lang.core.psi.impl.mixin.valueParameters
 import org.rust.lang.core.psi.util.childOfType
@@ -106,8 +106,8 @@ class RsPsiFactory(private val project: Project) {
 
     private inline fun <reified T : RsCompositeElement> createFromText(code: String): T? =
         PsiFileFactory.getInstance(project)
-            .createFileFromText("DUMMY.rs", RsLanguage, code)
-            ?.childOfType<T>()
+            .createFileFromText("DUMMY.rs", RsFileType, code)
+            .childOfType<T>()
 
     fun createComma(): PsiElement =
         createFromText<RsValueParameter>("fn f(_ : (), )")!!.nextSibling

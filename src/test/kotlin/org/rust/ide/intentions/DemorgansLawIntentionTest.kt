@@ -111,4 +111,14 @@ class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention()) {
             if 20 >= 50 && 40 != 20 {}
         }
     """)
+
+    fun testConstant() = doAvailableTest("""
+        fn main() {
+            let _ = b /*caret*/|| true;
+        }
+    """, """
+        fn main() {
+            let _ = !(!b && !true);
+        }
+    """)
 }
