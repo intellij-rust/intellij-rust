@@ -7,29 +7,37 @@ import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 
 class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
-    fun testLibraryAsCrate() = stubOnlyResolve("""
-    //- main.rs
-        extern crate my_lib;
+    fun testLibraryAsCrate() {
+        if (is2016_1()) return
 
-        fn main() {
-            my_lib::hello();
-        }         //^ lib.rs
+        stubOnlyResolve("""
+        //- main.rs
+            extern crate my_lib;
 
-    //- lib.rs
-        pub fn hello() {}
-    """)
+            fn main() {
+                my_lib::hello();
+            }         //^ lib.rs
 
-    fun testCrateAlias() = stubOnlyResolve("""
-    //- main.rs
-        extern crate my_lib as other_name;
+        //- lib.rs
+            pub fn hello() {}
+        """)
+    }
 
-        fn main() {
-            other_name::hello();
-        }                //^ lib.rs
+    fun testCrateAlias() {
+        if (is2016_1()) return
 
-    //- lib.rs
-        pub fn hello() {}
-    """)
+        stubOnlyResolve("""
+        //- main.rs
+            extern crate my_lib as other_name;
+
+            fn main() {
+                other_name::hello();
+            }                //^ lib.rs
+
+        //- lib.rs
+            pub fn hello() {}
+        """)
+    }
 
     override fun getProjectDescriptor(): LightProjectDescriptor = WithLibraryProjectDescriptor
 

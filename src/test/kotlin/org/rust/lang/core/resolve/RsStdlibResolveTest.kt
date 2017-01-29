@@ -20,48 +20,68 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {}
     """)
 
-    fun testResolveCollections() = stubOnlyResolve("""
-    //- main.rs
-        use std::collections::Bound;
-                             //^ ...libcollections/lib.rs
+    fun testResolveCollections() {
+        if (is2016_1()) return
 
-        fn main() {}
-    """)
+        stubOnlyResolve("""
+        //- main.rs
+            use std::collections::Bound;
+                                 //^ ...libcollections/lib.rs
 
-    fun testResolveCore() = stubOnlyResolve("""
-    //- main.rs
-        // FromStr is defined in `core` and reexported in `std`
-        use std::str::FromStr;
-                        //^ ...libcore/str/mod.rs
+            fn main() {}
+        """)
+    }
 
-        fn main() { }
-    """)
+    fun testResolveCore() {
+        if (is2016_1()) return
 
-    fun testResolvePrelude() = stubOnlyResolve("""
-    //- main.rs
-        fn main() {
-            let _ = String::new();
-                    //^  ...libcollections/string.rs
-        }
-    """)
+        stubOnlyResolve("""
+        //- main.rs
+            // FromStr is defined in `core` and reexported in `std`
+            use std::str::FromStr;
+                            //^ ...libcore/str/mod.rs
 
-    fun testResolvePreludeInModule() = stubOnlyResolve("""
-    //- main.rs
-        mod tests {
-            fn test() {
+            fn main() { }
+        """)
+    }
+
+    fun testResolvePrelude() {
+        if (is2016_1()) return
+
+        stubOnlyResolve("""
+        //- main.rs
+            fn main() {
                 let _ = String::new();
                         //^  ...libcollections/string.rs
             }
-        }
-    """)
+        """)
+    }
 
-    fun testResolveBox() = stubOnlyResolve("""
-    //- main.rs
-        fn main() {
-            let _ = Box::new(92);
-                   //^ ...liballoc/boxed.rs
-        }
-    """)
+    fun testResolvePreludeInModule() {
+        if (is2016_1()) return
+
+        stubOnlyResolve("""
+        //- main.rs
+            mod tests {
+                fn test() {
+                    let _ = String::new();
+                            //^  ...libcollections/string.rs
+                }
+            }
+        """)
+    }
+
+    fun testResolveBox() {
+        if (is2016_1()) return
+
+        stubOnlyResolve("""
+        //- main.rs
+            fn main() {
+                let _ = Box::new(92);
+                       //^ ...liballoc/boxed.rs
+            }
+        """)
+    }
 
     fun testDontPutStdInStd() = stubOnlyResolve("""
     //- main.rs
@@ -83,19 +103,23 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                   //^ unresolved
     """)
 
-    fun testResolveOption() = stubOnlyResolve("""
-    //- main.rs
-        fn f(i: i32) -> Option<i32> {}
+    fun testResolveOption() {
+        if (is2016_1()) return
 
-        fn bar() {
-            if let Some(x) = f() {
-                if let Some(y) = f(x) {
-                      //^ ...libcore/option.rs
-                    if let Some(z) = f(y) {}
+        stubOnlyResolve("""
+        //- main.rs
+            fn f(i: i32) -> Option<i32> {}
+
+            fn bar() {
+                if let Some(x) = f() {
+                    if let Some(y) = f(x) {
+                          //^ ...libcore/option.rs
+                        if let Some(z) = f(y) {}
+                    }
                 }
             }
-        }
-    """)
+        """)
+    }
 
     fun testPreludeVisibility1() = stubOnlyResolve("""
     //- main.rs
