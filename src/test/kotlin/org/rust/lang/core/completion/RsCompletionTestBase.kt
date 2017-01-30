@@ -35,6 +35,38 @@ abstract class RsCompletionTestBase : RsTestBase() {
         }
     }
 
+    protected fun checkSingleCompletionWithMultipleFiles(target: String, @Language("Rust") code: String) {
+        val files = ProjectFile.parseFileCollection(code)
+        for ((path, text) in files) {
+            myFixture.tempDirFixture.createFile(path, replaceCaretMarker(text))
+        }
+
+        openFileInEditor(files[0].path)
+
+        val variants = myFixture.completeBasic()
+
+        fun LookupElement.debug(): String = "$lookupString ($psiElement)"
+        check(variants == null) {
+            "Expected a single completion, but got ${variants.size}:\n" +
+                variants.map { it.debug() }.joinToString("\n")
+        }
+        val normName = target
+            .substringBeforeLast("()")
+            .substringBeforeLast(" {}")
+            .substringAfterLast("::")
+            .substringAfterLast(".")
+        val shift = when {
+            target.endsWith("()") || target.endsWith("::") -> 3
+            target.endsWith(" {}") -> 4
+            else -> 2
+        }
+        val element = myFixture.file.findElementAt(myFixture.caretOffset - shift)!!
+        val skipTextCheck = normName.isEmpty() || normName.contains(' ')
+        check((skipTextCheck || element.text == normName) && (element.fitsHierarchically(target) || element.fitsLinearly(target))) {
+            "Wrong completion, expected `$target`, but got\n${myFixture.file.text}"
+        }
+    }
+
     protected fun checkContainsCompletion(text: String, @Language("Rust") code: String) {
         InlineFile(code).withCaret()
         val variants = myFixture.completeBasic()
@@ -47,6 +79,23 @@ abstract class RsCompletionTestBase : RsTestBase() {
 
     protected fun checkNoCompletion(@Language("Rust") code: String) {
         InlineFile(code).withCaret()
+        val variants = myFixture.completeBasic()
+        checkNotNull(variants) {
+            val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)
+            "Expected zero completions, but one completion was auto inserted: `${element?.text}`."
+        }
+        check(variants.isEmpty()) {
+            "Expected zero completions, got ${variants.size}."
+        }
+    }
+
+    protected fun checkNoCompletionWithMultipleFiles(@Language("Rust") code: String) {
+        val files = ProjectFile.parseFileCollection(code)
+        for ((path, text) in files) {
+            myFixture.tempDirFixture.createFile(path, replaceCaretMarker(text))
+        }
+
+        openFileInEditor(files[0].path)
         val variants = myFixture.completeBasic()
         checkNotNull(variants) {
             val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)
