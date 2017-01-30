@@ -5,7 +5,7 @@ env:
   global: ORG_GRADLE_PROJECT_downloadIdeaSources=false
   matrix:
         - ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT RUST_VERSION=nightly
-        - ORG_GRADLE_PROJECT_ideaVersion=2016.1              RUST_VERSION=1.13.0
+        - ORG_GRADLE_PROJECT_ideaVersion=2016.2              RUST_VERSION=1.13.0
 
 before_script:
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION -y

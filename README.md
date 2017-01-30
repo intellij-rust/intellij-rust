@@ -34,7 +34,8 @@ If you are looking for the TOML plugin, see [toml] directory.
 
 ## Compatible IDEs
 
-The plugin should be compatible with any Intellij based IDE starting from 2016.1.
+The plugin is compatible with any IntelliJ based IDE starting from 2016.2. 
+If you don't have any yet, try [IntelliJ IDEA Community Edition](https://www.jetbrains.com/idea/)
 
 ## Contributing
 
