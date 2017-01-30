@@ -3,9 +3,9 @@ package org.rust.ide.inspections
 /**
  * Tests for Missing Else inspection.
  */
-class RsMissingElseInspectionTest : RsInspectionsTestBase() {
+class RsMissingElseInspectionTest : RsInspectionsTestBase(RsMissingElseInspection()) {
 
-    fun testSimple() = checkByText<RsMissingElseInspection>("""
+    fun testSimple() = checkByText("""
         fn main() {
             if true {
             }<warning descr="Suspicious if. Did you mean `else if`?"> if </warning>true {
@@ -13,7 +13,7 @@ class RsMissingElseInspectionTest : RsInspectionsTestBase() {
         }
     """)
 
-    fun testNoSpaces() = checkByText<RsMissingElseInspection>("""
+    fun testNoSpaces() = checkByText("""
         fn main() {
             let a = 10;
             if true {
@@ -22,7 +22,7 @@ class RsMissingElseInspectionTest : RsInspectionsTestBase() {
         }
     """)
 
-    fun testWideSpaces() = checkByText<RsMissingElseInspection>("""
+    fun testWideSpaces() = checkByText("""
         fn main() {
             let a = 10;
             if true {
@@ -31,7 +31,7 @@ class RsMissingElseInspectionTest : RsInspectionsTestBase() {
         }
     """)
 
-    fun testComments() = checkByText<RsMissingElseInspection>("""
+    fun testComments() = checkByText("""
         fn main() {
             let a = 10;
             if true {
@@ -40,7 +40,7 @@ class RsMissingElseInspectionTest : RsInspectionsTestBase() {
         }
     """)
 
-    fun testNotLastExpr() = checkByText<RsMissingElseInspection>("""
+    fun testNotLastExpr() = checkByText("""
         fn main() {
             let a = 10;
             if a > 5 {
@@ -50,18 +50,18 @@ class RsMissingElseInspectionTest : RsInspectionsTestBase() {
         }
     """)
 
-    fun testHandlesBlocksWithNoSiblingsCorrectly() = checkByText<RsMissingElseInspection>("""
+    fun testHandlesBlocksWithNoSiblingsCorrectly() = checkByText("""
         fn main() {if true {}}
     """)
 
-    fun testNotAppliedWhenLineBreakExists() = checkByText<RsMissingElseInspection>("""
+    fun testNotAppliedWhenLineBreakExists() = checkByText("""
         fn main() {
             if true {}
             if true {}
         }
     """)
 
-    fun testNotAppliedWhenTheresNoSecondIf() = checkByText<RsMissingElseInspection>("""
+    fun testNotAppliedWhenTheresNoSecondIf() = checkByText("""
         fn main() {
             if {
                 92;
@@ -70,7 +70,7 @@ class RsMissingElseInspectionTest : RsInspectionsTestBase() {
         }
     """)
 
-    fun testFix() = checkFixByText<RsMissingElseInspection>("Change to `else if`", """
+    fun testFix() = checkFixByText("Change to `else if`", """
         fn main() {
             let a = 10;
             if a > 7 {
@@ -86,7 +86,7 @@ class RsMissingElseInspectionTest : RsInspectionsTestBase() {
         }
     """)
 
-    fun testFixPreservesComments() = checkFixByText<RsMissingElseInspection>("Change to `else if`", """
+    fun testFixPreservesComments() = checkFixByText("Change to `else if`", """
         fn main() {
             let a = 10;
             if a > 7 {
