@@ -401,6 +401,10 @@
             <className>org.rust.ide.intentions.UnElideLifetimesIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.IfLetToMatchIntention</className>
+            <category>Rust</category>
+        </intentionAction>
         <!-- Run Configurations -->
 
         <programRunner implementation="org.rust.cargo.runconfig.RsRunner"/>
