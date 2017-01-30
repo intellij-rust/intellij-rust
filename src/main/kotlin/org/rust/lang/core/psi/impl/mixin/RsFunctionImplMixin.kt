@@ -43,7 +43,8 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
 val RsFunction.isAbstract: Boolean get() = stub?.isAbstract ?: (block == null)
 val RsFunction.isAssocFn: Boolean get() = stub?.isStatic ?: (selfParameter == null)
 val RsFunction.isTest: Boolean get() = stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
-
+val RsFunction.isInherentImpl: Boolean
+    get() = (parent as? RsImplItem)?.let { return@let if (it.traitRef == null) it else null } != null
 
 enum class RsFunctionRole {
     // Bump stub version if reorder fields
