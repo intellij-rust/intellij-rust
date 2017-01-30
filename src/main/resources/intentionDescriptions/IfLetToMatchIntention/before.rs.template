@@ -1,0 +1,9 @@
+fn main() {
+<spot>    if let Some(x) = compute() {
+        println!("Got {}", x)
+    }</spot>
+}
+
+fn compute() -> Option<i32> {
+    None
+}
