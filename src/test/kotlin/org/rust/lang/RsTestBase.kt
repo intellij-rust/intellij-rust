@@ -281,7 +281,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         fun checkHtmlStyle(html: String) {
             // http://stackoverflow.com/a/1732454
             val re = "<body>(.*)</body>".toRegex(RegexOption.DOT_MATCHES_ALL)
-            val body = re.find(html)!!.groups[1]!!.value.trim()
+            val body = (re.find(html)?.let { it.groups[1]!!.value } ?: html).trim()
             check(body[0].isUpperCase()) {
                 "Please start description with the capital latter"
             }

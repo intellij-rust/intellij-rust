@@ -11,8 +11,9 @@ abstract class RsInspectionsTestBase(
 
     fun testInspectionHasDocumentation() {
         val description = "inspectionDescriptions/${inspection.javaClass.simpleName?.dropLast("Inspection".length)}.html"
-        inspection.javaClass.classLoader.getResource(description)
+        val text = getResourceAsString(description)
             ?: error("No inspection description for ${inspection.javaClass} ($description)")
+        checkHtmlStyle(text)
     }
 
     override fun getProjectDescriptor() = if (useStdLib) WithStdlibRustProjectDescriptor else super.getProjectDescriptor()
