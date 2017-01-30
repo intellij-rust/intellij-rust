@@ -96,8 +96,7 @@ FILE
               RsPathExprImpl(PATH_EXPR)
                 RsPathImpl(PATH)
                   PsiElement(identifier)('baz')
-              PsiErrorElement:'!', '&', '^' or '|' expected, got ':'
-                PsiElement(:)(':')
+              PsiElement(:)(':')
               PsiWhiteSpace(' ')
               PsiElement(INTEGER_LITERAL)('62')
             PsiElement(,)(',')
