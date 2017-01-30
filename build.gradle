@@ -88,6 +88,10 @@ allprojects {
     }
 
     dependencies {
+        compileOnly('com.github.JetBrains:Grammar-Kit:1.5.0') {
+            exclude group: 'org.jetbrains.plugins'
+        }
+
         compile('com.github.matklad:miglayout:afbdb74067') {
             exclude module: 'org-netbeans-api-annotations-common'
         }
@@ -181,7 +185,7 @@ def parserTask(project, parserName, pkg) {
         }
 
         main = 'org.intellij.grammar.Main'
-        classpath(configurations.compile + files('lib/grammar-kit.jar'))
+        classpath(configurations.compileOnly)
 
         args = [dstRoot, file(src)]
 
