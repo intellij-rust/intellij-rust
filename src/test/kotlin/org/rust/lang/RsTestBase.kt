@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -14,8 +15,8 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
@@ -275,6 +276,27 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             camelCaseName.split("(?=[A-Z])".toRegex())
                 .map(String::toLowerCase)
                 .joinToString("_")
+
+        @JvmStatic
+        fun checkHtmlStyle(html: String) {
+            // http://stackoverflow.com/a/1732454
+            val re = "<body>(.*)</body>".toRegex(RegexOption.DOT_MATCHES_ALL)
+            val body = re.find(html)!!.groups[1]!!.value.trim()
+            check(body[0].isUpperCase()) {
+                "Please start description with the capital latter"
+            }
+
+            check(body.last() == '.') {
+                "Please end description with a period"
+            }
+        }
+
+        @JvmStatic fun getResourceAsString(path: String): String? {
+            val stream = RsTestBase::class.java.classLoader.getResourceAsStream(path)
+                ?: return null
+
+            return StreamUtil.readText(stream, Charsets.UTF_8)
+        }
     }
 }
 
