@@ -1,35 +1,41 @@
 package org.rust.lang.core.resolve
 
-import com.intellij.openapi.application.ApplicationInfo
-
 class RsStubOnlyResolveTest : RsResolveTestBase() {
-    fun testChildMod() = stubOnlyResolve("""
-    //- main.rs
-        mod child;
+    fun testChildMod() {
+        if (is2016_1()) return
 
-        fn main() {
-            child::foo();
-                  //^ child.rs
-        }
+        stubOnlyResolve("""
+        //- main.rs
+            mod child;
 
-    //- child.rs
-        pub fn foo() {}
-    """)
+            fn main() {
+                child::foo();
+                      //^ child.rs
+            }
 
-    fun testNestedChildMod() = stubOnlyResolve("""
-    //- main.rs
-        mod inner {
-            pub mod child;
-        }
+        //- child.rs
+            pub fn foo() {}
+        """)
+    }
 
-        fn main() {
-            inner::child::foo();
-                         //^ inner/child.rs
-        }
+    fun testNestedChildMod() {
+        if (is2016_1()) return
 
-    //- inner/child.rs
-        fn foo() {}
-    """)
+        stubOnlyResolve("""
+        //- main.rs
+            mod inner {
+                pub mod child;
+            }
+
+            fn main() {
+                inner::child::foo();
+                             //^ inner/child.rs
+            }
+
+        //- inner/child.rs
+            fn foo() {}
+        """)
+    }
 
     fun testModDecl() = stubOnlyResolve("""
     //- main.rs
@@ -68,77 +74,97 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     """)
 
-    fun testModDeclPathSuper() = stubOnlyResolve("""
-    //- bar/baz/quux.rs
-        fn quux() {
-            super::main();
-        }          //^ main.rs
+    fun testModDeclPathSuper() {
+        if (is2016_1()) return
 
-    //- main.rs
-        #[path = "bar/baz/quux.rs"]
-        mod foo;
+        stubOnlyResolve("""
+        //- bar/baz/quux.rs
+            fn quux() {
+                super::main();
+            }          //^ main.rs
 
-        fn main(){}
-    """)
+        //- main.rs
+            #[path = "bar/baz/quux.rs"]
+            mod foo;
 
-    fun testModRelative() = stubOnlyResolve("""
-    //- main.rs
-        mod sub;
+            fn main(){}
+        """)
+    }
 
-        fn main() {
-            sub::foobar::quux();
-        }               //^ foo.rs
+    fun testModRelative() {
+        if (is2016_1()) return
 
-    //- sub.rs
-        #[path="./foo.rs"]
-        pub mod foobar;
+        stubOnlyResolve("""
+        //- main.rs
+            mod sub;
 
-    //- foo.rs
-        fn quux() {}
-    """)
+            fn main() {
+                sub::foobar::quux();
+            }               //^ foo.rs
 
-    fun testModRelative2() = stubOnlyResolve("""
-    //- main.rs
-        mod sub;
+        //- sub.rs
+            #[path="./foo.rs"]
+            pub mod foobar;
 
-        fn main() {
-            sub::foobar::quux();
-        }               //^ foo.rs
+        //- foo.rs
+            fn quux() {}
+        """)
+    }
 
-    //- sub/mod.rs
-        #[path="../foo.rs"]
-        pub mod foobar;
+    fun testModRelative2() {
+        if (is2016_1()) return
 
-    //- foo.rs
-        pub fn quux() {}
-    """)
+        stubOnlyResolve("""
+        //- main.rs
+            mod sub;
 
-    fun testUseFromChild() = stubOnlyResolve("""
-    //- main.rs
-        use child::{foo};
-        mod child;
+            fn main() {
+                sub::foobar::quux();
+            }               //^ foo.rs
 
-        fn main() {
-            foo();
-        }  //^ child.rs
+        //- sub/mod.rs
+            #[path="../foo.rs"]
+            pub mod foobar;
 
-    //- child.rs
-        pub fn foo() {}
-    """)
+        //- foo.rs
+            pub fn quux() {}
+        """)
+    }
 
-    fun testUseGlobalPath() = stubOnlyResolve("""
-    //- foo.rs
-        fn main() {
-            ::bar::hello();
-        }         //^ bar.rs
+    fun testUseFromChild() {
+        if (is2016_1()) return
 
-    //- lib.rs
-        mod foo;
-        pub mod bar;
+        stubOnlyResolve("""
+        //- main.rs
+            use child::{foo};
+            mod child;
 
-    //- bar.rs
-        pub fn hello() {}
-    """)
+            fn main() {
+                foo();
+            }  //^ child.rs
+
+        //- child.rs
+            pub fn foo() {}
+        """)
+    }
+
+    fun testUseGlobalPath() {
+        if (is2016_1()) return
+
+        stubOnlyResolve("""
+        //- foo.rs
+            fn main() {
+                ::bar::hello();
+            }         //^ bar.rs
+
+        //- lib.rs
+            mod foo;
+            pub mod bar;
+
+        //- bar.rs
+            pub fn hello() {}
+        """)
+    }
 
     // We resolve mod_decls even if the parent module does not own a directory and mod_decl should not be allowed.
     // This way, we don't need to know the set of crate roots for resolve, which helps indexing.
@@ -200,13 +226,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
             use super::S;
             pub fn id(x: S) -> S { x }
         """)
-    }
-
-    // BACKCOMPAT: 2016.1
-    // See org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent
-    private fun is2016_1(): Boolean {
-        val info = ApplicationInfo.getInstance()
-        return (info.majorVersion == "2016" && info.minorVersion == "1")
     }
 
 }

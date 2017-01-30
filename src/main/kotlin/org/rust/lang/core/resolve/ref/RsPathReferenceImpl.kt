@@ -18,7 +18,11 @@ class RsPathReferenceImpl(
 
     override fun resolveInner(): List<RsCompositeElement> {
         val path = element.asRustPath ?: return emptyList()
-        return ResolveEngine.resolve(path, element, namespaceForResolve)
+        val parent = element.parent.parent
+        return when (parent) {
+            is RsCallExpr -> ResolveEngine.resolveCallExpr(path, element, namespaceForResolve)
+            else -> ResolveEngine.resolve(path, element, namespaceForResolve)
+        }
     }
 
     override fun getVariants(): Array<out Any> =

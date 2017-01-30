@@ -36,7 +36,7 @@ object ResolveEngine {
      * Resolves abstract qualified-path [path] in such a way, like it was a qualified-reference
      * used at [pivot]
      */
-    fun resolve(path: RustPath, pivot: RsCompositeElement, namespace: Namespace? = null): List<RsCompositeElement> {
+    fun resolve(path: RustPath, pivot: RsCompositeElement, namespace: Namespace? = null, single: Boolean = true): List<RsCompositeElement> {
         val start: Sequence<ScopeEntry> = when (path) {
             is RustPath.CrateRelative -> sequenceOfNotNull(
                 pivot.crateRoot?.let { ScopeEntry.of(it) }
@@ -72,7 +72,7 @@ object ResolveEngine {
             current = scope.filter { it.name == name }
         }
 
-        val filteredByNs = if (namespace == null) current else current.filterByNamespace(namespace).take(1)
+        val filteredByNs = if (namespace == null) current else current.filterByNamespace(namespace).take(if (single) 1 else Int.MAX_VALUE)
         return filteredByNs
             .mapNotNull { it.element }
             .toList()
@@ -128,15 +128,22 @@ object ResolveEngine {
         return emptyList()
     }
 
+    fun resolveCallExpr(path: RustPath, element: RsPath, namespace: Namespace?): List<RsCompositeElement> {
+        val fn = resolve(path, element, namespace, false).asSequence()
+            .filterIsInstance<RsNamedElement>()
+            .chooseMajor()
+        return if (fn == null) emptyList() else listOf(fn)
+    }
+
     /**
      * Resolves method-call expressions
      */
     fun resolveMethodCallExpr(call: RsMethodCallExpr): RsNamedElement? {
         val receiverType = call.expr.type
         val name = call.identifier.text
-
         return receiverType.getMethodsIn(call.project)
-            .find { it.name == name }
+            .filter { it.name == name }
+            .chooseMajor()
     }
 
     fun resolveUseGlob(ref: RsUseGlob): List<RsCompositeElement> = recursionGuard(ref, Computable {
@@ -209,6 +216,19 @@ object ResolveEngine {
         get() = splitToSequence("::")
             .map { RustPathSegment(it, emptyList()) }
             .toList()
+
+    /**
+     * Chooses the major element from the given sequence of candidates. For instance,
+     * a function/method from inherent implementation takes precedence over trait implementations.
+     */
+    private fun Sequence<RsNamedElement>.chooseMajor(): RsNamedElement? =
+        partition { it.isInherent }.let {
+            when {
+                it.first.isNotEmpty() -> it.first[0]
+                it.second.isNotEmpty() -> it.second[0]
+                else -> null
+            }
+        }
 }
 
 /**
@@ -511,6 +531,9 @@ private fun <T> Sequence<T>.takeWhileInclusive(pred: (T) -> Boolean): Sequence<T
 
 private fun PsiElement.isStrictAncestorOf(child: PsiElement) =
     PsiTreeUtil.isAncestor(this, child, true)
+
+private val RsCompositeElement.isInherent: Boolean
+    get() = (parent as? RsImplItem)?.let { return@let if (it.traitRef == null) it else null } != null
 
 /**
  * Helper to debug complex iterator pipelines

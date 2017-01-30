@@ -1,5 +1,6 @@
 package org.rust.lang.core.resolve
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.impl.PsiManagerImpl
 import org.assertj.core.api.Assertions.assertThat
@@ -73,5 +74,12 @@ abstract class RsResolveTestBase : RsTestBase() {
                 "Should resolve to ${expectedResolveFile.path}, was ${actualResolveFile.path} instead"
             }
         }
+    }
+
+    // BACKCOMPAT: 2016.1
+    // See org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent
+    protected fun is2016_1(): Boolean {
+        val info = ApplicationInfo.getInstance()
+        return (info.majorVersion == "2016" && info.minorVersion == "1")
     }
 }
