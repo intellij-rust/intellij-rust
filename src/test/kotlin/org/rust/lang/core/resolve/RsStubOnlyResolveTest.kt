@@ -2,7 +2,7 @@ package org.rust.lang.core.resolve
 
 class RsStubOnlyResolveTest : RsResolveTestBase() {
     fun testChildMod() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- main.rs
@@ -19,7 +19,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
     }
 
     fun testNestedChildMod() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- main.rs
@@ -75,7 +75,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
     """)
 
     fun testModDeclPathSuper() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- bar/baz/quux.rs
@@ -92,7 +92,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
     }
 
     fun testModRelative() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- main.rs
@@ -112,7 +112,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
     }
 
     fun testModRelative2() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- main.rs
@@ -132,7 +132,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
     }
 
     fun testUseFromChild() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- main.rs
@@ -149,7 +149,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
     }
 
     fun testUseGlobalPath() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- foo.rs
@@ -212,7 +212,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
     """)
 
     fun testFunctionType() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- main.rs

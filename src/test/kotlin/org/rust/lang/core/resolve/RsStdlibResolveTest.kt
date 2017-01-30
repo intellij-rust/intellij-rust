@@ -21,7 +21,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     """)
 
     fun testResolveCollections() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- main.rs
@@ -33,7 +33,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     }
 
     fun testResolveCore() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- main.rs
@@ -46,7 +46,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     }
 
     fun testResolvePrelude() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- main.rs
@@ -58,7 +58,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     }
 
     fun testResolvePreludeInModule() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- main.rs
@@ -72,7 +72,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     }
 
     fun testResolveBox() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- main.rs
@@ -104,7 +104,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     """)
 
     fun testResolveOption() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- main.rs

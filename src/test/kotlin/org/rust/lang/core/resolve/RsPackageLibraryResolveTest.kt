@@ -8,7 +8,7 @@ import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
     fun testLibraryAsCrate() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- main.rs
@@ -24,7 +24,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
     }
 
     fun testCrateAlias() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- main.rs

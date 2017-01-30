@@ -76,10 +76,10 @@ abstract class RsResolveTestBase : RsTestBase() {
         }
     }
 
-    // BACKCOMPAT: 2016.1
+    // BACKCOMPAT: 2016.2
     // See org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent
-    protected fun is2016_1(): Boolean {
+    protected fun is2016_2(): Boolean {
         val info = ApplicationInfo.getInstance()
-        return (info.majorVersion == "2016" && info.minorVersion == "1")
+        return (info.majorVersion == "2016" && info.minorVersion == "2")
     }
 }

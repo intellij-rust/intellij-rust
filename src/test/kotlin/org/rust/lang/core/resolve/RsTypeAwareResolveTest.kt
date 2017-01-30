@@ -76,7 +76,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
     """)
 
     fun testMethodCallOnTraitObject() {
-        if (is2016_1()) return
+        if (is2016_2()) return
 
         stubOnlyResolve("""
         //- main.rs
