@@ -1,5 +1,6 @@
 package org.rust.ide.annotator
 
+import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.execution.filters.BrowserHyperlinkInfo
@@ -27,8 +28,8 @@ class RsCrateDocLineMarkerProvider : LineMarkerProvider {
                 crateItem.crate,
                 crateItem.crate.textRange,
                 RsIcons.DOCS_MARK,
-                // TODO: change the `6` to Pass.LINE_MARKERS, when it does not duplicate icons.
-                6,
+                // BACKCOMPAT: 2016.2
+                Pass.UPDATE_OVERRIDDEN_MARKERS,
                 { "Open documentation for `${crate.normName}`" },
                 { e, c ->
                     BrowserHyperlinkInfo.openUrl("https://docs.rs/${crate.pkg.name}/${crate.pkg.version}/${crate.normName}")
