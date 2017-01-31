@@ -1,7 +1,6 @@
 {
     parserClass='org.rust.lang.core.parser.RustParser'
     parserUtilClass='org.rust.lang.core.parser.RustParserUtil'
-    psiTreeUtilClass='org.rust.lang.core.parser.RustPsiTreeUtil'
 
     implements='org.rust.lang.core.psi.RsCompositeElement'
     extends='org.rust.lang.core.psi.impl.RsCompositeElementImpl'
