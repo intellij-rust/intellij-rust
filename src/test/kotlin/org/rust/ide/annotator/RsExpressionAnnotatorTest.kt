@@ -81,7 +81,7 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
 
         struct Win {
             foo: i32,
-            #[cfg(widows)] bar: i32,
+            #[cfg(windows)] bar: i32,
         }
 
         #[cfg(unix)]

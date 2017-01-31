@@ -29,6 +29,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val visitor = object : RsVisitor() {
             override fun visitConstant(o: RsConstant) = checkConstant(holder, o)
+            override fun visitValueArgumentList(o: RsValueArgumentList) = checkValueArgumentList(holder, o)
             override fun visitStructItem(o: RsStructItem) = checkStructItem(holder, o)
             override fun visitEnumItem(o: RsEnumItem) = checkDuplicates(holder, o)
             override fun visitEnumVariant(o: RsEnumVariant) = checkDuplicates(holder, o)
@@ -289,6 +290,23 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
     }
 
+    private fun checkValueArgumentList(holder: AnnotationHolder, args: RsValueArgumentList) {
+        val parent = args.parent
+        val expectedCount = when (parent) {
+            is RsCallExpr -> parent.expectedParamsCount()
+            is RsMethodCallExpr -> parent.expectedParamsCount()
+            else -> null
+        } ?: return
+
+        val realCount = args.exprList.size
+        if (realCount != expectedCount) {
+            holder.createErrorAnnotation(args,
+                "This function takes $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}"
+                + " but $realCount ${pluralise(realCount, "parameter", "parameters")}"
+                + " ${pluralise(realCount, "was", "were")} supplied [E0061]")
+        }
+    }
+
     private fun require(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
         if (el != null) null else holder.createErrorAnnotation(highlightElements.combinedRange ?: TextRange.EMPTY_RANGE, message)
 
@@ -420,3 +438,20 @@ private fun AnnotationSession.fileDuplicatesMap(): MutableMap<PsiElement, Map<Na
 
 private val RsNamedElement.namespaced: Sequence<Pair<Namespace, RsNamedElement>>
     get() = namespaces.asSequence().map { Pair(it, this) }
+
+private fun RsCallExpr.expectedParamsCount(): Int? {
+    val path = (expr as? RsPathExpr)?.path ?: return null
+    val fn = path.reference.resolve() as? RsFunction ?: return null
+    if (fn.role == RsFunctionRole.IMPL_METHOD && !fn.isInherentImpl) return null
+    if (fn.queryAttributes.hasCfgAttr()) return null
+    val count = fn.valueParameterList?.valueParameterList?.size ?: return null
+    // We can call foo.method(1), or Foo::method(&foo, 1), so need to take coloncolon into account
+    val s = if (path.coloncolon != null && fn.selfParameter != null) 1 else 0
+    return count + s
+}
+
+private fun RsMethodCallExpr.expectedParamsCount(): Int? {
+    val fn = reference.resolve() as? RsFunction ?: return null
+    if (fn.queryAttributes.hasCfgAttr()) return null
+    return if (fn.isInherentImpl) fn.valueParameterList?.valueParameterList?.size else null
+}

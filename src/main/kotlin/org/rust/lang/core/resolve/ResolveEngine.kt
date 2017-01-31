@@ -222,7 +222,7 @@ object ResolveEngine {
      * a function/method from inherent implementation takes precedence over trait implementations.
      */
     private fun Sequence<RsNamedElement>.chooseMajor(): RsNamedElement? =
-        partition { it.isInherent }.let {
+        partition { it is RsFunction && it.isInherentImpl }.let {
             when {
                 it.first.isNotEmpty() -> it.first[0]
                 it.second.isNotEmpty() -> it.second[0]
@@ -531,9 +531,6 @@ private fun <T> Sequence<T>.takeWhileInclusive(pred: (T) -> Boolean): Sequence<T
 
 private fun PsiElement.isStrictAncestorOf(child: PsiElement) =
     PsiTreeUtil.isAncestor(this, child, true)
-
-private val RsCompositeElement.isInherent: Boolean
-    get() = (parent as? RsImplItem)?.let { return@let if (it.traitRef == null) it else null } != null
 
 /**
  * Helper to debug complex iterator pipelines
