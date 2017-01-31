@@ -12,6 +12,15 @@ before_script:
   - export PATH=$HOME/.cargo/bin:$PATH
   - cargo install rustfmt
 
+install: true
+
+script:
+  # BACKCOMPAT:
+  # HACK: Force grammar kit to use current IDEA version when generating parser.
+  # For actual compilation and running the version from the matrix will be used.
+  - ORG_GRADLE_PROJECT_ideaVersion=2016.3.2 ./gradlew generateRustParser generateTomlParser
+  - ./gradlew check -x generateRustParser -x generateTomlParser
+
 # https://docs.travis-ci.com/user/languages/java/#Caching
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
