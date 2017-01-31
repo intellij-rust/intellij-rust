@@ -11,7 +11,7 @@ import org.rust.lang.core.resolve.lexicalDeclarations
 import org.rust.lang.core.types.types.RustEnumType
 import org.rust.lang.core.types.type
 
-open class AssertPostfixTemplateBase(name: String) : StringBasedPostfixTemplate(
+abstract class AssertPostfixTemplateBase(name: String) : StringBasedPostfixTemplate(
     name,
     "$name!(exp);",
     RsTopMostInScopeSelector(RsExpr::isBool)) {
