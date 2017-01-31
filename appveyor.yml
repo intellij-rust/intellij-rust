@@ -5,7 +5,7 @@ install:
   - curl -sSf -o rustup-init.exe https://dev-static.rust-lang.org/rustup/dist/i686-pc-windows-gnu/rustup-init.exe
   - rustup-init.exe -y
   - set PATH=C:\Users\appveyor\.cargo\bin;%PATH%
-  - cargo install rustfmt
+  - rustfmt --help || cargo install rustfmt --force
 
 build_script:
   - gradlew.bat assemble testClasses --no-daemon
@@ -15,6 +15,7 @@ test_script:
 
 cache:
   - C:\Users\appveyor\.cargo\registry
+  - C:\Users\appveyor\.cargo\bin
 
 # Appveyor does not allow huge cache folders
 # https://www.appveyor.com/docs/build-cache/

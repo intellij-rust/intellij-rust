@@ -10,7 +10,7 @@ env:
 before_script:
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION -y
   - export PATH=$HOME/.cargo/bin:$PATH
-  - cargo install rustfmt
+  - rustfmt --help || cargo install rustfmt --force
 
 install: true
 
@@ -29,3 +29,5 @@ cache:
   directories:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
+    - $HOME/.cargo/registry/
+    - $HOME/.cargo/bin/
