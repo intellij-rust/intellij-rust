@@ -16,10 +16,7 @@ import org.rust.ide.annotator.fixes.ImplementMethodsFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.mixin.*
-import org.rust.lang.core.psi.util.descendantsOfType
-import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.psi.util.trait
+import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 
@@ -40,6 +37,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitPatBinding(o: RsPatBinding) = checkPatBinding(holder, o)
             override fun visitPath(o: RsPath) = checkPath(holder, o)
             override fun visitFieldDecl(o: RsFieldDecl) = checkDuplicates(holder, o)
+            override fun visitRefLikeType(o: RsRefLikeType) = checkRefLikeType(holder, o)
             override fun visitTraitItem(o: RsTraitItem) = checkDuplicates(holder, o)
             override fun visitTypeAlias(o: RsTypeAlias) = checkTypeAlias(holder, o)
             override fun visitTypeParameter(o: RsTypeParameter) = checkDuplicates(holder, o)
@@ -307,6 +305,12 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
     }
 
+    private fun checkRefLikeType(holder: AnnotationHolder, type: RsRefLikeType) {
+        if (type.needsLifetime()) {
+            require(type.lifetime, holder, "Missing lifetime specifier [E0106]", type.and ?: type)
+        }
+    }
+
     private fun require(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
         if (el != null) null else holder.createErrorAnnotation(highlightElements.combinedRange ?: TextRange.EMPTY_RANGE, message)
 
@@ -319,6 +323,12 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun isInTraitImpl(o: RsVis): Boolean {
         val impl = o.parent?.parent
         return impl is RsImplItem && impl.traitRef != null
+    }
+
+    private fun RsRefLikeType.needsLifetime(): Boolean {
+        val parentTuples = generateSequence(parent as? RsTupleType) { it.parent as? RsTupleType }
+        val typeOwner = (parentTuples.lastOrNull() ?: this).parent
+        return typeOwner is RsFieldDecl || typeOwner is RsTupleFieldDecl || typeOwner is RsTypeAlias
     }
 
     private fun isInEnumVariantField(o: RsVis): Boolean {
@@ -444,8 +454,7 @@ private fun RsCallExpr.expectedParamsCount(): Int? {
     val el = path.reference.resolve()
     if (el is RsDocAndAttributeOwner && el.queryAttributes.hasCfgAttr()) return null
     return when (el) {
-        is RsStructItem -> el.tupleFields?.tupleFieldDeclList?.size
-        is RsEnumVariant -> el.tupleFields?.tupleFieldDeclList?.size
+        is RsFieldsOwner -> el.tupleFields?.tupleFieldDeclList?.size
         is RsFunction -> {
             if (el.role == RsFunctionRole.IMPL_METHOD && !el.isInherentImpl) return null
             val count = el.valueParameterList?.valueParameterList?.size ?: return null
