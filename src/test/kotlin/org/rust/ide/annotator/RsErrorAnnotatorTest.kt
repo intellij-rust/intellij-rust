@@ -399,6 +399,52 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun testE0106_MissingLifetimeInStructField() = checkErrors("""
+        struct Foo<'a> {
+            a: &'a str,
+            b: (bool, (u8, &'a f64)),
+            f: &'a Fn (&u32) -> &u32,
+        }
+        struct Bar<'a> {
+            a: <error descr="Missing lifetime specifier [E0106]">&</error>str,
+            b: (bool, (u8, <error>&</error>f64)),
+            f: <error>&</error>Fn (&u32) -> &u32,
+        }
+    """)
+
+    fun testE0106_MissingLifetimeInTupleStructField() = checkErrors("""
+        struct Foo<'a> (
+            &'a str,
+            (bool, (u8, &'a f64)),
+            &'a Fn (&u32) -> &u32);
+        struct Bar<'a> (
+            <error descr="Missing lifetime specifier [E0106]">&</error>str,
+            (bool, (u8, <error>&</error>f64)),
+            <error>&</error>Fn (&u32) -> &u32);
+    """)
+
+    fun testE0106_MissingLifetimeInEnum() = checkErrors("""
+        enum Foo<'a> {
+            A(&'a str),
+            B(bool, (u8, &'a f64)),
+            F(&'a Fn (&u32) -> &u32),
+        }
+        enum Bar<'a> {
+            A(<error descr="Missing lifetime specifier [E0106]">&</error>str),
+            B(bool, (u8, <error>&</error>f64)),
+            F(<error>&</error>Fn (&u32) -> &u32),
+        }
+    """)
+
+    fun testE0106_MissingLifetimeInTypeAlias() = checkErrors("""
+        type Str = &'static str;
+        type Foo<'a> = &'a Fn (&u32) -> &u32;
+
+        type U32 = <error descr="Missing lifetime specifier [E0106]">&</error>u32;
+        type Tuple = (bool, (u8, <error>&</error>f64));
+        type Func = <error>&</error>Fn (&u32) -> &u32;
+    """)
+
     fun testE0124_NameDuplicationInStruct() = checkErrors("""
         struct S {
             no_dup: bool,
