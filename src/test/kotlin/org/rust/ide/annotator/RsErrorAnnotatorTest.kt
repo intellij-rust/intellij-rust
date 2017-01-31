@@ -350,6 +350,20 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun testE0061_InvalidParametersNumberInTupleEnumVariants() = checkErrors("""
+        enum Foo {
+            VAR0(),
+            VAR1(u8)
+        }
+        fn main() {
+            let _ = Foo::VAR0();
+            let _ = Foo::VAR1(1);
+
+            let _ = Foo::VAR0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(4)</error>;
+            let _ = Foo::VAR1<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(10, false)</error>;
+        }
+    """)
+
     fun testE0061_RespectsCfgAttribute() = checkErrors("""
         struct Foo;
         impl Foo {

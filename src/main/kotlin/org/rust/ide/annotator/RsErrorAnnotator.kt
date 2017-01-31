@@ -445,6 +445,7 @@ private fun RsCallExpr.expectedParamsCount(): Int? {
     if (el is RsDocAndAttributeOwner && el.queryAttributes.hasCfgAttr()) return null
     return when (el) {
         is RsStructItem -> el.tupleFields?.tupleFieldDeclList?.size
+        is RsEnumVariant -> el.tupleFields?.tupleFieldDeclList?.size
         is RsFunction -> {
             if (el.role == RsFunctionRole.IMPL_METHOD && !el.isInherentImpl) return null
             val count = el.valueParameterList?.valueParameterList?.size ?: return null
