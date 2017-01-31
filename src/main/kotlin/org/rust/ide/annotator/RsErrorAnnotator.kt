@@ -441,13 +441,19 @@ private val RsNamedElement.namespaced: Sequence<Pair<Namespace, RsNamedElement>>
 
 private fun RsCallExpr.expectedParamsCount(): Int? {
     val path = (expr as? RsPathExpr)?.path ?: return null
-    val fn = path.reference.resolve() as? RsFunction ?: return null
-    if (fn.role == RsFunctionRole.IMPL_METHOD && !fn.isInherentImpl) return null
-    if (fn.queryAttributes.hasCfgAttr()) return null
-    val count = fn.valueParameterList?.valueParameterList?.size ?: return null
-    // We can call foo.method(1), or Foo::method(&foo, 1), so need to take coloncolon into account
-    val s = if (path.coloncolon != null && fn.selfParameter != null) 1 else 0
-    return count + s
+    val el = path.reference.resolve()
+    if (el is RsDocAndAttributeOwner && el.queryAttributes.hasCfgAttr()) return null
+    return when (el) {
+        is RsStructItem -> el.tupleFields?.tupleFieldDeclList?.size
+        is RsFunction -> {
+            if (el.role == RsFunctionRole.IMPL_METHOD && !el.isInherentImpl) return null
+            val count = el.valueParameterList?.valueParameterList?.size ?: return null
+            // We can call foo.method(1), or Foo::method(&foo, 1), so need to take coloncolon into account
+            val s = if (path.coloncolon != null && el.selfParameter != null) 1 else 0
+            count + s
+        }
+        else -> null
+    }
 }
 
 private fun RsMethodCallExpr.expectedParamsCount(): Int? {
