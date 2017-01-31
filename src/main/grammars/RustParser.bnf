@@ -209,8 +209,8 @@ private Item ::= Constant
                | Function
                | TraitItem
                | ImplItem
-               | ModDeclItem
                | ModItem
+               | ModDeclItem
                | ForeignModItem
                | StructItem
                | EnumItem
@@ -454,16 +454,6 @@ ExternCrateItem ::= AttrsAndVis extern crate identifier Alias? ';' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-ModDeclItem ::= AttrsAndVis mod identifier ';' {
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RsReferenceElement"
-                 "org.rust.lang.core.psi.RsNamedElement"
-                 "org.rust.lang.core.psi.RsItemElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsModDeclItemImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RsModDeclItemStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
-
 ModItem ::= AttrsAndVis mod identifier '{' InnerAttr* Items '}' {
   pin = 4
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
@@ -473,6 +463,17 @@ ModItem ::= AttrsAndVis mod identifier '{' InnerAttr* Items '}' {
                  "org.rust.lang.core.psi.RsInnerAttributeOwner" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsModItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsModItemStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+ModDeclItem ::= AttrsAndVis mod identifier ';' {
+  pin = 'identifier' // make sure `ModDeclItem` goes **after** `ModItem`
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.RsReferenceElement"
+                 "org.rust.lang.core.psi.RsNamedElement"
+                 "org.rust.lang.core.psi.RsItemElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RsModDeclItemImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsModDeclItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 

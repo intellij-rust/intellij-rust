@@ -3,7 +3,7 @@ package org.rust.lang.core.completion
 class RsModCompletionTest : RsCompletionTestBase() {
     fun testModCompletionSameDirectory() = checkSingleCompletionWithMultipleFiles("my_mod", """
     //- main.rs
-        mod my_m/*caret*/;
+        mod my_m/*caret*/
 
         fn main() {}
 
