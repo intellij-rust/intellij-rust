@@ -3,7 +3,8 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.ide.intentions.SimplifyBooleanExpressionIntention.UnaryOperator.*
+import org.rust.ide.utils.UnaryOperator
+import org.rust.ide.utils.operatorType
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.util.ancestors
@@ -14,11 +15,11 @@ class SimplifyBooleanExpressionIntention : RsElementBaseIntentionAction<RsExpr>(
     override fun getFamilyName() = "Simplify boolean expression"
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsExpr? =
-        element.parentOfType<RsExpr>()
-            ?.ancestors
-            ?.takeWhile { it is RsExpr }
-            ?.map { it as RsExpr }
-            ?.findLast { isSimplifiableExpression(it) }
+            element.parentOfType<RsExpr>()
+                    ?.ancestors
+                    ?.takeWhile { it is RsExpr }
+                    ?.map { it as RsExpr }
+                    ?.findLast { isSimplifiableExpression(it) }
 
     private fun isSimplifiableExpression(psi: RsExpr): Boolean {
         if (psi !is RsLitExpr && psi.eval() != null) return true
@@ -90,35 +91,4 @@ class SimplifyBooleanExpressionIntention : RsElementBaseIntentionAction<RsExpr>(
             else -> null
         }
     }
-
-    /**
-     * Enum class representing unary operator in rust.
-     */
-    enum class UnaryOperator {
-        REF, // `&a`
-        REF_MUT, // `&mut a`
-        DEREF, // `*a`
-        MINUS, // `-a`
-        NOT, // `!a`
-        BOX, // `box a`
-    }
-
-    /**
-     * Operator of current psi node with unary operation.
-     *
-     * The result can be [REF] (`&`), [REF_MUT] (`&mut`),
-     * [DEREF] (`*`), [MINUS] (`-`), [NOT] (`!`),
-     * [BOX] (`box`) or `null` if none of these.
-     */
-    val RsUnaryExpr.operatorType: UnaryOperator?
-        get() = when {
-            this.and != null -> UnaryOperator.REF
-            this.mut != null -> UnaryOperator.REF_MUT
-            this.mul != null -> UnaryOperator.DEREF
-            this.minus != null -> UnaryOperator.MINUS
-            this.excl != null -> UnaryOperator.NOT
-            this.box != null -> UnaryOperator.BOX
-            else -> null
-        }
-
 }
