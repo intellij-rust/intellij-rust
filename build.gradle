@@ -88,7 +88,7 @@ allprojects {
     }
 
     dependencies {
-        compileOnly('com.github.JetBrains:Grammar-Kit:1.4.3') {
+        compileOnly('com.github.JetBrains:Grammar-Kit:1.5.0') {
             exclude group: 'org.jetbrains.plugins'
             exclude module: 'idea'
         }
