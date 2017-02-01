@@ -326,6 +326,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun checkBinary(holder: AnnotationHolder, o: RsBinaryExpr) {
         if (o.isComparisonBinaryExpr() && (o.left.isComparisonBinaryExpr() || o.right.isComparisonBinaryExpr())) {
             holder.createErrorAnnotation(o, "Chained comparison operator require parentheses")
+        } else if (o.isAssignBinaryExpr() && !o.left.isMutable()) {
+            holder.createErrorAnnotation(o, "Reassigning an immutable variable [E0384]")
         }
     }
 
@@ -416,6 +418,11 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
     val op = this as? RsBinaryExpr ?: return false
     return op.operatorType in RS_COMPARISON_OPERATOR
+}
+
+private fun RsExpr?.isAssignBinaryExpr(): Boolean {
+    val op = this as? RsBinaryExpr ?: return false
+    return op.operatorType in RS_ASSIGN_OPERATOR
 }
 
 private fun checkDuplicates(holder: AnnotationHolder, element: RsNamedElement, scope: PsiElement = element.parent, recursively: Boolean = false) {
@@ -518,4 +525,13 @@ private fun RsMethodCallExpr.expectedParamsCount(): Int? {
     val fn = reference.resolve() as? RsFunction ?: return null
     if (fn.queryAttributes.hasCfgAttr()) return null
     return if (fn.isInherentImpl) fn.valueParameterList?.valueParameterList?.size else null
+}
+
+private fun RsExpr.isMutable(): Boolean {
+    val path = (this as? RsPathExpr)?.path ?: return true
+    val declaration = path.reference.resolve()
+
+    declaration?.parentOfType<RsLetDecl>()?.eq ?: return true
+
+    return when (declaration as? RsPatBinding)?.isMut
 }
