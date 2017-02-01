@@ -1,6 +1,7 @@
 package org.rust.lang.core.parser
 
 import com.intellij.lang.*
+import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.openapi.util.Key
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet

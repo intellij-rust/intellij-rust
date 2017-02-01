@@ -19,8 +19,8 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
 
     override fun toString(): String = "${javaClass.simpleName}($elementType)"
 
-    // BACKCOMPAT: 2016.1
-    // 2016.2 has shiny green stubs
+    // BACKCOMPAT: 2016.2
+    // 2016.3 has shiny green stubs
     abstract class WithParent<StubT : StubElement<*>> : RsStubbedElementImpl<StubT> {
         constructor(node: ASTNode) : super(node)
 

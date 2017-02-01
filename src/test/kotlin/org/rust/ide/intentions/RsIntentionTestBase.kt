@@ -7,6 +7,20 @@ import org.rust.lang.RsTestBase
 abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase() {
     final override val dataPath: String get() = ""
 
+    fun testIntentionHasDocumentation() {
+        val directory = "intentionDescriptions/${intention.javaClass.simpleName}"
+        val files = listOf("before.rs.template", "after.rs.template", "description.html")
+        for (file in files) {
+            val text = getResourceAsString("$directory/$file")
+                ?: error("No inspection description for ${intention.javaClass}.\n" +
+                "Add ${files.joinToString()} to src/main/resources/$directory")
+
+            if (file.endsWith(".html")) {
+                checkHtmlStyle(text)
+            }
+        }
+    }
+
     protected fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         InlineFile(before).withCaret()
         myFixture.launchAction(intention)

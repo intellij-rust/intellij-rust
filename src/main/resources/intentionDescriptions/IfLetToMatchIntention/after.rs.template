@@ -1,0 +1,11 @@
+fn main() {
+<spot>    match compute() {
+        Some(x) => {
+            println!("Got {}", x)
+        }
+    }</spot>
+}
+
+fn compute() -> Option<i32> {
+    None
+}

@@ -287,6 +287,164 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun testE0061_InvalidParametersNumberInFreeFunctions() = checkErrors("""
+        fn par_0() {}
+        fn par_1(p: bool) {}
+        fn par_3(p1: u32, p2: f64, p3: &'static str) {}
+
+        fn main() {
+            par_0();
+            par_1(true);
+            par_3(12, 7.1, "cool");
+
+            par_0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(4)</error>;
+            par_1<error descr="This function takes 1 parameter but 0 parameters were supplied [E0061]">()</error>;
+            par_1<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(true, false)</error>;
+            par_3<error descr="This function takes 3 parameters but 2 parameters were supplied [E0061]">(5, 1.0)</error>;
+        }
+    """)
+
+    fun testE0061_InvalidParametersNumberInAssocFunction() = checkErrors("""
+        struct Foo;
+        impl Foo {
+            fn par_0() {}
+            fn par_2(p1: u32, p2: f64) {}
+        }
+
+        fn main() {
+            Foo::par_0();
+            Foo::par_2(12, 7.1);
+
+            Foo::par_0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(4)</error>;
+            Foo::par_2<error descr="This function takes 2 parameters but 3 parameters were supplied [E0061]">(5, 1.0, "three")</error>;
+        }
+    """)
+
+    fun testE0061_InvalidParametersNumberInImplMethods() = checkErrors("""
+        struct Foo;
+        impl Foo {
+            fn par_0(&self) {}
+            fn par_2(&self, p1: u32, p2: f64) {}
+        }
+
+        fn main() {
+            let foo = Foo;
+            foo.par_0();
+            foo.par_2(12, 7.1);
+
+            foo.par_0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(4)</error>;
+            foo.par_2<error descr="This function takes 2 parameters but 3 parameters were supplied [E0061]">(5, 1.0, "three")</error>;
+            foo.par_2<error descr="This function takes 2 parameters but 0 parameters were supplied [E0061]">()</error>;
+        }
+    """)
+
+    fun testE0061_InvalidParametersNumberInTupleStructs() = checkErrors("""
+        struct Foo0();
+        struct Foo1(u8);
+        fn main() {
+            let _ = Foo0();
+            let _ = Foo1(1);
+
+            let _ = Foo0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(4)</error>;
+            let _ = Foo1<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(10, false)</error>;
+        }
+    """)
+
+    fun testE0061_InvalidParametersNumberInTupleEnumVariants() = checkErrors("""
+        enum Foo {
+            VAR0(),
+            VAR1(u8)
+        }
+        fn main() {
+            let _ = Foo::VAR0();
+            let _ = Foo::VAR1(1);
+
+            let _ = Foo::VAR0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(4)</error>;
+            let _ = Foo::VAR1<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(10, false)</error>;
+        }
+    """)
+
+    fun testE0061_RespectsCfgAttribute() = checkErrors("""
+        struct Foo;
+        impl Foo {
+            #[cfg(windows)]
+            fn bar(&self, p1: u32) {}
+            #[cfg(not(windows))]
+            fn bar(&self) {}
+        }
+        fn main() {
+            let foo = Foo;
+            foo.bar(10);  // Ignore both calls
+            foo.bar();
+        }
+    """)
+
+    // We would like to cover such cases, but the resolve engine has some flaws at the moment,
+    // so just ignore trait implementations to remove false positives
+    fun testE0061_IgnoresTraitImplementations() = checkErrors("""
+        trait Foo1 { fn foo(&self); }
+        trait Foo2 { fn foo(&self, a: u8); }
+        struct Bar;
+        impl Foo1 for Bar {
+            fn foo(&self) {}
+        }
+        impl<T> Foo2 for Box<T> {
+            fn foo(&self, a: u8) {}
+        }
+        type BFoo1<'a> = Box<Foo1 + 'a>;
+
+        fn main() {
+            let bar: BFoo1 = Box::new(Bar);
+            bar.foo();   // Resolves to Foo2.foo() for Box<T>, though Foo1.foo() for Bar is the correct one
+        }
+    """)
+
+    fun testE0106_MissingLifetimeInStructField() = checkErrors("""
+        struct Foo<'a> {
+            a: &'a str,
+            b: (bool, (u8, &'a f64)),
+            f: &'a Fn (&u32) -> &u32,
+        }
+        struct Bar<'a> {
+            a: <error descr="Missing lifetime specifier [E0106]">&</error>str,
+            b: (bool, (u8, <error>&</error>f64)),
+            f: <error>&</error>Fn (&u32) -> &u32,
+        }
+    """)
+
+    fun testE0106_MissingLifetimeInTupleStructField() = checkErrors("""
+        struct Foo<'a> (
+            &'a str,
+            (bool, (u8, &'a f64)),
+            &'a Fn (&u32) -> &u32);
+        struct Bar<'a> (
+            <error descr="Missing lifetime specifier [E0106]">&</error>str,
+            (bool, (u8, <error>&</error>f64)),
+            <error>&</error>Fn (&u32) -> &u32);
+    """)
+
+    fun testE0106_MissingLifetimeInEnum() = checkErrors("""
+        enum Foo<'a> {
+            A(&'a str),
+            B(bool, (u8, &'a f64)),
+            F(&'a Fn (&u32) -> &u32),
+        }
+        enum Bar<'a> {
+            A(<error descr="Missing lifetime specifier [E0106]">&</error>str),
+            B(bool, (u8, <error>&</error>f64)),
+            F(<error>&</error>Fn (&u32) -> &u32),
+        }
+    """)
+
+    fun testE0106_MissingLifetimeInTypeAlias() = checkErrors("""
+        type Str = &'static str;
+        type Foo<'a> = &'a Fn (&u32) -> &u32;
+
+        type U32 = <error descr="Missing lifetime specifier [E0106]">&</error>u32;
+        type Tuple = (bool, (u8, <error>&</error>f64));
+        type Func = <error>&</error>Fn (&u32) -> &u32;
+    """)
+
     fun testE0124_NameDuplicationInStruct() = checkErrors("""
         struct S {
             no_dup: bool,
@@ -586,7 +744,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
 
     fun testE0428_RespectsCfgAttribute() = checkErrors("""
         mod opt {
-            #[cfg(no(windows))] mod foo {}
+            #[cfg(not(windows))] mod foo {}
             #[cfg(windows)]     mod foo {}
 
             #[cfg(windows)] fn <error descr="A value named `hello_world` has already been defined in this module [E0428]">hello_world</error>() {}

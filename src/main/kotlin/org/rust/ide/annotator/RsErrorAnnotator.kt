@@ -16,10 +16,7 @@ import org.rust.ide.annotator.fixes.ImplementMethodsFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.mixin.*
-import org.rust.lang.core.psi.util.descendantsOfType
-import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.psi.util.trait
+import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 
@@ -29,6 +26,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val visitor = object : RsVisitor() {
             override fun visitConstant(o: RsConstant) = checkConstant(holder, o)
+            override fun visitValueArgumentList(o: RsValueArgumentList) = checkValueArgumentList(holder, o)
             override fun visitStructItem(o: RsStructItem) = checkStructItem(holder, o)
             override fun visitEnumItem(o: RsEnumItem) = checkDuplicates(holder, o)
             override fun visitEnumVariant(o: RsEnumVariant) = checkDuplicates(holder, o)
@@ -39,6 +37,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitPatBinding(o: RsPatBinding) = checkPatBinding(holder, o)
             override fun visitPath(o: RsPath) = checkPath(holder, o)
             override fun visitFieldDecl(o: RsFieldDecl) = checkDuplicates(holder, o)
+            override fun visitRefLikeType(o: RsRefLikeType) = checkRefLikeType(holder, o)
             override fun visitTraitItem(o: RsTraitItem) = checkDuplicates(holder, o)
             override fun visitTypeAlias(o: RsTypeAlias) = checkTypeAlias(holder, o)
             override fun visitTypeParameter(o: RsTypeParameter) = checkDuplicates(holder, o)
@@ -289,6 +288,29 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
     }
 
+    private fun checkValueArgumentList(holder: AnnotationHolder, args: RsValueArgumentList) {
+        val parent = args.parent
+        val expectedCount = when (parent) {
+            is RsCallExpr -> parent.expectedParamsCount()
+            is RsMethodCallExpr -> parent.expectedParamsCount()
+            else -> null
+        } ?: return
+
+        val realCount = args.exprList.size
+        if (realCount != expectedCount) {
+            holder.createErrorAnnotation(args,
+                "This function takes $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}"
+                + " but $realCount ${pluralise(realCount, "parameter", "parameters")}"
+                + " ${pluralise(realCount, "was", "were")} supplied [E0061]")
+        }
+    }
+
+    private fun checkRefLikeType(holder: AnnotationHolder, type: RsRefLikeType) {
+        if (type.needsLifetime()) {
+            require(type.lifetime, holder, "Missing lifetime specifier [E0106]", type.and ?: type)
+        }
+    }
+
     private fun require(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
         if (el != null) null else holder.createErrorAnnotation(highlightElements.combinedRange ?: TextRange.EMPTY_RANGE, message)
 
@@ -301,6 +323,12 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun isInTraitImpl(o: RsVis): Boolean {
         val impl = o.parent?.parent
         return impl is RsImplItem && impl.traitRef != null
+    }
+
+    private fun RsRefLikeType.needsLifetime(): Boolean {
+        val parentTuples = generateSequence(parent as? RsTupleType) { it.parent as? RsTupleType }
+        val typeOwner = (parentTuples.lastOrNull() ?: this).parent
+        return typeOwner is RsFieldDecl || typeOwner is RsTupleFieldDecl || typeOwner is RsTypeAlias
     }
 
     private fun isInEnumVariantField(o: RsVis): Boolean {
@@ -420,3 +448,26 @@ private fun AnnotationSession.fileDuplicatesMap(): MutableMap<PsiElement, Map<Na
 
 private val RsNamedElement.namespaced: Sequence<Pair<Namespace, RsNamedElement>>
     get() = namespaces.asSequence().map { Pair(it, this) }
+
+private fun RsCallExpr.expectedParamsCount(): Int? {
+    val path = (expr as? RsPathExpr)?.path ?: return null
+    val el = path.reference.resolve()
+    if (el is RsDocAndAttributeOwner && el.queryAttributes.hasCfgAttr()) return null
+    return when (el) {
+        is RsFieldsOwner -> el.tupleFields?.tupleFieldDeclList?.size
+        is RsFunction -> {
+            if (el.role == RsFunctionRole.IMPL_METHOD && !el.isInherentImpl) return null
+            val count = el.valueParameterList?.valueParameterList?.size ?: return null
+            // We can call foo.method(1), or Foo::method(&foo, 1), so need to take coloncolon into account
+            val s = if (path.coloncolon != null && el.selfParameter != null) 1 else 0
+            count + s
+        }
+        else -> null
+    }
+}
+
+private fun RsMethodCallExpr.expectedParamsCount(): Int? {
+    val fn = reference.resolve() as? RsFunction ?: return null
+    if (fn.queryAttributes.hasCfgAttr()) return null
+    return if (fn.isInherentImpl) fn.valueParameterList?.valueParameterList?.size else null
+}

@@ -3,16 +3,16 @@ package org.rust.ide.inspections
 /**
  * Tests for inspections suppression
  */
-class RsInspectionSuppressorTest : RsInspectionsTestBase() {
+class RsInspectionSuppressorTest : RsInspectionsTestBase(RsSelfConventionInspection()) {
 
-    fun testWithoutSuppression() = checkByText<RsSelfConventionInspection>("""
+    fun testWithoutSuppression() = checkByText("""
         struct S;
         impl S {
             fn is_foo(<warning>s<caret>elf</warning>) { }
         }
     """)
 
-    fun testSuppression() = checkByText<RsSelfConventionInspection>("""
+    fun testSuppression() = checkByText("""
         struct S;
         impl S {
             //noinspection RsSelfConvention

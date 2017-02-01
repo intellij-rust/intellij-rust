@@ -113,6 +113,35 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun `test issue 980`() = checkQuickFix("""
+        struct Mesh {
+            pub name: String,
+            pub vertices: Vec<Vector3>,
+            pub faces: Vec<Face>,
+            pub material: Option<String>,
+        }
+
+        fn main() {
+            Mesh{/*caret*/}
+        }
+    """, """
+        struct Mesh {
+            pub name: String,
+            pub vertices: Vec<Vector3>,
+            pub faces: Vec<Face>,
+            pub material: Option<String>,
+        }
+
+        fn main() {
+            Mesh{
+                name: (),
+                vertices: (),
+                faces: (),
+                material: (),
+            }
+        }
+    """)
+
     private fun checkQuickFix(@Language("Rust") before: String, @Language("Rust") after: String) =
         checkQuickFix("Add missing fields", before, after)
 

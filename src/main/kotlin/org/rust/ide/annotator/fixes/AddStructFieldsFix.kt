@@ -114,15 +114,12 @@ class AddStructFieldsFix(
         check(anchor == null || anchor.parent == this)
         val psiFactory = RsPsiFactory(newField.project)
 
-        val nextLine = if (multiline) {
-            addBefore(psiFactory.createNewline(), anchor ?: rbrace)
-        } else {
-            anchor ?: rbrace
-        }
-        val comma = addBefore(psiFactory.createComma(), nextLine)
+        var comma = psiFactory.createComma()
+        comma = addBefore(comma, anchor ?: rbrace)
         val result = addBefore(newField, comma) as RsStructExprField
         if (multiline) {
             addBefore(psiFactory.createNewline(), result)
+            addAfter(psiFactory.createNewline(), result.nextSibling)
         }
         return result
     }

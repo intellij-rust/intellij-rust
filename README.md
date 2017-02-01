@@ -34,7 +34,8 @@ If you are looking for the TOML plugin, see [toml] directory.
 
 ## Compatible IDEs
 
-The plugin should be compatible with any Intellij based IDE starting from 2016.1.
+The plugin is compatible with any IntelliJ based IDE starting from 2016.2. 
+If you don't have any yet, try [IntelliJ IDEA Community Edition](https://www.jetbrains.com/idea/)
 
 ## Contributing
 
@@ -56,8 +57,8 @@ with [up-for-grab].
 [gitter-chat]: https://gitter.im/intellij-rust/intellij-rust
 [gitter-chat-svg]: https://img.shields.io/badge/Gitter-Join%20Chat-blue.svg?style=flat-square
 
-[travis-build-status]: https://travis-ci.org/intellij-rust/intellij-rust
-[travis-build-status-svg]: https://img.shields.io/travis/intellij-rust/intellij-rust.svg?style=flat-square
+[travis-build-status]: https://travis-ci.org/intellij-rust/intellij-rust?branch=master
+[travis-build-status-svg]: https://img.shields.io/travis/intellij-rust/intellij-rust/master.svg?style=flat-square
 
 [appveyor-build-status]: https://ci.appveyor.com/project/matklad/intellij-rust/branch/master
 [appveyor-build-status-svg]: https://img.shields.io/appveyor/ci/matklad/intellij-rust.svg?style=flat-square

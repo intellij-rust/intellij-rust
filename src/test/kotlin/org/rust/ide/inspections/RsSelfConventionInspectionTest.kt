@@ -3,9 +3,9 @@ package org.rust.ide.inspections
 /**
  * Tests for Self Convention inspection
  */
-class RsSelfConventionInspectionTest : RsInspectionsTestBase() {
+class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionInspection()) {
 
-    fun testFrom() = checkByText<RsSelfConventionInspection>("""
+    fun testFrom() = checkByText("""
         struct Foo;
         impl Foo {
             fn from_nothing(<warning descr="methods called `from_*` usually take no self; consider choosing a less ambiguous name">self</warning>) -> T { T() }
@@ -13,7 +13,7 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase() {
         }
     """)
 
-    fun testInto() = checkByText<RsSelfConventionInspection>("""
+    fun testInto() = checkByText("""
         struct Foo;
         impl Foo {
             fn into_u32(self) -> u32 { 0 }
@@ -23,7 +23,7 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase() {
         }
     """)
 
-    fun testTo() = checkByText<RsSelfConventionInspection>("""
+    fun testTo() = checkByText("""
         struct Foo;
         impl Foo {
             fn to_something(<warning descr="methods called `to_*` usually take self by reference; consider choosing a less ambiguous name">self</warning>) -> u32 { 0 }
@@ -31,7 +31,7 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase() {
         }
     """)
 
-    fun testIs() = checkByText<RsSelfConventionInspection>("""
+    fun testIs() = checkByText("""
         struct Foo;
         impl Foo {
             fn is_awesome(<warning descr="methods called `is_*` usually take self by reference or no self; consider choosing a less ambiguous name">self</warning>) {}
@@ -39,7 +39,7 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase() {
         }
     """)
 
-    fun testIsSuppresedForCopyable() = checkByText<RsSelfConventionInspection>("""
+    fun testIsSuppresedForCopyable() = checkByText("""
         #[derive(Copy)]
         struct Copyable;
         impl Copyable {

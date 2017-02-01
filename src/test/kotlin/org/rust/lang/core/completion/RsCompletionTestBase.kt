@@ -11,6 +11,21 @@ abstract class RsCompletionTestBase : RsTestBase() {
 
     protected fun checkSingleCompletion(target: String, @Language("Rust") code: String) {
         InlineFile(code).withCaret()
+        singleCompletionCheck(target)
+    }
+
+    protected fun checkSingleCompletionWithMultipleFiles(target: String, @Language("Rust") code: String) {
+        val files = ProjectFile.parseFileCollection(code)
+        for ((path, text) in files) {
+            myFixture.tempDirFixture.createFile(path, replaceCaretMarker(text))
+        }
+
+        openFileInEditor(files[0].path)
+
+        singleCompletionCheck(target)
+    }
+
+    protected fun singleCompletionCheck(target: String) {
         val variants = myFixture.completeBasic()
 
         fun LookupElement.debug(): String = "$lookupString ($psiElement)"
@@ -47,6 +62,20 @@ abstract class RsCompletionTestBase : RsTestBase() {
 
     protected fun checkNoCompletion(@Language("Rust") code: String) {
         InlineFile(code).withCaret()
+        noCompletionCheck()
+    }
+
+    protected fun checkNoCompletionWithMultipleFiles(@Language("Rust") code: String) {
+        val files = ProjectFile.parseFileCollection(code)
+        for ((path, text) in files) {
+            myFixture.tempDirFixture.createFile(path, replaceCaretMarker(text))
+        }
+
+        openFileInEditor(files[0].path)
+        noCompletionCheck()
+    }
+
+    protected fun noCompletionCheck() {
         val variants = myFixture.completeBasic()
         checkNotNull(variants) {
             val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)

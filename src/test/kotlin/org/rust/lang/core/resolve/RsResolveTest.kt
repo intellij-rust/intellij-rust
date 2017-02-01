@@ -592,4 +592,3 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 }
-
