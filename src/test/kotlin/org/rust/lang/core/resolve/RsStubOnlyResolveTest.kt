@@ -228,4 +228,21 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         """)
     }
 
+    fun `test tuple struct`() {
+        if (is2016_2()) return
+
+        stubOnlyResolve("""
+        //- main.rs
+            mod foo;
+            use foo::S;
+
+            fn f(s: S) { s.0.bar() }
+                            //^ foo.rs
+        //- foo.rs
+            struct S(Bar);
+            struct Bar;
+            impl Bar { fn bar(self) {} }
+        """)
+    }
+
 }

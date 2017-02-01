@@ -543,7 +543,12 @@ BlockFields ::= '{' (FieldDecl (',' | &'}'))* '}' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-TupleFields ::= '(' (TupleFieldDecl (',' | &')'))* ')' { pin = 1 }
+TupleFields ::= '(' (TupleFieldDecl (',' | &')'))* ')' {
+  pin = 1
+  extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 VariantDiscriminant ::= '=' AnyExpr { pin = 1 }
 
@@ -564,6 +569,8 @@ TupleFieldDecl ::= AttrsAndVis TypeReference {
   implements = [ "org.rust.lang.core.psi.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.RsVisibilityOwner" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsTupleFieldDeclImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   recoverWhile = TupleField_recover
 }
