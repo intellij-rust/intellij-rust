@@ -533,5 +533,5 @@ private fun RsExpr.isMutable(): Boolean {
 
     declaration?.parentOfType<RsLetDecl>()?.eq ?: return true
 
-    return when (declaration as? RsPatBinding)?.isMut
+    return (declaration as? RsPatBinding)?.isMut ?: true
 }
