@@ -57,7 +57,7 @@ with [up-for-grab].
 [gitter-chat]: https://gitter.im/intellij-rust/intellij-rust
 [gitter-chat-svg]: https://img.shields.io/badge/Gitter-Join%20Chat-blue.svg?style=flat-square
 
-[travis-build-status]: https://travis-ci.org/intellij-rust/intellij-rust
+[travis-build-status]: https://travis-ci.org/intellij-rust/intellij-rust?branch=master
 [travis-build-status-svg]: https://img.shields.io/travis/intellij-rust/intellij-rust.svg?style=flat-square
 
 [appveyor-build-status]: https://ci.appveyor.com/project/matklad/intellij-rust/branch/master
