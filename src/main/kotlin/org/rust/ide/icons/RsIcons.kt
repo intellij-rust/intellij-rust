@@ -28,7 +28,7 @@ object RsIcons {
     val FINAL_MARK = AllIcons.Nodes.FinalMark!!
     val STATIC_MARK = AllIcons.Nodes.StaticMark!!
     val TEST_MARK = AllIcons.Nodes.JunitTestMark!!
-    val DOCS_MARK = AllIcons.General.Help_small!!
+    val DOCS_MARK = IconLoader.getIcon("/icons/docsrs.png")
 
     // Source code elements
 
