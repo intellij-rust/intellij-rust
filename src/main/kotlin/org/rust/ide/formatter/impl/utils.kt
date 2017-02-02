@@ -1,7 +1,6 @@
 package org.rust.ide.formatter.impl
 
 import com.intellij.lang.ASTNode
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.tree.TokenSet
@@ -50,19 +49,6 @@ val PsiElement.isTopLevelItem: Boolean
 val PsiElement.isStmtOrExpr: Boolean
     get() = this is RsStmt || this is RsExpr
 
-val PsiElement.isBlockDelim: Boolean
-    get() = node.isBlockDelim
-
-fun onSameLine(e1: PsiElement, e2: PsiElement): Boolean {
-    val documentManager = PsiDocumentManager.getInstance(e1.project)
-    val document = documentManager.getDocument(e1.containingFile)
-    return if (document != null && document == documentManager.getDocument(e2.containingFile)) {
-        document.getLineNumber(e1.textOffset) == document.getLineNumber(e2.textOffset)
-    } else {
-        false
-    }
-}
-
 
 val ASTNode.isDelimitedBlock: Boolean
     get() = elementType in DELIMITED_BLOCKS
@@ -76,9 +62,6 @@ val ASTNode.isFlatBraceBlock: Boolean
  */
 val ASTNode.isFlatBlock: Boolean
     get() = isFlatBraceBlock || elementType == PAT_ENUM
-
-val ASTNode.isBlockDelim: Boolean
-    get() = isBlockDelim(treeParent)
 
 fun ASTNode.isBlockDelim(parent: ASTNode?): Boolean {
     if (parent == null) return false
@@ -94,8 +77,6 @@ fun ASTNode.isBlockDelim(parent: ASTNode?): Boolean {
 }
 
 fun ASTNode?.isWhitespaceOrEmpty() = this == null || textLength == 0 || elementType == WHITE_SPACE
-
-fun onSameLine(e1: ASTNode, e2: ASTNode): Boolean = onSameLine(e1.psi, e2.psi)
 
 fun ASTNode.treeNonWSPrev(): ASTNode? {
     var current = this.treePrev

@@ -142,16 +142,6 @@ enum Moo { }
 mod Bar { }
 extern { }
 
-struct FooC { /* comment */ }
-enum MooC { /* comment */ }
-mod BarC { /* comment */ }
-extern { /* comment */ }
-
-struct Foo2 { x: i32 }
-enum Moo2 { Mmm(i32) }
-mod Bar2 { fn moo() -> i32 { 45 } }
-extern { fn snappy_max_compressed_length(source_length: size_t) -> size_t; }
-
 fn closures() {
     let square = ( |i:  i32 | i  *  i );
 
@@ -162,8 +152,6 @@ fn closures() {
          }};
 
     let empty = |arg|    {};
-
-    let simple = |arg| { /* comment */ foo(arg) };
 
     let test = |  | { do_something(); do_something_else(); };
 

@@ -8,10 +8,8 @@ import com.intellij.formatting.SpacingBuilder
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import com.intellij.psi.formatter.FormatterUtil
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
@@ -36,8 +34,8 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
 
         //== some special operators
         // FIXME(mkaput): Doesn't work well with comments
-        .afterInside(COMMA, ts(BLOCK_FIELDS, ENUM_BODY)).spacing(1, 1, 1, true, 1)
-        .afterInside(COMMA, ts(BLOCK_FIELDS, STRUCT_EXPR_BODY)).spacing(1, 1, 0, true, 1)
+        .afterInside(COMMA, ts(BLOCK_FIELDS, ENUM_BODY)).parentDependentLFSpacing(1, 1, true, 1)
+        .afterInside(COMMA, ts(BLOCK_FIELDS, STRUCT_EXPR_BODY)).parentDependentLFSpacing(1, 1, true, 1)
         .after(COMMA).spacing(1, 1, 0, true, 0)
         .before(COMMA).spaceIf(false)
         .after(COLON).spaceIf(true)
@@ -97,8 +95,10 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         // them too much and let rustfmt do all the pesky work.
         // Some basic transformation from in-line block to multi-line block
         // is also performed; see doc of #blockMustBeMultiLine() for details.
-        .afterInside(LBRACE, BLOCK_LIKE).spacing(1, 1, 0, true, 0)
-        .beforeInside(RBRACE, BLOCK_LIKE).spacing(1, 1, 0, true, 0)
+        .afterInside(LBRACE, BLOCK_LIKE).parentDependentLFSpacing(1, 1, true, 0)
+        .beforeInside(RBRACE, BLOCK_LIKE).parentDependentLFSpacing(1, 1, true, 0)
+        .afterInside(LBRACE, FLAT_BRACE_BLOCKS).parentDependentLFSpacing(1, 1, true, 0)
+        .beforeInside(RBRACE, FLAT_BRACE_BLOCKS).parentDependentLFSpacing(1, 1, true, 0)
         .withinPairInside(LBRACE, RBRACE, PAT_STRUCT).spacing(1, 1, 0, true, 0)
 
         .betweenInside(IDENTIFIER, ALIAS, EXTERN_CRATE_ITEM).spaces(1)
@@ -153,10 +153,6 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RsFmtContext): Spac
         // Ensure that each attribute is in separate line; comment aware
             psi1 is RsOuterAttr && (psi2 is RsOuterAttr || psi1.parent is RsItemElement)
                 || psi1 is PsiComment && (psi2 is RsOuterAttr || psi1.getPrevNonCommentSibling() is RsOuterAttr)
-            -> return lineBreak(keepBlankLines = 0)
-
-        // { ... } => {\n ...\n }, see blockMustBeMultiLine docs for details
-            blockMustBeMultiLine()
             -> return lineBreak(keepBlankLines = 0)
 
         // Format blank lines between statements (or return expression)
@@ -255,46 +251,6 @@ private fun ASTNode.hasLineBreakBeforeInSameParent(): Boolean =
 private fun ASTNode?.isWhiteSpaceWithLineBreak(): Boolean =
     this != null && elementType == WHITE_SPACE && containsEOL()
 
-/**
- * Check whether blocks must be laid out multi-line:
- *  1. a) if block is a brace list - one brace is placed as it's a single-line block while the other - multi-line
- *     b) otherwise - it contains a line break and non-whitespace children
- *  2. there are 2 or more statements/expressions inside if it's a code block
- *  3. it's item's body block
- */
-private fun SpacingContext.blockMustBeMultiLine(): Boolean {
-    if (elementType1 != LBRACE && elementType2 != RBRACE) return false
-
-    val lbrace = (if (elementType1 == LBRACE) node1 else TreeUtil.findSiblingBackward(node2, LBRACE)) ?: return false
-    val rbrace = (if (elementType2 == RBRACE) node2 else TreeUtil.findSibling(node1, RBRACE)) ?: return false
-    val childrenCount = countNonWhitespaceASTNodesBetween(lbrace, rbrace)
-
-    if (parentType in BRACE_LISTS) {
-        val lbraceIsNewline = lbrace.hasWhitespaceAfterIgnoringComments()
-        val rbraceIsNewline = rbrace.hasWhitespaceBeforeIgnoringComments()
-        if (lbraceIsNewline xor rbraceIsNewline) {
-            return true // 1a
-        }
-    } else {
-        if (!onSameLine(lbrace, rbrace) && childrenCount > 0) {
-            return true // 1b
-        }
-    }
-
-    return when (parentPsi) {
-        is RsBlock -> childrenCount != 0 && (childrenCount >= 2 || parentPsi.parent is RsItemElement) // 2
-
-        is RsBlockFields,
-        is RsEnumBody,
-        is RsTraitItem,
-        is RsModItem,
-        is RsForeignModItem -> childrenCount != 0 // 3
-
-        is RsMatchBody -> childrenCount != 0 && !ctx.rustSettings.ALLOW_ONE_LINE_MATCH
-
-        else -> false
-    }
-}
 
 private fun SpacingContext.needsBlankLineBetweenItems(): Boolean {
     if (elementType1 in RS_COMMENTS || elementType2 in RS_COMMENTS)
@@ -310,25 +266,4 @@ private fun SpacingContext.needsBlankLineBetweenItems(): Boolean {
         return false
 
     return true
-}
-
-private fun countNonWhitespaceASTNodesBetween(left: ASTNode, right: ASTNode): Int {
-    require(left.treeParent == right.treeParent && left.startOffset < right.startOffset)
-    var count = 0
-    var next: ASTNode? = left
-    while (next != null && next != right) {
-        next = FormatterUtil.getNext(next, WHITE_SPACE)
-        count += 1
-    }
-    return count - 1 // subtract right node
-}
-
-private fun ASTNode.hasWhitespaceAfterIgnoringComments(): Boolean {
-    val lastWS = psi.getNextNonCommentSibling()?.prevSibling
-    return lastWS is PsiWhiteSpace && lastWS.containsEOL()
-}
-
-private fun ASTNode.hasWhitespaceBeforeIgnoringComments(): Boolean {
-    val lastWS = psi.getPrevNonCommentSibling()?.nextSibling
-    return lastWS is PsiWhiteSpace && lastWS.containsEOL()
 }
