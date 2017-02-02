@@ -8,6 +8,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import org.rust.ide.formatter.blocks.RsFmtBlock
 import org.rust.ide.formatter.blocks.RsMacroArgFmtBlock
+import org.rust.ide.formatter.blocks.RsMultilineStringLiteralBlock
+import org.rust.lang.core.psi.RS_RAW_LITERALS
+import org.rust.lang.core.psi.RS_STRING_LITERALS
 import org.rust.lang.core.psi.RsElementTypes.MACRO_ARG
 
 class RsFormattingModelBuilder : FormattingModelBuilder {
@@ -27,9 +30,18 @@ class RsFormattingModelBuilder : FormattingModelBuilder {
             indent: Indent?,
             wrap: Wrap?,
             ctx: RsFmtContext
-        ): ASTBlock = when (node.elementType) {
-            MACRO_ARG -> RsMacroArgFmtBlock(node, alignment, indent, wrap, ctx)
-            else -> RsFmtBlock(node, alignment, indent, wrap, ctx)
+        ): ASTBlock {
+            val type = node.elementType
+
+            if (type == MACRO_ARG) {
+                return RsMacroArgFmtBlock(node, alignment, indent, wrap, ctx)
+            }
+
+            if ((type in RS_STRING_LITERALS || type in RS_RAW_LITERALS) && node.textContains('\n')) {
+                return RsMultilineStringLiteralBlock(node, alignment, indent, wrap)
+            }
+
+            return RsFmtBlock(node, alignment, indent, wrap, ctx)
         }
     }
 }

@@ -11,7 +11,7 @@ fn read_manifest_output() -> String {
         \"name\":\"foo\",\
         \"src_path\":\"src[..]foo.rs\"\
     }],\
-    <caret>
+<caret>
     \"manifest_path\":\"[..]Cargo.toml\"\
 }".into()
 }

@@ -94,8 +94,49 @@ class RsFormatterTest : RsFormatterTestBase() {
                             Transformed};
     """)
 
+    fun `test string literals are left intact`() = doTextTest("""
+        fn main() {
+        (
+        r"
+        x
+        "
+        );
+            let foo =
+              "Hello
+                World";
+        }
+    """, """
+        fn main() {
+            (
+                r"
+        x
+        "
+            );
+            let foo =
+            "Hello
+                World";
+        }
+    """)
+
+    fun `test string literals are left intact in macro`() = doTextTest("""
+        fn а() {
+            println!("{}",
+        r##"Some string
+        which continues on this line
+        and also on this one
+        "##);
+        }
+    """, """
+        fn а() {
+            println!("{}",
+                     r##"Some string
+        which continues on this line
+        and also on this one
+        "##);
+        }
+    """)
+
     private fun common() = getSettings(RsLanguage)
     private fun custom() = settings.getCustomSettings(RsCodeStyleSettings::class.java)
 
 }
-

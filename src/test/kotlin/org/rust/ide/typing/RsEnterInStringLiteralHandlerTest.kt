@@ -173,30 +173,53 @@ last
     """, """
         fn main() {
             "foo
-            /*caret*/
+                /*caret*/
     """)
 
-    fun testIncompleteEscape() = doTest("""
+    fun `test escaped eof`() = doTest("""
         fn main() {
             "foo\n/*caret*/
     """, """
         fn main() {
-            "foo\n\
-            /*caret*/
+            "foo\n
+                /*caret*/
     """)
 
-    fun testRawIncomplete() = doTest("""
+    fun `test raw eof`() = doTest("""
         fn main() {
             r##"foo/*caret*/
     """, """
         fn main() {
             r##"foo
+                /*caret*/
+    """)
+
+    fun `test incomplete escaped`() = doTest("""
+        fn main() {
+            "foo\n/*caret*/
+        }
+    """, """
+        fn main() {
+            "foo\n\
+        /*caret*/
+        }
+    """)
+
+    // FIXME: probably should not indent in this case
+    fun `test incomplete raw`() = doTest("""
+        fn main() {
+            r##"foo/*caret*/
+        }
+    """, """
+        fn main() {
+            r##"foo
             /*caret*/
+        }
     """)
 
     fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) {
-        InlineFile(before).withCaret()
+        InlineFile(before.trimIndent()).withCaret()
         myFixture.type('\n')
-        myFixture.checkResult(replaceCaretMarker(after))
+        myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 }
