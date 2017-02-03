@@ -9,9 +9,9 @@ import com.intellij.psi.PsiFile
 import org.rust.ide.formatter.RsCommaFormatProcessor
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsFieldDecl
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructExprBody
 import org.rust.lang.core.psi.RsStructExprField
-import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.getNextNonCommentSibling
 
@@ -36,17 +36,25 @@ class AddStructFieldsFix(
     ) {
         val psiFactory = RsPsiFactory(project)
         var expr = startElement as RsStructExprBody
-        val multiline = (expr.structExprFieldList.isEmpty() && fieldsToAdd.size > 1) || expr.textContains('\n')
+
+        val forceMultiline = expr.structExprFieldList.isEmpty() && fieldsToAdd.size > 2
 
         var firstAdded: RsStructExprField? = null
         for (fieldDecl in fieldsToAdd) {
             val field = psiFactory.createStructExprField(fieldDecl.name!!)
             val addBefore = findPlaceToAdd(field, expr.structExprFieldList, declaredFields)
             expr.ensureTrailingComma()
-            val added = expr.addFieldBefore(field, addBefore, multiline)
+
+            val comma = expr.addBefore(psiFactory.createComma(), addBefore ?: expr.rbrace)
+            val added = expr.addBefore(field, comma) as RsStructExprField
+
             if (firstAdded == null) {
                 firstAdded = added
             }
+        }
+
+        if (forceMultiline) {
+            expr.addAfter(psiFactory.createNewline(), expr.lbrace)
         }
 
         expr = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(expr)
@@ -103,24 +111,5 @@ class AddStructFieldsFix(
 
         if (lastField.getNextNonCommentSibling()?.elementType == COMMA) return
         addAfter(RsPsiFactory(project).createComma(), lastField)
-    }
-
-    private fun RsStructExprBody.addFieldBefore(
-        newField: RsStructExprField,
-        anchor: RsStructExprField?,
-        multiline: Boolean
-    ): RsStructExprField {
-
-        check(anchor == null || anchor.parent == this)
-        val psiFactory = RsPsiFactory(newField.project)
-
-        var comma = psiFactory.createComma()
-        comma = addBefore(comma, anchor ?: rbrace)
-        val result = addBefore(newField, comma) as RsStructExprField
-        if (multiline) {
-            addBefore(psiFactory.createNewline(), result)
-            addAfter(psiFactory.createNewline(), result.nextSibling)
-        }
-        return result
     }
 }
