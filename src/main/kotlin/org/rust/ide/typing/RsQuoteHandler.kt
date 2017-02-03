@@ -9,6 +9,7 @@ import org.rust.lang.core.psi.RsElementTypes.*
 
 // Remember not to auto-pair `'` in char literals because of lifetimes, which use single `'`: `'a`
 class RsQuoteHandler : SimpleTokenSetQuoteHandler(
+    BYTE_LITERAL,
     STRING_LITERAL,
     BYTE_STRING_LITERAL,
     RAW_STRING_LITERAL,
@@ -23,6 +24,7 @@ class RsQuoteHandler : SimpleTokenSetQuoteHandler(
                 offset - start <= 2
             BYTE_STRING_LITERAL, RAW_STRING_LITERAL ->
                 offset - start <= 1
+            BYTE_LITERAL -> offset == start + 1
             else -> super.isOpeningQuote(iterator, offset)
         }
     }
@@ -37,6 +39,13 @@ class RsQuoteHandler : SimpleTokenSetQuoteHandler(
             true
         else
             super.isInsideLiteral(iterator)
+
+    override fun isNonClosedLiteral(iterator: HighlighterIterator, chars: CharSequence): Boolean {
+        if (iterator.tokenType == BYTE_LITERAL) {
+            return iterator.end - iterator.start == 2
+        }
+        return super.isNonClosedLiteral(iterator, chars)
+    }
 
     /**
      * Check whether caret is deep inside string literal,

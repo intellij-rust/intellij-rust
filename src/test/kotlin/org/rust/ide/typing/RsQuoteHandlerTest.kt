@@ -3,19 +3,84 @@ package org.rust.ide.typing
 class RsQuoteHandlerTest : RsTypingTestBase() {
     override val dataPath = "org/rust/ide/typing/quoteHandler/fixtures"
 
-    fun testDoNotCompleteCharQuotes() = doTest('\'')
-    fun testDoNotCompleteByteQuotes() = doTest('\'')
+    fun `test don't complete char quotes`() = doTestByText("""
+        fn main() {
+            <caret>
+        }
+    """, """
+        fn main() {
+            '<caret>
+        }
+    """, '\'')
 
-    fun testCompleteStringQuotes() = doTest('"')
-    fun testCompleteByteStringQuotes() = doTest('"')
+    fun `test complete byte quotes`() = doTestByText("""
+        fn main() {
+            b<caret>
+        }
+    """, """
+        fn main() {
+            b'<caret>'
+        }
+    """, '\'')
 
-    fun testCompleteRawStringQuotes() = doTest('"')
-    fun testCompleteRawStringQuotes2() = doTest('"')
-    fun testCompleteByteRawStringQuotes() = doTest('"')
-    fun testCompleteByteRawStringQuotes2() = doTest('"')
+    fun `test byte literal with single quote before`() = doTestByText("""
+        b'<caret>
+    """, """
+        b''<caret>
+    """, '\'')
+
+    fun `test byte literal with single quote after`() = doTestByText("""
+        b<caret>'
+    """, """
+        b'<caret>
+    """, '\'')
+
+    fun `test complete string quotes`() = doTestByText("""
+        <caret>
+    """, """
+        "<caret>"
+    """, '"')
+
+    fun `test complete byte string quotes`() = doTestByText("""
+        b<caret>
+    """, """
+        b"<caret>"
+    """, '"')
+
+    fun `test complete raw string quotes with hashes`() = doTestByText("""
+        r###<caret>
+    """, """
+        r###"<caret>"###
+    """, '"')
+
+    fun `test complete raw string quotes no hashes`() = doTestByText("""
+        r<caret>
+    """, """
+        r"<caret>"
+    """, '"')
+
+    fun `test complete raw byte string quotes with hashes`() = doTestByText("""
+        r###<caret>
+    """, """
+        r###"<caret>"###
+    """, '"')
+
+    fun `test complete raw byte string quotes no hashes`() = doTestByText("""
+        r<caret>
+    """, """
+        r"<caret>"
+    """, '"')
 
     // https://github.com/intellij-rust/intellij-rust/issues/687
-    fun testDoubleQuoteInRawLiteral() = doTest('"')
+    fun `test double quote in raw string`() = doTestByText("""
+        r###"Hello, <caret> World!"###
+    """, """
+        r###"Hello, "<caret> World!"###
+    """, '"')
 
-    fun testSingleQuoteInRawLiteral() = doTest('\'')
+    fun `test single quote in raw string`() = doTestByText("""
+        r###"Hello, <caret> World!"###
+    """, """
+        r###"Hello, '<caret> World!"###
+    """, '\'')
 }
