@@ -44,6 +44,10 @@ class RsQuoteHandler : SimpleTokenSetQuoteHandler(
         if (iterator.tokenType == BYTE_LITERAL) {
             return iterator.end - iterator.start == 2
         }
+        if (iterator.tokenType in RS_RAW_LITERALS) {
+            val lastChar = chars[iterator.end - 1]
+            return lastChar != '#' && lastChar != '"'
+        }
         return super.isNonClosedLiteral(iterator, chars)
     }
 
@@ -87,12 +91,7 @@ class RsQuoteHandler : SimpleTokenSetQuoteHandler(
         val literal = getLiteralDumb(iterator) ?: return null
         if (literal.node.elementType !in RS_RAW_LITERALS) return null
 
-        val valueOffsets = literal.offsets.value?.shiftRight(iterator.start) ?: return null
-        if (offset !in valueOffsets || offset == valueOffsets.startOffset || offset == valueOffsets.endOffset) {
-            val hashes = literal.offsets.openDelim?.length?.let { it - 1 } ?: 0
-            return '"' + "#".repeat(hashes)
-        } else {
-            return null
-        }
+        val hashes = literal.offsets.openDelim?.length?.let { it - 1 } ?: 0
+        return '"' + "#".repeat(hashes)
     }
 }

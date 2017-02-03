@@ -83,4 +83,16 @@ class RsQuoteHandlerTest : RsTypingTestBase() {
     """, """
         r###"Hello, '<caret> World!"###
     """, '\'')
+
+    fun `test double quote in empty raw string`() = doTestByText("""
+        r#"<caret>"#
+    """, """
+        r#""<caret>"#
+    """, '"')
+
+    fun `test single quote in empty raw string`() = doTestByText("""
+        r#"<caret>"#
+    """, """
+        r#"'<caret>"#
+    """, '\'')
 }
