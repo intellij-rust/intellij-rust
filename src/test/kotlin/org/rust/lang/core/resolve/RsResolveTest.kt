@@ -408,15 +408,25 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testStructField() = checkByCode("""
+    fun `test struct field named`() = checkByCode("""
         struct S { foo: i32 }
                   //X
-
         fn main() {
             let _ = S { foo: 92 };
-                       //^
-        }
+        }              //^
     """)
+
+    // Perhaps this should resolve to the local instead?
+    fun `test struct field shorthand`() = checkByCode("""
+        struct S { foo: i32, bar: i32 }
+                            //X
+        fn main() {
+            let foo = 92;
+            let bar = 62;
+            let _ = S { bar, foo };
+        }              //^
+    """)
+
 
     fun testEnumField() = checkByCode("""
         enum E { X { foo: i32 } }

@@ -797,7 +797,7 @@ StructExpr ::= <<checkStructAllowed>> PathGenericArgsWithColons StructExprBody
 
 StructExprBody ::= '{' [ <<comma_separated_list StructExprField>> ] ('..'  AnyExpr)? '}' { pin = 1 }
 
-StructExprField ::= identifier ':' AnyExpr {
+StructExprField ::= identifier [ ':' AnyExpr ] {
   pin = 1
   recoverWhile = StructExprField_recover
   implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
