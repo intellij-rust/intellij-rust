@@ -94,6 +94,76 @@ class SimplifyBooleanExpressionIntentionTest : RsIntentionTestBase(SimplifyBoole
         }
     """)
 
+    fun testNonEquivalent1() = doAvailableTest("""
+        fn main() {
+            let a = a ||/*caret*/ true || true;
+        }
+    """, """
+        fn main() {
+            let a = true;
+        }
+    """)
+
+    fun testNonEquivalent2() = doAvailableTest("""
+        fn main() {
+            let a = a ||/*caret*/ false;
+        }
+    """, """
+        fn main() {
+            let a = a;
+        }
+    """)
+
+    fun testNonEquivalent3() = doAvailableTest("""
+        fn main() {
+            let a = a &&/*caret*/ false;
+        }
+    """, """
+        fn main() {
+            let a = false;
+        }
+    """)
+
+    fun testNonEquivalent4() = doAvailableTest("""
+        fn main() {
+            let a = a &&/*caret*/ true;
+        }
+    """, """
+        fn main() {
+            let a = a;
+        }
+    """)
+
+    fun testComplexNonEquivalent1() = doAvailableTest("""
+        fn main() {
+            let a = f() && (g() &&/*caret*/ false);
+        }
+    """, """
+        fn main() {
+            let a = f() && (false);
+        }
+    """)
+
+    fun testComplexNonEquivalent2() = doAvailableTest("""
+        fn main() {
+            let a = 1 > 2 &&/*caret*/ 2 > 3 && 3 > 4 || true;
+        }
+    """, """
+        fn main() {
+            let a = true;
+        }
+    """)
+
+    fun testComplexNonEquivalent3() = doAvailableTest("""
+        fn main() {
+            let a = 1 > 2 &&/*caret*/ 2 > 3 && 3 > 4 || false;
+        }
+    """, """
+        fn main() {
+            let a = 1 > 2 && 2 > 3 && 3 > 4;
+        }
+    """)
+
     fun testNotAvailable3() = doUnavailableTest("""
         fn main() {
             let a = a /*caret*/&& b;
@@ -102,23 +172,17 @@ class SimplifyBooleanExpressionIntentionTest : RsIntentionTestBase(SimplifyBoole
 
     fun testNotAvailable4() = doUnavailableTest("""
         fn main() {
-            let a = a ||/*caret*/ true || true;
+            let a = true /*caret*/^ a;
         }
     """)
 
     fun testNotAvailable5() = doUnavailableTest("""
         fn main() {
-            let a = true /*caret*/^ a;
-        }
-    """)
-
-    fun testNotAvailable6() = doUnavailableTest("""
-        fn main() {
             let a =  !/*caret*/a;
         }
     """)
 
-    fun testNotAvailable7() = doUnavailableTest("""
+    fun testNotAvailable6() = doUnavailableTest("""
         fn main() {
             let a = /*caret*/true;
         }

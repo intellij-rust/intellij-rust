@@ -3,55 +3,89 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.template.postfix.isBool
 import org.rust.ide.utils.UnaryOperator
 import org.rust.ide.utils.operatorType
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.util.ancestors
 import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.types.type
 
 class SimplifyBooleanExpressionIntention : RsElementBaseIntentionAction<RsExpr>() {
     override fun getText() = "Simplify boolean expression"
     override fun getFamilyName() = "Simplify boolean expression"
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsExpr? =
-            element.parentOfType<RsExpr>()
-                    ?.ancestors
-                    ?.takeWhile { it is RsExpr }
-                    ?.map { it as RsExpr }
-                    ?.findLast { isSimplifiableExpression(it) }
+        element.parentOfType<RsExpr>()
+            ?.ancestors
+            ?.takeWhile { it is RsExpr }
+            ?.map { it as RsExpr }
+            ?.findLast { isSimplifiableExpression(it) }
 
     private fun isSimplifiableExpression(psi: RsExpr): Boolean {
-        if (psi !is RsLitExpr && psi.eval() != null) return true
-
-        return when (psi) {
-            is RsBinaryExpr -> when (psi.operatorType) {
-            // short-circuit operations
-                ANDAND, OROR -> psi.left.eval() != null && psi.right != null
-                else -> false
-            }
-            else -> false
-        }
+        return (psi.copy() as RsExpr).simplify().second
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: RsExpr) {
-        val value = ctx.eval()
-        if (value != null) {
-            ctx.replace(RsPsiFactory(project).createExpression(value.toString()))
-            return
-        }
-        val expr = ctx as RsBinaryExpr
-        val leftVal = ctx.left.eval()
-            ?: error("Can't simplify expression")
-        when (expr.operatorType) {
-            ANDAND -> {
-                check(leftVal)
-                expr.replace(expr.right!!)
+        val (expr, isSimplified) = ctx.simplify()
+        if (isSimplified)
+            ctx.replace(expr)
+    }
+
+    private fun createPsiElement(project: Project, value: Any) = RsPsiFactory(project).createExpression(value.toString())
+
+    private fun RsExpr.simplify(): Pair<RsExpr, Boolean> {
+        if (this is RsLitExpr)
+            return this to false
+        return this.eval()?.let {
+            createPsiElement(project, it) to true
+        } ?: when (this) {
+            is RsBinaryExpr -> {
+                val (leftExpr, leftSimplified) = left.simplify()
+                val (rightExpr, rightSimplified) = right!!.simplify()
+                if (leftExpr is RsLitExpr) {
+                    leftExpr.boolLiteral?.let {
+                        when (this.operatorType) {
+                            ANDAND ->
+                                when (it.text) {
+                                    "true" -> return rightExpr to true
+                                    "false" -> return createPsiElement(project, "false") to true
+                                }
+                            OROR ->
+                                when (it.text) {
+                                    "true" -> return createPsiElement(project, "true") to true
+                                    "false" -> return rightExpr to true
+                                }
+                        }
+                        {}
+                    }
+                }
+                if (rightExpr is RsLitExpr) {
+                    rightExpr.boolLiteral?.let {
+                        when (this.operatorType) {
+                            ANDAND ->
+                                when (it.text) {
+                                    "true" -> return leftExpr to true
+                                    "false" -> return createPsiElement(project, "false") to true
+                                }
+                            OROR ->
+                                when (it.text) {
+                                    "true" -> return createPsiElement(project, "true") to true
+                                    "false" -> return leftExpr to true
+                                }
+                        }
+                        {}
+                    }
+                }
+                if (leftSimplified)
+                    this.left.replace(leftExpr)
+                if (rightSimplified)
+                    this.right!!.replace(rightExpr)
+                this to (leftSimplified || rightSimplified)
             }
-            OROR -> {
-                check(!leftVal)
-                expr.replace(expr.right!!)
-            }
+            else ->
+                this to false
         }
     }
 
