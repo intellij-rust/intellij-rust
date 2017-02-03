@@ -50,7 +50,7 @@ class AddStructFieldsFix(
         }
 
         expr = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(expr)
-        RsCommaFormatProcessor.fixStructExprBody(expr)
+        RsCommaFormatProcessor.fixSingleLineBracedBlock(expr)
 
         if (editor != null && firstAdded != null) {
             editor.caretModel.moveToOffset(firstAdded.expr!!.textOffset)
