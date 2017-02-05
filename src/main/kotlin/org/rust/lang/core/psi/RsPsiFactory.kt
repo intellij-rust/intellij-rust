@@ -112,6 +112,9 @@ class RsPsiFactory(private val project: Project) {
     fun createComma(): PsiElement =
         createFromText<RsValueParameter>("fn f(_ : (), )")!!.nextSibling
 
+    fun createColon(): PsiElement =
+        createFromText<RsConstant>("const C: () = ();")!!.colon!!
+
     fun createNewline(): PsiElement =
         PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n")
 

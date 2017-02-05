@@ -58,6 +58,8 @@ class RenameTest : RsTestBase() {
         fn main() {
             let x = S { foo: 92 };
             println!("{}", x.foo);
+            let foo = 62;
+            S { foo };
         }
     """, """
         struct S { spam: i32 }
@@ -65,6 +67,8 @@ class RenameTest : RsTestBase() {
         fn main() {
             let x = S { spam: 92 };
             println!("{}", x.spam);
+            let foo = 62;
+            S { spam: foo };
         }
     """)
 
