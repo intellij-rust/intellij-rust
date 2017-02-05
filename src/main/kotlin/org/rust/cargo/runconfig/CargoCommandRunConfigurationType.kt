@@ -26,6 +26,8 @@ class CargoCommandRunConfigurationType : ConfigurationTypeBase("CargoCommandRunC
                     task.isEnabled = false
                 }
             }
+
+            override fun isConfigurationSingletonByDefault(): Boolean = true
         })
     }
 }
