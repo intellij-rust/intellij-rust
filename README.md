@@ -1,11 +1,11 @@
 # ![logo](art/icon_intellij_rust_32.png) Rust IDE built using the IntelliJ Platform
 
 
-| Build Status |                                                                                                                            |
-|--------------|----------------------------------------------------------------------------------------------------------------------------|
-| TeamCity     | [![TeamCity Build Status][teamcity-build-status-svg]][teamcity-build-status] [![Performance][performance-svg]][performance]|
-| Travis       | [![Travis Build Status][travis-build-status-svg]][travis-build-status]                                                     |
-| AppVeyor     | [![AppVeyor Build Status][appveyor-build-status-svg]][appveyor-build-status]                                               |
+| Build Status |                                                                              |
+|--------------|------------------------------------------------------------------------------|
+| TeamCity     | [![TeamCity Build Status][teamcity-build-status-svg]][teamcity-build-status] |
+| Travis       | [![Travis Build Status][travis-build-status-svg]][travis-build-status]       |
+| AppVeyor     | [![AppVeyor Build Status][appveyor-build-status-svg]][appveyor-build-status] |
 
 [![Join the chat at https://gitter.im/intellij-rust/intellij-rust][gitter-chat-svg]][gitter-chat]
 
@@ -55,7 +55,7 @@ with [up-for-grab].
 
 <!-- Badges -->
 [gitter-chat]: https://gitter.im/intellij-rust/intellij-rust
-[gitter-chat-svg]: https://img.shields.io/badge/Gitter-Join%20Chat-blue.svg?style=flat-square
+[gitter-chat-svg]: https://badges.gitter.im/Join%20Chat.svg
 
 [travis-build-status]: https://travis-ci.org/intellij-rust/intellij-rust?branch=master
 [travis-build-status-svg]: https://travis-ci.org/intellij-rust/intellij-rust.svg?branch=master
@@ -65,6 +65,3 @@ with [up-for-grab].
 
 [teamcity-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust&guest=1
 [teamcity-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust/statusIcon.svg
-
-[performance]: https://teamcity.jetbrains.com/project.html?projectId=IntellijIdeaPlugins_Rust&tab=stats&guest=1
-[performance-svg]: https://img.shields.io/badge/build-performance-blue.svg?style=flat-square
