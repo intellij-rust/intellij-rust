@@ -2,7 +2,6 @@ package org.rust.lang
 
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -37,15 +36,10 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
     override fun runTest() {
         val projectDescriptor = projectDescriptor
-        if (projectDescriptor is RustProjectDescriptorBase.WithRustup) {
-            if (projectDescriptor.rustup == null) {
-                System.err.println("SKIP $name: no rustup found")
-                return
-            }
-            if (projectDescriptor.stdlib == null) {
-                System.err.println("SKIP $name: rustup found, but there is no stdlib available")
-                return
-            }
+        val reason = (projectDescriptor as? RustProjectDescriptorBase)?.skipTestReason
+        if (reason != null) {
+            System.err.println("SKIP $name: $reason")
+            return
         }
 
         super.runTest()
@@ -179,20 +173,25 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
     protected open class RustProjectDescriptorBase : LightProjectDescriptor() {
         open class WithRustup : RustProjectDescriptorBase() {
-            override fun setUpProject(project: Project, handler: SetupHandler) {
-                if (WithStdlibRustProjectDescriptor.rustup == null) return
-                // The actual tests should be skipped as well, if we skip the setup
-                super.setUpProject(project, handler)
-            }
-
             private val toolchain: RustToolchain? by lazy { RustToolchain.suggest() }
 
             val rustup by lazy { toolchain?.rustup("/") }
             val stdlib by lazy { (rustup?.downloadStdlib() as? Rustup.DownloadResult.Ok)?.library }
+
+            override val skipTestReason: String? get() {
+                if (rustup == null) return "No rustup"
+                if (stdlib == null) return "No stdib"
+                return null
+            }
         }
+
+        open val skipTestReason: String? = null
 
         final override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
             super.configureModule(module, model, contentEntry)
+            if (skipTestReason != null) {
+                return
+            }
 
             val moduleBaseDir = contentEntry.file!!.url
             val projectWorkspace = CargoProjectWorkspaceService.getInstance(module) as CargoProjectWorkspaceServiceImpl
