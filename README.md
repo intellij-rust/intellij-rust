@@ -58,13 +58,13 @@ with [up-for-grab].
 [gitter-chat-svg]: https://img.shields.io/badge/Gitter-Join%20Chat-blue.svg?style=flat-square
 
 [travis-build-status]: https://travis-ci.org/intellij-rust/intellij-rust?branch=master
-[travis-build-status-svg]: https://img.shields.io/travis/intellij-rust/intellij-rust/master.svg?style=flat-square
+[travis-build-status-svg]: https://travis-ci.org/intellij-rust/intellij-rust.svg?branch=master
 
 [appveyor-build-status]: https://ci.appveyor.com/project/matklad/intellij-rust/branch/master
-[appveyor-build-status-svg]: https://img.shields.io/appveyor/ci/matklad/intellij-rust.svg?style=flat-square
+[appveyor-build-status-svg]: https://ci.appveyor.com/api/projects/status/mc5rjptfa0t2cer5?svg=true
 
 [teamcity-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust&guest=1
-[teamcity-build-status-svg]: https://img.shields.io/teamcity/http/teamcity.jetbrains.com/s/IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust.svg?style=flat-square
+[teamcity-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust/statusIcon.svg
 
 [performance]: https://teamcity.jetbrains.com/project.html?projectId=IntellijIdeaPlugins_Rust&tab=stats&guest=1
 [performance-svg]: https://img.shields.io/badge/build-performance-blue.svg?style=flat-square
