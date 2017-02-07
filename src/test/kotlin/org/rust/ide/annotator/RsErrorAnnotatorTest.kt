@@ -535,6 +535,69 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun testE0261_UndeclareLifetimeInStruct() = checkErrors("""
+        struct Foo<'a, 'b> {
+            a: &'a u32,
+            b: (bool, &'b str),
+            c: &'static str,
+        }
+        struct Bar<'a> {
+            a: &<error descr="Use of undeclared lifetime name `'c` [E0261]">'c</error> u32,
+            b: (bool, &<error>'d</error> str),
+        }
+    """)
+
+    fun testE0261_UndeclareLifetimeInTupleStruct() = checkErrors("""
+        struct Foo<'a, 'b>(
+            &'a u32,
+            (bool, &'b str),
+            &'static str
+        );
+        struct Bar<'a>(
+            &<error descr="Use of undeclared lifetime name `'c` [E0261]">'c</error> u32,
+            (bool, &<error>'d</error> str)
+        );
+    """)
+
+    fun testE0261_UndeclareLifetimeInEnums() = checkErrors("""
+        enum Foo<'a, 'b> {
+            FOO(&'a u32),
+            BAR(bool, &'b str),
+            BAZ(&'static str),
+        }
+        enum Bar<'a> {
+            FOO(&<error descr="Use of undeclared lifetime name `'c` [E0261]">'c</error> u32),
+            BAR(bool, &<error>'d</error> str)
+        }
+    """)
+
+    fun testE0261_UndeclareLifetimeInTypeAliases() = checkErrors("""
+        type U32<'a> = &'a u32;
+        type Tup<'a> = (bool, &'a str);
+        type Str = &'static str;
+
+        type ErrU32 = &<error descr="Use of undeclared lifetime name `'c` [E0261]">'c</error> u32;
+        type ErrTup<'a> = (bool, &<error>'b</error> str);
+    """)
+
+    fun testE0262_UndeclareLifetimeInTypeParameters() = checkErrors("""
+        trait Foo<'a, 'b> {
+            type U32 = &'a u32;
+            type Tup = (bool, &'b str);
+            type Str = &'static str;
+        }
+        struct Bar;
+        impl<'c, 'd> Foo<'c, 'd> for Bar {
+            type U32 = &'c u32;
+            type Tup = (bool, &'d str);
+        }
+        struct Baz;
+        impl<'a, 'b> Foo<'a, 'b> for Baz {
+            type U32 = &<error descr="Use of undeclared lifetime name `'c` [E0261]">'c</error> u32;
+            type Tup = (bool, &<error>'d</error> str);
+        }
+    """)
+
     fun testE0263_LifetimeNameDuplicationInGenericParams() = checkErrors("""
         fn foo<'a, 'b>(x: &'a str, y: &'b str) { }
         struct Str<'a, 'b> { a: &'a u32, b: &'b f64 }

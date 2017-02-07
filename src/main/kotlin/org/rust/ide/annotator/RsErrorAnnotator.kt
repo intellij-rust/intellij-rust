@@ -306,8 +306,34 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkRefLikeType(holder: AnnotationHolder, type: RsRefLikeType) {
-        if (type.needsLifetime()) {
-            require(type.lifetime, holder, "Missing lifetime specifier [E0106]", type.and ?: type)
+        val owner = type.typeOwner
+        val needLifetime = owner is RsFieldDecl || owner is RsTupleFieldDecl || owner is RsTypeAlias
+        if (!needLifetime) return
+
+        val lifetime = type.lifetime
+        if (lifetime == null) {
+            holder.createErrorAnnotation(type.and?.textRange ?: type.textRange, "Missing lifetime specifier [E0106]")
+        } else {
+            checkLifetimeDeclaration(holder, lifetime, owner)
+        }
+    }
+
+    private fun checkLifetimeDeclaration(holder: AnnotationHolder, lifetime: PsiElement, owner: PsiElement) {
+        val name = lifetime.text
+        if (name == "'static") return
+        val declaredLifetimes = owner.branch
+            .mapNotNull {
+                when (it) {
+                    is RsStructItem -> it.typeParameterList?.lifetimeParameterList ?: emptyList()
+                    is RsEnumItem -> it.typeParameterList?.lifetimeParameterList ?: emptyList()
+                    is RsTypeAlias -> if (it.parent is RsImplItem || it.parent is RsTraitItem) null else it.typeParameterList?.lifetimeParameterList ?: emptyList()
+                    is RsImplItem -> it.typeParameterList?.lifetimeParameterList ?: emptyList()
+                    is RsTraitItem -> it.typeParameterList?.lifetimeParameterList ?: emptyList()
+                    else -> null
+                }
+            }.firstOrNull() ?: return
+        if (declaredLifetimes.none { it.name == name }) {
+            holder.createErrorAnnotation(lifetime.textRange, "Use of undeclared lifetime name `$name` [E0261]")
         }
     }
 
@@ -323,12 +349,6 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun isInTraitImpl(o: RsVis): Boolean {
         val impl = o.parent?.parent
         return impl is RsImplItem && impl.traitRef != null
-    }
-
-    private fun RsRefLikeType.needsLifetime(): Boolean {
-        val parentTuples = generateSequence(parent as? RsTupleType) { it.parent as? RsTupleType }
-        val typeOwner = (parentTuples.lastOrNull() ?: this).parent
-        return typeOwner is RsFieldDecl || typeOwner is RsTupleFieldDecl || typeOwner is RsTypeAlias
     }
 
     private fun isInEnumVariantField(o: RsVis): Boolean {
@@ -350,6 +370,9 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private val Collection<String?>.namesList: String
         get() = mapNotNull { "`$it`" }.joinToString(", ")
+
+    private val RsRefLikeType.typeOwner: PsiElement
+        get() = (parent.branch.takeWhile { it is RsTupleType }.lastOrNull() ?: this).parent
 
     private val RsSelfParameter.canonicalDecl: String
         get() = buildString {
