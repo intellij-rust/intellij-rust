@@ -48,29 +48,23 @@ fun RsExpr.isPure(): Boolean? {
         is RsTupleExpr -> exprList.allMaybe(RsExpr::isPure)
         is RsFieldExpr -> expr.isPure()
         is RsParenExpr -> expr.isPure()
-        is RsBreakExpr -> false // Changes execution flow
-        is RsContExpr -> false  // -//-
-        is RsRetExpr -> false   // -//-
-        is RsTryExpr -> false   // -//-
-        is RsPathExpr -> true   // Paths are always pure
-        is RsQualPathExpr -> true
-        is RsLitExpr -> true
-        is RsUnitExpr -> true
+        is RsBreakExpr, is RsContExpr, is RsRetExpr, is RsTryExpr -> false   // Changes execution flow
+        is RsPathExpr, is RsQualPathExpr, is RsLitExpr, is RsUnitExpr -> true
 
     // TODO: more complex analysis of blocks of code and search of implemented traits
-        is RsBlockExpr -> null  // Have to analyze lines, very hard case
-        is RsCastExpr -> null;  // `expr.isPure()` maybe not true, think about side-effects, may panic while cast
-        is RsCallExpr -> null   // All arguments and function itself must be pure, very hard case
-        is RsForExpr -> null    // Always return (), if pure then can be replaced with it
-        is RsIfExpr -> null
-        is RsIndexExpr -> null  // Index trait can be overloaded, can panic if out of bounds
-        is RsLambdaExpr -> null
-        is RsLoopExpr -> null
-        is RsMacroExpr -> null
-        is RsMatchExpr -> null
-        is RsMethodCallExpr -> null
-        is RsRangeExpr -> null
-        is RsUnaryExpr -> null  // May be overloaded
+        is RsBlockExpr, // Have to analyze lines, very hard case
+        is RsCastExpr,  // `expr.isPure()` maybe not true, think about side-effects, may panic while cast
+        is RsCallExpr,  // All arguments and function itself must be pure, very hard case
+        is RsForExpr,   // Always return (), if pure then can be replaced with it
+        is RsIfExpr,
+        is RsIndexExpr, // Index trait can be overloaded, can panic if out of bounds
+        is RsLambdaExpr,
+        is RsLoopExpr,
+        is RsMacroExpr,
+        is RsMatchExpr,
+        is RsMethodCallExpr,
+        is RsRangeExpr,
+        is RsUnaryExpr, // May be overloaded
         is RsWhileExpr -> null
         else -> null
     }
@@ -122,37 +116,13 @@ fun RsExpr.simplifyBooleanExpression(): Pair<RsExpr, Boolean> {
             val (leftExpr, leftSimplified) = left.simplifyBooleanExpression()
             val (rightExpr, rightSimplified) = right!!.simplifyBooleanExpression()
             if (leftExpr is RsLitExpr) {
-                leftExpr.boolLiteral?.let {
-                    when (this.operatorType) {
-                        ANDAND ->
-                            when (it.text) {
-                                "true" -> return rightExpr to true
-                                "false" -> return createPsiElement(project, "false") to true
-                            }
-                        OROR ->
-                            when (it.text) {
-                                "true" -> return createPsiElement(project, "true") to true
-                                "false" -> return rightExpr to true
-                            }
-                    }
-                    {}
+                simplifyBinaryOperation(this, leftExpr, rightExpr, project)?.let {
+                    return it to true
                 }
             }
             if (rightExpr is RsLitExpr) {
-                rightExpr.boolLiteral?.let {
-                    when (this.operatorType) {
-                        ANDAND ->
-                            when (it.text) {
-                                "true" -> return leftExpr to true
-                                "false" -> return createPsiElement(project, "false") to true
-                            }
-                        OROR ->
-                            when (it.text) {
-                                "true" -> return createPsiElement(project, "true") to true
-                                "false" -> return leftExpr to true
-                            }
-                    }
-                    {}
+                simplifyBinaryOperation(this, rightExpr, leftExpr, project)?.let {
+                    return it to true
                 }
             }
             if (leftSimplified)
@@ -163,6 +133,27 @@ fun RsExpr.simplifyBooleanExpression(): Pair<RsExpr, Boolean> {
         }
         else ->
             this to false
+    }
+}
+
+private fun simplifyBinaryOperation(op: RsBinaryExpr, const: RsLitExpr, expr: RsExpr, project: Project): RsExpr? {
+    return const.boolLiteral?.let {
+        when (op.operatorType) {
+            ANDAND ->
+                when (it.text) {
+                    "true" -> expr
+                    "false" -> createPsiElement(project, "false")
+                    else -> null
+                }
+            OROR ->
+                when (it.text) {
+                    "true" -> createPsiElement(project, "true")
+                    "false" -> expr
+                    else -> null
+                }
+            else ->
+                null
+        }
     }
 }
 
