@@ -3,6 +3,8 @@
 
 | Build Status |                                                                              |
 |--------------|------------------------------------------------------------------------------|
+| Alpha        | [![Alpha Build Status][alpha-build-status-svg]][alpha-build-status]          |
+| Nightly      | [![Nightly Build Status][nightly-build-status-svg]][nightly-build-status]    |
 | TeamCity     | [![TeamCity Build Status][teamcity-build-status-svg]][teamcity-build-status] |
 | Travis       | [![Travis Build Status][travis-build-status-svg]][travis-build-status]       |
 | AppVeyor     | [![AppVeyor Build Status][appveyor-build-status-svg]][appveyor-build-status] |
@@ -62,6 +64,15 @@ with [up-for-grab].
 
 [appveyor-build-status]: https://ci.appveyor.com/project/matklad/intellij-rust/branch/master
 [appveyor-build-status-svg]: https://ci.appveyor.com/api/projects/status/mc5rjptfa0t2cer5?svg=true
+
+[teamcity-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust&guest=1
+[teamcity-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust/statusIcon.svg
+
+[alpha-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_UploadAlphaRust&guest=1
+[alpha-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_UploadAlphaRust/statusIcon.svg
+
+[nightly-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_UploadNightlyRust&guest=1
+[nightly-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_UploadNightlyRust/statusIcon.svg
 
 [teamcity-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust&guest=1
 [teamcity-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust/statusIcon.svg
