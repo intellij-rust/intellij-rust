@@ -302,6 +302,11 @@
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.RsSimplifyPrintInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="self usage in static context"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RsSelfInStaticContextInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
