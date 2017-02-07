@@ -78,11 +78,17 @@ class Cargo(
             .withParameters(command)
 
         // Make output colored
-        if ((SystemInfo.isLinux || SystemInfo.isMac)
+        if (!SystemInfo.isWindows
             && command in COLOR_ACCEPTING_COMMANDS
             && additionalArguments.none { it.startsWith("--color") }) {
+
+            if (SystemInfo.isLinux) {
+                cmdLine.withEnvironment("TERM", "xterm+256color")
+            } else if (SystemInfo.isMac) {
+                cmdLine.withEnvironment("TERM", "linux")
+            }
+
             cmdLine
-                .withEnvironment("TERM", "xterm+256color")
                 .withRedirectErrorStream(true)
                 .withParameters("--color=always") // Must come first in order not to corrupt the running program arguments
         }
