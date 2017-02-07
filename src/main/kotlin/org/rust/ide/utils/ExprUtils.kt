@@ -1,6 +1,9 @@
 package org.rust.ide.utils
 
+import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsElementTypes.ANDAND
+import org.rust.lang.core.psi.RsElementTypes.OROR
 
 /**
  * Returns `true` if all elements are `true`, `false` if there exists
@@ -28,7 +31,7 @@ private fun <T> List<T>.allMaybe(predicate: (T) -> Boolean?): Boolean? {
 fun RsExpr.isPure(): Boolean? {
     return when (this) {
         is RsArrayExpr -> when (semicolon) {
-            null -> exprList.allMaybe { it.isPure() }
+            null -> exprList.allMaybe(RsExpr::isPure)
             else -> exprList[0].isPure() // Array literal of form [expr; size],
         // size is a compile-time constant, so it is always pure
         }
@@ -38,7 +41,11 @@ fun RsExpr.isPure(): Boolean? {
                 .allMaybe { it?.isPure() } // TODO: Why `it` can be null?
             else -> null // TODO: handle update case (`Point{ y: 0, z: 10, .. base}`)
         }
-        is RsTupleExpr -> exprList.allMaybe { it.isPure() }
+        is RsBinaryExpr -> when (operatorType) {
+            ANDAND, OROR -> listOf(left, right!!).allMaybe(RsExpr::isPure)
+            else -> null // Have to search if operation is overloaded
+        }
+        is RsTupleExpr -> exprList.allMaybe(RsExpr::isPure)
         is RsFieldExpr -> expr.isPure()
         is RsParenExpr -> expr.isPure()
         is RsBreakExpr -> false // Changes execution flow
@@ -50,8 +57,7 @@ fun RsExpr.isPure(): Boolean? {
         is RsLitExpr -> true
         is RsUnitExpr -> true
 
-        // TODO: more complex analysis of blocks of code and search of implemented traits
-        is RsBinaryExpr -> null // Have to search if operation is overloaded
+    // TODO: more complex analysis of blocks of code and search of implemented traits
         is RsBlockExpr -> null  // Have to analyze lines, very hard case
         is RsCastExpr -> null;  // `expr.isPure()` maybe not true, think about side-effects, may panic while cast
         is RsCallExpr -> null   // All arguments and function itself must be pure, very hard case
@@ -100,3 +106,107 @@ val RsUnaryExpr.operatorType: UnaryOperator?
         else -> null
     }
 
+/**
+ * Simplifies a boolean expression if can.
+ *
+ * @return `(expr, result)` where `expr` is a resulting expression,
+ *         `result` is true if an expression was actually simplified.
+ */
+fun RsExpr.simplifyBooleanExpression(): Pair<RsExpr, Boolean> {
+    if (this is RsLitExpr)
+        return this to false
+    return this.evalBooleanExpression()?.let {
+        createPsiElement(project, it) to true
+    } ?: when (this) {
+        is RsBinaryExpr -> {
+            val (leftExpr, leftSimplified) = left.simplifyBooleanExpression()
+            val (rightExpr, rightSimplified) = right!!.simplifyBooleanExpression()
+            if (leftExpr is RsLitExpr) {
+                leftExpr.boolLiteral?.let {
+                    when (this.operatorType) {
+                        ANDAND ->
+                            when (it.text) {
+                                "true" -> return rightExpr to true
+                                "false" -> return createPsiElement(project, "false") to true
+                            }
+                        OROR ->
+                            when (it.text) {
+                                "true" -> return createPsiElement(project, "true") to true
+                                "false" -> return rightExpr to true
+                            }
+                    }
+                    {}
+                }
+            }
+            if (rightExpr is RsLitExpr) {
+                rightExpr.boolLiteral?.let {
+                    when (this.operatorType) {
+                        ANDAND ->
+                            when (it.text) {
+                                "true" -> return leftExpr to true
+                                "false" -> return createPsiElement(project, "false") to true
+                            }
+                        OROR ->
+                            when (it.text) {
+                                "true" -> return createPsiElement(project, "true") to true
+                                "false" -> return leftExpr to true
+                            }
+                    }
+                    {}
+                }
+            }
+            if (leftSimplified)
+                this.left.replace(leftExpr)
+            if (rightSimplified)
+                this.right!!.replace(rightExpr)
+            this to (leftSimplified || rightSimplified)
+        }
+        else ->
+            this to false
+    }
+}
+
+/**
+ * Evaluates a boolean expression if can.
+ *
+ * @return result of evaluation or `null` if can't simplify or
+ *         if it is not a boolean expression.
+ */
+fun RsExpr.evalBooleanExpression(): Boolean? {
+    return when (this) {
+        is RsLitExpr ->
+            (kind as? RsLiteralKind.Boolean)?.value
+
+        is RsBinaryExpr -> when (operatorType) {
+            ANDAND -> {
+                val lhs = left.evalBooleanExpression() ?: return null
+                if (!lhs) return false
+                val rhs = right?.evalBooleanExpression() ?: return null
+                lhs && rhs
+            }
+            OROR -> {
+                val lhs = left.evalBooleanExpression() ?: return null
+                if (lhs) return true
+                val rhs = right?.evalBooleanExpression() ?: return null
+                lhs || rhs
+            }
+            RsElementTypes.XOR -> {
+                val lhs = left.evalBooleanExpression() ?: return null
+                val rhs = right?.evalBooleanExpression() ?: return null
+                lhs xor rhs
+            }
+            else -> null
+        }
+
+        is RsUnaryExpr -> when (operatorType) {
+            UnaryOperator.NOT -> expr?.evalBooleanExpression()?.let { !it }
+            else -> null
+        }
+
+        is RsParenExpr -> expr.evalBooleanExpression()
+
+        else -> null
+    }
+}
+
+private fun createPsiElement(project: Project, value: Any) = RsPsiFactory(project).createExpression(value.toString())
