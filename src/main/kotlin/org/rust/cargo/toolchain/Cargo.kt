@@ -73,12 +73,9 @@ class Cargo(
         additionalArguments: List<String> = emptyList(),
         environmentVariables: Map<String, String> = emptyMap()
     ): GeneralCommandLine {
-        var args = additionalArguments
         val cmdLine = GeneralCommandLine(pathToCargoExecutable)
             .withWorkDirectory(projectDirectory)
             .withParameters(command)
-            .withEnvironment(CargoConstants.RUSTC_ENV_VAR, pathToRustExecutable)
-            .withEnvironment(environmentVariables)
 
         // Make output colored
         if ((SystemInfo.isLinux || SystemInfo.isMac)
@@ -87,11 +84,13 @@ class Cargo(
             cmdLine
                 .withEnvironment("TERM", "linux")
                 .withRedirectErrorStream(true)
-            args = ArrayList(additionalArguments.size + 1)
-            args.add("--color=always")  // Must come first in order not to corrupt the running program arguments
-            args.addAll(additionalArguments)
+                .withParameters("--color=always") // Must come first in order not to corrupt the running program arguments
         }
-        return cmdLine.withParameters(args)
+
+        return cmdLine
+            .withEnvironment(CargoConstants.RUSTC_ENV_VAR, pathToRustExecutable)
+            .withEnvironment(environmentVariables)
+            .withParameters(additionalArguments)
     }
 
     private fun rustfmtCommandline(filePath: String) =
