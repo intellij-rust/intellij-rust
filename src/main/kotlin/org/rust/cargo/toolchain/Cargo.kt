@@ -82,7 +82,7 @@ class Cargo(
             && command in COLOR_ACCEPTING_COMMANDS
             && additionalArguments.none { it.startsWith("--color") }) {
             cmdLine
-                .withEnvironment("TERM", "linux")
+                .withEnvironment("TERM", "xterm+256color")
                 .withRedirectErrorStream(true)
                 .withParameters("--color=always") // Must come first in order not to corrupt the running program arguments
         }
