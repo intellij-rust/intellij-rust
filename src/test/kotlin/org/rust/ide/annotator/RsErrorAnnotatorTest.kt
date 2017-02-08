@@ -445,6 +445,12 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         type Func = <error>&</error>Fn (&u32) -> &u32;
     """)
 
+    fun testE0106_MissingLifetimeIgnoresRawPointers() = checkErrors("""
+        struct Foo {
+            raw: *const i32   // Must not be highlighted
+        }
+    """)
+
     fun testE0124_NameDuplicationInStruct() = checkErrors("""
         struct S {
             no_dup: bool,
