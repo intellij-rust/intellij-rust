@@ -1,5 +1,7 @@
 package org.rust.ide.annotator
 
+import org.junit.Test
+
 class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/errors"
 
@@ -782,6 +784,38 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             <error>pub</error> type A = u32;
             <error>pub</error> fn b() {}
             <error>pub</error> const C: u32 = 10;
+        }
+    """)
+
+    @Test
+    fun testE0424_SelfInStaticAndImpl() = checkErrors("""
+        struct Foo;
+
+        impl Foo {
+            fn foo() {
+                let a = <error descr="The self keyword was used in a static method [E0424]">self</error>;
+            }
+        }
+    """)
+
+    @Test
+    fun testE0424_IgnoreNonStatic() = checkErrors("""
+        struct Foo;
+
+        impl Foo {
+            fn foo(self) {
+                let a = self;
+            }
+        }
+    """)
+
+    @Test
+    fun testE0424_IgnoreModulePath() = checkErrors("""
+        fn foo() {
+        }
+
+        fn bar() {
+            self::foo()
         }
     """)
 }

@@ -10,6 +10,10 @@ import org.rust.lang.core.psi.impl.mixin.valueParameters
 import org.rust.lang.core.psi.util.childOfType
 
 class RsPsiFactory(private val project: Project) {
+    fun createSelf(): RsSelfParameter =
+        createFromText<RsFunction>("fn main(self){}")?.selfParameter
+            ?: error("Failed to create self element")
+
     fun createIdentifier(text: String): PsiElement =
         createFromText<RsModDeclItem>("mod $text;")?.identifier
             ?: error("Failed to create identifier: `$text`")
