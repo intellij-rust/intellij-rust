@@ -158,6 +158,7 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
 
         override fun run(indicator: ProgressIndicator) {
             LOG.info("Cargo project update started")
+            indicator.isIndeterminate = true
 
             if (!toolchain.looksLikeValidToolchain()) {
                 result = UpdateResult.Err(ExecutionException("Invalid toolchain ${toolchain.presentableLocation}"))

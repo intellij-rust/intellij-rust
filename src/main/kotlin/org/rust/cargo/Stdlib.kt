@@ -20,6 +20,7 @@ class SetupRustStdlibTask(
     private val oldLibrary = rustStandardLibrary(module)
 
     override fun run(indicator: ProgressIndicator) {
+        indicator.isIndeterminate = true
         result = rustup.downloadStdlib()
     }
 
