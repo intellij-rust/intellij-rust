@@ -69,11 +69,9 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         function.isInherentImpl
         if (path.asRustPath !is RustPath.ModRelative && function.isAssocFn) {
             val error = "The self keyword was used in a static method [E0424]"
+            val annotation = holder.createErrorAnnotation(path, error)
             if (function.role == RsFunctionRole.IMPL_METHOD) {
-                holder.createErrorAnnotation(path, error)
-                    .registerFix(AddSelfFix(function))
-            } else {
-                holder.createErrorAnnotation(path, error)
+                annotation.registerFix(AddSelfFix(function))
             }
         }
     }
