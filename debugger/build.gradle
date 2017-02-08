@@ -1,0 +1,45 @@
+buildscript {
+    ext.kotlinVersion = '1.0.6'
+    ext.javaVersion = '1.8'
+
+    repositories {
+        mavenCentral()
+        maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+    }
+}
+
+plugins {
+    id 'org.jetbrains.intellij' version "0.2.0"
+}
+
+version "0.0.1.$buildNumber"
+
+apply plugin: 'idea'
+idea {
+    module {
+        generatedSourceDirs += file('src/gen')
+    }
+}
+
+apply plugin: 'org.jetbrains.intellij'
+intellij {
+    pluginName 'intellij-rust-debugger'
+    plugins = ['org.rust.lang:0.1.0.1567']
+    downloadSources false
+    updateSinceUntilBuild false
+    instrumentCode false
+
+    localPath 'lib/clion-2016.3.2'
+}
+
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+sourceCompatibility = javaVersion
+targetCompatibility = javaVersion
+
+tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
