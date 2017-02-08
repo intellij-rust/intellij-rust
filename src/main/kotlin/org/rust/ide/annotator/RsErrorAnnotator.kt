@@ -326,6 +326,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun RsRefLikeType.needsLifetime(): Boolean {
+        if (mul != null) return false
         val parentTuples = generateSequence(parent as? RsTupleType) { it.parent as? RsTupleType }
         val typeOwner = (parentTuples.lastOrNull() ?: this).parent
         return typeOwner is RsFieldDecl || typeOwner is RsTupleFieldDecl || typeOwner is RsTypeAlias
