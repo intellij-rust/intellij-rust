@@ -28,7 +28,7 @@ idea {
 apply plugin: 'org.jetbrains.intellij'
 intellij {
     pluginName 'intellij-rust-debugger'
-    plugins = ['org.rust.lang:0.1.0.1567']
+    plugins = ['org.rust.lang:0.1.0.1611']
     downloadSources false
     updateSinceUntilBuild false
     instrumentCode false
