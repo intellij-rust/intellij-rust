@@ -113,7 +113,7 @@ class RsFormatterTest : RsFormatterTestBase() {
         "
             );
             let foo =
-            "Hello
+                "Hello
                 World";
         }
     """)
@@ -133,6 +133,18 @@ class RsFormatterTest : RsFormatterTestBase() {
         which continues on this line
         and also on this one
         "##);
+        }
+    """)
+
+    fun `test let indent`() = doTextTest("""
+        fn main() {
+            let _ =
+            92;
+        }
+    """, """
+        fn main() {
+            let _ =
+                92;
         }
     """)
 

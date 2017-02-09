@@ -42,7 +42,7 @@ last
     """, """
         fn main() {
             let lit =
-            /*caret*/"Hello, World";
+                /*caret*/"Hello, World";
         }
     """)
 

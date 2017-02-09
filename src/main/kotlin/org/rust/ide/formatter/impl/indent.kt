@@ -48,13 +48,21 @@ fun RsFmtBlock.computeIndent(child: ASTNode, childCtx: RsFmtContext): Indent? {
                 Indent.getNoneIndent()
             }
 
-    // In match expression:
+    // Two line match:
     //     Foo =>
     //     92
     // =>
     //     Foo =>
     //         92
-        parentType == MATCH_ARM && childPsi is RsExpr -> Indent.getNormalIndent()
+    //
+    // and let:
+    //     let_ =
+    //     92;
+    // =>
+    //     let _ =>
+    //         92;
+        childPsi is RsExpr && (parentType == MATCH_ARM || parentType == LET_DECL) ->
+            Indent.getNormalIndent()
 
     // fn moo(...)
     // -> ...
