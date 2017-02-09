@@ -32,31 +32,6 @@ object RustParserUtil : GeneratedParserUtilBase() {
     // Helpers
     //
 
-    // Parses either a paren_expr (92) or a tuple_expr (92, ) by postponing the decision of
-    // what exactly is parsed until `,` is (not) seen.
-    @JvmStatic fun tupleOrParenExpr(builder: PsiBuilder, level: Int,
-                                    anyExpr: Parser,
-                                    tupleExprEnd: Parser,
-                                    parenExprEnd: Parser): Boolean {
-        if (!recursion_guard_(builder, level, "tupleOrParenExpr")) return false
-        if (!nextTokenIsFast(builder, LPAREN)) return false
-        val marker = enter_section_(builder)
-        var result = consumeTokenFast(builder, LPAREN)
-        result = result && anyExpr.parse(builder, level + 1)
-
-        var hasComma = false
-        result = result && if (nextTokenIsFast(builder, COMMA)) {
-            hasComma = true
-            tupleExprEnd.parse(builder, level + 1)
-        } else {
-            parenExprEnd.parse(builder, level + 1)
-        }
-        val elementType = if (hasComma) RsElementTypes.TUPLE_EXPR else RsElementTypes.PAREN_EXPR
-
-        exit_section_(builder, marker, elementType, result)
-        return result
-    }
-
     @JvmStatic fun checkStructAllowed(b: PsiBuilder, level: Int): Boolean = b.structAllowed
 
     @JvmStatic fun checkBraceAllowed(b: PsiBuilder, level: Int): Boolean {

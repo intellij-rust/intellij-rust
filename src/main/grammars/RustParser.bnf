@@ -205,6 +205,7 @@ private union ::= <<unionKeyword>>
 private AttrsAndVis ::= OuterAttr* Vis?
 
 private Item ::= Constant
+               | FooItem
                | TypeAlias
                | Function
                | TraitItem
@@ -837,18 +838,15 @@ RetExpr ::= return Expr?
 
 UnitExpr ::= '(' ')'
 
-// It is possible to distinguish between paren_expr (any_expr) and a single element
-// tuple_expr (any_expr,) only after almost all input has been consumed. That is, it's
-// not LL(k) for any k. So let's use a custom rule to avoid exponential backtracking.
-TupleOrParenExpr ::= << tupleOrParenExpr AnyExpr TupleExprEnd ParenExprEnd >>
+fake TupleExpr ::= '(' AnyExpr+ ')'
+fake ParenExpr ::= '(' AnyExpr ')'
 
-// Used by `tupleOrParenExpr`
-TupleExpr ::= '(' AnyExpr TupleExprEnd
-private TupleExprEnd ::= ',' [ AnyExpr (',' AnyExpr)* ','? ] ')'
-
-// Used by `tupleOrParenExpr`
-ParenExpr ::= '(' AnyExpr ParenExprEnd
-private ParenExprEnd ::= ')'
+// XXX: without the `pin`, upper rules won't work, GK can change element type
+// of the frame only if it already has some type
+// https://github.com/JetBrains/Grammar-Kit/blob/d716ade658c1f8e1f84bd0d61764c9949a7df5f2/src/org/intellij/grammar/parser/GeneratedParserUtilBase.java#L656
+TupleOrParenExpr ::= '(' AnyExpr (TupleExprUpper | ParenExprUpper) { pin = 1 }
+upper TupleExprUpper ::= ',' [ AnyExpr (',' AnyExpr)* ','? ] ')' { elementType = TupleExpr}
+upper ParenExprUpper ::= ')' { elementType = ParenExpr }
 
 ArrayExpr ::= '[' ArrayInitializer ']' { pin = 1 }
 private ArrayInitializer ::= [ AnyExpr ( ';' AnyExpr | (',' AnyExpr)* ','? ) ]
