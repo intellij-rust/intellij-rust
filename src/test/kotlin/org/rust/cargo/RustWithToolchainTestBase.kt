@@ -46,7 +46,7 @@ abstract class RustWithToolchainTestBase : PlatformTestCase() {
         super.tearDown()
     }
 
-    override fun createMainModule(): Module? {
+    override fun createMainModule(): Module {
         val module = super.createMainModule()
         ModuleRootModificationUtil.addContentRoot(module, project.basePath!!)
         return module
