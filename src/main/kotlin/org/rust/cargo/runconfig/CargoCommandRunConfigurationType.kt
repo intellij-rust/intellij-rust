@@ -16,7 +16,7 @@ class CargoCommandRunConfigurationType : ConfigurationTypeBase("CargoCommandRunC
     init {
         addFactory(object : ConfigurationFactory(this) {
             override fun createTemplateConfiguration(project: Project): RunConfiguration =
-                CargoCommandConfiguration(project, "Cargo", this@CargoCommandRunConfigurationType)
+                CargoCommandConfiguration(project, "Cargo", this)
 
             override fun configureBeforeRunTaskDefaults(providerID: Key<out BeforeRunTask<BeforeRunTask<*>>>,
                                                         task: BeforeRunTask<out BeforeRunTask<*>>) {

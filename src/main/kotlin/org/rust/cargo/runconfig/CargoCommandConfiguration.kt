@@ -21,8 +21,8 @@ import org.rust.cargo.util.modulesWithCargoProject
 class CargoCommandConfiguration(
     project: Project,
     name: String,
-    configurationType: CargoCommandRunConfigurationType
-) : ModuleBasedConfiguration<RustRunConfigurationModule>(name, RustRunConfigurationModule(project), configurationType.configurationFactories[0]) {
+    factory : ConfigurationFactory
+) : ModuleBasedConfiguration<RustRunConfigurationModule>(name, RustRunConfigurationModule(project), factory) {
 
     var command: String = CargoConstants.Commands.RUN
     var additionalArguments: String = ""
