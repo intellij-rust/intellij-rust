@@ -136,12 +136,18 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
-    fun `test let indent`() = doTextTest("""
+    fun `test indent initializer expression`() = doTextTest("""
+        const C: () =
+        ();
+
         fn main() {
             let _ =
             92;
         }
     """, """
+        const C: () =
+            ();
+
         fn main() {
             let _ =
                 92;
