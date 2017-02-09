@@ -9,8 +9,8 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.CargoCommandConfiguration
 import org.rust.cargo.runconfig.CargoCommandRunConfigurationType
-import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsCompositeElement
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsMod
 import org.rust.lang.core.psi.containingCargoTarget
 import org.rust.lang.core.psi.impl.mixin.isTest
@@ -25,7 +25,8 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         val location = context.location ?: return false
         val test = findTest(location) ?: return false
 
-        return configuration.command == CargoConstants.Commands.TEST &&
+        return configuration.configurationModule.module == context.module &&
+            configuration.command == CargoConstants.Commands.TEST &&
             configuration.additionalArguments == test.commandLineParameters
     }
 
@@ -38,6 +39,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         val test = findTest(location) ?: return false
         sourceElement.set(test.sourceElement)
 
+        configuration.configurationModule.module = context.module
         configuration.command = CargoConstants.Commands.TEST
         configuration.name = test.configurationName
         configuration.additionalArguments = test.commandLineParameters

@@ -24,7 +24,8 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         val location = context.location ?: return false
         val target = findBinaryTarget(location) ?: return false
 
-        return configuration.command == CargoConstants.Commands.RUN &&
+        return configuration.configurationModule.module == context.module &&
+            configuration.command == CargoConstants.Commands.RUN &&
             configuration.additionalArguments == target.additionalArguments
     }
 
@@ -39,6 +40,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         val source = if (fn != null && isMainFunction(fn)) fn else context.psiLocation?.containingFile
         sourceElement.set(source)
 
+        configuration.configurationModule.module = context.module
         configuration.name = target.configurationName
         configuration.command = CargoConstants.Commands.RUN
         configuration.additionalArguments = target.additionalArguments
