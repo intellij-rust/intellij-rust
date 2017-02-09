@@ -302,6 +302,11 @@
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.RsSimplifyPrintInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Simplify boolean expression"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RsSimplifyBooleanExpressionInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
