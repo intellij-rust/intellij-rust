@@ -24,6 +24,7 @@ import java.awt.Dimension
 import javax.swing.*
 import com.fasterxml.jackson.annotation.*
 import com.fasterxml.jackson.databind.node.NullNode
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.TextRange
 
 import kotlin.collections.*
@@ -73,9 +74,9 @@ open class Logger(val notificationGroup : NotificationGroup) {
             //Use wrapping scroll pane
             val SCP = false
             var finalComponent : JComponent
-            var maxWid = 500
-            var maxHeight = 500
-            var max = Dimension(maxWid,maxHeight)
+            val maxWid = 500
+            val maxHeight = 500
+            val max = Dimension(maxWid,maxHeight)
 
             if (IJ) {
                 val doc = EditorFactory.getInstance().createDocument(info.infoString)
@@ -104,7 +105,7 @@ open class Logger(val notificationGroup : NotificationGroup) {
                 //editor.maximumSize = Dimension(500,500)
                 println(editor.preferredSize)
 
-                var scrollPane = JScrollPane(editor)
+                val scrollPane = JScrollPane(editor)
                 scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
                 scrollPane.maximumSize = Dimension(500,500)
 
@@ -112,12 +113,12 @@ open class Logger(val notificationGroup : NotificationGroup) {
             }
 
             if (SCP) {
-                var scrollPane = JScrollPane(finalComponent)
+                val scrollPane = JScrollPane(finalComponent)
                 scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
                 scrollPane.maximumSize = max
                 //scrollPane.preferredSize = Dimension(500,500)
 
-                var panel = JPanel()
+                val panel = JPanel()
                 panel.add(scrollPane)
                 panel.layout = BoxLayout(panel, BoxLayout.PAGE_AXIS)
                 //panel.preferredSize = Dimension(500,500)
@@ -127,11 +128,11 @@ open class Logger(val notificationGroup : NotificationGroup) {
                 finalComponent = panel
             }
 
-            var popup = false
+            val popup = false
 
             if (popup) {
                 val pos = MouseInfo.getPointerInfo().location
-                var builder = JBPopupFactory.getInstance().createBalloonBuilder(finalComponent)
+                val builder = JBPopupFactory.getInstance().createBalloonBuilder(finalComponent)
                 //var builder = JBPopupFactory.getInstance().createBalloonBuilder(scrollPane).setAnimationCycle(100)
                 //var builder = JBPopupFactory.getInstance().createBalloonBuilder(editor).setAnimationCycle(100)
                 //var builder = JBPopupFactory.getInstance().createBalloonBuilder(panel).setAnimationCycle(100)
@@ -140,7 +141,7 @@ open class Logger(val notificationGroup : NotificationGroup) {
                 //var builder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(info.infoString, MessageType.INFO, null)
                 builder.setAnimationCycle(100)
                 builder.createBalloon()
-                var balloon = builder.createBalloon()
+                val balloon = builder.createBalloon()
 
                 println("ball prefsz=${balloon.preferredSize}")
 
@@ -148,7 +149,7 @@ open class Logger(val notificationGroup : NotificationGroup) {
                 balloon.show(RelativePoint(pos), Balloon.Position.atLeft)
             } else {
                 if (false) {
-                    var frame = JFrame()
+                    val frame = JFrame()
 
                     frame.add(finalComponent)
                     frame.maximumSize = Dimension(500, 500)
@@ -161,9 +162,9 @@ open class Logger(val notificationGroup : NotificationGroup) {
                 if (true) {
                     val pos = MouseInfo.getPointerInfo().location
 
-                    var builder = JBPopupFactory.getInstance().createComponentPopupBuilder(finalComponent, null)
+                    val builder = JBPopupFactory.getInstance().createComponentPopupBuilder(finalComponent, null)
 
-                    var pop = builder.createPopup()
+                    val pop = builder.createPopup()
 
                     pop.show(RelativePoint(pos))
 
@@ -222,16 +223,40 @@ object CargoJson {
         if (actual == expected)
             return
 
-        var ctxStr = if (forContext != "") "for $forContext " else ""
-        var err = "Unexpected $name `$actual` $ctxStr(expected `$expected`)"
+        val ctxStr = if (forContext != "") "for $forContext " else ""
+        val err = "Unexpected $name `$actual` $ctxStr(expected `$expected`)"
 
 
         throw RuntimeException(err)
     }
 
+    data class Target(
+        val kind: List<String>,
+        val name : String,
+        val src_path : String)
+
+    @Suppress("UNUSED")
+    //These are special compiler messages that we're going to ignore.
+    data class CompilerMessage(
+        val features : JsonNode,
+        val filenames : List<String>,
+        val package_id: String,
+        val profile : Profile,
+        val reason : String,
+        val target : Target
+        ) {
+        data class Profile(
+            val debug_assertions : Boolean,
+            val debuginfo : Int,
+            val opt_level : String,
+            val test : Boolean
+            )
+    }
+
     //A top level compiler message
     data class TopMessage(
         val message: Message,
+        @Suppress("UNUSED")
         val package_id : String,
         val reason : String,
         val target : Target
@@ -242,10 +267,9 @@ object CargoJson {
         }
 
         //FIXME: Make a serialize for messages that also serializes the level
-
         abstract class InfoMessageBase(override val message: String, override val spans : List<Span>) : Message() {
 
-            override fun doAnnotate(holder: AnnotationHolder) {
+            override fun doAnnotate(holder: AnnotationHolder, target: Target) {
                 //We don't expect these to be called directly.
                 //We only expect help messages as children of error messages
 
@@ -255,13 +279,79 @@ object CargoJson {
         class HelpMessage(message: String, spans: List<Span>) : InfoMessageBase(message, spans)
         class NoteMessage(message: String, spans: List<Span>) : InfoMessageBase(message, spans)
 
-        class ErrorMessage(val children: List<Message>, val code: Code?, override val message: String, override val spans: List<Span>) : Message() {
+        //Used for both error and warning
+        abstract class ErrorBaseMessage(
+            val children: List<Message>,
+            val code: Code?,
+            override val message: String,
+            override val spans: List<Span>,
+            //FIXME: Change level to an enum
+            val level : String //Only "warning" and "error" allowed
+        ) : Message() {
             init {
                 children.forEach { assert(it is NoteMessage || it is HelpMessage) }
             }
 
-            override fun doAnnotate(holder: AnnotationHolder) {
+            //Check if this we don't need to do annotation for this error
+            //and can skip it.
+            private fun canSkipAnnotation() : Boolean {
+                if (code != null || children.isNotEmpty() || spans.isNotEmpty())
+                    return false
+
+                //Check the message itself - some messages don't need to be displayed as errors
+                val regexes = arrayOf(
+                    Regex("aborting due to \\d+ previous errors"),
+                    Regex("aborting due to previous error")
+                )
+                val sanitizedMessage = message.trim()
+
+                for (regex in regexes) {
+                    if (sanitizedMessage.matches(regex)) {
+                        return true
+                    }
+                }
+
+                return false
+            }
+
+            override fun doAnnotate(holder: AnnotationHolder, target: Target) {
                 DEBUG.beginLog("ErrorMessage.doAnnotate")
+
+                holder.currentAnnotationSession.file
+                if (canSkipAnnotation()) {
+                    DEBUG.log("skipping annotation for error $message")
+                    DEBUG.endLog()
+                    return
+                }
+
+                //Next we do the span annotations
+                val annotFile = holder.currentAnnotationSession.file.virtualFile.path
+                val severity = when (level) {
+                    "error" -> HighlightSeverity.ERROR
+                    "warning" -> HighlightSeverity.WEAK_WARNING
+                    else -> { throw AssertionError() }
+                }
+                //Can't have hyperlinks in the info. We'll include it in the tooltip instead.
+                val codeStr = if (code != null) "Code: ${code.formatAsLink()}" else ""
+                val shortErrorStr = message
+
+                //If spans are empty we add a "global" error
+                if (spans.isEmpty()) {
+                    DEBUG.log("global error")
+                    if (target.src_path != annotFile) {
+                        DEBUG.log("not main file, skipping")
+                    } else {
+                        DEBUG.log("doing error $shortErrorStr")
+                        val annot = holder.createAnnotation(severity, TextRange.EMPTY_RANGE, shortErrorStr)
+
+                        annot.isFileLevelAnnotation = true
+                        annot.setNeedsUpdateOnTyping(true)
+                        annot.tooltip = message + if(codeStr != "") "<hr/>$codeStr" else ""
+
+                    }
+                    DEBUG.endLog()
+                    return
+                }
 
                 //Each span has a label and a text range
                 //The error itself is relevant for all of them.
@@ -270,30 +360,59 @@ object CargoJson {
 
                 //Get all children (help/note) messages without spans
                 val childrenMsg = children.filter{ it.spans.isEmpty() }.map { (if (it is NoteMessage) "Note: " else "Help: ") + it.message }.joinToString("<br/>")
-                val extraMsg = "$message ${if (code != null) "(${code.formatAsLink()})" else ""}<br/>$childrenMsg"
+
+                //Create a problem group to group all annotations
+                val problemGroup = object : ProblemGroup {
+                    override fun getProblemName(): String? {
+                        return shortErrorStr
+                    }
+                }
 
                 //Generate annotations for all spans of this error message plus of the children messages with spans
                 val allSpans = spans + children.filter {it.spans.isNotEmpty()}.map {it.spans}.flatten()
 
-                allSpans.forEach { it.doAnnotate(holder, message, extraMsg) }
+                DEBUG.log("doing annotations for file $annotFile")
+                allSpans.filter {
+                    //First filter all spans not relevant for this file
+                    val res = annotFile == it.file_name
+                    if (!res)
+                        DEBUG.log("skipping span for file ${it.file_name}.")
+                    res
+                }.forEach {
+                    //Next create the annotations for the spans of this file
+                    val textRange = TextRange(it.byte_start, it.byte_end)
+                    //Short message is the description. If there's a label we use it,
+                    //and if not we use the original error message.
+                    //In any case we attach the error code if there.
+                    val short = it.label ?: message
+                    //In the tooltip we give additional info - the children messages
+                    val extra = (if(codeStr !="") "$codeStr<br/>" else "") + childrenMsg
+                    val tooltip = short + if (extra.isBlank()) "" else "<hr/>$extra"
+
+                    DEBUG.log("adding annotation (short=$short, ${EI("tooltip", tooltip)})")
+                    val annot = holder.createAnnotation(severity, textRange, short)
+
+                    annot!!.tooltip = tooltip
+                    annot.problemGroup = problemGroup
+                    annot.setNeedsUpdateOnTyping(true)
+                }
 
                 DEBUG.endLog()
 
             }
         }
-        class AbortingDueToPreviousErrorsMessage(override val message : String) : Message() {
-            override val spans = emptyList<Span>()
-            override fun doAnnotate(holder: AnnotationHolder) {
-                //Nothing to do
-            }
-        }
+
+        class ErrorMessage(children: List<Message>, code: Code?, message: String, spans: List<Span>) :
+            ErrorBaseMessage(children, code, message, spans, "error")
+        class WarningMessage(children: List<Message>, code: Code?, message: String, spans: List<Span>) :
+            ErrorBaseMessage(children, code, message, spans, "warning")
 
         abstract class Message {
 
             abstract val message : String
             abstract val spans : List<Span>
 
-            abstract fun doAnnotate(holder: AnnotationHolder)
+            abstract fun doAnnotate(holder: AnnotationHolder, target: Target)
 
             companion object {
 
@@ -307,11 +426,7 @@ object CargoJson {
                     rendered: NullNode,
                     spans: List<Message.Span>
                 ): Message{
-                    var msgType = level
-                    if (level == "error")
-                        msgType = "abort due to previous errors"
-
-                    val ctx = "a message of type `$msgType`"
+                    val ctx = "a message of type `$level`"
 
                     //assert(rendered == null)
                     /*
@@ -328,30 +443,17 @@ object CargoJson {
                     }
 
                     when (level) {
-                        "error" -> {
-
-                            //Apparently errors *can* have null codes. At this point it is unclear if
-                            //it is even possible to distinguish between abort errors and regular ones.
-                            if (code == null && spans.isEmpty()) {
-                                //Message is "aborting due to previous errors"
-                                checkExp("code", code, null, ctx)
-                                checkExp("children size", children.size, 0, ctx)
-                                checkExp("spans size", spans.size, 0, ctx)
-                                return AbortingDueToPreviousErrorsMessage(message)
-                            }
-
-                            var err = ""
-                            if (spans.size == 0) {
-                                err = "span count (expected >0, got ${spans.size})"
-                            }
-
+                        "error", "warning" -> {
                             //Children may be any number (0 or bigger)
                             //code may be null
+                            //spans may be any number
 
-                            if (err != "")
-                                throw RuntimeException("Error - Unexpected $err for an error message.")
+                            when (level) {
+                                "error" -> return ErrorMessage(children, code, message, spans)
+                                "warning" -> return WarningMessage(children, code, message, spans)
+                                else -> throw AssertionError()
+                            }
 
-                            return ErrorMessage(children, code, message, spans)
                         }
                         "help" -> return HelpMessage(message, spans)
                         "note" -> return NoteMessage(message, spans)
@@ -367,7 +469,7 @@ object CargoJson {
                 fun formatAsLink() : String {
                     val rustErrorIndexPrefix = "https://doc.rust-lang.org/error-index.html"
 
-                    return "Code: <a href=\"$rustErrorIndexPrefix#$code\">$code</a>"
+                    return "<a href=\"$rustErrorIndexPrefix#$code\">$code</a>"
                 }
             }
 
@@ -397,37 +499,23 @@ object CargoJson {
                     val text : String
                 ) {}
 
-                //errMsg - The original error message (used if label is null)
-                //extra - The extra info
-                fun doAnnotate(holder : AnnotationHolder, errMsg: String, extra : String) {
-                    DEBUG.beginLog("Span.doAnnotate")
-
-                    val text = TextRange(byte_start, byte_end)
-                    val short = label ?: errMsg
-                    val full = "$short<hr>$extra"
-
-                    DEBUG.log("adding error (short=$short, ${EI("full", full)})")
-                    val annot = holder.createErrorAnnotation(text, short)
-                    annot.tooltip = full
-
-                    DEBUG.endLog()
-                }
-
             }
 
         }
 
-        data class Target(val kind: List<String>, val name : String, val src_path : String) {}
-
         //file - The file to annotate
         fun doAnnotate(file: PsiFile, holder: AnnotationHolder)  {
-            DEBUG.beginLog("doAnnotate(file=${file.virtualFile.path},src_path=${target.src_path}")
+            //Apparently src_path is not important - stays the same for different files.
+/*
             if (target.src_path != file.virtualFile.path) {
                 DEBUG.endLog()
                 return
             }
+            */
 
-            message.doAnnotate(holder)
+            DEBUG.beginLog("doAnnotate(file=${file.virtualFile.path})")
+
+            message.doAnnotate(holder, target)
 
             DEBUG.endLog()
         }
@@ -440,24 +528,43 @@ data class TEAAnnotationInfo(val file: PsiFile, val editor: Editor) {
 
 }
 
-class TEAAnnotationResult(val commandOutput: String) {
+class TEAAnnotationResult(commandOutput: String) {
+
+    var parsedMessages = emptyList<CargoJson.TopMessage>()
 
     private companion object {
         val mapper = jacksonObjectMapper()
 
     }
 
-    val parsedMessages : List<CargoJson.TopMessage> = mapper.readerFor(CargoJson.TopMessage::class.java).readValues<CargoJson.TopMessage>(commandOutput).readAll()
+    init {
+
+        parsedMessages += commandOutput.lines().filter {
+            //Apparently some lines also have human readable messages. We ignore any lines not beginning with '{'
+            val trimmed = it.trimStart()
+            trimmed.isNotEmpty() && trimmed[0] =='{'
+        }.filter {
+            //We check the first field name by finding the first " then reading until another " (we expect
+            //that a '{' present and don't check for it).
+            val first = it.indexOfFirst { it == '"' }
+            assert(first != -1)
+            val second = it.indexOf('"', first + 1)
+            assert(second != -1)
+
+            when (it.subSequence(first + 1, second)) {
+                "message" -> true
+                "features" -> false
+                else -> {assert(false); throw AssertionError()}
+            }
+
+        } .map {
+            //Next parse the messages
+            mapper.readerFor(CargoJson.TopMessage::class.java).readValue<CargoJson.TopMessage>(it)
+        }
+    }
 
     fun prettyJson(): String {
-        var res = ""
-
-        for (msg in parsedMessages) {
-            res += "json=${mapper.writerWithDefaultPrettyPrinter().writeValueAsString(msg)}\n"
-        }
-
-        return res
-
+        return "${mapper.writerWithDefaultPrettyPrinter().writeValueAsString(parsedMessages)}\n"
     }
 
     override fun toString(): String {
@@ -472,6 +579,7 @@ class CargoCheckExtAnnotator: ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
         val ret : TEAAnnotationInfo?
         DEBUG.beginLog("collectInformation(${file.name})")
 
+        editor.project
         if (hasErrors) {
             DEBUG.log("file already has errors, aborting cargo check")
             ret = null
@@ -492,11 +600,11 @@ class CargoCheckExtAnnotator: ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
         val rustcExec : String = "/home/developer/.cargo/bin/cargo"
         val path = info.editor.project?.basePath
 
-        var args = arrayOf(rustcExec, "check", "--manifest-path=$path/Cargo.toml", "--message-format=json")
-        var cmd = args.joinToString(" ")
+        val args = arrayOf(rustcExec, "check", "--manifest-path=$path/Cargo.toml", "--message-format=json")
+        val cmd = args.joinToString(" ")
 
-        DEBUG.log("executing ${EI("cargo check", "$cmd")}")
-        var ps = Runtime.getRuntime().exec(args)
+        DEBUG.log("executing ${EI("cargo check", cmd)}")
+        val ps = Runtime.getRuntime().exec(args)
 
         val err = ps.errorStream.bufferedReader().use { it.readText() }
         val out = ps.inputStream.bufferedReader().use { it.readText() }
@@ -505,7 +613,7 @@ class CargoCheckExtAnnotator: ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
         DEBUG.log("cargo check returned $retVal, ${EI("output", out)}, ${EI("error", err)} (" +
             "${EI("output-json", out, JsonFileType.INSTANCE)}, ${EI("err-json", err, JsonFileType.INSTANCE)}")
 
-        var ret : TEAAnnotationResult?
+        val ret : TEAAnnotationResult?
 
         when (retVal) {
             //No errors
@@ -514,7 +622,7 @@ class CargoCheckExtAnnotator: ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
             101 -> ret = TEAAnnotationResult(out)
             //Unrecognized return value
             else -> {
-                var msg =
+                val msg =
                     """Unrecognized cargo return code $retVal.
                       |Command: `$cmd`
                     """.trimMargin()
@@ -533,14 +641,16 @@ class CargoCheckExtAnnotator: ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
 
     override fun apply(file: PsiFile, annotationResult: TEAAnnotationResult?, holder: AnnotationHolder) {
 
+        ModuleUtilCore.findModuleForPsiElement(file)
+        holder.currentAnnotationSession.file
         if (annotationResult == null)
             return
 
-        DEBUG.beginLog("apply(${file.virtualFile.path})")
+        DEBUG.beginLog("apply(file=${file.virtualFile.path},annotationSession.file=${holder.currentAnnotationSession.file.virtualFile.path})")
 
-        DEBUG.log("got annotation result ${EI("json", annotationResult!!.prettyJson())}")
+        DEBUG.log("got annotation result ${EI("json", annotationResult.prettyJson())}")
 
-        annotationResult!!.parsedMessages.withIndex().forEach { pair ->
+        annotationResult.parsedMessages.withIndex().forEach { pair ->
             val i = pair.index
             val msg = pair.value
 
