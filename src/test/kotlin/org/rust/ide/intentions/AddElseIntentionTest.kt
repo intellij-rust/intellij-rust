@@ -2,16 +2,13 @@ package org.rust.ide.intentions
 
 class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention()) {
 
-    fun test1() = doUnavailableTest(
-        """
+    fun test1() = doUnavailableTest("""
         fn main() {
             42/*caret*/;
         }
-        """
-    )
+    """)
 
-    fun testFullIfElse() = doUnavailableTest(
-        """
+    fun testFullIfElse() = doUnavailableTest("""
         fn foo(a: i32, b: i32) {
             if a == b {
                 println!("Equally");/*caret*/
@@ -19,28 +16,23 @@ class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention()) {
                 println!("Not equally");
             }
         }
-        """
-    )
+    """)
 
-    fun testSimple() = doAvailableTest(
-        """
+    fun testSimple() = doAvailableTest("""
         fn foo(a: i32, b: i32) {
             if a == b {
                 println!("Equally");/*caret*/
             }
         }
-        """,
-        """
+    """, """
         fn foo(a: i32, b: i32) {
             if a == b {
                 println!("Equally");
             } else {/*caret*/}
         }
-        """
-    )
+    """)
 
-    fun testNested1() = doAvailableTest(
-        """
+    fun testNested1() = doAvailableTest("""
         fn main() {
             if true {
                 if true {
@@ -48,8 +40,7 @@ class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention()) {
                 /*caret*/}
             }
         }
-        """,
-        """
+    """, """
         fn main() {
             if true {
                 if true {
@@ -57,11 +48,9 @@ class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention()) {
                 } else {/*caret*/}
             }
         }
-        """
-    )
+    """)
 
-    fun testNested2() = doAvailableTest(
-        """
+    fun testNested2() = doAvailableTest("""
         fn main() {
             if true {
                 if true {
@@ -69,8 +58,7 @@ class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention()) {
                 }/*caret*/
             }
         }
-        """,
-        """
+    """, """
         fn main() {
             if true {
                 if true {
@@ -78,21 +66,17 @@ class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention()) {
                 }
             } else {/*caret*/}
         }
-        """
-    )
+    """)
 
-    fun testReformat() = doAvailableTest(
-        """
+    fun testReformat() = doAvailableTest("""
         fn main() {
             if true {
             /*caret*/
             }
         }
-        """,
-        """
+    """, """
         fn main() {
             if true {} else {/*caret*/}
         }
-        """
-    )
+    """)
 }
