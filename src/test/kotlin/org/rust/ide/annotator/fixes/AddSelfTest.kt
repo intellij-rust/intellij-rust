@@ -17,7 +17,7 @@ impl S {
 struct S;
 
 impl S {
-    fn foo(self) {
+    fn foo(&self) {
         self/*caret*/;
     }
 }
@@ -36,7 +36,7 @@ impl S {
 struct S;
 
 impl S {
-    fn foo(self, a: i32) {
+    fn foo(&self, a: i32) {
         self/*caret*/;
     }
 }

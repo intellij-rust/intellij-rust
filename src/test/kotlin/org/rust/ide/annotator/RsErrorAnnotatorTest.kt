@@ -787,7 +787,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    @Test
     fun testE0424_SelfInStaticAndImpl() = checkErrors("""
         struct Foo;
 
@@ -798,7 +797,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    @Test
     fun testE0424_IgnoreNonStatic() = checkErrors("""
         struct Foo;
 
@@ -809,7 +807,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    @Test
     fun testE0424_IgnoreModulePath() = checkErrors("""
         fn foo() {
         }
@@ -819,3 +816,5 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 }
+
+data class A (val s: String)

@@ -20,10 +20,10 @@ class AddSelfFix(val function: RsFunction) : LocalQuickFixAndIntentionActionOnPs
 
         val valueParameterList = function.valueParameterList
         val lparen = valueParameterList?.firstChild
+
         val self = psiFactory.createSelf()
 
         valueParameterList?.addAfter(self, lparen)
-
         if (hasParameters) {
             // IDE error if use addAfter(comma, self)
             val parent = lparen?.parent
