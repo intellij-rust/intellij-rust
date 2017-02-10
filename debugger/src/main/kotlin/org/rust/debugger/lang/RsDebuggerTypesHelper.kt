@@ -1,13 +1,11 @@
-package org.rust.debugger
+package org.rust.debugger.lang
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
 import com.intellij.xdebugger.XSourcePosition
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess
-import com.jetbrains.cidr.execution.debugger.OCDebuggerLanguageSupportFactory
-import com.jetbrains.cidr.execution.debugger.OCDebuggerTypesHelper
 import com.jetbrains.cidr.execution.debugger.backend.LLValue
 import com.jetbrains.cidr.execution.debugger.evaluation.CidrDebuggerTypesHelper
+import com.jetbrains.cidr.execution.debugger.evaluation.CidrMemberValue
 import org.rust.lang.core.psi.RsCompositeElement
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.util.parentOfType
@@ -16,19 +14,24 @@ import org.rust.lang.core.resolve.ResolveEngine
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
 
-class RsCidrDebuggerLanguageSupportFactory : OCDebuggerLanguageSupportFactory() {
-    override fun createTypesHelper(process: CidrDebugProcess?): CidrDebuggerTypesHelper = object : OCDebuggerTypesHelper(process) {
-        override fun resolveToDeclaration(position: XSourcePosition, `var`: LLValue): PsiElement? {
-            if (PsiManager.getInstance(process!!.project).findFile(position.file) !is RsFile) {
-                return super.resolveToDeclaration(position, `var`)
-            }
+class RsDebuggerTypesHelper(process: CidrDebugProcess) : CidrDebuggerTypesHelper(process) {
+    private fun isApplicable(position: XSourcePosition): Boolean {
+        return getContextElement(position).containingFile is RsFile
+    }
 
-            val context = CidrDebuggerTypesHelper.getDefaultContextElement(position, process.project)
-            return resolveToDeclaration(context, `var`.name)
-        }
+    override fun computeSourcePosition(value: CidrMemberValue): XSourcePosition? = null
+
+    override fun isImplicitContextVariable(position: XSourcePosition, `var`: LLValue): Boolean? = false
+
+    override fun resolveProperty(value: CidrMemberValue, dynamicTypeName: String?): XSourcePosition? = null
+
+    override fun resolveToDeclaration(position: XSourcePosition, `var`: LLValue): PsiElement? {
+        if (!isApplicable(position)) return null
+
+        val context = getContextElement(position)
+        return resolveToDeclaration(context, `var`.name)
     }
 }
-
 
 private fun resolveToDeclaration(ctx: PsiElement?, name: String): PsiElement? {
     val composite = ctx?.parentOfType<RsCompositeElement>() ?: return null

@@ -22,7 +22,7 @@
     <depends>org.rust.lang</depends>
 
     <extensions defaultExtensionNs="cidr.debugger">
-        <languageSupportFactory implementation="org.rust.debugger.RsCidrDebuggerLanguageSupportFactory"
+        <languageSupportFactory implementation="org.rust.debugger.lang.RsCidrDebuggerLanguageSupportFactory"
                                 order="first"/>
 
     </extensions>
