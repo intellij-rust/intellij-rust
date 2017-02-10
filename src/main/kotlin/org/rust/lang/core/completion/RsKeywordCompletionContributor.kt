@@ -1,15 +1,18 @@
 package org.rust.lang.core.completion
 
-import com.intellij.codeInsight.completion.CompletionContributor
-import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.StandardPatterns.or
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.tree.TokenSet
+import com.intellij.util.ProcessingContext
 import org.rust.lang.core.RsPsiPattern
-import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPath
@@ -17,6 +20,8 @@ import org.rust.lang.core.psi.impl.RsFile
 
 /**
  * Completes Rust keywords
+ *
+ * TODO: checkout  org.jetbrains.kotlin.idea.completion.KeywordCompletion, it has some super cool ideas
  */
 class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
@@ -37,6 +42,33 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             RsKeywordCompletionProvider("mut"))
         extend(CompletionType.BASIC, loopFlowCommandPatern(),
             RsKeywordCompletionProvider("break", "continue"))
+
+        extend(CompletionType.BASIC, elsePattern(), object : CompletionProvider<CompletionParameters>() {
+            override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
+                val elseBuilder = LookupElementBuilder
+                    .create("else")
+                    .bold()
+                    .withTailText(" {...}")
+                    .withInsertHandler { context, lookupElement ->
+                        context.document.insertString(context.selectionEndOffset, " {  }")
+                        EditorModificationUtil.moveCaretRelatively(context.editor, 3)
+
+                    }
+
+                val elseIfBuilder = LookupElementBuilder
+                    .create("else if")
+                    .bold()
+                    .withTailText(" {...}")
+                    .withInsertHandler { context, lookupElement ->
+                        context.document.insertString(context.selectionEndOffset, "  { }")
+                        EditorModificationUtil.moveCaretRelatively(context.editor, 1)
+                    }
+
+                for (builder in listOf(elseBuilder, elseIfBuilder)) {
+                    result.addElement(PrioritizedLookupElement.withPriority(builder, CompletionEngine.KEYWORD_PRIORITY))
+                }
+            }
+        })
     }
 
     private fun declarationPattern(): PsiElementPattern.Capture<PsiElement> =
@@ -78,4 +110,10 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         psiElement<PsiElement>()
             .withElementType(TokenSet.create(IDENTIFIER))
             .and(RsPsiPattern.onStatementBeginning(*startWords))
+
+    private fun elsePattern(): PsiElementPattern.Capture<PsiElement> {
+        val braceAfterIf = psiElement(RBRACE).withSuperParent(2, psiElement(IF_EXPR))
+        return psiElement<PsiElement>()
+            .afterLeafSkipping(psiElement(PsiWhiteSpace::class.java), braceAfterIf)
+    }
 }

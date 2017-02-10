@@ -1,5 +1,7 @@
 package org.rust.lang.core.completion
 
+import org.intellij.lang.annotations.Language
+
 class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     fun testBreakInForLoop() = checkSingleCompletion("break", """
         fn foo() {
@@ -318,4 +320,34 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     fun testUseSuper() = checkSingleCompletion("super::", """
         use su/*caret*/
     """)
+
+    fun `test else`() = checkCompletion("else", """
+        fn main() {
+            if true { } /*caret*/
+        }
+    """, """
+        fn main() {
+            if true { } else { /*caret*/ }
+        }
+    """)
+
+    fun `test else if`() = checkCompletion("else if", """
+        fn main() {
+            if true { } /*caret*/
+        }
+    """, """
+        fn main() {
+            if true { } else if /*caret*/ { }
+        }
+    """)
+
+    private fun checkCompletion(
+        lookupString: String,
+        @Language("Rust") before: String,
+        @Language("Rust") after: String
+    ) = checkByText(before, after) {
+        val items = myFixture.completeBasic()
+        myFixture.lookup.currentItem = items.find { it.lookupString == lookupString }
+        myFixture.type('\n')
+    }
 }
