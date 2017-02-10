@@ -15,10 +15,6 @@ import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
 
 class RsDebuggerTypesHelper(process: CidrDebugProcess) : CidrDebuggerTypesHelper(process) {
-    private fun isApplicable(position: XSourcePosition): Boolean {
-        return getContextElement(position).containingFile is RsFile
-    }
-
     override fun computeSourcePosition(value: CidrMemberValue): XSourcePosition? = null
 
     override fun isImplicitContextVariable(position: XSourcePosition, `var`: LLValue): Boolean? = false
@@ -26,11 +22,17 @@ class RsDebuggerTypesHelper(process: CidrDebugProcess) : CidrDebuggerTypesHelper
     override fun resolveProperty(value: CidrMemberValue, dynamicTypeName: String?): XSourcePosition? = null
 
     override fun resolveToDeclaration(position: XSourcePosition, `var`: LLValue): PsiElement? {
-        if (!isApplicable(position)) return null
+        if (!isRust(position)) return delegate?.resolveToDeclaration(position, `var`)
 
         val context = getContextElement(position)
         return resolveToDeclaration(context, `var`.name)
     }
+
+    private val delegate: CidrDebuggerTypesHelper? =
+        RsDebuggerLanguageSupportFactory.DELEGATE?.createTypesHelper(process)
+
+    private fun isRust(position: XSourcePosition): Boolean =
+        getContextElement(position).containingFile is RsFile
 }
 
 private fun resolveToDeclaration(ctx: PsiElement?, name: String): PsiElement? {

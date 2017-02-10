@@ -14,8 +14,6 @@ import com.intellij.ui.layout.LayoutBuilder
 import com.intellij.ui.layout.Row
 import com.intellij.ui.layout.panel
 import com.intellij.util.xmlb.XmlSerializer
-import com.jetbrains.cidr.execution.CidrCommandLineState
-import com.jetbrains.cidr.execution.CidrRunProfile
 import org.jdom.Element
 import org.rust.cargo.runconfig.RustRunConfigurationModule
 import org.rust.cargo.util.cargoProjectRoot
@@ -40,7 +38,6 @@ class CargoDebugConfigurationType : ConfigurationTypeBase("CargoDebugConfigurati
 class CargoDebugConfiguration(
     project: Project, factory: ConfigurationFactory, name: String?
 ) : ModuleBasedConfiguration<RustRunConfigurationModule>(name, RustRunConfigurationModule(project), factory),
-    CidrRunProfile,
     RunConfigurationWithSuppressedDefaultRunAction {
 
     init {
@@ -57,7 +54,7 @@ class CargoDebugConfiguration(
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
         Form()
 
-    override fun getState(executor: Executor, environment: ExecutionEnvironment): CidrCommandLineState? {
+    override fun getState(executor: Executor, environment: ExecutionEnvironment): CommandLineState? {
         val module = configurationModule.module
             ?: error("No Rust module")
 
@@ -65,8 +62,7 @@ class CargoDebugConfiguration(
         val cmd = GeneralCommandLine("$projectDir/target/debug/$binary")
             // LLDB won't work without working directory
             .withWorkDirectory(projectDir)
-        val launcher = RsDebugLauncher(project, cmd)
-        return RsDebugRunState(environment, launcher)
+        return RsDebugCommandLineState(environment, cmd)
     }
 
     override fun writeExternal(element: Element) {

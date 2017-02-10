@@ -20,7 +20,6 @@ import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.XDebugProcessConfiguratorStarter
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
-import com.jetbrains.cidr.execution.CidrCommandLineState
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.project.settings.toolchain
@@ -43,14 +42,14 @@ class RsDebugRunner : AsyncGenericProgramRunner<RunnerSettings>() {
         return task.queueAsync().then {
             object : RunProfileStarter() {
                 override fun execute(state: RunProfileState, env: ExecutionEnvironment): RunContentDescriptor? {
-                    return startDebugSession(state as CidrCommandLineState, env, false).runContentDescriptor
+                    return startDebugSession(state as RsDebugCommandLineState, env, false).runContentDescriptor
                 }
             }
         }
     }
 
     @Throws(ExecutionException::class)
-    fun startDebugSession(state: CidrCommandLineState,
+    fun startDebugSession(state: RsDebugCommandLineState,
                           env: ExecutionEnvironment,
                           muteBreakpoints: Boolean,
                           vararg listeners: XDebugSessionListener): XDebugSession {
