@@ -32,6 +32,20 @@ class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention()) {
         }
     """)
 
+    fun `test caret after brace`() = doAvailableTest("""
+        fn foo() {
+            if true {
+                ()
+            }/*caret*/
+        }
+    """, """
+        fn foo() {
+            if true {
+                ()
+            } else {/*caret*/}
+        }
+    """)
+
     fun testNested1() = doAvailableTest("""
         fn main() {
             if true {

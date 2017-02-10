@@ -1,6 +1,7 @@
 package org.rust.ide.intentions
 
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
@@ -24,7 +25,7 @@ import com.intellij.psi.PsiElement
  *
  * [findApplicableContext] is executed under a read action, and [invoke] under a write action.
  */
-abstract class RsElementBaseIntentionAction<Ctx> : PsiElementBaseIntentionAction() {
+abstract class RsElementBaseIntentionAction<Ctx> : BaseElementAtCaretIntentionAction() {
 
     /**
      * Return `null` if the intention is not applicable, otherwise collect and return
