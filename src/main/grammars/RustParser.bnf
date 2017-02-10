@@ -228,6 +228,17 @@ private Items ::= Item_with_recover*
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// Lifetimes
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+LifetimeDecl ::= lifetime {
+  implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RsLifetimeDeclImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsLifetimeDeclStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // Functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -278,7 +289,7 @@ TypeParameterList ::= '<' LifetimesParams TypeParams '>' {
 private LifetimesParams ::= <<list_element LifetimeParameter>>*
 private TypeParams      ::= <<list_element TypeParameter>>*
 
-LifetimeParameter ::= OuterAttr* lifetime LifetimeParamBounds? {
+LifetimeParameter ::= OuterAttr* LifetimeDecl LifetimeParamBounds? {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsLifetimeParameterImplMixin"
 }
@@ -813,7 +824,7 @@ WhileExpr ::= Label? while Condition SimpleBlock { pin = 'while' }
 Condition ::= [ let Pat '=' ] NoStructLitExpr
 
 LoopExpr ::= Label? loop SimpleBlock { pin = 'loop' }
-private Label ::= lifetime ':'
+private Label ::= LifetimeDecl ':'
 
 ContExpr ::= continue lifetime?
 
