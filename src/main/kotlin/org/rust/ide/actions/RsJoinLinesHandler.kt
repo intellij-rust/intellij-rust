@@ -13,6 +13,10 @@ import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.util.elementType
 
 class RsJoinLinesHandler : JoinLinesHandlerDelegate {
+    /**
+     * Fixup lines **after** they have been join.
+     * See [RsJoinRawLinesHandler]
+     */
     override fun tryJoinLines(document: Document, file: PsiFile, offsetNear: Int, end: Int): Int {
         if (file !is RsFile) return CANNOT_JOIN
 

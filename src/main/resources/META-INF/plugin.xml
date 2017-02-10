@@ -137,7 +137,10 @@
                                   id="RustRawLiteralHashesDeleter"/>
 
         <joinLinesHandler implementation="org.rust.ide.actions.RsJoinLinesHandler"
-                          id="RustStringLiteralJoinLinesHandler"/>
+                          id="RsJoinLinesHandler"/>
+
+        <joinLinesHandler implementation="org.rust.ide.actions.RsJoinRawLinesHandler"
+                          id="RsJoinRawLinesHandler"/>
 
         <!-- Code Style -->
 

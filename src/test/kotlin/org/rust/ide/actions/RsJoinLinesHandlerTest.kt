@@ -1,20 +1,10 @@
 package org.rust.ide.actions
 
-import com.intellij.openapi.actionSystem.IdeActions
-import org.intellij.lang.annotations.Language
-import org.rust.lang.RsTestBase
+class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
+    fun `test empty file`() = doTest("/*caret*/", "/*caret*/")
 
-class RsJoinLinesHandlerTest : RsTestBase() {
-    override val dataPath: String = ""
-
-    private fun doTest(
-        @Language("Rust") before: String,
-        @Language("Rust") after: String
-    ) {
-        checkByText(before, after) {
-            myFixture.performEditorAction(IdeActions.ACTION_EDITOR_JOIN_LINES)
-        }
-    }
+    fun `test blank file1`() = doTest("/*caret*/\n\n", "/*caret*/\n")
+    fun `test blank file2`() = doTest("\n/*caret*/\n", "\n/*caret*/")
 
     fun testNoEscape() = doTest("""
         fn main() {
