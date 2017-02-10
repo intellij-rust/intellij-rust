@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsMethodCallExpr
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsTryExpr
 import org.rust.lang.core.psi.util.parentOfType
 
 class UnwrapToTryIntention : RsElementBaseIntentionAction<RsMethodCallExpr>() {
@@ -24,8 +23,7 @@ class UnwrapToTryIntention : RsElementBaseIntentionAction<RsMethodCallExpr>() {
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: RsMethodCallExpr) {
-        val newPsiElement = RsPsiFactory(project).createExpression("a?")
-        (newPsiElement as? RsTryExpr)?.expr?.replace(ctx.expr) ?: return
-        ctx.replace(newPsiElement)
+        val tryElement = RsPsiFactory(project).createTryExpression(ctx.expr)
+        ctx.replace(tryElement)
     }
 }

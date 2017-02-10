@@ -1,1 +1,1 @@
-let a = <spot>Some(12)?</spot>
+let a = <spot>Ok(12)?</spot>

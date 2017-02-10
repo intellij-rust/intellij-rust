@@ -18,6 +18,15 @@ class RsPsiFactory(private val project: Project) {
         createFromText("fn main() { $text; }")
             ?: error("Failed to create expression from text: `$text`")
 
+    fun createTryExpression(expr: RsExpr): RsTryExpr {
+        val newElement = createExpression("a?")
+        if (newElement is RsTryExpr) {
+            newElement.expr.replace(expr)
+            return newElement
+        }
+        error("Failed to create try expression `${expr.text}`?")
+    }
+
     fun createBlockExpr(body: String): RsBlockExpr =
         createExpression("{ $body }") as RsBlockExpr
 

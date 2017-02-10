@@ -13,11 +13,11 @@ class UnwrapToTryIntentionTest : RsIntentionTestBase(UnwrapToTryIntention()) {
 
     fun testAvailable2() = doAvailableTest("""
         fn main() {
-            let a = Some(12).unwrap/*caret*/();
+            let a = Ok(12).unwrap/*caret*/();
         }
     """, """
         fn main() {
-            let a = Some(12)?;
+            let a = Ok(12)?;
         }
     """)
 
