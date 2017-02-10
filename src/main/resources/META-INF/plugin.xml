@@ -375,6 +375,10 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
+            <className>org.rust.ide.intentions.UnwrapToTryIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.AddElseIntention</className>
             <category>Rust</category>
         </intentionAction>
