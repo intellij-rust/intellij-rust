@@ -121,7 +121,7 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
             is RsLiteralKind.Boolean -> RustBooleanType
             is RsLiteralKind.Integer -> RustIntegerType.fromLiteral(o.integerLiteral!!)
             is RsLiteralKind.Float -> RustFloatType.fromLiteral(o.floatLiteral!!)
-            is RsLiteralKind.String -> RustStringSliceType
+            is RsLiteralKind.String -> RustReferenceType(RustStringSliceType)
             is RsLiteralKind.Char -> RustCharacterType
             null -> RustUnknownType
         }
