@@ -307,7 +307,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkRefLikeType(holder: AnnotationHolder, type: RsRefLikeType) {
         if (type.needsLifetime()) {
-            require(type.lifetime, holder, "Missing lifetime specifier [E0106]", type.and ?: type)
+            require(type.lifetimeReference, holder, "Missing lifetime specifier [E0106]", type.and ?: type)
         }
     }
 

@@ -4,7 +4,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.isMut
 import org.rust.lang.core.psi.impl.isRef
 import org.rust.lang.core.psi.impl.mixin.selfParameter
 import org.rust.lang.core.psi.impl.mixin.valueParameters
@@ -20,7 +19,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         val scope = element.parentOfType<RsBlock>()
         if (fn.contains(scope)) return null
 
-        if ((fn.retType?.typeReference as? RsRefLikeType)?.lifetime != null) return null
+        if ((fn.retType?.typeReference as? RsRefLikeType)?.lifetimeReference != null) return null
 
         val args = fn.allRefArgs
 
@@ -46,7 +45,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
             retType.replace(createRefType(project, retType, ctx.allRefArgs.first().lifetime!!.text))
         } else {
             val lifeTime = (retType.replace(createRefType(project, retType, "'unknown"))
-                as RsRefLikeType).lifetime ?: return
+                as RsRefLikeType).lifetimeReference ?: return
             editor.selectionModel.setSelection(lifeTime.textRange.startOffset + 1, lifeTime.textRange.endOffset)
         }
     }
@@ -74,10 +73,10 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         return (selfAfg + params).filterNotNull()
     }
 
-    private val PsiElement.lifetime: PsiElement? get() =
+    private val PsiElement.lifetime: RsLifetimeReference? get() =
     when (this) {
-        is RsSelfParameter -> lifetime
-        is RsValueParameter -> (typeReference as? RsRefLikeType)?.lifetime
+        is RsSelfParameter -> lifetimeReference
+        is RsValueParameter -> (typeReference as? RsRefLikeType)?.lifetimeReference
         else -> null
     }
 }

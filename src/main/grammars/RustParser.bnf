@@ -259,7 +259,7 @@ LambdaParameter ::= Pat TypeAscription?
 AnonParameter ::= [ RestrictedPat ':' ] TypeReference
 PathParameter ::= TypeReference !'='
 
-SelfParameter ::= [ '&' lifetime? ] mut? self TypeAscription? {
+SelfParameter ::= [ '&' LifetimeReference? ] mut? self TypeAscription? {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsSelfParameterImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsSelfParameterStub"
@@ -299,7 +299,7 @@ LifetimeParameter ::= OuterAttr* LifetimeDecl LifetimeParamBounds? {
   mixin = "org.rust.lang.core.psi.impl.mixin.RsLifetimeParameterImplMixin"
 }
 
-LifetimeParamBounds ::= ':' lifetime ('+' lifetime)*
+LifetimeParamBounds ::= ':' LifetimeReference ('+' LifetimeReference)*
 
 TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' TypeReference ] {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
@@ -313,7 +313,7 @@ Polybound ::= [ ForLifetimes | '?' ] Bound
 
 WhereClause ::= where <<comma_separated_list WherePred>>
 
-WherePred ::= lifetime LifetimeParamBounds | ForLifetimes? TypeReference TypeParamBounds
+WherePred ::= LifetimeReference LifetimeParamBounds | ForLifetimes? TypeReference TypeParamBounds
 
 ForLifetimes ::= for '<' LifetimesParams '>'
 
@@ -668,7 +668,7 @@ ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-RefLikeType ::= ( '&' lifetime? mut? | '*' [ const | mut ] ) TypeReference {
+RefLikeType ::= ( '&' LifetimeReference? mut? | '*' [ const | mut ] ) TypeReference {
   stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -687,7 +687,7 @@ TypeWithBoundsType ::= TypeReference ('+' Bound)+ {
   stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-Bound ::= lifetime | TraitRef
+Bound ::= LifetimeReference | TraitRef
 
 ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
   stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
@@ -831,9 +831,9 @@ Condition ::= [ let Pat '=' ] NoStructLitExpr
 LoopExpr ::= Label? loop SimpleBlock { pin = 'loop' }
 private Label ::= LifetimeDecl ':'
 
-ContExpr ::= continue lifetime?
+ContExpr ::= continue LifetimeReference?
 
-BreakExpr ::= break lifetime? AnyExpr?
+BreakExpr ::= break LifetimeReference? AnyExpr?
 
 ForExpr ::= Label? for Pat in NoStructLitExpr SimpleBlock { pin = "for" }
 

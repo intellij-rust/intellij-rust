@@ -601,4 +601,111 @@ class RsResolveTest : RsResolveTestBase() {
                 //^ unresolved
         }
     """)
+
+    fun `test lifetime in function arguments`() = checkByCode("""
+        fn foo<'a>(
+              //X
+            a: &'a u32) {}
+               //^
+    """)
+
+    fun `test lifetime in function return type`() = checkByCode("""
+        fn foo<'a>()
+              //X
+            -> &'a u32 {}
+               //^
+    """)
+
+    fun `test lifetime in struct`() = checkByCode("""
+        struct Foo<'a> {
+                  //X
+            a: &'a u32 }
+               //^
+    """)
+
+    fun `test lifetime in enum`() = checkByCode("""
+        enum Foo<'a> {
+                //X
+            BAR(&'a u32) }
+                //^
+    """)
+
+    fun `test lifetime in type alias`() = checkByCode("""
+        type Str<'a>
+                //X
+            = &'a str;
+              //^
+    """)
+
+    fun `test lifetime in impl`() = checkByCode("""
+        struct Foo<'a> { a: &'a str }
+        impl<'a>
+            //X
+            Foo<'a> {}
+               //^
+    """)
+
+    fun `test lifetime in trait`() = checkByCode("""
+        trait Named<'a> {
+                   //X
+            fn name(&self) -> &'a str;
+                              //^
+         }
+    """)
+
+    fun `test lifetime in fn parameters`() = checkByCode("""
+        fn foo<'a>(
+              //X
+          f: &'a Fn() -> &'a str) {}
+                         //^
+    """)
+
+    fun `test lifetime in type param bounds`() = checkByCode("""
+        fn foo<'a,
+              //X
+            T: 'a>(a: &'a T) {}
+              //^
+    """)
+
+    fun `test lifetime in where clause`() = checkByCode("""
+        fn foo<'a, T>(a: &'a T)
+              //X
+            where T: 'a {}
+                    //^
+    """)
+
+    fun `test static lifetime unresolved`() = checkByCode("""
+        fn foo(name: &'static str) {}
+                      //^ unresolved
+    """)
+
+    fun `test loop label`() = checkByCode("""
+        fn foo() {
+            'a: loop {
+           //X
+                break 'a;
+                     //^
+            }
+        }
+    """)
+
+    fun `test while loop label`() = checkByCode("""
+        fn foo() {
+            'a: while true {
+           //X
+                continue 'a;
+                        //^
+            }
+        }
+    """)
+
+    fun `test for loop label`() = checkByCode("""
+        fn foo() {
+            'a: for _ in 0..3 {
+           //X
+                break 'a;
+                     //^
+            }
+        }
+    """)
 }
