@@ -254,14 +254,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testStrRef() = expect<ComparisonFailure> {
-        testExpr("""
+    fun testStrRef() = testExpr("""
         fn main() {
             let a = "Hello";
                        //^ & str
         }
     """)
-    }
 
     fun testEnumVariantA() = testExpr("""
         enum E { A(i32), B { val: bool }, C }
