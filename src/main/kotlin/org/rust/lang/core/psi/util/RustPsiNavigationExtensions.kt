@@ -20,6 +20,8 @@ inline fun <reified T : PsiElement> PsiElement.childOfType(strict: Boolean = tru
 inline fun <reified T : PsiElement> PsiElement.descendantsOfType(): Collection<T> =
     PsiTreeUtil.findChildrenOfType(this, T::class.java)
 
+val PsiElement.branch: Sequence<PsiElement>
+    get() = generateSequence(this) { it.parent }
 
 /**
  * Finds first sibling that is neither comment, nor whitespace before given element.

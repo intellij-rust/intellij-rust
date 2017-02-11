@@ -16,3 +16,5 @@ abstract class RsLifetimeReferenceImplMixin (node: ASTNode) : RsCompositeElement
     override fun getReference(): RsReference = RsLifetimeReferenceReferenceImpl(this)
 
 }
+
+val RsLifetimeReference.isPredefined : Boolean get() = lifetime.text == "'static"
