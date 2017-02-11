@@ -1,7 +1,5 @@
 package org.rust.ide.annotator
 
-import org.junit.Test
-
 class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/errors"
 
