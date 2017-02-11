@@ -1,7 +1,6 @@
 package org.rust.ide.annotator
 
 import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
@@ -13,12 +12,15 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.annotator.fixes.AddModuleFileFix
-import org.rust.ide.annotator.fixes.ImplementMethodsFix
 import org.rust.ide.annotator.fixes.AddSelfFix
+import org.rust.ide.annotator.fixes.ImplementMethodsFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.mixin.*
-import org.rust.lang.core.psi.util.*
+import org.rust.lang.core.psi.util.descendantsOfType
+import org.rust.lang.core.psi.util.module
+import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.util.trait
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.symbols.RustPath

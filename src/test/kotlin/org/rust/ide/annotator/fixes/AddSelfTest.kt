@@ -1,11 +1,9 @@
 package org.rust.ide.annotator.fixes
 
-import org.junit.Test
 import org.rust.ide.annotator.RsAnnotatorTestBase
 
 class AddSelfTest : RsAnnotatorTestBase() {
-    @Test
-    fun testNoParameters() = checkQuickFix("Add self to function", """
+    fun `test has no parameters`() = checkQuickFix("Add self to function", """
 struct S;
 
 impl S {
@@ -23,8 +21,7 @@ impl S {
 }
 """)
 
-    @Test
-    fun testHasParameters() = checkQuickFix("Add self to function", """
+    fun `test has parameters`() = checkQuickFix("Add self to function", """
 struct S;
 
 impl S {

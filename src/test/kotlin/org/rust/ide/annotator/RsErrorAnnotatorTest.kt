@@ -787,7 +787,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0424_SelfInStaticAndImpl() = checkErrors("""
+    fun `testE0424 self in impl`() = checkErrors("""
         struct Foo;
 
         impl Foo {
@@ -797,7 +797,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0424_IgnoreNonStatic() = checkErrors("""
+    fun `testE0424 ignore non static`() = checkErrors("""
         struct Foo;
 
         impl Foo {
@@ -807,7 +807,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0424_IgnoreModulePath() = checkErrors("""
+    fun `testE0424 ignore module path`() = checkErrors("""
         fn foo() {
         }
 
@@ -816,5 +816,3 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 }
-
-data class A (val s: String)
