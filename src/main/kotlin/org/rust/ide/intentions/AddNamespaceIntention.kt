@@ -11,7 +11,7 @@ class AddNamespaceIntention : RsElementBaseIntentionAction<AddNamespaceIntention
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val (matchExpr, caller, gen, more) = ctx
         val callWithNamespace =
-            RustPsiFactory(project).createExpression("""${caller.text}::<${gen.text}>${more.text}""") as RsCallExpr
+            RsPsiFactory(project).createExpression("""${caller.text}::<${gen.text}>${more.text}""") as RsCallExpr
         matchExpr.replace(callWithNamespace)
     }
 
