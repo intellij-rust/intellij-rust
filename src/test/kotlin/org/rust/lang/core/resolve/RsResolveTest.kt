@@ -708,4 +708,24 @@ class RsResolveTest : RsResolveTestBase() {
             }
         }
     """)
+
+    fun `test for loop label vs lifetime conflict 1`() = checkByCode("""
+        fn foo<'a>(a: &'a str) {
+            'a: for _ in 0..3 {
+           //X
+                break 'a;
+                     //^
+            }
+        }
+    """)
+
+    fun `test for loop label vs lifetime conflict 2`() = checkByCode("""
+        fn foo<'a>(a: &'a str) {
+              //X
+            'a: for _ in 0..3 {
+                let _: &'a str = a;
+                       //^
+            }
+        }
+    """)
 }

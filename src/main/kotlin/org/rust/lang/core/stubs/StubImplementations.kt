@@ -24,7 +24,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 59
+        override fun getStubVersion(): Int = 60
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -81,6 +81,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "TUPLE_FIELD_DECL" -> RsPlaceholderStub.Type("TUPLE_FIELD_DECL", ::RsTupleFieldDeclImpl)
     "FIELD_DECL" -> RsFieldDeclStub.Type
     "LIFETIME_DECL" -> RsLifetimeDeclStub.Type
+    "LABEL_DECL" -> RsLabelDeclStub.Type
     "ALIAS" -> RsAliasStub.Type
 
     "USE_GLOB_LIST" -> RsPlaceholderStub.Type("USE_GLOB_LIST", ::RsUseGlobListImpl)
@@ -764,6 +765,33 @@ class RsLifetimeDeclStub(
     }
 }
 
+class RsLabelDeclStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    override val name: String?
+) : StubBase<RsLabelDecl>(parent, elementType),
+    RsNamedStub {
+
+    object Type : RsStubElementType<RsLabelDeclStub, RsLabelDecl>("LABEL_DECL") {
+        override fun createPsi(stub: RsLabelDeclStub) =
+            RsLabelDeclImpl(stub, this)
+
+        override fun createStub(psi: RsLabelDecl, parentStub: StubElement<*>?) =
+            RsLabelDeclStub(parentStub, this, psi.name)
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RsLabelDeclStub(parentStub, this,
+                dataStream.readNameAsString()
+            )
+
+        override fun serialize(stub: RsLabelDeclStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.name)
+            }
+
+        override fun indexStub(stub: RsLabelDeclStub, sink: IndexSink) {
+        }
+    }
+}
 
 private fun StubInputStream.readNameAsString(): String? = readName()?.string
 
