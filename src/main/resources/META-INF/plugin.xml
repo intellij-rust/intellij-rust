@@ -36,6 +36,10 @@
         <lang.parserDefinition language="Rust" implementationClass="org.rust.lang.core.parser.RustParserDefinition"/>
         <stubElementTypeHolder class="org.rust.lang.core.psi.RsElementTypes"/>
 
+        <!-- Selection Handler -->
+
+        <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsListSelectionHandler" />
+
         <!-- Syntax Highlighter -->
 
         <lang.syntaxHighlighterFactory language="Rust"
