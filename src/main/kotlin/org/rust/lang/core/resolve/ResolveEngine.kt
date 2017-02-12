@@ -209,23 +209,31 @@ object ResolveEngine {
         return module.project.getPsiFor(module.cargoWorkspace?.findCrateByName(name)?.crateRoot)?.rustMod
     }
 
+    fun resolveLabel(label: RsLabel): RsLabelDecl? =
+        label.branch
+            .mapNotNull {
+                when (it) {
+                    is RsLoopExpr -> it.labelDecl
+                    is RsForExpr -> it.labelDecl
+                    is RsWhileExpr -> it.labelDecl
+                    else -> null
+                }
+            }.find { it.name ==  label.lifetime.text}
+
     fun resolveLifetime(lifetimeRef: RsLifetimeReference): RsLifetimeDecl? {
         if (lifetimeRef.isPredefined) return null
         return lifetimeRef.branch
             .mapNotNull {
                 when (it) {
-                    is RsFunction -> it.typeParameterList?.lifetimeDecls
-                    is RsStructItem -> it.typeParameterList?.lifetimeDecls
-                    is RsEnumItem -> it.typeParameterList?.lifetimeDecls
-                    is RsTypeAlias -> if (it.parent is RsImplItem || it.parent is RsTraitItem) null else it.typeParameterList?.lifetimeDecls
-                    is RsImplItem -> it.typeParameterList?.lifetimeDecls
-                    is RsTraitItem -> it.typeParameterList?.lifetimeDecls
-                    is RsLoopExpr -> it.lifetimeDecl?.let { sequenceOf(it) }
-                    is RsForExpr -> it.lifetimeDecl?.let { sequenceOf(it) }
-                    is RsWhileExpr -> it.lifetimeDecl?.let { sequenceOf(it) }
+                    is RsFunction -> it.typeParameterList
+                    is RsStructItem -> it.typeParameterList
+                    is RsEnumItem -> it.typeParameterList
+                    is RsTypeAlias -> if (it.parent is RsImplItem || it.parent is RsTraitItem) null else it.typeParameterList
+                    is RsImplItem -> it.typeParameterList
+                    is RsTraitItem -> it.typeParameterList
                     else -> null
                 }
-            }.flatMap { it }
+            }.flatMap { it.lifetimeDecls }
             .find { it.name ==  lifetimeRef.lifetime.text}
     }
 

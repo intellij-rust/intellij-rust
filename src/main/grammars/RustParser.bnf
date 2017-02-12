@@ -825,17 +825,27 @@ PathExpr ::= PathGenericArgsWithColons
 
 QualPathExpr ::= << qualified_path PathGenericArgsWithColons >>
 
-WhileExpr ::= Label? while Condition SimpleBlock { pin = 'while' }
+WhileExpr ::= LabelDecl? while Condition SimpleBlock { pin = 'while' }
 Condition ::= [ let Pat '=' ] NoStructLitExpr
 
-LoopExpr ::= Label? loop SimpleBlock { pin = 'loop' }
-private Label ::= LifetimeDecl ':'
+LoopExpr ::= LabelDecl? loop SimpleBlock { pin = 'loop' }
 
-ContExpr ::= continue LifetimeReference?
+ContExpr ::= continue Label?
 
-BreakExpr ::= break LifetimeReference? AnyExpr?
+BreakExpr ::= break Label? AnyExpr?
 
-ForExpr ::= Label? for Pat in NoStructLitExpr SimpleBlock { pin = "for" }
+ForExpr ::= LabelDecl? for Pat in NoStructLitExpr SimpleBlock { pin = "for" }
+
+LabelDecl ::= lifetime ':' {
+  implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RsLabelDeclImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsLabelDeclStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+Label ::= lifetime {
+  implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.impl.mixin.RsLabelImplMixin"
+}
 
 MatchExpr ::= match NoStructLitExpr MatchBody { pin = 'match'}
 MatchBody ::= '{' MatchArm* '}' { pin = 1 }
