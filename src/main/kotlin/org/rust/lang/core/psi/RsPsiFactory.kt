@@ -4,15 +4,23 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
+import com.intellij.psi.tree.IElementType
 import org.rust.lang.RsFileType
+import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
+import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
 import org.rust.lang.core.psi.impl.mixin.selfParameter
 import org.rust.lang.core.psi.impl.mixin.valueParameters
 import org.rust.lang.core.psi.util.childOfType
 
 class RsPsiFactory(private val project: Project) {
-    fun createIdentifier(text: String): PsiElement =
-        createFromText<RsModDeclItem>("mod $text;")?.identifier
-            ?: error("Failed to create identifier: `$text`")
+    fun createIdentifier(text: String, tokenType: IElementType): PsiElement =
+        when (tokenType) {
+            IDENTIFIER -> createFromText<RsModDeclItem>("mod $text;")?.identifier
+                ?: error("Failed to create identifier: `$text`")
+            QUOTE_IDENTIFIER -> createFromText<RsLifetimeDecl>("fn foo<$text>(_: &$text u8) {}")?.quoteIdentifier
+                ?: error("Failed to create quote identifier: `$text`")
+            else -> error("Unsupported identifier token type for `$text` ($tokenType)")
+        }
 
     fun createExpression(text: String): RsExpr =
         createFromText("fn main() { $text; }")

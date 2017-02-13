@@ -6,6 +6,7 @@ import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.lexer.RsLexer
 import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
+import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
 
 class RsNamesValidator : NamesValidator {
     override fun isKeyword(name: String, project: Project?): Boolean =
@@ -18,10 +19,10 @@ class RsNamesValidator : NamesValidator {
         isIdentifier(name, project, true)
 
     fun isIdentifier(name: String, @Suppress("UNUSED_PARAMETER") project: Project?, withPrimitives: Boolean): Boolean =
-        if (withPrimitives) {
-            getLexerType(name) == IDENTIFIER && name !in PrimitiveTypes
-        } else {
-            getLexerType(name) == IDENTIFIER
+        when (getLexerType(name)) {
+            IDENTIFIER -> !withPrimitives || name !in PrimitiveTypes
+            QUOTE_IDENTIFIER -> name !in PredefinedLifetimes
+            else -> false
         }
 
     private fun getLexerType(text: String): IElementType? {
@@ -52,5 +53,7 @@ class RsNamesValidator : NamesValidator {
             "f64",
             "str"
         )
+
+        val PredefinedLifetimes = arrayOf("'static")
     }
 }

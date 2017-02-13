@@ -1,6 +1,7 @@
 package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RsLifetimeDecl
 import org.rust.lang.core.psi.impl.RsStubbedNamedElementImpl
@@ -12,5 +13,6 @@ abstract class RsLifetimeDeclImplMixin : RsStubbedNamedElementImpl<RsLifetimeDec
 
     constructor(stub: RsLifetimeDeclStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getName(): String = lifetime.text
+    override fun getNameIdentifier(): PsiElement? = quoteIdentifier
+
 }

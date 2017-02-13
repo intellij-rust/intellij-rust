@@ -6,6 +6,6 @@ import org.rust.lang.core.psi.impl.RsNamedElementImpl
 
 abstract class RsLifetimeParameterImplMixin(node: ASTNode) : RsNamedElementImpl(node), RsLifetimeParameter {
 
-    override fun getNameIdentifier() = lifetimeDecl.lifetime
+    override fun getNameIdentifier() = lifetimeDecl.quoteIdentifier
 
 }

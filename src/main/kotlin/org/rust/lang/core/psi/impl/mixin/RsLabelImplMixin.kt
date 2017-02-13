@@ -9,7 +9,7 @@ import org.rust.lang.core.resolve.ref.RsReference
 
 abstract class RsLabelImplMixin (node: ASTNode) : RsCompositeElementImpl(node), RsLabel {
 
-    override val referenceNameElement: PsiElement get() = lifetime
+    override val referenceNameElement: PsiElement get() = quoteIdentifier
 
     override val referenceName: String get() = referenceNameElement.text
 

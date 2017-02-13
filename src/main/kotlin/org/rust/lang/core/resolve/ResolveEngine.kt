@@ -210,31 +210,23 @@ object ResolveEngine {
     }
 
     fun resolveLabel(label: RsLabel): RsLabelDecl? =
-        label.branch
-            .mapNotNull {
-                when (it) {
-                    is RsLoopExpr -> it.labelDecl
-                    is RsForExpr -> it.labelDecl
-                    is RsWhileExpr -> it.labelDecl
-                    else -> null
-                }
-            }.find { it.name ==  label.lifetime.text}
+        label.ancestors
+            .takeWhile { it !is RsLambdaExpr && it !is RsFunction }
+            .mapNotNull { it as? RsLabeledExpression }
+            .map { it.labelDecl }
+            .find { it.name ==  label.quoteIdentifier.text}
 
-    fun resolveLifetime(lifetimeRef: RsLifetimeReference): RsLifetimeDecl? {
+    fun resolveLifetime(lifetimeRef: RsLifetime): RsLifetimeDecl? {
         if (lifetimeRef.isPredefined) return null
-        return lifetimeRef.branch
+        return lifetimeRef.ancestors
             .mapNotNull {
                 when (it) {
-                    is RsFunction -> it.typeParameterList
-                    is RsStructItem -> it.typeParameterList
-                    is RsEnumItem -> it.typeParameterList
                     is RsTypeAlias -> if (it.parent is RsImplItem || it.parent is RsTraitItem) null else it.typeParameterList
-                    is RsImplItem -> it.typeParameterList
-                    is RsTraitItem -> it.typeParameterList
+                    is RsGenericDeclaration -> it.typeParameterList
                     else -> null
                 }
             }.flatMap { it.lifetimeDecls }
-            .find { it.name ==  lifetimeRef.lifetime.text}
+            .find { it.name ==  lifetimeRef.quoteIdentifier.text}
     }
 
     private val String.segments: List<RustPathSegment>

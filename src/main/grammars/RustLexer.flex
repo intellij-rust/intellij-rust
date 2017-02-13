@@ -304,11 +304,11 @@ OUTER_EOL_DOC = ({EOL_DOC_LINE}{EOL_WS})*{EOL_DOC_LINE}
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Lifetimes & Literals
+// Quote identifiers & Literals
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 <IN_LIFETIME_OR_CHAR> {
-  \'{IDENTIFIER}                        { yybegin(INITIAL); return LIFETIME; }
+  \'{IDENTIFIER}                        { yybegin(INITIAL); return QUOTE_IDENTIFIER; }
   {CHAR_LITERAL}                        { yybegin(INITIAL); return CHAR_LITERAL; }
   <<EOF>>                               { yybegin(INITIAL); return BAD_CHARACTER; }
 }
