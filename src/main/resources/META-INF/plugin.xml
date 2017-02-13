@@ -425,7 +425,8 @@
         <runConfigurationProducer implementation="org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer"/>
         <runConfigurationProducer implementation="org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer"/>
 
-        <runLineMarkerContributor language="Rust" implementationClass="org.rust.cargo.runconfig.RsRunLineMarkerContributor"/>
+        <runLineMarkerContributor language="Rust" implementationClass="org.rust.cargo.runconfig.command.CargoExecutableRunLineMarkerContributor"/>
+        <runLineMarkerContributor language="Rust" implementationClass="org.rust.cargo.runconfig.test.CargoTestRunLineMarkerContributor"/>
 
         <!-- Cargo -->
 

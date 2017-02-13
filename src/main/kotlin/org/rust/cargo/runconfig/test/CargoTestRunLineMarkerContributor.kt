@@ -1,27 +1,20 @@
-package org.rust.cargo.runconfig
+package org.rust.cargo.runconfig.test
 
 import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
-import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.impl.mixin.isTest
 import org.rust.lang.core.psi.util.elementType
 
-class RsRunLineMarkerContributor : RunLineMarkerContributor() {
+class CargoTestRunLineMarkerContributor : RunLineMarkerContributor() {
     override fun getInfo(element: PsiElement): Info? {
         if (element.elementType != IDENTIFIER) return null
         val fn = element.parent as? RsFunction ?: return null
         return when {
-            CargoExecutableRunConfigurationProducer.isMainFunction(fn) -> Info(
-                AllIcons.RunConfigurations.TestState.Run,
-                Function<PsiElement, String> { "Run Application" },
-                *ExecutorAction.getActions(0)
-            )
-
             fn.isTest -> Info(
                 AllIcons.RunConfigurations.TestState.Green2,
                 Function<PsiElement, String> { "Run Test" },
