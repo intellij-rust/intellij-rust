@@ -22,7 +22,7 @@ class CargoCommandConfiguration(
     project: Project,
     name: String,
     factory: ConfigurationFactory
-) : ModuleBasedConfiguration<RustRunConfigurationModule>(name, RustRunConfigurationModule(project), factory),
+) : ModuleBasedConfiguration<RsRunConfigurationModule>(name, RsRunConfigurationModule(project), factory),
     RunConfigurationWithSuppressedDefaultDebugAction {
 
     var command: String = CargoConstants.Commands.RUN
@@ -101,4 +101,3 @@ class CargoCommandConfiguration(
     }
 }
 
-class RustRunConfigurationModule(project: Project) : RunConfigurationModule(project)
