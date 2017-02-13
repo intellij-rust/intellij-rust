@@ -7,10 +7,10 @@ val CargoWorkspace.Target.cargoArgumentSpeck: String get() {
     val pkgSpec = "--package ${pkg.name}"
 
     val targetSpec = when (kind) {
-        CargoWorkspace.TargetKind.BIN -> "--bin ${name}"
-        CargoWorkspace.TargetKind.TEST -> "--test ${name}"
-        CargoWorkspace.TargetKind.EXAMPLE -> "--example ${name}"
-        CargoWorkspace.TargetKind.BENCH -> "--bench ${name}"
+        CargoWorkspace.TargetKind.BIN -> "--bin $name"
+        CargoWorkspace.TargetKind.TEST -> "--test $name"
+        CargoWorkspace.TargetKind.EXAMPLE -> "--example $name"
+        CargoWorkspace.TargetKind.BENCH -> "--bench $name"
         CargoWorkspace.TargetKind.LIB -> "--lib"
         CargoWorkspace.TargetKind.UNKNOWN -> return pkgSpec
     }
