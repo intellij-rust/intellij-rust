@@ -1,4 +1,4 @@
-package org.rust.cargo.runconfig.producers
+package org.rust.cargo.runconfig.test
 
 import com.intellij.execution.Location
 import com.intellij.execution.actions.ConfigurationContext
@@ -7,8 +7,9 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.runconfig.CargoCommandConfiguration
-import org.rust.cargo.runconfig.CargoCommandRunConfigurationType
+import org.rust.cargo.runconfig.cargoArgumentSpeck
+import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.command.CargoCommandRunConfigurationType
 import org.rust.lang.core.psi.RsCompositeElement
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsMod

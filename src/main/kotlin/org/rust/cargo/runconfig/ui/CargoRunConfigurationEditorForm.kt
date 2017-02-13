@@ -1,4 +1,4 @@
-package org.rust.cargo.runconfig.forms
+package org.rust.cargo.runconfig.ui
 
 import backcompat.ui.components.CheckBox
 import backcompat.ui.components.Label
@@ -8,7 +8,7 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.ui.RawCommandLineEditor
-import org.rust.cargo.runconfig.CargoCommandConfiguration
+import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import javax.swing.JComponent
 import javax.swing.JTextField
 

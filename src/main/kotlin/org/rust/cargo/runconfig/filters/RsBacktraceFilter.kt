@@ -1,4 +1,4 @@
-package org.rust.cargo.runconfig
+package org.rust.cargo.runconfig.filters
 
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.runconfig.RegexpFileLinkFilter.Companion.FILE_POSITION_RE
+import org.rust.cargo.runconfig.filters.RegexpFileLinkFilter.Companion.FILE_POSITION_RE
 import org.rust.lang.core.resolve.ResolveEngine
 import java.awt.Color
 import java.awt.Font
@@ -30,7 +30,7 @@ class RsBacktraceFilter(
     module: Module
 ) : Filter {
 
-    private val sourceLinkFilter = RegexpFileLinkFilter(project, cargoProjectDir, "\\s+at $FILE_POSITION_RE")
+    private val sourceLinkFilter = RegexpFileLinkFilter(project, cargoProjectDir, "\\s+at ${FILE_POSITION_RE}")
     private val backtraceItemFilter = RsBacktraceItemFilter(project, module)
 
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
@@ -66,9 +66,9 @@ private class RsBacktraceItemFilter(
         }
 
         // Dim the hashcode
-        resultItems.add(Filter.ResultItem(funcEnd, funcEnd + funcHash.length, null, DIMMED_TEXT))
+        resultItems.add(com.intellij.execution.filters.Filter.ResultItem(funcEnd, funcEnd + funcHash.length, null, DIMMED_TEXT))
 
-        return Filter.Result(resultItems)
+        return com.intellij.execution.filters.Filter.Result(resultItems)
     }
 
     private fun extractFnHyperlink(funcName: String, start: Int, end: Int): Filter.ResultItem? {
@@ -77,7 +77,7 @@ private class RsBacktraceItemFilter(
         val doc = docManager.getDocument(funcFile) ?: return null
         val link = OpenFileHyperlinkInfo(project, funcFile.virtualFile, doc.getLineNumber(func.element.textOffset))
         val linkAttr = if (func.pkg.origin != PackageOrigin.WORKSPACE) GRAYED_LINK else null
-        return Filter.ResultItem(start, end, link, linkAttr)
+        return com.intellij.execution.filters.Filter.ResultItem(start, end, link, linkAttr)
     }
 
     /**

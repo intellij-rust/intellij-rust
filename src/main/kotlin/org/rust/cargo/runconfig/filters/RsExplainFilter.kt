@@ -1,4 +1,4 @@
-package org.rust.cargo.runconfig
+package org.rust.cargo.runconfig.filters
 
 import com.intellij.execution.filters.BrowserHyperlinkInfo
 import com.intellij.execution.filters.Filter

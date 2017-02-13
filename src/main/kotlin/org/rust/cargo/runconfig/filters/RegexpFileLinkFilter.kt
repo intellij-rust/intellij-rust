@@ -1,4 +1,4 @@
-package org.rust.cargo.runconfig
+package org.rust.cargo.runconfig.filters
 
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.HyperlinkInfo
@@ -45,7 +45,7 @@ open class RegexpFileLinkFilter(
         val columnNumber = match.groups[3]?.let { zeroBasedNumber(it.value) } ?: 0
 
         val lineStart = entireLength - line.length
-        return Filter.Result(
+        return com.intellij.execution.filters.Filter.Result(
             lineStart + fileGroup.range.start,
             lineStart + fileGroup.range.endInclusive + 1,
             createOpenFileHyperlink(fileGroup.value, lineNumber, columnNumber)
