@@ -1,13 +1,9 @@
 package org.rust.ide.inspections
 
 class RsSimplifyBooleanExpressionInspectionTest : RsInspectionsTestBase(RsSimplifyBooleanExpressionInspection()) {
-    fun `test subexpression`() {
-        //FIXME: throws Must not change PSI outside command or undo-transparent action.
-        if (true) return
-        checkByText("""
+    fun `test subexpression`() = checkByText("""
             fn main() {
-                let _ = true && foo && bar;
+                let _ = <1warning><warning>true && foo</warning> && bar</warning>;
             }
         """)
-    }
 }
