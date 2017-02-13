@@ -63,6 +63,11 @@ class RsParserPerformanceTest : RsTestBase() {
                 override fun visitFileEx(file: VirtualFile): Result {
                     if (file.isDirectory && file.name in ignored) return SKIP_CHILDREN
 
+                    // BACKCOMPAT: Rust 1.16.0
+                    // There is a syntax error in this file
+                    // https://github.com/rust-lang/rust/pull/37278
+                    if (file.path.endsWith("dataflow/graphviz.rs")) return CONTINUE
+
                     if (file.fileType != RsFileType) return CONTINUE
                     val fileContent = String(file.contentsToByteArray())
 
