@@ -150,6 +150,7 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     override fun visitParenExpr(o: RsParenExpr) = set { o.expr.type }
 
     override fun visitBinaryExpr(o: RsBinaryExpr) = set {
+
         when (o.operatorType) {
             ANDAND,
             OROR,
@@ -160,7 +161,7 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
             GTEQ,
             LTEQ -> RustBooleanType
 
-            else -> RustUnknownType
+            else -> inferType(o)
         }
     }
 
