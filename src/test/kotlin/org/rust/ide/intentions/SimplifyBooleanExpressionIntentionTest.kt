@@ -237,4 +237,11 @@ class SimplifyBooleanExpressionIntentionTest : RsIntentionTestBase(SimplifyBoole
             let a = true;
         }
     """)
+
+    fun `test incomplete code`() = doUnavailableTest("""
+        fn main() {
+            xs.iter()
+                .map(|/*caret*/)
+        }
+    """)
 }

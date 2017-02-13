@@ -42,7 +42,7 @@ fun RsExpr.isPure(): Boolean? {
             else -> null // TODO: handle update case (`Point{ y: 0, z: 10, .. base}`)
         }
         is RsBinaryExpr -> when (operatorType) {
-            ANDAND, OROR -> listOf(left, right!!).allMaybe(RsExpr::isPure)
+            ANDAND, OROR -> listOfNotNull(left, right).allMaybe(RsExpr::isPure)
             else -> null // Have to search if operation is overloaded
         }
         is RsTupleExpr -> exprList.allMaybe(RsExpr::isPure)
@@ -107,14 +107,19 @@ val RsUnaryExpr.operatorType: UnaryOperator?
  *         `result` is true if an expression was actually simplified.
  */
 fun RsExpr.simplifyBooleanExpression(): Pair<RsExpr, Boolean> {
-    if (this is RsLitExpr)
-        return this to false
-    return this.evalBooleanExpression()?.let {
-        createPsiElement(project, it) to true
-    } ?: when (this) {
+    val original = this to false
+    if (this is RsLitExpr) return original
+
+    val value = this.evalBooleanExpression()
+    if (value != null) {
+        return createPsiElement(project, value) to true
+    }
+
+    return when (this) {
         is RsBinaryExpr -> {
+            val right = right ?: return original
             val (leftExpr, leftSimplified) = left.simplifyBooleanExpression()
-            val (rightExpr, rightSimplified) = right!!.simplifyBooleanExpression()
+            val (rightExpr, rightSimplified) = right.simplifyBooleanExpression()
             if (leftExpr is RsLitExpr) {
                 simplifyBinaryOperation(this, leftExpr, rightExpr, project)?.let {
                     return it to true
@@ -126,13 +131,12 @@ fun RsExpr.simplifyBooleanExpression(): Pair<RsExpr, Boolean> {
                 }
             }
             if (leftSimplified)
-                this.left.replace(leftExpr)
+                left.replace(leftExpr)
             if (rightSimplified)
-                this.right!!.replace(rightExpr)
+                right.replace(rightExpr)
             this to (leftSimplified || rightSimplified)
         }
-        else ->
-            this to false
+        else -> original
     }
 }
 
