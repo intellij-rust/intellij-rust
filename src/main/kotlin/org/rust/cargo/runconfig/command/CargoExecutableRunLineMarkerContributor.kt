@@ -15,9 +15,13 @@ class CargoExecutableRunLineMarkerContributor : RunLineMarkerContributor() {
         val fn = element.parent as? RsFunction ?: return null
         if (!CargoExecutableRunConfigurationProducer.isMainFunction(fn)) return null
 
+        val actions = ExecutorAction.getActions(0)
+
         return Info(
             AllIcons.RunConfigurations.TestState.Run,
-            Function<PsiElement, String> { "Run Application" },
-            *ExecutorAction.getActions(0))
+            Function<PsiElement, String> { psiElement ->
+                actions.mapNotNull { getText(it, psiElement) }.joinToString("\n")
+            },
+            *actions)
     }
 }
