@@ -231,14 +231,14 @@ private Items ::= Item_with_recover*
 // Lifetimes
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-LifetimeDecl ::= quote_identifier {
+LifetimeDecl ::= QUOTE_IDENTIFIER {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsLifetimeDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsLifetimeDeclStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-Lifetime ::= quote_identifier {
+Lifetime ::= QUOTE_IDENTIFIER {
   implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsLifetimeImplMixin"
 }
@@ -845,11 +845,11 @@ ForExpr ::= LabelDecl? for Pat in NoStructLitExpr SimpleBlock {
   implements = [ "org.rust.lang.core.psi.RsLabeledExpression" ]
 }
 
-LabelDecl ::= quote_identifier ':' {
+LabelDecl ::= QUOTE_IDENTIFIER ':' {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsLabelDeclImplMixin"
 }
-Label ::= quote_identifier {
+Label ::= QUOTE_IDENTIFIER {
   implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsLabelImplMixin"
 }

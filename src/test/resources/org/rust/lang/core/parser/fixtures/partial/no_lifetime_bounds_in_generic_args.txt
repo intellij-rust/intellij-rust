@@ -17,12 +17,12 @@ FILE
             PsiElement(::)('::')
             PsiElement(<)('<')
             RsLifetimeImpl(LIFETIME)
-              PsiElement(quote_identifier)(''static')
+              PsiElement(QUOTE_IDENTIFIER)(''static')
             PsiErrorElement:<type reference> or '>' expected, got ':'
               <empty list>
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
-      PsiElement(quote_identifier)(''static')
+      PsiElement(QUOTE_IDENTIFIER)(''static')
       PsiElement(>)('>')
       PsiElement(()('(')
       PsiElement())(')')
