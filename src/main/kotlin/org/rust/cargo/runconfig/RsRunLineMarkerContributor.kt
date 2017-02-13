@@ -12,7 +12,6 @@ import org.rust.lang.core.psi.impl.mixin.isTest
 import org.rust.lang.core.psi.util.elementType
 
 class RsRunLineMarkerContributor : RunLineMarkerContributor() {
-
     override fun getInfo(element: PsiElement): Info? {
         if (element.elementType != IDENTIFIER) return null
         val fn = element.parent as? RsFunction ?: return null

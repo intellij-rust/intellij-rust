@@ -9,10 +9,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import org.rust.ide.icons.RsIcons
 
-class CargoCommandRunConfigurationType : ConfigurationTypeBase("CargoCommandRunConfiguration",
+class CargoCommandRunConfigurationType : ConfigurationTypeBase(
+    "CargoCommandRunConfiguration",
     "Cargo Command",
     "Cargo command run configuration",
-    RsIcons.RUST) {
+    RsIcons.RUST
+) {
     init {
         addFactory(object : ConfigurationFactory(this) {
             override fun createTemplateConfiguration(project: Project): RunConfiguration =
