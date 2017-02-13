@@ -37,8 +37,8 @@ fun RsExpr.isPure(): Boolean? {
         }
         is RsStructExpr -> when (structExprBody.dotdot) {
             null -> structExprBody.structExprFieldList
-                .map { it.expr }
-                .allMaybe { it?.isPure() } // TODO: Why `it` can be null?
+                    .map { it.expr }
+                    .allMaybe { it?.isPure() } // TODO: Why `it` can be null?
             else -> null // TODO: handle update case (`Point{ y: 0, z: 10, .. base}`)
         }
         is RsBinaryExpr -> when (operatorType) {
@@ -53,9 +53,9 @@ fun RsExpr.isPure(): Boolean? {
 
     // TODO: more complex analysis of blocks of code and search of implemented traits
         is RsBlockExpr, // Have to analyze lines, very hard case
-        is RsCastExpr,  // `expr.isPure()` maybe not true, think about side-effects, may panic while cast
-        is RsCallExpr,  // All arguments and function itself must be pure, very hard case
-        is RsForExpr,   // Always return (), if pure then can be replaced with it
+        is RsCastExpr, // `expr.isPure()` maybe not true, think about side-effects, may panic while cast
+        is RsCallExpr, // All arguments and function itself must be pure, very hard case
+        is RsForExpr, // Always return (), if pure then can be replaced with it
         is RsIfExpr,
         is RsIndexExpr, // Index trait can be overloaded, can panic if out of bounds
         is RsLambdaExpr,
@@ -100,40 +100,55 @@ val RsUnaryExpr.operatorType: UnaryOperator?
         else -> null
     }
 
+fun RsExpr.canBeSimplified(): Boolean = 
+    simplifyBooleanExpression(peek = true).second
+
+fun RsExpr.simplifyBooleanExpression() = 
+    simplifyBooleanExpression(peek = false)
+
 /**
  * Simplifies a boolean expression if can.
  *
+ * @param peek if true then does not perform any changes on PSI, 
+ *             `expr` is not defined and `result` indicates if this expression
+ *             can be simplified
  * @return `(expr, result)` where `expr` is a resulting expression,
  *         `result` is true if an expression was actually simplified.
  */
-fun RsExpr.simplifyBooleanExpression(): Pair<RsExpr, Boolean> {
+private fun RsExpr.simplifyBooleanExpression(peek: Boolean): Pair<RsExpr, Boolean> {
     val original = this to false
     if (this is RsLitExpr) return original
 
     val value = this.evalBooleanExpression()
     if (value != null) {
-        return createPsiElement(project, value) to true
+        return (if (peek) this else createPsiElement(project, value)) to true
     }
 
     return when (this) {
         is RsBinaryExpr -> {
             val right = right ?: return original
-            val (leftExpr, leftSimplified) = left.simplifyBooleanExpression()
-            val (rightExpr, rightSimplified) = right.simplifyBooleanExpression()
+            val (leftExpr, leftSimplified) = left.simplifyBooleanExpression(peek)
+            val (rightExpr, rightSimplified) = right.simplifyBooleanExpression(peek)
             if (leftExpr is RsLitExpr) {
+                if (peek) 
+                    return this to true
                 simplifyBinaryOperation(this, leftExpr, rightExpr, project)?.let {
                     return it to true
                 }
             }
             if (rightExpr is RsLitExpr) {
+                if (peek)
+                    return this to true
                 simplifyBinaryOperation(this, rightExpr, leftExpr, project)?.let {
                     return it to true
                 }
             }
-            if (leftSimplified)
-                left.replace(leftExpr)
-            if (rightSimplified)
-                right.replace(rightExpr)
+            if (!peek) {
+                if (leftSimplified)
+                    left.replace(leftExpr)
+                if (rightSimplified)
+                    right.replace(rightExpr)
+            }
             this to (leftSimplified || rightSimplified)
         }
         else -> original

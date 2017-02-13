@@ -4,6 +4,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import org.rust.ide.utils.canBeSimplified
 import org.rust.ide.utils.isPure
 import org.rust.ide.utils.simplifyBooleanExpression
 import org.rust.lang.core.psi.RsExpr
@@ -20,7 +21,7 @@ class RsSimplifyBooleanExpressionInspection : RsLocalInspectionTool() {
         override fun visitExpr(o: RsExpr) {
             if (o.isPure() != true)
                 return
-            val (expr, result) = o.simplifyBooleanExpression()
+            val result = o.canBeSimplified()
             if (!result)
                 return
             holder.registerProblem(
