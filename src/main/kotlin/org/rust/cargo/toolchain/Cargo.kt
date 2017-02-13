@@ -82,13 +82,8 @@ class Cargo(
             && command in COLOR_ACCEPTING_COMMANDS
             && additionalArguments.none { it.startsWith("--color") }) {
 
-            if (SystemInfo.isLinux) {
-                cmdLine.withEnvironment("TERM", "xterm+256color")
-            } else if (SystemInfo.isMac) {
-                cmdLine.withEnvironment("TERM", "linux")
-            }
-
             cmdLine
+                .withEnvironment("TERM", "ansi")
                 .withRedirectErrorStream(true)
                 .withParameters("--color=always") // Must come first in order not to corrupt the running program arguments
         }
