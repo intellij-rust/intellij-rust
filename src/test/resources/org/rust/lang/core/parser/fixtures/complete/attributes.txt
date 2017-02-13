@@ -229,7 +229,7 @@ FILE
             PsiElement(identifier)('foo')
           PsiElement(])(']')
         RsLifetimeDeclImpl(LIFETIME_DECL)
-          PsiElement(quote_identifier)(''a')
+          PsiElement(QUOTE_IDENTIFIER)(''a')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       RsTypeParameterImpl(TYPE_PARAMETER)
