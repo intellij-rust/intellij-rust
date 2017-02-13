@@ -19,7 +19,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         val scope = element.parentOfType<RsBlock>()
         if (fn.contains(scope)) return null
 
-        if ((fn.retType?.typeReference as? RsRefLikeType)?.lifetimeReference != null) return null
+        if ((fn.retType?.typeReference as? RsRefLikeType)?.lifetime != null) return null
 
         val args = fn.allRefArgs
 
@@ -45,7 +45,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
             retType.replace(createRefType(project, retType, ctx.allRefArgs.first().lifetime!!.text))
         } else {
             val lifeTime = (retType.replace(createRefType(project, retType, "'unknown"))
-                as RsRefLikeType).lifetimeReference ?: return
+                as RsRefLikeType).lifetime ?: return
             editor.selectionModel.setSelection(lifeTime.textRange.startOffset + 1, lifeTime.textRange.endOffset)
         }
     }
@@ -73,10 +73,10 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         return (selfAfg + params).filterNotNull()
     }
 
-    private val PsiElement.lifetime: RsLifetimeReference? get() =
+    private val PsiElement.lifetime: RsLifetime? get() =
     when (this) {
-        is RsSelfParameter -> lifetimeReference
-        is RsValueParameter -> (typeReference as? RsRefLikeType)?.lifetimeReference
+        is RsSelfParameter -> lifetime
+        is RsValueParameter -> (typeReference as? RsRefLikeType)?.lifetime
         else -> null
     }
 }

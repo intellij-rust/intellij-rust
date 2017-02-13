@@ -6,6 +6,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsNamedElement
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.util.elementType
 
 abstract class RsNamedElementImpl(node: ASTNode) : RsCompositeElementImpl(node),
                                                    RsNamedElement,
@@ -16,7 +17,9 @@ abstract class RsNamedElementImpl(node: ASTNode) : RsCompositeElementImpl(node),
     override fun getName(): String? = nameIdentifier?.text
 
     override fun setName(name: String): PsiElement? {
-        nameIdentifier?.replace(RsPsiFactory(project).createIdentifier(name))
+        nameIdentifier?.let {
+            it.replace(RsPsiFactory(project).createIdentifier(name, it.elementType))
+        }
         return this
     }
 

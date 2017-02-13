@@ -72,6 +72,22 @@ class RenameTest : RsTestBase() {
         }
     """)
 
+    fun `test rename lifetime`() = doTest("'bar", """
+        fn foo<'foo>(a: &/*caret*/'foo u32) {}
+    """, """
+        fn foo<'bar>(a: &'bar u32) {}
+    """)
+
+    fun `test rename loop label`() = doTest("'bar", """
+        fn foo() {
+            /*caret*/'foo: loop { break 'foo }
+        }
+    """, """
+        fn foo() {
+            'bar: loop { break 'bar }
+        }
+    """)
+
     fun testRenameFile() = checkByDirectory {
         val file = myFixture.configureFromTempProjectFile("foo.rs")
         myFixture.renameElement(file, "bar.rs")

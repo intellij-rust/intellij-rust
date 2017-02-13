@@ -108,7 +108,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
 
     return sb2
         //== types
-        .afterInside(LIFETIME_REFERENCE, REF_LIKE_TYPE).spaceIf(true)
+        .afterInside(LIFETIME, REF_LIKE_TYPE).spaceIf(true)
         .betweenInside(ts(MUL), ts(CONST, MUT), REF_LIKE_TYPE).spaces(0)
         .before(TYPE_PARAM_BOUNDS).spaces(0)
         .beforeInside(LPAREN, PATH).spaces(0)

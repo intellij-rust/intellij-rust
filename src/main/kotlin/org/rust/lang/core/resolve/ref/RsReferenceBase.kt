@@ -6,8 +6,12 @@ import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.PsiPolyVariantReferenceBase
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.ResolveCache
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsCompositeElement
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
+import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
+import org.rust.lang.core.psi.RsNamedElement
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsReferenceElement
 import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.psi.util.parentRelativeRange
 
@@ -49,8 +53,13 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
 
     companion object {
         @JvmStatic protected fun doRename(identifier: PsiElement, newName: String) {
-            check(identifier.elementType == IDENTIFIER)
-            identifier.replace(RsPsiFactory(identifier.project).createIdentifier(newName.replace(".rs", "")))
+            val factory = RsPsiFactory(identifier.project)
+            val newId = when (identifier.elementType) {
+                IDENTIFIER -> factory.createIdentifier(newName.replace(".rs", ""), IDENTIFIER)
+                QUOTE_IDENTIFIER -> factory.createIdentifier(newName, QUOTE_IDENTIFIER)
+                else -> error("Unsupported identifier type for `$newName` (${identifier.elementType})")
+            }
+            identifier.replace(newId)
         }
     }
 }

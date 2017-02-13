@@ -25,7 +25,7 @@ class RsHighlighter : SyntaxHighlighterBase() {
             IDENTIFIER -> RsColor.IDENTIFIER
             UNDERSCORE -> RsColor.IDENTIFIER
 
-            LIFETIME -> RsColor.LIFETIME
+            QUOTE_IDENTIFIER -> RsColor.LIFETIME
 
             CHAR_LITERAL -> RsColor.CHAR
             BYTE_LITERAL -> RsColor.CHAR

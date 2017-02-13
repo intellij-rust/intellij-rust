@@ -104,7 +104,7 @@
 //
 // Naming convention:
 //
-//   * tokens are lowercase: for, if, identifier, lifetime
+//   * tokens are lowercase: for, if, identifier
 //   * rules are PascalCase: StructItem, EnumVariant
 //   * macro rules are snake_cased: list_item
 //   * recovery related rules are PascalCase_with_snake_suffix: Item_recover
@@ -156,7 +156,7 @@ TypeArgumentList ::= TypeArgumentListImpl {
 }
 ColonTypeArgumentList ::= '::' TypeArgumentListImpl { elementType = TypeArgumentList }
 
-private TypeArgumentListImpl ::= '<' !'=' ( <<list_element LifetimeReference>>*
+private TypeArgumentListImpl ::= '<' !'=' ( <<list_element Lifetime>>*
                                             <<list_element (!(identifier '=') TypeReference)>>*
                                             <<list_element AssocTypeBinding>>*) '>' { pin = 2 }
 AssocTypeBinding ::= identifier '=' TypeReference
@@ -231,16 +231,16 @@ private Items ::= Item_with_recover*
 // Lifetimes
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-LifetimeDecl ::= lifetime {
+LifetimeDecl ::= quote_identifier {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsLifetimeDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsLifetimeDeclStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-LifetimeReference ::= lifetime {
+Lifetime ::= quote_identifier {
   implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsLifetimeReferenceImplMixin"
+  mixin = "org.rust.lang.core.psi.impl.mixin.RsLifetimeImplMixin"
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -259,7 +259,7 @@ LambdaParameter ::= Pat TypeAscription?
 AnonParameter ::= [ RestrictedPat ':' ] TypeReference
 PathParameter ::= TypeReference !'='
 
-SelfParameter ::= [ '&' LifetimeReference? ] mut? self TypeAscription? {
+SelfParameter ::= [ '&' Lifetime? ] mut? self TypeAscription? {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsSelfParameterImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsSelfParameterStub"
@@ -299,7 +299,7 @@ LifetimeParameter ::= OuterAttr* LifetimeDecl LifetimeParamBounds? {
   mixin = "org.rust.lang.core.psi.impl.mixin.RsLifetimeParameterImplMixin"
 }
 
-LifetimeParamBounds ::= ':' LifetimeReference ('+' LifetimeReference)*
+LifetimeParamBounds ::= ':' Lifetime ('+' Lifetime)*
 
 TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' TypeReference ] {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
@@ -313,7 +313,7 @@ Polybound ::= [ ForLifetimes | '?' ] Bound
 
 WhereClause ::= where <<comma_separated_list WherePred>>
 
-WherePred ::= LifetimeReference LifetimeParamBounds | ForLifetimes? TypeReference TypeParamBounds
+WherePred ::= Lifetime LifetimeParamBounds | ForLifetimes? TypeReference TypeParamBounds
 
 ForLifetimes ::= for '<' LifetimesParams '>'
 
@@ -668,7 +668,7 @@ ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-RefLikeType ::= ( '&' LifetimeReference? mut? | '*' [ const | mut ] ) TypeReference {
+RefLikeType ::= ( '&' Lifetime? mut? | '*' [ const | mut ] ) TypeReference {
   stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -687,7 +687,7 @@ TypeWithBoundsType ::= TypeReference ('+' Bound)+ {
   stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-Bound ::= LifetimeReference | TraitRef
+Bound ::= Lifetime | TraitRef
 
 ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
   stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
@@ -825,24 +825,31 @@ PathExpr ::= PathGenericArgsWithColons
 
 QualPathExpr ::= << qualified_path PathGenericArgsWithColons >>
 
-WhileExpr ::= LabelDecl? while Condition SimpleBlock { pin = 'while' }
+WhileExpr ::= LabelDecl? while Condition SimpleBlock {
+  pin = 'while'
+  implements = [ "org.rust.lang.core.psi.RsLabeledExpression" ]
+}
 Condition ::= [ let Pat '=' ] NoStructLitExpr
 
-LoopExpr ::= LabelDecl? loop SimpleBlock { pin = 'loop' }
+LoopExpr ::= LabelDecl? loop SimpleBlock {
+  pin = 'loop'
+  implements = [ "org.rust.lang.core.psi.RsLabeledExpression" ]
+}
 
 ContExpr ::= continue Label?
 
 BreakExpr ::= break Label? AnyExpr?
 
-ForExpr ::= LabelDecl? for Pat in NoStructLitExpr SimpleBlock { pin = "for" }
+ForExpr ::= LabelDecl? for Pat in NoStructLitExpr SimpleBlock {
+  pin = 'for'
+  implements = [ "org.rust.lang.core.psi.RsLabeledExpression" ]
+}
 
-LabelDecl ::= lifetime ':' {
+LabelDecl ::= quote_identifier ':' {
   implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsLabelDeclImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RsLabelDeclStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-Label ::= lifetime {
+Label ::= quote_identifier {
   implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.impl.mixin.RsLabelImplMixin"
 }

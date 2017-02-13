@@ -1,16 +1,10 @@
 package org.rust.lang.core.psi.impl.mixin
 
 import com.intellij.lang.ASTNode
-import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsLabelDecl
-import org.rust.lang.core.psi.impl.RsStubbedNamedElementImpl
-import org.rust.lang.core.stubs.RsLabelDeclStub
+import org.rust.lang.core.psi.impl.RsNamedElementImpl
 
-abstract class RsLabelDeclImplMixin : RsStubbedNamedElementImpl<RsLabelDeclStub>, RsLabelDecl {
-
-    constructor(node: ASTNode) : super(node)
-
-    constructor(stub: RsLabelDeclStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
-
-    override fun getName(): String = lifetime.text
+abstract class RsLabelDeclImplMixin(node: ASTNode) : RsNamedElementImpl(node), RsLabelDecl {
+    override fun getNameIdentifier(): PsiElement? = quoteIdentifier
 }

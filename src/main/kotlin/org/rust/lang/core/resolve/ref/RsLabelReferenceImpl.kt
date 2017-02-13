@@ -10,7 +10,7 @@ class RsLabelReferenceImpl(
 ) : RsReferenceBase<RsLabel>(element),
     RsReference {
 
-    override val RsLabel.referenceAnchor: PsiElement get() = lifetime
+    override val RsLabel.referenceAnchor: PsiElement get() = quoteIdentifier
 
     override fun resolveInner(): List<RsNamedElement> = listOfNotNull(ResolveEngine.resolveLabel(element))
 

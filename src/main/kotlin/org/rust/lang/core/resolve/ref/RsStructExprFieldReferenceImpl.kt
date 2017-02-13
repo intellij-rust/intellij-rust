@@ -3,10 +3,7 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.completion.CompletionEngine
-import org.rust.lang.core.psi.RsNamedElement
-import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsStructExpr
-import org.rust.lang.core.psi.RsStructExprField
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.ResolveEngine
 
@@ -31,7 +28,7 @@ class RsStructExprFieldReferenceImpl(
             super.handleElementRename(newName)
         } else {
             val psiFactory = RsPsiFactory(element.project)
-            val newIdent = psiFactory.createIdentifier(newName)
+            val newIdent = psiFactory.createIdentifier(newName, RsElementTypes.IDENTIFIER)
             val colon = psiFactory.createColon()
             val initExpression = psiFactory.createExpression(element.identifier.text)
 
