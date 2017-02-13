@@ -1,4 +1,4 @@
-package org.rust.cargo.runconfig
+package org.rust.cargo.runconfig.filters
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,5 +12,5 @@ class RsConsoleFilter(
 ) : RegexpFileLinkFilter(
     project,
     cargoProjectDir,
-    "(?:\\s+--> )?$FILE_POSITION_RE.*"
+    "(?:\\s+--> )?${FILE_POSITION_RE}.*"
 )

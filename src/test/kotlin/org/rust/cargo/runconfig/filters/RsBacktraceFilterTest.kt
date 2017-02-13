@@ -1,4 +1,4 @@
-package org.rust.cargo.runconfig
+package org.rust.cargo.runconfig.filters
 
 import com.intellij.openapi.util.SystemInfo
 import org.rust.cargo.util.modules

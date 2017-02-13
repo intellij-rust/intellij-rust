@@ -5,7 +5,7 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
-import org.rust.cargo.runconfig.producers.CargoExecutableRunConfigurationProducer
+import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.impl.mixin.isTest

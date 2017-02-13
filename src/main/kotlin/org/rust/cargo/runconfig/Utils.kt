@@ -1,4 +1,4 @@
-package org.rust.cargo.runconfig.producers
+package org.rust.cargo.runconfig
 
 import org.rust.cargo.project.workspace.CargoWorkspace
 

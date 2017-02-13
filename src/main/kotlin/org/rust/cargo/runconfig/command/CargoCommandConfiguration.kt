@@ -1,4 +1,4 @@
-package org.rust.cargo.runconfig
+package org.rust.cargo.runconfig.command
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
@@ -13,7 +13,9 @@ import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.runconfig.forms.CargoRunConfigurationEditorForm
+import org.rust.cargo.runconfig.CargoRunState
+import org.rust.cargo.runconfig.RsRunConfigurationModule
+import org.rust.cargo.runconfig.ui.CargoRunConfigurationEditorForm
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
@@ -77,7 +79,7 @@ class CargoCommandConfiguration(
         class Err(val error: RuntimeConfigurationError) : ConfigurationResult()
 
         companion object {
-            fun error(message: String) = ConfigurationResult.Err(RuntimeConfigurationError(message))
+            fun error(message: String) = Err(RuntimeConfigurationError(message))
         }
     }
 

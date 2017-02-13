@@ -7,6 +7,10 @@ import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
+import org.rust.cargo.runconfig.filters.RsBacktraceFilter
+import org.rust.cargo.runconfig.filters.RsConsoleFilter
+import org.rust.cargo.runconfig.filters.RsExplainFilter
+import org.rust.cargo.runconfig.filters.RsPanicFilter
 import org.rust.cargo.toolchain.RustToolchain
 
 class CargoRunState(

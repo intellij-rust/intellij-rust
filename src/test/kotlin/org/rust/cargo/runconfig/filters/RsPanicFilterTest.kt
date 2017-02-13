@@ -1,4 +1,4 @@
-package org.rust.cargo.runconfig
+package org.rust.cargo.runconfig.filters
 
 /**
  * Tests for RustPanicFilter

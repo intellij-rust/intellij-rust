@@ -1,4 +1,4 @@
-package org.rust.cargo.runconfig
+package org.rust.cargo.runconfig.command
 
 import com.intellij.compiler.options.CompileStepBeforeRun
 import com.intellij.execution.BeforeRunTask

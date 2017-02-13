@@ -1,4 +1,4 @@
-package org.rust.cargo.runconfig
+package org.rust.cargo.runconfig.filters
 
 import com.intellij.execution.filters.Filter
 import org.assertj.core.api.Assertions.assertThat
