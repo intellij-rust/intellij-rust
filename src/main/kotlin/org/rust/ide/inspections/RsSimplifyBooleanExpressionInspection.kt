@@ -20,7 +20,7 @@ class RsSimplifyBooleanExpressionInspection : RsLocalInspectionTool() {
         override fun visitExpr(o: RsExpr) {
             if (o.isPure() != true)
                 return
-            val (expr, result) = o.simplifyBooleanExpression()
+            val (ignored, result) = o.simplifyBooleanExpression(true)
             if (!result)
                 return
             holder.registerProblem(
