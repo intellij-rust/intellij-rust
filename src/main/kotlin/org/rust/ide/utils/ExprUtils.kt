@@ -100,6 +100,12 @@ val RsUnaryExpr.operatorType: UnaryOperator?
         else -> null
     }
 
+fun RsExpr.canBeSimplified(): Boolean = 
+    simplifyBooleanExpression(peek = true).second
+
+fun RsExpr.simplifyBooleanExpression() = 
+    simplifyBooleanExpression(peek = false)
+
 /**
  * Simplifies a boolean expression if can.
  *
@@ -109,7 +115,7 @@ val RsUnaryExpr.operatorType: UnaryOperator?
  * @return `(expr, result)` where `expr` is a resulting expression,
  *         `result` is true if an expression was actually simplified.
  */
-fun RsExpr.simplifyBooleanExpression(peek: Boolean = false): Pair<RsExpr, Boolean> {
+private fun RsExpr.simplifyBooleanExpression(peek: Boolean): Pair<RsExpr, Boolean> {
     val original = this to false
     if (this is RsLitExpr) return original
 
