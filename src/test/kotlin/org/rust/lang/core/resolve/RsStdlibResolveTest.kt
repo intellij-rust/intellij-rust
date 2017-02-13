@@ -129,6 +129,70 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test inherent impl char 1`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() { 'Z'.is_lowercase(); }
+                      //^ .../char.rs
+    """)
+
+    fun `test inherent impl char 2`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() { char::is_lowercase('Z'); }
+                        //^ .../char.rs
+    """)
+    }
+
+    fun `test inherent impl str 1`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() { "Z".to_uppercase(); }
+                      //^ ...libcollections/str.rs
+    """)
+
+    fun `test inherent impl str 2`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() { str::to_uppercase("Z"); }
+                       //^ ...libcollections/str.rs
+    """)
+    }
+
+    fun `test inherent impl f32 1`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() { 0.0f32.sqrt(); }
+                         //^ .../f32.rs
+    """)
+
+    fun `test inherent impl f32 2`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() { f32::sqrt(0.0f32); }
+                       //^ .../f32.rs
+    """)
+    }
+
+    fun `test inherent impl f32 3`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() { <f32>::sqrt(0.0f32); }
+                         //^ .../f32.rs
+    """)
+    }
+
+    fun `test inherent impl f64 1`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() { 0.0f64.sqrt(); }
+                         //^ .../f64.rs
+    """)
+
+    fun `test inherent impl f64 2`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() { f64::sqrt(0.0f64); }
+                       //^ .../f64.rs
+    """)
+    }
+
     fun `test println macro`() = stubOnlyResolve("""
     //- main.rs
         fn main() {

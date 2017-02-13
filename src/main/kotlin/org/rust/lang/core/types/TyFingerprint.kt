@@ -29,8 +29,8 @@ data class TyFingerprint constructor(
             is TyStruct -> type.item.name?.let(::TyFingerprint)
             is TyEnum -> type.item.name?.let(::TyFingerprint)
             is TySlice -> TyFingerprint("[T]")
-            is TyStr -> TyFingerprint("str")
             is TyReference -> create(type.referenced)
+            is TyPrimitive -> TyFingerprint(type.toString())
             else -> null
         }
     }

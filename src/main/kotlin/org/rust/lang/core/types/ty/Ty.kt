@@ -82,7 +82,7 @@ fun findImplsAndTraits(project: Project, ty: Ty): Pair<Collection<BoundElement<R
 
     //  XXX: TyStr is TyPrimitive, but we want to handle it separately
         is TyStr -> RsImplIndex.findImpls(project, ty).map { impl -> BoundElement(impl) } to noTraits
-        is TyPrimitive, is TyUnit, is TyUnknown -> noImpls to noTraits
+        is TyUnit, is TyUnknown -> noImpls to noTraits
 
         else -> RsImplIndex.findImpls(project, ty).map { impl ->
             BoundElement(impl, impl.remapTypeParameters(ty.typeParameterValues).orEmpty())
