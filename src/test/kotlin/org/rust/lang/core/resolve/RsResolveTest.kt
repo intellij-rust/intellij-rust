@@ -674,6 +674,14 @@ class RsResolveTest : RsResolveTestBase() {
                     //^
     """)
 
+    fun `test lifetime in for lifetimes`() = checkByCode("""
+        fn foo_func<'a>(a: &'a u32) -> &'a u32 { a }
+        const FOO: for<'a> fn(&'a u32)
+                      //X
+            -> &'a u32 = foo_func;
+               //^
+    """)
+
     fun `test static lifetime unresolved`() = checkByCode("""
         fn foo(name: &'static str) {}
                       //^ unresolved

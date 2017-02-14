@@ -220,7 +220,13 @@ object ResolveEngine {
             null
         } else {
             lifetimeRef.ancestors
-                .mapNotNull { (it as? RsGenericDeclaration)?.typeParameterList }
+                .mapNotNull {
+                    when (it) {
+                        is RsGenericDeclaration -> it.typeParameterList?.lifetimeParameterList
+                        is RsForInType -> it.forLifetimes.lifetimeParameterList
+                        else -> null
+                    }
+                }
                 .flatMap { it.lifetimeDecls }
                 .find { it.name ==  lifetimeRef.quoteIdentifier.text}
         }
@@ -545,8 +551,8 @@ private fun <T> Sequence<T>.takeWhileInclusive(pred: (T) -> Boolean): Sequence<T
 private fun PsiElement.isStrictAncestorOf(child: PsiElement) =
     PsiTreeUtil.isAncestor(this, child, true)
 
-private val RsTypeParameterList.lifetimeDecls: Sequence<RsLifetimeDecl>
-    get() = lifetimeParameterList.asSequence().map { it.lifetimeDecl }
+private val List<RsLifetimeParameter>.lifetimeDecls: Sequence<RsLifetimeDecl>
+    get() = asSequence().map { it.lifetimeDecl }
 
 /**
  * Helper to debug complex iterator pipelines
