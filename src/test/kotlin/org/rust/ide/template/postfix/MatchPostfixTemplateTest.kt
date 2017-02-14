@@ -1,7 +1,7 @@
 package org.rust.ide.template.postfix
 
 class MatchPostfixTemplateTest : PostfixTemplateTest(MatchPostfixTemplate()) {
-    fun testSimple() = doTest("""
+    fun `test simple`() = doTest("""
         enum Message {
             Quit,
             ChangeColor(i32, i32, i32),
@@ -29,7 +29,7 @@ class MatchPostfixTemplateTest : PostfixTemplateTest(MatchPostfixTemplate()) {
         }
     """)
 
-    fun testCanMatchConstant() = doTest("""
+    fun `test can match constant`() = doTest("""
         const THE_ANSWER: i32 = 42;
 
         fn check(x: i32) -> bool {
@@ -41,6 +41,22 @@ class MatchPostfixTemplateTest : PostfixTemplateTest(MatchPostfixTemplate()) {
         fn check(x: i32) -> bool {
             match x {
                 _ => {}
+            }
+        }
+    """)
+
+    fun `test nested`() = doTest("""
+        fn main() {
+            match a {
+                _ => b.match/*caret*/
+            }
+        }
+    """, """
+        fn main() {
+            match a {
+                _ => match b {
+                    _ => {/*caret*/}
+                }
             }
         }
     """)
