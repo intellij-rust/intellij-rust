@@ -2,7 +2,6 @@ package org.rust.cargo.runconfig.filters
 
 import com.intellij.execution.filters.BrowserHyperlinkInfo
 import com.intellij.execution.filters.Filter
-import com.intellij.execution.filters.Filter.Result
 import com.intellij.openapi.project.DumbAware
 import java.util.regex.Pattern
 
@@ -16,7 +15,7 @@ class RsExplainFilter : Filter, DumbAware {
         Pattern.compile("--explain E(\\d{4})"),
         Pattern.compile("(error|warning)\\[E(\\d{4})\\]"))
 
-    override fun applyFilter(line: String, entireLength: Int): Result? {
+    override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
         val matcher = patterns
             .map { it.matcher(line) }
             .firstOrNull { it.find() } ?: return null
@@ -31,6 +30,6 @@ class RsExplainFilter : Filter, DumbAware {
         val startOffset = entireLength - line.length + matcher.start() + offset
         val endOffset = startOffset + length
 
-        return Result(startOffset, endOffset, info)
+        return Filter.Result(startOffset, endOffset, info)
     }
 }

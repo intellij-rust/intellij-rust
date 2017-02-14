@@ -45,7 +45,7 @@ open class RegexpFileLinkFilter(
         val columnNumber = match.groups[3]?.let { zeroBasedNumber(it.value) } ?: 0
 
         val lineStart = entireLength - line.length
-        return com.intellij.execution.filters.Filter.Result(
+        return Filter.Result(
             lineStart + fileGroup.range.start,
             lineStart + fileGroup.range.endInclusive + 1,
             createOpenFileHyperlink(fileGroup.value, lineNumber, columnNumber)

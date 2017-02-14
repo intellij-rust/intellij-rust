@@ -66,9 +66,9 @@ private class RsBacktraceItemFilter(
         }
 
         // Dim the hashcode
-        resultItems.add(com.intellij.execution.filters.Filter.ResultItem(funcEnd, funcEnd + funcHash.length, null, DIMMED_TEXT))
+        resultItems.add(Filter.ResultItem(funcEnd, funcEnd + funcHash.length, null, DIMMED_TEXT))
 
-        return com.intellij.execution.filters.Filter.Result(resultItems)
+        return Filter.Result(resultItems)
     }
 
     private fun extractFnHyperlink(funcName: String, start: Int, end: Int): Filter.ResultItem? {
@@ -77,7 +77,7 @@ private class RsBacktraceItemFilter(
         val doc = docManager.getDocument(funcFile) ?: return null
         val link = OpenFileHyperlinkInfo(project, funcFile.virtualFile, doc.getLineNumber(func.element.textOffset))
         val linkAttr = if (func.pkg.origin != PackageOrigin.WORKSPACE) GRAYED_LINK else null
-        return com.intellij.execution.filters.Filter.ResultItem(start, end, link, linkAttr)
+        return Filter.ResultItem(start, end, link, linkAttr)
     }
 
     /**
