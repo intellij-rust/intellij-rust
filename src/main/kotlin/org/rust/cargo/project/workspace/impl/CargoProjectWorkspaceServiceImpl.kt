@@ -14,13 +14,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.Alarm
-import com.intellij.util.PathUtil
 import org.jetbrains.annotations.TestOnly
-import org.rust.cargo.CargoConstants
 import org.rust.cargo.SetupRustStdlibTask
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
@@ -64,7 +59,11 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
         }
 
         with(module.messageBus.connect()) {
-            subscribe(VirtualFileManager.VFS_CHANGES, FileChangesWatcher())
+            subscribe(VirtualFileManager.VFS_CHANGES, CargoTomlWatcher(fun() {
+                if (!module.project.rustSettings.autoUpdateEnabled) return
+                val toolchain = module.project.toolchain ?: return
+                requestUpdate(toolchain)
+            }))
 
             subscribe(RustProjectSettingsService.TOOLCHAIN_TOPIC, object : RustProjectSettingsService.ToolchainListener {
                 override fun toolchainChanged(newToolchain: RustToolchain?) = refreshStdlib()
@@ -185,39 +184,6 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
             val r = requireNotNull(result)
             commitUpdate(r)
             afterCommit?.invoke(r)
-        }
-    }
-
-    /**
-     * File changes listener, detecting changes inside the `Cargo.toml` files
-     */
-    inner class FileChangesWatcher : BulkFileListener {
-        private val IMPLICIT_TARGET_DIRS = listOf(
-            CargoConstants.ProjectLayout.binaries,
-            CargoConstants.ProjectLayout.sources,
-            CargoConstants.ProjectLayout.tests
-        ).flatten()
-
-        private val INTERESTING_NAMES = listOf(
-            RustToolchain.CARGO_TOML,
-            "build.rs"
-        )
-
-        override fun before(events: List<VFileEvent>) {
-        }
-
-        override fun after(events: List<VFileEvent>) {
-            fun isInterestingEvent(event: VFileEvent): Boolean {
-                if (event is VFileContentChangeEvent) return false
-                return INTERESTING_NAMES.any { event.path.endsWith(it) } ||
-                    IMPLICIT_TARGET_DIRS.any { PathUtil.getParentPath(event.path).endsWith(it) }
-            }
-
-            if (!module.project.rustSettings.autoUpdateEnabled) return
-            val toolchain = module.project.toolchain ?: return
-            if (events.any(::isInterestingEvent)) {
-                requestUpdate(toolchain)
-            }
         }
     }
 
