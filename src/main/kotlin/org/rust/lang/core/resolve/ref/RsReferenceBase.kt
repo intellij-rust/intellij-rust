@@ -55,8 +55,8 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
         @JvmStatic protected fun doRename(identifier: PsiElement, newName: String) {
             val factory = RsPsiFactory(identifier.project)
             val newId = when (identifier.elementType) {
-                IDENTIFIER -> factory.createIdentifier(newName.replace(".rs", ""), IDENTIFIER)
-                QUOTE_IDENTIFIER -> factory.createIdentifier(newName, QUOTE_IDENTIFIER)
+                IDENTIFIER -> factory.createIdentifier(newName.replace(".rs", ""))
+                QUOTE_IDENTIFIER -> factory.createQuoteIdentifier(newName)
                 else -> error("Unsupported identifier type for `$newName` (${identifier.elementType})")
             }
             identifier.replace(newId)
