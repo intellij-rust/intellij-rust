@@ -212,22 +212,18 @@ object ResolveEngine {
     fun resolveLabel(label: RsLabel): RsLabelDecl? =
         label.ancestors
             .takeWhile { it !is RsLambdaExpr && it !is RsFunction }
-            .mapNotNull { it as? RsLabeledExpression }
-            .map { it.labelDecl }
+            .mapNotNull { (it as? RsLabeledExpression)?.labelDecl }
             .find { it.name ==  label.quoteIdentifier.text}
 
-    fun resolveLifetime(lifetimeRef: RsLifetime): RsLifetimeDecl? {
-        if (lifetimeRef.isPredefined) return null
-        return lifetimeRef.ancestors
-            .mapNotNull {
-                when (it) {
-                    is RsTypeAlias -> if (it.parent is RsImplItem || it.parent is RsTraitItem) null else it.typeParameterList
-                    is RsGenericDeclaration -> it.typeParameterList
-                    else -> null
-                }
-            }.flatMap { it.lifetimeDecls }
-            .find { it.name ==  lifetimeRef.quoteIdentifier.text}
-    }
+    fun resolveLifetime(lifetimeRef: RsLifetime): RsLifetimeDecl? =
+        if (lifetimeRef.isPredefined) {
+            null
+        } else {
+            lifetimeRef.ancestors
+                .mapNotNull { (it as? RsGenericDeclaration)?.typeParameterList }
+                .flatMap { it.lifetimeDecls }
+                .find { it.name ==  lifetimeRef.quoteIdentifier.text}
+        }
 
     private val String.segments: List<RustPathSegment>
         get() = splitToSequence("::")

@@ -13,14 +13,13 @@ import org.rust.lang.core.psi.impl.mixin.valueParameters
 import org.rust.lang.core.psi.util.childOfType
 
 class RsPsiFactory(private val project: Project) {
-    fun createIdentifier(text: String, tokenType: IElementType): PsiElement =
-        when (tokenType) {
-            IDENTIFIER -> createFromText<RsModDeclItem>("mod $text;")?.identifier
-                ?: error("Failed to create identifier: `$text`")
-            QUOTE_IDENTIFIER -> createFromText<RsLifetimeDecl>("fn foo<$text>(_: &$text u8) {}")?.quoteIdentifier
-                ?: error("Failed to create quote identifier: `$text`")
-            else -> error("Unsupported identifier token type for `$text` ($tokenType)")
-        }
+    fun createIdentifier(text: String): PsiElement =
+        createFromText<RsModDeclItem>("mod $text;")?.identifier
+            ?: error("Failed to create identifier: `$text`")
+
+    fun createQuoteIdentifier(text: String): PsiElement =
+        createFromText<RsLifetimeDecl>("fn foo<$text>(_: &$text u8) {}")?.quoteIdentifier
+            ?: error("Failed to create quote identifier: `$text`")
 
     fun createExpression(text: String): RsExpr =
         createFromText("fn main() { $text; }")

@@ -21,7 +21,7 @@ class RsNamesValidator : NamesValidator {
     fun isIdentifier(name: String, @Suppress("UNUSED_PARAMETER") project: Project?, withPrimitives: Boolean): Boolean =
         when (getLexerType(name)) {
             IDENTIFIER -> !withPrimitives || name !in PrimitiveTypes
-            QUOTE_IDENTIFIER -> name !in PredefinedLifetimes
+            QUOTE_IDENTIFIER -> true
             else -> false
         }
 

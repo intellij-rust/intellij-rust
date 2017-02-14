@@ -9,7 +9,6 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
-import org.rust.lang.core.psi.util.elementType
 import org.rust.lang.core.stubs.RsNamedStub
 
 abstract class RsStubbedNamedElementImpl<StubT> : RsStubbedElementImpl<StubT>,
@@ -30,9 +29,7 @@ where StubT : RsNamedStub, StubT : StubElement<*> {
     }
 
     override fun setName(name: String): PsiElement? {
-        nameIdentifier?.let {
-            it.replace(RsPsiFactory(project).createIdentifier(name, it.elementType))
-        }
+        nameIdentifier?.replace(RsPsiFactory(project).createIdentifier(name))
         return this
     }
 

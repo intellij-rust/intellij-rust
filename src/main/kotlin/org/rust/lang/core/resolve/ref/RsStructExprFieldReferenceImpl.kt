@@ -28,7 +28,7 @@ class RsStructExprFieldReferenceImpl(
             super.handleElementRename(newName)
         } else {
             val psiFactory = RsPsiFactory(element.project)
-            val newIdent = psiFactory.createIdentifier(newName, RsElementTypes.IDENTIFIER)
+            val newIdent = psiFactory.createIdentifier(newName)
             val colon = psiFactory.createColon()
             val initExpression = psiFactory.createExpression(element.identifier.text)
 
