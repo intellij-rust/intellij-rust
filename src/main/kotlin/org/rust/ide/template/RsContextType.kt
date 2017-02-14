@@ -3,7 +3,6 @@ package org.rust.ide.template
 import com.intellij.codeInsight.template.EverywhereContextType
 import com.intellij.codeInsight.template.TemplateContextType
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
-import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -13,7 +12,6 @@ import org.rust.ide.highlight.RsHighlighter
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.symbols.RustPath
 import kotlin.reflect.KClass
 
 sealed class RsContextType(
@@ -46,7 +44,7 @@ sealed class RsContextType(
     class Statement : RsContextType("RUST_STATEMENT", "Statement", Generic::class) {
         override fun isInContext(element: PsiElement): Boolean {
             // We are inside block but there is no item nor attr between
-            if (PsiTreeUtil.findFirstParent(element, blockOrItem) !is RsBlock) return false
+            if (owner(element) !is RsBlock) return false
             val parent = element.parent
 
             // foo::element
@@ -65,7 +63,7 @@ sealed class RsContextType(
     class Item : RsContextType("RUST_ITEM", "Item", Generic::class) {
         override fun isInContext(element: PsiElement): Boolean =
             // We are inside item but there is no block between
-            PsiTreeUtil.findFirstParent(element, blockOrItem) is RsItemElement
+            owner(element) is RsItemElement
     }
 
     class Struct : RsContextType("RUST_STRUCT", "Structure", Item::class) {
@@ -76,9 +74,9 @@ sealed class RsContextType(
     }
 
     class Mod : RsContextType("RUST_MOD", "Module", Item::class) {
-        override fun isInContext(element: PsiElement): Boolean =
-            // We are inside RsModItem
-            PsiTreeUtil.findFirstParent(element, blockOrItem) is RsModItem
+        override fun isInContext(element: PsiElement): Boolean
+            // We are inside RsMod
+            = owner(element) is RsMod
     }
 
     class Attribute : RsContextType("RUST_ATTRIBUTE", "Attribute", Item::class) {
@@ -87,8 +85,8 @@ sealed class RsContextType(
     }
 
     companion object {
-        private val blockOrItem = Condition<PsiElement> { element ->
-            element is RsBlock || element is RsItemElement || element is RsAttr
+        private fun owner(element: PsiElement): PsiElement? = PsiTreeUtil.findFirstParent(element) {
+            it is RsBlock || it is RsItemElement || it is RsAttr || it is PsiFile
         }
     }
 }

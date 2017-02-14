@@ -81,6 +81,21 @@ class RsLiveTemplatesTest : RsTestBase() {
         }
     """)
 
+    fun `test module level context available in file`() = expandSnippet("""
+        tfn/*caret*/
+    """, """
+        #[test]
+        fn /*caret*/() {
+${"            "/*trailing ws on this line*/}
+        }
+    """)
+
+    fun `test module level context not available in function`() = noSnippet("""
+        fn foo() {
+            x.tfn/*caret*/
+        }
+    """)
+
     private fun expandSnippet(@Language("Rust") before: String, @Language("Rust") after: String) =
         checkByText(before, after) {
             myFixture.performEditorAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB)
