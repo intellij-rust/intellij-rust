@@ -690,7 +690,7 @@ class RsSelfParameterStub(
             RsSelfParameterImpl(stub, this)
 
         override fun createStub(psi: RsSelfParameter, parentStub: StubElement<*>?) =
-            RsSelfParameterStub(parentStub, this, psi.isRef, psi.isMut)
+            RsSelfParameterStub(parentStub, this, psi.isMut, psi.isRef)
 
         override fun indexStub(stub: RsSelfParameterStub, sink: IndexSink) {
             // NOP
