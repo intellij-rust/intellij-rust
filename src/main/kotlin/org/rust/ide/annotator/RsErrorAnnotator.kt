@@ -1,6 +1,7 @@
 package org.rust.ide.annotator
 
 import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
@@ -16,7 +17,10 @@ import org.rust.ide.annotator.fixes.ImplementMethodsFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.mixin.*
-import org.rust.lang.core.psi.util.*
+import org.rust.lang.core.psi.util.descendantsOfType
+import org.rust.lang.core.psi.util.module
+import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.util.trait
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 
@@ -32,6 +36,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitEnumVariant(o: RsEnumVariant) = checkDuplicates(holder, o)
             override fun visitFunction(o: RsFunction) = checkFunction(holder, o)
             override fun visitImplItem(o: RsImplItem) = checkImpl(holder, o)
+            override fun visitLabel(o: RsLabel) = checkLabel(holder, o)
+            override fun visitLifetime(o: RsLifetime) = checkLifetime(holder, o)
             override fun visitModDeclItem(o: RsModDeclItem) = checkModDecl(holder, o)
             override fun visitModItem(o: RsModItem) = checkDuplicates(holder, o)
             override fun visitPatBinding(o: RsPatBinding) = checkPatBinding(holder, o)
@@ -169,6 +175,14 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         if (struct.kind == RsStructKind.UNION && struct.tupleFields != null) {
             deny(struct.tupleFields, holder, "Union cannot be tuple-like")
         }
+    }
+
+    private fun checkLabel(holder: AnnotationHolder, label: RsLabel) =
+        requireResolve(holder, label, "Use of undeclared label `${label.text}` [E0426]")
+
+    private fun checkLifetime(holder: AnnotationHolder, lifetime: RsLifetime) {
+        if (lifetime.isPredefined) return
+        requireResolve(holder, lifetime, "Use of undeclared lifetime name `${lifetime.text}` [E0261]")
     }
 
     private fun checkModDecl(holder: AnnotationHolder, modDecl: RsModDeclItem) {
@@ -309,6 +323,12 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         if (type.needsLifetime()) {
             require(type.lifetime, holder, "Missing lifetime specifier [E0106]", type.and ?: type)
         }
+    }
+
+    private fun requireResolve(holder: AnnotationHolder, el: RsReferenceElement, message: String) {
+        if (el.reference.resolve() != null) return
+        holder.createErrorAnnotation(el.textRange, message)
+            .highlightType = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
     }
 
     private fun require(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
