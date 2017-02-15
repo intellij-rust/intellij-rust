@@ -32,11 +32,8 @@ class TestProjectBuilder(
         check(path.endsWith(".$ext"))
         val dir = PathUtil.getParentPath(path)
         val vDir = VfsUtil.createDirectoryIfMissing(root, dir)
-        vDir.createChildData(this, PathUtil.getFileName(path))
-            .getOutputStream(this).bufferedWriter()
-            .use {
-                it.write(code.trimIndent())
-            }
+        val vFile = vDir.createChildData(this, PathUtil.getFileName(path))
+        VfsUtil.saveText(vFile, code.trimIndent())
     }
 
     fun build(builder: TestProjectBuilder.() -> Unit): TestProject {
