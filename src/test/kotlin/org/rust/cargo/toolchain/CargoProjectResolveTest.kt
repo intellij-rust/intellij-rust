@@ -1,68 +1,185 @@
 package org.rust.cargo.toolchain
 
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiManager
-import com.intellij.psi.PsiReference
+import org.rust.TestProject
+import org.rust.TestProjectBuilder
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
 import org.rust.cargo.project.workspace.cargoWorkspace
+import org.rust.lang.core.psi.RsPath
 
 class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
-    override val dataPath: String = "src/test/resources/org/rust/cargo/toolchain/fixtures"
+    override val dataPath: String = ""
 
-    fun testResolveExternalLibrary() = resolveRefInFile("external_library", "src/main.rs")
-    fun testResolveLocalPackage() = resolveRefInFile("local_package", "src/main.rs")
-    fun testResolveLocalPackageMod() = resolveRefInFile("local_package_mod", "src/bar.rs")
-    fun testModuleRelations() = resolveRefInFile("mods", "src/foo.rs")
-    fun testKebabCase() = resolveRefInFile("kebab-case", "src/main.rs")
-    fun testCaseInsensitiveMods() {
+    fun `test resolve external library`() = buildProject {
+        toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                authors = []
+
+                [dependencies]
+                rand = "=0.3.14"
+        """)
+
+        rust("src/main.rs", """
+                extern crate rand;
+
+                use rand::distributions;
+
+                mod foo;
+
+                fn main() {
+                    let _ = distributions::normal::Normal::new(0.0, 1.0);
+                }                         //^
+        """)
+    }.checkReferenceIsResolved<RsPath>("src/main.rs")
+
+    fun `test resolve local package`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            authors = []
+
+            [dependencies]
+            foo = { path = "./foo" }
+        """)
+
+        rust("src/main.rs", """
+            extern crate foo;
+            mod bar;
+
+            fn main() {
+                foo::hello();
+            }       //^
+        """)
+
+        rust("src/bar.rs", """
+            use foo::hello;
+
+            pub fn bar() {
+                hello();
+            }   //^
+        """)
+
+        dir("foo") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            rust("src/lib.rs", """
+                pub fn hello() {}
+            """)
+        }
+    }.run {
+        checkReferenceIsResolved<RsPath>("src/main.rs")
+        checkReferenceIsResolved<RsPath>("src/bar.rs")
+    }
+
+    fun `test module relations`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "mods"
+            version = "0.1.0"
+            authors = []
+
+            [dependencies]
+        """)
+
+        rust("src/lib.rs", """
+            mod foo;
+
+            pub struct S;
+        """)
+
+        rust("src/foo.rs", """
+            use S;
+              //^
+        """)
+    }.checkReferenceIsResolved<RsPath>("src/foo.rs")
+
+    fun `test kebab-case`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "kebab-case"
+            version = "0.1.0"
+            authors = []
+
+            [dependencies]
+        """)
+
+        rust("src/main.rs", """
+            extern crate kebab_case;
+
+            fn main() {
+                kebab_case::foo();
+            }              //^
+        """)
+
+        rust("src/lib.rs", "pub fn foo() { }")
+
+    }.checkReferenceIsResolved<RsPath>("src/main.rs")
+
+    fun `test case insensitive mods`() {
         if (!SystemInfo.isWindows) return
-        resolveRefInFile("case_insensitive_mods", "src/BAR.rs")
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "mods"
+                version = "0.1.0"
+                authors = []
+
+                [dependencies]
+            """)
+
+            rust("src/lib.rs", "mod foo; mod bar;")
+            rust("src/FOO.rs", "pub struct Spam;")
+
+            rust("src/BAR.rs", """
+                use foo::Spam;
+                         //^
+            """)
+        }.checkReferenceIsResolved<RsPath>("src/BAR.rs")
     }
 
     // Test that we don't choke on winapi crate, which uses **A LOT** of
     // glob imports and is just **ENORMOUS**
-    fun testWinTorture() = resolveRefInFile("win_torture", "src/main.rs", unresolved = true)
+    fun `test winapi torture`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            authors = []
 
-    private fun resolveRefInFile(project: String, fileWithRef: String, unresolved: Boolean = false) =
-        withProject(project) {
-            CargoProjectWorkspaceService.getInstance(module).syncUpdate(module.project.toolchain!!)
+            [dependencies]
+            winapi = "0.2"
+        """)
 
-            if (module.cargoWorkspace == null) {
-                error("Failed to update a test Cargo project")
-            }
+        rust("src/main.rs", """
+            extern crate winapi;
+            use winapi::*;
 
-            val result = extractReference(fileWithRef).resolve()
-            if (unresolved) {
-                check(result == null) { "Reference is erroneously resolved" }
-            } else {
-                checkNotNull(result) {
-                    "Unresolved reference in $fileWithRef"
-                }
-            }
+            fn main() {
+                let _ = foo;
+            }          //^
+        """)
+    }.checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
+
+    fun buildProject(builder: TestProjectBuilder.() -> Unit): TestProject =
+        TestProjectBuilder(project).build(builder).apply {
+            refreshWorkspace()
         }
 
-    private fun extractReference(path: String): PsiReference {
-        val vFile = LocalFileSystem.getInstance().findFileByPath("${myProject.basePath}/$path")!!
-        val psiFile = PsiManager.getInstance(myProject).findFile(vFile)!!
-        val documentManager = PsiDocumentManager.getInstance(project)
-
-        var referenceOffset = 0
-        WriteCommandAction.runWriteCommandAction(project) {
-            val document = documentManager.getDocument(psiFile)!!
-            val text = document.text
-            val refTag = "<ref>"
-            referenceOffset = text.indexOf(refTag)
-            document.deleteString(referenceOffset, referenceOffset + refTag.length)
-            documentManager.commitDocument(document)
+    private fun refreshWorkspace() {
+        CargoProjectWorkspaceService.getInstance(module).syncUpdate(module.project.toolchain!!)
+        if (module.cargoWorkspace == null) {
+            error("Failed to update a test Cargo project")
         }
-        check(referenceOffset > 0)
-
-        return psiFile.findReferenceAt(referenceOffset)!!
     }
 }
