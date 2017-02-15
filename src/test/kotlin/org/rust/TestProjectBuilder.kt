@@ -47,21 +47,20 @@ class TestProjectBuilder(
 
 class TestProject(
     private val project: Project,
-    private val root: VirtualFile
+    val root: VirtualFile
 ) {
 
-    inline fun <reified T : PsiElement> findElementInFile(path: String, marker: String = "^"): T {
-        val element = doFindElementInFile(path, marker)
+    inline fun <reified T : PsiElement> findElementInFile(path: String): T {
+        val element = doFindElementInFile(path)
         return element.parentOfType<T>()
             ?: error("No parent of type ${T::class.java} for ${element.text}")
     }
 
     inline fun <reified T : RsReferenceElement> checkReferenceIsResolved(
         path: String,
-        marker: String = "^",
         shouldNotResolve: Boolean = false
     ) {
-        val ref = findElementInFile<T>(path, marker)
+        val ref = findElementInFile<T>(path)
         val res = ref.reference.resolve()
         if (shouldNotResolve) {
             check(res == null) {
@@ -74,12 +73,11 @@ class TestProject(
         }
     }
 
-
-    fun doFindElementInFile(path: String, marker: String): PsiElement {
+    fun doFindElementInFile(path: String): PsiElement {
         val vFile = root.findFileByRelativePath(path)
             ?: error("No `$path` file in test project")
         val file = PsiManager.getInstance(project).findFile(vFile)!!
-        return findElementInFile(file, marker)
+        return findElementInFile(file, "^")
     }
 }
 
