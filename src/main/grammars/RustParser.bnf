@@ -222,7 +222,8 @@ private Item_with_recover ::= !('}' | <<eof>>) Item {
   pin = 1
   recoverWhile = Item_recover
 }
-private Item_recover ::= !('}' | '#' | pub | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait | static | TYPE_KW | impl | "union")
+private Item_first ::= '#' | pub | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait | static | TYPE_KW | impl | "union"
+private Item_recover ::= !('}' | Item_first )
 
 private Items ::= Item_with_recover*
 
@@ -751,6 +752,8 @@ Expr ::= RetExpr
        | UnaryExpr
        | TryExpr
        | AtomExpr
+Expr_first ::= return | '|' | Path_first | '{' | '[' | '(' | '..' | '...' | true | false | box | QUOTE_IDENTIFIER
+  | '-' | '*' | '!' | '&' | move | LitExpr | while | if | for | continue | break  | loop | match | unsafe
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
 NoStructLitExpr ::= <<structLiterals 'OFF' <<stmtMode 'OFF' Expr>> >> { elementType = Expr }
@@ -1033,18 +1036,20 @@ fake Block ::= '{' InnerAttr* (Item | Stmt)* Expr? '}' {
   implements = "org.rust.lang.core.psi.RsItemsOwner"
 }
 
-SimpleBlock ::= '{' BlockTail '}' {
+SimpleBlock ::= '{' BlockElement* '}' {
   pin = 1
   elementType = Block
 }
 
-InnerAttrsAndBlock ::= '{' InnerAttr* BlockTail '}' {
+InnerAttrsAndBlock ::= '{' InnerAttr* BlockElement* '}' {
   pin = 1
   elementType = Block
 }
-
-private BlockTail ::= (ExprStmtOrLastExpr | Stmt | Item)* { recoverWhile = BlockRecover }
-private BlockRecover ::= !('}')
+private BlockElement ::= !'}' (ExprStmtOrLastExpr | Stmt | Item) {
+  pin = 1
+  recoverWhile = BlockElement_recover
+}
+private BlockElement_recover ::= !('}' | Item_first | Expr_first | let | ';')
 
 Stmt ::= LetDecl | EmptyStmt | never ';'
 

@@ -100,18 +100,32 @@ FILE
           <empty list>
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
-      PsiElement(INTEGER_LITERAL)('62')
+      RsLitExprImpl(LIT_EXPR)
+        PsiElement(INTEGER_LITERAL)('62')
+        PsiErrorElement:'&', '^' or '|' expected, got ','
+          <empty list>
       PsiElement(,)(',')
       PsiWhiteSpace('\n        ')
-      PsiElement(identifier)('quux')
+      RsPathExprImpl(PATH_EXPR)
+        RsPathImpl(PATH)
+          PsiElement(identifier)('quux')
+        PsiErrorElement:'!', '&', '^' or '|' expected, got ':'
+          <empty list>
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
       PsiElement(,)(',')
       PsiWhiteSpace('\n        ')
-      PsiElement(identifier)('quazar')
+      RsPathExprImpl(PATH_EXPR)
+        RsPathImpl(PATH)
+          PsiElement(identifier)('quazar')
+        PsiErrorElement:'!', '&', '^' or '|' expected, got ':'
+          <empty list>
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
-      PsiElement(INTEGER_LITERAL)('42')
+      RsLitExprImpl(LIT_EXPR)
+        PsiElement(INTEGER_LITERAL)('42')
+        PsiErrorElement:'&', '^' or '|' expected, got ','
+          <empty list>
       PsiElement(,)(',')
       PsiWhiteSpace('\n    ')
       PsiElement(})('}')

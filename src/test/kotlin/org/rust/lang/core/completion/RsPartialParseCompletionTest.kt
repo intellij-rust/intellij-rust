@@ -125,5 +125,25 @@ class RsPartialParseCompletionTest : RsCompletionTestBase() {
         type FooBar = ();
         struct S(Fo/*caret*/)
     """)
+
+    fun `test statement recovery`() = checkByText("""
+        fn ubik() { }
+
+        fn main() {
+            let _ =
+
+            let _ = ubi/*caret*/
+        }
+    """, """
+        fn ubik() { }
+
+        fn main() {
+            let _ =
+
+            let _ = ubik()
+        }
+    """) {
+        executeSoloCompletion()
+    }
 }
 

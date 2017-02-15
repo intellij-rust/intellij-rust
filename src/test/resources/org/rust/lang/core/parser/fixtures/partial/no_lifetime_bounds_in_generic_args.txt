@@ -23,8 +23,10 @@ FILE
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
       PsiElement(QUOTE_IDENTIFIER)(''static')
-      PsiElement(>)('>')
-      PsiElement(()('(')
-      PsiElement())(')')
+      PsiErrorElement:':' expected, got '>'
+        PsiElement(>)('>')
+      RsUnitExprImpl(UNIT_EXPR)
+        PsiElement(()('(')
+        PsiElement())(')')
       PsiWhiteSpace('\n')
       PsiElement(})('}')
