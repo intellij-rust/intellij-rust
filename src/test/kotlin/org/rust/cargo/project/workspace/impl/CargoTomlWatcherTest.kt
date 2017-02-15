@@ -56,8 +56,7 @@ class CargoTomlWatcherTest : RsTestBase() {
     }
 
     private fun newCreateEvent(name: String): Pair<VirtualFile, VFileCreateEvent> {
-        val baseDir = myFixture.tempDirFixture.findOrCreateDir("proj")
-        val vFile = myFixture.tempDirFixture.createFile("$baseDir/$name")
+        val vFile = myFixture.tempDirFixture.createFile("proj/$name")
         return vFile to VFileCreateEvent(null, vFile.parent, vFile.name, false, true)
     }
 
