@@ -81,12 +81,13 @@ class RsLiveTemplatesTest : RsTestBase() {
         }
     """)
 
+    val indent = "    "
     fun `test module level context available in file`() = expandSnippet("""
         tfn/*caret*/
     """, """
         #[test]
         fn /*caret*/() {
-${"            "/*trailing ws on this line*/}
+        $indent
         }
     """)
 
@@ -96,8 +97,16 @@ ${"            "/*trailing ws on this line*/}
         }
     """)
 
+    fun `test main is available in file`() = expandSnippet("""
+        main/*caret*/
+    """, """
+        fn main() {
+        $indent/*caret*/
+        }
+    """)
+
     private fun expandSnippet(@Language("Rust") before: String, @Language("Rust") after: String) =
-        checkByText(before, after) {
+        checkByText(before.trimIndent(), after.trimIndent()) {
             myFixture.performEditorAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB)
         }
 
