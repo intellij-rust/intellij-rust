@@ -1,6 +1,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
@@ -12,11 +13,19 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.getPsiFor
+import org.rust.cargo.util.modules
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.rustMod
+import org.rust.lang.core.psi.impl.RsFile
+import org.rust.lang.core.psi.impl.mixin.*
+import org.rust.lang.core.psi.impl.rustMod
+import org.rust.lang.core.psi.util.ancestors
+import org.rust.lang.core.psi.util.fields
+import org.rust.lang.core.psi.util.module
+import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
@@ -97,6 +106,15 @@ object ResolveEngine {
             .firstOrNull() ?: return null
         return Result(el, pkg)
     }
+
+    /**
+     * Resolves an absolute path.
+     */
+    fun resolve(path: String, project: Project): Result? =
+        // FIXME This is dumb implementation which seems to work
+        project.modules.asSequence()
+            .mapNotNull { resolve(path, it) }
+            .firstOrNull()
 
     /**
      * Resolves references to struct's fields inside destructuring [RsStructExpr]
