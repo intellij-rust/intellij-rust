@@ -541,6 +541,26 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun `test E0261 undeclared lifetimes`() = checkErrors("""
+        fn foo<'a, 'b>(x: &'a u32, f: &'b Fn(&'b u8) -> &'b str) -> &'a u32 { x }
+        const FOO: for<'a> fn(&'a u32) -> &'a u32 = foo_func;
+        struct Struct<'a> { s: &'a str }
+        enum En<'a, 'b> { A(&'a u32), B(&'b bool) }
+        type Str<'d> = &'d str;
+
+        fn foo_err<'a>(x: &<error descr="Use of undeclared lifetime name `'b` [E0261]">'b</error> str) {}
+        fn bar() {
+            'foo: loop {
+                let _: &<error descr="Use of undeclared lifetime name `'foo` [E0261]">'foo</error> str;
+            }
+        }
+    """)
+
+    fun `test E0261 not applied to static lifetimes`() = checkErrors("""
+        const ZERO: &'static u32 = &0;
+        fn foo(a: &'static str) {}
+    """)
+
     fun testE0263_LifetimeNameDuplicationInGenericParams() = checkErrors("""
         fn foo<'a, 'b>(x: &'a str, y: &'b str) { }
         struct Str<'a, 'b> { a: &'a u32, b: &'b f64 }
@@ -594,6 +614,23 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
                   b: bool,
                   <error>a</error>: f64) {}
         fn tuples(<error>a</error>: u8, (b, (<error>a</error>, c)): (u16, (u32, u64))) {}
+    """)
+
+    fun `test E0426 undeclared label`() = checkErrors("""
+        fn ok() {
+            'foo: loop { break 'foo }
+            'bar: while true { continue 'bar }
+            'baz: for _ in 0..3 { break 'baz }
+            'outer: loop {
+                'inner: while true { break 'outer }
+            }
+        }
+
+        fn err<'a>(a: &'a str) {
+            'foo: loop { continue <error descr="Use of undeclared label `'bar` [E0426]">'bar</error> }
+            while true { break <error descr="Use of undeclared label `'static` [E0426]">'static</error> }
+            for _ in 0..1 { break <error descr="Use of undeclared label `'a` [E0426]">'a</error> }
+        }
     """)
 
     fun testE0428_NameDuplicationInCodeBlock() = checkErrors("""
