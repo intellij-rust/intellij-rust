@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.annotator.fixes.AddModuleFileFix
+import org.rust.ide.annotator.fixes.AddSelfFix
 import org.rust.ide.annotator.fixes.ImplementMethodsFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RsFile
@@ -23,6 +24,7 @@ import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.util.trait
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
+import org.rust.lang.core.symbols.RustPath
 
 class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
@@ -65,6 +67,17 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val child = path.path
         if ((child == null || child.asRustPath != null) && path.asRustPath == null) {
             holder.createErrorAnnotation(path, "Invalid path: self and super are allowed only at the beginning")
+        }
+
+        path.self ?: return
+        val function = path.parentOfType<RsFunction>() ?: return
+        val rustPath = path.asRustPath
+        if (rustPath != null && rustPath !is RustPath.ModRelative && function.isAssocFn) {
+            val error = "The self keyword was used in a static method [E0424]"
+            val annotation = holder.createErrorAnnotation(path, error)
+            if (function.role != RsFunctionRole.FREE) {
+                annotation.registerFix(AddSelfFix(function))
+            }
         }
     }
 
