@@ -1,6 +1,9 @@
 package org.rust.lang.core.type
 
 import org.junit.ComparisonFailure
+import org.junit.Test
+import org.rust.lang.core.types.types.RustFloatType
+import org.rust.lang.core.types.types.RustIntegerType
 
 class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun testFunctionCall() = testExpr("""
@@ -395,7 +398,29 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                 """,
                 "Binary operation: $traitName")
         }
+    }
 
+    fun `test binary operators for primitives`() {
+        val operations = listOf("+", "-", "/", "*", "%")
+        val primitives = RustIntegerType.Kind.values()
+            .map { it.name }
+            .toMutableList()
+        RustFloatType.Kind.values()
+            .mapTo(primitives) { it.name }
+        primitives.forEach { primitive ->
+            operations.forEach { operation ->
+                testExpr("""
+                    fn main() {
+                        let a :$primitive;
+                        let b :$primitive;
+                        let x = a $operation b;
+                        x
+                      //^ $primitive
+                    }
+                    """,
+                    "Binary operation: $operation for $primitive")
+            }
+        }
     }
 }
 
