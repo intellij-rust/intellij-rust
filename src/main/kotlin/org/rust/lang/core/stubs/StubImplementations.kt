@@ -24,7 +24,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 61
+        override fun getStubVersion(): Int = 62
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -406,7 +406,6 @@ class RsFunctionStub(
     override val name: String?,
     override val isPublic: Boolean,
     val isAbstract: Boolean,
-    val isStatic: Boolean,
     val isTest: Boolean,
     val role: RsFunctionRole
 ) : StubBase<RsFunction>(parent, elementType),
@@ -421,7 +420,6 @@ class RsFunctionStub(
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
-                dataStream.readBoolean(),
                 dataStream.readEnum(RsFunctionRole.values())
             )
 
@@ -430,7 +428,6 @@ class RsFunctionStub(
                 writeName(stub.name)
                 writeBoolean(stub.isPublic)
                 writeBoolean(stub.isAbstract)
-                writeBoolean(stub.isStatic)
                 writeBoolean(stub.isTest)
                 writeEnum(stub.role)
             }
@@ -440,7 +437,7 @@ class RsFunctionStub(
 
         override fun createStub(psi: RsFunction, parentStub: StubElement<*>?) =
             RsFunctionStub(parentStub, this,
-                psi.name, psi.isPublic, psi.isAbstract, psi.isAssocFn, psi.isTest, psi.role)
+                psi.name, psi.isPublic, psi.isAbstract, psi.isTest, psi.role)
 
         override fun indexStub(stub: RsFunctionStub, sink: IndexSink) = sink.indexFunction(stub)
     }
