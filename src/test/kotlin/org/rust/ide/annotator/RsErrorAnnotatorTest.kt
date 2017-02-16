@@ -827,4 +827,33 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             <error>pub</error> const C: u32 = 10;
         }
     """)
+
+    fun `testE0424 self in impl`() = checkErrors("""
+        struct Foo;
+
+        impl Foo {
+            fn foo() {
+                let a = <error descr="The self keyword was used in a static method [E0424]">self</error>;
+            }
+        }
+    """)
+
+    fun `testE0424 ignore non static`() = checkErrors("""
+        struct Foo;
+
+        impl Foo {
+            fn foo(self) {
+                let a = self;
+            }
+        }
+    """)
+
+    fun `testE0424 ignore module path`() = checkErrors("""
+        fn foo() {
+        }
+
+        fn bar() {
+            self::foo()
+        }
+    """)
 }
