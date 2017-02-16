@@ -451,6 +451,19 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun `test E0121 type placeholder in signatures`() = checkErrors("""
+        fn ok(_: &'static str) {
+            let four = |x: _| 4;
+            let _ = match (8, 3) { (_, _) => four(1) };
+            if let Some(_) = Some(0) {}
+        }
+
+        fn foo(a: <error descr="The type placeholder `_` is not allowed within types on item signatures [E0121]">_</error>) {}
+        fn bar() -> <error>_</error> {}
+        fn baz(t: (u32, <error>_</error>)) -> (bool, (f64, <error>_</error>)) {}
+        static FOO: <error>_</error> = 42;
+    """)
+
     fun testE0124_NameDuplicationInStruct() = checkErrors("""
         struct S {
             no_dup: bool,
