@@ -30,7 +30,7 @@ private fun inferTypeWithOutput(expr: RsBinaryExpr, traitName: String): RustType
         }
     }
     val addTraits = RsImplIndex.findImplsFor(type, expr.project)
-        .filter { it.traitRef?.text == traitName }
+        .filter { it.traitRef?.text == traitName } // may be not from ops.rs
         .distinct() // somehow here can be more than one same impl
     if(addTraits.toList().size != 1) {
         return RustUnknownType

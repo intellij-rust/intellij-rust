@@ -354,5 +354,48 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                 "Case number: $i")
         }
     }
+
+    fun `test binary operators through trait`() {
+        val traitNames = mapOf(
+            "Add" to "+",
+            "Rem" to "%",
+            "Sub" to "-",
+            "Div" to "/",
+            "Mul" to "*"
+        )
+        traitNames.forEach { entry ->
+            val traitName = entry.key
+            val operation = entry.value
+            val functionName = traitName.toLowerCase()
+            testExpr("""
+                pub trait $traitName<RHS=Self> {
+                    type Output;
+                    fn $functionName(self, rhs: RHS) -> Self::Output;
+                }
+
+                struct A {
+                    b: i32
+                }
+
+                impl $traitName for A {
+                    type Output = A;
+
+                    fn $functionName(self, rhs: A) -> A {
+                        return A {b : self.b + rhs.b};
+                    }
+                }
+
+                fn main() {
+                    let a = A {b : 12};
+                    let b = A {b : 3};
+                    let x = a $operation b;
+                    x
+                  //^ A
+                }
+                """,
+                "Binary operation: $traitName")
+        }
+
+    }
 }
 
