@@ -18,10 +18,7 @@ import org.rust.ide.annotator.fixes.ImplementMethodsFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.RsFile
 import org.rust.lang.core.psi.impl.mixin.*
-import org.rust.lang.core.psi.util.descendantsOfType
-import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.psi.util.trait
+import org.rust.lang.core.psi.util.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.symbols.RustPath
@@ -31,6 +28,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val visitor = object : RsVisitor() {
+            override fun visitBaseType(o: RsBaseType) = checkBaseType(holder, o)
             override fun visitConstant(o: RsConstant) = checkConstant(holder, o)
             override fun visitValueArgumentList(o: RsValueArgumentList) = checkValueArgumentList(holder, o)
             override fun visitStructItem(o: RsStructItem) = checkStructItem(holder, o)
@@ -57,6 +55,14 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
 
         element.accept(visitor)
+    }
+
+    private fun checkBaseType(holder: AnnotationHolder, type: RsBaseType) {
+        if (type.underscore == null) return
+        val owner = type.ancestors.drop(1).dropWhile { it is RsTupleType }.first()
+        if ((owner is RsValueParameter || owner is RsRetType) && owner.parent.parent !is RsLambdaExpr || owner is RsConstant) {
+            holder.createErrorAnnotation(type, "The type placeholder `_` is not allowed within types on item signatures [E0121]")
+        }
     }
 
     private fun checkPatBinding(holder: AnnotationHolder, binding: RsPatBinding) {
