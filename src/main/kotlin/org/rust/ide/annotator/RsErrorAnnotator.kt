@@ -67,16 +67,24 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val child = path.path
         if ((child == null || child.asRustPath != null) && path.asRustPath == null) {
             holder.createErrorAnnotation(path, "Invalid path: self and super are allowed only at the beginning")
+            return
         }
 
-        path.self ?: return
-        val function = path.parentOfType<RsFunction>() ?: return
-        val rustPath = path.asRustPath
-        if (rustPath != null && rustPath !is RustPath.ModRelative && function.isAssocFn) {
-            val error = "The self keyword was used in a static method [E0424]"
-            val annotation = holder.createErrorAnnotation(path, error)
-            if (function.role != RsFunctionRole.FREE) {
-                annotation.registerFix(AddSelfFix(function))
+        if (path.self != null) {
+            val rustPath = path.asRustPath
+            if (rustPath == null || rustPath is RustPath.ModRelative) return
+            val function = path.parentOfType<RsFunction>()
+            if (function == null) {
+                holder.createErrorAnnotation(path, "self value is not available in this context")
+                return
+            }
+
+            if (function.selfParameter == null) {
+                val error = "The self keyword was used in a static method [E0424]"
+                val annotation = holder.createErrorAnnotation(path, error)
+                if (function.role != RsFunctionRole.FREE) {
+                    annotation.registerFix(AddSelfFix(function))
+                }
             }
         }
     }

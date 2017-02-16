@@ -838,6 +838,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun `test self expression outside function`() = checkErrors("""
+        const C: () = <error descr="self value is not available in this context">self</error>;
+    """)
+
     fun `testE0424 ignore non static`() = checkErrors("""
         struct Foo;
 
