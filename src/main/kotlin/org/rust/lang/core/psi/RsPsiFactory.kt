@@ -84,11 +84,13 @@ class RsPsiFactory(private val project: Project) {
         createFromText("use $text;")
             ?: error("Failed to create use item from text: `$text`")
 
-    fun createTraitImplItem(traitMethods: List<RsFunction>): RsImplItem {
-        val methods = traitMethods
-            .mapNotNull { " ${it.signatureText} {\nunimplemented!()\n}" }
-            .joinToString("\n\n")
-        val text = "impl T for S { $methods }"
+    fun createTraitImplItem(traitMethods: List<RsFunction>, traitTypeAliases: List<RsTypeAlias>): RsImplItem {
+        val members = (
+                    traitTypeAliases.map { " type ${it.name} = ();" } +
+                    traitMethods.map { " \n${it.signatureText} {\nunimplemented!()\n}" }
+                ).joinToString("\n")
+        val text = "impl T for S { \n$members\n }"
+        println(createFromText<RsImplItem>(text)?.text)
         return createFromText(text)
             ?: error("Failed to create an impl from text: `$text`")
     }

@@ -302,17 +302,21 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val mustImplement = canImplement.filterValues { it.isAbstract }
         val implemented = impl.functionList.associateBy { it.name }
 
+        val canImplementTypes = trait.typeAliasList.associateBy { it.name }
+        val mustImplementTypes = canImplementTypes.filterValues { it.typeReference == null }
+        val implementedTypes = impl.typeAliasList.associateBy { it.name }
+
         val notImplemented = mustImplement.keys - implemented.keys
-        if (!notImplemented.isEmpty()) {
-            val toImplement = trait.functionList.filter { it.name in notImplemented }
+        val notImplementedTypes = mustImplementTypes.keys - implementedTypes.keys
+        if (!notImplemented.isEmpty() || !notImplementedTypes.isEmpty()) {
             val implHeaderTextRange = TextRange.create(
                 impl.textRange.startOffset,
                 impl.typeReference?.textRange?.endOffset ?: impl.textRange.endOffset
             )
 
             holder.createErrorAnnotation(implHeaderTextRange,
-                "Not all trait items implemented, missing: ${notImplemented.namesList} [E0046]"
-            ).registerFix(ImplementMethodsFix(impl, toImplement))
+                "Not all trait items implemented, missing: ${(notImplemented + notImplementedTypes).namesList} [E0046]"
+            ).registerFix(ImplementMethodsFix(impl))
         }
 
         val notMembers = implemented.filterKeys { it !in canImplement }

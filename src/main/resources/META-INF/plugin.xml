@@ -113,11 +113,15 @@
                                         implementationClass="org.rust.ide.annotator.RsTraitMethodImplLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="Rust"
                                         implementationClass="org.rust.ide.annotator.RsCrateDocLineMarkerProvider"/>
-
         <!-- Rename Processor -->
 
         <renamePsiElementProcessor implementation="org.rust.lang.refactoring.RsRenameProcessor" />
+        
+        <!-- Implement methods -->
 
+        <codeInsight.implementMethod language="Rust" 
+                                     implementationClass="org.rust.ide.core.overrideImplement.ImplementMembersHandler"/>
+        
         <!-- Completion -->
 
         <completion.contributor language="Rust"

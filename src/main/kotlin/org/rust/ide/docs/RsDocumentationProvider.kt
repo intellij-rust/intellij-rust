@@ -8,6 +8,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.doc.documentationAsHtml
+import org.rust.utils.getFormattedParts
 
 class RsDocumentationProvider : AbstractDocumentationProvider() {
 
@@ -21,7 +22,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         val doc = element.documentationAsHtml() ?: ""
         return header + signature + doc
     }
-
+    
     override fun getQuickNavigateInfo(e: PsiElement, originalElement: PsiElement?): String? =
         (e as? RsNamedElement)?.presentationInfo?.quickDocumentationText
 }
