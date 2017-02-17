@@ -4,14 +4,13 @@ import com.intellij.codeInsight.documentation.DocumentationManager
 
 class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
     override val dataPath = ""
+    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
     fun `test nested function`() = doTest("""
         mod a {
             mod b {
                 mod c {
-                    pub fn double(x: i16) -> i32 {
-                        x * 2
-                    }
+                    pub fn double(x: i16) -> i32 { x * 2 }
                 }
             }
 
@@ -130,11 +129,18 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         let mut <b>xyz</b> [main.rs]
     """)
 
-    fun `test mod`() = doTest("""
+    fun `test module 1`() = doTest("""
         pub mod foo { /* foo code */ }
         use self::fo<caret>o;
     """, """
         pub mod <b>foo</b> [main.rs]
+    """)
+
+    fun `test module 2`() = doTest("""
+        mod foo { pub mod bar { pub mod baz { } } }
+        use self::foo::ba<caret>r::baz;
+    """, """
+        pub mod <b>bar</b> [main.rs]
     """)
 
     fun `test struct`() = doTest("""
@@ -149,6 +155,15 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         use self::Fo<caret>o;
     """, """
         pub struct <b>Foo</b>(a: bool) [main.rs]
+    """)
+
+    fun `test struct field`() = doTest("""
+        pub struct Foo { pub foo: bool }
+        fn foo() {
+            let _ = Foo { fo<caret>o: true };
+        }
+    """, """
+        pub <b>foo</b>: bool [main.rs]
     """)
 
     fun `test enum`() = doTest("""
@@ -196,7 +211,13 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
     fun `test lifetime`() = doTest("""
         type Str<'foo> = &'fo<caret>o str;
     """, """
-        <b>'foo</b> [main.rs]
+        <i>lifetime:</i> <b>'foo</b> [main.rs]
+    """)
+
+    fun `test type parameter`() = doTest("""
+        fn foo<T>(t: <caret>T) {}
+    """, """
+        <i>type parameter:</i> <b>T</b> [main.rs]
     """)
 
     fun `test loop label`() = doTest("""
@@ -204,7 +225,23 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
             'foo: loop { break 'fo<caret>o }
         }
     """, """
-        <b>'foo</b> [main.rs]
+        <b>'foo</b>: loop [main.rs]
+    """)
+
+    fun `test for loop label`() = doTest("""
+        fn foo() {
+            'foo: for x in 0..4 { continue 'fo<caret>o }
+        }
+    """, """
+        <b>'foo</b>: for x in 0..4 [main.rs]
+    """)
+
+    fun `test while loop label`() = doTest("""
+        fn foo() {
+            'foo: while true { continue 'fo<caret>o }
+        }
+    """, """
+        <b>'foo</b>: while true [main.rs]
     """)
 
     fun `test self parameter 1`() = doTest("""
@@ -225,10 +262,76 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         <b>self</b>: &amp;mut Foo [main.rs]
     """)
 
-    fun `test value parameter`() = doTest("""
+    fun `test value parameter 1`() = doTest("""
         fn foo(val: &mut u32) { let _ = v<caret>al; }
     """, """
-        <b>val</b> [main.rs]
+        <i>value parameter:</i> <b>val</b>: &amp;mut u32 [main.rs]
+    """)
+
+    fun `test value parameter 2`() = doTest("""
+        fn foo((val, flag): &mut (u32, bool)) { let _ = v<caret>al; }
+    """, """
+        <i>value parameter:</i> (<b>val</b>, flag): &amp;mut (u32, bool) [main.rs]
+    """)
+
+    fun `test value parameter 3`() = doTest("""
+        fn foo((val, flag): &mut (u32, bool)) { let _ = fl<caret>ag; }
+    """, """
+        <i>value parameter:</i> (val, <b>flag</b>): &amp;mut (u32, bool) [main.rs]
+    """)
+
+    fun `test match arm 1`() = doTest("""
+        fn foo() {
+            match Some(12) {
+                foo => fo<caret>o
+            };
+        }
+    """, """
+        <i>match arm:</i> <b>foo</b> [main.rs]
+    """)
+
+    fun `test match arm 2`() = doTest("""
+        fn foo() {
+            match Some(12) {
+                Some(foo) => fo<caret>o
+                None => 0
+            };
+        }
+    """, """
+        <i>match arm:</i> Some(<b>foo</b>) [main.rs]
+    """)
+
+    fun `test match arm 3`() = doTest("""
+        struct Foo { foo: bool }
+        fn foo() {
+            let f = Foo { foo: true };
+            match f {
+                Foo { foo } => fo<caret>o
+            };
+        }
+    """, """
+        <i>match arm:</i> Foo { <b>foo</b> } [main.rs]
+    """)
+
+    fun `test match if let`() = doTest("""
+        fn foo() {
+            if let Some(ref foo) = None {
+                *fo<caret>o
+            }
+    """, """
+        let Some(ref <b>foo</b>) = None [main.rs]
+    """)
+
+    fun `test file 1`() = doTest("""
+        const PI: f64 = std::f<caret>64::consts::PI;
+    """, """
+        mod f64 [f64.rs]
+    """)
+
+    fun `test file 2`() = doTest("""
+        const PI: f64 = st<caret>d::f64::consts::PI;
+    """, """
+        <i>crate</i> [lib.rs]
     """)
 
     private fun doTest(code: String, expected: String) {

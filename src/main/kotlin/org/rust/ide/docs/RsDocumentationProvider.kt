@@ -6,8 +6,8 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.isMut
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.impl.RsFile
+import org.rust.lang.core.psi.util.ancestors
 import org.rust.lang.doc.documentationAsHtml
 
 class RsDocumentationProvider : AbstractDocumentationProvider() {
@@ -17,74 +17,67 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
         val name = if (element is RsMod) element.modName else element.name
         val header = if (name != null) "<pre>$name</pre>\n" else ""
-        val functionSignature = (element as? RsFunction)?.formatSignature()
+        val functionSignature = (element as? RsFunction)?.signatureText
         val signature = if (functionSignature != null) "<pre>$functionSignature</pre>\n" else ""
         val doc = element.documentationAsHtml() ?: ""
         return header + signature + doc
     }
 
-    override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?) = when (element) {
-        is RsPatBinding -> getQuickNavigateInfo(element)
-        is RsNamedElement -> element.getQuickNavigateInfo()
-        else -> null
-    }
-
-    private fun getQuickNavigateInfo(element: RsPatBinding): String {
-        val location = element.locationString
-        val bindingMode = if (element.isMut) "mut " else ""
-        val prefix = if (element.parentOfType<RsValueParameter>() != null) "" else "let "
-        return  "$prefix$bindingMode<b>${element.identifier.text}</b>$location"
-    }
-
-    private fun RsNamedElement.formatSignature(): String {
-        // Example:
-        // fn item looks like this:
-        // ```
-        //     ///doc comment
-        //     #[attribute]
-        //     pub const unsafe extern "C" fn foo<T>(x: T): where T: Clone { ... }
-        // ```
-        //
-        // we want to show only the signature, and make the name bold
-
-        var signatureStartElement = firstChild
-        loop@ while (true) {
-            when (signatureStartElement) {
-                is PsiWhiteSpace, is PsiComment, is RsOuterAttr -> {
-                    signatureStartElement = signatureStartElement.nextSibling
+    override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?): String? {
+        val formatString = when (element) {
+            is RsFunction -> element.signatureText
+            is RsStructItem -> element.signatureText
+            is RsFieldDecl -> element.signatureText
+            is RsEnumItem -> element.signatureText
+            is RsEnumVariant -> element.signatureText
+            is RsTraitItem -> element.signatureText
+            is RsTypeAlias -> element.signatureText
+            is RsConstant -> element.signatureText
+            is RsSelfParameter -> element.signatureText
+            is RsTypeParameter -> element.signatureText
+            is RsLifetimeDecl -> element.signatureText
+            is RsLabelDecl -> element.signatureText()
+            is RsPatBinding -> {
+                val owner = element.owner
+                when (owner) {
+                    is RsLetDecl -> owner.signatureText(element.identifier)
+                    is RsValueParameter -> owner.signatureText(element.identifier)
+                    is RsMatchArm -> owner.signatureText(element.identifier)
+                    is RsCondition -> owner.signatureText(element.identifier)
+                    else -> createSignatureText(element, element.identifier)
                 }
-                else -> break@loop
             }
-        }
+            is RsFile -> element.signatureText()
+            is RsNamedElement -> element.signatureText
+            else -> null
+        } ?: return null
+        return "$formatString${element.locationString}"
+    }
 
-        val signatureStart = signatureStartElement?.startOffsetInParent ?: 0
-        val stopAt = when (this) {
-            is RsFunction -> listOf(whereClause, retType, valueParameterList)
-            is RsStructItem -> if (blockFields != null) listOf(whereClause) else listOf(whereClause, tupleFields)
-            is RsEnumItem -> listOf(whereClause)
-            is RsEnumVariant -> listOf(tupleFields)
-            is RsTraitItem -> listOf(whereClause)
-            is RsTypeAlias -> listOf(typeReference, typeParamBounds, whereClause)
-            is RsConstant -> listOf(expr, typeReference)
-            is RsSelfParameter -> listOf(typeReference)
-            else -> listOf(navigationElement)
-        }
+    private fun createSignatureText(decl: RsCompositeElement, id: PsiElement?, stopAt: List<PsiElement?> = emptyList()): String? {
+        if (id == null) return null
+
+        // Remove trailing spaces, comments and attributes
+        val signatureStartElement = generateSequence(decl.firstChild) { it.nextSibling }
+            .dropWhile { it is PsiWhiteSpace || it is PsiComment || it is RsOuterAttr }
+            .firstOrNull()
+
+        val signatureStart = signatureStartElement?.startOffsetInParent ?: return id.text
+        val idStart = id.ancestors.takeWhile { it != decl }.sumBy { it.startOffsetInParent }
 
         // pick (in order) elements we should stop at
         // if they all fail, drop down to the end of the id element
-        val idElement = if (this is RsSelfParameter) self else navigationElement
         val signatureEnd = stopAt
-                .filterNotNull().firstOrNull()
-                ?.let { it.startOffsetInParent + it.textLength }
-                ?: idElement.startOffsetInParent + idElement.textLength
+            .filterNotNull().firstOrNull()
+            ?.let { it.startOffsetInParent + it.textLength }
+            ?: idStart + id.textLength
 
-        val identStart = idElement.startOffsetInParent
-        val identEnd = identStart + idElement.textLength
-        check(signatureStart <= identStart && identStart <= identEnd &&
-            identEnd <= signatureEnd && signatureEnd <= textLength)
+        val idEnd = idStart + id.textLength
+        check(signatureStart <= idStart && idStart <= idEnd &&
+            idEnd <= signatureEnd && signatureEnd <= decl.textLength)
 
-        val beforeIdent = text.substring(signatureStart, identStart).escaped
-        val afterIdent = text.substring(identEnd, signatureEnd)
+        val beforeIdent = decl.text.substring(signatureStart, idStart).escaped
+        val afterIdent = decl.text.substring(idEnd, signatureEnd)
             .replace("""\s+""".toRegex(), " ")
             .replace("( ", "(")
             .replace(" )", ")")
@@ -92,14 +85,91 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
             .trimEnd()
             .escaped
 
-        return "$beforeIdent<b>$name</b>$afterIdent"
+        return "$beforeIdent<b>${id.text}</b>$afterIdent"
     }
 
-    private fun RsNamedElement.getQuickNavigateInfo(): String =
-        "${formatSignature()}$locationString"
+    private val RsNamedElement.signatureText: String?
+        get() = createSignatureText(this, navigationElement)
 
+    private val RsFunction.signatureText: String?
+        get() = createSignatureText(this, identifier, listOf(whereClause, retType, valueParameterList))
+
+    private val RsStructItem.signatureText: String?
+        get() = createSignatureText(this, identifier, if (blockFields != null) listOf(whereClause) else listOf(whereClause, tupleFields))
+
+    private val RsFieldDecl.signatureText: String?
+        get() = createSignatureText(this, identifier, listOf(typeReference))
+
+    private val RsEnumItem.signatureText: String?
+        get() = createSignatureText(this, identifier, listOf(whereClause))
+
+    private val RsEnumVariant.signatureText: String?
+        get() = createSignatureText(this, identifier, listOf(tupleFields))
+
+    private val RsTraitItem.signatureText: String?
+        get() = createSignatureText(this, identifier, listOf(whereClause))
+
+    private val RsTypeAlias.signatureText: String?
+        get() = createSignatureText(this, identifier, listOf(typeReference, typeParamBounds, whereClause))
+
+    private val RsConstant.signatureText: String?
+        get() = createSignatureText(this, identifier, listOf(expr, typeReference))
+
+    private val RsTypeParameter.signatureText: String?
+        get() = "<i>type parameter:</i> " + createSignatureText(this, identifier)
+
+    private val RsLifetimeDecl.signatureText: String?
+        get() = "<i>lifetime:</i> " + createSignatureText(this, quoteIdentifier)
+
+    private fun RsLabelDecl.signatureText(): String? {
+        val p = parent
+        return when (p) {
+            is RsLoopExpr -> p.signatureText
+            is RsForExpr -> p.signatureText
+            is RsWhileExpr -> p.signatureText
+            else -> createSignatureText(this, quoteIdentifier)
+        }
+    }
+
+    private val RsLoopExpr.signatureText: String?
+        get() = createSignatureText(this, labelDecl.quoteIdentifier, listOf(loop))
+
+    private val RsForExpr.signatureText: String?
+        get() = createSignatureText(this, labelDecl.quoteIdentifier, listOf(expr, `in`, `for`))
+
+    private val RsWhileExpr.signatureText: String?
+        get() = createSignatureText(this, labelDecl.quoteIdentifier, listOf(condition, `while`))
+
+    private val RsSelfParameter.signatureText: String?
+        get() = createSignatureText(this, self, listOf(typeReference))
+
+    private fun RsLetDecl.signatureText(id: PsiElement): String? =
+        createSignatureText(this, id, listOf(typeReference))
+
+    private fun RsValueParameter.signatureText(id: PsiElement): String? =
+        "<i>value parameter:</i> " + createSignatureText(this, id, listOf(typeReference))
+
+    private fun RsMatchArm.signatureText(id: PsiElement): String? =
+        "<i>match arm:</i> " + createSignatureText(this, id, listOf(matchPat))
+
+    private fun RsCondition.signatureText(id: PsiElement): String? =
+        createSignatureText(this, id, listOf(lastChild))
+
+    private fun RsFile.signatureText(): String? {
+        val mName = modName
+        return if (isCrateRoot) "<i>crate</i>"
+            else if (mName != null) "mod $mName"
+            else "<i>file</i>"
+    }
+
+    private val RsPatBinding.owner: PsiElement?
+        get() = ancestors
+            .drop(1).dropWhile { it is RsPat || it is RsMatchPat || it is RsPatField }
+            .filterIsInstance<RsCompositeElement>()
+            .firstOrNull()
     private val PsiElement.locationString: String
         get() = containingFile?.let { " [${it.name}]" }.orEmpty()
 
     private val String.escaped: String get() = StringUtil.escapeXml(this)
+
 }
