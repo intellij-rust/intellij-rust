@@ -24,24 +24,18 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?) = when (element) {
         is RsPatBinding -> getQuickNavigateInfo(element)
-        is RsFunction -> getQuickNavigateInfo(element)
+        is RsNamedElement -> element.getQuickNavigateInfo()
         else -> null
     }
 
     private fun getQuickNavigateInfo(element: RsPatBinding): String {
         val location = element.locationString
         val bindingMode = if (element.isMut) "mut " else ""
-
         return "let $bindingMode<b>${element.identifier.text}</b>$location"
     }
 
-    private fun getQuickNavigateInfo(element: RsFunction): String {
-        val signature = element.formatSignature()
-        val location = element.locationString
-        return "$signature$location"
-    }
-
-    private fun RsFunction.formatSignature(): String {
+    private fun RsNamedElement.formatSignature(): String {
+        // Example:
         // fn item looks like this:
         // ```
         //     ///doc comment
@@ -62,17 +56,27 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         }
 
         val signatureStart = signatureStartElement?.startOffsetInParent ?: 0
+        val stopAt = when (this) {
+            is RsFunction -> listOf(whereClause, retType, valueParameterList)
+            is RsStructItem -> if (blockFields != null) listOf(whereClause) else listOf(whereClause, tupleFields)
+            is RsEnumItem -> listOf(whereClause)
+            is RsEnumVariant -> listOf(tupleFields)
+            is RsTraitItem -> listOf(whereClause)
+            is RsTypeAlias -> listOf(typeReference, typeParamBounds, whereClause)
+            is RsConstant -> listOf(expr, typeReference)
+            else -> listOf(navigationElement)
+        }
 
-        // pick (in order) where clause, return type, or closing brace of the parameters
-        // if all else fails, drop down to the length of the current element
-        val functionElements = listOf(whereClause, retType, valueParameterList)
-        val signatureEnd = functionElements
+        // pick (in order) elements we should stop at
+        // if they all fail, drop down to the end of the id element
+        val idElement = navigationElement
+        val signatureEnd = stopAt
             .filterNotNull().firstOrNull()
             ?.let { it.startOffsetInParent + it.textLength }
-            ?: textLength
+            ?: idElement.startOffsetInParent + idElement.textLength
 
-        val identStart = identifier.startOffsetInParent
-        val identEnd = identStart + identifier.textLength
+        val identStart = idElement.startOffsetInParent
+        val identEnd = identStart + idElement.textLength
         check(signatureStart <= identStart && identStart <= identEnd &&
             identEnd <= signatureEnd && signatureEnd <= textLength)
 
@@ -87,6 +91,9 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
         return "$beforeIdent<b>$name</b>$afterIdent"
     }
+
+    private fun RsNamedElement.getQuickNavigateInfo(): String =
+        "${formatSignature()}$locationString"
 
     private val PsiElement.locationString: String
         get() = containingFile?.let { " [${it.name}]" }.orEmpty()
