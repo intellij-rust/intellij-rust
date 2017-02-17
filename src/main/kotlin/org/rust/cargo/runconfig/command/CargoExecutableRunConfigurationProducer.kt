@@ -13,7 +13,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.parentOfType
 
-class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandRunConfigurationType()) {
+class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType()) {
 
     override fun isConfigurationFromContext(
         configuration: CargoCommandConfiguration,

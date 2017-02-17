@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Key
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.runconfig.command.CargoCommandRunConfigurationType
+import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 
 class RunConfigurationTestCase : RustWithToolchainTestBase() {
     override val dataPath = "src/test/resources/org/rust/cargo/runconfig/fixtures"
@@ -23,7 +23,7 @@ class RunConfigurationTestCase : RustWithToolchainTestBase() {
     }
 
     private fun createConfiguration(): CargoCommandConfiguration {
-        val configurationType = ConfigurationTypeUtil.findConfigurationType(CargoCommandRunConfigurationType::class.java)
+        val configurationType = ConfigurationTypeUtil.findConfigurationType(CargoCommandConfigurationType::class.java)
         val factory = configurationType.configurationFactories[0]
         val configuration = factory.createTemplateConfiguration(myModule.project) as CargoCommandConfiguration
         configuration.setModule(myModule)

@@ -9,7 +9,7 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.cargoArgumentSpeck
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.runconfig.command.CargoCommandRunConfigurationType
+import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.lang.core.psi.RsCompositeElement
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsMod
@@ -17,7 +17,7 @@ import org.rust.lang.core.psi.containingCargoTarget
 import org.rust.lang.core.psi.impl.mixin.isTest
 import org.rust.lang.core.psi.util.parentOfType
 
-class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandRunConfigurationType()) {
+class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType()) {
 
     override fun isConfigurationFromContext(
         configuration: CargoCommandConfiguration,
