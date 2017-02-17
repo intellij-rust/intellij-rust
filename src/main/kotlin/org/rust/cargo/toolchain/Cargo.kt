@@ -17,7 +17,6 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.utils.fullyRefreshDirectory
 import java.io.File
-import java.util.*
 
 /**
  * A main gateway for executing cargo commands.
@@ -67,6 +66,11 @@ class Cargo(
 
     fun reformatFile(owner: Disposable, filePath: String, listener: ProcessListener? = null) =
         rustfmtCommandline(filePath).execute(owner, listener)
+
+    fun generalCommand(commandLine: CargoCommandLine): GeneralCommandLine {
+        val env = (if (commandLine.printBacktrace) mapOf("RUSTC_BACKTRACE" to "1") else emptyMap()) + commandLine.environmentVariables
+        return generalCommand(commandLine.command, commandLine.additionalArguments, env)
+    }
 
     fun generalCommand(
         command: String,

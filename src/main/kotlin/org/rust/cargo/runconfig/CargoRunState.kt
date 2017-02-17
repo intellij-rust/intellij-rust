@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
+import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.runconfig.filters.RsBacktraceFilter
 import org.rust.cargo.runconfig.filters.RsConsoleFilter
 import org.rust.cargo.runconfig.filters.RsExplainFilter
@@ -18,9 +19,7 @@ class CargoRunState(
     private val toolchain: RustToolchain,
     module: Module,
     private val cargoProjectDirectory: VirtualFile,
-    private val command: String,
-    private val additionalArguments: List<String>,
-    private val environmentVariables: Map<String, String>
+    private val commandLine: CargoCommandLine
 ) : CommandLineState(environment) {
 
     init {
@@ -32,7 +31,7 @@ class CargoRunState(
 
     override fun startProcess(): ProcessHandler {
         val cmd = toolchain.cargo(cargoProjectDirectory.path)
-            .generalCommand(command, additionalArguments, environmentVariables)
+            .generalCommand(commandLine)
             // Explicitly use UTF-8.
             // Even though default system encoding is usually not UTF-8 on windows,
             // most Rust programs are UTF-8 only.

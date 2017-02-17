@@ -2,20 +2,20 @@ package org.rust.cargo.runconfig
 
 import org.rust.cargo.project.workspace.CargoWorkspace
 
-val CargoWorkspace.Target.cargoArgumentSpeck: String get() {
+val CargoWorkspace.Target.cargoArgumentSpeck: List<String> get() {
     // Can get fancy here not add this arguments if we are the root package
-    val pkgSpec = "--package ${pkg.name}"
+    val pkgSpec = listOf("--package", pkg.name)
 
     val targetSpec = when (kind) {
-        CargoWorkspace.TargetKind.BIN -> "--bin $name"
-        CargoWorkspace.TargetKind.TEST -> "--test $name"
-        CargoWorkspace.TargetKind.EXAMPLE -> "--example $name"
-        CargoWorkspace.TargetKind.BENCH -> "--bench $name"
-        CargoWorkspace.TargetKind.LIB -> "--lib"
+        CargoWorkspace.TargetKind.BIN -> listOf("--bin", name)
+        CargoWorkspace.TargetKind.TEST -> listOf("--test", name)
+        CargoWorkspace.TargetKind.EXAMPLE -> listOf("--example", name)
+        CargoWorkspace.TargetKind.BENCH -> listOf("--bench", name)
+        CargoWorkspace.TargetKind.LIB -> listOf("--lib")
         CargoWorkspace.TargetKind.UNKNOWN -> return pkgSpec
     }
 
-    return "$pkgSpec $targetSpec"
+    return pkgSpec + targetSpec
 }
 
 

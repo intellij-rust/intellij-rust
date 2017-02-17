@@ -8,14 +8,16 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.xmlb.XmlSerializer
+import com.intellij.util.xmlb.annotations.Property
+import com.intellij.util.xmlb.annotations.Tag
 import org.jdom.Element
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.RsRunConfigurationModule
 import org.rust.cargo.runconfig.ui.CargoRunConfigurationEditorForm
+import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
@@ -27,12 +29,22 @@ class CargoCommandConfiguration(
 ) : ModuleBasedConfiguration<RsRunConfigurationModule>(name, RsRunConfigurationModule(project), factory),
     RunConfigurationWithSuppressedDefaultDebugAction {
 
-    var command: String = CargoConstants.Commands.RUN
-    var additionalArguments: String = ""
-    var environmentVariables: Map<String, String> = mutableMapOf()
-    var printBacktrace: Boolean = true
+    @get: com.intellij.util.xmlb.annotations.Transient
+    @set: com.intellij.util.xmlb.annotations.Transient
+    var cargoCommandLine: CargoCommandLine
+        get() = CargoCommandLine(_cargoArgs.command, _cargoArgs.additionalArguments, _cargoArgs.printBacktrace, _cargoArgs.environmentVariables)
+        set(value) = with(value) {
+            _cargoArgs.command = command
+            _cargoArgs.additionalArguments = additionalArguments
+            _cargoArgs.printBacktrace = printBacktrace
+            _cargoArgs.environmentVariables = environmentVariables
+        }
+
+    @Property(surroundWithTag = false)
+    private var _cargoArgs = SerializableCargoCommandLine()
 
     init {
+        cargoCommandLine = CargoCommandLine(CargoConstants.Commands.RUN)
         configurationModule.module = project.modulesWithCargoProject.firstOrNull()
     }
 
@@ -49,14 +61,7 @@ class CargoCommandConfiguration(
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
         val config = cleanConfiguration() as? ConfigurationResult.Ok ?: return null
-        val args = ParametersListUtil.parse(additionalArguments)
-
-        val environmentVariables = if (printBacktrace)
-            environmentVariables + ("RUST_BACKTRACE" to "1")
-        else
-            environmentVariables
-
-        return CargoRunState(environment, config.toolchain, config.module, config.cargoProjectDirectory, command, args, environmentVariables)
+        return CargoRunState(environment, config.toolchain, config.module, config.cargoProjectDirectory, cargoCommandLine)
     }
 
     override fun writeExternal(element: Element) {
@@ -103,3 +108,10 @@ class CargoCommandConfiguration(
     }
 }
 
+@Tag(value = "parameters")
+data class SerializableCargoCommandLine(
+    var command: String = "",
+    var additionalArguments: List<String> = mutableListOf(),
+    var printBacktrace: Boolean = true,
+    var environmentVariables: Map<String, String> = mutableMapOf()
+)

@@ -8,7 +8,9 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.ui.RawCommandLineEditor
+import com.intellij.util.execution.ParametersListUtil
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.toolchain.CargoCommandLine
 import javax.swing.JComponent
 import javax.swing.JTextField
 
@@ -22,23 +24,26 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
     private val printBacktrace = CheckBox("Print back&trace")
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
-        command.text = configuration.command
-
         comboModules.setModules(configuration.validModules)
         comboModules.selectedModule = configuration.configurationModule.module
 
-        additionalArguments.text = configuration.additionalArguments
-        environmentVariables.envs = configuration.environmentVariables
-        printBacktrace.isSelected = configuration.printBacktrace
+        configuration.cargoCommandLine.let { args ->
+            command.text = args.command
+            additionalArguments.text = ParametersListUtil.join(args.additionalArguments)
+            printBacktrace.isSelected = args.printBacktrace
+            environmentVariables.envs = args.environmentVariables
+        }
     }
 
     @Throws(ConfigurationException::class)
     override fun applyEditorTo(configuration: CargoCommandConfiguration) {
-        configuration.command = command.text
         configuration.setModule(comboModules.selectedModule)
-        configuration.additionalArguments = additionalArguments.text
-        configuration.environmentVariables = environmentVariables.envs
-        configuration.printBacktrace = printBacktrace.isSelected
+        configuration.cargoCommandLine = CargoCommandLine(
+            command.text,
+            ParametersListUtil.parse(additionalArguments.text),
+            printBacktrace.isSelected,
+            environmentVariables.envs
+        )
     }
 
     override fun createEditor(): JComponent = panel {

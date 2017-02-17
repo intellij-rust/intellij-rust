@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.workspace.cargoWorkspace
+import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.util.module
 import org.rust.lang.core.psi.util.parentOfType
@@ -23,8 +24,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         val target = findBinaryTarget(location) ?: return false
 
         return configuration.configurationModule.module == context.module &&
-            configuration.command == CargoConstants.Commands.RUN &&
-            configuration.additionalArguments == target.additionalArguments
+            configuration.cargoCommandLine == target.cargoArgs
     }
 
     override fun setupConfigurationFromContext(
@@ -40,8 +40,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
 
         configuration.configurationModule.module = context.module
         configuration.name = target.configurationName
-        configuration.command = CargoConstants.Commands.RUN
-        configuration.additionalArguments = target.additionalArguments
+        configuration.cargoCommandLine = target.cargoArgs
         return true
     }
 
@@ -50,7 +49,11 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         kind: String
     ) {
         val configurationName: String = "Run $name"
-        val additionalArguments: String = "--$kind $name"
+
+        val cargoArgs = CargoCommandLine(
+            CargoConstants.Commands.RUN,
+            listOf("--$kind", name)
+        )
     }
 
     companion object {

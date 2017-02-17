@@ -134,9 +134,9 @@ if $cygwin ; then
         CHECK2=`echo "$arg"|egrep -c "^-"`                                 ### Determine if an option
 
         if [ $CHECK -ne 0 ] && [ $CHECK2 -eq 0 ] ; then                    ### Added a condition
-            eval `echo args$i`=`cygpath --path --ignore --mixed "$arg"`
+            eval `echo commandLine$i`=`cygpath --path --ignore --mixed "$arg"`
         else
-            eval `echo args$i`="\"$arg\""
+            eval `echo commandLine$i`="\"$arg\""
         fi
         i=$((i+1))
     done
@@ -154,7 +154,7 @@ if $cygwin ; then
     esac
 fi
 
-# Escape application args
+# Escape application commandLine
 save ( ) {
     for i do printf %s\\n "$i" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/' \\\\/" ; done
     echo " "

@@ -10,6 +10,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.cargoArgumentSpeck
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
+import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.lang.core.psi.RsCompositeElement
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsMod
@@ -27,8 +28,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         val test = findTest(location) ?: return false
 
         return configuration.configurationModule.module == context.module &&
-            configuration.command == CargoConstants.Commands.TEST &&
-            configuration.additionalArguments == test.commandLineParameters
+            configuration.cargoCommandLine == test.cargoCommandLine
     }
 
     override fun setupConfigurationFromContext(
@@ -41,21 +41,21 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         sourceElement.set(test.sourceElement)
 
         configuration.configurationModule.module = context.module
-        configuration.command = CargoConstants.Commands.TEST
         configuration.name = test.configurationName
-        configuration.additionalArguments = test.commandLineParameters
+        configuration.cargoCommandLine = test.cargoCommandLine
         return true
     }
 
-    private data class TestConfig(
+    private class TestConfig(
         val sourceElement: RsCompositeElement,
         val configurationName: String,
-        val testPath: String,
-        val target: CargoWorkspace.Target
+        testPath: String,
+        target: CargoWorkspace.Target
     ) {
-        val commandLineParameters: String get() {
-            return "${target.cargoArgumentSpeck} $testPath"
-        }
+        val cargoCommandLine: CargoCommandLine = CargoCommandLine(
+            CargoConstants.Commands.TEST,
+            target.cargoArgumentSpeck + testPath
+        )
     }
 
     private fun findTest(location: Location<*>): TestConfig? =
