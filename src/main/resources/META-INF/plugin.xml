@@ -38,7 +38,7 @@
 
         <!-- Selection Handler -->
 
-        <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsListSelectionHandler" />
+        <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsListSelectionHandler"/>
 
         <!-- Syntax Highlighter -->
 
@@ -48,7 +48,7 @@
         <!-- Formatter -->
 
         <lang.formatter language="Rust" implementationClass="org.rust.ide.formatter.RsFormattingModelBuilder"/>
-        <postFormatProcessor implementation="org.rust.ide.formatter.RsCommaFormatProcessor" />
+        <postFormatProcessor implementation="org.rust.ide.formatter.RsCommaFormatProcessor"/>
 
         <!-- Refactoring support -->
 
@@ -422,11 +422,14 @@
 
         <programRunner implementation="org.rust.cargo.runconfig.RsRunner"/>
         <configurationType implementation="org.rust.cargo.runconfig.command.CargoCommandConfigurationType"/>
-        <runConfigurationProducer implementation="org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer"/>
+        <runConfigurationProducer
+            implementation="org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer"/>
         <runConfigurationProducer implementation="org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer"/>
 
-        <runLineMarkerContributor language="Rust" implementationClass="org.rust.cargo.runconfig.command.CargoExecutableRunLineMarkerContributor"/>
-        <runLineMarkerContributor language="Rust" implementationClass="org.rust.cargo.runconfig.test.CargoTestRunLineMarkerContributor"/>
+        <runLineMarkerContributor language="Rust"
+                                  implementationClass="org.rust.cargo.runconfig.command.CargoExecutableRunLineMarkerContributor"/>
+        <runLineMarkerContributor language="Rust"
+                                  implementationClass="org.rust.cargo.runconfig.test.CargoTestRunLineMarkerContributor"/>
 
         <!-- Cargo -->
 
@@ -491,9 +494,6 @@
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
 
-        <action id="Rust.RefreshCargoProject"
-                class="org.rust.ide.actions.RefreshCargoProjectAction"
-                icon="AllIcons.Actions.Refresh"/>
 
         <action id="Rust.RustExpandModuleAction"
                 class="org.rust.ide.actions.RsExpandModuleAction"
@@ -507,6 +507,14 @@
                 description="Reformat current file with rustfmt">
             <add-to-group group-id="CodeMenu" anchor="last"/>
         </action>
+
+        <action id="Rust.RefreshCargoProject"
+                class="org.rust.ide.actions.RefreshCargoProjectAction"
+                icon="AllIcons.Actions.Refresh"/>
+
+        <action id="Rust.CargoCommand"
+                class="org.rust.cargo.runconfig.command.RunCargoCommandAction"
+                text="Run Cargo command"/>
     </actions>
 
 </idea-plugin>

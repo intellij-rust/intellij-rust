@@ -32,4 +32,6 @@ class CargoCommandConfigurationType : ConfigurationTypeBase(
             override fun isConfigurationSingletonByDefault(): Boolean = true
         })
     }
+
+    val factory: ConfigurationFactory get() = configurationFactories.single()
 }

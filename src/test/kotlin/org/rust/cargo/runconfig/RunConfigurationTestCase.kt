@@ -24,7 +24,7 @@ class RunConfigurationTestCase : RustWithToolchainTestBase() {
 
     private fun createConfiguration(): CargoCommandConfiguration {
         val configurationType = ConfigurationTypeUtil.findConfigurationType(CargoCommandConfigurationType::class.java)
-        val factory = configurationType.configurationFactories[0]
+        val factory = configurationType.factory
         val configuration = factory.createTemplateConfiguration(myModule.project) as CargoCommandConfiguration
         configuration.setModule(myModule)
         return configuration
