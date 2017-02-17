@@ -207,6 +207,30 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         <b>'foo</b> [main.rs]
     """)
 
+    fun `test self parameter 1`() = doTest("""
+        struct Foo;
+        impl Foo {
+            fn foo(&mut self) { let _ = sel<caret>f; }
+        }
+    """, """
+        &amp;mut <b>self</b> [main.rs]
+    """)
+
+    fun `test self parameter 2`() = doTest("""
+        struct Foo;
+        impl Foo {
+            fn foo(self: &mut Foo) { let _ = sel<caret>f; }
+        }
+    """, """
+        <b>self</b>: &amp;mut Foo [main.rs]
+    """)
+
+    fun `test value parameter`() = doTest("""
+        fn foo(val: &mut u32) { let _ = v<caret>al; }
+    """, """
+        <b>val</b> [main.rs]
+    """)
+
     private fun doTest(code: String, expected: String) {
         myFixture.configureByText("main.rs", code)
         val originalElement = myFixture.elementAtCaret

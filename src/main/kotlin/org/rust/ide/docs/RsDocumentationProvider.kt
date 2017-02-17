@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.impl.mixin.isMut
+import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.doc.documentationAsHtml
 
 class RsDocumentationProvider : AbstractDocumentationProvider() {
@@ -31,7 +32,8 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
     private fun getQuickNavigateInfo(element: RsPatBinding): String {
         val location = element.locationString
         val bindingMode = if (element.isMut) "mut " else ""
-        return "let $bindingMode<b>${element.identifier.text}</b>$location"
+        val prefix = if (element.parentOfType<RsValueParameter>() != null) "" else "let "
+        return  "$prefix$bindingMode<b>${element.identifier.text}</b>$location"
     }
 
     private fun RsNamedElement.formatSignature(): String {
@@ -64,16 +66,17 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
             is RsTraitItem -> listOf(whereClause)
             is RsTypeAlias -> listOf(typeReference, typeParamBounds, whereClause)
             is RsConstant -> listOf(expr, typeReference)
+            is RsSelfParameter -> listOf(typeReference)
             else -> listOf(navigationElement)
         }
 
         // pick (in order) elements we should stop at
         // if they all fail, drop down to the end of the id element
-        val idElement = navigationElement
+        val idElement = if (this is RsSelfParameter) self else navigationElement
         val signatureEnd = stopAt
-            .filterNotNull().firstOrNull()
-            ?.let { it.startOffsetInParent + it.textLength }
-            ?: idElement.startOffsetInParent + idElement.textLength
+                .filterNotNull().firstOrNull()
+                ?.let { it.startOffsetInParent + it.textLength }
+                ?: idElement.startOffsetInParent + idElement.textLength
 
         val identStart = idElement.startOffsetInParent
         val identEnd = identStart + idElement.textLength
