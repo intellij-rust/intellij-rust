@@ -23,35 +23,48 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         return header + signature + doc
     }
 
-    override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?): String? {
-        val formatString = when (element) {
-            is RsFunction -> element.signatureText
-            is RsStructItem -> element.signatureText
-            is RsFieldDecl -> element.signatureText
-            is RsEnumItem -> element.signatureText
-            is RsEnumVariant -> element.signatureText
-            is RsTraitItem -> element.signatureText
-            is RsTypeAlias -> element.signatureText
-            is RsConstant -> element.signatureText
-            is RsSelfParameter -> element.signatureText
-            is RsTypeParameter -> element.signatureText
-            is RsLifetimeDecl -> element.signatureText
-            is RsLabelDecl -> element.signatureText()
-            is RsPatBinding -> {
-                val owner = element.owner
-                when (owner) {
-                    is RsLetDecl -> owner.signatureText(element.identifier)
-                    is RsValueParameter -> owner.signatureText(element.identifier)
-                    is RsMatchArm -> owner.signatureText(element.identifier)
-                    is RsCondition -> owner.signatureText(element.identifier)
-                    else -> createSignatureText(element, element.identifier)
+    override fun getQuickNavigateInfo(e: PsiElement, originalElement: PsiElement?): String? {
+        val formatString = when (e) {
+            is RsFunction -> e.signatureText
+            is RsStructItem -> createSignatureText(e, e.identifier, if (e.blockFields != null) listOf(e.whereClause) else listOf(e.whereClause, e.tupleFields))
+            is RsFieldDecl -> createSignatureText(e, e.identifier, listOf(e.typeReference))
+            is RsEnumItem -> createSignatureText(e, e.identifier, listOf(e.whereClause))
+            is RsEnumVariant -> createSignatureText(e, e.identifier, listOf(e.tupleFields))
+            is RsTraitItem -> createSignatureText(e, e.identifier, listOf(e.whereClause))
+            is RsTypeAlias -> createSignatureText(e, e.identifier, listOf(e.typeReference, e.typeParamBounds, e.whereClause))
+            is RsConstant -> createSignatureText(e, e.identifier, listOf(e.expr, e.typeReference))
+            is RsSelfParameter -> createSignatureText(e, e.self, listOf(e.typeReference))
+            is RsTypeParameter -> "<i>type parameter:</i> " + createSignatureText(e, e.identifier)
+            is RsLifetimeDecl -> "<i>lifetime:</i> " + createSignatureText(e, e.quoteIdentifier)
+            is RsLabelDecl -> {
+                val p = e.parent
+                when (p) {
+                    is RsLoopExpr -> createSignatureText(p, p.labelDecl.quoteIdentifier, listOf(p.loop))
+                    is RsForExpr -> createSignatureText(p, p.labelDecl.quoteIdentifier, listOf(p.expr, p.`in`, p.`for`))
+                    is RsWhileExpr -> createSignatureText(p, p.labelDecl.quoteIdentifier, listOf(p.condition, p.`while`))
+                    else -> createSignatureText(e, e.quoteIdentifier)
                 }
             }
-            is RsFile -> element.signatureText()
-            is RsNamedElement -> element.signatureText
+            is RsPatBinding -> {
+                val owner = e.owner
+                when (owner) {
+                    is RsLetDecl -> createSignatureText(owner, e.identifier, listOf(owner.typeReference))
+                    is RsValueParameter -> "<i>value parameter:</i> " + createSignatureText(owner, e.identifier, listOf(owner.typeReference))
+                    is RsMatchArm -> "<i>match arm:</i> " + createSignatureText(owner, e.identifier, listOf(owner.matchPat))
+                    is RsCondition -> createSignatureText(owner, e.identifier, listOf(owner.lastChild))
+                    else -> createSignatureText(e, e.identifier)
+                }
+            }
+            is RsFile -> {
+                val mName = e.modName
+                if (e.isCrateRoot) "<i>crate</i>"
+                else if (mName != null) "mod $mName"
+                else "<i>file</i>"
+            }
+            is RsNamedElement -> createSignatureText(e, e.navigationElement)
             else -> null
         } ?: return null
-        return "$formatString${element.locationString}"
+        return "$formatString${e.locationString}"
     }
 
     private fun createSignatureText(decl: RsCompositeElement, id: PsiElement?, stopAt: List<PsiElement?> = emptyList()): String? {
@@ -88,79 +101,8 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         return "$beforeIdent<b>${id.text}</b>$afterIdent"
     }
 
-    private val RsNamedElement.signatureText: String?
-        get() = createSignatureText(this, navigationElement)
-
     private val RsFunction.signatureText: String?
         get() = createSignatureText(this, identifier, listOf(whereClause, retType, valueParameterList))
-
-    private val RsStructItem.signatureText: String?
-        get() = createSignatureText(this, identifier, if (blockFields != null) listOf(whereClause) else listOf(whereClause, tupleFields))
-
-    private val RsFieldDecl.signatureText: String?
-        get() = createSignatureText(this, identifier, listOf(typeReference))
-
-    private val RsEnumItem.signatureText: String?
-        get() = createSignatureText(this, identifier, listOf(whereClause))
-
-    private val RsEnumVariant.signatureText: String?
-        get() = createSignatureText(this, identifier, listOf(tupleFields))
-
-    private val RsTraitItem.signatureText: String?
-        get() = createSignatureText(this, identifier, listOf(whereClause))
-
-    private val RsTypeAlias.signatureText: String?
-        get() = createSignatureText(this, identifier, listOf(typeReference, typeParamBounds, whereClause))
-
-    private val RsConstant.signatureText: String?
-        get() = createSignatureText(this, identifier, listOf(expr, typeReference))
-
-    private val RsTypeParameter.signatureText: String?
-        get() = "<i>type parameter:</i> " + createSignatureText(this, identifier)
-
-    private val RsLifetimeDecl.signatureText: String?
-        get() = "<i>lifetime:</i> " + createSignatureText(this, quoteIdentifier)
-
-    private fun RsLabelDecl.signatureText(): String? {
-        val p = parent
-        return when (p) {
-            is RsLoopExpr -> p.signatureText
-            is RsForExpr -> p.signatureText
-            is RsWhileExpr -> p.signatureText
-            else -> createSignatureText(this, quoteIdentifier)
-        }
-    }
-
-    private val RsLoopExpr.signatureText: String?
-        get() = createSignatureText(this, labelDecl.quoteIdentifier, listOf(loop))
-
-    private val RsForExpr.signatureText: String?
-        get() = createSignatureText(this, labelDecl.quoteIdentifier, listOf(expr, `in`, `for`))
-
-    private val RsWhileExpr.signatureText: String?
-        get() = createSignatureText(this, labelDecl.quoteIdentifier, listOf(condition, `while`))
-
-    private val RsSelfParameter.signatureText: String?
-        get() = createSignatureText(this, self, listOf(typeReference))
-
-    private fun RsLetDecl.signatureText(id: PsiElement): String? =
-        createSignatureText(this, id, listOf(typeReference))
-
-    private fun RsValueParameter.signatureText(id: PsiElement): String? =
-        "<i>value parameter:</i> " + createSignatureText(this, id, listOf(typeReference))
-
-    private fun RsMatchArm.signatureText(id: PsiElement): String? =
-        "<i>match arm:</i> " + createSignatureText(this, id, listOf(matchPat))
-
-    private fun RsCondition.signatureText(id: PsiElement): String? =
-        createSignatureText(this, id, listOf(lastChild))
-
-    private fun RsFile.signatureText(): String? {
-        val mName = modName
-        return if (isCrateRoot) "<i>crate</i>"
-            else if (mName != null) "mod $mName"
-            else "<i>file</i>"
-    }
 
     private val RsPatBinding.owner: PsiElement?
         get() = ancestors
