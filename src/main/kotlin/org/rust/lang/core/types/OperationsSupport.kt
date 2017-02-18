@@ -27,7 +27,7 @@ fun inferTypeWithOutput(expr: RsBinaryExpr, traitName: String): RustType {
     }
     val traitImpl = expr.left.findImpl(traitName) ?: return RustUnknownType
 
-    val outputTypeAlias = traitImpl.typeAliasList.find { it.name == "Output" }
+    val outputTypeAlias = traitImpl.typeAliasList.find { it.name == "Output" } // todo
     return outputTypeAlias?.typeReference?.type ?: RustUnknownType
 }
 

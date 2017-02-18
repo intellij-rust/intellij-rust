@@ -427,37 +427,5 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             }
         }
     }
-
-    fun `test binary operators through inherited trait`(){
-        testExpr("""
-                pub trait Add<RHS=Self> {
-                    type Output;
-                    fn add(self, rhs: RHS) -> Self::Output;
-                }
-
-                pub trait AddI : Add {}
-
-                struct A {
-                    b: i32
-                }
-
-                impl AddI for A {
-                    type Output = A;
-
-                    fn add(self, rhs: A) -> A {
-                        return A {b : self.b + rhs.b};
-                    }
-                }
-
-                fn main() {
-                    let a = A {b : 12};
-                    let b = A {b : 3};
-                    let x = a + b;
-                    x
-                  //^ A
-                }
-                """,
-            "")
-    }
 }
 
