@@ -364,7 +364,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             "Rem" to "%",
             "Sub" to "-",
             "Div" to "/",
-            "Mul" to "*"
+            "Mul" to "*",
+            "Shl" to "<<",
+            "Shr" to ">>",
+            "BitOr" to "|",
+            "BitXor" to "^",
+            "BitAnd" to "&"
         )
         traitNames.forEach { entry ->
             val traitName = entry.key
@@ -401,7 +406,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     }
 
     fun `test binary operators for primitives`() {
-        val operations = listOf("+", "-", "/", "*", "%")
+        val operations = listOf("+", "-", "/", "*", "%", ">>", "<<", "|", "&", "^")
         val primitives = RustIntegerType.Kind.values()
             .map { it.name }
             .toMutableList()
@@ -421,6 +426,38 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                     "Binary operation: $operation for $primitive")
             }
         }
+    }
+
+    fun `test binary operators through inherited trait`(){
+        testExpr("""
+                pub trait Add<RHS=Self> {
+                    type Output;
+                    fn add(self, rhs: RHS) -> Self::Output;
+                }
+
+                pub trait AddI : Add {}
+
+                struct A {
+                    b: i32
+                }
+
+                impl AddI for A {
+                    type Output = A;
+
+                    fn add(self, rhs: A) -> A {
+                        return A {b : self.b + rhs.b};
+                    }
+                }
+
+                fn main() {
+                    let a = A {b : 12};
+                    let b = A {b : 3};
+                    let x = a + b;
+                    x
+                  //^ A
+                }
+                """,
+            "")
     }
 }
 

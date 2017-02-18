@@ -5,6 +5,7 @@ import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
+import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.types.types.*
 
 object RustTypificationEngine {
@@ -129,6 +130,8 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
         o.block?.type ?: RustUnknownType
     }
 
+    override fun visitCastExpr(o: RsCastExpr) = set { o.typeReference.type }
+
     override fun visitIfExpr(o: RsIfExpr) = set {
         if (o.elseBranch == null)
             RustUnitType
@@ -149,8 +152,8 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
 
     override fun visitParenExpr(o: RsParenExpr) = set { o.expr.type }
 
-    override fun visitBinaryExpr(o: RsBinaryExpr) = set {
 
+    override fun visitBinaryExpr(o: RsBinaryExpr) = set {
         when (o.operatorType) {
             ANDAND,
             OROR,
@@ -161,7 +164,19 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
             GTEQ,
             LTEQ -> RustBooleanType
 
-            else -> inferType(o)
+            PLUS -> inferTypeWithOutput(o, "Add")
+            MINUS -> inferTypeWithOutput(o, "Sub")
+            MUL -> inferTypeWithOutput(o, "Mul")
+            DIV -> inferTypeWithOutput(o, "Div")
+            REM -> inferTypeWithOutput(o, "Rem")
+            LTLT -> inferTypeWithOutput(o, "Shl")
+            GTGT -> inferTypeWithOutput(o, "Shr")
+            OR -> inferTypeWithOutput(o, "BitOr")
+            AND -> inferTypeWithOutput(o, "BitAnd")
+            XOR -> inferTypeWithOutput(o, "BitXor")
+
+
+            else -> RustUnknownType
         }
     }
 

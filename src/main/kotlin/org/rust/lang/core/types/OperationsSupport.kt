@@ -1,43 +1,34 @@
 package org.rust.lang.core.types
 
-import org.rust.lang.core.psi.RsBinaryExpr
-import org.rust.lang.core.psi.RsElementTypes
-import org.rust.lang.core.psi.operatorType
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
-import org.rust.lang.core.types.types.RustFloatType
-import org.rust.lang.core.types.types.RustIntegerType
-import org.rust.lang.core.types.types.RustPrimitiveType
-import org.rust.lang.core.types.types.RustUnknownType
+import org.rust.lang.core.types.types.*
 
-fun inferType(o: RsBinaryExpr) : RustType {
-    return when (o.operatorType) {
-        RsElementTypes.PLUS -> inferTypeWithOutput(o, "Add")
-        RsElementTypes.MINUS -> inferTypeWithOutput(o, "Sub")
-        RsElementTypes.MUL -> inferTypeWithOutput(o, "Mul")
-        RsElementTypes.DIV -> inferTypeWithOutput(o, "Div")
-        RsElementTypes.REM -> inferTypeWithOutput(o, "Rem")
-        //TODO shifts and so on
-        else -> RustUnknownType
+
+fun RsExpr.findImpl(traitName: String): RsImplItem? {
+    val traitImpls = RsImplIndex.findImplsFor(type, project)
+        .filter { it.traitRef?.text == traitName } // may be not from ops.rs
+        .distinct() // somehow here can be more than one same impl
+    if (traitImpls.toList().size != 1) {
+        return null
+    } else {
+        return traitImpls.first()
     }
 }
 
-private fun inferTypeWithOutput(expr: RsBinaryExpr, traitName: String): RustType {
-    val type = expr.left.type
-    if(type.isPrimitive) {
-        val primitive = tryInferPrimitive(type as RustPrimitiveType, expr.right?.type)
-        if(primitive != null) {
+fun inferTypeWithOutput(expr: RsBinaryExpr, traitName: String): RustType {
+    val left = expr.left.type
+    val right = expr.right?.type
+    if (left.isPrimitive) {
+        val primitive = tryInferPrimitive(left as RustPrimitiveType, right)
+        if (primitive != null) {
             return primitive
         }
     }
-    val addTraits = RsImplIndex.findImplsFor(type, expr.project)
-        .filter { it.traitRef?.text == traitName } // may be not from ops.rs
-        .distinct() // somehow here can be more than one same impl
-    if(addTraits.toList().size != 1) {
-        return RustUnknownType
-    } else {
-        val outputTypeAlias = addTraits.first().typeAliasList.find { it.name == "Output" }
-        return outputTypeAlias?.typeReference?.type ?: RustUnknownType
-    }
+    val traitImpl = expr.left.findImpl(traitName) ?: return RustUnknownType
+
+    val outputTypeAlias = traitImpl.typeAliasList.find { it.name == "Output" }
+    return outputTypeAlias?.typeReference?.type ?: RustUnknownType
 }
 
 
@@ -46,15 +37,17 @@ private fun tryInferPrimitive(left: RustPrimitiveType, right: RustType?): RustTy
     right ?: return RustUnknownType
     when (left) {
         is RustIntegerType -> {
-            if(right is RustIntegerType && right.kind == left.kind) {
+            if (right is RustIntegerType && right.kind == left.kind) {
                 return RustIntegerType(left.kind)
             }
         }
         is RustFloatType -> {
-            if(right is RustFloatType && right.kind == left.kind) {
+            if (right is RustFloatType && right.kind == left.kind) {
                 return RustFloatType(left.kind)
             }
         }
     }
     return null
 }
+
+
