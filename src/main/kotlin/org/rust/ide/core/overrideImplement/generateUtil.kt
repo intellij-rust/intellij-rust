@@ -10,6 +10,8 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import io.netty.util.internal.chmv8.ConcurrentHashMapV8
 import org.rust.ide.icons.RsIcons
+import org.rust.ide.utils.toImplementFunctions
+import org.rust.ide.utils.toImplementTypes
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
@@ -42,16 +44,10 @@ private class RsFunctionChooserMember(val base: MemberChooserObjectBase, val mem
     }
 
     override fun renderTreeNode(component: SimpleColoredComponent?, tree: JTree?) {
-        when (member) {
-            is FunctionOrType.Function -> {
-                component?.append("fn ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-                component?.icon = RsIcons.FUNCTION
-            }
-            is FunctionOrType.Type -> {
-                component?.append("type ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-                component?.icon = RsIcons.TYPE
-            }
-        }
+        component?.icon = when (member) {
+            is FunctionOrType.Function -> member.function
+            is FunctionOrType.Type -> member.type
+        }.getIcon(0)
         component?.append(text)
     }
 
@@ -70,19 +66,8 @@ fun generateTraitMembers(impl: RsImplItem) {
     val trait = impl.traitRef?.trait ?: error("No trait ref")
     val traitName = trait.name ?: error("No trait name")
 
-    val canImplement = trait.functionList.associateBy { it.name }
-    val mustImplement = canImplement.filterValues { it.isAbstract }
-    val implemented = impl.functionList.associateBy { it.name }
-
-    val canImplementTypes = trait.typeAliasList.associateBy { it.name }
-    val mustImplementTypes = canImplementTypes.filterValues { it.typeReference == null }
-    val implementedTypes = impl.typeAliasList.associateBy { it.name }
-
-    val notImplemented = mustImplement.keys - implemented.keys
-    val notImplementedTypes = mustImplementTypes.keys - implementedTypes.keys
-
-    val toImplement = trait.functionList.filter { it.name in notImplemented }
-    val toImplementTypes = trait.typeAliasList.filter { it.name in notImplementedTypes }
+    val toImplement = impl.toImplementFunctions()
+    val toImplementTypes = impl.toImplementTypes()
 
     if (toImplement.isEmpty() && toImplementTypes.isEmpty())
         return
@@ -91,7 +76,8 @@ fun generateTraitMembers(impl: RsImplItem) {
             toImplementTypes.map { RsFunctionChooserMember(base, FunctionOrType.Type(it)) }
 
     val chooser = MemberChooser(members.toTypedArray(), true, true, project)
-    chooser.title = "Implement members"
+    chooser.title = "Implement Members"
+    chooser.setCopyJavadocVisible(false)
     chooser.show()
 
     val selected = chooser.selectedElements ?: listOf()
