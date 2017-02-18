@@ -354,5 +354,25 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                 "Case number: $i")
         }
     }
+
+    fun `test const pointer`() {
+        testExpr("""
+        fn main() {
+            let y = 42;
+            let x = &y as *const i32;
+            x
+          //^ *const i32
+        }""")
+    }
+
+    fun `test cast`() {
+        testExpr("""
+        fn main() {
+            let y = 42;
+            let x = &y as i64;
+            x
+          //^ i64
+        }""")
+    }
 }
 

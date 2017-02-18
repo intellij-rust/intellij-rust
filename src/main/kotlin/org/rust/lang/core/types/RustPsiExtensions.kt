@@ -61,9 +61,17 @@ private fun typeReferenceToType(ref: RsTypeReference): RustType {
         }
 
         is RsRefLikeType -> {
-            if (!ref.isRef) return RustUnknownType
             val base = ref.typeReference ?: return RustUnknownType
-            RustReferenceType(typeReferenceToType(base), ref.isMut)
+            val mutable = ref.isMut
+            if (ref.isRef) {
+                RustReferenceType(typeReferenceToType(base), mutable)
+            } else {
+                if (ref.mul != null) { //Raw pointers
+                    RustPointerType(typeReferenceToType(base), mutable)
+                } else {
+                    RustUnknownType
+                }
+            }
         }
 
         else ->

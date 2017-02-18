@@ -2,6 +2,7 @@ package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.impl.isMut
 import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
@@ -43,6 +44,9 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
         // Default until we handle all the cases explicitly
         RustUnknownType
     }
+
+
+    override fun visitCastExpr(o: RsCastExpr) = set { o.typeReference.type }
 
     override fun visitUnaryExpr(o: RsUnaryExpr) = set {
         if (o.box != null)
