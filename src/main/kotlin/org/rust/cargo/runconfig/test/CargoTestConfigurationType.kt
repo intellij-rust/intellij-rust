@@ -8,7 +8,6 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import org.rust.cargo.icons.CargoIcons
-import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 
 class CargoTestConfigurationType : ConfigurationTypeBase(
     "CargoTestRunConfiguration",
@@ -19,10 +18,12 @@ class CargoTestConfigurationType : ConfigurationTypeBase(
     init {
         addFactory(object : ConfigurationFactory(this) {
             override fun createTemplateConfiguration(project: Project): RunConfiguration =
-                CargoCommandConfiguration(project, "Cargo", this)
+                CargoTestConfiguration(project, "Cargo Test", this)
 
-            override fun configureBeforeRunTaskDefaults(providerID: Key<out BeforeRunTask<BeforeRunTask<*>>>,
-                                                        task: BeforeRunTask<out BeforeRunTask<*>>) {
+            override fun configureBeforeRunTaskDefaults(
+                providerID: Key<out BeforeRunTask<BeforeRunTask<*>>>,
+                task: BeforeRunTask<out BeforeRunTask<*>>
+            ) {
                 if (providerID == CompileStepBeforeRun.ID) {
                     // We don't use jps, so we don't need to execute `Make` task
                     // before run configuration is executed
