@@ -12,7 +12,6 @@ import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.runconfig.CargoConfigurationBase
-import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.toolchain.CargoCommandLine
 import com.intellij.util.xmlb.annotations.Transient as XmlbTransient
 
@@ -49,7 +48,13 @@ class CargoTestConfiguration(
         environment: ExecutionEnvironment,
         config: ConfigurationResult
     ): RunProfileState? =
-        CargoRunState(environment, config.toolchain, config.module, config.cargoProjectDirectory, cargoCommandLine)
+        CargoTestRunState(
+            environment,
+            config.toolchain,
+            config.module,
+            config.cargoProjectDirectory,
+            cargoCommandLine
+        )
 
     @Tag(value = "parameters")
     data class SerializableCargoCommandLine(

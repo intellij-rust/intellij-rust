@@ -8,14 +8,13 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.qualifiedName
 import org.rust.lang.core.resolve.ResolveEngine
 
 /**
  * Url format:
  *  - test functions: `cargo:test://{test function fq name}`
  *
- * **It is preferable to use `getUrl` methods instead of manually constructing urls.**
+ * **It is preferable to use `get...Url` methods instead of manually constructing urls.**
  */
 object CargoTestLocator : SMTestLocator {
     const val TEST_PROTOCOL = "cargo:test"
@@ -41,5 +40,6 @@ object CargoTestLocator : SMTestLocator {
         return emptyList()
     }
 
-    fun getUrl(function: RsFunction): String = "$TEST_PROTOCOL://${function.qualifiedName}"
+    fun getTestFnUrl(name: String): String = "$TEST_PROTOCOL://$name"
+    fun getTestFnUrl(function: RsFunction): String = "$TEST_PROTOCOL://${function.name}"
 }

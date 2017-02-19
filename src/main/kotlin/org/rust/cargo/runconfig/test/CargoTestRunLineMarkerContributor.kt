@@ -21,7 +21,7 @@ class CargoTestRunLineMarkerContributor : RunLineMarkerContributor() {
         val fn = element.parent as? RsFunction ?: return null
         return when {
             fn.isTest -> Info(
-                getTestStateIcon(CargoTestLocator.getUrl(fn), fn.project),
+                getTestStateIcon(CargoTestLocator.getTestFnUrl(fn), fn.project),
                 Function<PsiElement, String> { "Run Test" },
                 // `1` here will prefer test configuration over application configuration,
                 // when both a applicable. Usually configurations are ordered by their target

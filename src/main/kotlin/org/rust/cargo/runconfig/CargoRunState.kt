@@ -7,19 +7,22 @@ import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
-import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.runconfig.filters.RsBacktraceFilter
 import org.rust.cargo.runconfig.filters.RsConsoleFilter
 import org.rust.cargo.runconfig.filters.RsExplainFilter
 import org.rust.cargo.runconfig.filters.RsPanicFilter
+import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustToolchain
 
-class CargoRunState(
+/**
+ * Manages running of general cargo commands.
+ */
+open class CargoRunState(
     environment: ExecutionEnvironment,
-    private val toolchain: RustToolchain,
+    protected val toolchain: RustToolchain,
     module: Module,
-    private val cargoProjectDirectory: VirtualFile,
-    private val commandLine: CargoCommandLine
+    protected val cargoProjectDirectory: VirtualFile,
+    val commandLine: CargoCommandLine
 ) : CommandLineState(environment) {
 
     init {

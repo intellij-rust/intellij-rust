@@ -19,7 +19,7 @@ class CargoTestLocatorTest : RsTestBase() {
     private fun doSelfReferencesTest(@Language("Rust") source: String) {
         InlineFile(source)
         val func = findElementInEditor<RsFunction>()
-        val url = CargoTestLocator.getUrl(func)
+        val url = CargoTestLocator.getTestFnUrl(func)
         val locations = CargoTestLocator.getLocation(url, project, GlobalSearchScope.allScope(project))
         assert(locations.isNotEmpty()) { "generated url doesn't resolve to anything" }
         assert(locations.size == 1) { "generated url resolves to multiple things" }
