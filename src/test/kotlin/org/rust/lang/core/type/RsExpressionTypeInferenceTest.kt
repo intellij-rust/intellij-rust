@@ -374,5 +374,15 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
           //^ i64
         }""")
     }
+
+    fun `test pointer deref`() {
+        testExpr("""
+        fn main() {
+            let x : *const i32;
+            let y = *x; // it should be in unsafe
+            y
+          //^ i32
+        }""")
+    }
 }
 

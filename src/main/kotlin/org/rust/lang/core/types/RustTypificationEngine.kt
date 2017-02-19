@@ -58,6 +58,7 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
             when {
                 (o.and != null) -> RustReferenceType(base, o.mut != null)
                 (o.mul != null && base is RustReferenceType) -> base.referenced
+                (o.mul != null && base is RustPointerType) -> base.referenced
                 else -> base
             }
         }
