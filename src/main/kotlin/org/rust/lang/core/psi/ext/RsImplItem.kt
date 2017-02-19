@@ -29,3 +29,46 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
         return PresentationData(typeReference?.text ?: "Impl", null, RsIcons.IMPL, null)
     }
 }
+
+
+fun RsImplItem.toImplementFunctions(): List<RsFunction> {
+    val trait = traitRef?.trait ?: error("No trait ref")
+    val canImplement = trait.functionList.associateBy { it.name }
+    val mustImplement = canImplement.filterValues { it.isAbstract }
+    val implemented = functionList.associateBy { it.name }
+    val notImplemented = mustImplement.keys - implemented.keys
+    val toImplement = trait.functionList.filter { it.name in notImplemented }
+
+    return toImplement
+}
+
+fun RsImplItem.toImplementTypes(): List<RsTypeAlias> {
+    val trait = traitRef?.trait ?: error("No trait ref")
+    val canImplement = trait.typeAliasList.associateBy { it.name }
+    val mustImplement = canImplement.filterValues { it.typeReference == null }
+    val implemented = typeAliasList.associateBy { it.name }
+    val notImplemented = mustImplement.keys - implemented.keys
+    val toImplement = trait.typeAliasList.filter { it.name in notImplemented }
+
+    return toImplement
+}
+
+fun RsImplItem.toImplementConstants(): List<RsConstant> {
+    val trait = traitRef?.trait ?: error("No trait ref")
+    val canImplement = trait.constantList.associateBy { it.name }
+    val mustImplement = canImplement.filterValues { it.expr == null }
+    val implemented = constantList.associateBy { it.name }
+    val notImplemented = mustImplement.keys - implemented.keys
+    val toImplement = trait.constantList.filter { it.name in notImplemented }
+
+    return toImplement
+}
+
+fun RsImplItem.canOverrideFunctions() =
+    traitRef?.trait?.functionList ?: error("No trait ref")
+
+fun RsImplItem.canOverrideTypeAliases() =
+    traitRef?.trait?.typeAliasList ?: error("No trait ref")
+
+fun RsImplItem.canOverrideConstants() =
+    traitRef?.trait?.constantList ?: error("No trait ref")

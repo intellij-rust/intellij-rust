@@ -84,8 +84,9 @@ class RsPsiFactory(private val project: Project) {
         createFromText("use $text;")
             ?: error("Failed to create use item from text: `$text`")
 
-    fun createTraitImplItem(traitMethods: List<RsFunction>, traitTypeAliases: List<RsTypeAlias>): RsImplItem {
+    fun createTraitImplItem(traitMethods: List<RsFunction>, traitTypeAliases: List<RsTypeAlias>, traitConstants: List<RsConstant>): RsImplItem {
         val members = (
+                    traitConstants.map { " const ${it.identifier.text}: ${it.typeReference?.text} = unimplemented!();" } +
                     traitTypeAliases.map { " type ${it.name} = ();" } +
                     traitMethods.map { " \n${it.signatureText} {\nunimplemented!()\n}" }
                 ).joinToString("\n")

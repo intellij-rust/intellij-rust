@@ -5,48 +5,42 @@ import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.generation.MemberChooserObjectBase
 import com.intellij.ide.util.MemberChooser
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.psi.PsiElement
 import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.SimpleTextAttributes
-import io.netty.util.internal.chmv8.ConcurrentHashMapV8
-import org.rust.ide.icons.RsIcons
-import org.rust.ide.utils.toImplementFunctions
-import org.rust.ide.utils.toImplementTypes
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsTypeAlias
-import org.rust.lang.core.psi.impl.mixin.default
-import org.rust.lang.core.psi.impl.mixin.isAbstract
-import org.rust.lang.core.psi.util.childOfType
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.util.trait
 import org.rust.utils.getFormattedParts
 import javax.swing.JTree
 
-sealed class FunctionOrType {
-    class Function(val function: RsFunction) : FunctionOrType()
-    class Type(val type: RsTypeAlias) : FunctionOrType()
+sealed class TraitMember {
+    class Function(val function: RsFunction) : TraitMember()
+    class Type(val type: RsTypeAlias) : TraitMember()
+    class Constant(val constant: RsConstant) : TraitMember()
 }
 
-private class RsFunctionChooserMember(val base: MemberChooserObjectBase, val member: FunctionOrType) : ClassMember {
+private class RsFunctionChooserMember(val base: MemberChooserObjectBase, val member: TraitMember) : ClassMember {
     private val text: String;
 
     init {
         when (member) {
-            is FunctionOrType.Function -> {
+            is TraitMember.Function -> {
                 val (before, after) = member.function.getFormattedParts()
                 text = "${member.function.name}$after"
             }
-            is FunctionOrType.Type -> {
+            is TraitMember.Type -> {
                 text = "${member.type.name}"
+            }
+            is TraitMember.Constant -> {
+                text = "${member.constant.name}: ${member.constant.typeReference?.text}"
             }
         }
     }
 
     override fun renderTreeNode(component: SimpleColoredComponent?, tree: JTree?) {
         component?.icon = when (member) {
-            is FunctionOrType.Function -> member.function
-            is FunctionOrType.Type -> member.type
+            is TraitMember.Function -> member.function
+            is TraitMember.Type -> member.type
+            is TraitMember.Constant -> member.constant
         }.getIcon(0)
         component?.append(text)
     }
@@ -56,9 +50,16 @@ private class RsFunctionChooserMember(val base: MemberChooserObjectBase, val mem
     }
 
     override fun getText() = when (member) {
-        is FunctionOrType.Function -> member.function.name ?: ""
-        is FunctionOrType.Type -> member.type.name ?: ""
+        is TraitMember.Function -> member.function.name
+        is TraitMember.Type -> member.type.name
+        is TraitMember.Constant -> member.constant.name
+    } ?: ""
+
+    override fun equals(other: Any?): Boolean {
+        return text == (other as? RsFunctionChooserMember)?.text
     }
+
+    override fun hashCode() = text.hashCode()
 }
 
 fun generateTraitMembers(impl: RsImplItem) {
@@ -66,17 +67,20 @@ fun generateTraitMembers(impl: RsImplItem) {
     val trait = impl.traitRef?.trait ?: error("No trait ref")
     val traitName = trait.name ?: error("No trait name")
 
-    val toImplement = impl.toImplementFunctions()
-    val toImplementTypes = impl.toImplementTypes()
+    val base = MemberChooserObjectBase(traitName, trait.getIcon(0))
+    val mandatoryMembers = impl.toImplementFunctions().map { RsFunctionChooserMember(base, TraitMember.Function(it)) } +
+        impl.toImplementTypes().map { RsFunctionChooserMember(base, TraitMember.Type(it)) } +
+        impl.toImplementConstants().map { RsFunctionChooserMember(base, TraitMember.Constant(it)) }
+    val allMembers = impl.canOverrideFunctions().map { RsFunctionChooserMember(base, TraitMember.Function(it)) } +
+        impl.canOverrideTypeAliases().map { RsFunctionChooserMember(base, TraitMember.Type(it)) } +
+        impl.canOverrideConstants().map { RsFunctionChooserMember(base, TraitMember.Constant(it)) }
 
-    if (toImplement.isEmpty() && toImplementTypes.isEmpty())
+    if (allMembers.isEmpty())
         return
-    val base = MemberChooserObjectBase(traitName, RsIcons.TRAIT)
-    val members = toImplement.map { RsFunctionChooserMember(base, FunctionOrType.Function(it)) } +
-            toImplementTypes.map { RsFunctionChooserMember(base, FunctionOrType.Type(it)) }
 
-    val chooser = MemberChooser(members.toTypedArray(), true, true, project)
+    val chooser = MemberChooser(allMembers.toTypedArray(), true, true, project)
     chooser.title = "Implement Members"
+    chooser.selectElements(mandatoryMembers.toTypedArray())
     chooser.setCopyJavadocVisible(false)
     chooser.show()
 
@@ -84,15 +88,16 @@ fun generateTraitMembers(impl: RsImplItem) {
     if (selected.isEmpty())
         return
     val templateImpl = RsPsiFactory(project).createTraitImplItem(
-            selected.mapNotNull { (it.member as? FunctionOrType.Function)?.function },
-            selected.mapNotNull { (it.member as? FunctionOrType.Type)?.type }
+        selected.mapNotNull { (it.member as? TraitMember.Function)?.function },
+        selected.mapNotNull { (it.member as? TraitMember.Type)?.type },
+        selected.mapNotNull { (it.member as? TraitMember.Constant)?.constant }
     )
     val lastMethodOrBrace = impl.functionList.lastOrNull() ?: impl.lbrace ?: return
     runWriteAction {
         impl.addRangeAfter(
-                templateImpl.lbrace?.nextSibling,
-                templateImpl.rbrace?.prevSibling,
-                lastMethodOrBrace
+            templateImpl.lbrace?.nextSibling,
+            templateImpl.rbrace?.prevSibling,
+            lastMethodOrBrace
         )
     }
 }
