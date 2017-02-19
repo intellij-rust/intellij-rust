@@ -245,31 +245,27 @@ private fun RsImplItem.remapTypeParameters(
 
 fun RsExpr.isConvertibleTo(type: RustType): Boolean = type.findSubtypes(project).contains(type)
 
-fun RustType.findSubtypes(project: Project) : Sequence<RustType> {
+fun RustType.findSubtypes(project: Project): Sequence<RustType> {
     val subtypes = mutableSetOf<RustType>()
     findSubtypes(subtypes, project)
     return subtypes.asSequence()
 }
 
 private fun RustType.findSubtypes(subtypes: MutableSet<RustType>, project: Project) {
-    if(!subtypes.add(this)) {
+    if (!subtypes.add(this)) {
         return
     }
     if (this is RustReferenceType) {
         RustPointerType(referenced, mutable).findSubtypes(subtypes, project)
-        if(mutable) {
+        if (mutable) {
             RustReferenceType(referenced, false).findSubtypes(subtypes, project)
-            }
+        }
 
         val base = stripAllRefsIfAny()
-        RsImplIndex.findImplsFor(base, project)
-            .distinct()
-            .filter { it.traitRef?.path?.identifier?.text == "Deref" }
-            .forEach { impl ->
-                val derefType = impl.traitRef?.path?.typeArgumentList?.assocTypeBindingList
-                    ?.find{it -> it.identifier.text == "Target"}
-                    ?.typeReference
-                derefType?.type?.findSubtypes(subtypes, project)
+        base.getImplsIn(project, "Deref")
+            .forEach { impl: RsImplItem ->
+                impl.findAssocType("Target")
+                    ?.typeReference?.type?.findSubtypes(subtypes, project)
             }
         base.getTraitsImplementedIn(project)
             .distinct()
@@ -278,7 +274,7 @@ private fun RustType.findSubtypes(subtypes: MutableSet<RustType>, project: Proje
 
     }
     if (this is RustPointerType) {
-        if(mutable) {
+        if (mutable) {
             RustPointerType(referenced, false).findSubtypes(subtypes, project)
         }
     }
@@ -287,4 +283,12 @@ private fun RustType.findSubtypes(subtypes: MutableSet<RustType>, project: Proje
 
 }
 
+private fun RsImplItem.findAssocType(name: String) = traitRef
+    ?.path
+    ?.typeArgumentList
+    ?.assocTypeBindingList
+    ?.find { it -> it.identifier.text == name }
 
+private fun RustType.getImplsIn(project: Project, name: String) = RsImplIndex.findImplsFor(this, project)
+    .distinct()
+    .filter { it.traitRef?.path?.identifier?.text == name }
