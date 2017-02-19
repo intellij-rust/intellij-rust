@@ -13,10 +13,11 @@ import org.rust.lang.core.psi.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.impl.mixin.isAssocFn
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
-import org.rust.lang.core.types.types.RustStructOrEnumTypeBase
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustTypeFingerprint
 import org.rust.lang.core.types.type
+import org.rust.lang.core.types.types.RustSliceType
+import org.rust.lang.core.types.types.RustStructOrEnumTypeBase
 
 
 object RsImplIndex {
@@ -30,10 +31,11 @@ object RsImplIndex {
             .flatMap { it.functionList.orEmpty().asSequence() }
 
     fun findImplsFor(target: RustType, project: Project): Sequence<RsImplItem> {
-        val inherentImpls = if (target is RustStructOrEnumTypeBase)
-            InherentImpls.find(target.item)
-        else
-            emptySequence()
+        val inherentImpls = when (target) {
+            is RustStructOrEnumTypeBase -> InherentImpls.find(target.item)
+            is RustSliceType -> InherentImpls.find(target, project)
+            else -> emptySequence()
+        }
 
         return TraitImpls.find(target, project) + inherentImpls
     }
@@ -51,14 +53,19 @@ object RsImplIndex {
                 val fingerprint = RustTypeFingerprint.create(target)
                     ?: return emptySequence()
 
-                return StubIndex.getElements(
+                val elements = StubIndex.getElements(
                     TraitImpls.KEY,
                     fingerprint,
                     project,
                     GlobalSearchScope.allScope(project),
                     RsImplItem::class.java
-                ).asSequence().filter {
-                    it.typeReference?.type == target
+                ).asSequence()
+                if(target is RustSliceType) {
+                    return elements
+                } else {
+                    return elements.filter {
+                        it.typeReference?.type == target
+                    }
                 }
             }
 
@@ -82,17 +89,21 @@ object RsImplIndex {
             private val KEY: StubIndexKey<RustTypeFingerprint, RsImplItem> =
                 StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.InherentImpls")
 
-            fun find(target: RsStructOrEnumItemElement): Sequence<RsImplItem> {
-                val fingerprint = RustTypeFingerprint.create(target.type)
+            fun find(target: RustType, project: Project): Sequence<RsImplItem> {
+                val fingerprint = RustTypeFingerprint.create(target)
                     ?: return emptySequence()
 
                 return StubIndex.getElements(
                     InherentImpls.KEY,
                     fingerprint,
-                    target.project,
-                    GlobalSearchScope.allScope(target.project),
+                    project,
+                    GlobalSearchScope.allScope(project),
                     RsImplItem::class.java
-                ).asSequence().filter { impl ->
+                ).asSequence()
+            }
+
+            fun find(target: RsStructOrEnumItemElement): Sequence<RsImplItem> {
+                return find(target.type, target.project).asSequence().filter { impl ->
                     val ty = impl.typeReference?.type
                     ty is RustStructOrEnumTypeBase && ty.item == target
                 }
