@@ -1,11 +1,12 @@
 package org.rust.lang.core.types
 
+import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.impl.isMut
 import org.rust.lang.core.psi.impl.mixin.*
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.visitors.RustComputingVisitor
+import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.types.types.*
 
 object RustTypificationEngine {
@@ -239,3 +240,42 @@ private fun RsImplItem.remapTypeParameters(
                 null
             }
         }.toMap()
+
+
+fun RsExpr.isConvertibleTo(type: RustType): Boolean = type.findSubtypes(project).contains(type)
+
+fun RustType.findSubtypes(project: Project) : Sequence<RustType> {
+    val subtypes = mutableSetOf<RustType>()
+    findSubtypes(subtypes, project)
+    return subtypes.asSequence()
+}
+
+private fun RustType.findSubtypes(subtypes: MutableSet<RustType>, project: Project) {
+    if(!subtypes.add(this)) {
+        return
+    }
+    if (this is RustReferenceType) {
+        RustPointerType(referenced, mutable).findSubtypes(subtypes, project)
+        if(mutable) {
+            RustReferenceType(referenced, false).findSubtypes(subtypes, project)
+            }
+
+        RsImplIndex.findImplsFor(stripAllRefsIfAny(), project)
+            .distinct()
+            .filter { it.traitRef?.path?.identifier?.text == "Deref" }
+            .forEach { impl ->
+                val derefType = impl.traitRef?.path?.typeArgumentList?.assocTypeBindingList
+                    ?.find{it -> it.identifier.text == "Target"}
+                    ?.typeReference
+                derefType?.type?.findSubtypes(subtypes, project)
+            }
+    }
+    if (this is RustPointerType) {
+        if(mutable) {
+            RustPointerType(referenced, false).findSubtypes(subtypes, project)
+        }
+    }
+
+}
+
+
