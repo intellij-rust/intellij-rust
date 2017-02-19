@@ -149,6 +149,10 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
             ?: RustUnknownType
     }
 
+    override fun visitArrayExpr(o: RsArrayExpr) {
+        o.exprList
+    }
+
     override fun visitWhileExpr(o: RsWhileExpr) = set { RustUnitType }
     override fun visitLoopExpr(o: RsLoopExpr) = set { RustUnitType }
     override fun visitForExpr(o: RsForExpr) = set { RustUnitType }
@@ -278,9 +282,9 @@ private fun RustType.findSubtypes(subtypes: MutableSet<RustType>, project: Proje
             RustPointerType(referenced, false).findSubtypes(subtypes, project)
         }
     }
-    //TODO [T, i] -> [T]
-    //
-
+    if(this is RustArrayType) {
+        RustSliceType(base).findSubtypes(subtypes, project)
+    }
 }
 
 private fun RsImplItem.findAssocType(name: String) = traitRef

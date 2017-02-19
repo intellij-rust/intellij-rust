@@ -30,6 +30,17 @@ class RsSubtypingTest : RsTestBase() {
 """)
     }
 
+    fun `test array to slice subtyping`() {
+        val base = RustIntegerType(RustIntegerType.Kind.i32)
+        assertConvertibleTo("""
+            fn main() {
+                let x: [i32; 8];
+                x
+              //^ [i32; 8], [i32]
+            }
+""")
+    }
+
     fun `test deref subtyping`() {
         assertConvertibleTo("""
             struct A {

@@ -384,5 +384,23 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
           //^ i32
         }""")
     }
+
+    fun `test slice type`() {
+        testExpr("""
+        fn main() {
+            let x : [i32];
+            x
+          //^ [i32]
+        }""")
+    }
+
+    fun `test array type`() {
+        testExpr("""
+        fn main() {
+            let x : [i32; 8];
+            x
+          //^ [i32; 8]
+        }""")
+    }
 }
 
