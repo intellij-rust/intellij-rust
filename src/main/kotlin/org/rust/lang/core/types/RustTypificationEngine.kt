@@ -260,7 +260,8 @@ private fun RustType.findSubtypes(subtypes: MutableSet<RustType>, project: Proje
             RustReferenceType(referenced, false).findSubtypes(subtypes, project)
             }
 
-        RsImplIndex.findImplsFor(stripAllRefsIfAny(), project)
+        val base = stripAllRefsIfAny()
+        RsImplIndex.findImplsFor(base, project)
             .distinct()
             .filter { it.traitRef?.path?.identifier?.text == "Deref" }
             .forEach { impl ->
@@ -269,12 +270,19 @@ private fun RustType.findSubtypes(subtypes: MutableSet<RustType>, project: Proje
                     ?.typeReference
                 derefType?.type?.findSubtypes(subtypes, project)
             }
+        base.getTraitsImplementedIn(project)
+            .distinct()
+            .map { it.type }
+            .forEach { it.findSubtypes(subtypes, project) }
+
     }
     if (this is RustPointerType) {
         if(mutable) {
             RustPointerType(referenced, false).findSubtypes(subtypes, project)
         }
     }
+    //TODO [T, i] -> [T]
+    //
 
 }
 

@@ -50,7 +50,7 @@ class RsSubtypingTest : RsTestBase() {
             fn main() {
                 let x: & A;
                 x
-              //^ & A, *const A, i32
+              //^ & A, *const A, i32, Deref
             }
 """     )
     }
