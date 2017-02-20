@@ -172,6 +172,20 @@ class RsFormatterTest : RsFormatterTestBase() {
         fn fut() -> impl Future<Item=(), Error=()> {}
     """)
 
+    fun `test where is indented in impls`() = doTextTest("""
+        impl<T> Foo<T>
+        where T: bar
+        {
+            fn foo() {}
+        }
+    """, """
+        impl<T> Foo<T>
+            where T: bar
+        {
+            fn foo() {}
+        }
+    """)
+
     private fun common() = getSettings(RsLanguage)
     private fun custom() = settings.getCustomSettings(RsCodeStyleSettings::class.java)
 
