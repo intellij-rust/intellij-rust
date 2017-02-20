@@ -16,18 +16,14 @@ private class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val 
     private val text: String;
 
     init {
-        when (member) {
+        text = when (member) {
             is RsFunction -> {
                 val (before, after) = member.getFormattedParts()
-                text = "${member.name}$after"
+                "${member.name}$after"
             }
-            is RsTypeAlias -> {
-                text = "${member.name}"
-            }
-            is RsConstant -> {
-                text = "${member.name}: ${member.typeReference?.text}"
-            }
-            else -> error("Unknown trait member: " + member)
+            is RsTypeAlias -> "${member.name}"
+            is RsConstant -> "${member.name}: ${member.typeReference?.text}"
+            else -> error("Unknown trait member: $member")
         }
     }
 
@@ -55,7 +51,7 @@ fun generateTraitMembers(impl: RsImplItem) {
     val traitName = trait.name ?: error("No trait name")
 
     val base = MemberChooserObjectBase(traitName, trait.getIcon(0))
-    val (toImplement, toOverride) = impl.toImplementOverride()
+    val (toImplement, toOverride) = impl.toImplementOverride() ?: return
     val mandatoryMembers = toImplement.map { RsTraitMemberChooserMember(base, it) }
     val allMembers = toOverride.map { RsTraitMemberChooserMember(base, it) }
     

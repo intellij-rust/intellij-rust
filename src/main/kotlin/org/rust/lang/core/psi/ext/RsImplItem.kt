@@ -33,10 +33,10 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
 /**
  * @return pair of two lists: (mandatory trait members, optional trait members)
  */
-fun RsImplItem.toImplementOverride(): Pair<List<RsNamedElement>, List<RsNamedElement>> {
-    val trait = traitRef?.trait ?: error("No trait ref")
-    val traitMembers = trait.functionList as List<RsAbstractable> + trait.typeAliasList + trait.constantList 
-    val members = functionList as List<RsAbstractable> + typeAliasList + constantList
+fun RsImplItem.toImplementOverride(): Pair<List<RsNamedElement>, List<RsNamedElement>>? {
+    val trait = traitRef?.trait ?: return null
+    val traitMembers = trait.children.filterIsInstance<RsAbstractable>() 
+    val members = children.filterIsInstance<RsAbstractable>()
     val canImplement = traitMembers.associateBy { it.name }
     val mustImplement = canImplement.filterValues { it.isAbstract }
     val implemented = members.associateBy { it.name }

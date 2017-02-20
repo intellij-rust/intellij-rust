@@ -91,7 +91,6 @@ class RsPsiFactory(private val project: Project) {
                     traitMethods.map { " \n${it.signatureText} {\nunimplemented!()\n}" }
                 ).joinToString("\n")
         val text = "impl T for S { \n$members\n }"
-        println(createFromText<RsImplItem>(text)?.text)
         return createFromText(text)
             ?: error("Failed to create an impl from text: `$text`")
     }

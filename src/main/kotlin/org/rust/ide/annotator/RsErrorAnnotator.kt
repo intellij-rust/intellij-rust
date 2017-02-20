@@ -300,7 +300,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         
         val implemented = impl.functionList.associateBy { it.name }
         
-        val (toImplement, toOverride) = impl.toImplementOverride()
+        val (toImplement, toOverride) = impl.toImplementOverride() 
+                ?: listOf<RsNamedElement>() to listOf<RsNamedElement>()
         val notImplemented = toImplement.map { it.name }
         val canImplement = toOverride.associateBy { it.name }
         
@@ -315,8 +316,9 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             ).registerFix(ImplementMethodsFix(impl))
         }
 
+        val traitName = impl.traitRef?.text ?: return    
         val notMembers = implemented.filterKeys { it !in canImplement }
-        for (method in notMembers.values) {
+        for (method in notMembers.values) { 
             holder.createErrorAnnotation(method.identifier,
                 "Method `${method.name}` is not a member of trait `$traitName` [E0407]")
         }
