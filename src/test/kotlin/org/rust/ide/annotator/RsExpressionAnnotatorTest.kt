@@ -146,4 +146,12 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
             }
         }
     """)
+
+    fun `test E0384 in pattern`() = checkErrors("""
+        fn main() {
+            let (x, mut y) = (92, 62);
+            <error>x = 42</error>;
+            y = 42;
+        }
+    """)
 }
