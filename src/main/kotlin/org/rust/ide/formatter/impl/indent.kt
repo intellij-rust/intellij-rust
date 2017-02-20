@@ -37,6 +37,15 @@ fun RsFmtBlock.computeIndent(child: ASTNode, childCtx: RsFmtContext): Indent? {
     val childType = child.elementType
     val childPsi = child.psi
     return when {
+    // fn moo(...)
+    // -> ...
+    // where ... {}
+    // =>
+    // fn moo(...)
+    //     -> ...
+    //     where ... {}
+        childType == RET_TYPE || childType == WHERE_CLAUSE -> Indent.getNormalIndent()
+
     // Indent blocks excluding braces
         node.isDelimitedBlock -> getIndentIfNotDelim(child, node)
 
@@ -55,15 +64,6 @@ fun RsFmtBlock.computeIndent(child: ASTNode, childCtx: RsFmtContext): Indent? {
     //         92;
         childPsi is RsExpr && (parentType == MATCH_ARM || parentType == LET_DECL || parentType == CONSTANT) ->
             Indent.getNormalIndent()
-
-    // fn moo(...)
-    // -> ...
-    // where ... {}
-    // =>
-    // fn moo(...)
-    //     -> ...
-    //     where ... {}
-        childType == RET_TYPE || childType == WHERE_CLAUSE -> Indent.getNormalIndent()
 
     // Indent expressions (chain calls, binary expressions, ...)
         parentPsi is RsExpr -> Indent.getContinuationWithoutFirstIndent()
