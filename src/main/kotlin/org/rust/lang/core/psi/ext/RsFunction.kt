@@ -10,7 +10,6 @@ import org.rust.lang.core.stubs.RsFunctionStub
 import org.rust.lang.core.symbols.RustPath
 import javax.swing.Icon
 
-val RsFunction.isAbstract: Boolean get() = stub?.isAbstract ?: (block == null)
 val RsFunction.isAssocFn: Boolean get() = selfParameter == null
     && (role == RsFunctionRole.IMPL_METHOD || role == RsFunctionRole.TRAIT_METHOD)
 val RsFunction.isTest: Boolean get() = stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
@@ -71,6 +70,8 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublicNonStubbed(this)
 
+    override val isAbstract: Boolean get() = stub?.isAbstract ?: (block == null)
+    
     override val crateRelativePath: RustPath.CrateRelative? get() = RustPsiImplUtil.crateRelativePath(this)
 
     final override val innerAttrList: List<RsInnerAttr>

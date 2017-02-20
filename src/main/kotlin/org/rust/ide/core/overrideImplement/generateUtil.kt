@@ -12,36 +12,27 @@ import org.rust.lang.core.psi.util.trait
 import org.rust.utils.getFormattedParts
 import javax.swing.JTree
 
-sealed class TraitMember {
-    class Function(val function: RsFunction) : TraitMember()
-    class Type(val type: RsTypeAlias) : TraitMember()
-    class Constant(val constant: RsConstant) : TraitMember()
-}
-
-private class RsFunctionChooserMember(val base: MemberChooserObjectBase, val member: TraitMember) : ClassMember {
+private class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val member: RsNamedElement) : ClassMember {
     private val text: String;
 
     init {
         when (member) {
-            is TraitMember.Function -> {
-                val (before, after) = member.function.getFormattedParts()
-                text = "${member.function.name}$after"
+            is RsFunction -> {
+                val (before, after) = member.getFormattedParts()
+                text = "${member.name}$after"
             }
-            is TraitMember.Type -> {
-                text = "${member.type.name}"
+            is RsTypeAlias -> {
+                text = "${member.name}"
             }
-            is TraitMember.Constant -> {
-                text = "${member.constant.name}: ${member.constant.typeReference?.text}"
+            is RsConstant -> {
+                text = "${member.name}: ${member.typeReference?.text}"
             }
+            else -> error("Unknown trait member: " + member)
         }
     }
 
     override fun renderTreeNode(component: SimpleColoredComponent?, tree: JTree?) {
-        component?.icon = when (member) {
-            is TraitMember.Function -> member.function
-            is TraitMember.Type -> member.type
-            is TraitMember.Constant -> member.constant
-        }.getIcon(0)
+        component?.icon = member.getIcon(0)
         component?.append(text)
     }
 
@@ -49,14 +40,10 @@ private class RsFunctionChooserMember(val base: MemberChooserObjectBase, val mem
         return base
     }
 
-    override fun getText() = when (member) {
-        is TraitMember.Function -> member.function.name
-        is TraitMember.Type -> member.type.name
-        is TraitMember.Constant -> member.constant.name
-    } ?: ""
+    override fun getText() = member.name ?: ""
 
     override fun equals(other: Any?): Boolean {
-        return text == (other as? RsFunctionChooserMember)?.text
+        return text == (other as? RsTraitMemberChooserMember)?.text
     }
 
     override fun hashCode() = text.hashCode()
@@ -68,13 +55,10 @@ fun generateTraitMembers(impl: RsImplItem) {
     val traitName = trait.name ?: error("No trait name")
 
     val base = MemberChooserObjectBase(traitName, trait.getIcon(0))
-    val mandatoryMembers = impl.toImplementFunctions().map { RsFunctionChooserMember(base, TraitMember.Function(it)) } +
-        impl.toImplementTypes().map { RsFunctionChooserMember(base, TraitMember.Type(it)) } +
-        impl.toImplementConstants().map { RsFunctionChooserMember(base, TraitMember.Constant(it)) }
-    val allMembers = impl.canOverrideFunctions().map { RsFunctionChooserMember(base, TraitMember.Function(it)) } +
-        impl.canOverrideTypeAliases().map { RsFunctionChooserMember(base, TraitMember.Type(it)) } +
-        impl.canOverrideConstants().map { RsFunctionChooserMember(base, TraitMember.Constant(it)) }
-
+    val (toImplement, toOverride) = impl.toImplementOverride()
+    val mandatoryMembers = toImplement.map { RsTraitMemberChooserMember(base, it) }
+    val allMembers = toOverride.map { RsTraitMemberChooserMember(base, it) }
+    
     if (allMembers.isEmpty())
         return
 
@@ -88,9 +72,9 @@ fun generateTraitMembers(impl: RsImplItem) {
     if (selected.isEmpty())
         return
     val templateImpl = RsPsiFactory(project).createTraitImplItem(
-        selected.mapNotNull { (it.member as? TraitMember.Function)?.function },
-        selected.mapNotNull { (it.member as? TraitMember.Type)?.type },
-        selected.mapNotNull { (it.member as? TraitMember.Constant)?.constant }
+        selected.mapNotNull { it.member as? RsFunction },
+        selected.mapNotNull { it.member as? RsTypeAlias },
+        selected.mapNotNull { it.member as? RsConstant }
     )
     val lastMethodOrBrace = impl.functionList.lastOrNull() ?: impl.lbrace ?: return
     runWriteAction {

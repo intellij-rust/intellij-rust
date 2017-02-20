@@ -30,45 +30,18 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
     }
 }
 
-
-fun RsImplItem.toImplementFunctions(): List<RsFunction> {
+/**
+ * @return pair of two lists: (mandatory trait members, optional trait members)
+ */
+fun RsImplItem.toImplementOverride(): Pair<List<RsNamedElement>, List<RsNamedElement>> {
     val trait = traitRef?.trait ?: error("No trait ref")
-    val canImplement = trait.functionList.associateBy { it.name }
+    val traitMembers = trait.functionList as List<RsAbstractable> + trait.typeAliasList + trait.constantList 
+    val members = functionList as List<RsAbstractable> + typeAliasList + constantList
+    val canImplement = traitMembers.associateBy { it.name }
     val mustImplement = canImplement.filterValues { it.isAbstract }
-    val implemented = functionList.associateBy { it.name }
+    val implemented = members.associateBy { it.name }
     val notImplemented = mustImplement.keys - implemented.keys
-    val toImplement = trait.functionList.filter { it.name in notImplemented }
+    val toImplement = traitMembers.filter { it.name in notImplemented }
 
-    return toImplement
+    return toImplement to traitMembers
 }
-
-fun RsImplItem.toImplementTypes(): List<RsTypeAlias> {
-    val trait = traitRef?.trait ?: error("No trait ref")
-    val canImplement = trait.typeAliasList.associateBy { it.name }
-    val mustImplement = canImplement.filterValues { it.typeReference == null }
-    val implemented = typeAliasList.associateBy { it.name }
-    val notImplemented = mustImplement.keys - implemented.keys
-    val toImplement = trait.typeAliasList.filter { it.name in notImplemented }
-
-    return toImplement
-}
-
-fun RsImplItem.toImplementConstants(): List<RsConstant> {
-    val trait = traitRef?.trait ?: error("No trait ref")
-    val canImplement = trait.constantList.associateBy { it.name }
-    val mustImplement = canImplement.filterValues { it.expr == null }
-    val implemented = constantList.associateBy { it.name }
-    val notImplemented = mustImplement.keys - implemented.keys
-    val toImplement = trait.constantList.filter { it.name in notImplemented }
-
-    return toImplement
-}
-
-fun RsImplItem.canOverrideFunctions() =
-    traitRef?.trait?.functionList ?: error("No trait ref")
-
-fun RsImplItem.canOverrideTypeAliases() =
-    traitRef?.trait?.typeAliasList ?: error("No trait ref")
-
-fun RsImplItem.canOverrideConstants() =
-    traitRef?.trait?.constantList ?: error("No trait ref")
