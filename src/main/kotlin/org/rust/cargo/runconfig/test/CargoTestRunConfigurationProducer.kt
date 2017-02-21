@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElement
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.cargoArgumentSpeck
+import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.RsFunction
@@ -16,10 +18,10 @@ import org.rust.lang.core.psi.ext.containingCargoTarget
 import org.rust.lang.core.psi.ext.isTest
 import org.rust.lang.core.psi.ext.parentOfType
 
-class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoTestConfiguration>(CargoTestConfigurationType()) {
+class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType()) {
 
     override fun isConfigurationFromContext(
-        configuration: CargoTestConfiguration,
+        configuration: CargoCommandConfiguration,
         context: ConfigurationContext
     ): Boolean {
         val location = context.location ?: return false
@@ -30,7 +32,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoTestConf
     }
 
     override fun setupConfigurationFromContext(
-        configuration: CargoTestConfiguration,
+        configuration: CargoCommandConfiguration,
         context: ConfigurationContext,
         sourceElement: Ref<PsiElement>
     ): Boolean {

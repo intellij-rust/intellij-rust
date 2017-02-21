@@ -15,7 +15,7 @@
     </parameters>
     <module name="light_idea_test_case" />
   </configuration>
-  <configuration name="Test main" class="CargoTestConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
+  <configuration name="Test main" class="CargoCommandConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
     <parameters>
       <option name="additionalArguments">
         <list>
