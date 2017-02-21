@@ -43,9 +43,18 @@ object CompletionEngine {
         }
     }
 
-    fun completeUseGlob(glob: RsUseGlob): Array<out LookupElement> =
-        glob.basePath?.reference?.resolve()
-            .completionsFromResolveScope()
+    fun completeUseGlob(glob: RsUseGlob): Array<out LookupElement> {
+        val mod = run {
+            val basePath = glob.basePath
+            if (basePath != null) {
+                basePath.reference.resolve()
+            } else {
+                glob.crateRoot
+            }
+        }
+
+        return mod.completionsFromResolveScope()
+    }
 
     fun completeFieldName(field: RsStructExprField): Array<out LookupElement> =
         field.parentOfType<RsStructExpr>()
