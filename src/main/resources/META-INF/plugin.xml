@@ -406,7 +406,7 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
-            <className>org.rust.ide.intentions.ImplementStructIntention</className>
+            <className>org.rust.ide.intentions.AddImplIntention</className>
             <category>Rust</category>
         </intentionAction>
         <intentionAction>

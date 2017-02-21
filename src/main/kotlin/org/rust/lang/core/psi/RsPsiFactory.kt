@@ -4,10 +4,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
-import com.intellij.psi.tree.IElementType
 import org.rust.lang.RsFileType
-import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
-import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
 import org.rust.lang.core.psi.impl.mixin.selfParameter
 import org.rust.lang.core.psi.impl.mixin.valueParameters
 import org.rust.lang.core.psi.util.childOfType
@@ -88,9 +85,20 @@ class RsPsiFactory(private val project: Project) {
         return traitImpl.functionList.first()
     }
 
-    fun createInherentImplItem(name: String): RsImplItem =
-        createFromText("impl $name {  }")
+    fun createInherentImplItem(name: String, typeParameterList: RsTypeParameterList?, whereClause: RsWhereClause?): RsImplItem {
+        val whereText = whereClause?.text ?: ""
+        val typeParameterListText = typeParameterList?.text ?: ""
+        val typeArgumentListText = if (typeParameterList == null) {
+            ""
+        } else {
+            val parameterNames = typeParameterList.lifetimeParameterList.map { it.lifetimeDecl.text } +
+                typeParameterList.typeParameterList.map { it.name }
+            parameterNames.joinToString(", ", "<", ">")
+        }
+
+        return createFromText("impl $typeParameterListText $name $typeArgumentListText $whereText {  }")
             ?: error("Failed to create an inherent impl with name: `$name`")
+    }
 
     fun createWhereClause(
         lifetimeBounds: List<RsLifetimeParameter>,
