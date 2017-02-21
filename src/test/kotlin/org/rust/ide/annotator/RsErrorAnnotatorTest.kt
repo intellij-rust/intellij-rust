@@ -761,6 +761,9 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             // Enums and traits are in the same namespace (types)
             trait <error descr="A type named `DUP_T` has already been defined in this module [E0428]">DUP_T</error> {}
             enum <error>DUP_T</error> {}
+
+            <error descr="Unresolved module">mod foo;</error>
+            fn foo() {}
         }
     """)
 

@@ -86,6 +86,7 @@ private val TYPES_N_VALUES = TYPES + VALUES
 
 val RsNamedElement.namespaces: Set<Namespace> get() = when (this) {
     is RsMod,
+    is RsModDeclItem,
     is RsEnumItem,
     is RsTraitItem,
     is RsTypeParameter,
