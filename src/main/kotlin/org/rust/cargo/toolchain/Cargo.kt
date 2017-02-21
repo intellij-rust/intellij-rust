@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.utils.fullyRefreshDirectory
@@ -68,7 +69,7 @@ class Cargo(
         rustfmtCommandline(filePath).execute(owner, listener)
 
     fun generalCommand(commandLine: CargoCommandLine): GeneralCommandLine {
-        val env = (if (commandLine.printBacktrace) mapOf("RUSTC_BACKTRACE" to "1") else emptyMap()) + commandLine.environmentVariables
+        val env = (if (commandLine.printBacktrace) mapOf(RUST_BACTRACE_ENV_VAR to "1") else emptyMap()) + commandLine.environmentVariables
         return generalCommand(commandLine.command, commandLine.additionalArguments, env)
     }
 
