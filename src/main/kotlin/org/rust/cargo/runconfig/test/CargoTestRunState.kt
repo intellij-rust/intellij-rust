@@ -4,7 +4,6 @@ import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testframework.TestFrameworkRunningModel
@@ -36,7 +35,6 @@ class CargoTestRunState(
             "Cargo Test", processHandler, consoleProperties) as SMTRunnerConsoleView
 
         createFilters().forEach { consoleView.addMessageFilter(it) }
-        ProcessTerminatedListener.attach(processHandler)
 
         val executionResult = DefaultExecutionResult(consoleView, processHandler)
         val rerunFailedTestsAction = consoleProperties.createRerunFailedTestsAction(consoleView)
@@ -47,5 +45,20 @@ class CargoTestRunState(
             executionResult.setRestartActions(ToggleAutoTestAction())
         }
         return executionResult
+    }
+
+    override fun prepareCommandLine(): CargoCommandLine =
+        commandLine.copy(additionalArguments = addCustomArguments(commandLine.additionalArguments))
+
+    private fun addCustomArguments(additionalArguments: List<String>): List<String> {
+        // FIXME Cargo Test panics when --test-threads is repeated
+        val mut = additionalArguments.toMutableList()
+        val index = mut.indexOf("--")
+        if (index < 0) {
+            mut.addAll(listOf("--", "--nocapture", "--test-threads", "1"))
+        } else {
+            mut.addAll(index + 1, listOf("--nocapture", "--test-threads", "1"))
+        }
+        return mut
     }
 }
