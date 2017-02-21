@@ -181,7 +181,13 @@ PathGenericArgsWithColons ::= <<pathMode 'COLONS' PathImpl>> { elementType = Pat
 //    <TYPE [as TRAIT_REF]> :: (path_without_types | path_generic_args_with_colons)
 //    <T>::c<V,W>
 //    <T as Foo>::c(V) -> W
-private meta qualified_path ::= '<' TypeReference [ as TraitRef ] '>' '::' <<param>>
+fake QualifiedPath ::= '<' TypeReference [ as TraitRef] '>' '::' Path
+QualifiedPathWithColons ::= '<' TypeReference [ as TraitRef] '>' '::' PathGenericArgsWithColons {
+  elementType = QualifiedPath
+}
+QualifiedPathWithoutColons ::= '<' TypeReference [ as TraitRef] '>' '::' PathGenericArgsWithoutColons {
+  elementType = QualifiedPath
+}
 
 // Path semantically constrained to resolve to a trait
 TraitRef ::= PathGenericArgsWithoutColons {
@@ -365,7 +371,7 @@ Pat ::= PatWild
 private Pat_first ::= '_' | '&' | '(' | '[' | Path_first | LitExpr  | box | '-' | ref | mut
 
 
-PatQualPath ::= <<qualified_path PathWithoutTypes>>
+PatQualPath ::= QualifiedPathWithColons
 PatUniq ::= box Pat
 
 // XXX(matklad): it is impossible to distinguish between nullary enum variants
@@ -718,7 +724,7 @@ TypeAlias ::= OuterAttr* default_? Vis? TYPE_KW identifier
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-TypeQualPath ::= <<qualified_path PathWithoutTypes>>
+TypeQualPath ::= QualifiedPathWithoutColons
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Expressions
@@ -826,7 +832,7 @@ private StructExprField_recover ::= !(identifier | ',' | '}' | '..')
 
 PathExpr ::= PathGenericArgsWithColons
 
-QualPathExpr ::= << qualified_path PathGenericArgsWithColons >>
+QualPathExpr ::= QualifiedPathWithColons
 
 WhileExpr ::= LabelDecl? while Condition SimpleBlock {
   pin = 'while'

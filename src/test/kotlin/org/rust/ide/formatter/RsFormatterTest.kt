@@ -186,6 +186,16 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
+    fun `test spaces in reverse turbofish paths`() = doTextTest("""
+        enum E<T> {
+            X(< T :: BindTransport  as  IntoFuture > :: Future),
+        }
+    """, """
+        enum E<T> {
+            X(<T::BindTransport as IntoFuture>::Future),
+        }
+    """)
+
     private fun common() = getSettings(RsLanguage)
     private fun custom() = settings.getCustomSettings(RsCodeStyleSettings::class.java)
 
