@@ -1,6 +1,7 @@
 package org.rust.cargo.runconfig
 
 import com.intellij.execution.configurations.CommandLineState
+import com.intellij.execution.filters.Filter
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessTerminatedListener
@@ -20,16 +21,13 @@ import org.rust.cargo.toolchain.RustToolchain
 open class CargoRunState(
     environment: ExecutionEnvironment,
     protected val toolchain: RustToolchain,
-    module: Module,
+    protected val module: Module,
     protected val cargoProjectDirectory: VirtualFile,
     val commandLine: CargoCommandLine
 ) : CommandLineState(environment) {
 
     init {
-        consoleBuilder.addFilter(RsConsoleFilter(environment.project, cargoProjectDirectory))
-        consoleBuilder.addFilter(RsExplainFilter())
-        consoleBuilder.addFilter(RsPanicFilter(environment.project, cargoProjectDirectory))
-        consoleBuilder.addFilter(RsBacktraceFilter(environment.project, cargoProjectDirectory, module))
+        createFilters().forEach { consoleBuilder.addFilter(it) }
     }
 
     override fun startProcess(): ProcessHandler {
@@ -44,4 +42,11 @@ open class CargoRunState(
         ProcessTerminatedListener.attach(handler) // shows exit code upon termination
         return handler
     }
+
+    protected fun createFilters(): Collection<Filter> = listOf(
+        RsConsoleFilter(environment.project, cargoProjectDirectory),
+        RsExplainFilter(),
+        RsPanicFilter(environment.project, cargoProjectDirectory),
+        RsBacktraceFilter(environment.project, cargoProjectDirectory, module)
+    )
 }

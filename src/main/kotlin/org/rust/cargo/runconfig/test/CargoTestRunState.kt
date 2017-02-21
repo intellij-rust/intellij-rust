@@ -4,7 +4,6 @@ import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
@@ -31,14 +30,12 @@ class CargoTestRunState(
 ) : CargoRunState(environment, toolchain, module, cargoProjectDirectory, commandLine) {
     override fun execute(executor: Executor, runner: ProgramRunner<*>): ExecutionResult {
         val processHandler = startProcess()
-        val consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(environment.project)
-        setConsoleBuilder(consoleBuilder)
 
         val consoleProperties = CargoTestConsoleProperties(environment.runProfile as RunConfiguration, executor)
         val consoleView = SMTestRunnerConnectionUtil.createAndAttachConsole(
             "Cargo Test", processHandler, consoleProperties) as SMTRunnerConsoleView
 
-        // TODO Filters?
+        createFilters().forEach { consoleView.addMessageFilter(it) }
         ProcessTerminatedListener.attach(processHandler)
 
         val executionResult = DefaultExecutionResult(consoleView, processHandler)
