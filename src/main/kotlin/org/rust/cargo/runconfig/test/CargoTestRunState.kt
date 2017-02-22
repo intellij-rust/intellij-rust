@@ -12,7 +12,9 @@ import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Getter
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustToolchain
@@ -48,17 +50,49 @@ class CargoTestRunState(
     }
 
     override fun prepareCommandLine(): CargoCommandLine =
-        commandLine.copy(additionalArguments = addCustomArguments(commandLine.additionalArguments))
+        commandLine.copy(additionalArguments = patchArgs(commandLine.additionalArguments))
 
-    private fun addCustomArguments(additionalArguments: List<String>): List<String> {
-        // FIXME Cargo Test panics when --test-threads is repeated
-        val mut = additionalArguments.toMutableList()
-        val index = mut.indexOf("--")
-        if (index < 0) {
-            mut.addAll(listOf("--", "--nocapture", "--test-threads", "1"))
-        } else {
-            mut.addAll(index + 1, listOf("--nocapture", "--test-threads", "1"))
+    companion object {
+        /**
+         * This method is @TestOnly because it should be private, but there are unit tests for it.
+         *
+         * Libtest likes to yell when there are duplicated
+         * args, so we cannot just insert our defaults :(
+         */
+        @TestOnly
+        fun patchArgs(args: List<String>): List<String> {
+            val ddIdx = args.indexOf("--")
+            val (cargoArgs, libtestArgs) =
+                if (ddIdx < 0) {
+                    args to mutableListOf()
+                } else {
+                    args.subList(0, ddIdx) to args.subList(ddIdx + 1, args.size).toMutableList()
+                }
+
+            val nocapture = "--nocapture"
+            val noFailFast = "--no-fail-fast"
+            val testThreads = "--test-threads"
+
+            if (nocapture !in libtestArgs) libtestArgs.add(nocapture)
+            if (noFailFast !in libtestArgs) libtestArgs.add(noFailFast)
+
+            if (testThreads !in libtestArgs) {
+                libtestArgs.add(testThreads)
+                libtestArgs.add("1")
+            } else {
+                val idx = libtestArgs.indexOf(testThreads)
+                if (idx < libtestArgs.size - 1) {
+                    if (libtestArgs[idx + 1].all(StringUtil::isDecimalDigit)) {
+                        libtestArgs[idx + 1] = "1"
+                    } else {
+                        libtestArgs.add(idx + 1, "1")
+                    }
+                } else {
+                    libtestArgs.add("1")
+                }
+            }
+
+            return cargoArgs + "--" + libtestArgs
         }
-        return mut
     }
 }
