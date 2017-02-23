@@ -313,6 +313,19 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         <i>match arm binding:</i> Foo { <b>foo</b> } [main.rs]
     """)
 
+    fun `test match arm with cfg attribute`() = doTest("""
+        enum Foo {}
+        fn foo(f: Foo) {
+            match f {
+                #[cfg(afsd)]
+                Basdfwe => { Basdf<caret>we },
+                _ => {},
+            }
+        }
+    """, """
+        <i>match arm binding:</i> <b>Basdfwe</b> [main.rs]
+    """)
+
     fun `test match if let`() = doTest("""
         fn foo() {
             if let Some(ref foo) = None {
