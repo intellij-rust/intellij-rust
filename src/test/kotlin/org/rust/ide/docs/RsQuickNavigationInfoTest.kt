@@ -287,7 +287,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
             };
         }
     """, """
-        <i>match arm:</i> <b>foo</b> [main.rs]
+        <i>match arm binding:</i> <b>foo</b> [main.rs]
     """)
 
     fun `test match arm 2`() = doTest("""
@@ -298,7 +298,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
             };
         }
     """, """
-        <i>match arm:</i> Some(<b>foo</b>) [main.rs]
+        <i>match arm binding:</i> Some(<b>foo</b>) [main.rs]
     """)
 
     fun `test match arm 3`() = doTest("""
@@ -310,7 +310,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
             };
         }
     """, """
-        <i>match arm:</i> Foo { <b>foo</b> } [main.rs]
+        <i>match arm binding:</i> Foo { <b>foo</b> } [main.rs]
     """)
 
     fun `test match if let`() = doTest("""
@@ -318,20 +318,21 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
             if let Some(ref foo) = None {
                 *fo<caret>o
             }
+        }
     """, """
-        let Some(ref <b>foo</b>) = None [main.rs]
+        <i>condition binding:</i> let Some(ref <b>foo</b>) = None [main.rs]
     """)
 
     fun `test file 1`() = doTest("""
         const PI: f64 = std::f<caret>64::consts::PI;
     """, """
-        mod f64 [f64.rs]
+        mod <b>f64</b> [f64.rs]
     """)
 
     fun `test file 2`() = doTest("""
         const PI: f64 = st<caret>d::f64::consts::PI;
     """, """
-        <i>crate</i> [lib.rs]
+        <b>crate</b> [lib.rs]
     """)
 
     private fun doTest(code: String, expected: String) {
