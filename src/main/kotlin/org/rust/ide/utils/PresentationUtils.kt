@@ -71,7 +71,7 @@ val RsNamedElement.presentationInfo: PresentationInfo get() {
             when (patOwner) {
                 is RsLetDecl -> Pair("variable", createDeclarationInfo(patOwner, identifier, false, listOf(patOwner.typeReference)))
                 is RsValueParameter -> Pair("value parameter", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.typeReference)))
-                is RsMatchPat -> Pair("match arm binding", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner)))
+                is RsMatchPat -> Pair("match arm binding", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.lastChild)))
                 is RsCondition -> Pair("condition binding", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.lastChild)))
                 else -> Pair("binding", createDeclarationInfo(this, identifier, true))
             }
@@ -95,7 +95,7 @@ private fun createDeclarationInfo(decl: RsCompositeElement, id: PsiElement?, isA
         .dropWhile { it is PsiWhiteSpace || it is PsiComment || it is RsOuterAttr }
         .firstOrNull()
 
-    val signatureStart = signatureStartElement?.startOffsetInParent ?: return DeclarationInfo("", "", isAmbiguous)
+    val signatureStart = signatureStartElement?.startOffsetInParent ?: return null
     val idStart = id.ancestors.takeWhile { it != decl }.sumBy { it.startOffsetInParent }
 
     // pick (in order) elements we should stop at
