@@ -137,18 +137,27 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                                 //^ unresolved
     """)
 
-    fun `test string slice resolve`()= stubOnlyResolve("""
-    //- main.rs
-        fn main() { "test".lines(); }
-                            //^ ...libcollections/str.rs
-    """)
+    fun `test string slice resolve`() {
+        if (is2016_2()) return
 
-    fun `test slice resolve`()= stubOnlyResolve("""
-    //- main.rs
-        fn main() {
-            let x : [i32];
-            x.iter()
-             //^ ...libcollections/slice.rs
-        }
-    """)
+        stubOnlyResolve("""
+
+        //- main.rs
+            fn main() { "test".lines(); }
+                                //^ ...libcollections/str.rs
+        """)
+    }
+
+    fun `test slice resolve`() {
+        if (is2016_2()) return
+
+        stubOnlyResolve("""
+        //- main.rs
+            fn main() {
+                let x : [i32];
+                x.iter()
+                 //^ ...libcollections/slice.rs
+            }
+        """)
+    }
 }
