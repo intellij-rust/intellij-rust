@@ -4,8 +4,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.DebugUtil
+import com.intellij.psi.util.PsiTreeUtil
 import org.junit.experimental.categories.Category
 import org.rust.Performance
 import org.rust.lang.RsFileType
@@ -18,6 +20,15 @@ class RsParserPerformanceTest : RsTestBase() {
     override val dataPath: String = ""
 
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
+
+
+    // Use this function to check that some code does not blow up
+    // on some strange real-world PSI.
+//    fun `test anything`() = forAllPsiElements { element ->
+//        if (element is RsNamedElement) {
+//            check(element.name != null)
+//        }
+//    }
 
     fun testHighlightingPerformance() {
         val file = rustSrcDir().findFileByRelativePath("libsyntax/parse/parser.rs")!!
@@ -101,6 +112,24 @@ class RsParserPerformanceTest : RsTestBase() {
             println("${"%3d".format(time)}ms ${"%3d".format(fileLength / 1024)}kb: $path")
         }
         println()
+    }
+
+    @Suppress("unused")
+    private fun forAllPsiElements(f: (PsiElement) -> Unit) {
+        VfsUtilCore.visitChildrenRecursively(rustSrcDir(), object : VirtualFileVisitor<Void>() {
+            override fun visitFileEx(file: VirtualFile): Result {
+                if (file.fileType != RsFileType) return CONTINUE
+                val fileContent = String(file.contentsToByteArray())
+
+                val psi = PsiFileFactory.getInstance(project).createFileFromText(file.name, file.fileType, fileContent)
+
+                PsiTreeUtil.processElements(psi) {
+                    f(it)
+                    true
+                }
+                return CONTINUE
+            }
+        })
     }
 
     private fun rustSrcDir(): VirtualFile = projectDescriptor.stdlib!!
