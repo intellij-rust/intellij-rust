@@ -24,7 +24,7 @@ class RsTraitTreeElement(element: RsTraitItem) : PsiTreeElementBase<RsTraitItem>
         val trait = element ?: return emptyList()
         return listOf(
             trait.functionList.map(::RsFunctionTreeElement),
-            trait.constantList.map(::RsConstantTreeElement)
+            trait.constantList.map(::RsBaseTreeElement)
         ).flatten().sortedBy { it.element?.textOffset }
     }
 }

@@ -11,9 +11,9 @@ import org.rust.lang.core.psi.util.ancestors
 
 class PresentationInfo(
     element: RsNamedElement,
-    private val type: String?,
-    private val declaration: DeclarationInfo?,
-    private val name: String? = element.name
+    val type: String?,
+    val name: String,
+    private val declaration: DeclarationInfo
 ) {
     private val location: String?
 
@@ -21,28 +21,29 @@ class PresentationInfo(
         location = element.containingFile?.let { " [${it.name}]" }.orEmpty()
     }
 
-    val typeNameText: String get() = "$type `$name`"
+    val typeNameText: String get() = if (type == null) { name } else "$type `$name`"
 
-    val projectStructureItemText: String get() = "$name${declaration?.suffix}"
+    val projectStructureItemText: String get() = "$name${declaration.suffix}"
 
-    val declarationText: String
-        get() = if (declaration == null)
-            "<b>$name</b>"
-        else
-            "${declaration.prefix}<b>$name</b>${declaration.suffix}"
+    val projectStructureItemTextWithValue: String get() = "$projectStructureItemText${declaration.value}"
+
+    val signatureText: String = "${declaration.prefix}<b>$name</b>${declaration.suffix.escaped}"
 
     val quickDocumentationText: String
-        get() = if (declaration?.isAmbiguous ?: true && type != null) { "<i>$type:</i> " } else { "" } + "$declarationText$location"
+        get() = if (declaration.isAmbiguous && type != null) { "<i>$type:</i> " } else { "" } + "$signatureText${valueText.escaped}$location"
 
+    private val valueText: String get() = if (declaration.value.isEmpty()) { "" } else { " ${declaration.value}" }
 }
 
 data class DeclarationInfo(
-    val prefix: String,
-    val suffix: String,
+    val prefix: String = "",
+    val suffix: String = "",
+    val value: String = "",
     val isAmbiguous: Boolean = false
 )
 
-val RsNamedElement.presentationInfo: PresentationInfo get() {
+val RsNamedElement.presentationInfo: PresentationInfo? get() {
+    val elementName = name ?: return null
 
     val declInfo = when (this) {
         is RsFunction -> Pair("function", createDeclarationInfo(this, identifier, false, listOf(whereClause, retType, valueParameterList)))
@@ -51,8 +52,8 @@ val RsNamedElement.presentationInfo: PresentationInfo get() {
         is RsEnumItem -> Pair("enum", createDeclarationInfo(this, identifier, false, listOf(whereClause)))
         is RsEnumVariant -> Pair("enum variant", createDeclarationInfo(this, identifier, false, listOf(tupleFields)))
         is RsTraitItem -> Pair("trait", createDeclarationInfo(this, identifier, false, listOf(whereClause)))
-        is RsTypeAlias -> Pair("type alias", createDeclarationInfo(this, identifier, false, listOf(typeReference, typeParamBounds, whereClause)))
-        is RsConstant -> Pair("constant", createDeclarationInfo(this, identifier, false, listOf(expr, typeReference)))
+        is RsTypeAlias -> Pair("type alias", createDeclarationInfo(this, identifier, false, listOf(typeReference, typeParamBounds, whereClause), eq))
+        is RsConstant -> Pair("constant", createDeclarationInfo(this, identifier, false, listOf(expr, typeReference), eq))
         is RsSelfParameter -> Pair("parameter", createDeclarationInfo(this, self, false, listOf(typeReference)))
         is RsTypeParameter -> Pair("type parameter", createDeclarationInfo(this, identifier, true))
         is RsLifetimeDecl -> Pair("lifetime", createDeclarationInfo(this, quoteIdentifier, true))
@@ -78,47 +79,61 @@ val RsNamedElement.presentationInfo: PresentationInfo get() {
         }
         is RsFile -> {
             val mName = modName
-            if (isCrateRoot) return PresentationInfo(this, "crate", DeclarationInfo("", ""), "crate")
-            else if (mName != null) return PresentationInfo(this, "mod", DeclarationInfo("mod ", ""), name.substringBeforeLast(".rs"))
-            else Pair("file", null)
+            if (isCrateRoot) return PresentationInfo(this, "crate", "crate", DeclarationInfo())
+            else if (mName != null) return PresentationInfo(this, "mod", name.substringBeforeLast(".rs"), DeclarationInfo("mod "))
+            else Pair("file", DeclarationInfo())
         }
         else -> Pair(javaClass.simpleName, createDeclarationInfo(this, navigationElement, true))
     }
-    return PresentationInfo(this, declInfo.first, declInfo.second)
+    return declInfo.second?.let { PresentationInfo(this, declInfo.first, elementName, it) }
 }
 
-private fun createDeclarationInfo(decl: RsCompositeElement, id: PsiElement?, isAmbiguous: Boolean, stopAt: List<PsiElement?> = emptyList()): DeclarationInfo? {
-    if (id == null) return null
+private fun createDeclarationInfo(decl: RsCompositeElement, name: PsiElement?, isAmbiguous: Boolean, stopAt: List<PsiElement?> = emptyList(), valueSeparator: PsiElement? = null): DeclarationInfo? {
+    // Break an element declaration into elements. For example:
+    //
+    // pub const Foo: u32 = 100;
+    // ^^^^^^^^^ signature prefix
+    //           ^^^ name
+    //              ^^^^^ signature suffix
+    //                    ^^^^^ value
+    //                        ^ end
+    if (name == null) return null
 
-    // Remove trailing spaces, comments and attributes
-    val signatureStartElement = generateSequence(decl.firstChild) { it.nextSibling }
+    // Remove leading spaces, comments and attributes
+    val signatureStart = generateSequence(decl.firstChild) { it.nextSibling }
         .dropWhile { it is PsiWhiteSpace || it is PsiComment || it is RsOuterAttr }
         .firstOrNull()
+        ?.startOffsetInParent ?: return null
 
-    val signatureStart = signatureStartElement?.startOffsetInParent ?: return null
-    val idStart = id.ancestors.takeWhile { it != decl }.sumBy { it.startOffsetInParent }
+    val nameStart = name.offsetIn(decl)
 
     // pick (in order) elements we should stop at
-    // if they all fail, drop down to the end of the id element
-    val signatureEnd = stopAt
+    // if they all fail, drop down to the end of the name element
+    val end = stopAt
         .filterNotNull().firstOrNull()
         ?.let { it.startOffsetInParent + it.textLength }
-        ?: idStart + id.textLength
+        ?: nameStart + name.textLength
 
-    val idEnd = idStart + id.textLength
-    check(signatureStart <= idStart && idStart <= idEnd &&
-        idEnd <= signatureEnd && signatureEnd <= decl.textLength)
+    val valueStart = valueSeparator?.offsetIn(decl) ?: end
 
-    val beforeIdent = decl.text.substring(signatureStart, idStart).escaped
-    val afterIdent = decl.text.substring(idEnd, signatureEnd)
+    val nameEnd = nameStart + name.textLength
+
+    check(signatureStart <= nameStart && nameEnd <= valueStart
+        && valueStart <= end && end <= decl.textLength)
+
+    val prefix = decl.text.substring(signatureStart, nameStart).escaped
+    val value = decl.text.substring(valueStart, end)
+    val suffix = decl.text.substring(nameEnd, end - value.length)
         .replace("""\s+""".toRegex(), " ")
         .replace("( ", "(")
         .replace(" )", ")")
         .replace(" ,", ",")
         .trimEnd()
-        .escaped
 
-    return DeclarationInfo(beforeIdent, afterIdent, isAmbiguous)
+    return DeclarationInfo(prefix, suffix, value, isAmbiguous)
 }
+
+private fun PsiElement.offsetIn(owner: PsiElement): Int =
+    ancestors.takeWhile { it != owner }.sumBy { it.startOffsetInParent }
 
 private val String.escaped: String get() = StringUtil.escapeXml(this)

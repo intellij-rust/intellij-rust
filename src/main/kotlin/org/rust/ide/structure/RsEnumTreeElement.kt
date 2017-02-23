@@ -7,7 +7,6 @@ class RsEnumTreeElement(element: RsEnumItem) : PsiTreeElementBase<RsEnumItem>(el
 
     override fun getPresentableText() = element?.name
 
-    override fun getChildrenBase() = getVariants().orEmpty().map(::RsEnumVariantTreeElement)
+    override fun getChildrenBase() = element?.enumBody?.enumVariantList.orEmpty().map(::RsBaseTreeElement)
 
-    private fun getVariants() = element?.enumBody?.enumVariantList
 }
