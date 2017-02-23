@@ -8,6 +8,6 @@ class RsStructTreeElement(element: RsStructItem) : PsiTreeElementBase<RsStructIt
 
     override fun getPresentableText() = element?.name
 
-    override fun getChildrenBase() = (element?.namedFields ?: emptyList()).map(::RsStructDeclFieldTreeElement)
+    override fun getChildrenBase() = (element?.namedFields ?: emptyList()).map(::RsBaseTreeElement)
 
 }

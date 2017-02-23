@@ -16,16 +16,12 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
         val name = if (element is RsMod) element.modName else element.name
         val header = if (name != null) "<pre>$name</pre>\n" else ""
-        val functionSignature = (element as? RsFunction)?.presentationInfo?.declarationText
+        val functionSignature = (element as? RsFunction)?.presentationInfo?.signatureText
         val signature = if (functionSignature != null) "<pre>$functionSignature</pre>\n" else ""
         val doc = element.documentationAsHtml() ?: ""
         return header + signature + doc
     }
 
     override fun getQuickNavigateInfo(e: PsiElement, originalElement: PsiElement?): String? =
-        if (e is RsNamedElement) {
-            e.presentationInfo.quickDocumentationText
-        } else {
-            null
-        }
+        (e as? RsNamedElement)?.presentationInfo?.quickDocumentationText
 }
