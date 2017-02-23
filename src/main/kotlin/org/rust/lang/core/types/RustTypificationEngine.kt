@@ -247,43 +247,43 @@ private fun RsImplItem.remapTypeParameters(
         }.toMap()
 
 
-fun RsExpr.isConvertibleTo(type: RustType): Boolean = type.findSubtypes(project).contains(type)
+fun RsExpr.isCoercibleTo(type: RustType): Boolean = type.findCoercions(project).contains(type)
 
-fun RustType.findSubtypes(project: Project): Sequence<RustType> {
+fun RustType.findCoercions(project: Project): Sequence<RustType> {
     val subtypes = mutableSetOf<RustType>()
-    findSubtypes(subtypes, project)
+    findCoercions(subtypes, project)
     return subtypes.asSequence()
 }
 
-private fun RustType.findSubtypes(subtypes: MutableSet<RustType>, project: Project) {
+private fun RustType.findCoercions(subtypes: MutableSet<RustType>, project: Project) {
     if (!subtypes.add(this)) {
         return
     }
     if (this is RustReferenceType) {
-        RustPointerType(referenced, mutable).findSubtypes(subtypes, project)
+        RustPointerType(referenced, mutable).findCoercions(subtypes, project)
         if (mutable) {
-            RustReferenceType(referenced, false).findSubtypes(subtypes, project)
+            RustReferenceType(referenced, false).findCoercions(subtypes, project)
         }
 
         val base = stripAllRefsIfAny()
         base.getImplsIn(project, "Deref")
             .forEach { impl: RsImplItem ->
                 impl.findAssocType("Target")
-                    ?.typeReference?.type?.findSubtypes(subtypes, project)
+                    ?.typeReference?.type?.findCoercions(subtypes, project)
             }
         base.getTraitsImplementedIn(project)
             .distinct()
             .map { it.type }
-            .forEach { it.findSubtypes(subtypes, project) }
+            .forEach { it.findCoercions(subtypes, project) }
 
     }
     if (this is RustPointerType) {
         if (mutable) {
-            RustPointerType(referenced, false).findSubtypes(subtypes, project)
+            RustPointerType(referenced, false).findCoercions(subtypes, project)
         }
     }
     if(this is RustArrayType) {
-        RustSliceType(base).findSubtypes(subtypes, project)
+        RustSliceType(base).findCoercions(subtypes, project)
     }
 }
 

@@ -521,4 +521,29 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             FOO.field;
         }       //^
     """)
+
+    fun `test string slice resolve`()= checkByCode("""
+        impl<T> &str {
+            fn foo(&self) {}
+              //X
+        }
+
+        fn main() {
+            "test".foo();
+                    //^
+        }
+    """)
+
+    fun `test slice resolve`()= checkByCode("""
+        impl<T> [T] {
+            fn foo(&self) {}
+              //X
+        }
+
+        fn main() {
+            let x : [i32];
+            x.foo()
+             //^
+        }
+    """)
 }

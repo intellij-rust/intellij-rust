@@ -136,4 +136,19 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() { use self::m::Some; }
                                 //^ unresolved
     """)
+
+    fun `test string slice resolve`()= stubOnlyResolve("""
+    //- main.rs
+        fn main() { "test".lines(); }
+                            //^ ...libcollections/str.rs
+    """)
+
+    fun `test slice resolve`()= stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            let x : [i32];
+            x.iter()
+             //^ ...libcollections/slice.rs
+        }
+    """)
 }

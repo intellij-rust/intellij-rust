@@ -17,6 +17,7 @@ import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustTypeFingerprint
 import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustSliceType
+import org.rust.lang.core.types.types.RustStringSliceType
 import org.rust.lang.core.types.types.RustStructOrEnumTypeBase
 
 
@@ -33,7 +34,7 @@ object RsImplIndex {
     fun findImplsFor(target: RustType, project: Project): Sequence<RsImplItem> {
         val inherentImpls = when (target) {
             is RustStructOrEnumTypeBase -> InherentImpls.find(target.item)
-            is RustSliceType -> InherentImpls.find(target, project)
+            is RustSliceType, RustStringSliceType -> InherentImpls.find(target, project)
             else -> emptySequence()
         }
 
@@ -60,10 +61,9 @@ object RsImplIndex {
                     GlobalSearchScope.allScope(project),
                     RsImplItem::class.java
                 ).asSequence()
-                if(target is RustSliceType) {
-                    return elements
-                } else {
-                    return elements.filter {
+                return when (target) {
+                    is RustSliceType, RustStringSliceType -> elements
+                    else -> elements.filter {
                         it.typeReference?.type == target
                     }
                 }

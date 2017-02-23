@@ -76,23 +76,20 @@ private fun typeReferenceToType(ref: RsTypeReference): RustType {
 
         is RsArrayType -> {
             val expr = ref.expr
-            if (expr == null) {
-                RustSliceType(ref.typeReference?.type ?: return RustUnknownType)
-            } else {
-                if(expr is RsLitExpr) {
+            when (expr) {
+                null -> RustSliceType(ref.typeReference?.type ?: RustUnknownType)
+                is RsLitExpr -> {
                     val size = try {
                         expr.text.toInt() // TODO need more precise handling
                     } catch (e: NumberFormatException) {
                         return RustUnknownType
                     }
                     RustArrayType(expr.type, size)
-                } else {
-                    RustUnknownType
                 }
+                else -> RustUnknownType
             }
         }
 
-        else ->
-            RustUnknownType
+        else -> RustUnknownType
     }
 }

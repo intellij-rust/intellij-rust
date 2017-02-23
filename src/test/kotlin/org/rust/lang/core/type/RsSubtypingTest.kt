@@ -4,7 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.types.findSubtypes
+import org.rust.lang.core.types.findCoercions
 import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustIntegerType
 
@@ -15,7 +15,7 @@ class RsSubtypingTest : RsTestBase() {
         InlineFile(code)
         val (expr, data) = findElementAndDataInEditor<RsExpr>()
         val types = data.split(",").map(String::trim)
-        assertThat(expr.type.findSubtypes(expr.project).map { it.toString() }.toList())
+        assertThat(expr.type.findCoercions(expr.project).map { it.toString() }.toList())
             .containsOnly(*types.toTypedArray())
     }
 
