@@ -1,5 +1,0 @@
--consts.rs
- SEVEN: f64
- BOOK_TITLE: &'static str
- PUB_CONSTANT: i32
- PI: (i32, f64)
