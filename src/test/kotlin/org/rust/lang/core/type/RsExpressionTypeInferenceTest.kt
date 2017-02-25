@@ -330,6 +330,16 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test usize in array size`() = testExpr("""
+        fn foo() { let _ = [0u8; 10]; }
+                                //^ usize
+    """)
+
+    fun `test isize in enum variant discriminant`() = testExpr("""
+        enum Foo { BAR = 32 }
+                        //^ isize
+    """)
+
     fun testBinOperatorsBool() {
         val cases = listOf(
             Pair("1 == 2", "bool"),
