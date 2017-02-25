@@ -12,8 +12,7 @@ class RsRenameProcessor : RenamePsiElementProcessor() {
 
     override fun canProcessElement(element: PsiElement): Boolean = true
 
-    override fun prepareRenaming(element: PsiElement, newName: String?, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {
-        if (newName == null) return
+    override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {
         if (element is RsLifetime || element is RsLifetimeDecl || element is RsLabel || element is RsLabelDecl) {
             allRenames.put(element, newName.ensureQuote())
         } else {
