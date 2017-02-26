@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.operator
 
 /**
  * Checks for use of the non-existent =*, =! and =- operators that are probably typos but can be compiled.

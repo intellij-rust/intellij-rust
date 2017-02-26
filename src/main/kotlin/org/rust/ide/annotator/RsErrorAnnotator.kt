@@ -16,9 +16,8 @@ import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.AddSelfFix
 import org.rust.ide.annotator.fixes.ImplementMethodsFix
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.impl.mixin.*
-import org.rust.lang.core.psi.util.*
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.symbols.RustPath
@@ -242,7 +241,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkImpl(holder: AnnotationHolder, impl: RsImplItem) {
-        val trait = impl.traitRef?.trait ?: return
+        val trait = impl.traitRef?.resolveToTrait ?: return
         val traitName = trait.name ?: return
 
         val canImplement = trait.functionList.associateBy { it.name }

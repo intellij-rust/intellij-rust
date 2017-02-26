@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.impl.mixin.valueParameters
+import org.rust.lang.core.psi.ext.valueParameters
 
 class AddSelfFix(val function: RsFunction) : LocalQuickFixAndIntentionActionOnPsiElement(function) {
     override fun getFamilyName() = "Add self to function"

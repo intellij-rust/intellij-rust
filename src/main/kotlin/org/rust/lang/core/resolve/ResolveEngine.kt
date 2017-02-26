@@ -14,10 +14,9 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.getPsiFor
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.impl.mixin.*
-import org.rust.lang.core.psi.impl.rustMod
-import org.rust.lang.core.psi.util.*
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.rustMod
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment

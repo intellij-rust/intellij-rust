@@ -15,7 +15,8 @@ import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_CO
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.util.stringLiteralValue
+import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
+import org.rust.lang.core.psi.ext.stringLiteralValue
 import org.rust.lang.doc.psi.RsDocKind
 import java.net.URI
 

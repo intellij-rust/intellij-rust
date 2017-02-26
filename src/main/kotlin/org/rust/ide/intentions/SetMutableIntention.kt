@@ -6,9 +6,9 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsRefLikeType
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.impl.isMut
-import org.rust.lang.core.psi.impl.isRef
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.isMut
+import org.rust.lang.core.psi.ext.isRef
+import org.rust.lang.core.psi.ext.parentOfType
 
 /**
  * Set reference mutable

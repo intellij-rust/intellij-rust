@@ -6,14 +6,13 @@ import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.PsiPolyVariantReferenceBase
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.ResolveCache
-import org.rust.lang.core.psi.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
-import org.rust.lang.core.psi.RsNamedElement
+import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsReferenceElement
-import org.rust.lang.core.psi.util.elementType
-import org.rust.lang.core.psi.util.parentRelativeRange
+import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.lang.core.psi.ext.elementType
 
 abstract class RsReferenceBase<T : RsReferenceElement>(
     element: T
@@ -38,8 +37,9 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
     final override fun getRangeInElement(): TextRange = super.getRangeInElement()
 
     final override fun calculateDefaultRangeInElement(): TextRange {
-        check(element.referenceAnchor.parent === element)
-        return element.referenceAnchor.parentRelativeRange
+        val anchor = element.referenceAnchor
+        check(anchor.parent === element)
+        return TextRange.from(anchor.startOffsetInParent, anchor.textLength)
     }
 
     override fun handleElementRename(newName: String): PsiElement {

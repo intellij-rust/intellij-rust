@@ -11,7 +11,9 @@ import com.intellij.psi.util.PsiUtilCore
 import org.rust.ide.highlight.RsHighlighter
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.RsItemElement
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.parentOfType
 import kotlin.reflect.KClass
 
 sealed class RsContextType(

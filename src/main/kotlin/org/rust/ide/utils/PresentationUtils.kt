@@ -5,9 +5,11 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.impl.mixin.topLevelPattern
-import org.rust.lang.core.psi.util.ancestors
+import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.topLevelPattern
+import org.rust.lang.core.psi.ext.ancestors
 
 class PresentationInfo(
     element: RsNamedElement,

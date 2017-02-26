@@ -6,8 +6,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.util.descendantsOfType
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.operator
+import org.rust.lang.core.psi.ext.operatorType
+import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.utils.isNegation
 import org.rust.lang.utils.negateToString
 

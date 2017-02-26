@@ -4,7 +4,7 @@ import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsElementTypes.COLON
-import org.rust.lang.core.psi.util.elementType
+import org.rust.lang.core.psi.ext.elementType
 
 class RsCompletionContributor : CompletionContributor() {
 

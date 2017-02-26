@@ -11,7 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RS_RAW_LITERALS
-import org.rust.lang.core.psi.impl.RsFile
+import org.rust.lang.core.psi.RsFile
 
 class RsRawLiteralHashesInserter : TypedHandlerDelegate() {
     override fun beforeCharTyped(c: Char, project: Project, editor: Editor, file: PsiFile, fileType: FileType): Result {

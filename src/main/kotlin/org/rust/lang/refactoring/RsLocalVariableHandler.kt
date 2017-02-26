@@ -15,11 +15,11 @@ import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.util.ancestors
-import org.rust.lang.core.psi.util.findExpressionAtCaret
-import org.rust.lang.core.psi.util.findExpressionInRange
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.ancestors
+import org.rust.ide.utils.findExpressionAtCaret
+import org.rust.ide.utils.findExpressionInRange
+import org.rust.lang.core.psi.ext.parentOfType
 import java.util.*
 
 /**

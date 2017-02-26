@@ -1,8 +1,9 @@
 package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.topLevelPattern
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.RsFieldsOwner
+import org.rust.lang.core.psi.ext.topLevelPattern
+import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.types.types.RustReferenceType
 import org.rust.lang.core.types.types.RustStructType
 import org.rust.lang.core.types.types.RustTupleType

@@ -1,6 +1,6 @@
 package org.rust.lang.core.resolve
 
-import org.rust.lang.core.psi.RsReferenceElement
+import org.rust.lang.core.psi.ext.RsReferenceElement
 
 
 class RsMultiResolveTest : RsResolveTestBase() {

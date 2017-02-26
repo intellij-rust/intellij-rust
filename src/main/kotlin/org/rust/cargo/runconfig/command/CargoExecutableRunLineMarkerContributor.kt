@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.util.elementType
+import org.rust.lang.core.psi.ext.elementType
 
 class CargoExecutableRunLineMarkerContributor : RunLineMarkerContributor() {
     override fun getInfo(element: PsiElement): Info? {

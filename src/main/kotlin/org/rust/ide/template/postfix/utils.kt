@@ -8,7 +8,7 @@ import com.intellij.util.Function
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.util.ancestors
+import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustBooleanType
 import org.rust.lang.utils.negate

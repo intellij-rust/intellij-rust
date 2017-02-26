@@ -2,7 +2,7 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsLabel
-import org.rust.lang.core.psi.RsNamedElement
+import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.resolve.ResolveEngine
 
 class RsLabelReferenceImpl(

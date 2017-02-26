@@ -17,10 +17,11 @@ import org.rust.ide.formatter.RsFmtContext
 import org.rust.ide.formatter.settings.RsCodeStyleSettings
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.util.containsEOL
-import org.rust.lang.core.psi.util.elementType
-import org.rust.lang.core.psi.util.getNextNonCommentSibling
-import org.rust.lang.core.psi.util.getPrevNonCommentSibling
+import org.rust.lang.core.psi.ext.RsItemElement
+import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.getNextNonCommentSibling
+import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 import com.intellij.psi.tree.TokenSet.create as ts
 
 fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: RsCodeStyleSettings): SpacingBuilder {
@@ -250,8 +251,7 @@ private fun ASTNode.hasLineBreakBeforeInSameParent(): Boolean =
     treePrev != null && TreeUtil.findLastLeaf(treePrev).isWhiteSpaceWithLineBreak()
 
 private fun ASTNode?.isWhiteSpaceWithLineBreak(): Boolean =
-    this != null && elementType == WHITE_SPACE && containsEOL()
-
+    this != null && elementType == WHITE_SPACE && textContains('\n')
 
 private fun SpacingContext.needsBlankLineBetweenItems(): Boolean {
     if (elementType1 in RS_COMMENTS || elementType2 in RS_COMMENTS)

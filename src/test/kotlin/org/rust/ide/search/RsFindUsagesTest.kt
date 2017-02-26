@@ -3,7 +3,7 @@ package org.rust.ide.search
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.RsNamedElement
+import org.rust.lang.core.psi.ext.RsNamedElement
 
 class RsFindUsagesTest : RsTestBase() {
     override val dataPath: String get() = ""

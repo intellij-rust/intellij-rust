@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsStructOrEnumItemElement
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
+import org.rust.lang.core.psi.ext.parentOfType
 
 class AddImplIntention : RsElementBaseIntentionAction<AddImplIntention.Context>() {
     override fun getText() = "Add impl block"

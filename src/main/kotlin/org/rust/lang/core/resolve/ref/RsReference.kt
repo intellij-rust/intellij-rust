@@ -1,7 +1,7 @@
 package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiPolyVariantReference
-import org.rust.lang.core.psi.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsCompositeElement
 
 interface RsReference : PsiPolyVariantReference {
 

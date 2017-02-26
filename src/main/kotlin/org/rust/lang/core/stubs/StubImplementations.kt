@@ -7,8 +7,8 @@ import com.intellij.psi.stubs.*
 import com.intellij.psi.tree.IStubFileElementType
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.*
-import org.rust.lang.core.psi.impl.mixin.*
 
 
 class RsFileStub : PsiFileStubImpl<RsFile> {
@@ -281,7 +281,7 @@ class RsModDeclItemStub(
     override val name: String?,
     override val isPublic: Boolean,
     val pathAttribute: String?,
-    val isLocal: Boolean
+    val isLocal: Boolean    //TODO: get rid of it
 ) : StubBase<RsModDeclItem>(parent, elementType),
     RsNamedStub,
     RsVisibilityStub {

@@ -8,11 +8,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsMod
-import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.impl.mixin.RsFunctionRole
-import org.rust.lang.core.psi.impl.mixin.role
-import org.rust.lang.core.psi.impl.mixin.superMethod
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.RsFunctionRole
+import org.rust.lang.core.psi.ext.role
+import org.rust.lang.core.psi.ext.superMethod
 
 class RsGotoSuperHandler : LanguageCodeInsightActionHandler {
     override fun startInWriteAction() = false

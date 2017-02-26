@@ -6,8 +6,8 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.impl.mixin.isStarImport
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.isStarImport
+import org.rust.lang.core.psi.ext.parentOfType
 
 /**
  * Adds curly braces to singleton imports, changing from this

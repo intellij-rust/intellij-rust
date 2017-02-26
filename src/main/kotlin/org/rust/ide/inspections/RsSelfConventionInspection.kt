@@ -5,9 +5,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.psi.impl.mixin.*
-import org.rust.lang.core.psi.queryAttributes
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.types.RustStructOrEnumTypeBase
 import org.rust.lang.core.types.type
 

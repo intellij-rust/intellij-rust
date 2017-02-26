@@ -2,6 +2,7 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.types.isPrimitive
 import org.rust.lang.core.types.type
 

@@ -12,9 +12,10 @@ import org.rust.lang.core.completion.psiElement
 import org.rust.lang.core.completion.withSuperParent
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.impl.mixin.RsConstantKind
-import org.rust.lang.core.psi.impl.mixin.kind
+import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.RsConstantKind
+import org.rust.lang.core.psi.ext.kind
 
 /**
  * Rust PSI tree patterns.

@@ -7,11 +7,9 @@ import com.intellij.psi.util.PsiModificationTracker
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.COMMA
-import org.rust.lang.core.psi.impl.isMut
-import org.rust.lang.core.psi.impl.isRef
-import org.rust.lang.core.psi.impl.mixin.asRustPath
-import org.rust.lang.core.psi.util.elementType
-import org.rust.lang.core.psi.util.getPrevNonCommentSibling
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.asRustPath
+import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.ResolveEngine
 import org.rust.lang.core.symbols.RustPath

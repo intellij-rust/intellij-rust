@@ -4,7 +4,8 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.completion.CompletionEngine
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.resolve.ResolveEngine
 
 class RsStructExprFieldReferenceImpl(

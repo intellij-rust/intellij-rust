@@ -11,12 +11,12 @@ import org.rust.cargo.runconfig.cargoArgumentSpeck
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.lang.core.psi.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsMod
-import org.rust.lang.core.psi.containingCargoTarget
-import org.rust.lang.core.psi.impl.mixin.isTest
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.containingCargoTarget
+import org.rust.lang.core.psi.ext.isTest
+import org.rust.lang.core.psi.ext.parentOfType
 
 class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType()) {
 

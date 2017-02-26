@@ -8,9 +8,9 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.lang.core.psi.RsItemElement
-import org.rust.lang.core.psi.util.ancestors
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.RsItemElement
+import org.rust.lang.core.psi.ext.ancestors
+import org.rust.lang.core.psi.ext.parentOfType
 
 class RsInspectionSuppressor : InspectionSuppressor {
     override fun getSuppressActions(element: PsiElement?, toolId: String): Array<out SuppressQuickFix> = arrayOf(

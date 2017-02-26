@@ -9,8 +9,8 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsStructOrEnumItemElement
-import org.rust.lang.core.psi.impl.mixin.isAssocFn
+import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
+import org.rust.lang.core.psi.ext.isAssocFn
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.types.RustStructOrEnumTypeBase

@@ -4,20 +4,18 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.isRef
-import org.rust.lang.core.psi.impl.mixin.selfParameter
-import org.rust.lang.core.psi.impl.mixin.valueParameters
-import org.rust.lang.core.psi.util.contains
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.typeParameters
+import org.rust.lang.core.psi.ext.isRef
+import org.rust.lang.core.psi.ext.selfParameter
+import org.rust.lang.core.psi.ext.valueParameters
+import org.rust.lang.core.psi.ext.parentOfType
 
 class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
     override fun getText() = "Un-elide lifetimes"
     override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsFunction? {
-        val fn = element.parentOfType<RsFunction>() ?: return null
-        val scope = element.parentOfType<RsBlock>()
-        if (fn.contains(scope)) return null
+        val fn = element.parentOfType<RsFunction>(stopAt = RsBlock::class.java) ?: return null
 
         if ((fn.retType?.typeReference as? RsRefLikeType)?.lifetime != null) return null
 

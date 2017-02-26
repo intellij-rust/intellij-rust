@@ -29,6 +29,8 @@ import org.rust.lang.core.RsPsiPattern.onTestFn
 import org.rust.lang.core.RsPsiPattern.onTrait
 import org.rust.lang.core.RsPsiPattern.onTupleStruct
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
+import org.rust.lang.core.psi.ext.queryAttributes
 
 object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() {
 

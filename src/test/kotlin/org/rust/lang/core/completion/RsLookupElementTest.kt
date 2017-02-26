@@ -4,8 +4,8 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.RsNamedElement
-import org.rust.lang.core.psi.impl.RsFile
+import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.RsFile
 
 class RsLookupElementTest : RsTestBase() {
     override val dataPath: String get() = ""

@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.ANDAND
 import org.rust.lang.core.psi.RsElementTypes.OROR
+import org.rust.lang.core.psi.ext.operatorType
 
 /**
  * Returns `true` if all elements are `true`, `false` if there exists
@@ -100,16 +101,16 @@ val RsUnaryExpr.operatorType: UnaryOperator?
         else -> null
     }
 
-fun RsExpr.canBeSimplified(): Boolean = 
+fun RsExpr.canBeSimplified(): Boolean =
     simplifyBooleanExpression(peek = true).second
 
-fun RsExpr.simplifyBooleanExpression() = 
+fun RsExpr.simplifyBooleanExpression() =
     simplifyBooleanExpression(peek = false)
 
 /**
  * Simplifies a boolean expression if can.
  *
- * @param peek if true then does not perform any changes on PSI, 
+ * @param peek if true then does not perform any changes on PSI,
  *             `expr` is not defined and `result` indicates if this expression
  *             can be simplified
  * @return `(expr, result)` where `expr` is a resulting expression,
@@ -130,7 +131,7 @@ private fun RsExpr.simplifyBooleanExpression(peek: Boolean): Pair<RsExpr, Boolea
             val (leftExpr, leftSimplified) = left.simplifyBooleanExpression(peek)
             val (rightExpr, rightSimplified) = right.simplifyBooleanExpression(peek)
             if (leftExpr is RsLitExpr) {
-                if (peek) 
+                if (peek)
                     return this to true
                 simplifyBinaryOperation(this, leftExpr, rightExpr, project)?.let {
                     return it to true

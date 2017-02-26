@@ -4,7 +4,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsArrayExpr
 import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.RsVariantDiscriminant
-import org.rust.lang.core.psi.util.sizeExpr
+import org.rust.lang.core.psi.ext.sizeExpr
 
 data class RustIntegerType(val kind: Kind) : RustPrimitiveType {
 

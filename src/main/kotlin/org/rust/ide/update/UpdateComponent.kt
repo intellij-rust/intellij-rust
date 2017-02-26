@@ -17,7 +17,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.HttpRequests
 import org.jdom.JDOMException
-import org.rust.lang.core.psi.impl.isRustFile
+import org.rust.lang.core.psi.isRustFile
 import java.io.IOException
 import java.net.URLEncoder
 import java.net.UnknownHostException

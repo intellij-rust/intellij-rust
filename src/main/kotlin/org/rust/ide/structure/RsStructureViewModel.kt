@@ -5,7 +5,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel
 import com.intellij.openapi.editor.Editor
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RsFile
+import org.rust.lang.core.psi.RsFile
 
 class RsStructureViewModel(editor: Editor?, file: RsFile) : TextEditorBasedStructureViewModel(editor, file),
                                                             StructureViewModel.ElementInfoProvider {

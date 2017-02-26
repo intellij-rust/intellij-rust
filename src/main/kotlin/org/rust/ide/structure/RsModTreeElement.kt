@@ -2,7 +2,7 @@ package org.rust.ide.structure
 
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
-import org.rust.lang.core.psi.RsMod
+import org.rust.lang.core.psi.ext.RsMod
 
 open class RsModTreeElement(item: RsMod) : PsiTreeElementBase<RsMod>(item) {
     override fun getPresentableText() = element?.name

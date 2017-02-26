@@ -2,9 +2,8 @@ package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.impl.mixin.*
-import org.rust.lang.core.psi.util.parentOfType
-import org.rust.lang.core.psi.visitors.RustComputingVisitor
+import org.rust.lang.core.psi.RustComputingVisitor
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.types.*
 
 object RustTypificationEngine {

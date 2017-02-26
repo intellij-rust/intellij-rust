@@ -10,8 +10,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.PathUtil
 import org.intellij.lang.annotations.Language
-import org.rust.lang.core.psi.RsReferenceElement
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.utils.fullyRefreshDirectory
 
 class TestProjectBuilder(

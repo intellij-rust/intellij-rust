@@ -5,9 +5,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
 import org.rust.lang.RsFileType
-import org.rust.lang.core.psi.impl.mixin.selfParameter
-import org.rust.lang.core.psi.impl.mixin.valueParameters
-import org.rust.lang.core.psi.util.childOfType
+import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.selfParameter
+import org.rust.lang.core.psi.ext.valueParameters
+import org.rust.lang.core.psi.ext.childOfType
 
 class RsPsiFactory(private val project: Project) {
     fun createSelf(): RsSelfParameter {

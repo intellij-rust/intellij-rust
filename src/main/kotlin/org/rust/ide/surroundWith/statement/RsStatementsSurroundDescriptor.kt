@@ -5,7 +5,7 @@ import com.intellij.lang.surroundWith.SurroundDescriptor
 import com.intellij.lang.surroundWith.Surrounder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.lang.core.psi.util.findStatementsInRange
+import org.rust.ide.utils.findStatementsInRange
 
 class RsStatementsSurroundDescriptor : SurroundDescriptor {
     override fun getElementsToSurround(file: PsiFile, startOffset: Int, endOffset: Int): Array<out PsiElement> {

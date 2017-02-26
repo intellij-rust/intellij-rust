@@ -2,8 +2,8 @@
     parserClass='org.rust.lang.core.parser.RustParser'
     parserUtilClass='org.rust.lang.core.parser.RustParserUtil'
 
-    implements='org.rust.lang.core.psi.RsCompositeElement'
-    extends='org.rust.lang.core.psi.impl.RsCompositeElementImpl'
+    implements='org.rust.lang.core.psi.ext.RsCompositeElement'
+    extends='org.rust.lang.core.psi.ext.RsCompositeElementImpl'
 
     elementTypeHolderClass='org.rust.lang.core.psi.RsElementTypes'
 
@@ -134,8 +134,8 @@ MetaItemArgs ::= '(' [ <<comma_separated_list (MetaItem | LitExpr)>> ] ')'
 private PathIdent ::= !("union" identifier) identifier | self | super | 'Self'
 
 fake Path ::= [ Path '::' ] PathIdent PathTypeArguments? {
-  implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsPathImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsPathImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPathStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -150,7 +150,7 @@ private PathTypeArguments ::= <<isPathMode 'COLONS'>> ColonTypeArgumentList
                             | <<isPathMode 'NO_COLONS '>> ( TypeArgumentList | PathParameters RetType? ) // Fn(i32) -> i32 sugar
 
 TypeArgumentList ::= TypeArgumentListImpl {
-  extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -191,7 +191,7 @@ QualifiedPathWithoutColons ::= '<' TypeReference [ as TraitRef] '>' '::' PathGen
 
 // Path semantically constrained to resolve to a trait
 TraitRef ::= PathGenericArgsWithoutColons {
-  extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -239,15 +239,15 @@ private Items ::= Item_with_recover*
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 LifetimeDecl ::= QUOTE_IDENTIFIER {
-  implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsLifetimeDeclImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsLifetimeDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsLifetimeDeclStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 Lifetime ::= QUOTE_IDENTIFIER {
-  implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsLifetimeImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsLifetimeImplMixin"
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -256,7 +256,7 @@ Lifetime ::= QUOTE_IDENTIFIER {
 
 // Parameters
 fake ValueParameter ::= Pat? TypeReference? {
-  extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -267,14 +267,14 @@ AnonParameter ::= [ RestrictedPat ':' ] TypeReference
 PathParameter ::= TypeReference !'='
 
 SelfParameter ::= [ '&' Lifetime? ] mut? self TypeAscription? {
-  implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsSelfParameterImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsSelfParameterImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsSelfParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 fake ValueParameterList ::= SelfParameter? ValueParameter* '...'? {
-  extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -293,7 +293,7 @@ private meta variadic_params_impl ::= '(' [ <<param>> (',' <<param>>)*  [ ',' '.
 private RestrictedPat ::= &( [ mut | '&' '&'? ] ( identifier | '_' ) ) Pat
 
 TypeParameterList ::= '<' LifetimesParams TypeParams '>' {
-  extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -302,15 +302,15 @@ private LifetimesParams ::= <<list_element LifetimeParameter>>*
 private TypeParams      ::= <<list_element TypeParameter>>*
 
 LifetimeParameter ::= OuterAttr* LifetimeDecl LifetimeParamBounds? {
-  implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsLifetimeParameterImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsLifetimeParameterImplMixin"
 }
 
 LifetimeParamBounds ::= ':' Lifetime ('+' Lifetime)*
 
 TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' TypeReference ] {
-  implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
-  extends = "org.rust.lang.core.psi.impl.RsStubbedNamedElementImpl<?>"
+  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedNamedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsTypeParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -328,7 +328,7 @@ ExternAbi ::= extern STRING_LITERAL?
 
 RetType ::= '->' TypeReference {
   pin = 1
-  extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -345,12 +345,12 @@ Function ::= OuterAttr*
              (';' | InnerAttrsAndBlock)
 {
   pin = 'identifier'
-  implements = [ "org.rust.lang.core.psi.RsQualifiedNamedElement"
-                 "org.rust.lang.core.psi.RsGenericDeclaration"
-                 "org.rust.lang.core.psi.RsOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RsInnerAttributeOwner"
-                 "org.rust.lang.core.psi.RsTypeBearingItemElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsFunctionImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
+                 "org.rust.lang.core.psi.ext.RsGenericDeclaration"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
+                 "org.rust.lang.core.psi.ext.RsInnerAttributeOwner"
+                 "org.rust.lang.core.psi.ext.RsTypeBearingItemElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsFunctionImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsFunctionStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
@@ -402,8 +402,8 @@ PatRef ::= '&' mut? Pat
 
 PatWild ::= '_'
 PatBinding ::= BindingMode? identifier !'...' !'::' {
-  implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsPatBindingImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsPatBindingImplMixin"
 }
 
 PatField ::= identifier ':' Pat | box? PatBinding
@@ -412,9 +412,9 @@ BindingMode ::= ref mut? | mut
 
 Constant ::= OuterAttr* default_? Vis? (static mut? | const) identifier TypeAscription [ '=' AnyExpr ] ';' {
   pin = 'identifier'
-  implements = [ "org.rust.lang.core.psi.RsNamedElement"
-                 "org.rust.lang.core.psi.RsItemElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsConstantImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement"
+                 "org.rust.lang.core.psi.ext.RsItemElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsConstantImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsConstantStub"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -423,8 +423,8 @@ Constant ::= OuterAttr* default_? Vis? (static mut? | const) identifier TypeAscr
 UseItem ::= AttrsAndVis use UsePath ';' {
   pin = "use"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RsItemElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsUseItemImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsItemElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsUseItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsUseItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -441,14 +441,14 @@ private UsePath ::= '::'? UseGlobList
 
 UseGlobList ::= '{' UseGlob_with_recover* '}' {
   pin = 1
-  extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent<?>"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl.WithParent<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 UseGlob ::= (identifier | self) Alias? {
-  implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsUseGlobImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsUseGlobImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsUseGlobStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -460,8 +460,8 @@ private UseGlob_with_recover ::= !'}' UseGlob (',' | &'}') {
 private UseGlob_recover ::= !('}' | self | identifier)
 
 Alias ::= as identifier {
-  implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
-  extends = "org.rust.lang.core.psi.impl.RsStubbedNamedElementImpl<?>"
+  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedNamedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsAliasStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -469,10 +469,10 @@ Alias ::= as identifier {
 ExternCrateItem ::= AttrsAndVis extern crate identifier Alias? ';' {
   pin = "identifier"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RsReferenceElement"
-                 "org.rust.lang.core.psi.RsNamedElement"
-                 "org.rust.lang.core.psi.RsItemElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsExternCrateItemImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
+                 "org.rust.lang.core.psi.ext.RsNamedElement"
+                 "org.rust.lang.core.psi.ext.RsItemElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsExternCrateItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsExternCrateItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -480,11 +480,11 @@ ExternCrateItem ::= AttrsAndVis extern crate identifier Alias? ';' {
 ModItem ::= AttrsAndVis mod identifier '{' InnerAttr* Items '}' {
   pin = 4
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RsNamedElement"
-                 "org.rust.lang.core.psi.RsItemElement"
-                 "org.rust.lang.core.psi.RsMod"
-                 "org.rust.lang.core.psi.RsInnerAttributeOwner" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsModItemImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement"
+                 "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsMod"
+                 "org.rust.lang.core.psi.ext.RsInnerAttributeOwner" ]
+  mixin = "org.rust.lang.core.psi.ext.RsModItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsModItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -492,18 +492,18 @@ ModItem ::= AttrsAndVis mod identifier '{' InnerAttr* Items '}' {
 ModDeclItem ::= AttrsAndVis mod identifier ';' {
   pin = 'identifier' // make sure `ModDeclItem` goes **after** `ModItem`
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RsReferenceElement"
-                 "org.rust.lang.core.psi.RsNamedElement"
-                 "org.rust.lang.core.psi.RsItemElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsModDeclItemImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
+                 "org.rust.lang.core.psi.ext.RsNamedElement"
+                 "org.rust.lang.core.psi.ext.RsItemElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsModDeclItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsModDeclItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 ForeignModItem ::= AttrsAndVis ExternAbi '{' InnerAttr* ForeignDecl* '}' {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RsItemElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsForeignModItemImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsItemElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsForeignModItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -519,9 +519,9 @@ StructItem ::= AttrsAndVis (struct | union) identifier TypeParameterList?
                ( TupleStructTail | BlockStructTail | UnitStructTail ) {
   pin = 2
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RsStructOrEnumItemElement"
-                 "org.rust.lang.core.psi.RsFieldsOwner" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsStructItemImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsStructOrEnumItemElement"
+                 "org.rust.lang.core.psi.ext.RsFieldsOwner" ]
+  mixin = "org.rust.lang.core.psi.ext.RsStructItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsStructItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -532,15 +532,15 @@ private BlockStructTail ::= WhereClause? BlockFields
 
 EnumItem ::= AttrsAndVis enum identifier TypeParameterList? WhereClause? EnumBody {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = "org.rust.lang.core.psi.RsStructOrEnumItemElement"
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsEnumItemImplMixin"
+  implements = "org.rust.lang.core.psi.ext.RsStructOrEnumItemElement"
+  mixin = "org.rust.lang.core.psi.ext.RsEnumItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsEnumItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 EnumBody ::= '{' [ <<comma_separated_list EnumVariant>> ] '}' {
   pin = 1
-  extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent<?>"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl.WithParent<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -548,11 +548,11 @@ EnumBody ::= '{' [ <<comma_separated_list EnumVariant>> ] '}' {
 EnumVariant ::= OuterAttr* identifier VariantArgs? {
   pin = 2
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RsQualifiedNamedElement"
-                 "org.rust.lang.core.psi.RsNamedElement"
-                 "org.rust.lang.core.psi.RsOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RsFieldsOwner" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsEnumVariantImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
+                 "org.rust.lang.core.psi.ext.RsNamedElement"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
+                 "org.rust.lang.core.psi.ext.RsFieldsOwner" ]
+  mixin = "org.rust.lang.core.psi.ext.RsEnumVariantImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsEnumVariantStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -561,14 +561,14 @@ private VariantArgs ::= BlockFields | TupleFields | VariantDiscriminant
 
 BlockFields ::= '{' (FieldDecl (',' | &'}'))* '}' {
   pin = 1
-  extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent<?>"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl.WithParent<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 TupleFields ::= '(' (TupleFieldDecl (',' | &')'))* ')' {
   pin = 1
-  extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent<?>"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl.WithParent<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -578,10 +578,10 @@ VariantDiscriminant ::= '=' AnyExpr { pin = 1 }
 FieldDecl ::= AttrsAndVis identifier TypeAscription {
   pin = 2
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RsOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RsVisibilityOwner"
-                 "org.rust.lang.core.psi.RsNamedElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsFieldDeclImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
+                 "org.rust.lang.core.psi.ext.RsVisibilityOwner"
+                 "org.rust.lang.core.psi.ext.RsNamedElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsFieldDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsFieldDeclStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
   recoverWhile = Field_recover
@@ -589,9 +589,9 @@ FieldDecl ::= AttrsAndVis identifier TypeAscription {
 private Field_recover ::= !('}' | ',')
 
 TupleFieldDecl ::= AttrsAndVis TypeReference {
-  implements = [ "org.rust.lang.core.psi.RsOuterAttributeOwner"
-                 "org.rust.lang.core.psi.RsVisibilityOwner" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsTupleFieldDeclImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
+                 "org.rust.lang.core.psi.ext.RsVisibilityOwner" ]
+  mixin = "org.rust.lang.core.psi.ext.RsTupleFieldDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
@@ -606,10 +606,10 @@ private TupleField_recover ::= !(')' | ',')
 
 TraitItem ::= AttrsAndVis unsafe? trait identifier TypeParameterList? TypeParamBounds? WhereClause? TraitBody {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RsQualifiedNamedElement"
-                 "org.rust.lang.core.psi.RsTypeBearingItemElement"
-                 "org.rust.lang.core.psi.RsGenericDeclaration" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsTraitItemImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
+                 "org.rust.lang.core.psi.ext.RsTypeBearingItemElement"
+                 "org.rust.lang.core.psi.ext.RsGenericDeclaration" ]
+  mixin = "org.rust.lang.core.psi.ext.RsTraitItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsTraitItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -631,9 +631,9 @@ private TraitMember_recover ::= !('#' | Vis | extern | const | static | unsafe |
 ImplItem ::= AttrsAndVis unsafe? impl TypeParameterList? ( TraitImpl | InherentImpl ) {
   pin = "impl"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.RsItemElement"
-                 "org.rust.lang.core.psi.RsGenericDeclaration" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsImplItemImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsGenericDeclaration" ]
+  mixin = "org.rust.lang.core.psi.ext.RsImplItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsImplItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -667,7 +667,7 @@ TypeReference ::= ArrayType
                 | ForInType
                 | ImplTraitType {
   stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
-  extends = "org.rust.lang.core.psi.impl.RsStubbedElementImpl<?>"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
 }
 
 ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
@@ -715,10 +715,10 @@ TypeAlias ::= OuterAttr* default_? Vis? TYPE_KW identifier
               [ TypeParameterList WhereClause? | WhereClause | TypeParamBounds ]
               [ '=' TypeReference ] ';' {
   pin = 'identifier'
-  implements = [ "org.rust.lang.core.psi.RsQualifiedNamedElement"
-                 "org.rust.lang.core.psi.RsTypeBearingItemElement"
-                 "org.rust.lang.core.psi.RsGenericDeclaration" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsTypeAliasImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
+                 "org.rust.lang.core.psi.ext.RsTypeBearingItemElement"
+                 "org.rust.lang.core.psi.ext.RsGenericDeclaration" ]
+  mixin = "org.rust.lang.core.psi.ext.RsTypeAliasImplMixin"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   stubClass = "org.rust.lang.core.stubs.RsTypeAliasStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -825,8 +825,8 @@ StructExprBody ::= '{' [ <<comma_separated_list StructExprField>> ] ('..'  AnyEx
 StructExprField ::= identifier [ ':' AnyExpr ] {
   pin = 1
   recoverWhile = StructExprField_recover
-  implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsStructExprFieldImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsStructExprFieldImplMixin"
 }
 private StructExprField_recover ::= !(identifier | ',' | '}' | '..')
 
@@ -836,13 +836,13 @@ QualPathExpr ::= QualifiedPathWithColons
 
 WhileExpr ::= LabelDecl? while Condition SimpleBlock {
   pin = 'while'
-  implements = [ "org.rust.lang.core.psi.RsLabeledExpression" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression" ]
 }
 Condition ::= [ let Pat '=' ] NoStructLitExpr
 
 LoopExpr ::= LabelDecl? loop SimpleBlock {
   pin = 'loop'
-  implements = [ "org.rust.lang.core.psi.RsLabeledExpression" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression" ]
 }
 
 ContExpr ::= continue Label?
@@ -851,16 +851,16 @@ BreakExpr ::= break Label? AnyExpr?
 
 ForExpr ::= LabelDecl? for Pat in NoStructLitExpr SimpleBlock {
   pin = 'for'
-  implements = [ "org.rust.lang.core.psi.RsLabeledExpression" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression" ]
 }
 
 LabelDecl ::= QUOTE_IDENTIFIER ':' {
-  implements = [ "org.rust.lang.core.psi.RsNamedElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsLabelDeclImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsLabelDeclImplMixin"
 }
 Label ::= QUOTE_IDENTIFIER {
-  implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsLabelImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsLabelImplMixin"
 }
 
 MatchExpr ::= match NoStructLitExpr MatchBody { pin = 'match'}
@@ -909,8 +909,8 @@ private IndexArg ::= '[' Expr ']'
 CallExpr ::= Expr !<<isCompleteBlockExpr>> ValueArgumentList
 
 MethodCallExpr ::= Expr '.' identifier ColonTypeArgumentList? ValueArgumentList {
-  implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsMethodCallExprImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsMethodCallExprImplMixin"
 }
 
 ValueArgumentList ::= '(' <<comma_separated_list AnyExpr>>? ')' { pin = 1 }
@@ -918,8 +918,8 @@ ValueArgumentList ::= '(' <<comma_separated_list AnyExpr>>? ')' { pin = 1 }
 FieldId ::= identifier | INTEGER_LITERAL
 
 FieldExpr ::= Expr '.' FieldId {
-  implements = [ "org.rust.lang.core.psi.RsReferenceElement" ]
-  mixin = "org.rust.lang.core.psi.impl.mixin.RsFieldExprImplMixin"
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsFieldExprImplMixin"
 }
 
 LitExpr ::= STRING_LITERAL | BYTE_STRING_LITERAL
@@ -1021,7 +1021,7 @@ MacroExpr ::= ZzMacroCall
 PatMacro  ::= ZzMacroCall
 // TODO: Maybe implement item-related stuff for this production?
 MacroItem ::= AttrsAndVis ZzMacroItem {
-    implements = [ "org.rust.lang.core.psi.RsOuterAttributeOwner" ]
+    implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
 }
 ImplMacroMember ::= ZzMacroItem
 
@@ -1039,7 +1039,7 @@ TokenTree ::= '(' TokenTrees ')'
 
 fake Block ::= '{' InnerAttr* (Item | Stmt)* Expr? '}' {
   pin = 1
-  implements = "org.rust.lang.core.psi.RsItemsOwner"
+  implements = "org.rust.lang.core.psi.ext.RsItemsOwner"
 }
 
 SimpleBlock ::= '{' BlockElement* '}' {

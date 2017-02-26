@@ -8,8 +8,12 @@ import com.intellij.util.SmartList
 import org.rust.ide.annotator.fixes.AddStructFieldsFix
 import org.rust.ide.intentions.RemoveParenthesesFromExprIntention
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.RsStructKind
-import org.rust.lang.core.psi.impl.mixin.kind
+import org.rust.lang.core.psi.ext.RsFieldsOwner
+import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.lang.core.psi.ext.namedFields
+import org.rust.lang.core.psi.ext.queryAttributes
+import org.rust.lang.core.psi.ext.RsStructKind
+import org.rust.lang.core.psi.ext.kind
 import java.util.*
 
 class RsExpressionAnnotator : Annotator {

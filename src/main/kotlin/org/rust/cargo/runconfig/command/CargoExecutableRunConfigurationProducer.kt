@@ -11,8 +11,8 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.module
+import org.rust.lang.core.psi.ext.parentOfType
 
 class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType()) {
 

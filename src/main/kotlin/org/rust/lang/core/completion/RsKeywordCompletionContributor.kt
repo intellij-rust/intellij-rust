@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.impl.RsFile
+import org.rust.lang.core.psi.RsFile
 
 /**
  * Completes Rust keywords

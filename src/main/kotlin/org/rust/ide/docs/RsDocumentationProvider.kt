@@ -3,10 +3,10 @@ package org.rust.ide.docs
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.psi.PsiElement
 import org.rust.ide.utils.presentationInfo
-import org.rust.lang.core.psi.RsDocAndAttributeOwner
+import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsMod
-import org.rust.lang.core.psi.RsNamedElement
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.doc.documentationAsHtml
 
 class RsDocumentationProvider : AbstractDocumentationProvider() {

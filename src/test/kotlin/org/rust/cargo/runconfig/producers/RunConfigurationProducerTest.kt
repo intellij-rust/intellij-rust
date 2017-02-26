@@ -16,9 +16,9 @@ import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsMod
-import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.parentOfType
 
 class RunConfigurationProducerTest : RsTestBase() {
     override val dataPath: String get() = "org/rust/cargo/runconfig/producers/fixtures"

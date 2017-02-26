@@ -1,7 +1,7 @@
 package org.rust.lang.core.types.types
 
-import org.rust.lang.core.psi.RsStructOrEnumItemElement
-import org.rust.lang.core.psi.typeParameters
+import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
+import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.types.RustType
 
 interface RustStructOrEnumTypeBase : RustType {
