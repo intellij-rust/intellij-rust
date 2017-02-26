@@ -12,15 +12,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.cargoWorkspace
-import org.rust.ide.annotator.fixes.AddModuleFileFix
-import org.rust.ide.annotator.fixes.AddSelfFix
-import org.rust.ide.annotator.fixes.ImplementMethodsFix
+import org.rust.ide.annotator.fixes.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.symbols.RustPath
+import org.rust.lang.core.types.type
+import org.rust.lang.core.types.types.RustReferenceType
 
 class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
@@ -51,9 +51,29 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitValueParameter(o: RsValueParameter) = checkValueParameter(holder, o)
             override fun visitVis(o: RsVis) = checkVis(holder, o)
             override fun visitBinaryExpr(o: RsBinaryExpr) = checkBinary(holder, o)
+            override fun visitMethodCallExpr(o: RsMethodCallExpr) = checkMethodCall(holder, o)
+            override fun visitCallExpr(o: RsCallExpr) = checkCall(holder, o)
         }
 
         element.accept(visitor)
+    }
+
+    private fun checkCall(holder: AnnotationHolder, expr: RsCallExpr) {
+        val args = expr.valueArgumentList.exprList
+        args
+            .filter { it.expectedMutable() && !it.isMutable() }
+            .map { (it as? RsUnaryExpr)?.expr }
+            .filter { it != null }
+            .forEach {
+                createImmutableErrorAnnotation(holder, it!!)
+            }
+    }
+
+    private fun checkMethodCall(holder: AnnotationHolder, expr: RsMethodCallExpr) {
+        if (!expr.expr.isMutable() && expr.expectedMutableSelfParameter()) {
+            val left = expr.expr
+            createImmutableErrorAnnotation(holder, left)
+        }
     }
 
     private fun checkBaseType(holder: AnnotationHolder, type: RsBaseType) {
@@ -326,7 +346,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         if (o.isComparisonBinaryExpr() && (o.left.isComparisonBinaryExpr() || o.right.isComparisonBinaryExpr())) {
             holder.createErrorAnnotation(o, "Chained comparison operator require parentheses")
         } else if (o.isAssignBinaryExpr() && !o.left.isMutable()) {
-            holder.createErrorAnnotation(o, "Reassigning an immutable variable [E0384]")
+            val left = o.left
+            createImmutableErrorAnnotation(holder, left, true)
         }
     }
 
@@ -342,8 +363,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         if (realCount != expectedCount) {
             holder.createErrorAnnotation(args,
                 "This function takes $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}"
-                + " but $realCount ${pluralise(realCount, "parameter", "parameters")}"
-                + " ${pluralise(realCount, "was", "were")} supplied [E0061]")
+                    + " but $realCount ${pluralise(realCount, "parameter", "parameters")}"
+                    + " ${pluralise(realCount, "was", "were")} supplied [E0061]")
         }
     }
 
@@ -412,6 +433,35 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private val String.firstLower: String
         get() = if (isEmpty()) this else this[0].toLowerCase() + substring(1)
+
+
+    private fun createImmutableErrorAnnotation(holder: AnnotationHolder, expr: RsExpr, binary: Boolean = false) {
+        val message = when {
+            expr is RsPathExpr && binary -> "Reassigning an immutable variable [E0384]"
+            binary -> "Cannot assign to immutable field `${expr.text}`"
+            else -> {
+                "Cannot borrow immutable local variable `${expr.text}` as mutable"
+            }
+        }
+        val declaration = expr.declaration()
+        when (declaration) {
+            is RsSelfParameter -> {
+                holder.createErrorAnnotation(
+                    expr, message
+                ).registerFix(AddMutableForSelfParameterFix(declaration))
+            }
+            is RsPatBinding -> {
+                holder.createErrorAnnotation(
+                    expr, message
+                ).registerFix(AddMutableForPatBindingFix(declaration))
+            }
+            else -> {
+                holder.createErrorAnnotation(
+                    expr, message
+                )
+            }
+        }
+    }
 }
 
 private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
@@ -520,17 +570,65 @@ private fun RsCallExpr.expectedParamsCount(): Int? {
     }
 }
 
+private fun RsMethodCallExpr.expectedMutableSelfParameter(): Boolean {
+    val fn = reference.resolve() as? RsFunction ?: return false
+    val self = fn.selfParameter ?: return false
+    return self.isMut && self.isRef
+}
+
+private fun RsExpr.expectedMutable(): Boolean = (this as? RsUnaryExpr)?.mut != null
+
 private fun RsMethodCallExpr.expectedParamsCount(): Int? {
     val fn = reference.resolve() as? RsFunction ?: return null
     if (fn.queryAttributes.hasCfgAttr()) return null
     return if (fn.isInherentImpl) fn.valueParameterList?.valueParameterList?.size else null
 }
 
+private val RsCallExpr.declaration: RsFunction?
+    get() = (expr as? RsPathExpr)?.path?.reference?.resolve() as? RsFunction
+
+private fun RsExpr.declaration(): RsCompositeElement? {
+    if (this is RsPathExpr) {
+        return this.path.reference.resolve()
+    }
+    if (this is RsFieldExpr) {
+        return this.expr.declaration()
+    }
+    return null
+}
+
 private fun RsExpr.isMutable(): Boolean {
-    val path = (this as? RsPathExpr)?.path ?: return true
-    val declaration = path.reference.resolve()
+    if (this is RsPathExpr) {
+        val path = this.path
+        val declaration = path.reference.resolve()
 
-    declaration?.parentOfType<RsLetDecl>()?.eq ?: return true
+        if (declaration is RsSelfParameter) {
+            return declaration.mut != null
+        }
 
-    return (declaration as? RsPatBinding)?.isMut ?: true
+        val parameter = declaration?.parentOfType<RsValueParameter>()
+        if (parameter != null) {
+            val pat = parameter.pat
+            if (pat is RsPatIdent && pat.patBinding.isMut) {
+                return true
+            }
+            val ref = parameter.typeReference
+            if (ref is RsRefLikeType) {
+                return ref.mut != null
+            }
+            return false
+        }
+
+        declaration?.parentOfType<RsLetDecl>()?.eq ?: return true
+
+        return (declaration as? RsPatBinding)?.isMut ?: true
+    }
+    if (this is RsFieldExpr) {
+        val type = (this.expr.type as? RustReferenceType) ?: return true
+        return type.mutable
+    }
+    if (this is RsUnaryExpr) {
+        return this.expr?.isMutable() ?: true
+    }
+    return true
 }
