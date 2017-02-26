@@ -13,7 +13,7 @@ import org.rust.lang.core.psi.RsElementTypes.*
 
 open class RsTokenType(debugName: String) : IElementType(debugName, RsLanguage)
 
-private fun tokenSetOf(vararg tokens: IElementType) = TokenSet.create(*tokens)
+fun tokenSetOf(vararg tokens: IElementType) = TokenSet.create(*tokens)
 
 val RS_KEYWORDS = tokenSetOf(
     AS,

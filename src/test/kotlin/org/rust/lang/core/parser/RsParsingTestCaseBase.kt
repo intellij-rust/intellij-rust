@@ -42,8 +42,4 @@ abstract class RsParsingTestCaseBase(@NonNls dataPath: String)
         super.setUp()
         addExplicitExtension(LanguageBraceMatching.INSTANCE, RsLanguage, RsBraceMatcher())
     }
-
-    override fun tearDown() {
-        super.tearDown()
-    }
 }
