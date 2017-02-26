@@ -32,7 +32,7 @@ class LetPostfixTemplateTest : PostfixTemplateTest(LetPostfixTemplate()) {
         ,
         """
         fn foo() {
-            let /*caret*/x = (1 + 2);
+            let /*caret*/i = (1 + 2);
         }
         """
     )

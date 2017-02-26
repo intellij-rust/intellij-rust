@@ -1,6 +1,9 @@
 package org.rust.lang.core.type
 
 import org.junit.ComparisonFailure
+import org.junit.Test
+import org.rust.lang.core.types.types.RustFloatType
+import org.rust.lang.core.types.types.RustIntegerType
 
 class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun testFunctionCall() = testExpr("""
@@ -352,6 +355,76 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                 """
                 ,
                 "Case number: $i")
+        }
+    }
+
+    fun `test binary operators through trait`() {
+        val traitNames = mapOf(
+            "Add" to "+",
+            "Rem" to "%",
+            "Sub" to "-",
+            "Div" to "/",
+            "Mul" to "*",
+            "Shl" to "<<",
+            "Shr" to ">>",
+            "BitOr" to "|",
+            "BitXor" to "^",
+            "BitAnd" to "&"
+        )
+        traitNames.forEach { entry ->
+            val traitName = entry.key
+            val operation = entry.value
+            val functionName = traitName.toLowerCase()
+            testExpr("""
+                pub trait $traitName<RHS=Self> {
+                    type Output;
+                    fn $functionName(self, rhs: RHS) -> Self::Output;
+                }
+
+                struct A {
+                    b: i32
+                }
+
+                impl $traitName for A {
+                    type Output = A;
+
+                    fn $functionName(self, rhs: A) -> A {
+                        return A {b : self.b + rhs.b};
+                    }
+                }
+
+                fn main() {
+                    let a = A {b : 12};
+                    let b = A {b : 3};
+                    let x = a $operation b;
+                    x
+                  //^ A
+                }
+                """,
+                "Binary operation: $traitName")
+        }
+    }
+
+    fun `test binary operators for primitives`() {
+        val operations = listOf("+", "-", "/", "*", "%", ">>", "<<", "|", "&", "^")
+        val primitives = RustIntegerType.Kind.values()
+            .map { it.name }
+            .toMutableList()
+        RustFloatType.Kind.values()
+            .mapTo(primitives) { it.name }
+        primitives.forEach { primitive ->
+            operations.forEach { operation ->
+                testExpr("""
+                    fn main() {
+                        let a :$primitive;
+                        let b :$primitive;
+                        let x = a $operation b;
+                        x
+                      //^ $primitive
+                    }
+                    """,
+                    "Binary operation: $operation for $primitive")
+            }
         }
     }
 }

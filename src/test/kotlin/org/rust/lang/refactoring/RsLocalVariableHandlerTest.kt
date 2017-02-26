@@ -39,9 +39,9 @@ class RsLocalVariableHandlerTest : RsTestBase() {
 
         }""", """
         fn hello() {
-            let x = 5 + 10;
-            foo(x);
-            foo(x);
+            let i = 5 + 10;
+            foo(i);
+            foo(i);
         }
 
         fn foo(x: Int) {
@@ -62,9 +62,9 @@ class RsLocalVariableHandlerTest : RsTestBase() {
         }""", """
         fn main() {
             let a = 1;
-            let x = a + 1;
-            let b = x;
-            let c = x;
+            let i = a + 1;
+            let b = i;
+            let c = i;
         }""")
     {
         val ref = refactoring()
