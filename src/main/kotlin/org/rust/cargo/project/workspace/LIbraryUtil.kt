@@ -1,4 +1,4 @@
-package org.rust.cargo.util
+package org.rust.cargo.project.workspace
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.utils.checkWriteAccessAllowed
 
 /**
@@ -25,18 +26,21 @@ val Module.rustLibraryName: String get() = "Rust <$name>"
  * Hopefully this class will go away when a standard way to get rust sources appears.
  */
 class StandardLibraryRoots private constructor(
-    private val roots: List<VirtualFile>
+    val crates: List<StdCrate>
 ) {
 
+    data class StdCrate(val name: String, val crateRootUrl: String, val packageRootUrl: String)
+
     /**
-     * Creates an module level IDEA external library from [roots].
+     * Creates an module level IDEA external library from [crates].
      */
     fun attachTo(module: Module) {
-        module.updateLibrary(module.rustLibraryName, roots)
+        module.updateLibrary(module.rustLibraryName, crates.map { it.packageRootUrl })
+        CargoProjectWorkspaceService.getInstance(module).setStandardLibrary(crates)
     }
 
     fun sameAsLibrary(library: Library): Boolean
-        = roots.toSet() == library.rootProvider.getFiles(OrderRootType.CLASSES).toSet()
+        = crates.toSet() == library.rootProvider.getFiles(OrderRootType.CLASSES).toSet()
 
     companion object {
         fun fromPath(path: String): StandardLibraryRoots? =
@@ -47,7 +51,14 @@ class StandardLibraryRoots private constructor(
             val srcDir = if (sources.name == "src") sources else sources.findChild("src")
                 ?: return null
 
-            val roots = AutoInjectedCrates.stdlibCrateNames.mapNotNull { srcDir.findFileByRelativePath("lib$it") }
+            val roots = AutoInjectedCrates.stdlibCrateNames.mapNotNull { name ->
+                val pkg = srcDir.findFileByRelativePath("lib$name")
+                val lib = pkg?.findChild("lib.rs")
+                if (pkg != null && lib != null)
+                    StdCrate(name, lib.url, pkg.url)
+                else
+                    null
+            }
             if (roots.isEmpty()) return null
             return StandardLibraryRoots(roots)
         }
@@ -57,7 +68,7 @@ class StandardLibraryRoots private constructor(
 /**
  * Updates `CLASS` order-entries for the supplied module's library (referred to with `libraryName`)
  */
-fun Module.updateLibrary(libraryName: String, roots: Collection<VirtualFile>) {
+fun Module.updateLibrary(libraryName: String, urls: Collection<String>) {
     checkWriteAccessAllowed()
 
     val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
@@ -65,7 +76,7 @@ fun Module.updateLibrary(libraryName: String, roots: Collection<VirtualFile>) {
         ?: libraryTable.createLibrary(libraryName)
         ?: return
 
-    fillLibrary(library, roots)
+    fillLibrary(library, urls)
 
     ModuleRootModificationUtil.updateModel(this) { model ->
         OrderEntryUtil.findLibraryOrderEntry(model, library)?.let { previousOrderEntry ->
@@ -76,14 +87,14 @@ fun Module.updateLibrary(libraryName: String, roots: Collection<VirtualFile>) {
     }
 }
 
-private fun fillLibrary(library: Library, roots: Collection<VirtualFile>) {
+private fun fillLibrary(library: Library, urls: Collection<String>) {
     val model = library.modifiableModel
     for (url in library.getUrls(OrderRootType.CLASSES)) {
         model.removeRoot(url, OrderRootType.CLASSES)
     }
 
-    for (root in roots) {
-        model.addRoot(root, OrderRootType.CLASSES)
+    for (url in urls) {
+        model.addRoot(url, OrderRootType.CLASSES)
     }
 
     model.commit()

@@ -3,10 +3,8 @@ package org.rust.cargo.project.workspace
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleServiceManager
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.util.rustLibraryName
 
 /**
  * Cargo based project's workspace abstraction insulating inter-op with the `cargo` & `Cargo.toml`
@@ -29,6 +27,8 @@ interface CargoProjectWorkspaceService {
      * EDT thread.
      */
     fun requestImmediateUpdate(toolchain: RustToolchain, afterCommit: (UpdateResult) -> Unit)
+
+    fun setStandardLibrary(stdlib: List<StandardLibraryRoots.StdCrate>)
 
     @TestOnly
     fun syncUpdate(toolchain: RustToolchain)
@@ -55,8 +55,4 @@ interface CargoProjectWorkspaceService {
  * Extracts Cargo project description out of `Cargo.toml`
  */
 val Module.cargoWorkspace: CargoWorkspace?
-    get() = CargoProjectWorkspaceService.getInstance(this).workspace?.let {
-        val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(rustLibraryName)
-            ?: return it
-        return it.withStdlib(lib)
-    }
+    get() = CargoProjectWorkspaceService.getInstance(this).workspace

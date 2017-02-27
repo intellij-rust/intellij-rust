@@ -1,4 +1,4 @@
-package org.rust.cargo
+package org.rust.cargo.project.workspace
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.runWriteAction
@@ -8,8 +8,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import org.rust.cargo.toolchain.Rustup
-import org.rust.cargo.util.StandardLibraryRoots
-import org.rust.cargo.util.rustLibraryName
 import org.rust.ide.notifications.showBalloon
 
 class SetupRustStdlibTask(

@@ -16,22 +16,66 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.Alarm
 import org.jetbrains.annotations.TestOnly
-import org.rust.cargo.SetupRustStdlibTask
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
+import org.rust.cargo.project.workspace.*
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService.UpdateResult
-import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.util.cargoLibraryName
 import org.rust.cargo.util.cargoProjectRoot
-import org.rust.cargo.util.updateLibrary
 import org.rust.ide.notifications.showBalloon
+import org.rust.ide.utils.checkReadAccessAllowed
+import org.rust.ide.utils.checkWriteAccessAllowed
 
 
 private val LOG = Logger.getInstance(CargoProjectWorkspaceServiceImpl::class.java)
+
+
+/**
+ * [CargoWorkspace] of a real project consists of two pieces:
+ *
+ *   * Project structure reported by `cargo metadata`
+ *   * Standard library, usually retrieved from rustup.
+ *
+ * This two piece may vary independently. [WorkspaceMerger]
+ * merges them into a single [CargoWorkspace]. It's executed
+ * only on EDT, so you may think of it as an actor maintaining
+ * a two bits of state. 
+ */
+private class WorkspaceMerger {
+    private var rawWorkspace: CargoWorkspace? = null
+    private var stdlib: List<StandardLibraryRoots.StdCrate> = emptyList()
+
+    fun setStdlib(libs: List<StandardLibraryRoots.StdCrate>) {
+        checkWriteAccessAllowed()
+        stdlib = libs
+        update()
+    }
+
+    fun setRawWorkspace(workspace: CargoWorkspace) {
+        checkWriteAccessAllowed()
+        rawWorkspace = workspace
+        update()
+    }
+
+    var workspace: CargoWorkspace? = null
+        get() {
+            checkReadAccessAllowed()
+            return field
+        }
+        private set(value) {
+            field = value
+        }
+
+    private fun update() {
+        val raw = rawWorkspace
+        if (raw == null) {
+            workspace = null
+            return
+        }
+        workspace = raw.withStdlib(stdlib)
+    }
+}
 
 
 class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjectWorkspaceService {
@@ -41,12 +85,7 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
     private val debouncer = Debouncer(delayMillis = 1000, parentDisposable = module)
     private val taskQueue = BackgroundTaskQueue(module.project, "Cargo update")
 
-    /**
-     * Cached instance of the latest [CargoWorkspace] instance synced with `Cargo.toml`
-     *
-     * NOTA BENE: It inherently may be null, since there may be no `Cargo.toml` present at all
-     */
-    private var cached: CargoWorkspace? = null
+    private val workspaceMerger = WorkspaceMerger()
 
     init {
         fun refreshStdlib() {
@@ -96,6 +135,11 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
     override fun requestImmediateUpdate(toolchain: RustToolchain, afterCommit: (UpdateResult) -> Unit) =
         requestUpdate(toolchain, afterCommit)
 
+    override fun setStandardLibrary(stdlib: List<StandardLibraryRoots.StdCrate>) {
+        checkWriteAccessAllowed()
+        workspaceMerger.setStdlib(stdlib)
+    }
+
     override fun syncUpdate(toolchain: RustToolchain) {
         taskQueue.run(UpdateTask(toolchain, module.cargoProjectRoot!!.path, null))
     }
@@ -116,11 +160,7 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
      *            example, [CargoProjectWorkspaceService] wouldn't be able to provide a valid [CargoWorkspace] instance
      *            until the `Cargo.toml` becomes sound
      */
-    override val workspace: CargoWorkspace?
-        get() {
-            check(ApplicationManager.getApplication().isReadAccessAllowed)
-            return cached
-        }
+    override val workspace: CargoWorkspace? get() = workspaceMerger.workspace
 
     private fun commitUpdate(r: UpdateResult) {
         ApplicationManager.getApplication().assertIsDispatchThread()
@@ -128,8 +168,8 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
 
         if (r is UpdateResult.Ok) {
             runWriteAction {
-                cached = r.workspace
                 updateModuleDependencies(r.workspace)
+                workspaceMerger.setRawWorkspace(r.workspace)
             }
         }
 
@@ -142,7 +182,7 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
     private fun updateModuleDependencies(workspace: CargoWorkspace) {
         val libraryRoots = workspace.packages
             .filter { it.origin != PackageOrigin.WORKSPACE }
-            .mapNotNull { it.contentRoot }
+            .mapNotNull { it.contentRoot?.url }
 
         module.updateLibrary(module.cargoLibraryName, libraryRoots)
     }
