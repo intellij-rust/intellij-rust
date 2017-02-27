@@ -407,5 +407,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
           //^ [i32; 8]
         }
     """)
+
+    fun `test slice`() = testExpr("""
+        fn main() {
+            let x = [""];
+            x
+        } //^ <unknown>
+    """)
 }
 
