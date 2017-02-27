@@ -22,6 +22,8 @@ object RsIcons {
     // File types
 
     val RUST_FILE = IconLoader.getIcon("/icons/rust-file.png")
+    val MAIN_RS = IconLoader.getIcon("/icons/main-rs.png")
+    val MOD_RS = IconLoader.getIcon("/icons/mod-rs.png")
 
     // Marks
 
