@@ -5,9 +5,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsPatBinding
 
 class RsRefactoringSupportProvider : RefactoringSupportProvider() {
-    override fun isInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean {
-        return element is RsPatBinding
-    }
+    override fun isInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean = element is RsPatBinding
 
     override fun getIntroduceVariableHandler() = RsLocalVariableHandler()
 

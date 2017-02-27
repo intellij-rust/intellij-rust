@@ -1,5 +1,6 @@
 use std::io::prelude::*;
 use std::io;
+use std::fs::File;
 use std::collections::HashMap;
 
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -26,9 +27,9 @@ fn main() {
         let _ = Vec::<f64>::new();
     }).join().unwrap();
 
-    let r: &Read = &io::stdin().lock();
+    let mut f: &File = &File::open("foo.txt").unwrap();
     let mut buffer = String::new();
-    r.read_to_string(&mut buffer);
+    f.read_to_string(&mut buffer);
 }
 
 

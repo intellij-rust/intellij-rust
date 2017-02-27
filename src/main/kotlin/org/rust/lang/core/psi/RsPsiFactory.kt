@@ -11,8 +11,8 @@ import org.rust.lang.core.psi.ext.valueParameters
 import org.rust.lang.core.psi.ext.childOfType
 
 class RsPsiFactory(private val project: Project) {
-    fun createSelf(): RsSelfParameter {
-        return createFromText<RsFunction>("fn main(&self){}")?.selfParameter
+    fun createSelf(mutable: Boolean = false): RsSelfParameter {
+        return createFromText<RsFunction>("fn main(&${if (mutable) "mut " else ""}self){}")?.selfParameter
             ?: error("Failed to create self element")
     }
 
@@ -50,8 +50,9 @@ class RsPsiFactory(private val project: Project) {
         createFromText("fn main() { $text 92; }")
             ?: error("Failed to create statement from text: `$text`")
 
-    fun createLetDeclaration(name: String, expr: RsExpr, mutable: Boolean = false): RsLetDecl =
-        createStatement("let ${if (mutable) "mut " else ""}$name = ${expr.text};") as RsLetDecl
+    fun createLetDeclaration(name: String, expr: RsExpr, mutable: Boolean = false, type: RsTypeReference? = null): RsLetDecl =
+        createStatement("let ${if (mutable) "mut " else ""}$name${if (type != null) ": ${type.text}" else ""} = ${expr.text};") as RsLetDecl
+
 
     fun createType(text: String): RsTypeReference =
         createFromText("fn main() { let a : $text; }")
@@ -154,6 +155,17 @@ class RsPsiFactory(private val project: Project) {
     fun createUnsafe(): PsiElement =
         createFromText<RsFunction>("unsafe fn foo(){}")?.unsafe
             ?: error("Failed to create unsafe element")
+            
+    fun createValueParameter(name: String, type: RsTypeReference, mutable: Boolean = false): RsValueParameter {
+        return createFromText<RsFunction>("fn main($name: ${if (mutable) "&mut " else ""}${type.text}){}")
+            ?.valueParameterList?.valueParameterList?.get(0)
+            ?: error("Failed to create parameter element")
+    }
+
+    fun createPatBinding(name: String, mutable: Boolean = false): RsPatBinding =
+        (createStatement("let ${if (mutable) "mut " else ""}$name = 10;") as RsLetDecl).pat
+            ?.firstChild as RsPatBinding?
+            ?: error("Failed to create pat element")
 }
 
 private val RsFunction.signatureText: String? get() {
