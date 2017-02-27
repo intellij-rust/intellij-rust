@@ -1,9 +1,11 @@
 package org.rust.lang.core.types
 
+import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RustComputingVisitor
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.types.types.*
 
 object RustTypificationEngine {
@@ -43,6 +45,9 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
         RustUnknownType
     }
 
+
+    override fun visitCastExpr(o: RsCastExpr) = set { o.typeReference.type }
+
     override fun visitUnaryExpr(o: RsUnaryExpr) = set {
         if (o.box != null)
             RustUnknownType
@@ -52,6 +57,7 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
             when {
                 (o.and != null) -> RustReferenceType(base, o.mut != null)
                 (o.mul != null && base is RustReferenceType) -> base.referenced
+                (o.mul != null && base is RustPointerType) -> base.referenced
                 else -> base
             }
         }
@@ -140,6 +146,10 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
             .mapNotNull { it.expr?.type }
             .firstOrNull { it !is RustUnknownType }
             ?: RustUnknownType
+    }
+
+    override fun visitArrayExpr(o: RsArrayExpr) {
+        o.exprList
     }
 
     override fun visitWhileExpr(o: RsWhileExpr) = set { RustUnitType }
@@ -234,3 +244,54 @@ private fun RsImplItem.remapTypeParameters(
                 null
             }
         }.toMap()
+
+
+fun RsExpr.isCoercibleTo(type: RustType): Boolean = type.findCoercions(project).contains(type)
+
+fun RustType.findCoercions(project: Project): Sequence<RustType> {
+    val subtypes = mutableSetOf<RustType>()
+    findCoercions(subtypes, project)
+    return subtypes.asSequence()
+}
+
+private fun RustType.findCoercions(subtypes: MutableSet<RustType>, project: Project) {
+    if (!subtypes.add(this)) {
+        return
+    }
+    if (this is RustReferenceType) {
+        RustPointerType(referenced, mutable).findCoercions(subtypes, project)
+        if (mutable) {
+            RustReferenceType(referenced, false).findCoercions(subtypes, project)
+        }
+
+        val base = stripAllRefsIfAny()
+        base.getImplsIn(project, "Deref")
+            .forEach { impl: RsImplItem ->
+                impl.findAssocType("Target")
+                    ?.typeReference?.type?.findCoercions(subtypes, project)
+            }
+        base.getTraitsImplementedIn(project)
+            .distinct()
+            .map { it.type }
+            .forEach { it.findCoercions(subtypes, project) }
+
+    }
+    if (this is RustPointerType) {
+        if (mutable) {
+            RustPointerType(referenced, false).findCoercions(subtypes, project)
+        }
+    }
+    if(this is RustArrayType) {
+        RustSliceType(base).findCoercions(subtypes, project)
+    }
+}
+
+private fun RsImplItem.findAssocType(name: String) = traitRef
+    ?.path
+    ?.typeArgumentList
+    ?.assocTypeBindingList
+    ?.find { it -> it.identifier.text == name }
+
+private fun RustType.getImplsIn(project: Project, name: String) = RsImplIndex.findImplsFor(this, project)
+    .distinct()
+    .filter { it.traitRef?.path?.identifier?.text == name }

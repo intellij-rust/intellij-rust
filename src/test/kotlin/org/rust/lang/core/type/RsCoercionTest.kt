@@ -1,0 +1,120 @@
+package org.rust.lang.core.type
+
+import org.assertj.core.api.Assertions.assertThat
+import org.intellij.lang.annotations.Language
+import org.rust.lang.RsTestBase
+import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.types.findCoercions
+import org.rust.lang.core.types.type
+import org.rust.lang.core.types.types.RustIntegerType
+
+class RsCoercionTest : RsTestBase() {
+    override val dataPath = ""
+
+    fun assertCoercibleTo(@Language("Rust") code: String) {
+        InlineFile(code)
+        val (expr, data) = findElementAndDataInEditor<RsExpr>()
+        val types = data.split(",").map(String::trim)
+        assertThat(expr.type.findCoercions(expr.project).map { it.toString() }.toList())
+            .containsOnly(*types.toTypedArray())
+    }
+
+    fun `test reference subtyping`() {
+        val base = RustIntegerType(RustIntegerType.Kind.i32)
+        assertCoercibleTo("""
+            fn main() {
+                let x: &mut i32;
+                x
+              //^ &mut i32, & i32, *const i32, *mut i32
+            }
+""")
+    }
+
+    fun `test array to slice subtyping`() {
+        val base = RustIntegerType(RustIntegerType.Kind.i32)
+        assertCoercibleTo("""
+            fn main() {
+                let x: [i32; 8];
+                x
+              //^ [i32; 8], [i32]
+            }
+""")
+    }
+
+    fun `test deref subtyping`() {
+        assertCoercibleTo("""
+            struct A {
+                a : i32
+            }
+
+            pub trait Deref {
+                type Target: ?Sized;
+                fn deref(&self) -> &Self::Target;
+            }
+
+            impl Deref<Target=i32> for A {
+                fn deref(&self) -> i32 {
+                    return self.a;
+                }
+            }
+
+            fn main() {
+                let x: & A;
+                x
+              //^ & A, *const A, i32, Deref
+            }
+"""     )
+    }
+
+    fun `test deref circular`() {
+        assertCoercibleTo("""
+            struct A
+            struct B
+
+            pub trait Deref {
+                type Target: ?Sized;
+                fn deref(&self) -> &Self::Target;
+            }
+
+            impl Deref<Target=B> for A {
+                fn deref(&self) -> B {
+                    return B;
+                }
+            }
+
+            impl Deref<Target=A> for B {
+                fn deref(&self) -> A {
+                    return A;
+                }
+            }
+
+            fn main() {
+                let x: & A;
+                x
+              //^ & A, *const A, B, Deref
+            }
+"""     )
+    }
+    fun `test deref circular 2`() {
+        assertCoercibleTo("""
+            struct A
+
+            pub trait Deref {
+                type Target: ?Sized;
+                fn deref(&self) -> &Self::Target;
+            }
+
+            impl Deref<Target=A> for A {
+                fn deref(&self) -> A {
+                    return A;
+                }
+            }
+
+            fn main() {
+                let x: & A;
+                x
+              //^ & A, *const A, A, Deref
+            }
+"""     )
+    }
+}

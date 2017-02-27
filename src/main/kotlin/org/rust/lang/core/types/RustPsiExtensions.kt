@@ -59,12 +59,35 @@ private fun typeReferenceToType(ref: RsTypeReference): RustType {
         }
 
         is RsRefLikeType -> {
-            if (!ref.isRef) return RustUnknownType
             val base = ref.typeReference ?: return RustUnknownType
-            RustReferenceType(typeReferenceToType(base), ref.isMut)
+            val mutable = ref.isMut
+            if (ref.isRef) {
+                RustReferenceType(typeReferenceToType(base), mutable)
+            } else {
+                if (ref.mul != null) { //Raw pointers
+                    RustPointerType(typeReferenceToType(base), mutable)
+                } else {
+                    RustUnknownType
+                }
+            }
         }
 
-        else ->
-            RustUnknownType
+        is RsArrayType -> {
+            val expr = ref.expr
+            when (expr) {
+                null -> RustSliceType(ref.typeReference?.type ?: RustUnknownType)
+                is RsLitExpr -> {
+                    val size = try {
+                        expr.text.toInt() // TODO need more precise handling
+                    } catch (e: NumberFormatException) {
+                        return RustUnknownType
+                    }
+                    RustArrayType(expr.type, size)
+                }
+                else -> RustUnknownType
+            }
+        }
+
+        else -> RustUnknownType
     }
 }

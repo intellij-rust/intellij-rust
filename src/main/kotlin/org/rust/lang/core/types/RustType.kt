@@ -59,6 +59,8 @@ val RustType.isPrimitive: Boolean get() = when (this) {
     is RustIntegerType,
     is RustBooleanType,
     is RustCharacterType,
+    is RustArrayType,
+    is RustSliceType,
     is RustStringSliceType -> true
     else -> false
 }
