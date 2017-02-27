@@ -674,11 +674,18 @@ class RsResolveTest : RsResolveTestBase() {
                     //^
     """)
 
-    fun `test lifetime in for lifetimes`() = checkByCode("""
+    fun `test lifetime in for lifetimes 1`() = checkByCode("""
         fn foo_func<'a>(a: &'a u32) -> &'a u32 { a }
         const FOO: for<'a> fn(&'a u32)
                       //X
             -> &'a u32 = foo_func;
+               //^
+    """)
+
+    fun `test lifetime in for lifetimes 2`() = checkByCode("""
+        fn foo<F>(f: F) where F: for<'a>
+                                    //X
+            Fn(&'a i32) {}
                //^
     """)
 

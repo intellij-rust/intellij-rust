@@ -223,6 +223,7 @@ object ResolveEngine {
                     when (it) {
                         is RsGenericDeclaration -> it.typeParameterList?.lifetimeParameterList
                         is RsForInType -> it.forLifetimes.lifetimeParameterList
+                        is RsPolybound -> it.forLifetimes?.lifetimeParameterList
                         else -> null
                     }
                 }
