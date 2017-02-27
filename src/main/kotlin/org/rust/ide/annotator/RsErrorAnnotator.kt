@@ -1,5 +1,6 @@
 package org.rust.ide.annotator
 
+import com.intellij.codeInsight.PsiEquivalenceUtil
 import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.Annotation
@@ -10,15 +11,21 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.annotator.fixes.*
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsElementTypes.EQ
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.symbols.RustPath
+import org.rust.lang.core.types.type
+import org.rust.lang.core.types.types.RustReferenceType
+import org.rust.lang.core.types.types.RustTypeParameterType
+import org.rust.lang.core.types.types.RustUnknownType
 
 class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
@@ -51,6 +58,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitBinaryExpr(o: RsBinaryExpr) = checkBinary(holder, o)
             override fun visitCallExpr(o: RsCallExpr) = checkCallExpr(holder, o)
             override fun visitMethodCallExpr(o: RsMethodCallExpr) = checkMethodCallExpr(holder, o)
+            override fun visitUnaryExpr(o: RsUnaryExpr) = checkUnaryExpr(holder, o)
         }
 
         element.accept(visitor)
@@ -58,7 +66,12 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkMethodCallExpr(holder: AnnotationHolder, o: RsMethodCallExpr) {
         val fn = o.reference.resolve() as? RsFunction ?: return
-        if (fn.unsafe != null) {
+        if (!o.expr.isMutable() &&
+            fn.selfParameter != null &&
+            fn.selfParameter?.isMut ?: false &&
+            fn.selfParameter?.isRef ?: false) {
+            createImmutableErrorAnnotation(holder, o.expr)
+        } else if (fn.unsafe != null) {
             checkUnsafeCall(holder, o)
         }
     }
@@ -87,6 +100,13 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             annotation.registerFix(SurroundWithUnsafeFix(o))
             val block = o.parentOfType<RsBlock>()?.parent ?: return
             annotation.registerFix(AddUnsafeFix(block))
+        }
+    }
+
+    private fun checkUnaryExpr(holder: AnnotationHolder, unaryExpr: RsUnaryExpr) {
+        val expr = unaryExpr.expr ?: return
+        if (unaryExpr.operatorType == UnaryOperator.REF_MUT && !expr.isMutable()) {
+            createImmutableErrorAnnotation(holder, expr)
         }
     }
 
@@ -361,7 +381,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             val annotator = holder.createErrorAnnotation(o, "Chained comparison operator require parentheses")
             annotator.registerFix(AddTurbofishFix())
         } else if (o.isAssignBinaryExpr() && !o.left.isMutable()) {
-            holder.createErrorAnnotation(o, "Reassigning an immutable variable [E0384]")
+            createImmutableErrorAnnotation(holder, o.left, true)
         }
     }
 
@@ -377,8 +397,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         if (realCount != expectedCount) {
             holder.createErrorAnnotation(args,
                 "This function takes $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}"
-                + " but $realCount ${pluralise(realCount, "parameter", "parameters")}"
-                + " ${pluralise(realCount, "was", "were")} supplied [E0061]")
+                    + " but $realCount ${pluralise(realCount, "parameter", "parameters")}"
+                    + " ${pluralise(realCount, "was", "were")} supplied [E0061]")
         }
     }
 
@@ -447,6 +467,20 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private val String.firstLower: String
         get() = if (isEmpty()) this else this[0].toLowerCase() + substring(1)
+
+
+    private fun createImmutableErrorAnnotation(holder: AnnotationHolder, expr: RsExpr, binary: Boolean = false) {
+        val message = when {
+            expr is RsPathExpr && binary -> "Reassigning an immutable variable [E0384]"
+            binary -> "Cannot assign to immutable field `${expr.text}`"
+            else -> "Cannot borrow immutable local variable `${expr.text}` as mutable"
+        }
+        val annotation = holder.createErrorAnnotation(expr, message)
+        val declaration = expr.declaration() ?: return
+        if (declaration is RsSelfParameter || declaration is RsPatBinding) {
+            annotation.registerFix(AddMutableFix(declaration as RsNamedElement))
+        }
+    }
 }
 
 private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
@@ -561,11 +595,44 @@ private fun RsMethodCallExpr.expectedParamsCount(): Int? {
     return if (fn.isInherentImpl) fn.valueParameterList?.valueParameterList?.size else null
 }
 
+private val RsCallExpr.declaration: RsFunction?
+    get() = (expr as? RsPathExpr)?.path?.reference?.resolve() as? RsFunction
+
+private fun RsExpr.declaration(): RsCompositeElement? = when (this) {
+    is RsPathExpr -> this.path.reference.resolve()
+    is RsFieldExpr -> this.expr.declaration()
+    else -> null
+}
+
 private fun RsExpr.isMutable(): Boolean {
-    val path = (this as? RsPathExpr)?.path ?: return true
-    val declaration = path.reference.resolve()
+    return when (this) {
+        is RsPathExpr -> {
+            val declaration = this.path.reference.resolve() ?: return true
 
-    declaration?.parentOfType<RsLetDecl>()?.eq ?: return true
+            if (declaration is RsSelfParameter) {
+                return declaration.mut != null
+            }
 
-    return (declaration as? RsPatBinding)?.isMut ?: true
+            if (declaration is RsPatBinding && declaration.isMut) {
+                return true
+            }
+
+            val type = this.type
+            if (type is RustReferenceType) {
+                return type.mutable
+            }
+
+            val letExpr = declaration.parentOfType<RsLetDecl>()
+            if (letExpr != null && letExpr.eq == null) {
+                return true
+            }
+            if (type is RustUnknownType) {
+                return true
+            }
+            false
+        }
+        is RsFieldExpr -> (this.expr.type as? RustReferenceType)?.mutable ?: true
+        is RsUnaryExpr -> mul != null || (expr != null && expr?.isMutable() ?: true)
+        else -> true
+    }
 }
