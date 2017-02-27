@@ -2,7 +2,6 @@ package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.RustComputingVisitor
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.types.*
 
@@ -43,6 +42,9 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
         RustUnknownType
     }
 
+
+    override fun visitCastExpr(o: RsCastExpr) = set { o.typeReference.type }
+
     override fun visitUnaryExpr(o: RsUnaryExpr) = set {
         if (o.box != null)
             RustUnknownType
@@ -52,6 +54,7 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
             when {
                 (o.and != null) -> RustReferenceType(base, o.mut != null)
                 (o.mul != null && base is RustReferenceType) -> base.referenced
+                (o.mul != null && base is RustPointerType) -> base.referenced
                 else -> base
             }
         }
@@ -140,6 +143,10 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
             .mapNotNull { it.expr?.type }
             .firstOrNull { it !is RustUnknownType }
             ?: RustUnknownType
+    }
+
+    override fun visitArrayExpr(o: RsArrayExpr) {
+        o.exprList
     }
 
     override fun visitWhileExpr(o: RsWhileExpr) = set { RustUnitType }

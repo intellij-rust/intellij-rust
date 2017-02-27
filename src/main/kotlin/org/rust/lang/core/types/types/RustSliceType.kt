@@ -5,10 +5,10 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.resolveToTrait
 import org.rust.lang.core.resolve.indexes.RsImplIndex
+import org.rust.lang.core.types.RustType
 
-object RustStringSliceType : RustPrimitiveType {
-
-    override fun toString(): String = "str"
+data class RustSliceType(val elementType: RustType) : RustPrimitiveType {
+    override fun toString() = "[$elementType]"
 
     override fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> {
         return RsImplIndex.findImplsFor(this, project).mapNotNull { it.traitRef?.resolveToTrait }
