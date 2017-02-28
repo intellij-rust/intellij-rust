@@ -1,13 +1,19 @@
 package org.rust.cargo.toolchain
 
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import org.rust.TestProject
 import org.rust.TestProjectBuilder
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
+import org.rust.cargo.project.workspace.SetupRustStdlibTask
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.lang.core.psi.RsPath
+import org.rust.utils.fullyRefreshDirectory
 
 class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
@@ -180,6 +186,26 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
         CargoProjectWorkspaceService.getInstance(module).syncUpdate(module.project.toolchain!!)
         if (module.cargoWorkspace == null) {
             error("Failed to update a test Cargo project")
+        }
+    }
+
+
+    @Suppress("unused")
+    private fun openRealProject(path: String) {
+        runWriteAction {
+            VfsUtil.copyDirectory(
+                this,
+                LocalFileSystem.getInstance().findFileByPath(path)!!,
+                project.baseDir,
+                { true }
+            )
+            fullyRefreshDirectory(project.baseDir)
+        }
+
+        refreshWorkspace()
+        SetupRustStdlibTask(module, project.toolchain!!.rustup(project.baseDir.path)!!).apply {
+            run(EmptyProgressIndicator())
+            onSuccess()
         }
     }
 }
