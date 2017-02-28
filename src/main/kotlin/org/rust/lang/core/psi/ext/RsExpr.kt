@@ -24,10 +24,29 @@ val RsLitExpr.stringLiteralValue: String? get() = (kind as? RsTextLiteral)?.valu
 val RsArrayExpr.sizeExpr: RsExpr?
     get() = if (semicolon != null && exprList.size == 2) exprList[1] else null
 
+enum class UnaryOperator {
+    REF, // `&a`
+    REF_MUT, // `&mut a`
+    DEREF, // `*a`
+    MINUS, // `-a`
+    NOT, // `!a`
+    BOX, // `box a`
+}
+
+val RsUnaryExpr.operatorType: UnaryOperator get() = when {
+    mut != null -> UnaryOperator.REF_MUT
+    and != null -> UnaryOperator.REF
+    mul != null -> UnaryOperator.DEREF
+    minus != null -> UnaryOperator.MINUS
+    excl != null -> UnaryOperator.NOT
+    box != null -> UnaryOperator.BOX
+    else -> error("Unknown unary operator type: `$text`")
+}
 
 val RsBinaryExpr.operator: PsiElement
     get() = requireNotNull(node.findChildByType(BINARY_OPS)) { "guaranteed to be not-null by parser" }.psi
 
+// TODO: probably want to use a special `enum` here instead of `IElementType`.
 val RsBinaryExpr.operatorType: IElementType
     get() = operator.elementType
 

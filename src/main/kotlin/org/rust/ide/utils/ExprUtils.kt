@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.ANDAND
 import org.rust.lang.core.psi.RsElementTypes.OROR
+import org.rust.lang.core.psi.ext.UnaryOperator
 import org.rust.lang.core.psi.ext.operatorType
 
 /**
@@ -71,35 +72,6 @@ fun RsExpr.isPure(): Boolean? {
     }
 }
 
-/**
- * Enum class representing unary operator in rust.
- */
-enum class UnaryOperator {
-    REF, // `&a`
-    REF_MUT, // `&mut a`
-    DEREF, // `*a`
-    MINUS, // `-a`
-    NOT, // `!a`
-    BOX, // `box a`
-}
-
-/**
- * Operator of current psi node with unary operation.
- *
- * The result can be [REF] (`&`), [REF_MUT] (`&mut`),
- * [DEREF] (`*`), [MINUS] (`-`), [NOT] (`!`),
- * [BOX] (`box`) or `null` if none of these.
- */
-val RsUnaryExpr.operatorType: UnaryOperator?
-    get() = when {
-        this.and != null -> UnaryOperator.REF
-        this.mut != null -> UnaryOperator.REF_MUT
-        this.mul != null -> UnaryOperator.DEREF
-        this.minus != null -> UnaryOperator.MINUS
-        this.excl != null -> UnaryOperator.NOT
-        this.box != null -> UnaryOperator.BOX
-        else -> null
-    }
 
 fun RsExpr.canBeSimplified(): Boolean =
     simplifyBooleanExpression(peek = true).second
