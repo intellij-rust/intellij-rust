@@ -73,6 +73,8 @@
         <lang.psiStructureViewFactory language="Rust"
                                       implementationClass="org.rust.ide.structure.RsPsiStructureViewFactory"/>
 
+        <treeStructureProvider implementation="org.rust.ide.projectView.RsTreeStructureProvider"/>
+
         <!-- Usages Provider -->
 
         <lang.findUsagesProvider language="Rust" implementationClass="org.rust.ide.search.RsFindUsagesProvider"/>
