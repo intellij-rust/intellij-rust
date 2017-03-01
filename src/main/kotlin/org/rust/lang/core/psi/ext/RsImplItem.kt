@@ -33,8 +33,8 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
 /**
  * @return pair of two lists: (mandatory trait members, optional trait members)
  */
-fun RsImplItem.toImplementOverride(): Pair<List<RsNamedElement>, List<RsNamedElement>>? {
-    val trait = traitRef?.trait ?: return null
+fun RsImplItem.toImplementOverride(resolvedTrait: RsTraitItem? = null): Pair<List<RsNamedElement>, List<RsNamedElement>>? {
+    val trait = resolvedTrait ?: traitRef?.trait ?: return null
     val traitMembers = trait.children.filterIsInstance<RsAbstractable>() 
     val members = children.filterIsInstance<RsAbstractable>()
     val canImplement = traitMembers.associateBy { it.name }
