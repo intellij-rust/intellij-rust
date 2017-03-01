@@ -154,4 +154,69 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
             y = 42;
         }
     """)
+
+    fun `test need unsafe function`() = checkErrors("""
+        struct S;
+
+        impl S {
+            unsafe fn foo(&self) { return; }
+        }
+
+        fn main() {
+            let s = S;
+            <error descr="Call to unsafe function requires unsafe function or block [E0133]">s.foo()</error>;
+        }
+    """)
+
+    fun `test need unsafe block`() = checkErrors("""
+        struct S;
+
+        impl S {
+            unsafe fn foo(&self) { return; }
+        }
+
+        fn main() {
+            {
+                let s = S;
+                <error descr="Call to unsafe function requires unsafe function or block [E0133]">s.foo()</error>;
+            }
+        }
+    """)
+
+    fun `test need unsafe 2`() = checkErrors("""
+        unsafe fn foo() { return; }
+
+        fn main() {
+            <error>foo()</error>;
+        }
+    """)
+
+    fun `test is unsafe block`() = checkErrors("""
+        unsafe fn foo() {}
+
+        fn main() {
+            unsafe {
+                {
+                    foo();
+                }
+            }
+        }
+    """)
+
+    fun `test is unsafe function`() = checkErrors("""
+        unsafe fn foo() {}
+
+        fn main() {
+            unsafe {
+                fn bar() {
+                    <error>foo()</error>;
+                }
+            }
+        }
+    """)
+
+    fun `test unsafe call unsafe`() = checkErrors("""
+        unsafe fn foo() {}
+        unsafe fn bar() { foo(); }
+    """)
 }
