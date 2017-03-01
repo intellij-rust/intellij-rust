@@ -40,6 +40,9 @@ class RsPsiFactory(private val project: Project) {
     fun createBlockExpr(body: String): RsBlockExpr =
         createExpression("{ $body }") as RsBlockExpr
 
+    fun createUnsafeBlockExpr(body: String): RsBlockExpr =
+        createExpression("unsafe { $body }") as RsBlockExpr
+
     fun createStructExprField(name: String): RsStructExprField =
         (createExpression("S { $name: () }") as RsStructExpr).structExprBody.structExprFieldList[0]
 
@@ -148,6 +151,9 @@ class RsPsiFactory(private val project: Project) {
     fun createNewline(): PsiElement =
         PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n")
 
+    fun createUnsafe(): PsiElement =
+        createFromText<RsFunction>("unsafe fn foo(){}")?.unsafe
+            ?: error("Failed to create unsafe element")
 }
 
 private val RsFunction.signatureText: String? get() {

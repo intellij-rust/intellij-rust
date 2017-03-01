@@ -12,9 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.cargoWorkspace
-import org.rust.ide.annotator.fixes.AddModuleFileFix
-import org.rust.ide.annotator.fixes.AddSelfFix
-import org.rust.ide.annotator.fixes.ImplementMethodsFix
+import org.rust.ide.annotator.fixes.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.RsFile
@@ -51,9 +49,45 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitValueParameter(o: RsValueParameter) = checkValueParameter(holder, o)
             override fun visitVis(o: RsVis) = checkVis(holder, o)
             override fun visitBinaryExpr(o: RsBinaryExpr) = checkBinary(holder, o)
+            override fun visitCallExpr(o: RsCallExpr) = checkCallExpr(holder, o)
+            override fun visitMethodCallExpr(o: RsMethodCallExpr) = checkMethodCallExpr(holder, o)
         }
 
         element.accept(visitor)
+    }
+
+    private fun checkMethodCallExpr(holder: AnnotationHolder, o: RsMethodCallExpr) {
+        val fn = o.reference.resolve() as? RsFunction ?: return
+        if (fn.unsafe != null) {
+            checkUnsafeCall(holder, o)
+        }
+    }
+
+    private fun checkCallExpr(holder: AnnotationHolder, o: RsCallExpr) {
+        val path = (o.expr as? RsPathExpr)?.path ?: return
+        val fn = path.reference.resolve() as? RsFunction ?: return
+        if (fn.unsafe != null) {
+            checkUnsafeCall(holder, o)
+        }
+    }
+
+    private fun checkUnsafeCall(holder: AnnotationHolder, o: RsExpr) {
+        val parent = o.ancestors
+            .drop(1)    // skip the expression itself
+            .find {
+                when (it) {
+                    is RsBlockExpr -> it.unsafe != null
+                    is RsFunction -> true
+                    else -> false
+                }
+            } ?: return
+
+        if (parent is RsBlock || (parent is RsFunction && parent.unsafe == null)) {
+            val annotation = holder.createErrorAnnotation(o, "Call to unsafe function requires unsafe function or block [E0133]")
+            annotation.registerFix(SurroundWithUnsafeFix(o))
+            val block = o.parentOfType<RsBlock>()?.parent ?: return
+            annotation.registerFix(AddUnsafeFix(block))
+        }
     }
 
     private fun checkBaseType(holder: AnnotationHolder, type: RsBaseType) {
