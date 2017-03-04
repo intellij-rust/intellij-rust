@@ -423,11 +423,15 @@
             <className>org.rust.ide.intentions.IfLetToMatchIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.AddTurbofishIntention</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 
         <programRunner implementation="org.rust.cargo.runconfig.RsRunner"/>
-        <configurationType implementation="org.rust.cargo.runconfig.command.CargoCommandConfigurationType"/>
+        <configurationType implementation="org.rust.cargo.runconfig.CargoCommandRunConfigurationType"/>
         <runConfigurationProducer
             implementation="org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer"/>
         <runConfigurationProducer implementation="org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer"/>

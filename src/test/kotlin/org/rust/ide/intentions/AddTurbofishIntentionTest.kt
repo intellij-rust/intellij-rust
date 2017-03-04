@@ -1,8 +1,8 @@
 package org.rust.ide.intentions
 
-class AddNamespaceIntentionTest : RsIntentionTestBase(AddNamespaceIntention()) {
+class AddTurbofishIntentionTest : RsIntentionTestBase(AddTurbofishIntention()) {
 
-    fun testAddNamespaceBase() = doAvailableTest(
+    fun testAddTurbofishBase() = doAvailableTest(
         """
         fn foo() {
             let _ = parse/*caret*/<i32>("42");
@@ -14,7 +14,7 @@ class AddNamespaceIntentionTest : RsIntentionTestBase(AddNamespaceIntention()) {
         }
         """)
 
-    fun testAddNamespaceShouldBeAvailableAlsoInRightSide() = doAvailableTest(
+    fun testAddTurbofishShouldBeAvailableAlsoInRightSide() = doAvailableTest(
         """
         fn foo() {
             let _ = parse<i32>(/*caret*/"42");
@@ -26,7 +26,7 @@ class AddNamespaceIntentionTest : RsIntentionTestBase(AddNamespaceIntention()) {
         }
         """)
 
-    fun _testAddNamespaceShouldWorkAlsoWithMoreThanOneGenericArguments() = doAvailableTest(
+    fun _testAddTurbofishShouldWorkAlsoWithMoreThanOneGenericArguments() = doAvailableTest(
         """
         fn foo() {
             let _ = some<i32, f32>(/*caret*/"42");
@@ -38,14 +38,14 @@ class AddNamespaceIntentionTest : RsIntentionTestBase(AddNamespaceIntention()) {
         }
         """)
 
-    fun testAddNamespaceShouldNotBeAvailableIfTheIstanceIsCorrecteYet() = doUnavailableTest(
+    fun testAddTurbofishShouldNotBeAvailableIfTheInstanceIsCorrectedYet() = doUnavailableTest(
         """
         fn foo() {
             let _ = parse::</*caret*/i32>("42");
         }
         """)
 
-    fun testAddNamespaceShouldNotTriggerMisspelledComparisonSentences() {
+    fun testAddTurbofishShouldNotTriggerMisspelledComparisonSentences() {
         doUnavailableTest(
             """
             fn foo(x: i32) {
@@ -60,7 +60,7 @@ class AddNamespaceIntentionTest : RsIntentionTestBase(AddNamespaceIntention()) {
             """)
     }
 
-    fun testAddNamespaceShouldBeAilableJustIfLooksLikeAGenericReference() {
+    fun testAddTurbofishShouldBeAvailableJustIfLooksLikeAGenericReference() {
         doUnavailableTest(
             """
             fn foo(x: i32) {

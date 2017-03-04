@@ -7,11 +7,13 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.psi.RsElementTypes.*
 
-class AddNamespaceIntention : RsElementBaseIntentionAction<AddNamespaceIntention.Context>() {
+class AddTurbofishIntention : RsElementBaseIntentionAction<AddTurbofishIntention.Context>() {
+    private val TURBOFISH = "::"
+
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val (matchExpr, caller, gen, more) = ctx
         val callWithNamespace =
-            RsPsiFactory(project).createExpression("""${caller.text}::<${gen.text}>${more.text}""") as RsCallExpr
+            RsPsiFactory(project).createExpression("""${caller.text}$TURBOFISH<${gen.text}>${more.text}""") as RsCallExpr
         matchExpr.replace(callWithNamespace)
     }
 
@@ -22,16 +24,16 @@ class AddNamespaceIntention : RsElementBaseIntentionAction<AddNamespaceIntention
         val more: RsParenExpr
     )
 
-    override fun getText() = "Add missed namespace"
+    override fun getText() = "Add turbofish operator"
     override fun getFamilyName() = text
 
     private fun resolveMatchExpression(element: PsiElement): RsBinaryExpr? {
         val base = element.parentOfType<RsBinaryExpr>() ?: return null
         return if (base.left is RsBinaryExpr) {
-                base
-            } else {
-                base.parentOfType<RsBinaryExpr>()
-            }
+            base
+        } else {
+            base.parentOfType<RsBinaryExpr>()
+        }
     }
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
