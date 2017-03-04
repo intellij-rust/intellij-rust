@@ -414,7 +414,7 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
-            <className>org.rust.ide.intentions.AddNamespaceIntention</className>
+            <className>org.rust.ide.intentions.AddTurbofishIntention</className>
             <category>Rust</category>
         </intentionAction>
         <!-- Run Configurations -->
