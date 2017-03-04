@@ -11,7 +11,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.StringEscapesTokenTypes.STRING_LITERAL_ESCAPES
 import org.rust.lang.core.psi.RS_RAW_LITERALS
 import org.rust.lang.core.psi.RS_STRING_LITERALS
-import org.rust.lang.core.psi.impl.RsFile
+import org.rust.lang.core.psi.RsFile
 
 class RsEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
     override fun preprocessEnter(

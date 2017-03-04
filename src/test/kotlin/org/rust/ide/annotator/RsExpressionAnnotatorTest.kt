@@ -98,4 +98,60 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
             let _ = U <error descr="Union expressions should have exactly one field">{ a: 92, b: 92.0}</error>;
         }
     """)
+
+    fun testE0384_ReassignImmutableFromBinding() = checkErrors("""
+        fn main() {
+            let x = 5;
+            <error descr="Reassigning an immutable variable [E0384]">x = 3</error>;
+        }
+    """)
+
+    fun testE0384_ReassignMutableFromBinding() = checkErrors("""
+        fn main() {
+            let mut x = 5;
+            x = 3;
+        }
+    """)
+
+    fun testE0384_ReassignMutableFromBindingWithoutAssignement() = checkErrors("""
+        fn main() {
+            let mut x;
+            x = 3;
+        }
+    """)
+
+    fun testE0384_ReassignImmutableFromBindingWithoutAssignement() = checkErrors("""
+        fn main() {
+            let x;
+            x = 3;
+        }
+    """)
+
+    fun testE0384_ReassignMutableFromBindingThroughAsterisk() = checkErrors("""
+        fn main() {
+            let mut x = 3;
+            {
+                let y = &x;
+                *y = 5;
+            }
+        }
+    """)
+
+    fun testE0384_ReassignImmutableFromBindingThroughAsterisk() = checkErrors("""
+        fn main() {
+            let x = 3;
+            {
+                let y = &x;
+                *y = 5;
+            }
+        }
+    """)
+
+    fun `test E0384 in pattern`() = checkErrors("""
+        fn main() {
+            let (x, mut y) = (92, 62);
+            <error>x = 42</error>;
+            y = 42;
+        }
+    """)
 }

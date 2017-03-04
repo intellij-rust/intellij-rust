@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import org.rust.cargo.project.settings.toolchain
 import org.rust.ide.notifications.showBalloon
-import org.rust.lang.core.psi.impl.isRustFile
+import org.rust.lang.core.psi.isRustFile
 
 class RsFmtFileAction : DumbAwareAction() {
     override fun update(e: AnActionEvent) {

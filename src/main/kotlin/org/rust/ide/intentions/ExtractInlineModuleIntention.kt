@@ -7,8 +7,8 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.getOrCreateModuleFile
+import org.rust.lang.core.psi.ext.parentOfType
 
 //TODO: make context more precise here
 class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {

@@ -1,11 +1,18 @@
 <configurations>
   <configuration name="Run hello" class="CargoCommandConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
-    <option name="additionalArguments" value="--example hello" />
-    <option name="command" value="run" />
-    <option name="environmentVariables">
-      <map />
-    </option>
-    <option name="printBacktrace" value="true" />
+    <parameters>
+      <option name="additionalArguments">
+        <list>
+          <option value="--example" />
+          <option value="hello" />
+        </list>
+      </option>
+      <option name="command" value="run" />
+      <option name="environmentVariables">
+        <map />
+      </option>
+      <option name="printBacktrace" value="true" />
+    </parameters>
     <module name="light_idea_test_case" />
   </configuration>
 </configurations>

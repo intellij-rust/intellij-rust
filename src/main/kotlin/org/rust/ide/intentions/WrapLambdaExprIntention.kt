@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsLambdaExpr
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.parentOfType
 
 class WrapLambdaExprIntention : RsElementBaseIntentionAction<RsExpr>() {
     override fun getText() = "Add braces to lambda expression"

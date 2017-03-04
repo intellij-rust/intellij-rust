@@ -6,7 +6,7 @@ import org.rust.lang.RsTestBase
 class RenameTest : RsTestBase() {
     override val dataPath = "org/rust/ide/refactoring/fixtures/rename"
 
-    fun testFunction() = doTest("spam", """
+    fun `test function`() = doTest("spam", """
         mod a {
             mod b {
                 fn /*caret*/foo() {}
@@ -52,7 +52,13 @@ class RenameTest : RsTestBase() {
         }
     """)
 
-    fun testField() = doTest("spam", """
+    fun `test function with quote`() = doTest("'bar", """
+        fn fo/*caret*/o() { foo(); }
+    """, """
+        fn bar() { bar(); }
+    """)
+
+    fun `test field`() = doTest("spam", """
         struct S { /*caret*/foo: i32 }
 
         fn main() {
@@ -69,6 +75,28 @@ class RenameTest : RsTestBase() {
             println!("{}", x.spam);
             let foo = 62;
             S { spam: foo };
+        }
+    """)
+
+    fun `test rename lifetime`() = doTest("'bar", """
+        fn foo<'foo>(a: &/*caret*/'foo u32) {}
+    """, """
+        fn foo<'bar>(a: &'bar u32) {}
+    """)
+
+    fun `test rename lifetime without quote`() = doTest("baz", """
+        fn foo<'foo>(a: &/*caret*/'foo u32) {}
+    """, """
+        fn foo<'baz>(a: &'baz u32) {}
+    """)
+
+    fun `test rename loop label`() = doTest("'bar", """
+        fn foo() {
+            /*caret*/'foo: loop { break 'foo }
+        }
+    """, """
+        fn foo() {
+            'bar: loop { break 'bar }
         }
     """)
 

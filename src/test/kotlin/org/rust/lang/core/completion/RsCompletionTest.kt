@@ -44,7 +44,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testUseGlob() = checkSingleCompletion("quux", """
+    fun `test use glob`() = checkSingleCompletion("quux", """
         mod foo {
             pub fn quux() {}
         }
@@ -52,6 +52,14 @@ class RsCompletionTest : RsCompletionTestBase() {
         use self::foo::{q/*caret*/};
 
         fn main() {}
+    """)
+
+    fun `test use glob global`() = checkSingleCompletion("Foo", """
+        pub struct Foo;
+
+        mod m {
+            use {F/*caret*/};
+        }
     """)
 
     fun testUseItem() = checkSingleCompletion("quux", """

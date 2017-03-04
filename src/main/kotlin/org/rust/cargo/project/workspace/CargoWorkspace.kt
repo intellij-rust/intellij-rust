@@ -1,11 +1,8 @@
 package org.rust.cargo.project.workspace
 
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
-import org.rust.cargo.util.AutoInjectedCrates
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
@@ -98,26 +95,13 @@ class CargoWorkspace private constructor(
 
     fun isCrateRoot(file: VirtualFile): Boolean = findTargetForCrateRootFile(file) != null
 
-    /**
-     * Combines information about the project structure we got form cargo and information
-     * about the standard library that is stored as an IDEA external library
-     */
-    fun withStdlib(lib: Library): CargoWorkspace {
-        val roots: Map<String, VirtualFile> = lib.getFiles(OrderRootType.CLASSES).associateBy { it.name }
-        val stdlibPackages = AutoInjectedCrates.stdlibCrateNames.mapNotNull { name ->
-            roots["lib$name"]?.let { libDir ->
-                val file = libDir.findFileByRelativePath("lib.rs") ?: return@let null
-                name to file
-            }
-        }
-
-        val stdlib = stdlibPackages.map {
-            val (crateName, crateRoot) = it
+    fun withStdlib(libs: List<StandardLibraryRoots.StdCrate>): CargoWorkspace {
+        val stdlib = libs.map { crate ->
             Package(
-                contentRootUrl = crateRoot.parent.url,
-                name = crateName,
+                contentRootUrl = crate.packageRootUrl,
+                name = crate.name,
                 version = "",
-                targets = listOf(Target(crateRoot.url, name = crateName, kind = TargetKind.LIB)),
+                targets = listOf(Target(crate.crateRootUrl, name = crate.name, kind = TargetKind.LIB)),
                 source = null,
                 origin = PackageOrigin.STDLIB
             ).initTargets()

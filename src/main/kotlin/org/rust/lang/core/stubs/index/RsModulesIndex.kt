@@ -7,11 +7,11 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.PathUtil
-import org.rust.lang.core.psi.RsMod
+import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.RsModDeclItem
-import org.rust.lang.core.psi.containingMod
-import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.impl.mixin.pathAttribute
+import org.rust.lang.core.psi.ext.containingMod
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.pathAttribute
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsModDeclItemStub
 

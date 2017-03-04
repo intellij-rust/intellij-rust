@@ -5,8 +5,8 @@ import com.intellij.lang.parameterInfo.*
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.valueParameters
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.valueParameters
+import org.rust.lang.core.psi.ext.parentOfType
 
 /**
  * Provides functions/methods arguments hint.

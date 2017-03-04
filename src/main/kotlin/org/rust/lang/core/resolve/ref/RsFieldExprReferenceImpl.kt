@@ -3,7 +3,7 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.completion.CompletionEngine
 import org.rust.lang.core.psi.RsFieldExpr
-import org.rust.lang.core.psi.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.resolve.ResolveEngine
 
 class RsFieldExprReferenceImpl(

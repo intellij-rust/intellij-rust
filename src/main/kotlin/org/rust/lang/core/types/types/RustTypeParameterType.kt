@@ -2,7 +2,8 @@ package org.rust.lang.core.types.types
 
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.util.trait
+import org.rust.lang.core.psi.ext.RsGenericDeclaration
+import org.rust.lang.core.psi.ext.resolveToTrait
 import org.rust.lang.core.types.RustType
 
 data class RustTypeParameterType private constructor(
@@ -40,7 +41,7 @@ data class RustTypeParameterType private constructor(
                     .flatMap { it.typeParamBounds?.polyboundList.orEmpty().asSequence() }
 
             return (parameter.typeParamBounds?.polyboundList.orEmpty().asSequence() + whereBounds)
-                .mapNotNull { it.bound.traitRef?.trait }
+                .mapNotNull { it.bound.traitRef?.resolveToTrait }
         }
     }
 
@@ -53,7 +54,7 @@ data class RustTypeParameterType private constructor(
 
 private val RsTraitItem.superTraits: Sequence<RsTraitItem> get() {
     val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence()
-    return bounds.mapNotNull { it.bound.traitRef?.trait } + this
+    return bounds.mapNotNull { it.bound.traitRef?.resolveToTrait } + this
 }
 
 private fun transitiveClosure(traits: Sequence<RsTraitItem>): Sequence<RsTraitItem> {

@@ -1,6 +1,9 @@
 package org.rust.lang.core.resolve
 
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.RsNamedElement
 import java.util.*
 
 interface ScopeEntry {
@@ -86,6 +89,7 @@ private val TYPES_N_VALUES = TYPES + VALUES
 
 val RsNamedElement.namespaces: Set<Namespace> get() = when (this) {
     is RsMod,
+    is RsModDeclItem,
     is RsEnumItem,
     is RsTraitItem,
     is RsTypeParameter,

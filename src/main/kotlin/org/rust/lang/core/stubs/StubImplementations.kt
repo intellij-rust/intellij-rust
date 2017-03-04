@@ -7,8 +7,8 @@ import com.intellij.psi.stubs.*
 import com.intellij.psi.tree.IStubFileElementType
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.*
-import org.rust.lang.core.psi.impl.mixin.*
 
 
 class RsFileStub : PsiFileStubImpl<RsFile> {
@@ -24,7 +24,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 58
+        override fun getStubVersion(): Int = 62
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -80,6 +80,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "TUPLE_FIELDS" -> RsPlaceholderStub.Type("TUPLE_FIELDS", ::RsTupleFieldsImpl)
     "TUPLE_FIELD_DECL" -> RsPlaceholderStub.Type("TUPLE_FIELD_DECL", ::RsTupleFieldDeclImpl)
     "FIELD_DECL" -> RsFieldDeclStub.Type
+    "LIFETIME_DECL" -> RsLifetimeDeclStub.Type
     "ALIAS" -> RsAliasStub.Type
 
     "USE_GLOB_LIST" -> RsPlaceholderStub.Type("USE_GLOB_LIST", ::RsUseGlobListImpl)
@@ -280,7 +281,7 @@ class RsModDeclItemStub(
     override val name: String?,
     override val isPublic: Boolean,
     val pathAttribute: String?,
-    val isLocal: Boolean
+    val isLocal: Boolean    //TODO: get rid of it
 ) : StubBase<RsModDeclItem>(parent, elementType),
     RsNamedStub,
     RsVisibilityStub {
@@ -405,7 +406,6 @@ class RsFunctionStub(
     override val name: String?,
     override val isPublic: Boolean,
     val isAbstract: Boolean,
-    val isStatic: Boolean,
     val isTest: Boolean,
     val role: RsFunctionRole
 ) : StubBase<RsFunction>(parent, elementType),
@@ -420,7 +420,6 @@ class RsFunctionStub(
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
-                dataStream.readBoolean(),
                 dataStream.readEnum(RsFunctionRole.values())
             )
 
@@ -429,7 +428,6 @@ class RsFunctionStub(
                 writeName(stub.name)
                 writeBoolean(stub.isPublic)
                 writeBoolean(stub.isAbstract)
-                writeBoolean(stub.isStatic)
                 writeBoolean(stub.isTest)
                 writeEnum(stub.role)
             }
@@ -439,7 +437,7 @@ class RsFunctionStub(
 
         override fun createStub(psi: RsFunction, parentStub: StubElement<*>?) =
             RsFunctionStub(parentStub, this,
-                psi.name, psi.isPublic, psi.isAbstract, psi.isAssocFn, psi.isTest, psi.role)
+                psi.name, psi.isPublic, psi.isAbstract, psi.isTest, psi.role)
 
         override fun indexStub(stub: RsFunctionStub, sink: IndexSink) = sink.indexFunction(stub)
     }
@@ -735,6 +733,33 @@ class RsTypeReferenceStub(
     }
 }
 
+class RsLifetimeDeclStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    override val name: String?
+) : StubBase<RsLifetimeDecl>(parent, elementType),
+    RsNamedStub {
+
+    object Type : RsStubElementType<RsLifetimeDeclStub, RsLifetimeDecl>("LIFETIME_DECL") {
+        override fun createPsi(stub: RsLifetimeDeclStub) =
+            RsLifetimeDeclImpl(stub, this)
+
+        override fun createStub(psi: RsLifetimeDecl, parentStub: StubElement<*>?) =
+            RsLifetimeDeclStub(parentStub, this, psi.name)
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RsLifetimeDeclStub(parentStub, this,
+                dataStream.readNameAsString()
+            )
+
+        override fun serialize(stub: RsLifetimeDeclStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.name)
+            }
+
+        override fun indexStub(stub: RsLifetimeDeclStub, sink: IndexSink) {
+        }
+    }
+}
 
 private fun StubInputStream.readNameAsString(): String? = readName()?.string
 

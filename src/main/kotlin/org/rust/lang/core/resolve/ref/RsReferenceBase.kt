@@ -6,10 +6,13 @@ import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.PsiPolyVariantReferenceBase
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.ResolveCache
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
-import org.rust.lang.core.psi.util.elementType
-import org.rust.lang.core.psi.util.parentRelativeRange
+import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
+import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.lang.core.psi.ext.elementType
 
 abstract class RsReferenceBase<T : RsReferenceElement>(
     element: T
@@ -34,8 +37,9 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
     final override fun getRangeInElement(): TextRange = super.getRangeInElement()
 
     final override fun calculateDefaultRangeInElement(): TextRange {
-        check(element.referenceAnchor.parent === element)
-        return element.referenceAnchor.parentRelativeRange
+        val anchor = element.referenceAnchor
+        check(anchor.parent === element)
+        return TextRange.from(anchor.startOffsetInParent, anchor.textLength)
     }
 
     override fun handleElementRename(newName: String): PsiElement {
@@ -49,8 +53,13 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
 
     companion object {
         @JvmStatic protected fun doRename(identifier: PsiElement, newName: String) {
-            check(identifier.elementType == IDENTIFIER)
-            identifier.replace(RsPsiFactory(identifier.project).createIdentifier(newName.replace(".rs", "")))
+            val factory = RsPsiFactory(identifier.project)
+            val newId = when (identifier.elementType) {
+                IDENTIFIER -> factory.createIdentifier(newName.replace(".rs", ""))
+                QUOTE_IDENTIFIER -> factory.createQuoteIdentifier(newName)
+                else -> error("Unsupported identifier type for `$newName` (${identifier.elementType})")
+            }
+            identifier.replace(newId)
         }
     }
 }

@@ -3,7 +3,7 @@ package org.rust.lang.refactoring
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.impl.RsFile
+import org.rust.lang.core.psi.RsFile
 
 class RsNameSuggestionsKtTest : RsTestBase() {
     override val dataPath = "org/rust/lang/refactoring/fixtures/introduce_variable/"

@@ -9,8 +9,8 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <a href="https://intellij-rust.github.io/2017/02/06/changelog-29.html">
-                 https://intellij-rust.github.io/2017/02/06/changelog-29.html
+        <a href="https://intellij-rust.github.io/2017/02/27/changelog-32.html">
+                 https://intellij-rust.github.io/2017/02/27/changelog-32.html
     ]]>
     </change-notes>
 
@@ -36,6 +36,10 @@
         <lang.parserDefinition language="Rust" implementationClass="org.rust.lang.core.parser.RustParserDefinition"/>
         <stubElementTypeHolder class="org.rust.lang.core.psi.RsElementTypes"/>
 
+        <!-- Selection Handler -->
+
+        <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsListSelectionHandler"/>
+
         <!-- Syntax Highlighter -->
 
         <lang.syntaxHighlighterFactory language="Rust"
@@ -44,7 +48,7 @@
         <!-- Formatter -->
 
         <lang.formatter language="Rust" implementationClass="org.rust.ide.formatter.RsFormattingModelBuilder"/>
-        <postFormatProcessor implementation="org.rust.ide.formatter.RsCommaFormatProcessor" />
+        <postFormatProcessor implementation="org.rust.ide.formatter.RsCommaFormatProcessor"/>
 
         <!-- Refactoring support -->
 
@@ -68,6 +72,8 @@
 
         <lang.psiStructureViewFactory language="Rust"
                                       implementationClass="org.rust.ide.structure.RsPsiStructureViewFactory"/>
+
+        <treeStructureProvider implementation="org.rust.ide.projectView.RsTreeStructureProvider"/>
 
         <!-- Usages Provider -->
 
@@ -106,6 +112,10 @@
                                         implementationClass="org.rust.ide.annotator.RsTraitMethodImplLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="Rust"
                                         implementationClass="org.rust.ide.annotator.RsCrateDocLineMarkerProvider"/>
+
+        <!-- Rename Processor -->
+
+        <renamePsiElementProcessor implementation="org.rust.lang.refactoring.RsRenameProcessor" />
 
         <!-- Completion -->
 
@@ -307,7 +317,7 @@
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Simplify boolean expression"
-                         enabledByDefault="true" level="WARNING"
+                         enabledByDefault="false" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsSimplifyBooleanExpressionInspection"/>
 
         <!-- Surrounders -->
@@ -402,7 +412,7 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
-            <className>org.rust.ide.intentions.ImplementStructIntention</className>
+            <className>org.rust.ide.intentions.AddImplIntention</className>
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
@@ -413,21 +423,19 @@
             <className>org.rust.ide.intentions.IfLetToMatchIntention</className>
             <category>Rust</category>
         </intentionAction>
-        <intentionAction>
-            <className>org.rust.ide.intentions.AddNamespaceIntention</className>
-            <category>Rust</category>
-        </intentionAction>
+
         <!-- Run Configurations -->
 
         <programRunner implementation="org.rust.cargo.runconfig.RsRunner"/>
-        <configurationType implementation="org.rust.cargo.runconfig.CargoCommandRunConfigurationType"/>
+        <configurationType implementation="org.rust.cargo.runconfig.command.CargoCommandConfigurationType"/>
         <runConfigurationProducer
-            implementation="org.rust.cargo.runconfig.producers.CargoExecutableRunConfigurationProducer"/>
-        <runConfigurationProducer
-            implementation="org.rust.cargo.runconfig.producers.CargoTestRunConfigurationProducer"/>
+            implementation="org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer"/>
+        <runConfigurationProducer implementation="org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer"/>
 
         <runLineMarkerContributor language="Rust"
-                                  implementationClass="org.rust.cargo.runconfig.RsRunLineMarkerContributor"/>
+                                  implementationClass="org.rust.cargo.runconfig.command.CargoExecutableRunLineMarkerContributor"/>
+        <runLineMarkerContributor language="Rust"
+                                  implementationClass="org.rust.cargo.runconfig.test.CargoTestRunLineMarkerContributor"/>
 
         <!-- Cargo -->
 
@@ -442,6 +450,7 @@
         <!-- Icon Provider -->
 
         <iconProvider implementation="org.rust.cargo.icons.CargoIconProvider"/>
+        <iconProvider implementation="org.rust.ide.icons.RsIconProvider"/>
 
         <!-- Indices -->
 
@@ -492,9 +501,6 @@
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
 
-        <action id="Rust.RefreshCargoProject"
-                class="org.rust.ide.actions.RefreshCargoProjectAction"
-                icon="AllIcons.Actions.Refresh"/>
 
         <action id="Rust.RustExpandModuleAction"
                 class="org.rust.ide.actions.RsExpandModuleAction"
@@ -508,6 +514,14 @@
                 description="Reformat current file with rustfmt">
             <add-to-group group-id="CodeMenu" anchor="last"/>
         </action>
+
+        <action id="Rust.RefreshCargoProject"
+                class="org.rust.ide.actions.RefreshCargoProjectAction"
+                icon="AllIcons.Actions.Refresh"/>
+
+        <action id="Rust.CargoCommand"
+                class="org.rust.cargo.runconfig.command.RunCargoCommandAction"
+                text="Run Cargo command"/>
     </actions>
 
 </idea-plugin>

@@ -4,6 +4,8 @@ import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.ANDAND
 import org.rust.lang.core.psi.RsElementTypes.OROR
+import org.rust.lang.core.psi.ext.UnaryOperator
+import org.rust.lang.core.psi.ext.operatorType
 
 /**
  * Returns `true` if all elements are `true`, `false` if there exists
@@ -37,12 +39,12 @@ fun RsExpr.isPure(): Boolean? {
         }
         is RsStructExpr -> when (structExprBody.dotdot) {
             null -> structExprBody.structExprFieldList
-                .map { it.expr }
-                .allMaybe { it?.isPure() } // TODO: Why `it` can be null?
+                    .map { it.expr }
+                    .allMaybe { it?.isPure() } // TODO: Why `it` can be null?
             else -> null // TODO: handle update case (`Point{ y: 0, z: 10, .. base}`)
         }
         is RsBinaryExpr -> when (operatorType) {
-            ANDAND, OROR -> listOf(left, right!!).allMaybe(RsExpr::isPure)
+            ANDAND, OROR -> listOfNotNull(left, right).allMaybe(RsExpr::isPure)
             else -> null // Have to search if operation is overloaded
         }
         is RsTupleExpr -> exprList.allMaybe(RsExpr::isPure)
@@ -53,9 +55,9 @@ fun RsExpr.isPure(): Boolean? {
 
     // TODO: more complex analysis of blocks of code and search of implemented traits
         is RsBlockExpr, // Have to analyze lines, very hard case
-        is RsCastExpr,  // `expr.isPure()` maybe not true, think about side-effects, may panic while cast
-        is RsCallExpr,  // All arguments and function itself must be pure, very hard case
-        is RsForExpr,   // Always return (), if pure then can be replaced with it
+        is RsCastExpr, // `expr.isPure()` maybe not true, think about side-effects, may panic while cast
+        is RsCallExpr, // All arguments and function itself must be pure, very hard case
+        is RsForExpr, // Always return (), if pure then can be replaced with it
         is RsIfExpr,
         is RsIndexExpr, // Index trait can be overloaded, can panic if out of bounds
         is RsLambdaExpr,
@@ -70,69 +72,59 @@ fun RsExpr.isPure(): Boolean? {
     }
 }
 
-/**
- * Enum class representing unary operator in rust.
- */
-enum class UnaryOperator {
-    REF, // `&a`
-    REF_MUT, // `&mut a`
-    DEREF, // `*a`
-    MINUS, // `-a`
-    NOT, // `!a`
-    BOX, // `box a`
-}
 
-/**
- * Operator of current psi node with unary operation.
- *
- * The result can be [REF] (`&`), [REF_MUT] (`&mut`),
- * [DEREF] (`*`), [MINUS] (`-`), [NOT] (`!`),
- * [BOX] (`box`) or `null` if none of these.
- */
-val RsUnaryExpr.operatorType: UnaryOperator?
-    get() = when {
-        this.and != null -> UnaryOperator.REF
-        this.mut != null -> UnaryOperator.REF_MUT
-        this.mul != null -> UnaryOperator.DEREF
-        this.minus != null -> UnaryOperator.MINUS
-        this.excl != null -> UnaryOperator.NOT
-        this.box != null -> UnaryOperator.BOX
-        else -> null
-    }
+fun RsExpr.canBeSimplified(): Boolean =
+    simplifyBooleanExpression(peek = true).second
+
+fun RsExpr.simplifyBooleanExpression() =
+    simplifyBooleanExpression(peek = false)
 
 /**
  * Simplifies a boolean expression if can.
  *
+ * @param peek if true then does not perform any changes on PSI,
+ *             `expr` is not defined and `result` indicates if this expression
+ *             can be simplified
  * @return `(expr, result)` where `expr` is a resulting expression,
  *         `result` is true if an expression was actually simplified.
  */
-fun RsExpr.simplifyBooleanExpression(): Pair<RsExpr, Boolean> {
-    if (this is RsLitExpr)
-        return this to false
-    return this.evalBooleanExpression()?.let {
-        createPsiElement(project, it) to true
-    } ?: when (this) {
+private fun RsExpr.simplifyBooleanExpression(peek: Boolean): Pair<RsExpr, Boolean> {
+    val original = this to false
+    if (this is RsLitExpr) return original
+
+    val value = this.evalBooleanExpression()
+    if (value != null) {
+        return (if (peek) this else createPsiElement(project, value)) to true
+    }
+
+    return when (this) {
         is RsBinaryExpr -> {
-            val (leftExpr, leftSimplified) = left.simplifyBooleanExpression()
-            val (rightExpr, rightSimplified) = right!!.simplifyBooleanExpression()
+            val right = right ?: return original
+            val (leftExpr, leftSimplified) = left.simplifyBooleanExpression(peek)
+            val (rightExpr, rightSimplified) = right.simplifyBooleanExpression(peek)
             if (leftExpr is RsLitExpr) {
+                if (peek)
+                    return this to true
                 simplifyBinaryOperation(this, leftExpr, rightExpr, project)?.let {
                     return it to true
                 }
             }
             if (rightExpr is RsLitExpr) {
+                if (peek)
+                    return this to true
                 simplifyBinaryOperation(this, rightExpr, leftExpr, project)?.let {
                     return it to true
                 }
             }
-            if (leftSimplified)
-                this.left.replace(leftExpr)
-            if (rightSimplified)
-                this.right!!.replace(rightExpr)
+            if (!peek) {
+                if (leftSimplified)
+                    left.replace(leftExpr)
+                if (rightSimplified)
+                    right.replace(rightExpr)
+            }
             this to (leftSimplified || rightSimplified)
         }
-        else ->
-            this to false
+        else -> original
     }
 }
 

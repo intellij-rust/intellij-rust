@@ -8,44 +8,17 @@ import com.intellij.usageView.UsageViewLongNameLocation
 import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewShortNameLocation
 import com.intellij.usageView.UsageViewTypeLocation
-import org.rust.lang.core.psi.RsPatBinding
+import org.rust.ide.utils.presentationInfo
+import org.rust.lang.core.psi.ext.RsNamedElement
 
 class RsDescriptionProvider : ElementDescriptionProvider {
     override fun getElementDescription(element: PsiElement, location: ElementDescriptionLocation): String? {
         return when (location) {
-            is UsageViewNodeTextLocation -> getNodeText(element)
-            is UsageViewShortNameLocation -> getShortName(element)
-            is UsageViewLongNameLocation -> getLongName(element)
-            is UsageViewTypeLocation -> getType(element)
-            is HighlightUsagesDescriptionLocation -> getLongName(element)
-            else -> null
-        }
-    }
-
-    private fun getNodeText(element: PsiElement): String? {
-        return when (element) {
-            is RsPatBinding -> element.identifier.text
-            else -> null
-        }
-    }
-
-    private fun getShortName(element: PsiElement): String? {
-        return when (element) {
-            is RsPatBinding -> element.identifier.text
-            else -> null
-        }
-    }
-
-    private fun getLongName(element: PsiElement): String? {
-        return when (element) {
-            is RsPatBinding -> getShortName(element)
-            else -> null
-        }
-    }
-
-    private fun getType(element: PsiElement): String? {
-        return when (element) {
-            is RsPatBinding -> "variable"
+            is UsageViewNodeTextLocation -> (element as? RsNamedElement)?.name
+            is UsageViewShortNameLocation -> (element as? RsNamedElement)?.name
+            is UsageViewLongNameLocation -> (element as? RsNamedElement)?.name
+            is UsageViewTypeLocation -> (element as? RsNamedElement)?.presentationInfo?.type
+            is HighlightUsagesDescriptionLocation -> (element as? RsNamedElement)?.name
             else -> null
         }
     }

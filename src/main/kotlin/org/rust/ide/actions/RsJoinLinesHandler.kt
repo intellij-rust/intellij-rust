@@ -9,8 +9,8 @@ import org.rust.ide.typing.endsWithUnescapedBackslash
 import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.RS_STRING_LITERALS
-import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.util.elementType
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.elementType
 
 class RsJoinLinesHandler : JoinLinesHandlerDelegate {
     /**

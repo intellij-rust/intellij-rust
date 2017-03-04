@@ -12,8 +12,8 @@ import org.rust.lang.core.psi.RsFieldDecl
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructExprBody
 import org.rust.lang.core.psi.RsStructExprField
-import org.rust.lang.core.psi.util.elementType
-import org.rust.lang.core.psi.util.getNextNonCommentSibling
+import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 
 /**
  * Adds the given fields to the stricture defined by `expr`

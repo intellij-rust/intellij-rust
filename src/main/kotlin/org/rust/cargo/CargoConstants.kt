@@ -1,13 +1,13 @@
 package org.rust.cargo
 
 object CargoConstants {
-    const val ID = "Cargo"
-    const val NAME = "Cargo"
 
     const val MANIFEST_FILE = "Cargo.toml"
     const val LOCK_FILE = "Cargo.lock"
+    const val BUILD_RS_FILE = "build.rs"
 
     const val RUSTC_ENV_VAR = "RUSTC"
+    const val RUST_BACTRACE_ENV_VAR = "RUST_BACKTRACE"
 
     object Commands {
         val RUN = "run"

@@ -7,11 +7,9 @@ import com.intellij.psi.util.PsiModificationTracker
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.COMMA
-import org.rust.lang.core.psi.impl.isMut
-import org.rust.lang.core.psi.impl.isRef
-import org.rust.lang.core.psi.impl.mixin.asRustPath
-import org.rust.lang.core.psi.util.elementType
-import org.rust.lang.core.psi.util.getPrevNonCommentSibling
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.asRustPath
+import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.ResolveEngine
 import org.rust.lang.core.symbols.RustPath
@@ -61,12 +59,35 @@ private fun typeReferenceToType(ref: RsTypeReference): RustType {
         }
 
         is RsRefLikeType -> {
-            if (!ref.isRef) return RustUnknownType
             val base = ref.typeReference ?: return RustUnknownType
-            RustReferenceType(typeReferenceToType(base), ref.isMut)
+            val mutable = ref.isMut
+            if (ref.isRef) {
+                RustReferenceType(typeReferenceToType(base), mutable)
+            } else {
+                if (ref.mul != null) { //Raw pointers
+                    RustPointerType(typeReferenceToType(base), mutable)
+                } else {
+                    RustUnknownType
+                }
+            }
         }
 
-        else ->
-            RustUnknownType
+        is RsArrayType -> {
+            val expr = ref.expr
+            when (expr) {
+                null -> RustSliceType(ref.typeReference?.type ?: RustUnknownType)
+                is RsLitExpr -> {
+                    val size = try {
+                        expr.text.toInt() // TODO need more precise handling
+                    } catch (e: NumberFormatException) {
+                        return RustUnknownType
+                    }
+                    RustArrayType(expr.type, size)
+                }
+                else -> RustUnknownType
+            }
+        }
+
+        else -> RustUnknownType
     }
 }

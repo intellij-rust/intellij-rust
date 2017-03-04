@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsMethodCallExpr
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.parentOfType
 
 class UnwrapToTryIntention : RsElementBaseIntentionAction<RsMethodCallExpr>() {
     override fun getText() = "Replace .unwrap() with try"

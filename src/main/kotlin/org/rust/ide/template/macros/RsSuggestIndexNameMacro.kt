@@ -6,9 +6,9 @@ import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.codeInsight.template.macro.MacroBase
 import org.rust.lang.core.psi.RsPatBinding
-import org.rust.lang.core.psi.RsCompositeElement
-import org.rust.lang.core.psi.RsItemElement
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsItemElement
+import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.resolve.lexicalDeclarations
 
 class RsSuggestIndexNameMacro : MacroBase("rustSuggestIndexName", "rustSuggestIndexName()") {

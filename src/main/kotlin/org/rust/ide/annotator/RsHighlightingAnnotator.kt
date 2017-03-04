@@ -6,12 +6,14 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
 import org.rust.ide.highlight.RsHighlighter
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.RsFunctionRole
-import org.rust.lang.core.psi.impl.mixin.isMut
-import org.rust.lang.core.psi.impl.mixin.isAssocFn
-import org.rust.lang.core.psi.impl.mixin.role
-import org.rust.lang.core.psi.util.elementType
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.lang.core.psi.ext.RsFunctionRole
+import org.rust.lang.core.psi.ext.isMut
+import org.rust.lang.core.psi.ext.isAssocFn
+import org.rust.lang.core.psi.ext.role
+import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.types.isPrimitive
 import org.rust.lang.core.types.type
 

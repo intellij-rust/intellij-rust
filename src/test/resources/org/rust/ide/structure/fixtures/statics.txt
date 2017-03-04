@@ -1,5 +1,0 @@
--statics.rs
- N: i32
- NAME: &'static str
- MUT_N: i64
- E: (i32, f64)

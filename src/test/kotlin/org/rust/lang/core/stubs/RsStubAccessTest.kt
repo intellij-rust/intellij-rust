@@ -12,8 +12,8 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.testFramework.LoggedErrorProcessor
 import org.apache.log4j.Logger
 import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.RsCompositeElement
-import org.rust.lang.core.psi.RsNamedElement
+import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsNamedElement
 import java.util.*
 
 class RsStubAccessTest : RsTestBase() {

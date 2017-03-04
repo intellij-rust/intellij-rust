@@ -6,7 +6,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.*
+import org.rust.lang.core.psi.ext.*
 
 /**
  * Base class for naming inspections. Implements the core logic of checking names

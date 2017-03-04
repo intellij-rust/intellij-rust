@@ -4,8 +4,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.isSelf
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.isSelf
+import org.rust.lang.core.psi.ext.parentOfType
 
 /**
  * Removes the curly braces on singleton imports, changing from this

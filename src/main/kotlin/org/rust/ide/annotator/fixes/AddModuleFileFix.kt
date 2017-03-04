@@ -7,8 +7,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.actions.RsExpandModuleAction
 import org.rust.lang.core.psi.RsModDeclItem
-import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.impl.mixin.getOrCreateModuleFile
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.getOrCreateModuleFile
 
 /**
  * Creates module file by the given module declaration.

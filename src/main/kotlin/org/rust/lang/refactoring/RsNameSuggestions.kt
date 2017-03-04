@@ -5,8 +5,8 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.toSnakeCase
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.valueParameters
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.valueParameters
+import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.types.types.RustUnknownType
 import org.rust.lang.core.types.type
 import java.util.*

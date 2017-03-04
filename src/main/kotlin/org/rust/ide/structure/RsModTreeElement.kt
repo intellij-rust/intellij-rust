@@ -2,7 +2,7 @@ package org.rust.ide.structure
 
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
-import org.rust.lang.core.psi.RsMod
+import org.rust.lang.core.psi.ext.RsMod
 
 open class RsModTreeElement(item: RsMod) : PsiTreeElementBase<RsMod>(item) {
     override fun getPresentableText() = element?.name
@@ -13,12 +13,12 @@ open class RsModTreeElement(item: RsMod) : PsiTreeElementBase<RsMod>(item) {
             mod.enumItemList.map(::RsEnumTreeElement),
             mod.functionList.map(::RsFunctionTreeElement),
             mod.implItemList.map(::RsImplTreeElement),
-            mod.modDeclItemList.map(::RsModDeclTreeElement),
+            mod.modDeclItemList.map(::RsBaseTreeElement),
             mod.modItemList.map(::RsModTreeElement),
-            mod.constantList.map(::RsConstantTreeElement),
+            mod.constantList.map(::RsBaseTreeElement),
             mod.structItemList.map(::RsStructTreeElement),
             mod.traitItemList.map(::RsTraitTreeElement),
-            mod.typeAliasList.map(::RsTypeAliasTreeElement)
+            mod.typeAliasList.map(::RsBaseTreeElement)
         ).flatten().sortedBy { it.element?.textOffset }
     }
 }

@@ -14,18 +14,14 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.getPsiFor
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.impl.mixin.*
-import org.rust.lang.core.psi.impl.rustMod
-import org.rust.lang.core.psi.util.ancestors
-import org.rust.lang.core.psi.util.fields
-import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.rustMod
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
-import org.rust.lang.core.types.type
 import org.rust.lang.core.types.stripAllRefsIfAny
+import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustStructType
 import org.rust.utils.sequenceOfNotNull
 import java.util.*
@@ -211,6 +207,29 @@ object ResolveEngine {
         val module = crate.module ?: return null
         return module.project.getPsiFor(module.cargoWorkspace?.findCrateByName(name)?.crateRoot)?.rustMod
     }
+
+    fun resolveLabel(label: RsLabel): RsLabelDecl? =
+        label.ancestors
+            .takeWhile { it !is RsLambdaExpr && it !is RsFunction }
+            .mapNotNull { (it as? RsLabeledExpression)?.labelDecl }
+            .find { it.name ==  label.quoteIdentifier.text}
+
+    fun resolveLifetime(lifetimeRef: RsLifetime): RsLifetimeDecl? =
+        if (lifetimeRef.isPredefined) {
+            null
+        } else {
+            lifetimeRef.ancestors
+                .mapNotNull {
+                    when (it) {
+                        is RsGenericDeclaration -> it.typeParameterList?.lifetimeParameterList
+                        is RsForInType -> it.forLifetimes.lifetimeParameterList
+                        is RsPolybound -> it.forLifetimes?.lifetimeParameterList
+                        else -> null
+                    }
+                }
+                .flatMap { it.lifetimeDecls }
+                .find { it.name ==  lifetimeRef.quoteIdentifier.text}
+        }
 
     private val String.segments: List<RustPathSegment>
         get() = splitToSequence("::")
@@ -532,6 +551,9 @@ private fun <T> Sequence<T>.takeWhileInclusive(pred: (T) -> Boolean): Sequence<T
 private fun PsiElement.isStrictAncestorOf(child: PsiElement) =
     PsiTreeUtil.isAncestor(this, child, true)
 
+private val List<RsLifetimeParameter>.lifetimeDecls: Sequence<RsLifetimeDecl>
+    get() = asSequence().map { it.lifetimeDecl }
+
 /**
  * Helper to debug complex iterator pipelines
  */
@@ -542,4 +564,3 @@ private fun <T> Sequence<T>.inspect(f: (T) -> Unit = { println("inspecting $it")
         it
     }
 }
-

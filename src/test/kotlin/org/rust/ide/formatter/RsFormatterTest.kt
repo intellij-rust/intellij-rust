@@ -41,7 +41,19 @@ class RsFormatterTest : RsFormatterTestBase() {
 
     fun testAlignWhereBoundsOff() {
         custom().ALIGN_WHERE_BOUNDS = false
-        doTest()
+        doTextTest("""
+            impl moo {
+                pub fn with_bindings<R, F, I>(&mut self, bindings: I, f: F) -> R
+                    where F: FnOnce(&mut TypeContext<'a>) -> R,
+                          I: IntoIterator<Item=(&'a Ident, Type)> {}
+            }
+        """, """
+            impl moo {
+                pub fn with_bindings<R, F, I>(&mut self, bindings: I, f: F) -> R
+                    where F: FnOnce(&mut TypeContext<'a>) -> R,
+                        I: IntoIterator<Item=(&'a Ident, Type)> {}
+            }
+        """)
     }
 
     fun testAlignTypeParamsOn() {
@@ -151,6 +163,36 @@ class RsFormatterTest : RsFormatterTestBase() {
         fn main() {
             let _ =
                 92;
+        }
+    """)
+
+    fun `test associated types`() = doTextTest("""
+        fn fut() -> impl Future<Item = (),Error = ()> {}
+    """, """
+        fn fut() -> impl Future<Item=(), Error=()> {}
+    """)
+
+    fun `test where is indented in impls`() = doTextTest("""
+        impl<T> Foo<T>
+        where T: bar
+        {
+            fn foo() {}
+        }
+    """, """
+        impl<T> Foo<T>
+            where T: bar
+        {
+            fn foo() {}
+        }
+    """)
+
+    fun `test spaces in reverse turbofish paths`() = doTextTest("""
+        enum E<T> {
+            X(< T :: BindTransport  as  IntoFuture > :: Future),
+        }
+    """, """
+        enum E<T> {
+            X(<T::BindTransport as IntoFuture>::Future),
         }
     """)
 

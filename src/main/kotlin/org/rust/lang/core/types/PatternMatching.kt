@@ -1,16 +1,16 @@
 package org.rust.lang.core.types
 
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.RsFieldsOwner
+import org.rust.lang.core.psi.ext.topLevelPattern
+import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.types.types.RustReferenceType
 import org.rust.lang.core.types.types.RustStructType
 import org.rust.lang.core.types.types.RustTupleType
 import org.rust.lang.core.types.types.RustUnknownType
 
 fun inferPatternBindingType(binding: RsPatBinding): RustType {
-    //TODO: probably want something more precise than `getTopmostParentOfType` here
-    val pattern = PsiTreeUtil.getTopmostParentOfType(binding, RsPat::class.java)
+    val pattern = binding.topLevelPattern
         ?: error("Binding outside the pattern: ${binding.text}")
     val parent = pattern.parent
     val type = when (parent) {

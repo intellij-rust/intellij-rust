@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.impl.RsFile
+import org.rust.lang.core.psi.RsFile
 
 /**
  * Completes Rust keywords
@@ -64,9 +64,9 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
                         EditorModificationUtil.moveCaretRelatively(context.editor, 1)
                     }
 
-                for (builder in listOf(elseBuilder, elseIfBuilder)) {
-                    result.addElement(PrioritizedLookupElement.withPriority(builder, CompletionEngine.KEYWORD_PRIORITY))
-                }
+                // `else` is more common than `else if`
+                result.addElement(PrioritizedLookupElement.withPriority(elseBuilder, CompletionEngine.KEYWORD_PRIORITY * 1.0001))
+                result.addElement(PrioritizedLookupElement.withPriority(elseIfBuilder, CompletionEngine.KEYWORD_PRIORITY))
             }
         })
     }

@@ -34,22 +34,28 @@ FILE
         RsPatIdentImpl(PAT_IDENT)
           RsPatBindingImpl(PAT_BINDING)
             PsiElement(identifier)('S')
+      PsiErrorElement:'!', '(', ':', ';' or '{' expected, got '{'
+        <empty list>
       PsiWhiteSpace(' ')
       RsExprStmtImpl(EXPR_STMT)
-        PsiErrorElement:'!', '(', ':', ';' or '{' expected, got '{'
-          <empty list>
         RsBinaryExprImpl(BINARY_EXPR)
           RsBlockExprImpl(BLOCK_EXPR)
             RsBlockImpl(BLOCK)
               PsiElement({)('{')
-              PsiElement(mut)('mut')
+              PsiErrorElement:<stmt mode expr>, enum, extern, fn, impl, mod, trait, type or use expected, got 'mut'
+                PsiElement(mut)('mut')
               PsiWhiteSpace(' ')
-              PsiErrorElement:identifier expected, got 'f'
-                PsiElement(identifier)('f')
+              RsPathExprImpl(PATH_EXPR)
+                RsPathImpl(PATH)
+                  PsiElement(identifier)('f')
+                PsiErrorElement:'!', '&', '^' or '|' expected, got ':'
+                  <empty list>
               PsiWhiteSpace(' ')
               PsiElement(:)(':')
               PsiWhiteSpace(' ')
-              PsiElement(identifier)('f')
+              RsPathExprImpl(PATH_EXPR)
+                RsPathImpl(PATH)
+                  PsiElement(identifier)('f')
               PsiElement(})('}')
           PsiWhiteSpace(' ')
           PsiElement(=)('=')

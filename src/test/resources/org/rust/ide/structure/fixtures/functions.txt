@@ -1,4 +1,0 @@
--functions.rs
- fn_foo()
- test_something()
- double(i32) -> i32

@@ -7,6 +7,8 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.tree.TokenSet.orSet
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.ext.RsItemElement
+import org.rust.lang.core.psi.ext.RsMod
 import com.intellij.psi.tree.TokenSet.create as ts
 
 val NO_SPACE_AROUND_OPS = ts(COLONCOLON, DOT, DOTDOT)
@@ -25,7 +27,7 @@ val BRACE_LISTS = ts(USE_GLOB_LIST, FORMAT_MACRO_ARGS, TRY_MACRO_ARGS)
 val BRACE_DELIMITED_BLOCKS = orSet(BLOCK_LIKE, BRACE_LISTS)
 
 val ANGLE_DELIMITED_BLOCKS = ts(TYPE_PARAMETER_LIST, TYPE_ARGUMENT_LIST, FOR_LIFETIMES)
-val ANGLE_LISTS = orSet(ANGLE_DELIMITED_BLOCKS, ts(QUAL_PATH_EXPR))
+val ANGLE_LISTS = orSet(ANGLE_DELIMITED_BLOCKS, ts(QUALIFIED_PATH))
 
 val ATTRS = ts(OUTER_ATTR, INNER_ATTR)
 val MOD_ITEMS = ts(FOREIGN_MOD_ITEM, MOD_ITEM)

@@ -13,11 +13,11 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.utils.fullyRefreshDirectory
 import java.io.File
-import java.util.*
 
 /**
  * A main gateway for executing cargo commands.
@@ -68,6 +68,11 @@ class Cargo(
     fun reformatFile(owner: Disposable, filePath: String, listener: ProcessListener? = null) =
         rustfmtCommandline(filePath).execute(owner, listener)
 
+    fun generalCommand(commandLine: CargoCommandLine): GeneralCommandLine {
+        val env = (if (commandLine.printBacktrace) mapOf(RUST_BACTRACE_ENV_VAR to "1") else emptyMap()) + commandLine.environmentVariables
+        return generalCommand(commandLine.command, commandLine.additionalArguments, env)
+    }
+
     fun generalCommand(
         command: String,
         additionalArguments: List<String> = emptyList(),
@@ -82,13 +87,8 @@ class Cargo(
             && command in COLOR_ACCEPTING_COMMANDS
             && additionalArguments.none { it.startsWith("--color") }) {
 
-            if (SystemInfo.isLinux) {
-                cmdLine.withEnvironment("TERM", "xterm+256color")
-            } else if (SystemInfo.isMac) {
-                cmdLine.withEnvironment("TERM", "linux")
-            }
-
             cmdLine
+                .withEnvironment("TERM", "ansi")
                 .withRedirectErrorStream(true)
                 .withParameters("--color=always") // Must come first in order not to corrupt the running program arguments
         }

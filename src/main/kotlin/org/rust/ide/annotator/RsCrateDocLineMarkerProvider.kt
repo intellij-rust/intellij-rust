@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsExternCrateItem
-import org.rust.lang.core.psi.util.module
+import org.rust.lang.core.psi.ext.module
 
 /**
  * Provides an external crate imports with gutter icons that open documentation on docs.rs.

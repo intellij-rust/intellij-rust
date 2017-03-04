@@ -3,7 +3,7 @@ package org.rust.ide.search
 import com.intellij.lang.HelpID
 import com.intellij.lang.findUsages.FindUsagesProvider
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsNamedElement
+import org.rust.lang.core.psi.ext.RsNamedElement
 
 class RsFindUsagesProvider : FindUsagesProvider {
     // XXX: must return new instance of WordScanner here, because it is not thread safe

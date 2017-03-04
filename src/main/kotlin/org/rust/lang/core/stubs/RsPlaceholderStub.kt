@@ -2,7 +2,7 @@ package org.rust.lang.core.stubs
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.stubs.*
-import org.rust.lang.core.psi.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsCompositeElement
 
 class RsPlaceholderStub(parent: StubElement<*>?, elementType: IStubElementType<*, *>)
     : StubBase<RsCompositeElement>(parent, elementType) {

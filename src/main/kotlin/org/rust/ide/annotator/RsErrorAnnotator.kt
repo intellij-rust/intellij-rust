@@ -1,6 +1,7 @@
 package org.rust.ide.annotator
 
 import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
@@ -12,19 +13,21 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.annotator.fixes.AddModuleFileFix
+import org.rust.ide.annotator.fixes.AddSelfFix
 import org.rust.ide.annotator.fixes.ImplementMethodsFix
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.impl.mixin.*
-import org.rust.lang.core.psi.util.*
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
+import org.rust.lang.core.symbols.RustPath
 
 class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val visitor = object : RsVisitor() {
+            override fun visitBaseType(o: RsBaseType) = checkBaseType(holder, o)
             override fun visitConstant(o: RsConstant) = checkConstant(holder, o)
             override fun visitValueArgumentList(o: RsValueArgumentList) = checkValueArgumentList(holder, o)
             override fun visitStructItem(o: RsStructItem) = checkStructItem(holder, o)
@@ -32,6 +35,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitEnumVariant(o: RsEnumVariant) = checkDuplicates(holder, o)
             override fun visitFunction(o: RsFunction) = checkFunction(holder, o)
             override fun visitImplItem(o: RsImplItem) = checkImpl(holder, o)
+            override fun visitLabel(o: RsLabel) = checkLabel(holder, o)
+            override fun visitLifetime(o: RsLifetime) = checkLifetime(holder, o)
             override fun visitModDeclItem(o: RsModDeclItem) = checkModDecl(holder, o)
             override fun visitModItem(o: RsModItem) = checkDuplicates(holder, o)
             override fun visitPatBinding(o: RsPatBinding) = checkPatBinding(holder, o)
@@ -51,6 +56,14 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         element.accept(visitor)
     }
 
+    private fun checkBaseType(holder: AnnotationHolder, type: RsBaseType) {
+        if (type.underscore == null) return
+        val owner = type.ancestors.drop(1).dropWhile { it is RsTupleType }.first()
+        if ((owner is RsValueParameter || owner is RsRetType) && owner.parent.parent !is RsLambdaExpr || owner is RsConstant) {
+            holder.createErrorAnnotation(type, "The type placeholder `_` is not allowed within types on item signatures [E0121]")
+        }
+    }
+
     private fun checkPatBinding(holder: AnnotationHolder, binding: RsPatBinding) {
         binding.parentOfType<RsValueParameterList>()?.let { checkDuplicates(holder, binding, it, recursively = true) }
     }
@@ -59,6 +72,25 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val child = path.path
         if ((child == null || child.asRustPath != null) && path.asRustPath == null) {
             holder.createErrorAnnotation(path, "Invalid path: self and super are allowed only at the beginning")
+            return
+        }
+
+        if (path.self != null) {
+            val rustPath = path.asRustPath
+            if (rustPath == null || rustPath is RustPath.ModRelative) return
+            val function = path.parentOfType<RsFunction>()
+            if (function == null) {
+                holder.createErrorAnnotation(path, "self value is not available in this context")
+                return
+            }
+
+            if (function.selfParameter == null) {
+                val error = "The self keyword was used in a static method [E0424]"
+                val annotation = holder.createErrorAnnotation(path, error)
+                if (function.role != RsFunctionRole.FREE) {
+                    annotation.registerFix(AddSelfFix(function))
+                }
+            }
         }
     }
 
@@ -171,6 +203,14 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
     }
 
+    private fun checkLabel(holder: AnnotationHolder, label: RsLabel) =
+        requireResolve(holder, label, "Use of undeclared label `${label.text}` [E0426]")
+
+    private fun checkLifetime(holder: AnnotationHolder, lifetime: RsLifetime) {
+        if (lifetime.isPredefined) return
+        requireResolve(holder, lifetime, "Use of undeclared lifetime name `${lifetime.text}` [E0261]")
+    }
+
     private fun checkModDecl(holder: AnnotationHolder, modDecl: RsModDeclItem) {
         checkDuplicates(holder, modDecl)
         val pathAttribute = modDecl.pathAttribute
@@ -201,7 +241,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkImpl(holder: AnnotationHolder, impl: RsImplItem) {
-        val trait = impl.traitRef?.trait ?: return
+        val trait = impl.traitRef?.resolveToTrait ?: return
         val traitName = trait.name ?: return
 
         val canImplement = trait.functionList.associateBy { it.name }
@@ -285,6 +325,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun checkBinary(holder: AnnotationHolder, o: RsBinaryExpr) {
         if (o.isComparisonBinaryExpr() && (o.left.isComparisonBinaryExpr() || o.right.isComparisonBinaryExpr())) {
             holder.createErrorAnnotation(o, "Chained comparison operator require parentheses")
+        } else if (o.isAssignBinaryExpr() && !o.left.isMutable()) {
+            holder.createErrorAnnotation(o, "Reassigning an immutable variable [E0384]")
         }
     }
 
@@ -309,6 +351,12 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         if (type.needsLifetime()) {
             require(type.lifetime, holder, "Missing lifetime specifier [E0106]", type.and ?: type)
         }
+    }
+
+    private fun requireResolve(holder: AnnotationHolder, el: RsReferenceElement, message: String) {
+        if (el.reference.resolve() != null) return
+        holder.createErrorAnnotation(el.textRange, message)
+            .highlightType = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
     }
 
     private fun require(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
@@ -369,6 +417,11 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
     val op = this as? RsBinaryExpr ?: return false
     return op.operatorType in RS_COMPARISON_OPERATOR
+}
+
+private fun RsExpr?.isAssignBinaryExpr(): Boolean {
+    val op = this as? RsBinaryExpr ?: return false
+    return op.operatorType in RS_ASSIGN_OPERATOR
 }
 
 private fun checkDuplicates(holder: AnnotationHolder, element: RsNamedElement, scope: PsiElement = element.parent, recursively: Boolean = false) {
@@ -471,4 +524,13 @@ private fun RsMethodCallExpr.expectedParamsCount(): Int? {
     val fn = reference.resolve() as? RsFunction ?: return null
     if (fn.queryAttributes.hasCfgAttr()) return null
     return if (fn.isInherentImpl) fn.valueParameterList?.valueParameterList?.size else null
+}
+
+private fun RsExpr.isMutable(): Boolean {
+    val path = (this as? RsPathExpr)?.path ?: return true
+    val declaration = path.reference.resolve()
+
+    declaration?.parentOfType<RsLetDecl>()?.eq ?: return true
+
+    return (declaration as? RsPatBinding)?.isMut ?: true
 }

@@ -5,7 +5,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsItemElement
+import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.types.type
 
 

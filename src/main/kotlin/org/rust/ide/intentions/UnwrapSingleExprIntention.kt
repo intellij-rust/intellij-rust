@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.util.getNextNonCommentSibling
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.getNextNonCommentSibling
+import org.rust.lang.core.psi.ext.parentOfType
 
 class UnwrapSingleExprIntention : RsElementBaseIntentionAction<RsBlockExpr>() {
     override fun getText() = "Remove braces from single expression"

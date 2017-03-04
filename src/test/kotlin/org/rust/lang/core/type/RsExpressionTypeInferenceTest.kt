@@ -330,6 +330,16 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test usize in array size`() = testExpr("""
+        fn foo() { let _ = [0u8; 10]; }
+                                //^ usize
+    """)
+
+    fun `test isize in enum variant discriminant`() = testExpr("""
+        enum Foo { BAR = 32 }
+                        //^ isize
+    """)
+
     fun testBinOperatorsBool() {
         val cases = listOf(
             Pair("1 == 2", "bool"),
@@ -354,5 +364,55 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                 "Case number: $i")
         }
     }
+
+    fun `test const pointer`() = testExpr("""
+        fn main() {
+            let y = 42;
+            let x = &y as *const i32;
+            x
+          //^ *const i32
+        }
+    """)
+
+    fun `test cast`() = testExpr("""
+        fn main() {
+            let y = 42;
+            let x = &y as i64;
+            x
+          //^ i64
+        }
+    """)
+
+    fun `test pointer deref`() = testExpr("""
+        fn main() {
+            let x : *const i32;
+            let y = *x; // it should be in unsafe
+            y
+          //^ i32
+        }
+    """)
+
+    fun `test slice type`() = testExpr("""
+        fn main() {
+            let x : [i32];
+            x
+          //^ [i32]
+        }
+    """)
+
+    fun `test array type`() = testExpr("""
+        fn main() {
+            let x : [i32; 8];
+            x
+          //^ [i32; 8]
+        }
+    """)
+
+    fun `test slice`() = testExpr("""
+        fn main() {
+            let x = [""];
+            x
+        } //^ <unknown>
+    """)
 }
 

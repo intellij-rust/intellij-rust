@@ -13,7 +13,7 @@ import org.rust.lang.core.psi.RsElementTypes.*
 
 open class RsTokenType(debugName: String) : IElementType(debugName, RsLanguage)
 
-private fun tokenSetOf(vararg tokens: IElementType) = TokenSet.create(*tokens)
+fun tokenSetOf(vararg tokens: IElementType) = TokenSet.create(*tokens)
 
 val RS_KEYWORDS = tokenSetOf(
     AS,
@@ -58,3 +58,9 @@ val RS_RAW_LITERALS = tokenSetOf(RAW_STRING_LITERAL, RAW_BYTE_STRING_LITERAL)
 val RS_CONTEXTUAL_KEYWORDS = tokenSetOf(DEFAULT, UNION)
 
 val RS_COMPARISON_OPERATOR = tokenSetOf(GT, GTEQ, LT, LTEQ, EQEQ)
+
+val RS_LIST_OPEN_SYMBOLS = tokenSetOf(LPAREN, LT)
+val RS_LIST_CLOSE_SYMBOLS = tokenSetOf(RPAREN, GT)
+
+val RS_ASSIGN_OPERATOR = tokenSetOf(GTGTEQ, LTLTEQ, OREQ, XOREQ, ANDEQ, EQ, PLUSEQ, MINUSEQ, MULEQ, DIVEQ, REMEQ)
+

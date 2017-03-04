@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.file.PsiFileImplUtil
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
-import org.rust.lang.core.psi.RsMod
-import org.rust.lang.core.psi.impl.RsFile
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.RsFile
 
 class ContractModuleIntention : IntentionAction {
 

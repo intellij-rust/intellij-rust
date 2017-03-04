@@ -243,7 +243,7 @@ impl<T> IndexMut<usize> for Vec<T> {
 }
 
 impl<T> FromIterator<T> for Vec<T> {
-    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Vec<T> {
+    fn from_iter<I: IntoIterator<Item=T>>(iter: I) -> Vec<T> {
         let mut iterator = iter.into_iter();
         let mut vector = match iterator.next() {
             None => return Vec::new(),
@@ -303,7 +303,7 @@ impl<'a, T> Iterator for Drain<'a, T> {
 }
 
 trait Extend<A> {
-    fn extend<T: IntoIterator<Item = A>>(&mut self, iterable: T);
+    fn extend<T: IntoIterator<Item=A>>(&mut self, iterable: T);
 }
 
 impl<R, F: FnOnce() -> R> FnOnce<()> for AssertRecoverSafe<F> {

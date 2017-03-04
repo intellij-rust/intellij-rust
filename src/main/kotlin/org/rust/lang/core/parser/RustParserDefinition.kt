@@ -18,7 +18,7 @@ import org.rust.lang.core.psi.RS_EOL_COMMENTS
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsElementTypes.STRING_LITERAL
 import org.rust.lang.core.psi.RsTokenType
-import org.rust.lang.core.psi.impl.RsFile
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.stubs.RsFileStub
 
 class RustParserDefinition : ParserDefinition {

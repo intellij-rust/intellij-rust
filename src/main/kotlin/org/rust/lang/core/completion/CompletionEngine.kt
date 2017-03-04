@@ -10,13 +10,13 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.impl.mixin.asRustPath
-import org.rust.lang.core.psi.impl.mixin.basePath
-import org.rust.lang.core.psi.impl.mixin.valueParameters
-import org.rust.lang.core.psi.util.fields
-import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.asRustPath
+import org.rust.lang.core.psi.ext.basePath
+import org.rust.lang.core.psi.ext.valueParameters
+import org.rust.lang.core.psi.ext.module
+import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.RustTypificationEngine
@@ -43,9 +43,18 @@ object CompletionEngine {
         }
     }
 
-    fun completeUseGlob(glob: RsUseGlob): Array<out LookupElement> =
-        glob.basePath?.reference?.resolve()
-            .completionsFromResolveScope()
+    fun completeUseGlob(glob: RsUseGlob): Array<out LookupElement> {
+        val mod = run {
+            val basePath = glob.basePath
+            if (basePath != null) {
+                basePath.reference.resolve()
+            } else {
+                glob.crateRoot
+            }
+        }
+
+        return mod.completionsFromResolveScope()
+    }
 
     fun completeFieldName(field: RsStructExprField): Array<out LookupElement> =
         field.parentOfType<RsStructExpr>()

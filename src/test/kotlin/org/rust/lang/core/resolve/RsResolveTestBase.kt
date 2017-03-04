@@ -2,12 +2,12 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.psi.impl.PsiManagerImpl
+import com.intellij.psi.impl.PsiManagerEx
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.RsNamedElement
-import org.rust.lang.core.psi.RsReferenceElement
+import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.RsReferenceElement
 
 abstract class RsResolveTestBase : RsTestBase() {
 
@@ -40,8 +40,8 @@ abstract class RsResolveTestBase : RsTestBase() {
         for ((path, text) in files) {
             myFixture.tempDirFixture.createFile(path, text)
         }
-        // TODO: use `PsiManagerEx.getInstanceEx(project)` after 2016.1
-        (psiManager as PsiManagerImpl)
+
+        PsiManagerEx.getInstanceEx(project)
             .setAssertOnFileLoadingFilter(VirtualFileFilter { file ->
                 !file.path.endsWith(files[0].path)
             }, testRootDisposable)
@@ -77,7 +77,7 @@ abstract class RsResolveTestBase : RsTestBase() {
     }
 
     // BACKCOMPAT: 2016.2
-    // See org.rust.lang.core.psi.impl.RsStubbedElementImpl.WithParent
+    // See org.rust.lang.core.psi.ext.RsStubbedElementImpl.WithParent
     protected fun is2016_2(): Boolean {
         val info = ApplicationInfo.getInstance()
         return (info.majorVersion == "2016" && info.minorVersion == "2")

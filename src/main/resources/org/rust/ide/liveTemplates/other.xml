@@ -22,10 +22,7 @@
     <template name="main" description="main() function declaration" toReformat="true" toShortenFQNames="true"
               value="fn main() {&#10;    $END$&#10;}">
         <context>
-            <option name="RUST_FILE" value="true"/>
-            <option name="RUST_STATEMENT" value="false"/>
-            <option name="RUST_ITEM" value="false"/>
-            <option name="RUST_ATTRIBUTE" value="false"/>
+            <option name="RUST_MOD" value="true"/>
         </context>
     </template>
 

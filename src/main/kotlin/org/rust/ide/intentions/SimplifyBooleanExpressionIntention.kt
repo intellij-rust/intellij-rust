@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.ide.utils.simplifyBooleanExpression
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.util.ancestors
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.ancestors
+import org.rust.lang.core.psi.ext.parentOfType
 
 class SimplifyBooleanExpressionIntention : RsElementBaseIntentionAction<RsExpr>() {
     override fun getText() = "Simplify boolean expression"

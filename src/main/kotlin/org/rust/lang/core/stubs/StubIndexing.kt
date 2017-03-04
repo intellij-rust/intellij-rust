@@ -3,7 +3,7 @@ package org.rust.lang.core.stubs
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.util.PathUtil
-import org.rust.lang.core.psi.impl.mixin.RsTypeAliasRole
+import org.rust.lang.core.psi.ext.RsTypeAliasRole
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.stubs.index.RsGotoClassIndex
 import org.rust.lang.core.stubs.index.RsModulesIndex

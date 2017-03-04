@@ -11,8 +11,8 @@ import org.rust.lang.core.psi.RsBlockFields
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsElementTypes.RBRACE
 import org.rust.lang.core.psi.RsStructExprBody
-import org.rust.lang.core.psi.util.elementType
-import org.rust.lang.core.psi.util.getPrevNonCommentSibling
+import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
 class RsCommaFormatProcessor : PostFormatProcessor {
     override fun processElement(source: PsiElement, settings: CodeStyleSettings): PsiElement {

@@ -19,7 +19,7 @@ class RsImplTreeElement(element: RsImplItem) : PsiTreeElementBase<RsImplItem>(el
         val impl = element ?: return emptyList()
         return listOf(
             impl.functionList.map(::RsFunctionTreeElement),
-            impl.constantList.map(::RsConstantTreeElement)
+            impl.constantList.map(::RsBaseTreeElement)
         ).flatten().sortedBy { it.element?.textOffset }
     }
 }

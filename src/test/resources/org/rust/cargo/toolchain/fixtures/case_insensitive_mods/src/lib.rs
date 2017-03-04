@@ -1,3 +1,0 @@
-mod foo;
-mod bar;
-

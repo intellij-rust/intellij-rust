@@ -51,7 +51,8 @@ class RustProjectSettingsPanel {
             autoUpdateEnabled.isSelected
         )
         set(value) {
-            toolchainLocationField.text = value.toolchain?.location
+            // https://youtrack.jetbrains.com/issue/KT-16367
+            toolchainLocationField.setText(value.toolchain?.location)
             autoUpdateEnabled.isSelected = value.autoUpdateEnabled
         }
 

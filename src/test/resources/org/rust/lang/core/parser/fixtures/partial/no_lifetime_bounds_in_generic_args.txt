@@ -16,14 +16,17 @@ FILE
           RsTypeArgumentListImpl(TYPE_ARGUMENT_LIST)
             PsiElement(::)('::')
             PsiElement(<)('<')
-            PsiElement(lifetime)(''static')
+            RsLifetimeImpl(LIFETIME)
+              PsiElement(QUOTE_IDENTIFIER)(''static')
             PsiErrorElement:<type reference> or '>' expected, got ':'
               <empty list>
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
-      PsiElement(lifetime)(''static')
-      PsiElement(>)('>')
-      PsiElement(()('(')
-      PsiElement())(')')
+      PsiElement(QUOTE_IDENTIFIER)(''static')
+      PsiErrorElement:':' expected, got '>'
+        PsiElement(>)('>')
+      RsUnitExprImpl(UNIT_EXPR)
+        PsiElement(()('(')
+        PsiElement())(')')
       PsiWhiteSpace('\n')
       PsiElement(})('}')

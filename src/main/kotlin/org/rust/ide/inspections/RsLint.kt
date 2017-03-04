@@ -1,11 +1,11 @@
 package org.rust.ide.inspections
 
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsDocAndAttributeOwner
-import org.rust.lang.core.psi.RsMod
-import org.rust.lang.core.psi.queryAttributes
-import org.rust.lang.core.psi.superMods
-import org.rust.lang.core.psi.util.ancestors
+import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.queryAttributes
+import org.rust.lang.core.psi.ext.superMods
+import org.rust.lang.core.psi.ext.ancestors
 
 /**
  * Rust lints.

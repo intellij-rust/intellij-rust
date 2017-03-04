@@ -1,11 +1,21 @@
 <configurations>
   <configuration name="Test foo" class="CargoCommandConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
-    <option name="additionalArguments" value="--package test-package --test foo " />
-    <option name="command" value="test" />
-    <option name="environmentVariables">
-      <map />
-    </option>
-    <option name="printBacktrace" value="true" />
+    <parameters>
+      <option name="additionalArguments">
+        <list>
+          <option value="--package" />
+          <option value="test-package" />
+          <option value="--test" />
+          <option value="foo" />
+          <option value="" />
+        </list>
+      </option>
+      <option name="command" value="test" />
+      <option name="environmentVariables">
+        <map />
+      </option>
+      <option name="printBacktrace" value="true" />
+    </parameters>
     <module name="light_idea_test_case" />
   </configuration>
 </configurations>

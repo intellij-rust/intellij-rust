@@ -3,7 +3,7 @@ package org.rust.ide.utils
 import com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.rust.lang.core.psi.impl.isRustFile
+import org.rust.lang.core.psi.isRustFile
 
 class RsModTabTitleProvider : UniqueNameEditorTabTitleProvider() {
     val MOD_FILE_NAME = "mod.rs"

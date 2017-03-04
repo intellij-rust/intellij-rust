@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsBinaryExpr
 import org.rust.lang.core.psi.RsElementTypes.EQEQ
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.operatorType
+import org.rust.lang.core.psi.ext.operatorType
 
 abstract class AssertPostfixTemplateBase(name: String) : StringBasedPostfixTemplate(
     name,

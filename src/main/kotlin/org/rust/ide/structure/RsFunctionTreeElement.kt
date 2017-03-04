@@ -3,7 +3,7 @@ package org.rust.ide.structure
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.impl.mixin.valueParameters
+import org.rust.lang.core.psi.ext.valueParameters
 
 class RsFunctionTreeElement(element: RsFunction) : PsiTreeElementBase<RsFunction>(element) {
 

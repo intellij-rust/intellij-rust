@@ -2,7 +2,7 @@ package org.rust.lang.core.stubs.index
 
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
-import org.rust.lang.core.psi.RsNamedElement
+import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.stubs.RsFileStub
 
 class RsNamedElementIndex : StringStubIndexExtension<RsNamedElement>() {

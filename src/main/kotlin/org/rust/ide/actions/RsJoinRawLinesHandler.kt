@@ -6,9 +6,9 @@ import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.LBRACE
-import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.util.elementType
-import org.rust.lang.core.psi.util.getPrevNonCommentSibling
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
 class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
     /**
