@@ -12,7 +12,7 @@ import org.rust.lang.core.psi.ext.RsMod.Companion.MOD_RS
  */
 class RsTreeStructureProvider : TreeStructureProvider {
     override fun modify(parent: AbstractTreeNode<*>, children: Collection<AbstractTreeNode<*>>, settings: ViewSettings?): Collection<AbstractTreeNode<*>> {
-        if (!children.any { it is PsiFileNode && it.value.name == MOD_RS }) {
+        if (children.none { it is PsiFileNode && it.value?.name == MOD_RS }) {
             return children
         }
 
