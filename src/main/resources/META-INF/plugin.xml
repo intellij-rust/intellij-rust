@@ -431,7 +431,7 @@
         <!-- Run Configurations -->
 
         <programRunner implementation="org.rust.cargo.runconfig.RsRunner"/>
-        <configurationType implementation="org.rust.cargo.runconfig.CargoCommandRunConfigurationType"/>
+        <configurationType implementation="org.rust.cargo.runconfig.command.CargoCommandConfigurationType"/>
         <runConfigurationProducer
             implementation="org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer"/>
         <runConfigurationProducer implementation="org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer"/>
