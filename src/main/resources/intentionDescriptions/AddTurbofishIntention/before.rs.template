@@ -1,3 +1,0 @@
-fn foo(a: i32, b: i32) {
-    let _ = str::parse<i32>("48")
-}

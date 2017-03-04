@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.AddSelfFix
+import org.rust.ide.annotator.fixes.AddTurbofishFix
 import org.rust.ide.annotator.fixes.ImplementMethodsFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -324,7 +325,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkBinary(holder: AnnotationHolder, o: RsBinaryExpr) {
         if (o.isComparisonBinaryExpr() && (o.left.isComparisonBinaryExpr() || o.right.isComparisonBinaryExpr())) {
-            holder.createErrorAnnotation(o, "Chained comparison operator require parentheses")
+            val annotator = holder.createErrorAnnotation(o, "Chained comparison operator require parentheses")
+            annotator.registerFix(AddTurbofishFix())
         } else if (o.isAssignBinaryExpr() && !o.left.isMutable()) {
             holder.createErrorAnnotation(o, "Reassigning an immutable variable [E0384]")
         }

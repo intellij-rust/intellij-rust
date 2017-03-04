@@ -1,14 +1,15 @@
-package org.rust.ide.intentions
+package org.rust.ide.annotator.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.operatorType
 import org.rust.lang.core.psi.ext.parentOfType
 
-class AddTurbofishIntention : RsElementBaseIntentionAction<AddTurbofishIntention.Context>() {
+class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() {
     private val TURBOFISH = "::"
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
