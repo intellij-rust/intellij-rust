@@ -17,15 +17,6 @@ import org.rust.cargo.util.modules
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.rustMod
-import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.impl.mixin.*
-import org.rust.lang.core.psi.impl.rustMod
-import org.rust.lang.core.psi.util.ancestors
-import org.rust.lang.core.psi.util.fields
-import org.rust.lang.core.psi.util.module
-import org.rust.lang.core.psi.util.parentOfType
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
@@ -34,7 +25,6 @@ import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustStructType
 import org.rust.utils.sequenceOfNotNull
 import java.util.*
-
 
 object ResolveEngine {
     /**
@@ -230,7 +220,7 @@ object ResolveEngine {
         label.ancestors
             .takeWhile { it !is RsLambdaExpr && it !is RsFunction }
             .mapNotNull { (it as? RsLabeledExpression)?.labelDecl }
-            .find { it.name ==  label.quoteIdentifier.text}
+            .find { it.name == label.quoteIdentifier.text }
 
     fun resolveLifetime(lifetimeRef: RsLifetime): RsLifetimeDecl? =
         if (lifetimeRef.isPredefined) {
@@ -246,7 +236,7 @@ object ResolveEngine {
                     }
                 }
                 .flatMap { it.lifetimeDecls }
-                .find { it.name ==  lifetimeRef.quoteIdentifier.text}
+                .find { it.name == lifetimeRef.quoteIdentifier.text }
         }
 
     private val String.segments: List<RustPathSegment>
