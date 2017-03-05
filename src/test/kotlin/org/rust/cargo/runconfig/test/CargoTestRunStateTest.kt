@@ -20,19 +20,18 @@ class CargoTestRunStatePatchArgsTest(
     companion object {
         @Parameterized.Parameters(name = "{index}: {0}")
         @JvmStatic fun data(): Collection<Array<String>> = listOf(
-            arrayOf("", "-- --nocapture --no-fail-fast --test-threads 1"),
-            arrayOf("foo", "foo -- --nocapture --no-fail-fast --test-threads 1"),
-            arrayOf("foo bar", "foo bar -- --nocapture --no-fail-fast --test-threads 1"),
-            arrayOf("--", "-- --nocapture --no-fail-fast --test-threads 1"),
+            arrayOf("", "--no-fail-fast -- --nocapture --test-threads 1"),
+            arrayOf("foo", "foo --no-fail-fast -- --nocapture --test-threads 1"),
+            arrayOf("foo bar", "foo bar --no-fail-fast -- --nocapture --test-threads 1"),
+            arrayOf("--", "--no-fail-fast -- --nocapture --test-threads 1"),
 
-            arrayOf("-- --nocapture", "-- --nocapture --no-fail-fast --test-threads 1"),
-            arrayOf("-- --nocapture --no-fail-fast", "-- --nocapture --no-fail-fast --test-threads 1"),
-            arrayOf("-- --nocapture --no-fail-fast --test-threads", "-- --nocapture --no-fail-fast --test-threads 1"),
-            arrayOf("-- --nocapture --no-fail-fast --test-threads 1", "-- --nocapture --no-fail-fast --test-threads 1"),
-            arrayOf("-- --nocapture --no-fail-fast --test-threads 2", "-- --nocapture --no-fail-fast --test-threads 1"),
-            arrayOf("-- --no-fail-fast --nocapture --test-threads 2", "-- --no-fail-fast --nocapture --test-threads 1"),
-            arrayOf("-- --test-threads 2 --no-fail-fast --nocapture", "-- --test-threads 1 --no-fail-fast --nocapture"),
-            arrayOf("-- --test-threads --no-fail-fast --nocapture", "-- --test-threads 1 --no-fail-fast --nocapture")
+            arrayOf("-- --nocapture", "--no-fail-fast -- --nocapture --test-threads 1"),
+            arrayOf("--no-fail-fast -- --nocapture", "--no-fail-fast -- --nocapture --test-threads 1"),
+            arrayOf("--no-fail-fast -- --nocapture --test-threads", "--no-fail-fast -- --nocapture --test-threads 1"),
+            arrayOf("--no-fail-fast -- --nocapture --test-threads 1", "--no-fail-fast -- --nocapture --test-threads 1"),
+            arrayOf("--no-fail-fast -- --nocapture --test-threads 2", "--no-fail-fast -- --nocapture --test-threads 1"),
+            arrayOf("--no-fail-fast -- --test-threads 2 --nocapture", "--no-fail-fast -- --test-threads 1 --nocapture"),
+            arrayOf("--no-fail-fast -- --test-threads --nocapture", "--no-fail-fast -- --test-threads 1 --nocapture")
         )
     }
 }

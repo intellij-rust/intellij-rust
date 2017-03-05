@@ -64,17 +64,18 @@ class CargoTestRunState(
             val ddIdx = args.indexOf("--")
             val (cargoArgs, libtestArgs) =
                 if (ddIdx < 0) {
-                    args to mutableListOf()
+                    args.toMutableList() to mutableListOf()
                 } else {
-                    args.subList(0, ddIdx) to args.subList(ddIdx + 1, args.size).toMutableList()
+                    args.subList(0, ddIdx).toMutableList() to args.subList(ddIdx + 1, args.size).toMutableList()
                 }
 
             val nocapture = "--nocapture"
             val noFailFast = "--no-fail-fast"
             val testThreads = "--test-threads"
 
+            if (noFailFast !in cargoArgs) cargoArgs.add(noFailFast)
+
             if (nocapture !in libtestArgs) libtestArgs.add(nocapture)
-            if (noFailFast !in libtestArgs) libtestArgs.add(noFailFast)
 
             if (testThreads !in libtestArgs) {
                 libtestArgs.add(testThreads)
