@@ -15,7 +15,7 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val (matchExpr, caller, gen, more) = ctx
         val callWithNamespace =
-            RsPsiFactory(project).createExpression("""${caller.text}$TURBOFISH<${gen.text}>${more.text}""") as RsCallExpr
+            RsPsiFactory(project).createExpression("""${caller.text}$TURBOFISH<${gen.text}>${more.text}""")
         matchExpr.replace(callWithNamespace)
     }
 
@@ -23,7 +23,7 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
         val matchExpr: RsBinaryExpr,
         val caller: RsExpr,
         val gen: RsPathExpr,
-        val more: RsParenExpr
+        val more: RsExpr
     )
 
     override fun getText() = "Add turbofish operator"
@@ -46,7 +46,12 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
         }
         val caller = left.left
         val gen = left.right as? RsPathExpr ?: return null
-        val more = matchExpr.right as? RsParenExpr ?: return null
+        val more = matchExpr.right ?: return null
+        if (!isCallExpression(more)) {
+            return null
+        };
         return Context(matchExpr, caller, gen, more)
     }
+
+    private fun isCallExpression(expr: RsExpr) = expr is RsParenExpr || expr.firstChild is RsParenExpr
 }

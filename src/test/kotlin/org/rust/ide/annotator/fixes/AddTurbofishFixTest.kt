@@ -36,6 +36,18 @@ class AddTurbofishFixTest : RsAnnotatorTestBase() {
         }
         """)
 
+    fun `test add turbofish should be avilable also when call is chanind by another function`() = checkQuickFix(
+        """
+        fn foo() {
+            let _ = parse<i32>(/*caret*/"42").unwrap();
+        }
+        """,
+        """
+        fn foo() {
+            let _ = parse::<i32>(/*caret*/"42").unwrap();
+        }
+        """)
+
     fun `test add turbofish should not be available if the instance is corrected yet`() = checkNoIntention(intention,
         """
         fn foo() {
