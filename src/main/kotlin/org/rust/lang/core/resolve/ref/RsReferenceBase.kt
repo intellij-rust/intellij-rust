@@ -19,6 +19,10 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
 ) : PsiPolyVariantReferenceBase<T>(element),
     RsReference {
 
+    override fun resolve(): RsCompositeElement? {
+        return super.resolve() as? RsCompositeElement
+    }
+
     abstract fun resolveInner(): List<RsCompositeElement>
 
     final override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
