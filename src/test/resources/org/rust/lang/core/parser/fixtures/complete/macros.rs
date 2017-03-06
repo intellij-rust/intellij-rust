@@ -13,6 +13,12 @@ macro_rules! vec {
     };
 }
 
+macro_rules! default {
+    ($ty: ty) => { /* ANYTHING */ };
+}
+
+default!(String);
+
 thread_local!(static HANDLE: Handle = Handle(0));
 
 fn foo() {

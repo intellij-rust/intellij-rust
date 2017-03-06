@@ -133,7 +133,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
     private fun contextualKeyword(b: PsiBuilder, keyword: String, elementType: IElementType): Boolean {
         // Tricky: the token can be already remapped by some previous rule that was backtracked
-        if ((b.tokenType == IDENTIFIER && b.tokenText == keyword) || b.tokenType == elementType) {
+        if ((b.tokenType == IDENTIFIER && b.tokenText == keyword && !(b.lookAhead(1)?.equals(EXCL) ?: false)) || b.tokenType == elementType) {
             b.remapCurrentToken(elementType)
             b.advanceLexer()
             return true
