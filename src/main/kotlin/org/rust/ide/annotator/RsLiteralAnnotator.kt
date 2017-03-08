@@ -39,7 +39,7 @@ class RsLiteralAnnotator : Annotator {
                 val value = literal.value
                 when {
                     value == null || value.isEmpty() -> "empty ${literal.node.displayName}"
-                    value.length > 1 -> "too many characters in ${literal.node.displayName}"
+                    value.codePointCount(0, value.length) > 1 -> "too many characters in ${literal.node.displayName}"
                     else -> null
                 }?.let { holder.createErrorAnnotation(element, it) }
             }
