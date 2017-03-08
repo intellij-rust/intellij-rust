@@ -28,12 +28,12 @@ idea {
 apply plugin: 'org.jetbrains.intellij'
 intellij {
     pluginName 'intellij-rust-debugger'
-    plugins = ['org.rust.lang:0.1.0.1611']
+    plugins = ['org.rust.lang:0.1.0.1698']
     downloadSources false
     updateSinceUntilBuild false
     instrumentCode false
 
-    localPath 'lib/clion-2016.3.2'
+    localPath 'lib/clion-2016.3.3'
 }
 
 apply plugin: 'java'

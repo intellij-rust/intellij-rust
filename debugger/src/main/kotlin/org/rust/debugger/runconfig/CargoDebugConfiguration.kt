@@ -15,7 +15,7 @@ import com.intellij.ui.layout.Row
 import com.intellij.ui.layout.panel
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
-import org.rust.cargo.runconfig.RustRunConfigurationModule
+import org.rust.cargo.runconfig.RsRunConfigurationModule
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
 import org.rust.ide.icons.RsIcons
@@ -37,7 +37,7 @@ class CargoDebugConfigurationType : ConfigurationTypeBase("CargoDebugConfigurati
 
 class CargoDebugConfiguration(
     project: Project, factory: ConfigurationFactory, name: String?
-) : ModuleBasedConfiguration<RustRunConfigurationModule>(name, RustRunConfigurationModule(project), factory),
+) : ModuleBasedConfiguration<RsRunConfigurationModule>(name, RsRunConfigurationModule(project), factory),
     RunConfigurationWithSuppressedDefaultRunAction {
 
     init {
