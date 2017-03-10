@@ -1,6 +1,6 @@
 package org.rust.ide.template.postfix
 
-class LambdaPostfixTemplateTest : PostfixTemplateTest(ParenPostfixTemplate()) {
+class LambdaPostfixTemplateTest : PostfixTemplateTest(LambdaPostfixTemplate()) {
     fun testNotApplicable() = doTestNotApplicable("""
         struct S { }.lambda/*caret*/
     """)

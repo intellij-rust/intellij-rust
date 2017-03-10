@@ -16,7 +16,6 @@ abstract class PostfixTemplateTest(val postfixTemplate: PostfixTemplate) : RsTes
         @Language("Rust") after: String,
         checkSyntaxErrors: Boolean = true
     ) {
-
         InlineFile(before).withCaret()
         checkApplicability(before, true)
         myFixture.type('\t')

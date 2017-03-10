@@ -21,6 +21,7 @@ class RsPostfixTemplateProvider : PostfixTemplateProvider {
         MatchPostfixTemplate(),
         ParenPostfixTemplate(),
         LambdaPostfixTemplate(),
+        NotPostfixTemplate(),
         LetPostfixTemplate()
     )
 

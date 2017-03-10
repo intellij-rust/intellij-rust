@@ -37,6 +37,16 @@ class LambdaPostfixTemplate : StringBasedPostfixTemplate(
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
+class NotPostfixTemplate : StringBasedPostfixTemplate(
+    "not",
+    "!expr",
+    RsTopMostInScopeSelector({ true })) {
+
+    override fun getTemplateString(element: PsiElement): String = "!${element.text}"
+
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
+}
+
 class MatchPostfixTemplate : StringBasedPostfixTemplate(
     "match",
     "match expr {...}",
