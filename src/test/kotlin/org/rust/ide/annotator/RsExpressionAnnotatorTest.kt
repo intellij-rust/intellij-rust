@@ -102,7 +102,7 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
     fun testE0384_ReassignImmutableFromBinding() = checkErrors("""
         fn main() {
             let x = 5;
-            <error descr="Reassigning an immutable variable [E0384]">x = 3</error>;
+            <error descr="Reassigning an immutable variable [E0384]">x</error> = 3;
         }
     """)
 
@@ -132,7 +132,7 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
             let mut x = 3;
             {
                 let y = &x;
-                *y = 5;
+                <error descr="Cannot assign to immutable field `*y`">*y</error> = 5;
             }
         }
     """)
@@ -142,7 +142,7 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
             let x = 3;
             {
                 let y = &x;
-                *y = 5;
+                <error descr="Cannot assign to immutable field `*y`">*y</error> = 5;
             }
         }
     """)
@@ -150,7 +150,7 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
     fun `test E0384 in pattern`() = checkErrors("""
         fn main() {
             let (x, mut y) = (92, 62);
-            <error>x = 42</error>;
+            <error descr="Reassigning an immutable variable [E0384]">x</error> = 42;
             y = 42;
         }
     """)
