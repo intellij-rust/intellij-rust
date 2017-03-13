@@ -10,7 +10,7 @@ import org.jdom.Element
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl
-import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.CargoConfigurationBase
 import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
@@ -208,15 +208,15 @@ class RunConfigurationProducerTest : RsTestBase() {
         assertSameLinesWithFile("$testDataPath/${getTestName(true)}.xml", JDOMUtil.writeElement(root))
     }
 
-    private fun doTestRemembersContext(
-        producer: RunConfigurationProducer<CargoCommandConfiguration>,
+    private fun <T : CargoConfigurationBase> doTestRemembersContext(
+        producer: RunConfigurationProducer<T>,
         ctx1: PsiElement,
         ctx2: PsiElement
     ) {
         val contexts = listOf(ConfigurationContext(ctx1), ConfigurationContext(ctx2))
         val configsFromContext = contexts.map { it.configurationsFromContext!!.single() }
         configsFromContext.forEach { check(it.isProducedBy(producer.javaClass)) }
-        val configs = configsFromContext.map { it.configuration as CargoCommandConfiguration }
+        val configs = configsFromContext.map { it.configuration as T }
         for (i in 0..1) {
             assertThat(producer.isConfigurationFromContext(configs[i], contexts[i])).isTrue()
             assertThat(producer.isConfigurationFromContext(configs[i], contexts[1 - i])).isFalse()
