@@ -11,7 +11,9 @@ import com.intellij.ui.RawCommandLineEditor
 import com.intellij.util.execution.ParametersListUtil
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
+import java.awt.Dimension
 import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.JTextField
 
 
@@ -47,10 +49,13 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
     }
 
     override fun createEditor(): JComponent = panel {
-        labeledRow("Rust project:", comboModules) { comboModules(CCFlags.push) }
+        labeledRow("Rust &project:", comboModules) { comboModules(CCFlags.push) }
         labeledRow("&Command:", command) { command(growPolicy = GrowPolicy.SHORT_TEXT) }
-        labeledRow("Additional arguments:", additionalArguments) { additionalArguments() }
-        row(environmentVariables.label) { environmentVariables() }
+        labeledRow("&Additional arguments:", additionalArguments) { additionalArguments.apply {
+            dialogCaption = "Additional arguments"
+            makeWide()
+        }() }
+        row(environmentVariables.label) { environmentVariables.apply { makeWide() }() }
         row { printBacktrace() }
     }
 
@@ -58,5 +63,9 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
         val label = Label(labelText)
         label.labelFor = component
         row(label) { init() }
+    }
+
+    private fun JPanel.makeWide() {
+        preferredSize = Dimension(1000, height)
     }
 }
