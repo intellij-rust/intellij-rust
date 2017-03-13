@@ -1,6 +1,7 @@
 package org.rust.cargo.runconfig
 
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.toolchain.CargoCommandLine
 
 val CargoWorkspace.Target.cargoArgumentSpeck: List<String> get() {
     // Can get fancy here not add this arguments if we are the root package
@@ -18,4 +19,9 @@ val CargoWorkspace.Target.cargoArgumentSpeck: List<String> get() {
     return pkgSpec + targetSpec
 }
 
+fun CargoCommandLine.mergeWithDefault(default: CargoCommandLine): CargoCommandLine =
+    if (environmentVariables.isEmpty())
+        copy(environmentVariables = default.environmentVariables)
+    else
+        this
 

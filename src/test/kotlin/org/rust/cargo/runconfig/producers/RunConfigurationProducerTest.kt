@@ -1,7 +1,9 @@
 package org.rust.cargo.runconfig.producers
 
+import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
+import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
@@ -11,13 +13,14 @@ import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.lang.RsTestBase
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.parentOfType
 
 class RunConfigurationProducerTest : RsTestBase() {
@@ -178,6 +181,37 @@ class RunConfigurationProducerTest : RsTestBase() {
             example("hello-world", "example/hello.rs").open()
         }
         checkOnLeaf()
+    }
+
+    fun `test executable configuration uses default environment`() {
+        testProject {
+            bin("hello", "src/main.rs").open()
+        }
+
+        modifyTemplaceConfiguration {
+            cargoCommandLine = cargoCommandLine.copy(environmentVariables = mapOf("FOO" to "BAR"))
+        }
+
+        checkOnTopLevel<RsFile>()
+    }
+
+    fun `test test configuration uses default environment`() {
+        testProject {
+            lib("foo", "src/lib.rs", "#[test]\nfn test_foo() { as<caret>sert!(true); }").open()
+        }
+
+        modifyTemplaceConfiguration {
+            cargoCommandLine = cargoCommandLine.copy(environmentVariables = mapOf("FOO" to "BAR"))
+        }
+
+        checkOnTopLevel<RsFunction>()
+    }
+
+    private fun modifyTemplaceConfiguration(f: CargoCommandConfiguration.() -> Unit) {
+        val configurationType = ConfigurationTypeUtil.findConfigurationType(CargoCommandConfigurationType::class.java)
+        val factory = configurationType.factory
+        val template = RunManager.getInstance(project).getConfigurationTemplate(factory).configuration as CargoCommandConfiguration
+        template.f()
     }
 
     private fun checkOnLeaf() = checkOnElement<PsiElement>()

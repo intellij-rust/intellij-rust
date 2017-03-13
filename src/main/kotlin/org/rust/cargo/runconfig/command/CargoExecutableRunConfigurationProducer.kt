@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.workspace.cargoWorkspace
+import org.rust.cargo.runconfig.mergeWithDefault
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.module
@@ -24,7 +25,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         val target = findBinaryTarget(location) ?: return false
 
         return configuration.configurationModule.module == context.module &&
-            configuration.cargoCommandLine == target.cargoArgs
+            configuration.cargoCommandLine == target.cargoCommandLine
     }
 
     override fun setupConfigurationFromContext(
@@ -40,7 +41,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
 
         configuration.configurationModule.module = context.module
         configuration.name = target.configurationName
-        configuration.cargoCommandLine = target.cargoArgs
+        configuration.cargoCommandLine = target.cargoCommandLine.mergeWithDefault(configuration.cargoCommandLine)
         return true
     }
 
@@ -50,7 +51,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
     ) {
         val configurationName: String = "Run $name"
 
-        val cargoArgs = CargoCommandLine(
+        val cargoCommandLine = CargoCommandLine(
             CargoConstants.Commands.RUN,
             listOf("--$kind", name)
         )

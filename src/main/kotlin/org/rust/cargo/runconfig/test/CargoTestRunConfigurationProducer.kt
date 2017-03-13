@@ -10,6 +10,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.cargoArgumentSpeck
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
+import org.rust.cargo.runconfig.mergeWithDefault
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.RsFunction
@@ -42,7 +43,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
 
         configuration.configurationModule.module = context.module
         configuration.name = test.configurationName
-        configuration.cargoCommandLine = test.cargoCommandLine
+        configuration.cargoCommandLine = test.cargoCommandLine.mergeWithDefault(configuration.cargoCommandLine)
         return true
     }
 
