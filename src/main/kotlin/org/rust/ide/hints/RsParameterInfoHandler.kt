@@ -62,7 +62,7 @@ class RsParameterInfoHandler : ParameterInfoHandler<PsiElement, RsArgumentsDescr
                 return
             }
         }
-        context.objectsToView.mapIndexed { i, o -> context.setUIComponentEnabled(i, true) }
+        context.objectsToView.indices.map { context.setUIComponentEnabled(it, true) }
     }
 
     override fun updateUI(p: RsArgumentsDescription?, context: ParameterInfoUIContext) {

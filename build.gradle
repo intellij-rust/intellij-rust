@@ -152,6 +152,13 @@ project(':toml') {
     parserTask(project, 'TomlParser', 'org/toml/lang/core/psi')
 }
 
+compileKotlin {
+    kotlinOptions {
+        languageVersion = "1.1"
+        apiVersion = "1.0"
+    }
+}
+
 static def codegenTask(project, task) {
     project.compileKotlin.dependsOn task
     project.compileTestKotlin.dependsOn task

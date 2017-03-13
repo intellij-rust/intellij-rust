@@ -78,7 +78,7 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
     private fun createLookupElement(name: String): LookupElement =
         if (name.endsWith("()")) {
             LookupElementBuilder.create(name.substringBeforeLast("()"))
-                .withInsertHandler { context, lookupElement ->
+                .withInsertHandler { context, _ ->
                     context.document.insertString(context.selectionEndOffset, "()")
                     EditorModificationUtil.moveCaretRelatively(context.editor, 1)
                 }

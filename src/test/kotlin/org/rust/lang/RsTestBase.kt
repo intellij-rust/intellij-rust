@@ -128,13 +128,13 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         }
     }
 
-    inline fun <reified T : PsiElement> findElementInEditor(marker: String = "^"): T {
+    protected inline fun <reified T : PsiElement> findElementInEditor(marker: String = "^"): T {
         val (element, data) = findElementAndDataInEditor<T>(marker)
         check(data.isEmpty()) { "Did not expect marker data" }
         return element
     }
 
-    inline fun <reified T : PsiElement> findElementAndDataInEditor(marker: String = "^"): Pair<T, String> {
+    protected inline fun <reified T : PsiElement> findElementAndDataInEditor(marker: String = "^"): Pair<T, String> {
         val caretMarker = "//$marker"
         val (elementAtMarker, data) = run {
             val text = myFixture.file.text

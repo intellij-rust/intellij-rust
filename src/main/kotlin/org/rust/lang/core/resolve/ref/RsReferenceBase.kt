@@ -27,7 +27,7 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
 
     final override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
         ResolveCache.getInstance(element.project)
-            .resolveWithCaching(this, { r, incomplete ->
+            .resolveWithCaching(this, { r, _ ->
                 r.resolveInner().map(::PsiElementResolveResult).toTypedArray()
             },
                 /* needToPreventRecursion = */ true,

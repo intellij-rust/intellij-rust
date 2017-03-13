@@ -7,7 +7,7 @@ import org.rust.lang.core.psi.RsElementTypes.*
 fun RsFmtBlock.getAlignmentStrategy(): RsAlignmentStrategy = when (node.elementType) {
     TUPLE_EXPR, VALUE_ARGUMENT_LIST, FORMAT_MACRO_ARGS, TRY_MACRO_ARGS, VEC_MACRO_ARGS, USE_GLOB_LIST ->
         RsAlignmentStrategy.wrap()
-            .alignIf { child, parent, ctx ->
+            .alignIf { child, parent, _ ->
                 // Do not align if we have only one argument as this may lead to
                 // some quirks when that argument is tuple expr.
                 // Alignment do not allow "negative indentation" i.e.:
@@ -45,7 +45,7 @@ fun RsFmtBlock.getAlignmentStrategy(): RsAlignmentStrategy = when (node.elementT
 
     in FN_DECLS ->
         RsAlignmentStrategy.shared()
-            .alignIf { c, p, rustFmtContext ->
+            .alignIf { c, _, _ ->
                 c.elementType == RET_TYPE && ctx.rustSettings.ALIGN_RET_TYPE ||
                     c.elementType == WHERE_CLAUSE && ctx.rustSettings.ALIGN_WHERE_CLAUSE
             }
@@ -78,4 +78,4 @@ fun RsFmtBlock.getAlignmentStrategy(): RsAlignmentStrategy = when (node.elementT
     else -> RsAlignmentStrategy.NullStrategy
 }
 
-fun RsAlignmentStrategy.alignUnlessBlockDelim(): RsAlignmentStrategy = alignIf { c, p, x -> !c.isBlockDelim(p) }
+fun RsAlignmentStrategy.alignUnlessBlockDelim(): RsAlignmentStrategy = alignIf { c, p, _ -> !c.isBlockDelim(p) }

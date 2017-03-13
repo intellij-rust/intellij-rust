@@ -14,7 +14,6 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
     data class Context(
         val match: RsMatchExpr,
         val matchTarget: RsExpr,
-        val matchBody: RsMatchBody,
         val nonVoidArm: RsMatchArm
     )
 
@@ -31,11 +30,11 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
         val pattern = nonVoidArm.matchPat.patList.singleOrNull() ?: return null
         if (pattern.text == "_") return null
 
-        return Context(matchExpr, matchTarget, matchBody, nonVoidArm)
+        return Context(matchExpr, matchTarget, nonVoidArm)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val (matchExpr, matchTarget, matchBody, arm) = ctx
+        val (matchExpr, matchTarget, arm) = ctx
 
         var bodyText = arm.expr?.text ?: return
         if (arm.expr !is RsBlockExpr) {

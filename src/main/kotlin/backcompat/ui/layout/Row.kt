@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("PROTECTED_CALL_FROM_PUBLIC_INLINE")
+
 package backcompat.ui.layout
 
 import backcompat.ui.components.Label

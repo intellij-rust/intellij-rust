@@ -10,7 +10,7 @@ import org.rust.cargo.util.modulesWithCargoProject
 import org.rust.ide.notifications.showBalloon
 import org.rust.ide.utils.isNullOrEmpty
 
-class RefreshCargoProjectAction : AnAction() {
+class  RefreshCargoProjectAction : AnAction() {
     init {
         templatePresentation.text = "Refresh Cargo project"
         templatePresentation.description = "Update Cargo project information and download new dependencies"

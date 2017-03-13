@@ -134,7 +134,7 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
         is RsFunction -> base
             .withTypeText(retType?.typeReference?.text ?: "()")
             .withTailText(valueParameterList?.text?.replace("\\s+".toRegex(), " ") ?: "()")
-            .withInsertHandler handler@ { context: InsertionContext, lookupElement: LookupElement ->
+            .withInsertHandler handler@ { context: InsertionContext, _: LookupElement ->
                 if (context.isInUseBlock) return@handler
                 if (context.alreadyHasParens) return@handler
                 context.document.insertString(context.selectionEndOffset, "()")
@@ -158,7 +158,7 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
                         .joinToString(prefix = "(", postfix = ")")
                 else -> ""
             })
-            .withInsertHandler handler@ { context, lookupElement ->
+            .withInsertHandler handler@ { context, _ ->
                 if (context.isInUseBlock) return@handler
                 val (text, shift) = when {
                     tupleFields != null -> Pair("()", 1)

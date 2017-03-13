@@ -49,7 +49,7 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
                     .create("else")
                     .bold()
                     .withTailText(" {...}")
-                    .withInsertHandler { context, lookupElement ->
+                    .withInsertHandler { context, _ ->
                         context.document.insertString(context.selectionEndOffset, " {  }")
                         EditorModificationUtil.moveCaretRelatively(context.editor, 3)
 
@@ -59,7 +59,7 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
                     .create("else if")
                     .bold()
                     .withTailText(" {...}")
-                    .withInsertHandler { context, lookupElement ->
+                    .withInsertHandler { context, _ ->
                         context.document.insertString(context.selectionEndOffset, "  { }")
                         EditorModificationUtil.moveCaretRelatively(context.editor, 1)
                     }
