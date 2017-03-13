@@ -186,7 +186,7 @@ def parserTask(project, parserName, pkg) {
         }
 
         main = 'org.intellij.grammar.Main'
-        classpath(configurations.compileOnly)
+        classpath(configurations.compileOnly, configurations.compile)
 
         args = [dstRoot, file(src)]
 
