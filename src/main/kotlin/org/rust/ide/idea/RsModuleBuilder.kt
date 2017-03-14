@@ -30,6 +30,7 @@ class RsModuleBuilder : ModuleBuilder() {
 
     override fun setupRootModel(modifiableRootModel: ModifiableRootModel) {
         val root = doAddContentEntry(modifiableRootModel)?.file ?: return
+        modifiableRootModel.inheritSdk()
         val toolchain = rustProjectData?.toolchain
         root.refresh(/* async = */ false, /* recursive = */ true)
 

@@ -53,6 +53,10 @@ class CargoConfigurationWizardStep(
 
         override fun update(module: Module, rootModel: ModifiableRootModel) {
             data?.applyTo(module.project.rustSettings)
+            // We don't use SDK, but let's inherit one to reduce the amount of
+            // "SDK not configured" errors
+            // https://github.com/intellij-rust/intellij-rust/issues/1062
+            rootModel.inheritSdk()
 
             val contentEntry = rootModel.contentEntries.singleOrNull()
             if (contentEntry != null) {
