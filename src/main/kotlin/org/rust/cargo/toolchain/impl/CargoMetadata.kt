@@ -110,17 +110,20 @@ object CargoMetadata {
     )
 
     fun clean(project: Project): CleanCargoMetadata {
-        val packageIdToIndex = project.packages.mapIndexed { i, p -> p.id to i }.toMap()
+        val packageIdToIndex: (String) -> Int = project.packages.mapIndexed { i, p -> p.id to i }.toMap().let { pkgs ->
+            { pkgs[it] ?: error("Cargo metadata references an unlisted package: `$it`") }
+        }
+
         val fs = LocalFileSystem.getInstance()
         val members = project.workspace_members
             ?: error("No `members` key in the `cargo metadata` output.\n" +
             "Your version of Cargo is no longer supported, please upgrade Cargo.")
         return CleanCargoMetadata(
             project.packages.mapNotNull { it.clean(fs, it.id in members) },
-            project.resolve.nodes.map { node ->
+            project.resolve.nodes.map { (id, dependencies) ->
                 CleanCargoMetadata.DependencyNode(
-                    packageIdToIndex[node.id]!!,
-                    node.dependencies.map { packageIdToIndex[it]!! }
+                    packageIdToIndex(id),
+                    dependencies.map { packageIdToIndex(it) }
                 )
             }
         )
