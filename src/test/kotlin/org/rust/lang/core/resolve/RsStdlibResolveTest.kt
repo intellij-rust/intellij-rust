@@ -160,4 +160,11 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             }
         """)
     }
+
+    fun `test println macro`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            println!("Hello, World!");
+        }   //^ ...libstd/macros.rs
+    """)
 }

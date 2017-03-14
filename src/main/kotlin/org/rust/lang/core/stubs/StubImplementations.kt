@@ -24,7 +24,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 62
+        override fun getStubVersion(): Int = 64
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -106,6 +106,8 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "TYPE_ARGUMENT_LIST" -> RsPlaceholderStub.Type("TYPE_ARGUMENT_LIST", ::RsTypeArgumentListImpl)
 
     "RET_TYPE" -> RsPlaceholderStub.Type("RET_TYPE", ::RsRetTypeImpl)
+
+    "MACRO_DEFINITION" -> RsMacroDefinitionStub.Type
 
     else -> error("Unknown element $name")
 }
@@ -760,6 +762,39 @@ class RsLifetimeDeclStub(
         }
     }
 }
+
+class RsMacroDefinitionStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    override val name: String?
+) : StubBase<RsMacroDefinition>(parent, elementType),
+    RsNamedStub,
+    RsVisibilityStub {
+
+    override val isPublic: Boolean get() = true
+
+    object Type : RsStubElementType<RsMacroDefinitionStub, RsMacroDefinition>("MACRO_DEFINITION") {
+        override fun shouldCreateStub(node: ASTNode): Boolean = node.psi.parent.parent is RsMod
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RsMacroDefinitionStub(parentStub, this,
+                dataStream.readNameAsString()
+            )
+
+        override fun serialize(stub: RsMacroDefinitionStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.name)
+            }
+
+        override fun createPsi(stub: RsMacroDefinitionStub): RsMacroDefinition =
+            RsMacroDefinitionImpl(stub, this)
+
+        override fun createStub(psi: RsMacroDefinition, parentStub: StubElement<*>?) =
+            RsMacroDefinitionStub(parentStub, this, psi.name)
+
+        override fun indexStub(stub: RsMacroDefinitionStub, sink: IndexSink) = sink.indexMacroDefinition(stub)
+    }
+}
+
 
 private fun StubInputStream.readNameAsString(): String? = readName()?.string
 

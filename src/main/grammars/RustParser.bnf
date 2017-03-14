@@ -953,6 +953,10 @@ LogMacro ::= LogMacroInvocation LogMacroArgs { pin = 1 }
 MacroDefinition ::= MacroRulesInvocation identifier ItemMacroArg {
   pin = 1
   extends = ItemLikeMacro
+  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsMacroDefinitionImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsMacroDefinitionStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 private BuildInMacro ::= TryMacro
@@ -969,7 +973,11 @@ private ZzMacroItem ::= MacroDefinition | ItemLikeMacro {
 }
 
 // Invocations
-MacroInvocation ::= identifier '!' identifier?
+MacroInvocation ::= identifier '!' identifier? {
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsMacroInvocationImplMixin"
+}
+
 TryMacroInvocation ::= "try" '!'
 VecMacroInvocation ::= "vec" '!'
 LogMacroInvocation ::= ( "trace" | "log" | "warn" | "debug" | "error" | "info" ) '!'

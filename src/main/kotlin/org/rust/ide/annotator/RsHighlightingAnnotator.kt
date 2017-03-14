@@ -21,7 +21,7 @@ import org.rust.lang.core.types.type
 class RsHighlightingAnnotator : Annotator {
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-        val (partToHighlight, color) = if (element is RsReferenceElement) {
+        val (partToHighlight, color) = if (element is RsReferenceElement && element !is RsMacroInvocation) {
             highlightReference(element)
         } else {
             highlightNotReference(element)

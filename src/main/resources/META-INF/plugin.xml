@@ -456,6 +456,7 @@
 
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsModulesIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsNamedElementIndex"/>
+        <stubIndex implementation="org.rust.lang.core.stubs.index.RsMacroDefinitionIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsGotoClassIndex"/>
 
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsImplIndex$TraitImpls"/>
