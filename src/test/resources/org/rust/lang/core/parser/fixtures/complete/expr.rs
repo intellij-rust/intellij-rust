@@ -57,9 +57,11 @@ fn test() -> u32 {
     box 92;
 
     let _ = 1 as i32 <= 1;
+    let _ = 1: i32 <= 1;
 
     const TEN: u32 = 10;
     let _ = 1 as u32 + TEN;
+    let _ = 1: u32 + TEN;
 
     return (x = y)  /* return */
             + 1

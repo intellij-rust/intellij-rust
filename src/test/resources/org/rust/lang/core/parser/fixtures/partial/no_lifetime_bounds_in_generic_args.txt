@@ -21,6 +21,8 @@ FILE
             PsiErrorElement:<type reference> or '>' expected, got ':'
               <empty list>
       PsiElement(:)(':')
+      PsiErrorElement:fn or identifier expected, got ''static'
+        <empty list>
       PsiWhiteSpace(' ')
       PsiElement(QUOTE_IDENTIFIER)(''static')
       PsiErrorElement:':' expected, got '>'

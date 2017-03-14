@@ -96,9 +96,9 @@ FILE
       RsPathExprImpl(PATH_EXPR)
         RsPathImpl(PATH)
           PsiElement(identifier)('baz')
-        PsiErrorElement:'!', '&', '^' or '|' expected, got ':'
-          <empty list>
       PsiElement(:)(':')
+      PsiErrorElement:fn or identifier expected, got '62'
+        <empty list>
       PsiWhiteSpace(' ')
       RsLitExprImpl(LIT_EXPR)
         PsiElement(INTEGER_LITERAL)('62')
@@ -109,18 +109,17 @@ FILE
       RsPathExprImpl(PATH_EXPR)
         RsPathImpl(PATH)
           PsiElement(identifier)('quux')
-        PsiErrorElement:'!', '&', '^' or '|' expected, got ':'
-          <empty list>
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
-      PsiElement(,)(',')
+      PsiErrorElement:fn or identifier expected, got ','
+        PsiElement(,)(',')
       PsiWhiteSpace('\n        ')
       RsPathExprImpl(PATH_EXPR)
         RsPathImpl(PATH)
           PsiElement(identifier)('quazar')
-        PsiErrorElement:'!', '&', '^' or '|' expected, got ':'
-          <empty list>
       PsiElement(:)(':')
+      PsiErrorElement:fn or identifier expected, got '42'
+        <empty list>
       PsiWhiteSpace(' ')
       RsLitExprImpl(LIT_EXPR)
         PsiElement(INTEGER_LITERAL)('42')

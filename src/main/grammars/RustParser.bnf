@@ -814,7 +814,7 @@ BitOrBinExpr     ::= Expr !(<<isCompleteBlockExpr>> | oror)   '|' StmtModeExprOf
 BitAndBinExpr    ::= Expr !(<<isCompleteBlockExpr>> | andand) '&' StmtModeExprOff
 BitXorBinExpr    ::= Expr !<<isCompleteBlockExpr>> '^' StmtModeExprOff
 
-CastExpr ::= Expr as ScalarTypeReference
+CastExpr ::= Expr (as | ':')  ScalarTypeReference
 
 TryExpr ::= Expr '?'
 
