@@ -497,6 +497,27 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun testTryOperatorWithAlias() = checkByCode("""
+        enum Result<T, E> { Ok(T), Err(E)}
+
+        mod io {
+            pub struct IoError;
+            pub type IoResult<T> = super::Result<T, IoError>;
+
+            pub struct S { field: u32 }
+                          //X
+
+            pub fn foo() -> IoResult<S> { unimplemented!() }
+
+        }
+
+        fn main() {
+            let s = io::foo()?;
+            s.field;
+              //^
+        }
+    """)
+
     fun testMatchEnumTupleVariant() = checkByCode("""
         enum E { V(S) }
         struct S;
