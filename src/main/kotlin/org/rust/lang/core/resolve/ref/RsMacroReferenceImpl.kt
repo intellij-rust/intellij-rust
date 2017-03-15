@@ -8,17 +8,14 @@ import org.rust.lang.core.psi.RsMacroInvocation
 import org.rust.lang.core.stubs.index.RsMacroDefinitionIndex
 
 class RsMacroReferenceImpl(macroInvocation: RsMacroInvocation) : RsReferenceBase<RsMacroInvocation>(macroInvocation) {
-    override fun resolveInner(): List<RsMacroDefinition> {
-        val xs = StubIndex.getElements(
+    override fun resolveInner(): List<RsMacroDefinition> =
+        StubIndex.getElements(
             RsMacroDefinitionIndex.KEY,
             element.referenceName,
             element.project,
             GlobalSearchScope.allScope(element.project),
             RsMacroDefinition::class.java
         ).toList()
-        println("xs = ${xs}")
-        return xs
-    }
 
     override val RsMacroInvocation.referenceAnchor: PsiElement
         get() = referenceNameElement
