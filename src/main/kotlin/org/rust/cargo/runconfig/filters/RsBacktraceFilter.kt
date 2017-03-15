@@ -46,7 +46,7 @@ private class RsBacktraceItemFilter(
     val project: Project,
     val module: Module
 ) : Filter {
-    private val pattern = Pattern.compile("^(\\s*\\d+:\\s+0x[a-f0-9]+ - )(.+)(::h[0-9a-f]+)$")!!
+    private val pattern = Pattern.compile("^(\\s*\\d+:\\s+(?:0x[a-f0-9]+ - )?)(.+?)(::h[0-9a-f]+)?$")!!
     private val docManager = PsiDocumentManager.getInstance(project)
 
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
@@ -66,7 +66,9 @@ private class RsBacktraceItemFilter(
         }
 
         // Dim the hashcode
-        resultItems.add(Filter.ResultItem(funcEnd, funcEnd + funcHash.length, null, DIMMED_TEXT))
+        if (funcHash != null) {
+            resultItems.add(Filter.ResultItem(funcEnd, funcEnd + funcHash.length, null, DIMMED_TEXT))
+        }
 
         return Filter.Result(resultItems)
     }

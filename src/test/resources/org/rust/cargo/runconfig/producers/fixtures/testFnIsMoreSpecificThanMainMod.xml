@@ -1,11 +1,11 @@
 <configurations>
   <configuration name="Test test_foo" class="CargoCommandConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
     <option name="additionalArguments" value="--package test-package --bin foo test_foo" />
+    <option name="backtraceMode" value="2" />
     <option name="command" value="test" />
     <option name="environmentVariables">
       <map />
     </option>
-    <option name="printBacktrace" value="true" />
     <module name="light_idea_test_case" />
   </configuration>
 </configurations>

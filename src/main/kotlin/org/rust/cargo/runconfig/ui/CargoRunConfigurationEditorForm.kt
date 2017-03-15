@@ -1,15 +1,16 @@
 package org.rust.cargo.runconfig.ui
 
-import backcompat.ui.components.CheckBox
 import backcompat.ui.components.Label
 import backcompat.ui.layout.*
 import com.intellij.application.options.ModulesComboBox
 import com.intellij.execution.configuration.EnvironmentVariablesComponent
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.SettingsEditor
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.util.execution.ParametersListUtil
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -23,7 +24,7 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
     private val command = JTextField()
     private val additionalArguments = RawCommandLineEditor()
     private val environmentVariables = EnvironmentVariablesComponent()
-    private val printBacktrace = CheckBox("Print back&trace")
+    private val backtraceMode = ComboBox<BacktraceMode>()
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         comboModules.setModules(configuration.validModules)
@@ -32,7 +33,7 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
         configuration.cargoCommandLine.let { args ->
             command.text = args.command
             additionalArguments.text = ParametersListUtil.join(args.additionalArguments)
-            printBacktrace.isSelected = args.printBacktrace
+            backtraceMode.selectedIndex = args.backtraceMode.index
             environmentVariables.envs = args.environmentVariables
         }
     }
@@ -43,7 +44,7 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
         configuration.cargoCommandLine = CargoCommandLine(
             command.text,
             ParametersListUtil.parse(additionalArguments.text),
-            printBacktrace.isSelected,
+            BacktraceMode.fromIndex(backtraceMode.selectedIndex),
             environmentVariables.envs
         )
     }
@@ -56,7 +57,11 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
             makeWide()
         }() }
         row(environmentVariables.label) { environmentVariables.apply { makeWide() }() }
-        row { printBacktrace() }
+        labeledRow("Back&trace:", backtraceMode) { backtraceMode.apply{
+            addItem(BacktraceMode.NO)
+            addItem(BacktraceMode.SHORT)
+            addItem(BacktraceMode.FULL)
+        }() }
     }
 
     private fun LayoutBuilder.labeledRow(labelText: String, component: JComponent, init: Row.() -> Unit) {

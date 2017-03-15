@@ -10,11 +10,11 @@
           <option value="" />
         </list>
       </option>
+      <option name="backtraceMode" value="2" />
       <option name="command" value="test" />
       <option name="environmentVariables">
         <map />
       </option>
-      <option name="printBacktrace" value="true" />
     </parameters>
     <module name="light_idea_test_case" />
   </configuration>
