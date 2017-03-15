@@ -1,7 +1,6 @@
 package org.rust.cargo.toolchain
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -10,7 +9,6 @@ import org.rust.TestProjectBuilder
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
-import org.rust.cargo.project.workspace.SetupRustStdlibTask
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.lang.core.psi.RsPath
 import org.rust.utils.fullyRefreshDirectory
@@ -203,9 +201,5 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
         }
 
         refreshWorkspace()
-        SetupRustStdlibTask(module, project.toolchain!!.rustup(project.baseDir.path)!!).apply {
-            run(EmptyProgressIndicator())
-            onSuccess()
-        }
     }
 }

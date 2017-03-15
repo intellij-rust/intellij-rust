@@ -28,8 +28,6 @@ interface CargoProjectWorkspaceService {
      */
     fun requestImmediateUpdate(toolchain: RustToolchain, afterCommit: (UpdateResult) -> Unit)
 
-    fun setStandardLibrary(stdlib: List<StandardLibraryRoots.StdCrate>)
-
     @TestOnly
     fun syncUpdate(toolchain: RustToolchain)
 

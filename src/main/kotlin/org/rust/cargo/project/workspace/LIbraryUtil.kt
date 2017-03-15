@@ -36,7 +36,6 @@ class StandardLibraryRoots private constructor(
      */
     fun attachTo(module: Module) {
         module.updateLibrary(module.rustLibraryName, crates.map { it.packageRootUrl })
-        CargoProjectWorkspaceService.getInstance(module).setStandardLibrary(crates)
     }
 
     fun sameAsLibrary(library: Library): Boolean {

@@ -40,7 +40,7 @@ private val LOG = Logger.getInstance(CargoProjectWorkspaceServiceImpl::class.jav
  * This two piece may vary independently. [WorkspaceMerger]
  * merges them into a single [CargoWorkspace]. It's executed
  * only on EDT, so you may think of it as an actor maintaining
- * a two bits of state. 
+ * a two bits of state.
  */
 private class WorkspaceMerger {
     private var rawWorkspace: CargoWorkspace? = null
@@ -94,7 +94,9 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
             val rustup = module.project.toolchain?.rustup(projectDirectory)
                 ?: return
 
-            SetupRustStdlibTask(module, rustup).queue()
+            SetupRustStdlibTask(module, rustup, {
+                runWriteAction { workspaceMerger.setStdlib(it) }
+            }).queue()
         }
 
         with(module.messageBus.connect()) {
@@ -134,11 +136,6 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
 
     override fun requestImmediateUpdate(toolchain: RustToolchain, afterCommit: (UpdateResult) -> Unit) =
         requestUpdate(toolchain, afterCommit)
-
-    override fun setStandardLibrary(stdlib: List<StandardLibraryRoots.StdCrate>) {
-        checkWriteAccessAllowed()
-        workspaceMerger.setStdlib(stdlib)
-    }
 
     override fun syncUpdate(toolchain: RustToolchain) {
         taskQueue.run(UpdateTask(toolchain, module.cargoProjectRoot!!.path, null))
@@ -228,8 +225,13 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
     }
 
     @TestOnly
-    fun setState(workspace: CargoWorkspace) {
+    fun setRawWorkspace(workspace: CargoWorkspace) {
         commitUpdate(UpdateResult.Ok(workspace))
+    }
+
+    @TestOnly
+    fun setStdlib(libs: List<StandardLibraryRoots.StdCrate>) {
+        workspaceMerger.setStdlib(libs)
     }
 }
 

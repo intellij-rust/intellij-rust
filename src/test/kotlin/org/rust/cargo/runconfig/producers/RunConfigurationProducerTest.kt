@@ -25,7 +25,7 @@ import org.rust.lang.core.psi.ext.parentOfType
 
 class RunConfigurationProducerTest : RsTestBase() {
     override val dataPath: String get() = "org/rust/cargo/runconfig/producers/fixtures"
-    // We need to override this because we call [CargoProjectWorkspaceServiceImpl.setState].
+    // We need to override this because we call [CargoProjectWorkspaceServiceImpl.setRawWorkspace].
     override fun getProjectDescriptor(): LightProjectDescriptor = LightProjectDescriptor()
 
     fun testExecutableProducerWorksForBin() {
@@ -352,7 +352,7 @@ class RunConfigurationProducerTest : RsTestBase() {
                 )
             )
 
-            metadataService.setState(projectDescription)
+            metadataService.setRawWorkspace(projectDescription)
         }
 
         private fun addTarget(name: String, kind: CargoWorkspace.TargetKind, path: String, code: String) {

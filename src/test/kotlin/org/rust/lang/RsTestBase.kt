@@ -196,7 +196,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             val moduleBaseDir = contentEntry.file!!.url
             val projectWorkspace = CargoProjectWorkspaceService.getInstance(module) as CargoProjectWorkspaceServiceImpl
 
-            projectWorkspace.setState(testCargoProject(module, moduleBaseDir))
+            projectWorkspace.setRawWorkspace(testCargoProject(module, moduleBaseDir))
 
             // XXX: for whatever reason libraries created by `updateLibrary` are not indexed in tests.
             // this seems to fix the issue
@@ -240,7 +240,10 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
     protected object WithStdlibRustProjectDescriptor : RustProjectDescriptorBase.WithRustup() {
         override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
 
-            StandardLibraryRoots.fromFile(stdlib!!)!!.attachTo(module)
+            val stdlib = StandardLibraryRoots.fromFile(stdlib!!)!!
+            stdlib.attachTo(module)
+            (CargoProjectWorkspaceService.getInstance(module) as CargoProjectWorkspaceServiceImpl)
+                .setStdlib(stdlib.crates)
 
             val packages = listOf(testCargoPackage(contentRoot))
 
