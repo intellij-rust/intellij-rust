@@ -82,7 +82,7 @@ private fun typeReferenceToType(ref: RsTypeReference): RustType {
                     } catch (e: NumberFormatException) {
                         return RustUnknownType
                     }
-                    RustArrayType(expr.type, size)
+                    RustArrayType(ref.typeReference?.type ?: RustUnknownType, size)
                 }
                 else -> RustUnknownType
             }
