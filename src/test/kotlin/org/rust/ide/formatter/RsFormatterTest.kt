@@ -196,6 +196,12 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
+    fun `test unary minus in range patterns`() = doTextTest("""
+        fn main() { if let - 10 ... - 1 = - 8 {} }
+    """, """
+        fn main() { if let -10 ... -1 = -8 {} }
+    """)
+
     private fun common() = getSettings(RsLanguage)
     private fun custom() = settings.getCustomSettings(RsCodeStyleSettings::class.java)
 

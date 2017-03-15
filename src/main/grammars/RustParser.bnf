@@ -391,7 +391,7 @@ private Pat_with_recover ::= Pat (',' | &(')' | ']' | '..'))
 private PatField_with_recover ::= PatField (',' | & '}')
 
 PatRange ::= LitOrPath [ '...' LitOrPath ]
-private LitOrPath ::= '-'? LitExpr | PathExpr
+private LitOrPath ::= LitExpr | PathExpr | &('-' LitExpr) UnaryExpr
 
 PatTup ::= '(' SeqPat ')'
 PatVec ::= '[' SeqPat ']'
