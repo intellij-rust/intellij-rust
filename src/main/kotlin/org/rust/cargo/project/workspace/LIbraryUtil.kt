@@ -39,8 +39,11 @@ class StandardLibraryRoots private constructor(
         CargoProjectWorkspaceService.getInstance(module).setStandardLibrary(crates)
     }
 
-    fun sameAsLibrary(library: Library): Boolean
-        = crates.toSet() == library.rootProvider.getFiles(OrderRootType.CLASSES).toSet()
+    fun sameAsLibrary(library: Library): Boolean {
+        val libraryUrls = library.rootProvider.getFiles(OrderRootType.CLASSES).map { it.url }.toSet()
+        val myUrls = crates.map { it.packageRootUrl }.toSet()
+        return myUrls == libraryUrls
+    }
 
     companion object {
         fun fromPath(path: String): StandardLibraryRoots? =
