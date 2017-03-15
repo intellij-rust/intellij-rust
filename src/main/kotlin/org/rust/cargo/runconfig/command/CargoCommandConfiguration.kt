@@ -17,6 +17,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.RsRunConfigurationModule
 import org.rust.cargo.runconfig.ui.CargoRunConfigurationEditorForm
+import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoProjectRoot
@@ -32,11 +33,11 @@ class CargoCommandConfiguration(
     @get: com.intellij.util.xmlb.annotations.Transient
     @set: com.intellij.util.xmlb.annotations.Transient
     var cargoCommandLine: CargoCommandLine
-        get() = CargoCommandLine(_cargoArgs.command, _cargoArgs.additionalArguments, _cargoArgs.printBacktrace, _cargoArgs.environmentVariables)
+        get() = CargoCommandLine(_cargoArgs.command, _cargoArgs.additionalArguments, BacktraceMode.fromIndex(_cargoArgs.backtraceMode), _cargoArgs.environmentVariables)
         set(value) = with(value) {
             _cargoArgs.command = command
             _cargoArgs.additionalArguments = additionalArguments
-            _cargoArgs.printBacktrace = printBacktrace
+            _cargoArgs.backtraceMode = backtraceMode.index
             _cargoArgs.environmentVariables = environmentVariables
         }
 
@@ -112,6 +113,6 @@ class CargoCommandConfiguration(
 data class SerializableCargoCommandLine(
     var command: String = "",
     var additionalArguments: List<String> = mutableListOf(),
-    var printBacktrace: Boolean = true,
+    var backtraceMode: Int = BacktraceMode.DEFAULT.index,
     var environmentVariables: Map<String, String> = mutableMapOf()
 )

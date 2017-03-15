@@ -69,7 +69,11 @@ class Cargo(
         rustfmtCommandline(filePath).execute(owner, listener)
 
     fun generalCommand(commandLine: CargoCommandLine): GeneralCommandLine {
-        val env = (if (commandLine.printBacktrace) mapOf(RUST_BACTRACE_ENV_VAR to "1") else emptyMap()) + commandLine.environmentVariables
+        val env = when (commandLine.backtraceMode) {
+            BacktraceMode.SHORT -> mapOf(RUST_BACTRACE_ENV_VAR to "short")
+            BacktraceMode.FULL -> mapOf(RUST_BACTRACE_ENV_VAR to "full")
+            else -> emptyMap()
+        } + commandLine.environmentVariables
         return generalCommand(commandLine.command, commandLine.additionalArguments, env)
     }
 
