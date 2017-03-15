@@ -8,6 +8,8 @@ sealed class RustPath(val segments: List<RustPathSegment>) {
     abstract protected fun headToString(): String
     override fun toString(): String = headToString() + segments.map { "::${it.name}" }.joinToString(separator = "")
 
+    open val lastSegment: RustPathSegment? get() = segments.lastOrNull()
+
     class CrateRelative(segments: List<RustPathSegment>) : RustPath(segments) {
         override fun headToString(): String = ""
 
@@ -43,6 +45,8 @@ sealed class RustPath(val segments: List<RustPathSegment>) {
             other is Named && head == other.head && segments == other.segments
 
         override fun hashCode(): Int = 31 * head.hashCode() + segments.hashCode()
+
+        override val lastSegment: RustPathSegment get() = super.lastSegment ?: head
     }
 
     companion object {

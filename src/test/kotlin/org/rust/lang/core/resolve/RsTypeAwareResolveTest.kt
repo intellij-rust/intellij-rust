@@ -484,7 +484,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
                         //^ unresolved
     """)
 
-    fun testTryOperator() = checkByCode("""
+    fun testResultTryOperator() = checkByCode("""
         enum Result<T, E> { Ok(T), Err(E)}
         struct S { field: u32 }
                     //X
@@ -497,7 +497,25 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testTryOperatorWithAlias() = checkByCode("""
+    fun testResultUnwrap() = checkByCode("""
+        enum Result<T, E> { Ok(T), Err(E)}
+
+        impl<T, E: fmt::Debug> Result<T, E> {
+            pub fn unwrap(self) -> T { unimplemented!() }
+        }
+
+        struct S { field: u32 }
+                    //X
+        fn foo() -> Result<S, ()> { unimplemented!() }
+
+        fn main() {
+            let s = foo().unwrap();
+            s.field;
+            //^
+        }
+    """)
+
+    fun testResultTryOperatorWithAlias() = checkByCode("""
         enum Result<T, E> { Ok(T), Err(E)}
 
         mod io {
@@ -513,6 +531,28 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
 
         fn main() {
             let s = io::foo()?;
+            s.field;
+              //^
+        }
+    """)
+
+    fun testResultUnwrapWithAlias() = checkByCode("""
+        enum Result<T, E> { Ok(T), Err(E)}
+        impl<T, E: fmt::Debug> Result<T, E> {
+            pub fn unwrap(self) -> T { unimplemented!() }
+        }
+
+        mod io {
+            pub struct Error;
+            pub type Result<T> = super::Result<T, Error>;
+        }
+
+        struct S { field: u32 }
+                    //X
+        fn foo() -> io::Result<S> { unimplemented!() }
+
+        fn main() {
+            let s = foo().unwrap();
             s.field;
               //^
         }

@@ -52,7 +52,7 @@ private fun typeReferenceToType(ref: RsTypeReference): RustType {
             val target = ResolveEngine.resolve(path, ref, Namespace.Types)
                 .filterIsInstance<RsNamedElement>()
                 .firstOrNull() ?: return RustUnknownType
-            val typeArguments = (path as? RustPath.Named)?.head?.typeArguments.orEmpty()
+            val typeArguments = path.lastSegment?.typeArguments.orEmpty()
             RustTypificationEngine.typify(target)
                 .withTypeArguments(typeArguments.map { it.type })
 

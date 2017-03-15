@@ -8,7 +8,7 @@ import org.rust.lang.core.types.types.*
 import java.io.DataInput
 import java.io.DataOutput
 
-data class RustTypeFingerprint private constructor(
+data class RustTypeFingerprint constructor(
     private val name: String
 ) {
     companion object {
