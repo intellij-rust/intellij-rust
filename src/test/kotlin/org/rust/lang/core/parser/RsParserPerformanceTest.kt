@@ -105,7 +105,7 @@ class RsParserPerformanceTest : RsTestBase() {
 
         println("\n$name " +
             "\nTotal: ${totalTime}ms" +
-            "\nFiles: ${processed.size}")
+            "\nFileTree: ${processed.size}")
         val slowest = processed.sortedByDescending { it.time }.take(5)
         println("\nSlowest files")
         for ((path, time, fileLength) in slowest) {

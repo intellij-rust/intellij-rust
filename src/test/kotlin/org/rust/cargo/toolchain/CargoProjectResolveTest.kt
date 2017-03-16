@@ -4,8 +4,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
-import org.rust.TestProject
-import org.rust.TestProjectBuilder
+import org.rust.*
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
@@ -28,7 +27,8 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
                 rand = "=0.3.14"
         """)
 
-        rust("src/main.rs", """
+        dir("src") {
+            rust("main.rs", """
                 extern crate rand;
 
                 use rand::distributions;
@@ -38,7 +38,8 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
                 fn main() {
                     let _ = distributions::normal::Normal::new(0.0, 1.0);
                 }                         //^
-        """)
+            """)
+        }
     }.checkReferenceIsResolved<RsPath>("src/main.rs")
 
     fun `test resolve local package`() = buildProject {
@@ -52,22 +53,24 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
             foo = { path = "./foo" }
         """)
 
-        rust("src/main.rs", """
-            extern crate foo;
-            mod bar;
+        dir("src") {
+            rust("main.rs", """
+                extern crate foo;
+                mod bar;
 
-            fn main() {
-                foo::hello();
-            }       //^
-        """)
+                fn main() {
+                    foo::hello();
+                }       //^
+            """)
 
-        rust("src/bar.rs", """
-            use foo::hello;
+            rust("bar.rs", """
+                use foo::hello;
 
-            pub fn bar() {
-                hello();
-            }   //^
-        """)
+                pub fn bar() {
+                    hello();
+                }   //^
+            """)
+        }
 
         dir("foo") {
             toml("Cargo.toml", """
@@ -77,9 +80,11 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
                 authors = []
             """)
 
-            rust("src/lib.rs", """
-                pub fn hello() {}
-            """)
+            dir("src") {
+                rust("lib.rs", """
+                    pub fn hello() {}
+                """)
+            }
         }
     }.run {
         checkReferenceIsResolved<RsPath>("src/main.rs")
@@ -96,16 +101,18 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
             [dependencies]
         """)
 
-        rust("src/lib.rs", """
-            mod foo;
+        dir("src") {
+            rust("lib.rs", """
+                mod foo;
 
-            pub struct S;
-        """)
+                pub struct S;
+            """)
 
-        rust("src/foo.rs", """
-            use S;
-              //^
-        """)
+            rust("foo.rs", """
+                use S;
+                  //^
+            """)
+        }
     }.checkReferenceIsResolved<RsPath>("src/foo.rs")
 
     fun `test kebab-case`() = buildProject {
@@ -118,16 +125,17 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
             [dependencies]
         """)
 
-        rust("src/main.rs", """
-            extern crate kebab_case;
+        dir("src") {
+            rust("main.rs", """
+                extern crate kebab_case;
 
-            fn main() {
-                kebab_case::foo();
-            }              //^
-        """)
+                fn main() {
+                    kebab_case::foo();
+                }              //^
+            """)
 
-        rust("src/lib.rs", "pub fn foo() { }")
-
+            rust("lib.rs", "pub fn foo() { }")
+        }
     }.checkReferenceIsResolved<RsPath>("src/main.rs")
 
     fun `test case insensitive mods`() {
@@ -142,13 +150,14 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
                 [dependencies]
             """)
 
-            rust("src/lib.rs", "mod foo; mod bar;")
-            rust("src/FOO.rs", "pub struct Spam;")
-
-            rust("src/BAR.rs", """
-                use foo::Spam;
-                         //^
-            """)
+            dir("src") {
+                rust("lib.rs", "mod foo; mod bar;")
+                rust("FOO.rs", "pub struct Spam;")
+                rust("BAR.rs", """
+                    use foo::Spam;
+                             //^
+                """)
+            }
         }.checkReferenceIsResolved<RsPath>("src/BAR.rs")
     }
 
@@ -165,18 +174,20 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
             winapi = "0.2"
         """)
 
-        rust("src/main.rs", """
-            extern crate winapi;
-            use winapi::*;
+        dir("src") {
+            rust("main.rs", """
+                extern crate winapi;
+                use winapi::*;
 
-            fn main() {
-                let _ = foo;
-            }          //^
-        """)
+                fn main() {
+                    let _ = foo;
+                }          //^
+            """)
+        }
     }.checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
 
-    fun buildProject(builder: TestProjectBuilder.() -> Unit): TestProject =
-        TestProjectBuilder(project).build(builder).apply {
+    fun buildProject(builder: FileTreeBuilder.() -> Unit): TestProject =
+        fileTree { builder() }.create(project).apply {
             refreshWorkspace()
         }
 

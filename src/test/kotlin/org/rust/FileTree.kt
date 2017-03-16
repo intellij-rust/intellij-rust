@@ -8,40 +8,45 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.util.PathUtil
 import org.intellij.lang.annotations.Language
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.utils.fullyRefreshDirectory
 
-class TestProjectBuilder(
-    private val project: Project,
-    private val root: VirtualFile = project.baseDir
-) {
+fun fileTree(builder: FileTreeBuilder.() -> Unit): FileTree {
+    return FileTree(FileTreeBuilderImpl().apply { builder() }.intoDirectory())
+}
 
-    fun rust(path: String, @Language("Rust") code: String) = file(path, code, "rs")
+interface FileTreeBuilder {
+    fun dir(name: String, builder: FileTreeBuilder.() -> Unit)
+    fun file(name: String, code: String)
 
-    fun toml(path: String, @Language("TOML") code: String) = file(path, code, "toml")
+    fun rust(name: String, @Language("Rust") code: String) = file(name, code)
+    fun toml(name: String, @Language("TOML") code: String) = file(name, code)
+}
 
-    fun dir(path: String, builder: TestProjectBuilder.() -> Unit) {
-        val vDir = VfsUtil.createDirectoryIfMissing(root, path)
-        TestProjectBuilder(project, vDir).builder()
-    }
-
-    private fun file(path: String, @Language("Rust") code: String, ext: String) {
-        check(path.endsWith(".$ext"))
-        val dir = PathUtil.getParentPath(path)
-        val vDir = VfsUtil.createDirectoryIfMissing(root, dir)
-        val vFile = vDir.createChildData(this, PathUtil.getFileName(path))
-        VfsUtil.saveText(vFile, code.trimIndent())
-    }
-
-    fun build(builder: TestProjectBuilder.() -> Unit): TestProject {
-        runWriteAction {
-            builder()
-            fullyRefreshDirectory(root)
+class FileTree(private val rootDirectory: Entry.Directory) {
+    fun create(project: Project): TestProject {
+        fun go(dir: Entry.Directory, root: VirtualFile) {
+            for ((name, entry) in dir.children) {
+                when (entry) {
+                    is Entry.File -> {
+                        val vFile = root.createChildData(root, name)
+                        VfsUtil.saveText(vFile, entry.text)
+                    }
+                    is Entry.Directory -> {
+                        go(entry, root.createChildDirectory(root, name))
+                    }
+                }
+            }
         }
-        return TestProject(project, root)
+
+        runWriteAction {
+            go(rootDirectory, project.baseDir)
+            fullyRefreshDirectory(project.baseDir)
+        }
+
+        return TestProject(project, project.baseDir)
     }
 }
 
@@ -79,6 +84,26 @@ class TestProject(
         val file = PsiManager.getInstance(project).findFile(vFile)!!
         return findElementInFile(file, "^")
     }
+}
+
+
+private class FileTreeBuilderImpl(val directory: MutableMap<String, Entry> = mutableMapOf()) : FileTreeBuilder {
+    override fun dir(name: String, builder: FileTreeBuilder.() -> Unit) {
+        check('/' !in name) { "Bad directory name `$name`" }
+        directory[name] = FileTreeBuilderImpl().apply { builder() }.intoDirectory()
+    }
+
+    override fun file(name: String, code: String) {
+        check('/' !in name && '.' in name) { "Bad file name `$name`" }
+        directory[name] = Entry.File(code)
+    }
+
+    fun intoDirectory() = Entry.Directory(directory)
+}
+
+sealed class Entry {
+    class File(val text: String) : Entry()
+    class Directory(val children: MutableMap<String, Entry>) : Entry()
 }
 
 private fun findElementInFile(file: PsiFile, marker: String): PsiElement {

@@ -3,18 +3,18 @@ package org.rust.cargo.project.workspace.impl
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents
-import org.rust.TestProjectBuilder
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
 import org.rust.cargo.project.workspace.cargoWorkspace
+import org.rust.fileTree
 import org.rust.lang.core.psi.RsPath
 
 class CargoTomlWatcherIntegrationTest : RustWithToolchainTestBase() {
     override val dataPath: String = ""
 
     fun `test Cargo toml is refreshed`() {
-        val p = TestProjectBuilder(project).build {
+        val p = fileTree {
             toml("Cargo.toml", """
                 [package]
                 name = "hello"
@@ -25,13 +25,16 @@ class CargoTomlWatcherIntegrationTest : RustWithToolchainTestBase() {
                 #foo = { path = "./foo" }
             """)
 
-            rust("src/main.rs", """
-                extern crate foo;
+            dir("src") {
+                rust("main.rs", """
+                    extern crate foo;
 
-                fn main() {
-                    foo::hello();
-                }       //^
-            """)
+                    fn main() {
+                        foo::hello();
+                    }       //^
+                """)
+            }
+
 
             dir("foo") {
                 toml("Cargo.toml", """
@@ -41,11 +44,13 @@ class CargoTomlWatcherIntegrationTest : RustWithToolchainTestBase() {
                     authors = []
                 """)
 
-                rust("src/lib.rs", """
-                    pub fn hello() {}
-                """)
+                dir("src") {
+                    rust("lib.rs", """
+                        pub fn hello() {}
+                    """)
+                }
             }
-        }
+        }.create(project)
 
         p.checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
 
