@@ -17,7 +17,7 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsMod
 
-class RsExpandModuleAction : BaseRefactoringAction() {
+class RsPromoteModuleToDirectoryAction : BaseRefactoringAction() {
     override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean =
         elements.all { it is RsFile && it.name != RsMod.MOD_RS }
 

@@ -499,16 +499,16 @@
         </action>
 
 
-        <action id="Rust.RustExpandModuleAction"
-                class="org.rust.ide.actions.RsExpandModuleAction"
-                text="Expand module"
+        <action id="Rust.RsPromoteModuleToDirectoryAction"
+                class="org.rust.ide.actions.RsPromoteModuleToDirectoryAction"
+                text="Promote module to directory"
                 description="Move this module to a dedicated directory">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
-        <action id="Rust.RsContractModuleAction"
-                class="org.rust.ide.actions.RsContractModuleAction"
-                text="Contract module"
-                description="Replace directory module with a file">
+        <action id="Rust.RsDowngradeModuleToFile"
+                class="org.rust.ide.actions.RsDowngradeModuleToFile"
+                text="Downgrade module to file"
+                description="Move this module to a single file">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 

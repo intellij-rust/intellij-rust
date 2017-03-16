@@ -18,7 +18,7 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsMod
 
-class RsContractModuleAction : BaseRefactoringAction() {
+class RsDowngradeModuleToFile : BaseRefactoringAction() {
     override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean = elements.all { it.isDirectoryMod }
 
     override fun getHandler(dataContext: DataContext): RefactoringActionHandler = Handler
