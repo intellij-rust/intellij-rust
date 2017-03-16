@@ -1035,6 +1035,9 @@ PatMacro  ::= ZzMacroCall
 MacroItem ::= AttrsAndVis ZzMacroItem {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 ImplMacroMember ::= ZzMacroItem
 

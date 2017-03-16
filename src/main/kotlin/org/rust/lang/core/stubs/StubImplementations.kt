@@ -24,7 +24,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 64
+        override fun getStubVersion(): Int = 65
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -107,6 +107,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
 
     "RET_TYPE" -> RsPlaceholderStub.Type("RET_TYPE", ::RsRetTypeImpl)
 
+    "MACRO_ITEM" -> RsPlaceholderStub.Type("MACRO_ITEM", ::RsMacroItemImpl)
     "MACRO_DEFINITION" -> RsMacroDefinitionStub.Type
 
     else -> error("Unknown element $name")
