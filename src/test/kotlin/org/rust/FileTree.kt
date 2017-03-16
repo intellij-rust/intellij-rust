@@ -4,14 +4,12 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
+import com.intellij.psi.*
 import org.intellij.lang.annotations.Language
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.utils.fullyRefreshDirectory
+import kotlin.text.Charsets.UTF_8
 
 fun fileTree(builder: FileTreeBuilder.() -> Unit): FileTree {
     return FileTree(FileTreeBuilderImpl().apply { builder() }.intoDirectory())
@@ -26,7 +24,7 @@ interface FileTreeBuilder {
 }
 
 class FileTree(private val rootDirectory: Entry.Directory) {
-    fun create(project: Project): TestProject {
+    fun create(project: Project, directory: VirtualFile): TestProject {
         fun go(dir: Entry.Directory, root: VirtualFile) {
             for ((name, entry) in dir.children) {
                 when (entry) {
@@ -42,11 +40,36 @@ class FileTree(private val rootDirectory: Entry.Directory) {
         }
 
         runWriteAction {
-            go(rootDirectory, project.baseDir)
-            fullyRefreshDirectory(project.baseDir)
+            go(rootDirectory, directory)
+            fullyRefreshDirectory(directory)
         }
 
-        return TestProject(project, project.baseDir)
+        return TestProject(project, directory)
+    }
+
+    fun assertEquals(baseDir: VirtualFile) {
+        fun go(expected: Entry.Directory, actual: VirtualFile) {
+            val actualChildren = actual.children.associateBy { it.name }
+            check(expected.children.keys == actualChildren.keys) {
+                "Mismatch in directory ${actual.path}\n" +
+                    "Expected: ${expected.children.keys}\n" +
+                    "Actual  : ${actualChildren.keys}"
+            }
+
+            for ((name, entry) in expected.children) {
+                val a = actualChildren[name]!!
+                when (entry) {
+                    is Entry.File -> {
+                        check(!a.isDirectory)
+                        val actualText = String(a.contentsToByteArray(), UTF_8)
+                        check(entry.text == actualText)
+                    }
+                    is Entry.Directory -> go(entry, a)
+                }
+            }
+        }
+
+        go(rootDirectory, baseDir)
     }
 }
 
@@ -83,6 +106,14 @@ class TestProject(
             ?: error("No `$path` file in test project")
         val file = PsiManager.getInstance(project).findFile(vFile)!!
         return findElementInFile(file, "^")
+    }
+
+    fun psiFile(path: String): PsiFileSystemItem {
+        val vFile = root.findFileByRelativePath(path)
+            ?: error("Can't find `$path`")
+        val psiManager = PsiManager.getInstance(project)
+        return if (vFile.isDirectory) psiManager.findDirectory(vFile)!! else psiManager.findFile(vFile)!!
+
     }
 }
 

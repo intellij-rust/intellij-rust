@@ -35,7 +35,7 @@ abstract class RsParsingTestCaseBase(@NonNls dataPath: String)
 
     override fun getTestName(lowercaseFirstLetter: Boolean): String {
         val camelCase = super.getTestName(lowercaseFirstLetter)
-        return RsTestBase.camelToSnake(camelCase)
+        return RsTestBase.camelOrWordsToSnake(camelCase)
     }
 
     override fun setUp() {

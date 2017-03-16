@@ -49,7 +49,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         get() = "$testName.rs"
 
     protected val testName: String
-        get() = camelToSnake(getTestName(true))
+        get() = camelOrWordsToSnake(getTestName(true))
 
     protected fun checkByFile(ignoreTrailingWhitespace: Boolean = true, action: () -> Unit) {
         val (before, after) = (fileName to fileName.replace(".rs", "_after.rs"))
@@ -274,10 +274,13 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
     companion object {
         @JvmStatic
-        fun camelToSnake(camelCaseName: String): String =
-            camelCaseName.split("(?=[A-Z])".toRegex())
+        fun camelOrWordsToSnake(name: String): String {
+            if (' ' in name) return name.replace(" ", "_")
+
+            return name.split("(?=[A-Z])".toRegex())
                 .map(String::toLowerCase)
                 .joinToString("_")
+        }
 
         @JvmStatic
         fun checkHtmlStyle(html: String) {

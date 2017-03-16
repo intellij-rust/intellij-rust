@@ -348,10 +348,6 @@
         <!-- Intentions -->
 
         <intentionAction>
-            <className>org.rust.ide.intentions.ContractModuleIntention</className>
-            <category>Rust</category>
-        </intentionAction>
-        <intentionAction>
             <className>org.rust.ide.intentions.ExtractInlineModuleIntention</className>
             <category>Rust</category>
         </intentionAction>
@@ -509,6 +505,13 @@
                 description="Move this module to a dedicated directory">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
+        <action id="Rust.RsContractModuleAction"
+                class="org.rust.ide.actions.RsContractModuleAction"
+                text="Contract module"
+                description="Replace directory module with a file">
+            <add-to-group group-id="RefactoringMenu"/>
+        </action>
+
         <action id="Rust.CargoFmtFile"
                 class="org.rust.ide.actions.RsFmtFileAction"
                 text="Reformat file with rustfmt"

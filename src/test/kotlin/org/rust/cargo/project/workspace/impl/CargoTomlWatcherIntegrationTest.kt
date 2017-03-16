@@ -50,7 +50,7 @@ class CargoTomlWatcherIntegrationTest : RustWithToolchainTestBase() {
                     """)
                 }
             }
-        }.create(project)
+        }.create(project, project.baseDir)
 
         p.checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
 

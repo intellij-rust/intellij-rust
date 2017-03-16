@@ -18,14 +18,14 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
     fun `test resolve external library`() = buildProject {
         toml("Cargo.toml", """
-                [package]
-                name = "intellij-rust-test"
-                version = "0.1.0"
-                authors = []
+            [package]
+            name = "intellij-rust-test"
+            version = "0.1.0"
+            authors = []
 
-                [dependencies]
-                rand = "=0.3.14"
-        """)
+            [dependencies]
+            rand = "=0.3.14"
+    """)
 
         dir("src") {
             rust("main.rs", """
@@ -187,7 +187,7 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
     }.checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
 
     fun buildProject(builder: FileTreeBuilder.() -> Unit): TestProject =
-        fileTree { builder() }.create(project).apply {
+        fileTree { builder() }.create(project, project.baseDir).apply {
             refreshWorkspace()
         }
 
