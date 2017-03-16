@@ -193,6 +193,7 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
         private var result: UpdateResult? = null
 
         override fun run(indicator: ProgressIndicator) {
+            if (module.isDisposed) return
             LOG.info("Cargo project update started")
             indicator.isIndeterminate = true
 
