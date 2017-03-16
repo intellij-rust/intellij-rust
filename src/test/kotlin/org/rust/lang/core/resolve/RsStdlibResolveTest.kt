@@ -161,10 +161,14 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         """)
     }
 
-    fun `test println macro`() = stubOnlyResolve("""
-    //- main.rs
-        fn main() {
-            println!("Hello, World!");
-        }   //^ ...libstd/macros.rs
-    """)
+    fun `test println macro`() {
+        if (is2016_2()) return
+
+        stubOnlyResolve("""
+        //- main.rs
+            fn main() {
+                println!("Hello, World!");
+            }   //^ ...libstd/macros.rs
+        """)
+    }
 }
