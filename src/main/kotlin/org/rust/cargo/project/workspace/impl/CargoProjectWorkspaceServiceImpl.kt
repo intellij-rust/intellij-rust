@@ -94,9 +94,9 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
             val rustup = module.project.toolchain?.rustup(projectDirectory)
                 ?: return
 
-            SetupRustStdlibTask(module, rustup, {
+            taskQueue.run(SetupRustStdlibTask(module, rustup, {
                 runWriteAction { workspaceMerger.setStdlib(it) }
-            }).queue()
+            }))
         }
 
         with(module.messageBus.connect()) {
