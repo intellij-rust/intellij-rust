@@ -1033,7 +1033,8 @@ MacroExpr ::= ZzMacroCall
 PatMacro  ::= ZzMacroCall
 // TODO: Maybe implement item-related stuff for this production?
 MacroItem ::= AttrsAndVis ZzMacroItem {
-    implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
 }
 ImplMacroMember ::= ZzMacroItem
 
