@@ -12,7 +12,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     fun testGenericFieldReference() = testExpr("""
-        struct S<'a T> { field: &'a T }
+        struct S<'a, T> { field: &'a T }
 
         fn foo(s: S<'static, f64>) {
             let x = s.field;
