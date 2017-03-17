@@ -1,7 +1,5 @@
 package org.rust.lang.core.type
 
-import org.junit.ComparisonFailure
-
 class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun testFunctionCall() = testExpr("""
         struct S;
