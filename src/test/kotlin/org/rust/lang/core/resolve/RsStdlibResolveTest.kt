@@ -111,7 +111,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             fn f(i: i32) -> Option<i32> {}
 
             fn bar() {
-                if let Some(x) = f() {
+                if let Some(x) = f(42) {
                     if let Some(y) = f(x) {
                           //^ ...libcore/option.rs
                         if let Some(z) = f(y) {}
