@@ -1,28 +1,15 @@
 package org.rust.ide.annotator
-import com.intellij.openapi.diagnostic.Logger as IJLogger
-import java.util.*
+
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.TimeUnit
+import java.io.InputStream
+import java.lang.reflect.Type
 
-import java.awt.MouseInfo
-
-import javax.swing.event.HyperlinkEvent
+import kotlin.collections.*
 
 import com.intellij.lang.annotation.*
 import com.intellij.openapi.editor.*
 import com.intellij.psi.PsiFile
-import com.intellij.json.JsonFileType
-import com.intellij.notification.*
-import com.intellij.openapi.fileTypes.*
-import com.intellij.openapi.ui.popup.*
-import com.intellij.ui.EditorTextField
-import com.intellij.ui.awt.RelativePoint
-
-import com.fasterxml.jackson.module.kotlin.*
-import com.fasterxml.jackson.databind.JsonNode
-import java.awt.Dimension
-import javax.swing.*
-import com.fasterxml.jackson.annotation.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -30,196 +17,17 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import java.io.InputStream
+import com.intellij.openapi.diagnostic.Logger as IJLogger
 
-import kotlin.collections.*
+import com.google.gson.*
 
-//ExtraInfo
-class EI(val name : String, val infoString: String, val fileType : FileType = FileTypes.PLAIN_TEXT) {
+import org.apache.commons.lang.StringEscapeUtils.escapeHtml
 
-    companion object {
-        var lastId = AtomicInteger()
-        val globalMap = ConcurrentHashMap<String, EI>()
-    }
+object IJDebug {
+    val defaultTitle = "CARGO-CHECK"
 
-    var id = lastId.andIncrement
-    var fullId = "#$id"
-
-    init {
-        globalMap[fullId] = this
-    }
-
-    @Suppress("ProtectedInFinal", "unused")
-    protected fun finalize() {
-        globalMap.remove(fullId)
-    }
-
-    override fun toString(): String {
-        return "<a href=\"$fullId\">$name</a>"
-    }
-}
-
-open class Logger(@Suppress("unused") val notificationGroup : NotificationGroup) {
-
-    var prefix = Stack<String>()
-    var defaultNotificationType = NotificationType.INFORMATION
-    var defaultTitle = "CARGO-CHECK"
-    var doLog = true
-
-    object ExtraInfoListener : com.intellij.notification.NotificationListener.Adapter() {
-        override fun hyperlinkActivated(notification: Notification, e: HyperlinkEvent) {
-
-            val id = e.description
-
-
-            val info: EI = EI.globalMap[id] ?: throw RuntimeException("Unrecognized extra infoString id $id.\n" +
-                "Recognized ids are: ${EI.globalMap.keys.joinToString()}")
-
-            //Use Intellij Editor
-            val IJ = true
-            //Use wrapping scroll pane
-            val SCP = false
-            var finalComponent : JComponent
-            val maxWid = 500
-            val maxHeight = 500
-            val max = Dimension(maxWid,maxHeight)
-
-            if (IJ) {
-                val doc = EditorFactory.getInstance().createDocument(info.infoString)
-                val editor = EditorTextField(doc, null, info.fileType, true, false)
-
-                editor.addSettingsProvider { x ->
-                    if (x.component.preferredSize.width > maxWid) {
-                        editor.preferredSize = max
-                        x.setVerticalScrollbarVisible(true)
-                    }
-
-                    x.settings.isUseSoftWraps = true
-
-                }
-
-                finalComponent = editor
-            } else {
-                val editor = JTextArea()
-                editor.text = info.infoString
-                println(editor.preferredSize)
-                println(editor.preferredScrollableViewportSize)
-                editor.lineWrap = true
-                //editor.columns = 50
-                println(editor.preferredSize)
-                //editor.rows = 30
-                //editor.maximumSize = Dimension(500,500)
-                println(editor.preferredSize)
-
-                val scrollPane = JScrollPane(editor)
-                scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
-                scrollPane.maximumSize = Dimension(500,500)
-
-                finalComponent = scrollPane
-            }
-
-            if (SCP) {
-                val scrollPane = JScrollPane(finalComponent)
-                scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
-                scrollPane.maximumSize = max
-                //scrollPane.preferredSize = Dimension(500,500)
-
-                val panel = JPanel()
-                panel.add(scrollPane)
-                panel.layout = BoxLayout(panel, BoxLayout.PAGE_AXIS)
-                //panel.preferredSize = Dimension(500,500)
-                //panel.maximumSize = Dimension(500,500)
-
-
-                finalComponent = panel
-            }
-
-            val popup = false
-
-            if (popup) {
-                val pos = MouseInfo.getPointerInfo().location
-                val builder = JBPopupFactory.getInstance().createBalloonBuilder(finalComponent)
-                //var builder = JBPopupFactory.getInstance().createBalloonBuilder(scrollPane).setAnimationCycle(100)
-                //var builder = JBPopupFactory.getInstance().createBalloonBuilder(editor).setAnimationCycle(100)
-                //var builder = JBPopupFactory.getInstance().createBalloonBuilder(panel).setAnimationCycle(100)
-                //var builder = JBPopupFactory.getInstance().createDialogBalloonBuilder(editor, info.name)
-                //var builder = JBPopupFactory.getInstance().createDialogBalloonBuilder(scrollPane, info.name)
-                //var builder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(info.infoString, MessageType.INFO, null)
-                builder.setAnimationCycle(100)
-                builder.createBalloon()
-                val balloon = builder.createBalloon()
-
-                println("ball prefsz=${balloon.preferredSize}")
-
-                //First calculate the best direction for the popup
-                balloon.show(RelativePoint(pos), Balloon.Position.atLeft)
-            } else {
-                if (false) {
-                    val frame = JFrame()
-
-                    frame.add(finalComponent)
-                    frame.maximumSize = Dimension(500, 500)
-                    frame.pack()
-                    frame.maximumSize = Dimension(500, 500)
-                    frame.size = frame.maximumSize
-                    frame.isVisible = true
-                }
-
-                if (true) {
-                    val pos = MouseInfo.getPointerInfo().location
-
-                    val builder = JBPopupFactory.getInstance().createComponentPopupBuilder(finalComponent, null)
-
-                    val pop = builder.createPopup()
-
-                    pop.show(RelativePoint(pos))
-
-                    pop.moveToFitScreen()
-                }
-            }
-
-
-        }
-
-    }
-
-    fun log(content : String,
-            title : String = defaultTitle,
-            @Suppress("UNUSED_PARAMETER") notificationType: NotificationType = defaultNotificationType,
-            @Suppress("UNUSED_PARAMETER") notificationListener: NotificationListener? = ExtraInfoListener) {
-
-        if (doLog) {
-            //notificationGroup.createNotification(title, prefix.joinToString("") + content, notificationType, notificationListener).notify(null)
-            IJLogger.getInstance(title).debug("${prefix.joinToString("")}: $content")
-        }
-
-    }
-
-    fun log(info : EI,
-            title : String = defaultTitle,
-            notificationType: NotificationType = defaultNotificationType,
-            notificationListener: NotificationListener? = ExtraInfoListener) =
-        //log(info.toString(), title, notificationType, notificationListener)
-        log("${info.name}: ${info.infoString}", title, notificationType, notificationListener)
-
-    fun beginLog(name : String) {
-        prefix.push(name + ": ")
-        log("begin")
-    }
-
-    fun endLog() {
-        log("end")
-        prefix.pop()
-    }
-
-}
-
-object DEBUG : Logger(NotificationGroup("RustCheck", NotificationDisplayType.NONE, true)) {
-    var debugEnabled = true
-
-    init {
-        prefix.push("Debug: ")
-        doLog = debugEnabled
+    fun log(msg : String, title : String = defaultTitle) {
+        IJLogger.getInstance(title).debug(msg)
     }
 
 }
@@ -233,7 +41,6 @@ object CargoJson {
         val ctxStr = if (forContext != "") "for $forContext " else ""
         val err = "Unexpected $name `$actual` $ctxStr(expected `$expected`)"
 
-
         throw RuntimeException(err)
     }
 
@@ -245,7 +52,7 @@ object CargoJson {
     @Suppress("UNUSED")
     //These are special compiler messages that we're going to ignore.
     data class CompilerMessage(
-        val features : JsonNode,
+        val features : JsonObject,
         val filenames : List<String>,
         val package_id: String,
         val profile : Profile,
@@ -273,7 +80,6 @@ object CargoJson {
             checkExp("target.kind", target.kind, listOf("bin"))
         }
 
-        //FIXME: Make a serialize for messages that also serializes the level
         abstract class InfoMessageBase(override val message: String, override val spans : List<Span>) : Message() {
 
             override fun doAnnotate(holder: AnnotationHolder, target: Target) {
@@ -292,7 +98,6 @@ object CargoJson {
             val code: Code?,
             override val message: String,
             override val spans: List<Span>,
-            //FIXME: Change level to an enum
             val level : String //Only "warning" and "error" allowed
         ) : Message() {
             init {
@@ -316,20 +121,17 @@ object CargoJson {
             }
 
             override fun doAnnotate(holder: AnnotationHolder, target: Target) {
-                DEBUG.beginLog("ErrorMessage.doAnnotate")
-
-                holder.currentAnnotationSession.file
                 if (canSkipAnnotation()) {
-                    DEBUG.log("skipping annotation for error $message")
-                    DEBUG.endLog()
+                    //IJDebug.log("skipping annotation for error $message")
                     return
                 }
 
                 //Next we do the span annotations
-                val annotFile = holder.currentAnnotationSession.file.virtualFile.path
+                val annotFile = holder.currentAnnotationSession.file.virtualFile.name
+                val annotFilePath = holder.currentAnnotationSession.file.virtualFile.path
                 val severity = when (level) {
                     "error" -> HighlightSeverity.ERROR
-                    "warning" -> HighlightSeverity.WEAK_WARNING
+                    "warning" -> HighlightSeverity.WARNING
                     else -> { throw AssertionError() }
                 }
                 //Can't have hyperlinks in the info. We'll include it in the tooltip instead.
@@ -338,19 +140,17 @@ object CargoJson {
 
                 //If spans are empty we add a "global" error
                 if (spans.isEmpty()) {
-                    DEBUG.log("global error")
-                    if (target.src_path != annotFile) {
-                        DEBUG.log("not main file, skipping")
+                    if (target.src_path != annotFilePath) {
+                        //not main file, skip global annotation
                     } else {
-                        DEBUG.log("doing error $shortErrorStr")
+                        //add a global annotation
                         val annot = holder.createAnnotation(severity, TextRange.EMPTY_RANGE, shortErrorStr)
 
                         annot.isFileLevelAnnotation = true
                         annot.setNeedsUpdateOnTyping(true)
-                        annot.tooltip = message + if(codeStr != "") "<hr/>$codeStr" else ""
+                        annot.tooltip = escapeHtml(message) + if(codeStr != "") "<hr/>$codeStr" else ""
 
                     }
-                    DEBUG.endLog()
                     return
                 }
 
@@ -363,7 +163,7 @@ object CargoJson {
                 //spans twice - once in this message and once in their own annotation relevant to their span.
                 //This is because the main error lacks context when the notes are missing.
                 //FIXME: Add a hyperlink to the info annotations here and connect it to the annotation listener.
-                val childrenMsg = children.map { (if (it is NoteMessage) "Note: " else "Help: ") + it.message }.joinToString("<br/>")
+                val childrenMsg = children.map { (if (it is NoteMessage) "Note: " else "Help: ") + escapeHtml(it.message) }.joinToString("<br/>")
 
                 //Create a problem group to group all annotations
                 val problemGroup = ProblemGroup { shortErrorStr }
@@ -371,13 +171,10 @@ object CargoJson {
                 //Generate annotations for all spans of this error message plus of the children messages with spans
                 val allSpans = (listOf(this) + children).map {it.getAllSpans()}.flatten()
 
-                DEBUG.log("doing annotations for file $annotFile (${allSpans.size} spans)")
+                IJDebug.log("doing annotations for file $annotFile (${allSpans.size} spans)")
                 allSpans.filter {
                     //First filter all spans not relevant for this file
-                    val res = annotFile == it.file_name
-                    if (!res)
-                        DEBUG.log("skipping span for file ${it.file_name}.")
-                    res
+                    annotFilePath == it.file_name
                 }.forEach {
                     //Next create the annotations for the spans of this file
                     //The byte_start/byte_end numbers seem to be completely inaccurate for
@@ -400,6 +197,12 @@ object CargoJson {
                         return lineStart + col
                     }
 
+                    //FIXME: Sometimes rustc outputs an end line smaller than the start line.
+                    //       Assuming this is a bug in rustc and not a feature, this condition should be
+                    //       reverted to an assert in the future.
+                    if (it.line_end < it.line_start || it.line_end == it.line_start && it.column_end < it.column_start)
+                        return@forEach
+
                     //The compiler message lines and columns are 1 based while intellij idea are 0 based
                     val textRange = TextRange(toOfs(it.line_start - 1, it.column_start - 1), toOfs(it.line_end - 1, it.column_end - 1))
 
@@ -416,21 +219,21 @@ object CargoJson {
 
                     //In the tooltip we give additional info - the children messages
                     val extra = (if(codeStr !="") "$codeStr<br/>" else "") +
-                        (if (it.is_primary && it.label != null) "${it.label}<br/>" else "") +
+                        (if (it.is_primary && it.label != null) "${escapeHtml(it.label)}<br/>" else "") +
                         childrenMsg
                     val tooltip = short + if (extra.isBlank()) "" else "<hr/>" + extra
 
-                    DEBUG.log("adding annotation (short=$short, ${EI("tooltip", tooltip)})")
-                    val spanSeverity = if (it.is_primary) severity else HighlightSeverity.WEAK_WARNING
+                    //IJDebug.log("adding annotation (short=$short, ${EI("tooltip", tooltip)})")
+                    val spanSeverity = if (it.is_primary) severity else HighlightSeverity.INFORMATION // HighlightSeverity.WEAK_WARNING
+
                     val annot = holder.createAnnotation(spanSeverity, textRange, short)
 
-                    annot!!.tooltip = tooltip
+                    //See @holder.createAnnotation with tooltip for why we wrap the message like this
+                    annot!!.tooltip = "<html>${escapeHtml(tooltip)}</html>"
                     annot.problemGroup = problemGroup
                     annot.setNeedsUpdateOnTyping(true)
+
                 }
-
-                DEBUG.endLog()
-
             }
         }
 
@@ -439,7 +242,7 @@ object CargoJson {
         class WarningMessage(children: List<Message>, code: Code?, message: String, spans: List<Span>) :
             ErrorBaseMessage(children, code, message, spans, "warning")
 
-        abstract class Message {
+        abstract class Message  {
 
             abstract val message : String
             abstract val spans : List<Span>
@@ -453,52 +256,62 @@ object CargoJson {
 
             companion object {
 
-                @JsonCreator
-                @JvmStatic
-                fun factory(
-                    children: List<Message>,
-                    code: Code?,
-                    level: String,
-                    message: String,
-                    //It is unclear what this is but it may be a string.
-                    rendered: String?,
-                    spans: List<Message.Span>
-                ): Message{
-                    val ctx = "a message of type `$level`"
+                class MessageFactory : JsonDeserializer<Message> {
+                    override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): Message {
 
-                    //assert(rendered == null)
-                    /*
-                    if (rendered != null)
-                        throw RuntimeException("Unrecognized value for \"rendered\" field (`${rendered}`) in rust compiler message ")
-                        */
-                    if (level != "error" && level != "warning") {
-                        //These are checks for degenerate messages - i.e. messages with only a message string.
-                        //The types are: note, help, (error && code==null)
+                        val flat : FlatMessage = context!!.deserialize(json, FlatMessage::class.java)
 
-                        checkExp("code", code, null, ctx)
-                        checkExp("children size", children.size, 0, ctx)
-
-                    }
-
-                    when (level) {
-                        "error", "warning" -> {
-                            //Children may be any number (0 or bigger)
-                            //code may be null
-                            //spans may be any number
-
-                            when (level) {
-                                "error" -> return ErrorMessage(children, code, message, spans)
-                                "warning" -> return WarningMessage(children, code, message, spans)
-                                else -> throw AssertionError()
-                            }
-
-                        }
-                        "help" -> return HelpMessage(message, spans)
-                        "note" -> return NoteMessage(message, spans)
-
-                        else -> throw RuntimeException("Unrecognized level `$level` in rust compiler message")
+                        return flat.toMessage()
                     }
                 }
+
+                private data class FlatMessage(
+                    val children: List<Message>,
+                    val code: Code?,
+                    val level: String,
+                    val message: String,
+                    //It is unclear what this is but it may be a string.
+                    val rendered: String?,
+                    val spans: List<Message.Span>) {
+
+                    fun toMessage() : Message {
+                        val ctx = "a message of type `$level`"
+
+                        //assert(rendered == null)
+                        /*
+                        if (rendered != null)
+                            throw RuntimeException("Unrecognized value for \"rendered\" field (`${rendered}`) in rust compiler message ")
+                            */
+                        if (level != "error" && level != "warning") {
+                            //These are checks for degenerate messages - i.e. messages with only a message string.
+                            //The types are: note, help, (error && code==null)
+
+                            checkExp("code", code, null, ctx)
+                            checkExp("children size", children.size, 0, ctx)
+
+                        }
+
+                        when (level) {
+                            "error", "warning" -> {
+                                //Children may be any number (0 or bigger)
+                                //code may be null
+                                //spans may be any number
+
+                                when (level) {
+                                    "error" -> return ErrorMessage(children, code, message, spans)
+                                    "warning" -> return WarningMessage(children, code, message, spans)
+                                    else -> throw AssertionError()
+                                }
+
+                            }
+                            "help" -> return HelpMessage(message, spans)
+                            "note" -> return NoteMessage(message, spans)
+
+                            else -> throw RuntimeException("Unrecognized level `$level` in rust compiler message")
+                        }
+                    }
+                }
+
             }
 
             //An error code (?)
@@ -523,16 +336,14 @@ object CargoJson {
                 val label : String?,
                 val line_end : Int,
                 val line_start : Int,
-                val suggested_replacement : JsonNode?,
+                //May be JsonNull
+                val suggested_replacement : JsonElement,
                 val text : List<Text>
             ) {
 
                 //This can be used to get all children spans (e.g. in expansion) including
                 //this one.
-                @JsonIgnore
                 fun getAllSpans() : List<Span> {
-                    println("getallspans, dss = ${this.expansion?.def_site_span}")
-
                     return listOf(this) +
                         (this.expansion?.def_site_span?.getAllSpans() ?: listOf()) +
                         (this.expansion?.span?.getAllSpans() ?: listOf())
@@ -561,20 +372,8 @@ object CargoJson {
         }
 
         //file - The file to annotate
-        fun doAnnotate(file: PsiFile, holder: AnnotationHolder)  {
-            //Apparently src_path is not important - stays the same for different files.
-/*
-            if (target.src_path != file.virtualFile.path) {
-                DEBUG.endLog()
-                return
-            }
-            */
-
-            DEBUG.beginLog("doAnnotate(file=${file.virtualFile.path})")
-
+        fun doAnnotate(holder: AnnotationHolder)  {
             message.doAnnotate(holder, target)
-
-            DEBUG.endLog()
         }
     }
 
@@ -588,7 +387,11 @@ class TEAAnnotationResult(commandOutput: String) {
     var parsedMessages = emptyList<CargoJson.TopMessage>()
 
     private companion object {
-        val mapper = jacksonObjectMapper()
+        val jsonParser : Gson =
+            GsonBuilder()
+                .registerTypeAdapter(CargoJson.TopMessage.Message::class.java,
+                    CargoJson.TopMessage.Message.Companion.MessageFactory())
+                .create()
 
     }
 
@@ -615,12 +418,12 @@ class TEAAnnotationResult(commandOutput: String) {
         } .map {
             //Next parse the messages
             //We expect one message per line
-            mapper.readerFor(CargoJson.TopMessage::class.java).readValue<CargoJson.TopMessage>(it)
+            jsonParser.fromJson(it, CargoJson.TopMessage::class.java)
         }
     }
 
     fun prettyJson(): String {
-        return "${mapper.writerWithDefaultPrettyPrinter().writeValueAsString(parsedMessages)}\n"
+        return "${jsonParser.toJson(parsedMessages)}\n"
     }
 
     override fun toString(): String {
@@ -637,7 +440,7 @@ class CargoCheckExtAnnotator: ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
         private val cache = ConcurrentHashMap<Project, TEAAnnotationResult>()
 
         private fun doCargoCheck(project : Project) : TEAAnnotationResult {
-            DEBUG.beginLog("doCargoCheck(${project.name})")
+            IJDebug.log("beginning cargo check run for project ${project.name}")
 
             val rustcExec : String = "/home/developer/.cargo/bin/cargo"
             val path = project.basePath
@@ -645,73 +448,90 @@ class CargoCheckExtAnnotator: ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
             val args = listOf(rustcExec, "check", "--manifest-path=$path/Cargo.toml", "--message-format=json")
             val cmd = args.joinToString(" ")
 
-            DEBUG.log("executing ${EI("cargo check", cmd)}")
+            IJDebug.log("executing command `$cmd`")
 
-            val pb = ProcessBuilder(args).start()
-            //val ps = Runtime.getRuntime().exec(args)
+            val err : String
+            val out : String
+            val retVal : Int
+            var process : Process? = null
 
-            DEBUG.log("after exec")
+            try {
 
-            DEBUG.log("getting error/std output")
+                process = ProcessBuilder(args).start()
 
-            //The streams have to be read together since they apparently block one
-            //another somehow.
-            data class NonblockReader(val input : InputStream) {
-                private val reader = input.bufferedReader()
-                var isDone = false
-                private var text = ""
+                //The streams have to be read together since they apparently block one
+                //another somehow.
+                data class NonblockReader(val input: InputStream) {
+                    private val reader = input.bufferedReader()
+                    var isDone = false
+                    private var text = ""
 
-                //Try to read from the input stream without blocking
-                //Return true if anything was read, false otherwise
-                fun tryConsume() : Boolean {
+                    //Try to read from the input stream without blocking
+                    //Return true if anything was read, false otherwise
+                    fun tryConsume(): Boolean {
 
-                    if (!reader.ready()) return false
+                        if (!reader.ready()) return false
 
-                    val line = reader.readLine()
+                        val line = reader.readLine()
 
-                    if (line == null)
-                        isDone = true
-                    else
-                        text += line + "\n"
+                        if (line == null)
+                            isDone = true
+                        else
+                            text += line + "\n"
 
-                    return true
+                        return true
+                    }
+
+                    fun getText() = text
+
                 }
 
-                fun getText() = text
+                val errReader = NonblockReader(process.errorStream)
+                val outReader = NonblockReader(process.inputStream)
+                val sleepTime = 10L
+                var totalSleepTime = 0L
 
-            }
+                //val retVal = pb.waitFor()
 
-            val errReader = NonblockReader(pb.errorStream)
-            val outReader = NonblockReader(pb.inputStream)
-            val sleepTime = 1L
-            var totalSleepTime = 0L
+                while (!errReader.isDone || !outReader.isDone) {
 
-            while (!errReader.isDone || !outReader.isDone) {
-                var inputRead = false
-                for (reader in listOf(errReader, outReader))
-                    inputRead = inputRead || reader.tryConsume()
+                    var inputRead = false
+                    for (reader in listOf(errReader, outReader))
+                        inputRead = inputRead || reader.tryConsume()
 
-                //If no input read then sleep a bit
-                if (!inputRead) {
-                    Thread.sleep(sleepTime)
+                    if (!inputRead) {
 
-                    totalSleepTime += sleepTime
-                    //Make sure we aren't stuck
-                    //assert(totalSleepTime < 1000)
-                    if (totalSleepTime > 1000)
-                        break
+                        if (process.isAlive) {
+                            //If no input and still running then wait a bit
+                            process.waitFor(sleepTime, TimeUnit.MILLISECONDS)
+                            totalSleepTime += sleepTime
+                            assert(totalSleepTime < 10000)
+                        } else {
+                            //The output/error stream readers sometimes never stop trying to read - even
+                            //after the process has closed.
+                            //We have to figure out when the output/error stream is invalid ourselves
+                            //by getting a hint from the caller for when the process has been
+                            //closed and therefore more input can never be generated.
+                            break
+                        }
+
+                    }
+
                 }
 
+                retVal = process.exitValue()
+
+                err = errReader.getText()
+                out = outReader.getText()
+            } finally {
+                //cleanup
+                if (process != null)
+                    process.destroy()
             }
 
-            val err = errReader.getText()
-            DEBUG.log("getting std output")
-            val out = outReader.getText()
-            DEBUG.log("waiting for retval")
-            val retVal = pb.waitFor()
-
-            DEBUG.log("cargo check returned $retVal, ${EI("output", out)}, ${EI("error", err)} (" +
-                "${EI("output-json", out, JsonFileType.INSTANCE)}, ${EI("err-json", err, JsonFileType.INSTANCE)}")
+            IJDebug.log("command rv = $retVal")
+            IJDebug.log("command output = $out")
+            IJDebug.log("command error = $err")
 
             val ret : TEAAnnotationResult
 
@@ -732,7 +552,7 @@ class CargoCheckExtAnnotator: ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
 
             }
 
-            DEBUG.endLog()
+            IJDebug.log("ending cargo check for project ${project.name}")
 
             return ret
         }
@@ -748,31 +568,25 @@ class CargoCheckExtAnnotator: ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
             ApplicationManager.getApplication().messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES,
                 object : BulkFileListener {
                     override fun before(events: MutableList<out VFileEvent>) {
-                        DEBUG.beginLog("files changed handler (before)")
-                        DEBUG.log("events : $events")
-                        DEBUG.endLog()
                     }
 
                     override fun after(events: MutableList<out VFileEvent>) {
-                        DEBUG.beginLog("files changed handler (after)")
 
                         //fun printEv(l : MutableList<VFileEvent>) : String =events.map { it.file }.joinToString(",")
-                        DEBUG.log("files changed : $events}")
+                        IJDebug.log("files changed : $events}")
 
                         for (project in cache.keys) {
                             val relevantEvents = events.filterNotNull().filter{
                                 ProjectFileIndex.getInstance(project).isInSourceContent(it.file!!)
                             }
                             if (relevantEvents.isNotEmpty()) {
-                                DEBUG.log("found events for $project : $relevantEvents")
+                                IJDebug.log("found events for $project : $relevantEvents")
 
                                 //Remove the result to force recalculation
                                 cache.remove(project)
                             }
 
                         }
-
-                        DEBUG.endLog()
                     }
                 })
         }
@@ -782,32 +596,20 @@ class CargoCheckExtAnnotator: ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
     override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): TEAAnnotationInfo? {
 
         val ret : TEAAnnotationInfo?
-        DEBUG.beginLog("collectInformation(${file.name})")
 
         if (hasErrors) {
-            DEBUG.log("file already has errors, aborting cargo check")
-            ret = null
+            //IJDebug.log("project already has errors, aborting cargo check")
+            //ret = null
+            ret = TEAAnnotationInfo(file, editor)
         } else {
-            DEBUG.log("no errors, will do cargo check")
             ret = TEAAnnotationInfo(file, editor)
         }
-
-        DEBUG.endLog()
 
         return ret
     }
 
     override fun doAnnotate(info: TEAAnnotationInfo): TEAAnnotationResult? {
-
-        DEBUG.beginLog("doAnnotate(${info.file.name})")
-
-        val ret = CargoCheckServer.check(info.file.project)
-
-        DEBUG.log("done, annotation result ret is ${EI("ret", ret.toString())}")
-
-        DEBUG.endLog()
-
-        return ret
+        return CargoCheckServer.check(info.file.project)
     }
 
     override fun apply(file: PsiFile, annotationResult: TEAAnnotationResult?, holder: AnnotationHolder) {
@@ -815,21 +617,14 @@ class CargoCheckExtAnnotator: ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
         if (annotationResult == null)
             return
 
-        DEBUG.beginLog("apply(file=${file.virtualFile.path},annotationSession.file=${holder.currentAnnotationSession.file.virtualFile.path})")
+        IJDebug.log("apply (file=${file.name}, sessionfile=${holder.currentAnnotationSession.file.name})")
+        IJDebug.log("result = $annotationResult")
 
-        DEBUG.log("got annotation result ${EI("json", annotationResult.prettyJson())}")
-
-        annotationResult.parsedMessages.withIndex().forEach { pair ->
-            val i = pair.index
-            val msg = pair.value
-
-            DEBUG.log("doing message $i")
-            msg.doAnnotate(file, holder)
-
+        annotationResult.parsedMessages.forEach {
+            //the file to annotate is already embedded inside the annotation holder
+            it.doAnnotate(holder)
         }
 
-        DEBUG.endLog()
     }
 
 }
-
