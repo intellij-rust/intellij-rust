@@ -62,6 +62,26 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun testGenericConstPtr() = testExpr("""
+        struct S<T> { field: *const T }
+
+        fn foo(s: S<f64>) {
+            let x = s.field;
+            x
+          //^ *const f64
+        }
+    """)
+
+    fun testGenericMutPtr() = testExpr("""
+        struct S<T> { field: *mut T }
+
+        fn foo(s: S<f64>) {
+            let x = s.field;
+            x
+          //^ *mut f64
+        }
+    """)
+
     fun testGenericMethod() = testExpr("""
         struct B<T> { field: T }
 
