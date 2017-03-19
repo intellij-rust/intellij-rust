@@ -17,4 +17,8 @@ data class RustSliceType(val elementType: RustType) : RustPrimitiveType {
     override fun getMethodsIn(project: Project): Sequence<RsFunction> {
         return RsImplIndex.findMethodsFor(this, project)
     }
+
+    override fun substitute(map: Map<RustTypeParameterType, RustType>): RustType {
+        return RustSliceType(elementType.substitute(map))
+    }
 }

@@ -42,6 +42,26 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun testGenericArray() = testExpr("""
+        struct S<T> { field: [T; 1] }
+
+        fn foo(s: S<f64>) {
+            let x = s.field;
+            x
+          //^ [f64; 1]
+        }
+    """)
+
+    fun testGenericSlice() = testExpr("""
+        struct S<T: 'static> { field: &'static [T] }
+
+        fn foo(s: S<f64>) {
+            let x = s.field;
+            x
+          //^ & [f64]
+        }
+    """)
+
     fun testGenericMethod() = testExpr("""
         struct B<T> { field: T }
 
