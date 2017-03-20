@@ -8,7 +8,6 @@ import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.RsFunctionRole
-import org.rust.lang.core.psi.ext.isAbstract
 import org.rust.lang.core.psi.ext.role
 import org.rust.lang.core.psi.ext.superMethod
 import org.rust.lang.core.psi.ext.parentOfType

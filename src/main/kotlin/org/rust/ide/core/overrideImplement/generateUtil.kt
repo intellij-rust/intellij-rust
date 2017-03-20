@@ -7,27 +7,21 @@ import com.intellij.ide.util.MemberChooser
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleColoredComponent
+import org.rust.ide.utils.presentationInfo
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.impl.mixin.toImplementOverride
-import org.rust.lang.core.psi.util.trait
-import org.rust.utils.getFormattedParts
-import java.util.*
+import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.resolveToTrait
+import org.rust.lang.core.psi.ext.toImplementOverride
 import javax.swing.JTree
 
 class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val member: RsNamedElement) : ClassMember {
-    private val text: String;
-
-    init {
-        text = when (member) {
-            is RsFunction -> {
-                val (before, after) = member.getFormattedParts()
-                "${member.name}$after"
-            }
-            is RsTypeAlias -> "${member.name}"
-            is RsConstant -> "${member.name}: ${member.typeReference?.text}"
-            else -> error("Unknown trait member: $member")
-        }
-    }
+    private val text: String = when (member) {
+        is RsFunction ->
+            member.presentationInfo?.projectStructureItemText ?: ""
+        is RsTypeAlias -> "${member.name}"
+        is RsConstant -> "${member.name}: ${member.typeReference?.text}"
+        else -> error("Unknown trait member: $member")
+    };
 
     override fun renderTreeNode(component: SimpleColoredComponent?, tree: JTree?) {
         component?.icon = member.getIcon(0)
@@ -45,13 +39,13 @@ class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val member: 
     }
 
     override fun hashCode() = text.hashCode()
-    
+
     fun formattedText() = text
 }
 
 fun createTraitMembersChooser(impl: RsImplItem)
         : Pair<List<RsTraitMemberChooserMember>, List<RsTraitMemberChooserMember>>? {
-    val trait = impl.traitRef?.trait ?: error("No trait ref")
+    val trait = impl.traitRef?.resolveToTrait ?: error("No trait ref")
     val traitName = trait.name ?: error("No trait name")
 
     val base = MemberChooserObjectBase(traitName, trait.getIcon(0))
@@ -87,13 +81,11 @@ fun insertNewTraitMembers(selected: Collection<RsTraitMemberChooserMember>, impl
             selected.mapNotNull { it.member as? RsConstant }
     )
     val lastMethodOrBrace = impl.functionList.lastOrNull() ?: impl.lbrace ?: return
-    runWriteAction {
-        impl.addRangeAfter(
-                templateImpl.lbrace?.nextSibling,
-                templateImpl.rbrace?.prevSibling,
-                lastMethodOrBrace
-        )
-    }
+    impl.addRangeAfter(
+            templateImpl.lbrace?.nextSibling,
+            templateImpl.rbrace?.prevSibling,
+            lastMethodOrBrace
+    )
 }
 
 fun generateTraitMembers(impl: RsImplItem) {

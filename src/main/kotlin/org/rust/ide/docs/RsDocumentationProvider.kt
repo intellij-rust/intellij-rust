@@ -8,7 +8,6 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.doc.documentationAsHtml
-import org.rust.utils.getFormattedParts
 
 class RsDocumentationProvider : AbstractDocumentationProvider() {
 

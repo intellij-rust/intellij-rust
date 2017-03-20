@@ -4,11 +4,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
+import org.rust.ide.utils.presentationInfo
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.childOfType
 import org.rust.lang.core.psi.ext.selfParameter
 import org.rust.lang.core.psi.ext.valueParameters
-import org.rust.lang.core.psi.ext.childOfType
 
 class RsPsiFactory(private val project: Project) {
     fun createSelf(mutable: Boolean = false): RsSelfParameter {
@@ -86,11 +87,20 @@ class RsPsiFactory(private val project: Project) {
 
     fun createTraitImplItem(traitMethods: List<RsFunction>, traitTypeAliases: List<RsTypeAlias>, traitConstants: List<RsConstant>): RsImplItem {
         val members = (
-                    traitConstants.map { " const ${it.identifier.text}: ${it.typeReference?.text} = unimplemented!();" } +
-                    traitTypeAliases.map { " type ${it.name} = ();" } +
-                    traitMethods.map { " \n${it.signatureText} {\nunimplemented!()\n}" }
+                    traitConstants.map { "    const ${it.identifier.text}: ${it.typeReference?.text} = unimplemented!();" } +
+                    traitTypeAliases.map { "    type ${it.name} = ();" }
                 ).joinToString("\n")
-        val text = "impl T for S { \n$members\n }"
+        
+        val functions = traitMethods.map { "    ${it.signatureText ?: ""}{\n        unimplemented!()\n    }" }.joinToString("\n\n")
+        val text = "impl T for S {\n${
+            if (members.isEmpty()) {
+                functions
+            } else if (functions.isEmpty()) {
+                members
+            } else {
+                members + "\n\n" + functions
+            }
+        }\n}"
         return createFromText(text)
             ?: error("Failed to create an impl from text: `$text`")
     }
@@ -194,7 +204,7 @@ private val RsFunction.signatureText: String? get() {
         "${it.pat?.text ?: "_"}: ${it.typeReference?.text ?: "()"}"
     }
 
-    val ret = retType?.text ?: ""
+    val ret = retType?.text?.let { it + " " } ?: ""
     val where = whereClause?.text ?: ""
-    return "fn $name $generics (${allArguments.joinToString(",")}) $ret $where"
+    return "fn $name$generics(${allArguments.joinToString(",")}) $ret$where"
 }

@@ -4,9 +4,9 @@ import com.intellij.lang.LanguageCodeInsightActionHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.impl.RsFile
-import org.rust.lang.core.psi.util.parentOfType
+import org.rust.lang.core.psi.ext.parentOfType
 
 class ImplementMembersHandler: LanguageCodeInsightActionHandler {
     override fun isValidFor(editor: Editor, file: PsiFile): Boolean {

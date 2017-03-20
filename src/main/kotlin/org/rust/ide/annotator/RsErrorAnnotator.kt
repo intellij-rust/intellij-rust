@@ -293,7 +293,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
                 .registerFix(AddModuleFileFix(modDecl, expandModuleFirst = false))
         }
     }
-
+    
     private fun checkImpl(holder: AnnotationHolder, impl: RsImplItem) {
         val trait = impl.traitRef?.resolveToTrait ?: return
         val traitName = trait.name ?: return
@@ -316,7 +316,6 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             ).registerFix(ImplementMethodsFix(impl))
         }
 
-        val traitName = impl.traitRef?.text ?: return    
         val notMembers = implemented.filterKeys { it !in canImplement }
         for (method in notMembers.values) { 
             holder.createErrorAnnotation(method.identifier,
