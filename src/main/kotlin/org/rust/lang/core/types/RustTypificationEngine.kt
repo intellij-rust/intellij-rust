@@ -128,7 +128,7 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     }
 
     override fun visitBlockExpr(o: RsBlockExpr) = set {
-        o.block?.type ?: RustUnknownType
+        o.block.type
     }
 
     override fun visitIfExpr(o: RsIfExpr) = set {

@@ -46,7 +46,7 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
             }
 
             is RsIfExpr, is RsElseBranch -> {
-                val newBlock = psiFactory.createBlockExpr(expr.text).block!!
+                val newBlock = psiFactory.createBlockExpr(expr.text).block
                 return block.replace(newBlock).textRange.startOffset
             }
         }

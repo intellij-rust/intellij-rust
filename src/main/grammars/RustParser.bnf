@@ -743,7 +743,14 @@ TypeQualPath ::= QualifiedPathWithoutColons
 Expr ::= RetExpr
        | LambdaExpr
        | AssignBinExpr
+
+       | WhileExpr
+       | IfExpr
+       | ForExpr
+       | LoopExpr
+       | MatchExpr
        | BlockExpr
+
        | ContExpr
        | BreakExpr
        | FullRangeExpr
@@ -762,6 +769,7 @@ Expr ::= RetExpr
        | UnaryExpr
        | TryExpr
        | AtomExpr
+
 Expr_first ::= return | '|' | Path_first | '{' | '[' | '(' | '..' | '...' | true | false | box | QUOTE_IDENTIFIER
   | '-' | '*' | '!' | '&' | move | LitExpr | while | if | for | continue | break  | loop | match | unsafe
 
@@ -771,12 +779,8 @@ AnyExpr ::= <<structLiterals 'ON' <<stmtMode 'OFF' Expr>> >> { elementType = Exp
 StmtModeExpr ::= <<structLiterals 'ON' <<stmtMode 'ON' Expr>> >> { elementType = Expr }
 StmtModeExprOff ::= <<stmtMode 'OFF' Expr>> { elementType = Expr }
 
-BlockExpr ::= WhileExpr
-            | IfExpr
-            | ForExpr
-            | LoopExpr
-            | MatchExpr
-            | [ unsafe &'{' ] SimpleBlock
+BlockExpr ::= [ unsafe &'{' ] SimpleBlock
+
 
 private AtomExpr ::= LitExpr
                     | MacroExpr

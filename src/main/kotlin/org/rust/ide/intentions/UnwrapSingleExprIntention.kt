@@ -14,7 +14,7 @@ class UnwrapSingleExprIntention : RsElementBaseIntentionAction<RsBlockExpr>() {
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsBlockExpr? {
         val blockExpr = element.parentOfType<RsBlockExpr>() ?: return null
-        val block = blockExpr.block ?: return null
+        val block = blockExpr.block
 
         return if (block.expr != null && block.lbrace.getNextNonCommentSibling() == block.expr)
             blockExpr
@@ -23,7 +23,7 @@ class UnwrapSingleExprIntention : RsElementBaseIntentionAction<RsBlockExpr>() {
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: RsBlockExpr) {
-        val blockBody = ctx.block?.expr ?: return
+        val blockBody = ctx.block.expr ?: return
         val relativeCaretPosition = editor.caretModel.offset - blockBody.textOffset
 
         val offset = (ctx.replace(blockBody) as RsExpr).textOffset

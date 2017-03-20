@@ -10,6 +10,6 @@ class RsWithBlockSurrounder : RsStatementsSurrounderBase.SimpleBlock<RsBlockExpr
 
     override fun createTemplate(project: Project): Pair<RsBlockExpr, RsBlock> {
         val block = RsPsiFactory(project).createBlockExpr("\n")
-        return block to block.block!!
+        return block to block.block
     }
 }

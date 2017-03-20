@@ -48,6 +48,6 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
     }
 
     private val RsExpr.isVoid: Boolean
-        get() = (this is RsBlockExpr && block?.lbrace.getNextNonCommentSibling() == block?.rbrace)
+        get() = (this is RsBlockExpr && block.lbrace.getNextNonCommentSibling() == block.rbrace)
             || this is RsUnitExpr
 }

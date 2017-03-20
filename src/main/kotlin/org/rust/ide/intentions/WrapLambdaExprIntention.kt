@@ -25,7 +25,7 @@ class WrapLambdaExprIntention : RsElementBaseIntentionAction<RsExpr>() {
         val bodyStr = "\n${ctx.text}\n"
         val blockExpr = RsPsiFactory(project).createBlockExpr(bodyStr)
 
-        val offset = ((ctx.replace(blockExpr)) as RsBlockExpr).block?.expr?.textOffset ?: return
+        val offset = ((ctx.replace(blockExpr)) as RsBlockExpr).block.expr?.textOffset ?: return
         editor.caretModel.moveToOffset(offset + relativeCaretPosition)
     }
 }
