@@ -12,7 +12,7 @@ abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase(
         val files = listOf("before.rs.template", "after.rs.template", "description.html")
         for (file in files) {
             val text = getResourceAsString("$directory/$file")
-                ?: error("No inspection description for ${intention.javaClass}.\n" +
+                ?: fail("No inspection description for ${intention.javaClass}.\n" +
                 "Add ${files.joinToString()} to src/main/resources/$directory")
 
             if (file.endsWith(".html")) {

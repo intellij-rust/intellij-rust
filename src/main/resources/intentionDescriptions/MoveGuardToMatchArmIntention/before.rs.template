@@ -1,0 +1,6 @@
+fn main() {
+    let pair = (2, -2);
+    match pair {
+        (x, y) <spot>if x == y</spot> => println!("equal"),
+    }
+}

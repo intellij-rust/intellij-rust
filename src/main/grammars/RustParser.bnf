@@ -878,7 +878,8 @@ MatchArm ::= OuterAttr* MatchPat '=>' StmtModeExpr (',' | (&'}' | <<isBlock>>)) 
   recoverWhile = MatchArmRecover
 }
 private MatchArmRecover ::= !(Pat_first | OuterAttr_first | '}')
-MatchPat ::= Pat ('|' Pat)* (if AnyExpr)?
+MatchPat ::= Pat ('|' Pat)* MatchArmGuard?
+MatchArmGuard ::= if AnyExpr
 
 IfExpr ::= if Condition SimpleBlock ElseBranch? { pin = 'if' }
 ElseBranch ::= else ( IfExpr | SimpleBlock )

@@ -401,6 +401,10 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
+            <className>org.rust.ide.intentions.MoveGuardToMatchArmIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.SetMutableIntention</className>
             <category>Rust</category>
         </intentionAction>
