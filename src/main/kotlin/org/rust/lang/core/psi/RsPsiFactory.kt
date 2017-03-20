@@ -29,22 +29,19 @@ class RsPsiFactory(private val project: Project) {
             ?: error("Failed to create expression from text: `$text`")
 
     fun createTryExpression(expr: RsExpr): RsTryExpr {
-        val newElement = createExpression("a?")
-        if (newElement is RsTryExpr) {
-            newElement.expr.replace(expr)
-            return newElement
-        }
-        error("Failed to create try expression `${expr.text}`?")
+        val newElement = createExpressionOfType<RsTryExpr>("a?")
+        newElement.expr.replace(expr)
+        return newElement
     }
 
     fun createBlockExpr(body: String): RsBlockExpr =
-        createExpression("{ $body }") as RsBlockExpr
+        createExpressionOfType("{ $body }")
 
     fun createUnsafeBlockExpr(body: String): RsBlockExpr =
-        createExpression("unsafe { $body }") as RsBlockExpr
+        createExpressionOfType("unsafe { $body }")
 
     fun createStructExprField(name: String): RsStructExprField =
-        (createExpression("S { $name: () }") as RsStructExpr).structExprBody.structExprFieldList[0]
+        createExpressionOfType<RsStructExpr>("S { $name: () }").structExprBody.structExprFieldList[0]
 
     fun createStatement(text: String): RsStmt =
         createFromText("fn main() { $text 92; }")
@@ -155,7 +152,7 @@ class RsPsiFactory(private val project: Project) {
     fun createUnsafe(): PsiElement =
         createFromText<RsFunction>("unsafe fn foo(){}")?.unsafe
             ?: error("Failed to create unsafe element")
-            
+
     fun createValueParameter(name: String, type: RsTypeReference, mutable: Boolean = false): RsValueParameter {
         return createFromText<RsFunction>("fn main($name: ${if (mutable) "&mut " else ""}${type.text}){}")
             ?.valueParameterList?.valueParameterList?.get(0)
@@ -166,6 +163,10 @@ class RsPsiFactory(private val project: Project) {
         (createStatement("let ${if (mutable) "mut " else ""}$name = 10;") as RsLetDecl).pat
             ?.firstChild as RsPatBinding?
             ?: error("Failed to create pat element")
+
+    private inline fun<reified E: RsExpr> createExpressionOfType(text: String): E =
+        createExpression(text) as? E
+            ?: error("Failed to create ${E::class.simpleName} from `$text`")
 }
 
 private val RsFunction.signatureText: String? get() {
