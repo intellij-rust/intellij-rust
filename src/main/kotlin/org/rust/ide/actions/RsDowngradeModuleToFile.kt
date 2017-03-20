@@ -2,7 +2,7 @@ package org.rust.ide.actions
 
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDirectory
@@ -33,7 +33,7 @@ class RsDowngradeModuleToFile : BaseRefactoringAction() {
         }
 
         override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
-            runWriteAction {
+            WriteCommandAction.runWriteCommandAction(project) {
                 for (element in elements) {
                     contractModule(element as PsiFileSystemItem)
                 }
