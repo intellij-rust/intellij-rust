@@ -1,8 +1,7 @@
 package org.rust.ide.intentions
 
 class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
-    fun testUnavailableAllVoidArms() = doUnavailableTest(
-        """
+    fun `test unavailable all void arms`() = doUnavailableTest("""
         enum MyOption {
             Nothing,
             Some(x),
@@ -16,11 +15,9 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
                 Nothing => {}
             }
         }
-        """
-    )
+    """)
 
-    fun testUnavailableAllNotVoidArms() = doUnavailableTest(
-        """
+    fun `test unavailable all not void arms`() = doUnavailableTest("""
         enum MyOption {
             Nothing,
             Some(x),
@@ -34,11 +31,9 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
                 Nothing => {43}/*caret*/
             }
         }
-        """
-    )
+    """)
 
-    fun testUnavailable_pattern() = doUnavailableTest(
-        """
+    fun `test unavailable pattern`() = doUnavailableTest("""
         enum OptionColor {
             NoColor,
             Color(i32, i32, i32),
@@ -52,11 +47,9 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
                 _ => {print!("No color")},
             };
         }
-        """
-    )
+    """)
 
-    fun testSimple1() = doAvailableTest(
-        """
+    fun `test simple 1`() = doAvailableTest("""
         enum MyOption {
             Nothing,
             Some(x),
@@ -74,9 +67,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
                 Nothing => {}
             }
         }
-        """
-        ,
-        """
+    """, """
         enum MyOption {
             Nothing,
             Some(x),
@@ -91,11 +82,9 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
                 let c = a + b;
             }
         }
-        """
-    )
+    """)
 
-    fun testSimple2() = doAvailableTest(
-        """
+    fun `test simple 2`() = doAvailableTest("""
         enum OptionColor {
             NoColor,
             Color(i32, i32, i32),
@@ -110,9 +99,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
                 OptionColor::NoColor => {},
             };
         }
-        """
-        ,
-        """
+    """, """
         enum OptionColor {
             NoColor,
             Color(i32, i32, i32),
@@ -125,6 +112,5 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
                 print!("White")
             };
         }
-        """
-    )
+    """)
 }
