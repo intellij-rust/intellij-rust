@@ -4,5 +4,5 @@ import org.rust.lang.core.psi.RsMatchArm
 import org.rust.lang.core.psi.RsMatchArmGuard
 
 val RsMatchArmGuard.parentMatchArm: RsMatchArm
-    get() = parent!!.parent as RsMatchArm
+    get() = parent as RsMatchArm
 

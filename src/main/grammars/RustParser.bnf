@@ -873,12 +873,11 @@ Label ::= QUOTE_IDENTIFIER {
 
 MatchExpr ::= match NoStructLitExpr MatchBody { pin = 'match'}
 MatchBody ::= '{' MatchArm* '}' { pin = 1 }
-MatchArm ::= OuterAttr* MatchPat '=>' StmtModeExpr (',' | (&'}' | <<isBlock>>)) {
+MatchArm ::= OuterAttr* Pat ('|' Pat)* MatchArmGuard? '=>' StmtModeExpr (',' | (&'}' | <<isBlock>>)) {
   pin = 2
-  recoverWhile = MatchArmRecover
+  recoverWhile = MatchArm_recover
 }
-private MatchArmRecover ::= !(Pat_first | OuterAttr_first | '}')
-MatchPat ::= Pat ('|' Pat)* MatchArmGuard?
+private MatchArm_recover ::= !(Pat_first | OuterAttr_first | '}')
 MatchArmGuard ::= if AnyExpr
 
 IfExpr ::= if Condition SimpleBlock ElseBranch? { pin = 'if' }

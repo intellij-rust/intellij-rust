@@ -394,7 +394,7 @@ private fun lexicalDeclarations(
             // Rust allows to defined several patterns in the single match arm,
             // but they all must bind the same variables, hence we can inspect
             // only the first one.
-            .matchPat.patList.take(1).asSequence()
+            .patList.take(1).asSequence()
             .flatMap { it.boundNames }
 
         else -> emptySequence()

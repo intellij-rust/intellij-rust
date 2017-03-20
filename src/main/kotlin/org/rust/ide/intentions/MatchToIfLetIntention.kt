@@ -14,7 +14,8 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
     data class Context(
         val match: RsMatchExpr,
         val matchTarget: RsExpr,
-        val nonVoidArm: RsMatchArm
+        val nonVoidArm: RsMatchArm,
+        val pattern: RsPat
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
@@ -27,14 +28,14 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
             .filter { it.expr?.isVoid == false }
             .singleOrNull() ?: return null
 
-        val pattern = nonVoidArm.matchPat.patList.singleOrNull() ?: return null
+        val pattern = nonVoidArm.patList.singleOrNull() ?: return null
         if (pattern.text == "_") return null
 
-        return Context(matchExpr, matchTarget, nonVoidArm)
+        return Context(matchExpr, matchTarget, nonVoidArm, pattern)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val (matchExpr, matchTarget, arm) = ctx
+        val (matchExpr, matchTarget, arm, pattern) = ctx
 
         var bodyText = arm.expr?.text ?: return
         if (arm.expr !is RsBlockExpr) {
@@ -42,7 +43,7 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
         }
 
         val rustIfLetExprElement =
-            RsPsiFactory(project).createExpression("if let ${arm.matchPat.text} = ${matchTarget.text} $bodyText")
+            RsPsiFactory(project).createExpression("if let ${pattern.text} = ${matchTarget.text} $bodyText")
                 as RsIfExpr
         matchExpr.replace(rustIfLetExprElement)
     }

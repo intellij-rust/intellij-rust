@@ -20,7 +20,7 @@ fun inferPatternBindingType(binding: RsPatBinding): RustType {
 
         is RsValueParameter -> parent.typeReference?.type
         is RsCondition -> parent.expr.type
-        is RsMatchPat -> parent.parentOfType<RsMatchExpr>()?.expr?.type
+        is RsMatchArm -> parent.parentOfType<RsMatchExpr>()?.expr?.type
         else -> null
     } ?: RustUnknownType
 
