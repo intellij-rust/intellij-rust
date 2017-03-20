@@ -7,6 +7,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
+import org.rust.lang.core.psi.RS_BLOCK_LIKE_EXPRESSIONS
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsElementTypes.*
 
@@ -66,7 +67,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
     @JvmStatic fun isBlock(b: PsiBuilder, level: Int): Boolean {
         val m = b.latestDoneMarker ?: return false
-        return m.tokenType in BLOCK_LIKE || m.isBracedMacro(b)
+        return m.tokenType in RS_BLOCK_LIKE_EXPRESSIONS || m.isBracedMacro(b)
     }
 
     @JvmStatic fun pathMode(b: PsiBuilder, level: Int, mode: PathParsingMode, parser: Parser): Boolean =
@@ -109,15 +110,6 @@ object RustParserUtil : GeneratedParserUtilBase() {
         marker.collapse(tokenType)
         return true
     }
-
-    private val BLOCK_LIKE = TokenSet.create(
-        WHILE_EXPR,
-        IF_EXPR,
-        FOR_EXPR,
-        LOOP_EXPR,
-        MATCH_EXPR,
-        BLOCK_EXPR
-    )
 
     private fun <T> PsiBuilder.withContext(key: Key<T>, value: T, block: PsiBuilder.() -> Boolean): Boolean {
         val old = getUserData(key)

@@ -163,7 +163,7 @@ fn misc() {
 
         Person::Info { name, height } => {
             println!("{} is {} tall!", name, height);
-        },
+        }
     }
 }
 

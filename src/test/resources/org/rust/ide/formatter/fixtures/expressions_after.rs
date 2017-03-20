@@ -20,13 +20,13 @@ fn main() {
     match x {
         S { foo } => {
             92;
-        },
+        }
 
         S {
             foo
         } => {
             92;
-        },
+        }
 
         S { foo } =>
             92
