@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.ide.formatter.RsCommaFormatProcessor
+import org.rust.ide.formatter.RsTrailingCommaFormatProcessor
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsFieldDecl
 import org.rust.lang.core.psi.RsPsiFactory
@@ -58,7 +58,7 @@ class AddStructFieldsFix(
         }
 
         expr = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(expr)
-        RsCommaFormatProcessor.fixSingleLineBracedBlock(expr)
+        RsTrailingCommaFormatProcessor.fixSingleLineBracedBlock(expr)
 
         if (editor != null && firstAdded != null) {
             editor.caretModel.moveToOffset(firstAdded.expr!!.textOffset)

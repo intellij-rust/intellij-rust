@@ -1,6 +1,6 @@
 package org.rust.ide.formatter
 
-class RsCommaFormatProcessorTest : RsFormatterTestBase() {
+class RsTrailingCommaFormatProcessorTest : RsFormatterTestBase() {
     fun testRemovesCommaIfSingleLine() = doTextTest("""
         struct S1 { a: i32, }
 

@@ -14,7 +14,7 @@ import org.rust.lang.core.psi.RsStructExprBody
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
-class RsCommaFormatProcessor : PostFormatProcessor {
+class RsTrailingCommaFormatProcessor : PostFormatProcessor {
     override fun processElement(source: PsiElement, settings: CodeStyleSettings): PsiElement {
         doProcess(source, settings, null)
         return source
