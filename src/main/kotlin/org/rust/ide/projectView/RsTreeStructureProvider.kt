@@ -4,13 +4,14 @@ import com.intellij.ide.projectView.TreeStructureProvider
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.project.DumbAware
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsMod.Companion.MOD_RS
 
 /**
  * Moves `mod.rs` files on top
  */
-class RsTreeStructureProvider : TreeStructureProvider {
+class RsTreeStructureProvider : TreeStructureProvider, DumbAware {
     override fun modify(parent: AbstractTreeNode<*>, children: Collection<AbstractTreeNode<*>>, settings: ViewSettings?): Collection<AbstractTreeNode<*>> {
         if (children.none { it is PsiFileNode && it.value?.name == MOD_RS }) {
             return children
