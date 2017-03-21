@@ -16,7 +16,7 @@ FILE
             PsiElement(identifier)('i32')
       PsiWhiteSpace(' ')
       PsiElement())(')')
-    PsiErrorElement:'{' expected, got 'fn'
+    PsiErrorElement:'->', ';', where or '{' expected, got 'fn'
       <empty list>
   PsiWhiteSpace('\n\n')
   RsFunctionImpl(FUNCTION)
@@ -81,7 +81,7 @@ FILE
     RsBlockImpl(BLOCK)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      PsiErrorElement:<stmt mode expr>, enum, extern, fn, impl, mod, trait, type or use expected, got '+'
+      PsiErrorElement:'#', <constant>, <enum item>, <expr stmt or last expr>, <extern crate item>, <foreign mod item>, <function>, <impl item>, <macro item>, <mod decl item>, <mod item>, <stmt>, <struct item>, <trait item>, <type alias> or <use item> expected, got '+'
         PsiElement(+)('+')
       PsiWhiteSpace('\n')
       PsiElement(})('}')
@@ -90,7 +90,7 @@ FILE
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('add')
-    PsiErrorElement:'add' unexpected
+    PsiErrorElement:'(' or < expected, got 'add'
       <empty list>
   PsiWhiteSpace(' ')
   PsiElement(identifier)('add')
@@ -104,7 +104,7 @@ FILE
     PsiElement(})('}')
   PsiWhiteSpace('\n\n')
   PsiElement(unsafe)('unsafe')
-  PsiErrorElement:fn, impl or trait expected, got 'const'
+  PsiErrorElement:extern, fn, impl or trait expected, got 'const'
     <empty list>
   PsiWhiteSpace(' ')
   RsFunctionImpl(FUNCTION)

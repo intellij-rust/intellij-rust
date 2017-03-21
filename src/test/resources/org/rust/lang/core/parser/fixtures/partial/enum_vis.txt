@@ -6,11 +6,11 @@ FILE
     PsiWhiteSpace(' ')
     RsEnumBodyImpl(ENUM_BODY)
       PsiElement({)('{')
-      PsiErrorElement:'}' expected, got 'pub'
+      PsiErrorElement:<enum variant> or '}' expected, got 'pub'
         <empty list>
   PsiWhiteSpace('\n    ')
   PsiElement(pub)('pub')
-  PsiErrorElement:enum, extern, fn, identifier, impl, mod, trait, type or use expected, got 'F'
+  PsiErrorElement:'(', const, enum, extern, fn, identifier, impl, macro_rules, mod, static, struct, trait, type, unsafe or use expected, got 'F'
     <empty list>
   PsiWhiteSpace(' ')
   PsiElement(identifier)('F')

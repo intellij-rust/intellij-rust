@@ -21,6 +21,7 @@ class RsPartialParsingTestCase : RsParsingTestCaseBase("partial") {
     fun testStructExprFields() = doTest(true)
     fun testHrtbForLifetimes() = doTest(true)
     fun testNoLifetimeBoundsInGenericArgs() = doTest(true)
+    fun testRequireCommas() = doTest(true)
 
     override fun checkResult(targetDataName: String?, file: PsiFile) {
         checkHasError(file)

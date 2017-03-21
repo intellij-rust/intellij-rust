@@ -12,7 +12,7 @@ FILE
       PsiWhiteSpace('\n    ')
       RsLitExprImpl(LIT_EXPR)
         PsiElement(INTEGER_LITERAL)('1')
-        PsiErrorElement:'&', '^' or '|' expected, got '>'
+        PsiErrorElement:'&', '(', ';', '[', '^', '|' or '}' expected, got '>'
           <empty list>
       PsiWhiteSpace(' ')
       PsiElement(>)('>')
@@ -44,7 +44,7 @@ FILE
       RsPathExprImpl(PATH_EXPR)
         RsPathImpl(PATH)
           PsiElement(identifier)('x')
-        PsiErrorElement:'!', '&', '^' or '|' expected, got '>'
+        PsiErrorElement:'!', '&', '(', '::', ';', '[', '^', '{', '|' or '}' expected, got '>'
           <empty list>
       PsiWhiteSpace(' ')
       PsiElement(>)('>')
@@ -60,7 +60,7 @@ FILE
       RsPathExprImpl(PATH_EXPR)
         RsPathImpl(PATH)
           PsiElement(identifier)('x')
-        PsiErrorElement:'!', '&', '^' or '|' expected, got '>'
+        PsiErrorElement:'!', '&', '(', '::', ';', '[', '^', '{', '|' or '}' expected, got '>'
           <empty list>
       PsiWhiteSpace(' ')
       PsiElement(>)('>')
@@ -74,11 +74,11 @@ FILE
       PsiWhiteSpace('\n\n    ')
       RsLitExprImpl(LIT_EXPR)
         PsiElement(INTEGER_LITERAL)('1')
-        PsiErrorElement:'&', '^' or '|' expected, got '<'
+        PsiErrorElement:'&', '(', ';', '[', '^', '|' or '}' expected, got '<'
           <empty list>
       PsiWhiteSpace(' ')
       PsiElement(<)('<')
-      PsiErrorElement:<type reference> or fn expected, got '<'
+      PsiErrorElement:<, <fn pointer type> or <type reference> expected, got '<'
         <empty list>
       PsiWhiteSpace(' ')
       PsiElement(<)('<')
@@ -110,11 +110,11 @@ FILE
       RsPathExprImpl(PATH_EXPR)
         RsPathImpl(PATH)
           PsiElement(identifier)('x')
-        PsiErrorElement:'!', '&', '^' or '|' expected, got '<'
+        PsiErrorElement:'!', '&', '(', '::', ';', '[', '^', '{', '|' or '}' expected, got '<'
           <empty list>
       PsiWhiteSpace(' ')
       PsiElement(<)('<')
-      PsiErrorElement:<type reference> or fn expected, got '<'
+      PsiErrorElement:<, <fn pointer type> or <type reference> expected, got '<'
         <empty list>
       PsiWhiteSpace(' ')
       PsiElement(<)('<')
@@ -129,7 +129,7 @@ FILE
       RsPathExprImpl(PATH_EXPR)
         RsPathImpl(PATH)
           PsiElement(identifier)('x')
-        PsiErrorElement:'!', '&', '^' or '|' expected, got '<'
+        PsiErrorElement:'!', '&', '(', '::', ';', '[', '^', '{', '|' or '}' expected, got '<'
           <empty list>
       PsiWhiteSpace(' ')
       PsiElement(<)('<')

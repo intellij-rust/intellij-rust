@@ -91,11 +91,7 @@
 
     generateTokenAccessors=true
 
-    // Fast method sometimes fails to report syntax errors,
-    // override it where it matters
-    consumeTokenMethod("TypeAscription|InnerAttrsAndBlock") = "consumeToken"
-
-    consumeTokenMethod(".*") = "consumeTokenFast"
+    consumeTokenMethod("(.*_recover)|(.*Expr)|BinAssignOp") = "consumeTokenFast"
 }
 
 // This is the grammar of the Rust language which is used by Grammar Kit
@@ -1014,7 +1010,9 @@ ItemMacroArg ::= '(' TokenTrees ')' ';'
 }
 
 TryMacroArgs ::= <<macro_args_delim AnyExpr>>
-VecMacroArgs ::= '[' ArrayInitializer ']' { pin = 1 }
+VecMacroArgs ::= '[' ArrayInitializer ']' | '(' ArrayInitializer ')' | '{' ArrayInitializer '}' {
+  pin = 1
+}
 
 private ZzLogMacroArgs ::= ('target' ':' Expr ','?)? (<<comma_separated_list FormatMacroArg>>)?
 LogMacroArgs ::=  <<macro_args_delim ZzLogMacroArgs>>

@@ -1,0 +1,21 @@
+FILE
+  RsStructItemImpl(STRUCT_ITEM)
+    PsiElement(struct)('struct')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('S')
+    RsTypeParameterListImpl(TYPE_PARAMETER_LIST)
+      PsiElement(<)('<')
+      RsLifetimeParameterImpl(LIFETIME_PARAMETER)
+        RsLifetimeDeclImpl(LIFETIME_DECL)
+          PsiElement(QUOTE_IDENTIFIER)(''a')
+      PsiErrorElement:',', ':' or '>' expected, got ''b'
+        <empty list>
+      PsiWhiteSpace(' ')
+      RsLifetimeParameterImpl(LIFETIME_PARAMETER)
+        RsLifetimeDeclImpl(LIFETIME_DECL)
+          PsiElement(QUOTE_IDENTIFIER)(''b')
+      PsiElement(>)('>')
+    PsiWhiteSpace(' ')
+    RsBlockFieldsImpl(BLOCK_FIELDS)
+      PsiElement({)('{')
+      PsiElement(})('}')
