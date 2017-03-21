@@ -311,7 +311,7 @@ TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' TypeReference ] {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-TypeParamBounds ::= ':' Polybound ('+' Polybound)*
+TypeParamBounds ::= ':' [ Polybound ('+' Polybound)* '+'? ]
 Polybound ::= [ ForLifetimes | '?' ] Bound
 
 WhereClause ::= where <<comma_separated_list WherePred>>

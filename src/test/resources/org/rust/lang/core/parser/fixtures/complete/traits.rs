@@ -14,3 +14,6 @@ fn foo() {
 trait bar<T> {
     fn baz(&self,);
 }
+
+trait TrailingPlusIsOk: Clone+{}
+trait EmptyBoundsAreValid: {}
