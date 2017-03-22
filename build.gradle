@@ -10,6 +10,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.1.1'
 }
 
+def isCi = System.env.CI != null
 
 allprojects {
     apply plugin: 'idea'
@@ -22,7 +23,7 @@ allprojects {
     apply plugin: 'org.jetbrains.intellij'
     intellij {
         version ideaVersion
-        downloadSources Boolean.valueOf(downloadIdeaSources)
+        downloadSources !isCi
         updateSinceUntilBuild = false
         instrumentCode = false
 
