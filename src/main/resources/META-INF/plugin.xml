@@ -22,6 +22,7 @@
 
     <depends>com.intellij.modules.lang</depends>
     <depends optional="true" config-file="idea-only.xml">com.intellij.modules.java</depends>
+    <depends optional="true" config-file="clion-only.xml">com.intellij.modules.clion</depends>
 
     <extensions defaultExtensionNs="com.intellij">
 

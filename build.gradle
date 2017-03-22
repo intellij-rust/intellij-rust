@@ -1,6 +1,7 @@
 buildscript {
     repositories {
         mavenCentral()
+        jcenter()
         maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
     }
 }
@@ -8,6 +9,7 @@ buildscript {
 plugins {
     id 'org.jetbrains.intellij' version '0.2.5'
     id 'org.jetbrains.kotlin.jvm' version '1.1.1'
+    id "de.undercouch.download" version "3.2.0"
 }
 
 def isCi = System.env.CI != null
@@ -26,6 +28,7 @@ allprojects {
         downloadSources !isCi
         updateSinceUntilBuild = false
         instrumentCode = false
+//        alternativeIdePath = "debugger/lib/clion-$clionVersion"
 
         publishPlugin {
             username publishUsername
@@ -107,6 +110,13 @@ allprojects {
 project(':') {
     version = "0.1.0.$buildNumber" + (publishChannel?.trim() ? "-$publishChannel" : "")
     intellij { pluginName 'intellij-rust' }
+
+    sourceSets {
+        main {
+            kotlin.srcDirs += 'debugger/src/main/kotlin'
+            compileClasspath += files("debugger/lib/clion-$clionVersion/lib/clion.jar")
+        }
+    }
 }
 
 project(':toml') {
@@ -119,6 +129,19 @@ test {
         excludeCategories 'org.rust.Performance'
     }
 }
+
+
+task downloadClion(type: de.undercouch.gradle.tasks.download.Download) {
+    src "https://download.jetbrains.com/cpp/CLion-${clionVersion}.tar.gz"
+    dest new File(project.projectDir, "debugger/lib/clion-${clionVersion}.tar.gz")
+    overwrite false
+}
+
+task unpackClion(dependsOn: downloadClion, type: Copy) {
+    from tarTree("debugger/lib/clion-${clionVersion}.tar.gz")
+    into new File(project.projectDir, "debugger/lib")
+}
+compileKotlin.dependsOn unpackClion
 
 task performanceTest(type: Test, group: 'Verification', dependsOn: [classes, testClasses]) {
     useJUnit {

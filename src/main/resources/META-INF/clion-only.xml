@@ -1,0 +1,11 @@
+<idea-plugin version="2">
+    <extensions defaultExtensionNs="cidr.debugger">
+        <languageSupportFactory implementation="org.rust.debugger.lang.RsDebuggerLanguageSupportFactory"
+                                order="first"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <programRunner implementation="org.rust.debugger.runconfig.RsDebugRunner"/>
+        <xdebugger.breakpointType implementation="org.rust.debugger.RsLineBreakpointType"/>
+    </extensions>
+</idea-plugin>
