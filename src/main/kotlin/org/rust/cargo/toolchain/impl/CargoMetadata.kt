@@ -144,11 +144,11 @@ object CargoMetadata {
     }
 
     private fun Target.clean(root: VirtualFile): CleanCargoMetadata.Target? {
-        val kind = when (kind) {
-            listOf("bin") -> CargoWorkspace.TargetKind.BIN
-            listOf("example") -> CargoWorkspace.TargetKind.EXAMPLE
-            listOf("test") -> CargoWorkspace.TargetKind.TEST
-            listOf("bench") -> CargoWorkspace.TargetKind.BENCH
+        val kind = when (kind.singleOrNull()) {
+            "bin" -> CargoWorkspace.TargetKind.BIN
+            "example" -> CargoWorkspace.TargetKind.EXAMPLE
+            "test" -> CargoWorkspace.TargetKind.TEST
+            "bench" -> CargoWorkspace.TargetKind.BENCH
             else ->
                 if (kind.any { it.endsWith("lib") })
                     CargoWorkspace.TargetKind.LIB
