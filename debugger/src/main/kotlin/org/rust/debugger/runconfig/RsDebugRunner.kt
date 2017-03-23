@@ -15,6 +15,7 @@ import com.intellij.execution.runners.AsyncGenericProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -151,7 +152,7 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
                             return
                         }
 
-                        ApplicationManager.getApplication().invokeAndWait {
+                        ApplicationManager.getApplication().invokeAndWait({
                             val dialog = SelectFromListDialog(project,
                                 binaries.toTypedArray(),
                                 SelectFromListDialog.ToStringAspect { it as String },
@@ -161,7 +162,7 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
                             result.setResult(
                                 if (dialog.showAndGet()) Binary(dialog.selection[0] as String) else null
                             )
-                        }
+                        }, ModalityState.defaultModalityState())
                     }
                 }.queue()
             }
