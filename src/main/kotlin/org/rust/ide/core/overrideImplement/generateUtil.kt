@@ -4,7 +4,6 @@ import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.generation.MemberChooserObjectBase
 import com.intellij.ide.util.MemberChooser
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleColoredComponent
 import org.rust.ide.utils.presentationInfo
@@ -44,7 +43,7 @@ class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val member: 
 }
 
 fun createTraitMembersChooser(impl: RsImplItem)
-        : Pair<List<RsTraitMemberChooserMember>, List<RsTraitMemberChooserMember>>? {
+    : Pair<List<RsTraitMemberChooserMember>, List<RsTraitMemberChooserMember>>? {
     val trait = impl.traitRef?.resolveToTrait ?: error("No trait ref")
     val traitName = trait.name ?: error("No trait name")
 
@@ -53,8 +52,7 @@ fun createTraitMembersChooser(impl: RsImplItem)
     val mandatoryMembers = toImplement.map { RsTraitMemberChooserMember(base, it) }
     val allMembers = toOverride.map { RsTraitMemberChooserMember(base, it) }
 
-    if (allMembers.isEmpty())
-        return null
+    if (allMembers.isEmpty()) return null
 
     return allMembers to mandatoryMembers
 }
@@ -76,20 +74,20 @@ fun insertNewTraitMembers(selected: Collection<RsTraitMemberChooserMember>, impl
     if (selected.isEmpty())
         return
     val templateImpl = RsPsiFactory(impl.project).createTraitImplItem(
-            selected.mapNotNull { it.member as? RsFunction },
-            selected.mapNotNull { it.member as? RsTypeAlias },
-            selected.mapNotNull { it.member as? RsConstant }
+        selected.mapNotNull { it.member as? RsFunction },
+        selected.mapNotNull { it.member as? RsTypeAlias },
+        selected.mapNotNull { it.member as? RsConstant }
     )
     val lastMethodOrBrace = impl.functionList.lastOrNull() ?: impl.lbrace ?: return
     impl.addRangeAfter(
-            templateImpl.lbrace?.nextSibling,
-            templateImpl.rbrace?.prevSibling,
-            lastMethodOrBrace
+        templateImpl.lbrace?.nextSibling,
+        templateImpl.rbrace?.prevSibling,
+        lastMethodOrBrace
     )
 }
 
 fun generateTraitMembers(impl: RsImplItem) {
     val (all, selected) = createTraitMembersChooser(impl) ?: return
-    val chooserSelected = showChooser(all, selected, impl.project);
+    val chooserSelected = showChooser(all, selected, impl.project)
     insertNewTraitMembers(chooserSelected, impl)
 }

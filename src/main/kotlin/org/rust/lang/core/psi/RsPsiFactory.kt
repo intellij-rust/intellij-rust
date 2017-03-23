@@ -4,7 +4,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
-import org.rust.ide.utils.presentationInfo
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.childOfType
@@ -87,20 +86,16 @@ class RsPsiFactory(private val project: Project) {
 
     fun createTraitImplItem(traitMethods: List<RsFunction>, traitTypeAliases: List<RsTypeAlias>, traitConstants: List<RsConstant>): RsImplItem {
         val members = (
-                    traitConstants.map { "    const ${it.identifier.text}: ${it.typeReference?.text} = unimplemented!();" } +
-                    traitTypeAliases.map { "    type ${it.name} = ();" }
-                ).joinToString("\n")
-        
+            traitConstants.map { "    const ${it.identifier.text}: ${it.typeReference?.text} = unimplemented!();" } +
+                traitTypeAliases.map { "    type ${it.name} = ();" }
+            ).joinToString("\n")
+
         val functions = traitMethods.map { "    ${it.signatureText ?: ""}{\n        unimplemented!()\n    }" }.joinToString("\n\n")
-        val text = "impl T for S {\n${
-            if (members.isEmpty()) {
-                functions
-            } else if (functions.isEmpty()) {
-                members
-            } else {
-                members + "\n\n" + functions
-            }
-        }\n}"
+        val text = "impl T for S {\n${when {
+            members.isEmpty() -> functions
+            functions.isEmpty() -> members
+            else -> members + "\n\n" + functions
+        }}\n}"
         return createFromText(text)
             ?: error("Failed to create an impl from text: `$text`")
     }
@@ -188,7 +183,7 @@ class RsPsiFactory(private val project: Project) {
             ?.firstChild as RsPatBinding?
             ?: error("Failed to create pat element")
 
-    private inline fun<reified E: RsExpr> createExpressionOfType(text: String): E =
+    private inline fun <reified E : RsExpr> createExpressionOfType(text: String): E =
         createExpression(text) as? E
             ?: error("Failed to create ${E::class.simpleName} from `$text`")
 }

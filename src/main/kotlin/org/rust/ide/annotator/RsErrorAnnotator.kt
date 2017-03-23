@@ -1,6 +1,5 @@
 package org.rust.ide.annotator
 
-import com.intellij.codeInsight.PsiEquivalenceUtil
 import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.Annotation
@@ -11,20 +10,16 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.annotator.fixes.*
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsElementTypes.EQ
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustReferenceType
-import org.rust.lang.core.types.types.RustTypeParameterType
 import org.rust.lang.core.types.types.RustUnknownType
 
 class RsErrorAnnotator : Annotator, HighlightRangeExtension {
@@ -293,18 +288,18 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
                 .registerFix(AddModuleFileFix(modDecl, expandModuleFirst = false))
         }
     }
-    
+
     private fun checkImpl(holder: AnnotationHolder, impl: RsImplItem) {
         val trait = impl.traitRef?.resolveToTrait ?: return
         val traitName = trait.name ?: return
-        
+
         val implemented = impl.functionList.associateBy { it.name }
-        
-        val (toImplement, toOverride) = impl.toImplementOverride() 
-                ?: listOf<RsNamedElement>() to listOf<RsNamedElement>()
+
+        val (toImplement, toOverride) = impl.toImplementOverride()
+            ?: listOf<RsNamedElement>() to listOf<RsNamedElement>()
         val notImplemented = toImplement.map { it.name }
         val canImplement = toOverride.associateBy { it.name }
-        
+
         if (notImplemented.isNotEmpty()) {
             val implHeaderTextRange = TextRange.create(
                 impl.textRange.startOffset,
@@ -317,7 +312,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
 
         val notMembers = implemented.filterKeys { it !in canImplement }
-        for (method in notMembers.values) { 
+        for (method in notMembers.values) {
             holder.createErrorAnnotation(method.identifier,
                 "Method `${method.name}` is not a member of trait `$traitName` [E0407]")
         }

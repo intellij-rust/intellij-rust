@@ -13,121 +13,121 @@ class OverrideTraitMembersTest : RsTestBase() {
     override fun isWriteActionRequired() = true;
 
     fun test1() = doTest("""
-trait T {
-    fn foo();
-    fn bar() {}
-}
-struct S;
-impl T for S {}
+        trait T {
+            fn foo();
+            fn bar() {}
+        }
+        struct S;
+        impl T for S {}
     """, """
         |*s foo()
         |   bar()
     """, """
-trait T {
-    fn foo();
-    fn bar() {}
-}
-struct S;
-impl T for S {
-    fn foo() {
-        unimplemented!()
-    }
-}
+        trait T {
+            fn foo();
+            fn bar() {}
+        }
+        struct S;
+        impl T for S {
+            fn foo() {
+                unimplemented!()
+            }
+        }
     """)
 
     fun test2() = doTest("""
-trait T {
-    fn foo();
-    fn bar() {}
-}
-struct S;
-impl T for S {}
+        trait T {
+            fn foo();
+            fn bar() {}
+        }
+        struct S;
+        impl T for S {}
     """, """
         |*s foo()
         | s bar()
     """, """
-trait T {
-    fn foo();
-    fn bar() {}
-}
-struct S;
-impl T for S {
-    fn foo() {
-        unimplemented!()
-    }
+        trait T {
+            fn foo();
+            fn bar() {}
+        }
+        struct S;
+        impl T for S {
+            fn foo() {
+                unimplemented!()
+            }
 
-    fn bar() {
-        unimplemented!()
-    }
-}
+            fn bar() {
+                unimplemented!()
+            }
+        }
     """)
 
     fun test3() = doTest("""
-trait T {
-    type Type;
-    fn foo();
-    fn bar() {}
-}
-struct S;
-impl T for S {}
+        trait T {
+            type Type;
+            fn foo();
+            fn bar() {}
+        }
+        struct S;
+        impl T for S {}
     """, """
         |*s Type
         |*s foo()
         |   bar()
     """, """
-trait T {
-    type Type;
-    fn foo();
-    fn bar() {}
-}
-struct S;
-impl T for S {
-    type Type = ();
+        trait T {
+            type Type;
+            fn foo();
+            fn bar() {}
+        }
+        struct S;
+        impl T for S {
+            type Type = ();
 
-    fn foo() {
-        unimplemented!()
-    }
-}
+            fn foo() {
+                unimplemented!()
+            }
+        }
     """)
 
     fun test4() = doTest("""
-trait T {
-    type Type;
-    type Type2 = i32;
-}
-struct S;
-impl T for S {}
+        trait T {
+            type Type;
+            type Type2 = i32;
+        }
+        struct S;
+        impl T for S {}
     """, """
         |*s Type
         | s Type2
     """, """
-trait T {
-    type Type;
-    type Type2 = i32;
-}
-struct S;
-impl T for S {
-    type Type = ();
-    type Type2 = ();
-}
+        trait T {
+            type Type;
+            type Type2 = i32;
+        }
+        struct S;
+        impl T for S {
+            type Type = ();
+            type Type2 = ();
+        }
     """)
 
     fun test5() = doTest("""
-trait T {
-    type Type1;
-    type Type2;
-    type Type3 = f64;
-    const CONST1: i32;
-    const CONST2: f64;
-    const CONST3: &'static str = "123";
-    fn foo(x: i32) -> i32;
-    fn bar(f64);
-    fn baz() {
-        println!("Hello world");
-    }
-}
-struct S;
-impl T for S {}
+        trait T {
+            type Type1;
+            type Type2;
+            type Type3 = f64;
+            const CONST1: i32;
+            const CONST2: f64;
+            const CONST3: &'static str = "123";
+            fn foo(x: i32) -> i32;
+            fn bar(f64);
+            fn baz() {
+                println!("Hello world");
+            }
+        }
+        struct S;
+        impl T for S {}
     """, """
         |*s Type1
         |*s Type2
@@ -139,46 +139,46 @@ impl T for S {}
         |*s bar(f64)
         |   baz()
     """, """
-trait T {
-    type Type1;
-    type Type2;
-    type Type3 = f64;
-    const CONST1: i32;
-    const CONST2: f64;
-    const CONST3: &'static str = "123";
-    fn foo(x: i32) -> i32;
-    fn bar(f64);
-    fn baz() {
-        println!("Hello world");
-    }
-}
-struct S;
-impl T for S {
-    const CONST1: i32 = unimplemented!();
-    const CONST2: f64 = unimplemented!();
-    const CONST3: &'static str = unimplemented!();
-    type Type1 = ();
-    type Type2 = ();
-    type Type3 = ();
+        trait T {
+            type Type1;
+            type Type2;
+            type Type3 = f64;
+            const CONST1: i32;
+            const CONST2: f64;
+            const CONST3: &'static str = "123";
+            fn foo(x: i32) -> i32;
+            fn bar(f64);
+            fn baz() {
+                println!("Hello world");
+            }
+        }
+        struct S;
+        impl T for S {
+            const CONST1: i32 = unimplemented!();
+            const CONST2: f64 = unimplemented!();
+            const CONST3: &'static str = unimplemented!();
+            type Type1 = ();
+            type Type2 = ();
+            type Type3 = ();
 
-    fn foo(x: i32) -> i32 {
-        unimplemented!()
-    }
+            fn foo(x: i32) -> i32 {
+                unimplemented!()
+            }
 
-    fn bar(_: f64) {
-        unimplemented!()
-    }
-}
+            fn bar(_: f64) {
+                unimplemented!()
+            }
+        }
     """)
 
     private fun doTest(@Language("Rust") code: String,
                        chooser: String,
                        @Language("Rust") expected: String) {
-        checkByText(code, expected) {
+        checkByText(code.trimIndent(), expected.trimIndent()) {
             val impl = myFixture.file.childOfType<RsImplItem>()
-                    ?: fail("Caret is not in an impl block")
+                ?: fail("Caret is not in an impl block")
             val (all, selected) = createTraitMembersChooser(impl)
-                    ?: fail("No members are available")
+                ?: fail("No members are available")
             val defaultChooser = renderChooser(all, selected)
             TestCase.assertEquals(unselectChooser(chooser), defaultChooser)
             val chooserSelected = extractSelected(all, chooser)
@@ -189,12 +189,9 @@ impl T for S {
     private fun extractSelected(all: List<RsTraitMemberChooserMember>, chooser: String): List<RsTraitMemberChooserMember> {
         val boolSelection = chooser.split("\n").filter(String::isNotBlank).map { it.trim()[2] == 's' }
         TestCase.assertEquals(all.size, boolSelection.size)
-        val result = ArrayList<RsTraitMemberChooserMember>()
-        for (i in 0..all.size - 1) {
-            if (boolSelection[i]) {
-                result.add(all[i])
-            }
-        }
+        val result = (0..all.size - 1)
+            .filter { boolSelection[it] }
+            .map { all[it] }
         return result
     }
 

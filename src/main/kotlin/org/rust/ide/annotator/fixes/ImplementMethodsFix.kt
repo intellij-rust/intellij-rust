@@ -9,7 +9,7 @@ import org.rust.ide.core.overrideImplement.generateTraitMembers
 import org.rust.lang.core.psi.RsImplItem
 
 /**
- * Adds empty impelementations of the given methods to an impl block.
+ * Adds empty implementations of the given methods to an impl block.
  */
 class ImplementMethodsFix(
     implBody: RsImplItem
