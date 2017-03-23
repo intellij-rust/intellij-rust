@@ -77,6 +77,9 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase() {
     """)
 
     fun testContextualKeywords() = checkInfo("""
+        trait <info>T</info> {
+            fn <info>foo</info>(); 
+        }
         <info>union</info> <info>U</info> { }
         impl <info>T</info> for <info>U</info> {
             <info>default</info> fn <info>foo</info>() {}

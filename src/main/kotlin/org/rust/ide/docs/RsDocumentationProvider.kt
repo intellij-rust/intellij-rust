@@ -20,7 +20,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         val doc = element.documentationAsHtml() ?: ""
         return header + signature + doc
     }
-
+    
     override fun getQuickNavigateInfo(e: PsiElement, originalElement: PsiElement?): String? =
         (e as? RsNamedElement)?.presentationInfo?.quickDocumentationText
 }

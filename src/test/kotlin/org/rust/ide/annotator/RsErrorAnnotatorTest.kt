@@ -265,7 +265,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0046_ImplementMethodsFix() = checkQuickFix("Implement methods")
+//    fun testE0046_ImplementMethodsFix() = checkQuickFix("Implement methods")
 
     fun testE0050_IncorrectParamsNumberInTraitImpl() = checkErrors("""
         trait T {

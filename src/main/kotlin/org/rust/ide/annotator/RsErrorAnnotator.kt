@@ -293,18 +293,19 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
                 .registerFix(AddModuleFileFix(modDecl, expandModuleFirst = false))
         }
     }
-
+    
     private fun checkImpl(holder: AnnotationHolder, impl: RsImplItem) {
         val trait = impl.traitRef?.resolveToTrait ?: return
         val traitName = trait.name ?: return
-
-        val canImplement = trait.functionList.associateBy { it.name }
-        val mustImplement = canImplement.filterValues { it.isAbstract }
+        
         val implemented = impl.functionList.associateBy { it.name }
-
-        val notImplemented = mustImplement.keys - implemented.keys
-        if (!notImplemented.isEmpty()) {
-            val toImplement = trait.functionList.filter { it.name in notImplemented }
+        
+        val (toImplement, toOverride) = impl.toImplementOverride() 
+                ?: listOf<RsNamedElement>() to listOf<RsNamedElement>()
+        val notImplemented = toImplement.map { it.name }
+        val canImplement = toOverride.associateBy { it.name }
+        
+        if (notImplemented.isNotEmpty()) {
             val implHeaderTextRange = TextRange.create(
                 impl.textRange.startOffset,
                 impl.typeReference?.textRange?.endOffset ?: impl.textRange.endOffset
@@ -312,19 +313,19 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
             holder.createErrorAnnotation(implHeaderTextRange,
                 "Not all trait items implemented, missing: ${notImplemented.namesList} [E0046]"
-            ).registerFix(ImplementMethodsFix(impl, toImplement))
+            ).registerFix(ImplementMethodsFix(impl))
         }
 
         val notMembers = implemented.filterKeys { it !in canImplement }
-        for (method in notMembers.values) {
+        for (method in notMembers.values) { 
             holder.createErrorAnnotation(method.identifier,
                 "Method `${method.name}` is not a member of trait `$traitName` [E0407]")
         }
 
         implemented
             .map { it.value to canImplement[it.key] }
-            .filter { it.second != null }
-            .forEach { checkTraitFnImplParams(holder, it.first, it.second!!, traitName) }
+            .mapNotNull { it.first to (it.second as? RsFunction ?: return@mapNotNull null) }
+            .forEach { checkTraitFnImplParams(holder, it.first, it.second, traitName) }
     }
 
     private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {

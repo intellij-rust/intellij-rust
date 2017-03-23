@@ -45,5 +45,7 @@ abstract class RsTypeAliasImplMixin : RsStubbedNamedElementImpl<RsTypeAliasStub>
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 
+    override val isAbstract: Boolean get() = typeReference == null
+    
     override val crateRelativePath: RustPath.CrateRelative? get() = RustPsiImplUtil.crateRelativePath(this)
 }

@@ -53,4 +53,6 @@ abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, 
     })
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
+
+    override val isAbstract: Boolean get() = expr == null
 }
