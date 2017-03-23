@@ -12,7 +12,7 @@ abstract class RsDocumentationProviderTest : RsTestBase() {
         val expectedFile = File("$testDataPath/${fileName.replace(".rs", ".html")}")
         val expected = FileUtil.loadFile(expectedFile).trim()
 
-        myFixture.configureByFile(fileName)
+        myFixture.configureByText("main.rs", FileUtil.loadFile(File("$testDataPath/$fileName")))
         val originalElement = myFixture.elementAtCaret
         val element = DocumentationManager.getInstance(project).findTargetElement(myFixture.editor, myFixture.file)
         val actual = block(element, originalElement)?.trim()

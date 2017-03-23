@@ -5,11 +5,8 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.topLevelPattern
-import org.rust.lang.core.psi.ext.ancestors
+import org.rust.lang.core.psi.ext.*
 
 class PresentationInfo(
     element: RsNamedElement,
@@ -88,6 +85,13 @@ val RsNamedElement.presentationInfo: PresentationInfo? get() {
         else -> Pair(javaClass.simpleName, createDeclarationInfo(this, navigationElement, true))
     }
     return declInfo.second?.let { PresentationInfo(this, declInfo.first, elementName, it) }
+}
+
+fun presentableQualifiedName(element: RsDocAndAttributeOwner): String? {
+    val qName = (element as? RsQualifiedNamedElement)?.qualifiedName
+    if (qName != null) return qName
+    if (element is RsMod) return element.modName
+    return element.name
 }
 
 private fun createDeclarationInfo(decl: RsCompositeElement, name: PsiElement?, isAmbiguous: Boolean, stopAt: List<PsiElement?> = emptyList(), valueSeparator: PsiElement? = null): DeclarationInfo? {

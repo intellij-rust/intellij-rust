@@ -13,6 +13,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
     fun testModInnerDocstring() = checkDoc()
     fun testFnInnerDocstring() = checkDoc()
     fun testFileInnerDocstring() = checkDoc()
+    fun testQualifiedName() = checkDoc()
 
     fun testIssue495() = checkDoc()     // https://github.com/intellij-rust/intellij-rust/issues/495
 
