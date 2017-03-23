@@ -18,6 +18,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.SelectFromListDialog
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
@@ -32,6 +35,7 @@ import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.util.cargoProjectRoot
+import javax.swing.ListSelectionModel
 
 class RsDebugRunner : AsyncGenericProgramRunner<RunnerSettings>() {
     override fun getRunnerId(): String = "RsDebugRunner"
@@ -61,11 +65,7 @@ class RsDebugRunner : AsyncGenericProgramRunner<RunnerSettings>() {
 
         return buildProjectAndGetBinaryArtifactPath(config.configurationModule.module!!, buildCommand, cargo)
             .then { result ->
-                when (result) {
-                    is CargoBuildResult.BuildFailed -> null
-                    is CargoBuildResult.WithoutBinary -> error("Can't find a binary to debug")
-                    is CargoBuildResult.Binary -> RsRunProfileStarter(GeneralCommandLine(result.path))
-                }
+                result?.path?.let { RsRunProfileStarter(GeneralCommandLine(it)) }
             }
     }
 }
@@ -91,11 +91,7 @@ private class RsRunProfileStarter(val commandLine: GeneralCommandLine) : RunProf
 }
 
 
-private sealed class CargoBuildResult {
-    object BuildFailed : CargoBuildResult()
-    object WithoutBinary : CargoBuildResult()
-    class Binary(val path: String) : CargoBuildResult()
-}
+private class Binary(val path: String)
 
 /**
  * Runs `command` twice:
@@ -103,8 +99,8 @@ private sealed class CargoBuildResult {
  *   * the second time to get json output
  * See https://github.com/rust-lang/cargo/issues/3855
  */
-private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoCommandLine, cargo: Cargo): Promise<CargoBuildResult> {
-    val result = AsyncPromise<CargoBuildResult>()
+private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoCommandLine, cargo: Cargo): Promise<Binary?> {
+    val result = AsyncPromise<Binary?>()
 
     val processForUserOutput = ProcessOutput()
     val processForUser = KillableColoredProcessHandler(cargo.generalCommand(command))
@@ -116,7 +112,7 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
         RunContentExecutor(module.project, processForUser)
             .withAfterCompletion {
                 if (processForUserOutput.exitCode != 0) {
-                    result.setResult(CargoBuildResult.BuildFailed)
+                    result.setResult(null)
                     return@withAfterCompletion
                 }
 
@@ -125,13 +121,13 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
                         indicator.isIndeterminate = true
                         val output = processForJson.runProcessWithProgressIndicator(indicator)
                         if (output.isCancelled || output.exitCode != 0) {
-                            result.setResult(CargoBuildResult.BuildFailed)
+                            result.setResult(null)
                             return
                         }
 
                         val parser = JsonParser()
                         val gson = Gson()
-                        val binary = output.stdoutLines
+                        val binaries = output.stdoutLines
                             .mapNotNull {
                                 try {
                                     parser.parse(it)
@@ -143,12 +139,29 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
                             .filter { it.getAsJsonPrimitive("reason").asString == "compiler-artifact" }
                             .filter { "bin" in gson.fromJson(it.getAsJsonObject("target"), CargoMetadata.Target::class.java).kind }
                             .flatMap { it.getAsJsonArray("filenames").map { it.asString } }
-                            .singleOrNull()
 
-                        result.setResult(
-                            if (binary != null) CargoBuildResult.Binary(binary) else CargoBuildResult.WithoutBinary
-                        )
+                        if (binaries.isEmpty()) {
+                            project.showErrorDialog("Can't find a binary to debug")
+                            result.setResult(null)
+                            return
+                        }
 
+                        if (binaries.size == 1) {
+                            result.setResult(Binary(binaries.single()))
+                            return
+                        }
+
+                        ApplicationManager.getApplication().invokeAndWait {
+                            val dialog = SelectFromListDialog(project,
+                                binaries.toTypedArray(),
+                                SelectFromListDialog.ToStringAspect { it as String },
+                                "Select binary to debug",
+                                ListSelectionModel.SINGLE_SELECTION
+                            )
+                            result.setResult(
+                                if (dialog.showAndGet()) Binary(dialog.selection[0] as String) else null
+                            )
+                        }
                     }
                 }.queue()
             }
@@ -157,6 +170,11 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
 
     return result
 }
+
+private fun Project.showErrorDialog(message: String) {
+    Messages.showErrorDialog(this, "Debugging is not possible", message)
+}
+
 
 private fun CargoCommandLine.prependArgument(arg: String): CargoCommandLine =
     copy(additionalArguments = listOf(arg) + additionalArguments)
