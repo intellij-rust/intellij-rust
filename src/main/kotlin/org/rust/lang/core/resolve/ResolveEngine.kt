@@ -205,14 +205,14 @@ object ResolveEngine {
     fun resolveExternCrate(crate: RsExternCrateItem): RsNamedElement? {
         val name = crate.name ?: return null
         val module = crate.module ?: return null
-        return module.project.getPsiFor(module.cargoWorkspace?.findCrateByName(name)?.crateRoot)?.rustMod
+        return module.project.getPsiFor(module.cargoWorkspace?.findCrateByName(name, crate.containingCargoPackage)?.crateRoot)?.rustMod
     }
 
     fun resolveLabel(label: RsLabel): RsLabelDecl? =
         label.ancestors
             .takeWhile { it !is RsLambdaExpr && it !is RsFunction }
             .mapNotNull { (it as? RsLabeledExpression)?.labelDecl }
-            .find { it.name ==  label.quoteIdentifier.text}
+            .find { it.name == label.quoteIdentifier.text}
 
     fun resolveLifetime(lifetimeRef: RsLifetime): RsLifetimeDecl? =
         if (lifetimeRef.isPredefined) {
@@ -492,7 +492,7 @@ private fun injectedCrates(file: RsFile): Sequence<ScopeEntry> {
         RsFile.Attributes.NO_CORE -> return emptySequence()
     }
     return sequenceOfNotNull(ScopeEntry.lazy(injected) {
-        val crate = cargoProject.findCrateByName(injected)?.crateRoot
+        val crate = cargoProject.findCrateByName(injected, file.containingCargoPackage)?.crateRoot
         module.project.getPsiFor(crate)?.rustMod
     })
 }
@@ -537,7 +537,6 @@ private val Module.preludeModule: PsiFile? get() {
 
 private fun Collection<RsNamedElement>.asScopeEntries(): Sequence<ScopeEntry> =
     asSequence().mapNotNull { ScopeEntry.Companion.of(it) }
-
 
 private fun <T> Sequence<T>.takeWhileInclusive(pred: (T) -> Boolean): Sequence<T> {
     var shouldContinue = true

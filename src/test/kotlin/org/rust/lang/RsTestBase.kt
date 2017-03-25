@@ -213,7 +213,8 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         }
 
         protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CleanCargoMetadata.Package(
-            contentRoot,
+            id = name + " 0.0.1",
+            url = contentRoot,
             name = name,
             version = "0.0.1",
             targets = listOf(
@@ -225,7 +226,8 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         )
 
         protected fun externalPackage(source: String?, name: String, targetName: String = name) = CleanCargoMetadata.Package(
-            "",
+            id = name + " 0.0.1",
+            url = "",
             name = name,
             version = "0.0.1",
             targets = listOf(

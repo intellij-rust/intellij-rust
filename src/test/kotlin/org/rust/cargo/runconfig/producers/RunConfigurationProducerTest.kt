@@ -334,7 +334,8 @@ class RunConfigurationProducerTest : RsTestBase() {
                 CleanCargoMetadata(
                     packages = listOf(
                         CleanCargoMetadata.Package(
-                            myFixture.tempDirFixture.getFile(".")!!.url,
+                            id = "test-package 0.0.1",
+                            url = myFixture.tempDirFixture.getFile(".")!!.url,
                             name = "test-package",
                             version = "0.0.1",
                             targets = targets.map {

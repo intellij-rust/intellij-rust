@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsExternCrateItem
+import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.psi.ext.module
 
 /**
@@ -22,7 +23,7 @@ class RsCrateDocLineMarkerProvider : LineMarkerProvider {
         for (el in elements) {
             val crateItem = el as? RsExternCrateItem ?: continue
             val cargoProject = crateItem.module?.cargoWorkspace ?: continue
-            val crate = cargoProject.findCrateByName(crateItem.identifier.text) ?: continue
+            val crate = cargoProject.findCrateByName(crateItem.identifier.text, crateItem.containingCargoPackage) ?: continue
             if (crate.pkg.source == null) continue
             result.add(LineMarkerInfo(
                 crateItem.crate,

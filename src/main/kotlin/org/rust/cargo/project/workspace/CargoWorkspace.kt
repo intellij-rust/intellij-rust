@@ -24,15 +24,14 @@ class CargoWorkspace private constructor(
         val source: String?,
         val origin: PackageOrigin
     ) {
+        val dependencies: MutableList<Package> = ArrayList()
         val libTarget: Target? get() = targets.find { it.isLib }
         val contentRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
 
         override fun toString() = "Package(contentRootUrl='$contentRootUrl', name='$name')"
 
         fun initTargets(): Package {
-            for (it in targets) {
-                it.initPackage(this)
-            }
+            targets.forEach { it.initPackage(this) }
             return this
         }
     }
@@ -78,10 +77,10 @@ class CargoWorkspace private constructor(
 
     private val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
 
-    fun findCrateByName(normName: String): Target? =
-        packages
-            .mapNotNull { it.libTarget }
-            .find { it.normName == normName }
+    fun findCrateByName(normName: String, inPackage: Package? = null): Target? =
+        inPackage?.dependencies?.findLibrary(normName)
+            ?.let { return it }
+            ?: packages.findLibrary(normName)
 
     /**
      * If the [file] is a crate root, returns the corresponding [Target]
@@ -106,10 +105,15 @@ class CargoWorkspace private constructor(
                 origin = PackageOrigin.STDLIB
             ).initTargets()
         }
+        packages.forEach { it.dependencies.addAll(stdlib) }
         return CargoWorkspace(packages + stdlib)
     }
 
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
+
+    fun Collection<CargoWorkspace.Package>.findLibrary(normName: String): CargoWorkspace.Target? =
+        mapNotNull { it.libTarget }
+            .find { it.normName == normName }
 
     companion object {
         fun deserialize(data: CleanCargoMetadata): CargoWorkspace {
@@ -123,23 +127,23 @@ class CargoWorkspace private constructor(
             // - if a package is a workspace member, it's WORKSPACE
             // - if a package is a direct dependency of a workspace member, it's DEPENDENCY
             // - otherwise, it's TRANSITIVE_DEPENDENCY
-            val nameToOrigin = HashMap<String, PackageOrigin>(data.packages.size)
+            val idToOrigin = HashMap<String, PackageOrigin>(data.packages.size)
             data.packages.forEachIndexed pkgs@ { index, pkg ->
                 if (pkg.isWorkspaceMember) {
-                    nameToOrigin[pkg.name] = PackageOrigin.WORKSPACE
+                    idToOrigin[pkg.id] = PackageOrigin.WORKSPACE
                     val depNode = data.dependencies.getOrNull(index) ?: return@pkgs
                     depNode.dependenciesIndexes
                         .mapNotNull { data.packages.getOrNull(it) }
                         .forEach {
-                            nameToOrigin.merge(it.name, PackageOrigin.DEPENDENCY, { o1, o2 -> PackageOrigin.min(o1, o2) })
+                            idToOrigin.merge(it.id, PackageOrigin.DEPENDENCY, { o1, o2 -> PackageOrigin.min(o1, o2) })
                         }
                 } else {
-                    nameToOrigin.putIfAbsent(pkg.name, PackageOrigin.TRANSITIVE_DEPENDENCY)
+                    idToOrigin.putIfAbsent(pkg.id, PackageOrigin.TRANSITIVE_DEPENDENCY)
                 }
             }
 
             val packages = data.packages.map { pkg ->
-                val origin = nameToOrigin[pkg.name] ?: error("Origin is undefined for package ${pkg.name}")
+                val origin = idToOrigin[pkg.id] ?: error("Origin is undefined for package ${pkg.name}")
                 Package(
                     pkg.url,
                     pkg.name,
@@ -148,10 +152,15 @@ class CargoWorkspace private constructor(
                     pkg.source,
                     origin
                 ).initTargets()
+            }.toList()
+
+            // Fill package dependencies
+            packages.forEachIndexed pkgs@ { index, pkg ->
+                val depNode = data.dependencies.getOrNull(index) ?: return@pkgs
+                pkg.dependencies.addAll(depNode.dependenciesIndexes.map { packages[it] })
             }
 
             return CargoWorkspace(packages)
         }
     }
 }
-
