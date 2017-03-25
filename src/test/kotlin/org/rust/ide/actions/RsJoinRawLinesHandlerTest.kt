@@ -35,6 +35,24 @@ class RsJoinRawLinesHandlerTest : RsJoinLinesHandlerTestBase() {
         }
     """)
 
+    fun `test match block arm with comma`() = doTest("""
+        fn main() {
+            match current.parent() {
+                Some(p) => /*caret*/{
+                    current = p
+                },
+                None => break,
+            }
+        }
+    """, """
+        fn main() {
+            match current.parent() {
+                Some(p) => current = p,
+                None => break,
+            }
+        }
+    """)
+
     fun `test lambda expression`() = doTest("""
         fn main() {
             let _: Vec<()> = xs.iter()

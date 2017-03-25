@@ -5,6 +5,7 @@ import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsElementTypes.LBRACE
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.elementType
@@ -39,7 +40,7 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
             is RsBlockExpr -> {
                 val grandpa = parent.parent
                 val newExpr = parent.replace(expr)
-                if (grandpa is RsMatchArm) {
+                if (grandpa is RsMatchArm && grandpa.lastChild?.elementType != COMMA) {
                     grandpa.add(psiFactory.createComma())
                 }
                 return newExpr.textRange.startOffset
