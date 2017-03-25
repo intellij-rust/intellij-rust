@@ -19,6 +19,8 @@ class ImplementMethodsFix(
 
     override fun getFamilyName(): String = text
 
+    override fun startInWriteAction(): Boolean = false
+
     override fun invoke(
         project: Project,
         file: PsiFile,

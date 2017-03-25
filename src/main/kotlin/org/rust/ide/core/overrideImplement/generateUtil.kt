@@ -4,8 +4,12 @@ import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.generation.MemberChooserObjectBase
 import com.intellij.ide.util.MemberChooser
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleColoredComponent
+import org.rust.ide.utils.checkWriteAccessAllowed
 import org.rust.ide.utils.presentationInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsNamedElement
@@ -71,6 +75,7 @@ private fun showChooser(all: Collection<RsTraitMemberChooserMember>,
 }
 
 fun insertNewTraitMembers(selected: Collection<RsTraitMemberChooserMember>, impl: RsImplItem) {
+    checkWriteAccessAllowed()
     if (selected.isEmpty())
         return
     val templateImpl = RsPsiFactory(impl.project).createTraitImplItem(
@@ -87,7 +92,10 @@ fun insertNewTraitMembers(selected: Collection<RsTraitMemberChooserMember>, impl
 }
 
 fun generateTraitMembers(impl: RsImplItem) {
+    check(!ApplicationManager.getApplication().isWriteAccessAllowed)
     val (all, selected) = createTraitMembersChooser(impl) ?: return
     val chooserSelected = showChooser(all, selected, impl.project)
-    insertNewTraitMembers(chooserSelected, impl)
+    runWriteAction {
+        insertNewTraitMembers(chooserSelected, impl)
+    }
 }
