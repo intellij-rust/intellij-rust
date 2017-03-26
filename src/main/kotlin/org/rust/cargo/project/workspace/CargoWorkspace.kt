@@ -24,6 +24,7 @@ class CargoWorkspace private constructor(
         val source: String?,
         val origin: PackageOrigin
     ) {
+        val normName = name.replace('-', '_')
         val dependencies: MutableList<Package> = ArrayList()
         val libTarget: Target? get() = targets.find { it.isLib }
         val contentRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
@@ -34,6 +35,9 @@ class CargoWorkspace private constructor(
             targets.forEach { it.initPackage(this) }
             return this
         }
+
+        fun findCrateByName(normName: String): Target? =
+            if (this.normName == normName) libTarget else dependencies.findLibrary(normName)
     }
 
     class Target(
@@ -77,10 +81,7 @@ class CargoWorkspace private constructor(
 
     private val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
 
-    fun findCrateByName(normName: String, inPackage: Package? = null): Target? =
-        inPackage?.dependencies?.findLibrary(normName)
-            ?.let { return it }
-            ?: packages.findLibrary(normName)
+    fun findCrateByNameApproximately(normName: String): Target? = packages.findLibrary(normName)
 
     /**
      * If the [file] is a crate root, returns the corresponding [Target]
@@ -96,7 +97,7 @@ class CargoWorkspace private constructor(
 
     fun withStdlib(libs: List<StandardLibraryRoots.StdCrate>): CargoWorkspace {
         val stdlib = libs.map { crate ->
-            Package(
+            val pkg = Package(
                 contentRootUrl = crate.packageRootUrl,
                 name = crate.name,
                 version = "",
@@ -104,16 +105,26 @@ class CargoWorkspace private constructor(
                 source = null,
                 origin = PackageOrigin.STDLIB
             ).initTargets()
+            (crate.name to pkg)
+        }.toMap()
+
+        // Bind dependencies and collect roots
+        val roots = ArrayList<Package>()
+        libs.forEach { lib ->
+            val slib = stdlib[lib.name] ?: error("Std lib ${lib.name} not found")
+            val depPackages = lib.dependencies.mapNotNull { stdlib[it] }
+            slib.dependencies.addAll(depPackages)
+            if (lib.isRoot) {
+                roots.add(slib)
+            }
         }
-        packages.forEach { it.dependencies.addAll(stdlib) }
-        return CargoWorkspace(packages + stdlib)
+
+        roots.forEach { it.dependencies.addAll(roots) }
+        packages.forEach { it.dependencies.addAll(roots) }
+        return CargoWorkspace(packages + roots)
     }
 
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
-
-    fun Collection<CargoWorkspace.Package>.findLibrary(normName: String): CargoWorkspace.Target? =
-        mapNotNull { it.libTarget }
-            .find { it.normName == normName }
 
     companion object {
         fun deserialize(data: CleanCargoMetadata): CargoWorkspace {
@@ -164,3 +175,8 @@ class CargoWorkspace private constructor(
         }
     }
 }
+
+private fun Collection<CargoWorkspace.Package>.findLibrary(normName: String): CargoWorkspace.Target? =
+    filter { it.normName == normName }
+        .mapNotNull { it.libTarget }
+        .firstOrNull()

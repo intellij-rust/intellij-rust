@@ -246,12 +246,12 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             val stdlib = StandardLibraryRoots.fromFile(stdlib!!)!!
             stdlib.attachTo(module)
             (CargoProjectWorkspaceService.getInstance(module) as CargoProjectWorkspaceServiceImpl)
-                .setStdlib(stdlib.crates)
+                .setStdlib(stdlib.rootCrates)
 
             val packages = listOf(testCargoPackage(contentRoot))
 
             return CleanCargoMetadata(packages, emptyList()).let {
-                CargoWorkspace.deserialize(it)
+                CargoWorkspace.deserialize(it).withStdlib(stdlib.crates)
             }
         }
     }
@@ -259,18 +259,20 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
     protected object WithStdlibAndDependencyRustProjectDescriptor : RustProjectDescriptorBase.WithRustup() {
         override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
 
-            StandardLibraryRoots.fromFile(stdlib!!)!!.attachTo(module)
+            val stdlib = StandardLibraryRoots.fromFile(stdlib!!)!!
+            stdlib.attachTo(module)
 
             val packages = listOf(
                 testCargoPackage(contentRoot),
-                externalPackage(null, "dep-lib", "dep-lib-target"),
+                externalPackage("dep-lib/lib.rs", "dep-lib", "dep-lib-target"),
+                externalPackage(null, "dep-nosrc-lib", "dep-nosrc-lib-target"),
                 externalPackage("trans-lib/lib.rs", "trans-lib"))
 
             val depNodes = ArrayList<CleanCargoMetadata.DependencyNode>()
-            depNodes.add(CleanCargoMetadata.DependencyNode(0, listOf(1)))   // Our package depends on test_dep
+            depNodes.add(CleanCargoMetadata.DependencyNode(0, listOf(1, 2)))   // Our package depends on dep_lib and dep_nosrc_lib
 
             return CleanCargoMetadata(packages, depNodes).let {
-                CargoWorkspace.deserialize(it)
+                CargoWorkspace.deserialize(it).withStdlib(stdlib.crates)
             }
         }
     }

@@ -36,12 +36,12 @@ class SetupRustStdlibTask(
                     ?: return failWithMessage("${result.library.presentableUrl} is not a valid Rust standard library")
 
                 if (oldLibrary != null && roots.sameAsLibrary(oldLibrary)) {
-                    withCurrentStdlib(roots.crates)
+                    withCurrentStdlib(roots.rootCrates)
                     return
                 }
 
                 runWriteAction { roots.attachTo(module) }
-                withCurrentStdlib(roots.crates)
+                withCurrentStdlib(roots.rootCrates)
                 project.showBalloon(
                     "Using Rust standard library at ${result.library.presentableUrl}",
                     NotificationType.INFORMATION

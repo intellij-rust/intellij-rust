@@ -205,7 +205,8 @@ object ResolveEngine {
     fun resolveExternCrate(crate: RsExternCrateItem): RsNamedElement? {
         val name = crate.name ?: return null
         val module = crate.module ?: return null
-        return module.project.getPsiFor(module.cargoWorkspace?.findCrateByName(name, crate.containingCargoPackage)?.crateRoot)?.rustMod
+        val pkg = crate.containingCargoPackage ?: return null
+        return module.project.getPsiFor(pkg.findCrateByName(name)?.crateRoot)?.rustMod
     }
 
     fun resolveLabel(label: RsLabel): RsLabelDecl? =
@@ -472,13 +473,8 @@ private fun RsCondition.boundNames(place: RsCompositeElement): Sequence<ScopeEnt
     else pat?.boundNames ?: emptySequence()
 
 private fun injectedCrates(file: RsFile): Sequence<ScopeEntry> {
-    val module = file.module
-        ?: return emptySequence()
-    val cargoProject = module.cargoWorkspace
-        ?: return emptySequence()
-
-    if (!file.isCrateRoot)
-        return emptySequence()
+    val module = file.module ?: return emptySequence()
+    if (!file.isCrateRoot) return emptySequence()
 
     // Rust injects implicit `extern crate std` in every crate root module unless it is
     // a `#![no_std]` crate, in which case `extern crate core` is injected. However, if
@@ -492,7 +488,7 @@ private fun injectedCrates(file: RsFile): Sequence<ScopeEntry> {
         RsFile.Attributes.NO_CORE -> return emptySequence()
     }
     return sequenceOfNotNull(ScopeEntry.lazy(injected) {
-        val crate = cargoProject.findCrateByName(injected, file.containingCargoPackage)?.crateRoot
+        val crate = file.containingCargoPackage?.findCrateByName(injected)?.crateRoot
         module.project.getPsiFor(crate)?.rustMod
     })
 }
@@ -528,10 +524,8 @@ private fun RsUseItem.nonWildcardEntries(): Sequence<ScopeEntry> {
 }
 
 private val Module.preludeModule: PsiFile? get() {
-    val stdlib = cargoWorkspace?.findCrateByName(AutoInjectedCrates.std)?.crateRoot
-        ?: return null
-    val preludeFile = stdlib.findFileByRelativePath("../prelude/v1.rs")
-        ?: return null
+    val stdlib = cargoWorkspace?.findCrateByNameApproximately(AutoInjectedCrates.std)?.crateRoot ?: return null
+    val preludeFile = stdlib.findFileByRelativePath("../prelude/v1.rs") ?: return null
     return project.getPsiFor(preludeFile)
 }
 

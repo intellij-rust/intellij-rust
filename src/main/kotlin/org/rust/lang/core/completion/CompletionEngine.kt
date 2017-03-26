@@ -7,21 +7,14 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.asRustPath
-import org.rust.lang.core.psi.ext.basePath
-import org.rust.lang.core.psi.ext.valueParameters
-import org.rust.lang.core.psi.ext.module
-import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.RustTypificationEngine
-import org.rust.lang.core.types.type
 import org.rust.lang.core.types.stripAllRefsIfAny
+import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustStructType
 import org.rust.lang.core.types.types.RustUnknownType
 import org.rust.utils.sequenceOfNotNull
@@ -78,7 +71,7 @@ object CompletionEngine {
     }
 
     fun completeExternCrate(extCrate: RsExternCrateItem): Array<out LookupElement> =
-        extCrate.module?.cargoWorkspace?.packages
+        extCrate.containingCargoPackage?.dependencies
             ?.filter { it.origin == PackageOrigin.DEPENDENCY }
             ?.mapNotNull { it.libTarget }
             ?.map { LookupElementBuilder.create(extCrate, it.normName).withIcon(extCrate.getIcon(0)) }

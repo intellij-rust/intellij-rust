@@ -81,10 +81,10 @@ class RustProjectConfigurable(
         val module = rustModule
         val newStdlibLocation = stdlibLocation.text
         if (module != null && newStdlibLocation != getCurrentStdlibLocation(module) && !newStdlibLocation.isNullOrBlank()) {
-            val roots = StandardLibraryRoots.fromPath(newStdlibLocation)
+            val stdlib = StandardLibraryRoots.fromPath(newStdlibLocation)
                 ?: throw ConfigurationException("Invalid standard library location: `$newStdlibLocation`")
 
-            runWriteAction { roots.attachTo(module) }
+            runWriteAction { stdlib.attachTo(module) }
         }
 
     }
