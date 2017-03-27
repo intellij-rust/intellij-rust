@@ -22,10 +22,10 @@ val Module.cargoLibraryName: String get() = "Cargo <$name>"
 val Module.rustLibraryName: String get() = "Rust <$name>"
 
 /**
- * Rust standard library crates source roots extracted from a zip archive or a folder with rust.
+ * Rust standard library crates sources extracted from a zip archive or a folder with rust.
  * Hopefully this class will go away when a standard way to get rust sources appears.
  */
-class StandardLibraryRoots private constructor(
+class StandardLibrary private constructor(
     val crates: List<StdCrate>
 ) {
 
@@ -50,13 +50,13 @@ class StandardLibraryRoots private constructor(
         return myUrls == libraryUrls
     }
 
-    val rootCrates: List<StdCrate> = crates.filter { it.isRoot }
+    private val rootCrates: List<StdCrate> = crates.filter { it.isRoot }
 
     companion object {
-        fun fromPath(path: String): StandardLibraryRoots? =
+        fun fromPath(path: String): StandardLibrary? =
             LocalFileSystem.getInstance().findFileByPath(path)?.let { fromFile(it) }
 
-        fun fromFile(sources: VirtualFile): StandardLibraryRoots? {
+        fun fromFile(sources: VirtualFile): StandardLibrary? {
             if (!sources.isDirectory) return null
             val srcDir = if (sources.name == "src") sources else sources.findChild("src")
                 ?: return null
@@ -70,7 +70,7 @@ class StandardLibraryRoots private constructor(
                     null
             }
             if (stdlib.isEmpty()) return null
-            return StandardLibraryRoots(stdlib)
+            return StandardLibrary(stdlib)
         }
     }
 }

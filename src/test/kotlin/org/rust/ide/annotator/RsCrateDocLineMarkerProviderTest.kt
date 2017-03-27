@@ -16,6 +16,6 @@ class RsCrateDocLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
     """)
 
     fun testNoDocumentationLink() = doTestByText("""
-        extern crate dep_nosrc_lib;       // It's a package name, no documentation
+        extern crate nosrc_lib;           // It's a package name, no documentation
     """)
 }

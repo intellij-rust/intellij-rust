@@ -95,7 +95,7 @@ class CargoWorkspace private constructor(
 
     fun isCrateRoot(file: VirtualFile): Boolean = findTargetForCrateRootFile(file) != null
 
-    fun withStdlib(libs: List<StandardLibraryRoots.StdCrate>): CargoWorkspace {
+    fun withStdlib(libs: List<StandardLibrary.StdCrate>): CargoWorkspace {
         val stdlib = libs.map { crate ->
             val pkg = Package(
                 contentRootUrl = crate.packageRootUrl,

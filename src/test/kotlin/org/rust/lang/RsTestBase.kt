@@ -21,7 +21,7 @@ import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
-import org.rust.cargo.project.workspace.StandardLibraryRoots
+import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.lang.core.psi.ext.parentOfType
 import java.util.*
 
@@ -243,10 +243,10 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
     protected object WithStdlibRustProjectDescriptor : RustProjectDescriptorBase.WithRustup() {
         override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
 
-            val stdlib = StandardLibraryRoots.fromFile(stdlib!!)!!
+            val stdlib = StandardLibrary.fromFile(stdlib!!)!!
             stdlib.attachTo(module)
             (CargoProjectWorkspaceService.getInstance(module) as CargoProjectWorkspaceServiceImpl)
-                .setStdlib(stdlib.rootCrates)
+                .setStdlib(stdlib.crates)
 
             val packages = listOf(testCargoPackage(contentRoot))
 
@@ -259,13 +259,13 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
     protected object WithStdlibAndDependencyRustProjectDescriptor : RustProjectDescriptorBase.WithRustup() {
         override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
 
-            val stdlib = StandardLibraryRoots.fromFile(stdlib!!)!!
+            val stdlib = StandardLibrary.fromFile(stdlib!!)!!
             stdlib.attachTo(module)
 
             val packages = listOf(
                 testCargoPackage(contentRoot),
                 externalPackage("dep-lib/lib.rs", "dep-lib", "dep-lib-target"),
-                externalPackage(null, "dep-nosrc-lib", "dep-nosrc-lib-target"),
+                externalPackage(null, "nosrc-lib", "nosrc-lib-target"),
                 externalPackage("trans-lib/lib.rs", "trans-lib"))
 
             val depNodes = ArrayList<CleanCargoMetadata.DependencyNode>()
