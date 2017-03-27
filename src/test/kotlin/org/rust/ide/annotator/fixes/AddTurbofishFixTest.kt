@@ -1,7 +1,6 @@
 package org.rust.ide.annotator.fixes
 
 import org.intellij.lang.annotations.Language
-import junit.framework.Assert
 import org.rust.ide.annotator.RsAnnotatorTestBase
 
 class AddTurbofishFixTest : RsAnnotatorTestBase() {
@@ -24,7 +23,7 @@ class AddTurbofishFixTest : RsAnnotatorTestBase() {
         }
         """)
 
-    fun `test add turbofish should be available also in right side`() = checkQuickFix(
+    fun `test should be available also in right side`() = checkQuickFix(
         """
         fn foo() {
             let _ = parse<i32>(/*caret*/"42");
@@ -36,7 +35,7 @@ class AddTurbofishFixTest : RsAnnotatorTestBase() {
         }
         """)
 
-    fun `test add turbofish should be avilable also when call is chanind by another function`() = checkQuickFix(
+    fun `test should be available also when call is chained by another function`() = checkQuickFix(
         """
         fn foo() {
             let _ = parse<i32>(/*caret*/"42").unwrap();
@@ -48,14 +47,54 @@ class AddTurbofishFixTest : RsAnnotatorTestBase() {
         }
         """)
 
-    fun `test add turbofish should not be available if the instance is corrected yet`() = checkNoIntention(intention,
+    fun `test should recognize also generics arguments`() {
+        for (gen in listOf("<Option<String>>",
+            "<Option<Option<String>>>",
+            "<Option<Option<Option<String>>>>",
+            "<Option<Option<Option<Option<String>>>>>")) {
+            checkQuickFix(
+                """
+                    fn foo() {
+                        let _ = something$gen(/*caret*/"42");
+                    }
+                """, """
+                    fn foo() {
+                        let _ = something::$gen(/*caret*/"42");
+                    }
+                """)
+        }
+    }
+
+    fun `test should guess the correct boundary`() {
+        val cases = listOf(
+            Pair("", " >> 3"), Pair("", " > 3 > 5"), Pair("", " == call_something()"),
+            Pair("3 < ", ""), Pair("3 == ", ""), Pair("bye() == 3 < ", " > more() >> 2")
+        )
+
+        for ((before, after) in cases) {
+            checkQuickFix(
+                """
+                fn foo() {
+                    let _ = ${before}something<Option<i32>>(/*caret*/"42")$after;
+                }
+                """, """
+                fn foo() {
+                    let _ = ${before}something::<Option<i32>>(/*caret*/"42")$after;
+                }
+                """)
+
+        }
+    }
+
+
+    fun `test should not be available if the instance is corrected yet`() = checkNoIntention(intention,
         """
         fn foo() {
             let _ = parse::</*caret*/i32>("42");
         }
         """)
 
-    fun `test add turbofish should not trigger misspelled comparison sentences`() {
+    fun `test should not trigger misspelled comparison sentences`() {
         checkNoIntention(intention,
             """
             fn foo(x: i32) {
@@ -70,7 +109,7 @@ class AddTurbofishFixTest : RsAnnotatorTestBase() {
             """)
     }
 
-    fun `test add turbofish should be available just if looks like a generic reference`() {
+    fun `test should be available just if looks like a generic reference`() {
         checkNoIntention(intention,
             """
             fn foo(x: i32) {
