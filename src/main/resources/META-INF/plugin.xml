@@ -9,8 +9,8 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <a href="https://intellij-rust.github.io/2017/03/20/changelog-34.html">
-                 https://intellij-rust.github.io/2017/03/20/changelog-34.html
+        <a href="https://intellij-rust.github.io/2017/03/27/changelog-35.html">
+                 https://intellij-rust.github.io/2017/03/27/changelog-35.html
     ]]>
     </change-notes>
 
@@ -117,12 +117,12 @@
         <!-- Rename Processor -->
 
         <renamePsiElementProcessor implementation="org.rust.lang.refactoring.RsRenameProcessor" />
-        
+
         <!-- Implement methods -->
 
-        <codeInsight.implementMethod language="Rust" 
+        <codeInsight.implementMethod language="Rust"
                                      implementationClass="org.rust.ide.core.overrideImplement.ImplementMembersHandler"/>
-        
+
         <!-- Completion -->
 
         <completion.contributor language="Rust"
