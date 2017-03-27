@@ -33,12 +33,13 @@ class CargoCommandConfiguration(
     @get: com.intellij.util.xmlb.annotations.Transient
     @set: com.intellij.util.xmlb.annotations.Transient
     var cargoCommandLine: CargoCommandLine
-        get() = CargoCommandLine(_cargoArgs.command, _cargoArgs.additionalArguments, BacktraceMode.fromIndex(_cargoArgs.backtraceMode), _cargoArgs.environmentVariables)
+        get() = CargoCommandLine(_cargoArgs.command, _cargoArgs.additionalArguments, BacktraceMode.fromIndex(_cargoArgs.backtraceMode), _cargoArgs.environmentVariables, _cargoArgs.nocapture)
         set(value) = with(value) {
             _cargoArgs.command = command
             _cargoArgs.additionalArguments = additionalArguments
             _cargoArgs.backtraceMode = backtraceMode.index
             _cargoArgs.environmentVariables = environmentVariables
+            _cargoArgs.nocapture = nocapture
         }
 
     @Property(surroundWithTag = false)
@@ -114,5 +115,6 @@ data class SerializableCargoCommandLine(
     var command: String = "",
     var additionalArguments: List<String> = mutableListOf(),
     var backtraceMode: Int = BacktraceMode.DEFAULT.index,
-    var environmentVariables: Map<String, String> = mutableMapOf()
+    var environmentVariables: Map<String, String> = mutableMapOf(),
+    var nocapture: Boolean = true
 )

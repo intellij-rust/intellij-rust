@@ -1,5 +1,6 @@
 package org.rust.cargo.runconfig.ui
 
+import backcompat.ui.components.CheckBox
 import backcompat.ui.components.Label
 import backcompat.ui.layout.*
 import com.intellij.application.options.ModulesComboBox
@@ -23,8 +24,14 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
     private val comboModules = ModulesComboBox()
     private val command = JTextField()
     private val additionalArguments = RawCommandLineEditor()
+    private val backtraceMode = ComboBox<BacktraceMode>().apply {
+        addItem(BacktraceMode.NO)
+        addItem(BacktraceMode.SHORT)
+        addItem(BacktraceMode.FULL)
+    }
     private val environmentVariables = EnvironmentVariablesComponent()
-    private val backtraceMode = ComboBox<BacktraceMode>()
+    private val nocapture = CheckBox("Show stdout/stderr in tests", true)
+
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         comboModules.setModules(configuration.validModules)
@@ -35,6 +42,7 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
             additionalArguments.text = ParametersListUtil.join(args.additionalArguments)
             backtraceMode.selectedIndex = args.backtraceMode.index
             environmentVariables.envs = args.environmentVariables
+            nocapture.isEnabled = args.nocapture
         }
     }
 
@@ -45,23 +53,25 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
             command.text,
             ParametersListUtil.parse(additionalArguments.text),
             BacktraceMode.fromIndex(backtraceMode.selectedIndex),
-            environmentVariables.envs
+            environmentVariables.envs,
+            nocapture.isSelected
         )
     }
 
     override fun createEditor(): JComponent = panel {
         labeledRow("Rust &project:", comboModules) { comboModules(CCFlags.push) }
         labeledRow("&Command:", command) { command(growPolicy = GrowPolicy.SHORT_TEXT) }
-        labeledRow("&Additional arguments:", additionalArguments) { additionalArguments.apply {
-            dialogCaption = "Additional arguments"
-            makeWide()
-        }() }
+
+        labeledRow("&Additional arguments:", additionalArguments) {
+            additionalArguments.apply {
+                dialogCaption = "Additional arguments"
+                makeWide()
+            }()
+        }
+        row { nocapture() }
+
         row(environmentVariables.label) { environmentVariables.apply { makeWide() }() }
-        labeledRow("Back&trace:", backtraceMode) { backtraceMode.apply{
-            addItem(BacktraceMode.NO)
-            addItem(BacktraceMode.SHORT)
-            addItem(BacktraceMode.FULL)
-        }() }
+        labeledRow("Back&trace:", backtraceMode) { backtraceMode() }
     }
 
     private fun LayoutBuilder.labeledRow(labelText: String, component: JComponent, init: Row.() -> Unit) {

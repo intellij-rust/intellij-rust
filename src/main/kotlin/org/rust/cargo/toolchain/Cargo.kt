@@ -74,7 +74,17 @@ class Cargo(
             BacktraceMode.FULL -> mapOf(RUST_BACTRACE_ENV_VAR to "full")
             else -> emptyMap()
         } + commandLine.environmentVariables
-        return generalCommand(commandLine.command, commandLine.additionalArguments, env)
+
+        val args = commandLine.additionalArguments.toMutableList()
+
+        if (commandLine.command == "test" && commandLine.nocapture && "--nocapture" !in args) {
+            if ("--" !in args) {
+                args += "--"
+            }
+            args += "--nocapture"
+        }
+
+        return generalCommand(commandLine.command, args, env)
     }
 
     fun generalCommand(
