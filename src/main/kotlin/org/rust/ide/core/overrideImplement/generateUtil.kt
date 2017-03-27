@@ -5,7 +5,6 @@ import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.generation.MemberChooserObjectBase
 import com.intellij.ide.util.MemberChooser
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleColoredComponent
@@ -24,7 +23,7 @@ class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val member: 
         is RsTypeAlias -> "${member.name}"
         is RsConstant -> "${member.name}: ${member.typeReference?.text}"
         else -> error("Unknown trait member: $member")
-    };
+    }
 
     override fun renderTreeNode(component: SimpleColoredComponent?, tree: JTree?) {
         component?.icon = member.getIcon(0)
