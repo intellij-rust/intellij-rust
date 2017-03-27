@@ -116,7 +116,7 @@
                                         implementationClass="org.rust.ide.annotator.RsCrateDocLineMarkerProvider"/>
         <!-- Rename Processor -->
 
-        <renamePsiElementProcessor implementation="org.rust.lang.refactoring.RsRenameProcessor" />
+        <renamePsiElementProcessor implementation="org.rust.lang.refactoring.RsRenameProcessor"/>
 
         <!-- Implement methods -->
 
