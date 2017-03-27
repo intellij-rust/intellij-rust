@@ -14,6 +14,7 @@
       <option name="environmentVariables">
         <map />
       </option>
+      <option name="nocapture" value="true" />
     </parameters>
     <module name="light_idea_test_case" />
   </configuration>
