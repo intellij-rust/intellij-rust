@@ -1,5 +1,7 @@
 package org.rust.cargo.runconfig
 
+import com.intellij.execution.lineMarker.ExecutorAction
+import com.intellij.openapi.actionSystem.AnAction
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.CargoCommandLine
 
@@ -24,4 +26,12 @@ fun CargoCommandLine.mergeWithDefault(default: CargoCommandLine): CargoCommandLi
         copy(environmentVariables = default.environmentVariables)
     else
         this
+
+
+// BACKCOMPAT: 2016.3
+// See https://youtrack.jetbrains.com/issue/KT-17090
+@Suppress("UNCHECKED_CAST")
+fun getExecutorActions(order: Int): Array<AnAction> =
+    ExecutorAction::class.java.getMethod("getActions", Integer.TYPE)
+        .invoke(null, order) as Array<AnAction>
 
