@@ -15,13 +15,11 @@ import com.intellij.execution.runners.AsyncGenericProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.SelectFromListDialog
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
@@ -36,7 +34,6 @@ import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.util.cargoProjectRoot
-import javax.swing.ListSelectionModel
 
 class RsDebugRunner : AsyncGenericProgramRunner<RunnerSettings>() {
     override fun getRunnerId(): String = "RsDebugRunner"
@@ -101,7 +98,7 @@ private class Binary(val path: String)
  * See https://github.com/rust-lang/cargo/issues/3855
  */
 private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoCommandLine, cargo: Cargo): Promise<Binary?> {
-    val result = AsyncPromise<Binary?>()
+    val promise = AsyncPromise<Binary?>()
 
     val processForUserOutput = ProcessOutput()
     val processForUser = KillableColoredProcessHandler(cargo.generalCommand(command))
@@ -113,22 +110,24 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
         RunContentExecutor(module.project, processForUser)
             .withAfterCompletion {
                 if (processForUserOutput.exitCode != 0) {
-                    result.setResult(null)
+                    promise.setResult(null)
                     return@withAfterCompletion
                 }
 
                 object : Task.Backgroundable(module.project, "Building Cargo project") {
+                    var result: List<String>? = null
+
                     override fun run(indicator: ProgressIndicator) {
                         indicator.isIndeterminate = true
                         val output = processForJson.runProcessWithProgressIndicator(indicator)
                         if (output.isCancelled || output.exitCode != 0) {
-                            result.setResult(null)
+                            promise.setResult(null)
                             return
                         }
 
                         val parser = JsonParser()
                         val gson = Gson()
-                        val binaries = output.stdoutLines
+                        result = output.stdoutLines
                             .mapNotNull {
                                 try {
                                     parser.parse(it)
@@ -141,39 +140,38 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
                             .filter { "bin" in gson.fromJson(it.getAsJsonObject("target"), CargoMetadata.Target::class.java).kind }
                             .flatMap { it.getAsJsonArray("filenames").map { it.asString } }
 
-                        if (binaries.isEmpty()) {
-                            project.showErrorDialog("Can't find a binary to debug")
-                            result.setResult(null)
-                            return
-                        }
 
-                        if (binaries.size == 1) {
-                            result.setResult(Binary(binaries.single()))
-                            return
-                        }
+                    }
 
-                        ApplicationManager.getApplication().invokeAndWait({
-                            val dialog = SelectFromListDialog(project,
-                                binaries.toTypedArray(),
-                                SelectFromListDialog.ToStringAspect { it as String },
-                                "Select binary to debug",
-                                ListSelectionModel.SINGLE_SELECTION
-                            )
-                            result.setResult(
-                                if (dialog.showAndGet()) Binary(dialog.selection[0] as String) else null
-                            )
-                        }, ModalityState.defaultModalityState())
+                    override fun onSuccess() {
+                        val binaries = result!!
+                        when {
+                            binaries.isEmpty() -> {
+                                project.showErrorDialog("Can't find a binary to debug")
+                                promise.setResult(null)
+                            }
+                            binaries.size > 1 -> {
+                                project.showErrorDialog("More then one binary produced. " +
+                                    "Please specify `--bin`, `--lib` or `--test` flag explicitly.")
+                                promise.setResult(null)
+                            }
+                            else -> promise.setResult(Binary(binaries.single()))
+                        }
+                    }
+
+                    override fun onThrowable(error: Throwable) {
+                        promise.setResult(null)
                     }
                 }.queue()
             }
             .run()
     }
 
-    return result
+    return promise
 }
 
 private fun Project.showErrorDialog(message: String) {
-    Messages.showErrorDialog(this, "Debugging is not possible", message)
+    Messages.showErrorDialog(this, message, "Debugging is not possible")
 }
 
 
