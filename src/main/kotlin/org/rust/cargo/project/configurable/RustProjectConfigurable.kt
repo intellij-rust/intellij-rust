@@ -15,7 +15,7 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.project.workspace.StandardLibraryRoots
+import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
 import javax.swing.JComponent
@@ -81,10 +81,10 @@ class RustProjectConfigurable(
         val module = rustModule
         val newStdlibLocation = stdlibLocation.text
         if (module != null && newStdlibLocation != getCurrentStdlibLocation(module) && !newStdlibLocation.isNullOrBlank()) {
-            val roots = StandardLibraryRoots.fromPath(newStdlibLocation)
+            val stdlib = StandardLibrary.fromPath(newStdlibLocation)
                 ?: throw ConfigurationException("Invalid standard library location: `$newStdlibLocation`")
 
-            runWriteAction { roots.attachTo(module) }
+            runWriteAction { stdlib.attachTo(module) }
         }
 
     }

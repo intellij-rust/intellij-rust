@@ -461,7 +461,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
 
         fn bar<T: D>(x: T) { x.foo() }
                               //^
-""")
+    """)
 
     fun testChainedBoundsCycle() = checkByCode("""
         trait A: B {}

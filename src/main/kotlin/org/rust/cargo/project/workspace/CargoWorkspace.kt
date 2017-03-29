@@ -24,17 +24,20 @@ class CargoWorkspace private constructor(
         val source: String?,
         val origin: PackageOrigin
     ) {
+        val normName = name.replace('-', '_')
+        val dependencies: MutableList<Package> = ArrayList()
         val libTarget: Target? get() = targets.find { it.isLib }
         val contentRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
 
         override fun toString() = "Package(contentRootUrl='$contentRootUrl', name='$name')"
 
         fun initTargets(): Package {
-            for (it in targets) {
-                it.initPackage(this)
-            }
+            targets.forEach { it.initPackage(this) }
             return this
         }
+
+        fun findCrateByName(normName: String): Target? =
+            if (this.normName == normName) libTarget else dependencies.findLibrary(normName)
     }
 
     class Target(
@@ -78,10 +81,7 @@ class CargoWorkspace private constructor(
 
     private val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
 
-    fun findCrateByName(normName: String): Target? =
-        packages
-            .mapNotNull { it.libTarget }
-            .find { it.normName == normName }
+    fun findCrateByNameApproximately(normName: String): Target? = packages.findLibrary(normName)
 
     /**
      * If the [file] is a crate root, returns the corresponding [Target]
@@ -95,9 +95,9 @@ class CargoWorkspace private constructor(
 
     fun isCrateRoot(file: VirtualFile): Boolean = findTargetForCrateRootFile(file) != null
 
-    fun withStdlib(libs: List<StandardLibraryRoots.StdCrate>): CargoWorkspace {
+    fun withStdlib(libs: List<StandardLibrary.StdCrate>): CargoWorkspace {
         val stdlib = libs.map { crate ->
-            Package(
+            val pkg = Package(
                 contentRootUrl = crate.packageRootUrl,
                 name = crate.name,
                 version = "",
@@ -105,8 +105,23 @@ class CargoWorkspace private constructor(
                 source = null,
                 origin = PackageOrigin.STDLIB
             ).initTargets()
+            (crate.name to pkg)
+        }.toMap()
+
+        // Bind dependencies and collect roots
+        val roots = ArrayList<Package>()
+        libs.forEach { lib ->
+            val slib = stdlib[lib.name] ?: error("Std lib ${lib.name} not found")
+            val depPackages = lib.dependencies.mapNotNull { stdlib[it] }
+            slib.dependencies.addAll(depPackages)
+            if (lib.isRoot) {
+                roots.add(slib)
+            }
         }
-        return CargoWorkspace(packages + stdlib)
+
+        roots.forEach { it.dependencies.addAll(roots) }
+        packages.forEach { it.dependencies.addAll(roots) }
+        return CargoWorkspace(packages + roots)
     }
 
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
@@ -123,23 +138,23 @@ class CargoWorkspace private constructor(
             // - if a package is a workspace member, it's WORKSPACE
             // - if a package is a direct dependency of a workspace member, it's DEPENDENCY
             // - otherwise, it's TRANSITIVE_DEPENDENCY
-            val nameToOrigin = HashMap<String, PackageOrigin>(data.packages.size)
+            val idToOrigin = HashMap<String, PackageOrigin>(data.packages.size)
             data.packages.forEachIndexed pkgs@ { index, pkg ->
                 if (pkg.isWorkspaceMember) {
-                    nameToOrigin[pkg.name] = PackageOrigin.WORKSPACE
+                    idToOrigin[pkg.id] = PackageOrigin.WORKSPACE
                     val depNode = data.dependencies.getOrNull(index) ?: return@pkgs
                     depNode.dependenciesIndexes
                         .mapNotNull { data.packages.getOrNull(it) }
                         .forEach {
-                            nameToOrigin.merge(it.name, PackageOrigin.DEPENDENCY, { o1, o2 -> PackageOrigin.min(o1, o2) })
+                            idToOrigin.merge(it.id, PackageOrigin.DEPENDENCY, { o1, o2 -> PackageOrigin.min(o1, o2) })
                         }
                 } else {
-                    nameToOrigin.putIfAbsent(pkg.name, PackageOrigin.TRANSITIVE_DEPENDENCY)
+                    idToOrigin.putIfAbsent(pkg.id, PackageOrigin.TRANSITIVE_DEPENDENCY)
                 }
             }
 
             val packages = data.packages.map { pkg ->
-                val origin = nameToOrigin[pkg.name] ?: error("Origin is undefined for package ${pkg.name}")
+                val origin = idToOrigin[pkg.id] ?: error("Origin is undefined for package ${pkg.name}")
                 Package(
                     pkg.url,
                     pkg.name,
@@ -148,6 +163,12 @@ class CargoWorkspace private constructor(
                     pkg.source,
                     origin
                 ).initTargets()
+            }.toList()
+
+            // Fill package dependencies
+            packages.forEachIndexed pkgs@ { index, pkg ->
+                val depNode = data.dependencies.getOrNull(index) ?: return@pkgs
+                pkg.dependencies.addAll(depNode.dependenciesIndexes.map { packages[it] })
             }
 
             return CargoWorkspace(packages)
@@ -155,3 +176,7 @@ class CargoWorkspace private constructor(
     }
 }
 
+private fun Collection<CargoWorkspace.Package>.findLibrary(normName: String): CargoWorkspace.Target? =
+    filter { it.normName == normName }
+        .mapNotNull { it.libTarget }
+        .firstOrNull()

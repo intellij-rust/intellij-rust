@@ -84,5 +84,5 @@ class RsTypeParametersResolveTest : RsResolveTestBase() {
 
         fn main() { let _: S::T = unreachable!(); }
                             //^ unresolved
-        """)
+    """)
 }

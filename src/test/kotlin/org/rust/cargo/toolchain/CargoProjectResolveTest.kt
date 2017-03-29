@@ -186,6 +186,69 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
         }
     }.checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
 
+    fun `test multiversion crate resolve`() = buildProject {
+        toml("Cargo.toml", """
+            [workspace]
+            members = ["hello"]
+        """)
+        dir("hello") {
+            toml("Cargo.toml", """
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                workspace = "../"
+
+                [dependencies]
+                rand = "=0.3.14"
+                bar = { version = "7.0.0", path = "../bar" }
+            """)
+            dir("src") {
+                rust("main.rs", """
+                    extern crate rand;
+                    extern crate bar;
+                    fn main() {
+                        let _ = rand::thread_rng();
+                                     // ^
+                    }
+                """)
+            }
+        }
+        dir("bar") {
+            toml("Cargo.toml", """
+                [package]
+                name = "bar"
+                version = "7.0.0"
+
+                [dependencies]
+                rand = { version = "54.0.0", path="../rand" }
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    extern crate rand;
+                    fn bar() {
+                        let _ = rand::thread_rng();
+                                     // ^
+                    }
+                """)
+            }
+        }
+        dir("rand") {
+            toml("Cargo.toml", """
+                [package]
+                name = "rand"
+                version = "54.0.0"
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    pub fn thread_rng() -> u32 { 42 }
+            """)
+            }
+        }
+    }.run {
+        checkReferenceIsResolved<RsPath>("hello/src/main.rs", toCrate = "rand 0.3.14")
+        checkReferenceIsResolved<RsPath>("bar/src/lib.rs", toCrate = "rand 54.0.0")
+    }
+
     fun buildProject(builder: FileTreeBuilder.() -> Unit): TestProject =
         fileTree { builder() }.create(project, project.baseDir).apply {
             refreshWorkspace()

@@ -22,47 +22,55 @@ val Module.cargoLibraryName: String get() = "Cargo <$name>"
 val Module.rustLibraryName: String get() = "Rust <$name>"
 
 /**
- * Rust standard library crates source roots extracted from a zip archive or a folder with rust.
+ * Rust standard library crates sources extracted from a zip archive or a folder with rust.
  * Hopefully this class will go away when a standard way to get rust sources appears.
  */
-class StandardLibraryRoots private constructor(
+class StandardLibrary private constructor(
     val crates: List<StdCrate>
 ) {
 
-    data class StdCrate(val name: String, val crateRootUrl: String, val packageRootUrl: String)
+    data class StdCrate(
+        val name: String,
+        val isRoot: Boolean,
+        val crateRootUrl: String,
+        val packageRootUrl: String,
+        val dependencies: Collection<String>
+    )
 
     /**
      * Creates an module level IDEA external library from [crates].
      */
     fun attachTo(module: Module) {
-        module.updateLibrary(module.rustLibraryName, crates.map { it.packageRootUrl })
+        module.updateLibrary(module.rustLibraryName, rootCrates.map { it.packageRootUrl })
     }
 
     fun sameAsLibrary(library: Library): Boolean {
         val libraryUrls = library.rootProvider.getFiles(OrderRootType.CLASSES).map { it.url }.toSet()
-        val myUrls = crates.map { it.packageRootUrl }.toSet()
+        val myUrls = rootCrates.map { it.packageRootUrl }.toSet()
         return myUrls == libraryUrls
     }
 
+    private val rootCrates: List<StdCrate> = crates.filter { it.isRoot }
+
     companion object {
-        fun fromPath(path: String): StandardLibraryRoots? =
+        fun fromPath(path: String): StandardLibrary? =
             LocalFileSystem.getInstance().findFileByPath(path)?.let { fromFile(it) }
 
-        fun fromFile(sources: VirtualFile): StandardLibraryRoots? {
+        fun fromFile(sources: VirtualFile): StandardLibrary? {
             if (!sources.isDirectory) return null
             val srcDir = if (sources.name == "src") sources else sources.findChild("src")
                 ?: return null
 
-            val roots = AutoInjectedCrates.stdlibCrateNames.mapNotNull { name ->
-                val pkg = srcDir.findFileByRelativePath("lib$name")
-                val lib = pkg?.findChild("lib.rs")
-                if (pkg != null && lib != null)
-                    StdCrate(name, lib.url, pkg.url)
+            val stdlib = AutoInjectedCrates.stdlibCrates.mapNotNull { libInfo ->
+                val packageSrcDir = srcDir.findFileByRelativePath(libInfo.srcDir)
+                val libFile = packageSrcDir?.findChild("lib.rs")
+                if (packageSrcDir != null && libFile != null)
+                    StdCrate(libInfo.name, libInfo.isRoot, libFile.url, packageSrcDir.url, libInfo.dependencies)
                 else
                     null
             }
-            if (roots.isEmpty()) return null
-            return StandardLibraryRoots(roots)
+            if (stdlib.isEmpty()) return null
+            return StandardLibrary(stdlib)
         }
     }
 }

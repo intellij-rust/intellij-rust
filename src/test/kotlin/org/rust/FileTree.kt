@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import org.intellij.lang.annotations.Language
 import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.utils.fullyRefreshDirectory
 import kotlin.text.Charsets.UTF_8
@@ -86,7 +87,8 @@ class TestProject(
 
     inline fun <reified T : RsReferenceElement> checkReferenceIsResolved(
         path: String,
-        shouldNotResolve: Boolean = false
+        shouldNotResolve: Boolean = false,
+        toCrate: String? = null
     ) {
         val ref = findElementInFile<T>(path)
         val res = ref.reference.resolve()
@@ -97,6 +99,12 @@ class TestProject(
         } else {
             check(res != null) {
                 "Failed to resolve the reference `${ref.text}` in `$path`."
+            }
+            if (toCrate != null && res != null) {
+                val pkg = res.containingCargoPackage?.let { "${it.name} ${it.version}" } ?: "[nowhere]"
+                check(pkg == toCrate) {
+                    "Expected to be resolved to $toCrate but actually resolved to $pkg"
+                }
             }
         }
     }

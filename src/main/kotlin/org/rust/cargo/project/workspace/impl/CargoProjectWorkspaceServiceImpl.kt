@@ -44,9 +44,9 @@ private val LOG = Logger.getInstance(CargoProjectWorkspaceServiceImpl::class.jav
  */
 private class WorkspaceMerger {
     private var rawWorkspace: CargoWorkspace? = null
-    private var stdlib: List<StandardLibraryRoots.StdCrate> = emptyList()
+    private var stdlib: List<StandardLibrary.StdCrate> = emptyList()
 
-    fun setStdlib(libs: List<StandardLibraryRoots.StdCrate>) {
+    fun setStdlib(libs: List<StandardLibrary.StdCrate>) {
         checkWriteAccessAllowed()
         stdlib = libs
         update()
@@ -231,7 +231,7 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
     }
 
     @TestOnly
-    fun setStdlib(libs: List<StandardLibraryRoots.StdCrate>) {
+    fun setStdlib(libs: List<StandardLibrary.StdCrate>) {
         workspaceMerger.setStdlib(libs)
     }
 }

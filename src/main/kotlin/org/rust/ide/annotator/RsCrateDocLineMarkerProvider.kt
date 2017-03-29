@@ -6,10 +6,9 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.execution.filters.BrowserHyperlinkInfo
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
-import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsExternCrateItem
-import org.rust.lang.core.psi.ext.module
+import org.rust.lang.core.psi.ext.containingCargoPackage
 
 /**
  * Provides an external crate imports with gutter icons that open documentation on docs.rs.
@@ -21,8 +20,8 @@ class RsCrateDocLineMarkerProvider : LineMarkerProvider {
     override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {
         for (el in elements) {
             val crateItem = el as? RsExternCrateItem ?: continue
-            val cargoProject = crateItem.module?.cargoWorkspace ?: continue
-            val crate = cargoProject.findCrateByName(crateItem.identifier.text) ?: continue
+            val crateName = crateItem.identifier.text
+            val crate = crateItem.containingCargoPackage?.findCrateByName(crateName) ?: continue
             if (crate.pkg.source == null) continue
             result.add(LineMarkerInfo(
                 crateItem.crate,
@@ -30,7 +29,7 @@ class RsCrateDocLineMarkerProvider : LineMarkerProvider {
                 RsIcons.DOCS_MARK,
                 // BACKCOMPAT: 2016.2
                 Pass.UPDATE_OVERRIDDEN_MARKERS,
-                { "Open documentation for `${crate.normName}`" },
+                { "Open documentation for `${crate.pkg.normName}`" },
                 { _, _ -> BrowserHyperlinkInfo.openUrl("https://docs.rs/${crate.pkg.name}/${crate.pkg.version}/${crate.normName}") },
                 GutterIconRenderer.Alignment.LEFT))
         }

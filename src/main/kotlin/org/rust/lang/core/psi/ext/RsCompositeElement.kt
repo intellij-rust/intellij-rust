@@ -36,9 +36,12 @@ val RsCompositeElement.crateRoot: RsMod? get() {
 
 val RsCompositeElement.containingCargoTarget: CargoWorkspace.Target? get() {
     val cargoProject = module?.cargoWorkspace ?: return null
-    val crateRoot = crateRoot ?: return null
-    return cargoProject.findTargetForCrateRootFile(crateRoot.containingFile.virtualFile)
+    val root = crateRoot ?: return null
+    val file = root.containingFile.originalFile.virtualFile ?: return null
+    return cargoProject.findTargetForCrateRootFile(file)
 }
+
+val RsCompositeElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
 
 abstract class RsCompositeElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsCompositeElement {
     override fun getReference(): RsReference? = null

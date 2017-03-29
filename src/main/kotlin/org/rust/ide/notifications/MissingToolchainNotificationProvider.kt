@@ -22,7 +22,7 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.project.workspace.StandardLibraryRoots
+import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.lang.core.psi.isNotRustFile
 import java.awt.Component
@@ -150,7 +150,7 @@ class MissingToolchainNotificationProvider(
     }
 
     private fun tryAttachStdlibToModule(module: Module, stdlib: VirtualFile): Boolean {
-        val roots = StandardLibraryRoots.fromFile(stdlib)
+        val roots = StandardLibrary.fromFile(stdlib)
             ?: return false
 
         runWriteAction { roots.attachTo(module) }

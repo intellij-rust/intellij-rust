@@ -134,6 +134,7 @@ object CargoMetadata {
             "`cargo metadata` reported a package which does not exist at `$manifest_path`"
         }
         return CleanCargoMetadata.Package(
+            id,
             root.url,
             name,
             version,
@@ -179,6 +180,7 @@ data class CleanCargoMetadata(
     )
 
     data class Package(
+        val id: String,
         val url: String,
         val name: String,
         val version: String,

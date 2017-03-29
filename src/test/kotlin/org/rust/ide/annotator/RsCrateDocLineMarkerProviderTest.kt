@@ -8,14 +8,14 @@ class RsCrateDocLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 
     fun testDocumentationLink() = doTestByText("""
         #[cfg(not(windows))]
-        extern crate trans_lib;             // - Open documentation for `trans_lib`
+        extern crate dep_lib;             // - Open documentation for `dep_lib`
     """)
 
     fun testDocumentationLinkWithAlias() = doTestByText("""
-        extern crate trans_lib as tlib;     // - Open documentation for `trans_lib`
+        extern crate dep_lib as dlib;     // - Open documentation for `dep_lib`
     """)
 
     fun testNoDocumentationLink() = doTestByText("""
-        extern crate dep_lib;               // It's a package name, no documentation
+        extern crate nosrc_lib;           // It's a package name, no documentation
     """)
 }
