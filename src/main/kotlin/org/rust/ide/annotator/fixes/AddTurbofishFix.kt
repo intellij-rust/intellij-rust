@@ -94,7 +94,6 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
 
     private fun isCallExpression(expr: RsExpr) = expr is RsParenExpr || expr.firstChild is RsParenExpr
 
-    /* Maybe there' s a better way than cut and paste these methods from RsFactory */
     private inline fun <reified T : RsCompositeElement> create(project: Project, text: String): T? =
         createFromText(project, "fn main() { $text; }")
 
