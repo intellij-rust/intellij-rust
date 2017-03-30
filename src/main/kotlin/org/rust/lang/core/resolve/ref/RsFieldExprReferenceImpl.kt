@@ -15,17 +15,15 @@ class RsFieldExprReferenceImpl(
 
     override val RsFieldExpr.referenceAnchor: PsiElement get() = referenceNameElement
 
-    override fun getVariants(): Array<out Any> {
-        val p = CompletionProcessor()
-        processResolveVariants(element, ResolveConfig(isCompletion = true), p)
-        return p.result.toTypedArray()
-    }
+    override fun getVariants(): Array<out Any> =
+        CompletionProcessor().run {
+            processResolveVariants(element, ResolveConfig(isCompletion = true), it)
+        }
 
-    override fun resolveInner(): List<RsCompositeElement> {
-        val p = MultiResolveProcessor(element.referenceName)
-        processResolveVariants(element, ResolveConfig(isCompletion = false), p)
-        return p.result
-    }
+    override fun resolveInner(): List<RsCompositeElement> =
+        MultiResolveProcessor(element.referenceName).run {
+            processResolveVariants(element, ResolveConfig(isCompletion = false), it)
+        }
 
     override fun handleElementRename(newName: String): PsiElement {
         element.fieldId.identifier?.let { doRename(it, newName) }

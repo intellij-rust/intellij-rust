@@ -14,17 +14,29 @@ typealias RsResolveProcessor = (Variant) -> Boolean
 
 
 class MultiResolveProcessor(private val referenceName: String) : RsResolveProcessor {
-    val result = mutableListOf<RsCompositeElement>()
+    private val result = mutableListOf<RsCompositeElement>()
+
     override fun invoke(v: Variant): Boolean {
         if (v.name == referenceName) result += v.element
         return false
     }
+
+    fun run(f: (RsResolveProcessor) -> Unit): List<RsCompositeElement> {
+        f(this)
+        return result
+    }
 }
 
 class CompletionProcessor() : RsResolveProcessor {
-    val result = mutableListOf<LookupElement>()
+    private val result = mutableListOf<LookupElement>()
+
     override fun invoke(v: Variant): Boolean {
         result += v.element.createLookupElement(v.name)
         return false
+    }
+
+    fun run(f: (RsResolveProcessor) -> Unit): Array<LookupElement> {
+        f(this)
+        return result.toTypedArray()
     }
 }

@@ -16,17 +16,13 @@ class RsStructExprFieldReferenceImpl(
 
     override val RsStructExprField.referenceAnchor: PsiElement get() = referenceNameElement
 
-    override fun getVariants(): Array<out LookupElement> {
-        val p = CompletionProcessor()
-        processResolveVariants(element, p)
-        return p.result.toTypedArray()
-    }
+    override fun getVariants(): Array<out LookupElement> =
+        CompletionProcessor().run { processResolveVariants(element, it) }
 
-    override fun resolveInner(): List<RsCompositeElement> {
-        val p = MultiResolveProcessor(element.referenceName)
-        processResolveVariants(element, p)
-        return p.result
-    }
+    override fun resolveInner(): List<RsCompositeElement> =
+        MultiResolveProcessor(element.referenceName).run {
+            processResolveVariants(element, it)
+        }
 
     override fun handleElementRename(newName: String): PsiElement {
         return if (element.colon != null) {
