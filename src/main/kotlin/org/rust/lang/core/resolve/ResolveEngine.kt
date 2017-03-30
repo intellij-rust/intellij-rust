@@ -4,7 +4,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -97,42 +96,6 @@ object ResolveEngine {
             .filterIsInstance<RsNamedElement>()
             .chooseMajor()
         return if (fn == null) emptyList() else listOf(fn)
-    }
-
-    /**
-     * Looks-up file corresponding to particular module designated by `mod-declaration-item`:
-     *
-     *  ```
-     *  // foo.rs
-     *  pub mod bar; // looks up `bar.rs` or `bar/mod.rs` in the same dir
-     *
-     *  pub mod nested {
-     *      pub mod baz; // looks up `nested/baz.rs` or `nested/baz/mod.rs`
-     *  }
-     *
-     *  ```
-     *
-     *  | A module without a body is loaded from an external file, by default with the same name as the module,
-     *  | plus the '.rs' extension. When a nested sub-module is loaded from an external file, it is loaded
-     *  | from a subdirectory path that mirrors the module hierarchy.
-     *
-     * Reference:
-     *      https://github.com/rust-lang/rust/blob/master/src/doc/reference.md#modules
-     */
-    fun resolveModDecl(modDecl: RsModDeclItem): RsNamedElement? {
-        val dir = modDecl.containingMod.ownedDirectory ?: return null
-
-        val psiManager = PsiManager.getInstance(modDecl.project)
-        return modDecl.possiblePaths.mapNotNull { path ->
-            dir.virtualFile.findFileByRelativePath(path)?.let { psiManager.findFile(it) }?.rustMod
-        }.singleOrNull()
-    }
-
-    fun resolveExternCrate(crate: RsExternCrateItem): RsNamedElement? {
-        val name = crate.name ?: return null
-        val module = crate.module ?: return null
-        val pkg = crate.containingCargoPackage ?: return null
-        return module.project.getPsiFor(pkg.findCrateByName(name)?.crateRoot)?.rustMod
     }
 
     fun resolveLabel(label: RsLabel): RsLabelDecl? =

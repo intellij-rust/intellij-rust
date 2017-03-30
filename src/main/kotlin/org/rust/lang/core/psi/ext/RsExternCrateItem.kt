@@ -21,7 +21,7 @@ abstract class RsExternCrateItemImplMixin : RsStubbedNamedElementImpl<RsExternCr
 
     override val referenceNameElement: PsiElement get() = identifier
 
-    override val referenceName: String get() = referenceNameElement.text
+    override val referenceName: String get() = name!!
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 

@@ -2,14 +2,14 @@ package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElement.EMPTY_ARRAY
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
-import com.intellij.psi.PsiFile
-import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.asRustPath
+import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.valueParameters
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.RustTypificationEngine
@@ -31,31 +31,6 @@ object CompletionEngine {
                 .filterByNamespace(namespace)
                 .completionsFromScopeEntries()
         }
-    }
-
-    fun completeExternCrate(extCrate: RsExternCrateItem): Array<out LookupElement> =
-        extCrate.containingCargoPackage?.dependencies
-            ?.filter { it.origin == PackageOrigin.DEPENDENCY }
-            ?.mapNotNull { it.libTarget }
-            ?.map { LookupElementBuilder.create(extCrate, it.normName).withIcon(extCrate.getIcon(0)) }
-            ?.toTypedArray() ?: emptyArray()
-
-    fun completeMod(mod: RsModDeclItem): Array<out LookupElement> {
-        val directory = mod.containingMod.ownedDirectory ?: return EMPTY_ARRAY
-
-        val currentModuleName = mod.parentOfType<PsiFile>()?.name?.substringBeforeLast('.')
-
-        val modFromRsFile = directory.files
-            .filter { it.name.endsWith(".rs") }
-            .map { it.name.substringBeforeLast('.') }
-            .filter { it != "mod" && it != currentModuleName }
-            .map { LookupElementBuilder.create(it).withIcon(RsIcons.MODULE) }
-
-        val modFromDirectoryModRsFile = directory.subdirectories
-            .filter { it.findFile("mod.rs") != null }
-            .map { LookupElementBuilder.create(it.name).withIcon(RsIcons.MODULE) }
-
-        return (modFromRsFile + modFromDirectoryModRsFile).toTypedArray()
     }
 }
 

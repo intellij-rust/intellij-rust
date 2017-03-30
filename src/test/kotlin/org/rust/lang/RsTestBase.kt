@@ -8,20 +8,22 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
-import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.lang.core.psi.ext.parentOfType
 import java.util.*
 
@@ -225,17 +227,22 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             isWorkspaceMember = true
         )
 
-        protected fun externalPackage(source: String?, name: String, targetName: String = name) = CleanCargoMetadata.Package(
-            id = name + " 0.0.1",
-            url = "",
-            name = name,
-            version = "0.0.1",
-            targets = listOf(
-                CleanCargoMetadata.Target("", targetName, CargoWorkspace.TargetKind.LIB)
-            ),
-            source = source,
-            isWorkspaceMember = false
-        )
+        protected fun externalPackage(contentRoot: String, source: String?, name: String, targetName: String = name): CleanCargoMetadata.Package {
+            val root = VirtualFileManager.getInstance().findFileByUrl(contentRoot)!!
+            val vFile = source?.let { VfsTestUtil.createFile(root, it) }
+
+            return CleanCargoMetadata.Package(
+                id = name + " 0.0.1",
+                url = "",
+                name = name,
+                version = "0.0.1",
+                targets = listOf(
+                    CleanCargoMetadata.Target(vFile?.url ?: "", targetName, CargoWorkspace.TargetKind.LIB)
+                ),
+                source = source,
+                isWorkspaceMember = false
+            )
+        }
     }
 
     protected object DefaultDescriptor : RustProjectDescriptorBase()
@@ -264,9 +271,9 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
             val packages = listOf(
                 testCargoPackage(contentRoot),
-                externalPackage("dep-lib/lib.rs", "dep-lib", "dep-lib-target"),
-                externalPackage(null, "nosrc-lib", "nosrc-lib-target"),
-                externalPackage("trans-lib/lib.rs", "trans-lib"))
+                externalPackage(contentRoot, "dep-lib/lib.rs", "dep-lib", "dep-lib-target"),
+                externalPackage(contentRoot, null, "nosrc-lib", "nosrc-lib-target"),
+                externalPackage(contentRoot, "trans-lib/lib.rs", "trans-lib"))
 
             val depNodes = ArrayList<CleanCargoMetadata.DependencyNode>()
             depNodes.add(CleanCargoMetadata.DependencyNode(0, listOf(1, 2)))   // Our package depends on dep_lib and dep_nosrc_lib

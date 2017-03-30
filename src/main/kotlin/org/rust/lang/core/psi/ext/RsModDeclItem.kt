@@ -71,7 +71,7 @@ abstract class RsModDeclItemImplMixin : RsStubbedNamedElementImpl<RsModDeclItemS
 
     override val referenceNameElement: PsiElement get() = identifier
 
-    override val referenceName: String get() = referenceNameElement.text
+    override val referenceName: String get() = name!!
 
     override fun getIcon(flags: Int): Icon? = iconWithVisibility(flags, RsIcons.MODULE)
 

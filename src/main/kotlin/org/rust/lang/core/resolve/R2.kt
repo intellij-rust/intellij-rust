@@ -1,6 +1,11 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.PsiManager
+import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.util.getPsiFor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.RustType
@@ -76,6 +81,73 @@ fun processResolveVariants(glob: RsUseGlob, processor: RsResolveProcessor): Bool
     if (processor("self", baseItem)) return true
 
     return processDeclarations(baseItem, processor)
+}
+
+
+/**
+ * Looks-up file corresponding to particular module designated by `mod-declaration-item`:
+ *
+ *  ```
+ *  // foo.rs
+ *  pub mod bar; // looks up `bar.rs` or `bar/mod.rs` in the same dir
+ *
+ *  pub mod nested {
+ *      pub mod baz; // looks up `nested/baz.rs` or `nested/baz/mod.rs`
+ *  }
+ *
+ *  ```
+ *
+ *  | A module without a body is loaded from an external file, by default with the same name as the module,
+ *  | plus the '.rs' extension. When a nested sub-module is loaded from an external file, it is loaded
+ *  | from a subdirectory path that mirrors the module hierarchy.
+ *
+ * Reference:
+ *      https://github.com/rust-lang/rust/blob/master/src/doc/reference.md#modules
+ */
+fun processResolveVariants(modDecl: RsModDeclItem, processor: RsResolveProcessor): Boolean {
+    val dir = modDecl.containingMod.ownedDirectory ?: return false
+
+    val explicitPath = modDecl.pathAttribute
+    if (explicitPath != null) {
+        val vFile = dir.virtualFile.findFileByRelativePath(explicitPath) ?: return false
+        val mod = PsiManager.getInstance(modDecl.project).findFile(vFile)?.rustMod ?: return false
+
+        val name = modDecl.name ?: return false
+        return processor(name, mod)
+    }
+    if (modDecl.isLocal) return false
+
+    for (file in dir.files) {
+        if (file == modDecl.containingFile.originalFile || file.name == RsMod.MOD_RS) continue
+        val mod = file.rustMod ?: continue
+        val name = FileUtil.getNameWithoutExtension(file.name)
+        if (processor(name, mod)) return true
+    }
+
+    for (d in dir.subdirectories) {
+        val mod = d.findFile(RsMod.MOD_RS)?.rustMod ?: continue
+        if (processor(d.name, mod)) return true
+    }
+
+    return false
+}
+
+fun processResolveVariants(crate: RsExternCrateItem, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
+    val module = crate.module ?: return false
+    val pkg = crate.containingCargoPackage ?: return false
+    fun processPackage(pkg: CargoWorkspace.Package): Boolean {
+        if (isCompletion && pkg.origin != PackageOrigin.DEPENDENCY) return false
+        val libTarget = pkg.libTarget ?: return false
+        return processor.lazy(libTarget.normName) {
+            module.project.getPsiFor(libTarget.crateRoot)?.rustMod
+        }
+    }
+
+    if (processPackage(pkg)) return true
+    for (p in pkg.dependencies) {
+        if (processPackage(p)) return true
+    }
+    return false
 }
 
 
