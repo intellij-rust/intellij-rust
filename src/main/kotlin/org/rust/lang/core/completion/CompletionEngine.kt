@@ -15,7 +15,6 @@ import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.RustTypificationEngine
 import org.rust.lang.core.types.stripAllRefsIfAny
 import org.rust.lang.core.types.type
-import org.rust.lang.core.types.types.RustStructType
 import org.rust.lang.core.types.types.RustUnknownType
 import org.rust.utils.sequenceOfNotNull
 
@@ -53,17 +52,6 @@ object CompletionEngine {
         field.parentOfType<RsStructExpr>()
             ?.fields.orEmpty()
             .completionsFromNamedElements()
-
-    fun completeFieldOrMethod(field: RsFieldExpr): Array<out LookupElement> {
-        val receiverType = field.expr.type.stripAllRefsIfAny()
-
-        // Needs type ascription to please Kotlin's type checker, https://youtrack.jetbrains.com/issue/KT-12696.
-        val fields: List<RsNamedElement> = (receiverType as? RustStructType)?.item?.namedFields.orEmpty()
-
-        val methods = receiverType.getMethodsIn(field.project).toList()
-
-        return (fields + methods).completionsFromNamedElements()
-    }
 
     fun completeMethod(call: RsMethodCallExpr): Array<out LookupElement> {
         val receiverType = call.expr.type.stripAllRefsIfAny()

@@ -20,9 +20,7 @@ import org.rust.lang.core.psi.rustMod
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
-import org.rust.lang.core.types.stripAllRefsIfAny
 import org.rust.lang.core.types.type
-import org.rust.lang.core.types.types.RustStructType
 import org.rust.utils.sequenceOfNotNull
 import java.util.*
 
@@ -103,26 +101,6 @@ object ResolveEngine {
      */
     fun resolveStructExprField(structExpr: RsStructExpr, fieldName: String): List<RsNamedElement> =
         structExpr.fields.filter { it.name == fieldName }
-
-    /**
-     * Resolves references to struct's fields inside [RsFieldExpr]
-     */
-    fun resolveFieldExpr(fieldExpr: RsFieldExpr): List<RsCompositeElement> {
-        val receiverType = fieldExpr.expr.type.stripAllRefsIfAny()
-        val struct = (receiverType as? RustStructType)?.item ?: return emptyList()
-
-        val name = fieldExpr.fieldName
-        if (name != null) {
-            return struct.namedFields.filter { it.name == name }
-        }
-
-        val index = fieldExpr.fieldIndex
-        if (index != null) {
-            return listOfNotNull(struct.positionalFields.getOrNull(index))
-        }
-
-        return emptyList()
-    }
 
     fun resolveCallExpr(path: RustPath, element: RsPath, namespace: Namespace?): List<RsCompositeElement> {
         val fn = resolve(path, element, namespace, false).asSequence()
