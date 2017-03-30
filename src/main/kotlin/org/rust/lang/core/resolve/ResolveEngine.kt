@@ -1,7 +1,6 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -12,11 +11,8 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.getPsiFor
-import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.rustMod
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.symbols.RustPathSegment
@@ -102,37 +98,6 @@ object ResolveEngine {
             .chooseMajor()
         return if (fn == null) emptyList() else listOf(fn)
     }
-
-    fun resolveUseGlob(ref: RsUseGlob): List<RsCompositeElement> = recursionGuard(ref, Computable {
-        val basePath = ref.basePath
-
-        // This is not necessarily a module, e.g.
-        //
-        //   ```
-        //   fn foo() {}
-        //
-        //   mod inner {
-        //       use foo::{self};
-        //   }
-        //   ```
-        val baseItem = (if (basePath != null)
-            basePath.reference.resolve()
-        else
-        // `use ::{foo, bar}`
-            ref.crateRoot)
-
-        when {
-        // `use foo::{self}`
-            ref.isSelf && baseItem != null -> listOf(baseItem)
-
-        // `use foo::{bar}`
-            baseItem != null -> (containingDeclarations(baseItem) ?: emptySequence())
-                .filter { it.name == ref.referenceName }
-                .mapNotNull { it.element }
-                .toList()
-            else -> emptyList()
-        }
-    }) ?: emptyList()
 
     /**
      * Looks-up file corresponding to particular module designated by `mod-declaration-item`:

@@ -33,19 +33,6 @@ object CompletionEngine {
         }
     }
 
-    fun completeUseGlob(glob: RsUseGlob): Array<out LookupElement> {
-        val mod = run {
-            val basePath = glob.basePath
-            if (basePath != null) {
-                basePath.reference.resolve()
-            } else {
-                glob.crateRoot
-            }
-        }
-
-        return mod.completionsFromResolveScope()
-    }
-
     fun completeExternCrate(extCrate: RsExternCrateItem): Array<out LookupElement> =
         extCrate.containingCargoPackage?.dependencies
             ?.filter { it.origin == PackageOrigin.DEPENDENCY }
@@ -85,12 +72,6 @@ private fun Sequence<ScopeEntry>.completionsFromScopeEntries(): Array<LookupElem
     mapNotNull {
         it.element?.createLookupElement(it.name)
     }.toList().toTypedArray()
-
-private fun Collection<RsNamedElement>.completionsFromNamedElements(): Array<LookupElement> =
-    mapNotNull {
-        val name = it.name ?: return@mapNotNull null
-        it.createLookupElement(name)
-    }.toTypedArray()
 
 fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
     val base = LookupElementBuilder.create(this, scopeName)

@@ -6,7 +6,7 @@ import org.rust.lang.core.psi.ext.RsCompositeElement
 
 interface Variant {
     val name: String
-    val element: RsCompositeElement
+    val element: RsCompositeElement?
 }
 
 // FOUND/STOP == true
@@ -17,7 +17,10 @@ class MultiResolveProcessor(private val referenceName: String) : RsResolveProces
     private val result = mutableListOf<RsCompositeElement>()
 
     override fun invoke(v: Variant): Boolean {
-        if (v.name == referenceName) result += v.element
+        if (v.name == referenceName) {
+            val element = v.element ?: return false
+            result += element
+        }
         return false
     }
 
@@ -31,7 +34,10 @@ class CompletionProcessor() : RsResolveProcessor {
     private val result = mutableListOf<LookupElement>()
 
     override fun invoke(v: Variant): Boolean {
-        result += v.element.createLookupElement(v.name)
+        val lookupElement = v.element?.createLookupElement(v.name)
+        if (lookupElement != null) {
+            result += lookupElement
+        }
         return false
     }
 

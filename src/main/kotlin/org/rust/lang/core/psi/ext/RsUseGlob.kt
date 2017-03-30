@@ -13,6 +13,9 @@ import org.rust.lang.core.stubs.RsUseGlobStub
 val RsUseGlob.basePath: RsPath?
     get() = parentOfType<RsUseItem>()?.path
 
+val RsUseGlob.parentUseItem: RsUseItem get() = parentOfType<RsUseItem>()!!
+
+
 val RsUseGlob.isSelf: Boolean get() = referenceName == "self"
 
 abstract class RsUseGlobImplMixin : RsStubbedElementImpl<RsUseGlobStub>, RsUseGlob {
