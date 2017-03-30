@@ -96,12 +96,6 @@ object ResolveEngine {
         return Result(el, pkg)
     }
 
-    /**
-     * Resolves references to struct's fields inside destructuring [RsStructExpr]
-     */
-    fun resolveStructExprField(structExpr: RsStructExpr, fieldName: String): List<RsNamedElement> =
-        structExpr.fields.filter { it.name == fieldName }
-
     fun resolveCallExpr(path: RustPath, element: RsPath, namespace: Namespace?): List<RsCompositeElement> {
         val fn = resolve(path, element, namespace, false).asSequence()
             .filterIsInstance<RsNamedElement>()

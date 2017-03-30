@@ -2,11 +2,12 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.completion.CompletionEngine
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.parentOfType
-import org.rust.lang.core.resolve.ResolveEngine
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsStructExprField
+import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.resolve.CompletionProcessor
+import org.rust.lang.core.resolve.MultiResolveProcessor
+import org.rust.lang.core.resolve.processResolveVariants
 
 class RsStructExprFieldReferenceImpl(
     field: RsStructExprField
@@ -15,13 +16,16 @@ class RsStructExprFieldReferenceImpl(
 
     override val RsStructExprField.referenceAnchor: PsiElement get() = referenceNameElement
 
-    override fun getVariants(): Array<out LookupElement> =
-        CompletionEngine.completeFieldName(element)
+    override fun getVariants(): Array<out LookupElement> {
+        val p = CompletionProcessor()
+        processResolveVariants(element, p)
+        return p.result.toTypedArray()
+    }
 
-    override fun resolveInner(): List<RsNamedElement> {
-        val structExpr = element.parentOfType<RsStructExpr>() ?: return emptyList()
-
-        return ResolveEngine.resolveStructExprField(structExpr, element.referenceName)
+    override fun resolveInner(): List<RsCompositeElement> {
+        val p = MultiResolveProcessor(element.referenceName)
+        processResolveVariants(element, p)
+        return p.result
     }
 
     override fun handleElementRename(newName: String): PsiElement {

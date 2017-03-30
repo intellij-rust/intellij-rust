@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsFieldExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsMethodCallExpr
-import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.psi.RsStructExprField
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.stripAllRefsIfAny
@@ -42,6 +42,11 @@ fun processResolveVariants(fieldExpr: RsFieldExpr, config: ResolveConfig, proces
     return false
 }
 
+fun processResolveVariants(field: RsStructExprField, processor: RsResolveProcessor): Boolean {
+    val structOrEnumVariant = field.parentStructExpr.path.reference.resolve() as? RsFieldsOwner ?: return false
+    return processFields(structOrEnumVariant, processor)
+}
+
 fun processResolveVariants(callExpr: RsMethodCallExpr, processor: RsResolveProcessor): Boolean {
     val receiverType = callExpr.expr.type
     return processMethods(callExpr.project, receiverType, processor)
@@ -49,7 +54,7 @@ fun processResolveVariants(callExpr: RsMethodCallExpr, processor: RsResolveProce
 
 /// Named elements
 
-fun processFields(struct: RsStructItem, processor: RsResolveProcessor): Boolean {
+fun processFields(struct: RsFieldsOwner, processor: RsResolveProcessor): Boolean {
     for (field in struct.namedFields) {
         if (processor(field)) return true
     }

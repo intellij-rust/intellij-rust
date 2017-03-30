@@ -46,11 +46,6 @@ object CompletionEngine {
         return mod.completionsFromResolveScope()
     }
 
-    fun completeFieldName(field: RsStructExprField): Array<out LookupElement> =
-        field.parentOfType<RsStructExpr>()
-            ?.fields.orEmpty()
-            .completionsFromNamedElements()
-
     fun completeExternCrate(extCrate: RsExternCrateItem): Array<out LookupElement> =
         extCrate.containingCargoPackage?.dependencies
             ?.filter { it.origin == PackageOrigin.DEPENDENCY }
