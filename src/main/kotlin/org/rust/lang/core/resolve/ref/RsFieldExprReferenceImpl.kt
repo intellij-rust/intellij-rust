@@ -5,7 +5,6 @@ import org.rust.lang.core.psi.RsFieldExpr
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.resolve.CompletionProcessor
 import org.rust.lang.core.resolve.MultiResolveProcessor
-import org.rust.lang.core.resolve.ResolveConfig
 import org.rust.lang.core.resolve.processResolveVariants
 
 class RsFieldExprReferenceImpl(
@@ -17,12 +16,12 @@ class RsFieldExprReferenceImpl(
 
     override fun getVariants(): Array<out Any> =
         CompletionProcessor().run {
-            processResolveVariants(element, ResolveConfig(isCompletion = true), it)
+            processResolveVariants(element, true, it)
         }
 
     override fun resolveInner(): List<RsCompositeElement> =
         MultiResolveProcessor(element.referenceName).run {
-            processResolveVariants(element, ResolveConfig(isCompletion = false), it)
+            processResolveVariants(element, false, it)
         }
 
     override fun handleElementRename(newName: String): PsiElement {

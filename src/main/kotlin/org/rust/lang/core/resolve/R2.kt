@@ -13,9 +13,6 @@ import org.rust.lang.core.types.stripAllRefsIfAny
 import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustStructType
 
-class ResolveConfig(
-    val isCompletion: Boolean
-)
 
 private data class SimpleVariant(override val name: String, override val element: RsCompositeElement) : Variant
 
@@ -46,13 +43,13 @@ private fun processAll(es: List<RsNamedElement>, processor: RsResolveProcessor):
 
 /// References
 
-fun processResolveVariants(fieldExpr: RsFieldExpr, config: ResolveConfig, processor: RsResolveProcessor): Boolean {
+fun processResolveVariants(fieldExpr: RsFieldExpr, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val receiverType = fieldExpr.expr.type.stripAllRefsIfAny()
 
     val struct = (receiverType as? RustStructType)?.item
     if (struct != null && processFields(struct, processor)) return true
 
-    if (config.isCompletion) {
+    if (isCompletion) {
         processMethods(fieldExpr.project, receiverType, processor)
     }
 
