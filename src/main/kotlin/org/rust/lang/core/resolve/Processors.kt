@@ -4,6 +4,11 @@ import com.intellij.codeInsight.lookup.LookupElement
 import org.rust.lang.core.completion.createLookupElement
 import org.rust.lang.core.psi.ext.RsCompositeElement
 
+interface Variant {
+    val name: String
+    val element: RsCompositeElement
+}
+
 // FOUND/STOP == true
 typealias RsResolveProcessor = (Variant) -> Boolean
 

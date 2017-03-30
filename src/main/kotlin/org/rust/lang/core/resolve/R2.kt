@@ -15,20 +15,15 @@ class ResolveConfig(
     val isCompletion: Boolean
 )
 
-interface Variant {
-    val name: String
-    val element: RsCompositeElement
-
-    companion object {
-        fun of(name: String, element: RsCompositeElement): Variant = SimpleVariant(name, element)
-    }
-}
-
 private class SimpleVariant(override val name: String, override val element: RsCompositeElement) : Variant
+
+private operator fun RsResolveProcessor.invoke(name: String, e: RsCompositeElement): Boolean {
+    return this(SimpleVariant(name, e))
+}
 
 private operator fun RsResolveProcessor.invoke(e: RsNamedElement): Boolean {
     val name = e.name ?: return false
-    return this(Variant.of(name, e))
+    return this(name, e)
 }
 
 
@@ -60,7 +55,7 @@ fun processFields(struct: RsStructItem, processor: RsResolveProcessor): Boolean 
     }
 
     for ((idx, field) in struct.positionalFields.withIndex()) {
-        if (processor(Variant.of(idx.toString(), field))) return true
+        if (processor(idx.toString(), field)) return true
     }
     return false
 }
