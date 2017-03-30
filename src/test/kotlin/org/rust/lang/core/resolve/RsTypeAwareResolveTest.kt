@@ -394,24 +394,6 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
-    //FIXME: should resolve to non ref!
-    fun testNonInherentImpl2() = checkByCode("""
-        trait T { fn foo(&self) { println!("Hello"); } }
-
-        struct S;
-
-        impl T for S { fn foo(&self) { println!("non ref"); } }
-
-        impl<'a> T for &'a S { fn foo(&self) { println!("ref"); } }
-                                 //X
-
-        fn main() {
-            let x: &S = &S;
-            x.foo()
-              //^
-        }
-    """)
-
     fun testGenericParamMethodCall() = checkByCode("""
         trait Spam { fn eggs(&self); }
                         //X

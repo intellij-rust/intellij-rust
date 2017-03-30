@@ -13,8 +13,6 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.RustTypificationEngine
-import org.rust.lang.core.types.stripAllRefsIfAny
-import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustUnknownType
 import org.rust.utils.sequenceOfNotNull
 
@@ -52,11 +50,6 @@ object CompletionEngine {
         field.parentOfType<RsStructExpr>()
             ?.fields.orEmpty()
             .completionsFromNamedElements()
-
-    fun completeMethod(call: RsMethodCallExpr): Array<out LookupElement> {
-        val receiverType = call.expr.type.stripAllRefsIfAny()
-        return receiverType.getMethodsIn(call.project).toList().completionsFromNamedElements()
-    }
 
     fun completeExternCrate(extCrate: RsExternCrateItem): Array<out LookupElement> =
         extCrate.containingCargoPackage?.dependencies

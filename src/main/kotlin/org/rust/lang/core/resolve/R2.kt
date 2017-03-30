@@ -3,6 +3,7 @@ package org.rust.lang.core.resolve
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsFieldExpr
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsMethodCallExpr
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.RustType
@@ -25,13 +26,11 @@ interface Variant {
 
 private class SimpleVariant(override val name: String, override val element: RsCompositeElement) : Variant
 
-// FOUND/STOP == true
-typealias RsResolveProcessor = (Variant) -> Boolean
-
-operator fun RsResolveProcessor.invoke(e: RsNamedElement): Boolean {
+private operator fun RsResolveProcessor.invoke(e: RsNamedElement): Boolean {
     val name = e.name ?: return false
     return this(Variant.of(name, e))
 }
+
 
 /// References
 
@@ -46,6 +45,11 @@ fun processResolveVariants(fieldExpr: RsFieldExpr, config: ResolveConfig, proces
     }
 
     return false
+}
+
+fun processResolveVariants(callExpr: RsMethodCallExpr, processor: RsResolveProcessor): Boolean {
+    val receiverType = callExpr.expr.type
+    return processMethods(callExpr.project, receiverType, processor)
 }
 
 /// Named elements

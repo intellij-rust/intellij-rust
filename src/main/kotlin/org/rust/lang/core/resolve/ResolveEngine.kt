@@ -109,17 +109,6 @@ object ResolveEngine {
         return if (fn == null) emptyList() else listOf(fn)
     }
 
-    /**
-     * Resolves method-call expressions
-     */
-    fun resolveMethodCallExpr(call: RsMethodCallExpr): RsNamedElement? {
-        val receiverType = call.expr.type
-        val name = call.identifier.text
-        return receiverType.getMethodsIn(call.project)
-            .filter { it.name == name }
-            .chooseMajor()
-    }
-
     fun resolveUseGlob(ref: RsUseGlob): List<RsCompositeElement> = recursionGuard(ref, Computable {
         val basePath = ref.basePath
 
