@@ -42,7 +42,7 @@ class CargoRunConfigurationEditorForm : SettingsEditor<CargoCommandConfiguration
             additionalArguments.text = ParametersListUtil.join(args.additionalArguments)
             backtraceMode.selectedIndex = args.backtraceMode.index
             environmentVariables.envs = args.environmentVariables
-            nocapture.isEnabled = args.nocapture
+            nocapture.isSelected = args.nocapture
         }
     }
 
