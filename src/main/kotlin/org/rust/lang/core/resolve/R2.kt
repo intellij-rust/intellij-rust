@@ -1,3 +1,5 @@
+@file:Suppress("LoopToCallChain")
+
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.project.Project
