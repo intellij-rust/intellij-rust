@@ -202,7 +202,7 @@ fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsRes
 
     val prevScope = mutableSetOf<String>()
     for (scope in path.ancestors) {
-        val currScope = mutableSetOf<String>()
+        val currScope = mutableListOf<String>()
         val shadowingProcessor = { v: Variant ->
             v.name !in prevScope && run {
                 currScope += v.name
@@ -210,14 +210,14 @@ fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsRes
             }
         }
         if (processLexicalDeclarations(scope as RsCompositeElement, path, ns, shadowingProcessor)) return true
-        if (scope is RsMod) break
         prevScope.addAll(currScope)
+        if (scope is RsMod) break
     }
 
     val preludeFile = path.containingCargoPackage?.findCrateByName("std")?.crateRoot
         ?.findFileByRelativePath("../prelude/v1.rs")
     val prelude = path.project.getPsiFor(preludeFile)?.rustMod
-    if (prelude != null && processDeclarations(prelude, false, ns, processor)) return true
+    if (prelude != null && processDeclarations(prelude, false, ns, { v -> v.name !in prevScope && processor(v) })) return true
 
     return false
 }
@@ -433,13 +433,17 @@ fun processLexicalDeclarations(scope: RsCompositeElement, place: RsCompositeElem
         }
 
         is RsFunction -> {
-            if (processAll(scope.typeParameters, processor)) return true
-            val selfParam = scope.selfParameter
-            if (selfParam != null && processor("self", selfParam)) return true
+            if (Namespace.Types in ns) {
+                if (processAll(scope.typeParameters, processor)) return true
+            }
+            if (Namespace.Values in ns) {
+                val selfParam = scope.selfParameter
+                if (selfParam != null && processor("self", selfParam)) return true
 
-            for (parameter in scope.valueParameters) {
-                val pat = parameter.pat ?: continue
-                if (processPattern(pat, processor)) return true
+                for (parameter in scope.valueParameters) {
+                    val pat = parameter.pat ?: continue
+                    if (processPattern(pat, processor)) return true
+                }
             }
         }
 
