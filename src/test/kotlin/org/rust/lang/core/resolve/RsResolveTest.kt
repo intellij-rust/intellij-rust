@@ -582,13 +582,15 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    // We resolve this, although this usage of `super` is invalid.
+    // Annotator will highlight it as an error.
     fun testWrongSuper() = checkByCode("""
         fn foo() {}
-
+          //X
         mod inner {
             fn main() {
                 ::inner::super::foo();
-                               //^ unresolved
+                               //^
             }
         }
     """)

@@ -30,7 +30,7 @@ class MultiResolveProcessor(private val referenceName: String) : RsResolveProces
     }
 }
 
-class CompletionProcessor() : RsResolveProcessor {
+class CompletionProcessor : RsResolveProcessor {
     private val result = mutableListOf<LookupElement>()
 
     override fun invoke(v: Variant): Boolean {

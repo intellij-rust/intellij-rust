@@ -82,10 +82,10 @@ fun Sequence<ScopeEntry>.filterByNamespace(namespace: Namespace?): Sequence<Scop
     return mapNotNull { it.filterByNamespace(namespace) }
 }
 
-private val TYPES = EnumSet.of(Namespace.Types)
-private val VALUES = EnumSet.of(Namespace.Values)
-private val LIFETIMES = EnumSet.of(Namespace.Lifetimes)
-private val TYPES_N_VALUES = TYPES + VALUES
+val TYPES = EnumSet.of(Namespace.Types)
+val VALUES = EnumSet.of(Namespace.Values)
+val LIFETIMES = EnumSet.of(Namespace.Lifetimes)
+val TYPES_N_VALUES = TYPES + VALUES
 
 val RsNamedElement.namespaces: Set<Namespace> get() = when (this) {
     is RsMod,

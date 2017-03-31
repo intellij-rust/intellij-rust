@@ -430,7 +430,7 @@ private fun <T> Sequence<T>.takeWhileInclusive(pred: (T) -> Boolean): Sequence<T
     }
 }
 
-private fun PsiElement.isStrictAncestorOf(child: PsiElement) =
+fun PsiElement.isStrictAncestorOf(child: PsiElement) =
     PsiTreeUtil.isAncestor(this, child, true)
 
 private val List<RsLifetimeParameter>.lifetimeDecls: Sequence<RsLifetimeDecl>

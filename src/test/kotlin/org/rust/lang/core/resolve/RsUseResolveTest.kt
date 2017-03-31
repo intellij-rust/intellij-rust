@@ -74,7 +74,7 @@ class RsUseResolveTest : RsResolveTestBase() {
 
         fn main() {
             foo::e();
-               //^ 21
+               //^
         }
     """)
 

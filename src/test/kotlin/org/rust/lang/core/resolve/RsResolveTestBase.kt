@@ -26,8 +26,15 @@ abstract class RsResolveTestBase : RsTestBase() {
             return
         }
 
-        val resolved = checkNotNull(refElement.reference.resolve()) {
-            "Failed to resolve ${refElement.text}"
+        val resolved = refElement.reference.resolve()
+        if (resolved == null) {
+            val multiResolve = refElement.reference.multiResolve()
+            check(multiResolve.size != 1)
+            if (multiResolve.isEmpty()) {
+                fail("Failed to resolve ${refElement.text}")
+            } else {
+                fail("Failed to resolve ${refElement.text}, multiple variants:\n${multiResolve.joinToString()}")
+            }
         }
 
         val target = findElementInEditor<RsNamedElement>("X")

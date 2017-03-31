@@ -3,11 +3,15 @@ package org.rust.lang.core.resolve
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiManager
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtilCore
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.getPsiFor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.indexes.RsImplIndex
+import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.stripAllRefsIfAny
 import org.rust.lang.core.types.type
@@ -38,7 +42,12 @@ private operator fun RsResolveProcessor.invoke(e: RsNamedElement): Boolean {
     return this(name, e)
 }
 
-private fun processAll(es: List<RsNamedElement>, processor: RsResolveProcessor): Boolean = es.any { processor(it) }
+private fun processAll(elements: Collection<RsNamedElement>, processor: RsResolveProcessor): Boolean {
+    for (e in elements) {
+        if (processor(e)) return true
+    }
+    return false
+}
 
 
 /// References
@@ -77,9 +86,8 @@ fun processResolveVariants(glob: RsUseGlob, processor: RsResolveProcessor): Bool
 
     if (processor("self", baseItem)) return true
 
-    return processDeclarations(baseItem, processor)
+    return processDeclarations(baseItem, TYPES_N_VALUES, processor)
 }
-
 
 /**
  * Looks-up file corresponding to particular module designated by `mod-declaration-item`:
@@ -147,6 +155,62 @@ fun processResolveVariants(crate: RsExternCrateItem, isCompletion: Boolean, proc
     return false
 }
 
+fun processResolveVariants(path: RsPath, processor: RsResolveProcessor): Boolean {
+    val qualifier = path.path
+    val parent = path.parent
+    val ns = when (parent) {
+        is RsPath, is RsTypeReference -> TYPES
+        is RsUseItem -> if (parent.isStarImport) TYPES else TYPES_N_VALUES
+        is RsPathExpr -> VALUES
+        else -> TYPES_N_VALUES
+    }
+
+    if (qualifier != null) {
+        val base = qualifier.reference.resolve() ?: return false
+        if (base is RsMod) {
+            val s = base.`super`
+            if (s != null && processor("super", s)) return true
+        }
+        if (processDeclarations(base, ns, processor)) return true
+        if (base is RsTypeBearingItemElement && parent !is RsUseItem) {
+            if (processAssociatedFunctions(base.project, base.type, processor)) return true
+        }
+        return false
+    }
+
+    val containigMod = path.containingMod
+    val crateRoot = path.crateRoot
+    if (!path.isCrateRelative) {
+        if (Namespace.Types in ns && containigMod != null) {
+            if (processor("self", containigMod)) return true
+            val superMod = containigMod.`super`
+            if (superMod != null) {
+                if (processor("super", superMod)) return true
+            }
+        }
+    }
+
+    // Paths in use items are implicitly global.
+    if (path.isCrateRelative || path.parentOfType<RsUseItem>() != null) {
+        if (crateRoot != null) {
+            if (processDeclarations(crateRoot, ns, processor)) return true
+        }
+        return false
+    }
+
+    for (scope in path.ancestors) {
+        if (processLexicalDeclarations(scope as RsCompositeElement, path, ns, processor)) return true
+        if (scope is RsMod) break
+    }
+
+    val preludeFile = path.containingCargoPackage?.findCrateByName("std")?.crateRoot
+        ?.findFileByRelativePath("../prelude/v1.rs")
+    val prelude = path.project.getPsiFor(preludeFile)?.rustMod
+    if (prelude != null && processDeclarations(prelude, false, ns, processor)) return true
+
+    return false
+}
+
 
 /// Named elements
 
@@ -160,7 +224,17 @@ fun processFields(struct: RsFieldsOwner, processor: RsResolveProcessor): Boolean
 }
 
 fun processMethods(project: Project, receiver: RustType, processor: RsResolveProcessor): Boolean {
-    val (inherent, nonInherent) = receiver.getMethodsIn(project).partition { it is RsFunction && it.isInherentImpl }
+    val methods = receiver.getMethodsIn(project)
+    return processFnsWithInherentPriority(methods, processor)
+}
+
+fun processAssociatedFunctions(project: Project, type: RustType, processor: RsResolveProcessor): Boolean {
+    val methodsAndFns = RsImplIndex.findMethodsAndAssociatedFunctionsFor(type, project)
+    return processFnsWithInherentPriority(methodsAndFns, processor)
+}
+
+fun processFnsWithInherentPriority(fns: Sequence<RsFunction>, processor: RsResolveProcessor): Boolean {
+    val (inherent, nonInherent) = fns.partition { it is RsFunction && it.isInherentImpl }
     if (processAll(inherent, processor)) return true
 
     val inherentNames = inherent.mapNotNull { it.name }.toHashSet()
@@ -171,37 +245,97 @@ fun processMethods(project: Project, receiver: RustType, processor: RsResolvePro
     return false
 }
 
-fun processDeclarations(scope: RsCompositeElement, processor: RsResolveProcessor): Boolean {
+fun processDeclarations(scope: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
     when (scope) {
-        is RsEnumItem -> if (processAll(scope.enumBody.enumVariantList, processor)) {
-            return true
+        is RsEnumItem -> {
+            if (processAll(scope.enumBody.enumVariantList, processor)) return true
         }
-        is RsFile -> if (processDeclarations(scope, false, processor)) {
-            return true
-        }
-        is RsMod -> if (processDeclarations(scope, false, processor)) {
-            return true
+        is RsMod -> {
+            if (processDeclarations(scope, false, ns, processor)) return true
         }
     }
 
     return false
 }
 
-fun processDeclarations(scope: RsItemsOwner, withPrivateImports: Boolean, processor: RsResolveProcessor): Boolean {
-    for (modDecl in scope.modDeclItemList) {
-        val name = modDecl.name ?: continue
-        val mod = modDecl.reference.resolve() ?: continue
-        if (processor(name, mod)) return true
+fun processDeclarations(scope: RsItemsOwner, withPrivateImports: Boolean, ns: Set<Namespace>, originalProcessor: RsResolveProcessor): Boolean {
+    val (starImports, itemImports) = scope.useItemList
+        .filter { it.isPublic || withPrivateImports }
+        .partition { it.isStarImport }
+
+    // Handle shadowing of `use::*`, but only if star imports are present
+    val directlyDeclaredNames = mutableSetOf<String>()
+    val processor = if (starImports.isEmpty()) {
+        originalProcessor
+    } else {
+        { v: Variant ->
+            directlyDeclaredNames += v.name
+            originalProcessor(v)
+        }
     }
 
-    if (processAll(scope.functionList, processor)
-        || processAll(scope.enumItemList, processor)
-        || processAll(scope.modItemList, processor)
-        || processAll(scope.constantList, processor)
-        || processAll(scope.structItemList, processor)
-        || processAll(scope.traitItemList, processor)
-        || processAll(scope.typeAliasList, processor)) {
-        return true
+
+    // Unit like structs are both types and values
+    for (struct in scope.structItemList) {
+        if (struct.namespaces.intersect(ns).isNotEmpty() && processor(struct)) {
+            return true
+        }
+    }
+
+    if (Namespace.Types in ns) {
+        for (modDecl in scope.modDeclItemList) {
+            val name = modDecl.name ?: continue
+            val mod = modDecl.reference.resolve() ?: continue
+            if (processor(name, mod)) return true
+        }
+
+        if (processAll(scope.enumItemList, processor)
+            || processAll(scope.modItemList, processor)
+            || processAll(scope.traitItemList, processor)
+            || processAll(scope.typeAliasList, processor)) {
+            return true
+        }
+
+        if (scope is RsFile && scope.isCrateRoot) {
+            val pkg = scope.containingCargoPackage
+            val module = scope.module
+
+            if (pkg != null && module != null) {
+                val finsStdMod = { name: String ->
+                    val crate = pkg.findCrateByName(name)?.crateRoot
+                    module.project.getPsiFor(crate)?.rustMod
+                }
+
+                // Rust injects implicit `extern crate std` in every crate root module unless it is
+                // a `#![no_std]` crate, in which case `extern crate core` is injected. However, if
+                // there is a (unstable?) `#![no_core]` attribute, nothing is injected.
+                //
+                // https://doc.rust-lang.org/book/using-rust-without-the-standard-library.html
+                // The stdlib lib itself is `#![no_std]`, and the core is `#![no_core]`
+                when (scope.attributes) {
+                    RsFile.Attributes.NONE -> {
+                        if (processor.lazy("std") { finsStdMod("std") }) {
+                            return true
+                        }
+                    }
+                    RsFile.Attributes.NO_STD -> {
+                        if (processor.lazy("core") { finsStdMod("core") }) {
+                            return true
+                        }
+                    }
+                    RsFile.Attributes.NO_CORE -> {
+                    }
+                }
+            }
+        }
+
+    }
+
+    if (Namespace.Values in ns) {
+        if (processAll(scope.functionList, processor)
+            || processAll(scope.constantList, processor)) {
+            return true
+        }
     }
 
     for (fmod in scope.foreignModItemList) {
@@ -215,25 +349,26 @@ fun processDeclarations(scope: RsItemsOwner, withPrivateImports: Boolean, proces
         if (processor(name, mod)) return true
     }
 
-    val (starImports, itemImports) = scope.useItemList
-        .filter { it.isPublic || withPrivateImports }
-        .partition { it.isStarImport }
+    fun resolveWithNs(ref: RsReference): RsCompositeElement? =
+        ref.multiResolve().find { element ->
+            element is RsNamedElement && ns.intersect(element.namespaces).isNotEmpty()
+        }
 
     for (use in itemImports) {
         val globList = use.useGlobList
         if (globList == null) {
             val path = use.path ?: continue
             val name = use.alias?.name ?: path.referenceName ?: continue
-            // XXX
-            if (processor.lazy(name, { path.reference.resolve() })) return true
+            if (processor.lazy(name, { resolveWithNs(path.reference) })) {
+                return true
+            }
         } else {
             for (glob in globList.useGlobList) {
                 val name = glob.alias?.name
                     ?: (if (glob.isSelf) use.path?.referenceName else null)
                     ?: glob.referenceName
                     ?: continue
-                // XXX
-                if (processor.lazy(name, { glob.reference.resolve() })) return true
+                if (processor.lazy(name, { resolveWithNs(glob.reference) })) return true
             }
         }
     }
@@ -241,9 +376,116 @@ fun processDeclarations(scope: RsItemsOwner, withPrivateImports: Boolean, proces
     for (use in starImports) {
         val mod = use.path?.reference?.resolve() ?: continue
 //        val newCtx = context.copy(visitedStarImports = context.visitedStarImports + this)
-        if (processDeclarations(mod, processor)) return true
+        if (processDeclarations(mod, ns, { v ->
+            v.name !in directlyDeclaredNames && originalProcessor(v)
+        })) return true
     }
 
     return false
 }
 
+fun processPattern(pattern: RsPat, processor: RsResolveProcessor): Boolean {
+    val boundNames = PsiTreeUtil.findChildrenOfType(pattern, RsPatBinding::class.java)
+    return processAll(boundNames, processor)
+}
+
+fun processCondition(condition: RsCondition?, place: RsCompositeElement, processor: RsResolveProcessor): Boolean {
+    if (condition == null || condition.isStrictAncestorOf(place)) return false
+    val pat = condition.pat
+    if (pat != null && processPattern(pat, processor)) return true
+    return false
+}
+
+fun processLexicalDeclarations(scope: RsCompositeElement, place: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
+    when (scope) {
+        is RsMod -> {
+            if (processDeclarations(scope, true, ns, processor)) return true
+        }
+
+        is RsStructItem,
+        is RsEnumItem,
+        is RsTypeAlias -> {
+            scope as RsGenericDeclaration
+            if (processAll(scope.typeParameters, processor)) return true
+        }
+
+        is RsTraitItem -> {
+            if (processAll(scope.typeParameters, processor)) return true
+            if (processor("Self", scope)) return true
+        }
+
+        is RsImplItem -> {
+            if (processAll(scope.typeParameters, processor)) return true
+            //TODO: handle types which are not `NamedElements` (e.g. tuples)
+            val selfType = (scope.typeReference as? RsBaseType)?.path?.reference?.resolve()
+            if (selfType != null && processor("Self", selfType)) return true
+        }
+
+        is RsFunction -> {
+            if (processAll(scope.typeParameters, processor)) return true
+            val selfParam = scope.selfParameter
+            if (selfParam != null && processor("self", selfParam)) return true
+
+            for (parameter in scope.valueParameters) {
+                val pat = parameter.pat ?: continue
+                if (processPattern(pat, processor)) return true
+            }
+        }
+
+        is RsBlock -> {
+            // We want to filter out
+            // all non strictly preceding let declarations.
+            //
+            // ```
+            // let x = 92; // visible
+            // let x = x;  // not visible
+            //         ^ context.place
+            // let x = 62; // not visible
+            // ```
+            val visited = mutableSetOf<String>()
+            if (Namespace.Values in ns) {
+                val shadowingProcessor = { v: Variant ->
+                    (v.name !in visited) && run {
+                        visited += v.name
+                        processor(v)
+                    }
+                }
+
+                for (stmt in scope.stmtList.asReversed()) {
+                    val pat = (stmt as? RsLetDecl)?.pat ?: continue
+                    if (PsiUtilCore.compareElementsByPosition(place, stmt) < 0) continue
+                    if (stmt.isStrictAncestorOf(place)) continue
+                    if (processPattern(pat, shadowingProcessor)) return true
+                }
+            }
+
+            return processDeclarations(scope, true, ns, processor)
+        }
+
+        is RsForExpr -> {
+            if (scope.expr?.isStrictAncestorOf(place) == true) return false
+            val pat = scope.pat
+            if (pat != null && processPattern(pat, processor)) return true
+        }
+
+        is RsIfExpr -> return processCondition(scope.condition, place, processor)
+        is RsWhileExpr -> return processCondition(scope.condition, place, processor)
+
+        is RsLambdaExpr -> {
+            for (parameter in scope.valueParameterList.valueParameterList) {
+                val pat = parameter.pat
+                if (pat != null && processPattern(pat, processor)) return true
+            }
+        }
+
+        is RsMatchArm -> {
+            // Rust allows to defined several patterns in the single match arm,
+            // but they all must bind the same variables, hence we can inspect
+            // only the first one.
+            val pat = scope.patList.firstOrNull()
+            if (pat != null && processPattern(pat, processor)) return true
+
+        }
+    }
+    return false
+}

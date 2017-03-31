@@ -52,6 +52,8 @@ class RsMultiResolveTest : RsResolveTestBase() {
     private fun doTest(@Language("Rust") code: String) {
         InlineFile(code)
         val ref = findElementInEditor<RsReferenceElement>().reference
-        check(ref.multiResolve().size == 2)
+        check(ref.multiResolve().size == 2) {
+            "Expected 2 variants, got ${ref.multiResolve()}"
+        }
     }
 }
