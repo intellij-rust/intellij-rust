@@ -34,8 +34,6 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             RsKeywordCompletionProvider("crate", "fn"))
         extend(CompletionType.BASIC, unsafeDeclarationPattern(),
             RsKeywordCompletionProvider("fn", "impl", "trait", "extern"))
-        extend(CompletionType.BASIC, usePattern(),
-            RsKeywordCompletionProvider("self", "super"))
         extend(CompletionType.BASIC, newCodeStatementPattern(),
             RsKeywordCompletionProvider("return", "let"))
         extend(CompletionType.BASIC, letPattern(),
@@ -79,9 +77,6 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     private fun externDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
         baseDeclarationPattern().and(statementBeginningPattern("extern"))
-
-    private fun usePattern(): PsiElementPattern.Capture<PsiElement> =
-        baseDeclarationPattern().and(statementBeginningPattern("use"))
 
     private fun unsafeDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
         baseDeclarationPattern().and(statementBeginningPattern("unsafe"))

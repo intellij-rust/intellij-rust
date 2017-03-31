@@ -23,16 +23,16 @@ class RsKeywordCompletionProvider(
 
     private companion object {
         val SUFFIXES = listOf(
-            AddSuffix(" ") to listOf("crate", "const", "enum", "extern", "fn", "impl", "let", "mod", "mut", "pub",
-                "static", "struct", "trait", "type", "unsafe", "use"),
-            AddSuffix("::") to listOf("self", "super")
+            AddSuffixInsertionHandler(" ") to listOf("crate", "const", "enum", "extern", "fn", "impl", "let", "mod", "mut", "pub",
+                "static", "struct", "trait", "type", "unsafe", "use")
         )
     }
 
-    private class AddSuffix(val suffix: String) : InsertHandler<LookupElement> {
-        override fun handleInsert(context: InsertionContext, item: LookupElement) {
-            context.document.insertString(context.selectionEndOffset, suffix)
-            EditorModificationUtil.moveCaretRelatively(context.editor, suffix.length)
-        }
+}
+
+class AddSuffixInsertionHandler(val suffix: String) : InsertHandler<LookupElement> {
+    override fun handleInsert(context: InsertionContext, item: LookupElement) {
+        context.document.insertString(context.selectionEndOffset, suffix)
+        EditorModificationUtil.moveCaretRelatively(context.editor, suffix.length)
     }
 }

@@ -157,13 +157,13 @@ fun processResolveVariants(crate: RsExternCrateItem, isCompletion: Boolean, proc
     return false
 }
 
-fun processResolveVariants(path: RsPath, processor: RsResolveProcessor): Boolean {
+fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val qualifier = path.path
     val parent = path.parent
     val ns = when (parent) {
         is RsPath, is RsTypeReference -> TYPES
         is RsUseItem -> if (parent.isStarImport) TYPES else TYPES_N_VALUES
-        is RsPathExpr -> VALUES
+        is RsPathExpr -> if (isCompletion) TYPES_N_VALUES else VALUES
         else -> TYPES_N_VALUES
     }
 

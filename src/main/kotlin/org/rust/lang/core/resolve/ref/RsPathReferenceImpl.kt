@@ -6,10 +6,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.asRustPath
 import org.rust.lang.core.psi.ext.isStarImport
-import org.rust.lang.core.resolve.MultiResolveProcessor
-import org.rust.lang.core.resolve.Namespace
-import org.rust.lang.core.resolve.ResolveEngine
-import org.rust.lang.core.resolve.processResolveVariants
+import org.rust.lang.core.resolve.*
 
 
 class RsPathReferenceImpl(
@@ -19,18 +16,11 @@ class RsPathReferenceImpl(
 
     override val RsPath.referenceAnchor: PsiElement get() = referenceNameElement
 
-    override fun resolveInner(): List<RsCompositeElement> {
-        return MultiResolveProcessor(element.referenceName).run { processResolveVariants(element, it) }
-//        val path = element.asRustPath ?: return emptyList()
-//        val parent = element.parent.parent
-//        return when (parent) {
-//            is RsCallExpr -> ResolveEngine.resolveCallExpr(path, element, namespaceForResolve)
-//            else -> ResolveEngine.resolve(path, element, namespaceForResolve)
-//        }
-    }
+    override fun resolveInner(): List<RsCompositeElement> =
+        MultiResolveProcessor(element.referenceName).run { processResolveVariants(element, false, it) }
 
     override fun getVariants(): Array<out Any> =
-        CompletionEngine.completePath(element, namespaceForCompletion)
+        CompletionProcessor().run { processResolveVariants(element, true, it) }
 
     override fun isReferenceTo(element: PsiElement): Boolean {
         val target = resolve()

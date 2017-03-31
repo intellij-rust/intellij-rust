@@ -7,52 +7,27 @@ import com.intellij.openapi.editor.EditorModificationUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.psi.ext.asRustPath
+import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.psi.ext.valueParameters
-import org.rust.lang.core.resolve.*
-import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.RustTypificationEngine
 import org.rust.lang.core.types.types.RustUnknownType
-import org.rust.utils.sequenceOfNotNull
 
 object CompletionEngine {
     const val KEYWORD_PRIORITY = 10.0
-
-    fun completePath(ref: RsPath, namespace: Namespace?): Array<out LookupElement> {
-        val path = ref.asRustPath ?: return emptyArray()
-
-        return if (path.segments.isNotEmpty()) {
-            val qual = path.dropLastSegment()
-            ResolveEngine.resolve(qual, ref, Namespace.Types).firstOrNull()
-                .completionsFromResolveScope()
-        } else {
-            lexicalDeclarations(ref)
-                .filterByNamespace(namespace)
-                .completionsFromScopeEntries()
-        }
-    }
 }
-
-private fun RsCompositeElement?.completionsFromResolveScope(): Array<LookupElement> =
-    if (this == null)
-        emptyArray()
-    else
-        sequenceOfNotNull(
-            containingDeclarations(this),
-            associatedDeclarations(this)
-        ).flatten().completionsFromScopeEntries()
-
-private fun Sequence<ScopeEntry>.completionsFromScopeEntries(): Array<LookupElement> =
-    mapNotNull {
-        it.element?.createLookupElement(it.name)
-    }.toList().toTypedArray()
 
 fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
     val base = LookupElementBuilder.create(this, scopeName)
         .withIcon(if (this is RsFile) RsIcons.MODULE else getIcon(0))
 
     return when (this) {
+        is RsMod -> if (scopeName == "self" || scopeName == "super") {
+            base.withInsertHandler(AddSuffixInsertionHandler("::"))
+        } else {
+            base
+        }
+
         is RsConstant -> base.withTypeText(typeReference?.text)
         is RsFieldDecl -> base.withTypeText(typeReference?.text)
 
@@ -103,16 +78,6 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
             })
 
         else -> base
-    }
-}
-
-private fun RustPath.dropLastSegment(): RustPath {
-    check(segments.isNotEmpty())
-    val segments = segments.subList(0, segments.size - 1)
-    return when (this) {
-        is RustPath.CrateRelative -> RustPath.CrateRelative(segments)
-        is RustPath.ModRelative -> RustPath.ModRelative(level, segments)
-        is RustPath.Named -> RustPath.Named(head, segments)
     }
 }
 

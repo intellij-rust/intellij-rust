@@ -318,7 +318,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     """)
 
     fun testUseSuper() = checkSingleCompletion("super::", """
-        use su/*caret*/
+        mod m { use su/*caret*/ }
     """)
 
     fun `test else`() = checkCompletion("else", """
