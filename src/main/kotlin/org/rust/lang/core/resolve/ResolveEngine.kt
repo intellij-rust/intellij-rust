@@ -91,13 +91,6 @@ object ResolveEngine {
         return Result(el, pkg)
     }
 
-    fun resolveCallExpr(path: RustPath, element: RsPath, namespace: Namespace?): List<RsCompositeElement> {
-        val fn = resolve(path, element, namespace, false).asSequence()
-            .filterIsInstance<RsNamedElement>()
-            .chooseMajor()
-        return if (fn == null) emptyList() else listOf(fn)
-    }
-
     fun resolveLabel(label: RsLabel): RsLabelDecl? =
         label.ancestors
             .takeWhile { it !is RsLambdaExpr && it !is RsFunction }
@@ -125,19 +118,6 @@ object ResolveEngine {
         get() = splitToSequence("::")
             .map { RustPathSegment(it, emptyList()) }
             .toList()
-
-    /**
-     * Chooses the major element from the given sequence of candidates. For instance,
-     * a function/method from inherent implementation takes precedence over trait implementations.
-     */
-    private fun Sequence<RsNamedElement>.chooseMajor(): RsNamedElement? =
-        partition { it is RsFunction && it.isInherentImpl }.let {
-            when {
-                it.first.isNotEmpty() -> it.first[0]
-                it.second.isNotEmpty() -> it.second[0]
-                else -> null
-            }
-        }
 }
 
 /**
