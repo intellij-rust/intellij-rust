@@ -5,7 +5,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor
-import org.rust.lang.core.psi.RS_BLOCK_LIKE_EXPRESSIONS
+import org.rust.lang.core.psi.RsElementTypes.BLOCK_EXPR
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsMatchArm
 import org.rust.lang.core.psi.ext.elementType
@@ -30,7 +30,7 @@ class RsMatchArmCommaFormatProcessor : PreFormatProcessor {
 
     private fun removeCommaAfterBlock(element: RsMatchArm): Boolean {
         val expr = element.expr ?: return false
-        if (expr.elementType !in RS_BLOCK_LIKE_EXPRESSIONS) return false
+        if (expr.elementType != BLOCK_EXPR) return false
         val comma = expr.getNextNonCommentSibling() ?: return false
         if (comma.elementType == COMMA) {
             comma.delete()

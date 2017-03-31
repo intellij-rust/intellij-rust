@@ -202,6 +202,7 @@ class RsFormatterTest : RsFormatterTestBase() {
         fn main() { if let -10 ... -1 = -8 {} }
     """)
 
+    // https://internals.rust-lang.org/t/syntax-of-block-like-expressions-in-match-arms/5025
     fun `test removes commas in match arms with blocks`() = doTextTest("""
         fn main() {
             match x {
@@ -220,9 +221,9 @@ class RsFormatterTest : RsFormatterTestBase() {
                 1 => 1,
                 2 => { 2 }
                 3 => { 3 }
-                4 => loop {}
+                4 => loop {},
                 5 => 5,
-                6 => if true {} else {}
+                6 => if true {} else {},
                 7 => 7
             }
         }

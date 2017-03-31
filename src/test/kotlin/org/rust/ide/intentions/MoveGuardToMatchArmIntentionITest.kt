@@ -38,7 +38,7 @@ class MoveGuardToMatchArmIntentionTest : RsIntentionTestBase(MoveGuardToMatchArm
                 1 => if true/*caret*/ {
                     let x = 92;
                     println!("{}", x);
-                }
+                },
             }
         }
     """)
@@ -69,7 +69,7 @@ class MoveGuardToMatchArmIntentionTest : RsIntentionTestBase(MoveGuardToMatchArm
     """, """
         fn main() {
             match 1 {
-                1 => if true { () }
+                1 => if true { () },
                 2 => ()
             }
         }
