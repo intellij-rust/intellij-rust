@@ -198,9 +198,18 @@ fun processResolveVariants(path: RsPath, processor: RsResolveProcessor): Boolean
         return false
     }
 
+    val prevScope = mutableSetOf<String>()
     for (scope in path.ancestors) {
-        if (processLexicalDeclarations(scope as RsCompositeElement, path, ns, processor)) return true
+        val currScope = mutableSetOf<String>()
+        val shadowingProcessor = { v: Variant ->
+            v.name !in prevScope && run {
+                currScope += v.name
+                processor(v)
+            }
+        }
+        if (processLexicalDeclarations(scope as RsCompositeElement, path, ns, shadowingProcessor)) return true
         if (scope is RsMod) break
+        prevScope.addAll(currScope)
     }
 
     val preludeFile = path.containingCargoPackage?.findCrateByName("std")?.crateRoot
