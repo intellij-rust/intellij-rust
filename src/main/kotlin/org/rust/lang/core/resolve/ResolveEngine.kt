@@ -1,7 +1,6 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
@@ -14,7 +13,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.symbols.RustPath
-import org.rust.lang.core.symbols.RustPathSegment
 import org.rust.lang.core.types.type
 import org.rust.utils.sequenceOfNotNull
 import java.util.*
@@ -72,30 +70,11 @@ object ResolveEngine {
         val pkg: CargoWorkspace.Package
     )
 
-    /**
-     * Resolves an absolute path.
-     */
-    fun resolve(path: String, module: Module): Result? {
-        val segments = path.segments
-        if (segments.isEmpty()) return null
-        val cargoProject = module.cargoWorkspace ?: return null
-        val pkg = cargoProject.findPackage(segments[0].name) ?: return null
-        val vfm = VirtualFileManager.getInstance()
-        val rustPath = RustPath.CrateRelative(segments.drop(1))
-        val el = pkg.targets.asSequence()
-            .mapNotNull { vfm.findFileByUrl(it.crateRootUrl) }
-            .mapNotNull { module.project.getPsiFor(it) as? RsCompositeElement }
-            .flatMap { ResolveEngine.resolve(rustPath, it).asSequence() }
-            .filterIsInstance(RsNamedElement::class.java)
-            .firstOrNull() ?: return null
-        return Result(el, pkg)
-    }
-
     fun resolveLabel(label: RsLabel): RsLabelDecl? =
         label.ancestors
             .takeWhile { it !is RsLambdaExpr && it !is RsFunction }
             .mapNotNull { (it as? RsLabeledExpression)?.labelDecl }
-            .find { it.name == label.quoteIdentifier.text}
+            .find { it.name == label.quoteIdentifier.text }
 
     fun resolveLifetime(lifetimeRef: RsLifetime): RsLifetimeDecl? =
         if (lifetimeRef.isPredefined) {
@@ -111,13 +90,8 @@ object ResolveEngine {
                     }
                 }
                 .flatMap { it.lifetimeDecls }
-                .find { it.name ==  lifetimeRef.quoteIdentifier.text}
+                .find { it.name == lifetimeRef.quoteIdentifier.text }
         }
-
-    private val String.segments: List<RustPathSegment>
-        get() = splitToSequence("::")
-            .map { RustPathSegment(it, emptyList()) }
-            .toList()
 }
 
 /**

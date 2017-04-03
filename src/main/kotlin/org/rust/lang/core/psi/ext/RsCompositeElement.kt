@@ -9,6 +9,7 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.cargoWorkspace
+import org.rust.lang.core.psi.CODE_FRAGMENT_FILE
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.resolve.ref.RsReference
@@ -25,13 +26,20 @@ val RsModDeclItem.containingMod: RsMod
         ?: error("Rust mod decl outside of a module")
 
 val RsCompositeElement.crateRoot: RsMod? get() {
-    val mod = containingFile as? RsFile ?: return null
+    val codeFragmentFile = getUserData(CODE_FRAGMENT_FILE)
+    if (codeFragmentFile != null) {
+        return codeFragmentFile.crateRoot
+    }
 
-    val root = mod.superMods.lastOrNull()
-    return if (root != null && root.isCrateRoot)
-        root
-    else
-        null
+    return if (this is RsFile) {
+        val root = superMods.lastOrNull()
+        if (root != null && root.isCrateRoot)
+            root
+        else
+            null
+    } else {
+        (parent as? RsCompositeElement)?.crateRoot
+    }
 }
 
 val RsCompositeElement.containingCargoTarget: CargoWorkspace.Target? get() {

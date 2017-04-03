@@ -2,6 +2,7 @@
 
 package org.rust.lang.core.resolve
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiManager
@@ -9,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.util.getPsiFor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -220,6 +222,23 @@ fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsRes
     if (prelude != null && processDeclarations(prelude, false, ns, { v -> v.name !in prevScope && processor(v) })) return true
 
     return false
+}
+
+/**
+ * Resolves an absolute path.
+ */
+fun resolveStringPath(path: String, module: Module): ResolveEngine.Result? {
+    val parts = path.split("::", limit = 2)
+    if (parts.size != 2) return null
+    val workspace = module.cargoWorkspace ?: return null
+    val pkg = workspace.findPackage(parts[0]) ?: return null
+
+    val el = pkg.targets.asSequence()
+        .mapNotNull { RsCodeFragmentFactory(module.project).createCrateRelativePath("::${parts[1]}", it) }
+        .mapNotNull { it.path.reference.resolve() }
+        .filterIsInstance<RsNamedElement>()
+        .firstOrNull() ?: return null
+    return ResolveEngine.Result(el, pkg)
 }
 
 
