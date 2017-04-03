@@ -24,7 +24,6 @@ import org.rust.lang.core.psi.ext.module
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.index.RsModulesIndex
-import org.rust.lang.core.symbols.RustPath
 
 class RsFile(
     fileViewProvider: FileViewProvider
@@ -56,7 +55,7 @@ class RsFile(
 
     override val modName: String? = if (name != RsMod.MOD_RS) FileUtil.getNameWithoutExtension(name) else parent?.name
 
-    override val crateRelativePath: RustPath.CrateRelative? get() = RustPsiImplUtil.modCrateRelativePath(this)
+    override val crateRelativePath: String? get() = RustPsiImplUtil.modCrateRelativePath(this)
 
     override val ownsDirectory: Boolean
         get() = name == RsMod.MOD_RS || isCrateRoot

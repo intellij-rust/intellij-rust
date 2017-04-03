@@ -25,7 +25,7 @@ class RsDropRefInspection : RsLocalInspectionTool() {
         val pathExpr = expr.expr as? RsPathExpr ?: return
 
         val resEl = pathExpr.path.reference.resolve()
-        if (resEl !is RsFunction || resEl.crateRelativePath.toString() != "::mem::drop") return
+        if (resEl !is RsFunction || resEl.crateRelativePath != "::mem::drop") return
 
         val args = expr.valueArgumentList.exprList
         if (args.size != 1) return

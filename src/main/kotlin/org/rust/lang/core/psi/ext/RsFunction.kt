@@ -7,7 +7,6 @@ import org.rust.ide.icons.RsIcons
 import org.rust.ide.icons.addTestMark
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsFunctionStub
-import org.rust.lang.core.symbols.RustPath
 import javax.swing.Icon
 
 val RsFunction.isAssocFn: Boolean get() = selfParameter == null
@@ -71,8 +70,8 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublicNonStubbed(this)
 
     override val isAbstract: Boolean get() = stub?.isAbstract ?: (block == null)
-    
-    override val crateRelativePath: RustPath.CrateRelative? get() = RustPsiImplUtil.crateRelativePath(this)
+
+    override val crateRelativePath: String? get() = RustPsiImplUtil.crateRelativePath(this)
 
     final override val innerAttrList: List<RsInnerAttr>
         get() = block?.innerAttrList.orEmpty()

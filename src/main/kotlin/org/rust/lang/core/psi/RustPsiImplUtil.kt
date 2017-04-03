@@ -2,8 +2,6 @@ package org.rust.lang.core.psi
 
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.RsVisibilityStub
-import org.rust.lang.core.symbols.RustPath
-import org.rust.lang.core.symbols.RustPathSegment
 
 /**
  * Mixin methods to implement PSI interfaces without copy pasting and
@@ -17,16 +15,18 @@ object RustPsiImplUtil {
     fun isPublicNonStubbed(element: RsVisibilityOwner): Boolean =
         element.vis != null
 
-    fun crateRelativePath(element: RsNamedElement): RustPath.CrateRelative? {
-        val segment = element.name?.let { RustPathSegment.withoutGenerics(it) } ?: return null
-        return element.containingMod?.crateRelativePath?.join(segment)
+    fun crateRelativePath(element: RsNamedElement): String? {
+        val name = element.name ?: return null
+        val qualifier = element.containingMod?.crateRelativePath ?: return null
+        return "$qualifier::$name"
     }
 
-    fun modCrateRelativePath(mod: RsMod): RustPath.CrateRelative? {
+    fun modCrateRelativePath(mod: RsMod): String? {
         val segments = mod.superMods.asReversed().drop(1).map {
-            RustPathSegment.withoutGenerics(it.modName ?: return null)
+            it.modName ?: return null
         }
-        return RustPath.CrateRelative(segments)
+        if (segments.isEmpty()) return ""
+        return "::" + segments.joinToString("::")
     }
 }
 

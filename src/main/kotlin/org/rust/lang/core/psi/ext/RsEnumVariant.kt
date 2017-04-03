@@ -6,8 +6,6 @@ import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.stubs.RsEnumVariantStub
-import org.rust.lang.core.symbols.RustPath
-import org.rust.lang.core.symbols.RustPathSegment
 import javax.swing.Icon
 
 val RsEnumVariant.parentEnum: RsEnumItem get() = parent?.parent as RsEnumItem
@@ -18,9 +16,9 @@ abstract class RsEnumVariantImplMixin : RsStubbedNamedElementImpl<RsEnumVariantS
 
     override fun getIcon(flags: Int): Icon = RsIcons.ENUM_VARIANT
 
-    override val crateRelativePath: RustPath.CrateRelative? get() {
+    override val crateRelativePath: String? get() {
         val variantName = name ?: return null
-        return parentEnum.crateRelativePath?.join(RustPathSegment.withoutGenerics(variantName))
+        return parentEnum.crateRelativePath?.let { "$it::$variantName" }
     }
 }
 

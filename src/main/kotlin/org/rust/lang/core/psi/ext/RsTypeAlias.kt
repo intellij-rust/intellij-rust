@@ -10,7 +10,6 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.RustPsiImplUtil
 import org.rust.lang.core.stubs.RsTypeAliasStub
-import org.rust.lang.core.symbols.RustPath
 import javax.swing.Icon
 
 enum class RsTypeAliasRole {
@@ -46,6 +45,6 @@ abstract class RsTypeAliasImplMixin : RsStubbedNamedElementImpl<RsTypeAliasStub>
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 
     override val isAbstract: Boolean get() = typeReference == null
-    
-    override val crateRelativePath: RustPath.CrateRelative? get() = RustPsiImplUtil.crateRelativePath(this)
+
+    override val crateRelativePath: String? get() = RustPsiImplUtil.crateRelativePath(this)
 }

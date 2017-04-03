@@ -1,9 +1,7 @@
 package org.rust.lang.core.psi.ext
 
-import org.rust.lang.core.symbols.RustPath
-
 interface RsQualifiedNamedElement : RsNamedElement {
-    val crateRelativePath: RustPath.CrateRelative?
+    val crateRelativePath: String?
 }
 
 val RsQualifiedNamedElement.qualifiedName: String? get() {

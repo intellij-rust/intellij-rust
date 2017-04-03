@@ -11,10 +11,6 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 import org.rust.lang.core.psi.ext.parentOfType
-import org.rust.lang.core.resolve.Namespace
-import org.rust.lang.core.resolve.ResolveEngine
-import org.rust.lang.core.symbols.RustPath
-import org.rust.lang.core.symbols.RustPathSegment
 
 class RsDebuggerTypesHelper(process: CidrDebugProcess) : CidrDebuggerTypesHelper(process) {
     override fun computeSourcePosition(value: CidrMemberValue): XSourcePosition? = null

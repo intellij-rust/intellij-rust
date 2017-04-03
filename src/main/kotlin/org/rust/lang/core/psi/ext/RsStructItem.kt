@@ -8,7 +8,6 @@ import org.rust.lang.core.psi.RsElementTypes.UNION
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RustPsiImplUtil
 import org.rust.lang.core.stubs.RsStructItemStub
-import org.rust.lang.core.symbols.RustPath
 import javax.swing.Icon
 
 val RsStructItem.union: PsiElement?
@@ -36,5 +35,5 @@ abstract class RsStructItemImplMixin : RsStubbedNamedElementImpl<RsStructItemStu
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 
-    override val crateRelativePath: RustPath.CrateRelative? get() = RustPsiImplUtil.crateRelativePath(this)
+    override val crateRelativePath: String? get() = RustPsiImplUtil.crateRelativePath(this)
 }
