@@ -6,6 +6,7 @@ import com.jetbrains.cidr.execution.debugger.CidrDebugProcess
 import com.jetbrains.cidr.execution.debugger.backend.LLValue
 import com.jetbrains.cidr.execution.debugger.evaluation.CidrDebuggerTypesHelper
 import com.jetbrains.cidr.execution.debugger.evaluation.CidrMemberValue
+import org.rust.lang.core.psi.RsCodeFragmentFactory
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
@@ -39,6 +40,8 @@ class RsDebuggerTypesHelper(process: CidrDebugProcess) : CidrDebuggerTypesHelper
 private fun resolveToDeclaration(ctx: PsiElement?, name: String): PsiElement? {
     val composite = ctx?.getNextNonCommentSibling()?.parentOfType<RsCompositeElement>(strict = false)
         ?: return null
-    val path = RustPath.Named(RustPathSegment(name, emptyList()), emptyList())
-    return ResolveEngine.resolve(path, composite, Namespace.Values).firstOrNull()
+    val expr = RsCodeFragmentFactory(composite.project).createLocalVariable(name, composite)
+        ?: return null
+
+    return expr.path.reference.resolve()
 }

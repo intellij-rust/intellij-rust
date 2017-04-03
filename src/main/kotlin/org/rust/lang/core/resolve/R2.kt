@@ -203,7 +203,10 @@ fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsRes
     }
 
     val prevScope = mutableSetOf<String>()
-    for (scope in path.ancestors) {
+    var cameFrom: RsCompositeElement = path
+    var scope = path.parent
+    // TODO: there's treeWalkUp
+    while (scope != null) {
         val currScope = mutableListOf<String>()
         val shadowingProcessor = { v: Variant ->
             v.name !in prevScope && run {
@@ -211,9 +214,11 @@ fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsRes
                 processor(v)
             }
         }
-        if (processLexicalDeclarations(scope as RsCompositeElement, path, ns, shadowingProcessor)) return true
+        if (processLexicalDeclarations(scope as RsCompositeElement, cameFrom, ns, shadowingProcessor)) return true
         prevScope.addAll(currScope)
         if (scope is RsMod) break
+        cameFrom = scope
+        scope = scope.getUserData(RS_CODE_FRAGMENT_CONTEXT) ?: scope.parent
     }
 
     val preludeFile = path.containingCargoPackage?.findCrateByName("std")?.crateRoot
@@ -419,14 +424,15 @@ fun processPattern(pattern: RsPat, processor: RsResolveProcessor): Boolean {
     return processAll(boundNames, processor)
 }
 
-fun processCondition(condition: RsCondition?, place: RsCompositeElement, processor: RsResolveProcessor): Boolean {
-    if (condition == null || condition.isStrictAncestorOf(place)) return false
+fun processCondition(condition: RsCondition?, cameFrom: RsCompositeElement, processor: RsResolveProcessor): Boolean {
+    if (condition == null || condition == cameFrom) return false
     val pat = condition.pat
     if (pat != null && processPattern(pat, processor)) return true
     return false
 }
 
-fun processLexicalDeclarations(scope: RsCompositeElement, place: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
+fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
+    check(cameFrom.parent == scope || cameFrom.getUserData(RS_CODE_FRAGMENT_CONTEXT) == scope)
     when (scope) {
         is RsMod -> {
             if (processDeclarations(scope, true, ns, processor)) return true
@@ -487,8 +493,8 @@ fun processLexicalDeclarations(scope: RsCompositeElement, place: RsCompositeElem
 
                 for (stmt in scope.stmtList.asReversed()) {
                     val pat = (stmt as? RsLetDecl)?.pat ?: continue
-                    if (PsiUtilCore.compareElementsByPosition(place, stmt) < 0) continue
-                    if (stmt.isStrictAncestorOf(place)) continue
+                    if (PsiUtilCore.compareElementsByPosition(cameFrom, stmt) < 0) continue
+                    if (stmt == cameFrom) continue
                     if (processPattern(pat, shadowingProcessor)) return true
                 }
             }
@@ -497,13 +503,13 @@ fun processLexicalDeclarations(scope: RsCompositeElement, place: RsCompositeElem
         }
 
         is RsForExpr -> {
-            if (scope.expr?.isStrictAncestorOf(place) == true) return false
+            if (scope.expr == cameFrom) return false
             val pat = scope.pat
             if (pat != null && processPattern(pat, processor)) return true
         }
 
-        is RsIfExpr -> return processCondition(scope.condition, place, processor)
-        is RsWhileExpr -> return processCondition(scope.condition, place, processor)
+        is RsIfExpr -> return processCondition(scope.condition, cameFrom, processor)
+        is RsWhileExpr -> return processCondition(scope.condition, cameFrom, processor)
 
         is RsLambdaExpr -> {
             for (parameter in scope.valueParameterList.valueParameterList) {

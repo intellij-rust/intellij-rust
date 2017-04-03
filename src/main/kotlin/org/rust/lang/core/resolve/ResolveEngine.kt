@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.getPsiFor

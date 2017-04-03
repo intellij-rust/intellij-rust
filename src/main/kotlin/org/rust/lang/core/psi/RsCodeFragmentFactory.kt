@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiManager
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.lang.core.psi.ext.RsCompositeElement
 
 class RsCodeFragmentFactory(private val project: Project) {
     private val psiFactory = RsPsiFactory(project)
@@ -16,11 +17,18 @@ class RsCodeFragmentFactory(private val project: Project) {
         expr.setContext(crateRoot)
         return expr
     }
+
+    fun createLocalVariable(name: String, context: RsCompositeElement): RsPathExpr? {
+        val expr = psiFactory.tryCreatePathExpr(name) ?: return null
+        expr.setContext(context)
+        return expr
+    }
 }
 
-val CODE_FRAGMENT_FILE = Key.create<RsFile>("org.rust.lang.core.psi.CODE_FRAGMENT_FILE")
+// TODO: should probably use `.getContext` instead of our own thing.
+val RS_CODE_FRAGMENT_CONTEXT = Key.create<RsCompositeElement>("org.rust.lang.core.psi.CODE_FRAGMENT_FILE")
 
-private fun RsPathExpr.setContext(file: RsFile) {
-    putUserData(CODE_FRAGMENT_FILE, file)
+private fun RsPathExpr.setContext(ctx: RsCompositeElement) {
+    putUserData(RS_CODE_FRAGMENT_CONTEXT, ctx)
 }
 
