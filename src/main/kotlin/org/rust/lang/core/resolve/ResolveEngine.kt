@@ -65,11 +65,6 @@ object ResolveEngine {
             .toList()
     }
 
-    data class Result(
-        val element: RsNamedElement,
-        val pkg: CargoWorkspace.Package
-    )
-
     fun resolveLabel(label: RsLabel): RsLabelDecl? =
         label.ancestors
             .takeWhile { it !is RsLambdaExpr && it !is RsFunction }

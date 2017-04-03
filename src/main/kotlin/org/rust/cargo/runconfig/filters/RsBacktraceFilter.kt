@@ -74,11 +74,11 @@ private class RsBacktraceItemFilter(
     }
 
     private fun extractFnHyperlink(funcName: String, start: Int, end: Int): Filter.ResultItem? {
-        val func = resolveStringPath(funcName, module) ?: return null
-        val funcFile = func.element.containingFile
+        val (element, pkg) = resolveStringPath(funcName, module) ?: return null
+        val funcFile = element.containingFile
         val doc = docManager.getDocument(funcFile) ?: return null
-        val link = OpenFileHyperlinkInfo(project, funcFile.virtualFile, doc.getLineNumber(func.element.textOffset))
-        val linkAttr = if (func.pkg.origin != PackageOrigin.WORKSPACE) GRAYED_LINK else null
+        val link = OpenFileHyperlinkInfo(project, funcFile.virtualFile, doc.getLineNumber(element.textOffset))
+        val linkAttr = if (pkg.origin != PackageOrigin.WORKSPACE) GRAYED_LINK else null
         return Filter.ResultItem(start, end, link, linkAttr)
     }
 

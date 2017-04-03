@@ -227,7 +227,7 @@ fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsRes
 /**
  * Resolves an absolute path.
  */
-fun resolveStringPath(path: String, module: Module): ResolveEngine.Result? {
+fun resolveStringPath(path: String, module: Module): Pair<RsNamedElement, CargoWorkspace.Package>? {
     val parts = path.split("::", limit = 2)
     if (parts.size != 2) return null
     val workspace = module.cargoWorkspace ?: return null
@@ -238,7 +238,7 @@ fun resolveStringPath(path: String, module: Module): ResolveEngine.Result? {
         .mapNotNull { it.path.reference.resolve() }
         .filterIsInstance<RsNamedElement>()
         .firstOrNull() ?: return null
-    return ResolveEngine.Result(el, pkg)
+    return el to pkg
 }
 
 
