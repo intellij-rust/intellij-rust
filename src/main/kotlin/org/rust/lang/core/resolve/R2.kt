@@ -21,41 +21,6 @@ import org.rust.lang.core.types.stripAllRefsIfAny
 import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustStructType
 
-
-private data class SimpleScopeEntry(override val name: String, override val element: RsCompositeElement) : ScopeEntry
-
-private class LazyScopeEntry(
-    override val name: String,
-    thunk: Lazy<RsCompositeElement?>
-) : ScopeEntry {
-    override val element: RsCompositeElement? by thunk
-
-    override fun toString(): String = "LazyScopeEntry($name, $element)"
-}
-
-private operator fun RsResolveProcessor.invoke(name: String, e: RsCompositeElement): Boolean {
-    return this(SimpleScopeEntry(name, e))
-}
-
-private fun RsResolveProcessor.lazy(name: String, e: () -> RsCompositeElement?): Boolean {
-    return this(LazyScopeEntry(name, lazy(e)))
-}
-
-private operator fun RsResolveProcessor.invoke(e: RsNamedElement): Boolean {
-    val name = e.name ?: return false
-    return this(name, e)
-}
-
-private fun processAll(elements: Collection<RsNamedElement>, processor: RsResolveProcessor): Boolean {
-    for (e in elements) {
-        if (processor(e)) return true
-    }
-    return false
-}
-
-
-/// References
-
 fun processResolveVariants(fieldExpr: RsFieldExpr, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val receiverType = fieldExpr.expr.type.stripAllRefsIfAny()
 
@@ -224,23 +189,14 @@ fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsRes
     return false
 }
 
-// There's already similar functions in TreeUtils, should use it
-private fun walkUp(
-    start: RsCompositeElement,
-    stopAfter: (RsCompositeElement) -> Boolean,
-    processor: (cameFrom: RsCompositeElement, scope: RsCompositeElement) -> Boolean
-): Boolean {
-
-    var cameFrom: RsCompositeElement = start
-    var scope = start.parent as RsCompositeElement?
-    while (scope != null) {
-        if (processor(cameFrom, scope)) return true
-        if (stopAfter(scope)) break
-        cameFrom = scope
-        scope = scope.getUserData(RS_CODE_FRAGMENT_CONTEXT) ?: (scope.parent as RsCompositeElement?)
+fun processLocalVariables(place: RsCompositeElement, processor: (RsPatBinding) -> Unit) {
+    walkUp(place, { it is RsItemElement}) { cameFrom, scope ->
+        processLexicalDeclarations(scope, cameFrom, VALUES) { v ->
+            val el = v.element
+            if (el is RsPatBinding) processor(el)
+            true
+        }
     }
-
-    return false
 }
 
 /**
@@ -261,9 +217,7 @@ fun resolveStringPath(path: String, module: Module): Pair<RsNamedElement, CargoW
 }
 
 
-/// Named elements
-
-fun processFields(struct: RsFieldsOwner, processor: RsResolveProcessor): Boolean {
+private fun processFields(struct: RsFieldsOwner, processor: RsResolveProcessor): Boolean {
     if (processAll(struct.namedFields, processor)) return true
 
     for ((idx, field) in struct.positionalFields.withIndex()) {
@@ -272,17 +226,17 @@ fun processFields(struct: RsFieldsOwner, processor: RsResolveProcessor): Boolean
     return false
 }
 
-fun processMethods(project: Project, receiver: RustType, processor: RsResolveProcessor): Boolean {
+private fun processMethods(project: Project, receiver: RustType, processor: RsResolveProcessor): Boolean {
     val methods = receiver.getMethodsIn(project)
     return processFnsWithInherentPriority(methods, processor)
 }
 
-fun processAssociatedFunctions(project: Project, type: RustType, processor: RsResolveProcessor): Boolean {
+private fun processAssociatedFunctions(project: Project, type: RustType, processor: RsResolveProcessor): Boolean {
     val methodsAndFns = RsImplIndex.findMethodsAndAssociatedFunctionsFor(type, project)
     return processFnsWithInherentPriority(methodsAndFns, processor)
 }
 
-fun processFnsWithInherentPriority(fns: Sequence<RsFunction>, processor: RsResolveProcessor): Boolean {
+private fun processFnsWithInherentPriority(fns: Sequence<RsFunction>, processor: RsResolveProcessor): Boolean {
     val (inherent, nonInherent) = fns.partition { it is RsFunction && it.isInherentImpl }
     if (processAll(inherent, processor)) return true
 
@@ -294,7 +248,7 @@ fun processFnsWithInherentPriority(fns: Sequence<RsFunction>, processor: RsResol
     return false
 }
 
-fun processDeclarations(scope: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
+private fun processDeclarations(scope: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
     when (scope) {
         is RsEnumItem -> {
             if (processAll(scope.enumBody.enumVariantList, processor)) return true
@@ -307,7 +261,7 @@ fun processDeclarations(scope: RsCompositeElement, ns: Set<Namespace>, processor
     return false
 }
 
-fun processDeclarations(scope: RsItemsOwner, withPrivateImports: Boolean, ns: Set<Namespace>, originalProcessor: RsResolveProcessor): Boolean {
+private fun processDeclarations(scope: RsItemsOwner, withPrivateImports: Boolean, ns: Set<Namespace>, originalProcessor: RsResolveProcessor): Boolean {
     val (starImports, itemImports) = scope.useItemList
         .filter { it.isPublic || withPrivateImports }
         .partition { it.isStarImport }
@@ -433,30 +387,21 @@ fun processDeclarations(scope: RsItemsOwner, withPrivateImports: Boolean, ns: Se
     return false
 }
 
-fun processPattern(pattern: RsPat, processor: RsResolveProcessor): Boolean {
-    val boundNames = PsiTreeUtil.findChildrenOfType(pattern, RsPatBinding::class.java)
-    return processAll(boundNames, processor)
-}
-
-fun processCondition(condition: RsCondition?, cameFrom: RsCompositeElement, processor: RsResolveProcessor): Boolean {
-    if (condition == null || condition == cameFrom) return false
-    val pat = condition.pat
-    if (pat != null && processPattern(pat, processor)) return true
-    return false
-}
-
-fun processLocalVariables(place: RsCompositeElement, processor: (RsPatBinding) -> Unit) {
-    walkUp(place, { it is RsItemElement}) { cameFrom, scope ->
-        processLexicalDeclarations(scope, cameFrom, VALUES) { v ->
-            val el = v.element
-            if (el is RsPatBinding) processor(el)
-            true
-        }
-    }
-}
-
-fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
+private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
     check(cameFrom.parent == scope || cameFrom.getUserData(RS_CODE_FRAGMENT_CONTEXT) == scope)
+
+    fun processPattern(pattern: RsPat, processor: RsResolveProcessor): Boolean {
+        val boundNames = PsiTreeUtil.findChildrenOfType(pattern, RsPatBinding::class.java)
+        return processAll(boundNames, processor)
+    }
+
+    fun processCondition(condition: RsCondition?, processor: RsResolveProcessor): Boolean {
+        if (condition == null || condition == cameFrom) return false
+        val pat = condition.pat
+        if (pat != null && processPattern(pat, processor)) return true
+        return false
+    }
+
     when (scope) {
         is RsMod -> {
             if (processDeclarations(scope, true, ns, processor)) return true
@@ -532,8 +477,8 @@ fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCompositeE
             if (pat != null && processPattern(pat, processor)) return true
         }
 
-        is RsIfExpr -> return processCondition(scope.condition, cameFrom, processor)
-        is RsWhileExpr -> return processCondition(scope.condition, cameFrom, processor)
+        is RsIfExpr -> return processCondition(scope.condition, processor)
+        is RsWhileExpr -> return processCondition(scope.condition, processor)
 
         is RsLambdaExpr -> {
             for (parameter in scope.valueParameterList.valueParameterList) {
@@ -552,4 +497,55 @@ fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCompositeE
         }
     }
     return false
+}
+
+
+// There's already similar functions in TreeUtils, should use it
+private fun walkUp(
+    start: RsCompositeElement,
+    stopAfter: (RsCompositeElement) -> Boolean,
+    processor: (cameFrom: RsCompositeElement, scope: RsCompositeElement) -> Boolean
+): Boolean {
+
+    var cameFrom: RsCompositeElement = start
+    var scope = start.parent as RsCompositeElement?
+    while (scope != null) {
+        if (processor(cameFrom, scope)) return true
+        if (stopAfter(scope)) break
+        cameFrom = scope
+        scope = scope.getUserData(RS_CODE_FRAGMENT_CONTEXT) ?: (scope.parent as RsCompositeElement?)
+    }
+
+    return false
+}
+
+private operator fun RsResolveProcessor.invoke(name: String, e: RsCompositeElement): Boolean {
+    return this(SimpleScopeEntry(name, e))
+}
+
+private fun RsResolveProcessor.lazy(name: String, e: () -> RsCompositeElement?): Boolean {
+    return this(LazyScopeEntry(name, lazy(e)))
+}
+
+private operator fun RsResolveProcessor.invoke(e: RsNamedElement): Boolean {
+    val name = e.name ?: return false
+    return this(name, e)
+}
+
+private fun processAll(elements: Collection<RsNamedElement>, processor: RsResolveProcessor): Boolean {
+    for (e in elements) {
+        if (processor(e)) return true
+    }
+    return false
+}
+
+private data class SimpleScopeEntry(override val name: String, override val element: RsCompositeElement) : ScopeEntry
+
+private class LazyScopeEntry(
+    override val name: String,
+    thunk: Lazy<RsCompositeElement?>
+) : ScopeEntry {
+    override val element: RsCompositeElement? by thunk
+
+    override fun toString(): String = "LazyScopeEntry($name, $element)"
 }
