@@ -9,8 +9,11 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <a href="https://intellij-rust.github.io/2017/03/27/changelog-35.html">
-                 https://intellij-rust.github.io/2017/03/27/changelog-35.html
+        This is the last release to support IDEA 2016.2. If you want to continue to
+        receive updates, please upgrade your IDE. <br/>
+
+        <a href="https://intellij-rust.github.io/2017/04/03/changelog-36.html">
+                 https://intellij-rust.github.io/2017/04/03/changelog-36.html
     ]]>
     </change-notes>
 
