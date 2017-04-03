@@ -5,9 +5,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructExprField
 import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.resolve.CompletionProcessor
-import org.rust.lang.core.resolve.MultiResolveProcessor
-import org.rust.lang.core.resolve.processResolveVariants
+import org.rust.lang.core.resolve.*
 
 class RsStructExprFieldReferenceImpl(
     field: RsStructExprField
@@ -17,10 +15,10 @@ class RsStructExprFieldReferenceImpl(
     override val RsStructExprField.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun getVariants(): Array<out LookupElement> =
-        CompletionProcessor().run { processResolveVariants(element, it) }
+        collectCompletionVariants { processResolveVariants(element, it) }
 
     override fun resolveInner(): List<RsCompositeElement> =
-        MultiResolveProcessor(element.referenceName).run {
+        collectResolveVariants(element.referenceName) {
             processResolveVariants(element, it)
         }
 

@@ -17,42 +17,31 @@ interface ScopeEntry {
 }
 
 /**
- * true means that an interesting element was found
- * and that all further processing should stop.
+ * Return `true` to stop further processing,
+ * return `false` to continue search
  */
 typealias RsResolveProcessor = (ScopeEntry) -> Boolean
 
-
-class MultiResolveProcessor(private val referenceName: String) : RsResolveProcessor {
-    fun run(f: (RsResolveProcessor) -> Unit): List<RsCompositeElement> {
-        f(this)
-        return result
-    }
-
-    private val result = mutableListOf<RsCompositeElement>()
-
-    override fun invoke(v: ScopeEntry): Boolean {
-        if (v.name == referenceName) {
-            val element = v.element ?: return false
+fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Unit): List<RsCompositeElement> {
+    val result = mutableListOf<RsCompositeElement>()
+    f { e ->
+        if (e.name == referenceName) {
+            val element = e.element ?: return@f false
             result += element
         }
-        return false
+        false
     }
+    return result
 }
 
-class CompletionProcessor : RsResolveProcessor {
-    fun run(f: (RsResolveProcessor) -> Unit): Array<LookupElement> {
-        f(this)
-        return result.toTypedArray()
-    }
-
-    private val result = mutableListOf<LookupElement>()
-
-    override fun invoke(v: ScopeEntry): Boolean {
-        val lookupElement = v.element?.createLookupElement(v.name)
+fun collectCompletionVariants(f: (RsResolveProcessor) -> Unit): Array<LookupElement> {
+    val result = mutableListOf<LookupElement>()
+    f { e ->
+        val lookupElement = e.element?.createLookupElement(e.name)
         if (lookupElement != null) {
             result += lookupElement
         }
-        return false
+        false
     }
+    return result.toTypedArray()
 }

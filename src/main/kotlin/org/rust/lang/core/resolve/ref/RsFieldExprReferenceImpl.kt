@@ -3,9 +3,7 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsFieldExpr
 import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.resolve.CompletionProcessor
-import org.rust.lang.core.resolve.MultiResolveProcessor
-import org.rust.lang.core.resolve.processResolveVariants
+import org.rust.lang.core.resolve.*
 
 class RsFieldExprReferenceImpl(
     fieldExpr: RsFieldExpr
@@ -15,12 +13,12 @@ class RsFieldExprReferenceImpl(
     override val RsFieldExpr.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun getVariants(): Array<out Any> =
-        CompletionProcessor().run {
+        collectCompletionVariants {
             processResolveVariants(element, true, it)
         }
 
     override fun resolveInner(): List<RsCompositeElement> =
-        MultiResolveProcessor(element.referenceName).run {
+        collectResolveVariants(element.referenceName) {
             processResolveVariants(element, false, it)
         }
 
