@@ -22,23 +22,23 @@ import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustStructType
 
 
-private data class SimpleVariant(override val name: String, override val element: RsCompositeElement) : Variant
+private data class SimpleScopeEntry(override val name: String, override val element: RsCompositeElement) : ScopeEntry
 
-private class LazyVariant(
+private class LazyScopeEntry(
     override val name: String,
     thunk: Lazy<RsCompositeElement?>
-) : Variant {
+) : ScopeEntry {
     override val element: RsCompositeElement? by thunk
 
-    override fun toString(): String = "LazyVariant($name, $element)"
+    override fun toString(): String = "LazyScopeEntry($name, $element)"
 }
 
 private operator fun RsResolveProcessor.invoke(name: String, e: RsCompositeElement): Boolean {
-    return this(SimpleVariant(name, e))
+    return this(SimpleScopeEntry(name, e))
 }
 
 private fun RsResolveProcessor.lazy(name: String, e: () -> RsCompositeElement?): Boolean {
-    return this(LazyVariant(name, lazy(e)))
+    return this(LazyScopeEntry(name, lazy(e)))
 }
 
 private operator fun RsResolveProcessor.invoke(e: RsNamedElement): Boolean {
@@ -205,10 +205,10 @@ fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsRes
     val prevScope = mutableSetOf<String>()
     walkUp(path, { it is RsMod}) { cameFrom, scope ->
         val currScope = mutableListOf<String>()
-        val shadowingProcessor = { v: Variant ->
-            v.name !in prevScope && run {
-                currScope += v.name
-                processor(v)
+        val shadowingProcessor = { e: ScopeEntry ->
+            e.name !in prevScope && run {
+                currScope += e.name
+                processor(e)
             }
         }
         if (processLexicalDeclarations(scope, cameFrom, ns, shadowingProcessor)) return@walkUp true
@@ -317,9 +317,9 @@ fun processDeclarations(scope: RsItemsOwner, withPrivateImports: Boolean, ns: Se
     val processor = if (starImports.isEmpty()) {
         originalProcessor
     } else {
-        { v: Variant ->
-            directlyDeclaredNames += v.name
-            originalProcessor(v)
+        { e: ScopeEntry ->
+            directlyDeclaredNames += e.name
+            originalProcessor(e)
         }
     }
 
@@ -508,10 +508,10 @@ fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCompositeE
             // ```
             val visited = mutableSetOf<String>()
             if (Namespace.Values in ns) {
-                val shadowingProcessor = { v: Variant ->
-                    (v.name !in visited) && run {
-                        visited += v.name
-                        processor(v)
+                val shadowingProcessor = { e: ScopeEntry ->
+                    (e.name !in visited) && run {
+                        visited += e.name
+                        processor(e)
                     }
                 }
 
