@@ -203,10 +203,7 @@ fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsRes
     }
 
     val prevScope = mutableSetOf<String>()
-    var cameFrom: RsCompositeElement = path
-    var scope = path.parent
-    // TODO: there's treeWalkUp
-    while (scope != null) {
+    walkUp(path, { it is RsMod}) { cameFrom, scope ->
         val currScope = mutableListOf<String>()
         val shadowingProcessor = { v: Variant ->
             v.name !in prevScope && run {
@@ -214,17 +211,34 @@ fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsRes
                 processor(v)
             }
         }
-        if (processLexicalDeclarations(scope as RsCompositeElement, cameFrom, ns, shadowingProcessor)) return true
+        if (processLexicalDeclarations(scope, cameFrom, ns, shadowingProcessor)) return@walkUp true
         prevScope.addAll(currScope)
-        if (scope is RsMod) break
-        cameFrom = scope
-        scope = scope.getUserData(RS_CODE_FRAGMENT_CONTEXT) ?: scope.parent
+        false
     }
 
     val preludeFile = path.containingCargoPackage?.findCrateByName("std")?.crateRoot
         ?.findFileByRelativePath("../prelude/v1.rs")
     val prelude = path.project.getPsiFor(preludeFile)?.rustMod
     if (prelude != null && processDeclarations(prelude, false, ns, { v -> v.name !in prevScope && processor(v) })) return true
+
+    return false
+}
+
+// There's already similar functions in TreeUtils, should use it
+private fun walkUp(
+    start: RsCompositeElement,
+    stopAfter: (RsCompositeElement) -> Boolean,
+    processor: (cameFrom: RsCompositeElement, scope: RsCompositeElement) -> Boolean
+): Boolean {
+
+    var cameFrom: RsCompositeElement = start
+    var scope = start.parent as RsCompositeElement?
+    while (scope != null) {
+        if (processor(cameFrom, scope)) return true
+        if (stopAfter(scope)) break
+        cameFrom = scope
+        scope = scope.getUserData(RS_CODE_FRAGMENT_CONTEXT) ?: (scope.parent as RsCompositeElement?)
+    }
 
     return false
 }
@@ -429,6 +443,16 @@ fun processCondition(condition: RsCondition?, cameFrom: RsCompositeElement, proc
     val pat = condition.pat
     if (pat != null && processPattern(pat, processor)) return true
     return false
+}
+
+fun processLocalVariables(place: RsCompositeElement, processor: (RsPatBinding) -> Unit) {
+    walkUp(place, { it is RsItemElement}) { cameFrom, scope ->
+        processLexicalDeclarations(scope, cameFrom, VALUES) { v ->
+            val el = v.element
+            if (el is RsPatBinding) processor(el)
+            true
+        }
+    }
 }
 
 fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {

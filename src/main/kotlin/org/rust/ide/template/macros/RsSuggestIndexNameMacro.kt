@@ -5,11 +5,10 @@ import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.codeInsight.template.macro.MacroBase
-import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.parentOfType
-import org.rust.lang.core.resolve.lexicalDeclarations
+import org.rust.lang.core.resolve.processLocalVariables
+import java.util.*
 
 class RsSuggestIndexNameMacro : MacroBase("rustSuggestIndexName", "rustSuggestIndexName()") {
     override fun calculateResult(params: Array<out Expression>, context: ExpressionContext, quick: Boolean): Result? {
@@ -23,10 +22,13 @@ class RsSuggestIndexNameMacro : MacroBase("rustSuggestIndexName", "rustSuggestIn
     }
 }
 
-private fun getPatBindingNamesVisibleAt(pivot: RsCompositeElement): Set<String> =
-    lexicalDeclarations(pivot,
-        // we are only interested in local scopes
-        stop = { scope -> scope is RsItemElement }
-    )
-        .mapNotNull { (it.element as? RsPatBinding)?.name }
-        .toHashSet()
+private fun getPatBindingNamesVisibleAt(pivot: RsCompositeElement): Set<String> {
+    val result = HashSet<String>()
+    processLocalVariables(pivot) { patBinding ->
+        val name = patBinding.name
+        if (name != null) {
+            result += name
+        }
+    }
+    return result
+}
