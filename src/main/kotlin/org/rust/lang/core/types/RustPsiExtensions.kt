@@ -8,7 +8,6 @@ import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.symbols.RustPath
 import org.rust.lang.core.types.types.*
 
 val RsExpr.type: RustType
@@ -40,14 +39,14 @@ private fun typeReferenceToType(ref: RsTypeReference): RustType {
         }
 
         is RsBaseType -> {
-            val path = ref.path?.asRustPath ?: return RustUnknownType
-            if (path is RustPath.Named && path.segments.isEmpty()) {
-                val primitiveType = RustPrimitiveType.fromTypeName(path.head.name)
+            val path = ref.path ?: return RustUnknownType
+            if (path.path == null && !path.isCrateRelative) {
+                val primitiveType = RustPrimitiveType.fromTypeName(path.referenceName)
                 if (primitiveType != null) return primitiveType
             }
             val target = ref.path?.reference?.resolve() as? RsNamedElement
                 ?: return RustUnknownType
-            val typeArguments = path.lastSegment?.typeArguments.orEmpty()
+            val typeArguments = path.typeArgumentList?.typeReferenceList.orEmpty()
             RustTypificationEngine.typify(target)
                 .withTypeArguments(typeArguments.map { it.type })
 

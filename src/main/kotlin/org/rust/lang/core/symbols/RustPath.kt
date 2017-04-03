@@ -1,14 +1,10 @@
 package org.rust.lang.core.symbols
 
-import org.rust.lang.core.psi.RsTypeReference
-
 sealed class RustPath(val segments: List<RustPathSegment>) {
     abstract fun join(segment: RustPathSegment): RustPath
 
     abstract protected fun headToString(): String
     override fun toString(): String = headToString() + segments.map { "::${it.name}" }.joinToString(separator = "")
-
-    open val lastSegment: RustPathSegment? get() = segments.lastOrNull()
 
     class CrateRelative(segments: List<RustPathSegment>) : RustPath(segments) {
         override fun headToString(): String = ""
@@ -21,51 +17,21 @@ sealed class RustPath(val segments: List<RustPathSegment>) {
         override fun hashCode(): Int = segments.hashCode()
     }
 
-    class ModRelative(val level: Int, segments: List<RustPathSegment>) : RustPath(segments) {
-        init {
-            check(level >= 0)
-        }
-
-        override fun headToString(): String = if (level == 0) RustPath.SELF else RustPath.SUPER + "::${RustPath.SUPER}".repeat(level - 1)
-
-        override fun join(segment: RustPathSegment): ModRelative = ModRelative(level, segments + segment)
-
-        override fun equals(other: Any?): Boolean =
-            other is ModRelative && level == other.level && segments == other.segments
-
-        override fun hashCode(): Int = 31 * level + segments.hashCode()
-    }
-
-    class Named(val head: RustPathSegment, segments: List<RustPathSegment> = emptyList()) : RustPath(segments) {
-        override fun headToString(): String = head.name
-
-        override fun join(segment: RustPathSegment): Named = Named(head, segments + segment)
-
-        override fun equals(other: Any?): Boolean =
-            other is Named && head == other.head && segments == other.segments
-
-        override fun hashCode(): Int = 31 * head.hashCode() + segments.hashCode()
-
-        override val lastSegment: RustPathSegment get() = super.lastSegment ?: head
-    }
-
     companion object {
         val SELF = "self"
         val SUPER = "super"
-        val CSELF = "Self"
     }
 }
 
 
 data class RustPathSegment(
-    val name: String,
-    val typeArguments: List<RsTypeReference>
+    val name: String
 ) {
     init {
         check(name != RustPath.SUPER)
     }
 
     companion object {
-        fun withoutGenerics(name: String) = RustPathSegment(name, emptyList())
+        fun withoutGenerics(name: String) = RustPathSegment(name)
     }
 }

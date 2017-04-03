@@ -17,8 +17,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
-import org.rust.lang.core.symbols.RustPath
-import org.rust.lang.core.types.type
+ import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustReferenceType
 import org.rust.lang.core.types.types.RustUnknownType
 
@@ -118,15 +117,24 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkPath(holder: AnnotationHolder, path: RsPath) {
+        fun isValidSelfSuper(path: RsPath): Boolean {
+            if (path.self == null && path.`super` == null) return true
+            if (path.path == null && path.coloncolon != null) return false
+            if (path.self != null && path.path != null) return false
+            if (path.`super` != null) {
+                val q = path.path ?: return true
+                return q.self != null || q.`super` != null
+            }
+            return true
+        }
+
         val child = path.path
-        if ((child == null || child.asRustPath != null) && path.asRustPath == null) {
+        if ((child == null || isValidSelfSuper(child)) && !isValidSelfSuper(path)) {
             holder.createErrorAnnotation(path, "Invalid path: self and super are allowed only at the beginning")
             return
         }
 
-        if (path.self != null) {
-            val rustPath = path.asRustPath
-            if (rustPath == null || rustPath is RustPath.ModRelative) return
+        if (path.self != null && path.parent !is RsPath) {
             val function = path.parentOfType<RsFunction>()
             if (function == null) {
                 holder.createErrorAnnotation(path, "self value is not available in this context")
