@@ -60,9 +60,9 @@ val RsNamedElement.presentationInfo: PresentationInfo? get() {
         is RsLabelDecl -> {
             val p = parent
             when (p) {
-                is RsLoopExpr -> Pair("label", createDeclarationInfo(p, p.labelDecl.quoteIdentifier, false, listOf(p.loop)))
-                is RsForExpr -> Pair("label", createDeclarationInfo(p, p.labelDecl.quoteIdentifier, false, listOf(p.expr, p.`in`, p.`for`)))
-                is RsWhileExpr -> Pair("label", createDeclarationInfo(p, p.labelDecl.quoteIdentifier, false, listOf(p.condition, p.`while`)))
+                is RsLoopExpr -> Pair("label", createDeclarationInfo(p, p.labelDecl?.quoteIdentifier, false, listOf(p.loop)))
+                is RsForExpr -> Pair("label", createDeclarationInfo(p, p.labelDecl?.quoteIdentifier, false, listOf(p.expr, p.`in`, p.`for`)))
+                is RsWhileExpr -> Pair("label", createDeclarationInfo(p, p.labelDecl?.quoteIdentifier, false, listOf(p.condition, p.`while`)))
                 else -> Pair("label", createDeclarationInfo(this, quoteIdentifier, true))
             }
         }
