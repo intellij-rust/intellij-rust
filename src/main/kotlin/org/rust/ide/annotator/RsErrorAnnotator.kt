@@ -413,7 +413,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun requireResolve(holder: AnnotationHolder, el: RsReferenceElement, message: String) {
-        if (el.reference.resolve() != null) return
+        if (el.reference.resolve() != null || el.reference.multiResolve().size > 1) return
         holder.createErrorAnnotation(el.textRange, message)
             .highlightType = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
     }

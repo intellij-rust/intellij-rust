@@ -168,7 +168,7 @@ fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsRes
     }
 
     val prevScope = mutableSetOf<String>()
-    walkUp(path, { it is RsMod}) { cameFrom, scope ->
+    walkUp(path, { it is RsMod }) { cameFrom, scope ->
         val currScope = mutableListOf<String>()
         val shadowingProcessor = { e: ScopeEntry ->
             e.name !in prevScope && run {
@@ -189,8 +189,35 @@ fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsRes
     return false
 }
 
+fun processResolveVariants(label: RsLabel, processor: RsResolveProcessor): Boolean {
+    for (scope in label.ancestors) {
+        if (scope is RsLambdaExpr || scope is RsFunction) return false
+        if (scope is RsLabeledExpression) {
+            val lableDecl = scope.labelDecl ?: continue
+            if (processor(lableDecl)) return true
+        }
+    }
+    return false
+}
+
+fun processResolveVariants(lifetime: RsLifetime, processor: RsResolveProcessor): Boolean {
+    if (lifetime.isPredefined) return false
+    loop@ for (scope in lifetime.ancestors) {
+        val lifetimeParameters = when (scope) {
+            is RsGenericDeclaration -> scope.typeParameterList?.lifetimeParameterList
+            is RsForInType -> scope.forLifetimes.lifetimeParameterList
+            is RsPolybound -> scope.forLifetimes?.lifetimeParameterList
+            else -> continue@loop
+        }
+        for (l in lifetimeParameters.orEmpty()) {
+            if (processor(l.lifetimeDecl)) return true
+        }
+    }
+    return false
+}
+
 fun processLocalVariables(place: RsCompositeElement, processor: (RsPatBinding) -> Unit) {
-    walkUp(place, { it is RsItemElement}) { cameFrom, scope ->
+    walkUp(place, { it is RsItemElement }) { cameFrom, scope ->
         processLexicalDeclarations(scope, cameFrom, VALUES) { v ->
             val el = v.element
             if (el is RsPatBinding) processor(el)
