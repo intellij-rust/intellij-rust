@@ -3,6 +3,7 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsLabel
 import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processResolveVariants
 
@@ -16,5 +17,6 @@ class RsLabelReferenceImpl(
     override fun resolveInner(): List<RsCompositeElement> =
         collectResolveVariants(element.referenceName) { processResolveVariants(element, it) }
 
-    override fun getVariants(): Array<out Any> = emptyArray()
+    override fun getVariants(): Array<out Any> =
+        collectCompletionVariants { processResolveVariants(element, it) }
 }
