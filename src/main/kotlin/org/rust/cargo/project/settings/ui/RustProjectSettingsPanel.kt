@@ -58,8 +58,8 @@ class RustProjectSettingsPanel {
 
     fun attachTo(layout: LayoutBuilder) = with(layout) {
         toolchainLocationField.addBrowseFolderListener(
-            "",
-            "Cargo location",
+            "Select directory with cargo binary",
+            null,
             null,
             FileChooserDescriptorFactory.createSingleFolderDescriptor(),
             TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
