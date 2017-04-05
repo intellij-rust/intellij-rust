@@ -345,7 +345,7 @@ Function ::= OuterAttr*
                  "org.rust.lang.core.psi.ext.RsGenericDeclaration"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner"
-                 "org.rust.lang.core.psi.ext.RsTypeBearingItemElement" 
+                 "org.rust.lang.core.psi.ext.RsTypeBearingItemElement"
                  "org.rust.lang.core.psi.ext.RsAbstractable" ]
   mixin = "org.rust.lang.core.psi.ext.RsFunctionImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsFunctionStub"
@@ -410,7 +410,7 @@ BindingMode ::= ref mut? | mut
 Constant ::= OuterAttr* default_? Vis? (static mut? | const) identifier TypeAscription [ '=' AnyExpr ] ';' {
   pin = 'identifier'
   implements = [ "org.rust.lang.core.psi.ext.RsNamedElement"
-                 "org.rust.lang.core.psi.ext.RsItemElement" 
+                 "org.rust.lang.core.psi.ext.RsItemElement"
                  "org.rust.lang.core.psi.ext.RsAbstractable" ]
   mixin = "org.rust.lang.core.psi.ext.RsConstantImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsConstantStub"
@@ -439,7 +439,7 @@ private UsePath ::= '::'? UseGlobList
 
 UseGlobList ::= '{' UseGlob_with_recover* '}' {
   pin = 1
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl.WithParent<?>"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -538,7 +538,7 @@ EnumItem ::= AttrsAndVis enum identifier TypeParameterList? WhereClause? EnumBod
 
 EnumBody ::= '{' [ <<comma_separated_list EnumVariant>> ] '}' {
   pin = 1
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl.WithParent<?>"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -559,14 +559,14 @@ private VariantArgs ::= BlockFields | TupleFields | VariantDiscriminant
 
 BlockFields ::= '{' (FieldDecl (',' | &'}'))* '}' {
   pin = 1
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl.WithParent<?>"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 TupleFields ::= '(' (TupleFieldDecl (',' | &')'))* ')' {
   pin = 1
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl.WithParent<?>"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -719,7 +719,7 @@ TypeAlias ::= OuterAttr* default_? Vis? TYPE_KW identifier
   pin = 'identifier'
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsTypeBearingItemElement"
-                 "org.rust.lang.core.psi.ext.RsGenericDeclaration" 
+                 "org.rust.lang.core.psi.ext.RsGenericDeclaration"
                  "org.rust.lang.core.psi.ext.RsAbstractable" ]
   mixin = "org.rust.lang.core.psi.ext.RsTypeAliasImplMixin"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]

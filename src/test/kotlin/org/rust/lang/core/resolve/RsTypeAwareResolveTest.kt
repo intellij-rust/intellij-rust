@@ -75,23 +75,19 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testMethodCallOnTraitObject() {
-        if (is2016_2()) return
+    fun testMethodCallOnTraitObject() = stubOnlyResolve("""
+    //- main.rs
+        mod aux;
+        use aux::T;
 
-        stubOnlyResolve("""
-        //- main.rs
-            mod aux;
-            use aux::T;
+        fn call_virtually(obj: &T) { obj.virtual_function() }
+                                                //^ aux.rs
 
-            fn call_virtually(obj: &T) { obj.virtual_function() }
-                                                    //^ aux.rs
-
-        //- aux.rs
-            trait T {
-                fn virtual_function(&self) {}
-            }
-        """)
-    }
+    //- aux.rs
+        trait T {
+            fn virtual_function(&self) {}
+        }
+    """)
 
     fun testMethodInherentVsTraitConflict() = checkByCode("""
         struct Foo;

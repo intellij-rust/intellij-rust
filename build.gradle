@@ -46,6 +46,7 @@ allprojects {
     compileKotlin {
         kotlinOptions {
             languageVersion = '1.1'
+            // BACKCOMPAT: 2016.3
             apiVersion = '1.0'
         }
     }

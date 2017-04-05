@@ -25,6 +25,4 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
         }
 
     override val referenceName: String get() = stub?.referenceName ?: referenceNameElement.text
-
-    override fun getParent(): PsiElement? = parentByStub
 }

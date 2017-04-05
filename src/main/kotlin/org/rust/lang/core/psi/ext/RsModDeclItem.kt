@@ -76,9 +76,4 @@ abstract class RsModDeclItemImplMixin : RsStubbedNamedElementImpl<RsModDeclItemS
     override fun getIcon(flags: Int): Icon? = iconWithVisibility(flags, RsIcons.MODULE)
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
-
-    override fun getParent(): PsiElement? {
-        val stub = stub
-        return if (stub == null || stub.isLocal) parentByTree else parentByStub
-    }
 }

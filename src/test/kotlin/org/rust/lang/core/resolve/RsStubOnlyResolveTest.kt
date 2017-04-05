@@ -1,41 +1,33 @@
 package org.rust.lang.core.resolve
 
 class RsStubOnlyResolveTest : RsResolveTestBase() {
-    fun testChildMod() {
-        if (is2016_2()) return
+    fun testChildMod() = stubOnlyResolve("""
+    //- main.rs
+        mod child;
 
-        stubOnlyResolve("""
-        //- main.rs
-            mod child;
+        fn main() {
+            child::foo();
+                  //^ child.rs
+        }
 
-            fn main() {
-                child::foo();
-                      //^ child.rs
-            }
+    //- child.rs
+        pub fn foo() {}
+    """)
 
-        //- child.rs
-            pub fn foo() {}
-        """)
-    }
+    fun testNestedChildMod() = stubOnlyResolve("""
+    //- main.rs
+        mod inner {
+            pub mod child;
+        }
 
-    fun testNestedChildMod() {
-        if (is2016_2()) return
+        fn main() {
+            inner::child::foo();
+                         //^ inner/child.rs
+        }
 
-        stubOnlyResolve("""
-        //- main.rs
-            mod inner {
-                pub mod child;
-            }
-
-            fn main() {
-                inner::child::foo();
-                             //^ inner/child.rs
-            }
-
-        //- inner/child.rs
-            fn foo() {}
-        """)
-    }
+    //- inner/child.rs
+        fn foo() {}
+    """)
 
     fun testModDecl() = stubOnlyResolve("""
     //- main.rs
@@ -74,83 +66,65 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     """)
 
-    fun testModDeclPathSuper() {
-        if (is2016_2()) return
+    fun testModDeclPathSuper() = stubOnlyResolve("""
+    //- bar/baz/quux.rs
+        fn quux() {
+            super::main();
+        }          //^ main.rs
 
-        stubOnlyResolve("""
-        //- bar/baz/quux.rs
-            fn quux() {
-                super::main();
-            }          //^ main.rs
+    //- main.rs
+        #[path = "bar/baz/quux.rs"]
+        mod foo;
 
-        //- main.rs
-            #[path = "bar/baz/quux.rs"]
-            mod foo;
+        fn main(){}
+    """)
 
-            fn main(){}
-        """)
-    }
+    fun testModRelative() = stubOnlyResolve("""
+    //- main.rs
+        mod sub;
 
-    fun testModRelative() {
-        if (is2016_2()) return
+        fn main() {
+            sub::foobar::quux();
+        }               //^ foo.rs
 
-        stubOnlyResolve("""
-        //- main.rs
-            mod sub;
+    //- sub.rs
+        #[path="./foo.rs"]
+        pub mod foobar;
 
-            fn main() {
-                sub::foobar::quux();
-            }               //^ foo.rs
+    //- foo.rs
+        fn quux() {}
+    """)
 
-        //- sub.rs
-            #[path="./foo.rs"]
-            pub mod foobar;
+    fun testModRelative2() = stubOnlyResolve("""
+    //- main.rs
+        mod sub;
 
-        //- foo.rs
-            fn quux() {}
-        """)
-    }
+        fn main() {
+            sub::foobar::quux();
+        }               //^ foo.rs
 
-    fun testModRelative2() {
-        if (is2016_2()) return
+    //- sub/mod.rs
+        #[path="../foo.rs"]
+        pub mod foobar;
 
-        stubOnlyResolve("""
-        //- main.rs
-            mod sub;
+    //- foo.rs
+        pub fn quux() {}
+    """)
 
-            fn main() {
-                sub::foobar::quux();
-            }               //^ foo.rs
+    fun testUseFromChild() = stubOnlyResolve("""
+    //- main.rs
+        use child::{foo};
+        mod child;
 
-        //- sub/mod.rs
-            #[path="../foo.rs"]
-            pub mod foobar;
+        fn main() {
+            foo();
+        }  //^ child.rs
 
-        //- foo.rs
-            pub fn quux() {}
-        """)
-    }
-
-    fun testUseFromChild() {
-        if (is2016_2()) return
-
-        stubOnlyResolve("""
-        //- main.rs
-            use child::{foo};
-            mod child;
-
-            fn main() {
-                foo();
-            }  //^ child.rs
-
-        //- child.rs
-            pub fn foo() {}
-        """)
-    }
+    //- child.rs
+        pub fn foo() {}
+    """)
 
     fun testUseGlobalPath() {
-        if (is2016_2()) return
-
         stubOnlyResolve("""
         //- foo.rs
             fn main() {
@@ -211,38 +185,30 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         mod baz;
     """)
 
-    fun testFunctionType() {
-        if (is2016_2()) return
+    fun testFunctionType() = stubOnlyResolve("""
+    //- main.rs
+        mod foo;
 
-        stubOnlyResolve("""
-        //- main.rs
-            mod foo;
+        struct S { field: u32, }
 
-            struct S { field: u32, }
+        fn main() { foo::id(S { field: 92 }).field }
+                                             //^ main.rs
+    //- foo.rs
+        use super::S;
+        pub fn id(x: S) -> S { x }
+    """)
 
-            fn main() { foo::id(S { field: 92 }).field }
-                                                 //^ main.rs
-        //- foo.rs
-            use super::S;
-            pub fn id(x: S) -> S { x }
-        """)
-    }
+    fun `test tuple struct`() = stubOnlyResolve("""
+    //- main.rs
+        mod foo;
+        use foo::S;
 
-    fun `test tuple struct`() {
-        if (is2016_2()) return
-
-        stubOnlyResolve("""
-        //- main.rs
-            mod foo;
-            use foo::S;
-
-            fn f(s: S) { s.0.bar() }
-                            //^ foo.rs
-        //- foo.rs
-            struct S(Bar);
-            struct Bar;
-            impl Bar { fn bar(self) {} }
-        """)
-    }
+        fn f(s: S) { s.0.bar() }
+                        //^ foo.rs
+    //- foo.rs
+        struct S(Bar);
+        struct Bar;
+        impl Bar { fn bar(self) {} }
+    """)
 
 }

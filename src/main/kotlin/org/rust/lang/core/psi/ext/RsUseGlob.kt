@@ -33,6 +33,4 @@ abstract class RsUseGlobImplMixin : RsStubbedElementImpl<RsUseGlobStub>, RsUseGl
         }
 
     override val referenceName: String get() = stub?.referenceName ?: referenceNameElement.text
-
-    override fun getParent(): PsiElement = parentByStub
 }
