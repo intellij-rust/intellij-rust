@@ -205,6 +205,7 @@ fun processResolveVariants(lifetime: RsLifetime, processor: RsResolveProcessor):
     loop@ for (scope in lifetime.ancestors) {
         val lifetimeParameters = when (scope) {
             is RsGenericDeclaration -> scope.typeParameterList?.lifetimeParameterList
+            is RsWhereClause -> scope.wherePredList.mapNotNull { it.forLifetimes }.flatMap { it.lifetimeParameterList }
             is RsForInType -> scope.forLifetimes.lifetimeParameterList
             is RsPolybound -> scope.forLifetimes?.lifetimeParameterList
             else -> continue@loop
