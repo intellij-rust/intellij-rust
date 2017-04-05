@@ -253,13 +253,11 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             val stdlib = StandardLibrary.fromFile(stdlib!!)!!
             stdlib.attachTo(module)
             (CargoProjectWorkspaceService.getInstance(module) as CargoProjectWorkspaceServiceImpl)
-                .setStdlib(stdlib.crates)
+                .setStdlib(stdlib)
 
             val packages = listOf(testCargoPackage(contentRoot))
 
-            return CleanCargoMetadata(packages, emptyList()).let {
-                CargoWorkspace.deserialize(it).withStdlib(stdlib.crates)
-            }
+            return CargoWorkspace.deserialize(CleanCargoMetadata(packages, emptyList()))
         }
     }
 

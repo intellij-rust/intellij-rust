@@ -13,7 +13,7 @@ import org.rust.ide.notifications.showBalloon
 class SetupRustStdlibTask(
     private val module: Module,
     private val rustup: Rustup,
-    private val withCurrentStdlib: (List<StandardLibrary.StdCrate>) -> Unit
+    private val withCurrentStdlib: (StandardLibrary) -> Unit
 ) : Task.Backgroundable(module.project, "Setup Rust stdlib") {
     private lateinit var result: Rustup.DownloadResult
     private val oldLibrary = rustStandardLibrary(module)
@@ -36,12 +36,12 @@ class SetupRustStdlibTask(
                     ?: return failWithMessage("${result.library.presentableUrl} is not a valid Rust standard library")
 
                 if (oldLibrary != null && stdlib.sameAsLibrary(oldLibrary)) {
-                    withCurrentStdlib(stdlib.crates)
+                    withCurrentStdlib(stdlib)
                     return
                 }
 
                 runWriteAction { stdlib.attachTo(module) }
-                withCurrentStdlib(stdlib.crates)
+                withCurrentStdlib(stdlib)
                 project.showBalloon(
                     "Using Rust standard library at ${result.library.presentableUrl}",
                     NotificationType.INFORMATION
