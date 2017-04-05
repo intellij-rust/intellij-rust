@@ -54,10 +54,6 @@ allprojects {
     sourceSets {
         main {
             java.srcDirs += 'src/gen'
-            // BACKCOMPAT: 2016.2
-            // Exclude miglayout bundled with the IDE because we need a newer version, which
-            // is only available since 2016.3
-            compileClasspath = compileClasspath.filter { it.name != 'miglayout-swing.jar' }
         }
     }
 
@@ -96,10 +92,6 @@ allprojects {
         compileOnly('com.github.JetBrains:Grammar-Kit:34fd65b92af957c25d940b828d81ab3ba9b398b0') {
             exclude group: 'org.jetbrains.plugins'
             exclude module: 'idea'
-        }
-
-        compile('com.github.matklad:miglayout:afbdb74067') {
-            exclude module: 'org-netbeans-api-annotations-common'
         }
 
         testCompile 'junit:junit:4.+'

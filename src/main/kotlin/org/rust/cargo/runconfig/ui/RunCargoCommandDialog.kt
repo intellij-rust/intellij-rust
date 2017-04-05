@@ -1,6 +1,6 @@
 package org.rust.cargo.runconfig.ui
 
-import backcompat.ui.layout.panel
+import com.intellij.ui.layout.panel
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper

@@ -1,8 +1,8 @@
 package org.rust.cargo.runconfig.ui
 
-import backcompat.ui.components.CheckBox
-import backcompat.ui.components.Label
-import backcompat.ui.layout.*
+import com.intellij.ui.components.CheckBox
+import com.intellij.ui.components.Label
+import com.intellij.ui.layout.*
 import com.intellij.application.options.ModulesComboBox
 import com.intellij.execution.configuration.EnvironmentVariablesComponent
 import com.intellij.openapi.options.ConfigurationException

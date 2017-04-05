@@ -1,8 +1,8 @@
 package org.rust.cargo.project.configurable
 
-import backcompat.ui.components.Label
-import backcompat.ui.components.textFieldWithHistoryWithBrowseButton
-import backcompat.ui.layout.panel
+import com.intellij.ui.components.Label
+import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
+import com.intellij.ui.layout.panel
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module

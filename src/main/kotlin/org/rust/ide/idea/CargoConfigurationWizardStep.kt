@@ -1,6 +1,6 @@
 package org.rust.ide.idea
 
-import backcompat.ui.layout.panel
+import com.intellij.ui.layout.panel
 import com.intellij.ide.util.importProject.ProjectDescriptor
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
 import com.intellij.ide.util.projectWizard.ModuleWizardStep

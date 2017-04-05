@@ -1,7 +1,7 @@
 package org.rust.cargo.project.settings.ui
 
-import backcompat.ui.layout.CCFlags
-import backcompat.ui.layout.LayoutBuilder
+import com.intellij.ui.layout.CCFlags
+import com.intellij.ui.layout.LayoutBuilder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
