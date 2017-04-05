@@ -108,7 +108,8 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
         }
     }
 
-    override fun isCollapsedByDefault(node: ASTNode): Boolean = node.elementType in COLLAPSED_BY_DEFAULT
+    override fun isCollapsedByDefault(node: ASTNode): Boolean =
+        RsCodeFoldingSettings.instance.collapsibleOneLineMethods && node.elementType in COLLAPSED_BY_DEFAULT
 
     private companion object {
         val COLLAPSED_BY_DEFAULT = TokenSet.create(LBRACE, RBRACE)
