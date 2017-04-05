@@ -21,6 +21,7 @@ class RsFoldingTest : RsTestBase() {
     fun testMacroBraceArg() = doTest()
     fun testUseGlobList() = doTest()
     fun testBlockComment() = doTest()
+    fun testOneLinerFunction() = doTest()
 
     private fun doTest() {
         myFixture.testFolding("$testDataPath/$fileName")
