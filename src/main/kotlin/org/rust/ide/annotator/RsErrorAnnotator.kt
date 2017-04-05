@@ -105,10 +105,27 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkBaseType(holder: AnnotationHolder, type: RsBaseType) {
+        checkBaseTypeUnderscore(holder, type)
+        val paramsDecl = type.path?.reference?.resolve() as? RsGenericDeclaration ?: return
+        checkBaseTypeLifetimes(holder, type, paramsDecl)
+    }
+
+    private fun checkBaseTypeUnderscore(holder: AnnotationHolder, type: RsBaseType) {
         if (type.underscore == null) return
         val owner = type.ancestors.drop(1).dropWhile { it is RsTupleType }.first()
         if ((owner is RsValueParameter || owner is RsRetType) && owner.parent.parent !is RsLambdaExpr || owner is RsConstant) {
             holder.createErrorAnnotation(type, "The type placeholder `_` is not allowed within types on item signatures [E0121]")
+        }
+    }
+
+    private fun checkBaseTypeLifetimes(holder: AnnotationHolder, type: RsBaseType, paramsDecl: RsGenericDeclaration) {
+        val expectedLifetimes = paramsDecl.typeParameterList?.lifetimeParameterList?.size ?: 0
+        val actualLifetimes = type.path?.typeArgumentList?.lifetimeList?.size ?: 0
+        if (expectedLifetimes == actualLifetimes) return
+        if (actualLifetimes == 0 && !type.lifetimeElidable) {
+            holder.createErrorAnnotation(type, "Missing lifetime specifier [E0106]")
+        } else if (actualLifetimes > 0 && actualLifetimes != expectedLifetimes) {
+            holder.createErrorAnnotation(type, "Wrong number of lifetime parameters: expected $expectedLifetimes, found $actualLifetimes [E0107]")
         }
     }
 
@@ -407,7 +424,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkRefLikeType(holder: AnnotationHolder, type: RsRefLikeType) {
-        if (type.needsLifetime()) {
+        if (type.mul == null && !type.lifetimeElidable) {
             require(type.lifetime, holder, "Missing lifetime specifier [E0106]", type.and ?: type)
         }
     }
@@ -432,11 +449,9 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         return impl is RsImplItem && impl.traitRef != null
     }
 
-    private fun RsRefLikeType.needsLifetime(): Boolean {
-        if (mul != null) return false
-        val parentTuples = generateSequence(parent as? RsTupleType) { it.parent as? RsTupleType }
-        val typeOwner = (parentTuples.lastOrNull() ?: this).parent
-        return typeOwner is RsFieldDecl || typeOwner is RsTupleFieldDecl || typeOwner is RsTypeAlias
+    private val RsTypeReference.lifetimeElidable: Boolean get() {
+        val typeOwner = topmostType.parent
+        return typeOwner !is RsFieldDecl && typeOwner !is RsTupleFieldDecl && typeOwner !is RsTypeAlias
     }
 
     private fun isInEnumVariantField(o: RsVis): Boolean {
@@ -640,3 +655,10 @@ private fun RsExpr.isMutable(): Boolean {
         else -> true
     }
 }
+
+private val RsTypeReference.topmostType: RsTypeReference
+    get() = ancestors
+        .drop(1)
+        .filterNot { it is RsTypeArgumentList || it is RsPath }
+        .takeWhile { it is RsBaseType || it is RsTupleType || it is RsRefLikeType }
+        .lastOrNull() as? RsTypeReference ?: this
