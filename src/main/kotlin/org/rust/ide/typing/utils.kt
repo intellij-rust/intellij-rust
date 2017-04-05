@@ -53,7 +53,7 @@ fun Document.deleteChar(offset: Int) {
     deleteString(offset, offset + 1)
 }
 
-// BACKCOMPAT: Kotlin 1.0 ABI
+// BACKCOMPAT: 2016.3
 @Suppress("DEPRECATED_BINARY_MOD_AS_REM")
 fun CharSequence.endsWithUnescapedBackslash(): Boolean =
     takeLastWhile { it == '\\' }.length % 2 == 1
