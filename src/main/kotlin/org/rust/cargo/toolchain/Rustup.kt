@@ -40,6 +40,7 @@ class Rustup(
 
     fun getStdlibFromSysroot(): VirtualFile? {
         val sysroot = GeneralCommandLine(pathToRustcExecutable)
+            .withCharset(Charsets.UTF_8)
             .withWorkDirectory(projectDirectory)
             .withParameters("--print", "sysroot")
             .exec(5.seconds)

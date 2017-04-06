@@ -93,6 +93,7 @@ class Cargo(
         environmentVariables: Map<String, String> = emptyMap()
     ): GeneralCommandLine {
         val cmdLine = GeneralCommandLine(pathToCargoExecutable)
+            .withCharset(Charsets.UTF_8)
             .withWorkDirectory(projectDirectory)
             .withParameters(command)
 
