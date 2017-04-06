@@ -25,7 +25,7 @@ class RsModuleBuilder : ModuleBuilder() {
 
     override fun getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep =
         CargoConfigurationWizardStep(context).apply {
-            Disposer.register(parentDisposable, this)
+            Disposer.register(parentDisposable, Disposable { this.disposeUIResources() })
         }
 
     override fun setupRootModel(modifiableRootModel: ModifiableRootModel) {

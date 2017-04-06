@@ -1,21 +1,22 @@
 package org.rust.cargo.project.configurable
 
-import com.intellij.ui.components.Label
-import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
-import com.intellij.ui.layout.panel
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.Label
+import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
+import com.intellij.ui.layout.panel
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
+import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
 import javax.swing.JComponent
@@ -38,7 +39,7 @@ class RustProjectConfigurable(
         row("Cargo.toml") { cargoTomlLocation() }
     }
 
-    override fun disposeUIResources() = rustProjectSettings.disposeUIResources()
+    override fun disposeUIResources() = Disposer.dispose(rustProjectSettings)
 
     override fun reset() {
         val settings = project.rustSettings

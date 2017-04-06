@@ -1,27 +1,24 @@
 package org.rust.cargo.project.settings.ui
 
-import com.intellij.ui.layout.CCFlags
-import com.intellij.ui.layout.LayoutBuilder
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.JBColor
-import com.intellij.util.Alarm
+import com.intellij.ui.layout.CCFlags
+import com.intellij.ui.layout.LayoutBuilder
 import com.intellij.util.text.SemVer
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.RustToolchain
+import org.rust.utils.UiDebouncer
 import javax.swing.JCheckBox
 import javax.swing.JLabel
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
-class RustProjectSettingsPanel {
+class RustProjectSettingsPanel : Disposable {
     data class Data(
         val toolchain: RustToolchain?,
         val autoUpdateEnabled: Boolean
@@ -32,18 +29,13 @@ class RustProjectSettingsPanel {
         }
     }
 
-    private val disposable: Disposable = Disposer.newDisposable("RustProjectSettingsPanel")
-    fun disposeUIResources() = Disposer.dispose(disposable)
+    override fun dispose() {}
 
-    private val versionUpdateAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
+    private val versionUpdateDebouncer = UiDebouncer(this)
 
-    private val toolchainLocationField = TextFieldWithBrowseButton(null, disposable)
+    private val toolchainLocationField = TextFieldWithBrowseButton(null, this)
     private val autoUpdateEnabled = JCheckBox()
-    private val rustVersion = JLabel()
-    private val cargoVersion = JLabel()
-    private val rustupVersion = JLabel()
-
-    private val versionUpdateDelayMillis = 200
+    private val toolchainVersion = JLabel()
 
     var data: Data
         get() = Data(
@@ -65,17 +57,14 @@ class RustProjectSettingsPanel {
             TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
         )
         listenForUpdates(toolchainLocationField.textField)
-        Disposer.register(disposable, toolchainLocationField)
 
         data = Data(
             RustToolchain.suggest(),
             autoUpdateEnabled = true
         )
 
-        row("Toolchain location") { toolchainLocationField(CCFlags.pushX) }
-        row("Rustc") { rustVersion() }
-        row("Cargo") { cargoVersion() }
-        row("Rustup") { rustupVersion() }
+        row("Toolchain location:") { toolchainLocationField(CCFlags.pushX) }
+        row("Toolchain version:") { toolchainVersion() }
     }
 
     @Throws(ConfigurationException::class)
@@ -87,46 +76,24 @@ class RustProjectSettingsPanel {
     }
 
     private fun listenForUpdates(textField: JTextField) {
-        var previousLocation = textField.text
-
         textField.document.addDocumentListener(object : DocumentAdapter() {
             override fun textChanged(e: DocumentEvent?) {
                 val currentLocation = textField.text
-                if (currentLocation != previousLocation) {
-                    scheduleVersionUpdate(currentLocation)
-                    previousLocation = currentLocation
-                }
+                versionUpdateDebouncer.run(
+                    onPooledThread = {
+                        RustToolchain(currentLocation).queryVersions().rustc.semver
+                    },
+                    onUiThread = { rustcVersion ->
+                        if (rustcVersion == SemVer.UNKNOWN) {
+                            toolchainVersion.text = "N/A"
+                            toolchainVersion.foreground = JBColor.RED
+                        } else {
+                            toolchainVersion.text = rustcVersion.parsedVersion
+                            toolchainVersion.foreground = JBColor.foreground()
+                        }
+                    }
+                )
             }
         })
-    }
-
-    private fun scheduleVersionUpdate(toolchainLocation: String) {
-        versionUpdateAlarm.cancelAllRequests()
-        versionUpdateAlarm.addRequest({
-            val versionInfo = RustToolchain(toolchainLocation).queryVersions()
-            updateVersion(versionInfo)
-        }, versionUpdateDelayMillis)
-    }
-
-    private fun updateVersion(info: RustToolchain.VersionInfo) {
-        ApplicationManager.getApplication().invokeLater({
-            if (Disposer.isDisposed(disposable)) return@invokeLater
-
-            val labelToVersion = listOf(
-                rustVersion to info.rustc.semver,
-                cargoVersion to info.cargo,
-                rustupVersion to info.rustup
-            )
-
-            for ((label, version) in labelToVersion) {
-                if (version == SemVer.UNKNOWN) {
-                    label.text = "N/A"
-                    label.foreground = JBColor.RED
-                } else {
-                    label.text = version.parsedVersion
-                    label.foreground = JBColor.foreground()
-                }
-            }
-        }, ModalityState.any())
     }
 }

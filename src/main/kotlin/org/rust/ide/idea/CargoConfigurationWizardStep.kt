@@ -5,10 +5,10 @@ import com.intellij.ide.util.importProject.ProjectDescriptor
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.settings.rustSettings
@@ -18,7 +18,7 @@ import javax.swing.JComponent
 class CargoConfigurationWizardStep(
     private val context: WizardContext,
     private val projectDescriptor: ProjectDescriptor? = null
-) : ModuleWizardStep(), Disposable {
+) : ModuleWizardStep() {
 
     private val rustProjectSettings = RustProjectSettingsPanel()
 
@@ -26,7 +26,7 @@ class CargoConfigurationWizardStep(
         rustProjectSettings.attachTo(this)
     }
 
-    override fun disposeUIResources() = rustProjectSettings.disposeUIResources()
+    override fun disposeUIResources() = Disposer.dispose(rustProjectSettings)
 
     override fun updateDataModel() {
         ConfigurationUpdater.data = rustProjectSettings.data
@@ -45,8 +45,6 @@ class CargoConfigurationWizardStep(
         rustProjectSettings.validateSettings()
         return true
     }
-
-    override fun dispose() = rustProjectSettings.disposeUIResources()
 
     private object ConfigurationUpdater : ModuleConfigurationUpdater() {
         var data: RustProjectSettingsPanel.Data? = null
