@@ -49,9 +49,7 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
         override fun visitBlockFields(o: RsBlockFields) = fold(o)
 
         override fun visitBlock(o: RsBlock) {
-            if (o.parent is RsFunction && o.isSingleLine) {
-                if (tryFoldBlockWhitespaces(o)) return
-            }
+            if (tryFoldBlockWhitespaces(o)) return
             fold(o)
         }
 
@@ -92,17 +90,20 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
         }
 
         private fun tryFoldBlockWhitespaces(block: RsBlock): Boolean {
-            val leftEl = block.prevSibling as? PsiWhiteSpace ?: block.lbrace
-            val rightEl = block.rbrace ?: return false
-            val leadingSpace = block.lbrace.nextSibling as? PsiWhiteSpace ?: return false
-            val trailingSpace = rightEl.prevSibling as? PsiWhiteSpace ?: return false
+            if (!(block.parent is RsFunction && block.isSingleLine)) return false
+
+            val lbrace = block.lbrace
+            val rbrace = block.rbrace ?: return false
+            val leadingSpace = lbrace.nextSibling as? PsiWhiteSpace ?: return false
+            val trailingSpace = rbrace.prevSibling as? PsiWhiteSpace ?: return false
             if (leadingSpace == trailingSpace || !leadingSpace.worthFolding && !trailingSpace.worthFolding) return false
 
+            val leftEl = block.prevSibling as? PsiWhiteSpace ?: lbrace
             val range1 = TextRange(leftEl.textOffset, leadingSpace.textRange.endOffset)
-            val range2 = TextRange(trailingSpace.textOffset, rightEl.textRange.endOffset)
-            val group = FoldingGroup.newGroup("OneLiner")
-            descriptors += FoldingDescriptor(block.lbrace.node, range1, group)
-            descriptors += FoldingDescriptor(rightEl.node, range2, group)
+            val range2 = TextRange(trailingSpace.textOffset, rbrace.textRange.endOffset)
+            val group = FoldingGroup.newGroup("one-liner")
+            descriptors += FoldingDescriptor(lbrace.node, range1, group)
+            descriptors += FoldingDescriptor(rbrace.node, range2, group)
 
             return true
         }
