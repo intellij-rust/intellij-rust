@@ -124,7 +124,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         if (expectedLifetimes == actualLifetimes) return
         if (actualLifetimes == 0 && !type.lifetimeElidable) {
             holder.createErrorAnnotation(type, "Missing lifetime specifier [E0106]")
-        } else if (actualLifetimes > 0 && actualLifetimes != expectedLifetimes) {
+        } else if (actualLifetimes > 0) {
             holder.createErrorAnnotation(type, "Wrong number of lifetime parameters: expected $expectedLifetimes, found $actualLifetimes [E0107]")
         }
     }
