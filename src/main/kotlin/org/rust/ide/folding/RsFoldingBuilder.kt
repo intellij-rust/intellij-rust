@@ -18,6 +18,8 @@ import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.LBRACE
 import org.rust.lang.core.psi.RsElementTypes.RBRACE
+import org.rust.lang.core.psi.ext.getNextNonCommentSibling
+import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 import org.rust.lang.core.rightSiblings
 import java.util.*
 
@@ -94,9 +96,16 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
 
             val lbrace = block.lbrace
             val rbrace = block.rbrace ?: return false
+
+            val blockElement = lbrace.getNextNonCommentSibling()
+            if (blockElement == null || blockElement != rbrace.getPrevNonCommentSibling()) return false
+            if (blockElement.textContains('\n')) return false
+
+            val doc = PsiDocumentManager.getInstance(block.project).getDocument(block.containingFile) ?: return false
+            if (!(doc.areOnAdjacentLines(lbrace, blockElement) && doc.areOnAdjacentLines(blockElement, rbrace))) return false
+
             val leadingSpace = lbrace.nextSibling as? PsiWhiteSpace ?: return false
             val trailingSpace = rbrace.prevSibling as? PsiWhiteSpace ?: return false
-            if (leadingSpace == trailingSpace || !leadingSpace.worthFolding && !trailingSpace.worthFolding) return false
 
             val leftEl = block.prevSibling as? PsiWhiteSpace ?: lbrace
             val range1 = TextRange(leftEl.textOffset, leadingSpace.textRange.endOffset)
@@ -117,6 +126,9 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
     }
 }
 
+private fun Document.areOnAdjacentLines(first: PsiElement, second: PsiElement): Boolean =
+    getLineNumber(first.textRange.endOffset) + 1 == getLineNumber(second.textRange.startOffset)
+
 private val RsBlock.isSingleLine: Boolean get() {
     // remove all leading and trailing spaces before counting lines
     val startContents = lbrace.rightSiblings.dropWhile { it is PsiWhiteSpace }.firstOrNull() ?: return false
@@ -126,5 +138,3 @@ private val RsBlock.isSingleLine: Boolean get() {
     val doc = PsiDocumentManager.getInstance(project).getDocument(containingFile) ?: return false
     return doc.getLineNumber(startContents.textOffset) == doc.getLineNumber(endContents.textRange.endOffset)
 }
-
-private val PsiWhiteSpace?.worthFolding: Boolean get() = this != null && text.length > 1
