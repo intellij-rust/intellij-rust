@@ -691,6 +691,14 @@ class RsResolveTest : RsResolveTestBase() {
                //^
     """)
 
+    fun `test lifetime in for lifetimes 3`() = checkByCode("""
+        trait Foo<T> {}
+        fn foo<T>(t: T) where for<'a>
+                                 //X
+                              T: Foo<&'a T> {}
+                                     //^
+    """)
+
     fun `test static lifetime unresolved`() = checkByCode("""
         fn foo(name: &'static str) {}
                       //^ unresolved
