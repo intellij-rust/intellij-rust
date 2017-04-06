@@ -24,6 +24,7 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
     return when (this) {
         is RsMod -> if (scopeName == "self" || scopeName == "super") {
             base.withInsertHandler(AddSuffixInsertionHandler("::"))
+                .withTailText("::")
         } else {
             base
         }
