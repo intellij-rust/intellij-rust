@@ -211,4 +211,23 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         impl Bar { fn bar(self) {} }
     """)
 
+    fun `test method call`() = stubOnlyResolve("""
+    //- main.rs
+        mod aux;
+        use aux::S;
+
+        fn main() {
+            let s: S = S;
+
+            s.foo();
+            //^ aux.rs
+        }
+
+    //- aux.rs
+        pub struct S;
+
+        impl S {
+            pub fn foo(&self) { }
+        }
+    """)
 }

@@ -13,28 +13,6 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
-    // TODO: change the following tests to `stubOnlyResolve` after 2016.1
-    fun testMethodCallExpr1() = checkByCode("""
-    //- main.rs
-        mod aux;
-        use aux::S;
-
-        fn main() {
-            let s: S = S;
-
-            s.foo();
-            //^
-        }
-
-    //- aux.rs
-        pub struct S;
-
-        impl S {
-            pub fn foo(&self) { }
-                  //X
-        }
-    """)
-
     fun testMethodCallExpr2() = checkByCode("""
     //- main.rs
         mod aux;
