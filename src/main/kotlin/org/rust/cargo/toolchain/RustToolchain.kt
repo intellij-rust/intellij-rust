@@ -160,13 +160,17 @@ private object Suggestions {
 
     private fun forWindows(): Sequence<File> {
         if (!SystemInfo.isWindows) return emptySequence()
+        val fromHome = File(System.getProperty("user.home") ?: "", ".cargo/bin")
 
-        val programFiles = File(System.getenv("ProgramFiles") ?: return emptySequence())
-        if (!programFiles.exists() || !programFiles.isDirectory) return emptySequence()
+        val programFiles = File(System.getenv("ProgramFiles") ?: "")
+        val fromProgramFiles = if (!programFiles.exists() || !programFiles.isDirectory)
+            emptySequence()
+        else
+            programFiles.listFiles { file -> file.isDirectory }.asSequence()
+                .filter { it.nameWithoutExtension.toLowerCase().startsWith("rust") }
+                .map { File(it, "bin") }
 
-        return programFiles.listFiles { file -> file.isDirectory }.asSequence()
-            .filter { it.nameWithoutExtension.toLowerCase().startsWith("rust") }
-            .map { File(it, "bin") }
+        return sequenceOf(fromHome) + fromProgramFiles
     }
 }
 
