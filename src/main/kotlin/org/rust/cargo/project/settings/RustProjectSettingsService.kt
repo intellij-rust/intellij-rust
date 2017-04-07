@@ -7,8 +7,8 @@ import org.rust.cargo.toolchain.RustToolchain
 
 interface RustProjectSettingsService {
     data class Data(
-        var toolchain: RustToolchain?,
-        var autoUpdateEnabled: Boolean
+        val toolchain: RustToolchain?,
+        val autoUpdateEnabled: Boolean
     )
 
     var data: Data
