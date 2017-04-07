@@ -6,9 +6,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.configurable.RustProjectConfigurable
 import org.rust.cargo.project.settings.RustProjectSettingsService
-import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.util.modules
 
 @State(name = "RustProjectSettings")
 class RustProjectSettingsServiceImpl(
@@ -31,24 +29,12 @@ class RustProjectSettingsServiceImpl(
         ShowSettingsUtil.getInstance().editConfigurable(project, RustProjectConfigurable(project))
     }
 
-    override var autoUpdateEnabled: Boolean
-        get() = state.autoUpdateEnabled
+    override var data: RustProjectSettingsService.Data
+        get() = RustProjectSettingsService.Data(state.toolchainHomeDirectory?.let(::RustToolchain), state.autoUpdateEnabled)
         set(value) {
-            state.autoUpdateEnabled = value
-        }
-
-    override var toolchain: RustToolchain?
-        get() = state.toolchainHomeDirectory?.let(::RustToolchain)
-        set(value) {
-            if (state.toolchainHomeDirectory != value?.location) {
-
-                if (value != null) {
-                    for (module in project.modules) {
-                        CargoProjectWorkspaceService.getInstance(module).requestUpdate(value)
-                    }
-                }
-
-                state.toolchainHomeDirectory = value?.location
+            val newState = State(value.toolchain?.location, value.autoUpdateEnabled)
+            if (state != newState) {
+                state = newState
                 notifyToolchainChanged()
             }
         }

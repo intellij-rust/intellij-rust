@@ -6,8 +6,15 @@ import com.intellij.util.messages.Topic
 import org.rust.cargo.toolchain.RustToolchain
 
 interface RustProjectSettingsService {
-    var toolchain: RustToolchain?
-    var autoUpdateEnabled: Boolean
+    data class Data(
+        var toolchain: RustToolchain?,
+        var autoUpdateEnabled: Boolean
+    )
+
+    var data: Data
+
+    val toolchain: RustToolchain? get() = data.toolchain
+    val autoUpdateEnabled: Boolean get() = data.autoUpdateEnabled
 
     /*
      * Show a dialog for toolchain configuration
@@ -31,4 +38,3 @@ val Project.rustSettings: RustProjectSettingsService
         ?: error("Failed to get RustProjectSettingsService for $this")
 
 val Project.toolchain: RustToolchain? get() = rustSettings.toolchain
-

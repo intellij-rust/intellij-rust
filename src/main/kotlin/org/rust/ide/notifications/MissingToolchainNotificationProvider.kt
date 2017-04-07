@@ -100,7 +100,7 @@ class MissingToolchainNotificationProvider(
             }
 
             runWriteAction {
-                project.rustSettings.toolchain = toolchain
+                project.rustSettings.data = project.rustSettings.data.copy(toolchain = toolchain)
             }
 
             project.showBalloon("Using Cargo at ${toolchain.presentableLocation}", NotificationType.INFORMATION)

@@ -24,8 +24,10 @@ class RustProjectSettingsPanel : Disposable {
         val autoUpdateEnabled: Boolean
     ) {
         fun applyTo(settings: RustProjectSettingsService) {
-            settings.autoUpdateEnabled = autoUpdateEnabled
-            settings.toolchain = toolchain
+            settings.data = RustProjectSettingsService.Data(
+                toolchain,
+                autoUpdateEnabled
+            )
         }
     }
 
