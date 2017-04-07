@@ -37,12 +37,12 @@ abstract class RustWithToolchainTestBase : PlatformTestCase() {
     override fun setUp() {
         super.setUp()
         if (toolchain != null) {
-            project.rustSettings.toolchain = toolchain
+             project.rustSettings.data = project.rustSettings.data.copy(toolchain = toolchain)
         }
     }
 
     override fun tearDown() {
-        project.rustSettings.toolchain = null
+        project.rustSettings.data = project.rustSettings.data.copy(toolchain = null)
         super.tearDown()
     }
 
