@@ -2,7 +2,10 @@ package org.rust.cargo.project.settings.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.Link
 import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.LayoutBuilder
 import com.intellij.util.text.SemVer
@@ -37,6 +40,23 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
 
     private val pathToStdlibField = pathToDirectoryTextField(this,
         "Select directory with standard library source code")
+    private val dowloadStdlibLink = Link("Download via rustup") {
+        val rustup = RustToolchain(pathToToolchainField.text).rustup(cargoProjectDir)
+        if (rustup != null) {
+            object : Task.Backgroundable(null, "Downloading Rust standard library") {
+                override fun shouldStartInBackground(): Boolean = false
+
+                override fun run(indicator: ProgressIndicator) {
+                    indicator.isIndeterminate = true
+                    rustup.downloadStdlib()
+                }
+
+                override fun onSuccess() {
+                    update()
+                }
+            }.queue()
+        }
+    }
 
     private val autoUpdateEnabled = JCheckBox()
     private val toolchainVersion = JLabel()
@@ -65,6 +85,7 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
         row("Toolchain location:") { pathToToolchainField(CCFlags.pushX) }
         row("Toolchain version:") { toolchainVersion() }
         row("Standard library:") { pathToStdlibField() }
+        row { dowloadStdlibLink() }
     }
 
     @Throws(ConfigurationException::class)
@@ -83,9 +104,10 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
                 val rustcVerson = toolchain.queryVersions().rustc.semver
                 val rustup = toolchain.rustup(cargoProjectDir)
                 val stdlibLocation = rustup?.getStdlibFromSysroot()?.presentableUrl
-                Pair(rustcVerson, stdlibLocation)
+                Triple(rustcVerson, stdlibLocation, rustup != null)
             },
-            onUiThread = { (rustcVersion, stdlibLocation) ->
+            onUiThread = { (rustcVersion, stdlibLocation, hasRustup) ->
+                dowloadStdlibLink.isVisible = hasRustup
                 if (rustcVersion == SemVer.UNKNOWN) {
                     toolchainVersion.text = "N/A"
                     toolchainVersion.foreground = JBColor.RED
