@@ -15,9 +15,10 @@ class UiDebouncer(parentDisaposable: Disposable, private val delayMillis: Int = 
 
     fun <T> run(onPooledThread: () -> T, onUiThread: (T) -> Unit) {
         alarm.cancelAllRequests()
+        val modalityState = ModalityState.current()
         alarm.addRequest({
             val r = onPooledThread()
-            ApplicationManager.getApplication().invokeLater({ onUiThread(r) }, ModalityState.any())
+            ApplicationManager.getApplication().invokeLater({ onUiThread(r) }, modalityState)
         }, delayMillis)
     }
 }
@@ -25,7 +26,7 @@ class UiDebouncer(parentDisaposable: Disposable, private val delayMillis: Int = 
 fun pathToDirectoryTextField(
     disposable: Disposable,
     title: String,
-    onTextChanged: (String) -> Unit
+    onTextChanged: () -> Unit = {}
 ): TextFieldWithBrowseButton {
 
     val component = TextFieldWithBrowseButton(null, disposable)
@@ -35,7 +36,7 @@ fun pathToDirectoryTextField(
     )
     component.childComponent.document.addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent?) {
-            onTextChanged(component.text)
+            onTextChanged()
         }
     })
 

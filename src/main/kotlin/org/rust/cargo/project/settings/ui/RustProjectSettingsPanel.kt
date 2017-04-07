@@ -13,10 +13,11 @@ import org.rust.utils.pathToDirectoryTextField
 import javax.swing.JCheckBox
 import javax.swing.JLabel
 
-class RustProjectSettingsPanel : Disposable {
+class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disposable {
     data class Data(
         val toolchain: RustToolchain?,
-        val autoUpdateEnabled: Boolean
+        val autoUpdateEnabled: Boolean,
+        val explicitPathToStdlib: String?
     ) {
         fun applyTo(settings: RustProjectSettingsService) {
             settings.data = RustProjectSettingsService.Data(
@@ -31,48 +32,39 @@ class RustProjectSettingsPanel : Disposable {
 
     private val versionUpdateDebouncer = UiDebouncer(this)
 
-    private val pathToToolchainField = pathToDirectoryTextField(
-        this,
-        "Select directory with cargo binary"
-    ) { text ->
-        versionUpdateDebouncer.run(
-            onPooledThread = {
-                RustToolchain(text).queryVersions().rustc.semver
-            },
-            onUiThread = { rustcVersion ->
-                if (rustcVersion == SemVer.UNKNOWN) {
-                    toolchainVersion.text = "N/A"
-                    toolchainVersion.foreground = JBColor.RED
-                } else {
-                    toolchainVersion.text = rustcVersion.parsedVersion
-                    toolchainVersion.foreground = JBColor.foreground()
-                }
-            }
-        )
+    private val pathToToolchainField = pathToDirectoryTextField(this,
+        "Select directory with cargo binary", { update() })
 
-    }
+    private val pathToStdlibField = pathToDirectoryTextField(this,
+        "Select directory with standard library source code")
+
     private val autoUpdateEnabled = JCheckBox()
     private val toolchainVersion = JLabel()
 
     var data: Data
         get() = Data(
             RustToolchain(pathToToolchainField.text),
-            autoUpdateEnabled.isSelected
+            autoUpdateEnabled.isSelected,
+            pathToStdlibField.text.blankToNull()
         )
         set(value) {
             // https://youtrack.jetbrains.com/issue/KT-16367
             pathToToolchainField.setText(value.toolchain?.location)
             autoUpdateEnabled.isSelected = value.autoUpdateEnabled
+            pathToStdlibField.text = ""
+            update()
         }
 
     fun attachTo(layout: LayoutBuilder) = with(layout) {
         data = Data(
             RustToolchain.suggest(),
-            autoUpdateEnabled = true
+            true,
+            null
         )
 
         row("Toolchain location:") { pathToToolchainField(CCFlags.pushX) }
         row("Toolchain version:") { toolchainVersion() }
+        row("Standard library:") { pathToStdlibField() }
     }
 
     @Throws(ConfigurationException::class)
@@ -82,4 +74,30 @@ class RustProjectSettingsPanel : Disposable {
             throw ConfigurationException("Invalid toolchain location: can't find Cargo in ${toolchain.location}")
         }
     }
+
+    private fun update() {
+        val pathToToolchain = pathToToolchainField.text
+        versionUpdateDebouncer.run(
+            onPooledThread = {
+                val toolchain = RustToolchain(pathToToolchain)
+                val rustcVerson = toolchain.queryVersions().rustc.semver
+                val rustup = toolchain.rustup(cargoProjectDir)
+                val stdlibLocation = rustup?.getStdlibFromSysroot()?.presentableUrl
+                Pair(rustcVerson, stdlibLocation)
+            },
+            onUiThread = { (rustcVersion, stdlibLocation) ->
+                if (rustcVersion == SemVer.UNKNOWN) {
+                    toolchainVersion.text = "N/A"
+                    toolchainVersion.foreground = JBColor.RED
+                } else {
+                    toolchainVersion.text = rustcVersion.parsedVersion
+                    toolchainVersion.foreground = JBColor.foreground()
+                }
+
+                pathToStdlibField.text = stdlibLocation ?: ""
+            }
+        )
+    }
 }
+
+private fun String.blankToNull(): String? = if (isBlank()) null else this
