@@ -52,8 +52,6 @@ class CargoTomlWatcherIntegrationTest : RustWithToolchainTestBase() {
             }
         }.create(project, project.baseDir)
 
-        p.checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
-
         CargoProjectWorkspaceService.getInstance(module).syncUpdate(module.project.toolchain!!)
         if (module.cargoWorkspace == null) {
             error("Failed to update a test Cargo project")
