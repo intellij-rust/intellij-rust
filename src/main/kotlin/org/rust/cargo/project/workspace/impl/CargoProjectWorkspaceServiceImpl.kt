@@ -92,11 +92,21 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
             val projectDirectory = module.cargoProjectRoot?.path
                 ?: return
             val rustup = module.project.toolchain?.rustup(projectDirectory)
-                ?: return
-
-            taskQueue.run(SetupRustStdlibTask(module, rustup, {
-                runWriteAction { workspaceMerger.setStdlib(it) }
-            }))
+            if (rustup != null) {
+                taskQueue.run(SetupRustStdlibTask(module, rustup, {
+                    runWriteAction { workspaceMerger.setStdlib(it) }
+                }))
+            } else {
+                ApplicationManager.getApplication().invokeLater {
+                    val lib = StandardLibrary.fromPath(module.project.rustSettings.data.explicitPathToStdlib ?: "")
+                    if (lib != null) {
+                        runWriteAction {
+                            lib.attachTo(module)
+                            workspaceMerger.setStdlib(lib)
+                        }
+                    }
+                }
+            }
         }
 
         with(module.messageBus.connect()) {

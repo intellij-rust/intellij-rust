@@ -26,7 +26,7 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
             settings.data = RustProjectSettingsService.Data(
                 toolchain,
                 autoUpdateEnabled,
-                null
+                explicitPathToStdlib
             )
         }
     }
@@ -40,23 +40,21 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
 
     private val pathToStdlibField = pathToDirectoryTextField(this,
         "Select directory with standard library source code")
-    private val downloadStdlibLink = Link("Download via rustup") {
+
+    private val downloadStdlibLink = Link("Download via rustup", action = {
         val rustup = RustToolchain(pathToToolchainField.text).rustup(cargoProjectDir)
         if (rustup != null) {
             object : Task.Backgroundable(null, "Downloading Rust standard library") {
                 override fun shouldStartInBackground(): Boolean = false
+                override fun onSuccess() = update()
 
                 override fun run(indicator: ProgressIndicator) {
                     indicator.isIndeterminate = true
                     rustup.downloadStdlib()
                 }
-
-                override fun onSuccess() {
-                    update()
-                }
             }.queue()
         }
-    }
+    }).apply { isVisible = false }
 
     private val autoUpdateEnabled = JCheckBox()
     private val toolchainVersion = JLabel()
@@ -65,13 +63,13 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
         get() = Data(
             RustToolchain(pathToToolchainField.text),
             autoUpdateEnabled.isSelected,
-            pathToStdlibField.text.blankToNull()
+            (if (downloadStdlibLink.isVisible) null else pathToStdlibField.text.blankToNull())
         )
         set(value) {
             // https://youtrack.jetbrains.com/issue/KT-16367
             pathToToolchainField.setText(value.toolchain?.location)
             autoUpdateEnabled.isSelected = value.autoUpdateEnabled
-            pathToStdlibField.text = ""
+            pathToStdlibField.text = value.explicitPathToStdlib ?: ""
             update()
         }
 
@@ -86,6 +84,7 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
         row("Toolchain version:") { toolchainVersion() }
         row("Standard library:") { pathToStdlibField() }
         row { downloadStdlibLink() }
+        row("Watch Cargo.toml:") { autoUpdateEnabled() }
     }
 
     @Throws(ConfigurationException::class)
@@ -115,8 +114,9 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
                     toolchainVersion.text = rustcVersion.parsedVersion
                     toolchainVersion.foreground = JBColor.foreground()
                 }
-
-                pathToStdlibField.text = stdlibLocation ?: ""
+                if (hasRustup) {
+                    pathToStdlibField.text = stdlibLocation ?: ""
+                }
             }
         )
     }
