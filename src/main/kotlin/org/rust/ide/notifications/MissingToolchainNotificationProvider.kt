@@ -42,7 +42,7 @@ class MissingToolchainNotificationProvider(
         project.messageBus.connect(project).apply {
             subscribe(RustProjectSettingsService.TOOLCHAIN_TOPIC,
                 object : RustProjectSettingsService.ToolchainListener {
-                    override fun toolchainChanged(newToolchain: RustToolchain?) {
+                    override fun toolchainChanged() {
                         notifications.updateAllNotifications()
                     }
                 })

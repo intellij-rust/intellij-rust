@@ -107,7 +107,7 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
             }))
 
             subscribe(RustProjectSettingsService.TOOLCHAIN_TOPIC, object : RustProjectSettingsService.ToolchainListener {
-                override fun toolchainChanged(newToolchain: RustToolchain?) = refreshStdlib()
+                override fun toolchainChanged() = refreshStdlib()
             })
         }
 

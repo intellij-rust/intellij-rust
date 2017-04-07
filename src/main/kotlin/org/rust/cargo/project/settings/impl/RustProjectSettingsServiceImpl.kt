@@ -49,12 +49,12 @@ class RustProjectSettingsServiceImpl(
                 }
 
                 state.toolchainHomeDirectory = value?.location
-                notify(value)
+                notifyToolchainChanged()
             }
         }
 
-    private fun notify(toolchain: RustToolchain?) {
-        project.messageBus.syncPublisher(RustProjectSettingsService.TOOLCHAIN_TOPIC).toolchainChanged(toolchain)
+    private fun notifyToolchainChanged() {
+        project.messageBus.syncPublisher(RustProjectSettingsService.TOOLCHAIN_TOPIC).toolchainChanged()
     }
 }
 

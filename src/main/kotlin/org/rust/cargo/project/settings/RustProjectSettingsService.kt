@@ -22,7 +22,7 @@ interface RustProjectSettingsService {
     }
 
     interface ToolchainListener {
-        fun toolchainChanged(newToolchain: RustToolchain?)
+        fun toolchainChanged()
     }
 }
 
