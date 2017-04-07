@@ -19,7 +19,7 @@ class RustProjectConfigurable(
     private val project: Project
 ) : Configurable, Configurable.NoScroll {
 
-    private val rustProjectSettings = RustProjectSettingsPanel()
+    private val rustProjectSettings = RustProjectSettingsPanel(rustModule?.cargoProjectRoot?.path ?: ".")
     private val cargoTomlLocation = Label("N/A")
 
     override fun createComponent(): JComponent = panel {
