@@ -8,7 +8,11 @@ import org.rust.cargo.toolchain.RustToolchain
 interface RustProjectSettingsService {
     data class Data(
         val toolchain: RustToolchain?,
-        val autoUpdateEnabled: Boolean
+        val autoUpdateEnabled: Boolean,
+        // Usually, we use `rustup` to find stdlib automatically,
+        // but if once does not use rustup, it's possible to
+        // provide path to stdlib explicitly.
+        val explicitPathToStdlib: String?
     )
 
     var data: Data

@@ -26,7 +26,8 @@ class RustProjectSettingsPanel : Disposable {
         fun applyTo(settings: RustProjectSettingsService) {
             settings.data = RustProjectSettingsService.Data(
                 toolchain,
-                autoUpdateEnabled
+                autoUpdateEnabled,
+                null
             )
         }
     }

@@ -16,7 +16,8 @@ class RustProjectSettingsServiceImpl(
 
     data class State(
         var toolchainHomeDirectory: String? = null,
-        var autoUpdateEnabled: Boolean = true
+        var autoUpdateEnabled: Boolean = true,
+        var explicitPathToStdlib: String? = null
     )
 
     override fun getState(): State = state
@@ -30,9 +31,13 @@ class RustProjectSettingsServiceImpl(
     }
 
     override var data: RustProjectSettingsService.Data
-        get() = RustProjectSettingsService.Data(state.toolchainHomeDirectory?.let(::RustToolchain), state.autoUpdateEnabled)
+        get() = RustProjectSettingsService.Data(
+            state.toolchainHomeDirectory?.let(::RustToolchain),
+            state.autoUpdateEnabled,
+            state.explicitPathToStdlib
+        )
         set(value) {
-            val newState = State(value.toolchain?.location, value.autoUpdateEnabled)
+            val newState = State(value.toolchain?.location, value.autoUpdateEnabled, value.explicitPathToStdlib)
             if (state != newState) {
                 state = newState
                 notifyToolchainChanged()
