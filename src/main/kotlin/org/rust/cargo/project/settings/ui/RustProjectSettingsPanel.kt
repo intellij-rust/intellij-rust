@@ -36,37 +36,37 @@ class RustProjectSettingsPanel : Disposable {
 
     private val versionUpdateDebouncer = UiDebouncer(this)
 
-    private val toolchainLocationField = TextFieldWithBrowseButton(null, this)
+    private val pathToToolchainField = TextFieldWithBrowseButton(null, this)
     private val autoUpdateEnabled = JCheckBox()
     private val toolchainVersion = JLabel()
 
     var data: Data
         get() = Data(
-            RustToolchain(toolchainLocationField.text),
+            RustToolchain(pathToToolchainField.text),
             autoUpdateEnabled.isSelected
         )
         set(value) {
             // https://youtrack.jetbrains.com/issue/KT-16367
-            toolchainLocationField.setText(value.toolchain?.location)
+            pathToToolchainField.setText(value.toolchain?.location)
             autoUpdateEnabled.isSelected = value.autoUpdateEnabled
         }
 
     fun attachTo(layout: LayoutBuilder) = with(layout) {
-        toolchainLocationField.addBrowseFolderListener(
+        pathToToolchainField.addBrowseFolderListener(
             "Select directory with cargo binary",
             null,
             null,
             FileChooserDescriptorFactory.createSingleFolderDescriptor(),
             TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
         )
-        listenForUpdates(toolchainLocationField.textField)
+        listenForUpdates(pathToToolchainField.textField)
 
         data = Data(
             RustToolchain.suggest(),
             autoUpdateEnabled = true
         )
 
-        row("Toolchain location:") { toolchainLocationField(CCFlags.pushX) }
+        row("Toolchain location:") { pathToToolchainField(CCFlags.pushX) }
         row("Toolchain version:") { toolchainVersion() }
     }
 
