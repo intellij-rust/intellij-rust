@@ -40,7 +40,7 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
 
     private val pathToStdlibField = pathToDirectoryTextField(this,
         "Select directory with standard library source code")
-    private val dowloadStdlibLink = Link("Download via rustup") {
+    private val downloadStdlibLink = Link("Download via rustup") {
         val rustup = RustToolchain(pathToToolchainField.text).rustup(cargoProjectDir)
         if (rustup != null) {
             object : Task.Backgroundable(null, "Downloading Rust standard library") {
@@ -85,7 +85,7 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
         row("Toolchain location:") { pathToToolchainField(CCFlags.pushX) }
         row("Toolchain version:") { toolchainVersion() }
         row("Standard library:") { pathToStdlibField() }
-        row { dowloadStdlibLink() }
+        row { downloadStdlibLink() }
     }
 
     @Throws(ConfigurationException::class)
@@ -107,7 +107,7 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
                 Triple(rustcVerson, stdlibLocation, rustup != null)
             },
             onUiThread = { (rustcVersion, stdlibLocation, hasRustup) ->
-                dowloadStdlibLink.isVisible = hasRustup
+                downloadStdlibLink.isVisible = hasRustup
                 if (rustcVersion == SemVer.UNKNOWN) {
                     toolchainVersion.text = "N/A"
                     toolchainVersion.foreground = JBColor.RED
