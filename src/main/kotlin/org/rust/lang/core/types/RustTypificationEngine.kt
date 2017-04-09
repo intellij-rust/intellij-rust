@@ -1,5 +1,6 @@
 package org.rust.lang.core.types
 
+import org.rust.ide.utils.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
@@ -10,7 +11,7 @@ object RustTypificationEngine {
         RustExprTypificationVisitor().compute(expr)
 
     fun typify(named: RsNamedElement): RustType {
-        return when (named) {
+        val type = when (named) {
             is RsStructItem -> RustStructType(named)
 
             is RsEnumItem -> RustEnumType(named)
@@ -32,6 +33,8 @@ object RustTypificationEngine {
 
             else -> RustUnknownType
         }
+        if (named is RsGenericDeclaration) return type.withTypeArguments(named.typeParameters.map(::RustTypeParameterType))
+        return type
     }
 }
 
@@ -68,8 +71,8 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
     override fun visitStructExpr(o: RsStructExpr) = set {
         val base = o.path.reference.resolve()
         when (base) {
-            is RsStructItem -> base.type
-            is RsEnumVariant -> base.parentEnum.type
+            is RsStructItem -> inferStructTypeParameters(o, base)
+            is RsEnumVariant -> inferEnumTypeParameters(o, base)
             else -> RustUnknownType
         }
     }
@@ -87,8 +90,8 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
         if (fn is RsPathExpr) {
             val variant = fn.path.reference.resolve()
             when (variant) {
-                is RsEnumVariant -> return@set variant.parentEnum.type
-                is RsStructItem -> return@set variant.type
+                is RsEnumVariant -> return@set inferTupleEnumTypeParameters(o, variant)
+                is RsStructItem -> return@set inferTupleStructTypeParameters(o, variant)
             }
         }
 
@@ -237,3 +240,68 @@ private fun RsImplItem.remapTypeParameters(
                 null
             }
         }.toMap()
+
+private fun inferStructTypeParameters(o: RsStructExpr, item: RsStructItem): RustType {
+    val baseType = item.type
+    if ((baseType as? RustStructOrEnumTypeBase)?.typeArguments.isNullOrEmpty()) return baseType
+    val argsMapping = item.blockFields?.let { inferTypeParametersForFields(o.structExprBody.structExprFieldList, it) } ?: emptyMap()
+    return if (argsMapping.isEmpty()) baseType else baseType.substitute(argsMapping)
+}
+
+private fun inferEnumTypeParameters(o: RsStructExpr, item: RsEnumVariant): RustType {
+    val baseType = item.parentEnum.type
+    if ((baseType as? RustStructOrEnumTypeBase)?.typeArguments.isNullOrEmpty()) return baseType
+    val argsMapping = item.blockFields?.let { inferTypeParametersForFields(o.structExprBody.structExprFieldList, it) } ?: emptyMap()
+    return if (argsMapping.isEmpty()) baseType else baseType.substitute(argsMapping)
+}
+
+private fun inferTypeParametersForFields(
+    structExprFieldList: List<RsStructExprField>,
+    fields: RsBlockFields
+): Map<RustTypeParameterType, RustType> {
+    val argsMapping = mutableMapOf<RustTypeParameterType, RustType>()
+    val fieldTypes = fields.fieldDeclList
+        .associate { it.identifier.text to (it.typeReference?.type ?: RustUnknownType) }
+    structExprFieldList.forEach { field ->
+        field.expr?.let { expr -> addTypeMapping(argsMapping, fieldTypes[field.identifier.text], expr) }
+    }
+    return argsMapping
+}
+
+private fun inferTupleStructTypeParameters(o: RsCallExpr, item: RsStructItem): RustType {
+    val baseType = item.type
+    if ((baseType as? RustStructOrEnumTypeBase)?.typeArguments.isNullOrEmpty()) return baseType
+    val argsMapping = item.tupleFields?.let { inferTypeParametersForTuple(o.valueArgumentList.exprList, it) } ?: emptyMap()
+    return if (argsMapping.isEmpty()) baseType else baseType.substitute(argsMapping)
+}
+
+private fun inferTupleEnumTypeParameters(o: RsCallExpr, item: RsEnumVariant): RustType {
+    val baseType = item.parentEnum.type
+    if ((baseType as? RustStructOrEnumTypeBase)?.typeArguments.isNullOrEmpty()) return baseType
+    val argsMapping = item.tupleFields?.let { inferTypeParametersForTuple(o.valueArgumentList.exprList, it) } ?: emptyMap()
+    return if (argsMapping.isEmpty()) baseType else baseType.substitute(argsMapping)
+}
+
+private fun inferTypeParametersForTuple(
+    tupleExprs: List<RsExpr>,
+    tupleFields: RsTupleFields
+): Map<RustTypeParameterType, RustType> {
+    val argsMapping = mutableMapOf<RustTypeParameterType, RustType>()
+    val tupleFieldDeclList = tupleFields.tupleFieldDeclList
+    tupleExprs.withIndex().forEach { (i, expr) ->
+        tupleFieldDeclList.getOrNull(i)?.let { tupleField -> addTypeMapping(argsMapping, tupleField.typeReference.type, expr) }
+    }
+    return argsMapping
+}
+
+private fun addTypeMapping(
+    argsMapping: MutableMap<RustTypeParameterType, RustType>,
+    fieldType: RustType?,
+    expr: RsExpr
+) {
+    if (fieldType is RustTypeParameterType) {
+        val old = argsMapping[fieldType]
+        if (old == null || old == RustUnknownType)
+            argsMapping[fieldType] = RustTypificationEngine.typifyExpr(expr)
+    }
+}
