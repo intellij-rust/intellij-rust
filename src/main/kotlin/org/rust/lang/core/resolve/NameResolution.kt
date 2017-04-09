@@ -192,12 +192,12 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
         return false
     }
 
-    val containigMod = path.containingMod
+    val containingMod = path.containingMod
     val crateRoot = path.crateRoot
     if (!path.hasColonColon) {
-        if (Namespace.Types in ns && containigMod != null) {
-            if (processor("self", containigMod)) return true
-            val superMod = containigMod.`super`
+        if (Namespace.Types in ns && containingMod != null) {
+            if (processor("self", containingMod)) return true
+            val superMod = containingMod.`super`
             if (superMod != null) {
                 if (processor("super", superMod)) return true
             }
