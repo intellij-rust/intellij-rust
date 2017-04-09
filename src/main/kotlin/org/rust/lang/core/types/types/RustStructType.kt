@@ -4,8 +4,8 @@ import com.intellij.codeInsight.completion.CompletionUtil
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.types.RustType
 
-data class RustStructType(
-    val struct: RsStructItem,
+class RustStructType(
+    struct: RsStructItem,
     override val typeArguments: List<RustType> = emptyList()
 ) : RustStructOrEnumTypeBase {
 
@@ -18,4 +18,10 @@ data class RustStructType(
 
     override fun substitute(map: Map<RustTypeParameterType, RustType>): RustStructType =
         RustStructType(item, typeArguments.map { it.substitute(map) })
+
+    override fun equals(other: Any?): Boolean =
+        other is RustStructType && item == other.item && typeArguments == other.typeArguments
+
+    override fun hashCode(): Int =
+        item.hashCode() xor typeArguments.hashCode()
 }
