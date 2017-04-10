@@ -1,3 +1,7 @@
+branches:
+  except:
+    - staging.tmp
+
 language: java
 
 jdk: oraclejdk8
