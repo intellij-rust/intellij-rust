@@ -106,8 +106,14 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkBaseType(holder: AnnotationHolder, type: RsBaseType) {
         checkBaseTypeUnderscore(holder, type)
+
+        // Don't apply generic declaration checks to Fn-traits and `Self`
+        if (type.path?.valueParameterList != null) return
+        if (type.path?.cself != null) return
+
         val paramsDecl = type.path?.reference?.resolve() as? RsGenericDeclaration ?: return
         checkBaseTypeLifetimes(holder, type, paramsDecl)
+        checkBaseTypeTypeArguments(holder, type, paramsDecl)
     }
 
     private fun checkBaseTypeUnderscore(holder: AnnotationHolder, type: RsBaseType) {
@@ -127,6 +133,18 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         } else if (actualLifetimes > 0) {
             holder.createErrorAnnotation(type, "Wrong number of lifetime parameters: expected $expectedLifetimes, found $actualLifetimes [E0107]")
         }
+    }
+
+    private fun checkBaseTypeTypeArguments(holder: AnnotationHolder, type: RsBaseType, paramsDecl: RsGenericDeclaration) {
+        val expectedRequiredParams = paramsDecl.typeParameterList?.typeParameterList?.filter { it.eq == null }?.size ?: 0
+        val expectedTotalParams = paramsDecl.typeParameterList?.typeParameterList?.size ?: 0
+        val actualArgs = type.path?.typeArgumentList?.typeReferenceList?.size ?: 0
+        val (code, expectedText) = when {
+            actualArgs < expectedRequiredParams -> ("E0243" to if (expectedRequiredParams != expectedTotalParams) "at least $expectedRequiredParams" else "$expectedTotalParams")
+            actualArgs > expectedTotalParams -> ("E0244" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams")
+            else -> null
+        } ?: return
+        holder.createErrorAnnotation(type, "Wrong number of type arguments: expected $expectedText, found $actualArgs [$code]")
     }
 
     private fun checkPatBinding(holder: AnnotationHolder, binding: RsPatBinding) {
