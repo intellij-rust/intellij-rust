@@ -30,7 +30,7 @@
     </template>
 
     <!-- TODO: Convert this to Generate... action -->
-    <template name="tbn" description="bench function" toReformat="false" toShortenFQNames="true"
+    <template name="bfn" description="bench function" toReformat="false" toShortenFQNames="true"
               value="#[bench]&#10;fn $NAME$(b: &amp;mut test::Bencher) {&#10;    b.iter(||);$END$&#10;}">
         <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true"/>
         <context>
