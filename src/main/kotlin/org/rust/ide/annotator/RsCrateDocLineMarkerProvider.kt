@@ -27,8 +27,7 @@ class RsCrateDocLineMarkerProvider : LineMarkerProvider {
                 crateItem.crate,
                 crateItem.crate.textRange,
                 RsIcons.DOCS_MARK,
-                // BACKCOMPAT: 2016.2
-                Pass.UPDATE_OVERRIDDEN_MARKERS,
+                Pass.LINE_MARKERS,
                 { "Open documentation for `${crate.pkg.normName}`" },
                 { _, _ -> BrowserHyperlinkInfo.openUrl("https://docs.rs/${crate.pkg.name}/${crate.pkg.version}/${crate.normName}") },
                 GutterIconRenderer.Alignment.LEFT))

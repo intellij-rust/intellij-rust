@@ -36,8 +36,7 @@ class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
                     el,
                     el.textRange,
                     RsIcons.RECURSIVE_CALL,
-                    // BACKCOMPAT: 2016.2
-                    Pass.UPDATE_OVERRIDDEN_MARKERS,
+                    Pass.LINE_MARKERS,
                     FunctionUtil.constant("Recursive call"),
                     null,
                     GutterIconRenderer.Alignment.RIGHT))
