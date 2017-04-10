@@ -260,12 +260,21 @@ private class Debouncer(
 ) {
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
 
-    fun submit(task: () -> Unit, immediately: Boolean) = onAlarmThread {
-        alarm.cancelAllRequests()
-        if (immediately) {
+    fun submit(task: () -> Unit, immediately: Boolean) {
+        if (ApplicationManager.getApplication().isUnitTestMode) {
+            check(ApplicationManager.getApplication().isDispatchThread) {
+                "Background activity in unit tests can lead to deadlocks"
+            }
             task()
-        } else {
-            alarm.addRequest(task, delayMillis)
+            return
+        }
+        onAlarmThread {
+            alarm.cancelAllRequests()
+            if (immediately) {
+                task()
+            } else {
+                alarm.addRequest(task, delayMillis)
+            }
         }
     }
 

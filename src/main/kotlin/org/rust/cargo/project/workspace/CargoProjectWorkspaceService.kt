@@ -13,6 +13,11 @@ import org.rust.cargo.toolchain.RustToolchain
  * Quite low-level in its nature & follows a soft-fail policy, i.e. provides access
  * for latest obtained instance of the [CargoWorkspace], though doesn't assure that this
  * one could be obtained (consider the case with invalid, or missing `Cargo.toml`)
+ *
+ * Updating project information is inherently asynchronous, however during the tests
+ * all updates are executed synchronously on the EDT thread. This is needed because
+ * the tests themselves use EDT, so any async update which tries to commit via a
+ * WriteAction leads to a deadlock.
  */
 interface CargoProjectWorkspaceService {
 
