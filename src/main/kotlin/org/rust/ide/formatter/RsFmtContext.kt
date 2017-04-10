@@ -34,8 +34,8 @@ data class RsFmtContext private constructor(
     companion object {
         fun create(settings: CodeStyleSettings): RsFmtContext {
             val commonSettings = settings.getCommonSettings(RsLanguage)
-            val rustSettings = settings.getCustomSettings(RsCodeStyleSettings::class.java)
-            return RsFmtContext(commonSettings, rustSettings, createSpacingBuilder(commonSettings, rustSettings))
+            val rustSettings = settings.rust
+            return RsFmtContext(commonSettings, settings.rust, createSpacingBuilder(commonSettings, rustSettings))
         }
     }
 }

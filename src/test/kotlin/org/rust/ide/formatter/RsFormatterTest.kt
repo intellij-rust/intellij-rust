@@ -229,6 +229,37 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
+    fun `test keeps commas settings`() {
+        custom().KEEP_COMMAS = true
+        doTextTest("""
+            fn main() {
+                let _ = S { foo: 1, bar: 2, };
+                match x {
+                    1 => 1,
+                    2 => { 2 },
+                    3 => { 3 }
+                    4 => loop {},
+                    5 => 5,
+                    6 => if true {} else {},
+                    7 => 7
+                }
+            }
+        """, """
+            fn main() {
+                let _ = S { foo: 1, bar: 2, };
+                match x {
+                    1 => 1,
+                    2 => { 2 },
+                    3 => { 3 }
+                    4 => loop {},
+                    5 => 5,
+                    6 => if true {} else {},
+                    7 => 7
+                }
+            }
+        """)
+    }
+
     private fun common() = getSettings(RsLanguage)
     private fun custom() = settings.getCustomSettings(RsCodeStyleSettings::class.java)
 
