@@ -2,17 +2,16 @@ package org.rust.lang.core.types.types
 
 import com.intellij.psi.PsiElement
 
-data class RustFloatType(val kind: Kind) : RustPrimitiveType {
+data class RustFloatType(val kind: Kind, override val isKindWeak: Boolean = false) : RustNumericType {
 
     companion object {
         fun fromLiteral(literal: PsiElement): RustFloatType {
             val kind = Kind.values().find { literal.text.endsWith(it.name) }
-                //FIXME: If an floating point type can be uniquely determined from the surrounding program context,
-                // the unsuffixed floating point literal has that type. We use f64 for now.
-                ?: Kind.f64
 
-            return RustFloatType(kind)
+            return RustFloatType(kind ?: DEFAULT_KIND, kind == null)
         }
+
+        val DEFAULT_KIND = Kind.f64
     }
 
     enum class Kind { f32, f64 }

@@ -180,7 +180,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test struct expr with 2 fields of same type`() = testExpr("""
+    fun `test struct expr with 2 fields of same type integer 1`() = testExpr("""
         struct SomeStruct<T> { a: T, b: T }
         fn main() {
             let x = SomeStruct { a: 5u16, b: 0 };
@@ -189,15 +189,23 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    // currently the first wins - a and b resolved as i32
-//    fun `test struct expr with 2 fields of same type 2`() = testExpr("""
-//        struct SomeStruct<T> { a: T, b: T }
-//        fn main() {
-//            let x = SomeStruct { a: 0, b: 5u16 };
-//            x.a
-//            //^ u16
-//        }
-//    """)
+    fun `test struct expr with 2 fields of same type integer 2`() = testExpr("""
+        struct SomeStruct<T> { a: T, b: T }
+        fn main() {
+            let x = SomeStruct { a: 0, b: 5u16 };
+            x.a
+            //^ u16
+        }
+    """)
+
+    fun `test struct expr with 2 fields of same type float 2`() = testExpr("""
+        struct SomeStruct<T> { a: T, b: T }
+        fn main() {
+            let x = SomeStruct { a: 0.0, b: 5f32 };
+            x.a
+            //^ f32
+        }
+    """)
 
     fun `test struct expr with 2 fields of different types`() = testExpr("""
         struct SomeStruct<T1, T2> { a: T1, b: T2 }

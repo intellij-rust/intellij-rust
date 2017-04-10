@@ -6,26 +6,26 @@ import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.RsVariantDiscriminant
 import org.rust.lang.core.psi.ext.sizeExpr
 
-data class RustIntegerType(val kind: Kind) : RustPrimitiveType {
+data class RustIntegerType(val kind: Kind, override val isKindWeak: Boolean = false) : RustNumericType {
 
     companion object {
         fun fromLiteral(literal: PsiElement): RustIntegerType {
             val kind = Kind.values().find { literal.text.endsWith(it.name) }
                 ?: inferKind(literal)
 
-            return RustIntegerType(kind)
+            return RustIntegerType(kind ?: DEFAULT_KIND, kind == null)
         }
 
         /**
          * Tries to infer the kind of an unsuffixed integer literal by its context.
          * Fall back to the default kind if can't infer.
          */
-        private fun inferKind(literal: PsiElement): Kind {
-            val expr = literal.parent as? RsLitExpr ?: return DEFAULT_KIND
+        private fun inferKind(literal: PsiElement): Kind? {
+            val expr = literal.parent as? RsLitExpr ?: return null
             return when {
                 expr.isArraySize -> Kind.usize
                 expr.isEnumVariantDiscriminant -> Kind.isize
-                else -> DEFAULT_KIND
+                else -> null
             }
         }
 
