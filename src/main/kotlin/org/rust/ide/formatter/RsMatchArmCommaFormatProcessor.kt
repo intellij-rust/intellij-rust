@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor
 import org.rust.lang.core.psi.RsElementTypes.BLOCK_EXPR
 import org.rust.lang.core.psi.RsElementTypes.COMMA
@@ -13,6 +14,8 @@ import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 
 class RsMatchArmCommaFormatProcessor : PreFormatProcessor {
     override fun process(element: ASTNode, range: TextRange): TextRange {
+        if (CodeStyleSettingsManager.getInstance(element.psi.project).currentSettings.rust.KEEP_COMMAS) return range
+
         var nRemovedCommas = 0
         element.psi.accept(object : PsiRecursiveElementVisitor() {
             override fun visitElement(element: PsiElement) {

@@ -50,6 +50,11 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
                     CodeStyleSettingsCustomizable.WRAPPING_KEEP)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
+                    "KEEP_COMMAS",
+                    "Trailing commas",
+                    CodeStyleSettingsCustomizable.WRAPPING_KEEP)
+
+                consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALIGN_RET_TYPE",
                     "Align return type to function parameters",
                     CodeStyleSettingsCustomizable.WRAPPING_METHOD_PARAMETERS)
@@ -68,6 +73,15 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
                     "ALIGN_WHERE_BOUNDS",
                     "Align where clause bounds",
                     "Type parameters")
+            }
+
+            LANGUAGE_SPECIFIC -> {
+                consumer.showStandardOptions()
+                consumer.showCustomOption(RsCodeStyleSettings::class.java,
+                    "NORMALIZE_COMMAS",
+                    "Normalize trailing commas",
+                    "Other")
+
             }
         }
     }
