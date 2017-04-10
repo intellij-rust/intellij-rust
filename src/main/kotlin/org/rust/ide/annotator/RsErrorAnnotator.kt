@@ -648,6 +648,8 @@ private fun RsExpr.isMutable(): Boolean {
             if (type is RustUnknownType) {
                 return true
             }
+            if (declaration is RsEnumVariant) return true
+
             false
         }
         is RsFieldExpr -> (this.expr.type as? RustReferenceType)?.mutable ?: true

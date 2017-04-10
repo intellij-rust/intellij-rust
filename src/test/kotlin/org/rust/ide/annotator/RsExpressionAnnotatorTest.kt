@@ -468,4 +468,12 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
             }
         }
     """)
+
+    fun `test simple enum variant is treated as mutable`() = checkErrors("""
+        enum Foo { FOO }
+        fn foo (f: &mut Foo) {}
+        fn bar () {
+            foo(&mut Foo::FOO);     // Must not be annotated
+        }
+    """)
 }
