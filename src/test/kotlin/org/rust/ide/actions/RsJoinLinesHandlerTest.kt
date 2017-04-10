@@ -1,14 +1,7 @@
 package org.rust.ide.actions
 
-import com.intellij.openapi.application.ApplicationManager
-
 class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
-    fun `test empty file`() {
-        // BACKCOMPAT
-        // https://youtrack.jetbrains.com/issue/IDEA-168069
-        if (ApplicationManager.getApplication().isEAP) return
-        doTest("/*caret*/", "/*caret*/")
-    }
+    fun `test empty file`() = doTest("/*caret*/", "/*caret*/")
 
     fun `test blank file1`() = doTest("/*caret*/\n\n", "/*caret*/\n")
     fun `test blank file2`() = doTest("\n/*caret*/\n", "\n/*caret*/")
