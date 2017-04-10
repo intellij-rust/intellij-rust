@@ -4,8 +4,6 @@ import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.markup.EffectType
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -13,8 +11,6 @@ import com.intellij.psi.PsiDocumentManager
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.filters.RegexpFileLinkFilter.Companion.FILE_POSITION_RE
 import org.rust.lang.core.resolve.resolveStringPath
-import java.awt.Color
-import java.awt.Font
 import java.util.*
 import java.util.regex.Pattern
 
@@ -78,8 +74,7 @@ private class RsBacktraceItemFilter(
         val funcFile = element.containingFile
         val doc = docManager.getDocument(funcFile) ?: return null
         val link = OpenFileHyperlinkInfo(project, funcFile.virtualFile, doc.getLineNumber(element.textOffset))
-        val linkAttr = if (pkg.origin != PackageOrigin.WORKSPACE) GRAYED_LINK else null
-        return Filter.ResultItem(start, end, link, linkAttr)
+        return Filter.ResultItem(start, end, link, pkg.origin != PackageOrigin.WORKSPACE)
     }
 
     /**
@@ -136,8 +131,6 @@ private class RsBacktraceItemFilter(
     private companion object {
         val DIMMED_TEXT = EditorColorsManager.getInstance().globalScheme
             .getAttributes(TextAttributesKey.createTextAttributesKey("org.rust.DIMMED_TEXT"))!!
-        val GRAYED_LINK_COLOR = Color(135, 135, 135)
-        val GRAYED_LINK = TextAttributes(GRAYED_LINK_COLOR, null, GRAYED_LINK_COLOR, EffectType.LINE_UNDERSCORE, Font.PLAIN)
         val SKIP_PREFIXES = arrayOf(
             "std::rt::lang_start",
             "std::panicking",
