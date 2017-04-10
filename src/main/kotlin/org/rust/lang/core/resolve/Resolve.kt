@@ -411,9 +411,12 @@ private fun processDeclarations(scope: RsItemsOwner, withPrivateImports: Boolean
         }
     }
 
+    if (originalProcessor(ScopeEvent.STAR_IMPORTS)) {
+        return false
+    }
     for (use in starImports) {
         val mod = use.path?.reference?.resolve() ?: continue
-//        val newCtx = context.copy(visitedStarImports = context.visitedStarImports + this)
+
         if (processDeclarations(mod, ns, { v ->
             v.name !in directlyDeclaredNames && originalProcessor(v)
         })) return true
