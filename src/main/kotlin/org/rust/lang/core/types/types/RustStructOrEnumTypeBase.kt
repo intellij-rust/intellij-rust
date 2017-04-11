@@ -7,6 +7,8 @@ import org.rust.lang.core.types.RustType
 interface RustStructOrEnumTypeBase : RustType {
     val typeArguments: List<RustType>
 
+    val typeArgumentsMapping: List<RustTypeParameterType>
+
     val item: RsStructOrEnumItemElement
 
     override val typeParameterValues: Map<RustTypeParameterType, RustType>
@@ -16,4 +18,8 @@ interface RustStructOrEnumTypeBase : RustType {
                 RustTypeParameterType(param) to arg
             }.toMap()
 
+    fun aliasTypeArguments(typeArguments: List<RustTypeParameterType>): RustType
+
+    override fun withTypeArguments(typeArguments: List<RustType>): RustType =
+        substitute(typeArgumentsMapping.withIndex().associate { (i, type) -> type to (typeArguments.getOrNull(i) ?: type) })
 }
