@@ -6,7 +6,7 @@ import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.RsVariantDiscriminant
 import org.rust.lang.core.psi.ext.sizeExpr
 
-data class RustIntegerType(val kind: Kind, override val isKindWeak: Boolean = false) : RustNumericType {
+class RustIntegerType(val kind: Kind, override val isKindWeak: Boolean = false) : RustNumericType {
 
     companion object {
         fun fromLiteral(literal: PsiElement): RustIntegerType {
@@ -41,5 +41,10 @@ data class RustIntegerType(val kind: Kind, override val isKindWeak: Boolean = fa
     }
 
     override fun toString(): String = kind.toString()
+
+    override fun equals(other: Any?): Boolean = other is RustIntegerType && other.kind == kind
+
+    override fun hashCode(): Int = kind.hashCode()
+
 
 }
