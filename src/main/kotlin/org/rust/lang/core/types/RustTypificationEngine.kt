@@ -301,7 +301,7 @@ private fun addTypeMapping(
 ) {
     if (fieldType is RustTypeParameterType) {
         val old = argsMapping[fieldType]
-        if (old == null || old == RustUnknownType)
+        if (old == null || old == RustUnknownType || old is RustNumericType && old.isKindWeak)
             argsMapping[fieldType] = RustTypificationEngine.typifyExpr(expr)
     }
 }
