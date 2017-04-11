@@ -397,6 +397,22 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun `test E0069 empty return`() = checkErrors("""
+        fn ok1() { return; }
+        fn ok2() -> () { return; }
+        fn ok3() -> u32 {
+            let _ = || return;
+            return 10
+        }
+
+        fn err1() -> bool {
+            <error descr="`return;` in a function whose return type is not `()` [E0069]">return</error>;
+        }
+        fn err2() -> ! {
+            <error>return</error>
+        }
+    """)
+
     fun `test E0106 missing lifetime in struct field`() = checkErrors("""
         struct Foo<'a> {
             a: &'a str,
