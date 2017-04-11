@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.annotator.fixes.*
+import org.rust.ide.utils.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
@@ -42,6 +43,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitPath(o: RsPath) = checkPath(holder, o)
             override fun visitFieldDecl(o: RsFieldDecl) = checkDuplicates(holder, o)
             override fun visitRefLikeType(o: RsRefLikeType) = checkRefLikeType(holder, o)
+            override fun visitRetExpr(o: RsRetExpr) = checkRetExpr(holder, o)
             override fun visitTraitItem(o: RsTraitItem) = checkDuplicates(holder, o)
             override fun visitTypeAlias(o: RsTypeAlias) = checkTypeAlias(holder, o)
             override fun visitTypeParameter(o: RsTypeParameter) = checkDuplicates(holder, o)
@@ -447,6 +449,14 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
     }
 
+    private fun checkRetExpr(holder: AnnotationHolder, ret: RsRetExpr) {
+        if (ret.expr != null) return
+        val fn = ret.ancestors.find { it is RsFunction || it is RsLambdaExpr } as? RsFunction ?: return
+        val retType = fn.retType?.typeReference ?: return
+        if (retType is RsTupleType && retType.isUnitType) return
+        holder.createErrorAnnotation(ret, "`return;` in a function whose return type is not `()` [E0069]")
+    }
+
     private fun requireResolve(holder: AnnotationHolder, el: RsReferenceElement, message: String) {
         if (el.reference.resolve() != null || el.reference.multiResolve().size > 1) return
         holder.createErrorAnnotation(el.textRange, message)
@@ -682,3 +692,5 @@ private val RsTypeReference.topmostType: RsTypeReference
         .filterNot { it is RsTypeArgumentList || it is RsPath }
         .takeWhile { it is RsBaseType || it is RsTupleType || it is RsRefLikeType }
         .lastOrNull() as? RsTypeReference ?: this
+
+private val RsTupleType.isUnitType: Boolean get() = typeReferenceList.isNullOrEmpty()
