@@ -13,27 +13,6 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testMethodCallExpr2() = checkByCode("""
-    //- main.rs
-        mod aux;
-        use aux::S;
-
-        fn main() {
-            let s: S = S;
-
-            s.foo();
-            //^
-        }
-
-    //- aux.rs
-        enum S { X }
-
-        impl S {
-            fn foo(&self) { }
-              //X
-        }
-    """)
-
     fun testMethodReference() = checkByCode("""
     //- main.rs
         mod x;
