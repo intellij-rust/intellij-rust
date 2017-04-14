@@ -13,25 +13,36 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testMethodCallExpr2() = checkByCode("""
-    //- main.rs
-        mod aux;
-        use aux::S;
+    fun `test trait impl method`() = checkByCode("""
+        trait T { fn foo(&self); }
+        struct S;
+        impl T for S { fn foo(&self) {} }
+                         //X
+        fn foo(s: S) {
+            s.foo()
+        }    //^
+    """)
 
-        fn main() {
-            let s: S = S;
+    fun `test trait default method`() = checkByCode("""
+        trait T { fn foo(&self) {} }
+                    //X
+        struct S;
+        impl T for S { }
 
-            s.foo();
-            //^
-        }
+        fn foo(s: S) {
+            s.foo()
+        }    //^
+    """)
 
-    //- aux.rs
-        enum S { X }
+    fun `test trait overriden default method`() = checkByCode("""
+        trait T { fn foo(&self) {} }
 
-        impl S {
-            fn foo(&self) { }
-              //X
-        }
+        struct S;
+        impl T for S { fn foo(&self) {} }
+                         //X
+        fn foo(s: S) {
+            s.foo()
+        }    //^
     """)
 
     fun testMethodReference() = checkByCode("""
@@ -278,19 +289,6 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         fn main() {
             Foo::bar();
                 //^
-        }
-    """)
-
-    fun testMethodFromInherentImpl() = checkByCode("""
-        struct S;
-
-        impl S { fn test(&self) { } }
-                    //X
-
-        fn main() {
-            let s = S;
-            S::test(&s);
-               //^
         }
     """)
 

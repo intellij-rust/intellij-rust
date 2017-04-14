@@ -11,6 +11,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.isAssocFn
+import org.rust.lang.core.psi.ext.resolveToTrait
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.RustType
@@ -29,7 +30,7 @@ object RsImplIndex {
 
     fun findMethodsAndAssociatedFunctionsFor(target: RustType, project: Project): Sequence<RsFunction> =
         findImplsFor(target, project)
-            .flatMap { it.functionList.orEmpty().asSequence() }
+            .flatMap { it.allMethodsAndAssocFunctions }
 
     fun findImplsFor(target: RustType, project: Project): Sequence<RsImplItem> {
         val inherentImpls = when (target) {
@@ -118,4 +119,13 @@ object RsImplIndex {
             }
         }
     }
+}
+
+val RsImplItem.allMethodsAndAssocFunctions: Sequence<RsFunction> get() {
+    val directlyImplemented = functionList.map { it.name }.toSet()
+    val defaulted = traitRef?.resolveToTrait?.functionList.orEmpty().asSequence().filter {
+        it.name !in directlyImplemented
+    }
+
+    return functionList.asSequence() + defaulted
 }

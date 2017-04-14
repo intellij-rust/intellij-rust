@@ -230,4 +230,24 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
             pub fn foo(&self) { }
         }
     """)
+
+    fun `test method call on enum`() = stubOnlyResolve("""
+    //- main.rs
+        mod aux;
+        use aux::S;
+
+        fn main() {
+            let s: S = S::X;
+
+            s.foo();
+            //^ aux.rs
+        }
+
+    //- aux.rs
+        enum S { X }
+
+        impl S {
+            fn foo(&self) { }
+        }
+    """)
 }
