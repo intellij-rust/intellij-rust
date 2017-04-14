@@ -224,5 +224,18 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             //^ u16
         }
     """)
+
+    fun testGenericAlias() = testExpr("""
+        struct S1<T>(T);
+        struct S3<T1, T2, T3>(T1, T2, T3);
+
+        type A<T1, T2> = S3<T2, S1<T1>, S3<S1<T2>, T2, T2>>;
+        type B = A<u16, u8>;
+
+        fn f(b: B) {
+            (b.0, (b.1).0, ((b.2).0).0)
+          //^ (u8, u16, u8)
+        }
+    """)
 }
 

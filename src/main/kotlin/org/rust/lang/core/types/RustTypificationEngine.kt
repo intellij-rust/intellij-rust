@@ -17,7 +17,11 @@ object RustTypificationEngine {
             is RsEnumItem -> RustEnumType(named)
             is RsEnumVariant -> RustEnumType((named.parent as RsEnumBody).parent as RsEnumItem)
 
-            is RsTypeAlias -> named.typeReference?.type ?: RustUnknownType
+            is RsTypeAlias -> {
+                val t = named.typeReference?.type ?: RustUnknownType
+                (t as? RustStructOrEnumTypeBase)
+                    ?.aliasTypeArguments(named.typeParameters.map(::RustTypeParameterType)) ?: t
+            }
 
             is RsFunction -> deviseFunctionType(named)
 
@@ -33,7 +37,6 @@ object RustTypificationEngine {
 
             else -> RustUnknownType
         }
-        if (named is RsGenericDeclaration) return type.withTypeArguments(named.typeParameters.map(::RustTypeParameterType))
         return type
     }
 }
