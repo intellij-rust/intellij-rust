@@ -13,6 +13,38 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test trait impl method`() = checkByCode("""
+        trait T { fn foo(&self); }
+        struct S;
+        impl T for S { fn foo(&self) {} }
+                         //X
+        fn foo(s: S) {
+            s.foo()
+        }    //^
+    """)
+
+    fun `test trait default method`() = checkByCode("""
+        trait T { fn foo(&self) {} }
+                    //X
+        struct S;
+        impl T for S { }
+
+        fn foo(s: S) {
+            s.foo()
+        }    //^
+    """)
+
+    fun `test trait overriden default method`() = checkByCode("""
+        trait T { fn foo(&self) {} }
+
+        struct S;
+        impl T for S { fn foo(&self) {} }
+                         //X
+        fn foo(s: S) {
+            s.foo()
+        }    //^
+    """)
+
     fun testMethodReference() = checkByCode("""
     //- main.rs
         mod x;
