@@ -260,19 +260,6 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testMethodFromInherentImpl() = checkByCode("""
-        struct S;
-
-        impl S { fn test(&self) { } }
-                    //X
-
-        fn main() {
-            let s = S;
-            S::test(&s);
-               //^
-        }
-    """)
-
     fun testHiddenInherentImpl() = checkByCode("""
         struct S;
 
