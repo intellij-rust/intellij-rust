@@ -829,13 +829,13 @@ StructExpr ::= <<checkStructAllowed>> PathGenericArgsWithColons StructExprBody
 
 StructExprBody ::= '{' [ <<comma_separated_list StructExprField>> ] ('..'  AnyExpr)? '}' { pin = 1 }
 
-StructExprField ::= identifier [ ':' AnyExpr ] {
-  pin = 1
+StructExprField ::= OuterAttr* identifier [ ':' AnyExpr ] {
+  pin = 2
   recoverWhile = StructExprField_recover
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsStructExprFieldImplMixin"
 }
-private StructExprField_recover ::= !(identifier | ',' | '}' | '..')
+private StructExprField_recover ::= !(identifier | ',' | '}' | '..' | '#')
 
 PathExpr ::= PathGenericArgsWithColons
 
