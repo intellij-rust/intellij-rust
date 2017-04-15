@@ -611,4 +611,95 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             }   //^
         }
     """)
+
+    fun `test method in specialized trait impl for struct`() = checkByCode("""
+        trait Tr { fn some_fn(&self); }
+        struct S<T> { value: T }
+        impl Tr for S<u8> {
+            fn some_fn(&self) { }
+        }
+        impl Tr for S<u16> {
+            fn some_fn(&self) { }
+             //X
+        }
+        fn main() {
+            let v = S {value: 5u16};
+            v.some_fn();
+            //^
+        }
+    """)
+
+    fun `test method in specialized trait impl for struct 2`() = checkByCode("""
+        trait Tr { fn some_fn(&self); }
+        struct S<T1, T2> { value1: T1, value2: T2 }
+        impl Tr for S<u8, u8> {
+            fn some_fn(&self) { }
+        }
+        impl Tr for S<u16, u8> {
+            fn some_fn(&self) { }
+             //X
+        }
+        impl Tr for S<u8, u16> {
+            fn some_fn(&self) { }
+        }
+        impl Tr for S<u16, u16> {
+            fn some_fn(&self) { }
+        }
+        fn main() {
+            let v = S {value1: 5u16, value2: 5u8};
+            v.some_fn();
+            //^
+        }
+    """)
+
+    fun `test method in specialized trait impl for tuple struct`() = checkByCode("""
+        trait Tr { fn some_fn(&self); }
+        struct S<T> (T);
+        impl Tr for S<u8> {
+            fn some_fn(&self) { }
+        }
+        impl Tr for S<u16> {
+            fn some_fn(&self) { }
+             //X
+        }
+        fn main() {
+            let v = S (5u16);
+            v.some_fn();
+            //^
+        }
+    """)
+
+    fun `test method in specialized trait impl for enum`() = checkByCode("""
+        trait Tr { fn some_fn(&self); }
+        enum S<T> { Var1{value: T}, Var2 }
+        impl Tr for S<u8> {
+            fn some_fn(&self) { }
+        }
+        impl Tr for S<u16> {
+            fn some_fn(&self) { }
+             //X
+        }
+        fn main() {
+            let v = S::Var1 {value: 5u16};
+            v.some_fn();
+            //^
+        }
+    """)
+
+    fun `test method in specialized trait impl for tuple enum`() = checkByCode("""
+        trait Tr { fn some_fn(&self); }
+        enum S<T> { Var1(T), Var2  }
+        impl Tr for S<u8> {
+            fn some_fn(&self) { }
+        }
+        impl Tr for S<u16> {
+            fn some_fn(&self) { }
+             //X
+        }
+        fn main() {
+            let v = S::Var1 (5u16);
+            v.some_fn();
+            //^
+        }
+    """)
 }
