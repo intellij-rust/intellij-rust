@@ -148,6 +148,8 @@
 
         <typedHandler implementation="org.rust.ide.typing.RsRawLiteralHashesInserter"
                       id="RustRawLiteralHashesInserter"/>
+        <typedHandler implementation="org.rust.ide.typing.RsTypingHandler"
+                      id="RustTypingHandler"/>
 
         <backspaceHandlerDelegate implementation="org.rust.ide.typing.RsRawLiteralHashesDeleter"
                                   id="RustRawLiteralHashesDeleter"/>
