@@ -864,15 +864,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0428_RespectsCrateAliases() = checkErrors("""
-        extern crate num as num_lib;
-        mod num {}
-
-        // FIXME: ideally we want to highlight these
-        extern crate foo;
-        mod foo {}
-    """)
-
     fun testE0428_IgnoresLocalBindings() = checkErrors("""
         mod no_dup {
             fn no_dup() {
