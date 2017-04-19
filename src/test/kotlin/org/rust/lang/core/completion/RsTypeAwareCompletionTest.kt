@@ -1,5 +1,7 @@
 package org.rust.lang.core.completion
 
+import java.io.File
+
 class RsTypeAwareCompletionTest : RsCompletionTestBase() {
     fun testMethodCallExpr() = checkSingleCompletion("S.transmogrify()", """
         struct S;
@@ -74,5 +76,13 @@ class RsTypeAwareCompletionTest : RsCompletionTestBase() {
             fn frobnicate(&self);
             fn bar(&self) { self.frob/*caret*/ }
         }
+    """)
+
+    fun `test default method`() = checkSingleCompletion("frobnicate()", """
+        trait Frob { fn frobnicate(&self) { } }
+        struct S;
+        impl Frob for S {}
+
+        fn foo(s: S) { s.frob/*caret*/ }
     """)
 }

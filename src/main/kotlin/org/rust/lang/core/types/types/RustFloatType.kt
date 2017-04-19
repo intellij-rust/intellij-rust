@@ -2,7 +2,7 @@ package org.rust.lang.core.types.types
 
 import com.intellij.psi.PsiElement
 
-data class RustFloatType(val kind: Kind, override val isKindWeak: Boolean = false) : RustNumericType {
+class RustFloatType(val kind: Kind, override val isKindWeak: Boolean = false) : RustNumericType {
 
     companion object {
         fun fromLiteral(literal: PsiElement): RustFloatType {
@@ -17,5 +17,9 @@ data class RustFloatType(val kind: Kind, override val isKindWeak: Boolean = fals
     enum class Kind { f32, f64 }
 
     override fun toString(): String = kind.toString()
+
+    override fun equals(other: Any?): Boolean = other is RustFloatType && other.kind == kind
+
+    override fun hashCode(): Int = kind.hashCode()
 
 }
