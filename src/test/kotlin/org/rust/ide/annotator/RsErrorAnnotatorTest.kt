@@ -1,9 +1,6 @@
 package org.rust.ide.annotator
 
-import com.intellij.testFramework.LightProjectDescriptor
-
 class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibAndDependencyRustProjectDescriptor
     override val dataPath = "org/rust/ide/annotator/fixtures/errors"
 
     fun testInvalidModuleDeclarations() = doTest("helper.rs")
@@ -976,8 +973,4 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             self::foo()
         }
     """)
-
-    fun testUnknownCrate() {
-
-    }
 }
