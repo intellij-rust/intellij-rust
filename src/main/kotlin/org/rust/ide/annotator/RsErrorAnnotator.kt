@@ -55,6 +55,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitCallExpr(o: RsCallExpr) = checkCallExpr(holder, o)
             override fun visitMethodCallExpr(o: RsMethodCallExpr) = checkMethodCallExpr(holder, o)
             override fun visitUnaryExpr(o: RsUnaryExpr) = checkUnaryExpr(holder, o)
+            override fun visitExternCrateItem(o: RsExternCrateItem) = checkExternCrate(holder, o)
         }
 
         element.accept(visitor)
@@ -455,6 +456,11 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val retType = fn.retType?.typeReference ?: return
         if (retType is RsTupleType && retType.isUnitType) return
         holder.createErrorAnnotation(ret, "`return;` in a function whose return type is not `()` [E0069]")
+    }
+
+    private fun checkExternCrate(holder: AnnotationHolder, el: RsExternCrateItem) {
+        if (el.reference.resolve() != null) return
+        holder.createErrorAnnotation(el.textRange, "Unknown crate '" + el.identifier.text + "' [E0463]")
     }
 
     private fun requireResolve(holder: AnnotationHolder, el: RsReferenceElement, message: String) {

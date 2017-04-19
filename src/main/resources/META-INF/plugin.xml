@@ -188,13 +188,8 @@
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Unresolved reference"
-                         enabledByDefault="true" level="WARNING"
+                         enabledByDefault="false" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsUnresolvedReferenceInspection"/>
-
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Unknown crate"
-                         enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsUnknownCrateInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Double negation"
