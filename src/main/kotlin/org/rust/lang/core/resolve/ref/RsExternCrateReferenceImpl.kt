@@ -13,8 +13,8 @@ class RsExternCrateReferenceImpl(
     override val RsExternCrateItem.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun getVariants(): Array<out Any> =
-        collectCompletionVariants { processResolveVariants(element, true, it) }
+        collectCompletionVariants { processExternCrateResolveVariants(element, true, it) }
 
     override fun resolveInner(): List<RsCompositeElement> =
-        collectResolveVariants(element.name!!) { processResolveVariants(element, false, it) }
+        collectResolveVariants(element.name!!) { processExternCrateResolveVariants(element, false, it) }
 }

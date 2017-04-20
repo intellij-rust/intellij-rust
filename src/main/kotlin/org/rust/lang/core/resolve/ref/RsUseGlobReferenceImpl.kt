@@ -13,10 +13,10 @@ class RsUseGlobReferenceImpl(
     override val RsUseGlob.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun getVariants(): Array<out Any> =
-        collectCompletionVariants { processResolveVariants(element, it) }
+        collectCompletionVariants { processUseGlobResolveVariants(element, it) }
 
     override fun resolveInner(): List<RsCompositeElement> =
-        collectResolveVariants(element.referenceName) { processResolveVariants(element, it) }
+        collectResolveVariants(element.referenceName) { processUseGlobResolveVariants(element, it) }
 }
 
 

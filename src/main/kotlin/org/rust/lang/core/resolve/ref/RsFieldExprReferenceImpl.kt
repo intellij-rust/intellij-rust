@@ -14,12 +14,12 @@ class RsFieldExprReferenceImpl(
 
     override fun getVariants(): Array<out Any> =
         collectCompletionVariants {
-            processResolveVariants(element, true, it)
+            processFieldExprResolveVariants(element, true, it)
         }
 
     override fun resolveInner(): List<RsCompositeElement> =
         collectResolveVariants(element.referenceName) {
-            processResolveVariants(element, false, it)
+            processFieldExprResolveVariants(element, false, it)
         }
 
     override fun handleElementRename(newName: String): PsiElement {

@@ -15,11 +15,11 @@ class RsStructLiteralFieldReferenceImpl(
     override val RsStructLiteralField.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun getVariants(): Array<out LookupElement> =
-        collectCompletionVariants { processResolveVariants(element, it) }
+        collectCompletionVariants { processStructLiteralFieldResolveVariants(element, it) }
 
     override fun resolveInner(): List<RsCompositeElement> =
         collectResolveVariants(element.referenceName) {
-            processResolveVariants(element, it)
+            processStructLiteralFieldResolveVariants(element, it)
         }
 
     override fun handleElementRename(newName: String): PsiElement {
