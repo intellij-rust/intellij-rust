@@ -21,30 +21,30 @@ import org.rust.lang.core.types.stripAllRefsIfAny
 import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustStructType
 
-fun processResolveVariants(fieldExpr: RsFieldExpr, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
+fun processFieldExprResolveVariants(fieldExpr: RsFieldExpr, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val receiverType = fieldExpr.expr.type.stripAllRefsIfAny()
 
     val struct = (receiverType as? RustStructType)?.item
-    if (struct != null && processFields(struct, processor)) return true
+    if (struct != null && processFieldDeclarations(struct, processor)) return true
 
     if (isCompletion) {
-        processMethods(fieldExpr.project, receiverType, processor)
+        processMethodDeclarations(fieldExpr.project, receiverType, processor)
     }
 
     return false
 }
 
-fun processResolveVariants(field: RsStructLiteralField, processor: RsResolveProcessor): Boolean {
+fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, processor: RsResolveProcessor): Boolean {
     val structOrEnumVariant = field.parentStructLiteral.path.reference.resolve() as? RsFieldsOwner ?: return false
-    return processFields(structOrEnumVariant, processor)
+    return processFieldDeclarations(structOrEnumVariant, processor)
 }
 
-fun processResolveVariants(callExpr: RsMethodCallExpr, processor: RsResolveProcessor): Boolean {
+fun processMethodCallExprResolveVariants(callExpr: RsMethodCallExpr, processor: RsResolveProcessor): Boolean {
     val receiverType = callExpr.expr.type
-    return processMethods(callExpr.project, receiverType, processor)
+    return processMethodDeclarations(callExpr.project, receiverType, processor)
 }
 
-fun processResolveVariants(glob: RsUseGlob, processor: RsResolveProcessor): Boolean {
+fun processUseGlobResolveVariants(glob: RsUseGlob, processor: RsResolveProcessor): Boolean {
     val useItem = glob.parentUseItem
     val basePath = useItem.path
     val baseItem = (if (basePath != null)
@@ -55,7 +55,7 @@ fun processResolveVariants(glob: RsUseGlob, processor: RsResolveProcessor): Bool
 
     if (processor("self", baseItem)) return true
 
-    return processDeclarations(baseItem, TYPES_N_VALUES, processor)
+    return processItemOrEnumVariantDeclarations(baseItem, TYPES_N_VALUES, processor)
 }
 
 /**
@@ -78,7 +78,7 @@ fun processResolveVariants(glob: RsUseGlob, processor: RsResolveProcessor): Bool
  * Reference:
  *      https://github.com/rust-lang/rust/blob/master/src/doc/reference.md#modules
  */
-fun processResolveVariants(modDecl: RsModDeclItem, processor: RsResolveProcessor): Boolean {
+fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolveProcessor): Boolean {
     val dir = modDecl.containingMod.ownedDirectory ?: return false
 
     val explicitPath = modDecl.pathAttribute
@@ -113,7 +113,7 @@ fun processResolveVariants(modDecl: RsModDeclItem, processor: RsResolveProcessor
     return false
 }
 
-fun processResolveVariants(crate: RsExternCrateItem, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
+fun processExternCrateResolveVariants(crate: RsExternCrateItem, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val module = crate.module ?: return false
     val pkg = crate.containingCargoPackage ?: return false
     fun processPackage(pkg: CargoWorkspace.Package): Boolean {
@@ -131,7 +131,7 @@ fun processResolveVariants(crate: RsExternCrateItem, isCompletion: Boolean, proc
     return false
 }
 
-fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
+fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val qualifier = path.path
     val parent = path.parent
     val ns = when (parent) {
@@ -147,9 +147,9 @@ fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsRes
             val s = base.`super`
             if (s != null && processor("super", s)) return true
         }
-        if (processDeclarations(base, ns, processor)) return true
+        if (processItemOrEnumVariantDeclarations(base, ns, processor)) return true
         if (base is RsTypeBearingItemElement && parent !is RsUseItem) {
-            if (processAssociatedFunctions(base.project, base.type, processor)) return true
+            if (processAssociatedFunctionsDeclarations(base.project, base.type, processor)) return true
         }
         return false
     }
@@ -169,7 +169,7 @@ fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsRes
     // Paths in use items are implicitly global.
     if (path.isCrateRelative || path.parentOfType<RsUseItem>() != null) {
         if (crateRoot != null) {
-            if (processDeclarations(crateRoot, ns, processor)) return true
+            if (processItemOrEnumVariantDeclarations(crateRoot, ns, processor)) return true
         }
         return false
     }
@@ -191,12 +191,12 @@ fun processResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsRes
     val preludeFile = path.containingCargoPackage?.findCrateByName("std")?.crateRoot
         ?.findFileByRelativePath("../prelude/v1.rs")
     val prelude = path.project.getPsiFor(preludeFile)?.rustMod
-    if (prelude != null && processDeclarations(prelude, false, ns, { v -> v.name !in prevScope && processor(v) })) return true
+    if (prelude != null && processItemDeclarations(prelude, false, ns, { v -> v.name !in prevScope && processor(v) })) return true
 
     return false
 }
 
-fun processResolveVariants(label: RsLabel, processor: RsResolveProcessor): Boolean {
+fun processLabelResolveVariants(label: RsLabel, processor: RsResolveProcessor): Boolean {
     for (scope in label.ancestors) {
         if (scope is RsLambdaExpr || scope is RsFunction) return false
         if (scope is RsLabeledExpression) {
@@ -207,7 +207,7 @@ fun processResolveVariants(label: RsLabel, processor: RsResolveProcessor): Boole
     return false
 }
 
-fun processResolveVariants(lifetime: RsLifetime, processor: RsResolveProcessor): Boolean {
+fun processLifetimeResolveVariants(lifetime: RsLifetime, processor: RsResolveProcessor): Boolean {
     if (lifetime.isPredefined) return false
     loop@ for (scope in lifetime.ancestors) {
         val lifetimeParameters = when (scope) {
@@ -252,7 +252,7 @@ fun resolveStringPath(path: String, module: Module): Pair<RsNamedElement, CargoW
 }
 
 
-private fun processFields(struct: RsFieldsOwner, processor: RsResolveProcessor): Boolean {
+private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolveProcessor): Boolean {
     if (processAll(struct.namedFields, processor)) return true
 
     for ((idx, field) in struct.positionalFields.withIndex()) {
@@ -261,12 +261,12 @@ private fun processFields(struct: RsFieldsOwner, processor: RsResolveProcessor):
     return false
 }
 
-private fun processMethods(project: Project, receiver: RustType, processor: RsResolveProcessor): Boolean {
+private fun processMethodDeclarations(project: Project, receiver: RustType, processor: RsResolveProcessor): Boolean {
     val methods = receiver.getMethodsIn(project)
     return processFnsWithInherentPriority(methods, processor)
 }
 
-private fun processAssociatedFunctions(project: Project, type: RustType, processor: RsResolveProcessor): Boolean {
+private fun processAssociatedFunctionsDeclarations(project: Project, type: RustType, processor: RsResolveProcessor): Boolean {
     val methodsAndFns = RsImplIndex.findMethodsAndAssociatedFunctionsFor(type, project)
     return processFnsWithInherentPriority(methodsAndFns, processor)
 }
@@ -283,20 +283,20 @@ private fun processFnsWithInherentPriority(fns: Sequence<RsFunction>, processor:
     return false
 }
 
-private fun processDeclarations(scope: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
+private fun processItemOrEnumVariantDeclarations(scope: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
     when (scope) {
         is RsEnumItem -> {
             if (processAll(scope.enumBody.enumVariantList, processor)) return true
         }
         is RsMod -> {
-            if (processDeclarations(scope, false, ns, processor)) return true
+            if (processItemDeclarations(scope, false, ns, processor)) return true
         }
     }
 
     return false
 }
 
-private fun processDeclarations(scope: RsItemsOwner, withPrivateImports: Boolean, ns: Set<Namespace>, originalProcessor: RsResolveProcessor): Boolean {
+private fun processItemDeclarations(scope: RsItemsOwner, withPrivateImports: Boolean, ns: Set<Namespace>, originalProcessor: RsResolveProcessor): Boolean {
     val (starImports, itemImports) = scope.useItemList
         .filter { it.isPublic || withPrivateImports }
         .partition { it.isStarImport }
@@ -417,7 +417,7 @@ private fun processDeclarations(scope: RsItemsOwner, withPrivateImports: Boolean
     for (use in starImports) {
         val mod = use.path?.reference?.resolve() ?: continue
 
-        if (processDeclarations(mod, ns, { v ->
+        if (processItemOrEnumVariantDeclarations(mod, ns, { v ->
             v.name !in directlyDeclaredNames && originalProcessor(v)
         })) return true
     }
@@ -442,7 +442,7 @@ private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCo
 
     when (scope) {
         is RsMod -> {
-            if (processDeclarations(scope, true, ns, processor)) return true
+            if (processItemDeclarations(scope, true, ns, processor)) return true
         }
 
         is RsStructItem,
@@ -506,7 +506,7 @@ private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCo
                 }
             }
 
-            return processDeclarations(scope, true, ns, processor)
+            return processItemDeclarations(scope, true, ns, processor)
         }
 
         is RsForExpr -> {

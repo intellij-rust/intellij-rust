@@ -14,10 +14,10 @@ class RsPathReferenceImpl(
     override val RsPath.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun resolveInner(): List<RsCompositeElement> =
-        collectResolveVariants(element.referenceName) { processResolveVariants(element, false, it) }
+        collectResolveVariants(element.referenceName) { processPathResolveVariants(element, false, it) }
 
     override fun getVariants(): Array<out Any> =
-        collectCompletionVariants { processResolveVariants(element, true, it) }
+        collectCompletionVariants { processPathResolveVariants(element, true, it) }
 
     override fun isReferenceTo(element: PsiElement): Boolean {
         val target = resolve()

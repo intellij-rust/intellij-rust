@@ -13,8 +13,8 @@ class RsMethodCallReferenceImpl(
     override val RsMethodCallExpr.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun getVariants(): Array<out Any> =
-        collectCompletionVariants { processResolveVariants(element, it) }
+        collectCompletionVariants { processMethodCallExprResolveVariants(element, it) }
 
     override fun resolveInner(): List<RsCompositeElement> =
-        collectResolveVariants(element.referenceName) { processResolveVariants(element, it) }
+        collectResolveVariants(element.referenceName) { processMethodCallExprResolveVariants(element, it) }
 }
