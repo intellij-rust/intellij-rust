@@ -13,4 +13,3 @@ class RsRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun getIntroduceVariableHandler(element: PsiElement?) = RsLocalVariableHandler()
 
 }
-

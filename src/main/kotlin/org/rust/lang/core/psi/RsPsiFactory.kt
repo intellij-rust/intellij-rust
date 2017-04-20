@@ -178,6 +178,24 @@ class RsPsiFactory(private val project: Project) {
         createFromText<RsFunction>("unsafe fn foo(){}")?.unsafe
             ?: error("Failed to create unsafe element")
 
+    fun createFunction(name: String, stmts: List<PsiElement>, public: Boolean, self: Boolean): RsFunction =
+        createFromText<RsFunction>("${if (public) "pub" else ""} fn $name(${if (self) "self" else ""}) {\n" +
+            stmts.joinToString(separator = "\n", transform = { it.text }) +
+            "\n}")
+            ?: error("Failed to create function element: ${name}")
+
+    fun createFunctionCallFunctionStmt(name: String, type: String?): RsStmt =
+        createFromText("fn main(){${if (type != null) "$type::" else ""}$name();}")
+            ?: error("Failed to create call function statement")
+
+    fun createFunctionCallSelfMethodStmt(name: String): RsStmt =
+        createFromText("fn main(){self.$name();}")
+            ?: error("Failed to create call method statement")
+
+    fun createImpl(name: String, functions: List<RsFunction>): RsImplItem =
+        createFromText<RsImplItem>("impl $name {\n${functions.joinToString(separator = "\n", transform = { it.text })}\n}")
+            ?: error("Failed to create RsImplItem element")
+
     fun createValueParameter(name: String, type: RsTypeReference, mutable: Boolean = false): RsValueParameter {
         return createFromText<RsFunction>("fn main($name: ${if (mutable) "&mut " else ""}${type.text}){}")
             ?.valueParameterList?.valueParameterList?.get(0)
