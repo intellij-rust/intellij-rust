@@ -9,9 +9,9 @@ import org.rust.ide.core.overrideImplement.generateTraitMembers
 import org.rust.lang.core.psi.RsImplItem
 
 /**
- * Adds empty implementations of the given methods to an impl block.
+ * Adds unimplemented methods and associated types to an impl block
  */
-class ImplementMethodsFix(
+class ImplementMembersFix(
     implBody: RsImplItem
 ) : LocalQuickFixAndIntentionActionOnPsiElement(implBody) {
 

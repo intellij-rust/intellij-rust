@@ -353,7 +353,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
             holder.createErrorAnnotation(implHeaderTextRange,
                 "Not all trait items implemented, missing: ${notImplemented.namesList} [E0046]"
-            ).registerFix(ImplementMethodsFix(impl))
+            ).registerFix(ImplementMembersFix(impl))
         }
 
         val notMembers = implemented.filterKeys { it !in canImplement }
