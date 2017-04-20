@@ -7,10 +7,10 @@ import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.childOfType
 import java.util.*
 
-class OverrideTraitMembersTest : RsTestBase() {
+class ImplementMembersFixTest : RsTestBase() {
     override val dataPath = ""
 
-    override fun isWriteActionRequired() = true;
+    override fun isWriteActionRequired() = true
 
     fun test1() = doTest("""
         trait T {
