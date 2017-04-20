@@ -32,6 +32,9 @@
     </actions>
 
     <extensions defaultExtensionNs="com.intellij">
+        <!-- although Rust module type is only created by IDEA, we need it in other IDEs as well
+             to be able to open a project created in IDEA without errors -->
+        <moduleType id="RUST_MODULE" implementationClass="org.rust.ide.idea.RsModuleType"/>
 
         <!-- Rust -->
 

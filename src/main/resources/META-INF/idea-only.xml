@@ -1,6 +1,5 @@
 <idea-plugin version="2">
     <extensions defaultExtensionNs="com.intellij">
-        <moduleType id="RUST_MODULE" implementationClass="org.rust.ide.idea.RsModuleType"/>
         <moduleBuilder builderClass="org.rust.ide.idea.RsModuleBuilder"/>
         <projectStructureDetector implementation="RsProjectStructureDetector"/>
     </extensions>
