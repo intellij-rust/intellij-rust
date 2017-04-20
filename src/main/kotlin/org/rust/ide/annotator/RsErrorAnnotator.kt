@@ -337,6 +337,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun checkImpl(holder: AnnotationHolder, impl: RsImplItem) {
         val trait = impl.traitRef?.resolveToTrait ?: return
         val traitName = trait.name ?: return
+        // Macros can add methods
+        if (impl.implMacroMemberList.isNotEmpty()) return
 
         val implemented = impl.functionList.associateBy { it.name }
 
