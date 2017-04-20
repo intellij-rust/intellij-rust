@@ -10,7 +10,7 @@ import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper
 import org.rust.lang.core.psi.RsBlockFields
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsElementTypes.RBRACE
-import org.rust.lang.core.psi.RsStructExprBody
+import org.rust.lang.core.psi.RsStructLiteralBody
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
@@ -34,7 +34,7 @@ class RsTrailingCommaFormatProcessor : PostFormatProcessor {
                 super.visitElement(element)
                 if (!helper.isElementFullyInRange(element)) return
                 when (element) {
-                    is RsStructExprBody, is RsBlockFields -> {
+                    is RsStructLiteralBody, is RsBlockFields -> {
                         if (fixSingleLineBracedBlock(element)) {
                             helper.updateResultRange(1, 0)
                         }

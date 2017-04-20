@@ -34,8 +34,8 @@ fun processResolveVariants(fieldExpr: RsFieldExpr, isCompletion: Boolean, proces
     return false
 }
 
-fun processResolveVariants(field: RsStructExprField, processor: RsResolveProcessor): Boolean {
-    val structOrEnumVariant = field.parentStructExpr.path.reference.resolve() as? RsFieldsOwner ?: return false
+fun processResolveVariants(field: RsStructLiteralField, processor: RsResolveProcessor): Boolean {
+    val structOrEnumVariant = field.parentStructLiteral.path.reference.resolve() as? RsFieldsOwner ?: return false
     return processFields(structOrEnumVariant, processor)
 }
 

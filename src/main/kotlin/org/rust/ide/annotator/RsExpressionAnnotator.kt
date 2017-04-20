@@ -19,37 +19,37 @@ import java.util.*
 class RsExpressionAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         element.accept(RedundantParenthesisVisitor(holder))
-        if (element is RsStructExpr) {
+        if (element is RsStructLiteral) {
             val decl = element.path.reference.resolve() as? RsFieldsOwner
             if (decl != null) {
-                checkStructExpr(holder, decl, element.structExprBody)
+                checkStructLiteral(holder, decl, element.structLiteralBody)
             }
         }
     }
 
-    private fun checkStructExpr(
+    private fun checkStructLiteral(
         holder: AnnotationHolder,
         decl: RsFieldsOwner,
-        expr: RsStructExprBody
+        expr: RsStructLiteralBody
     ) {
-        expr.structExprFieldList
+        expr.structLiteralFieldList
             .filter { it.reference.resolve() == null }
             .forEach {
                 holder.createErrorAnnotation(it.identifier, "No such field")
                     .highlightType = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
             }
 
-        for (field in expr.structExprFieldList.findDuplicateReferences()) {
+        for (field in expr.structLiteralFieldList.findDuplicateReferences()) {
             holder.createErrorAnnotation(field.identifier, "Duplicate field")
         }
 
         if (expr.dotdot != null) return  // functional update, no need to declare all the fields.
 
-        val declaredFields = expr.structExprFieldList.map { it.referenceName }.toSet()
+        val declaredFields = expr.structLiteralFieldList.map { it.referenceName }.toSet()
         val missingFields = decl.namedFields.filter { it.name !in declaredFields && !it.queryAttributes.hasCfgAttr() }
 
         if (decl is RsStructItem && decl.kind == RsStructKind.UNION) {
-            if (expr.structExprFieldList.size > 1) {
+            if (expr.structLiteralFieldList.size > 1) {
                 holder.createErrorAnnotation(expr, "Union expressions should have exactly one field")
             }
         } else {

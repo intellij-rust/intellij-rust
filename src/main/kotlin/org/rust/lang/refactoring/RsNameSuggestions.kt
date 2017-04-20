@@ -28,7 +28,7 @@ fun RsExpr.suggestNames(): LinkedHashSet<String> {
     val foundNames = when {
         this.isArgument() -> rustNameUtil(nameForArgument())
         this is RsCallExpr -> nameForCall(this).flatMap(::rustNameUtil)
-        parent is RsStructExprField -> rustNameUtil(parent.identifier.text)
+        parent is RsStructLiteralField -> rustNameUtil(parent.identifier.text)
         else -> emptyList()
     }
 
@@ -91,6 +91,6 @@ fun findNamesInLocalScope(expr: PsiElement): List<String> {
 }
 
 private fun PsiElement.isArgument() = this.parent is RsValueArgumentList
-private fun PsiElement.isStructField() = this.parent is RsStructExprField
+private fun PsiElement.isStructField() = this.parent is RsStructLiteralField
 
 private fun rustNameUtil(name: String) = NameUtil.getSuggestionsByName(name, "", "", false, false, false).map { it.toSnakeCase(false) }

@@ -71,7 +71,7 @@ private class RustExprTypificationVisitor : RustComputingVisitor<RustType>() {
         resolve?.let { RustTypificationEngine.typify(it) } ?: RustUnknownType
     }
 
-    override fun visitStructExpr(o: RsStructExpr) = set {
+    override fun visitStructLiteral(o: RsStructLiteral) = set {
         val base = o.path.reference.resolve()
         when (base) {
             is RsStructItem -> inferStructTypeParameters(o, base)
@@ -244,28 +244,28 @@ private fun RsImplItem.remapTypeParameters(
             }
         }.toMap()
 
-private fun inferStructTypeParameters(o: RsStructExpr, item: RsStructItem): RustType {
+private fun inferStructTypeParameters(o: RsStructLiteral, item: RsStructItem): RustType {
     val baseType = item.type
     if ((baseType as? RustStructOrEnumTypeBase)?.typeArguments.isNullOrEmpty()) return baseType
-    val argsMapping = item.blockFields?.let { inferTypeParametersForFields(o.structExprBody.structExprFieldList, it) } ?: emptyMap()
+    val argsMapping = item.blockFields?.let { inferTypeParametersForFields(o.structLiteralBody.structLiteralFieldList, it) } ?: emptyMap()
     return if (argsMapping.isEmpty()) baseType else baseType.substitute(argsMapping)
 }
 
-private fun inferEnumTypeParameters(o: RsStructExpr, item: RsEnumVariant): RustType {
+private fun inferEnumTypeParameters(o: RsStructLiteral, item: RsEnumVariant): RustType {
     val baseType = item.parentEnum.type
     if ((baseType as? RustStructOrEnumTypeBase)?.typeArguments.isNullOrEmpty()) return baseType
-    val argsMapping = item.blockFields?.let { inferTypeParametersForFields(o.structExprBody.structExprFieldList, it) } ?: emptyMap()
+    val argsMapping = item.blockFields?.let { inferTypeParametersForFields(o.structLiteralBody.structLiteralFieldList, it) } ?: emptyMap()
     return if (argsMapping.isEmpty()) baseType else baseType.substitute(argsMapping)
 }
 
 private fun inferTypeParametersForFields(
-    structExprFieldList: List<RsStructExprField>,
+    structLiteralFieldList: List<RsStructLiteralField>,
     fields: RsBlockFields
 ): Map<RustTypeParameterType, RustType> {
     val argsMapping = mutableMapOf<RustTypeParameterType, RustType>()
     val fieldTypes = fields.fieldDeclList
         .associate { it.identifier.text to (it.typeReference?.type ?: RustUnknownType) }
-    structExprFieldList.forEach { field ->
+    structLiteralFieldList.forEach { field ->
         field.expr?.let { expr -> addTypeMapping(argsMapping, fieldTypes[field.identifier.text], expr) }
     }
     return argsMapping
