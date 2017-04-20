@@ -44,7 +44,7 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
 
     private class FoldingVisitor(private val descriptors: MutableList<FoldingDescriptor>) : RsVisitor() {
 
-        override fun visitStructExprBody(o: RsStructExprBody) = fold(o)
+        override fun visitStructLiteralBody(o: RsStructLiteralBody) = fold(o)
 
         override fun visitEnumBody(o: RsEnumBody) = fold(o)
 

@@ -58,8 +58,8 @@ class RsPsiFactory(private val project: Project) {
         return expr
     }
 
-    fun createStructExprField(name: String): RsStructExprField =
-        createExpressionOfType<RsStructExpr>("S { $name: () }").structExprBody.structExprFieldList[0]
+    fun createStructLiteralField(name: String): RsStructLiteralField =
+        createExpressionOfType<RsStructLiteral>("S { $name: () }").structLiteralBody.structLiteralFieldList[0]
 
     fun createStatement(text: String): RsStmt =
         createFromText("fn main() { $text 92; }")

@@ -10,8 +10,8 @@ import org.rust.ide.formatter.RsTrailingCommaFormatProcessor
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsFieldDecl
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsStructExprBody
-import org.rust.lang.core.psi.RsStructExprField
+import org.rust.lang.core.psi.RsStructLiteralBody
+import org.rust.lang.core.psi.RsStructLiteralField
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 
@@ -21,7 +21,7 @@ import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 class AddStructFieldsFix(
     val declaredFields: List<RsFieldDecl>,
     val fieldsToAdd: List<RsFieldDecl>,
-    structBody: RsStructExprBody
+    structBody: RsStructLiteralBody
 ) : LocalQuickFixAndIntentionActionOnPsiElement(structBody) {
     override fun getText(): String = "Add missing fields"
 
@@ -35,18 +35,18 @@ class AddStructFieldsFix(
         endElement: PsiElement
     ) {
         val psiFactory = RsPsiFactory(project)
-        var expr = startElement as RsStructExprBody
+        var expr = startElement as RsStructLiteralBody
 
-        val forceMultiline = expr.structExprFieldList.isEmpty() && fieldsToAdd.size > 2
+        val forceMultiline = expr.structLiteralFieldList.isEmpty() && fieldsToAdd.size > 2
 
-        var firstAdded: RsStructExprField? = null
+        var firstAdded: RsStructLiteralField? = null
         for (fieldDecl in fieldsToAdd) {
-            val field = psiFactory.createStructExprField(fieldDecl.name!!)
-            val addBefore = findPlaceToAdd(field, expr.structExprFieldList, declaredFields)
+            val field = psiFactory.createStructLiteralField(fieldDecl.name!!)
+            val addBefore = findPlaceToAdd(field, expr.structLiteralFieldList, declaredFields)
             expr.ensureTrailingComma()
 
             val comma = expr.addBefore(psiFactory.createComma(), addBefore ?: expr.rbrace)
-            val added = expr.addBefore(field, comma) as RsStructExprField
+            val added = expr.addBefore(field, comma) as RsStructLiteralField
 
             if (firstAdded == null) {
                 firstAdded = added
@@ -66,10 +66,10 @@ class AddStructFieldsFix(
     }
 
     private fun findPlaceToAdd(
-        fieldToAdd: RsStructExprField,
-        existingFields: List<RsStructExprField>,
+        fieldToAdd: RsStructLiteralField,
+        existingFields: List<RsStructLiteralField>,
         declaredFields: List<RsFieldDecl>
-    ): RsStructExprField? {
+    ): RsStructLiteralField? {
         // If `fieldToAdd` is first in the original declaration, add it first
         if (fieldToAdd.referenceName == declaredFields.firstOrNull()?.name) {
             return existingFields.firstOrNull()
@@ -105,8 +105,8 @@ class AddStructFieldsFix(
         return null
     }
 
-    private fun RsStructExprBody.ensureTrailingComma() {
-        val lastField = structExprFieldList.lastOrNull()
+    private fun RsStructLiteralBody.ensureTrailingComma() {
+        val lastField = structLiteralFieldList.lastOrNull()
             ?: return
 
         if (lastField.getNextNonCommentSibling()?.elementType == COMMA) return

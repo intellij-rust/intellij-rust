@@ -3,16 +3,16 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsStructExprField
+import org.rust.lang.core.psi.RsStructLiteralField
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.resolve.*
 
-class RsStructExprFieldReferenceImpl(
-    field: RsStructExprField
-) : RsReferenceBase<RsStructExprField>(field),
+class RsStructLiteralFieldReferenceImpl(
+    field: RsStructLiteralField
+) : RsReferenceBase<RsStructLiteralField>(field),
     RsReference {
 
-    override val RsStructExprField.referenceAnchor: PsiElement get() = referenceNameElement
+    override val RsStructLiteralField.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun getVariants(): Array<out LookupElement> =
         collectCompletionVariants { processResolveVariants(element, it) }

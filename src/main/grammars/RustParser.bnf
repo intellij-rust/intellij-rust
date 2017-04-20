@@ -78,7 +78,7 @@
     elementType("(Fn|Anon|Lambda|Path)Parameter") = ValueParameter
     elementType("(Fn|Lambda|Path|FnType)Parameters") = ValueParameterList
 
-    extends(".+Expr") = Expr
+    extends("(.+Expr|StructLiteral)") = Expr
     elementType(".+BinExpr") = BinaryExpr
 
     extends("(?!RetType).*Type") = TypeReference
@@ -783,7 +783,7 @@ BlockExpr ::= [ unsafe &'{' ] SimpleBlock
 
 private AtomExpr ::= LitExpr
                     | MacroExpr
-                    | StructExpr
+                    | StructLiteral
                     | QualPathExpr
                     | MethodCallExpr
                     | FieldExpr
@@ -825,17 +825,17 @@ UnaryExpr ::= (box | '-' | '*' | '!' | '&' mut?) Expr
 
 LambdaExpr ::= move? LambdaParameters RetType? AnyExpr
 
-StructExpr ::= <<checkStructAllowed>> PathGenericArgsWithColons StructExprBody
+StructLiteral ::= <<checkStructAllowed>> PathGenericArgsWithColons StructLiteralBody
 
-StructExprBody ::= '{' [ <<comma_separated_list StructExprField>> ] ('..'  AnyExpr)? '}' { pin = 1 }
+StructLiteralBody ::= '{' [ <<comma_separated_list StructLiteralField>> ] ('..'  AnyExpr)? '}' { pin = 1 }
 
-StructExprField ::= OuterAttr* identifier [ ':' AnyExpr ] {
+StructLiteralField ::= OuterAttr* identifier [ ':' AnyExpr ] {
   pin = 2
-  recoverWhile = StructExprField_recover
+  recoverWhile = StructLiteralField_recover
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
-  mixin = "org.rust.lang.core.psi.ext.RsStructExprFieldImplMixin"
+  mixin = "org.rust.lang.core.psi.ext.RsStructLiteralFieldImplMixin"
 }
-private StructExprField_recover ::= !(identifier | ',' | '}' | '..' | '#')
+private StructLiteralField_recover ::= !(identifier | ',' | '}' | '..' | '#')
 
 PathExpr ::= PathGenericArgsWithColons
 
