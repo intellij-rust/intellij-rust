@@ -96,7 +96,10 @@ private fun collectBindings(pattern: RsPat, type: RustType): Map<RsPatBinding, R
 private fun getIteratorItemType(iteratorType: RustType, project: Project): RustType {
     val iteratorItem = RsImplIndex
         .findImplsFor(iteratorType, project)
-        .find { it.traitRef?.resolveToTrait?.name == "Iterator" }
+        .find {
+            val traitName = it.traitRef?.resolveToTrait?.name
+            traitName == "Iterator" || traitName == "IntoIterator"
+        }
         ?.typeAliasList
         ?.find { it.name == "Item" }
         ?: return RustUnknownType
