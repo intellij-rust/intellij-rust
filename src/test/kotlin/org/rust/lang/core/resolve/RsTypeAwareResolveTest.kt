@@ -561,4 +561,23 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
              //^
         }
     """)
+
+    fun `test iterator for loop resolve`() = checkByCode("""
+        trait Iterator { type Item; fn next(&mut self) -> Option<Self::Item>; }
+
+        struct S;
+        impl S { fn foo(&self) {} }
+                  //X
+        struct I;
+        impl Iterator for I {
+            type Item = S;
+            fn next(&mut self) -> Option<S> { None }
+        }
+
+        fn main() {
+            for s in I {
+                s.foo();
+            }    //^
+        }
+    """)
 }
