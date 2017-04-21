@@ -1,9 +1,12 @@
 package org.rust.lang.core.types
 
+import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsFieldsOwner
-import org.rust.lang.core.psi.ext.topLevelPattern
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.resolveToTrait
+import org.rust.lang.core.psi.ext.topLevelPattern
+import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.types.types.RustReferenceType
 import org.rust.lang.core.types.types.RustStructType
 import org.rust.lang.core.types.types.RustTupleType
@@ -21,6 +24,7 @@ fun inferPatternBindingType(binding: RsPatBinding): RustType {
         is RsValueParameter -> parent.typeReference?.type
         is RsCondition -> parent.expr.type
         is RsMatchArm -> parent.parentOfType<RsMatchExpr>()?.expr?.type
+        is RsForExpr -> getIteratorItemType(parent.expr?.type ?: RustUnknownType, binding.project)
         else -> null
     } ?: RustUnknownType
 
@@ -87,4 +91,18 @@ private fun collectBindings(pattern: RsPat, type: RustType): Map<RsPatBinding, R
 
     go(pattern, type)
     return bindings
+}
+
+private fun getIteratorItemType(iteratorType: RustType, project: Project): RustType {
+    val iteratorItem = RsImplIndex
+        .findImplsFor(iteratorType, project)
+        .find {
+            val traitName = it.traitRef?.resolveToTrait?.name
+            traitName == "Iterator" || traitName == "IntoIterator"
+        }
+        ?.typeAliasList
+        ?.find { it.name == "Item" }
+        ?: return RustUnknownType
+
+    return iteratorItem.typeReference?.type ?: RustUnknownType
 }
