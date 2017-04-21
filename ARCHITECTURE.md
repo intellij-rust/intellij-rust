@@ -132,13 +132,13 @@ Read more about parse and PSI in the [sdk documentation][psi-doc]
 
 # Name resolution
 
-PSI itself does not carry much semantic information. You need to connect
+PSI itself does not carry any semantic information. You need to connect
 definitions of things with their usages to be able to do code completion and
 navigation. This is handled by references. Some PSI elements can return a
 special `RustReference` object from their `getReference` method. This
-`RustReference` has `resolve` method, which will return the definition the
+`RsReference` has a `resolve` method, which will return the definition the
 reference element refers to. The definitions usually implement
-`RustNamedElement` interface. Here's an example
+`RsNamedElement` interface. Here's an example
 
 ```
 // This is function, functions are `NamedElement`s.
@@ -153,22 +153,10 @@ fn bar() {
 
 The implementation of name resolution is different in Intellij-Rust and in
 rustc. Compiler resolves the whole crate at once, walking the tree of modules in
-the top-down fashion. Intellij-Rust lazily resolves names by walking the PSI
+a top-down fashion. Intellij-Rust lazily resolves names by walking the PSI
 tree upwards from the reference. This allows to do resolve only in the file
 currently opened in the editor and its dependencies, ignoring most of the
-crates. The major chunk of resolve is handled by the `lexicalDeclarations`,
-`containingDeclarations` and `associatedDeclarations` functions.
-
-`lexicalDeclarations` takes a reference and walks the AST tree upwards, collecting
-all the `let` declarations, function parameters, item definitions and other
-"local" declarations. This is the function which does the work of resolving a
-local variable or a first component `foo` of the `foo::bar::baz` path.
-
-`outerDeclarations` takes a module and lists all items defined in it. It handles
-resolution of all the subsequent components of the `foo::bar::baz` path.
-
-These functions allow to list *all* visible declarations and are used in
-completion as well.
+crates. See `NameResolution.kt` for the details.
 
 The result of resolve is cached. The caches are flushed after every PSI
 modification. That is, after you type a key in the editor, all the name
@@ -213,11 +201,11 @@ All other indexes are implemented on top of the stubs. When constructing a stub
 tree, you may associated current stub-based PSI element with some key. Latter,
 you can use this key to retrieve the element.
 
-## RustModuleIndex
+## RsModulesIndex
 
-RustModulesIndex is an example of simple but useful stub-based index. It is used
+RsModulesIndex is an example of simple but useful stub-based index. It is used
 to answer the question: "given the `foo.rs` file, what is its parent
-module?". Search for the usages of `RustModulesIndex.KEY` to see how the index
+module?". Search for the usages of `RsModulesIndex.KEY` to see how the index
 is populated and queried.
 
 The naive solution is to find a `mod.rs` file in the containing directory, but
