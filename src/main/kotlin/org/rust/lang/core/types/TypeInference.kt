@@ -218,7 +218,7 @@ private fun addTypeMapping(
  * impl<X, Y> Flip<Y, X> { ... }
  * ```
  */
-private fun RsImplItem.remapTypeParameters(
+fun RsImplItem.remapTypeParameters(
     map: Map<RustTypeParameterType, RustType>
 ): Map<RustTypeParameterType, RustType> =
     typeReference?.type?.typeParameterValues.orEmpty()

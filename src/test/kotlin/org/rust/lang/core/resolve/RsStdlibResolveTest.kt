@@ -135,4 +135,16 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             println!("Hello, World!");
         }   //^ ...libstd/macros.rs
     """)
+
+    fun `test iterating a vec`() = stubOnlyResolve("""
+    //- main.rs
+        struct X;
+        impl X { fn foo(&self) {} }
+
+        fn foo(xs: Vec<X>) {
+            for x in xs {
+                x.foo()
+            }    //^ ...main.rs
+        }
+    """)
 }
