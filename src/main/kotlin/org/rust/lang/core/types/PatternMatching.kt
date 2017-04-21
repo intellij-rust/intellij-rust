@@ -94,15 +94,18 @@ private fun collectBindings(pattern: RsPat, type: RustType): Map<RsPatBinding, R
 }
 
 private fun getIteratorItemType(iteratorType: RustType, project: Project): RustType {
-    val iteratorItem = RsImplIndex
+    val impl = RsImplIndex
         .findImplsFor(iteratorType, project)
         .find {
             val traitName = it.traitRef?.resolveToTrait?.name
             traitName == "Iterator" || traitName == "IntoIterator"
-        }
-        ?.typeAliasList
-        ?.find { it.name == "Item" }
-        ?: return RustUnknownType
+        } ?: return RustUnknownType
 
-    return iteratorItem.typeReference?.type ?: RustUnknownType
+    val rawType = impl
+        .typeAliasList
+        .find { it.name == "Item" }
+        ?.typeReference?.type ?: RustUnknownType
+
+    val typeParameterMap = impl.remapTypeParameters(iteratorType.typeParameterValues)
+    return rawType.substitute(typeParameterMap)
 }
