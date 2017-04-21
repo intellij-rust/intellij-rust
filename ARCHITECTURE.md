@@ -56,7 +56,7 @@ rarely changes and is mostly done.
 # Parser
 
 The parser is generated from the BNF-like description of the language grammar in
-the file `RustParser.bng`. We use Intellij-specific parser generator [Grammar
+the file `RustParser.bnf`. We use Intellij-specific parser generator [Grammar
 Kit]. The corresponding gralde task is `generateRustParser`.
 
 Grammar Kit [documentation][GK-docs] is on GitHub. You can also use
