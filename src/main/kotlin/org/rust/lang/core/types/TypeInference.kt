@@ -60,8 +60,7 @@ private fun inferType(expr: RsExpr): RustType {
 
             val impl = method.parentOfType<RsImplItem>()
             val typeParameterMap = impl?.remapTypeParameters(expr.expr.type.typeParameterValues).orEmpty()
-
-            deviseFunctionType(method).retType.substitute(typeParameterMap)
+            return (method.retType?.typeReference?.type ?: RustUnitType).substitute(typeParameterMap)
         }
 
         is RsFieldExpr -> {
@@ -232,36 +231,3 @@ private fun RsImplItem.remapTypeParameters(
                 null
             }
         }.toMap()
-
-private fun deviseFunctionType(fn: RsFunction): RustFunctionType {
-    val paramTypes = mutableListOf<RustType>()
-
-    val self = fn.selfParameter
-    if (self != null) {
-        paramTypes += deviseSelfType(self)
-    }
-
-    paramTypes += fn.valueParameters.map { it.typeReference?.type ?: RustUnknownType }
-
-    return RustFunctionType(paramTypes, fn.retType?.typeReference?.type ?: RustUnitType)
-}
-
-/**
- * Devises type for the given (implicit) self-argument
- */
-private fun deviseSelfType(self: RsSelfParameter): RustType {
-    val impl = self.parentOfType<RsImplItem>()
-    var Self: RustType = if (impl != null) {
-        impl.typeReference?.type ?: return RustUnknownType
-    } else {
-        val trait = self.parentOfType<RsTraitItem>()
-            ?: return RustUnknownType
-        RustTypeParameterType(trait)
-    }
-
-    if (self.isRef) {
-        Self = RustReferenceType(Self, mutable = self.isMut)
-    }
-
-    return Self
-}
