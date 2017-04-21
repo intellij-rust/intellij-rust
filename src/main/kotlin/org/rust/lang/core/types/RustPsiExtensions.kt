@@ -10,12 +10,6 @@ import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.types.*
 
-val RsExpr.type: RustType
-    get() = CachedValuesManager.getCachedValue(this, CachedValueProvider {
-        val type = recursionGuard(this, Computable { RustTypificationEngine.typifyExpr(this) })
-            ?: RustUnknownType
-        CachedValueProvider.Result.create(type, PsiModificationTracker.MODIFICATION_COUNT)
-    })
 
 val RsTypeReference.type: RustType
     get() = recursionGuard(this, Computable { typeReferenceToType(this) })
