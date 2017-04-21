@@ -480,8 +480,7 @@
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsMacroDefinitionIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsGotoClassIndex"/>
 
-        <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsImplIndex$TraitImpls"/>
-        <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsImplIndex$InherentImpls"/>
+        <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsImplIndex"/>
 
         <!-- Notification Providers -->
 

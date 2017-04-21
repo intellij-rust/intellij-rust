@@ -24,7 +24,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 66
+        override fun getStubVersion(): Int = 67
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -705,7 +705,8 @@ class RsSelfParameterStub(
 class RsTypeReferenceStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val isMut: Boolean,
-    val isRef: Boolean
+    val isRef: Boolean,
+    val arraySize: Int
 ) : StubBase<RsTypeReference>(parent, elementType) {
 
     class Type<PsiT : RsTypeReference>(
@@ -715,12 +716,17 @@ class RsTypeReferenceStub(
 
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?)
-            = RsTypeReferenceStub(parentStub, this, dataStream.readBoolean(), dataStream.readBoolean())
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RsTypeReferenceStub(parentStub, this,
+                dataStream.readBoolean(),
+                dataStream.readBoolean(),
+                dataStream.readInt()
+            )
 
         override fun serialize(stub: RsTypeReferenceStub, dataStream: StubOutputStream) = with(dataStream) {
             dataStream.writeBoolean(stub.isMut)
             dataStream.writeBoolean(stub.isRef)
+            dataStream.writeInt(stub.arraySize)
         }
 
         override fun createPsi(stub: RsTypeReferenceStub) = psiCtor(stub, this)
@@ -728,7 +734,8 @@ class RsTypeReferenceStub(
         override fun createStub(psi: PsiT, parentStub: StubElement<*>?) =
             RsTypeReferenceStub(parentStub, this,
                 (psi as? RsRefLikeType)?.isMut ?: false,
-                (psi as? RsRefLikeType)?.isRef ?: false
+                (psi as? RsRefLikeType)?.isRef ?: false,
+                (psi as? RsArrayType)?.arraySize ?: -1
             )
 
         override fun indexStub(stub: RsTypeReferenceStub, sink: IndexSink) {
