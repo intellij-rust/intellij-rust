@@ -21,6 +21,39 @@ import org.rust.lang.core.types.stripAllRefsIfAny
 import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustStructType
 
+// IntelliJ Rust name resolution algorithm.
+// Collapse all methods (`ctrl shift -`) to get a bird's eye view.
+//
+// The entry point is
+// `process~X~ResolveVariants(x: RsReferenceElement, processor: RsResolveProcessor)`
+// family of methods.
+//
+// Conceptually, each of these methods returns a sequence of `RsNameElement`s
+// visible at the reference location. During completion, all of them are presented
+// as completion variants, and during resolve only the one with the name matching
+// the reference is selected.
+//
+// Instead of Kotlin `Sequence`'s, a callback (`RsResolveProcessor`) is used, because
+// it gives **much** nicer stacktraces (we used to have `Sequence` here some time ago).
+//
+// Instead of using `RsNameElement` directly, `RsResolveProcessor` operates on `ScopeEntry`s.
+// `ScopeEntry` allows to change the effective name of an element (for aliases) and to retrieve
+// the actual element lazily.
+//
+// The `process~PsiElement~Declarations` family of methods list name elements belonging
+// to a particular element (for example, variants of an enum).
+//
+// Technicalities:
+//
+//   * We can get into infinite loop during name resolution. This is handled by
+//     `RsReferenceBase`.
+//   * The results of name resolution are cached and invalidated on every code change.
+//     Caching also is handled by `RsReferenceBase`.
+//   * Ideally, all of the methods except for `processLexicalDeclarations` should operate on stubs only.
+//   * Rust uses two namespaces for declarations ("types" and "values"). The necessary namespace is
+//     determined by the syntactic position of the reference in `processResolveVariants` function and
+//     is passed down to the `processDeclarations` functions.
+
 fun processFieldExprResolveVariants(fieldExpr: RsFieldExpr, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val receiverType = fieldExpr.expr.type.stripAllRefsIfAny()
 
