@@ -26,6 +26,7 @@ val RsModDeclItem.containingMod: RsMod
         ?: error("Rust mod decl outside of a module")
 
 val RsCompositeElement.crateRoot: RsMod? get() {
+    //TODO: use PsiElement.context here!
     val codeFragmentFile = getUserData(RS_CODE_FRAGMENT_CONTEXT)
     if (codeFragmentFile != null) {
         return codeFragmentFile.crateRoot

@@ -138,10 +138,10 @@ class RsStdlibResolveTest : RsResolveTestBase() {
 
     fun `test iterating a vec`() = stubOnlyResolve("""
     //- main.rs
-        struct X;
-        impl X { fn foo(&self) {} }
+        struct FooBar;
+        impl FooBar { fn foo(&self) {} }
 
-        fn foo(xs: Vec<X>) {
+        fn foo(xs: Vec<FooBar>) {
             for x in xs {
                 x.foo()
             }    //^ ...main.rs
