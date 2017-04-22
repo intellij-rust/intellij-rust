@@ -158,11 +158,13 @@
 
         <typedHandler implementation="org.rust.ide.typing.RsRawLiteralHashesInserter"
                       id="RustRawLiteralHashesInserter"/>
-        <typedHandler implementation="org.rust.ide.typing.RsTypingHandler"
-                      id="RustTypingHandler"/>
+        <typedHandler implementation="org.rust.ide.typing.RsAngleBraceTypedHandler"
+                      id="RustAngleBraceTypedHandler"/>
 
         <backspaceHandlerDelegate implementation="org.rust.ide.typing.RsRawLiteralHashesDeleter"
                                   id="RustRawLiteralHashesDeleter"/>
+        <backspaceHandlerDelegate implementation="org.rust.ide.typing.RsAngleBraceBackspaceHandler"
+                                  id="RustAngleBraceBackspaceHandler"/>
 
         <joinLinesHandler implementation="org.rust.ide.actions.RsJoinLinesHandler"
                           id="RsJoinLinesHandler"/>
