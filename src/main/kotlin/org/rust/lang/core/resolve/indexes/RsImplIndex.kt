@@ -16,10 +16,6 @@ import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustTypeFingerprint
 import org.rust.lang.core.types.type
-import org.rust.lang.core.types.types.RustSliceType
-import org.rust.lang.core.types.types.RustStructOrEnumTypeBase
-import org.rust.lang.core.types.types.RustTypeParameterType
-import org.rust.lang.core.types.types.RustUnknownType
 
 class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
@@ -47,8 +43,12 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
                 RsImplItem::class.java
             ).asSequence()
             return when {
-                else -> elements.filter {
-                    canUnify(target, it.typeReference?.type ?: RustUnknownType)
+                else -> elements.filter { impl ->
+                    val ty = impl.typeReference?.type
+                    // Addition class check is a temporal solution to filter impls for type parameter
+                    // with the same name
+                    // struct S; impl<S: Tr1> Tr2 for S {}
+                    ty != null && ty.javaClass == target.javaClass && ty.canUnifyWith(target, project)
                 }
             }
         }
@@ -73,16 +73,4 @@ private val RsImplItem.allMethodsAndAssocFunctions: Sequence<RsFunction> get() {
     }
 
     return functionList.asSequence() + defaulted
-}
-
-private fun canUnify(t1: RustType, t2: RustType): Boolean {
-    if (t1 == t2) return true
-    if (t1 is RustTypeParameterType || t2 is RustTypeParameterType) return true
-    if (t1 is RustStructOrEnumTypeBase && t2 is RustStructOrEnumTypeBase) {
-        return t1.item == t2.item && t1.typeArguments.zip(t2.typeArguments).all { (a, b) -> canUnify(a, b) }
-    }
-    if (t1 is RustSliceType && t2 is RustSliceType) {
-        return canUnify(t1.elementType, t2.elementType)
-    }
-    return false
 }

@@ -18,6 +18,10 @@ data class RustSliceType(val elementType: RustType) : RustPrimitiveType {
         return RsImplIndex.findMethodsFor(this, project)
     }
 
+    override fun canUnifyWith(other: RustType, project: Project): Boolean {
+        return other is RustSliceType && elementType.canUnifyWith(other.elementType, project)
+    }
+
     override fun substitute(map: Map<RustTypeParameterType, RustType>): RustType {
         return RustSliceType(elementType.substitute(map))
     }
