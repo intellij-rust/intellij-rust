@@ -135,12 +135,17 @@ class CargoWorkspace private constructor(
             // handle cycles here.
 
             // Figure out packages origins:
-            // - if a package is a workspace member, it's WORKSPACE
+            // - if a package is a workspace member, or if it resides inside a workspace member directory, it's WORKSPACE
             // - if a package is a direct dependency of a workspace member, it's DEPENDENCY
             // - otherwise, it's TRANSITIVE_DEPENDENCY
             val idToOrigin = HashMap<String, PackageOrigin>(data.packages.size)
+            val workspacePaths = data.packages
+                .filter { it.isWorkspaceMember }
+                .map { it.manifestPath.substringBeforeLast("Cargo.toml", "") }
+                .filter(String::isNotEmpty)
+                .toList()
             data.packages.forEachIndexed pkgs@ { index, pkg ->
-                if (pkg.isWorkspaceMember) {
+                if (pkg.isWorkspaceMember || workspacePaths.any { pkg.manifestPath.startsWith(it) }) {
                     idToOrigin[pkg.id] = PackageOrigin.WORKSPACE
                     val depNode = data.dependencies.getOrNull(index) ?: return@pkgs
                     depNode.dependenciesIndexes

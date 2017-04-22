@@ -215,7 +215,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         }
 
         protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CleanCargoMetadata.Package(
-            id = name + " 0.0.1",
+            id = "$name 0.0.1",
             url = contentRoot,
             name = name,
             version = "0.0.1",
@@ -224,6 +224,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
                 CleanCargoMetadata.Target("$contentRoot/lib.rs", name, CargoWorkspace.TargetKind.LIB)
             ),
             source = null,
+            manifestPath = "$contentRoot/../Cargo.toml",
             isWorkspaceMember = true
         )
 
@@ -232,7 +233,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             val vFile = source?.let { VfsTestUtil.createFile(root, it) }
 
             return CleanCargoMetadata.Package(
-                id = name + " 0.0.1",
+                id = "$name 0.0.1",
                 url = "",
                 name = name,
                 version = "0.0.1",
@@ -240,6 +241,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
                     CleanCargoMetadata.Target(vFile?.url ?: "", targetName, CargoWorkspace.TargetKind.LIB)
                 ),
                 source = source,
+                manifestPath = "/ext-libs/$name/Cargo.toml",
                 isWorkspaceMember = false
             )
         }
