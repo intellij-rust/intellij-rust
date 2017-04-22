@@ -5,3 +5,4 @@ out/
 build/
 gen/
 debugger/lib
+.DS_Store
