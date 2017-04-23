@@ -50,8 +50,8 @@ private fun inferType(expr: RsExpr): RustType {
                 }
             }
 
-            val calleeType = fn.type
-            (calleeType as? RustFunctionType)?.retType ?: RustUnknownType
+            val calleeType = fn.type as? RustFunctionType ?: return RustUnknownType
+            calleeType.retType.substitute(mapTypeParameters(calleeType.paramTypes, expr.valueArgumentList.exprList))
         }
 
         is RsMethodCallExpr -> {
@@ -189,11 +189,15 @@ private fun inferTypeParametersForTuple(
     tupleExprs: List<RsExpr>,
     tupleFields: RsTupleFields
 ): Map<RustTypeParameterType, RustType> {
+    return mapTypeParameters(tupleFields.tupleFieldDeclList.map { it.typeReference.type }, tupleExprs)
+}
+
+private fun mapTypeParameters(
+    argDefs: Iterable<RustType>,
+    argExprs: Iterable<RsExpr>
+): Map<RustTypeParameterType, RustType> {
     val argsMapping = mutableMapOf<RustTypeParameterType, RustType>()
-    val tupleFieldDeclList = tupleFields.tupleFieldDeclList
-    tupleExprs.withIndex().forEach { (i, expr) ->
-        tupleFieldDeclList.getOrNull(i)?.let { tupleField -> addTypeMapping(argsMapping, tupleField.typeReference.type, expr) }
-    }
+    argExprs.zip(argDefs).forEach { (expr, type) -> addTypeMapping(argsMapping, type, expr) }
     return argsMapping
 }
 

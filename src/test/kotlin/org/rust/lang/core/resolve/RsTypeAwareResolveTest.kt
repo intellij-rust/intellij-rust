@@ -512,6 +512,17 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun testGenericFunctionCall() = checkByCode("""
+        struct S;
+        impl S { fn m(&self) {} }
+                  //X
+        fn f<T>(t: T) -> T { t }
+        fn main() {
+            f(S).m();
+               //^
+        }
+    """)
+
     fun testMatchEnumTupleVariant() = checkByCode("""
         enum E { V(S) }
         struct S;
