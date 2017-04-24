@@ -172,54 +172,54 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     fun `test struct expr`() = testExpr("""
-        struct SomeStruct<T> { a: T }
+        struct S<T> { a: T }
         fn main() {
-            let x = SomeStruct { a: 5u16 };
+            let x = S { a: 5u16 };
             x.a
             //^ u16
         }
     """)
 
     fun `test struct expr with 2 fields of same type integer 1`() = testExpr("""
-        struct SomeStruct<T> { a: T, b: T }
+        struct S<T> { a: T, b: T }
         fn main() {
-            let x = SomeStruct { a: 5u16, b: 0 };
+            let x = S { a: 5u16, b: 0 };
             x.b
             //^ u16
         }
     """)
 
     fun `test struct expr with 2 fields of same type integer 2`() = testExpr("""
-        struct SomeStruct<T> { a: T, b: T }
+        struct S<T> { a: T, b: T }
         fn main() {
-            let x = SomeStruct { a: 0, b: 5u16 };
+            let x = S { a: 0, b: 5u16 };
             x.a
             //^ u16
         }
     """)
 
     fun `test struct expr with 2 fields of same type float 2`() = testExpr("""
-        struct SomeStruct<T> { a: T, b: T }
+        struct S<T> { a: T, b: T }
         fn main() {
-            let x = SomeStruct { a: 0.0, b: 5f32 };
+            let x = S { a: 0.0, b: 5f32 };
             x.a
             //^ f32
         }
     """)
 
     fun `test struct expr with 2 fields of different types`() = testExpr("""
-        struct SomeStruct<T1, T2> { a: T1, b: T2 }
+        struct S<T1, T2> { a: T1, b: T2 }
         fn main() {
-            let x = SomeStruct { a: 5u16, b: 5u8 };
+            let x = S { a: 5u16, b: 5u8 };
             (x.a, x.b)
           //^ (u16, u8)
         }
     """)
 
     fun testTupleStructExpression() = testExpr("""
-        struct SomeStruct<T> (T);
+        struct S<T> (T);
         fn main() {
-            let x = SomeStruct(5u16);
+            let x = S(5u16);
             x.0
             //^ u16
         }

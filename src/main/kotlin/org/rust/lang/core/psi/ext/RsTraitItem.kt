@@ -8,6 +8,24 @@ import org.rust.lang.core.psi.RustPsiImplUtil
 import org.rust.lang.core.stubs.RsTraitItemStub
 import javax.swing.Icon
 
+val RsTraitItem.superTraits: Sequence<RsTraitItem> get() {
+    val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence()
+    return bounds.mapNotNull { it.bound.traitRef?.resolveToTrait }
+}
+
+val RsTraitItem.flattenHierarchy: Sequence<RsTraitItem> get() {
+    val result = mutableSetOf<RsTraitItem>()
+    fun dfs(trait: RsTraitItem) {
+        if (trait in result) return
+        result += trait
+        trait.superTraits.forEach(::dfs)
+    }
+    dfs(this)
+
+    return result.asSequence()
+}
+
+fun RsTraitItem.hierarchyContains(other: RsTraitItem): Boolean = flattenHierarchy.contains(other)
 
 abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>, RsTraitItem {
 

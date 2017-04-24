@@ -7,6 +7,9 @@ import org.rust.lang.core.types.RustType
 
 object RustUnitType : RustType {
 
+    override fun canUnifyWith(other: RustType, project: Project): Boolean =
+        other is RustUnitType
+
     override fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
         emptySequence()
 

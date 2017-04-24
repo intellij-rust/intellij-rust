@@ -311,12 +311,29 @@ TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' TypeReference ] {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-TypeParamBounds ::= ':' [ Polybound ('+' Polybound)* '+'? ]
-Polybound ::= [ ForLifetimes | '?' ] Bound
+TypeParamBounds ::= ':' [ Polybound ('+' Polybound)* '+'? ] {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-WhereClause ::= where <<comma_separated_list WherePred>>
+Polybound ::= [ ForLifetimes | '?' ] Bound {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-WherePred ::= Lifetime LifetimeParamBounds | ForLifetimes? TypeReference TypeParamBounds
+WhereClause ::= where <<comma_separated_list WherePred>> {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+WherePred ::= Lifetime LifetimeParamBounds | ForLifetimes? TypeReference TypeParamBounds {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 ForLifetimes ::= for '<' LifetimesParams '>'
 
@@ -696,7 +713,11 @@ TypeWithBoundsType ::= TypeReference ('+' Bound)+ {
   stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-Bound ::= Lifetime | TraitRef
+Bound ::= Lifetime | TraitRef {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
   stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"

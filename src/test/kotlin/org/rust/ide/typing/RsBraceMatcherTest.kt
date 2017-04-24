@@ -28,24 +28,6 @@ class RsBraceMatcherTest : RsTestBase() {
         "fn foo(<caret>){}"
     )
 
-    fun `test pair angle brace after colon colon token`() = doTest(
-        "fn main() { let _ = foo::<caret> }",
-        '<',
-        "fn main() { let _ = foo::<<caret>> }"
-    )
-
-    fun `test don't pair angle brace after colon colon in string literal`() = doTest(
-        """fn main() { let _ = "foo::<caret>" }""",
-        '<',
-        """fn main() { let _ = "foo::<<caret>" }"""
-    )
-
-    fun `test don't pair angle brace after colon colon in comments`() = doTest(
-        "fn main() { let _ = /* foo::<caret> */ }",
-        '<',
-        "fn main() { let _ = /* foo::<<caret> */ }"
-    )
-
     fun `test match parenthesis`() = doMatch("fn foo<caret>(x: (i32, ()) ) {}", ")")
 
     fun `test match square brackets`() = doMatch("fn foo(x: <caret>[i32; 192]) {}", "]")

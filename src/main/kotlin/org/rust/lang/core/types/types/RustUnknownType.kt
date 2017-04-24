@@ -13,6 +13,8 @@ object RustUnknownType : RustType {
     override fun getMethodsIn(project: Project): Sequence<RsFunction> =
         emptySequence()
 
+    override fun canUnifyWith(other: RustType, project: Project): Boolean = false
+
     override fun toString(): String = "<unknown>"
 
 }

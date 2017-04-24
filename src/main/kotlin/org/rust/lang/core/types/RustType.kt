@@ -19,6 +19,13 @@ interface RustType {
         RsImplIndex.findMethodsFor(this, project)
 
     /**
+     * Checks if `other` type may be represented as this type.
+     *
+     * Note that `t1.canUnifyWith(t2)` is not the same as `t2.canUnifyWith(t1)`.
+     */
+    fun canUnifyWith(other: RustType, project: Project): Boolean
+
+    /**
      * Apply positional type arguments to a generic type.
      *
      * This works for `some::path::<Type1, Type2>` case.

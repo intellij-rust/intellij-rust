@@ -3,7 +3,9 @@ package org.rust.lang.core.types.types
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
+import org.rust.lang.core.psi.ext.hierarchyContains
 import org.rust.lang.core.psi.ext.resolveToTrait
+import org.rust.lang.core.psi.ext.superTraits
 import org.rust.lang.core.types.RustType
 
 data class RustTypeParameterType private constructor(
@@ -19,6 +21,10 @@ data class RustTypeParameterType private constructor(
 
     override fun getMethodsIn(project: Project): Sequence<RsFunction> =
         getTraitsImplementedIn(project).flatMap { it.functionList.asSequence() }
+
+    override fun canUnifyWith(other: RustType, project: Project): Boolean {
+        return this == other || parameter.bounds.all { canUnifyTraitBoundWith(it, other, project) }
+    }
 
     override fun substitute(map: Map<RustTypeParameterType, RustType>): RustType = map[this] ?: this
 
@@ -52,11 +58,6 @@ data class RustTypeParameterType private constructor(
     }
 }
 
-private val RsTraitItem.superTraits: Sequence<RsTraitItem> get() {
-    val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence()
-    return bounds.mapNotNull { it.bound.traitRef?.resolveToTrait } + this
-}
-
 private fun transitiveClosure(traits: Sequence<RsTraitItem>): Sequence<RsTraitItem> {
     val result = mutableSetOf<RsTraitItem>()
     fun dfs(trait: RsTraitItem) {
@@ -67,4 +68,9 @@ private fun transitiveClosure(traits: Sequence<RsTraitItem>): Sequence<RsTraitIt
     traits.forEach(::dfs)
 
     return result.asSequence()
+}
+
+private fun canUnifyTraitBoundWith(trait: RsTraitItem, other: RustType, project: Project): Boolean {
+    return other is RustTraitType && other.trait.hierarchyContains(trait) ||
+        other.getTraitsImplementedIn(project).contains(trait)
 }

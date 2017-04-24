@@ -9,6 +9,9 @@ interface RustPrimitiveType : RustType {
     override fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
         emptySequence()
 
+    override fun canUnifyWith(other: RustType, project: Project): Boolean =
+        this == other
+
     companion object {
         fun fromTypeName(name: String): RustPrimitiveType? {
             val integerKind = RustIntegerType.Kind.values().find { it.name == name }

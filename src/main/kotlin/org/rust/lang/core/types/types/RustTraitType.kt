@@ -19,5 +19,8 @@ data class RustTraitType(val trait: RsTraitItem) : RustType {
     override fun getMethodsIn(project: Project): Sequence<RsFunction> =
         getTraitsImplementedIn(project).flatMap { it.functionList.asSequence() }
 
+    override fun canUnifyWith(other: RustType, project: Project): Boolean =
+        other is RsTraitItem && trait == other.trait
+
     override fun toString(): String = trait.name ?: "<anonymous>"
 }
