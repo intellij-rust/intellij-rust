@@ -4,13 +4,21 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
-import org.rust.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiRecursiveElementVisitor
+import org.rust.FileTreeBuilder
+import org.rust.TestProject
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
 import org.rust.cargo.project.workspace.cargoWorkspace
+import org.rust.fileTree
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsPath
 import org.rust.utils.fullyRefreshDirectory
+import kotlin.system.measureTimeMillis
 
 class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
@@ -263,7 +271,28 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
 
     @Suppress("unused")
-    private fun openRealProject(path: String) {
+    fun measureResolveTime() {
+        val pathToCargoSource = "/home/user/examples/cargo"
+        val base = openRealProject(pathToCargoSource)
+        val toml = base.findFileByRelativePath("src/cargo/util/toml.rs")
+            ?: error("failed to find toml file")
+        val psiManager = PsiManager.getInstance(project)
+        val psi = psiManager.findFile(toml) as RsFile
+
+        val elapsed = measureTimeMillis {
+            psi.accept(object : PsiRecursiveElementVisitor() {
+                override fun visitElement(element: PsiElement) {
+                    super.visitElement(element)
+                    element.reference?.resolve()
+                }
+            })
+        }
+
+        println("elapsed = ${elapsed}ms")
+    }
+
+    @Suppress("unused")
+    private fun openRealProject(path: String): VirtualFile {
         runWriteAction {
             VfsUtil.copyDirectory(
                 this,
@@ -275,5 +304,6 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
         }
 
         refreshWorkspace()
+        return project.baseDir
     }
 }
