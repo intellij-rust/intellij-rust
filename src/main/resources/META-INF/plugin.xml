@@ -340,6 +340,11 @@
                          enabledByDefault="false" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsSimplifyBooleanExpressionInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="No mutable required"
+                         enabledByDefault="false" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RsVariableMutableInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
