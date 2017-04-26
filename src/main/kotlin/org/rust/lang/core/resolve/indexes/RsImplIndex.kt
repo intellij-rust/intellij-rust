@@ -6,6 +6,10 @@ import com.intellij.psi.stubs.AbstractStubIndex
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
@@ -16,6 +20,7 @@ import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustTypeFingerprint
 import org.rust.lang.core.types.type
+import java.util.concurrent.ConcurrentMap
 
 class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
@@ -31,7 +36,10 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
             findImplsFor(target, project)
                 .flatMap { it.allMethodsAndAssocFunctions }
 
-        fun findImplsFor(target: RustType, project: Project): Collection<RsImplItem> {
+        fun findImplsFor(target: RustType, project: Project): Collection<RsImplItem> =
+            project.implsCache.getOrPut(target) { doFindImplsFor(target, project) }
+
+        private fun doFindImplsFor(target: RustType, project: Project): Collection<RsImplItem> {
             val fingerprint = RustTypeFingerprint.create(target)
                 ?: return emptyList()
 
@@ -71,3 +79,12 @@ private val RsImplItem.allMethodsAndAssocFunctions: Collection<RsFunction> get()
 
     return functionList + defaulted
 }
+
+private val Project.implsCache: ConcurrentMap<RustType, Collection<RsImplItem>>
+    get() = CachedValuesManager.getManager(this)
+        .getCachedValue(this, {
+            CachedValueProvider.Result.create(
+                ContainerUtil.newConcurrentMap<RustType, Collection<RsImplItem>>(),
+                PsiModificationTracker.MODIFICATION_COUNT
+            )
+        })
