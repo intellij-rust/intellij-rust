@@ -23,17 +23,17 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
     override fun getKeyDescriptor(): KeyDescriptor<RustTypeFingerprint> = RustTypeFingerprint.KeyDescriptor
 
     companion object {
-        fun findMethodsFor(target: RustType, project: Project): Sequence<RsFunction> =
+        fun findMethodsFor(target: RustType, project: Project): Collection<RsFunction> =
             findMethodsAndAssociatedFunctionsFor(target, project)
                 .filter { !it.isAssocFn }
 
-        fun findMethodsAndAssociatedFunctionsFor(target: RustType, project: Project): Sequence<RsFunction> =
+        fun findMethodsAndAssociatedFunctionsFor(target: RustType, project: Project): Collection<RsFunction> =
             findImplsFor(target, project)
                 .flatMap { it.allMethodsAndAssocFunctions }
 
-        fun findImplsFor(target: RustType, project: Project): Sequence<RsImplItem> {
+        fun findImplsFor(target: RustType, project: Project): Collection<RsImplItem> {
             val fingerprint = RustTypeFingerprint.create(target)
-                ?: return emptySequence()
+                ?: return emptyList()
 
             return StubIndex.getElements(
                 KEY,
@@ -41,7 +41,7 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
                 project,
                 GlobalSearchScope.allScope(project),
                 RsImplItem::class.java
-            ).asSequence().filter { impl ->
+            ).filter { impl ->
                 val ty = impl.typeReference?.type
                 // Addition class check is a temporal solution to filter impls for type parameter
                 // with the same name
@@ -63,11 +63,11 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
     }
 }
 
-private val RsImplItem.allMethodsAndAssocFunctions: Sequence<RsFunction> get() {
+private val RsImplItem.allMethodsAndAssocFunctions: Collection<RsFunction> get() {
     val directlyImplemented = functionList.map { it.name }.toSet()
     val defaulted = traitRef?.resolveToTrait?.functionList.orEmpty().asSequence().filter {
         it.name !in directlyImplemented
     }
 
-    return functionList.asSequence() + defaulted
+    return functionList + defaulted
 }

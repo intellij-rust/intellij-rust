@@ -7,7 +7,7 @@ import org.rust.lang.core.types.stripAllRefsIfAny
 
 data class RustReferenceType(val referenced: RustType, val mutable: Boolean = false) : RustType {
 
-    override fun getMethodsIn(project: Project): Sequence<RsFunction> =
+    override fun getMethodsIn(project: Project): Collection<RsFunction> =
         super.getMethodsIn(project) + stripAllRefsIfAny().getMethodsIn(project)
 
     override fun canUnifyWith(other: RustType, project: Project): Boolean =

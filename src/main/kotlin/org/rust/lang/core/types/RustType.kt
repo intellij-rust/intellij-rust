@@ -12,10 +12,10 @@ interface RustType {
     /**
      * Traits explicitly (or implicitly) implemented for this particular type
      */
-    fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
+    fun getTraitsImplementedIn(project: Project): Collection<RsTraitItem> =
         RsImplIndex.findImplsFor(this, project).mapNotNull { it.traitRef?.resolveToTrait }
 
-    fun getMethodsIn(project: Project): Sequence<RsFunction> =
+    fun getMethodsIn(project: Project): Collection<RsFunction> =
         RsImplIndex.findMethodsFor(this, project)
 
     /**
