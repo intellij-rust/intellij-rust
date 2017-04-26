@@ -35,21 +35,18 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
             val fingerprint = RustTypeFingerprint.create(target)
                 ?: return emptySequence()
 
-            val elements = StubIndex.getElements(
+            return StubIndex.getElements(
                 KEY,
                 fingerprint,
                 project,
                 GlobalSearchScope.allScope(project),
                 RsImplItem::class.java
-            ).asSequence()
-            return when {
-                else -> elements.filter { impl ->
-                    val ty = impl.typeReference?.type
-                    // Addition class check is a temporal solution to filter impls for type parameter
-                    // with the same name
-                    // struct S; impl<S: Tr1> Tr2 for S {}
-                    ty != null && ty.javaClass == target.javaClass && ty.canUnifyWith(target, project)
-                }
+            ).asSequence().filter { impl ->
+                val ty = impl.typeReference?.type
+                // Addition class check is a temporal solution to filter impls for type parameter
+                // with the same name
+                // struct S; impl<S: Tr1> Tr2 for S {}
+                ty != null && ty.javaClass == target.javaClass && ty.canUnifyWith(target, project)
             }
         }
 
