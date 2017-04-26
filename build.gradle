@@ -131,13 +131,6 @@ project(':toml') {
     intellij { pluginName 'intellij-toml' }
 }
 
-test {
-    useJUnit {
-        excludeCategories 'org.rust.Performance'
-    }
-}
-
-
 task downloadClion(type: de.undercouch.gradle.tasks.download.Download) {
     src "https://download.jetbrains.com/cpp/CLion-${clionVersion}.tar.gz"
     dest new File(project.projectDir, "debugger/lib/clion-${clionVersion}.tar.gz")
@@ -149,23 +142,6 @@ task unpackClion(dependsOn: downloadClion, type: Copy) {
     into new File(project.projectDir, "debugger/lib")
 }
 compileKotlin.dependsOn unpackClion
-
-task performanceTest(type: Test, group: 'Verification', dependsOn: [classes, testClasses]) {
-    useJUnit {
-        includeCategories 'org.rust.Performance'
-        reports.html.destination = "$buildDir/reports/performanceTests"
-    }
-
-    testLogging {
-        events 'passed', 'skipped', 'failed'
-        showStandardStreams = true
-        exceptionFormat = 'full'
-    }
-
-    outputs.upToDateWhen { false } // always execute task, even if already executed.
-}
-
-check.dependsOn performanceTest
 
 dependencies {
     compile('org.jetbrains:markdown:0.1.12') {

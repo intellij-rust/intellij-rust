@@ -1,4 +1,4 @@
-package org.rust.ide.annotator
+package org.rustSlowTests
 
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.LightProjectDescriptor
@@ -7,7 +7,6 @@ import org.junit.experimental.categories.Category
 import org.rust.Performance
 import org.rust.lang.RsTestBase
 
-@Category(Performance::class)
 class RsHighlightingPerformanceTest : RsTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/performance"
 

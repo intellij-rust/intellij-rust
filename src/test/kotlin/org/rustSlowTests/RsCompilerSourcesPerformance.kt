@@ -1,4 +1,4 @@
-package org.rust.lang.core.parser
+package org.rustSlowTests
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -15,8 +15,7 @@ import org.rust.lang.RsTestBase
 import java.util.*
 import kotlin.system.measureTimeMillis
 
-@Category(Performance::class)
-class RsParserPerformanceTest : RsTestBase() {
+class RsCompilerSourcesPerformance : RsTestBase() {
     override val dataPath: String = ""
 
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor

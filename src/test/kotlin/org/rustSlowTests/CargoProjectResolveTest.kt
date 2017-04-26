@@ -1,4 +1,4 @@
-package org.rust.cargo.toolchain
+package org.rustSlowTests
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.SystemInfo
