@@ -16,11 +16,11 @@ data class RustTypeParameterType private constructor(
 
     constructor(trait: RsTraitItem) : this(Self(trait))
 
-    override fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
+    override fun getTraitsImplementedIn(project: Project): Collection<RsTraitItem> =
         transitiveClosure(parameter.bounds)
 
-    override fun getMethodsIn(project: Project): Sequence<RsFunction> =
-        getTraitsImplementedIn(project).flatMap { it.functionList.asSequence() }
+    override fun getMethodsIn(project: Project): Collection<RsFunction> =
+        getTraitsImplementedIn(project).flatMap { it.functionList }
 
     override fun canUnifyWith(other: RustType, project: Project): Boolean {
         if(this == other) return true
@@ -61,7 +61,7 @@ data class RustTypeParameterType private constructor(
     }
 }
 
-private fun transitiveClosure(traits: Sequence<RsTraitItem>): Sequence<RsTraitItem> {
+private fun transitiveClosure(traits: Sequence<RsTraitItem>): Collection<RsTraitItem> {
     val result = mutableSetOf<RsTraitItem>()
     fun dfs(trait: RsTraitItem) {
         if (trait in result) return
@@ -70,5 +70,5 @@ private fun transitiveClosure(traits: Sequence<RsTraitItem>): Sequence<RsTraitIt
     }
     traits.forEach(::dfs)
 
-    return result.asSequence()
+    return result
 }

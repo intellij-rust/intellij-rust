@@ -6,8 +6,8 @@ import org.rust.lang.core.types.RustType
 
 interface RustPrimitiveType : RustType {
 
-    override fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
-        emptySequence()
+    override fun getTraitsImplementedIn(project: Project): Collection<RsTraitItem> =
+        emptyList()
 
     override fun canUnifyWith(other: RustType, project: Project): Boolean =
         this == other

@@ -10,11 +10,11 @@ object RustUnitType : RustType {
     override fun canUnifyWith(other: RustType, project: Project): Boolean =
         other is RustUnitType
 
-    override fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
-        emptySequence()
+    override fun getTraitsImplementedIn(project: Project): Collection<RsTraitItem> =
+        emptyList()
 
-    override fun getMethodsIn(project: Project): Sequence<RsFunction> =
-        emptySequence()
+    override fun getMethodsIn(project: Project): Collection<RsFunction> =
+        emptyList()
 
     override fun toString(): String = "()"
 }

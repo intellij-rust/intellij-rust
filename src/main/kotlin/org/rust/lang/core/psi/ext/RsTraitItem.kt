@@ -13,7 +13,7 @@ val RsTraitItem.superTraits: Sequence<RsTraitItem> get() {
     return bounds.mapNotNull { it.bound.traitRef?.resolveToTrait }
 }
 
-val RsTraitItem.flattenHierarchy: Sequence<RsTraitItem> get() {
+val RsTraitItem.flattenHierarchy: Collection<RsTraitItem> get() {
     val result = mutableSetOf<RsTraitItem>()
     fun dfs(trait: RsTraitItem) {
         if (trait in result) return
@@ -22,7 +22,7 @@ val RsTraitItem.flattenHierarchy: Sequence<RsTraitItem> get() {
     }
     dfs(this)
 
-    return result.asSequence()
+    return result
 }
 
 abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>, RsTraitItem {

@@ -10,11 +10,11 @@ object RustStringSliceType : RustPrimitiveType {
 
     override fun toString(): String = "str"
 
-    override fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> {
+    override fun getTraitsImplementedIn(project: Project): Collection<RsTraitItem> {
         return RsImplIndex.findImplsFor(this, project).mapNotNull { it.traitRef?.resolveToTrait }
     }
 
-    override fun getMethodsIn(project: Project): Sequence<RsFunction> {
+    override fun getMethodsIn(project: Project): Collection<RsFunction> {
         return RsImplIndex.findMethodsFor(this, project)
     }
 }

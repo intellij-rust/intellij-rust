@@ -304,7 +304,7 @@ private fun processAssociatedFunctionsDeclarations(project: Project, type: RustT
     return processFnsWithInherentPriority(methodsAndFns, processor)
 }
 
-private fun processFnsWithInherentPriority(fns: Sequence<RsFunction>, processor: RsResolveProcessor): Boolean {
+private fun processFnsWithInherentPriority(fns: Collection<RsFunction>, processor: RsResolveProcessor): Boolean {
     val (inherent, nonInherent) = fns.partition { it is RsFunction && it.isInherentImpl }
     if (processAll(inherent, processor)) return true
 

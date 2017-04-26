@@ -6,6 +6,10 @@ import com.intellij.psi.stubs.AbstractStubIndex
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
@@ -16,6 +20,7 @@ import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustTypeFingerprint
 import org.rust.lang.core.types.type
+import java.util.concurrent.ConcurrentMap
 
 class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
@@ -23,17 +28,20 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
     override fun getKeyDescriptor(): KeyDescriptor<RustTypeFingerprint> = RustTypeFingerprint.KeyDescriptor
 
     companion object {
-        fun findMethodsFor(target: RustType, project: Project): Sequence<RsFunction> =
+        fun findMethodsFor(target: RustType, project: Project): Collection<RsFunction> =
             findMethodsAndAssociatedFunctionsFor(target, project)
                 .filter { !it.isAssocFn }
 
-        fun findMethodsAndAssociatedFunctionsFor(target: RustType, project: Project): Sequence<RsFunction> =
+        fun findMethodsAndAssociatedFunctionsFor(target: RustType, project: Project): Collection<RsFunction> =
             findImplsFor(target, project)
                 .flatMap { it.allMethodsAndAssocFunctions }
 
-        fun findImplsFor(target: RustType, project: Project): Sequence<RsImplItem> {
+        fun findImplsFor(target: RustType, project: Project): Collection<RsImplItem> =
+            project.implsCache.getOrPut(target) { doFindImplsFor(target, project) }
+
+        private fun doFindImplsFor(target: RustType, project: Project): Collection<RsImplItem> {
             val fingerprint = RustTypeFingerprint.create(target)
-                ?: return emptySequence()
+                ?: return emptyList()
 
             return StubIndex.getElements(
                 KEY,
@@ -41,7 +49,7 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
                 project,
                 GlobalSearchScope.allScope(project),
                 RsImplItem::class.java
-            ).asSequence().filter { impl ->
+            ).filter { impl ->
                 val ty = impl.typeReference?.type
                 // Addition class check is a temporal solution to filter impls for type parameter
                 // with the same name
@@ -63,11 +71,20 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
     }
 }
 
-private val RsImplItem.allMethodsAndAssocFunctions: Sequence<RsFunction> get() {
+private val RsImplItem.allMethodsAndAssocFunctions: Collection<RsFunction> get() {
     val directlyImplemented = functionList.map { it.name }.toSet()
     val defaulted = traitRef?.resolveToTrait?.functionList.orEmpty().asSequence().filter {
         it.name !in directlyImplemented
     }
 
-    return functionList.asSequence() + defaulted
+    return functionList + defaulted
 }
+
+private val Project.implsCache: ConcurrentMap<RustType, Collection<RsImplItem>>
+    get() = CachedValuesManager.getManager(this)
+        .getCachedValue(this, {
+            CachedValueProvider.Result.create(
+                ContainerUtil.newConcurrentMap<RustType, Collection<RsImplItem>>(),
+                PsiModificationTracker.MODIFICATION_COUNT
+            )
+        })
