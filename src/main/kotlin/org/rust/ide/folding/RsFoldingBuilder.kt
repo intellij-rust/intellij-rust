@@ -11,8 +11,11 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.lang.RsLanguage
+import org.rust.lang.core.leftLeaves
 import org.rust.lang.core.leftSiblings
 import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
 import org.rust.lang.core.psi.*
@@ -21,6 +24,7 @@ import org.rust.lang.core.psi.RsElementTypes.RBRACE
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 import org.rust.lang.core.rightSiblings
+import java.lang.Integer.max
 import java.util.*
 
 class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
@@ -36,13 +40,17 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
         if (root !is RsFile) return emptyArray()
 
         val descriptors: MutableList<FoldingDescriptor> = ArrayList()
-        val visitor = FoldingVisitor(descriptors)
+        val rightMargin = CodeStyleSettingsManager.getSettings(root.project).getRightMargin(RsLanguage)
+        val visitor = FoldingVisitor(descriptors, rightMargin)
         PsiTreeUtil.processElements(root) { it.accept(visitor); true }
 
         return descriptors.toTypedArray()
     }
 
-    private class FoldingVisitor(private val descriptors: MutableList<FoldingDescriptor>) : RsVisitor() {
+    private class FoldingVisitor(
+        private val descriptors: MutableList<FoldingDescriptor>,
+        val rightMargin: Int
+    ) : RsVisitor() {
 
         override fun visitStructLiteralBody(o: RsStructLiteralBody) = fold(o)
 
@@ -92,7 +100,11 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
         }
 
         private fun tryFoldBlockWhitespaces(block: RsBlock): Boolean {
-            if (!(block.parent is RsFunction && block.isSingleLine)) return false
+            if (block.parent !is RsFunction) return false
+
+            val doc = PsiDocumentManager.getInstance(block.project).getDocument(block.containingFile) ?: return false
+            val maxLenght = rightMargin - block.getOffsetInLine(doc) - ONE_LINER_PLACEHOLDERS_EXTRA_LENGTH
+            if (!block.isSingleLine(doc, maxLenght)) return false
 
             val lbrace = block.lbrace
             val rbrace = block.rbrace ?: return false
@@ -100,8 +112,6 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
             val blockElement = lbrace.getNextNonCommentSibling()
             if (blockElement == null || blockElement != rbrace.getPrevNonCommentSibling()) return false
             if (blockElement.textContains('\n')) return false
-
-            val doc = PsiDocumentManager.getInstance(block.project).getDocument(block.containingFile) ?: return false
             if (!(doc.areOnAdjacentLines(lbrace, blockElement) && doc.areOnAdjacentLines(blockElement, rbrace))) return false
 
             val leadingSpace = lbrace.nextSibling as? PsiWhiteSpace ?: return false
@@ -123,18 +133,26 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
 
     private companion object {
         val COLLAPSED_BY_DEFAULT = TokenSet.create(LBRACE, RBRACE)
+        val ONE_LINER_PLACEHOLDERS_EXTRA_LENGTH = 4
     }
 }
 
 private fun Document.areOnAdjacentLines(first: PsiElement, second: PsiElement): Boolean =
     getLineNumber(first.textRange.endOffset) + 1 == getLineNumber(second.textRange.startOffset)
 
-private val RsBlock.isSingleLine: Boolean get() {
+private fun RsBlock.isSingleLine(doc: Document, maxLength: Int): Boolean {
     // remove all leading and trailing spaces before counting lines
     val startContents = lbrace.rightSiblings.dropWhile { it is PsiWhiteSpace }.firstOrNull() ?: return false
     if (startContents.node.elementType == RBRACE) return false
     val endContents = rbrace?.leftSiblings?.dropWhile { it is PsiWhiteSpace }?.firstOrNull() ?: return false
+    if (endContents.textRange.endOffset - startContents.textOffset > maxLength) return false
 
-    val doc = PsiDocumentManager.getInstance(project).getDocument(containingFile) ?: return false
     return doc.getLineNumber(startContents.textOffset) == doc.getLineNumber(endContents.textRange.endOffset)
+}
+
+private fun PsiElement.getOffsetInLine(doc: Document): Int {
+    val blockLine = doc.getLineNumber(textRange.startOffset)
+    return leftLeaves
+        .takeWhile { doc.getLineNumber(it.textRange.endOffset) == blockLine }
+        .sumBy { el -> el.text.lastIndexOf('\n').let { el.text.length - max(it + 1, 0) } }
 }

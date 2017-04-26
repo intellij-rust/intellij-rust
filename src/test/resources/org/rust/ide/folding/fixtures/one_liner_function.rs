@@ -8,3 +8,7 @@ fn bar()
     println!("Hello World");
 
 }</fold>
+
+fn long() <fold text='{...}'>{
+    println!("This line is too long to fit into the line margin after collapsing, so it will fully collapse as a large block");
+}</fold>
