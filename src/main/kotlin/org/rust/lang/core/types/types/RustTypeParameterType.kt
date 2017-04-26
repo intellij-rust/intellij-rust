@@ -3,7 +3,7 @@ package org.rust.lang.core.types.types
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
-import org.rust.lang.core.psi.ext.hierarchyContains
+import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToTrait
 import org.rust.lang.core.psi.ext.superTraits
 import org.rust.lang.core.types.RustType
@@ -23,7 +23,10 @@ data class RustTypeParameterType private constructor(
         getTraitsImplementedIn(project).flatMap { it.functionList.asSequence() }
 
     override fun canUnifyWith(other: RustType, project: Project): Boolean {
-        return this == other || parameter.bounds.all { canUnifyTraitBoundWith(it, other, project) }
+        if(this == other) return true
+
+        val implTraits = ((other as? RustTraitType)?.trait?.flattenHierarchy ?: other.getTraitsImplementedIn(project)).toSet()
+        return parameter.bounds.all { implTraits.contains(it) }
     }
 
     override fun substitute(map: Map<RustTypeParameterType, RustType>): RustType = map[this] ?: this
@@ -68,9 +71,4 @@ private fun transitiveClosure(traits: Sequence<RsTraitItem>): Sequence<RsTraitIt
     traits.forEach(::dfs)
 
     return result.asSequence()
-}
-
-private fun canUnifyTraitBoundWith(trait: RsTraitItem, other: RustType, project: Project): Boolean {
-    return other is RustTraitType && other.trait.hierarchyContains(trait) ||
-        other.getTraitsImplementedIn(project).contains(trait)
 }

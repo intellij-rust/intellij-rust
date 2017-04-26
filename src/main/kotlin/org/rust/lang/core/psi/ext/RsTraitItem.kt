@@ -25,8 +25,6 @@ val RsTraitItem.flattenHierarchy: Sequence<RsTraitItem> get() {
     return result.asSequence()
 }
 
-fun RsTraitItem.hierarchyContains(other: RsTraitItem): Boolean = flattenHierarchy.contains(other)
-
 abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>, RsTraitItem {
 
     constructor(node: ASTNode) : super(node)
