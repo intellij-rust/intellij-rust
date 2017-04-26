@@ -5,6 +5,9 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestCase
 import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
+import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
 
 // This class allows to execute real Cargo during the tests.
@@ -25,6 +28,14 @@ abstract class RustWithToolchainTestBase : PlatformTestCase() {
 
         action()
     }
+
+    protected fun refreshWorkspace() {
+        CargoProjectWorkspaceService.getInstance(module).syncUpdate(module.project.toolchain!!)
+        if (module.cargoWorkspace == null) {
+            error("Failed to update a test Cargo project")
+        }
+    }
+
 
     override fun runTest() {
         if (toolchain == null) {

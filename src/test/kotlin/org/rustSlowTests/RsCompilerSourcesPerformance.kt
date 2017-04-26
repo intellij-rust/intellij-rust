@@ -29,7 +29,7 @@ class RsCompilerSourcesPerformance : RsTestBase() {
 //        }
 //    }
 
-    fun testHighlightingPerformance() {
+    fun `test highlighting performance without resolve`() {
         val file = rustSrcDir().findFileByRelativePath("libsyntax/parse/parser.rs")!!
         val fileContents = String(file.contentsToByteArray())
         myFixture.configureByText("parser.rs", fileContents)
