@@ -13,14 +13,22 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.isAssocFn
+import org.rust.lang.core.psi.ext.queryAttributes
 import org.rust.lang.core.psi.ext.resolveToTrait
+import org.rust.lang.core.resolve.isDerefTrait
+import org.rust.lang.core.resolve.langAttribute
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustTypeFingerprint
 import org.rust.lang.core.types.type
 import java.util.concurrent.ConcurrentMap
+
+private val RsImplItem.targetType: RustType? get() {
+    return this.typeAliasList.find { it.name == "Target" }?.typeReference?.type
+}
 
 class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
@@ -36,14 +44,23 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
             findImplsFor(target, project)
                 .flatMap { it.allMethodsAndAssocFunctions }
 
-        fun findImplsFor(target: RustType, project: Project): Collection<RsImplItem> =
-            project.implsCache.getOrPut(target) { doFindImplsFor(target, project) }
+        fun findImplsFor(
+            target: RustType,
+            project: Project,
+            deref_hierarchic: Collection<RustType> = emptyList()
+        ): Collection<RsImplItem> =
+            project.implsCache
+                .getOrPut(target) { doFindImplsFor(target, project, deref_hierarchic) }
 
-        private fun doFindImplsFor(target: RustType, project: Project): Collection<RsImplItem> {
+        private fun doFindImplsFor(
+            target: RustType,
+            project: Project,
+            deref_hierarchic: Collection<RustType>
+        ): Collection<RsImplItem> {
             val fingerprint = RustTypeFingerprint.create(target)
                 ?: return emptyList()
 
-            return StubIndex.getElements(
+            val collection = StubIndex.getElements(
                 KEY,
                 fingerprint,
                 project,
@@ -56,6 +73,13 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
                 // struct S; impl<S: Tr1> Tr2 for S {}
                 ty != null && ty.javaClass == target.javaClass && ty.canUnifyWith(target, project)
             }
+            val derefTargetType = collection.find(RsImplItem::isDerefTrait)?.targetType
+            val derefImpls = if (derefTargetType != null && !deref_hierarchic.any { it == derefTargetType })
+                findImplsFor(derefTargetType, project, deref_hierarchic + listOf(derefTargetType))
+            else
+                emptyList()
+
+            return collection + derefImpls.filter { !collection.contains(it) }
         }
 
         fun index(stub: RsImplItemStub, sink: IndexSink) {
