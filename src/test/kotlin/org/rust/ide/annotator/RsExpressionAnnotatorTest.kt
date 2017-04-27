@@ -364,6 +364,26 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun `test mutable type should not annotate`() = checkErrors("""
+        struct S;
+
+        impl S {
+            fn foo(&mut self) {
+                unimplemented!();
+            }
+        }
+
+        trait Test {
+            fn test(self);
+        }
+
+        impl<'a> Test for &'a mut S {
+            fn test(self) {
+                self.foo();
+            }
+        }
+    """)
+
     fun `test immutable used at mutable method definition`() = checkErrors("""
         struct S;
 
