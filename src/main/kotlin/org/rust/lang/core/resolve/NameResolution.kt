@@ -227,7 +227,7 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
     val preludeFile = path.containingCargoPackage?.findCrateByName("std")?.crateRoot
         ?.findFileByRelativePath("../prelude/v1.rs")
     val prelude = path.project.getPsiFor(preludeFile)?.rustMod
-    if (prelude != null && processItemDeclarations(prelude, false, ns, { v -> v.name !in prevScope && processor(v) })) return true
+    if (prelude != null && processItemDeclarations(prelude, ns, { v -> v.name !in prevScope && processor(v) }, false)) return true
 
     return false
 }
@@ -325,14 +325,14 @@ private fun processItemOrEnumVariantDeclarations(scope: RsCompositeElement, ns: 
             if (processAll(scope.enumBody.enumVariantList, processor)) return true
         }
         is RsMod -> {
-            if (processItemDeclarations(scope, false, ns, processor)) return true
+            if (processItemDeclarations(scope, ns, processor, withPrivateImports = false)) return true
         }
     }
 
     return false
 }
 
-private fun processItemDeclarations(scope: RsItemsOwner, withPrivateImports: Boolean, ns: Set<Namespace>, originalProcessor: RsResolveProcessor): Boolean {
+private fun processItemDeclarations(scope: RsItemsOwner, ns: Set<Namespace>, originalProcessor: RsResolveProcessor, withPrivateImports: Boolean): Boolean {
     val (starImports, itemImports) = scope.useItemList
         .filter { it.isPublic || withPrivateImports }
         .partition { it.isStarImport }
@@ -478,7 +478,7 @@ private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCo
 
     when (scope) {
         is RsMod -> {
-            if (processItemDeclarations(scope, true, ns, processor)) return true
+            if (processItemDeclarations(scope, ns, processor, withPrivateImports = true)) return true
         }
 
         is RsStructItem,
@@ -542,7 +542,7 @@ private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCo
                 }
             }
 
-            return processItemDeclarations(scope, true, ns, processor)
+            return processItemDeclarations(scope, ns, processor, withPrivateImports = true)
         }
 
         is RsForExpr -> {
