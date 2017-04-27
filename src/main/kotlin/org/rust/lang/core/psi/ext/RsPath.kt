@@ -9,8 +9,7 @@ import org.rust.lang.core.resolve.ref.RsPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsPathStub
 
-//TODO: the name is awful
-val RsPath.isCrateRelative: Boolean get() = stub?.isCrateRelative ?: (coloncolon != null)
+val RsPath.hasColonColon: Boolean get() = stub?.hasColonColon ?: (coloncolon != null)
 
 private val RS_CODE_FRAGMENT_CONTEXT = Key.create<RsCompositeElement>("org.rust.lang.core.psi.CODE_FRAGMENT_FILE")
 

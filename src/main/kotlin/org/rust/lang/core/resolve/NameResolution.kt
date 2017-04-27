@@ -192,7 +192,7 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
 
     val containigMod = path.containingMod
     val crateRoot = path.crateRoot
-    if (!path.isCrateRelative) {
+    if (!path.hasColonColon) {
         if (Namespace.Types in ns && containigMod != null) {
             if (processor("self", containigMod)) return true
             val superMod = containigMod.`super`
@@ -203,7 +203,7 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
     }
 
     // Paths in use items are implicitly global.
-    if (path.isCrateRelative || path.contextOfType<RsUseItem>() != null) {
+    if (path.hasColonColon || path.contextOfType<RsUseItem>() != null) {
         if (crateRoot != null) {
             if (processItemOrEnumVariantDeclarations(crateRoot, ns, processor)) return true
         }

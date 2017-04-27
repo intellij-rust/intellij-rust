@@ -38,7 +38,7 @@ private fun typeReferenceToType(ref: RsTypeReference): RustType {
 
         is RsBaseType -> {
             val path = ref.path ?: return RustUnknownType
-            if (path.path == null && !path.isCrateRelative) {
+            if (path.path == null && !path.hasColonColon) {
                 val primitiveType = RustPrimitiveType.fromTypeName(path.referenceName)
                 if (primitiveType != null) return primitiveType
             }

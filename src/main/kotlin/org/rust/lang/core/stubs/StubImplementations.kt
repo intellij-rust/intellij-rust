@@ -615,7 +615,7 @@ class RsUseGlobStub(
 class RsPathStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val referenceName: String,
-    val isCrateRelative: Boolean
+    val hasColonColon: Boolean
 ) : StubBase<RsPath>(parent, elementType) {
 
     object Type : RsStubElementType<RsPathStub, RsPath>("PATH") {
@@ -625,7 +625,7 @@ class RsPathStub(
             RsPathImpl(stub, this)
 
         override fun createStub(psi: RsPath, parentStub: StubElement<*>?) =
-            RsPathStub(parentStub, this, psi.referenceName, psi.isCrateRelative)
+            RsPathStub(parentStub, this, psi.referenceName, psi.hasColonColon)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsPathStub(parentStub, this,
@@ -636,7 +636,7 @@ class RsPathStub(
         override fun serialize(stub: RsPathStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.referenceName)
-                writeBoolean(stub.isCrateRelative)
+                writeBoolean(stub.hasColonColon)
             }
 
         override fun indexStub(stub: RsPathStub, sink: IndexSink) {
