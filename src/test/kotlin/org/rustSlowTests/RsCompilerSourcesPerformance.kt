@@ -1,4 +1,4 @@
-package org.rust.lang.core.parser
+package org.rustSlowTests
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -15,8 +15,7 @@ import org.rust.lang.RsTestBase
 import java.util.*
 import kotlin.system.measureTimeMillis
 
-@Category(Performance::class)
-class RsParserPerformanceTest : RsTestBase() {
+class RsCompilerSourcesPerformance : RsTestBase() {
     override val dataPath: String = ""
 
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
@@ -30,7 +29,7 @@ class RsParserPerformanceTest : RsTestBase() {
 //        }
 //    }
 
-    fun testHighlightingPerformance() {
+    fun `test highlighting performance without resolve`() {
         val file = rustSrcDir().findFileByRelativePath("libsyntax/parse/parser.rs")!!
         val fileContents = String(file.contentsToByteArray())
         myFixture.configureByText("parser.rs", fileContents)
