@@ -543,6 +543,13 @@
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 
+        <action id="Rust.RsConvertToNamedFields"
+                class="org.rust.lang.refactoring.RsConvertToNamedFieldsAction"
+                text="Convert to named fields"
+                description="Move this module to a single file">
+            <add-to-group group-id="RefactoringMenu"/>
+        </action>
+
         <action id="Rust.CargoFmtFile"
                 class="org.rust.ide.actions.RsFmtFileAction"
                 text="Reformat file with rustfmt"

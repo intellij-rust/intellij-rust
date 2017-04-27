@@ -61,12 +61,26 @@ class RsPsiFactory(private val project: Project) {
     fun createStructLiteralField(name: String): RsStructLiteralField =
         createExpressionOfType<RsStructLiteral>("S { $name: () }").structLiteralBody.structLiteralFieldList[0]
 
+    data class BlockField(val pub: Boolean, val name: String, val type: RsTypeReference)
+
+    fun createBlockFields(fields: List<BlockField>): RsBlockFields {
+        val fieldsText = fields.joinToString(separator = ",\n") {
+            "${"pub".iff(it.pub)}${it.name}: ${it.type.text}"
+        }
+        return createStruct("struct S { $fieldsText }")
+            .blockFields!!
+    }
+
+    fun createStruct(text: String): RsStructItem =
+        createFromText(text)
+            ?: error("Failed to create statement from text: `$text`")
+
     fun createStatement(text: String): RsStmt =
         createFromText("fn main() { $text 92; }")
             ?: error("Failed to create statement from text: `$text`")
 
     fun createLetDeclaration(name: String, expr: RsExpr, mutable: Boolean = false, type: RsTypeReference? = null): RsLetDecl =
-        createStatement("let ${if (mutable) "mut " else ""}$name${if (type != null) ": ${type.text}" else ""} = ${expr.text};") as RsLetDecl
+        createStatement("let ${"mut".iff(mutable)}$name${if (type != null) ": ${type.text}" else ""} = ${expr.text};") as RsLetDecl
 
 
     fun createType(text: String): RsTypeReference =
@@ -227,3 +241,5 @@ private val RsFunction.signatureText: String? get() {
     val where = whereClause?.text ?: ""
     return "fn $name$generics(${allArguments.joinToString(",")}) $ret$where"
 }
+
+private fun String.iff(cond: Boolean) = if (cond) this + " " else " "
