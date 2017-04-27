@@ -5,8 +5,6 @@ import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
 abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase() {
-    final override val dataPath: String get() = ""
-
     fun testIntentionHasDocumentation() {
         val directory = "intentionDescriptions/${intention.javaClass.simpleName}"
         val files = listOf("before.rs.template", "after.rs.template", "description.html")

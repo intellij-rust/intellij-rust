@@ -3,8 +3,6 @@ package org.rust.ide.typing
 import com.intellij.openapi.util.text.StringUtil
 
 class RsTypingEmptyFileFuzzyTest : RsTypingTestBase() {
-    override val dataPath: String = ""
-
     fun testFuzzy() {
         // These chars cause problems or require special treating
         val blacklist = setOf('\b', '\t', '\r', '"', '(', '[', '{')

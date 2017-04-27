@@ -33,7 +33,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
     override fun isWriteActionRequired(): Boolean = false
 
-    abstract val dataPath: String
+    open val dataPath: String = ""
 
     override fun getTestDataPath(): String = "${RsTestCase.testResourcesPath}/$dataPath"
 

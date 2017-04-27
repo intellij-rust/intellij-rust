@@ -8,8 +8,6 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.RsFile
 
 class RsLookupElementTest : RsTestBase() {
-    override val dataPath: String get() = ""
-
     fun testFn() = check("""
         fn foo(x: i32) -> Option<String> {}
           //^

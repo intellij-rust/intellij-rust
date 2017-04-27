@@ -14,7 +14,7 @@ import org.rust.cargo.toolchain.RustToolchain
 // Unlike `RustTestCaseBase` it does not use in-memory temporary VFS
 // and instead copies real files.
 abstract class RustWithToolchainTestBase : PlatformTestCase() {
-    abstract val dataPath: String
+    open val dataPath: String = ""
 
     private val toolchain = RustToolchain.suggest()
 

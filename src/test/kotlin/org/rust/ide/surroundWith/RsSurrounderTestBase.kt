@@ -12,8 +12,6 @@ import org.rust.lang.RsTestBase
 import java.util.*
 
 abstract class RsSurrounderTestBase(val surrounder: Surrounder) : RsTestBase() {
-    override val dataPath: String = ""
-
     protected fun doTest(@Language("Rust") before: String,
                          @Language("Rust") after: String,
                          checkSyntaxErrors: Boolean = true) {

@@ -8,8 +8,6 @@ import org.rust.lang.RsFileType
 import org.rust.lang.RsTestBase
 
 class RsBraceMatcherTest : RsTestBase() {
-    override val dataPath: String get() = ""
-
     fun `test don't pair parenthesis before identifier`() = doTest(
         "fn main() { let _ = <caret>typing }",
         '(',

@@ -8,8 +8,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import org.rust.lang.RsTestBase
 
 class CargoTomlWatcherTest : RsTestBase() {
-    override val dataPath: String get() = ""
-
     private var counter = 0
 
     fun `test toml modifications`() {

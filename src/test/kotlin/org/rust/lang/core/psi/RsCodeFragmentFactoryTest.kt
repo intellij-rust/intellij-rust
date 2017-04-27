@@ -4,8 +4,6 @@ import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.lang.RsTestBase
 
 class RsCodeFragmentFactoryTest : RsTestBase() {
-    override val dataPath: String = ""
-
     fun `test resolve string path`() {
         InlineFile("mod foo { struct S; }")
         val target = myModule.cargoWorkspace!!.packages.single().targets.first()

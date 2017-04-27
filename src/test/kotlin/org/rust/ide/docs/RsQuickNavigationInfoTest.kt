@@ -3,7 +3,6 @@ package org.rust.ide.docs
 import com.intellij.codeInsight.documentation.DocumentationManager
 
 class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
-    override val dataPath = ""
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
     fun `test nested function`() = doTest("""

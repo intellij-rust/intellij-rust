@@ -16,8 +16,6 @@ import java.util.*
 import kotlin.system.measureTimeMillis
 
 class RsCompilerSourcesPerformance : RsTestBase() {
-    override val dataPath: String = ""
-
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
 
