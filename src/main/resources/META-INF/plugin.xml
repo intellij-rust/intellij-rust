@@ -531,13 +531,13 @@
 
 
         <action id="Rust.RsPromoteModuleToDirectoryAction"
-                class="org.rust.ide.actions.RsPromoteModuleToDirectoryAction"
+                class="org.rust.lang.refactoring.RsPromoteModuleToDirectoryAction"
                 text="Promote module to directory"
                 description="Move this module to a dedicated directory">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
         <action id="Rust.RsDowngradeModuleToFile"
-                class="org.rust.ide.actions.RsDowngradeModuleToFile"
+                class="org.rust.lang.refactoring.RsDowngradeModuleToFile"
                 text="Downgrade module to file"
                 description="Move this module to a single file">
             <add-to-group group-id="RefactoringMenu"/>

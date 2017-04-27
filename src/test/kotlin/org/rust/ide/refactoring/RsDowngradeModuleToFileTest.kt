@@ -1,13 +1,12 @@
-package org.rust.ide.actions
+package org.rust.ide.refactoring
 
-import com.intellij.idea.IdeaTestApplication
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.TestDataProvider
 import org.rust.FileTree
 import org.rust.fileTree
 import org.rust.lang.RsTestBase
+import org.rust.lang.refactoring.RsDowngradeModuleToFile
 
 class RsDowngradeModuleToFileTest : RsTestBase() {
     fun `test works on file`() = checkAvailable(
@@ -71,9 +70,9 @@ class RsDowngradeModuleToFileTest : RsTestBase() {
     }
 
     private fun testActionOnElement(element: PsiElement): Presentation {
-        IdeaTestApplication.getInstance().setDataProvider(object : TestDataProvider(project) {
+        com.intellij.idea.IdeaTestApplication.getInstance().setDataProvider(object : TestDataProvider(project) {
             override fun getData(dataId: String?): Any? =
-                if (CommonDataKeys.PSI_ELEMENT.`is`(dataId)) element else super.getData(dataId)
+                if (com.intellij.openapi.actionSystem.CommonDataKeys.PSI_ELEMENT.`is`(dataId)) element else super.getData(dataId)
         })
 
         return myFixture.testAction(RsDowngradeModuleToFile())

@@ -1,4 +1,4 @@
-package org.rust.ide.actions
+package org.rust.ide.refactoring
 
 import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -8,6 +8,7 @@ import com.intellij.testFramework.TestDataProvider
 import org.rust.FileTree
 import org.rust.fileTree
 import org.rust.lang.RsTestBase
+import org.rust.lang.refactoring.RsPromoteModuleToDirectoryAction
 
 class RsPromoteModuleToDirectoryActionTest : RsTestBase() {
     fun `test works on file`() = checkAvailable(
