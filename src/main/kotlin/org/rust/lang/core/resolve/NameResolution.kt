@@ -91,7 +91,9 @@ fun processUseGlobResolveVariants(glob: RsUseGlob, processor: RsResolveProcessor
 
     if (processor("self", baseItem)) return true
 
-    return processItemOrEnumVariantDeclarations(baseItem, TYPES_N_VALUES, processor)
+    return processItemOrEnumVariantDeclarations(baseItem, TYPES_N_VALUES, processor,
+        withPrivateImports = basePath != null && isSuperChain(basePath)
+    )
 }
 
 /**
@@ -183,7 +185,7 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
             val s = base.`super`
             if (s != null && processor("super", s)) return true
         }
-        if (processItemOrEnumVariantDeclarations(base, ns, processor)) return true
+        if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
         if (base is RsTypeBearingItemElement && parent !is RsUseItem) {
             if (processAssociatedFunctionsDeclarations(base.project, base.type, processor)) return true
         }
@@ -319,13 +321,13 @@ private fun processFnsWithInherentPriority(fns: Collection<RsFunction>, processo
     return false
 }
 
-private fun processItemOrEnumVariantDeclarations(scope: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
+private fun processItemOrEnumVariantDeclarations(scope: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor, withPrivateImports: Boolean = false): Boolean {
     when (scope) {
         is RsEnumItem -> {
             if (processAll(scope.enumBody.enumVariantList, processor)) return true
         }
         is RsMod -> {
-            if (processItemDeclarations(scope, ns, processor, withPrivateImports = false)) return true
+            if (processItemDeclarations(scope, ns, processor, withPrivateImports)) return true
         }
     }
 
@@ -451,11 +453,14 @@ private fun processItemDeclarations(scope: RsItemsOwner, ns: Set<Namespace>, ori
         return false
     }
     for (use in starImports) {
-        val mod = use.path?.reference?.resolve() ?: continue
+        val basePath = use.path ?: continue
+        val mod = basePath.reference.resolve() ?: continue
 
-        if (processItemOrEnumVariantDeclarations(mod, ns, { v ->
-            v.name !in directlyDeclaredNames && originalProcessor(v)
-        })) return true
+        val found = processItemOrEnumVariantDeclarations(mod, ns,
+            { it.name !in directlyDeclaredNames && originalProcessor(it) },
+            withPrivateImports = isSuperChain(basePath)
+        )
+        if (found) return true
     }
 
     return false
@@ -622,4 +627,9 @@ private class LazyScopeEntry(
     override val element: RsCompositeElement? by thunk
 
     override fun toString(): String = "LazyScopeEntry($name, $element)"
+}
+
+private fun isSuperChain(path: RsPath): Boolean {
+    val qual = path.path
+    return path.referenceName == "super" && (qual == null || isSuperChain(qual))
 }

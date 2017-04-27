@@ -482,4 +482,28 @@ class RsUseResolveTest : RsResolveTestBase() {
         const Z: i32 = X5;
                      //^
     """)
+
+    fun `test private glob import`() = checkByCode("""
+        mod utils {
+            pub enum MyError { SomeError }
+        }                       //X
+        use utils::*;
+
+        mod bar {
+            use super::*;
+            fn bar() -> MyError { MyError::SomeError }
+        }                                   //^
+    """)
+
+    fun `test private reexport`() = checkByCode("""
+        mod utils {
+            pub enum MyError { SomeError }
+        }                       //X
+        use utils::MyError;
+
+        mod bar {
+            use super::MyError;
+            fn bar() -> MyError { MyError::SomeError }
+        }                                   //^
+    """)
 }
