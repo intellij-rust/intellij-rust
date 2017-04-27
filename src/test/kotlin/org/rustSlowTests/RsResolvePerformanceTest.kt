@@ -13,8 +13,6 @@ import org.rust.utils.fullyRefreshDirectory
 import kotlin.system.measureTimeMillis
 
 class RsResolvePerformanceTest : RustWithToolchainTestBase() {
-    override val dataPath: String get() = ""
-
     fun `test resolving Cargo`() {
         val base = openRealProject("testData/cargo")
         if (base == null) {

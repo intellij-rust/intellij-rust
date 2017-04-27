@@ -10,8 +10,6 @@ import org.rust.fileTree
 import org.rust.lang.RsTestBase
 
 class RsPromoteModuleToDirectoryActionTest : RsTestBase() {
-    override val dataPath: String = ""
-
     fun `test works on file`() = checkAvailable(
         "foo.rs",
         fileTree {

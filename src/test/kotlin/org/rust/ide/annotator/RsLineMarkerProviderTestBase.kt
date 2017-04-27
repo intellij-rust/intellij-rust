@@ -6,8 +6,6 @@ import com.intellij.openapi.project.Project
 import org.rust.lang.RsTestBase
 
 abstract class RsLineMarkerProviderTestBase : RsTestBase() {
-    override val dataPath = ""
-
     protected fun doTestByText(source: String) {
         myFixture.configureByText("lib.rs", source)
         myFixture.doHighlighting()

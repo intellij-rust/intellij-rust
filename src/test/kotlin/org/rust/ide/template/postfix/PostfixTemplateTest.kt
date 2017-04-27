@@ -9,8 +9,6 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.RsTestBase
 
 abstract class PostfixTemplateTest(val postfixTemplate: PostfixTemplate) : RsTestBase() {
-    override val dataPath = ""
-
     protected fun doTest(
         @Language("Rust") before: String,
         @Language("Rust") after: String,

@@ -11,8 +11,6 @@ import org.rust.fileTree
 import org.rust.lang.core.psi.RsPath
 
 class CargoTomlWatcherIntegrationTest : RustWithToolchainTestBase() {
-    override val dataPath: String = ""
-
     fun `test Cargo toml is refreshed`() {
         val p = fileTree {
             toml("Cargo.toml", """

@@ -5,8 +5,6 @@ import com.intellij.ide.DataManager
 import org.rust.lang.RsTestBase
 
 abstract class RsSelectionHandlerTestBase : RsTestBase() {
-    override val dataPath = ""
-
     fun doTest(before: String, vararg after: String) {
         myFixture.configureByText("main.rs", before)
         val action = SelectWordHandler(null)

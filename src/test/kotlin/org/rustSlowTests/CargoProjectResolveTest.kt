@@ -9,8 +9,6 @@ import org.rust.lang.core.psi.RsPath
 
 class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
-    override val dataPath: String = ""
-
     fun `test resolve external library`() = buildProject {
         toml("Cargo.toml", """
             [package]

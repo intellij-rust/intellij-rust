@@ -7,8 +7,6 @@ import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.types.type
 
 abstract class RsTypificationTestBase : RsTestBase() {
-    override val dataPath: String get() = ""
-
     protected fun testExpr(@Language("Rust") code: String, description: String = "") {
         InlineFile(code)
         val (expr, expectedType) = findElementAndDataInEditor<RsExpr>()

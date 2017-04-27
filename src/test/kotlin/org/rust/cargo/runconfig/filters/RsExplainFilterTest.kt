@@ -5,7 +5,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.rust.lang.RsTestBase
 
 class RsExplainFilterTest : RsTestBase() {
-    override val dataPath = ""
     private val filter: Filter get() = RsExplainFilter()
 
     fun testOldExplainFormat() {
