@@ -53,6 +53,9 @@ import org.rust.lang.core.types.types.RustStructType
 //   * Rust uses two namespaces for declarations ("types" and "values"). The necessary namespace is
 //     determined by the syntactic position of the reference in `processResolveVariants` function and
 //     is passed down to the `processDeclarations` functions.
+//   * Instead of `getParent` we use `getContext` here. This trick allows for funny things like creating
+//     a code fragment in a temporary file and attaching it to some existing file. See the usages of
+//     [RsCodeFragmentFactory]
 
 fun processFieldExprResolveVariants(fieldExpr: RsFieldExpr, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val receiverType = fieldExpr.expr.type.stripAllRefsIfAny()
@@ -166,7 +169,7 @@ fun processExternCrateResolveVariants(crate: RsExternCrateItem, isCompletion: Bo
 
 fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val qualifier = path.path
-    val parent = path.parent
+    val parent = path.context
     val ns = when (parent) {
         is RsPath, is RsTypeReference -> TYPES
         is RsUseItem -> if (parent.isStarImport) TYPES else TYPES_N_VALUES
@@ -200,7 +203,7 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
     }
 
     // Paths in use items are implicitly global.
-    if (path.isCrateRelative || path.parentOfType<RsUseItem>() != null) {
+    if (path.isCrateRelative || path.contextOfType<RsUseItem>() != null) {
         if (crateRoot != null) {
             if (processItemOrEnumVariantDeclarations(crateRoot, ns, processor)) return true
         }
@@ -278,7 +281,7 @@ fun resolveStringPath(path: String, module: Module): Pair<RsNamedElement, CargoW
 
     val el = pkg.targets.asSequence()
         .mapNotNull { RsCodeFragmentFactory(module.project).createCrateRelativePath("::${parts[1]}", it) }
-        .mapNotNull { it.path.reference.resolve() }
+        .mapNotNull { it.reference.resolve() }
         .filterIsInstance<RsNamedElement>()
         .firstOrNull() ?: return null
     return el to pkg
@@ -459,7 +462,7 @@ private fun processItemDeclarations(scope: RsItemsOwner, withPrivateImports: Boo
 }
 
 private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
-    check(cameFrom.parent == scope || cameFrom.getUserData(RS_CODE_FRAGMENT_CONTEXT) == scope)
+    check(cameFrom.context == scope)
 
     fun processPattern(pattern: RsPat, processor: RsResolveProcessor): Boolean {
         val boundNames = PsiTreeUtil.findChildrenOfType(pattern, RsPatBinding::class.java)
@@ -579,12 +582,12 @@ private fun walkUp(
 ): Boolean {
 
     var cameFrom: RsCompositeElement = start
-    var scope = start.parent as RsCompositeElement?
+    var scope = start.context as RsCompositeElement?
     while (scope != null) {
         if (processor(cameFrom, scope)) return true
         if (stopAfter(scope)) break
         cameFrom = scope
-        scope = scope.getUserData(RS_CODE_FRAGMENT_CONTEXT) ?: (scope.parent as RsCompositeElement?)
+        scope = scope.context as RsCompositeElement?
     }
 
     return false
