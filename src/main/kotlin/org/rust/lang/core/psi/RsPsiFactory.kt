@@ -52,10 +52,10 @@ class RsPsiFactory(private val project: Project) {
     fun createUnsafeBlockExpr(body: String): RsBlockExpr =
         createExpressionOfType("unsafe { $body }")
 
-    fun tryCreatePathExpr(text: String): RsPathExpr? {
-        val expr = createFromText<RsPathExpr>("fn main() { $text;}") ?: return null
-        if (expr.text != text) return null
-        return expr
+    fun tryCreatePath(text: String): RsPath? {
+        val path = createFromText<RsPathExpr>("fn main() { $text;}")?.path ?: return null
+        if (path.text != text) return null
+        return path
     }
 
     fun createStructLiteralField(name: String): RsStructLiteralField =

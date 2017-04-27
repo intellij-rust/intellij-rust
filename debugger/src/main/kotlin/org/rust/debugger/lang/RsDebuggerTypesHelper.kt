@@ -36,8 +36,8 @@ class RsDebuggerTypesHelper(process: CidrDebugProcess) : CidrDebuggerTypesHelper
 private fun resolveToDeclaration(ctx: PsiElement?, name: String): PsiElement? {
     val composite = ctx?.getNextNonCommentSibling()?.parentOfType<RsCompositeElement>(strict = false)
         ?: return null
-    val expr = RsCodeFragmentFactory(composite.project).createLocalVariable(name, composite)
+    val path = RsCodeFragmentFactory(composite.project).createLocalVariable(name, composite)
         ?: return null
 
-    return expr.path.reference.resolve()
+    return path.reference.resolve()
 }

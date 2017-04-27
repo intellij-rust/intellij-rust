@@ -41,6 +41,9 @@ inline fun <reified T : PsiElement> PsiElement.parentOfType(strict: Boolean = tr
 inline fun <reified T : PsiElement> PsiElement.parentOfType(strict: Boolean = true, stopAt: Class<out PsiElement>): T? =
     PsiTreeUtil.getParentOfType(this, T::class.java, strict, stopAt)
 
+inline fun <reified T : PsiElement> PsiElement.contextOfType(strict: Boolean = true): T? =
+    PsiTreeUtil.getContextOfType(this, T::class.java, strict)
+
 inline fun <reified T : PsiElement> PsiElement.childOfType(strict: Boolean = true): T? =
     PsiTreeUtil.findChildOfType(this, T::class.java, strict)
 
