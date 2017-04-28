@@ -1,29 +1,19 @@
-package org.rust.lang.core.types
+package org.rust.lang.core.types.infer
 
-import com.intellij.openapi.util.Computable
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import org.rust.ide.utils.isNullOrEmpty
-import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.*
 
-val RsExpr.type: RustType
-    get() = CachedValuesManager.getCachedValue(this, CachedValueProvider {
-        val type = recursionGuard(this, Computable { inferType(this) })
-            ?: RustUnknownType
-        CachedValueProvider.Result.create(type, PsiModificationTracker.MODIFICATION_COUNT)
-    })
-
-private fun inferType(expr: RsExpr): RustType {
+fun inferExpressionType(expr: RsExpr): RustType {
     return when (expr) {
         is RsPathExpr -> {
             val target = expr.path.reference.resolve() as? RsNamedElement
                 ?: return RustUnknownType
 
-            RustTypificationEngine.typify(target)
+            inferDeclarationType(target)
         }
 
         is RsStructLiteral -> {
