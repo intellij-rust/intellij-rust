@@ -20,6 +20,7 @@ import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.stripAllRefsIfAny
 import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustStructType
+import java.util.*
 
 // IntelliJ Rust name resolution algorithm.
 // Collapse all methods (`ctrl shift -`) to get a bird's eye view.
@@ -425,26 +426,50 @@ private fun processItemDeclarations(scope: RsItemsOwner, ns: Set<Namespace>, ori
         if (processor(name, mod)) return true
     }
 
-    fun resolveWithNs(ref: RsReference): RsCompositeElement? =
-        ref.multiResolve().find { element ->
-            element is RsNamedElement && ns.intersect(element.namespaces).isNotEmpty()
+    fun processMultiResolveWithNs(name: String, ref: RsReference, processor: RsResolveProcessor): Boolean {
+        // XXX: use items can legitimately resolve in both namespaces.
+        // Because we must be lazy, we don't know up front how many times we
+        // need to call the `processor`, so we need to calculate this lazily
+        // if the processor scrutinizes at least the first element.
+
+        // XXX: there are two `cfg`ed `boxed` modules in liballoc, so
+        // we apply "first in the namespace wins" heuristic.
+        var variants: List<RsNamedElement> = emptyList()
+        val visitedNamespaces = EnumSet.noneOf(Namespace::class.java)
+        if (processor.lazy(name) {
+            variants = ref.multiResolve()
+                .filterIsInstance<RsNamedElement>()
+                .filter { ns.intersect(it.namespaces).isNotEmpty() }
+            val first = variants.firstOrNull()
+            if (first != null) {
+                visitedNamespaces.addAll(first.namespaces)
+            }
+            first
+        }) {
+            return true
         }
+        // `variants` will be populated if processor looked at the corresponding element
+        for (element in variants.drop(1)) {
+            if (element.namespaces.all { it in visitedNamespaces }) continue
+            visitedNamespaces.addAll(element.namespaces)
+            if (processor(name, element)) return true
+        }
+        return false
+    }
 
     for (use in itemImports) {
         val globList = use.useGlobList
         if (globList == null) {
             val path = use.path ?: continue
             val name = use.alias?.name ?: path.referenceName ?: continue
-            if (processor.lazy(name, { resolveWithNs(path.reference) })) {
-                return true
-            }
+            if (processMultiResolveWithNs(name, path.reference, processor)) return true
         } else {
             for (glob in globList.useGlobList) {
                 val name = glob.alias?.name
                     ?: (if (glob.isSelf) use.path?.referenceName else null)
                     ?: glob.referenceName
                     ?: continue
-                if (processor.lazy(name, { resolveWithNs(glob.reference) })) return true
+                if (processMultiResolveWithNs(name, glob.reference, processor)) return true
             }
         }
     }
