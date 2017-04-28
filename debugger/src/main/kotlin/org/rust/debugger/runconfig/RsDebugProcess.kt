@@ -3,12 +3,14 @@ package org.rust.debugger.runconfig
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.filters.TextConsoleBuilder
 import com.intellij.xdebugger.XDebugSession
+import com.jetbrains.cidr.cpp.CPPToolchains
 import com.jetbrains.cidr.cpp.execution.debugger.backend.GDBDriverConfiguration
 import com.jetbrains.cidr.execution.Installer
 import com.jetbrains.cidr.execution.RunParameters
 import com.jetbrains.cidr.execution.TrivialInstaller
 import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration
+import com.jetbrains.cidr.execution.debugger.backend.LLDBDriverConfiguration
 import com.jetbrains.cidr.execution.debugger.breakpoints.CidrBreakpointHandler
 import org.rust.debugger.RsLineBreakpointType
 
@@ -22,13 +24,12 @@ class RsDebugProcess(parameters: RunParameters, session: XDebugSession, consoleB
 class RsDebugRunParameters(
     val cmd: GeneralCommandLine
 ) : RunParameters() {
-    private val cfg = GDBDriverConfiguration()
-
     override fun getDebuggerDriverConfiguration(): DebuggerDriverConfiguration = cfg
-
     override fun getInstaller(): Installer = TrivialInstaller(cmd)
 
     override fun getArchitectureId(): String? = null
+
+    private val cfg = if (CPPToolchains.getInstance().isUseLLDB) LLDBDriverConfiguration() else GDBDriverConfiguration()
 }
 
 
