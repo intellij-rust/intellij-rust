@@ -143,4 +143,19 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
 
         }
     """)
+
+    fun `test issue 1138`() = checkByCode("""
+        mod foo {
+            mod inner { pub fn inner() {} }
+                                //X
+            pub use self::inner::inner;
+        }
+
+        mod bar { pub use foo::inner; }
+        use bar::inner;
+
+        fn f() { inner(); }
+                 //^
+    """)
+
 }
