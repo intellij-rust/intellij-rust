@@ -8,8 +8,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.util.PsiTreeUtil
-import org.junit.experimental.categories.Category
-import org.rust.Performance
 import org.rust.lang.RsFileType
 import org.rust.lang.RsTestBase
 import java.util.*
@@ -27,31 +25,13 @@ class RsCompilerSourcesPerformance : RsTestBase() {
 //        }
 //    }
 
-    fun `test highlighting performance without resolve`() {
-        val file = rustSrcDir().findFileByRelativePath("libsyntax/parse/parser.rs")!!
-        val fileContents = String(file.contentsToByteArray())
-        myFixture.configureByText("parser.rs", fileContents)
-        val elapsed = myFixture.checkHighlighting()
-        reportTeamCityMetric(name, elapsed)
-    }
-
-    fun testParsingCompilerSources() {
+    fun testParsingStandardLibrarySources() {
         val sources = rustSrcDir()
         parseRustFiles(
             sources,
             ignored = setOf("test", "doc", "etc", "grammar"),
-            expectedNumberOfFiles = 800,
+            expectedNumberOfFiles = 500,
             checkForErrors = true
-        )
-    }
-
-    fun testParsingCompilerTests() {
-        val testDir = rustSrcDir().findFileByRelativePath("test")!!
-        parseRustFiles(
-            testDir,
-            ignored = emptyList(),
-            expectedNumberOfFiles = 4000,
-            checkForErrors = false
         )
     }
 
