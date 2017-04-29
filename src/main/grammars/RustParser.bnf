@@ -975,7 +975,7 @@ AssertEqMacro ::= AssertEqMacroInvocation AssertEqMacroArgs { pin = 1 }
 VecMacro ::= VecMacroInvocation VecMacroArgs { pin = 1 }
 LogMacro ::= LogMacroInvocation LogMacroArgs { pin = 1 }
 
-MacroDefinition ::= MacroRulesInvocation identifier ItemMacroArg {
+MacroDefinition ::= MacroRulesInvocation identifier MacroDefinitionPatternList {
   pin = 1
   extends = ItemLikeMacro
   implements = [ "org.rust.lang.core.psi.ext.RsNamedElement" ]
@@ -983,6 +983,37 @@ MacroDefinition ::= MacroRulesInvocation identifier ItemMacroArg {
   stubClass = "org.rust.lang.core.stubs.RsMacroDefinitionStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+
+MacroDefinitionPatternList ::= <<macro_definition_delim (MacroDefinitionPattern ';'?)* >>
+
+private meta macro_definition_delim ::= '(' <<param>> ')' ';'
+                                      | '{' <<param>> '}'
+                                      | '[' <<param>> ']' ';' { pin = 1 }
+MacroDefinitionPattern ::= MacroPattern '=>' MacroBody
+MacroBinding ::= <<macroIdentifier>>
+
+MacroPattern ::= '(' MacroMatchingTree* ')'
+               | '{' MacroMatchingTree* '}'
+               | '[' MacroMatchingTree* ']'
+MacroMatchingTree ::=  '(' MacroMatchingTree* ')'
+                     | '{' MacroMatchingTree* '}'
+                     | '[' MacroMatchingTree* ']'
+                     | (MacroPatternSimpleMatching | MacroPatternComplexMatching)+
+                     | << placeholderMacroToken >>+
+
+MacroPatternComplexMatching ::= '$' '(' MacroMatchingTree* ')' <<tokenAfterComplexPattern>>* ('*' | '+')
+MacroPatternSimpleMatching ::= '$' MacroBinding ':' identifier
+
+MacroBody ::= '(' MacroTokenTree* ')'
+            | '{' MacroTokenTree* '}'
+            | '[' MacroTokenTree* ']'
+MacroTokenTree ::= '(' MacroTokenTree* ')'
+                 | '{' MacroTokenTree* '}'
+                 | '[' MacroTokenTree* ']'
+                 | (MacroBodyComplexMatching | MacroBodySimpleMatching) +
+                 | << placeholderMacroToken >> +
+MacroBodyComplexMatching ::= '$' '(' MacroTokenTree* ')' <<tokenAfterComplexPattern>>* ('*' | '+')
+MacroBodySimpleMatching ::= '$' (MacroBinding | "crate")
 
 private BuildInMacro ::= TryMacro
                        | FormatLikeMacro
