@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.psi.ext.valueParameters
-import org.rust.lang.core.types.RustTypificationEngine
+import org.rust.lang.core.types.infer.inferDeclarationType
 import org.rust.lang.core.types.types.RustUnknownType
 
 object CompletionEngine {
@@ -71,7 +71,7 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
             }
 
         is RsPatBinding -> base
-            .withTypeText(RustTypificationEngine.typify(this).let {
+            .withTypeText(inferDeclarationType(this).let {
                 when (it) {
                     is RustUnknownType -> ""
                     else -> it.toString()

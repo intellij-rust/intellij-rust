@@ -14,11 +14,12 @@ val RsPatBinding.isMut: Boolean
 val RsPatBinding.isArg: Boolean
     get() = parent?.parent is RsValueParameter
 
-val RsPatBinding.topLevelPattern: RsPat?
+val RsPatBinding.topLevelPattern: RsPat
     get() = ancestors
         .dropWhile { it is RsPat || it is RsPatField }
         .filterIsInstance<RsPat>()
         .lastOrNull()
+        ?: error("Binding outside the pattern: `${this.text}`")
 
 
 abstract class RsPatBindingImplMixin(node: ASTNode) : RsNamedElementImpl(node),
