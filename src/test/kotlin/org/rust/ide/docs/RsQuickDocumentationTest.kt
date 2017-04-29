@@ -17,6 +17,13 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
 
     fun testIssue495() = checkDoc()     // https://github.com/intellij-rust/intellij-rust/issues/495
 
+    fun testFnArg() = checkDoc()
+    fun testVariable() = checkDoc()
+    fun testGenericEnumVariable() = checkDoc()
+    fun testGenericStructVariable() = checkDoc()
+    fun testTupleDestructuring() = checkDoc()
+    fun testConditionalBinding() = checkDoc()
+
     private fun checkDoc() = compareByHtml { element, originalElement ->
         RsDocumentationProvider().generateDoc(element, originalElement)
     }

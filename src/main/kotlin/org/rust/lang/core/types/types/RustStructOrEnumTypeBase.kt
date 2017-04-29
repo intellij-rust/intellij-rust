@@ -19,6 +19,13 @@ interface RustStructOrEnumTypeBase : RustType {
                 RustTypeParameterType(param) to arg
             }.toMap()
 
+    val fullName: String
+        get() {
+            return if (item.name != null) {
+                item.name + if (typeArguments.isNotEmpty()) typeArguments.joinToString(", ", "<", ">") else ""
+            } else "<anonymous>"
+        }
+
     override fun canUnifyWith(other: RustType, project: Project): Boolean =
         other is RustStructOrEnumTypeBase && item == other.item &&
             typeArguments.zip(other.typeArguments).all { (type1, type2) -> type1.canUnifyWith(type2, project)}

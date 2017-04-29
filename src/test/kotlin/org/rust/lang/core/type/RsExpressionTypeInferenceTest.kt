@@ -314,7 +314,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let x = P(92);
             x
-          //^ P
+          //^ P<i32>
         }
     """)
 
