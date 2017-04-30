@@ -127,10 +127,25 @@ fun inferExpressionType(expr: RsExpr): RustType {
                 RustUnknownType
         }
 
+        is RsArrayExpr -> inferArrayType(expr)
+
         else -> RustUnknownType
     }
 }
 
+private fun inferArrayType(expr: RsArrayExpr): RustType {
+    val (elementType, size) = if (expr.semicolon != null) {
+        val elementType = expr.initializer?.type ?: return RustSliceType(RustUnknownType)
+        val size = calculateArraySize(expr.sizeExpr) ?: return RustSliceType(elementType)
+        elementType to size
+    } else {
+        val elements = expr.arrayElements
+        if (elements.isNullOrEmpty()) return RustSliceType(RustUnknownType)
+        // '!!' is safe here because we've just checked that elements isn't null
+        elements!![0].type to elements.size
+    }
+    return RustArrayType(elementType, size)
+}
 
 private val RsBlock.type: RustType get() = expr?.type ?: RustUnitType
 
