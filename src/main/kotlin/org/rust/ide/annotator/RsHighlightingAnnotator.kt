@@ -6,14 +6,7 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
 import org.rust.ide.highlight.RsHighlighter
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.psi.ext.RsReferenceElement
-import org.rust.lang.core.psi.ext.RsFunctionRole
-import org.rust.lang.core.psi.ext.isMut
-import org.rust.lang.core.psi.ext.isAssocFn
-import org.rust.lang.core.psi.ext.role
-import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.isPrimitive
 import org.rust.lang.core.types.type
 
@@ -21,10 +14,11 @@ import org.rust.lang.core.types.type
 class RsHighlightingAnnotator : Annotator {
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-        val (partToHighlight, color) = if (element is RsReferenceElement && element !is RsMacroInvocation) {
-            highlightReference(element)
-        } else {
-            highlightNotReference(element)
+        val (partToHighlight, color) = when {
+            element is RsPatBinding && !element.isReferenceToConstant -> highlightNotReference(element)
+            element is RsMacroInvocation -> highlightNotReference(element)
+            element is RsReferenceElement -> highlightReference(element)
+            else -> highlightNotReference(element)
         } ?: return
 
         holder.createInfoAnnotation(partToHighlight, null).textAttributes = color.textAttributesKey

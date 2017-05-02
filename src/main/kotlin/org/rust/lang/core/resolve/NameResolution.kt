@@ -216,26 +216,18 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
         return false
     }
 
-    val prevScope = mutableSetOf<String>()
-    walkUp(path, { it is RsMod }) { cameFrom, scope ->
-        val currScope = mutableListOf<String>()
-        val shadowingProcessor = { e: ScopeEntry ->
-            e.name !in prevScope && run {
-                currScope += e.name
-                processor(e)
-            }
+    return processScopeDeclarations(path, processor, ns)
+}
+
+fun processPatBindingResolveVariants(binding: RsPatBinding, processor: RsResolveProcessor): Boolean {
+    return processScopeDeclarations(binding, { entry ->
+        processor.lazy(entry.name) {
+            val element = entry.element
+            val isConstant = element is RsConstant
+                || (element is RsEnumVariant && element.blockFields == null && element.tupleFields == null)
+            if (isConstant) element else null
         }
-        if (processLexicalDeclarations(scope, cameFrom, ns, shadowingProcessor)) return@walkUp true
-        prevScope.addAll(currScope)
-        false
-    }
-
-    val preludeFile = path.containingCargoPackage?.findCrateByName("std")?.crateRoot
-        ?.findFileByRelativePath("../prelude/v1.rs")
-    val prelude = path.project.getPsiFor(preludeFile)?.rustMod
-    if (prelude != null && processItemDeclarations(prelude, ns, { v -> v.name !in prevScope && processor(v) }, false)) return true
-
-    return false
+    }, VALUES)
 }
 
 fun processLabelResolveVariants(label: RsLabel, processor: RsResolveProcessor): Boolean {
@@ -598,11 +590,35 @@ private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCo
             // Rust allows to defined several patterns in the single match arm,
             // but they all must bind the same variables, hence we can inspect
             // only the first one.
+            if (cameFrom in scope.patList) return false
             val pat = scope.patList.firstOrNull()
             if (pat != null && processPattern(pat, processor)) return true
 
         }
     }
+    return false
+}
+
+private fun processScopeDeclarations(scopeStart: RsCompositeElement, processor: RsResolveProcessor, ns: Set<Namespace>): Boolean {
+    val prevScope = mutableSetOf<String>()
+    walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->
+        val currScope = mutableListOf<String>()
+        val shadowingProcessor = { e: ScopeEntry ->
+            e.name !in prevScope && run {
+                currScope += e.name
+                processor(e)
+            }
+        }
+        if (processLexicalDeclarations(scope, cameFrom, ns, shadowingProcessor)) return@walkUp true
+        prevScope.addAll(currScope)
+        false
+    }
+
+    val preludeFile = scopeStart.containingCargoPackage?.findCrateByName("std")?.crateRoot
+        ?.findFileByRelativePath("../prelude/v1.rs")
+    val prelude = scopeStart.project.getPsiFor(preludeFile)?.rustMod
+    if (prelude != null && processItemDeclarations(prelude, ns, { v -> v.name !in prevScope && processor(v) }, false)) return true
+
     return false
 }
 

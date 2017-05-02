@@ -416,7 +416,8 @@ PatRef ::= '&' mut? Pat
 
 PatWild ::= '_'
 PatBinding ::= BindingMode? identifier !'...' !'::' {
-  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement"
+                 "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsPatBindingImplMixin"
 }
 

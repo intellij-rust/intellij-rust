@@ -147,4 +147,15 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             }    //^ ...main.rs
         }
     """)
+
+    fun `test resolve None in pattern`() = stubOnlyResolve("""
+    //- main.rs
+        fn foo(x: Option<i32>) -> i32 {
+            match x {
+                Some(v) => V,
+                None => 0,
+            }  //^ ...libcore/option.rs
+        }
+    """)
+
 }
