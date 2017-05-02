@@ -330,4 +330,24 @@ class RsCompletionTest : RsCompletionTestBase() {
             fn foo(bar: &mut Self::/*caret*/);
         }
     """)
+
+    fun `test complete enum variants 1`() = checkSingleCompletion("BinOp", """
+        enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
+        fn foo(e: Expr) {
+            use self::Expr::*;
+            match e {
+                Bi/*caret*/
+            }
+        }
+    """)
+
+    fun `test complete enum variants 2`() = checkSingleCompletion("Unit", """
+        enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
+        fn foo(e: Expr) {
+            use self::Expr::*;
+            match e {
+                Un/*caret*/
+            }
+        }
+    """)
 }
