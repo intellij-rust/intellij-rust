@@ -753,4 +753,15 @@ class RsResolveTest : RsResolveTestBase() {
             }
         }
     """)
+
+    fun `test pattern constant binding ambiguity`() = checkByCode("""
+        const X: i32 = 0;
+            //X
+        fn foo(x: i32) {
+            match x {
+                X => 92
+            } //^
+        }
+    """)
+
 }
