@@ -14,10 +14,10 @@ class RsPatBindingReferenceImpl(
     override val RsPatBinding.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun resolveInner(): List<RsCompositeElement> =
-        collectResolveVariants(element.referenceName) { processPatBindingResolveVariants(element, it) }
+        collectResolveVariants(element.referenceName) { processPatBindingResolveVariants(element, false, it) }
 
     override fun getVariants(): Array<out Any> =
-        collectCompletionVariants { processPatBindingResolveVariants(element, it) }
+        collectCompletionVariants { processPatBindingResolveVariants(element, true, it) }
 
     override fun isReferenceTo(element: PsiElement): Boolean {
         val target = resolve()

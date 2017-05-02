@@ -219,15 +219,19 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
     return processScopeDeclarations(path, processor, ns)
 }
 
-fun processPatBindingResolveVariants(binding: RsPatBinding, processor: RsResolveProcessor): Boolean {
+fun processPatBindingResolveVariants(binding: RsPatBinding, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     return processScopeDeclarations(binding, { entry ->
         processor.lazy(entry.name) {
             val element = entry.element
             val isConstant = element is RsConstant
                 || (element is RsEnumVariant && element.blockFields == null && element.tupleFields == null)
-            if (isConstant) element else null
+            val isPathOrDestructable = when (element) {
+                is RsMod, is RsEnumItem, is RsEnumVariant, is RsStructItem -> true
+                else -> false
+            }
+            if (isConstant || (isCompletion && isPathOrDestructable)) element else null
         }
-    }, VALUES)
+    }, if (isCompletion) TYPES_N_VALUES else VALUES)
 }
 
 fun processLabelResolveVariants(label: RsLabel, processor: RsResolveProcessor): Boolean {
