@@ -3,6 +3,7 @@ package org.rust.ide.typing
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.fileTypes.FileType
@@ -23,8 +24,17 @@ class RsAngleBraceTypedHandler : TypedHandlerDelegate() {
     override fun beforeCharTyped(c: Char, project: Project, editor: Editor, file: PsiFile, fileType: FileType): Result {
         if (file !is RsFile) return Result.CONTINUE
 
-        if (c == '<' && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
-            rsLTTyped = isStartOfGenericBraces(editor)
+        if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
+            when (c) {
+                '<' -> rsLTTyped = isStartOfGenericBraces(editor)
+                '>' -> {
+                    val charAtCaret = editor.document.charsSequence.getOrNull(editor.caretModel.offset)
+                    if (charAtCaret == '>' && calculateBalance(editor) == 0) {
+                        EditorModificationUtil.moveCaretRelatively(editor, 1)
+                        return Result.STOP
+                    }
+                }
+            }
         }
 
         return Result.CONTINUE
@@ -35,9 +45,9 @@ class RsAngleBraceTypedHandler : TypedHandlerDelegate() {
 
         if (rsLTTyped) {
             rsLTTyped = false
-            val offset = editor.caretModel.offset
-            val balance = calculateBalance(offset, editor)
+            val balance = calculateBalance(editor)
             if (balance == 1) {
+                val offset = editor.caretModel.offset
                 editor.document.insertString(offset, ">")
             }
             return Result.STOP
@@ -59,9 +69,9 @@ class RsAngleBraceBackspaceHandler : RsEnableableBackspaceHandlerDelegate() {
     }
 
     override fun deleted(c: Char, file: PsiFile, editor: Editor): Boolean {
-        val offset = editor.caretModel.offset
-        val balance = calculateBalance(offset, editor)
+        val balance = calculateBalance(editor)
         if (balance < 0) {
+            val offset = editor.caretModel.offset
             editor.document.deleteString(offset, offset + 1)
             return true
         }
@@ -108,7 +118,8 @@ private fun isTypeLikeIdentifier(offset: Int, editor: Editor, iterator: Highligh
     return (iterator.start + 1 until iterator.end).any { Character.isLowerCase(chars[it]) }
 }
 
-private fun calculateBalance(offset: Int, editor: Editor): Int {
+private fun calculateBalance(editor: Editor): Int {
+    val offset = editor.caretModel.offset
     val iterator = (editor as EditorEx).highlighter.createIterator(offset)
     while (iterator.start > 0 && iterator.tokenType !in INVALID_INSIDE_TOKENS) {
         iterator.retreat()

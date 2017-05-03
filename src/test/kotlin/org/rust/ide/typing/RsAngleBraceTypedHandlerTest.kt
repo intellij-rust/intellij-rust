@@ -25,6 +25,12 @@ class RsAngleBraceTypedHandlerTest : RsTypingTestBase() {
     fun `test don't remove next GT if braces aren't balanced`() =
         doTestByText("fn foo() { let _ = foo::<<<caret>>", "fn foo() { let _ = foo::<<caret>>", '\b')
 
+    fun `test closing brace just moves the caret`() =
+        doTestByText("fn foo() { let x: Result::<E, X<caret>> }", "fn foo() { let x: Result::<E, X><caret> }", '>')
+
+    fun `test right angle is inserted if it is not a closing brace`() =
+        doTestByText("fn foo() { let x: Result::<E, X><caret> }", "fn foo() { let x: Result::<E, X>><caret> }", '>')
+
     private fun doComplexTest(before: String) {
         val afterWithGT = before.replace("<caret>", "<<caret>>")
         // check completion at the end of file
