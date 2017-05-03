@@ -3,45 +3,51 @@ package org.rust.ide.typing
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.rust.lang.core.psi.RsElementTypes
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.tokenSetOf
 
-private val GENERIC_NAMED_ENTITY_KEYWORDS = tokenSetOf(RsElementTypes.FN, RsElementTypes.STRUCT,
-    RsElementTypes.ENUM, RsElementTypes.TRAIT, RsElementTypes.TYPE_KW)
+private val GENERIC_NAMED_ENTITY_KEYWORDS = tokenSetOf(FN, STRUCT, ENUM, TRAIT, TYPE_KW)
 
-private val INVALID_INSIDE_TOKENS = tokenSetOf(RsElementTypes.LBRACE, RsElementTypes.RBRACE,
-    RsElementTypes.SEMICOLON)
+private val INVALID_INSIDE_TOKENS = tokenSetOf(LBRACE, RBRACE, SEMICOLON)
 
 class RsAngleBraceTypedHandler : TypedHandlerDelegate() {
 
     private var rsLTTyped = false
 
     override fun beforeCharTyped(c: Char, project: Project, editor: Editor, file: PsiFile, fileType: FileType): Result {
-        if (file !is RsFile) {
-            return Result.CONTINUE
-        }
-        if (c == '<' && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
-            rsLTTyped = isStartOfGenericBraces(editor)
+        if (file !is RsFile) return Result.CONTINUE
+
+        if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
+            when (c) {
+                '<' -> rsLTTyped = isStartOfGenericBraces(editor)
+                '>' -> {
+                    val charAtCaret = editor.document.charsSequence.getOrNull(editor.caretModel.offset)
+                    if (charAtCaret == '>' && calculateBalance(editor) == 0) {
+                        EditorModificationUtil.moveCaretRelatively(editor, 1)
+                        return Result.STOP
+                    }
+                }
+            }
         }
 
         return Result.CONTINUE
     }
 
     override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
-        if (file !is RsFile) {
-            return Result.CONTINUE
-        }
+        if (file !is RsFile) return Result.CONTINUE
+
         if (rsLTTyped) {
             rsLTTyped = false
-            val offset = editor.caretModel.offset
-            val balance = calculateBalance(offset, editor)
+            val balance = calculateBalance(editor)
             if (balance == 1) {
+                val offset = editor.caretModel.offset
                 editor.document.insertString(offset, ">")
             }
             return Result.STOP
@@ -57,15 +63,15 @@ class RsAngleBraceBackspaceHandler : RsEnableableBackspaceHandlerDelegate() {
         if (c == '<' && file is RsFile) {
             val offset = editor.caretModel.offset
             val iterator = (editor as EditorEx).highlighter.createIterator(offset)
-            return iterator.tokenType == RsElementTypes.GT
+            return iterator.tokenType == GT
         }
         return false
     }
 
     override fun deleted(c: Char, file: PsiFile, editor: Editor): Boolean {
-        val offset = editor.caretModel.offset
-        val balance = calculateBalance(offset, editor)
+        val balance = calculateBalance(editor)
         if (balance < 0) {
+            val offset = editor.caretModel.offset
             editor.document.deleteString(offset, offset + 1)
             return true
         }
@@ -79,15 +85,14 @@ private fun isStartOfGenericBraces(editor: Editor): Boolean {
     if (!isValidOffset(offset - 1, editor.document.charsSequence)) return false
     val iterator = (editor as EditorEx).highlighter.createIterator(offset - 1)
 
-    if (iterator.atEnd()) {
-        return false
-    }
+    if (iterator.atEnd()) return false
+
     return when (iterator.tokenType) {
         // manual function type specification
-        RsElementTypes.COLONCOLON -> true
+        COLONCOLON -> true
         // generic implementation block
-        RsElementTypes.IMPL -> true
-        RsElementTypes.IDENTIFIER -> {
+        IMPL -> true
+        IDENTIFIER -> {
             // don't complete angle braces inside identifier
             if (iterator.end != offset) return false
             // it considers that typical case is only one whitespace character
@@ -113,7 +118,8 @@ private fun isTypeLikeIdentifier(offset: Int, editor: Editor, iterator: Highligh
     return (iterator.start + 1 until iterator.end).any { Character.isLowerCase(chars[it]) }
 }
 
-private fun calculateBalance(offset: Int, editor: Editor): Int {
+private fun calculateBalance(editor: Editor): Int {
+    val offset = editor.caretModel.offset
     val iterator = (editor as EditorEx).highlighter.createIterator(offset)
     while (iterator.start > 0 && iterator.tokenType !in INVALID_INSIDE_TOKENS) {
         iterator.retreat()
@@ -126,8 +132,8 @@ private fun calculateBalance(offset: Int, editor: Editor): Int {
     var balance = 0
     while (!iterator.atEnd() && balance >= 0 && iterator.tokenType !in INVALID_INSIDE_TOKENS) {
         when (iterator.tokenType) {
-            RsElementTypes.LT -> balance++
-            RsElementTypes.GT -> balance--
+            LT -> balance++
+            GT -> balance--
         }
         iterator.advance()
     }
