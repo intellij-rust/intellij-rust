@@ -32,7 +32,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
     private fun generateDoc(element: RsPatBinding): String? {
         val presentationInfo = element.presentationInfo ?: return null
         val type = inferDeclarationType(element).toString().escaped
-        return "${presentationInfo.type} <b>${presentationInfo.name}</b>: $type"
+        return "<pre>${presentationInfo.type} <b>${presentationInfo.name}</b>: $type</pre>"
     }
 
     override fun getQuickNavigateInfo(e: PsiElement, originalElement: PsiElement?): String? =
