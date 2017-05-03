@@ -1,6 +1,6 @@
 package org.rust.ide.typing
 
-class RsAngleBraceHandlersTests : RsTypingTestBase() {
+class RsAngleBraceTypedHandlerTest : RsTypingTestBase() {
     fun `test pair angle brace after colon colon token`() = doComplexTest("fn foo() { let _ = foo::<caret>")
     fun `test pair angle brace in implementation block`() = doComplexTest("impl<caret>")
     fun `test pair angle brace in generic function declaration`() = doComplexTest("fn foo<caret>")
