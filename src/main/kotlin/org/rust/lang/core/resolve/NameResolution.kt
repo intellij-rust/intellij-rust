@@ -216,11 +216,11 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
         return false
     }
 
-    return processScopeDeclarations(path, processor, ns)
+    return processNestedScopesUpwards(path, processor, ns)
 }
 
 fun processPatBindingResolveVariants(binding: RsPatBinding, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
-    return processScopeDeclarations(binding, { entry ->
+    return processNestedScopesUpwards(binding, { entry ->
         processor.lazy(entry.name) {
             val element = entry.element
             val isConstant = element is RsConstant
@@ -603,7 +603,7 @@ private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCo
     return false
 }
 
-private fun processScopeDeclarations(scopeStart: RsCompositeElement, processor: RsResolveProcessor, ns: Set<Namespace>): Boolean {
+private fun processNestedScopesUpwards(scopeStart: RsCompositeElement, processor: RsResolveProcessor, ns: Set<Namespace>): Boolean {
     val prevScope = mutableSetOf<String>()
     walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->
         val currScope = mutableListOf<String>()
