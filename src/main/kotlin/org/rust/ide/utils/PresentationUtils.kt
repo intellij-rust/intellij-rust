@@ -142,4 +142,4 @@ private fun createDeclarationInfo(decl: RsCompositeElement, name: PsiElement?, i
 private fun PsiElement.offsetIn(owner: PsiElement): Int =
     ancestors.takeWhile { it != owner }.sumBy { it.startOffsetInParent }
 
-private val String.escaped: String get() = StringUtil.escapeXml(this)
+val String.escaped: String get() = StringUtil.escapeXml(this)
