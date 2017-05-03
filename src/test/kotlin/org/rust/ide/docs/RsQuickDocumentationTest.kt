@@ -23,6 +23,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
     fun testGenericStructVariable() = checkDoc()
     fun testTupleDestructuring() = checkDoc()
     fun testConditionalBinding() = checkDoc()
+    fun testStructField() = checkDoc()
 
     private fun checkDoc() = compareByHtml { element, originalElement ->
         RsDocumentationProvider().generateDoc(element, originalElement)
