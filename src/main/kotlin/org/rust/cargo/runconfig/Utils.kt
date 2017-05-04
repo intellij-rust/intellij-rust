@@ -1,8 +1,12 @@
 package org.rust.cargo.runconfig
 
+import com.intellij.execution.RunManager
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.openapi.actionSystem.AnAction
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.toolchain.CargoCommandLine
 
 val CargoWorkspace.Target.cargoArgumentSpeck: List<String> get() {
@@ -26,6 +30,13 @@ fun CargoCommandLine.mergeWithDefault(default: CargoCommandLine): CargoCommandLi
         copy(environmentVariables = default.environmentVariables)
     else
         this
+
+fun RunManager.createCargoCommandRunConfiguration(cargoCommandLine: CargoCommandLine): RunnerAndConfigurationSettings {
+    val runnerAndConfigurationSettings = createRunConfiguration(cargoCommandLine.command, CargoCommandConfigurationType().factory)
+    val configuration = runnerAndConfigurationSettings.configuration as CargoCommandConfiguration
+    configuration.cargoCommandLine = cargoCommandLine
+    return runnerAndConfigurationSettings
+}
 
 
 // BACKCOMPAT: 2016.3

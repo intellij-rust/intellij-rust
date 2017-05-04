@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.module.Module
 import org.rust.cargo.icons.CargoIcons
+import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.runconfig.ui.RunCargoCommandDialog
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.modulesWithCargoProject
@@ -50,14 +51,9 @@ class RunCargoCommandAction : AnAction(CargoIcons.ICON) {
     private fun createRunConfiguration(module: Module, cargoCommandLine: CargoCommandLine): RunnerAndConfigurationSettings {
         val runManager = RunManagerEx.getInstanceEx(module.project)
 
-        val newConfigurationSettings =
-            runManager.createRunConfiguration(cargoCommandLine.command, CargoCommandConfigurationType().factory)
-
-        val configuration = newConfigurationSettings.configuration as CargoCommandConfiguration
-        configuration.cargoCommandLine = cargoCommandLine
-
-        runManager.setTemporaryConfiguration(newConfigurationSettings)
-        return newConfigurationSettings
+        return runManager.createCargoCommandRunConfiguration(cargoCommandLine).apply {
+            runManager.setTemporaryConfiguration(this)
+        }
     }
 }
 
