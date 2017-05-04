@@ -841,19 +841,24 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
     """)
 
     fun `test recursive auto deref`() = checkByCode("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
         struct A;
         struct B;
         struct C;
+
         impl C { fn some_fn(&self) { } }
-        #[lang = "deref"]
-        trait Deref { type Target; }
+                    //X
+
         impl Deref for A { type Target = B; }
         impl Deref for B { type Target = C; }
         impl Deref for C { type Target = A; }
 
         fn foo(a: A) {
+            // compiler actually bails with `reached the recursion limit while auto-dereferencing B`
             a.some_fn()
-            //^ unresolved
+            //^
         }
     """)
 
