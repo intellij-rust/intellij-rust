@@ -807,4 +807,72 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             //^ unresolved
         }
     """)
+
+    fun `test single auto deref`() = checkByCode("""
+        struct A;
+        struct B;
+        impl B { fn some_fn(&self) { } }
+                    //X
+        #[lang = "deref"]
+        trait Deref { type Target; }
+        impl Deref for A { type Target = B; }
+
+        fn foo(a: A) {
+            a.some_fn()
+            //^
+        }
+    """)
+
+    fun `test multiple auto deref`() = checkByCode("""
+        struct A;
+        struct B;
+        struct C;
+        impl C { fn some_fn(&self) { } }
+                    //X
+        #[lang = "deref"]
+        trait Deref { type Target; }
+        impl Deref for A { type Target = B; }
+        impl Deref for B { type Target = C; }
+
+        fn foo(a: A) {
+            a.some_fn()
+            //^
+        }
+    """)
+
+    fun `test recursive auto deref`() = checkByCode("""
+        struct A;
+        struct B;
+        struct C;
+        impl C { fn some_fn(&self) { } }
+        #[lang = "deref"]
+        trait Deref { type Target; }
+        impl Deref for A { type Target = B; }
+        impl Deref for B { type Target = C; }
+        impl Deref for C { type Target = A; }
+
+        fn foo(a: A) {
+            a.some_fn()
+            //^ unresolved
+        }
+    """)
+
+    fun `test auto deref only for impls`() = checkByCode("""
+        struct A;
+        struct B;
+        #[lang = "deref"]
+        trait Deref { type Target; }
+        impl Deref for A { type Target = B; }
+
+        trait Tr {}
+        impl Tr for B {}
+        struct S<T>(T);
+        impl<T: Tr> S<T> { fn bar(&self) {} }
+
+        fn foo(a: S<A>) {
+            a.bar();
+            //^ unresolved
+        }
+    """)
+
 }
