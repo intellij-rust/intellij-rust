@@ -20,6 +20,7 @@ import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustTypeFingerprint
+import org.rust.lang.core.types.derefTransitively
 import org.rust.lang.core.types.type
 import java.util.concurrent.ConcurrentMap
 
@@ -46,26 +47,11 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
             project: Project,
             includeDeref: Boolean = false
         ): Collection<RsImplItem> {
-            val visited = mutableSetOf<RustType>()
-            val result = mutableSetOf<RsImplItem>()
-
-            fun go(target: RustType) {
-                if (target in visited) return
-                visited += target
-
-                val batch = findImpls(project, target)
-                result += batch
-
-                if (includeDeref) {
-                    batch.find(RsImplItem::isDerefTrait)?.targetType?.let { go(it) }
-                }
-            }
-            go(target)
-
-            return result
+            val types = if (includeDeref) target.derefTransitively(project) else setOf(target)
+            return types.flatMap { findImpls(project, it) }
         }
 
-        private fun findImpls(project: Project, target: RustType): Collection<RsImplItem> {
+        fun findImpls(project: Project, target: RustType): Collection<RsImplItem> {
             fun doFind(): Collection<RsImplItem> {
                 val fingerprint = RustTypeFingerprint.create(target)
                     ?: return emptyList()

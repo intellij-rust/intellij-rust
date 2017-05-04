@@ -2,9 +2,11 @@ package org.rust.lang.core.types
 
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.resolveToTrait
 import org.rust.lang.core.resolve.indexes.RsImplIndex
+import org.rust.lang.core.resolve.isDerefTrait
 import org.rust.lang.core.types.types.*
 
 interface RustType {
@@ -57,6 +59,18 @@ fun RustType.stripAllRefsIfAny(): RustType = when (this) {
     else -> this
 }
 
+fun RustType.derefTransitively(project: Project): Set<RustType> {
+    val result = mutableSetOf<RustType>()
+    fun go(ty: RustType) {
+        if (ty in result) return
+        result += ty
+        RsImplIndex.findImplsFor(ty, project)
+            .find(RsImplItem::isDerefTrait)?.targetType?.let { go(it) }
+    }
+    go(this)
+    return result
+}
+
 
 /**
  * Checks whether this particular type is a primitive one
@@ -70,4 +84,8 @@ val RustType.isPrimitive: Boolean get() = when (this) {
     is RustSliceType,
     is RustStringSliceType -> true
     else -> false
+}
+
+private val RsImplItem.targetType: RustType? get() {
+    return this.typeAliasList.find { it.name == "Target" }?.typeReference?.type
 }
