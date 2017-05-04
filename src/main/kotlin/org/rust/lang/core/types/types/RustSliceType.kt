@@ -14,10 +14,6 @@ data class RustSliceType(val elementType: RustType) : RustPrimitiveType {
         return RsImplIndex.findImplsFor(this, project).mapNotNull { it.traitRef?.resolveToTrait }
     }
 
-    override fun getMethodsIn(project: Project): Collection<RsFunction> {
-        return RsImplIndex.findMethodsFor(this, project)
-    }
-
     override fun canUnifyWith(other: RustType, project: Project): Boolean {
         return other is RustSliceType && elementType.canUnifyWith(other.elementType, project)
     }

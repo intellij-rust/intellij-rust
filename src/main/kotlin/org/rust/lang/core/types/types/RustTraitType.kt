@@ -17,7 +17,7 @@ data class RustTraitType(val trait: RsTraitItem) : RustType {
         listOf(trait)
 
     override fun getMethodsIn(project: Project): Collection<RsFunction> =
-        getTraitsImplementedIn(project).flatMap { it.functionList}
+        getTraitsImplementedIn(project).flatMap { it.functionList }
 
     override fun canUnifyWith(other: RustType, project: Project): Boolean =
         other is RsTraitItem && trait == other.trait
