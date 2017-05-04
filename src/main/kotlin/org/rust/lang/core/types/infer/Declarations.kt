@@ -3,8 +3,8 @@ package org.rust.lang.core.types.infer
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.findImplsAndTraits
 import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.*
 
@@ -142,7 +142,8 @@ private fun deviseFunctionType(fn: RsFunction): RustFunctionType {
 }
 
 private fun getIteratorItemType(iteratorType: RustType, project: Project): RustType {
-    val impl = RsImplIndex.findImplsFor(iteratorType, project)
+
+    val impl = findImplsAndTraits(project, iteratorType).first
         .find {
             val traitName = it.traitRef?.resolveToTrait?.name
             traitName == "Iterator" || traitName == "IntoIterator"

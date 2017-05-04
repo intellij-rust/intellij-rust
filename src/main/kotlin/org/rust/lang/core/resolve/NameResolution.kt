@@ -14,11 +14,8 @@ import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.util.getPsiFor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.resolve.ref.RsReference
-import org.rust.lang.core.types.RustType
-import org.rust.lang.core.types.stripAllRefsIfAny
-import org.rust.lang.core.types.type
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.types.RustStructType
 import java.util.*
 
@@ -59,15 +56,14 @@ import java.util.*
 //     [RsCodeFragmentFactory]
 
 fun processFieldExprResolveVariants(fieldExpr: RsFieldExpr, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
-    val receiverType = fieldExpr.expr.type.stripAllRefsIfAny()
-
-    val struct = (receiverType as? RustStructType)?.item
-    if (struct != null && processFieldDeclarations(struct, processor)) return true
-
-    if (isCompletion) {
-        processMethodDeclarations(fieldExpr.project, receiverType, processor)
+    val receiverType = fieldExpr.expr.type
+    for (ty in receiverType.derefTransitively(fieldExpr.project)) {
+        if (ty !is RustStructType) continue
+        if (processFieldDeclarations(ty.item, processor)) return true
     }
-
+    if (isCompletion && processMethodDeclarationsWithDeref(fieldExpr.project, receiverType, processor)) {
+        return true
+    }
     return false
 }
 
@@ -78,7 +74,7 @@ fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, proces
 
 fun processMethodCallExprResolveVariants(callExpr: RsMethodCallExpr, processor: RsResolveProcessor): Boolean {
     val receiverType = callExpr.expr.type
-    return processMethodDeclarations(callExpr.project, receiverType, processor)
+    return processMethodDeclarationsWithDeref(callExpr.project, receiverType, processor)
 }
 
 fun processUseGlobResolveVariants(glob: RsUseGlob, processor: RsResolveProcessor): Boolean {
@@ -191,7 +187,7 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
         }
         if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
         if (base is RsTypeBearingItemElement && parent !is RsUseItem) {
-            if (processAssociatedFunctionsDeclarations(base.project, base.type, processor)) return true
+            if (processAssociatedFunctionsAndMethodsDeclarations(base.project, base.type, processor)) return true
         }
         return false
     }
@@ -299,14 +295,17 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolve
     return false
 }
 
-private fun processMethodDeclarations(project: Project, receiver: RustType, processor: RsResolveProcessor): Boolean {
-    val methods = receiver.getMethodsIn(project)
-    return processFnsWithInherentPriority(methods, processor)
+private fun processMethodDeclarationsWithDeref(project: Project, receiver: RustType, processor: RsResolveProcessor): Boolean {
+    for (ty in receiver.derefTransitively(project)) {
+        val methods = findMethodsAndAssocFunctions(project, ty).filter { !it.isAssocFn  }
+        if (processFnsWithInherentPriority(methods, processor)) return true
+    }
+    return false
 }
 
-private fun processAssociatedFunctionsDeclarations(project: Project, type: RustType, processor: RsResolveProcessor): Boolean {
-    val methodsAndFns = RsImplIndex.findMethodsAndAssociatedFunctionsFor(type, project)
-    return processFnsWithInherentPriority(methodsAndFns, processor)
+private fun processAssociatedFunctionsAndMethodsDeclarations(project: Project, type: RustType, processor: RsResolveProcessor): Boolean {
+    val assocFunctions = findMethodsAndAssocFunctions(project, type)
+    return processFnsWithInherentPriority(assocFunctions, processor)
 }
 
 private fun processFnsWithInherentPriority(fns: Collection<RsFunction>, processor: RsResolveProcessor): Boolean {

@@ -1,12 +1,14 @@
 package org.rust.lang.core.types.types
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsBaseType
+import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
-import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToTrait
 import org.rust.lang.core.psi.ext.superTraits
 import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.findTraits
 
 data class RustTypeParameterType private constructor(
     private val parameter: TypeParameter
@@ -16,16 +18,13 @@ data class RustTypeParameterType private constructor(
 
     constructor(trait: RsTraitItem) : this(Self(trait))
 
-    override fun getTraitsImplementedIn(project: Project): Collection<RsTraitItem> =
+    fun getTraitsImplementedIn(): Collection<RsTraitItem> =
         transitiveClosure(parameter.bounds)
-
-    override fun getMethodsIn(project: Project): Collection<RsFunction> =
-        getTraitsImplementedIn(project).flatMap { it.functionList }
 
     override fun canUnifyWith(other: RustType, project: Project): Boolean {
         if(this == other) return true
 
-        val implTraits = ((other as? RustTraitType)?.trait?.flattenHierarchy ?: other.getTraitsImplementedIn(project)).toSet()
+        val implTraits = findTraits(project, other).toSet()
         return parameter.bounds.all { implTraits.contains(it) }
     }
 
