@@ -13,12 +13,9 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.isAssocFn
-import org.rust.lang.core.psi.ext.queryAttributes
 import org.rust.lang.core.psi.ext.resolveToTrait
 import org.rust.lang.core.resolve.isDerefTrait
-import org.rust.lang.core.resolve.langAttribute
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.RustType
@@ -47,41 +44,48 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
         fun findImplsFor(
             target: RustType,
             project: Project,
-            include_deref: Boolean = false,
-            deref_hierarchic: Collection<RustType> = emptyList()
-        ): Collection<RsImplItem> =
-            project.implsCache
-                .getOrPut(target) { doFindImplsFor(target, project, deref_hierarchic) }
-                .filter { include_deref || it.typeReference?.type?.canUnifyWith(target, project) ?: false }
-
-        private fun doFindImplsFor(
-            target: RustType,
-            project: Project,
-            deref_hierarchic: Collection<RustType>
+            includeDeref: Boolean = false
         ): Collection<RsImplItem> {
-            val fingerprint = RustTypeFingerprint.create(target)
-                ?: return emptyList()
+            val visited = mutableSetOf<RustType>()
+            val result = mutableSetOf<RsImplItem>()
 
-            val collection = StubIndex.getElements(
-                KEY,
-                fingerprint,
-                project,
-                GlobalSearchScope.allScope(project),
-                RsImplItem::class.java
-            ).filter { impl ->
-                val ty = impl.typeReference?.type
-                // Addition class check is a temporal solution to filter impls for type parameter
-                // with the same name
-                // struct S; impl<S: Tr1> Tr2 for S {}
-                ty != null && ty.javaClass == target.javaClass && ty.canUnifyWith(target, project)
+            fun go(target: RustType) {
+                if (target in visited) return
+                visited += target
+
+                val batch = findImpls(project, target)
+                result += batch
+
+                if (includeDeref) {
+                    batch.find(RsImplItem::isDerefTrait)?.targetType?.let { go(it) }
+                }
             }
-            val derefTargetType = collection.find(RsImplItem::isDerefTrait)?.targetType
-            val derefImpls = if (derefTargetType != null && !deref_hierarchic.any { it == derefTargetType })
-                findImplsFor(derefTargetType, project, true, deref_hierarchic + listOf(derefTargetType))
-            else
-                emptyList()
+            go(target)
 
-            return collection + derefImpls.filter { !collection.contains(it) }
+            return result
+        }
+
+        private fun findImpls(project: Project, target: RustType): Collection<RsImplItem> {
+            fun doFind(): Collection<RsImplItem> {
+                val fingerprint = RustTypeFingerprint.create(target)
+                    ?: return emptyList()
+
+                return StubIndex.getElements(
+                    KEY,
+                    fingerprint,
+                    project,
+                    GlobalSearchScope.allScope(project),
+                    RsImplItem::class.java
+                ).filter { impl ->
+                    val ty = impl.typeReference?.type
+                    // Addition class check is a temporal solution to filter impls for type parameter
+                    // with the same name
+                    // struct S; impl<S: Tr1> Tr2 for S {}
+                    ty != null && ty.javaClass == target.javaClass && ty.canUnifyWith(target, project)
+                }
+            }
+
+            return project.implsCache.getOrPut(target) { doFind() }
         }
 
         fun index(stub: RsImplItemStub, sink: IndexSink) {
