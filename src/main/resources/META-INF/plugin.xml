@@ -357,7 +357,7 @@
         <lang.foldingBuilder language="Rust" implementationClass="org.rust.ide.folding.RsFoldingBuilder"/>
         <codeFoldingOptionsProvider instance="org.rust.ide.folding.RsCodeFoldingOptionsProvider"/>
         <applicationService serviceInterface="org.rust.ide.folding.RsCodeFoldingSettings"
-                            serviceImplementation="org.rust.ide.folding.impl.RsCodeFoldingSettingsImpl" />
+                            serviceImplementation="org.rust.ide.folding.impl.RsCodeFoldingSettingsImpl"/>
 
         <!-- Live Templates -->
 
@@ -464,6 +464,8 @@
                                   implementationClass="org.rust.cargo.runconfig.command.CargoExecutableRunLineMarkerContributor"/>
         <runLineMarkerContributor language="Rust"
                                   implementationClass="org.rust.cargo.runconfig.test.CargoTestRunLineMarkerContributor"/>
+
+        <projectTaskRunner implementation="org.rust.cargo.runconfig.RsProjectTasksRunner"/>
 
         <!-- Cargo -->
 
