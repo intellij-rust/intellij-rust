@@ -41,16 +41,18 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
                 .filter { !it.isAssocFn }
 
         fun findMethodsAndAssociatedFunctionsFor(target: RustType, project: Project): Collection<RsFunction> =
-            findImplsFor(target, project)
+            findImplsFor(target, project, true)
                 .flatMap { it.allMethodsAndAssocFunctions }
 
         fun findImplsFor(
             target: RustType,
             project: Project,
+            include_deref: Boolean = false,
             deref_hierarchic: Collection<RustType> = emptyList()
         ): Collection<RsImplItem> =
             project.implsCache
                 .getOrPut(target) { doFindImplsFor(target, project, deref_hierarchic) }
+                .filter { include_deref || it.typeReference?.type?.canUnifyWith(target, project) ?: false }
 
         private fun doFindImplsFor(
             target: RustType,
@@ -75,7 +77,7 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
             }
             val derefTargetType = collection.find(RsImplItem::isDerefTrait)?.targetType
             val derefImpls = if (derefTargetType != null && !deref_hierarchic.any { it == derefTargetType })
-                findImplsFor(derefTargetType, project, deref_hierarchic + listOf(derefTargetType))
+                findImplsFor(derefTargetType, project, true, deref_hierarchic + listOf(derefTargetType))
             else
                 emptyList()
 

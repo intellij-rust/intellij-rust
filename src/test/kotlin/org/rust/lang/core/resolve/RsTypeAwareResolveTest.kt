@@ -857,4 +857,22 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test auto deref only for impls`() = checkByCode("""
+        struct A;
+        struct B;
+        #[lang = "deref"]
+        trait Deref { type Target; }
+        impl Deref for A { type Target = B; }
+
+        trait Tr {}
+        impl Tr for B {}
+        struct S<T>(T);
+        impl<T: Tr> S<T> { fn bar(&self) {} }
+
+        fn foo(a: S<A>) {
+            a.bar();
+            //^ unresolved
+        }
+    """)
+
 }
