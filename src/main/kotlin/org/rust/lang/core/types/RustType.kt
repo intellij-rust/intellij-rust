@@ -44,19 +44,19 @@ interface RustType {
 
 fun RustType.derefTransitively(project: Project): Set<RustType> {
     val result = mutableSetOf<RustType>()
-    fun go(ty: RustType) {
-        if (ty in result) return
+
+    var ty = this
+    while (true) {
+        if (ty in result) break
         result += ty
-
-        if (ty is RustReferenceType) {
-            go(ty.referenced)
-            return
+        ty = if (ty is RustReferenceType) {
+            ty.referenced
+        } else {
+            RsImplIndex.findImpls(project, ty).find(RsImplItem::isDerefTrait)?.targetType
+                ?: break
         }
-
-        RsImplIndex.findImpls(project, ty)
-            .find(RsImplItem::isDerefTrait)?.targetType?.let { go(it) }
     }
-    go(this)
+
     return result
 }
 
@@ -90,7 +90,6 @@ private val RsImplItem.allMethodsAndAssocFunctions: Collection<RsFunction> get()
 
     return functionList + defaulted
 }
-
 
 
 /**
