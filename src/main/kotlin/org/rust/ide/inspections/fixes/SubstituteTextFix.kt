@@ -21,7 +21,7 @@ class SubstituteTextFix(
     val fixName: String = "Substitute"
 ) : LocalQuickFix {
     override fun getName() = fixName
-    override fun getFamilyName() = "Substitue one text to another"
+    override fun getFamilyName() = "Substitute one text to another"
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val document = PsiDocumentManager.getInstance(project).getDocument(file)
