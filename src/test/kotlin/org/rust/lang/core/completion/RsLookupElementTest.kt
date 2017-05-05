@@ -20,6 +20,19 @@ class RsLookupElementTest : RsTestBase() {
         }
     """, tailText = "(&self, x: i32)", typeText = "()")
 
+    fun testTraitByMethod() = check("""
+        trait T {
+            fn foo(&self, x: i32);
+        }
+        struct S;
+        impl T for S {
+            fn foo(&self, x: i32) {
+              //^
+                unimplemented!()
+            }
+        }
+    """, tailText = "(&self, x: i32) of T", typeText = "()")
+
     fun testConsItem() = check("""
         const c: S = unimplemented!();
             //^
