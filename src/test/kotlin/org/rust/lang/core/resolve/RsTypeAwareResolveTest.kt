@@ -809,12 +809,15 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
     """)
 
     fun `test single auto deref`() = checkByCode("""
-        struct A;
-        struct B;
-        impl B { fn some_fn(&self) { } }
-                    //X
         #[lang = "deref"]
         trait Deref { type Target; }
+
+        struct A;
+        struct B;
+
+        impl B { fn some_fn(&self) { } }
+                    //X
+
         impl Deref for A { type Target = B; }
 
         fn foo(a: A) {
@@ -824,13 +827,16 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
     """)
 
     fun `test multiple auto deref`() = checkByCode("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
         struct A;
         struct B;
         struct C;
+
         impl C { fn some_fn(&self) { } }
                     //X
-        #[lang = "deref"]
-        trait Deref { type Target; }
+
         impl Deref for A { type Target = B; }
         impl Deref for B { type Target = C; }
 
@@ -863,11 +869,108 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
     """)
 
     fun `test auto deref only for impls`() = checkByCode("""
-        struct A;
-        struct B;
         #[lang = "deref"]
         trait Deref { type Target; }
+
+        struct A;
+        struct B;
+
         impl Deref for A { type Target = B; }
+
+        trait Tr {}
+        impl Tr for B {}
+        struct S<T>(T);
+        impl<T: Tr> S<T> { fn bar(&self) {} }
+
+        fn foo(a: S<A>) {
+            a.bar();
+            //^ unresolved
+        }
+    """)
+
+    fun `test single auto deref mut`() = checkByCode("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+        #[lang = "deref_mut"]
+        trait DerefMut: Deref {  }
+
+        struct A;
+        struct B;
+
+        impl B { fn some_fn(&self) { } }
+                    //X
+
+        impl Deref for A { type Target = B; }
+        impl DerefMut for A {  }
+
+        fn foo(a: A) {
+            a.some_fn()
+            //^
+        }
+    """)
+
+    fun `test multiple auto deref mut`() = checkByCode("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+        #[lang = "deref_mut"]
+        trait DerefMut: Deref {  }
+
+        struct A;
+        struct B;
+        struct C;
+
+        impl C { fn some_fn(&self) { } }
+                    //X
+
+        impl Deref for A { type Target = B; }
+        impl DerefMut for A {  }
+        impl Deref for B { type Target = C; }
+        impl DerefMut for B {  }
+
+        fn foo(a: A) {
+            a.some_fn()
+            //^
+        }
+    """)
+
+    fun `test recursive auto deref mut`() = checkByCode("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+        #[lang = "deref_mut"]
+        trait DerefMut: Deref {  }
+
+        struct A;
+        struct B;
+        struct C;
+
+        impl C { fn some_fn(&self) { } }
+                    //X
+
+        impl Deref for A { type Target = B; }
+        impl DerefMut for A {}
+        impl Deref for B { type Target = C; }
+        impl DerefMut for B {}
+        impl Deref for C { type Target = A; }
+        impl DerefMut for C {}
+
+        fn foo(a: A) {
+            // compiler actually bails with `reached the recursion limit while auto-dereferencing B`
+            a.some_fn()
+            //^
+        }
+    """)
+
+    fun `test auto deref mut only for impls`() = checkByCode("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+        #[lang = "deref_mut"]
+        trait DerefMut: Deref {  }
+
+        struct A;
+        struct B;
+
+        impl Deref for A { type Target = B; }
+        impl DerefMut for A {  }
 
         trait Tr {}
         impl Tr for B {}

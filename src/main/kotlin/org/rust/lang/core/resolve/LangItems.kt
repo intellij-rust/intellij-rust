@@ -10,6 +10,7 @@ import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.findImplsAndTraits
 import org.rust.lang.core.types.infer.remapTypeParameters
 import org.rust.lang.core.types.type
+import org.rust.lang.core.types.types.RustReferenceType
 import org.rust.lang.core.types.types.RustUnknownType
 
 
@@ -18,7 +19,17 @@ fun findDerefTarget(project: Project, ty: RustType): RustType? {
     for (impl in impls) {
         val trait = impl.traitRef?.resolveToTrait ?: continue
         if (!trait.isDeref) continue
-        return lookupAssociatedType(impl, "Target")
+        return RustReferenceType(lookupAssociatedType(impl, "Target"), false)
+    }
+    return null
+}
+
+fun findDerefMutTarget(project: Project, ty: RustType): RustType? {
+    val impls = RsImplIndex.findImpls(project, ty)
+    for (impl in impls) {
+        val trait = impl.traitRef?.resolveToTrait ?: continue
+        if (!trait.isDerefMut) continue
+        return RustReferenceType(lookupAssociatedType(impl, "Target"), true)
     }
     return null
 }
@@ -42,6 +53,7 @@ private val RsTraitItem.langAttribute: String? get() {
 }
 
 private val RsTraitItem.isDeref: Boolean get() = langAttribute == "deref"
+private val RsTraitItem.isDerefMut: Boolean get() = langAttribute == "deref_mut"
 
 private fun lookupAssociatedType(impl: RsImplItem, name: String): RustType =
     impl.typeAliasList.find { it.name == name }?.typeReference?.type
