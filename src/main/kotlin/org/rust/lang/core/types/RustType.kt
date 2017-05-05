@@ -64,7 +64,7 @@ fun findImplsAndTraits(project: Project, ty: RustType): Pair<Collection<RsImplIt
     val noImpls = emptyList<RsImplItem>()
     val noTraits = emptyList<RsTraitItem>()
     return when (ty) {
-        is RustTypeParameterType -> noImpls to ty.getTraitsImplementedIn()
+        is RustTypeParameterType -> noImpls to ty.getTraitBoundsTransitively()
         is RustTraitType -> noImpls to ty.trait.flattenHierarchy
         is RustSliceType, is RustStringSliceType -> RsImplIndex.findImpls(project, ty) to emptyList()
         is RustPrimitiveType, is RustUnitType, is RustUnknownType -> noImpls to noTraits
@@ -82,16 +82,6 @@ fun findMethodsAndAssocFunctions(project: Project, ty: RustType): List<RsFunctio
     return impls.flatMap { it.allMethodsAndAssocFunctions } + traits.flatMap { it.functionList }
 }
 
-private val RsImplItem.allMethodsAndAssocFunctions: Collection<RsFunction> get() {
-    val directlyImplemented = functionList.map { it.name }.toSet()
-    val defaulted = traitRef?.resolveToTrait?.functionList.orEmpty().asSequence().filter {
-        it.name !in directlyImplemented
-    }
-
-    return functionList + defaulted
-}
-
-
 /**
  * Checks whether this particular type is a primitive one
  */
@@ -108,4 +98,13 @@ val RustType.isPrimitive: Boolean get() = when (this) {
 
 private val RsImplItem.targetType: RustType? get() {
     return this.typeAliasList.find { it.name == "Target" }?.typeReference?.type
+}
+
+private val RsImplItem.allMethodsAndAssocFunctions: Collection<RsFunction> get() {
+    val directlyImplemented = functionList.map { it.name }.toSet()
+    val defaulted = traitRef?.resolveToTrait?.functionList.orEmpty().asSequence().filter {
+        it.name !in directlyImplemented
+    }
+
+    return functionList + defaulted
 }

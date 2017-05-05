@@ -17,7 +17,6 @@ import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.RustTypeFingerprint
 import org.rust.lang.core.types.type
-import java.util.concurrent.ConcurrentMap
 
 class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
@@ -45,7 +44,15 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
                 }
             }
 
-            return project.implsCache.getOrPut(target) { doFind() }
+            val implsCache = CachedValuesManager.getManager(project)
+                .getCachedValue(project, {
+                    CachedValueProvider.Result.create(
+                        ContainerUtil.newConcurrentMap<RustType, Collection<RsImplItem>>(),
+                        PsiModificationTracker.MODIFICATION_COUNT
+                    )
+                })
+
+            return implsCache.getOrPut(target) { doFind() }
         }
 
         fun index(stub: RsImplItemStub, sink: IndexSink) {
@@ -60,13 +67,3 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
             StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.TraitImpls")
     }
 }
-
-
-private val Project.implsCache: ConcurrentMap<RustType, Collection<RsImplItem>>
-    get() = CachedValuesManager.getManager(this)
-        .getCachedValue(this, {
-            CachedValueProvider.Result.create(
-                ContainerUtil.newConcurrentMap<RustType, Collection<RsImplItem>>(),
-                PsiModificationTracker.MODIFICATION_COUNT
-            )
-        })

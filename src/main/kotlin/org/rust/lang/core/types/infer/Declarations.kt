@@ -142,7 +142,6 @@ private fun deviseFunctionType(fn: RsFunction): RustFunctionType {
 }
 
 private fun getIteratorItemType(iteratorType: RustType, project: Project): RustType {
-
     val impl = findImplsAndTraits(project, iteratorType).first
         .find {
             val traitName = it.traitRef?.resolveToTrait?.name

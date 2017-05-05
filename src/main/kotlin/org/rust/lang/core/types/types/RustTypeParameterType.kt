@@ -5,8 +5,8 @@ import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
+import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToTrait
-import org.rust.lang.core.psi.ext.superTraits
 import org.rust.lang.core.types.RustType
 import org.rust.lang.core.types.findTraits
 
@@ -18,11 +18,11 @@ data class RustTypeParameterType private constructor(
 
     constructor(trait: RsTraitItem) : this(Self(trait))
 
-    fun getTraitsImplementedIn(): Collection<RsTraitItem> =
-        transitiveClosure(parameter.bounds)
+    fun getTraitBoundsTransitively(): Collection<RsTraitItem> =
+        parameter.bounds.flatMapTo(mutableSetOf()) { it.flattenHierarchy.asSequence() }
 
     override fun canUnifyWith(other: RustType, project: Project): Boolean {
-        if(this == other) return true
+        if (this == other) return true
 
         val implTraits = findTraits(project, other).toSet()
         return parameter.bounds.all { implTraits.contains(it) }
@@ -58,16 +58,4 @@ data class RustTypeParameterType private constructor(
 
         override val bounds: Sequence<RsTraitItem> get() = sequenceOf(trait)
     }
-}
-
-private fun transitiveClosure(traits: Sequence<RsTraitItem>): Collection<RsTraitItem> {
-    val result = mutableSetOf<RsTraitItem>()
-    fun dfs(trait: RsTraitItem) {
-        if (trait in result) return
-        result += trait
-        trait.superTraits.forEach(::dfs)
-    }
-    traits.forEach(::dfs)
-
-    return result
 }
