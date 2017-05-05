@@ -6,8 +6,8 @@ import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToTrait
+import org.rust.lang.core.resolve.findDerefTarget
 import org.rust.lang.core.resolve.indexes.RsImplIndex
-import org.rust.lang.core.resolve.isDerefTrait
 import org.rust.lang.core.types.types.*
 
 interface RustType {
@@ -52,7 +52,7 @@ fun RustType.derefTransitively(project: Project): Set<RustType> {
         ty = if (ty is RustReferenceType) {
             ty.referenced
         } else {
-            RsImplIndex.findImpls(project, ty).find(RsImplItem::isDerefTrait)?.targetType
+            findDerefTarget(project, ty)
                 ?: break
         }
     }
@@ -94,10 +94,6 @@ val RustType.isPrimitive: Boolean get() = when (this) {
     is RustSliceType,
     is RustStringSliceType -> true
     else -> false
-}
-
-private val RsImplItem.targetType: RustType? get() {
-    return this.typeAliasList.find { it.name == "Target" }?.typeReference?.type
 }
 
 private val RsImplItem.allMethodsAndAssocFunctions: Collection<RsFunction> get() {

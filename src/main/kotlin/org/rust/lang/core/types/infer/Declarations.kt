@@ -1,10 +1,9 @@
 package org.rust.lang.core.types.infer
 
-import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.findIteratorItemType
 import org.rust.lang.core.types.RustType
-import org.rust.lang.core.types.findImplsAndTraits
 import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.*
 
@@ -40,7 +39,7 @@ fun inferDeclarationType(decl: RsNamedElement): RustType {
                 is RsValueParameter -> parent.typeReference?.type
                 is RsCondition -> parent.expr.type
                 is RsMatchArm -> parent.parentOfType<RsMatchExpr>()?.expr?.type
-                is RsForExpr -> getIteratorItemType(parent.expr?.type ?: RustUnknownType, decl.project)
+                is RsForExpr -> findIteratorItemType(decl.project, parent.expr?.type ?: RustUnknownType)
                 else -> null
             } ?: RustUnknownType
 
@@ -141,18 +140,3 @@ private fun deviseFunctionType(fn: RsFunction): RustFunctionType {
     return RustFunctionType(paramTypes, fn.retType?.typeReference?.type ?: RustUnitType)
 }
 
-private fun getIteratorItemType(iteratorType: RustType, project: Project): RustType {
-    val impl = findImplsAndTraits(project, iteratorType).first
-        .find {
-            val traitName = it.traitRef?.resolveToTrait?.name
-            traitName == "Iterator" || traitName == "IntoIterator"
-        } ?: return RustUnknownType
-
-    val rawType = impl
-        .typeAliasList
-        .find { it.name == "Item" }
-        ?.typeReference?.type ?: RustUnknownType
-
-    val typeParameterMap = impl.remapTypeParameters(iteratorType.typeParameterValues)
-    return rawType.substitute(typeParameterMap)
-}
