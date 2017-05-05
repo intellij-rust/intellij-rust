@@ -86,6 +86,42 @@ object RustParserUtil : GeneratedParserUtilBase() {
             }
         }
 
+    @JvmStatic fun macroIdentifier(b: PsiBuilder, level: Int): Boolean =
+        when (b.tokenType) {
+            TYPE_KW,
+            IDENTIFIER -> {
+                b.advanceLexer()
+                true
+            }
+            else -> false
+        }
+
+    @JvmStatic fun placeholderMacroToken(b: PsiBuilder, level: Int): Boolean =
+        when (b.tokenType) {
+            LBRACE, RBRACE -> false
+            LPAREN, RPAREN -> false
+            LBRACK, RBRACK -> false
+            DOLLAR -> false
+            else -> {
+                b.advanceLexer()
+                true
+            }
+        }
+
+    @JvmStatic fun tokenAfterComplexPattern(b: PsiBuilder, level: Int): Boolean =
+        when (b.tokenType) {
+            LBRACE, RBRACE -> false
+            LPAREN, RPAREN -> false
+            LBRACK, RBRACK -> false
+            DOLLAR -> false
+            PLUS -> false
+            MUL -> false
+            else -> {
+                b.advanceLexer()
+                true
+            }
+        }
+
     @JvmStatic fun gtgteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, GTGTEQ, GT, GT, EQ)
     @JvmStatic fun gtgtImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, GTGT, GT, GT)
     @JvmStatic fun gteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, GTEQ, GT, EQ)
