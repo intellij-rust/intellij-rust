@@ -100,6 +100,9 @@
         <gotoClassContributor implementation="org.rust.ide.navigation.goto.RsClassNavigationContributor"/>
         <gotoSymbolContributor implementation="org.rust.ide.navigation.goto.RsSymbolNavigationContributor"/>
         <codeInsight.gotoSuper language="Rust" implementationClass="org.rust.ide.navigation.goto.RsGotoSuperHandler"/>
+        // `ctrl+alt+b`
+        <definitionsScopedSearch implementation="org.rust.ide.navigation.goto.RsTraitImplementationsSearch"/>
+        <gotoTargetRendererProvider implementation="org.rust.ide.navigation.goto.RsGotoTargetRendererProvider"/>
 
         <!-- Hints -->
 
