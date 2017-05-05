@@ -16,7 +16,6 @@ class SetupRustStdlibTask(
     private val withCurrentStdlib: (StandardLibrary) -> Unit
 ) : Task.Backgroundable(module.project, "Setup Rust stdlib") {
     private lateinit var result: Rustup.DownloadResult
-    private val oldLibrary = rustStandardLibrary(module)
 
     override fun run(indicator: ProgressIndicator) {
         indicator.isIndeterminate = true
@@ -25,9 +24,6 @@ class SetupRustStdlibTask(
 
     override fun onSuccess() {
         if (module.isDisposed) return
-        if (rustStandardLibrary(module) != oldLibrary) {
-            return failWithMessage("Rust std library has been updated concurrently")
-        }
 
         val result = result
         when (result) {
@@ -35,6 +31,7 @@ class SetupRustStdlibTask(
                 val stdlib = StandardLibrary.fromFile(result.library)
                     ?: return failWithMessage("${result.library.presentableUrl} is not a valid Rust standard library")
 
+                val oldLibrary = rustStandardLibrary(module)
                 if (oldLibrary != null && stdlib.sameAsLibrary(oldLibrary)) {
                     withCurrentStdlib(stdlib)
                     return
