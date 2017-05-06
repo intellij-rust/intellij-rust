@@ -880,7 +880,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
     fun testE0463_UnknownCrate() = checkErrors("""
         extern crate alloc;
 
-        <error descr="Can't find crate for 'litarvan' [E0463]">extern crate litarvan;</error>
+        <error descr="Can't find crate for `litarvan` [E0463]">extern crate litarvan;</error>
     """)
 
     fun testE0428_IgnoresLocalBindings() = checkErrors("""
