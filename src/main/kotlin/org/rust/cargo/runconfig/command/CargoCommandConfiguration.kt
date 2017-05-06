@@ -19,6 +19,7 @@ import org.rust.cargo.runconfig.RsRunConfigurationModule
 import org.rust.cargo.runconfig.ui.CargoRunConfigurationEditorForm
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
@@ -33,11 +34,12 @@ class CargoCommandConfiguration(
     @get: com.intellij.util.xmlb.annotations.Transient
     @set: com.intellij.util.xmlb.annotations.Transient
     var cargoCommandLine: CargoCommandLine
-        get() = CargoCommandLine(_cargoArgs.command, _cargoArgs.additionalArguments, BacktraceMode.fromIndex(_cargoArgs.backtraceMode), _cargoArgs.environmentVariables, _cargoArgs.nocapture)
+        get() = CargoCommandLine(_cargoArgs.command, _cargoArgs.additionalArguments, BacktraceMode.fromIndex(_cargoArgs.backtraceMode), RustChannel.fromIndex(_cargoArgs.channel), _cargoArgs.environmentVariables, _cargoArgs.nocapture)
         set(value) = with(value) {
             _cargoArgs.command = command
             _cargoArgs.additionalArguments = additionalArguments
             _cargoArgs.backtraceMode = backtraceMode.index
+            _cargoArgs.channel = channel.index
             _cargoArgs.environmentVariables = environmentVariables
             _cargoArgs.nocapture = nocapture
         }
@@ -101,6 +103,10 @@ class CargoCommandConfiguration(
             return ConfigurationResult.error("Invalid toolchain: ${toolchain.presentableLocation}")
         }
 
+        if (!toolchain.isRustupAvailable && cargoCommandLine.channel != RustChannel.DEFAULT) {
+            return ConfigurationResult.error("Channel '${cargoCommandLine.channel}' is set explicitly with no rustup avaliable")
+        }
+
         return ConfigurationResult.Ok(
             toolchain,
             module,
@@ -115,6 +121,7 @@ data class SerializableCargoCommandLine(
     var command: String = "",
     var additionalArguments: List<String> = mutableListOf(),
     var backtraceMode: Int = BacktraceMode.DEFAULT.index,
+    var channel: Int = RustChannel.DEFAULT.index,
     var environmentVariables: Map<String, String> = mutableMapOf(),
     var nocapture: Boolean = true
 )

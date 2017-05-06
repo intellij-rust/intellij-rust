@@ -11,6 +11,7 @@
         </list>
       </option>
       <option name="backtraceMode" value="2" />
+      <option name="channel" value="0" />
       <option name="command" value="test" />
       <option name="environmentVariables">
         <map />
