@@ -314,7 +314,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let x = P(92);
             x
-          //^ P
+          //^ P<i32>
         }
     """)
 
@@ -412,11 +412,42 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test slice`() = testExpr("""
+    fun `test array type3`() = testExpr("""
+        fn main() {
+            let x : [bool; 8usize];
+            x
+          //^ [bool; 8]
+        }
+    """)
+
+    fun `test array expression type1`() = testExpr("""
         fn main() {
             let x = [""];
             x
-        } //^ <unknown>
+        } //^ [& str; 1]
+    """)
+
+    fun `test array expression type2`() = testExpr("""
+        fn main() {
+            let x = [1, 2, 3];
+            x
+          //^ [i32; 3]
+        }
+    """)
+
+    fun `test array expression type3`() = testExpr("""
+        fn main() {
+            let x = [0; 8];
+            x
+          //^ [i32; 8]
+        }
+    """)
+
+    fun `test array expression type4`() = testExpr("""
+        fn main() {
+            let x = [0; 8usize];
+            x
+          //^ [i32; 8]
+        }
     """)
 }
-

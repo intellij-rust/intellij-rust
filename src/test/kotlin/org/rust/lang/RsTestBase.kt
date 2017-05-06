@@ -33,7 +33,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
     override fun isWriteActionRequired(): Boolean = false
 
-    abstract val dataPath: String
+    open val dataPath: String = ""
 
     override fun getTestDataPath(): String = "${RsTestCase.testResourcesPath}/$dataPath"
 
@@ -132,14 +132,19 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
     }
 
     protected inline fun <reified T : PsiElement> findElementInEditor(marker: String = "^"): T {
-        val (element, data) = findElementAndDataInEditor<T>(marker)
+        val (element, data) = findElementWithDataAndOffsetInEditor<T>(marker)
         check(data.isEmpty()) { "Did not expect marker data" }
         return element
     }
 
     protected inline fun <reified T : PsiElement> findElementAndDataInEditor(marker: String = "^"): Pair<T, String> {
+        val (element, data) = findElementWithDataAndOffsetInEditor<T>(marker)
+        return element to data
+    }
+
+    protected inline fun <reified T : PsiElement> findElementWithDataAndOffsetInEditor(marker: String = "^"): Triple<T, String, Int> {
         val caretMarker = "//$marker"
-        val (elementAtMarker, data) = run {
+        val (elementAtMarker, data, offset) = run {
             val text = myFixture.file.text
             val markerOffset = text.indexOf(caretMarker)
             check(markerOffset != -1) { "No `$marker` marker:\n$text" }
@@ -151,11 +156,11 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             val markerPosition = myFixture.editor.offsetToLogicalPosition(markerOffset + caretMarker.length - 1)
             val previousLine = LogicalPosition(markerPosition.line - 1, markerPosition.column)
             val elementOffset = myFixture.editor.logicalPositionToOffset(previousLine)
-            myFixture.file.findElementAt(elementOffset)!! to data
+            Triple(myFixture.file.findElementAt(elementOffset)!!, data, elementOffset)
         }
         val element = elementAtMarker.parentOfType<T>(strict = false)
             ?: error("No ${T::class.java.simpleName} at ${elementAtMarker.text}")
-        return element to data
+        return Triple(element, data, offset)
     }
 
     protected fun replaceCaretMarker(text: String) = text.replace("/*caret*/", "<caret>")
@@ -215,7 +220,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         }
 
         protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CleanCargoMetadata.Package(
-            id = name + " 0.0.1",
+            id = "$name 0.0.1",
             url = contentRoot,
             name = name,
             version = "0.0.1",
@@ -224,6 +229,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
                 CleanCargoMetadata.Target("$contentRoot/lib.rs", name, CargoWorkspace.TargetKind.LIB)
             ),
             source = null,
+            manifestPath = "$contentRoot/../Cargo.toml",
             isWorkspaceMember = true
         )
 
@@ -232,7 +238,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             val vFile = source?.let { VfsTestUtil.createFile(root, it) }
 
             return CleanCargoMetadata.Package(
-                id = name + " 0.0.1",
+                id = "$name 0.0.1",
                 url = "",
                 name = name,
                 version = "0.0.1",
@@ -240,6 +246,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
                     CleanCargoMetadata.Target(vFile?.url ?: "", targetName, CargoWorkspace.TargetKind.LIB)
                 ),
                 source = source,
+                manifestPath = "/ext-libs/$name/Cargo.toml",
                 isWorkspaceMember = false
             )
         }

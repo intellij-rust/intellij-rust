@@ -140,6 +140,7 @@ object CargoMetadata {
             version,
             targets.mapNotNull { it.clean(root) },
             source,
+            manifest_path,
             isWorkspaceMember
         )
     }
@@ -186,6 +187,7 @@ data class CleanCargoMetadata(
         val version: String,
         val targets: Collection<Target>,
         val source: String?,
+        val manifestPath: String,
         val isWorkspaceMember: Boolean
     )
 

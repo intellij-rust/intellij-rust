@@ -6,8 +6,6 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.RsTestBase
 
 class RsGotoSuperHandlerTest : RsTestBase() {
-    override val dataPath = ""
-
     fun testGotoSuper() = checkNavigation("""
         mod foo {
             mod bar {

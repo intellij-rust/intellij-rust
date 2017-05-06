@@ -3,14 +3,21 @@ buildscript {
         mavenCentral()
         jcenter()
         maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
+        maven { url 'https://jitpack.io' }
+    }
+    dependencies {
+        classpath "com.github.hurricup:gradle-grammar-kit-plugin:354bb8c477"
     }
 }
 
 plugins {
     id 'org.jetbrains.intellij' version '0.2.5'
-    id 'org.jetbrains.kotlin.jvm' version '1.1.1'
+    id 'org.jetbrains.kotlin.jvm' version '1.1.2'
     id "de.undercouch.download" version "3.2.0"
 }
+
+import org.jetbrains.grammarkit.tasks.GenerateLexer
+import org.jetbrains.grammarkit.tasks.GenerateParser
 
 def isCi = System.env.CI != null
 
@@ -56,6 +63,13 @@ allprojects {
         main {
             java.srcDirs += 'src/gen'
         }
+    }
+
+    apply plugin: 'org.jetbrains.grammarkit'
+    grammarKit {
+        grammarKitRelease = '1.5.1'
+        grammarKitTargetRoot = 'src/gen'
+        purgeOldFiles = true
     }
 
     test {
@@ -117,13 +131,6 @@ project(':toml') {
     intellij { pluginName 'intellij-toml' }
 }
 
-test {
-    useJUnit {
-        excludeCategories 'org.rust.Performance'
-    }
-}
-
-
 task downloadClion(type: de.undercouch.gradle.tasks.download.Download) {
     src "https://download.jetbrains.com/cpp/CLion-${clionVersion}.tar.gz"
     dest new File(project.projectDir, "debugger/lib/clion-${clionVersion}.tar.gz")
@@ -136,24 +143,6 @@ task unpackClion(dependsOn: downloadClion, type: Copy) {
 }
 compileKotlin.dependsOn unpackClion
 
-task performanceTest(type: Test, group: 'Verification', dependsOn: [classes, testClasses]) {
-    useJUnit {
-        includeCategories 'org.rust.Performance'
-        reports.html.destination = "$buildDir/reports/performanceTests"
-    }
-
-    testLogging {
-        events 'passed', 'skipped', 'failed'
-        showStandardStreams = true
-        exceptionFormat = 'full'
-    }
-
-    outputs.upToDateWhen { false } // always execute task, even if already executed.
-}
-
-check.dependsOn performanceTest
-
-
 dependencies {
     compile('org.jetbrains:markdown:0.1.12') {
         exclude module: 'kotlin-runtime'
@@ -161,55 +150,40 @@ dependencies {
     }
 }
 
-lexerTask(project, 'RustLexer', 'org/rust/lang/core/lexer')
-lexerTask(project, 'RustDocHighlightingLexer', 'org/rust/lang/doc/lexer')
-parserTask(project, 'RustParser', 'org/rust/lang/core/psi')
+task generateRustLexer(type: GenerateLexer) {
+    source 'src/main/grammars/RustLexer.flex'
+    targetDir 'src/gen/org/rust/lang/core/lexer'
+    targetClass '_RustLexer'
+}
+
+task generateRustDocHighlightingLexer(type: GenerateLexer) {
+    source 'src/main/grammars/RustDocHighlightingLexer.flex'
+    targetDir 'src/gen/org/rust/lang/doc/lexer'
+    targetClass '_RustDocHighlightingLexer'
+}
+
+task generateRustParser(type: GenerateParser) {
+    source 'src/main/grammars/RustParser.bnf'
+    pathToParser '/org/rust/lang/core/parser/RustParser.java'
+    pathToPsiRoot '/org/rust/lang/core/psi'
+}
+
+compileKotlin.dependsOn generateRustLexer, generateRustDocHighlightingLexer, generateRustParser
+compileTestKotlin.dependsOn generateRustLexer, generateRustDocHighlightingLexer, generateRustParser
 
 project(':toml') {
-    lexerTask(project, 'TomlLexer', 'org/toml/lang/core/lexer')
-    parserTask(project, 'TomlParser', 'org/toml/lang/core/psi')
-}
+    task generateTomlLexer(type: GenerateLexer) {
+        source 'src/main/grammars/TomlLexer.flex'
+        targetDir 'src/gen/org/toml/lang/core/lexer'
+        targetClass '_TomlLexer'
+    }
 
+    task generateTomlParser(type: GenerateParser) {
+        source 'src/main/grammars/TomlParser.bnf'
+        pathToParser '/org/toml/lang/core/parser/TomlParser.java'
+        pathToPsiRoot '/org/toml/lang/core/psi'
+    }
 
-static def codegenTask(project, task) {
-    project.compileKotlin.dependsOn task
-    project.compileTestKotlin.dependsOn task
-    return task
-}
-
-def lexerTask(project, lexerName, pkg) {
-    return codegenTask(project, tasks.create("generate${lexerName}", JavaExec) {
-        def src = "$project.projectDir/src/main/grammars/${lexerName}.flex"
-        def dst = "$project.projectDir/src/gen/$pkg"
-
-        main = 'jflex.Main'
-        classpath = files('lib/jflex/jflex-1.7.0-SNAPSHOT.jar')
-
-        args = ['--skel', 'lib/jflex/idea-flex.skeleton',
-                '-d', dst,
-                src
-        ]
-
-        inputs.file file(src)
-        outputs.dir file("$dst/_${lexerName}.java")
-    })
-}
-
-def parserTask(project, parserName, pkg) {
-    return codegenTask(project, tasks.create("generate${parserName}", JavaExec) {
-        def dstRoot = "$project.projectDir/src/gen"
-        def src = "$project.projectDir/src/main/grammars/${parserName}.bnf"
-        def dst = "$dstRoot/$pkg"
-        doFirst {
-            delete file(dst)
-        }
-
-        main = 'org.intellij.grammar.Main'
-        classpath(configurations.compileOnly, configurations.compile)
-
-        args = [dstRoot, file(src)]
-
-        inputs.file file(src)
-        outputs.dir dst
-    })
+    compileKotlin.dependsOn generateTomlLexer, generateTomlParser
+    compileTestKotlin.dependsOn generateTomlLexer, generateTomlParser
 }

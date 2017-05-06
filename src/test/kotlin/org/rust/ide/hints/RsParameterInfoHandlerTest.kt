@@ -12,9 +12,6 @@ import org.rust.lang.RsTestBase
  * Tests for RustParameterInfoHandler
  */
 class RsParameterInfoHandlerTest : RsTestBase() {
-
-    override val dataPath = ""
-
     fun testFnNoArgs() = checkByText("""
         fn foo() {}
         fn main() { foo(<caret>); }

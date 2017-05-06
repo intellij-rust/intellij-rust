@@ -6,8 +6,6 @@ import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
 
 class RsFindUsagesTest : RsTestBase() {
-    override val dataPath: String get() = ""
-
     fun testFindLocalVar() = doTest("""
         fn foo(x: i32) -> i32 {
              //^

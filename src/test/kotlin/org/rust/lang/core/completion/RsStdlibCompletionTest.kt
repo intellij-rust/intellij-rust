@@ -17,5 +17,12 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
             m::dr/*caret*/
         }
     """)
+
+    fun testIter() = checkSingleCompletion("iter_mut()", """
+        fn main() {
+            let vec: Vec<i32> = Vec::new();
+            let iter = vec.iter_m/*caret*/
+        }
+    """)
 }
 

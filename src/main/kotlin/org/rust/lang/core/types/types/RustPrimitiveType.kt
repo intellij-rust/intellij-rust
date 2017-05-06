@@ -1,13 +1,11 @@
 package org.rust.lang.core.types.types
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.types.RustType
 
 interface RustPrimitiveType : RustType {
-
-    override fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
-        emptySequence()
+    override fun canUnifyWith(other: RustType, project: Project): Boolean =
+        this == other
 
     companion object {
         fun fromTypeName(name: String): RustPrimitiveType? {

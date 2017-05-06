@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
     <id>org.toml.lang</id>
     <name>Toml</name>
     <version>0.0.1</version>

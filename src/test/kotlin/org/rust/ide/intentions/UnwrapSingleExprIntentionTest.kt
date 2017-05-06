@@ -4,8 +4,6 @@ import org.rust.lang.RsFileType
 import org.rust.lang.RsTestBase
 
 class UnwrapSingleExprIntentionTest : RsTestBase() {
-    override val dataPath = ""
-
     fun testAvailableLambdaUnwrapBracesSingleExpression() = doAvailableTest(
         """
         fn main() {

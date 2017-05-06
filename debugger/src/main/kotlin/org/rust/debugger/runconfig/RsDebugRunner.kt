@@ -52,7 +52,8 @@ class RsDebugRunner : AsyncGenericProgramRunner<RunnerSettings>() {
     override fun prepare(env: ExecutionEnvironment, state: RunProfileState): Promise<RunProfileStarter> {
         val config = env.runnerAndConfigurationSettings!!.configuration as CargoCommandConfiguration
         val project = config.project
-        val cargo = project.toolchain!!.cargo(config.configurationModule.module!!.cargoProjectRoot!!.path)
+        val cargoProjectDirectory = config.configurationModule.module!!.cargoProjectRoot!!.path
+        val cargo = project.toolchain!!.cargo(cargoProjectDirectory)
 
         val buildCommand = if (config.cargoCommandLine.command == "run") {
             config.cargoCommandLine.copy(command = "build")
@@ -63,7 +64,10 @@ class RsDebugRunner : AsyncGenericProgramRunner<RunnerSettings>() {
 
         return buildProjectAndGetBinaryArtifactPath(config.configurationModule.module!!, buildCommand, cargo)
             .then { result ->
-                result?.path?.let { RsRunProfileStarter(GeneralCommandLine(it)) }
+                result?.path?.let {
+                    val commandLine = GeneralCommandLine(it).withWorkDirectory(cargoProjectDirectory)
+                    RsRunProfileStarter(commandLine)
+                }
             }
     }
 }
@@ -71,6 +75,9 @@ class RsDebugRunner : AsyncGenericProgramRunner<RunnerSettings>() {
 private class RsRunProfileStarter(val commandLine: GeneralCommandLine) : RunProfileStarter() {
     override fun execute(state: RunProfileState, env: ExecutionEnvironment): RunContentDescriptor {
         state as CargoRunState
+        check(commandLine.workDirectory != null) {
+            "LLDB requires working directory"
+        }
         val runParameters = RsDebugRunParameters(commandLine)
         val debugSession = XDebuggerManager.getInstance(env.project)
             .startSession(env, object : XDebugProcessConfiguratorStarter() {

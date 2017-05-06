@@ -5,8 +5,6 @@ import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
 class RsSpellCheckerTest : RsTestBase() {
-    override val dataPath = ""
-
     fun testComments() = doTest("""// Hello, <TYPO descr="Typo: In word 'Wodrl'">Wodrl</TYPO>!""")
 
     fun testStringLiterals() = doTest("""

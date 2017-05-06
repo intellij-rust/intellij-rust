@@ -5,3 +5,6 @@ out/
 build/
 gen/
 debugger/lib
+exampleProject
+testData
+.DS_Store

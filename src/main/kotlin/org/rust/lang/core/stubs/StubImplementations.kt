@@ -24,7 +24,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 66
+        override fun getStubVersion(): Int = 69
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -104,6 +104,12 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "TYPE_PARAMETER" -> RsTypeParameterStub.Type
     "TYPE_PARAMETER_LIST" -> RsPlaceholderStub.Type("TYPE_PARAMETER_LIST", ::RsTypeParameterListImpl)
     "TYPE_ARGUMENT_LIST" -> RsPlaceholderStub.Type("TYPE_ARGUMENT_LIST", ::RsTypeArgumentListImpl)
+
+    "TYPE_PARAM_BOUNDS" -> RsPlaceholderStub.Type("TYPE_PARAM_BOUNDS", ::RsTypeParamBoundsImpl)
+    "POLYBOUND" -> RsPlaceholderStub.Type("POLYBOUND", ::RsPolyboundImpl)
+    "BOUND" -> RsPlaceholderStub.Type("BOUND", ::RsBoundImpl)
+    "WHERE_CLAUSE" -> RsPlaceholderStub.Type("WHERE_CLAUSE", ::RsWhereClauseImpl)
+    "WHERE_PRED" -> RsPlaceholderStub.Type("WHERE_PRED", ::RsWherePredImpl)
 
     "RET_TYPE" -> RsPlaceholderStub.Type("RET_TYPE", ::RsRetTypeImpl)
 
@@ -353,7 +359,8 @@ class RsModItemStub(
 class RsTraitItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    override val isPublic: Boolean
+    override val isPublic: Boolean,
+    val langAttribute: String?
 ) : StubBase<RsTraitItem>(parent, elementType),
     RsNamedStub,
     RsVisibilityStub {
@@ -362,20 +369,22 @@ class RsTraitItemStub(
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsTraitItemStub(parentStub, this,
                 dataStream.readNameAsString(),
-                dataStream.readBoolean()
+                dataStream.readBoolean(),
+                dataStream.readNameAsString()
             )
 
         override fun serialize(stub: RsTraitItemStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
                 writeBoolean(stub.isPublic)
+                writeName(stub.langAttribute)
             }
 
         override fun createPsi(stub: RsTraitItemStub): RsTraitItem =
             RsTraitItemImpl(stub, this)
 
         override fun createStub(psi: RsTraitItem, parentStub: StubElement<*>?) =
-            RsTraitItemStub(parentStub, this, psi.name, psi.isPublic)
+            RsTraitItemStub(parentStub, this, psi.name, psi.isPublic, psi.queryAttributes.langAttribute)
 
         override fun indexStub(stub: RsTraitItemStub, sink: IndexSink) = sink.indexTraitItem(stub)
     }
@@ -609,7 +618,7 @@ class RsUseGlobStub(
 class RsPathStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val referenceName: String,
-    val isCrateRelative: Boolean
+    val hasColonColon: Boolean
 ) : StubBase<RsPath>(parent, elementType) {
 
     object Type : RsStubElementType<RsPathStub, RsPath>("PATH") {
@@ -619,7 +628,7 @@ class RsPathStub(
             RsPathImpl(stub, this)
 
         override fun createStub(psi: RsPath, parentStub: StubElement<*>?) =
-            RsPathStub(parentStub, this, psi.referenceName, psi.isCrateRelative)
+            RsPathStub(parentStub, this, psi.referenceName, psi.hasColonColon)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsPathStub(parentStub, this,
@@ -630,7 +639,7 @@ class RsPathStub(
         override fun serialize(stub: RsPathStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.referenceName)
-                writeBoolean(stub.isCrateRelative)
+                writeBoolean(stub.hasColonColon)
             }
 
         override fun indexStub(stub: RsPathStub, sink: IndexSink) {
@@ -705,7 +714,8 @@ class RsSelfParameterStub(
 class RsTypeReferenceStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val isMut: Boolean,
-    val isRef: Boolean
+    val isRef: Boolean,
+    val arraySize: Int
 ) : StubBase<RsTypeReference>(parent, elementType) {
 
     class Type<PsiT : RsTypeReference>(
@@ -715,12 +725,17 @@ class RsTypeReferenceStub(
 
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?)
-            = RsTypeReferenceStub(parentStub, this, dataStream.readBoolean(), dataStream.readBoolean())
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RsTypeReferenceStub(parentStub, this,
+                dataStream.readBoolean(),
+                dataStream.readBoolean(),
+                dataStream.readInt()
+            )
 
         override fun serialize(stub: RsTypeReferenceStub, dataStream: StubOutputStream) = with(dataStream) {
             dataStream.writeBoolean(stub.isMut)
             dataStream.writeBoolean(stub.isRef)
+            dataStream.writeInt(stub.arraySize)
         }
 
         override fun createPsi(stub: RsTypeReferenceStub) = psiCtor(stub, this)
@@ -728,7 +743,8 @@ class RsTypeReferenceStub(
         override fun createStub(psi: PsiT, parentStub: StubElement<*>?) =
             RsTypeReferenceStub(parentStub, this,
                 (psi as? RsRefLikeType)?.isMut ?: false,
-                (psi as? RsRefLikeType)?.isRef ?: false
+                (psi as? RsRefLikeType)?.isRef ?: false,
+                (psi as? RsArrayType)?.arraySize ?: -1
             )
 
         override fun indexStub(stub: RsTypeReferenceStub, sink: IndexSink) {

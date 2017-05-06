@@ -52,21 +52,35 @@ class RsPsiFactory(private val project: Project) {
     fun createUnsafeBlockExpr(body: String): RsBlockExpr =
         createExpressionOfType("unsafe { $body }")
 
-    fun tryCreatePathExpr(text: String): RsPathExpr? {
-        val expr = createFromText<RsPathExpr>("fn main() { $text;}") ?: return null
-        if (expr.text != text) return null
-        return expr
+    fun tryCreatePath(text: String): RsPath? {
+        val path = createFromText<RsPathExpr>("fn main() { $text;}")?.path ?: return null
+        if (path.text != text) return null
+        return path
     }
 
-    fun createStructExprField(name: String): RsStructExprField =
-        createExpressionOfType<RsStructExpr>("S { $name: () }").structExprBody.structExprFieldList[0]
+    fun createStructLiteralField(name: String): RsStructLiteralField =
+        createExpressionOfType<RsStructLiteral>("S { $name: () }").structLiteralBody.structLiteralFieldList[0]
+
+    data class BlockField(val pub: Boolean, val name: String, val type: RsTypeReference)
+
+    fun createBlockFields(fields: List<BlockField>): RsBlockFields {
+        val fieldsText = fields.joinToString(separator = ",\n") {
+            "${"pub".iff(it.pub)}${it.name}: ${it.type.text}"
+        }
+        return createStruct("struct S { $fieldsText }")
+            .blockFields!!
+    }
+
+    fun createStruct(text: String): RsStructItem =
+        createFromText(text)
+            ?: error("Failed to create statement from text: `$text`")
 
     fun createStatement(text: String): RsStmt =
         createFromText("fn main() { $text 92; }")
             ?: error("Failed to create statement from text: `$text`")
 
     fun createLetDeclaration(name: String, expr: RsExpr, mutable: Boolean = false, type: RsTypeReference? = null): RsLetDecl =
-        createStatement("let ${if (mutable) "mut " else ""}$name${if (type != null) ": ${type.text}" else ""} = ${expr.text};") as RsLetDecl
+        createStatement("let ${"mut".iff(mutable)}$name${if (type != null) ": ${type.text}" else ""} = ${expr.text};") as RsLetDecl
 
 
     fun createType(text: String): RsTypeReference =
@@ -178,6 +192,24 @@ class RsPsiFactory(private val project: Project) {
         createFromText<RsFunction>("unsafe fn foo(){}")?.unsafe
             ?: error("Failed to create unsafe element")
 
+    fun createFunction(name: String, stmts: List<PsiElement>, public: Boolean, self: Boolean): RsFunction =
+        createFromText<RsFunction>("${if (public) "pub" else ""} fn $name(${if (self) "self" else ""}) {\n" +
+            stmts.joinToString(separator = "\n", transform = { it.text }) +
+            "\n}")
+            ?: error("Failed to create function element: ${name}")
+
+    fun createFunctionCallFunctionStmt(name: String, type: String?): RsStmt =
+        createFromText("fn main(){${if (type != null) "$type::" else ""}$name();}")
+            ?: error("Failed to create call function statement")
+
+    fun createFunctionCallSelfMethodStmt(name: String): RsStmt =
+        createFromText("fn main(){self.$name();}")
+            ?: error("Failed to create call method statement")
+
+    fun createImpl(name: String, functions: List<RsFunction>): RsImplItem =
+        createFromText<RsImplItem>("impl $name {\n${functions.joinToString(separator = "\n", transform = { it.text })}\n}")
+            ?: error("Failed to create RsImplItem element")
+
     fun createValueParameter(name: String, type: RsTypeReference, mutable: Boolean = false): RsValueParameter {
         return createFromText<RsFunction>("fn main($name: ${if (mutable) "&mut " else ""}${type.text}){}")
             ?.valueParameterList?.valueParameterList?.get(0)
@@ -209,3 +241,5 @@ private val RsFunction.signatureText: String? get() {
     val where = whereClause?.text ?: ""
     return "fn $name$generics(${allArguments.joinToString(",")}) $ret$where"
 }
+
+private fun String.iff(cond: Boolean) = if (cond) this + " " else " "

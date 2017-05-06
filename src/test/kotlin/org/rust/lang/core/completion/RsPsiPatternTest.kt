@@ -7,8 +7,6 @@ import org.rust.lang.RsTestBase
 import org.rust.lang.core.RsPsiPattern
 
 class RsPsiPatternTest : RsTestBase() {
-    override val dataPath: String get() = ""
-
     fun testOnStructAttr() = testPattern("""
         #[foo]
         //^

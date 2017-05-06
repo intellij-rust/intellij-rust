@@ -3,7 +3,7 @@ package org.rust.ide.inspections
 /**
  * Tests for the CString Pointer inspection
  */
-class RsCStringPointerInspectionTest : RsInspectionsTestBase(RsCStringPointerInspection(), true) {
+class RsCStringPointerInspectionTest : RsInspectionsTestBase(RsCStringPointerInspection(), useStdLib = true) {
 
     fun testInspection() = checkByText("""
         use std::ffi::{CString};

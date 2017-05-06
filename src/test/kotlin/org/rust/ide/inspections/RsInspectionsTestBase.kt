@@ -7,8 +7,6 @@ abstract class RsInspectionsTestBase(
     val useStdLib: Boolean = false
 ) : RsTestBase() {
 
-    override val dataPath = ""
-
     fun testInspectionHasDocumentation() {
         val description = "inspectionDescriptions/${inspection.javaClass.simpleName?.dropLast("Inspection".length)}.html"
         val text = getResourceAsString(description)

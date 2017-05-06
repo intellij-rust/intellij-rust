@@ -5,13 +5,16 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestCase
 import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
+import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
 
 // This class allows to execute real Cargo during the tests.
 // Unlike `RustTestCaseBase` it does not use in-memory temporary VFS
 // and instead copies real files.
 abstract class RustWithToolchainTestBase : PlatformTestCase() {
-    abstract val dataPath: String
+    open val dataPath: String = ""
 
     private val toolchain = RustToolchain.suggest()
 
@@ -25,6 +28,14 @@ abstract class RustWithToolchainTestBase : PlatformTestCase() {
 
         action()
     }
+
+    protected fun refreshWorkspace() {
+        CargoProjectWorkspaceService.getInstance(module).syncUpdate(module.project.toolchain!!)
+        if (module.cargoWorkspace == null) {
+            error("Failed to update a test Cargo project")
+        }
+    }
+
 
     override fun runTest() {
         if (toolchain == null) {

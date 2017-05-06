@@ -4,8 +4,6 @@ import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
 abstract class RsAnnotatorTestBase : RsTestBase() {
-    override val dataPath = ""
-
     protected fun doTest(vararg additionalFilenames: String) {
         myFixture.testHighlighting(fileName, *additionalFilenames)
     }

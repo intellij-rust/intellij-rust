@@ -1,8 +1,6 @@
 package org.rust.ide.annotator
 
 class RsLiteralAnnotatorTest : RsAnnotatorTestBase() {
-    override val dataPath = ""
-
     fun testCharLiteralLength() = checkErrors("""
         fn main() {
             let ch1 = <error descr="empty char literal">''</error>;

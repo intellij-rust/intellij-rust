@@ -1,8 +1,6 @@
 package org.rust.lang.core.stubs
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.stubs.IndexSink
-import com.intellij.util.PathUtil
 import org.rust.lang.core.psi.ext.RsTypeAliasRole
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.stubs.index.RsGotoClassIndex
@@ -39,8 +37,7 @@ fun IndexSink.indexTraitItem(stub: RsTraitItemStub) {
 }
 
 fun IndexSink.indexImplItem(stub: RsImplItemStub) {
-    RsImplIndex.TraitImpls.index(stub, this)
-    RsImplIndex.InherentImpls.index(stub, this)
+    RsImplIndex.index(stub, this)
 }
 
 fun IndexSink.indexFunction(stub: RsFunctionStub) {

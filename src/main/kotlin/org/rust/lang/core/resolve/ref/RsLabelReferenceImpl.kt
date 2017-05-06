@@ -5,7 +5,15 @@ import org.rust.lang.core.psi.RsLabel
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectResolveVariants
-import org.rust.lang.core.resolve.processResolveVariants
+import org.rust.lang.core.resolve.processLifetimeResolveVariants
+import org.rust.lang.core.resolve.processLabelResolveVariants
+import org.rust.lang.core.resolve.processPathResolveVariants
+import org.rust.lang.core.resolve.processExternCrateResolveVariants
+import org.rust.lang.core.resolve.processModDeclResolveVariants
+import org.rust.lang.core.resolve.processUseGlobResolveVariants
+import org.rust.lang.core.resolve.processMethodCallExprResolveVariants
+import org.rust.lang.core.resolve.processStructLiteralFieldResolveVariants
+import org.rust.lang.core.resolve.processFieldExprResolveVariants
 
 class RsLabelReferenceImpl(
     element: RsLabel
@@ -15,8 +23,8 @@ class RsLabelReferenceImpl(
     override val RsLabel.referenceAnchor: PsiElement get() = quoteIdentifier
 
     override fun resolveInner(): List<RsCompositeElement> =
-        collectResolveVariants(element.referenceName) { processResolveVariants(element, it) }
+        collectResolveVariants(element.referenceName) { processLabelResolveVariants(element, it) }
 
     override fun getVariants(): Array<out Any> =
-        collectCompletionVariants { processResolveVariants(element, it) }
+        collectCompletionVariants { processLabelResolveVariants(element, it) }
 }

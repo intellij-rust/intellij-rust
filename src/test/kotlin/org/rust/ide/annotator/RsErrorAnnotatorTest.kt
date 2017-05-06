@@ -267,6 +267,18 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun testE0046_IgnoreMacros() = checkErrors("""
+        trait T { fn foo(&self); }
+
+        macro_rules! impl_foo {
+            () => { fn foo(&self) {} };
+        }
+
+        struct S;
+
+        impl T for S { impl_foo!(); }
+    """)
+
     fun testE0050_IncorrectParamsNumberInTraitImpl() = checkErrors("""
         trait T {
             fn ok_foo();

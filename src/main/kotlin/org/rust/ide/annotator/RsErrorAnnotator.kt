@@ -19,7 +19,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
- import org.rust.lang.core.types.type
+import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustReferenceType
 import org.rust.lang.core.types.types.RustUnknownType
 
@@ -62,12 +62,20 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         element.accept(visitor)
     }
 
-    private fun checkMethodCallExpr(holder: AnnotationHolder, o: RsMethodCallExpr) {
-        val fn = o.reference.resolve() as? RsFunction ?: return
+    private fun checkMethodForNeededMutable(o: RsMethodCallExpr, fn: RsFunction): Boolean {
         if (!o.expr.isMutable() &&
             fn.selfParameter != null &&
             fn.selfParameter?.isMut ?: false &&
             fn.selfParameter?.isRef ?: false) {
+            val typeRef = o.parentOfType<RsImplItem>()?.typeReference as? RsRefLikeType ?: return true
+            return !typeRef.isMut
+        }
+        return false
+    }
+
+    private fun checkMethodCallExpr(holder: AnnotationHolder, o: RsMethodCallExpr) {
+        val fn = o.reference.resolve() as? RsFunction ?: return
+        if (checkMethodForNeededMutable(o, fn)) {
             createImmutableErrorAnnotation(holder, o.expr)
         } else if (fn.unsafe != null) {
             checkUnsafeCall(holder, o)
@@ -339,6 +347,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun checkImpl(holder: AnnotationHolder, impl: RsImplItem) {
         val trait = impl.traitRef?.resolveToTrait ?: return
         val traitName = trait.name ?: return
+        // Macros can add methods
+        if (impl.implMacroMemberList.isNotEmpty()) return
 
         val implemented = impl.functionList.associateBy { it.name }
 
@@ -355,7 +365,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
             holder.createErrorAnnotation(implHeaderTextRange,
                 "Not all trait items implemented, missing: ${notImplemented.namesList} [E0046]"
-            ).registerFix(ImplementMethodsFix(impl))
+            ).registerFix(ImplementMembersFix(impl))
         }
 
         val notMembers = implemented.filterKeys { it !in canImplement }

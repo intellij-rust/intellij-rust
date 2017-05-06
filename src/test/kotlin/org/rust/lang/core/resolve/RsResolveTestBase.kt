@@ -9,9 +9,6 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
 
 abstract class RsResolveTestBase : RsTestBase() {
-
-    final override val dataPath = ""
-
     protected fun checkByCode(@Language("Rust") code: String) {
         InlineFile(code)
 

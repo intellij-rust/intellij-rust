@@ -78,7 +78,7 @@
     elementType("(Fn|Anon|Lambda|Path)Parameter") = ValueParameter
     elementType("(Fn|Lambda|Path|FnType)Parameters") = ValueParameterList
 
-    extends(".+Expr") = Expr
+    extends("(.+Expr|StructLiteral)") = Expr
     elementType(".+BinExpr") = BinaryExpr
 
     extends("(?!RetType).*Type") = TypeReference
@@ -311,12 +311,29 @@ TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' TypeReference ] {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-TypeParamBounds ::= ':' [ Polybound ('+' Polybound)* '+'? ]
-Polybound ::= [ ForLifetimes | '?' ] Bound
+TypeParamBounds ::= ':' [ Polybound ('+' Polybound)* '+'? ] {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-WhereClause ::= where <<comma_separated_list WherePred>>
+Polybound ::= [ ForLifetimes | '?' ] Bound {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-WherePred ::= Lifetime LifetimeParamBounds | ForLifetimes? TypeReference TypeParamBounds
+WhereClause ::= where <<comma_separated_list WherePred>> {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+WherePred ::= Lifetime LifetimeParamBounds | ForLifetimes? TypeReference TypeParamBounds {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 ForLifetimes ::= for '<' LifetimesParams '>'
 
@@ -399,7 +416,8 @@ PatRef ::= '&' mut? Pat
 
 PatWild ::= '_'
 PatBinding ::= BindingMode? identifier !'...' !'::' {
-  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement"
+                 "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsPatBindingImplMixin"
 }
 
@@ -696,7 +714,11 @@ TypeWithBoundsType ::= TypeReference ('+' Bound)+ {
   stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-Bound ::= Lifetime | TraitRef
+Bound ::= Lifetime | TraitRef {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
   stubClass = "org.rust.lang.core.stubs.RsTypeReferenceStub"
@@ -783,7 +805,7 @@ BlockExpr ::= [ unsafe &'{' ] SimpleBlock
 
 private AtomExpr ::= LitExpr
                     | MacroExpr
-                    | StructExpr
+                    | StructLiteral
                     | QualPathExpr
                     | MethodCallExpr
                     | FieldExpr
@@ -825,17 +847,17 @@ UnaryExpr ::= (box | '-' | '*' | '!' | '&' mut?) Expr
 
 LambdaExpr ::= move? LambdaParameters RetType? AnyExpr
 
-StructExpr ::= <<checkStructAllowed>> PathGenericArgsWithColons StructExprBody
+StructLiteral ::= <<checkStructAllowed>> PathGenericArgsWithColons StructLiteralBody
 
-StructExprBody ::= '{' [ <<comma_separated_list StructExprField>> ] ('..'  AnyExpr)? '}' { pin = 1 }
+StructLiteralBody ::= '{' [ <<comma_separated_list StructLiteralField>> ] ('..'  AnyExpr)? '}' { pin = 1 }
 
-StructExprField ::= OuterAttr* identifier [ ':' AnyExpr ] {
+StructLiteralField ::= OuterAttr* identifier [ ':' AnyExpr ] {
   pin = 2
-  recoverWhile = StructExprField_recover
+  recoverWhile = StructLiteralField_recover
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
-  mixin = "org.rust.lang.core.psi.ext.RsStructExprFieldImplMixin"
+  mixin = "org.rust.lang.core.psi.ext.RsStructLiteralFieldImplMixin"
 }
-private StructExprField_recover ::= !(identifier | ',' | '}' | '..' | '#')
+private StructLiteralField_recover ::= !(identifier | ',' | '}' | '..' | '#')
 
 PathExpr ::= PathGenericArgsWithColons
 
@@ -953,7 +975,7 @@ AssertEqMacro ::= AssertEqMacroInvocation AssertEqMacroArgs { pin = 1 }
 VecMacro ::= VecMacroInvocation VecMacroArgs { pin = 1 }
 LogMacro ::= LogMacroInvocation LogMacroArgs { pin = 1 }
 
-MacroDefinition ::= MacroRulesInvocation identifier ItemMacroArg {
+MacroDefinition ::= MacroRulesInvocation identifier MacroDefinitionPatternList {
   pin = 1
   extends = ItemLikeMacro
   implements = [ "org.rust.lang.core.psi.ext.RsNamedElement" ]
@@ -961,6 +983,37 @@ MacroDefinition ::= MacroRulesInvocation identifier ItemMacroArg {
   stubClass = "org.rust.lang.core.stubs.RsMacroDefinitionStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+
+MacroDefinitionPatternList ::= <<macro_definition_delim (MacroDefinitionPattern ';'?)* >>
+
+private meta macro_definition_delim ::= '(' <<param>> ')' ';'
+                                      | '{' <<param>> '}'
+                                      | '[' <<param>> ']' ';' { pin = 1 }
+MacroDefinitionPattern ::= MacroPattern '=>' MacroBody
+MacroBinding ::= <<macroIdentifier>>
+
+MacroPattern ::= '(' MacroMatchingTree* ')'
+               | '{' MacroMatchingTree* '}'
+               | '[' MacroMatchingTree* ']'
+MacroMatchingTree ::=  '(' MacroMatchingTree* ')'
+                     | '{' MacroMatchingTree* '}'
+                     | '[' MacroMatchingTree* ']'
+                     | (MacroPatternSimpleMatching | MacroPatternComplexMatching)+
+                     | << placeholderMacroToken >>+
+
+MacroPatternComplexMatching ::= '$' '(' MacroMatchingTree* ')' <<tokenAfterComplexPattern>>* ('*' | '+')
+MacroPatternSimpleMatching ::= '$' MacroBinding ':' identifier
+
+MacroBody ::= '(' MacroTokenTree* ')'
+            | '{' MacroTokenTree* '}'
+            | '[' MacroTokenTree* ']'
+MacroTokenTree ::= '(' MacroTokenTree* ')'
+                 | '{' MacroTokenTree* '}'
+                 | '[' MacroTokenTree* ']'
+                 | (MacroBodyComplexMatching | MacroBodySimpleMatching) +
+                 | << placeholderMacroToken >> +
+MacroBodyComplexMatching ::= '$' '(' MacroTokenTree* ')' <<tokenAfterComplexPattern>>* ('*' | '+')
+MacroBodySimpleMatching ::= '$' (MacroBinding | "crate")
 
 private BuildInMacro ::= TryMacro
                        | FormatLikeMacro

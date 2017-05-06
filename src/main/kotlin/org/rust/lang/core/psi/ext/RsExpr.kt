@@ -10,12 +10,6 @@ import org.rust.lang.core.psi.RsElementTypes.*
  */
 val RsLitExpr.stringLiteralValue: String? get() = (kind as? RsTextLiteral)?.value
 
-/**
- * Extracts the expression that defines the size of an array.
- */
-val RsArrayExpr.sizeExpr: RsExpr?
-    get() = if (semicolon != null && exprList.size == 2) exprList[1] else null
-
 enum class UnaryOperator {
     REF, // `&a`
     REF_MUT, // `&mut a`

@@ -306,4 +306,48 @@ class RsCompletionTest : RsCompletionTestBase() {
             Foo/*caret*/
         }
     """)
+
+    // issue #1182
+    fun testAssociatedTypeCompletion() = checkSingleCompletion("Bar", """
+        trait Foo {
+            type Bar;
+            fn foo(bar: Self::Ba/*caret*/);
+        }
+    """)
+
+    // issue #1182
+    fun testAssociatedTypeSuggestion() = checkContainsCompletion("Bar", """
+        trait Foo {
+            type Bar;
+            fn foo(bar: Self::/*caret*/);
+        }
+    """)
+
+    // issue #1182
+    fun testAssociatedTypeSuggestionWithReference() = checkContainsCompletion("Bar", """
+        trait Foo {
+            type Bar;
+            fn foo(bar: &mut Self::/*caret*/);
+        }
+    """)
+
+    fun `test complete enum variants 1`() = checkSingleCompletion("BinOp", """
+        enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
+        fn foo(e: Expr) {
+            use self::Expr::*;
+            match e {
+                Bi/*caret*/
+            }
+        }
+    """)
+
+    fun `test complete enum variants 2`() = checkSingleCompletion("Unit", """
+        enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
+        fn foo(e: Expr) {
+            use self::Expr::*;
+            match e {
+                Un/*caret*/
+            }
+        }
+    """)
 }

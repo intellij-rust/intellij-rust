@@ -6,9 +6,6 @@ import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
 class RsStructureViewTest : RsTestBase() {
-
-    override val dataPath = ""
-
     fun `test functions`() = doTest("""
         fn fn_foo () {}
 

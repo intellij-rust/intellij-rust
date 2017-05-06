@@ -135,4 +135,27 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             println!("Hello, World!");
         }   //^ ...libstd/macros.rs
     """)
+
+    fun `test iterating a vec`() = stubOnlyResolve("""
+    //- main.rs
+        struct FooBar;
+        impl FooBar { fn foo(&self) {} }
+
+        fn foo(xs: Vec<FooBar>) {
+            for x in xs {
+                x.foo()
+            }    //^ ...main.rs
+        }
+    """)
+
+    fun `test resolve None in pattern`() = stubOnlyResolve("""
+    //- main.rs
+        fn foo(x: Option<i32>) -> i32 {
+            match x {
+                Some(v) => V,
+                None => 0,
+            }  //^ ...libcore/option.rs
+        }
+    """)
+
 }

@@ -37,8 +37,8 @@ fun RsExpr.isPure(): Boolean? {
             else -> exprList[0].isPure() // Array literal of form [expr; size],
         // size is a compile-time constant, so it is always pure
         }
-        is RsStructExpr -> when (structExprBody.dotdot) {
-            null -> structExprBody.structExprFieldList
+        is RsStructLiteral -> when (structLiteralBody.dotdot) {
+            null -> structLiteralBody.structLiteralFieldList
                     .map { it.expr }
                     .allMaybe { it?.isPure() } // TODO: Why `it` can be null?
             else -> null // TODO: handle update case (`Point{ y: 0, z: 10, .. base}`)

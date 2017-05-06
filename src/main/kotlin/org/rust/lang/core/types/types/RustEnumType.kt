@@ -13,7 +13,7 @@ class RustEnumType(
 
     override val item = CompletionUtil.getOriginalOrSelf(enum)
 
-    override fun toString(): String = item.name ?: "<anonymous>"
+    override fun toString(): String = fullName
 
     override fun withTypeArguments(typeArguments: List<RustType>): RustEnumType =
         super.withTypeArguments(typeArguments) as RustEnumType

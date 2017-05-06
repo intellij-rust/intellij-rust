@@ -13,7 +13,7 @@ class RustStructType(
 
     override val item = CompletionUtil.getOriginalOrSelf(struct)
 
-    override fun toString(): String = item.name ?: "<anonymous>"
+    override fun toString(): String = fullName
 
     override fun withTypeArguments(typeArguments: List<RustType>): RustStructType =
         super.withTypeArguments(typeArguments) as RustStructType

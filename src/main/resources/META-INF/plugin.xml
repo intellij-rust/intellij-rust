@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
     <id>org.rust.lang</id>
     <name>Rust</name>
 
@@ -9,8 +9,8 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <a href="https://intellij-rust.github.io/2017/04/10/changelog-37.html">
-                 https://intellij-rust.github.io/2017/04/10/changelog-37.html
+        <a href="https://intellij-rust.github.io/2017/05/02/changelog-39.html">
+                 https://intellij-rust.github.io/2017/05/02/changelog-39.html
     ]]>
     </change-notes>
 
@@ -24,7 +24,17 @@
     <depends optional="true" config-file="idea-only.xml">com.intellij.modules.java</depends>
     <depends optional="true" config-file="clion-only.xml">com.intellij.modules.clion</depends>
 
+    <actions>
+        <action id="ExtractFunction" class="org.rust.lang.refactoring.extractFunction.RsExtractFunctionAction"
+                text="_Function..." use-shortcut-of="ExtractMethod">
+            <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
+        </action>
+    </actions>
+
     <extensions defaultExtensionNs="com.intellij">
+        <!-- although Rust module type is only created by IDEA, we need it in other IDEs as well
+             to be able to open a project created in IDEA without errors -->
+        <moduleType id="RUST_MODULE" implementationClass="org.rust.ide.idea.RsModuleType"/>
 
         <!-- Rust -->
 
@@ -90,6 +100,9 @@
         <gotoClassContributor implementation="org.rust.ide.navigation.goto.RsClassNavigationContributor"/>
         <gotoSymbolContributor implementation="org.rust.ide.navigation.goto.RsSymbolNavigationContributor"/>
         <codeInsight.gotoSuper language="Rust" implementationClass="org.rust.ide.navigation.goto.RsGotoSuperHandler"/>
+        // `ctrl+alt+b`
+        <definitionsScopedSearch implementation="org.rust.ide.navigation.goto.RsTraitImplementationsSearch"/>
+        <gotoTargetRendererProvider implementation="org.rust.ide.navigation.goto.RsGotoTargetRendererProvider"/>
 
         <!-- Hints -->
 
@@ -148,9 +161,13 @@
 
         <typedHandler implementation="org.rust.ide.typing.RsRawLiteralHashesInserter"
                       id="RustRawLiteralHashesInserter"/>
+        <typedHandler implementation="org.rust.ide.typing.RsAngleBraceTypedHandler"
+                      id="RustAngleBraceTypedHandler"/>
 
         <backspaceHandlerDelegate implementation="org.rust.ide.typing.RsRawLiteralHashesDeleter"
                                   id="RustRawLiteralHashesDeleter"/>
+        <backspaceHandlerDelegate implementation="org.rust.ide.typing.RsAngleBraceBackspaceHandler"
+                                  id="RustAngleBraceBackspaceHandler"/>
 
         <joinLinesHandler implementation="org.rust.ide.actions.RsJoinLinesHandler"
                           id="RsJoinLinesHandler"/>
@@ -322,9 +339,19 @@
                          implementationClass="org.rust.ide.inspections.RsSimplifyPrintInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
+                         displayName="Anonymous function parameter"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RsAnonymousParameterInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
                          displayName="Simplify boolean expression"
                          enabledByDefault="false" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsSimplifyBooleanExpressionInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="No mutable required"
+                         enabledByDefault="false" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RsVariableMutableInspection"/>
 
         <!-- Surrounders -->
 
@@ -338,7 +365,7 @@
         <lang.foldingBuilder language="Rust" implementationClass="org.rust.ide.folding.RsFoldingBuilder"/>
         <codeFoldingOptionsProvider instance="org.rust.ide.folding.RsCodeFoldingOptionsProvider"/>
         <applicationService serviceInterface="org.rust.ide.folding.RsCodeFoldingSettings"
-                            serviceImplementation="org.rust.ide.folding.impl.RsCodeFoldingSettingsImpl" />
+                            serviceImplementation="org.rust.ide.folding.impl.RsCodeFoldingSettingsImpl"/>
 
         <!-- Live Templates -->
 
@@ -446,6 +473,8 @@
         <runLineMarkerContributor language="Rust"
                                   implementationClass="org.rust.cargo.runconfig.test.CargoTestRunLineMarkerContributor"/>
 
+        <projectTaskRunner implementation="org.rust.cargo.runconfig.RsProjectTasksRunner"/>
+
         <!-- Cargo -->
 
         <projectConfigurable instance="org.rust.cargo.project.configurable.RustProjectConfigurable"
@@ -468,8 +497,7 @@
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsMacroDefinitionIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsGotoClassIndex"/>
 
-        <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsImplIndex$TraitImpls"/>
-        <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsImplIndex$InherentImpls"/>
+        <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsImplIndex"/>
 
         <!-- Notification Providers -->
 
@@ -513,14 +541,21 @@
 
 
         <action id="Rust.RsPromoteModuleToDirectoryAction"
-                class="org.rust.ide.actions.RsPromoteModuleToDirectoryAction"
+                class="org.rust.lang.refactoring.RsPromoteModuleToDirectoryAction"
                 text="Promote module to directory"
                 description="Move this module to a dedicated directory">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
         <action id="Rust.RsDowngradeModuleToFile"
-                class="org.rust.ide.actions.RsDowngradeModuleToFile"
+                class="org.rust.lang.refactoring.RsDowngradeModuleToFile"
                 text="Downgrade module to file"
+                description="Move this module to a single file">
+            <add-to-group group-id="RefactoringMenu"/>
+        </action>
+
+        <action id="Rust.RsConvertToNamedFields"
+                class="org.rust.lang.refactoring.RsConvertToNamedFieldsAction"
+                text="Convert to named fields"
                 description="Move this module to a single file">
             <add-to-group group-id="RefactoringMenu"/>
         </action>

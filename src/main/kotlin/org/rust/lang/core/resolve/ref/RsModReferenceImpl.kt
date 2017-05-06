@@ -13,8 +13,8 @@ class RsModReferenceImpl(
     override val RsModDeclItem.referenceAnchor: PsiElement get() = identifier
 
     override fun getVariants(): Array<out Any> =
-        collectCompletionVariants { processResolveVariants(element, it) }
+        collectCompletionVariants { processModDeclResolveVariants(element, it) }
 
     override fun resolveInner(): List<RsCompositeElement> =
-        collectResolveVariants(element.referenceName) { processResolveVariants(element, it) }
+        collectResolveVariants(element.referenceName) { processModDeclResolveVariants(element, it) }
 }

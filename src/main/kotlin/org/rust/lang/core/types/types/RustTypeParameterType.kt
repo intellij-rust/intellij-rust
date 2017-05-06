@@ -1,10 +1,14 @@
 package org.rust.lang.core.types.types
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsBaseType
+import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
+import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToTrait
 import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.findTraits
 
 data class RustTypeParameterType private constructor(
     private val parameter: TypeParameter
@@ -14,11 +18,15 @@ data class RustTypeParameterType private constructor(
 
     constructor(trait: RsTraitItem) : this(Self(trait))
 
-    override fun getTraitsImplementedIn(project: Project): Sequence<RsTraitItem> =
-        transitiveClosure(parameter.bounds)
+    fun getTraitBoundsTransitively(): Collection<RsTraitItem> =
+        parameter.bounds.flatMapTo(mutableSetOf()) { it.flattenHierarchy.asSequence() }
 
-    override fun getMethodsIn(project: Project): Sequence<RsFunction> =
-        getTraitsImplementedIn(project).flatMap { it.functionList.asSequence() }
+    override fun canUnifyWith(other: RustType, project: Project): Boolean {
+        if (this == other) return true
+
+        val implTraits = findTraits(project, other).toSet()
+        return parameter.bounds.all { implTraits.contains(it) }
+    }
 
     override fun substitute(map: Map<RustTypeParameterType, RustType>): RustType = map[this] ?: this
 
@@ -50,21 +58,4 @@ data class RustTypeParameterType private constructor(
 
         override val bounds: Sequence<RsTraitItem> get() = sequenceOf(trait)
     }
-}
-
-private val RsTraitItem.superTraits: Sequence<RsTraitItem> get() {
-    val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence()
-    return bounds.mapNotNull { it.bound.traitRef?.resolveToTrait } + this
-}
-
-private fun transitiveClosure(traits: Sequence<RsTraitItem>): Sequence<RsTraitItem> {
-    val result = mutableSetOf<RsTraitItem>()
-    fun dfs(trait: RsTraitItem) {
-        if (trait in result) return
-        result += trait
-        trait.superTraits.forEach(::dfs)
-    }
-    traits.forEach(::dfs)
-
-    return result.asSequence()
 }
