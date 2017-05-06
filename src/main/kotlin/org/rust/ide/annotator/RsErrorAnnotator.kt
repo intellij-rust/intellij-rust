@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.annotator.fixes.*
 import org.rust.ide.utils.isNullOrEmpty
@@ -459,8 +460,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkExternCrate(holder: AnnotationHolder, el: RsExternCrateItem) {
-        if (el.reference.resolve() != null) return
-        holder.createErrorAnnotation(el.textRange, "Unknown crate '" + el.identifier.text + "' [E0463]")
+        if (el.reference.resolve() != null || el.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return
+        holder.createErrorAnnotation(el.textRange, "Can't find crate for `${el.identifier.text}` [E0463]")
     }
 
     private fun requireResolve(holder: AnnotationHolder, el: RsReferenceElement, message: String) {
