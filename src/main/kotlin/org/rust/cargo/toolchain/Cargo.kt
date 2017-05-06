@@ -33,7 +33,8 @@ class Cargo(
     private val pathToRustExecutable: String,
     // It's more convenient to use project directory rather then path to `Cargo.toml`
     // because some commands don't accept `--manifest-path` argument
-    private val projectDirectory: String?
+    private val projectDirectory: String?,
+    private val rustup: Rustup?
 ) {
     /**
      * Fetch all dependencies and calculate project information.
@@ -84,16 +85,23 @@ class Cargo(
             args += "--nocapture"
         }
 
-        return generalCommand(commandLine.command, args, env)
+        return generalCommand(commandLine.command, args, env, commandLine.channel)
     }
 
     fun generalCommand(
         command: String,
         additionalArguments: List<String> = emptyList(),
-        environmentVariables: Map<String, String> = emptyMap()
+        environmentVariables: Map<String, String> = emptyMap(),
+        channel: RustChannel = RustChannel.DEFAULT
     ): GeneralCommandLine {
-        val cmdLine = GeneralCommandLine(pathToCargoExecutable)
-            .withCharset(Charsets.UTF_8)
+        val cmdLine = if (channel == RustChannel.DEFAULT) {
+            GeneralCommandLine(pathToCargoExecutable)
+        } else {
+            if (rustup == null) error("Channel '$channel' cannot be set explicitly because rustup is not avaliable")
+            rustup.createRunCommandLine(channel, pathToCargoExecutable)
+        }
+
+        cmdLine.withCharset(Charsets.UTF_8)
             .withWorkDirectory(projectDirectory)
             .withParameters(command)
 
