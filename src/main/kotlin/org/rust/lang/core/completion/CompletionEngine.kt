@@ -17,6 +17,9 @@ object CompletionEngine {
     const val KEYWORD_PRIORITY = 10.0
 }
 
+private val RsFunction.extraTailText: String
+    get() = parentOfType<RsImplItem>()?.traitRef?.text?.let { " of $it" } ?: ""
+
 fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
     val base = LookupElementBuilder.create(this, scopeName)
         .withIcon(if (this is RsFile) RsIcons.MODULE else getIcon(0))
@@ -35,6 +38,7 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
         is RsFunction -> base
             .withTypeText(retType?.typeReference?.text ?: "()")
             .withTailText(valueParameterList?.text?.replace("\\s+".toRegex(), " ") ?: "()")
+            .appendTailText(extraTailText, true)
             .withInsertHandler handler@ { context: InsertionContext, _: LookupElement ->
                 if (context.isInUseBlock) return@handler
                 if (context.alreadyHasParens) return@handler
