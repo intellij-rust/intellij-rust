@@ -188,7 +188,7 @@
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Unresolved reference"
-                         enabledByDefault="false" level="WARNING"
+                         enabledByDefault="false" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsUnresolvedReferenceInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
