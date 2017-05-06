@@ -1,5 +1,7 @@
 package org.rust.ide.annotator
 
+import com.intellij.testFramework.LightProjectDescriptor
+
 class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/errors"
 
@@ -862,6 +864,23 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             <error descr="Unresolved module">mod foo;</error>
             fn foo() {}
         }
+    """)
+
+    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibAndDependencyRustProjectDescriptor
+
+    fun testE0428_RespectsCrateAliases() = checkErrors("""
+        extern crate libc as libc_alias;
+        mod libc {}
+
+        // FIXME: ideally we want to highlight these
+        extern crate alloc;
+        mod alloc {}
+    """)
+
+    fun testE0463_UnknownCrate() = checkErrors("""
+        extern crate alloc;
+
+        <error descr="Unknown crate 'litarvan' [E0463]">extern crate litarvan;</error>
     """)
 
     fun testE0428_IgnoresLocalBindings() = checkErrors("""

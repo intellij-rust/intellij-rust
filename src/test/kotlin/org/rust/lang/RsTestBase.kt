@@ -270,12 +270,11 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             val packages = listOf(
                 testCargoPackage(contentRoot),
                 externalPackage(contentRoot, "dep-lib/lib.rs", "dep-lib", "dep-lib-target"),
-                externalPackage(contentRoot, "foo-lib/lib.rs", "foo-lib", "foo-lib-target"),
                 externalPackage(contentRoot, null, "nosrc-lib", "nosrc-lib-target"),
                 externalPackage(contentRoot, "trans-lib/lib.rs", "trans-lib"))
 
             val depNodes = ArrayList<CleanCargoMetadata.DependencyNode>()
-            depNodes.add(CleanCargoMetadata.DependencyNode(0, listOf(1, 2, 3)))   // Our package depends on dep_lib, dep_nosrc_lib and foo_lib
+            depNodes.add(CleanCargoMetadata.DependencyNode(0, listOf(1, 2)))   // Our package depends on dep_lib and dep_nosrc_lib
 
             return CleanCargoMetadata(packages, depNodes).let {
                 CargoWorkspace.deserialize(it).withStdlib(stdlib.crates)
