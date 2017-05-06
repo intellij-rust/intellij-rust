@@ -161,6 +161,6 @@ class Cargo(
     }
 
     private companion object {
-        val COLOR_ACCEPTING_COMMANDS = listOf("bench", "build", "check", "clean", "doc", "install", "publish", "run", "test", "update")
+        val COLOR_ACCEPTING_COMMANDS = listOf("bench", "build", "check", "clean", "clippy", "doc", "install", "publish", "run", "test", "update")
     }
 }
