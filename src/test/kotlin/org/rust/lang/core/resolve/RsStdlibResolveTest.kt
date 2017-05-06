@@ -158,4 +158,12 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test vec indexing`() = stubOnlyResolve("""
+    //- main.rs
+        fn foo(xs: Vec<String>) {
+            xs[0].capacity();
+                 //^ ...libcollections/string.rs
+        }
+    """)
+
 }

@@ -56,6 +56,9 @@ object TyStr : TyPrimitive {
 
 interface TyNumeric : TyPrimitive {
     val isKindWeak: Boolean
+
+    override fun canUnifyWith(other: Ty, project: Project): Boolean
+        = this == other || javaClass == other.javaClass && (other as TyNumeric).isKindWeak
 }
 
 class TyInteger(val kind: Kind, override val isKindWeak: Boolean = false) : TyNumeric {
