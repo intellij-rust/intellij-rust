@@ -9,6 +9,25 @@ import org.rust.lang.core.psi.RsPath
 
 class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
+    fun `test resolve feature gated crate`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "intellij-rust-test"
+            version = "0.1.0"
+            authors = []
+    """)
+
+        dir("src") {
+            rust("main.rs", """
+                extern crate rand;
+
+                fn main() {
+                    let _ = rand::XorShiftRng { x: 0, y: 0, z: 0, w: 0 };
+                }                     //^
+            """)
+        }
+    }.checkReferenceIsResolved<RsPath>("src/main.rs")
+
     fun `test resolve external library`() = buildProject {
         toml("Cargo.toml", """
             [package]
@@ -25,8 +44,6 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
                 extern crate rand;
 
                 use rand::distributions;
-
-                mod foo;
 
                 fn main() {
                     let _ = distributions::normal::Normal::new(0.0, 1.0);

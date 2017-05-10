@@ -5,9 +5,26 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.toolchain.RustToolchain
 
+enum class StdLibType {
+    /**
+     * An indispensable part of the stdlib
+     */
+    ROOT,
+
+    /**
+     * A crate that can be used as a dependency if a corresponding feature is turned on
+     */
+    FEATURE_GATED,
+
+    /**
+     * A dependency that is not visible outside of the stdlib
+     */
+    DEPENDENCY
+}
+
 data class StdLibInfo (
     val name: String,
-    val isRoot: Boolean = false,
+    val type: StdLibType,
     val srcDir: String = "lib" + name,
     val dependencies: List<String> = emptyList()
 )
@@ -17,32 +34,33 @@ object AutoInjectedCrates {
     const val core: String = "core"
     val stdlibCrates = listOf(
         // Roots
-        StdLibInfo(std, dependencies = listOf("alloc_jemalloc", "alloc_system", "panic_abort", "rand",
+        StdLibInfo(std, StdLibType.ROOT, dependencies = listOf("alloc_jemalloc", "alloc_system", "panic_abort", "rand",
             "compiler_builtins", "unwind", "rustc_asan", "rustc_lsan", "rustc_msan", "rustc_tsan",
-            "build_helper"), isRoot = true),
-        StdLibInfo(core, isRoot = true),
-        StdLibInfo("alloc", isRoot = true),
-        StdLibInfo("collections", isRoot = true),
-        StdLibInfo("libc", srcDir = "liblibc/src", isRoot = true),
-        StdLibInfo("panic_unwind", isRoot = true),
-        StdLibInfo("rustc_unicode", isRoot = true),
-        StdLibInfo("std_unicode", isRoot = true),
-        StdLibInfo("test", dependencies = listOf("getopts", "term"), isRoot = true),
+            "build_helper")),
+        StdLibInfo(core, StdLibType.ROOT),
+        StdLibInfo("alloc", StdLibType.ROOT),
+        StdLibInfo("collections", StdLibType.ROOT),
+        StdLibInfo("libc", StdLibType.ROOT, srcDir = "liblibc/src"),
+        StdLibInfo("panic_unwind", type = StdLibType.ROOT),
+        StdLibInfo("rustc_unicode", type = StdLibType.ROOT),
+        StdLibInfo("std_unicode", type = StdLibType.ROOT),
+        StdLibInfo("test", dependencies = listOf("getopts", "term"), type = StdLibType.ROOT),
+        // Feature gated
+        StdLibInfo("alloc_jemalloc", StdLibType.FEATURE_GATED),
+        StdLibInfo("alloc_system", StdLibType.FEATURE_GATED),
+        StdLibInfo("compiler_builtins", StdLibType.FEATURE_GATED),
+        StdLibInfo("getopts", StdLibType.FEATURE_GATED),
+        StdLibInfo("panic_unwind", StdLibType.FEATURE_GATED),
+        StdLibInfo("panic_abort", StdLibType.FEATURE_GATED),
+        StdLibInfo("rand", StdLibType.FEATURE_GATED),
+        StdLibInfo("term", StdLibType.FEATURE_GATED),
+        StdLibInfo("unwind", StdLibType.FEATURE_GATED),
         // Dependencies
-        StdLibInfo("alloc_jemalloc"),
-        StdLibInfo("alloc_system"),
-        StdLibInfo("build_helper", srcDir = "build_helper"),
-        StdLibInfo("compiler_builtins"),
-        StdLibInfo("getopts"),
-        StdLibInfo("panic_unwind"),
-        StdLibInfo("panic_abort"),
-        StdLibInfo("rand"),
-        StdLibInfo("rustc_asan"),
-        StdLibInfo("rustc_lsan"),
-        StdLibInfo("rustc_msan"),
-        StdLibInfo("rustc_tsan"),
-        StdLibInfo("term"),
-        StdLibInfo("unwind")
+        StdLibInfo("build_helper", StdLibType.DEPENDENCY, srcDir = "build_helper"),
+        StdLibInfo("rustc_asan", StdLibType.DEPENDENCY),
+        StdLibInfo("rustc_lsan", StdLibType.DEPENDENCY),
+        StdLibInfo("rustc_msan", StdLibType.DEPENDENCY),
+        StdLibInfo("rustc_tsan", StdLibType.DEPENDENCY)
     )
 }
 
