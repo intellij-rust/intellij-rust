@@ -35,6 +35,7 @@ import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.util.cargoProjectRoot
 
+//BACKCOMPAT: 2017.1 use `AsyncProgramRunner`
 class RsDebugRunner : AsyncGenericProgramRunner<RunnerSettings>() {
     override fun getRunnerId(): String = "RsDebugRunner"
 
@@ -143,11 +144,12 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
                                 }
                             }
                             .mapNotNull { if (it.isJsonObject) it.asJsonObject else null }
-                            .filter { it.getAsJsonPrimitive("reason").asString == "compiler-artifact" }
-                            .filter { "bin" in gson.fromJson(it.getAsJsonObject("target"), CargoMetadata.Target::class.java).kind }
-                            .flatMap { it.getAsJsonArray("filenames").map { it.asString } }
-
-
+                            .mapNotNull { CargoMetadata.Artifact.fromJson(it) }
+                            .filter { artifact ->
+                                val target = artifact.target
+                                "bin" in target.kind || "lib" in target.kind && artifact.profile.test
+                            }
+                            .flatMap { it.filenames }
                     }
 
                     override fun onSuccess() {
