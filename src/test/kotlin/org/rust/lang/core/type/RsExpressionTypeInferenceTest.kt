@@ -255,7 +255,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun testStrRef() = testExpr("""
         fn main() {
             let a = "Hello";
-                       //^ & str
+                       //^ &str
         }
     """)
 
@@ -424,7 +424,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let x = [""];
             x
-        } //^ [& str; 1]
+        } //^ [&str; 1]
     """)
 
     fun `test array expression type2`() = testExpr("""

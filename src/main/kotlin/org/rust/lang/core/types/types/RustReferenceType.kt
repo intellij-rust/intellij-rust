@@ -8,8 +8,7 @@ data class RustReferenceType(val referenced: RustType, val mutable: Boolean = fa
     override fun canUnifyWith(other: RustType, project: Project): Boolean =
         other is RustReferenceType && referenced.canUnifyWith(other.referenced, project)
 
-
-    override fun toString(): String = "${if (mutable) "&mut" else "&"} $referenced"
+    override fun toString(): String = "${if (mutable) "&mut " else "&"}$referenced"
 
     override fun substitute(map: Map<RustTypeParameterType, RustType>): RustType =
         RustReferenceType(referenced.substitute(map), mutable)
