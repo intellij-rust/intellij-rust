@@ -5,9 +5,12 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.Label
 import com.intellij.ui.components.Link
 import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.LayoutBuilder
+import com.intellij.util.PlatformUtils
 import com.intellij.util.text.SemVer
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.RustToolchain
@@ -20,13 +23,15 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
     data class Data(
         val toolchain: RustToolchain?,
         val autoUpdateEnabled: Boolean,
-        val explicitPathToStdlib: String?
+        val explicitPathToStdlib: String?,
+        val useCargoCheckForBuild: Boolean
     ) {
         fun applyTo(settings: RustProjectSettingsService) {
             settings.data = RustProjectSettingsService.Data(
                 toolchain,
                 autoUpdateEnabled,
-                explicitPathToStdlib
+                explicitPathToStdlib,
+                useCargoCheckForBuild
             )
         }
     }
@@ -40,6 +45,8 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
 
     private val pathToStdlibField = pathToDirectoryTextField(this,
         "Select directory with standard library source code")
+
+    private val useCargoCheckForBuildCheckbox = JBCheckBox()
 
     private val downloadStdlibLink = Link("Download via rustup", action = {
         val rustup = RustToolchain(pathToToolchainField.text).rustup(cargoProjectDir)
@@ -63,13 +70,15 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
         get() = Data(
             RustToolchain(pathToToolchainField.text),
             autoUpdateEnabled.isSelected,
-            (if (downloadStdlibLink.isVisible) null else pathToStdlibField.text.blankToNull())
+            (if (downloadStdlibLink.isVisible) null else pathToStdlibField.text.blankToNull()),
+            useCargoCheckForBuildCheckbox.isSelected
         )
         set(value) {
             // https://youtrack.jetbrains.com/issue/KT-16367
             pathToToolchainField.setText(value.toolchain?.location)
             autoUpdateEnabled.isSelected = value.autoUpdateEnabled
             pathToStdlibField.text = value.explicitPathToStdlib ?: ""
+            useCargoCheckForBuildCheckbox.isSelected = value.useCargoCheckForBuild
             update()
         }
 
@@ -77,14 +86,18 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
         data = Data(
             RustToolchain.suggest(),
             true,
-            null
+            null,
+            false
         )
 
         row("Toolchain location:") { pathToToolchainField(CCFlags.pushX) }
         row("Toolchain version:") { toolchainVersion() }
         row("Standard library:") { pathToStdlibField() }
         row { downloadStdlibLink() }
-        row("Watch Cargo.toml:") { autoUpdateEnabled() }
+        row(label = Label("Watch Cargo.toml:")) { autoUpdateEnabled() }
+        if (PlatformUtils.isIntelliJ()) {
+            row("Use cargo check:") { useCargoCheckForBuildCheckbox() }
+        }
     }
 
     @Throws(ConfigurationException::class)

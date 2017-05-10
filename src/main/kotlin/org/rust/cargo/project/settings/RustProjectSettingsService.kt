@@ -10,15 +10,17 @@ interface RustProjectSettingsService {
         val toolchain: RustToolchain?,
         val autoUpdateEnabled: Boolean,
         // Usually, we use `rustup` to find stdlib automatically,
-        // but if once does not use rustup, it's possible to
+        // but if one does not use rustup, it's possible to
         // provide path to stdlib explicitly.
-        val explicitPathToStdlib: String?
+        val explicitPathToStdlib: String?,
+        val useCargoCheckForBuild: Boolean
     )
 
     var data: Data
 
     val toolchain: RustToolchain? get() = data.toolchain
     val autoUpdateEnabled: Boolean get() = data.autoUpdateEnabled
+    val useCargoCheckForBuild: Boolean get() = data.useCargoCheckForBuild
 
     /*
      * Show a dialog for toolchain configuration
