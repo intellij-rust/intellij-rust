@@ -7,8 +7,10 @@ language: java
 jdk: oraclejdk8
 env:
   matrix:
-        # https://github.com/rust-lang-nursery/rustup.rs/issues/1092
-        # - ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT RUST_VERSION=nightly
+# Backwards incompatible change in upstream. Need to wait until it is made b/c, or
+# implement a Java shim without @Override annotation.
+# https://slack-redir.net/link?url=https%3A%2F%2Fgithub.com%2FJetBrains%2Fintellij-community%2Fcommit%2Fa09fc34ef231220b4eb1a091bd2a25bedb25d085%23diff-6180cd1c5f27463e1236dfdea209a49cL51
+#        - ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT RUST_VERSION=nightly
         - ORG_GRADLE_PROJECT_ideaVersion=2017.1              RUST_VERSION=1.13.0
 
 before_script:
