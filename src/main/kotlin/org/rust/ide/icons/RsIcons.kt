@@ -17,7 +17,6 @@ object RsIcons {
     // Logos
 
     val RUST = IconLoader.getIcon("/icons/rust.png")
-    val RUST_BIG = IconLoader.getIcon("/icons/rust-big.png")
 
     // File types
 
