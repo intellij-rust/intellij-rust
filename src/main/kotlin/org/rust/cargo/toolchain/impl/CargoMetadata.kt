@@ -1,5 +1,7 @@
 package org.rust.cargo.toolchain.impl
 
+import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
@@ -107,6 +109,27 @@ object CargoMetadata {
          * id's of dependent packages
          */
         val dependencies: List<String>
+    )
+
+    // The next two things do not belong here,
+    // see `machine_message` in Cargo.
+    data class Artifact(
+        val target: Target,
+        val profile: Profile,
+        val filenames: List<String>
+    ) {
+        companion object {
+            fun fromJson(json: JsonObject): Artifact? {
+                if (json.getAsJsonPrimitive("reason").asString != "compiler-artifact") {
+                    return null
+                }
+                return Gson().fromJson(json, Artifact::class.java)
+            }
+        }
+    }
+
+    data class Profile(
+        val test: Boolean
     )
 
     fun clean(project: Project): CleanCargoMetadata {
