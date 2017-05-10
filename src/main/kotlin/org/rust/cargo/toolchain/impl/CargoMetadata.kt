@@ -151,6 +151,7 @@ object CargoMetadata {
             "example" -> CargoWorkspace.TargetKind.EXAMPLE
             "test" -> CargoWorkspace.TargetKind.TEST
             "bench" -> CargoWorkspace.TargetKind.BENCH
+            "proc-macro" -> CargoWorkspace.TargetKind.LIB
             else ->
                 if (kind.any { it.endsWith("lib") })
                     CargoWorkspace.TargetKind.LIB
