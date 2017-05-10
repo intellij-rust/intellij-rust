@@ -153,7 +153,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
 
     fun testPrimitiveStrRef() = testType("""
         type T = &'static str;
-                 //^ & str
+                 //^ &str
     """)
 
     /**

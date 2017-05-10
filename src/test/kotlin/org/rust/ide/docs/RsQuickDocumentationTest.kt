@@ -256,7 +256,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                    //^
         }
     """, """
-        <pre>variable <b>x</b>: &amp; str</pre>
+        <pre>variable <b>x</b>: &amp;str</pre>
     """)
 
     fun testGenericEnumVariable() = doTest("""
@@ -292,7 +292,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                   //^
         }
     """, """
-        <pre>variable <b>b</b>: (&amp; str, i32)</pre>
+        <pre>variable <b>b</b>: (&amp;str, i32)</pre>
     """)
 
     fun testConditionalBinding() = doTest("""
