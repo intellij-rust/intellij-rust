@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.util.AutoInjectedCrates
+import org.rust.cargo.util.StdLibType
 import org.rust.ide.utils.checkWriteAccessAllowed
 
 /**
@@ -31,7 +32,7 @@ class StandardLibrary private constructor(
 
     data class StdCrate(
         val name: String,
-        val isRoot: Boolean,
+        val type: StdLibType,
         val crateRootUrl: String,
         val packageRootUrl: String,
         val dependencies: Collection<String>
@@ -50,7 +51,7 @@ class StandardLibrary private constructor(
         return myUrls == libraryUrls
     }
 
-    private val rootCrates: List<StdCrate> = crates.filter { it.isRoot }
+    private val rootCrates: List<StdCrate> = crates.filter { it.type == StdLibType.ROOT }
 
     companion object {
         fun fromPath(path: String): StandardLibrary? =
@@ -65,7 +66,7 @@ class StandardLibrary private constructor(
                 val packageSrcDir = srcDir.findFileByRelativePath(libInfo.srcDir)
                 val libFile = packageSrcDir?.findChild("lib.rs")
                 if (packageSrcDir != null && libFile != null)
-                    StdCrate(libInfo.name, libInfo.isRoot, libFile.url, packageSrcDir.url, libInfo.dependencies)
+                    StdCrate(libInfo.name, libInfo.type, libFile.url, packageSrcDir.url, libInfo.dependencies)
                 else
                     null
             }
