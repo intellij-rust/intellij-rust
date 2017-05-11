@@ -1,10 +1,10 @@
-package org.rust.lang.core.types
+package org.rust.lang.core.types.types
 
 import org.rust.lang.core.psi.RsArrayType
 import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsRefLikeType
 import org.rust.lang.core.psi.RsTypeReference
-import org.rust.lang.core.types.types.*
+import org.rust.lang.core.types.Ty
 import java.io.DataInput
 import java.io.DataOutput
 

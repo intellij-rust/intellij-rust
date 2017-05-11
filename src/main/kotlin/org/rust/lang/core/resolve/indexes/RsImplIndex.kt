@@ -15,7 +15,7 @@ import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.Ty
-import org.rust.lang.core.types.RustTypeFingerprint
+import org.rust.lang.core.types.types.RustTypeFingerprint
 import org.rust.lang.core.types.type
 
 class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
