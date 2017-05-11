@@ -12,7 +12,7 @@ data class RustFunctionType(val paramTypes: List<Ty>, val retType: Ty) : Ty {
 
     override fun toString(): String {
         val params = paramTypes.joinToString(", ", "fn(", ")")
-        return if (retType === RustUnitType) params else "$params -> $retType"
+        return if (retType === TyUnit) params else "$params -> $retType"
     }
 
     override fun substitute(map: Map<RustTypeParameterType, Ty>): RustFunctionType =

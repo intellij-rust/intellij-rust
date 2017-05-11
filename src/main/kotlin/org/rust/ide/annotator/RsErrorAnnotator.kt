@@ -20,7 +20,7 @@ import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustReferenceType
-import org.rust.lang.core.types.types.RustUnknownType
+import org.rust.lang.core.types.types.TyUnknown
 
 class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
@@ -683,7 +683,7 @@ private fun RsExpr.isMutable(): Boolean {
             if (letExpr != null && letExpr.eq == null) {
                 return true
             }
-            if (type is RustUnknownType) {
+            if (type is TyUnknown) {
                 return true
             }
             if (declaration is RsEnumVariant) return true

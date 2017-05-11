@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project
 import org.rust.lang.core.types.Ty
 
 
-class RustArrayType(val base: Ty, val size: Int) : RustPrimitiveType {
+class RustArrayType(val base: Ty, val size: Int) : Ty {
 
     override fun canUnifyWith(other: Ty, project: Project): Boolean =
         other is RustArrayType && size == other.size && base.canUnifyWith(other.base, project)

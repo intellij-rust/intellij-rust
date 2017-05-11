@@ -75,8 +75,8 @@ fun findImplsAndTraits(project: Project, ty: Ty): Pair<Collection<RsImplItem>, C
     return when (ty) {
         is RustTypeParameterType -> noImpls to ty.getTraitBoundsTransitively()
         is RustTraitType -> noImpls to ty.trait.flattenHierarchy
-        is RustSliceType, is RustStringSliceType -> RsImplIndex.findImpls(project, ty) to emptyList()
-        is RustPrimitiveType, is RustUnitType, is RustUnknownType -> noImpls to noTraits
+        is RustSliceType, is TyStr -> RsImplIndex.findImpls(project, ty) to emptyList()
+        is TyPrimitive, is TyUnit, is TyUnknown -> noImpls to noTraits
         else -> RsImplIndex.findImpls(project, ty) to emptyList()
     }
 }
@@ -95,13 +95,13 @@ fun findMethodsAndAssocFunctions(project: Project, ty: Ty): List<RsFunction> {
  * Checks whether this particular type is a primitive one
  */
 val Ty.isPrimitive: Boolean get() = when (this) {
-    is RustFloatType,
-    is RustIntegerType,
-    is RustBooleanType,
-    is RustCharacterType,
+    is TyFloat,
+    is TyInteger,
+    is TyBool,
+    is TyPrimitive,
     is RustArrayType,
     is RustSliceType,
-    is RustStringSliceType -> true
+    is TyStr -> true
     else -> false
 }
 

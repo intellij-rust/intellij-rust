@@ -10,7 +10,7 @@ import org.rust.lang.core.types.Ty
 import org.rust.lang.core.types.findImplsAndTraits
 import org.rust.lang.core.types.infer.remapTypeParameters
 import org.rust.lang.core.types.type
-import org.rust.lang.core.types.types.RustUnknownType
+import org.rust.lang.core.types.types.TyUnknown
 
 
 fun findDerefTarget(project: Project, ty: Ty): Ty? {
@@ -28,7 +28,7 @@ fun findIteratorItemType(project: Project, ty: Ty): Ty {
         .find {
             val traitName = it.traitRef?.resolveToTrait?.name
             traitName == "Iterator" || traitName == "IntoIterator"
-        } ?: return RustUnknownType
+        } ?: return TyUnknown
 
     val rawType = lookupAssociatedType(impl, "Item")
     val typeParameterMap = impl.remapTypeParameters(ty.typeParameterValues)
@@ -45,4 +45,4 @@ private val RsTraitItem.isDeref: Boolean get() = langAttribute == "deref"
 
 private fun lookupAssociatedType(impl: RsImplItem, name: String): Ty =
     impl.typeAliasList.find { it.name == name }?.typeReference?.type
-        ?: RustUnknownType
+        ?: TyUnknown

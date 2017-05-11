@@ -7,11 +7,11 @@ import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustReferenceType
 import org.rust.lang.core.types.types.RustStructType
 import org.rust.lang.core.types.types.RustTupleType
-import org.rust.lang.core.types.types.RustUnknownType
+import org.rust.lang.core.types.types.TyUnknown
 
 fun inferPatternBindingType(binding: RsPatBinding, pattern: RsPat, patternType: Ty): Ty {
     val bindings = collectBindings(pattern, patternType)
-    return bindings[binding] ?: RustUnknownType
+    return bindings[binding] ?: TyUnknown
 }
 
 private fun collectBindings(pattern: RsPat, type: Ty): Map<RsPatBinding, Ty> {
@@ -28,7 +28,7 @@ private fun collectBindings(pattern: RsPat, type: Ty): Map<RsPatBinding, Ty> {
             is RsPatTup -> {
                 val types = (type as? RustTupleType)?.types.orEmpty()
                 for ((idx, p) in pat.patList.withIndex()) {
-                    go(p, types.getOrElse(idx, { RustUnknownType }))
+                    go(p, types.getOrElse(idx, { TyUnknown }))
                 }
             }
             is RsPatEnum -> {
@@ -39,7 +39,7 @@ private fun collectBindings(pattern: RsPat, type: Ty): Map<RsPatBinding, Ty> {
                     ?: return
 
                 for ((idx, p) in pat.patList.withIndex()) {
-                    go(p, tupleFields.tupleFieldDeclList.getOrNull(idx)?.typeReference?.type ?: RustUnknownType)
+                    go(p, tupleFields.tupleFieldDeclList.getOrNull(idx)?.typeReference?.type ?: TyUnknown)
                 }
             }
             is RsPatStruct -> {
@@ -57,14 +57,14 @@ private fun collectBindings(pattern: RsPat, type: Ty): Map<RsPatBinding, Ty> {
                         patField.identifier?.text
                             ?: error("`pat_field` may be either `pat_binding` or should contain identifier! ${patField.text}")
                     }
-                    val fieldType = structFields[fieldName]?.typeReference?.type ?: RustUnknownType
+                    val fieldType = structFields[fieldName]?.typeReference?.type ?: TyUnknown
                     patField.pat?.let { go(it, fieldType) }
                     if (fieldPun != null) {
                         bindings[fieldPun] = fieldType
                     }
                 }
             }
-            is RsPatRef -> go(pat.pat, (type as? RustReferenceType)?.referenced ?: RustUnknownType)
+            is RsPatRef -> go(pat.pat, (type as? RustReferenceType)?.referenced ?: TyUnknown)
             else -> {
                 // not yet handled
             }

@@ -11,7 +11,7 @@ fun inferExpressionType(expr: RsExpr): Ty {
     return when (expr) {
         is RsPathExpr -> {
             val target = expr.path.reference.resolve() as? RsNamedElement
-                ?: return RustUnknownType
+                ?: return TyUnknown
 
             inferDeclarationType(target)
         }
@@ -21,13 +21,13 @@ fun inferExpressionType(expr: RsExpr): Ty {
             when (base) {
                 is RsStructItem -> inferStructTypeParameters(expr, base)
                 is RsEnumVariant -> inferEnumTypeParameters(expr, base)
-                else -> RustUnknownType
+                else -> TyUnknown
             }
         }
 
         is RsTupleExpr -> RustTupleType(expr.exprList.map { it.type })
         is RsParenExpr -> expr.expr.type
-        is RsUnitExpr -> RustUnitType
+        is RsUnitExpr -> TyUnit
         is RsCastExpr -> expr.typeReference.type
 
         is RsCallExpr -> {
@@ -40,17 +40,17 @@ fun inferExpressionType(expr: RsExpr): Ty {
                 }
             }
 
-            val calleeType = fn.type as? RustFunctionType ?: return RustUnknownType
+            val calleeType = fn.type as? RustFunctionType ?: return TyUnknown
             calleeType.retType.substitute(mapTypeParameters(calleeType.paramTypes, expr.valueArgumentList.exprList))
         }
 
         is RsMethodCallExpr -> {
             val method = expr.reference.resolve() as? RsFunction
-                ?: return RustUnknownType
+                ?: return TyUnknown
 
             val impl = method.parentOfType<RsImplItem>()
             val typeParameterMap = impl?.remapTypeParameters(expr.expr.type.typeParameterValues).orEmpty()
-            return (method.retType?.typeReference?.type ?: RustUnitType).substitute(typeParameterMap)
+            return (method.retType?.typeReference?.type ?: TyUnit).substitute(typeParameterMap)
         }
 
         is RsFieldExpr -> {
@@ -59,46 +59,46 @@ fun inferExpressionType(expr: RsExpr): Ty {
                 is RsFieldDecl -> field.typeReference?.type
                 is RsTupleFieldDecl -> field.typeReference.type
                 else -> null
-            } ?: RustUnknownType
+            } ?: TyUnknown
             raw.substitute(expr.expr.type.typeParameterValues)
         }
 
         is RsLitExpr -> {
             when (expr.kind) {
-                is RsLiteralKind.Boolean -> RustBooleanType
-                is RsLiteralKind.Integer -> RustIntegerType.fromLiteral(expr.integerLiteral!!)
-                is RsLiteralKind.Float -> RustFloatType.fromLiteral(expr.floatLiteral!!)
-                is RsLiteralKind.String -> RustReferenceType(RustStringSliceType)
-                is RsLiteralKind.Char -> RustCharacterType
-                null -> RustUnknownType
+                is RsLiteralKind.Boolean -> TyBool
+                is RsLiteralKind.Integer -> TyInteger.fromLiteral(expr.integerLiteral!!)
+                is RsLiteralKind.Float -> TyFloat.fromLiteral(expr.floatLiteral!!)
+                is RsLiteralKind.String -> RustReferenceType(TyStr)
+                is RsLiteralKind.Char -> TyChar
+                null -> TyUnknown
             }
         }
 
         is RsBlockExpr -> expr.block.type
-        is RsIfExpr -> if (expr.elseBranch == null) RustUnitType else (expr.block?.type ?: RustUnknownType)
+        is RsIfExpr -> if (expr.elseBranch == null) TyUnit else (expr.block?.type ?: TyUnknown)
     // TODO: handle break with value
-        is RsWhileExpr, is RsLoopExpr, is RsForExpr -> return RustUnitType
+        is RsWhileExpr, is RsLoopExpr, is RsForExpr -> return TyUnit
 
         is RsMatchExpr -> {
             expr.matchBody?.matchArmList.orEmpty().asSequence()
                 .mapNotNull { it.expr?.type }
-                .firstOrNull { it !is RustUnknownType }
-                ?: RustUnknownType
+                .firstOrNull { it !is TyUnknown }
+                ?: TyUnknown
         }
 
         is RsUnaryExpr -> {
-            val base = expr.expr?.type ?: return RustUnknownType
+            val base = expr.expr?.type ?: return TyUnknown
             return when (expr.operatorType) {
                 UnaryOperator.REF -> RustReferenceType(base, mutable = false)
                 UnaryOperator.REF_MUT -> RustReferenceType(base, mutable = true)
                 UnaryOperator.DEREF -> when (base) {
                     is RustReferenceType -> base.referenced
                     is RustPointerType -> base.referenced
-                    else -> RustUnknownType
+                    else -> TyUnknown
                 }
                 UnaryOperator.MINUS -> base
-                UnaryOperator.NOT -> RustBooleanType
-                UnaryOperator.BOX -> RustUnknownType
+                UnaryOperator.NOT -> TyBool
+                UnaryOperator.BOX -> TyUnknown
             }
         }
 
@@ -110,9 +110,9 @@ fun inferExpressionType(expr: RsExpr): Ty {
             RsElementTypes.LT,
             RsElementTypes.GT,
             RsElementTypes.GTEQ,
-            RsElementTypes.LTEQ -> RustBooleanType
+            RsElementTypes.LTEQ -> TyBool
 
-            else -> RustUnknownType
+            else -> TyUnknown
         }
 
         is RsTryExpr -> {
@@ -122,32 +122,32 @@ fun inferExpressionType(expr: RsExpr): Ty {
             // Java uses fully qualified names for this, perhaps we
             // can do this as well? Will be harder to test though :(
             if (base is RustEnumType && base.item.name == "Result")
-                base.typeArguments.firstOrNull() ?: RustUnknownType
+                base.typeArguments.firstOrNull() ?: TyUnknown
             else
-                RustUnknownType
+                TyUnknown
         }
 
         is RsArrayExpr -> inferArrayType(expr)
 
-        else -> RustUnknownType
+        else -> TyUnknown
     }
 }
 
 private fun inferArrayType(expr: RsArrayExpr): Ty {
     val (elementType, size) = if (expr.semicolon != null) {
-        val elementType = expr.initializer?.type ?: return RustSliceType(RustUnknownType)
+        val elementType = expr.initializer?.type ?: return RustSliceType(TyUnknown)
         val size = calculateArraySize(expr.sizeExpr) ?: return RustSliceType(elementType)
         elementType to size
     } else {
         val elements = expr.arrayElements
-        if (elements.isNullOrEmpty()) return RustSliceType(RustUnknownType)
+        if (elements.isNullOrEmpty()) return RustSliceType(TyUnknown)
         // '!!' is safe here because we've just checked that elements isn't null
         elements!![0].type to elements.size
     }
     return RustArrayType(elementType, size)
 }
 
-private val RsBlock.type: Ty get() = expr?.type ?: RustUnitType
+private val RsBlock.type: Ty get() = expr?.type ?: TyUnit
 
 private fun inferStructTypeParameters(o: RsStructLiteral, item: RsStructItem): Ty {
     val baseType = item.type
@@ -183,7 +183,7 @@ private fun inferTypeParametersForFields(
 ): Map<RustTypeParameterType, Ty> {
     val argsMapping = mutableMapOf<RustTypeParameterType, Ty>()
     val fieldTypes = fields.fieldDeclList
-        .associate { it.identifier.text to (it.typeReference?.type ?: RustUnknownType) }
+        .associate { it.identifier.text to (it.typeReference?.type ?: TyUnknown) }
     structLiteralFieldList.forEach { field ->
         field.expr?.let { expr -> addTypeMapping(argsMapping, fieldTypes[field.identifier.text], expr) }
     }
@@ -213,7 +213,7 @@ private fun addTypeMapping(
 ) {
     if (fieldType is RustTypeParameterType) {
         val old = argsMapping[fieldType]
-        if (old == null || old == RustUnknownType || old is RustNumericType && old.isKindWeak)
+        if (old == null || old == TyUnknown || old is TyNumeric && old.isKindWeak)
             argsMapping[fieldType] = expr.type
     }
 }

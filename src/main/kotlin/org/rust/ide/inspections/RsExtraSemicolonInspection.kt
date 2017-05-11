@@ -6,7 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.types.types.RustUnitType
+import org.rust.lang.core.types.types.TyUnit
 import org.rust.lang.core.types.type
 
 /**
@@ -29,7 +29,7 @@ class RsExtraSemicolonInspection : RsLocalInspectionTool() {
 private fun inspect(holder: ProblemsHolder, fn: RsFunction) {
     val block = fn.block ?: return
     val retType = fn.retType?.typeReference ?: return
-    if (retType.type == RustUnitType) return
+    if (retType.type == TyUnit) return
     if (block.expr != null) return
     val lastStatement = block.stmtList.lastOrNull() as? RsExprStmt ?: return
 

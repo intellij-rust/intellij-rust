@@ -15,7 +15,7 @@ fun inferDeclarationType(decl: RsNamedElement): Ty {
         is RsEnumVariant -> RustEnumType(decl.parentEnum)
 
         is RsTypeAlias -> {
-            val t = decl.typeReference?.type ?: RustUnknownType
+            val t = decl.typeReference?.type ?: TyUnknown
             (t as? RustStructOrEnumTypeBase)
                 ?.aliasTypeArguments(decl.typeParameters.map(::RustTypeParameterType)) ?: t
         }
@@ -24,7 +24,7 @@ fun inferDeclarationType(decl: RsNamedElement): Ty {
 
         is RsTraitItem -> RustTraitType(decl)
 
-        is RsConstant -> decl.typeReference?.type ?: RustUnknownType
+        is RsConstant -> decl.typeReference?.type ?: TyUnknown
 
         is RsSelfParameter -> deviseSelfType(decl)
 
@@ -39,16 +39,16 @@ fun inferDeclarationType(decl: RsNamedElement): Ty {
                 is RsValueParameter -> parent.typeReference?.type
                 is RsCondition -> parent.expr.type
                 is RsMatchArm -> parent.parentOfType<RsMatchExpr>()?.expr?.type
-                is RsForExpr -> findIteratorItemType(decl.project, parent.expr?.type ?: RustUnknownType)
+                is RsForExpr -> findIteratorItemType(decl.project, parent.expr?.type ?: TyUnknown)
                 else -> null
-            } ?: RustUnknownType
+            } ?: TyUnknown
 
             inferPatternBindingType(decl, pattern, patternType)
         }
 
         is RsTypeParameter -> RustTypeParameterType(decl)
 
-        else -> RustUnknownType
+        else -> TyUnknown
     }
 }
 
@@ -60,19 +60,19 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
                 return inferTypeReferenceType(single)
             }
             if (ref.typeReferenceList.isEmpty()) {
-                return RustUnitType
+                return TyUnit
             }
             RustTupleType(ref.typeReferenceList.map(::inferTypeReferenceType))
         }
 
         is RsBaseType -> {
-            val path = ref.path ?: return RustUnknownType
+            val path = ref.path ?: return TyUnknown
             if (path.path == null && !path.hasColonColon) {
-                val primitiveType = RustPrimitiveType.fromTypeName(path.referenceName)
+                val primitiveType = TyPrimitive.fromTypeName(path.referenceName)
                 if (primitiveType != null) return primitiveType
             }
             val target = ref.path?.reference?.resolve() as? RsNamedElement
-                ?: return RustUnknownType
+                ?: return TyUnknown
             val typeArguments = path.typeArgumentList?.typeReferenceList.orEmpty()
             inferDeclarationType(target)
                 .withTypeArguments(typeArguments.map { it.type })
@@ -80,7 +80,7 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
         }
 
         is RsRefLikeType -> {
-            val base = ref.typeReference ?: return RustUnknownType
+            val base = ref.typeReference ?: return TyUnknown
             val mutable = ref.isMut
             if (ref.isRef) {
                 RustReferenceType(inferTypeReferenceType(base), mutable)
@@ -88,13 +88,13 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
                 if (ref.mul != null) { //Raw pointers
                     RustPointerType(inferTypeReferenceType(base), mutable)
                 } else {
-                    RustUnknownType
+                    TyUnknown
                 }
             }
         }
 
         is RsArrayType -> {
-            val componentType = ref.typeReference?.type ?: RustUnknownType
+            val componentType = ref.typeReference?.type ?: TyUnknown
             val size = ref.arraySize
             if (size == null) {
                 RustSliceType(componentType)
@@ -103,7 +103,7 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
             }
         }
 
-        else -> RustUnknownType
+        else -> TyUnknown
     }
 }
 
@@ -113,10 +113,10 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
 private fun deviseSelfType(self: RsSelfParameter): Ty {
     val impl = self.parentOfType<RsImplItem>()
     var Self: Ty = if (impl != null) {
-        impl.typeReference?.type ?: return RustUnknownType
+        impl.typeReference?.type ?: return TyUnknown
     } else {
         val trait = self.parentOfType<RsTraitItem>()
-            ?: return RustUnknownType
+            ?: return TyUnknown
         RustTypeParameterType(trait)
     }
 
@@ -135,8 +135,8 @@ private fun deviseFunctionType(fn: RsFunction): RustFunctionType {
         paramTypes += deviseSelfType(self)
     }
 
-    paramTypes += fn.valueParameters.map { it.typeReference?.type ?: RustUnknownType }
+    paramTypes += fn.valueParameters.map { it.typeReference?.type ?: TyUnknown }
 
-    return RustFunctionType(paramTypes, fn.retType?.typeReference?.type ?: RustUnitType)
+    return RustFunctionType(paramTypes, fn.retType?.typeReference?.type ?: TyUnit)
 }
 

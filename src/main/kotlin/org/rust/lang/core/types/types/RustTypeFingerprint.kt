@@ -23,7 +23,7 @@ data class RustTypeFingerprint constructor(
             is RustStructType -> type.item.name?.let(::RustTypeFingerprint)
             is RustEnumType -> type.item.name?.let(::RustTypeFingerprint)
             is RustSliceType -> RustTypeFingerprint("[T]")
-            is RustStringSliceType -> RustTypeFingerprint("str")
+            is TyStr -> RustTypeFingerprint("str")
             is RustReferenceType -> create(type.referenced)
             else -> null
         }
