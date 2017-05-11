@@ -7,8 +7,7 @@ import org.rust.ide.colors.RsColor
 import org.rust.ide.highlight.RsHighlighter
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.ty.isPrimitive
-import org.rust.lang.core.types.type
+import org.rust.lang.core.types.ty.TyPrimitive
 
 // Highlighting logic here should be kept in sync with tags in RustColorSettingsPage
 class RsHighlightingAnnotator : Annotator {
@@ -28,8 +27,7 @@ class RsHighlightingAnnotator : Annotator {
         // These should be highlighted as keywords by the lexer
         if (element is RsPath && (element.self != null || element.`super` != null)) return null
 
-        val parent = element.parent
-        val isPrimitiveType = element is RsPath && parent is RsBaseType && parent.type.isPrimitive
+        val isPrimitiveType = element is RsPath && TyPrimitive.fromPath(element) != null
 
         val color = if (isPrimitiveType) {
             RsColor.PRIMITIVE_TYPE

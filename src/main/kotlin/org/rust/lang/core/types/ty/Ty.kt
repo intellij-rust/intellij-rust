@@ -90,20 +90,6 @@ fun findMethodsAndAssocFunctions(project: Project, ty: Ty): List<RsFunction> {
     return impls.flatMap { it.allMethodsAndAssocFunctions } + traits.flatMap { it.functionList }
 }
 
-/**
- * Checks whether this particular type is a primitive one
- */
-val Ty.isPrimitive: Boolean get() = when (this) {
-    is TyFloat,
-    is TyInteger,
-    is TyBool,
-    is TyPrimitive,
-    is TyArray,
-    is TySlice,
-    is TyStr -> true
-    else -> false
-}
-
 private val RsImplItem.allMethodsAndAssocFunctions: Collection<RsFunction> get() {
     val directlyImplemented = functionList.map { it.name }.toSet()
     val defaulted = traitRef?.resolveToTrait?.functionList.orEmpty().asSequence().filter {
