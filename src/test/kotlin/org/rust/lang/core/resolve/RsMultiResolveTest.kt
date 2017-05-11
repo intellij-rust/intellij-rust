@@ -21,6 +21,29 @@ class RsMultiResolveTest : RsResolveTestBase() {
         }
     """)
 
+    //FIXME: should resolve to a single mut method!
+    fun `test auto deref and deref mut`() = doTest("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+        #[lang = "deref_mut"]
+        trait DerefMut: Deref {  }
+
+        struct A;
+        struct B;
+
+        impl Deref for A { type Target = B; }
+        impl DerefMut for A {  }
+
+        impl B { fn bar(&self) {} }
+        impl B { fn bar(&mut self) {} }
+                   //X
+
+        fn foo(mut a: A) {
+            a.bar()
+            //^
+        }
+    """)
+
     fun testUseMultiReference() = doTest("""
         use m::foo;
               //^

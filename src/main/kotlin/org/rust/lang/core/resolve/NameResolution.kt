@@ -57,11 +57,11 @@ import java.util.*
 
 fun processFieldExprResolveVariants(fieldExpr: RsFieldExpr, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val receiverType = fieldExpr.expr.type
-    for (ty in receiverType.derefTransitively(fieldExpr.project)) {
+    for (ty in receiverType.derefAndDerefMutTransitively(fieldExpr.project)) {
         if (ty !is RustStructType) continue
         if (processFieldDeclarations(ty.item, processor)) return true
     }
-    if (isCompletion && processMethodDeclarationsWithDeref(fieldExpr.project, receiverType, processor)) {
+    if (isCompletion && processMethodDeclarationsWithDerefAndDerefMut(fieldExpr.project, receiverType, processor)) {
         return true
     }
     return false
@@ -74,7 +74,7 @@ fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, proces
 
 fun processMethodCallExprResolveVariants(callExpr: RsMethodCallExpr, processor: RsResolveProcessor): Boolean {
     val receiverType = callExpr.expr.type
-    return processMethodDeclarationsWithDeref(callExpr.project, receiverType, processor)
+    return processMethodDeclarationsWithDerefAndDerefMut(callExpr.project, receiverType, processor)
 }
 
 fun processUseGlobResolveVariants(glob: RsUseGlob, processor: RsResolveProcessor): Boolean {
@@ -295,8 +295,8 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolve
     return false
 }
 
-private fun processMethodDeclarationsWithDeref(project: Project, receiver: RustType, processor: RsResolveProcessor): Boolean {
-    for (ty in receiver.derefTransitively(project)) {
+private fun processMethodDeclarationsWithDerefAndDerefMut(project: Project, receiver: RustType, processor: RsResolveProcessor): Boolean {
+    for (ty in receiver.derefAndDerefMutTransitively(project)) {
         val methods = findMethodsAndAssocFunctions(project, ty).filter { !it.isAssocFn  }
         if (processFnsWithInherentPriority(methods, processor)) return true
     }

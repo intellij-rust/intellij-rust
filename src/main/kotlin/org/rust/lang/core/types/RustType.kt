@@ -6,6 +6,7 @@ import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToTrait
+import org.rust.lang.core.resolve.findDerefMutTarget
 import org.rust.lang.core.resolve.findDerefTarget
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.types.types.*
@@ -53,6 +54,32 @@ fun RustType.derefTransitively(project: Project): Set<RustType> {
             ty.referenced
         } else {
             findDerefTarget(project, ty)
+                ?: break
+        }
+    }
+
+    return result
+}
+
+fun RustType.derefAndDerefMutTransitively(project: Project): Set<RustType> {
+    val result = mutableSetOf<RustType>()
+    result += derefTransitively(project)
+    result += derefMutTransitively(project)
+
+    return result
+}
+
+fun RustType.derefMutTransitively(project: Project): Set<RustType> {
+    val result = mutableSetOf<RustType>()
+
+    var ty = this
+    while (true) {
+        if (ty in result) break
+        result += ty
+        ty = if (ty is RustReferenceType) {
+            ty.referenced
+        } else {
+            findDerefMutTarget(project, ty)
                 ?: break
         }
     }
