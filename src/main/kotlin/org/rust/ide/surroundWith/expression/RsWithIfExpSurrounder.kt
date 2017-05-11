@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.types.types.RustBooleanType
+import org.rust.lang.core.types.ty.TyBool
 import org.rust.lang.core.types.type
 
 class RsWithIfExpSurrounder : RsExpressionSurrounderBase<RsIfExpr>() {
@@ -21,7 +21,7 @@ class RsWithIfExpSurrounder : RsExpressionSurrounderBase<RsIfExpr>() {
         expression.condition!!.expr
 
     override fun isApplicable(expression: RsExpr): Boolean =
-        expression.type == RustBooleanType
+        expression.type == TyBool
 
     override fun doPostprocessAndGetSelectionRange(editor: Editor, expression: PsiElement): TextRange? {
         var block = (expression as? RsIfExpr)?.block ?: return null

@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.psi.ext.valueParameters
 import org.rust.lang.core.types.infer.inferDeclarationType
-import org.rust.lang.core.types.types.RustUnknownType
+import org.rust.lang.core.types.ty.TyUnknown
 
 object CompletionEngine {
     const val KEYWORD_PRIORITY = 10.0
@@ -77,7 +77,7 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
         is RsPatBinding -> base
             .withTypeText(inferDeclarationType(this).let {
                 when (it) {
-                    is RustUnknownType -> ""
+                    is TyUnknown -> ""
                     else -> it.toString()
                 }
             })

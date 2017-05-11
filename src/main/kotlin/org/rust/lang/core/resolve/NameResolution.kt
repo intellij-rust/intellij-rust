@@ -16,7 +16,10 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.types.*
-import org.rust.lang.core.types.types.RustStructType
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyStruct
+import org.rust.lang.core.types.ty.derefTransitively
+import org.rust.lang.core.types.ty.findMethodsAndAssocFunctions
 import java.util.*
 
 // IntelliJ Rust name resolution algorithm.
@@ -58,7 +61,7 @@ import java.util.*
 fun processFieldExprResolveVariants(fieldExpr: RsFieldExpr, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val receiverType = fieldExpr.expr.type
     for (ty in receiverType.derefTransitively(fieldExpr.project)) {
-        if (ty !is RustStructType) continue
+        if (ty !is TyStruct) continue
         if (processFieldDeclarations(ty.item, processor)) return true
     }
     if (isCompletion && processMethodDeclarationsWithDeref(fieldExpr.project, receiverType, processor)) {
@@ -295,7 +298,7 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolve
     return false
 }
 
-private fun processMethodDeclarationsWithDeref(project: Project, receiver: RustType, processor: RsResolveProcessor): Boolean {
+private fun processMethodDeclarationsWithDeref(project: Project, receiver: Ty, processor: RsResolveProcessor): Boolean {
     for (ty in receiver.derefTransitively(project)) {
         val methods = findMethodsAndAssocFunctions(project, ty).filter { !it.isAssocFn  }
         if (processFnsWithInherentPriority(methods, processor)) return true
@@ -303,7 +306,7 @@ private fun processMethodDeclarationsWithDeref(project: Project, receiver: RustT
     return false
 }
 
-private fun processAssociatedFunctionsAndMethodsDeclarations(project: Project, type: RustType, processor: RsResolveProcessor): Boolean {
+private fun processAssociatedFunctionsAndMethodsDeclarations(project: Project, type: Ty, processor: RsResolveProcessor): Boolean {
     val assocFunctions = findMethodsAndAssocFunctions(project, type)
     return processFnsWithInherentPriority(assocFunctions, processor)
 }

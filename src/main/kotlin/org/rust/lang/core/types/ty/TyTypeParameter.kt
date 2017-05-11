@@ -1,4 +1,4 @@
-package org.rust.lang.core.types.types
+package org.rust.lang.core.types.ty
 
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsBaseType
@@ -7,12 +7,10 @@ import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
 import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToTrait
-import org.rust.lang.core.types.RustType
-import org.rust.lang.core.types.findTraits
 
-data class RustTypeParameterType private constructor(
+data class TyTypeParameter private constructor(
     private val parameter: TypeParameter
-) : RustType {
+) : Ty {
 
     constructor(parameter: RsTypeParameter) : this(Named(parameter))
 
@@ -21,14 +19,14 @@ data class RustTypeParameterType private constructor(
     fun getTraitBoundsTransitively(): Collection<RsTraitItem> =
         parameter.bounds.flatMapTo(mutableSetOf()) { it.flattenHierarchy.asSequence() }
 
-    override fun canUnifyWith(other: RustType, project: Project): Boolean {
+    override fun canUnifyWith(other: Ty, project: Project): Boolean {
         if (this == other) return true
 
         val implTraits = findTraits(project, other).toSet()
         return parameter.bounds.all { implTraits.contains(it) }
     }
 
-    override fun substitute(map: Map<RustTypeParameterType, RustType>): RustType = map[this] ?: this
+    override fun substitute(map: Map<TyTypeParameter, Ty>): Ty = map[this] ?: this
 
     override fun toString(): String = parameter.name ?: "<unknown>"
 
