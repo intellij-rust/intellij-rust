@@ -1,10 +1,11 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsEnumItem
+import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.types.ty.isPrimitive
-import org.rust.lang.core.types.type
+import org.rust.lang.core.types.ty.TyPrimitive
 
 class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Unresolved reference"
@@ -12,10 +13,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitPath(o: RsPath) {
-                val p = o.parent
-                val isPrimitiveType = o is RsPath &&
-                    p is RsBaseType &&
-                    p.type.isPrimitive
+                val isPrimitiveType = o is RsPath && TyPrimitive.fromPath(o) != null
 
                 if (isPrimitiveType || o.reference.resolve() != null) return
 

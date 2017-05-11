@@ -2,9 +2,8 @@ package org.rust.lang.core.types.ty
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsArrayExpr
-import org.rust.lang.core.psi.RsLitExpr
-import org.rust.lang.core.psi.RsVariantDiscriminant
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.hasColonColon
 import org.rust.lang.core.psi.ext.sizeExpr
 
 /**
@@ -18,7 +17,11 @@ interface TyPrimitive : Ty {
         this == other
 
     companion object {
-        fun fromTypeName(name: String): TyPrimitive? {
+        fun fromPath(path: RsPath): TyPrimitive? {
+            if (path.hasColonColon) return null
+            if (path.parent !is RsBaseType) return null
+            val name = path.referenceName
+
             val integerKind = TyInteger.Kind.values().find { it.name == name }
             if (integerKind != null) return TyInteger(integerKind)
 

@@ -66,10 +66,10 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
 
         is RsBaseType -> {
             val path = ref.path ?: return TyUnknown
-            if (path.path == null && !path.hasColonColon) {
-                val primitiveType = TyPrimitive.fromTypeName(path.referenceName)
-                if (primitiveType != null) return primitiveType
-            }
+
+            val primitiveType = TyPrimitive.fromPath(path)
+            if (primitiveType != null) return primitiveType
+
             val target = ref.path?.reference?.resolve() as? RsNamedElement
                 ?: return TyUnknown
             val typeArguments = path.typeArgumentList?.typeReferenceList.orEmpty()
