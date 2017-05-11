@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.psi.ext.valueParameters
 import org.rust.lang.core.types.infer.inferDeclarationType
-import org.rust.lang.core.types.types.TyUnknown
+import org.rust.lang.core.types.ty.TyUnknown
 
 object CompletionEngine {
     const val KEYWORD_PRIORITY = 10.0

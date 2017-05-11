@@ -2,12 +2,8 @@ package org.rust.lang.core.types.infer
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsFieldsOwner
-import org.rust.lang.core.types.Ty
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
-import org.rust.lang.core.types.types.RustReferenceType
-import org.rust.lang.core.types.types.RustStructType
-import org.rust.lang.core.types.types.RustTupleType
-import org.rust.lang.core.types.types.TyUnknown
 
 fun inferPatternBindingType(binding: RsPatBinding, pattern: RsPat, patternType: Ty): Ty {
     val bindings = collectBindings(pattern, patternType)
@@ -26,7 +22,7 @@ private fun collectBindings(pattern: RsPat, type: Ty): Map<RsPatBinding, Ty> {
                 pat.pat?.let { go(it, type) }
             }
             is RsPatTup -> {
-                val types = (type as? RustTupleType)?.types.orEmpty()
+                val types = (type as? TyTuple)?.types.orEmpty()
                 for ((idx, p) in pat.patList.withIndex()) {
                     go(p, types.getOrElse(idx, { TyUnknown }))
                 }
@@ -35,7 +31,7 @@ private fun collectBindings(pattern: RsPat, type: Ty): Map<RsPatBinding, Ty> {
                 // the type might actually be either a tuple variant of enum, or a tuple struct.
                 val ref = pat.path.reference.resolve()
                 val tupleFields = (ref as? RsFieldsOwner)?.tupleFields
-                    ?: (type as? RustStructType)?.item?.tupleFields
+                    ?: (type as? TyStruct)?.item?.tupleFields
                     ?: return
 
                 for ((idx, p) in pat.patList.withIndex()) {
@@ -44,7 +40,7 @@ private fun collectBindings(pattern: RsPat, type: Ty): Map<RsPatBinding, Ty> {
             }
             is RsPatStruct -> {
                 val struct = pat.path.reference.resolve() as? RsFieldsOwner
-                    ?: (type as? RustStructType)?.item
+                    ?: (type as? TyStruct)?.item
                     ?: return
 
                 val structFields = struct.blockFields?.fieldDeclList?.associateBy { it.name }.orEmpty()
@@ -64,7 +60,7 @@ private fun collectBindings(pattern: RsPat, type: Ty): Map<RsPatBinding, Ty> {
                     }
                 }
             }
-            is RsPatRef -> go(pat.pat, (type as? RustReferenceType)?.referenced ?: TyUnknown)
+            is RsPatRef -> go(pat.pat, (type as? TyReference)?.referenced ?: TyUnknown)
             else -> {
                 // not yet handled
             }

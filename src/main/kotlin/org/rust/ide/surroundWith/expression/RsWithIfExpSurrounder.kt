@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.types.types.TyBool
+import org.rust.lang.core.types.ty.TyBool
 import org.rust.lang.core.types.type
 
 class RsWithIfExpSurrounder : RsExpressionSurrounderBase<RsIfExpr>() {

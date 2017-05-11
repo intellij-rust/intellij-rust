@@ -7,7 +7,7 @@ import org.rust.ide.inspections.toSnakeCase
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.valueParameters
 import org.rust.lang.core.psi.ext.parentOfType
-import org.rust.lang.core.types.types.TyUnknown
+import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import java.util.*
 

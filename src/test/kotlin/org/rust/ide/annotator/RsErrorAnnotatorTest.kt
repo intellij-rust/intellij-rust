@@ -855,7 +855,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
 
     fun testE0428_RespectsNamespaces() = checkErrors("""
         mod m {
-            // Consts and types are in different namespaces
+            // Consts and ty are in different namespaces
             type  NO_C_DUP = bool;
             const NO_C_DUP: u32 = 10;
 

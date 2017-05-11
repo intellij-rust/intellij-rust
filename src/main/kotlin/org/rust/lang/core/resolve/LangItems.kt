@@ -6,11 +6,11 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.queryAttributes
 import org.rust.lang.core.psi.ext.resolveToTrait
 import org.rust.lang.core.resolve.indexes.RsImplIndex
-import org.rust.lang.core.types.Ty
-import org.rust.lang.core.types.findImplsAndTraits
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.findImplsAndTraits
 import org.rust.lang.core.types.infer.remapTypeParameters
 import org.rust.lang.core.types.type
-import org.rust.lang.core.types.types.TyUnknown
+import org.rust.lang.core.types.ty.TyUnknown
 
 
 fun findDerefTarget(project: Project, ty: Ty): Ty? {

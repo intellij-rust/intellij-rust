@@ -7,7 +7,7 @@ import org.rust.ide.colors.RsColor
 import org.rust.ide.highlight.RsHighlighter
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.isPrimitive
+import org.rust.lang.core.types.ty.isPrimitive
 import org.rust.lang.core.types.type
 
 // Highlighting logic here should be kept in sync with tags in RustColorSettingsPage

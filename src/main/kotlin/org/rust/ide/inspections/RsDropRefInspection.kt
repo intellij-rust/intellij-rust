@@ -6,7 +6,7 @@ import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.types.types.RustReferenceType
+import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.type
 
 /**
@@ -31,7 +31,7 @@ class RsDropRefInspection : RsLocalInspectionTool() {
         if (args.size != 1) return
 
         val arg = args[0]
-        if (arg.type is RustReferenceType) {
+        if (arg.type is TyReference) {
             val fixes = if (arg.text[0] == '&') arrayOf(RemoveRefFix(arg, "Call with owned value")) else emptyArray()
             holder.registerProblem(
                 expr,

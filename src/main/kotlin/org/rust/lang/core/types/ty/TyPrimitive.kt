@@ -1,4 +1,4 @@
-package org.rust.lang.core.types.types
+package org.rust.lang.core.types.ty
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -6,10 +6,9 @@ import org.rust.lang.core.psi.RsArrayExpr
 import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.RsVariantDiscriminant
 import org.rust.lang.core.psi.ext.sizeExpr
-import org.rust.lang.core.types.Ty
 
 /**
- * These are "atomic" types (not type constructors, singletons).
+ * These are "atomic" ty (not type constructors, singletons).
  *
  * Definition intentionally differs from the reference: we don't treat
  * tuples or arrays as primitive.

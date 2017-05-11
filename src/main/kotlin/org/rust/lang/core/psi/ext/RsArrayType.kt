@@ -3,7 +3,7 @@ package org.rust.lang.core.psi.ext
 import org.rust.lang.core.psi.RsArrayType
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsLitExpr
-import org.rust.lang.core.types.types.TyInteger
+import org.rust.lang.core.types.ty.TyInteger
 
 val RsArrayType.arraySize: Int? get() {
     val stub = stub

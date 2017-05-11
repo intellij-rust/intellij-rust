@@ -11,7 +11,8 @@ import org.rust.lang.core.psi.ext.RsTypeBearingItemElement
 import org.rust.lang.core.types.infer.inferDeclarationType
 import org.rust.lang.core.types.infer.inferExpressionType
 import org.rust.lang.core.types.infer.inferTypeReferenceType
-import org.rust.lang.core.types.types.TyUnknown
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyUnknown
 
 
 val RsTypeReference.type: Ty

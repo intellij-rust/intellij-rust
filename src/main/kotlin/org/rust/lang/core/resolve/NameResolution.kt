@@ -16,7 +16,10 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.types.*
-import org.rust.lang.core.types.types.RustStructType
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyStruct
+import org.rust.lang.core.types.ty.derefTransitively
+import org.rust.lang.core.types.ty.findMethodsAndAssocFunctions
 import java.util.*
 
 // IntelliJ Rust name resolution algorithm.
@@ -58,7 +61,7 @@ import java.util.*
 fun processFieldExprResolveVariants(fieldExpr: RsFieldExpr, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val receiverType = fieldExpr.expr.type
     for (ty in receiverType.derefTransitively(fieldExpr.project)) {
-        if (ty !is RustStructType) continue
+        if (ty !is TyStruct) continue
         if (processFieldDeclarations(ty.item, processor)) return true
     }
     if (isCompletion && processMethodDeclarationsWithDeref(fieldExpr.project, receiverType, processor)) {

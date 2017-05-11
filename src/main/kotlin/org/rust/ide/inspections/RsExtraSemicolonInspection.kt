@@ -6,7 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.types.types.TyUnit
+import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.type
 
 /**

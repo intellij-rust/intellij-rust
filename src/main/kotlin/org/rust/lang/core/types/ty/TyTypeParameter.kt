@@ -1,4 +1,4 @@
-package org.rust.lang.core.types.types
+package org.rust.lang.core.types.ty
 
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsBaseType
@@ -7,10 +7,8 @@ import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
 import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToTrait
-import org.rust.lang.core.types.Ty
-import org.rust.lang.core.types.findTraits
 
-data class RustTypeParameterType private constructor(
+data class TyTypeParameter private constructor(
     private val parameter: TypeParameter
 ) : Ty {
 
@@ -28,7 +26,7 @@ data class RustTypeParameterType private constructor(
         return parameter.bounds.all { implTraits.contains(it) }
     }
 
-    override fun substitute(map: Map<RustTypeParameterType, Ty>): Ty = map[this] ?: this
+    override fun substitute(map: Map<TyTypeParameter, Ty>): Ty = map[this] ?: this
 
     override fun toString(): String = parameter.name ?: "<unknown>"
 

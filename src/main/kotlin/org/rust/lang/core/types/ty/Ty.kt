@@ -1,4 +1,4 @@
-package org.rust.lang.core.types
+package org.rust.lang.core.types.ty
 
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsFunction
@@ -8,7 +8,6 @@ import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToTrait
 import org.rust.lang.core.resolve.findDerefTarget
 import org.rust.lang.core.resolve.indexes.RsImplIndex
-import org.rust.lang.core.types.types.*
 
 /**
  * Represents both a type, like `i32` or `S<Foo, Bar>`, as well
@@ -38,12 +37,12 @@ interface Ty {
      * This works for `struct S<T> { field: T }`, when we
      * know the type of `T` and want to find the type of `field`.
      */
-    fun substitute(map: Map<RustTypeParameterType, Ty>): Ty = this
+    fun substitute(map: Map<TyTypeParameter, Ty>): Ty = this
 
     /**
      * Bindings between formal type parameters and actual type arguments.
      */
-    val typeParameterValues: Map<RustTypeParameterType, Ty> get() = emptyMap()
+    val typeParameterValues: Map<TyTypeParameter, Ty> get() = emptyMap()
 
     /**
      * User visible string representation of a type
@@ -58,7 +57,7 @@ fun Ty.derefTransitively(project: Project): Set<Ty> {
     while (true) {
         if (ty in result) break
         result += ty
-        ty = if (ty is RustReferenceType) {
+        ty = if (ty is TyReference) {
             ty.referenced
         } else {
             findDerefTarget(project, ty)
@@ -73,9 +72,9 @@ fun findImplsAndTraits(project: Project, ty: Ty): Pair<Collection<RsImplItem>, C
     val noImpls = emptyList<RsImplItem>()
     val noTraits = emptyList<RsTraitItem>()
     return when (ty) {
-        is RustTypeParameterType -> noImpls to ty.getTraitBoundsTransitively()
-        is RustTraitType -> noImpls to ty.trait.flattenHierarchy
-        is RustSliceType, is TyStr -> RsImplIndex.findImpls(project, ty) to emptyList()
+        is TyTypeParameter -> noImpls to ty.getTraitBoundsTransitively()
+        is TyTraitObject -> noImpls to ty.trait.flattenHierarchy
+        is TySlice, is TyStr -> RsImplIndex.findImpls(project, ty) to emptyList()
         is TyPrimitive, is TyUnit, is TyUnknown -> noImpls to noTraits
         else -> RsImplIndex.findImpls(project, ty) to emptyList()
     }
@@ -99,8 +98,8 @@ val Ty.isPrimitive: Boolean get() = when (this) {
     is TyInteger,
     is TyBool,
     is TyPrimitive,
-    is RustArrayType,
-    is RustSliceType,
+    is TyArray,
+    is TySlice,
     is TyStr -> true
     else -> false
 }
