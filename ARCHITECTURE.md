@@ -180,6 +180,15 @@ These indexes power go to class and go to symbol functionality. They are also
 used during resolve to find the parent module for a file and to get the list of
 `impl`s for a type.
 
+# Type inference
+
+Type inference support is far from being complete. We don't have a Hindley-Milner
+style unification algorithm, and instead use simple bottom-up inference (
+`org.rust.lang.core.types.infer` package). A particularly interesting problem
+is trait matching. To answer the question "does type `X` implement trait `T`?", 
+we try not to look at every `impl` in the world, but to filter potentially 
+interesting `impls` by type. It is handled by `RsImplIndex`.    
+
 ## Stubs
 
 The main use of indexes is for building a stub tree. Stub tree is a condensed
