@@ -10,40 +10,49 @@ import org.rust.lang.core.resolve.findDerefTarget
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.types.types.*
 
-interface RustType {
+/**
+ * Represents both a type, like `i32` or `S<Foo, Bar>`, as well
+ * as an unbound constructor `S`.
+ *
+ * The name `Ty` is short for `Type`, inspired by the Rust
+ * compiler.
+ */
+interface Ty {
     /**
      * Checks if `other` type may be represented as this type.
      *
      * Note that `t1.canUnifyWith(t2)` is not the same as `t2.canUnifyWith(t1)`.
      */
-    fun canUnifyWith(other: RustType, project: Project): Boolean
+    fun canUnifyWith(other: Ty, project: Project): Boolean
 
     /**
-     * Apply positional type arguments to a generic type.
+     * Apply positional type arguments to a type constructors.
      *
      * This works for `some::path::<Type1, Type2>` case.
      */
-    fun withTypeArguments(typeArguments: List<RustType>): RustType = this
+    fun withTypeArguments(typeArguments: List<Ty>): Ty = this
 
     /**
-     * Apply named type arguments to a generic type.
+     * Substitute type parameters for their values
      *
      * This works for `struct S<T> { field: T }`, when we
      * know the type of `T` and want to find the type of `field`.
      */
-    fun substitute(map: Map<RustTypeParameterType, RustType>): RustType = this
+    fun substitute(map: Map<RustTypeParameterType, Ty>): Ty = this
 
     /**
      * Bindings between formal type parameters and actual type arguments.
      */
-    val typeParameterValues: Map<RustTypeParameterType, RustType> get() = emptyMap()
+    val typeParameterValues: Map<RustTypeParameterType, Ty> get() = emptyMap()
 
+    /**
+     * User visible string representation of a type
+     */
     override fun toString(): String
-
 }
 
-fun RustType.derefTransitively(project: Project): Set<RustType> {
-    val result = mutableSetOf<RustType>()
+fun Ty.derefTransitively(project: Project): Set<Ty> {
+    val result = mutableSetOf<Ty>()
 
     var ty = this
     while (true) {
@@ -60,7 +69,7 @@ fun RustType.derefTransitively(project: Project): Set<RustType> {
     return result
 }
 
-fun findImplsAndTraits(project: Project, ty: RustType): Pair<Collection<RsImplItem>, Collection<RsTraitItem>> {
+fun findImplsAndTraits(project: Project, ty: Ty): Pair<Collection<RsImplItem>, Collection<RsTraitItem>> {
     val noImpls = emptyList<RsImplItem>()
     val noTraits = emptyList<RsTraitItem>()
     return when (ty) {
@@ -72,12 +81,12 @@ fun findImplsAndTraits(project: Project, ty: RustType): Pair<Collection<RsImplIt
     }
 }
 
-fun findTraits(project: Project, ty: RustType): Collection<RsTraitItem> {
+fun findTraits(project: Project, ty: Ty): Collection<RsTraitItem> {
     val (impls, traits) = findImplsAndTraits(project, ty)
     return traits + impls.mapNotNull { it.traitRef?.resolveToTrait }
 }
 
-fun findMethodsAndAssocFunctions(project: Project, ty: RustType): List<RsFunction> {
+fun findMethodsAndAssocFunctions(project: Project, ty: Ty): List<RsFunction> {
     val (impls, traits) = findImplsAndTraits(project, ty)
     return impls.flatMap { it.allMethodsAndAssocFunctions } + traits.flatMap { it.functionList }
 }
@@ -85,7 +94,7 @@ fun findMethodsAndAssocFunctions(project: Project, ty: RustType): List<RsFunctio
 /**
  * Checks whether this particular type is a primitive one
  */
-val RustType.isPrimitive: Boolean get() = when (this) {
+val Ty.isPrimitive: Boolean get() = when (this) {
     is RustFloatType,
     is RustIntegerType,
     is RustBooleanType,

@@ -2,7 +2,7 @@ package org.rust.lang.core.types.types
 
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.Ty
 
 
 /**
@@ -10,9 +10,9 @@ import org.rust.lang.core.types.RustType
  * Though you use the same path to denote both traits and trait objects,
  * only the latter are types.
  */
-data class RustTraitType(val trait: RsTraitItem) : RustType {
+data class RustTraitType(val trait: RsTraitItem) : Ty {
 
-    override fun canUnifyWith(other: RustType, project: Project): Boolean =
+    override fun canUnifyWith(other: Ty, project: Project): Boolean =
         other is RsTraitItem && trait == other.trait
 
     override fun toString(): String = trait.name ?: "<anonymous>"

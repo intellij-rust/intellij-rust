@@ -1,11 +1,11 @@
 package org.rust.lang.core.types.types
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.Ty
 
-data class RustFunctionType(val paramTypes: List<RustType>, val retType: RustType) : RustType {
+data class RustFunctionType(val paramTypes: List<Ty>, val retType: Ty) : Ty {
 
-    override fun canUnifyWith(other: RustType, project: Project): Boolean =
+    override fun canUnifyWith(other: Ty, project: Project): Boolean =
         other is RustFunctionType && paramTypes.size == other.paramTypes.size &&
             paramTypes.zip(other.paramTypes).all { (type1, type2) -> type1.canUnifyWith(type2, project) } &&
             retType.canUnifyWith(other.retType, project)
@@ -15,6 +15,6 @@ data class RustFunctionType(val paramTypes: List<RustType>, val retType: RustTyp
         return if (retType === RustUnitType) params else "$params -> $retType"
     }
 
-    override fun substitute(map: Map<RustTypeParameterType, RustType>): RustFunctionType =
+    override fun substitute(map: Map<RustTypeParameterType, Ty>): RustFunctionType =
         RustFunctionType(paramTypes.map { it.substitute(map) }, retType.substitute(map))
 }

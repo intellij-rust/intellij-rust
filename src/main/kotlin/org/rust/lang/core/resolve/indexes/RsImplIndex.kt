@@ -14,7 +14,7 @@ import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
-import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.Ty
 import org.rust.lang.core.types.RustTypeFingerprint
 import org.rust.lang.core.types.type
 
@@ -24,7 +24,7 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
     override fun getKeyDescriptor(): KeyDescriptor<RustTypeFingerprint> = RustTypeFingerprint.KeyDescriptor
 
     companion object {
-        fun findImpls(project: Project, target: RustType): Collection<RsImplItem> {
+        fun findImpls(project: Project, target: Ty): Collection<RsImplItem> {
             fun doFind(): Collection<RsImplItem> {
                 val fingerprint = RustTypeFingerprint.create(target)
                     ?: return emptyList()
@@ -47,7 +47,7 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
             val implsCache = CachedValuesManager.getManager(project)
                 .getCachedValue(project, {
                     CachedValueProvider.Result.create(
-                        ContainerUtil.newConcurrentMap<RustType, Collection<RsImplItem>>(),
+                        ContainerUtil.newConcurrentMap<Ty, Collection<RsImplItem>>(),
                         PsiModificationTracker.MODIFICATION_COUNT
                     )
                 })

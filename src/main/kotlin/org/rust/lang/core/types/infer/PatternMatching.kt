@@ -2,24 +2,24 @@ package org.rust.lang.core.types.infer
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsFieldsOwner
-import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.Ty
 import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustReferenceType
 import org.rust.lang.core.types.types.RustStructType
 import org.rust.lang.core.types.types.RustTupleType
 import org.rust.lang.core.types.types.RustUnknownType
 
-fun inferPatternBindingType(binding: RsPatBinding, pattern: RsPat, patternType: RustType): RustType {
+fun inferPatternBindingType(binding: RsPatBinding, pattern: RsPat, patternType: Ty): Ty {
     val bindings = collectBindings(pattern, patternType)
     return bindings[binding] ?: RustUnknownType
 }
 
-private fun collectBindings(pattern: RsPat, type: RustType): Map<RsPatBinding, RustType> {
-    val bindings: MutableMap<RsPatBinding, RustType> = mutableMapOf()
+private fun collectBindings(pattern: RsPat, type: Ty): Map<RsPatBinding, Ty> {
+    val bindings: MutableMap<RsPatBinding, Ty> = mutableMapOf()
 
     // Here, we try to infer as much types as possible, so we use
     // type only as a hint
-    fun go(pat: RsPat, type: RustType) {
+    fun go(pat: RsPat, type: Ty) {
         when (pat) {
             is RsPatIdent -> {
                 bindings += pat.patBinding to type

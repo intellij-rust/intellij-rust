@@ -3,11 +3,11 @@ package org.rust.lang.core.types.infer
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.findIteratorItemType
-import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.Ty
 import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.*
 
-fun inferDeclarationType(decl: RsNamedElement): RustType {
+fun inferDeclarationType(decl: RsNamedElement): Ty {
     return when (decl) {
         is RsStructItem -> RustStructType(decl)
 
@@ -52,7 +52,7 @@ fun inferDeclarationType(decl: RsNamedElement): RustType {
     }
 }
 
-fun inferTypeReferenceType(ref: RsTypeReference): RustType {
+fun inferTypeReferenceType(ref: RsTypeReference): Ty {
     return when (ref) {
         is RsTupleType -> {
             val single = ref.typeReferenceList.singleOrNull()
@@ -110,9 +110,9 @@ fun inferTypeReferenceType(ref: RsTypeReference): RustType {
 /**
  * Devises type for the given (implicit) self-argument
  */
-private fun deviseSelfType(self: RsSelfParameter): RustType {
+private fun deviseSelfType(self: RsSelfParameter): Ty {
     val impl = self.parentOfType<RsImplItem>()
-    var Self: RustType = if (impl != null) {
+    var Self: Ty = if (impl != null) {
         impl.typeReference?.type ?: return RustUnknownType
     } else {
         val trait = self.parentOfType<RsTraitItem>()
@@ -128,7 +128,7 @@ private fun deviseSelfType(self: RsSelfParameter): RustType {
 }
 
 private fun deviseFunctionType(fn: RsFunction): RustFunctionType {
-    val paramTypes = mutableListOf<RustType>()
+    val paramTypes = mutableListOf<Ty>()
 
     val self = fn.selfParameter
     if (self != null) {

@@ -19,7 +19,7 @@ data class RustTypeFingerprint constructor(
             else -> null
         }
 
-        fun create(type: RustType): RustTypeFingerprint? = when (type) {
+        fun create(type: Ty): RustTypeFingerprint? = when (type) {
             is RustStructType -> type.item.name?.let(::RustTypeFingerprint)
             is RustEnumType -> type.item.name?.let(::RustTypeFingerprint)
             is RustSliceType -> RustTypeFingerprint("[T]")

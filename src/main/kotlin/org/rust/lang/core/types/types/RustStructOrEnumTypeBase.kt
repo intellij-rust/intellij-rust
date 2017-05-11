@@ -3,16 +3,16 @@ package org.rust.lang.core.types.types
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.typeParameters
-import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.Ty
 
-interface RustStructOrEnumTypeBase : RustType {
-    val typeArguments: List<RustType>
+interface RustStructOrEnumTypeBase : Ty {
+    val typeArguments: List<Ty>
 
     val typeArgumentsMapping: List<RustTypeParameterType>
 
     val item: RsStructOrEnumItemElement
 
-    override val typeParameterValues: Map<RustTypeParameterType, RustType>
+    override val typeParameterValues: Map<RustTypeParameterType, Ty>
         get() = item.typeParameters.zip(typeArguments)
             .mapNotNull {
                 val (param, arg) = it
@@ -26,12 +26,12 @@ interface RustStructOrEnumTypeBase : RustType {
             } else "<anonymous>"
         }
 
-    override fun canUnifyWith(other: RustType, project: Project): Boolean =
+    override fun canUnifyWith(other: Ty, project: Project): Boolean =
         other is RustStructOrEnumTypeBase && item == other.item &&
             typeArguments.zip(other.typeArguments).all { (type1, type2) -> type1.canUnifyWith(type2, project)}
 
-    fun aliasTypeArguments(typeArguments: List<RustTypeParameterType>): RustType
+    fun aliasTypeArguments(typeArguments: List<RustTypeParameterType>): Ty
 
-    override fun withTypeArguments(typeArguments: List<RustType>): RustType =
+    override fun withTypeArguments(typeArguments: List<Ty>): Ty =
         substitute(typeArgumentsMapping.withIndex().associate { (i, type) -> type to (typeArguments.getOrNull(i) ?: type) })
 }

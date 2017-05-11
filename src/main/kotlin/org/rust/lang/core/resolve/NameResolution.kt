@@ -295,7 +295,7 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolve
     return false
 }
 
-private fun processMethodDeclarationsWithDeref(project: Project, receiver: RustType, processor: RsResolveProcessor): Boolean {
+private fun processMethodDeclarationsWithDeref(project: Project, receiver: Ty, processor: RsResolveProcessor): Boolean {
     for (ty in receiver.derefTransitively(project)) {
         val methods = findMethodsAndAssocFunctions(project, ty).filter { !it.isAssocFn  }
         if (processFnsWithInherentPriority(methods, processor)) return true
@@ -303,7 +303,7 @@ private fun processMethodDeclarationsWithDeref(project: Project, receiver: RustT
     return false
 }
 
-private fun processAssociatedFunctionsAndMethodsDeclarations(project: Project, type: RustType, processor: RsResolveProcessor): Boolean {
+private fun processAssociatedFunctionsAndMethodsDeclarations(project: Project, type: Ty, processor: RsResolveProcessor): Boolean {
     val assocFunctions = findMethodsAndAssocFunctions(project, type)
     return processFnsWithInherentPriority(assocFunctions, processor)
 }

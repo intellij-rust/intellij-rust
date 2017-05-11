@@ -1,10 +1,10 @@
 package org.rust.lang.core.types.types
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.Ty
 
-interface RustPrimitiveType : RustType {
-    override fun canUnifyWith(other: RustType, project: Project): Boolean =
+interface RustPrimitiveType : Ty {
+    override fun canUnifyWith(other: Ty, project: Project): Boolean =
         this == other
 
     companion object {

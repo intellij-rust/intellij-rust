@@ -6,14 +6,14 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.queryAttributes
 import org.rust.lang.core.psi.ext.resolveToTrait
 import org.rust.lang.core.resolve.indexes.RsImplIndex
-import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.Ty
 import org.rust.lang.core.types.findImplsAndTraits
 import org.rust.lang.core.types.infer.remapTypeParameters
 import org.rust.lang.core.types.type
 import org.rust.lang.core.types.types.RustUnknownType
 
 
-fun findDerefTarget(project: Project, ty: RustType): RustType? {
+fun findDerefTarget(project: Project, ty: Ty): Ty? {
     val impls = RsImplIndex.findImpls(project, ty)
     for (impl in impls) {
         val trait = impl.traitRef?.resolveToTrait ?: continue
@@ -23,7 +23,7 @@ fun findDerefTarget(project: Project, ty: RustType): RustType? {
     return null
 }
 
-fun findIteratorItemType(project: Project, ty: RustType): RustType {
+fun findIteratorItemType(project: Project, ty: Ty): Ty {
     val impl = findImplsAndTraits(project, ty).first
         .find {
             val traitName = it.traitRef?.resolveToTrait?.name
@@ -43,6 +43,6 @@ private val RsTraitItem.langAttribute: String? get() {
 
 private val RsTraitItem.isDeref: Boolean get() = langAttribute == "deref"
 
-private fun lookupAssociatedType(impl: RsImplItem, name: String): RustType =
+private fun lookupAssociatedType(impl: RsImplItem, name: String): Ty =
     impl.typeAliasList.find { it.name == name }?.typeReference?.type
         ?: RustUnknownType

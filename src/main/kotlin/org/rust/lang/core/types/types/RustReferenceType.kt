@@ -1,15 +1,15 @@
 package org.rust.lang.core.types.types
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.types.RustType
+import org.rust.lang.core.types.Ty
 
-data class RustReferenceType(val referenced: RustType, val mutable: Boolean = false) : RustType {
+data class RustReferenceType(val referenced: Ty, val mutable: Boolean = false) : Ty {
 
-    override fun canUnifyWith(other: RustType, project: Project): Boolean =
+    override fun canUnifyWith(other: Ty, project: Project): Boolean =
         other is RustReferenceType && referenced.canUnifyWith(other.referenced, project)
 
     override fun toString(): String = "${if (mutable) "&mut " else "&"}$referenced"
 
-    override fun substitute(map: Map<RustTypeParameterType, RustType>): RustType =
+    override fun substitute(map: Map<RustTypeParameterType, Ty>): Ty =
         RustReferenceType(referenced.substitute(map), mutable)
 }
