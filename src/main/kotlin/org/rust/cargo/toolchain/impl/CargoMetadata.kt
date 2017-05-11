@@ -91,7 +91,20 @@ object CargoMetadata {
          * Path to the root module of the crate (aka crate root)
          */
         val src_path: String
-    )
+    ) {
+        val cleanKind: CargoWorkspace.TargetKind get() = when (kind.singleOrNull()) {
+            "bin" -> CargoWorkspace.TargetKind.BIN
+            "example" -> CargoWorkspace.TargetKind.EXAMPLE
+            "test" -> CargoWorkspace.TargetKind.TEST
+            "bench" -> CargoWorkspace.TargetKind.BENCH
+            "proc-macro" -> CargoWorkspace.TargetKind.LIB
+            else ->
+                if (kind.any { it.endsWith("lib") })
+                    CargoWorkspace.TargetKind.LIB
+                else
+                    CargoWorkspace.TargetKind.UNKNOWN
+        }
+    }
 
 
     /**
@@ -169,22 +182,10 @@ object CargoMetadata {
     }
 
     private fun Target.clean(root: VirtualFile): CleanCargoMetadata.Target? {
-        val kind = when (kind.singleOrNull()) {
-            "bin" -> CargoWorkspace.TargetKind.BIN
-            "example" -> CargoWorkspace.TargetKind.EXAMPLE
-            "test" -> CargoWorkspace.TargetKind.TEST
-            "bench" -> CargoWorkspace.TargetKind.BENCH
-            "proc-macro" -> CargoWorkspace.TargetKind.LIB
-            else ->
-                if (kind.any { it.endsWith("lib") })
-                    CargoWorkspace.TargetKind.LIB
-                else
-                    CargoWorkspace.TargetKind.UNKNOWN
-        }
 
         val mainFile = root.findFileByMaybeRelativePath(src_path)
 
-        return mainFile?.let { CleanCargoMetadata.Target(it.url, name, kind) }
+        return mainFile?.let { CleanCargoMetadata.Target(it.url, name, cleanKind) }
     }
 }
 

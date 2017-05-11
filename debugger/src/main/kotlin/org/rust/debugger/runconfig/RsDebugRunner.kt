@@ -1,6 +1,5 @@
 package org.rust.debugger.runconfig
 
-import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.google.gson.JsonSyntaxException
 import com.intellij.execution.RunContentExecutor
@@ -28,6 +27,7 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
@@ -134,7 +134,6 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
                         }
 
                         val parser = JsonParser()
-                        val gson = Gson()
                         result = output.stdoutLines
                             .mapNotNull {
                                 try {
@@ -145,9 +144,9 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
                             }
                             .mapNotNull { if (it.isJsonObject) it.asJsonObject else null }
                             .mapNotNull { CargoMetadata.Artifact.fromJson(it) }
-                            .filter { artifact ->
-                                val target = artifact.target
-                                "bin" in target.kind || "lib" in target.kind && artifact.profile.test
+                            .filter { (target, profile) ->
+                                target.cleanKind == CargoWorkspace.TargetKind.BIN
+                                    || (target.cleanKind == CargoWorkspace.TargetKind.LIB && profile.test)
                             }
                             .flatMap { it.filenames }
                     }
