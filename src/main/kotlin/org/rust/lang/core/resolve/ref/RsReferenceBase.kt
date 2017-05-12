@@ -6,11 +6,11 @@ import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.PsiPolyVariantReferenceBase
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.ResolveCache
-import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
-import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.elementType
 
@@ -19,11 +19,9 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
 ) : PsiPolyVariantReferenceBase<T>(element),
     RsReference {
 
-    override fun resolve(): RsCompositeElement? {
-        return super.resolve() as? RsCompositeElement
-    }
+    abstract protected fun resolveInner(): List<RsCompositeElement>
 
-    abstract fun resolveInner(): List<RsCompositeElement>
+    override fun resolve(): RsCompositeElement? = super.resolve() as? RsCompositeElement
 
     final override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
         ResolveCache.getInstance(element.project)
