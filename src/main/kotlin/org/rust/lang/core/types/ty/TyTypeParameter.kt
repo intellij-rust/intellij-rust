@@ -26,7 +26,7 @@ data class TyTypeParameter private constructor(
         return parameter.bounds.all { implTraits.contains(it) }
     }
 
-    override fun substitute(map: Map<TyTypeParameter, Ty>): Ty = map[this] ?: this
+    override fun substitute(map: TypeArguments): Ty = map[this] ?: this
 
     override fun toString(): String = parameter.name ?: "<unknown>"
 

@@ -9,6 +9,9 @@ import org.rust.lang.core.psi.ext.resolveToTrait
 import org.rust.lang.core.resolve.findDerefTarget
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 
+typealias TypeArguments = Map<TyTypeParameter, Ty>
+val emptyTypeArguments: TypeArguments = emptyMap()
+
 /**
  * Represents both a type, like `i32` or `S<Foo, Bar>`, as well
  * as an unbound constructor `S`.
@@ -29,7 +32,7 @@ interface Ty {
      *
      * This works for `some::path::<Type1, Type2>` case.
      */
-    fun withTypeArguments(typeArguments: List<Ty>): Ty = this
+    fun applyTypeArguments(typeArguments: List<Ty>): Ty = this
 
     /**
      * Substitute type parameters for their values
@@ -37,12 +40,12 @@ interface Ty {
      * This works for `struct S<T> { field: T }`, when we
      * know the type of `T` and want to find the type of `field`.
      */
-    fun substitute(map: Map<TyTypeParameter, Ty>): Ty = this
+    fun substitute(map: TypeArguments): Ty = this
 
     /**
      * Bindings between formal type parameters and actual type arguments.
      */
-    val typeParameterValues: Map<TyTypeParameter, Ty> get() = emptyMap()
+    val typeParameterValues: TypeArguments get() = emptyTypeArguments
 
     /**
      * User visible string representation of a type
