@@ -10,22 +10,25 @@ import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RustPsiImplUtil
 import org.rust.lang.core.stubs.RsTraitItemStub
+import org.rust.lang.core.types.BoundElement
 import org.rust.lang.utils.filterIsInstanceQuery
 import org.rust.lang.utils.filterQuery
 import org.rust.lang.utils.mapQuery
 import javax.swing.Icon
 
-val RsTraitItem.superTraits: Sequence<RsTraitItem> get() {
+val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>> get() {
     val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence()
-    return bounds.mapNotNull { it.bound.traitRef?.resolveToTrait }
+    return bounds.mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
 }
 
-val RsTraitItem.flattenHierarchy: Collection<RsTraitItem> get() {
-    val result = mutableSetOf<RsTraitItem>()
-    fun dfs(trait: RsTraitItem) {
-        if (trait in result) return
-        result += trait
-        trait.superTraits.forEach(::dfs)
+val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitItem>> get() {
+    val result = mutableSetOf<BoundElement<RsTraitItem>>()
+    val visited = mutableSetOf<RsTraitItem>()
+    fun dfs(boundTrait: BoundElement<RsTraitItem>) {
+        if (boundTrait.element in visited) return
+        visited += boundTrait.element
+        result += boundTrait
+        boundTrait.element.superTraits.forEach(::dfs)
     }
     dfs(this)
 

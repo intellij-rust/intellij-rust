@@ -77,8 +77,8 @@ fun findImplsAndTraits(project: Project, ty: Ty): Pair<Collection<BoundElement<R
     val noImpls = emptyList<BoundElement<RsImplItem>>()
     val noTraits = emptyList<BoundElement<RsTraitItem>>()
     return when (ty) {
-        is TyTypeParameter -> noImpls to ty.getTraitBoundsTransitively().map { BoundElement(it) }
-        is TyTraitObject -> noImpls to ty.trait.flattenHierarchy.map { BoundElement(it) }
+        is TyTypeParameter -> noImpls to ty.getTraitBoundsTransitively()
+        is TyTraitObject -> noImpls to BoundElement(ty.trait).flattenHierarchy
 
     //  XXX: TyStr is TyPrimitive, but we want to handle it separately
         is TyStr -> RsImplIndex.findImpls(project, ty).map { impl -> BoundElement(impl) } to noTraits
@@ -98,11 +98,11 @@ fun findTraits(project: Project, ty: Ty): Collection<RsTraitItem> {
 fun findMethodsAndAssocFunctions(project: Project, ty: Ty): List<BoundElement<RsFunction>> {
     val (impls, traits) = findImplsAndTraits(project, ty)
     val result = mutableListOf<BoundElement<RsFunction>>()
-    for (boundImpl in impls) {
-        boundImpl.element.allMethodsAndAssocFunctions.mapTo(result) { BoundElement(it, boundImpl.typeArguments) }
+    for ((impl, typeArguments) in impls) {
+        impl.allMethodsAndAssocFunctions.mapTo(result) { BoundElement(it, typeArguments) }
     }
-    traits.flatMapTo(result) { boundTrait ->
-        boundTrait.element.functionList.map { BoundElement(it, boundTrait.typeArguments) }
+    traits.flatMapTo(result) { (trait, typeArguments) ->
+        trait.functionList.map { BoundElement(it, typeArguments) }
     }
     return result
 }
