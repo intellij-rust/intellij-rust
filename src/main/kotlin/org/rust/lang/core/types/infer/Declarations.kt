@@ -74,7 +74,7 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
                 ?: return TyUnknown
             val typeArguments = path.typeArgumentList?.typeReferenceList.orEmpty()
             inferDeclarationType(target)
-                .withTypeArguments(typeArguments.map { it.type })
+                .applyTypeArguments(typeArguments.map { it.type })
 
         }
 

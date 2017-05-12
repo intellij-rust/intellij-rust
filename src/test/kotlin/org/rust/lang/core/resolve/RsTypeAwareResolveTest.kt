@@ -880,4 +880,18 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test propagates trait type arguments`() = checkByCode("""
+        trait I<T> {
+            fn foo(&self) -> T;
+        }
+
+        struct S;
+        impl S {
+            fn bar(&self) {}
+        }     //X
+
+        fn baz<T: I<S>>(t: T) {
+            t.foo().bar()
+        }         //^
+    """)
 }

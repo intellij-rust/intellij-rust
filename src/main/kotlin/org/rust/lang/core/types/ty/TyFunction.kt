@@ -14,6 +14,6 @@ data class TyFunction(val paramTypes: List<Ty>, val retType: Ty) : Ty {
         return if (retType === TyUnit) params else "$params -> $retType"
     }
 
-    override fun substitute(map: Map<TyTypeParameter, Ty>): TyFunction =
+    override fun substitute(map: TypeArguments): TyFunction =
         TyFunction(paramTypes.map { it.substitute(map) }, retType.substitute(map))
 }

@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsFieldExpr
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.resolve.*
+import org.rust.lang.core.types.BoundElement
 
 class RsFieldExprReferenceImpl(
     fieldExpr: RsFieldExpr
@@ -17,7 +18,7 @@ class RsFieldExprReferenceImpl(
             processFieldExprResolveVariants(element, true, it)
         }
 
-    override fun resolveInner(): List<RsCompositeElement> =
+    override fun resolveInner(): List<BoundElement<RsCompositeElement>> =
         collectResolveVariants(element.referenceName) {
             processFieldExprResolveVariants(element, false, it)
         }

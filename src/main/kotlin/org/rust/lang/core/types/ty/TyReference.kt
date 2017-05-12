@@ -9,6 +9,6 @@ data class TyReference(val referenced: Ty, val mutable: Boolean = false) : Ty {
 
     override fun toString(): String = "${if (mutable) "&mut " else "&"}$referenced"
 
-    override fun substitute(map: Map<TyTypeParameter, Ty>): Ty =
+    override fun substitute(map: TypeArguments): Ty =
         TyReference(referenced.substitute(map), mutable)
 }

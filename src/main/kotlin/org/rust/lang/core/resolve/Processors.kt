@@ -4,8 +4,10 @@ import com.intellij.codeInsight.lookup.LookupElement
 import org.rust.lang.core.completion.createLookupElement
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.psi.ext.allAttributes
 import org.rust.lang.core.psi.ext.isTest
+import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.ty.TypeArguments
+import org.rust.lang.core.types.ty.emptyTypeArguments
 
 /**
  * ScopeEntry is some PsiElement visible in some code scope.
@@ -17,6 +19,7 @@ import org.rust.lang.core.psi.ext.isTest
 interface ScopeEntry {
     val name: String
     val element: RsCompositeElement?
+    val typeArguments: TypeArguments get() = emptyTypeArguments
 }
 
 /**
@@ -38,14 +41,14 @@ enum class ScopeEvent : ScopeEntry {
  */
 typealias RsResolveProcessor = (ScopeEntry) -> Boolean
 
-fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Unit): List<RsCompositeElement> {
-    val result = mutableListOf<RsCompositeElement>()
+fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Unit): List<BoundElement<RsCompositeElement>> {
+    val result = mutableListOf<BoundElement<RsCompositeElement>>()
     f { e ->
         if (e == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@f true
 
         if (e.name == referenceName) {
             val element = e.element ?: return@f false
-            result += element
+            result += BoundElement(element, e.typeArguments)
         }
         false
     }

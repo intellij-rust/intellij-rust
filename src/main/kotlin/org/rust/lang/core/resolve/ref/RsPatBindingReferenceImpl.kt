@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.resolve.*
+import org.rust.lang.core.types.BoundElement
 
 
 class RsPatBindingReferenceImpl(
@@ -13,7 +14,7 @@ class RsPatBindingReferenceImpl(
 
     override val RsPatBinding.referenceAnchor: PsiElement get() = referenceNameElement
 
-    override fun resolveInner(): List<RsCompositeElement> =
+    override fun resolveInner(): List<BoundElement<RsCompositeElement>> =
         collectResolveVariants(element.referenceName) { processPatBindingResolveVariants(element, false, it) }
 
     override fun getVariants(): Array<out Any> =

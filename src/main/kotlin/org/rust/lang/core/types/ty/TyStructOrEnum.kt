@@ -14,7 +14,7 @@ interface TyStructOrEnumBase : Ty {
 
     val item: RsStructOrEnumItemElement
 
-    override val typeParameterValues: Map<TyTypeParameter, Ty>
+    override val typeParameterValues: TypeArguments
         get() = item.typeParameters.zip(typeArguments)
             .mapNotNull {
                 val (param, arg) = it
@@ -34,7 +34,7 @@ interface TyStructOrEnumBase : Ty {
 
     fun aliasTypeArguments(typeArguments: List<TyTypeParameter>): Ty
 
-    override fun withTypeArguments(typeArguments: List<Ty>): Ty =
+    override fun applyTypeArguments(typeArguments: List<Ty>): Ty =
         substitute(typeArgumentsMapping.withIndex().associate { (i, type) -> type to (typeArguments.getOrNull(i) ?: type) })
 }
 
@@ -48,13 +48,13 @@ class TyStruct(
 
     override fun toString(): String = fullName
 
-    override fun withTypeArguments(typeArguments: List<Ty>): TyStruct =
-        super.withTypeArguments(typeArguments) as TyStruct
+    override fun applyTypeArguments(typeArguments: List<Ty>): TyStruct =
+        super.applyTypeArguments(typeArguments) as TyStruct
 
     override fun aliasTypeArguments(typeArguments: List<TyTypeParameter>): TyStruct =
         TyStruct(item, typeArguments, this.typeArguments)
 
-    override fun substitute(map: Map<TyTypeParameter, Ty>): TyStruct =
+    override fun substitute(map: TypeArguments): TyStruct =
         TyStruct(item, typeArgumentsMapping, typeArguments.map { it.substitute(map) })
 
     override fun equals(other: Any?): Boolean =
@@ -74,13 +74,13 @@ class TyEnum(
 
     override fun toString(): String = fullName
 
-    override fun withTypeArguments(typeArguments: List<Ty>): TyEnum =
-        super.withTypeArguments(typeArguments) as TyEnum
+    override fun applyTypeArguments(typeArguments: List<Ty>): TyEnum =
+        super.applyTypeArguments(typeArguments) as TyEnum
 
     override fun aliasTypeArguments(typeArguments: List<TyTypeParameter>): TyEnum =
         TyEnum(item, typeArguments, this.typeArguments)
 
-    override fun substitute(map: Map<TyTypeParameter, Ty>): TyEnum =
+    override fun substitute(map: TypeArguments): TyEnum =
         TyEnum(item, typeArgumentsMapping, typeArguments.map { it.substitute(map) })
 
     override fun equals(other: Any?): Boolean =
