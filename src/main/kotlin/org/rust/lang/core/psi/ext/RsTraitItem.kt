@@ -16,11 +16,6 @@ import org.rust.lang.utils.filterQuery
 import org.rust.lang.utils.mapQuery
 import javax.swing.Icon
 
-val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>> get() {
-    val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence()
-    return bounds.mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
-}
-
 val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitItem>> get() {
     val result = mutableSetOf<BoundElement<RsTraitItem>>()
     val visited = mutableSetOf<RsTraitItem>()
@@ -40,6 +35,11 @@ fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
         .mapQuery { it.element.parent?.parent }
         .filterIsInstanceQuery<RsImplItem>()
         .filterQuery(Condition { it.typeReference != null })
+}
+
+private val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>> get() {
+    val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence()
+    return bounds.mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
 }
 
 abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>, RsTraitItem {
