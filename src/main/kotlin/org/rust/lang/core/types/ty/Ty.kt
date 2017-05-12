@@ -73,31 +73,37 @@ fun Ty.derefTransitively(project: Project): Set<Ty> {
     return result
 }
 
-fun findImplsAndTraits(project: Project, ty: Ty): Pair<Collection<RsImplItem>, Collection<RsTraitItem>> {
-    val noImpls = emptyList<RsImplItem>()
-    val noTraits = emptyList<RsTraitItem>()
+fun findImplsAndTraits(project: Project, ty: Ty): Pair<Collection<BoundElement<RsImplItem>>, Collection<BoundElement<RsTraitItem>>> {
+    val noImpls = emptyList<BoundElement<RsImplItem>>()
+    val noTraits = emptyList<BoundElement<RsTraitItem>>()
     return when (ty) {
-        is TyTypeParameter -> noImpls to ty.getTraitBoundsTransitively()
-        is TyTraitObject -> noImpls to ty.trait.flattenHierarchy
-        is TySlice, is TyStr -> RsImplIndex.findImpls(project, ty) to emptyList()
+        is TyTypeParameter -> noImpls to ty.getTraitBoundsTransitively().map { BoundElement(it) }
+        is TyTraitObject -> noImpls to ty.trait.flattenHierarchy.map { BoundElement(it) }
+
+    //  XXX: TyStr is TyPrimitive, but we want to handle it separately
+        is TyStr -> RsImplIndex.findImpls(project, ty).map { impl -> BoundElement(impl) } to noTraits
         is TyPrimitive, is TyUnit, is TyUnknown -> noImpls to noTraits
-        else -> RsImplIndex.findImpls(project, ty) to emptyList()
+
+        else -> RsImplIndex.findImpls(project, ty).map { impl ->
+            BoundElement(impl, impl.remapTypeParameters(ty.typeParameterValues).orEmpty())
+        } to noTraits
     }
 }
 
 fun findTraits(project: Project, ty: Ty): Collection<RsTraitItem> {
     val (impls, traits) = findImplsAndTraits(project, ty)
-    return traits + impls.mapNotNull { it.traitRef?.resolveToTrait }
+    return traits.map { it.element } + impls.mapNotNull { it.element.traitRef?.resolveToTrait }
 }
 
 fun findMethodsAndAssocFunctions(project: Project, ty: Ty): List<BoundElement<RsFunction>> {
     val (impls, traits) = findImplsAndTraits(project, ty)
     val result = mutableListOf<BoundElement<RsFunction>>()
-    for (impl in impls) {
-        val typeArguments = impl.remapTypeParameters(ty.typeParameterValues).orEmpty()
-        impl.allMethodsAndAssocFunctions.mapTo(result) { BoundElement(it, typeArguments) }
+    for (boundImpl in impls) {
+        boundImpl.element.allMethodsAndAssocFunctions.mapTo(result) { BoundElement(it, boundImpl.typeArguments) }
     }
-    traits.flatMapTo(result) { it.functionList.map { BoundElement(it) } }
+    traits.flatMapTo(result) { boundTrait ->
+        boundTrait.element.functionList.map { BoundElement(it, boundTrait.typeArguments) }
+    }
     return result
 }
 

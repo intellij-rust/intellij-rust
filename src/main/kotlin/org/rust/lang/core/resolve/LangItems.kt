@@ -25,14 +25,13 @@ fun findDerefTarget(project: Project, ty: Ty): Ty? {
 
 fun findIteratorItemType(project: Project, ty: Ty): Ty {
     val impl = findImplsAndTraits(project, ty).first
-        .find {
-            val traitName = it.traitRef?.resolveToTrait?.name
+        .find { boundImpl ->
+            val traitName = boundImpl.element.traitRef?.resolveToTrait?.name
             traitName == "Iterator" || traitName == "IntoIterator"
         } ?: return TyUnknown
 
-    val rawType = lookupAssociatedType(impl, "Item")
-    val typeParameterMap = impl.remapTypeParameters(ty.typeParameterValues)
-    return rawType.substitute(typeParameterMap)
+    val rawType = lookupAssociatedType(impl.element, "Item")
+    return rawType.substitute(impl.typeArguments)
 }
 
 
