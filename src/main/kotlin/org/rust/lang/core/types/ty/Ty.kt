@@ -8,6 +8,8 @@ import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToTrait
 import org.rust.lang.core.resolve.findDerefTarget
 import org.rust.lang.core.resolve.indexes.RsImplIndex
+import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.infer.remapTypeParameters
 
 typealias TypeArguments = Map<TyTypeParameter, Ty>
 val emptyTypeArguments: TypeArguments = emptyMap()
@@ -88,9 +90,15 @@ fun findTraits(project: Project, ty: Ty): Collection<RsTraitItem> {
     return traits + impls.mapNotNull { it.traitRef?.resolveToTrait }
 }
 
-fun findMethodsAndAssocFunctions(project: Project, ty: Ty): List<RsFunction> {
+fun findMethodsAndAssocFunctions(project: Project, ty: Ty): List<BoundElement<RsFunction>> {
     val (impls, traits) = findImplsAndTraits(project, ty)
-    return impls.flatMap { it.allMethodsAndAssocFunctions } + traits.flatMap { it.functionList }
+    val result = mutableListOf<BoundElement<RsFunction>>()
+    for (impl in impls) {
+        val typeArguments = impl.remapTypeParameters(ty.typeParameterValues).orEmpty()
+        impl.allMethodsAndAssocFunctions.mapTo(result) { BoundElement(it, typeArguments) }
+    }
+    traits.flatMapTo(result) { it.functionList.map { BoundElement(it) } }
+    return result
 }
 
 private val RsImplItem.allMethodsAndAssocFunctions: Collection<RsFunction> get() {

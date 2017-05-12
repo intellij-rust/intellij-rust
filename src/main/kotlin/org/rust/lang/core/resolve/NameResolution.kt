@@ -16,10 +16,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.types.*
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyStruct
-import org.rust.lang.core.types.ty.derefTransitively
-import org.rust.lang.core.types.ty.findMethodsAndAssocFunctions
+import org.rust.lang.core.types.ty.*
 import java.util.*
 
 // IntelliJ Rust name resolution algorithm.
@@ -300,7 +297,7 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolve
 
 private fun processMethodDeclarationsWithDeref(project: Project, receiver: Ty, processor: RsResolveProcessor): Boolean {
     for (ty in receiver.derefTransitively(project)) {
-        val methods = findMethodsAndAssocFunctions(project, ty).filter { !it.isAssocFn  }
+        val methods = findMethodsAndAssocFunctions(project, ty).filter { !it.element.isAssocFn  }
         if (processFnsWithInherentPriority(methods, processor)) return true
     }
     return false
@@ -311,13 +308,13 @@ private fun processAssociatedFunctionsAndMethodsDeclarations(project: Project, t
     return processFnsWithInherentPriority(assocFunctions, processor)
 }
 
-private fun processFnsWithInherentPriority(fns: Collection<RsFunction>, processor: RsResolveProcessor): Boolean {
-    val (inherent, nonInherent) = fns.partition { it is RsFunction && it.isInherentImpl }
-    if (processAll(inherent, processor)) return true
+private fun processFnsWithInherentPriority(fns: Collection<BoundElement<RsFunction>>, processor: RsResolveProcessor): Boolean {
+    val (inherent, nonInherent) = fns.partition { it.element is RsFunction && it.element.isInherentImpl }
+    if (processAllBound(inherent, processor)) return true
 
-    val inherentNames = inherent.mapNotNull { it.name }.toHashSet()
+    val inherentNames = inherent.mapNotNull { it.element.name }.toHashSet()
     for (fn in nonInherent) {
-        if (fn.name in inherentNames) continue
+        if (fn.element.name in inherentNames) continue
         if (processor(fn)) return true
     }
     return false
@@ -661,6 +658,11 @@ private operator fun RsResolveProcessor.invoke(e: RsNamedElement): Boolean {
     return this(name, e)
 }
 
+private operator fun RsResolveProcessor.invoke(e: BoundElement<RsNamedElement>): Boolean {
+    val name = e.element.name ?: return false
+    return this(SimpleScopeEntry(name, e.element, e.typeArguments))
+}
+
 private fun processAll(elements: Collection<RsNamedElement>, processor: RsResolveProcessor): Boolean {
     for (e in elements) {
         if (processor(e)) return true
@@ -668,7 +670,18 @@ private fun processAll(elements: Collection<RsNamedElement>, processor: RsResolv
     return false
 }
 
-private data class SimpleScopeEntry(override val name: String, override val element: RsCompositeElement) : ScopeEntry
+private fun processAllBound(elements: Collection<BoundElement<RsNamedElement>>, processor: RsResolveProcessor): Boolean {
+    for (e in elements) {
+        if (processor(e)) return true
+    }
+    return false
+}
+
+private data class SimpleScopeEntry(
+    override val name: String,
+    override val element: RsCompositeElement,
+    override val typeArguments: TypeArguments = emptyTypeArguments
+) : ScopeEntry
 
 private class LazyScopeEntry(
     override val name: String,
