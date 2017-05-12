@@ -13,20 +13,21 @@ import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.types.BoundElement
 
 abstract class RsReferenceBase<T : RsReferenceElement>(
     element: T
 ) : PsiPolyVariantReferenceBase<T>(element),
     RsReference {
 
-    abstract protected fun resolveInner(): List<RsCompositeElement>
+    abstract protected fun resolveInner(): List<BoundElement<RsCompositeElement>>
 
     override fun resolve(): RsCompositeElement? = super.resolve() as? RsCompositeElement
 
     final override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
         ResolveCache.getInstance(element.project)
             .resolveWithCaching(this, { r, _ ->
-                r.resolveInner().map(::PsiElementResolveResult).toTypedArray()
+                r.resolveInner().map { PsiElementResolveResult(it.element) }.toTypedArray()
             },
                 /* needToPreventRecursion = */ true,
                 /* incompleteCode = */ false)
