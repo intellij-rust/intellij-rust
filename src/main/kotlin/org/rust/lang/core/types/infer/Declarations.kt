@@ -35,7 +35,7 @@ fun inferDeclarationType(decl: RsNamedElement): Ty {
                     // use type ascription, if present or fallback to the type of the initializer expression
                     parent.typeReference?.type ?: parent.expr?.type
 
-                is RsValueParameter -> parent.typeReference?.type
+                is RsValueParameter -> parent.typeReference?.type ?: inferTypeForLambdaParameter(parent)
                 is RsCondition -> parent.expr.type
                 is RsMatchArm -> parent.parentOfType<RsMatchExpr>()?.expr?.type
                 is RsForExpr -> findIteratorItemType(decl.project, parent.expr?.type ?: TyUnknown)
@@ -49,6 +49,54 @@ fun inferDeclarationType(decl: RsNamedElement): Ty {
 
         else -> TyUnknown
     }
+}
+
+private val RsCallExpr.declaration: RsFunction?
+    get() = (expr as? RsPathExpr)?.path?.reference?.resolve() as? RsFunction
+
+private val RsMethodCallExpr.declaration: RsFunction?
+    get() = reference.resolve() as? RsFunction
+
+private val RsTypeParamBounds.boundTraitRefs: Collection<RsTraitRef>
+    get() = polyboundList.mapNotNull { it.bound.traitRef }
+
+fun inferTypeForLambdaExpr(lambdaExpr: RsLambdaExpr): Collection<RsTraitRef> {
+    val parent = lambdaExpr.parent as? RsValueArgumentList ?: return emptyList()
+    val callExpr = parent.parent
+    val typeOfFunction = when (callExpr) {
+        is RsCallExpr -> callExpr.declaration ?: return emptyList()
+        is RsMethodCallExpr -> callExpr.declaration ?: return emptyList()
+        else -> return emptyList()
+    }
+    val pos = parent.exprList.indexOf(lambdaExpr)
+    val typeReference = typeOfFunction.valueParameterList
+        ?.valueParameterList
+        ?.get(pos)
+        ?.typeReference ?: return emptyList()
+    var result = emptyList<RsTraitRef>()
+    typeOfFunction.typeParameterList
+        ?.typeParameterList
+        ?.filter { it.identifier.text == typeReference.text }
+        ?.forEach {
+            result += it.typeParamBounds?.boundTraitRefs ?: emptyList()
+        }
+    typeOfFunction.whereClause
+        ?.wherePredList
+        ?.filter { it.typeReference?.text == typeReference.text }
+        ?.forEach {
+            result += it.typeParamBounds?.boundTraitRefs ?: emptyList()
+        }
+    return result
+}
+
+fun inferTypeForLambdaParameter(parameter: RsValueParameter): Ty {
+    val lambda = parameter.parentOfType<RsLambdaExpr>() ?: return TyUnknown
+    val parameterPos = lambda.valueParameterList.valueParameterList.indexOf(parameter)
+    val bounds = inferTypeForLambdaExpr(lambda)
+    return bounds.asSequence()
+        .mapNotNull { it.path.valueParameterList?.valueParameterList?.get(parameterPos) }
+        .firstOrNull()
+        .let { it?.typeReference?.type ?: TyUnknown }
 }
 
 fun inferTypeReferenceType(ref: RsTypeReference): Ty {

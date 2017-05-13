@@ -548,7 +548,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }       //^
     """)
 
-    fun `test string slice resolve`()= checkByCode("""
+    fun `test string slice resolve`() = checkByCode("""
         impl<T> &str {
             fn foo(&self) {}
               //X
@@ -560,7 +560,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test slice resolve`()= checkByCode("""
+    fun `test slice resolve`() = checkByCode("""
         impl<T> [T] {
             fn foo(&self) {}
               //X
@@ -946,5 +946,82 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             c[0.0].foo()
                   //^
         }
+    """)
+
+    fun `test simple method resolve for closure`() = checkByCode("""
+        struct T;
+        impl T {
+            fn bar(&self) {}
+             //X
+        }
+
+        fn foo<F: Fn(&T) -> ()>(f: F) {}
+
+        fn main() {
+            foo(|t| { t.bar(); })
+        }              //^
+    """)
+
+    fun `test simple method resolve with where for closure`() = checkByCode("""
+        struct T;
+        impl T {
+            fn bar(&self) {}
+             //X
+        }
+
+        fn foo<F>(f: F) where F: Fn(&T) -> () {}
+
+        fn main() {
+            foo(|t| { t.bar(); })
+        }              //^
+    """)
+
+    fun `test simple inner resolve for closure`() = checkByCode("""
+        struct T;
+        impl T {
+            fn bar(&self) {}
+        }
+
+        fn foo<F: Fn(&T) -> ()>(f: F) {}
+
+        fn main() {
+            foo(|t| {
+               //X
+                t.bar();
+              //^
+            })
+        }
+    """)
+
+    fun `test simple self resolve for closure`() = checkByCode("""
+        struct T;
+        impl T {
+            fn bar(&self) {}
+              //X
+            fn foo<F: Fn(&T) -> ()>(&self, f: F) {}
+        }
+
+        fn main() {
+            let t = T;
+            t.foo(|e| { e.bar(); })
+        }                //^
+    """)
+
+    fun `test multi self resolve for closure`() = checkByCode("""
+        struct T;
+        struct S;
+        impl S {
+            fn bar(&self) -> T {T}
+        }
+        impl T {
+            fn bar(&self) {}
+              //X
+            fn foo<F: Fn(&T) -> ()>(&self, f: F) {}
+        }
+
+        fn main() {
+            let t = S;
+            t.bar().foo(|e| { e.bar(); })
+        }                      //^
     """)
 }
