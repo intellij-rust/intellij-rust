@@ -285,6 +285,13 @@ fun resolveStringPath(path: String, module: Module): Pair<RsNamedElement, CargoW
     return el to pkg
 }
 
+fun processMacroSimpleResolveVariants(element: RsMacroBodySimpleMatching, processor: RsResolveProcessor): Boolean {
+    val definition = element.parentOfType<RsMacroDefinitionPattern>() ?: return false
+    val simple = definition.macroPattern.descendantsOfType<RsMacroPatternSimpleMatching>()
+        .toList()
+
+    return simple.any { processor(it) }
+}
 
 private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolveProcessor): Boolean {
     if (processAll(struct.namedFields, processor)) return true

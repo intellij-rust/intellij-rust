@@ -82,6 +82,9 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
                 }
             })
 
+        is RsMacroPatternSimpleMatching -> base
+            .withTypeText(this.identifier.text)
+
         else -> base
     }
 }

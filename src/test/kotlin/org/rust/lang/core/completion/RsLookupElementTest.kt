@@ -8,6 +8,7 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.RsFile
 
 class RsLookupElementTest : RsTestBase() {
+    private val `$` = '$'
     fun testFn() = check("""
         fn foo(x: i32) -> Option<String> {}
           //^
@@ -72,6 +73,13 @@ class RsLookupElementTest : RsTestBase() {
         struct S { field: String }
                    //^
     """, typeText = "String")
+
+    fun `test macro simple`() = check("""
+        macro_rules! test {
+            ($`$`test:expr) => ($`$`test)
+                //^
+        }
+    """, tailText = null, typeText = "expr")
 
     fun testMod() {
         myFixture.configureByText("foo.rs", "")
