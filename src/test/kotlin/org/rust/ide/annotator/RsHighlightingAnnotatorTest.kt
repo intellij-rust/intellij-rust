@@ -34,6 +34,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase() {
             fn <info>foo</info>() {}
         }
     """)
+    private val `$` = '$'
 
     fun testMacro() = checkInfo("""
         fn <info>main</info>() {
@@ -41,8 +42,8 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase() {
             <info>unreachable!</info>();
         }
         <info>macro_rules!</info> foo {
-            (x => \u0024e:expr) => (println!("mode X: {}", \u0024e));
-            (y => \u0024e:expr) => (println!("mode Y: {}", \u0024e));
+            (x => $`$`<info>e</info>:expr) => (println!("mode X: {}", $`$`<info>e</info>));
+            (y => $`$`<info>e</info>:expr) => (println!("mode Y: {}", $`$`<info>e</info>));
         }
         impl T {
             <info>foo!</info>();
@@ -78,7 +79,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase() {
 
     fun testContextualKeywords() = checkInfo("""
         trait <info>T</info> {
-            fn <info>foo</info>(); 
+            fn <info>foo</info>();
         }
         <info>union</info> <info>U</info> { }
         impl <info>T</info> for <info>U</info> {
