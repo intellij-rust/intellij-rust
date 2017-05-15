@@ -894,4 +894,57 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             t.foo().bar()
         }         //^
     """)
+
+    fun `test indexing`() = checkByCode("""
+        #[lang = "index"]
+        trait Index<Idx: ?Sized> {
+            type Output: ?Sized;
+            fn index(&self, index: Idx) -> &Self::Output;
+        }
+
+        struct Container;
+        struct Elem;
+        impl Elem { fn foo(&self) {} }
+                      //X
+
+        impl Index<usize> for Container {
+            type Output = Elem;
+            fn index(&self, index: usize) -> &Elem { unimplemented!() }
+        }
+
+        fn bar(c: Container) {
+            c[0].foo()
+                //^
+        }
+    """)
+
+    fun `test indexing with multiple impls`() = checkByCode("""
+        #[lang = "index"]
+        trait Index<Idx: ?Sized> {
+            type Output: ?Sized;
+            fn index(&self, index: Idx) -> &Self::Output;
+        }
+
+        struct Container;
+        struct Elem1;
+        impl Elem1 { fn foo(&self) {} }
+        struct Elem2;
+        impl Elem2 { fn foo(&self) {} }
+                       //X
+
+        impl Index<usize> for Container {
+            type Output = Elem1;
+            fn index(&self, index: usize) -> &Elem1 { unimplemented!() }
+        }
+
+        impl Index<f64> for Container {
+            type Output = Elem2;
+            fn index(&self, index: f64) -> &Elem2 { unimplemented!() }
+        }
+
+        fn bar(c: Container) {
+            c[0.0].foo()
+                  //^
+        }
+    """)
 }

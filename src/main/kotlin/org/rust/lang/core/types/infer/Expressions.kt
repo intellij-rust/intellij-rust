@@ -3,6 +3,7 @@ package org.rust.lang.core.types.infer
 import org.rust.ide.utils.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.findIndexOutputType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -124,6 +125,12 @@ fun inferExpressionType(expr: RsExpr): Ty {
         }
 
         is RsArrayExpr -> inferArrayType(expr)
+
+        is RsIndexExpr -> {
+            val containerType = expr.containerExpr?.type ?: return TyUnknown
+            val indexType = expr.indexExpr?.type ?: return TyUnknown
+            findIndexOutputType(expr.project, containerType, indexType)
+        }
 
         else -> TyUnknown
     }
