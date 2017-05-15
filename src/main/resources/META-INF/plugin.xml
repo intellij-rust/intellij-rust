@@ -574,6 +574,11 @@
         <action id="Rust.CargoCommand"
                 class="org.rust.cargo.runconfig.command.RunCargoCommandAction"
                 text="Run Cargo command"/>
+
+        <action id="Rust.RunClippy"
+                class="org.rust.cargo.runconfig.command.RunClippyAction"
+                text="Run Clippy"/>
+
     </actions>
 
 </idea-plugin>
