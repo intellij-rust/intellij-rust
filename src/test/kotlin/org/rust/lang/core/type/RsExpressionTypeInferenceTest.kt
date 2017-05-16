@@ -450,4 +450,30 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
           //^ [i32; 8]
         }
     """)
+
+    fun `test inference type for closure`() = testExpr("""
+        struct T;
+        impl T {
+            fn bar(&self) {}
+        }
+
+        fn foo<F: Fn(&T) -> ()>(f: F) {}
+
+        fn main() {
+            foo(|t| { t.bar(); })
+        }           //^ &T
+    """)
+
+    fun `test inference type with where for closure`() = testExpr("""
+        struct T;
+        impl T {
+            fn bar(&self) {}
+        }
+
+        fn foo<F>(f: F) where F: Fn(&T) -> () {}
+
+        fn main() {
+            foo(|t| { t.bar(); })
+        }           //^ &T
+    """)
 }
