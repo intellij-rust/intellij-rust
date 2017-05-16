@@ -122,6 +122,9 @@ class Cargo(
             .withParameters(additionalArguments)
     }
 
+    fun clippyCommandLine(channel: RustChannel): CargoCommandLine =
+        CargoCommandLine("clippy", channel = channel)
+
     private fun rustfmtCommandline(filePath: String) =
         generalCommand("fmt").withParameters("--", "--write-mode=overwrite", "--skip-children", filePath)
 
