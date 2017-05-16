@@ -97,6 +97,8 @@ private fun colorFor(element: RsCompositeElement): RsColor? = when (element) {
     is RsTraitItem -> RsColor.TRAIT
     is RsTypeAlias -> RsColor.TYPE_ALIAS
     is RsTypeParameter -> RsColor.TYPE_PARAMETER
+    is RsMacroBodySimpleMatching -> RsColor.FUNCTION
+    is RsMacroPatternSimpleMatching -> RsColor.FUNCTION
     else -> null
 }
 
@@ -120,5 +122,6 @@ private fun partToHighlight(element: RsCompositeElement): PsiElement? = when (el
     is RsTraitItem -> element.identifier
     is RsTypeAlias -> element.identifier
     is RsTypeParameter -> element.identifier
+    is RsMacroPatternSimpleMatching -> element.macroBinding
     else -> null
 }
