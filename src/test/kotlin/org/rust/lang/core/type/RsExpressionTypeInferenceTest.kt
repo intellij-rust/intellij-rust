@@ -514,4 +514,58 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
           //^ <unknown>
         }
     """)
+
+    fun `test associated types for impl`() = testExpr("""
+        trait A {
+            type Item;
+            fn foo(self) -> Self::Item;
+        }
+        struct S;
+        impl A for S {
+            type Item = S;
+            fn foo(self) -> Self::Item {S}
+        }
+        fn main() {
+            let s = S;
+            let a = s.foo();
+            a;
+        } //^ S
+    """)
+
+    fun `test associated types for default impl`() = testExpr("""
+        trait A {
+            type Item;
+            fn foo(self) -> Self::Item {()}
+        }
+        struct S;
+        impl A for S {
+            type Item = S;
+        }
+        fn main() {
+            let s = S;
+            let a = s.foo();
+            a;
+        } //^ S
+    """)
+
+    fun `test inference type for associated type for closure`() = testExpr("""
+        trait A {
+            type Item;
+            fn filter<P>(self, predicate: P) -> Filter<Self, P> where Self: Sized, P: FnMut(&Self::Item) {
+                unimplemented!()
+            }
+        }
+        struct S;
+        impl S {
+            fn bar(&self) {}
+        }
+        impl A for S {
+            type Item = S;
+        }
+
+        fn main() {
+            let t = S;
+            t.filter(|e| { e.bar(); })
+        }                //^ &S
+    """)
 }

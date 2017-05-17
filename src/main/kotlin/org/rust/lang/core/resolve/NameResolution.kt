@@ -187,6 +187,10 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
         if (base is RsTraitItem && qualifier.cself != null) {
             if (processAll(base.typeAliasList, processor)) return true
         }
+        if(base is RsStructItem && qualifier.cself != null) {
+            val traitItem = path.parentOfType<RsImplItem>()
+            if (traitItem != null && processAll(traitItem.typeAliasList, processor)) return true
+        }
         if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
         if (base is RsTypeBearingItemElement && parent !is RsUseItem) {
             if (processAssociatedFunctionsAndMethodsDeclarations(base.project, base.type, processor)) return true

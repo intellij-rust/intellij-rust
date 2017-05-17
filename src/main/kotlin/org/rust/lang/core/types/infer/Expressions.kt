@@ -1,5 +1,6 @@
 package org.rust.lang.core.types.infer
 
+import com.intellij.psi.util.PsiUtilCore
 import org.rust.ide.utils.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -47,11 +48,13 @@ fun inferExpressionType(expr: RsExpr): Ty {
         is RsMethodCallExpr -> {
             val boundMethod = expr.reference.advancedResolve()
             val method = boundMethod?.element as? RsFunction ?: return TyUnknown
-            val retType = (method.retType?.typeReference?.type ?: TyUnit).substitute(boundMethod.typeArguments)
-            val methodType = method.type as? TyFunction ?: return retType
-            // drop first element of paramTypes because it's `self` param
-            // and it doesn't have value in `expr.valueArgumentList.exprList`
-            retType.substitute(mapTypeParameters(methodType.paramTypes.drop(1), expr.valueArgumentList.exprList))
+            val typeReference = method.retType?.typeReference
+            val type = typeReference?.type ?: TyUnit
+            return when (type) {
+                is TyUnit -> type
+                is TyUnknown -> inferTypeForExprAndDefaultMethodImpl(expr, method, typeReference)
+                else -> type.substitute(boundMethod.typeArguments)
+            }
         }
 
         is RsFieldExpr -> {
@@ -232,6 +235,19 @@ private fun getMoreCompleteType(t1: Ty, t2: Ty): Ty {
         return t2;
 
     return t1
+}
+
+private fun inferTypeForExprAndDefaultMethodImpl(expr: RsMethodCallExpr, method: RsFunction, type: RsTypeReference?): Ty {
+    val traitItem = method.parentOfType<RsTraitItem>() ?: return TyUnknown
+    val caller = expr.expr as? RsPathExpr ?: return TyUnknown
+    val typeStruct = caller.type as? TyStruct ?: return TyUnknown
+    val project = PsiUtilCore.getProjectInReadAction(typeStruct.item)
+    val impls = RsImplIndex.findImpls(project, typeStruct)
+    val implItem = impls.filter { it.traitRef?.path?.referenceName == traitItem.name }
+        .firstOrNull() ?: return TyUnknown
+    val ref = type as? RsBaseType ?: return TyUnknown
+    return implItem.typeAliasList.find { it.name == ref.path?.referenceName }
+        ?.typeReference?.type ?: TyUnknown
 }
 
 private fun inferArrayType(expr: RsArrayExpr): Ty {
