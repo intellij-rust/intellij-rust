@@ -1020,9 +1020,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
     fun `test associated type resolve for closure`() = checkByCode("""
         trait A {
             type Item;
-            fn filter<P>(self, predicate: P) -> Filter<Self, P> where Self: Sized, P: FnMut(&Self::Item) {
-                unimplemented!()
-            }
+            fn filter<P>(self, predicate: P) -> Filter<Self, P> where Self: Sized, P: FnMut(&Self::Item) {}
         }
         struct S;
         impl S {

@@ -187,7 +187,7 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
         if (base is RsTraitItem && qualifier.cself != null) {
             if (processAll(base.typeAliasList, processor)) return true
         }
-        if(base is RsStructItem && qualifier.cself != null) {
+        if (base is RsStructItem && qualifier.cself != null) {
             val traitItem = path.parentOfType<RsImplItem>()
             if (traitItem != null && processAll(traitItem.typeAliasList, processor)) return true
         }
