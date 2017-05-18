@@ -523,7 +523,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         struct S;
         impl A for S {
             type Item = S;
-            fn foo(self) -> Self::Item {S}
+            fn foo(self) -> Self::Item { S }
         }
         fn main() {
             let s = S;
@@ -535,7 +535,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test associated types for default impl`() = testExpr("""
         trait A {
             type Item;
-            fn foo(self) -> Self::Item {()}
+            fn foo(self) -> Self::Item { () }
         }
         struct S;
         impl A for S {
@@ -548,12 +548,10 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ S
     """)
 
-    fun `test inference type for associated type for closure`() = testExpr("""
+    fun `test inference ref type for associated type for closure`() = testExpr("""
         trait A {
             type Item;
-            fn filter<P>(self, predicate: P) -> Filter<Self, P> where Self: Sized, P: FnMut(&Self::Item) {
-                unimplemented!()
-            }
+            fn filter<P>(self, predicate: P) -> Filter<Self, P> where Self: Sized, P: FnMut(&Self::Item) {}
         }
         struct S;
         impl S {
@@ -567,5 +565,24 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let t = S;
             t.filter(|e| { e.bar(); })
         }                //^ &S
+    """)
+
+    fun `test inference type for associated type for closure`() = testExpr("""
+        trait A {
+            type Item;
+            fn filter<P>(self, predicate: P) -> Filter<Self, P> where Self: Sized, P: FnMut(Self::Item) {}
+        }
+        struct S;
+        impl S {
+            fn bar(&self) {}
+        }
+        impl A for S {
+            type Item = S;
+        }
+
+        fn main() {
+            let t = S;
+            t.filter(|e| { e.bar(); })
+        }                //^ S
     """)
 }

@@ -164,7 +164,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         struct S;
         impl A for S {
             type Item = S;
-            fn foo(self) -> Self::Item {S}
+            fn foo(self) -> Self::Item { S }
         }                         //^ S
     """)
 

@@ -1,6 +1,5 @@
 package org.rust.lang.core.types.infer
 
-import com.intellij.psi.util.PsiUtilCore
 import org.rust.ide.utils.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -52,7 +51,7 @@ fun inferExpressionType(expr: RsExpr): Ty {
             val type = typeReference?.type ?: TyUnit
             return when (type) {
                 is TyUnit -> type
-                is TyUnknown -> inferTypeForExprAndDefaultMethodImpl(expr, method, typeReference)
+                is TyUnknown -> inferTypeForMethodExpr(expr, method, typeReference)
                 else -> type.substitute(boundMethod.typeArguments)
             }
         }
@@ -222,6 +221,8 @@ fun inferExpressionType(expr: RsExpr): Ty {
             } else return TyUnknown;
         }
 
+        is RsLambdaExpr -> inferTypeForLambdaExpr(expr)
+
         else -> TyUnknown
     }
 }
@@ -237,17 +238,52 @@ private fun getMoreCompleteType(t1: Ty, t2: Ty): Ty {
     return t1
 }
 
-private fun inferTypeForExprAndDefaultMethodImpl(expr: RsMethodCallExpr, method: RsFunction, type: RsTypeReference?): Ty {
+fun inferTypeForMethodExpr(expr: RsMethodCallExpr, method: RsFunction, type: RsTypeReference?): Ty {
     val traitItem = method.parentOfType<RsTraitItem>() ?: return TyUnknown
     val caller = expr.expr as? RsPathExpr ?: return TyUnknown
     val typeStruct = caller.type as? TyStruct ?: return TyUnknown
-    val project = PsiUtilCore.getProjectInReadAction(typeStruct.item)
-    val impls = RsImplIndex.findImpls(project, typeStruct)
-    val implItem = impls.filter { it.traitRef?.path?.referenceName == traitItem.name }
+    val impls = findImplsAndTraits(expr.project, typeStruct).first
+    val implItem = impls.filter { it.element.traitRef?.path?.referenceName == traitItem.name }
+        .mapNotNull { it.element }
         .firstOrNull() ?: return TyUnknown
     val ref = type as? RsBaseType ?: return TyUnknown
     return implItem.typeAliasList.find { it.name == ref.path?.referenceName }
         ?.typeReference?.type ?: TyUnknown
+}
+
+private val RsCallExpr.declaration: RsFunction?
+    get() = (expr as? RsPathExpr)?.path?.reference?.resolve() as? RsFunction
+
+private val RsMethodCallExpr.declaration: RsFunction?
+    get() = reference.resolve() as? RsFunction
+
+private val RsTypeParamBounds.boundTraitRefs: Collection<RsTraitRef>
+    get() = polyboundList.mapNotNull { it.bound.traitRef }
+
+private val RsPath.isFn: Boolean get() = referenceName == "Fn" || referenceName == "FnMut" || referenceName == "FnOnce"
+
+private fun inferTypeForLambdaExpr(lambdaExpr: RsLambdaExpr): Ty {
+    val parent = lambdaExpr.parent as? RsValueArgumentList ?: return TyUnknown
+    val callExpr = parent.parent
+    val (function, pos) = when (callExpr) {
+        is RsCallExpr -> (callExpr.declaration?.type as? TyFunction to parent.exprList.indexOf(lambdaExpr))
+        is RsMethodCallExpr -> (callExpr.declaration?.type as? TyFunction to parent.exprList.indexOf(lambdaExpr) + 1)
+        else -> return TyUnknown
+    }
+    val typeParameter = function?.paramTypes?.get(pos) as? TyTypeParameter ?: return TyUnknown
+    val result = typeParameter.getTraitRefs()
+    val fn = result
+        .map { it.path }
+        .filter { it.isFn }
+        .firstOrNull() ?: return TyUnknown
+    val parameter = fn.valueParameterList
+        ?.valueParameterList
+        ?.mapNotNull { it.typeReference }
+        ?.map { inferTypeReferenceType(it, lambdaExpr) }
+        ?.toList() ?: emptyList()
+    val retType = fn.retType
+        ?.typeReference ?: return TyFunction(parameter, TyUnit)
+    return TyFunction(parameter, inferTypeReferenceType(retType, lambdaExpr))
 }
 
 private fun inferArrayType(expr: RsArrayExpr): Ty {

@@ -57,49 +57,24 @@ private val RsCallExpr.declaration: RsFunction?
 private val RsMethodCallExpr.declaration: RsFunction?
     get() = reference.resolve() as? RsFunction
 
-private val RsTypeParamBounds.boundTraitRefs: Collection<RsTraitRef>
-    get() = polyboundList.mapNotNull { it.bound.traitRef }
-
-fun inferTypeForLambdaExpr(lambdaExpr: RsLambdaExpr): Collection<RsTraitRef> {
-    val parent = lambdaExpr.parent as? RsValueArgumentList ?: return emptyList()
-    val callExpr = parent.parent
-    val typeOfFunction = when (callExpr) {
-        is RsCallExpr -> callExpr.declaration ?: return emptyList()
-        is RsMethodCallExpr -> callExpr.declaration ?: return emptyList()
-        else -> return emptyList()
-    }
-    val pos = parent.exprList.indexOf(lambdaExpr)
-    val typeReference = typeOfFunction.valueParameterList
-        ?.valueParameterList
-        ?.getOrNull(pos)
-        ?.typeReference ?: return emptyList()
-    var result = emptyList<RsTraitRef>()
-    typeOfFunction.typeParameterList
-        ?.typeParameterList
-        ?.filter { it.identifier.text == typeReference.text }
-        ?.forEach {
-            result += it.typeParamBounds?.boundTraitRefs ?: emptyList()
-        }
-    typeOfFunction.whereClause
-        ?.wherePredList
-        ?.filter { it.typeReference?.text == typeReference.text }
-        ?.forEach {
-            result += it.typeParamBounds?.boundTraitRefs ?: emptyList()
-        }
-    return result
+private fun inferTypeForMethodExpr(expr: RsExpr?, type: RsBaseType?): Ty {
+    val callee = expr?.parentOfType<RsMethodCallExpr>() ?: return TyUnknown
+    val method = callee.declaration ?: return TyUnknown
+    return inferTypeForMethodExpr(callee, method, type)
 }
 
 fun inferTypeForLambdaParameter(parameter: RsValueParameter): Ty {
     val lambda = parameter.parentOfType<RsLambdaExpr>() ?: return TyUnknown
     val parameterPos = lambda.valueParameterList.valueParameterList.indexOf(parameter)
-    val bounds = inferTypeForLambdaExpr(lambda)
-    return bounds.asSequence()
-        .mapNotNull { it.path.valueParameterList?.valueParameterList?.get(parameterPos) }
-        .firstOrNull()
-        .let { it?.typeReference?.type ?: TyUnknown }
+    val bounds = inferExpressionType(lambda) as? TyFunction ?: return TyUnknown
+    return bounds.paramTypes[parameterPos]
 }
 
 fun inferTypeReferenceType(ref: RsTypeReference): Ty {
+    return inferTypeReferenceType(ref, null)
+}
+
+fun inferTypeReferenceType(ref: RsTypeReference, expr: RsExpr? = null): Ty {
     return when (ref) {
         is RsTupleType -> {
             val single = ref.typeReferenceList.singleOrNull()
@@ -121,19 +96,23 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
             val target = ref.path?.reference?.resolve() as? RsNamedElement
                 ?: return TyUnknown
             val typeArguments = path.typeArgumentList?.typeReferenceList.orEmpty()
-            inferDeclarationType(target)
+            val type = inferDeclarationType(target)
                 .applyTypeArguments(typeArguments.map { it.type })
 
+            when (type) {
+                is TyUnknown -> inferTypeForMethodExpr(expr, ref)
+                else -> type
+            }
         }
 
         is RsRefLikeType -> {
             val base = ref.typeReference ?: return TyUnknown
             val mutable = ref.isMut
             if (ref.isRef) {
-                TyReference(inferTypeReferenceType(base), mutable)
+                TyReference(inferTypeReferenceType(base, expr), mutable)
             } else {
                 if (ref.isPointer) { //Raw pointers
-                    TyPointer(inferTypeReferenceType(base), mutable)
+                    TyPointer(inferTypeReferenceType(base, expr), mutable)
                 } else {
                     TyUnknown
                 }
