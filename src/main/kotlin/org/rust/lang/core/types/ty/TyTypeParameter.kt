@@ -20,12 +20,7 @@ data class TyTypeParameter private constructor(
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
         parameter.bounds.flatMapTo(mutableSetOf()) { it.flattenHierarchy.asSequence() }
 
-    override fun canUnifyWith(other: Ty, project: Project): Boolean {
-        if (this == other) return true
-
-        val implTraits = findTraits(project, other).toSet()
-        return parameter.bounds.all { implTraits.contains(it.element) }
-    }
+    override fun canUnifyWith(other: Ty, project: Project): Boolean = true
 
     override fun substitute(map: TypeArguments): Ty = map[this] ?: this
 

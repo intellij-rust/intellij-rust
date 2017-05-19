@@ -6,6 +6,7 @@ import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.typeParameters
+import org.rust.lang.core.types.type
 
 interface TyStructOrEnumBase : Ty {
     val typeArguments: List<Ty>
@@ -16,8 +17,7 @@ interface TyStructOrEnumBase : Ty {
 
     override val typeParameterValues: TypeArguments
         get() = item.typeParameters.zip(typeArguments)
-            .mapNotNull {
-                val (param, arg) = it
+            .mapNotNull { (param, arg) ->
                 TyTypeParameter(param) to arg
             }.toMap()
 
@@ -41,7 +41,7 @@ interface TyStructOrEnumBase : Ty {
 class TyStruct(
     struct: RsStructItem,
     override val typeArgumentsMapping: List<TyTypeParameter> = struct.typeParameters.map(::TyTypeParameter),
-    override val typeArguments: List<Ty> = typeArgumentsMapping
+    override val typeArguments: List<Ty> = typeArgumentsWithDefaults(struct)
 ) : TyStructOrEnumBase {
 
     override val item = CompletionUtil.getOriginalOrSelf(struct)
@@ -67,7 +67,7 @@ class TyStruct(
 class TyEnum(
     enum: RsEnumItem,
     override val typeArgumentsMapping: List<TyTypeParameter> = enum.typeParameters.map(::TyTypeParameter),
-    override val typeArguments: List<Ty> = typeArgumentsMapping
+    override val typeArguments: List<Ty> = typeArgumentsWithDefaults(enum)
 ) : TyStructOrEnumBase {
 
     override val item = CompletionUtil.getOriginalOrSelf(enum)
@@ -89,3 +89,9 @@ class TyEnum(
     override fun hashCode(): Int =
         item.hashCode() xor typeArguments.hashCode()
 }
+
+private fun typeArgumentsWithDefaults(item: RsStructOrEnumItemElement): List<Ty> =
+    item.typeParameters.map { typeParameter ->
+        val defaultType = typeParameter.typeReference?.type ?: TyUnknown
+        if (defaultType == TyUnknown) TyTypeParameter(typeParameter) else defaultType
+    }
