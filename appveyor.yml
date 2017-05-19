@@ -20,7 +20,4 @@ test_script:
 cache:
   - C:\Users\appveyor\.cargo\registry
   - C:\Users\appveyor\.cargo\bin
-
-# Appveyor does not allow huge cache folders
-# https://www.appveyor.com/docs/build-cache/
-# - C:\Users\appveyor\.gradle
+  - C:\Users\appveyor\.gradle
