@@ -166,4 +166,12 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test resolve with uninferred constrained type parameter`() = stubOnlyResolve("""
+    //- main.rs
+        use std::collections::HashSet;
+
+        fn main() {
+            let things = HashSet::new();
+        }                        //^
+    """)
 }
