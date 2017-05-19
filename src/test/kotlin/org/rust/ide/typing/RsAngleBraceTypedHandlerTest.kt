@@ -28,8 +28,17 @@ class RsAngleBraceTypedHandlerTest : RsTypingTestBase() {
     fun `test closing brace just moves the caret`() =
         doTestByText("fn foo() { let x: Result::<E, X<caret>> }", "fn foo() { let x: Result::<E, X><caret> }", '>')
 
+    fun `test don't jump over angle brace in the comment`() =
+        doTestByText("/* <<caret>> */ fn foo() {}", "/* <><caret>> */ fn foo() {}", '>')
+
     fun `test right angle is inserted if it is not a closing brace`() =
         doTestByText("fn foo() { let x: Result::<E, X><caret> }", "fn foo() { let x: Result::<E, X>><caret> }", '>')
+
+    fun `test empty open`() =
+        doTestByText("<caret>", "<<caret>", '<')
+
+    fun `test empty close`() =
+        doTestByText("<caret>", "><caret>", '>')
 
     private fun doComplexTest(before: String) {
         val afterWithGT = before.replace("<caret>", "<<caret>>")

@@ -28,8 +28,10 @@ class RsAngleBraceTypedHandler : TypedHandlerDelegate() {
             when (c) {
                 '<' -> rsLTTyped = isStartOfGenericBraces(editor)
                 '>' -> {
-                    val charAtCaret = editor.document.charsSequence.getOrNull(editor.caretModel.offset)
-                    if (charAtCaret == '>' && calculateBalance(editor) == 0) {
+                    val lexer = editor.createLexer(editor.caretModel.offset)
+                        ?: return Result.CONTINUE
+                    val tokenType = lexer.tokenType
+                    if (tokenType == GT && calculateBalance(editor) == 0) {
                         EditorModificationUtil.moveCaretRelatively(editor, 1)
                         return Result.STOP
                     }
@@ -81,33 +83,37 @@ class RsAngleBraceBackspaceHandler : RsEnableableBackspaceHandlerDelegate() {
 
 private fun isStartOfGenericBraces(editor: Editor): Boolean {
     val offset = editor.caretModel.offset
+    val lexer = editor.createLexer(offset - 1)
+        ?: return false
 
-    if (!isValidOffset(offset - 1, editor.document.charsSequence)) return false
-    val iterator = (editor as EditorEx).highlighter.createIterator(offset - 1)
-
-    if (iterator.atEnd()) return false
-
-    return when (iterator.tokenType) {
+    return when (lexer.tokenType) {
         // manual function type specification
         COLONCOLON -> true
         // generic implementation block
         IMPL -> true
         IDENTIFIER -> {
             // don't complete angle braces inside identifier
-            if (iterator.end != offset) return false
+            if (lexer.end != offset) return false
             // it considers that typical case is only one whitespace character
             // between keyword (fn, enum, etc.) and identifier
-            if (iterator.start > 1) {
-                iterator.retreat()
-                iterator.retreat()
-                if (iterator.tokenType in GENERIC_NAMED_ENTITY_KEYWORDS) return true
-                iterator.advance()
-                iterator.advance()
+            if (lexer.start > 1) {
+                lexer.retreat()
+                lexer.retreat()
+                if (lexer.tokenType in GENERIC_NAMED_ENTITY_KEYWORDS) return true
+                lexer.advance()
+                lexer.advance()
             }
-            isTypeLikeIdentifier(offset, editor, iterator)
+            isTypeLikeIdentifier(offset, editor, lexer)
         }
         else -> false
     }
+}
+
+private fun Editor.createLexer(offset: Int): HighlighterIterator? {
+    if (!isValidOffset(offset, document.charsSequence)) return null
+    val lexer = (this as EditorEx).highlighter.createIterator(offset)
+    if (lexer.atEnd()) return null
+    return lexer
 }
 
 private fun isTypeLikeIdentifier(offset: Int, editor: Editor, iterator: HighlighterIterator): Boolean {
