@@ -11,7 +11,10 @@ import org.rust.lang.core.resolve.ImplLookup
 data class TyReference(val referenced: Ty, val mutability: Mutability) : Ty {
 
     override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult =
-        if (other is TyReference) referenced.unifyWith(other.referenced, lookup) else UnifyResult.fail
+        if (other is TyReference && mutability == other.mutability)
+            referenced.unifyWith(other.referenced, lookup)
+        else
+            UnifyResult.fail
 
     override fun substitute(subst: Substitution): Ty =
         TyReference(referenced.substitute(subst), mutability)

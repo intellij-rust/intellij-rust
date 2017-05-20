@@ -559,8 +559,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test impl trait for mutable reference`() = expect<AssertionFailedError> {
-        checkByCode("""
+    fun `test impl trait for mutable reference`() = checkByCode("""
         struct Foo;
         trait T { fn foo(self); }
         impl<'a> T for &'a Foo { fn foo(self) {} }
@@ -572,10 +571,8 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             foo.foo();
         }      //^
     """)
-    }
 
-    fun `test impl trait for mutable pointer`() = expect<AssertionFailedError> {
-        checkByCode("""
+    fun `test impl trait for mutable pointer`() = checkByCode("""
         struct Foo;
         trait T { fn foo(self); }
         impl T for *const Foo { fn foo(self) {} }
@@ -587,5 +584,4 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             foo.foo();
         }      //^
     """)
-    }
 }
