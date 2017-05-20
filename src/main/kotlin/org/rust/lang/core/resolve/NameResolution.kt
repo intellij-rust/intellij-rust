@@ -59,7 +59,7 @@ fun processFieldExprResolveVariants(fieldExpr: RsFieldExpr, isCompletion: Boolea
     val receiverType = fieldExpr.expr.type
     for (ty in receiverType.derefTransitively(fieldExpr.project)) {
         if (ty !is TyStruct) continue
-        if (processFieldDeclarations(ty.item, processor)) return true
+        if (processFieldDeclarations(ty.item, ty.typeParameterValues, processor)) return true
     }
     if (isCompletion && processMethodDeclarationsWithDeref(fieldExpr.project, receiverType, processor)) {
         return true
@@ -69,7 +69,7 @@ fun processFieldExprResolveVariants(fieldExpr: RsFieldExpr, isCompletion: Boolea
 
 fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, processor: RsResolveProcessor): Boolean {
     val structOrEnumVariant = field.parentStructLiteral.path.reference.resolve() as? RsFieldsOwner ?: return false
-    return processFieldDeclarations(structOrEnumVariant, processor)
+    return processFieldDeclarations(structOrEnumVariant, emptyTypeArguments, processor)
 }
 
 fun processMethodCallExprResolveVariants(callExpr: RsMethodCallExpr, processor: RsResolveProcessor): Boolean {
@@ -293,11 +293,11 @@ fun processMacroSimpleResolveVariants(element: RsMacroBodySimpleMatching, proces
     return simple.any { processor(it) }
 }
 
-private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolveProcessor): Boolean {
-    if (processAll(struct.namedFields, processor)) return true
+private fun processFieldDeclarations(struct: RsFieldsOwner, typeArguments: TypeArguments, processor: RsResolveProcessor): Boolean {
+    if (processAllBound(struct.namedFields, typeArguments, processor)) return true
 
     for ((idx, field) in struct.positionalFields.withIndex()) {
-        if (processor(idx.toString(), field)) return true
+        if (processor(idx.toString(), field, typeArguments)) return true
     }
     return false
 }
@@ -652,8 +652,8 @@ private fun walkUp(
     return false
 }
 
-private operator fun RsResolveProcessor.invoke(name: String, e: RsCompositeElement): Boolean {
-    return this(SimpleScopeEntry(name, e))
+private operator fun RsResolveProcessor.invoke(name: String, e: RsCompositeElement, typeArguments: TypeArguments = emptyTypeArguments): Boolean {
+    return this(SimpleScopeEntry(name, e, typeArguments))
 }
 
 private fun RsResolveProcessor.lazy(name: String, e: () -> RsCompositeElement?): Boolean {
@@ -680,6 +680,13 @@ private fun processAll(elements: Collection<RsNamedElement>, processor: RsResolv
 private fun processAllBound(elements: Collection<BoundElement<RsNamedElement>>, processor: RsResolveProcessor): Boolean {
     for (e in elements) {
         if (processor(e)) return true
+    }
+    return false
+}
+
+private fun processAllBound(elements: Collection<RsNamedElement>, typeArguments: TypeArguments, processor: RsResolveProcessor): Boolean {
+    for (e in elements) {
+        if (processor(BoundElement(e, typeArguments))) return true
     }
     return false
 }

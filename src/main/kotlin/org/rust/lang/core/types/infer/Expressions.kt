@@ -51,13 +51,15 @@ fun inferExpressionType(expr: RsExpr): Ty {
         }
 
         is RsFieldExpr -> {
-            val field = expr.reference.resolve()
+            val boundField = expr.reference.advancedResolve()
+                ?: return TyUnknown
+            val field = boundField.element
             val raw = when (field) {
                 is RsFieldDecl -> field.typeReference?.type
                 is RsTupleFieldDecl -> field.typeReference.type
                 else -> null
             } ?: TyUnknown
-            raw.substitute(expr.expr.type.typeParameterValues)
+            raw.substitute(boundField.typeArguments)
         }
 
         is RsLitExpr -> {
