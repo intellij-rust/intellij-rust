@@ -353,6 +353,16 @@
                          enabledByDefault="false" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsVariableMutableInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Wrong type parameters number"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsWrongTypeParametersNumberInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Wrong lifetime parameters number"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsWrongLifetimeParametersNumberInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
