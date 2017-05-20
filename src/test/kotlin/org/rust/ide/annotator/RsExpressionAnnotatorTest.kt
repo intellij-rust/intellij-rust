@@ -237,6 +237,29 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
         unsafe fn bar() { foo(); }
     """)
 
+    fun `test pointer dereference`() = checkErrors("""
+        fn main() {
+            let char_ptr: *const char = 42 as *const _;
+            let val = <error descr="Dereference of raw pointer requires unsafe function or block [E0133]">*char_ptr</error>;
+        }
+    """)
+
+    fun `test pointer dereference in unsafe block`() = checkErrors("""
+        fn main() {
+            let char_ptr: *const char = 42 as *const _;
+            let val = unsafe { *char_ptr };
+        }
+    """)
+
+    fun `test pointer dereference in unsafe fn`() = checkErrors("""
+        fn main() {
+        }
+        unsafe fn foo() {
+            let char_ptr: *const char = 42 as *const _;
+            let val = *char_ptr;
+        }
+    """)
+
     fun `test immutable used at ref mutable method call (self)`() = checkErrors("""
         struct S;
 

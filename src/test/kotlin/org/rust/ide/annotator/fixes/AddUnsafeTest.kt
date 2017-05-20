@@ -100,4 +100,16 @@ class AddUnsafeTest : RsAnnotatorTestBase() {
             let s = unsafe { pi() } * 10.0;
         }
     """)
+
+    fun `test wrap ptr deref with a unsafe block inline`() = checkQuickFix("Surround with unsafe block", """
+        fn main() {
+            let char_ptr: *const char = 42 as *const _;
+            let val = *char_ptr/*caret*/;
+        }
+    """, """
+        fn main() {
+            let char_ptr: *const char = 42 as *const _;
+            let val = unsafe { *char_ptr };
+        }
+    """)
 }

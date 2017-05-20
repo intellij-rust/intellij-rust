@@ -19,6 +19,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
+import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
@@ -112,10 +113,25 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
     }
 
+    private fun checkUnsafePtrDereference(holder: AnnotationHolder, o: RsUnaryExpr) {
+        val type = o.expr?.type
+        if (!(type is TyPointer))
+            return
+
+        if (!o.isInUnsafeBlockOrFn()) {
+            val annotation = holder.createErrorAnnotation(o, "Dereference of raw pointer requires unsafe function or block [E0133]")
+            annotation.registerFix(SurroundWithUnsafeFix(o))
+            val block = o.parentOfType<RsBlock>()?.parent ?: return
+            annotation.registerFix(AddUnsafeFix(block))
+        }
+    }
+
     private fun checkUnaryExpr(holder: AnnotationHolder, unaryExpr: RsUnaryExpr) {
         val expr = unaryExpr.expr ?: return
         if (unaryExpr.operatorType == UnaryOperator.REF_MUT && !expr.isMutable()) {
             createImmutableErrorAnnotation(holder, expr)
+        } else if (unaryExpr.operatorType == UnaryOperator.DEREF) {
+            checkUnsafePtrDereference(holder, unaryExpr)
         }
     }
 
