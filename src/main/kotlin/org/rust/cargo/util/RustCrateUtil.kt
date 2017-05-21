@@ -29,20 +29,20 @@ object AutoInjectedCrates {
         StdLibInfo("std_unicode", isRoot = true),
         StdLibInfo("test", dependencies = listOf("getopts", "term"), isRoot = true),
         // Dependencies
-        StdLibInfo("alloc_jemalloc", isRoot = true),
-        StdLibInfo("alloc_system", isRoot = true),
+        StdLibInfo("alloc_jemalloc"),
+        StdLibInfo("alloc_system"),
         StdLibInfo("build_helper", srcDir = "build_helper"),
-        StdLibInfo("compiler_builtins", isRoot = true),
-        StdLibInfo("getopts", isRoot = true),
-        StdLibInfo("panic_unwind", isRoot = true),
-        StdLibInfo("panic_abort", isRoot = true),
-        StdLibInfo("rand", isRoot = true),
+        StdLibInfo("compiler_builtins"),
+        StdLibInfo("getopts"),
+        StdLibInfo("panic_unwind"),
+        StdLibInfo("panic_abort"),
+        StdLibInfo("rand"),
         StdLibInfo("rustc_asan"),
         StdLibInfo("rustc_lsan"),
         StdLibInfo("rustc_msan"),
         StdLibInfo("rustc_tsan"),
-        StdLibInfo("term", isRoot = true),
-        StdLibInfo("unwind", isRoot = true)
+        StdLibInfo("term"),
+        StdLibInfo("unwind")
     )
 }
 
