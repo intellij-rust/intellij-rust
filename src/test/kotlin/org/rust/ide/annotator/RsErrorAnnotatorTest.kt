@@ -1,5 +1,7 @@
 package org.rust.ide.annotator
 
+import com.intellij.testFramework.LightProjectDescriptor
+
 class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/errors"
 
@@ -741,13 +743,21 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibAndDependencyRustProjectDescriptor
+
     fun testE0428_RespectsCrateAliases() = checkErrors("""
-        extern crate num as num_lib;
-        mod num {}
+        extern crate libc as libc_alias;
+        mod libc {}
 
         // FIXME: ideally we want to highlight these
-        extern crate foo;
-        mod foo {}
+        extern crate alloc;
+        mod alloc {}
+    """)
+
+    fun testE0463_UnknownCrate() = checkErrors("""
+        extern crate alloc;
+
+        <error descr="Can't find crate for `litarvan` [E0463]">extern crate litarvan;</error>
     """)
 
     fun testE0428_IgnoresLocalBindings() = checkErrors("""

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.annotator.fixes.*
 import org.rust.ide.utils.isNullOrEmpty
@@ -54,6 +55,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitCallExpr(o: RsCallExpr) = checkCallExpr(holder, o)
             override fun visitMethodCallExpr(o: RsMethodCallExpr) = checkMethodCallExpr(holder, o)
             override fun visitUnaryExpr(o: RsUnaryExpr) = checkUnaryExpr(holder, o)
+            override fun visitExternCrateItem(o: RsExternCrateItem) = checkExternCrate(holder, o)
         }
 
         element.accept(visitor)
@@ -423,6 +425,11 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val retType = fn.retType?.typeReference ?: return
         if (retType is RsTupleType && retType.isUnitType) return
         holder.createErrorAnnotation(ret, "`return;` in a function whose return type is not `()` [E0069]")
+    }
+
+    private fun checkExternCrate(holder: AnnotationHolder, el: RsExternCrateItem) {
+        if (el.reference.multiResolve().isNotEmpty() || el.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return
+        holder.createErrorAnnotation(el.textRange, "Can't find crate for `${el.identifier.text}` [E0463]")
     }
 
     private fun requireResolve(holder: AnnotationHolder, el: RsReferenceElement, message: String) {
