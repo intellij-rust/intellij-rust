@@ -1,6 +1,5 @@
 package org.rust.debugger.runconfig
 
-import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.google.gson.JsonSyntaxException
 import com.intellij.execution.RunContentExecutor
@@ -28,6 +27,7 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
@@ -35,6 +35,7 @@ import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.util.cargoProjectRoot
 
+//BACKCOMPAT: 2017.1 use `AsyncProgramRunner`
 class RsDebugRunner : AsyncGenericProgramRunner<RunnerSettings>() {
     override fun getRunnerId(): String = "RsDebugRunner"
 
@@ -133,7 +134,6 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
                         }
 
                         val parser = JsonParser()
-                        val gson = Gson()
                         result = output.stdoutLines
                             .mapNotNull {
                                 try {
@@ -143,11 +143,12 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
                                 }
                             }
                             .mapNotNull { if (it.isJsonObject) it.asJsonObject else null }
-                            .filter { it.getAsJsonPrimitive("reason").asString == "compiler-artifact" }
-                            .filter { "bin" in gson.fromJson(it.getAsJsonObject("target"), CargoMetadata.Target::class.java).kind }
-                            .flatMap { it.getAsJsonArray("filenames").map { it.asString } }
-
-
+                            .mapNotNull { CargoMetadata.Artifact.fromJson(it) }
+                            .filter { (target, profile) ->
+                                target.cleanKind == CargoWorkspace.TargetKind.BIN
+                                    || (target.cleanKind == CargoWorkspace.TargetKind.LIB && profile.test)
+                            }
+                            .flatMap { it.filenames }
                     }
 
                     override fun onSuccess() {

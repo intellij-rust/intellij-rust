@@ -67,7 +67,7 @@ val RsNamedElement.presentationInfo: PresentationInfo? get() {
             }
         }
         is RsPatBinding -> {
-            val patOwner = topLevelPattern?.parent
+            val patOwner = topLevelPattern.parent
             when (patOwner) {
                 is RsLetDecl -> Pair("variable", createDeclarationInfo(patOwner, identifier, false, listOf(patOwner.typeReference)))
                 is RsValueParameter -> Pair("value parameter", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.typeReference)))

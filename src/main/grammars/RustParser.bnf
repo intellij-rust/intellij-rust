@@ -1002,7 +1002,10 @@ MacroMatchingTree ::=  '(' MacroMatchingTree* ')'
                      | << placeholderMacroToken >>+
 
 MacroPatternComplexMatching ::= '$' '(' MacroMatchingTree* ')' <<tokenAfterComplexPattern>>* ('*' | '+')
-MacroPatternSimpleMatching ::= '$' MacroBinding ':' identifier
+MacroPatternSimpleMatching ::= '$' MacroBinding ':' identifier {
+  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsMacroPatternSimpleMatchingImplMixin"
+}
 
 MacroBody ::= '(' MacroTokenTree* ')'
             | '{' MacroTokenTree* '}'
@@ -1013,7 +1016,10 @@ MacroTokenTree ::= '(' MacroTokenTree* ')'
                  | (MacroBodyComplexMatching | MacroBodySimpleMatching) +
                  | << placeholderMacroToken >> +
 MacroBodyComplexMatching ::= '$' '(' MacroTokenTree* ')' <<tokenAfterComplexPattern>>* ('*' | '+')
-MacroBodySimpleMatching ::= '$' (MacroBinding | "crate")
+MacroBodySimpleMatching ::= '$' (MacroBinding | "crate") {
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsMacroBodySimpleMatchingImplMixin"
+}
 
 private BuildInMacro ::= TryMacro
                        | FormatLikeMacro

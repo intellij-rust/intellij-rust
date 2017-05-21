@@ -14,19 +14,19 @@ import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
-import org.rust.lang.core.types.RustType
-import org.rust.lang.core.types.RustTypeFingerprint
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.TyFingerprint
 import org.rust.lang.core.types.type
 
-class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
+class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
-    override fun getKey(): StubIndexKey<RustTypeFingerprint, RsImplItem> = KEY
-    override fun getKeyDescriptor(): KeyDescriptor<RustTypeFingerprint> = RustTypeFingerprint.KeyDescriptor
+    override fun getKey(): StubIndexKey<TyFingerprint, RsImplItem> = KEY
+    override fun getKeyDescriptor(): KeyDescriptor<TyFingerprint> = TyFingerprint.KeyDescriptor
 
     companion object {
-        fun findImpls(project: Project, target: RustType): Collection<RsImplItem> {
+        fun findImpls(project: Project, target: Ty): Collection<RsImplItem> {
             fun doFind(): Collection<RsImplItem> {
-                val fingerprint = RustTypeFingerprint.create(target)
+                val fingerprint = TyFingerprint.create(target)
                     ?: return emptyList()
 
                 return StubIndex.getElements(
@@ -47,7 +47,7 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
             val implsCache = CachedValuesManager.getManager(project)
                 .getCachedValue(project, {
                     CachedValueProvider.Result.create(
-                        ContainerUtil.newConcurrentMap<RustType, Collection<RsImplItem>>(),
+                        ContainerUtil.newConcurrentMap<Ty, Collection<RsImplItem>>(),
                         PsiModificationTracker.MODIFICATION_COUNT
                     )
                 })
@@ -57,13 +57,13 @@ class RsImplIndex : AbstractStubIndex<RustTypeFingerprint, RsImplItem>() {
 
         fun index(stub: RsImplItemStub, sink: IndexSink) {
             val type = stub.psi.typeReference ?: return
-            val key = RustTypeFingerprint.create(type)
+            val key = TyFingerprint.create(type)
             if (key != null) {
                 sink.occurrence(KEY, key)
             }
         }
 
-        private val KEY: StubIndexKey<RustTypeFingerprint, RsImplItem> =
+        private val KEY: StubIndexKey<TyFingerprint, RsImplItem> =
             StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustImplIndex.TraitImpls")
     }
 }

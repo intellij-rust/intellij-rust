@@ -1,4 +1,4 @@
-# ![logo](art/icon_intellij_rust_32.png) Rust IDE built using the IntelliJ Platform
+# Rust plugin for the IntelliJ Platform
 
 
 | Build Status |                                                                              |

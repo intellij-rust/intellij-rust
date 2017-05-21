@@ -158,4 +158,28 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test vec indexing`() = stubOnlyResolve("""
+    //- main.rs
+        fn foo(xs: Vec<String>) {
+            xs[0].capacity();
+                 //^ ...libcollections/string.rs
+        }
+    """)
+
+    fun `test resolve with defaulted type parameters`() = stubOnlyResolve("""
+    //- main.rs
+        use std::collections::HashSet;
+
+        fn main() {
+            let things = HashSet::new();
+        }                        //^ ...hash/set.rs
+    """)
+
+    fun `test resolve with unsatisfied bounds`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() { foo().unwrap(); }
+                        //^ ...libcore/result.rs
+
+        fn foo() -> Result<i32, i32> { Ok(42) }
+    """)
 }

@@ -548,7 +548,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }       //^
     """)
 
-    fun `test string slice resolve`()= checkByCode("""
+    fun `test string slice resolve`() = checkByCode("""
         impl<T> &str {
             fn foo(&self) {}
               //X
@@ -560,7 +560,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test slice resolve`()= checkByCode("""
+    fun `test slice resolve`() = checkByCode("""
         impl<T> [T] {
             fn foo(&self) {}
               //X
@@ -620,180 +620,6 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             for s in II {
                 s.foo()
             }   //^
-        }
-    """)
-
-    fun `test method in specialized trait impl for struct`() = checkByCode("""
-        trait Tr { fn some_fn(&self); }
-        struct S<T> { value: T }
-        impl Tr for S<u8> {
-            fn some_fn(&self) { }
-        }
-        impl Tr for S<u16> {
-            fn some_fn(&self) { }
-             //X
-        }
-        fn main() {
-            let v = S {value: 5u16};
-            v.some_fn();
-            //^
-        }
-    """)
-
-    fun `test method in specialized trait impl for struct 2`() = checkByCode("""
-        trait Tr { fn some_fn(&self); }
-        struct S<T1, T2> { value1: T1, value2: T2 }
-        impl Tr for S<u8, u8> {
-            fn some_fn(&self) { }
-        }
-        impl Tr for S<u16, u8> {
-            fn some_fn(&self) { }
-             //X
-        }
-        impl Tr for S<u8, u16> {
-            fn some_fn(&self) { }
-        }
-        impl Tr for S<u16, u16> {
-            fn some_fn(&self) { }
-        }
-        fn main() {
-            let v = S {value1: 5u16, value2: 5u8};
-            v.some_fn();
-            //^
-        }
-    """)
-
-    fun `test method in specialized trait impl for tuple struct`() = checkByCode("""
-        trait Tr { fn some_fn(&self); }
-        struct S<T> (T);
-        impl Tr for S<u8> {
-            fn some_fn(&self) { }
-        }
-        impl Tr for S<u16> {
-            fn some_fn(&self) { }
-             //X
-        }
-        fn main() {
-            let v = S (5u16);
-            v.some_fn();
-            //^
-        }
-    """)
-
-    fun `test method in specialized trait impl for enum`() = checkByCode("""
-        trait Tr { fn some_fn(&self); }
-        enum S<T> { Var1{value: T}, Var2 }
-        impl Tr for S<u8> {
-            fn some_fn(&self) { }
-        }
-        impl Tr for S<u16> {
-            fn some_fn(&self) { }
-             //X
-        }
-        fn main() {
-            let v = S::Var1 {value: 5u16};
-            v.some_fn();
-            //^
-        }
-    """)
-
-    fun `test method in specialized trait impl for tuple enum`() = checkByCode("""
-        trait Tr { fn some_fn(&self); }
-        enum S<T> { Var1(T), Var2  }
-        impl Tr for S<u8> {
-            fn some_fn(&self) { }
-        }
-        impl Tr for S<u16> {
-            fn some_fn(&self) { }
-             //X
-        }
-        fn main() {
-            let v = S::Var1 (5u16);
-            v.some_fn();
-            //^
-        }
-    """)
-
-    fun `test method in specialized impl for struct`() = checkByCode("""
-        struct S<T> { value: T }
-        impl S<u8> {
-            fn some_fn(&self) { }
-        }
-        impl S<u16> {
-            fn some_fn(&self) { }
-             //X
-        }
-        fn main(v: S<u16>) {
-            v.some_fn();
-            //^
-        }
-    """)
-
-    fun `test trait bound not satisfied`() = checkByCode("""
-        trait Tr1 { fn some_fn(&self) {} }
-        trait Bound1 {}
-        trait Bound2 {}
-        struct S<T> { value: T }
-        impl<T: Bound1> Tr1 for S<T> {}
-        struct S0;
-        impl Bound2 for S0 {}
-        fn main(v: S<S0>) {
-            v.some_fn();
-            //^ unresolved
-        }
-    """)
-
-    fun `test trait bound satisfied for struct`() = checkByCode("""
-        trait Tr1 { fn some_fn(&self) {} }
-        trait Tr2 { fn some_fn(&self) {} }
-                     //X
-        trait Bound1 {}
-        trait Bound2 {}
-        struct S<T> { value: T }
-        impl<T: Bound1> Tr1 for S<T> {}
-        impl<T: Bound2> Tr2 for S<T> {}
-        struct S0;
-        impl Bound2 for S0 {}
-        fn main(v: S<S0>) {
-            v.some_fn();
-            //^
-        }
-    """)
-
-    fun `test trait bound satisfied for trait`() = checkByCode("""
-//        #[lang = "sized"]
-//        trait Sized {}
-        trait Tr1 { fn some_fn(&self) {} }
-        trait Tr2 { fn some_fn(&self) {} }
-                     //X
-        trait Bound1 {}
-        trait Bound2 {}
-        trait ChildOfBound2 : Bound2 {}
-        struct S<T : ?Sized> { value: T }
-        impl<T: Bound1 + ?Sized> Tr1 for S<T> { }
-        impl<T: Bound2 + ?Sized> Tr2 for S<T> { }
-        fn f(v: &S<ChildOfBound2>) {
-            v.some_fn();
-            //^
-        }
-    """)
-
-    fun `test trait bound satisfied for other bound`() = checkByCode("""
-        trait Tr1 { fn some_fn(&self) {} }
-        trait Tr2 { fn some_fn(&self) {} }
-                     //X
-        trait Bound1 {}
-        trait Bound2 {}
-        struct S<T> { value: T }
-        impl<T: Bound1> Tr1 for S<T> { }
-        impl<T: Bound2> Tr2 for S<T> { }
-
-        struct S1<T> { value: T }
-        impl<T: Bound2> S1<T> {
-            fn f(&self, t: S<T>) {
-                t.some_fn();
-                //^
-            }
         }
     """)
 
@@ -862,22 +688,148 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test auto deref only for impls`() = checkByCode("""
-        struct A;
-        struct B;
-        #[lang = "deref"]
-        trait Deref { type Target; }
-        impl Deref for A { type Target = B; }
+    fun `test propagates trait type arguments`() = checkByCode("""
+        trait I<T> {
+            fn foo(&self) -> T;
+        }
 
-        trait Tr {}
-        impl Tr for B {}
-        struct S<T>(T);
-        impl<T: Tr> S<T> { fn bar(&self) {} }
+        struct S;
+        impl S {
+            fn bar(&self) {}
+        }     //X
 
-        fn foo(a: S<A>) {
-            a.bar();
-            //^ unresolved
+        fn baz<T: I<S>>(t: T) {
+            t.foo().bar()
+        }         //^
+    """)
+
+    fun `test indexing`() = checkByCode("""
+        #[lang = "index"]
+        trait Index<Idx: ?Sized> {
+            type Output: ?Sized;
+            fn index(&self, index: Idx) -> &Self::Output;
+        }
+
+        struct Container;
+        struct Elem;
+        impl Elem { fn foo(&self) {} }
+                      //X
+
+        impl Index<usize> for Container {
+            type Output = Elem;
+            fn index(&self, index: usize) -> &Elem { unimplemented!() }
+        }
+
+        fn bar(c: Container) {
+            c[0].foo()
+                //^
         }
     """)
 
+    fun `test indexing with multiple impls`() = checkByCode("""
+        #[lang = "index"]
+        trait Index<Idx: ?Sized> {
+            type Output: ?Sized;
+            fn index(&self, index: Idx) -> &Self::Output;
+        }
+
+        struct Container;
+        struct Elem1;
+        impl Elem1 { fn foo(&self) {} }
+        struct Elem2;
+        impl Elem2 { fn foo(&self) {} }
+                       //X
+
+        impl Index<usize> for Container {
+            type Output = Elem1;
+            fn index(&self, index: usize) -> &Elem1 { unimplemented!() }
+        }
+
+        impl Index<f64> for Container {
+            type Output = Elem2;
+            fn index(&self, index: f64) -> &Elem2 { unimplemented!() }
+        }
+
+        fn bar(c: Container) {
+            c[0.0].foo()
+                  //^
+        }
+    """)
+
+    fun `test simple method resolve for closure`() = checkByCode("""
+        struct T;
+        impl T {
+            fn bar(&self) {}
+             //X
+        }
+
+        fn foo<F: Fn(&T) -> ()>(f: F) {}
+
+        fn main() {
+            foo(|t| { t.bar(); })
+        }              //^
+    """)
+
+    fun `test simple method resolve with where for closure`() = checkByCode("""
+        struct T;
+        impl T {
+            fn bar(&self) {}
+             //X
+        }
+
+        fn foo<F>(f: F) where F: Fn(&T) -> () {}
+
+        fn main() {
+            foo(|t| { t.bar(); })
+        }              //^
+    """)
+
+    fun `test simple inner resolve for closure`() = checkByCode("""
+        struct T;
+        impl T {
+            fn bar(&self) {}
+        }
+
+        fn foo<F: Fn(&T) -> ()>(f: F) {}
+
+        fn main() {
+            foo(|t| {
+               //X
+                t.bar();
+              //^
+            })
+        }
+    """)
+
+    fun `test simple self resolve for closure`() = checkByCode("""
+        struct T;
+        impl T {
+            fn bar(&self) {}
+              //X
+            fn foo<F: Fn(&T) -> ()>(&self, f: F) {}
+        }
+
+        fn main() {
+            let t = T;
+            t.foo(|e| { e.bar(); })
+        }                //^
+    """)
+
+    fun `test multi self resolve for closure`() = checkByCode("""
+        struct T;
+        struct S;
+        impl S {
+            fn bar(&self) -> T {T}
+        }
+        impl T {
+            fn bar(&self) {}
+              //X
+            fn foo<F: Fn(&T) -> ()>(&self, f: F) {}
+        }
+
+        fn main() {
+            let t = S;
+            t.bar().foo(|e| { e.bar(); })
+        }                      //^
+    """)
 }

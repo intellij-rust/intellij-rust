@@ -11,11 +11,14 @@ import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.psi.ext.valueParameters
 import org.rust.lang.core.types.infer.inferDeclarationType
-import org.rust.lang.core.types.types.RustUnknownType
+import org.rust.lang.core.types.ty.TyUnknown
 
 object CompletionEngine {
     const val KEYWORD_PRIORITY = 10.0
 }
+
+private val RsFunction.extraTailText: String
+    get() = parentOfType<RsImplItem>()?.traitRef?.text?.let { " of $it" } ?: ""
 
 fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
     val base = LookupElementBuilder.create(this, scopeName)
@@ -35,6 +38,7 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
         is RsFunction -> base
             .withTypeText(retType?.typeReference?.text ?: "()")
             .withTailText(valueParameterList?.text?.replace("\\s+".toRegex(), " ") ?: "()")
+            .appendTailText(extraTailText, true)
             .withInsertHandler handler@ { context: InsertionContext, _: LookupElement ->
                 if (context.isInUseBlock) return@handler
                 if (context.alreadyHasParens) return@handler
@@ -73,10 +77,13 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
         is RsPatBinding -> base
             .withTypeText(inferDeclarationType(this).let {
                 when (it) {
-                    is RustUnknownType -> ""
+                    is TyUnknown -> ""
                     else -> it.toString()
                 }
             })
+
+        is RsMacroPatternSimpleMatching -> base
+            .withTypeText(this.identifier.text)
 
         else -> base
     }

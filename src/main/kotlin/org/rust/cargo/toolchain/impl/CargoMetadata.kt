@@ -1,5 +1,7 @@
 package org.rust.cargo.toolchain.impl
 
+import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
@@ -89,7 +91,20 @@ object CargoMetadata {
          * Path to the root module of the crate (aka crate root)
          */
         val src_path: String
-    )
+    ) {
+        val cleanKind: CargoWorkspace.TargetKind get() = when (kind.singleOrNull()) {
+            "bin" -> CargoWorkspace.TargetKind.BIN
+            "example" -> CargoWorkspace.TargetKind.EXAMPLE
+            "test" -> CargoWorkspace.TargetKind.TEST
+            "bench" -> CargoWorkspace.TargetKind.BENCH
+            "proc-macro" -> CargoWorkspace.TargetKind.LIB
+            else ->
+                if (kind.any { it.endsWith("lib") })
+                    CargoWorkspace.TargetKind.LIB
+                else
+                    CargoWorkspace.TargetKind.UNKNOWN
+        }
+    }
 
 
     /**
@@ -107,6 +122,27 @@ object CargoMetadata {
          * id's of dependent packages
          */
         val dependencies: List<String>
+    )
+
+    // The next two things do not belong here,
+    // see `machine_message` in Cargo.
+    data class Artifact(
+        val target: Target,
+        val profile: Profile,
+        val filenames: List<String>
+    ) {
+        companion object {
+            fun fromJson(json: JsonObject): Artifact? {
+                if (json.getAsJsonPrimitive("reason").asString != "compiler-artifact") {
+                    return null
+                }
+                return Gson().fromJson(json, Artifact::class.java)
+            }
+        }
+    }
+
+    data class Profile(
+        val test: Boolean
     )
 
     fun clean(project: Project): CleanCargoMetadata {
@@ -146,21 +182,10 @@ object CargoMetadata {
     }
 
     private fun Target.clean(root: VirtualFile): CleanCargoMetadata.Target? {
-        val kind = when (kind.singleOrNull()) {
-            "bin" -> CargoWorkspace.TargetKind.BIN
-            "example" -> CargoWorkspace.TargetKind.EXAMPLE
-            "test" -> CargoWorkspace.TargetKind.TEST
-            "bench" -> CargoWorkspace.TargetKind.BENCH
-            else ->
-                if (kind.any { it.endsWith("lib") })
-                    CargoWorkspace.TargetKind.LIB
-                else
-                    CargoWorkspace.TargetKind.UNKNOWN
-        }
 
         val mainFile = root.findFileByMaybeRelativePath(src_path)
 
-        return mainFile?.let { CleanCargoMetadata.Target(it.url, name, kind) }
+        return mainFile?.let { CleanCargoMetadata.Target(it.url, name, cleanKind) }
     }
 }
 

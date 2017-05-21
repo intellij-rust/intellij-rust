@@ -7,7 +7,7 @@ language: java
 jdk: oraclejdk8
 env:
   matrix:
-        # https://github.com/rust-lang-nursery/rustup.rs/issues/1092
+        # https://youtrack.jetbrains.com/issue/IDEA-173171
         # - ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT RUST_VERSION=nightly
         - ORG_GRADLE_PROJECT_ideaVersion=2017.1              RUST_VERSION=1.13.0
 

@@ -9,8 +9,8 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <a href="https://intellij-rust.github.io/2017/05/02/changelog-39.html">
-                 https://intellij-rust.github.io/2017/05/02/changelog-39.html
+        <a href="https://intellij-rust.github.io/2017/05/15/changelog-40.html">
+                 https://intellij-rust.github.io/2017/05/15/changelog-40.html
     ]]>
     </change-notes>
 
@@ -353,6 +353,16 @@
                          enabledByDefault="false" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsVariableMutableInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Wrong type parameters number"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsWrongTypeParametersNumberInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Wrong lifetime parameters number"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsWrongLifetimeParametersNumberInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
@@ -574,6 +584,11 @@
         <action id="Rust.CargoCommand"
                 class="org.rust.cargo.runconfig.command.RunCargoCommandAction"
                 text="Run Cargo command"/>
+
+        <action id="Rust.RunClippy"
+                class="org.rust.cargo.runconfig.command.RunClippyAction"
+                text="Run Clippy"/>
+
     </actions>
 
 </idea-plugin>

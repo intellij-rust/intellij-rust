@@ -255,7 +255,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun testStrRef() = testExpr("""
         fn main() {
             let a = "Hello";
-                       //^ & str
+                       //^ &str
         }
     """)
 
@@ -424,7 +424,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let x = [""];
             x
-        } //^ [& str; 1]
+        } //^ [&str; 1]
     """)
 
     fun `test array expression type2`() = testExpr("""
@@ -449,5 +449,31 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             x
           //^ [i32; 8]
         }
+    """)
+
+    fun `test inference type for closure`() = testExpr("""
+        struct T;
+        impl T {
+            fn bar(&self) {}
+        }
+
+        fn foo<F: Fn(&T) -> ()>(f: F) {}
+
+        fn main() {
+            foo(|t| { t.bar(); })
+        }           //^ &T
+    """)
+
+    fun `test inference type with where for closure`() = testExpr("""
+        struct T;
+        impl T {
+            fn bar(&self) {}
+        }
+
+        fn foo<F>(f: F) where F: Fn(&T) -> () {}
+
+        fn main() {
+            foo(|t| { t.bar(); })
+        }           //^ &T
     """)
 }

@@ -3,6 +3,7 @@ package org.rust.cargo.project.workspace
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
+import org.rust.cargo.util.StdLibType
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
@@ -110,17 +111,25 @@ class CargoWorkspace private constructor(
 
         // Bind dependencies and collect roots
         val roots = ArrayList<Package>()
+        val featureGated = ArrayList<Package>()
         libs.forEach { lib ->
             val slib = stdlib[lib.name] ?: error("Std lib ${lib.name} not found")
             val depPackages = lib.dependencies.mapNotNull { stdlib[it] }
             slib.dependencies.addAll(depPackages)
-            if (lib.isRoot) {
+            if (lib.type == StdLibType.ROOT) {
                 roots.add(slib)
+            } else if (lib.type == StdLibType.FEATURE_GATED) {
+                featureGated.add(slib)
             }
         }
 
         roots.forEach { it.dependencies.addAll(roots) }
-        packages.forEach { it.dependencies.addAll(roots) }
+        packages.forEach { pkg ->
+            // Only add feature gated crates which names don't conflict with own dependencies
+            val packageFeatureGated = featureGated.filter { o -> pkg.dependencies.none { it.name == o.name } }
+            pkg.dependencies.addAll(roots + packageFeatureGated)
+        }
+
         return CargoWorkspace(packages + roots)
     }
 

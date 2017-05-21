@@ -8,6 +8,7 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.RsFile
 
 class RsLookupElementTest : RsTestBase() {
+    private val `$` = '$'
     fun testFn() = check("""
         fn foo(x: i32) -> Option<String> {}
           //^
@@ -19,6 +20,19 @@ class RsLookupElementTest : RsTestBase() {
               //^
         }
     """, tailText = "(&self, x: i32)", typeText = "()")
+
+    fun testTraitByMethod() = check("""
+        trait T {
+            fn foo(&self, x: i32);
+        }
+        struct S;
+        impl T for S {
+            fn foo(&self, x: i32) {
+              //^
+                unimplemented!()
+            }
+        }
+    """, tailText = "(&self, x: i32) of T", typeText = "()")
 
     fun testConsItem() = check("""
         const c: S = unimplemented!();
@@ -59,6 +73,13 @@ class RsLookupElementTest : RsTestBase() {
         struct S { field: String }
                    //^
     """, typeText = "String")
+
+    fun `test macro simple`() = check("""
+        macro_rules! test {
+            ($`$`test:expr) => ($`$`test)
+                //^
+        }
+    """, tailText = null, typeText = "expr")
 
     fun testMod() {
         myFixture.configureByText("foo.rs", "")

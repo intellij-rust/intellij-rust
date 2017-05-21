@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.types.*
-import org.rust.lang.core.types.types.RustStructType
+import org.rust.lang.core.types.ty.*
 import java.util.*
 
 // IntelliJ Rust name resolution algorithm.
@@ -58,8 +58,8 @@ import java.util.*
 fun processFieldExprResolveVariants(fieldExpr: RsFieldExpr, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val receiverType = fieldExpr.expr.type
     for (ty in receiverType.derefTransitively(fieldExpr.project)) {
-        if (ty !is RustStructType) continue
-        if (processFieldDeclarations(ty.item, processor)) return true
+        if (ty !is TyStruct) continue
+        if (processFieldDeclarations(ty.item, ty.typeParameterValues, processor)) return true
     }
     if (isCompletion && processMethodDeclarationsWithDeref(fieldExpr.project, receiverType, processor)) {
         return true
@@ -69,7 +69,7 @@ fun processFieldExprResolveVariants(fieldExpr: RsFieldExpr, isCompletion: Boolea
 
 fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, processor: RsResolveProcessor): Boolean {
     val structOrEnumVariant = field.parentStructLiteral.path.reference.resolve() as? RsFieldsOwner ?: return false
-    return processFieldDeclarations(structOrEnumVariant, processor)
+    return processFieldDeclarations(structOrEnumVariant, emptyTypeArguments, processor)
 }
 
 fun processMethodCallExprResolveVariants(callExpr: RsMethodCallExpr, processor: RsResolveProcessor): Boolean {
@@ -285,36 +285,43 @@ fun resolveStringPath(path: String, module: Module): Pair<RsNamedElement, CargoW
     return el to pkg
 }
 
+fun processMacroSimpleResolveVariants(element: RsMacroBodySimpleMatching, processor: RsResolveProcessor): Boolean {
+    val definition = element.parentOfType<RsMacroDefinitionPattern>() ?: return false
+    val simple = definition.macroPattern.descendantsOfType<RsMacroPatternSimpleMatching>()
+        .toList()
 
-private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolveProcessor): Boolean {
-    if (processAll(struct.namedFields, processor)) return true
+    return simple.any { processor(it) }
+}
+
+private fun processFieldDeclarations(struct: RsFieldsOwner, typeArguments: TypeArguments, processor: RsResolveProcessor): Boolean {
+    if (processAllBound(struct.namedFields, typeArguments, processor)) return true
 
     for ((idx, field) in struct.positionalFields.withIndex()) {
-        if (processor(idx.toString(), field)) return true
+        if (processor(idx.toString(), field, typeArguments)) return true
     }
     return false
 }
 
-private fun processMethodDeclarationsWithDeref(project: Project, receiver: RustType, processor: RsResolveProcessor): Boolean {
+private fun processMethodDeclarationsWithDeref(project: Project, receiver: Ty, processor: RsResolveProcessor): Boolean {
     for (ty in receiver.derefTransitively(project)) {
-        val methods = findMethodsAndAssocFunctions(project, ty).filter { !it.isAssocFn  }
+        val methods = findMethodsAndAssocFunctions(project, ty).filter { !it.element.isAssocFn  }
         if (processFnsWithInherentPriority(methods, processor)) return true
     }
     return false
 }
 
-private fun processAssociatedFunctionsAndMethodsDeclarations(project: Project, type: RustType, processor: RsResolveProcessor): Boolean {
+private fun processAssociatedFunctionsAndMethodsDeclarations(project: Project, type: Ty, processor: RsResolveProcessor): Boolean {
     val assocFunctions = findMethodsAndAssocFunctions(project, type)
     return processFnsWithInherentPriority(assocFunctions, processor)
 }
 
-private fun processFnsWithInherentPriority(fns: Collection<RsFunction>, processor: RsResolveProcessor): Boolean {
-    val (inherent, nonInherent) = fns.partition { it is RsFunction && it.isInherentImpl }
-    if (processAll(inherent, processor)) return true
+private fun processFnsWithInherentPriority(fns: Collection<BoundElement<RsFunction>>, processor: RsResolveProcessor): Boolean {
+    val (inherent, nonInherent) = fns.partition { it.element is RsFunction && it.element.isInherentImpl }
+    if (processAllBound(inherent, processor)) return true
 
-    val inherentNames = inherent.mapNotNull { it.name }.toHashSet()
+    val inherentNames = inherent.mapNotNull { it.element.name }.toHashSet()
     for (fn in nonInherent) {
-        if (fn.name in inherentNames) continue
+        if (fn.element.name in inherentNames) continue
         if (processor(fn)) return true
     }
     return false
@@ -645,8 +652,8 @@ private fun walkUp(
     return false
 }
 
-private operator fun RsResolveProcessor.invoke(name: String, e: RsCompositeElement): Boolean {
-    return this(SimpleScopeEntry(name, e))
+private operator fun RsResolveProcessor.invoke(name: String, e: RsCompositeElement, typeArguments: TypeArguments = emptyTypeArguments): Boolean {
+    return this(SimpleScopeEntry(name, e, typeArguments))
 }
 
 private fun RsResolveProcessor.lazy(name: String, e: () -> RsCompositeElement?): Boolean {
@@ -658,6 +665,11 @@ private operator fun RsResolveProcessor.invoke(e: RsNamedElement): Boolean {
     return this(name, e)
 }
 
+private operator fun RsResolveProcessor.invoke(e: BoundElement<RsNamedElement>): Boolean {
+    val name = e.element.name ?: return false
+    return this(SimpleScopeEntry(name, e.element, e.typeArguments))
+}
+
 private fun processAll(elements: Collection<RsNamedElement>, processor: RsResolveProcessor): Boolean {
     for (e in elements) {
         if (processor(e)) return true
@@ -665,7 +677,25 @@ private fun processAll(elements: Collection<RsNamedElement>, processor: RsResolv
     return false
 }
 
-private data class SimpleScopeEntry(override val name: String, override val element: RsCompositeElement) : ScopeEntry
+private fun processAllBound(elements: Collection<BoundElement<RsNamedElement>>, processor: RsResolveProcessor): Boolean {
+    for (e in elements) {
+        if (processor(e)) return true
+    }
+    return false
+}
+
+private fun processAllBound(elements: Collection<RsNamedElement>, typeArguments: TypeArguments, processor: RsResolveProcessor): Boolean {
+    for (e in elements) {
+        if (processor(BoundElement(e, typeArguments))) return true
+    }
+    return false
+}
+
+private data class SimpleScopeEntry(
+    override val name: String,
+    override val element: RsCompositeElement,
+    override val typeArguments: TypeArguments = emptyTypeArguments
+) : ScopeEntry
 
 private class LazyScopeEntry(
     override val name: String,

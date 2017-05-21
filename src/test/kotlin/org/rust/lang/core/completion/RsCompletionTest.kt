@@ -350,4 +350,13 @@ class RsCompletionTest : RsCompletionTestBase() {
             }
         }
     """)
+
+    fun `test should not complete for test functions`() = checkNoCompletion("""
+        #[test]
+        fn foobar() {}
+
+        fn main() {
+            foo/*caret*/
+        }
+    """)
 }

@@ -2,39 +2,42 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.PsiPolyVariantReferenceBase
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.ResolveCache
-import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
-import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.types.BoundElement
 
 abstract class RsReferenceBase<T : RsReferenceElement>(
     element: T
 ) : PsiPolyVariantReferenceBase<T>(element),
     RsReference {
 
-    override fun resolve(): RsCompositeElement? {
-        return super.resolve() as? RsCompositeElement
-    }
+    abstract protected fun resolveInner(): List<BoundElement<RsCompositeElement>>
 
-    abstract fun resolveInner(): List<RsCompositeElement>
+    override fun resolve(): RsCompositeElement? = super.resolve() as? RsCompositeElement
+
+    override fun advancedResolve(): BoundElement<RsCompositeElement>? =
+        advancedCachedMultiResolve().firstOrNull()
 
     final override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
-        ResolveCache.getInstance(element.project)
-            .resolveWithCaching(this, { r, _ ->
-                r.resolveInner().map(::PsiElementResolveResult).toTypedArray()
-            },
-                /* needToPreventRecursion = */ true,
-                /* incompleteCode = */ false)
+        advancedCachedMultiResolve().toTypedArray()
 
     final override fun multiResolve(): List<RsNamedElement> =
-        multiResolve(false).asList().mapNotNull { it.element as? RsNamedElement }
+        advancedCachedMultiResolve().mapNotNull { it.element as? RsNamedElement }
+
+    private fun advancedCachedMultiResolve(): List<BoundElement<RsCompositeElement>> {
+        return ResolveCache.getInstance(element.project)
+            .resolveWithCaching(this, Resolver,
+                /* needToPreventRecursion = */ true,
+                /* incompleteCode = */ false).orEmpty()
+    }
 
     abstract val T.referenceAnchor: PsiElement
 
@@ -54,6 +57,12 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
     override fun equals(other: Any?): Boolean = other is RsReferenceBase<*> && element === other.element
 
     override fun hashCode(): Int = element.hashCode()
+
+    private object Resolver : ResolveCache.AbstractResolver<RsReferenceBase<*>, List<BoundElement<RsCompositeElement>>> {
+        override fun resolve(ref: RsReferenceBase<*>, incompleteCode: Boolean): List<BoundElement<RsCompositeElement>> {
+            return ref.resolveInner()
+        }
+    }
 
     companion object {
         @JvmStatic protected fun doRename(identifier: PsiElement, newName: String) {

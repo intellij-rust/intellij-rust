@@ -6,7 +6,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.types.RustStructOrEnumTypeBase
+import org.rust.lang.core.types.ty.TyStructOrEnumBase
 import org.rust.lang.core.types.type
 
 class RsSelfConventionInspection : RsLocalInspectionTool() {
@@ -26,7 +26,7 @@ class RsSelfConventionInspection : RsLocalInspectionTool() {
 
     private fun RsFunction.isOwnerCopyable(): Boolean {
         val implBlock = parentOfType<RsImplItem>() ?: return false
-        val owner = implBlock.typeReference?.type as? RustStructOrEnumTypeBase ?: return false
+        val owner = implBlock.typeReference?.type as? TyStructOrEnumBase ?: return false
         return owner.item.queryAttributes.hasAttributeWithArg("derive", "Copy")
     }
 

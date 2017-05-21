@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.TestOnly
 import org.rust.utils.fullyRefreshDirectory
 import org.rust.utils.seconds
 
@@ -50,6 +49,9 @@ class Rustup(
         val fs = LocalFileSystem.getInstance()
         return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust/src"))
     }
+
+    fun createRunCommandLine(channel: RustChannel, varargs: String): GeneralCommandLine =
+        GeneralCommandLine(pathToRustupExecutable, "run", channel.rustupArgument, varargs)
 
     private fun GeneralCommandLine.exec(timeoutInMilliseconds: Int? = null): ProcessOutput {
         val handler = CapturingProcessHandler(this)

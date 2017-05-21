@@ -17,7 +17,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn foo(s: S<'static, f64>) {
             let x = s.field;
             x
-          //^ & f64
+          //^ &f64
         }
     """)
 
@@ -58,7 +58,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn foo(s: S<f64>) {
             let x = s.field;
             x
-          //^ & [f64]
+          //^ &[f64]
         }
     """)
 
@@ -200,7 +200,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun testSelfType() = testExpr("""
         trait T {
             fn foo(&self) { self; }
-                            //^ & Self
+                            //^ &Self
         }
     """)
 

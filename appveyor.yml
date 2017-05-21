@@ -1,4 +1,11 @@
+branches:
+  only:
+    - staging
+    - trying
+
 environment:
+  # use the most aggressive compressing because .gradle is HUGE
+  APPVEYOR_CACHE_ENTRY_ZIP_ARGS: -t7z -m0=lzma2 -mx=9
   JAVA_HOME: C:\Program Files\Java\jdk1.8.0
 
 install:
@@ -16,7 +23,4 @@ test_script:
 cache:
   - C:\Users\appveyor\.cargo\registry
   - C:\Users\appveyor\.cargo\bin
-
-# Appveyor does not allow huge cache folders
-# https://www.appveyor.com/docs/build-cache/
-# - C:\Users\appveyor\.gradle
+  - C:\Users\appveyor\.gradle

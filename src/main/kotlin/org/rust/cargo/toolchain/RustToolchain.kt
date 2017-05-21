@@ -36,16 +36,18 @@ data class RustToolchain(val location: String) {
     }
 
     fun cargo(cargoProjectDirectory: String): Cargo =
-        Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), cargoProjectDirectory)
+        Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), cargoProjectDirectory, rustup(cargoProjectDirectory))
 
-    fun rustup(cargoProjectDirectory: String): Rustup? {
-        if (!hasExecutable(RUSTUP)) return null
+    fun rustup(cargoProjectDirectory: String): Rustup? =
+        if (isRustupAvailable)
+            Rustup(pathToExecutable(RUSTUP), pathToExecutable(RUSTC), cargoProjectDirectory)
+        else
+            null
 
-        return Rustup(pathToExecutable(RUSTUP), pathToExecutable(RUSTC), cargoProjectDirectory)
-    }
+    val isRustupAvailable: Boolean get() = hasExecutable(RUSTUP)
 
     fun nonProjectCargo(): Cargo =
-        Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), null)
+        Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), null, null)
 
     val presentableLocation: String = PathUtil.toPresentableUrl(pathToExecutable(CARGO))
 

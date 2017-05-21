@@ -8,12 +8,14 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.project.Project
 import com.intellij.task.*
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.cargoProjectRoot
 
 class RsProjectTasksRunner : ProjectTaskRunner() {
     override fun run(project: Project, context: ProjectTaskContext, callback: ProjectTaskNotification?, tasks: MutableCollection<out ProjectTask>) {
-        val cargoCommandLine = CargoCommandLine("build", listOf("--all"))
+        val command = if (project.rustSettings.useCargoCheckForBuild) "check" else "build"
+        val cargoCommandLine = CargoCommandLine(command, listOf("--all"))
         val runnerAndConfigurationSettings = RunManager.getInstance(project)
             .createCargoCommandRunConfiguration(cargoCommandLine)
         val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)

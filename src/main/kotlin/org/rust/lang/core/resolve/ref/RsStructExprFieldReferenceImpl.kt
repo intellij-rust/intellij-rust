@@ -6,6 +6,7 @@ import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructLiteralField
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.resolve.*
+import org.rust.lang.core.types.BoundElement
 
 class RsStructLiteralFieldReferenceImpl(
     field: RsStructLiteralField
@@ -17,7 +18,7 @@ class RsStructLiteralFieldReferenceImpl(
     override fun getVariants(): Array<out LookupElement> =
         collectCompletionVariants { processStructLiteralFieldResolveVariants(element, it) }
 
-    override fun resolveInner(): List<RsCompositeElement> =
+    override fun resolveInner(): List<BoundElement<RsCompositeElement>> =
         collectResolveVariants(element.referenceName) {
             processStructLiteralFieldResolveVariants(element, it)
         }

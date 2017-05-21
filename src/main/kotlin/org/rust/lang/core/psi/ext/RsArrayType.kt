@@ -3,7 +3,7 @@ package org.rust.lang.core.psi.ext
 import org.rust.lang.core.psi.RsArrayType
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsLitExpr
-import org.rust.lang.core.types.types.RustIntegerType
+import org.rust.lang.core.types.ty.TyInteger
 
 val RsArrayType.arraySize: Int? get() {
     val stub = stub
@@ -18,7 +18,7 @@ fun calculateArraySize(expr: RsExpr?): Int? {
     val sizeLiteral = (expr as? RsLitExpr)
         ?.integerLiteral
         ?.text
-        ?.removeSuffix(RustIntegerType.Kind.usize.name)
+        ?.removeSuffix(TyInteger.Kind.usize.name)
     // BACKCOMPAT: Kotlin API 1.0
     return try {
         sizeLiteral?.toInt()
