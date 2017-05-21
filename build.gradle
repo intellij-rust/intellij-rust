@@ -2,7 +2,7 @@ buildscript {
     repositories {
         mavenCentral()
         jcenter()
-        maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
+        maven { url 'https://dl.bintray.com/jetbrains/intellij-plugin-service' }
         maven { url 'https://jitpack.io' }
     }
     dependencies {
@@ -99,7 +99,7 @@ allprojects {
 
     repositories {
         mavenCentral()
-        maven { url 'http://dl.bintray.com/jetbrains/markdown' }
+        maven { url 'https://dl.bintray.com/jetbrains/markdown' }
         maven { url 'https://jitpack.io' }
     }
 
