@@ -24,7 +24,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 70
+        override fun getStubVersion(): Int = 71
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -715,6 +715,7 @@ class RsTypeReferenceStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val isMut: Boolean,
     val isRef: Boolean,
+    val isPointer: Boolean,
     val arraySize: Int
 ) : StubBase<RsTypeReference>(parent, elementType) {
 
@@ -729,12 +730,14 @@ class RsTypeReferenceStub(
             RsTypeReferenceStub(parentStub, this,
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
+                dataStream.readBoolean(),
                 dataStream.readInt()
             )
 
         override fun serialize(stub: RsTypeReferenceStub, dataStream: StubOutputStream) = with(dataStream) {
             dataStream.writeBoolean(stub.isMut)
             dataStream.writeBoolean(stub.isRef)
+            dataStream.writeBoolean(stub.isPointer)
             dataStream.writeInt(stub.arraySize)
         }
 
@@ -744,6 +747,7 @@ class RsTypeReferenceStub(
             RsTypeReferenceStub(parentStub, this,
                 (psi as? RsRefLikeType)?.isMut ?: false,
                 (psi as? RsRefLikeType)?.isRef ?: false,
+                (psi as? RsRefLikeType)?.isPointer ?: false,
                 (psi as? RsArrayType)?.arraySize ?: -1
             )
 

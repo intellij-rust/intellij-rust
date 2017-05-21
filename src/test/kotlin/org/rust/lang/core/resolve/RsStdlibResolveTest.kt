@@ -193,6 +193,61 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     """)
     }
 
+    fun `test inherent impl const ptr 1`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            let p: *const char;
+            p.is_null();
+            //^ ...libcore/ptr.rs
+        }
+    """)
+    }
+
+    fun `test inherent impl const ptr 2`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            let p: *const char;
+            <*const char>::is_null(p);
+                         //^ ...libcore/ptr.rs
+        }
+    """)
+    }
+
+    fun `test inherent impl const ptr 3`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            let p: *mut char;
+            <*const char>::is_null(p); //Pass a *mut pointer to a *const method
+                         //^ ...libcore/ptr.rs
+        }
+    """)
+    }
+
+    fun `test inherent impl mut ptr 1`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            let p: *mut char;
+            p.is_null();
+            //^ ...libcore/ptr.rs
+        }
+    """)
+    }
+
+    fun `test inherent impl mut ptr 2`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            let p: *mut char;
+            <*mut char>::is_null(p);
+                       //^ ...libcore/ptr.rs
+        }
+    """)
+    }
+
     fun `test println macro`() = stubOnlyResolve("""
     //- main.rs
         fn main() {

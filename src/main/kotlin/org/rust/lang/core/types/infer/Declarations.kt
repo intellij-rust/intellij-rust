@@ -132,7 +132,7 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
             if (ref.isRef) {
                 TyReference(inferTypeReferenceType(base), mutable)
             } else {
-                if (ref.mul != null) { //Raw pointers
+                if (ref.isPointer) { //Raw pointers
                     TyPointer(inferTypeReferenceType(base), mutable)
                 } else {
                     TyUnknown

@@ -1,9 +1,7 @@
 package org.rust.lang.core.types
 
-import org.rust.lang.core.psi.RsArrayType
-import org.rust.lang.core.psi.RsBaseType
-import org.rust.lang.core.psi.RsRefLikeType
-import org.rust.lang.core.psi.RsTypeReference
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.isPointer
 import org.rust.lang.core.types.ty.*
 import java.io.DataInput
 import java.io.DataOutput
@@ -20,7 +18,12 @@ data class TyFingerprint constructor(
     companion object {
         fun create(type: RsTypeReference): TyFingerprint? = when (type) {
             is RsBaseType -> type.path?.referenceName?.let(::TyFingerprint)
-            is RsRefLikeType -> type.typeReference?.let { create(it) }
+            is RsRefLikeType -> {
+                if (type.isPointer)
+                    TyFingerprint("*T")
+                else
+                    type.typeReference?.let { create(it) }
+            }
             is RsArrayType -> TyFingerprint("[T]")
             else -> null
         }
@@ -29,6 +32,7 @@ data class TyFingerprint constructor(
             is TyStruct -> type.item.name?.let(::TyFingerprint)
             is TyEnum -> type.item.name?.let(::TyFingerprint)
             is TySlice -> TyFingerprint("[T]")
+            is TyPointer -> TyFingerprint("*T")
             is TyReference -> create(type.referenced)
             is TyPrimitive -> TyFingerprint(type.toString())
             else -> null
