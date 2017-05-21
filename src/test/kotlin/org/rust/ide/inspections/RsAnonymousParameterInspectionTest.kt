@@ -10,4 +10,11 @@ class RsAnonymousParameterInspectionTest : RsInspectionsTestBase(RsAnonymousPara
             fn fmt(&self, _: F);
         }
     """)
+
+    fun `test no warning for fn type`() = checkByText("""
+        fn foo<F: Fn(i32, &mut String)>(f: F) {}
+        pub trait T {
+            fn foo<F: FnMut(i32)>() {}
+        }
+    """)
 }
