@@ -18,9 +18,9 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
-import org.rust.lang.core.types.type
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.lang.core.types.type
 
 class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
@@ -42,7 +42,6 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitPatBinding(o: RsPatBinding) = checkPatBinding(holder, o)
             override fun visitPath(o: RsPath) = checkPath(holder, o)
             override fun visitFieldDecl(o: RsFieldDecl) = checkDuplicates(holder, o)
-            override fun visitRefLikeType(o: RsRefLikeType) = checkRefLikeType(holder, o)
             override fun visitRetExpr(o: RsRetExpr) = checkRetExpr(holder, o)
             override fun visitTraitItem(o: RsTraitItem) = checkDuplicates(holder, o)
             override fun visitTypeAlias(o: RsTypeAlias) = checkTypeAlias(holder, o)
@@ -115,46 +114,11 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkBaseType(holder: AnnotationHolder, type: RsBaseType) {
-        checkBaseTypeUnderscore(holder, type)
-
-        // Don't apply generic declaration checks to Fn-traits and `Self`
-        if (type.path?.valueParameterList != null) return
-        if (type.path?.cself != null) return
-
-        val paramsDecl = type.path?.reference?.resolve() as? RsGenericDeclaration ?: return
-        checkBaseTypeLifetimes(holder, type, paramsDecl)
-        checkBaseTypeTypeArguments(holder, type, paramsDecl)
-    }
-
-    private fun checkBaseTypeUnderscore(holder: AnnotationHolder, type: RsBaseType) {
         if (type.underscore == null) return
         val owner = type.ancestors.drop(1).dropWhile { it is RsTupleType }.first()
         if ((owner is RsValueParameter || owner is RsRetType) && owner.parent.parent !is RsLambdaExpr || owner is RsConstant) {
             holder.createErrorAnnotation(type, "The type placeholder `_` is not allowed within types on item signatures [E0121]")
         }
-    }
-
-    private fun checkBaseTypeLifetimes(holder: AnnotationHolder, type: RsBaseType, paramsDecl: RsGenericDeclaration) {
-        val expectedLifetimes = paramsDecl.typeParameterList?.lifetimeParameterList?.size ?: 0
-        val actualLifetimes = type.path?.typeArgumentList?.lifetimeList?.size ?: 0
-        if (expectedLifetimes == actualLifetimes) return
-        if (actualLifetimes == 0 && !type.lifetimeElidable) {
-            holder.createErrorAnnotation(type, "Missing lifetime specifier [E0106]")
-        } else if (actualLifetimes > 0) {
-            holder.createErrorAnnotation(type, "Wrong number of lifetime parameters: expected $expectedLifetimes, found $actualLifetimes [E0107]")
-        }
-    }
-
-    private fun checkBaseTypeTypeArguments(holder: AnnotationHolder, type: RsBaseType, paramsDecl: RsGenericDeclaration) {
-        val expectedRequiredParams = paramsDecl.typeParameterList?.typeParameterList?.filter { it.eq == null }?.size ?: 0
-        val expectedTotalParams = paramsDecl.typeParameterList?.typeParameterList?.size ?: 0
-        val actualArgs = type.path?.typeArgumentList?.typeReferenceList?.size ?: 0
-        val (code, expectedText) = when {
-            actualArgs < expectedRequiredParams -> ("E0243" to if (expectedRequiredParams != expectedTotalParams) "at least $expectedRequiredParams" else "$expectedTotalParams")
-            actualArgs > expectedTotalParams -> ("E0244" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams")
-            else -> null
-        } ?: return
-        holder.createErrorAnnotation(type, "Wrong number of type arguments: expected $expectedText, found $actualArgs [$code]")
     }
 
     private fun checkPatBinding(holder: AnnotationHolder, binding: RsPatBinding) {
@@ -453,12 +417,6 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
     }
 
-    private fun checkRefLikeType(holder: AnnotationHolder, type: RsRefLikeType) {
-        if (type.mul == null && !type.lifetimeElidable) {
-            require(type.lifetime, holder, "Missing lifetime specifier [E0106]", type.and ?: type)
-        }
-    }
-
     private fun checkRetExpr(holder: AnnotationHolder, ret: RsRetExpr) {
         if (ret.expr != null) return
         val fn = ret.ancestors.find { it is RsFunction || it is RsLambdaExpr } as? RsFunction ?: return
@@ -485,11 +443,6 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun isInTraitImpl(o: RsVis): Boolean {
         val impl = o.parent?.parent
         return impl is RsImplItem && impl.traitRef != null
-    }
-
-    private val RsTypeReference.lifetimeElidable: Boolean get() {
-        val typeOwner = topmostType.parent
-        return typeOwner !is RsFieldDecl && typeOwner !is RsTupleFieldDecl && typeOwner !is RsTypeAlias
     }
 
     private fun isInEnumVariantField(o: RsVis): Boolean {
@@ -695,12 +648,5 @@ private fun RsExpr.isMutable(): Boolean {
         else -> true
     }
 }
-
-private val RsTypeReference.topmostType: RsTypeReference
-    get() = ancestors
-        .drop(1)
-        .filterNot { it is RsTypeArgumentList || it is RsPath }
-        .takeWhile { it is RsBaseType || it is RsTupleType || it is RsRefLikeType }
-        .lastOrNull() as? RsTypeReference ?: this
 
 private val RsTupleType.isUnitType: Boolean get() = typeReferenceList.isNullOrEmpty()
