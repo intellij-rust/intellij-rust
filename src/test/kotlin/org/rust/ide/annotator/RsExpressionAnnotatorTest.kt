@@ -113,6 +113,13 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun testE0384_ReassignMutableFromStatic() = checkErrors("""
+        fn main() {
+            static mut X: u32 = 5;
+            X = 3;
+        }
+    """)
+
     fun testE0384_ReassignMutableFromBindingWithoutAssignement() = checkErrors("""
         fn main() {
             let mut x;

@@ -625,27 +625,16 @@ private fun RsExpr.isMutable(): Boolean {
     return when (this) {
         is RsPathExpr -> {
             val declaration = this.path.reference.resolve() ?: return true
-
-            if (declaration is RsSelfParameter) {
-                return declaration.mut != null
-            }
-
-            if (declaration is RsPatBinding && declaration.isMut) {
-                return true
-            }
+            if (declaration is RsSelfParameter) return declaration.isMut
+            if (declaration is RsPatBinding && declaration.isMut) return true
+            if (declaration is RsConstant) return declaration.isMut
 
             val type = this.type
-            if (type is TyReference) {
-                return type.mutable
-            }
+            if (type is TyReference) return type.mutable
 
             val letExpr = declaration.parentOfType<RsLetDecl>()
-            if (letExpr != null && letExpr.eq == null) {
-                return true
-            }
-            if (type is TyUnknown) {
-                return true
-            }
+            if (letExpr != null && letExpr.eq == null) return true
+            if (type is TyUnknown) return true
             if (declaration is RsEnumVariant) return true
 
             false
