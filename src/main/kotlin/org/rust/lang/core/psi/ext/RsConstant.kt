@@ -40,6 +40,8 @@ val RsConstant.role: RsConstantRole get() {
 val RsConstant.default: PsiElement?
     get() = node.findChildByType(DEFAULT)?.psi
 
+val RsConstant.isMut: Boolean
+    get() = mut != null
 
 abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, RsConstant {
     constructor(node: ASTNode) : super(node)
