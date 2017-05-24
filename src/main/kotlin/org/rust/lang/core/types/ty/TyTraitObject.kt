@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.RsTraitItem
  */
 data class TyTraitObject(val trait: RsTraitItem) : Ty {
 
-    override fun canUnifyWith(other: Ty, project: Project): Boolean =
+    override fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping?): Boolean =
         other is RsTraitItem && trait == other.trait
 
     override fun toString(): String = trait.name ?: "<anonymous>"

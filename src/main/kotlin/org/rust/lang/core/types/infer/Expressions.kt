@@ -215,17 +215,8 @@ private fun mapTypeParameters(
     return argsMapping
 }
 
-private fun addTypeMapping(
-    argsMapping: MutableMap<TyTypeParameter, Ty>,
-    fieldType: Ty?,
-    expr: RsExpr
-) {
-    if (fieldType is TyTypeParameter) {
-        val old = argsMapping[fieldType]
-        if (old == null || old == TyUnknown || old is TyNumeric && old.isKindWeak)
-            argsMapping[fieldType] = expr.type
-    }
-}
+private fun addTypeMapping(argsMapping: TypeMapping, fieldType: Ty?, expr: RsExpr) =
+    fieldType?.canUnifyWith(expr.type, expr.project, argsMapping)
 
 /**
  * Remap type parameters between type declaration and an impl block.
