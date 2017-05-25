@@ -3,6 +3,7 @@ package org.rust.lang.core.types.infer
 import org.rust.ide.utils.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.findArithmeticBinaryExprOutputType
 import org.rust.lang.core.resolve.findIndexOutputType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
@@ -106,14 +107,8 @@ fun inferExpressionType(expr: RsExpr): Ty {
         }
 
         is RsBinaryExpr -> when (expr.operatorType) {
-            RsElementTypes.ANDAND,
-            RsElementTypes.OROR,
-            RsElementTypes.EQEQ,
-            RsElementTypes.EXCLEQ,
-            RsElementTypes.LT,
-            RsElementTypes.GT,
-            RsElementTypes.GTEQ,
-            RsElementTypes.LTEQ -> TyBool
+            in BOOL_BINARY_OPS -> TyBool
+            in ARITHMETIC_BINARY_OPS -> inferArithmeticBinaryExprType(expr)
 
             else -> TyUnknown
         }
@@ -204,6 +199,13 @@ private fun inferTypeParametersForTuple(
     tupleFields: RsTupleFields
 ): Map<TyTypeParameter, Ty> {
     return mapTypeParameters(tupleFields.tupleFieldDeclList.map { it.typeReference.type }, tupleExprs)
+}
+
+private fun inferArithmeticBinaryExprType(expr: RsBinaryExpr): Ty {
+    val lhsType = expr.left.type
+    val rhsType = expr.right?.type ?: TyUnknown
+    val op = requireNotNull(expr.arithmeticOp)
+    return findArithmeticBinaryExprOutputType(expr.project, lhsType, rhsType, op)
 }
 
 private fun mapTypeParameters(

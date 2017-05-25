@@ -29,6 +29,23 @@ val RsUnaryExpr.operatorType: UnaryOperator get() = when {
     else -> error("Unknown unary operator type: `$text`")
 }
 
+enum class ArithmeticOp(val traitName: String, val itemName: String, val sign: String) {
+    ADD("Add", "add", "+"), // `a + b`
+    SUB("Sub", "sub", "-"), // `a - b`
+    MUL("Mul", "mul", "*"), // `a * b`
+    DIV("Div", "div", "/"), // `a / b`
+    REM("Rem", "rem", "%"), // `a % b`
+    BIT_AND("BitAnd", "bitand", "&"), // `a & b`
+    BIT_OR("BitOr", "bitor", "|"), // `a | b`
+    BIT_XOR("BitXor", "bitxor", "^"), // `a ^ b`
+    SHL("Shl", "shl", "<<"), // `a << b`
+    SHR("Shr", "shr", ">>"); // `a >> b`
+
+    operator fun component1(): String = traitName
+    operator fun component2(): String = itemName
+    operator fun component3(): String = sign
+}
+
 val RsBinaryExpr.operator: PsiElement
     get() = requireNotNull(node.findChildByType(BINARY_OPS)) { "guaranteed to be not-null by parser" }.psi
 
@@ -36,6 +53,43 @@ val RsBinaryExpr.operator: PsiElement
 val RsBinaryExpr.operatorType: IElementType
     get() = operator.elementType
 
+val RsBinaryExpr.arithmeticOp: ArithmeticOp? get() = when (operatorType) {
+    PLUS -> ArithmeticOp.ADD
+    MINUS -> ArithmeticOp.SUB
+    MUL -> ArithmeticOp.MUL
+    DIV -> ArithmeticOp.DIV
+    REM -> ArithmeticOp.REM
+    AND -> ArithmeticOp.BIT_AND
+    OR -> ArithmeticOp.BIT_OR
+    XOR -> ArithmeticOp.BIT_XOR
+    LTLT -> ArithmeticOp.SHL
+    GTGT -> ArithmeticOp.SHR
+    else -> null
+}
+
+val BOOL_BINARY_OPS = tokenSetOf(
+    ANDAND,
+    OROR,
+    EQEQ,
+    EXCLEQ,
+    LT,
+    GT,
+    GTEQ,
+    LTEQ
+)
+
+val ARITHMETIC_BINARY_OPS = tokenSetOf(
+    PLUS,
+    MINUS,
+    MUL,
+    DIV,
+    REM,
+    AND,
+    OR,
+    XOR,
+    LTLT,
+    GTGT
+)
 
 private val BINARY_OPS = tokenSetOf(
     AND,
