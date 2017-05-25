@@ -129,6 +129,125 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test inherent impl char 1`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() { 'Z'.is_lowercase(); }
+                      //^ .../char.rs
+    """)
+
+    fun `test inherent impl char 2`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() { char::is_lowercase('Z'); }
+                        //^ .../char.rs
+    """)
+    }
+
+    fun `test inherent impl str 1`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() { "Z".to_uppercase(); }
+                      //^ ...libcollections/str.rs
+    """)
+
+    fun `test inherent impl str 2`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() { str::to_uppercase("Z"); }
+                       //^ ...libcollections/str.rs
+    """)
+    }
+
+    fun `test inherent impl f32 1`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() { 0.0f32.sqrt(); }
+                         //^ .../f32.rs
+    """)
+
+    fun `test inherent impl f32 2`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() { f32::sqrt(0.0f32); }
+                       //^ .../f32.rs
+    """)
+    }
+
+    fun `test inherent impl f32 3`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() { <f32>::sqrt(0.0f32); }
+                         //^ .../f32.rs
+    """)
+    }
+
+    fun `test inherent impl f64 1`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() { 0.0f64.sqrt(); }
+                         //^ .../f64.rs
+    """)
+
+    fun `test inherent impl f64 2`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() { f64::sqrt(0.0f64); }
+                       //^ .../f64.rs
+    """)
+    }
+
+    fun `test inherent impl const ptr 1`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            let p: *const char;
+            p.is_null();
+            //^ ...libcore/ptr.rs
+        }
+    """)
+    }
+
+    fun `test inherent impl const ptr 2`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            let p: *const char;
+            <*const char>::is_null(p);
+                         //^ ...libcore/ptr.rs
+        }
+    """)
+    }
+
+    fun `test inherent impl const ptr 3`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            let p: *mut char;
+            <*const char>::is_null(p); //Pass a *mut pointer to a *const method
+                         //^ ...libcore/ptr.rs
+        }
+    """)
+    }
+
+    fun `test inherent impl mut ptr 1`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            let p: *mut char;
+            p.is_null();
+            //^ ...libcore/ptr.rs
+        }
+    """)
+    }
+
+    fun `test inherent impl mut ptr 2`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            let p: *mut char;
+            <*mut char>::is_null(p);
+                       //^ ...libcore/ptr.rs
+        }
+    """)
+    }
+
     fun `test println macro`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
