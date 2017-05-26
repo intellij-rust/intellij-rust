@@ -832,4 +832,18 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             t.bar().foo(|e| { e.bar(); })
         }                      //^
     """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/1269
+    fun `test tuple field`() = checkByCode("""
+        struct Foo;
+        impl Foo {
+            fn foo(&self) { unimplemented!() }
+              //X
+        }
+        fn main() {
+            let t = (1, Foo());
+            t.1.foo();
+               //^
+        }
+    """)
 }

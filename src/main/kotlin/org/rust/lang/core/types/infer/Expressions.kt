@@ -52,7 +52,11 @@ fun inferExpressionType(expr: RsExpr): Ty {
 
         is RsFieldExpr -> {
             val boundField = expr.reference.advancedResolve()
-                ?: return TyUnknown
+            if (boundField == null) {
+                val type = expr.expr.type as? TyTuple ?: return TyUnknown
+                val fieldIndex = expr.fieldId.integerLiteral?.text?.toInt() ?: return TyUnknown
+                return type.types.getOrElse(fieldIndex) { TyUnknown }
+            }
             val field = boundField.element
             val raw = when (field) {
                 is RsFieldDecl -> field.typeReference?.type

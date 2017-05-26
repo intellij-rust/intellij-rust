@@ -476,4 +476,22 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             foo(|t| { t.bar(); })
         }           //^ &T
     """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/1269
+    fun `test tuple field`() = testExpr("""
+        fn main() {
+            let x = (1, "foo").1;
+            x
+          //^ &str
+        }
+    """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/1269
+    fun `test tuple incorrect field`() = testExpr("""
+        fn main() {
+            let x = (1, "foo").2;
+            x
+          //^ <unknown>
+        }
+    """)
 }
