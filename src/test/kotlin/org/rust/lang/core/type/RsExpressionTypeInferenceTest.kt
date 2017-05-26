@@ -361,6 +361,18 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     }
 
+    fun `test assign`() {
+        for (op in listOf("=", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "<<=", ">>="))
+            testExpr("""
+            fn main() {
+                let mut x;
+                let y = (x $op 2);
+                y
+              //^ ()
+            }
+        """)
+    }
+
     fun `test const pointer`() = testExpr("""
         fn main() {
             let y = 42;

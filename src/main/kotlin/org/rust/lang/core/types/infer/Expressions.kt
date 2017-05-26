@@ -110,7 +110,7 @@ fun inferExpressionType(expr: RsExpr): Ty {
             when (op) {
                 is BoolOp -> TyBool
                 is ArithmeticOp -> inferArithmeticBinaryExprType(expr, op)
-
+                is AssignmentOp -> TyUnit
                 else -> TyUnknown
             }
         }
