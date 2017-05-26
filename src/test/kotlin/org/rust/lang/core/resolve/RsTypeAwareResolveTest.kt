@@ -453,6 +453,19 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun testResultTryMacro() = checkByCode("""
+        enum Result<T, E> { Ok(T), Err(E)}
+        struct S { field: u32 }
+                    //X
+        fn foo() -> Result<S, ()> { unimplemented!() }
+
+        fn main() {
+            let s = try!(foo());
+            s.field;
+            //^
+        }
+    """)
+
     fun testResultUnwrap() = checkByCode("""
         enum Result<T, E> { Ok(T), Err(E)}
 

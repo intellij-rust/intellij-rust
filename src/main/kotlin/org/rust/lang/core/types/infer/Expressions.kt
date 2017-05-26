@@ -116,6 +116,7 @@ fun inferExpressionType(expr: RsExpr): Ty {
         }
 
         is RsTryExpr -> {
+            // See RsMacroExpr where we handle the try! macro in a similar way
             val base = expr.expr.type
 
             if (isStdResult(base))
@@ -166,6 +167,52 @@ fun inferExpressionType(expr: RsExpr): Ty {
             val containerType = expr.containerExpr?.type ?: return TyUnknown
             val indexType = expr.indexExpr?.type ?: return TyUnknown
             findIndexOutputType(expr.project, containerType, indexType)
+        }
+
+        is RsMacroExpr -> {
+            if (expr.vecMacro != null) {
+                val elements = expr.vecMacro!!.vecMacroArgs?.exprList ?: emptyList()
+                var elementType: Ty = TyUnknown;
+                for (e in elements) {
+                    elementType = getMoreCompleteType(e.type, elementType);
+                }
+
+                findStdVec(elementType, expr)
+            } else if (expr.logMacro != null) {
+                TyUnit
+            } else if (expr.macro != null) {
+                val macro = expr.macro ?: return TyUnknown;
+                when (macro) {
+                    is RsTryMacro -> {
+                        // See RsTryExpr where we handle the ? expression in a similar way
+                        val base = macro.tryMacroArgs?.expr?.type ?: return TyUnknown;
+
+                        if (isStdResult(base))
+                            (base as TyEnum).typeArguments.firstOrNull() ?: TyUnknown
+                        else
+                            TyUnknown
+                    }
+
+                    is RsFormatLikeMacro -> {
+                        val name = macro.macroInvocation.referenceName;
+
+                        if (name == "format")
+                            findStdString(expr)
+                        else if (name == "format_args")
+                            findStdArguments(expr)
+                        else if (name == "write" || name == "writeln")
+                            TyUnknown //Returns different types depending on first argument
+                        else if (name == "panic" || name == "print" || name == "println")
+                            TyUnit
+                        else
+                            TyUnknown
+                    }
+                    is RsAssertMacro,
+                    is RsAssertEqMacro -> TyUnit
+
+                    else -> TyUnknown
+                }
+            } else return TyUnknown;
         }
 
         else -> TyUnknown

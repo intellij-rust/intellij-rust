@@ -83,4 +83,136 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
           //^ RangeInclusive<u16>
         }
     """)
+
+    fun `test vec!`() = testExpr("""
+        fn main() {
+            let x = vec!(1, 2u16, 4, 8);
+            x
+          //^ Vec<u16>
+        }
+    """)
+
+    fun `test vec! no_std`() = testExpr("""
+        #![no_std]
+        fn main() {
+            let x = vec!(1, 2u16, 4, 8);
+            x
+          //^ Vec<u16>
+        }
+    """)
+
+    fun `test format!`() = testExpr("""
+        fn main() {
+            let x = format!("{} {}", "Hello", "world!");
+            x
+          //^ String
+        }
+    """)
+
+    fun `test format! no_std`() = testExpr("""
+        #![no_std]
+        fn main() {
+            let x = format!("{} {}", "Hello", "world!");
+            x
+          //^ String
+        }
+    """)
+
+    fun `test format_args!`() = testExpr("""
+        fn main() {
+            let x = format_args!("{} {}", "Hello", "world!");
+            x
+          //^ Arguments
+        }
+    """)
+
+    fun `test format_args! no_std`() = testExpr("""
+        #![no_std]
+        fn main() {
+            let x = format_args!("{} {}", "Hello", "world!");
+            x
+          //^ Arguments
+        }
+    """)
+
+    fun `test assert!`() = testExpr("""
+        fn main() {
+            let x = assert!(1 != 2);
+            x
+          //^ ()
+        }
+    """)
+
+    fun `test debug_assert!`() = testExpr("""
+        fn main() {
+            let x = debug_assert!(1 != 2);
+            x
+          //^ ()
+        }
+    """)
+
+    fun `test assert_eq!`() = testExpr("""
+        fn main() {
+            let x = assert_eq!(1 + 1, 2);
+            x
+          //^ ()
+        }
+    """)
+
+    fun `test assert_ne!`() = testExpr("""
+        fn main() {
+            let x = assert_ne!(1, 2);
+            x
+          //^ ()
+        }
+    """)
+
+    fun `test debug_assert_eq!`() = testExpr("""
+        fn main() {
+            let x = debug_assert_eq!(1 + 1, 2);
+            x
+          //^ ()
+        }
+    """)
+
+    fun `test debug_assert_ne!`() = testExpr("""
+        fn main() {
+            let x = debug_assert_ne!(1, 2);
+            x
+          //^ ()
+        }
+    """)
+
+    fun `test panic!`() = testExpr("""
+        fn main() {
+            let x = panic!("Something went wrong");
+            x
+          //^ ()
+        }
+    """)
+
+    fun `test print!`() = testExpr("""
+        fn main() {
+            let x = print!("Something went wrong");
+            x
+          //^ ()
+        }
+    """)
+
+    fun `test println!`() = testExpr("""
+        fn main() {
+            let x = println!("Something went wrong");
+            x
+          //^ ()
+        }
+    """)
+
+    //From the log crate
+    fun `test warn!`() = testExpr("""
+        fn main() {
+            let x = warn!("Something went wrong");
+            x
+          //^ ()
+        }
+    """)
 }

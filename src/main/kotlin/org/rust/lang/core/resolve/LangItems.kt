@@ -113,3 +113,18 @@ fun findStdRange(rangeName: String, indexType: Ty?, elementForModule: RsComposit
     val typeParameter = ty.getTypeParameter("Idx") ?: return ty;
     return ty.substitute(mapOf(typeParameter to indexType));
 }
+
+fun findStdVec(elementType: Ty, elementForModule: RsCompositeElement): Ty {
+    val ty = tyFromAbsolutePath("std", "collections", "vec::Vec", elementForModule);
+
+    val typeParameter = ty.getTypeParameter("T") ?: return ty
+    return ty.substitute(mapOf(typeParameter to elementType));
+}
+
+fun findStdString(elementForModule: RsCompositeElement): Ty {
+    return tyFromAbsolutePath("std", "collections", "string::String", elementForModule);
+}
+
+fun findStdArguments(elementForModule: RsCompositeElement): Ty {
+    return tyFromAbsolutePath("std", "core", "fmt::Arguments", elementForModule);
+}
