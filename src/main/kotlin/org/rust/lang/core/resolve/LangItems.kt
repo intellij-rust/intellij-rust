@@ -1,11 +1,10 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.project.Project
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.ext.ArithmeticOp
-import org.rust.lang.core.psi.ext.queryAttributes
-import org.rust.lang.core.psi.ext.resolveToTrait
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.types.infer.remapTypeParameters
 import org.rust.lang.core.types.ty.*
@@ -86,3 +85,23 @@ private val RsTraitItem.isIndex: Boolean get() = langAttribute == "index"
 private fun lookupAssociatedType(impl: RsImplItem, name: String): Ty =
     impl.typeAliasList.find { it.name == name }?.typeReference?.type
         ?: TyUnknown
+
+private fun tyFromAbsolutePath(prefixStd: String, prefixNoStd: String, name: String, elementForModule: RsCompositeElement): Ty {
+    val module = elementForModule.module ?: return TyUnknown;
+    val crateRoot = elementForModule.crateRoot as? RsFile ?: return TyUnknown
+    val prefix = if (crateRoot.attributes == RsFile.Attributes.NONE) prefixStd else prefixNoStd;
+    val fullName = prefix + "::" + name;
+
+    val (element, _) = resolveStringPath(fullName, module) ?: return TyUnknown;
+    return (element as? RsTypeBearingItemElement)?.type ?: TyUnknown;
+}
+
+fun findStdRange(rangeName: String, indexType: Ty?, elementForModule: RsCompositeElement): Ty {
+    val ty = tyFromAbsolutePath("std", "core", "ops::" + rangeName, elementForModule);
+
+    if (indexType == null)
+        return ty;
+
+    val typeParameter = ty.getTypeParameter("Idx") ?: return ty;
+    return ty.substitute(mapOf(typeParameter to indexType));
+}

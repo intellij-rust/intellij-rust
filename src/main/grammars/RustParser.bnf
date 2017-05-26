@@ -921,12 +921,7 @@ upper ParenExprUpper ::= ')' { elementType = ParenExpr }
 ArrayExpr ::= '[' ArrayInitializer ']' { pin = 1 }
 private ArrayInitializer ::= [ AnyExpr ( ';' AnyExpr | (',' AnyExpr)* ','? ) ]
 
-fake RangeExpr ::= Expr + {
-  methods=[
-    from="/Expr[0]"
-    to="/Expr[1]"
-  ]
-}
+fake RangeExpr ::= Expr? ('..' | '...') Expr?
 
 FullRangeExpr ::= Expr ( '..' (<<checkBraceAllowed>> Expr)? | '...' (<<checkBraceAllowed>> Expr) ) { elementType = RangeExpr }
 OpenRangeExpr ::=      ( '..' (<<checkBraceAllowed>> Expr)? | '...' (<<checkBraceAllowed>> Expr) ) { elementType = RangeExpr }

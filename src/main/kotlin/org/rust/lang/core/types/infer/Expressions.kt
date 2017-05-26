@@ -3,8 +3,7 @@ package org.rust.lang.core.types.infer
 import org.rust.ide.utils.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.findArithmeticBinaryExprOutputType
-import org.rust.lang.core.resolve.findIndexOutputType
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -130,6 +129,42 @@ fun inferExpressionType(expr: RsExpr): Ty {
 
         is RsArrayExpr -> inferArrayType(expr)
 
+        is RsRangeExpr -> {
+            val el = expr.exprList;
+            val dot2 = expr.dotdot;
+            val dot3 = expr.dotdotdot;
+
+            val (rangeName, indexType) = when {
+                dot2 != null && el.size == 0 -> "RangeFull" to null
+                dot2 != null && el.size == 1 -> {
+                    val e = el[0];
+                    if (e.startOffsetInParent < dot2.startOffsetInParent) {
+                        "RangeFrom" to e.type
+                    } else {
+                        "RangeTo" to e.type
+                    }
+                }
+                dot2 != null && el.size == 2 -> {
+                    "Range" to getMoreCompleteType(el[0].type, el[1].type)
+                }
+                dot3 != null && el.size == 1 -> {
+                    val e = el[0];
+                    if (e.startOffsetInParent < dot3.startOffsetInParent) {
+                        return TyUnknown
+                    } else {
+                        "RangeToInclusive" to e.type
+                    }
+                }
+                dot3 != null && el.size == 2 -> {
+                    "RangeInclusive" to getMoreCompleteType(el[0].type, el[1].type)
+                }
+
+                else -> error("Unrecognized range expression")
+            }
+
+            findStdRange(rangeName, indexType, expr)
+        }
+
         is RsIndexExpr -> {
             val containerType = expr.containerExpr?.type ?: return TyUnknown
             val indexType = expr.indexExpr?.type ?: return TyUnknown
@@ -138,6 +173,17 @@ fun inferExpressionType(expr: RsExpr): Ty {
 
         else -> TyUnknown
     }
+}
+
+private fun getMoreCompleteType(t1: Ty, t2: Ty): Ty {
+    if (t1 is TyUnknown)
+        return t2;
+    if (t1 is TyInteger && t2 is TyInteger && t1.isKindWeak)
+        return t2;
+    if (t1 is TyFloat && t2 is TyFloat && t1.isKindWeak)
+        return t2;
+
+    return t1
 }
 
 private fun inferArrayType(expr: RsArrayExpr): Ty {
