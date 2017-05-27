@@ -846,4 +846,38 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
                //^
         }
     """)
+
+    fun `test simple generic function argument`() = checkByCode("""
+        struct Foo<F>(F);
+        struct Bar;
+        impl Bar {
+            fn bar(&self) { unimplemented!() }
+              //X
+        }
+        fn foo<T>(xs: Foo<T>) -> T { unimplemented!() }
+        fn main() {
+            let x = foo(Foo(Bar()));
+            x.bar();
+             //^
+        }
+    """)
+
+    fun `test complex generic function argument`() = checkByCode("""
+        struct Foo<T1, T2>(T1, T2);
+        enum Bar<T3> { V(T3) }
+        struct FooBar<T4, T5>(T4, T5);
+        struct S;
+
+        impl S {
+            fn bar(&self) { unimplemented!() }
+              //X
+        }
+
+        fn foo<F1, F2, F3>(x: FooBar<Foo<F1, F2>, Bar<F3>>) -> Foo<F2, F3> { unimplemented!() }
+        fn main() {
+            let x = foo(FooBar(Foo(123, "foo"), Bar::V(S())));
+            x.1.bar();
+              //^
+        }
+    """)
 }

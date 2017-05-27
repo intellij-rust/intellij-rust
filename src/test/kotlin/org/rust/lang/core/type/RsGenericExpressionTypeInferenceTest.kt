@@ -270,5 +270,84 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
           //^ (u8, u16, u8)
         }
     """)
+
+    fun testGenericStructArg() = testExpr("""
+        struct Foo<F>(F);
+        fn foo<T>(xs: Foo<T>) -> T { unimplemented!() }
+        fn main() {
+            let x = foo(Foo(123));
+            x
+          //^ i32
+        }
+    """)
+
+    fun testGenericEnumArg() = testExpr("""
+        enum Foo<F> { V(F) }
+        fn foo<T>(xs: Foo<T>) -> T { unimplemented!() }
+        fn main() {
+            let x = foo(Foo::V(123));
+            x
+          //^ i32
+        }
+    """)
+
+    fun testGenericTupleArg() = testExpr("""
+        fn foo<T, F>(xs: (T, F)) -> F { unimplemented!() }
+        fn main() {
+            let x = foo((123, "str"));
+            x
+          //^ &str
+        }
+    """)
+
+    fun testGenericReferenceArg() = testExpr("""
+        fn foo<T>(xs: &T) -> T { unimplemented!() }
+        fn main() {
+            let x = foo(&8u64);
+            x
+          //^ u64
+        }
+    """)
+
+    fun testGenericPointerArg() = testExpr("""
+        fn foo<T>(xs: *const T) -> T { unimplemented!() }
+        fn main() {
+            let x = foo(&8u16 as *const u16);
+            x
+          //^ u16
+        }
+    """)
+
+    fun testGenericArrayArg() = testExpr("""
+        fn foo<T>(xs: [T; 4]) -> T { unimplemented!() }
+        fn main() {
+            let x = foo([1, 2, 3, 4]);
+            x
+          //^ i32
+        }
+    """)
+
+    fun testGenericSliceArg() = testExpr("""
+        fn foo<T>(xs: &[T]) -> T { unimplemented!() }
+        fn main() {
+            let slice: &[&str] = &["foo", "bar"];
+            let x = foo(slice);
+            x
+          //^ &str
+        }
+    """)
+
+    fun testComplexGenericArg() = testExpr("""
+        struct Foo<T1, T2>(T1, T2);
+        enum Bar<T3, T4> { V(T3, T4) }
+        struct FooBar<T5, T6>(T5, T6);
+
+        fn foo<F1, F2, F3, F4>(x: FooBar<Foo<F1, F2>, Bar<F3, F4>>) -> (Bar<F4, F1>, Foo<F3, F2>) { unimplemented!() }
+        fn main() {
+            let x = foo(FooBar(Foo(123, "foo"), Bar::V([0.0; 3], (0, false))));
+            x
+          //^ (Bar<(i32, bool), i32>, Foo<[f64; 3], &str>)
+        }
+    """)
 }
 

@@ -12,6 +12,7 @@ import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.remapTypeParameters
 
 typealias TypeArguments = Map<TyTypeParameter, Ty>
+typealias TypeMapping = MutableMap<TyTypeParameter, Ty>
 val emptyTypeArguments: TypeArguments = emptyMap()
 
 /**
@@ -27,7 +28,7 @@ interface Ty {
      *
      * Note that `t1.canUnifyWith(t2)` is not the same as `t2.canUnifyWith(t1)`.
      */
-    fun canUnifyWith(other: Ty, project: Project): Boolean
+    fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping? = null): Boolean
 
     /**
      * Apply positional type arguments to a type constructors.
@@ -114,4 +115,26 @@ private val RsImplItem.allMethodsAndAssocFunctions: Collection<RsFunction> get()
     }
 
     return functionList + defaulted
+}
+
+internal inline fun merge(mapping: TypeMapping?, canUnify: (TypeMapping?) -> Boolean): Boolean {
+    return if (mapping != null) {
+        val innerMapping = mutableMapOf<TyTypeParameter, Ty>()
+        val result = canUnify(innerMapping)
+        if (result) {
+            mapping.merge(innerMapping)
+        }
+        result
+    } else {
+        canUnify(null)
+    }
+}
+
+internal fun TypeMapping.merge(otherMapping: TypeMapping) {
+    for ((param, value) in otherMapping) {
+        val old = get(param)
+        if (old == null || old == TyUnknown || old is TyNumeric && old.isKindWeak) {
+            put(param, value)
+        }
+    }
 }

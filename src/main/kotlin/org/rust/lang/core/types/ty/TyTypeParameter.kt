@@ -20,7 +20,10 @@ data class TyTypeParameter private constructor(
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
         parameter.bounds.flatMapTo(mutableSetOf()) { it.flattenHierarchy.asSequence() }
 
-    override fun canUnifyWith(other: Ty, project: Project): Boolean = true
+    override fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping?): Boolean {
+        mapping?.merge(mutableMapOf(this to other))
+        return true
+    }
 
     override fun substitute(map: TypeArguments): Ty = map[this] ?: this
 

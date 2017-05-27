@@ -28,9 +28,10 @@ interface TyStructOrEnumBase : Ty {
             } else "<anonymous>"
         }
 
-    override fun canUnifyWith(other: Ty, project: Project): Boolean =
+    override fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping?): Boolean = merge(mapping) {
         other is TyStructOrEnumBase && item == other.item &&
-            typeArguments.zip(other.typeArguments).all { (type1, type2) -> type1.canUnifyWith(type2, project) }
+            typeArguments.zip(other.typeArguments).all { (type1, type2) -> type1.canUnifyWith(type2, project, it) }
+    }
 
     fun aliasTypeArguments(typeArguments: List<TyTypeParameter>): Ty
 

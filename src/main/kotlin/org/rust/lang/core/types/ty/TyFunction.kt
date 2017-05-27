@@ -4,10 +4,11 @@ import com.intellij.openapi.project.Project
 
 data class TyFunction(val paramTypes: List<Ty>, val retType: Ty) : Ty {
 
-    override fun canUnifyWith(other: Ty, project: Project): Boolean =
+    override fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping?): Boolean = merge(mapping) {
         other is TyFunction && paramTypes.size == other.paramTypes.size &&
-            paramTypes.zip(other.paramTypes).all { (type1, type2) -> type1.canUnifyWith(type2, project) } &&
-            retType.canUnifyWith(other.retType, project)
+            paramTypes.zip(other.paramTypes).all { (type1, type2) -> type1.canUnifyWith(type2, project, it) } &&
+            retType.canUnifyWith(other.retType, project, it)
+    }
 
     override fun toString(): String {
         val params = paramTypes.joinToString(", ", "fn(", ")")
