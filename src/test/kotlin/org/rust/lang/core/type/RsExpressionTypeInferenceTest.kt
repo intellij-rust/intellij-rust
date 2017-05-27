@@ -451,6 +451,14 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test array expression type5`() = testExpr("""
+        fn main() {
+            let x = [1, 2u16, 3];
+            x
+          //^ [u16; 3]
+        }
+    """)
+
     fun `test inference type for closure`() = testExpr("""
         struct T;
         impl T {

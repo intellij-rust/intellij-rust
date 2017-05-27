@@ -238,8 +238,13 @@ private fun inferArrayType(expr: RsArrayExpr): Ty {
     } else {
         val elements = expr.arrayElements
         if (elements.isNullOrEmpty()) return TySlice(TyUnknown)
+
+        var elementType: Ty = TyUnknown;
         // '!!' is safe here because we've just checked that elements isn't null
-        elements!![0].type to elements.size
+        for (e in elements!!) {
+            elementType = getMoreCompleteType(e.type, elementType);
+        }
+        elementType to elements.size;
     }
     return TyArray(elementType, size)
 }
