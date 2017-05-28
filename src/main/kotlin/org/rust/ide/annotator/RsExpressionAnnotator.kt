@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.ext.namedFields
 import org.rust.lang.core.psi.ext.queryAttributes
 import org.rust.lang.core.psi.ext.RsStructKind
 import org.rust.lang.core.psi.ext.kind
+import org.rust.lang.core.psi.impl.RsStructLiteralImpl
 import java.util.*
 
 class RsExpressionAnnotator : Annotator {
@@ -81,8 +82,12 @@ private class RedundantParenthesisVisitor(private val holder: AnnotationHolder) 
 
     private fun RsExpr?.warnIfParens(message: String) {
         if (this is RsParenExpr) {
-            holder.createWeakWarningAnnotation(this, message)
-                .registerFix(RemoveParenthesesFromExprIntention())
+            when (this.children.singleOrNull()) {
+                null, is RsStructLiteralImpl -> Unit
+                else ->
+                    holder.createWeakWarningAnnotation(this, message)
+                          .registerFix(RemoveParenthesesFromExprIntention())
+            }
         }
     }
 }
