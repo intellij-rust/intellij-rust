@@ -356,6 +356,13 @@ private fun processItemDeclarations(scope: RsItemsOwner, ns: Set<Namespace>, ori
         }
     }
 
+    for (macro in scope.macroItemList) {
+        macro.macro.expansion?.let {
+            if (processItemDeclarations(it, ns, originalProcessor, withPrivateImports)) {
+                return true
+            }
+        }
+    }
 
     // Unit like structs are both types and values
     for (struct in scope.structItemList) {

@@ -174,10 +174,10 @@ class RsPsiFactory(private val project: Project) {
         createFromText("#[$text] struct Dummy;")
             ?: error("Failed to create an outer attribute from text: `$text`")
 
-    private inline fun <reified T : RsCompositeElement> createFromText(code: String): T? =
+    private inline fun <reified T : RsCompositeElement> createFromText(code: String, fileName: String = "DUMMY.rs"): T? =
         PsiFileFactory.getInstance(project)
-            .createFileFromText("DUMMY.rs", RsFileType, code)
-            .childOfType<T>()
+            .createFileFromText(fileName, RsFileType, code)
+            .childOfType<T>(false)
 
     fun createComma(): PsiElement =
         createFromText<RsValueParameter>("fn f(_ : (), )")!!.nextSibling
@@ -220,6 +220,35 @@ class RsPsiFactory(private val project: Project) {
         (createStatement("let ${if (mutable) "mut " else ""}$name = 10;") as RsLetDecl).pat
             ?.firstChild as RsPatBinding?
             ?: error("Failed to create pat element")
+
+    fun createErrorChainExpansion(): RsFile =
+        createFromText<RsFile>("""
+            #[derive(Debug)]
+            pub struct Error(/// The kind of the error.
+                             pub ErrorKind,
+                             /// Contains the error chain and the backtrace.
+                             #[doc(hidden)]
+                             pub ::error_chain::State);
+
+            #[doc = r" The kind of an error."]
+            #[derive(Debug)]
+            #[allow(unused)]
+            pub enum ErrorKind {
+                Msg(String),
+            }
+
+            /// Additional methods for `Result`, for easy interaction with this crate.
+            pub trait ResultExt<T, E> {
+                fn chain_err<F, EK>(self, callback: F) -> ::std::result::Result<T, Error>
+                    where F: FnOnce() -> EK,
+                          EK: Into<ErrorKind>;
+            }
+
+            /// Convenient wrapper around `std::Result`.
+            #[allow(unused)]
+            pub type Result<T> = ::std::result::Result<T, Error>;
+        """, "error_chain macro")
+            ?: error("Failed to create error_chain macro expansion")
 
     private inline fun <reified E : RsExpr> createExpressionOfType(text: String): E =
         createExpression(text) as? E

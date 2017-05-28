@@ -3,6 +3,7 @@ package org.rust.lang.core.psi.ext
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
@@ -12,6 +13,8 @@ import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.resolve.ref.RsReference
+
+private val RS_ELEMENT_CONTEXT = Key.create<PsiElement>("org.rust.lang.core.psi.ELEMENT_CONTEXT")
 
 interface RsCompositeElement : PsiElement {
     override fun getReference(): RsReference?
@@ -45,8 +48,11 @@ val RsCompositeElement.containingCargoTarget: CargoWorkspace.Target? get() {
 
 val RsCompositeElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
 
+fun RsCompositeElement.setContext(ctx: PsiElement) = putUserData(RS_ELEMENT_CONTEXT, ctx)
+
 abstract class RsCompositeElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsCompositeElement {
     override fun getReference(): RsReference? = null
+    override fun getContext(): PsiElement? = getUserData(RS_ELEMENT_CONTEXT) ?: parent
 }
 
 abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElementBase<StubT>, RsCompositeElement {
