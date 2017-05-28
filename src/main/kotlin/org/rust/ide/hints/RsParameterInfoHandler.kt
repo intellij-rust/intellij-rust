@@ -21,8 +21,9 @@ class RsParameterInfoHandler : ParameterInfoHandler<PsiElement, RsArgumentsDescr
 
     override fun getParameterCloseChars() = ",)"
 
-    override fun getParametersForLookup(item: LookupElement, context: ParameterInfoContext?): Array<out Any> {
-        val el = item.`object` as PsiElement
+    override fun getParametersForLookup(item: LookupElement, context: ParameterInfoContext?): Array<out Any>? {
+        val el = item.`object` as? PsiElement ?: return null
+
         val p = el.parent?.parent
         return if (p is RsCallExpr && p.declaration != null || p is RsMethodCallExpr && p.declaration != null) arrayOf(p) else emptyArray()
     }
