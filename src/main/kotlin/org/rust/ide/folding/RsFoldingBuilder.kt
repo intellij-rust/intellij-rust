@@ -18,6 +18,7 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.leftLeaves
 import org.rust.lang.core.leftSiblings
 import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
+import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.LBRACE
 import org.rust.lang.core.psi.RsElementTypes.RBRACE
@@ -76,8 +77,8 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
         override fun visitImplItem(o: RsImplItem) = foldBetween(o, o.lbrace, o.rbrace)
 
         override fun visitComment(comment: PsiComment) {
-            if (comment.tokenType == BLOCK_COMMENT) {
-                fold(comment)
+            when (comment.tokenType) {
+                BLOCK_COMMENT, OUTER_EOL_DOC_COMMENT -> fold(comment)
             }
         }
 
