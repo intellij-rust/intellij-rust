@@ -3,9 +3,11 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.RsCondition
+import org.rust.lang.core.psi.RsMatchExpr
 import org.rust.lang.core.psi.RsParenExpr
+import org.rust.lang.core.psi.RsStructLiteral
 import org.rust.lang.core.psi.ext.parentOfType
-import org.rust.lang.core.psi.impl.RsStructLiteralImpl
 
 class RemoveParenthesesFromExprIntention : RsElementBaseIntentionAction<RsParenExpr>() {
     override fun getText(): String = "Remove parentheses from expression"
@@ -14,10 +16,12 @@ class RemoveParenthesesFromExprIntention : RsElementBaseIntentionAction<RsParenE
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsParenExpr? {
         val parenExpr = element.parentOfType<RsParenExpr>()
 
-        return when (parenExpr?.children?.singleOrNull()) {
-            null, is RsStructLiteralImpl -> null
-            else -> parenExpr
-        }
+        return if (parenExpr?.parentOfType<RsCondition>() != null || parenExpr?.parentOfType<RsMatchExpr>() != null) {
+            when (parenExpr.children.singleOrNull()) {
+                null, is RsStructLiteral -> null
+                else -> parenExpr
+            }
+        } else parenExpr
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: RsParenExpr) {
