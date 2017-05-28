@@ -106,11 +106,14 @@ fun inferExpressionType(expr: RsExpr): Ty {
             }
         }
 
-        is RsBinaryExpr -> when (expr.operatorType) {
-            in BOOL_BINARY_OPS -> TyBool
-            in ARITHMETIC_BINARY_OPS -> inferArithmeticBinaryExprType(expr)
+        is RsBinaryExpr -> {
+            val op = expr.operatorType
+            when (op) {
+                is BoolOp -> TyBool
+                is ArithmeticOp -> inferArithmeticBinaryExprType(expr, op)
 
-            else -> TyUnknown
+                else -> TyUnknown
+            }
         }
 
         is RsTryExpr -> {
@@ -201,10 +204,9 @@ private fun inferTypeParametersForTuple(
     return mapTypeParameters(tupleFields.tupleFieldDeclList.map { it.typeReference.type }, tupleExprs)
 }
 
-private fun inferArithmeticBinaryExprType(expr: RsBinaryExpr): Ty {
+private fun inferArithmeticBinaryExprType(expr: RsBinaryExpr, op: ArithmeticOp): Ty {
     val lhsType = expr.left.type
     val rhsType = expr.right?.type ?: TyUnknown
-    val op = requireNotNull(expr.arithmeticOp)
     return findArithmeticBinaryExprOutputType(expr.project, lhsType, rhsType, op)
 }
 
