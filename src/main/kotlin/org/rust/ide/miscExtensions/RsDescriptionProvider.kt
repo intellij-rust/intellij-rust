@@ -1,4 +1,4 @@
-package org.rust.ide
+package org.rust.ide.miscExtensions
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation
 import com.intellij.psi.ElementDescriptionLocation
