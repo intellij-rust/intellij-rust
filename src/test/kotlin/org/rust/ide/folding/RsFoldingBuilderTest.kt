@@ -2,7 +2,7 @@ package org.rust.ide.folding
 
 import org.rust.lang.RsTestBase
 
-class RsFoldingTest : RsTestBase() {
+class RsFoldingBuilderTest : RsTestBase() {
     override val dataPath = "org/rust/ide/folding/fixtures"
 
     fun testFn() = doTest()
@@ -20,7 +20,7 @@ class RsFoldingTest : RsTestBase() {
     fun testMatchExpr() = doTest()
     fun testMacroBraceArg() = doTest()
     fun testUseGlobList() = doTest()
-    fun testBlockComment() = doTest()
+    fun testComments() = doTest()
     fun testOneLinerFunction() = doTest()
 
     private fun doTest() {

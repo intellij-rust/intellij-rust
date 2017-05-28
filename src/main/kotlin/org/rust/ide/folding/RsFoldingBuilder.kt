@@ -1,5 +1,6 @@
 package org.rust.ide.folding
 
+import com.intellij.codeInsight.folding.CodeFoldingSettings
 import com.intellij.lang.ASTNode
 import com.intellij.lang.folding.FoldingBuilderEx
 import com.intellij.lang.folding.FoldingDescriptor
@@ -14,10 +15,13 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
+import jdk.nashorn.internal.parser.Token
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.leftLeaves
 import org.rust.lang.core.leftSiblings
 import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
+import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
+import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.LBRACE
 import org.rust.lang.core.psi.RsElementTypes.RBRACE
@@ -76,8 +80,10 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
         override fun visitImplItem(o: RsImplItem) = foldBetween(o, o.lbrace, o.rbrace)
 
         override fun visitComment(comment: PsiComment) {
-            if (comment.tokenType == BLOCK_COMMENT) {
-                fold(comment)
+            when (comment.tokenType) {
+                BLOCK_COMMENT,
+                INNER_EOL_DOC_COMMENT,
+                OUTER_EOL_DOC_COMMENT -> fold(comment)
             }
         }
 
@@ -129,10 +135,12 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
     }
 
     override fun isCollapsedByDefault(node: ASTNode): Boolean =
-        RsCodeFoldingSettings.instance.collapsibleOneLineMethods && node.elementType in COLLAPSED_BY_DEFAULT
+        (RsCodeFoldingSettings.instance.collapsibleOneLineMethods && node.elementType in COLLAPSED_BY_DEFAULT)
+            || (CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS && node.elementType in DOC_COMMENTS)
 
     private companion object {
         val COLLAPSED_BY_DEFAULT = TokenSet.create(LBRACE, RBRACE)
+        val DOC_COMMENTS = TokenSet.create(INNER_EOL_DOC_COMMENT, OUTER_EOL_DOC_COMMENT)
         val ONE_LINER_PLACEHOLDERS_EXTRA_LENGTH = 4
     }
 }
