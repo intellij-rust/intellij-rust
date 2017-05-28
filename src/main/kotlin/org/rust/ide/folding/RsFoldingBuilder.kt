@@ -15,10 +15,12 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
+import jdk.nashorn.internal.parser.Token
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.leftLeaves
 import org.rust.lang.core.leftSiblings
 import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
+import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.LBRACE
@@ -79,7 +81,9 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
 
         override fun visitComment(comment: PsiComment) {
             when (comment.tokenType) {
-                BLOCK_COMMENT, OUTER_EOL_DOC_COMMENT -> fold(comment)
+                BLOCK_COMMENT,
+                INNER_EOL_DOC_COMMENT,
+                OUTER_EOL_DOC_COMMENT -> fold(comment)
             }
         }
 
@@ -132,10 +136,11 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
 
     override fun isCollapsedByDefault(node: ASTNode): Boolean =
         (RsCodeFoldingSettings.instance.collapsibleOneLineMethods && node.elementType in COLLAPSED_BY_DEFAULT)
-            || (CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS && node.elementType == OUTER_EOL_DOC_COMMENT)
+            || (CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS && node.elementType in DOC_COMMENTS)
 
     private companion object {
         val COLLAPSED_BY_DEFAULT = TokenSet.create(LBRACE, RBRACE)
+        val DOC_COMMENTS = TokenSet.create(INNER_EOL_DOC_COMMENT, OUTER_EOL_DOC_COMMENT)
         val ONE_LINER_PLACEHOLDERS_EXTRA_LENGTH = 4
     }
 }

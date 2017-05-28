@@ -1,3 +1,0 @@
-<fold text='/* ... */'>/*
-hello
-*/</fold>

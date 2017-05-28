@@ -20,7 +20,7 @@ class RsFoldingTest : RsTestBase() {
     fun testMatchExpr() = doTest()
     fun testMacroBraceArg() = doTest()
     fun testUseGlobList() = doTest()
-    fun testBlockComment() = doTest()
+    fun testComments() = doTest()
     fun testOneLinerFunction() = doTest()
 
     private fun doTest() {
