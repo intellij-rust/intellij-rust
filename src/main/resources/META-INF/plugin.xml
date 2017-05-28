@@ -145,7 +145,8 @@
 
         <!-- Description Provider -->
 
-        <elementDescriptionProvider implementation="org.rust.ide.RsDescriptionProvider"/>
+        <elementDescriptionProvider implementation="org.rust.ide.miscExtensions.RsDescriptionProvider"/>
+        <breadcrumbsInfoProvider implementation="org.rust.ide.miscExtensions.RsBreadcrumbsInfoProvider"/>
 
         <!-- Spell-checker -->
 
@@ -515,7 +516,7 @@
 
         <!-- Editor Tab Title Providers -->
 
-        <editorTabTitleProvider implementation="org.rust.ide.utils.RsModTabTitleProvider"/>
+        <editorTabTitleProvider implementation="org.rust.ide.miscExtensions.RsModTabTitleProvider"/>
 
         <!-- Refactoring -->
 
@@ -532,14 +533,6 @@
             <implementation-class>org.rust.ide.update.UpdateComponent</implementation-class>
         </component>
     </application-components>
-
-    <project-components>
-        <!-- Add your project components here -->
-    </project-components>
-
-    <module-components>
-
-    </module-components>
 
     <actions>
         <action id="Rust.NewRustFile"

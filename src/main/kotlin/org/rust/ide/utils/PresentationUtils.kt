@@ -5,7 +5,6 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.*
 
 class PresentationInfo(
@@ -20,7 +19,9 @@ class PresentationInfo(
         location = element.containingFile?.let { " [${it.name}]" }.orEmpty()
     }
 
-    val typeNameText: String get() = if (type == null) { name } else "$type `$name`"
+    val typeNameText: String get() = if (type == null) {
+        name
+    } else "$type `$name`"
 
     val projectStructureItemText: String get() = "$name${declaration.suffix}"
 
@@ -29,9 +30,17 @@ class PresentationInfo(
     val signatureText: String = "${declaration.prefix}<b>$name</b>${declaration.suffix.escaped}"
 
     val quickDocumentationText: String
-        get() = if (declaration.isAmbiguous && type != null) { "<i>$type:</i> " } else { "" } + "$signatureText${valueText.escaped}$location"
+        get() = if (declaration.isAmbiguous && type != null) {
+            "<i>$type:</i> "
+        } else {
+            ""
+        } + "$signatureText${valueText.escaped}$location"
 
-    private val valueText: String get() = if (declaration.value.isEmpty()) { "" } else { " ${declaration.value}" }
+    private val valueText: String get() = if (declaration.value.isEmpty()) {
+        ""
+    } else {
+        " ${declaration.value}"
+    }
 }
 
 data class DeclarationInfo(
@@ -143,3 +152,28 @@ private fun PsiElement.offsetIn(owner: PsiElement): Int =
     ancestors.takeWhile { it != owner }.sumBy { it.startOffsetInParent }
 
 val String.escaped: String get() = StringUtil.escapeXml(this)
+
+fun breadcrumbName(e: RsCompositeElement): String? {
+    fun lastComponentWithoutGenerics(path: RsPath) = path.referenceName
+
+    return when (e) {
+        is RsModItem, is RsStructOrEnumItemElement, is RsTraitItem, is RsConstant, is RsMacroDefinition ->
+            (e as RsNamedElement).name
+
+        is RsImplItem -> {
+            val typeName = run {
+                val typeReference = e.typeReference
+                (typeReference as? RsBaseType)?.path?.let { lastComponentWithoutGenerics(it) }
+                    ?: typeReference?.text
+                    ?: return null
+            }
+
+            val traitName = e.traitRef?.path?.let { lastComponentWithoutGenerics(it) }
+            val start = if (traitName != null) "$traitName for" else "impl"
+            "$start $typeName"
+        }
+
+        is RsFunction -> e.name?.let { "$it()" }
+        else -> null
+    }
+}

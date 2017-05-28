@@ -1,4 +1,4 @@
-package org.rust.ide.utils
+package org.rust.ide.miscExtensions
 
 import com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider
 import com.intellij.openapi.project.Project
