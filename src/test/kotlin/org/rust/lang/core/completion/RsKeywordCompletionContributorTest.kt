@@ -341,13 +341,25 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test return from unit function`() = checkCompletion("return",
+        "fn foo() { ret/*caret*/}",
+        "fn foo() { return;/*caret*/}"
+    )
+
+    fun `test return from non-unit function`() = checkCompletion("return",
+        "fn foo() -> i32 { ret/*caret*/}",
+        "fn foo() -> i32 { return /*caret*/}"
+    )
+
     private fun checkCompletion(
         lookupString: String,
         @Language("Rust") before: String,
         @Language("Rust") after: String
     ) = checkByText(before, after) {
         val items = myFixture.completeBasic()
-        myFixture.lookup.currentItem = items.find { it.lookupString == lookupString }
+            ?: return@checkByText // single completion was inserted
+        val lookupItem = items.find { it.lookupString == lookupString }
+        myFixture.lookup.currentItem = lookupItem
         myFixture.type('\n')
     }
 }
