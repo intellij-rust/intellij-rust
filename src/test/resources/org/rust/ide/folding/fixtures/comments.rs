@@ -1,27 +1,27 @@
-<fold text='/ * ... * / '>/*
+<fold text='/* ... */'>/*
 hello
-*/ < / fold>
+*/</fold>
 
-< fold text='/ * ... * / '>///
+<fold text='/* ... */'>///
 /// Outer doc
 ///</fold>
-fn foo() < fold text='{ ... }'>{}< / fold >
+fn foo() <fold text='{...}'>{}</fold>
 
-mod m < fold text ='{ ... }'>{
-< fold text = '/ * ... * / '>//!
+mod m <fold text='{...}'>{
+<fold text='/* ... */'>//!
     //! Inner doc
     //!</fold>
-}< / fold >
+}</fold>
 
-< fold text = '/ * ... * / '>/*
+<fold text='/* ... */'>/*
 hello
-*/ < / fold >
+*/</fold>
 
-< fold text = '/ * ... * / '>/*
+<fold text='/* ... */'>/*
 fn foo() {}
-*/ < /fold >
+*/</fold>
 
-mod m < fold text = '{ ...}'>{
-< fold text = '/ * ... * / '>/*
-    */ < / fold >
-} < / fold >
+mod m <fold text='{...}'>{
+<fold text='/* ... */'>/*
+    */</fold>
+}</fold>
