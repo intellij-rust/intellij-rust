@@ -7,6 +7,10 @@ import org.rust.ide.icons.RsIcons
 import org.rust.ide.icons.addTestMark
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsFunctionStub
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyUnit
+import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.lang.core.types.type
 import javax.swing.Icon
 
 val RsFunction.isAssocFn: Boolean get() = selfParameter == null
@@ -60,6 +64,11 @@ val RsFunction.title: String
         RsFunctionRole.FOREIGN -> "Foreign function `$name`"
         else -> "Function `$name`"
     }
+
+val RsFunction.returnType: Ty get() {
+    val retType = retType ?: return TyUnit
+    return retType.typeReference?.type ?: TyUnknown
+}
 
 abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, RsFunction {
 

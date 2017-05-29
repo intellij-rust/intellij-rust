@@ -346,6 +346,11 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         "fn foo() { return;/*caret*/}"
     )
 
+    fun `test return from explicit unit function`() = checkCompletion("return",
+        "fn foo() -> () { ret/*caret*/}",
+        "fn foo() -> () { return;/*caret*/}"
+    )
+
     fun `test return from non-unit function`() = checkCompletion("return",
         "fn foo() -> i32 { ret/*caret*/}",
         "fn foo() -> i32 { return /*caret*/}"

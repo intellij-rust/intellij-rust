@@ -8,6 +8,8 @@ import com.intellij.util.ProcessingContext
 import org.rust.lang.core.completion.CompletionEngine.KEYWORD_PRIORITY
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.returnType
+import org.rust.lang.core.types.ty.TyUnit
 
 class RsKeywordCompletionProvider(
     private vararg val keywords: String
@@ -37,7 +39,7 @@ private fun addInsertionHandler(keyword: String, builder: LookupElementBuilder, 
         in ALWAYS_NEEDS_SPACE -> " "
         "return" -> {
             val fn = parameters.position.parentOfType<RsFunction>() ?: return builder
-            if (fn.retType != null) " " else ";"
+            if (fn.returnType !is TyUnit) " " else ";"
         }
         else -> return builder
     }
