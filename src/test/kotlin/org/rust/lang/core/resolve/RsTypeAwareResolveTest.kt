@@ -1,5 +1,7 @@
 package org.rust.lang.core.resolve
 
+import org.rust.lang.core.psi.ext.ArithmeticOp
+
 class RsTypeAwareResolveTest : RsResolveTestBase() {
     fun testSelfMethodCallExpr() = checkByCode("""
         struct S;
@@ -880,4 +882,76 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
               //^
         }
     """)
+
+    fun `test arithmetic operations`() {
+        for ((traitName, itemName, sign) in ArithmeticOp.values()) {
+            checkByCode("""
+                #[lang = "$itemName"]
+                pub trait $traitName<RHS=Self> {
+                    type Output;
+                    fn $itemName(self, rhs: RHS) -> Self::Output;
+                }
+
+                struct Foo;
+                struct Bar;
+
+                impl Bar {
+                    fn bar(&self) { unimplemented!() }
+                      //X
+                }
+
+                impl $traitName<i32> for Foo {
+                    type Output = Bar;
+                    fn $itemName(self, rhs: i32) -> Bar { unimplemented!() }
+                }
+
+                fn foo(lhs: Foo, rhs: i32) {
+                    let x = lhs $sign rhs;
+                    x.bar()
+                     //^
+                }
+            """)
+        }
+    }
+
+    fun `test arithmetic operations with multiple impls`() {
+        for ((traitName, itemName, sign) in ArithmeticOp.values()) {
+            checkByCode("""
+                #[lang = "$itemName"]
+                pub trait $traitName<RHS=Self> {
+                    type Output;
+                    fn $itemName(self, rhs: RHS) -> Self::Output;
+                }
+
+                struct Foo;
+                struct Bar;
+                struct FooBar;
+
+                impl Bar {
+                    fn foo(&self) { unimplemented!() }
+                }
+
+                impl FooBar {
+                    fn foo(&self) { unimplemented!() }
+                      //X
+                }
+
+                impl $traitName<f64> for Foo {
+                    type Output = Bar;
+                    fn $itemName(self, rhs: f64) -> Bar { unimplemented!() }
+                }
+
+                impl $traitName<i32> for Foo {
+                    type Output = FooBar;
+                    fn $itemName(self, rhs: i32) -> FooBar { unimplemented!() }
+                }
+
+                fn foo(lhs: Foo, rhs: i32) {
+                    let x = lhs $sign rhs;
+                    x.foo()
+                     //^
+                }
+            """)
+        }
+    }
 }

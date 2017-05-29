@@ -2,10 +2,8 @@ package org.rust.ide.utils
 
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsElementTypes.ANDAND
-import org.rust.lang.core.psi.RsElementTypes.OROR
-import org.rust.lang.core.psi.ext.UnaryOperator
-import org.rust.lang.core.psi.ext.operatorType
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.LogicOp.*
 
 /**
  * Returns `true` if all elements are `true`, `false` if there exists
@@ -44,7 +42,7 @@ fun RsExpr.isPure(): Boolean? {
             else -> null // TODO: handle update case (`Point{ y: 0, z: 10, .. base}`)
         }
         is RsBinaryExpr -> when (operatorType) {
-            ANDAND, OROR -> listOfNotNull(left, right).allMaybe(RsExpr::isPure)
+            is LogicOp -> listOfNotNull(left, right).allMaybe(RsExpr::isPure)
             else -> null // Have to search if operation is overloaded
         }
         is RsTupleExpr -> exprList.allMaybe(RsExpr::isPure)
@@ -131,13 +129,13 @@ private fun RsExpr.simplifyBooleanExpression(peek: Boolean): Pair<RsExpr, Boolea
 private fun simplifyBinaryOperation(op: RsBinaryExpr, const: RsLitExpr, expr: RsExpr, project: Project): RsExpr? {
     return const.boolLiteral?.let {
         when (op.operatorType) {
-            ANDAND ->
+            AND ->
                 when (it.text) {
                     "true" -> expr
                     "false" -> createPsiElement(project, "false")
                     else -> null
                 }
-            OROR ->
+            OR ->
                 when (it.text) {
                     "true" -> createPsiElement(project, "true")
                     "false" -> expr
@@ -161,19 +159,19 @@ fun RsExpr.evalBooleanExpression(): Boolean? {
             (kind as? RsLiteralKind.Boolean)?.value
 
         is RsBinaryExpr -> when (operatorType) {
-            ANDAND -> {
+            AND -> {
                 val lhs = left.evalBooleanExpression() ?: return null
                 if (!lhs) return false
                 val rhs = right?.evalBooleanExpression() ?: return null
                 lhs && rhs
             }
-            OROR -> {
+            OR -> {
                 val lhs = left.evalBooleanExpression() ?: return null
                 if (lhs) return true
                 val rhs = right?.evalBooleanExpression() ?: return null
                 lhs || rhs
             }
-            RsElementTypes.XOR -> {
+            ArithmeticOp.BIT_XOR -> {
                 val lhs = left.evalBooleanExpression() ?: return null
                 val rhs = right?.evalBooleanExpression() ?: return null
                 lhs xor rhs

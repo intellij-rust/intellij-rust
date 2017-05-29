@@ -6,13 +6,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.operatorType
-import org.rust.lang.core.psi.ext.parentOfType
-import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.RsFileType
-import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.psi.ext.childOfType
-
+import org.rust.lang.core.psi.ext.*
 
 class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() {
     private val TURBOFISH = "::"
@@ -40,7 +35,7 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
             return resolveMatchExpression(base) ?: base
         }
         val left = base.left as RsBinaryExpr
-        if (left.operatorType == GTGT) {
+        if (left.operatorType == ArithmeticOp.SHR) {
             return resolveMatchExpression(base) ?: base
         }
         return base

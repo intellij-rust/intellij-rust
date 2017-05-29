@@ -2,14 +2,14 @@ package org.rust.lang.utils
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.ext.ComparisonOp.*
 import org.rust.lang.core.psi.ext.operatorType
 
 fun RsBinaryExpr.negateToString(): String {
     val lhs = left.text
     val rhs = right?.text ?: ""
     val op = when (operatorType) {
-        EQEQ -> "!="
+        EQ -> "!="
         EXCLEQ -> "=="
         GT -> "<="
         LT -> ">="

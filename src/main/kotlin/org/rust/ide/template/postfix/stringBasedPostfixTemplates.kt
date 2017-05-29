@@ -5,8 +5,8 @@ import com.intellij.codeInsight.template.impl.TextExpression
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsBinaryExpr
-import org.rust.lang.core.psi.RsElementTypes.EQEQ
 import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.ext.ComparisonOp
 import org.rust.lang.core.psi.ext.operatorType
 
 abstract class AssertPostfixTemplateBase(name: String) : StringBasedPostfixTemplate(
@@ -15,7 +15,7 @@ abstract class AssertPostfixTemplateBase(name: String) : StringBasedPostfixTempl
     RsTopMostInScopeSelector(RsExpr::isBool)) {
 
     override fun getTemplateString(element: PsiElement): String =
-        if (element is RsBinaryExpr && element.operatorType == EQEQ) {
+        if (element is RsBinaryExpr && element.operatorType == ComparisonOp.EQ) {
             "${this.presentableName}_eq!(${element.left.text}, ${element.right?.text});\$END$"
         } else {
             "$presentableName!(${element.text});\$END$"

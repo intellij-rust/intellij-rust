@@ -502,12 +502,12 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
 private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
     val op = this as? RsBinaryExpr ?: return false
-    return op.operatorType in RS_COMPARISON_OPERATOR
+    return op.operatorType is ComparisonOp
 }
 
 private fun RsExpr?.isAssignBinaryExpr(): Boolean {
     val op = this as? RsBinaryExpr ?: return false
-    return op.operatorType in RS_ASSIGN_OPERATOR
+    return op.operatorType is AssignmentOp
 }
 
 private fun checkDuplicates(holder: AnnotationHolder, element: RsNamedElement, scope: PsiElement = element.parent, recursively: Boolean = false) {

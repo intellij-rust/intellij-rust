@@ -3,13 +3,9 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.ext.operator
-import org.rust.lang.core.psi.ext.operatorType
-import org.rust.lang.core.psi.ext.descendantsOfType
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.LogicOp.*
 import org.rust.lang.utils.isNegation
 import org.rust.lang.utils.negateToString
 
@@ -19,21 +15,21 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
     private fun setTextForElement(element: RsBinaryExpr) {
         val binaryExpression = element
         text = when (binaryExpression.operatorType) {
-            ANDAND -> "DeMorgan's Law, Replace '&&' with '||'"
-            OROR -> "DeMorgan's Law, Replace '||' with '&&'"
+            AND -> "DeMorgan's Law, Replace '&&' with '||'"
+            OR -> "DeMorgan's Law, Replace '||' with '&&'"
             else -> ""
         }
     }
 
     data class Context(
         val binaryExpr: RsBinaryExpr,
-        val binaryOpType: IElementType
+        val binaryOpType: BinaryOperator
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val binExpr = element.parentOfType<RsBinaryExpr>() ?: return null
         val opType = binExpr.operatorType
-        if (opType == ANDAND || opType == OROR) {
+        if (opType is LogicOp) {
             setTextForElement(binExpr)
             return Context(binExpr, opType)
         }
@@ -67,7 +63,7 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
     }
 
 
-    private fun applyDemorgan(project: Project, topBinExpr: RsBinaryExpr, opType: IElementType) {
+    private fun applyDemorgan(project: Project, topBinExpr: RsBinaryExpr, opType: BinaryOperator) {
         val converted = convertConjunctionExpression(topBinExpr, opType) ?: return
 
         var expressionToReplace: RsExpr = topBinExpr
@@ -82,7 +78,7 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
         expressionToReplace.replace(newExpr)
     }
 
-    private fun isConjunctionExpression(expression: RsExpr, opType: IElementType): Boolean {
+    private fun isConjunctionExpression(expression: RsExpr, opType: BinaryOperator): Boolean {
         return expression is RsBinaryExpr && expression.operatorType == opType
     }
 
@@ -98,9 +94,7 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
                     level += 1
                     c = c.expr
                 }
-                return if (c is RsBinaryExpr
-                    && c.operatorType != ANDAND
-                    && c.operatorType != OROR) {
+                return if (c is RsBinaryExpr && c.operatorType !is LogicOp) {
                     "${"(".repeat(level)}${c.negateToString()}${")".repeat(level)}"
                 } else {
                     "!" + condition.text
@@ -113,7 +107,7 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
         }
     }
 
-    private fun convertConjunctionExpression(exp: RsBinaryExpr, opType: IElementType): String? {
+    private fun convertConjunctionExpression(exp: RsBinaryExpr, opType: BinaryOperator): String? {
         val lhs = exp.left
         val lhsText = if (isConjunctionExpression(lhs, opType)) {
             convertConjunctionExpression(lhs as RsBinaryExpr, opType)
@@ -131,7 +125,7 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
         }
 
         val flippedConjunction = if (exp.operatorType == opType) {
-            if (opType == ANDAND) "||" else "&&"
+            if (opType == AND) "||" else "&&"
         } else {
             exp.operator.text
         }

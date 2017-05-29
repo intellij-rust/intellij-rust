@@ -301,4 +301,21 @@ class RsStdlibResolveTest : RsResolveTestBase() {
 
         fn foo() -> Result<i32, i32> { Ok(42) }
     """)
+
+    fun `test String plus &str`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            (String::new() + "foo").capacity();
+                                     //^ ...libcollections/string.rs
+        }
+    """)
+
+    fun `test Instant minus Duration`() = stubOnlyResolve("""
+    //- main.rs
+        use std::time::{Duration, Instant};
+        fn main() {
+            (Instant::now() - Duration::from_secs(3)).elapsed();
+                                                      //^ ...time/mod.rs
+        }
+    """)
 }
