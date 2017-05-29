@@ -849,14 +849,19 @@ LambdaExpr ::= move? LambdaParameters RetType? AnyExpr
 
 StructLiteral ::= <<checkStructAllowed>> PathGenericArgsWithColons StructLiteralBody
 
-StructLiteralBody ::= '{' [ <<comma_separated_list StructLiteralField>> ] ('..'  AnyExpr)? '}' { pin = 1 }
+StructLiteralBody ::= '{' StructLiteralField_with_recover* ('..'  AnyExpr)? '}' { pin = 1 }
 
 StructLiteralField ::= OuterAttr* identifier [ ':' AnyExpr ] {
   pin = 2
-  recoverWhile = StructLiteralField_recover
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsStructLiteralFieldImplMixin"
 }
+
+private StructLiteralField_with_recover ::= StructLiteralField (',' | &'}') {
+  pin = 1
+  recoverWhile = StructLiteralField_recover
+}
+
 private StructLiteralField_recover ::= !(identifier | ',' | '}' | '..' | '#')
 
 PathExpr ::= PathGenericArgsWithColons
