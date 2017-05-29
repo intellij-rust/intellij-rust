@@ -90,29 +90,24 @@ FILE
             PsiWhiteSpace('\n        ')
             RsStructLiteralFieldImpl(STRUCT_LITERAL_FIELD)
               PsiElement(identifier)('bar')
-            PsiErrorElement:',', '..' or '}' expected, got 'baz'
+            PsiErrorElement:':' expected, got 'baz'
               <empty list>
-      PsiWhiteSpace('\n        ')
-      RsPathExprImpl(PATH_EXPR)
-        RsPathImpl(PATH)
-          PsiElement(identifier)('baz')
-      PsiElement(:)(':')
-      PsiErrorElement:<fn pointer type> or <path start> expected, got '62'
-        <empty list>
+            PsiWhiteSpace('\n        ')
+            RsStructLiteralFieldImpl(STRUCT_LITERAL_FIELD)
+              PsiElement(identifier)('baz')
+              PsiElement(:)(':')
+              PsiWhiteSpace(' ')
+              RsLitExprImpl(LIT_EXPR)
+                PsiElement(INTEGER_LITERAL)('62')
+            PsiElement(,)(',')
+            PsiWhiteSpace('\n        ')
+            RsStructLiteralFieldImpl(STRUCT_LITERAL_FIELD)
+              PsiElement(identifier)('quux')
+            PsiElement(:)(':')
+            PsiErrorElement:<any expr> expected, got ','
+              <empty list>
       PsiWhiteSpace(' ')
-      RsLitExprImpl(LIT_EXPR)
-        PsiElement(INTEGER_LITERAL)('62')
-        PsiErrorElement:'&', '(', ';', '[', '^', '|' or '}' expected, got ','
-          <empty list>
       PsiElement(,)(',')
-      PsiWhiteSpace('\n        ')
-      RsPathExprImpl(PATH_EXPR)
-        RsPathImpl(PATH)
-          PsiElement(identifier)('quux')
-      PsiElement(:)(':')
-      PsiWhiteSpace(' ')
-      PsiErrorElement:<fn pointer type> or <path start> expected, got ','
-        PsiElement(,)(',')
       PsiWhiteSpace('\n        ')
       RsPathExprImpl(PATH_EXPR)
         RsPathImpl(PATH)

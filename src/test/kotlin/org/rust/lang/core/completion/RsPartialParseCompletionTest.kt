@@ -145,5 +145,10 @@ class RsPartialParseCompletionTest : RsCompletionTestBase() {
     """) {
         executeSoloCompletion()
     }
+
+    fun `test struct field`() = checkSingleCompletion("bar", """
+        struct S { foo: i32, bar: i32}
+        fn main() { let _ = S { foo: 2, .ba/*caret*/ } }
+    """)
 }
 

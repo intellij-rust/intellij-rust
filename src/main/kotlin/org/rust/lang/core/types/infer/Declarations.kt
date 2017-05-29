@@ -184,6 +184,6 @@ private fun deviseFunctionType(fn: RsFunction): TyFunction {
 
     paramTypes += fn.valueParameters.map { it.typeReference?.type ?: TyUnknown }
 
-    return TyFunction(paramTypes, fn.retType?.typeReference?.type ?: TyUnit)
+    return TyFunction(paramTypes, fn.returnType)
 }
 

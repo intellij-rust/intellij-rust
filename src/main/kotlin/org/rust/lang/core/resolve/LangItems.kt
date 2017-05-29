@@ -3,22 +3,21 @@ package org.rust.lang.core.resolve
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.ext.ArithmeticOp
 import org.rust.lang.core.psi.ext.queryAttributes
 import org.rust.lang.core.psi.ext.resolveToTrait
 import org.rust.lang.core.resolve.indexes.RsImplIndex
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.findImplsAndTraits
 import org.rust.lang.core.types.infer.remapTypeParameters
-import org.rust.lang.core.types.ty.TyReference
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
-import org.rust.lang.core.types.ty.TyUnknown
 
 fun findDerefTarget(project: Project, ty: Ty): Ty? {
-    val impls = RsImplIndex.findImpls(project, ty)
-    for (impl in impls) {
+    val impls = findImplsAndTraits(project, ty).first
+    for ((impl, subst) in impls) {
         val trait = impl.traitRef?.resolveToTrait ?: continue
         if (!trait.isDeref) continue
         return lookupAssociatedType(impl, "Target")
+            .substitute(subst)
     }
     return null
 }
@@ -41,24 +40,39 @@ fun findIndexOutputType(project: Project, containerType: Ty, indexType: Ty): Ty 
     val suitableImpl = if (impls.size < 2) {
         impls.firstOrNull()
     } else {
-        impls.find { impl ->
-            // TODO: get index type from impl declaration
-            impl.functionList
-                .find { it.name == "index" }
-                ?.valueParameterList
-                ?.valueParameterList
-                // 'index' function have only one value parameter
-                // fn index(&self, index: Idx) -> &Self::Output;
-                ?.getOrNull(0)
-                ?.typeReference
-                ?.type
-                ?.canUnifyWith(indexType, project) ?: false
-        }
+        impls.find { isImplSuitable(project, it, "index", 0, indexType) }
     } ?: return TyUnknown
 
     val rawOutputType = lookupAssociatedType(suitableImpl, "Output")
     val typeParameterMap = suitableImpl.remapTypeParameters(containerType.typeParameterValues)
     return TyReference(rawOutputType.substitute(typeParameterMap))
+}
+
+fun findArithmeticBinaryExprOutputType(project: Project, lhsType: Ty, rhsType: Ty, op: ArithmeticOp): Ty {
+    val impls = RsImplIndex.findImpls(project, lhsType)
+        .filter { op.itemName == it.traitRef?.resolveToTrait?.langAttribute }
+
+    val suitableImpl = if (impls.size < 2) {
+        impls.firstOrNull()
+    } else {
+        impls.find { isImplSuitable(project, it, op.itemName, 0, rhsType) }
+    } ?: return TyUnknown
+
+    val rawOutputType = lookupAssociatedType(suitableImpl, "Output")
+    val typeParameterMap = suitableImpl.remapTypeParameters(lhsType.typeParameterValues)
+    return rawOutputType.substitute(typeParameterMap)
+}
+
+private fun isImplSuitable(project: Project, impl: RsImplItem,
+                           fnName: String, paramIndex: Int, paramType: Ty): Boolean {
+    return impl.functionList
+        .find { it.name == fnName }
+        ?.valueParameterList
+        ?.valueParameterList
+        ?.getOrNull(paramIndex)
+        ?.typeReference
+        ?.type
+        ?.canUnifyWith(paramType, project) ?: false
 }
 
 private val RsTraitItem.langAttribute: String? get() {
