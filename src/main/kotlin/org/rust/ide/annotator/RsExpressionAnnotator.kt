@@ -74,18 +74,12 @@ private class RedundantParenthesisVisitor(private val holder: AnnotationHolder) 
     override fun visitParenExpr(o: RsParenExpr) =
         o.expr.warnIfParens("Redundant parentheses in expression")
 
-    override fun visitLetDecl(o: RsLetDecl) {
-        o.expr.warnIfParens("Redundant parentheses in let declaration")
-    }
-
     private fun RsExpr?.warnIfParens(message: String) {
-        if (this is RsParenExpr) {
-            if ((this.parentOfType<RsCondition>() != null || this.parentOfType<RsMatchExpr>() != null)
-                && this.children.singleOrNull() is RsStructLiteral) {
-            } else
-                holder.createWeakWarningAnnotation(this, message)
-                    .registerFix(RemoveParenthesesFromExprIntention())
-        }
+        if (this !is RsParenExpr) return
+        val fix = RemoveParenthesesFromExprIntention()
+        if (fix.isAvailable(this))
+            holder.createWeakWarningAnnotation(this, message)
+                .registerFix(RemoveParenthesesFromExprIntention())
     }
 }
 
