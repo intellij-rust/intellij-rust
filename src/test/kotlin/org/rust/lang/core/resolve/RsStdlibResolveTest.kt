@@ -318,4 +318,17 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                                                       //^ ...time/mod.rs
         }
     """)
+
+    fun `test autoderef Rc`() = stubOnlyResolve("""
+    //- main.rs
+        use std::rc::Rc;
+        struct Foo;
+        impl Foo { fn foo(&self) {} }
+
+        fn main() {
+            let x = Rc::new(Foo);
+            x.foo()
+        }    //^ ...main.rs
+    """)
+
 }

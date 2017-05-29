@@ -12,11 +12,12 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
 fun findDerefTarget(project: Project, ty: Ty): Ty? {
-    val impls = RsImplIndex.findImpls(project, ty)
-    for (impl in impls) {
+    val impls = findImplsAndTraits(project, ty).first
+    for ((impl, subst) in impls) {
         val trait = impl.traitRef?.resolveToTrait ?: continue
         if (!trait.isDeref) continue
         return lookupAssociatedType(impl, "Target")
+            .substitute(subst)
     }
     return null
 }
