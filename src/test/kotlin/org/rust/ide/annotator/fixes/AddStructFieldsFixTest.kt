@@ -8,7 +8,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         struct S { foo: i32, bar: f64 }
 
         fn main() {
-            let _ = S { /*caret*/ };
+            let _ = /*caret*/S { };
         }
     """, """
         struct S { foo: i32, bar: f64 }
@@ -22,7 +22,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         struct S { a: i32, b: String }
 
         fn main() {
-            S { a: 92/*caret*/};
+            /*caret*/S { a: 92};
         }
         """, """
         struct S { a: i32, b: String }
@@ -36,7 +36,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         struct S { a: i32, b: String }
 
         fn main() {
-            S { a: 92, /*caret*/};
+            /*caret*/S { a: 92, };
         }
         """, """
         struct S { a: i32, b: String }
@@ -50,9 +50,9 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         struct S { a: i32, b: i32, c: i32, d: i32 }
 
         fn main() {
-            let _ = S {
+            let _ = /*caret*/S {
                 a: 92,
-                c: 92/*caret*/
+                c: 92
             };
         }
     """, """
@@ -72,7 +72,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         struct S { a: i32, b: i32 }
 
         fn main() {
-            let _ = S { b: 0,/*caret*/ };
+            let _ = /*caret*/S { b: 0, };
         }
     """, """
         struct S { a: i32, b: i32 }
@@ -86,7 +86,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         struct S { a: i32, b: i32 }
 
         fn main() {
-            let _ = S { /*caret*/a: 0 };
+            let _ = /*caret*/S { a: 0 };
         }
     """, """
         struct S { a: i32, b: i32 }
@@ -100,7 +100,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         struct S { a: i32, b: i32, c: i32, d: i32, e: i32}
 
         fn main() {
-            let _ = S { a: 0, c: 1, e: 2/*caret*/ };
+            let _ = /*caret*/S { a: 0, c: 1, e: 2 };
         }
     """, """
         struct S { a: i32, b: i32, c: i32, d: i32, e: i32}
@@ -119,7 +119,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         }
 
         fn main() {
-            Mesh{/*caret*/}
+            /*caret*/Mesh{}
         }
     """, """
         struct Mesh {
