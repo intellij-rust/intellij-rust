@@ -66,14 +66,14 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
                 ..S::default()
             };
 
-            let _ = S <error descr="Some fields are missing">{
+            let _ = <error descr="Some fields are missing">S</error> {
                 foo: 92,
-            }</error>;
+            };
 
-            let _ = S <error descr="Some fields are missing">{
+            let _ = <error descr="Some fields are missing">S</error> {
                 foo: 1,
                 <error descr="Duplicate field">foo</error>: 2,
-            }</error>;
+            };
 
             let _ = S {
                 foo: 1,
@@ -83,9 +83,9 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
 
             let _ = Empty { };
 
-            let _ = E::V <error>{
+            let _ = <error>E::V</error>{
                 <error>bar</error>: 92
-            }</error>;
+            };
         }
 
         struct Win {

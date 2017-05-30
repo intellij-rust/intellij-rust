@@ -49,8 +49,9 @@ class RsExpressionAnnotator : Annotator {
             }
         } else {
             if (missingFields.isNotEmpty()) {
-                holder.createErrorAnnotation(expr, "Some fields are missing")
-                    .registerFix(AddStructFieldsFix(decl.namedFields, missingFields, expr), expr.textRange)
+                holder.createErrorAnnotation(expr.parent.firstChild, "Some fields are missing")
+                    .registerFix(AddStructFieldsFix(decl.namedFields, missingFields, expr),
+                        expr.parent.firstChild.textRange)
             }
         }
 
