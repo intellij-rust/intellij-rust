@@ -8,12 +8,7 @@ import com.intellij.util.SmartList
 import org.rust.ide.annotator.fixes.AddStructFieldsFix
 import org.rust.ide.intentions.RemoveParenthesesFromExprIntention
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsFieldsOwner
-import org.rust.lang.core.psi.ext.RsReferenceElement
-import org.rust.lang.core.psi.ext.namedFields
-import org.rust.lang.core.psi.ext.queryAttributes
-import org.rust.lang.core.psi.ext.RsStructKind
-import org.rust.lang.core.psi.ext.kind
+import org.rust.lang.core.psi.ext.*
 import java.util.*
 
 class RsExpressionAnnotator : Annotator {
@@ -80,10 +75,11 @@ private class RedundantParenthesisVisitor(private val holder: AnnotationHolder) 
         o.expr.warnIfParens("Redundant parentheses in expression")
 
     private fun RsExpr?.warnIfParens(message: String) {
-        if (this is RsParenExpr) {
+        if (this !is RsParenExpr) return
+        val fix = RemoveParenthesesFromExprIntention()
+        if (fix.isAvailable(this))
             holder.createWeakWarningAnnotation(this, message)
                 .registerFix(RemoveParenthesesFromExprIntention())
-        }
     }
 }
 

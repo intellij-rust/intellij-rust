@@ -4,30 +4,39 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/expressions"
 
     fun testUnnecessaryParens() = checkWarnings("""
+
+        struct S { f: i32 }
+
         fn test() {
-            if <weak_warning>(true)</weak_warning> {
+            if <weak_warning descr="Predicate expression has unnecessary parentheses">(true)</weak_warning> {
                 let _ = 1;
             }
 
-            for x in <weak_warning>(0..10)</weak_warning> {
+            for x in <weak_warning descr="For loop expression has unnecessary parentheses">(0..10)</weak_warning> {
                 let _ = 1;
             }
 
-            match <weak_warning>(x)</weak_warning> {
+            match <weak_warning descr="Match expression has unnecessary parentheses">(x)</weak_warning> {
                 _ => println!("Hello world")
             }
 
-            if <weak_warning>(pred)</weak_warning> {
-                return <weak_warning>(true)</weak_warning>;
+            if <weak_warning descr="Predicate expression has unnecessary parentheses">(pred)</weak_warning> {
+                return <weak_warning descr="Return expression has unnecessary parentheses">(true)</weak_warning>;
             }
 
-            while <weak_warning>(true)</weak_warning> {
+            while <weak_warning descr="Predicate expression has unnecessary parentheses">(true)</weak_warning> {
                 let _ = 1;
             }
 
             let e = (<weak_warning descr="Redundant parentheses in expression">(4 + 3)</weak_warning>);
+            let _ = match <weak_warning descr="Match expression has unnecessary parentheses">(1)</weak_warning> { _ => 0 };
+            let _ = match (S { f: 0 }) { _ => 0 };
+
+            if (S { f: 0 } == S { f: 1 }) {
+                let _ = 1;
+            }
         }
-    """)
+        """)
 
 
     fun testStructExpr() = checkWarnings("""
