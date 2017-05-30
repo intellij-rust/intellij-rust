@@ -117,12 +117,9 @@ fun inferExpressionType(expr: RsExpr): Ty {
 
         is RsTryExpr -> {
             val base = expr.expr.type
-            // This is super hackish. Need to figure out how to
-            // identify known ty (See also the CString inspection).
-            // Java uses fully qualified names for this, perhaps we
-            // can do this as well? Will be harder to test though :(
-            if (base is TyEnum && base.item.name == "Result")
-                base.typeArguments.firstOrNull() ?: TyUnknown
+
+            if (isStdResult(base))
+                (base as TyEnum).typeArguments.firstOrNull() ?: TyUnknown
             else
                 TyUnknown
         }

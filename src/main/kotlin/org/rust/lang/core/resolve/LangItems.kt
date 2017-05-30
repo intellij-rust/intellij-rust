@@ -86,6 +86,14 @@ private fun lookupAssociatedType(impl: RsImplItem, name: String): Ty =
     impl.typeAliasList.find { it.name == name }?.typeReference?.type
         ?: TyUnknown
 
+// This is super hackish. Need to figure out how to
+// identify known ty (See also the CString inspection).
+// Java uses fully qualified names for this, perhaps we
+// can do this as well? Will be harder to test though :(
+fun isStdResult(type: Ty): Boolean {
+    return type is TyEnum && type.item.name == "Result";
+}
+
 private fun tyFromAbsolutePath(prefixStd: String, prefixNoStd: String, name: String, elementForModule: RsCompositeElement): Ty {
     val module = elementForModule.module ?: return TyUnknown;
     val crateRoot = elementForModule.crateRoot as? RsFile ?: return TyUnknown
