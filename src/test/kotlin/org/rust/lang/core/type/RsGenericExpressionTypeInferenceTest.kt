@@ -349,5 +349,13 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
           //^ (Bar<(i32, bool), i32>, Foo<[f64; 3], &str>)
         }
     """)
-}
 
+    fun testArrayToSlice() = testExpr("""
+        fn foo<T>(xs: &[T]) -> T { unimplemented!() }
+        fn main() {
+            let x = foo(&[1, 2, 3]);
+            x
+          //^ i32
+        }
+    """)
+}

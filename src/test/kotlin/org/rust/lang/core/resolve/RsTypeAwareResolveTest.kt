@@ -883,6 +883,20 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test array to slice`() = checkByCode("""
+        struct Foo;
+        impl Foo {
+            fn foo(&self) { unimplemented!() }
+              //X
+        }
+        fn foo<T>(xs: &[T]) -> T { unimplemented!() }
+        fn main() {
+            let x = foo(&[Foo(), Foo()]);
+            x.foo()
+             //^
+        }
+    """)
+
     fun `test arithmetic operations`() {
         for ((traitName, itemName, sign) in ArithmeticOp.values()) {
             checkByCode("""
