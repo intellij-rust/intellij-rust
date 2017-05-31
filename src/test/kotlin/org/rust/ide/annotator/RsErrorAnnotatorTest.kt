@@ -499,6 +499,26 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun `testE0199 Only safe impls for safe traits`() = checkErrors("""
+        struct Foo;
+        struct Foo2;
+
+        trait Bar { }
+
+        unsafe impl <error descr="Implementing the trait `Bar` is not unsafe [E0199]">Bar</error> for Foo { }
+        impl Bar for Foo2 { }
+    """)
+
+    fun `testE0200 Only unsafe impls for unsafe traits`() = checkErrors("""
+        struct Foo;
+        struct Foo2;
+
+        unsafe trait Bar { }
+
+        unsafe impl Bar for Foo { }
+        impl <error descr="The trait `Bar` requires an `unsafe impl` declaration [E0200]">Bar</error> for Foo2 { }
+    """)
+
     fun testE0201_NameDuplicationInImpl() = checkErrors("""
         struct Foo;
         impl Foo {
