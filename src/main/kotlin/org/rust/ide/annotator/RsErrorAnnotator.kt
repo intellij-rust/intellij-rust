@@ -309,8 +309,14 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkImpl(holder: AnnotationHolder, impl: RsImplItem) {
-        val trait = impl.traitRef?.resolveToTrait ?: return
+        val traitRef = impl.traitRef ?: return
+        val trait = traitRef.resolveToTrait ?: return
         val traitName = trait.name ?: return
+        if (impl.unsafe != null && trait.unsafe == null) {
+            holder.createErrorAnnotation(traitRef, "Implementing the trait `$traitName` is not unsafe [E0199]")
+        } else if (impl.unsafe == null && trait.unsafe != null) {
+            holder.createErrorAnnotation(traitRef, "The trait `$traitName` requires an `unsafe impl` declaration [E0200]")
+        }
         // Macros can add methods
         if (impl.implMacroMemberList.isNotEmpty()) return
 
