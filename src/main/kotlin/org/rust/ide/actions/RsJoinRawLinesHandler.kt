@@ -5,8 +5,7 @@ import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsElementTypes.COMMA
-import org.rust.lang.core.psi.RsElementTypes.LBRACE
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
@@ -19,7 +18,21 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
     override fun tryJoinRawLines(document: Document, file: PsiFile, start: Int, end: Int): Int {
         if (file !is RsFile) return CANNOT_JOIN
         if (start == 0) return CANNOT_JOIN
+
+        val joinStruct = tryJoinStruct(file, start)
+        if (joinStruct != CANNOT_JOIN)
+            return joinStruct
+
         return tryJoinSingleExpressionBlock(file, start)
+    }
+
+    fun tryJoinStruct(file: RsFile, start: Int): Int {
+        val body = file.findElementAt(start)!!.parent
+        if (body.elementType != STRUCT_LITERAL_BODY) return CANNOT_JOIN
+
+        val psiFactory = RsPsiFactory(file.project)
+        val newBody = psiFactory.createStructLiteralBody(body.children.asList())
+        return body.replace(newBody).textRange.startOffset
     }
 
     fun tryJoinSingleExpressionBlock(file: RsFile, start: Int): Int {

@@ -58,6 +58,11 @@ class RsPsiFactory(private val project: Project) {
         return path
     }
 
+    fun createStructLiteralBody(fields: List<PsiElement>): RsStructLiteralBody {
+        val fieldsText = fields.map { e -> e.text!! }.joinToString(", ")
+        return createExpressionOfType<RsStructLiteral>("S { $fieldsText }").structLiteralBody
+    }
+
     fun createStructLiteralField(name: String): RsStructLiteralField =
         createExpressionOfType<RsStructLiteral>("S { $name: () }").structLiteralBody.structLiteralFieldList[0]
 

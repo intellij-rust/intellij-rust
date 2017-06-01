@@ -13,6 +13,21 @@ class RsJoinRawLinesHandlerTest : RsJoinLinesHandlerTestBase() {
         }
     """)
 
+    fun `test remove last comma in struct`() = doTest("""
+        struct S { foo: i32, bar: i32 }
+        fn main() {
+            let _ = S /*caret*/{
+                foo: 1,
+                bar: 2,
+            };
+        }
+    ""","""
+        struct S { foo: i32, bar: i32 }
+        fn main() {
+            let _ = S /*caret*/{ foo: 1, bar: 2 };
+        }
+    """)
+
     fun `test match expression last arm`() = doTest("""
         fn main() {
             match n {
