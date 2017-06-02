@@ -69,8 +69,7 @@ class Cargo(
     fun reformatFile(owner: Disposable, filePath: String, listener: ProcessListener? = null) =
         rustfmtCommandline(filePath).execute(owner, listener)
 
-    fun checkFile(owner: Disposable, filePath: String) =
-        checkCommandline(filePath).execute(owner)
+    fun checkFile(owner: Disposable) = checkCommandline().execute(owner, ignoreExitCode = true)
 
     fun generalCommand(commandLine: CargoCommandLine): GeneralCommandLine {
         val env = when (commandLine.backtraceMode) {
@@ -131,10 +130,10 @@ class Cargo(
     private fun rustfmtCommandline(filePath: String) =
         generalCommand("fmt").withParameters("--", "--write-mode=overwrite", "--skip-children", filePath)
 
-    private fun checkCommandline(filePath: String) =
-        generalCommand("check").withParameters("--message-format=json")
+    private fun checkCommandline() = generalCommand("check").withParameters("--message-format=json")
 
-    private fun GeneralCommandLine.execute(owner: Disposable, listener: ProcessListener? = null): ProcessOutput {
+    private fun GeneralCommandLine.execute(owner: Disposable, listener: ProcessListener? = null,
+                                           ignoreExitCode: Boolean = false): ProcessOutput {
         val handler = CapturingProcessHandler(this)
         val cargoKiller = Disposable {
             // Don't attempt a graceful termination, Cargo can be SIGKILLed safely.
@@ -149,7 +148,7 @@ class Cargo(
         } finally {
             Disposer.dispose(cargoKiller)
         }
-        if (output.exitCode != 0) {
+        if (!ignoreExitCode && output.exitCode != 0) {
             throw ExecutionException("""
             Cargo execution failed (exit code ${output.exitCode}).
             $commandLineString

@@ -115,7 +115,7 @@
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsLiteralAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsExpressionAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsErrorAnnotator"/>
-        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsCargoCheckAnnotator"/>
+        <externalAnnotator language="Rust" implementationClass="org.rust.ide.annotator.RsCargoCheckAnnotator"/>
         <highlightRangeExtension implementation="org.rust.ide.annotator.RsErrorAnnotator"/>
 
         <!-- Line Marker Providers -->
@@ -568,13 +568,6 @@
                 class="org.rust.ide.actions.RsFmtFileAction"
                 text="Reformat file with rustfmt"
                 description="Reformat current file with rustfmt">
-            <add-to-group group-id="CodeMenu" anchor="last"/>
-        </action>
-
-        <action id="Rust.CargoCheck"
-                class="org.rust.ide.actions.RsCargoCheckAction"
-                text="Cargo check file"
-                description="Perform cargo check">
             <add-to-group group-id="CodeMenu" anchor="last"/>
         </action>
 
