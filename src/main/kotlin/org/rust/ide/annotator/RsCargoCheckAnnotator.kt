@@ -19,12 +19,13 @@ import com.intellij.util.PathUtil
 import org.apache.commons.lang.StringEscapeUtils.escapeHtml
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.CargoMessage
+import org.rust.cargo.toolchain.CargoTopMessage
 import java.util.concurrent.ConcurrentHashMap
 
 data class TEAAnnotationInfo(val file: PsiFile, val editor: Editor)
 
 class TEAAnnotationResult(commandOutput: List<String>) {
-    var messages = emptyList<CargoMessage>()
+    var messages = emptyList<CargoTopMessage>()
 
     init {
         val parser = JsonParser()
@@ -52,7 +53,7 @@ class TEAAnnotationResult(commandOutput: List<String>) {
         }.mapNotNull {
             if (it.isJsonObject) it.asJsonObject else null
         }.mapNotNull {
-            CargoMessage.fromJson(it)
+            CargoTopMessage.fromJson(it)
         }
     }
 }
@@ -105,16 +106,17 @@ class RsCargoCheckAnnotator : ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
         annotationResult.messages.forEach {
             val annotFile = holder.currentAnnotationSession.file.virtualFile.name
             val annotFilePath = holder.currentAnnotationSession.file.virtualFile.path
-            val severity = when (it.level) {
+            val severity = when (it.message.level) {
                 "error" -> HighlightSeverity.ERROR
                 "warning" -> HighlightSeverity.WARNING
                 else -> { throw AssertionError() }
             }
-            val shortErrorStr = it.message
-            val codeStr = it.code
+            val shortErrorStr = it.message.message
+            val codeStr = it.message.code
+            val target = it.target
 
             //If spans are empty we add a "global" error
-            if (it.spans.isEmpty()) {
+            if (it.message.spans.isEmpty()) {
                 if (it.target.src_path != annotFilePath) {
                     //not main file, skip global annotation
                 } else {
@@ -123,14 +125,14 @@ class RsCargoCheckAnnotator : ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
 
                     annot.isFileLevelAnnotation = true
                     annot.setNeedsUpdateOnTyping(true)
-                    annot.tooltip = escapeHtml(it.message) + if(it.code != "") "<hr/>$it.code" else ""
+                    annot.tooltip = escapeHtml(shortErrorStr) + if(codeStr != "") "<hr/>$codeStr" else ""
                 }
                 return
             }
 
             val problemGroup = ProblemGroup { shortErrorStr }
 
-            it.spans.filter {
+            it.message.spans.filter {
                 annotFilePath == it.file_name
             }.forEach {
                 val doc = holder.currentAnnotationSession.file.viewProvider.document ?: throw AssertionError()
@@ -176,9 +178,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
                     (if (it.is_primary && it.label != null) "${escapeHtml(it.label)}<br/>" else "") // + childrenMsg
                 val tooltip = short + if (extra.isBlank()) "" else "<hr/>" + extra
 
-                //IJDebug.log("adding annotation (short=$short, ${EI("tooltip", tooltip)})")
                 val spanSeverity = if (it.is_primary) severity else HighlightSeverity.INFORMATION // HighlightSeverity.WEAK_WARNING
-
                 val annot = holder.createAnnotation(spanSeverity, textRange, short)
 
                 //See @holder.createAnnotation with tooltip for why we wrap the message like this
