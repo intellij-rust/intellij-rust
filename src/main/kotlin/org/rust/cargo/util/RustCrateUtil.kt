@@ -42,6 +42,7 @@ object AutoInjectedCrates {
         StdLibInfo("collections", StdLibType.ROOT),
         StdLibInfo("libc", StdLibType.ROOT, srcDir = "liblibc/src"),
         StdLibInfo("panic_unwind", type = StdLibType.ROOT),
+        StdLibInfo("proc_macro", type = StdLibType.ROOT),
         StdLibInfo("rustc_unicode", type = StdLibType.ROOT),
         StdLibInfo("std_unicode", type = StdLibType.ROOT),
         StdLibInfo("test", dependencies = listOf("getopts", "term"), type = StdLibType.ROOT),
@@ -60,7 +61,8 @@ object AutoInjectedCrates {
         StdLibInfo("rustc_asan", StdLibType.DEPENDENCY),
         StdLibInfo("rustc_lsan", StdLibType.DEPENDENCY),
         StdLibInfo("rustc_msan", StdLibType.DEPENDENCY),
-        StdLibInfo("rustc_tsan", StdLibType.DEPENDENCY)
+        StdLibInfo("rustc_tsan", StdLibType.DEPENDENCY),
+        StdLibInfo("syntax", StdLibType.DEPENDENCY)
     )
 }
 
