@@ -3,9 +3,12 @@ package org.rust.ide.annotator
 import com.google.gson.JsonParser
 import com.intellij.lang.annotation.*
 import com.intellij.lang.annotation.Annotation
+import com.intellij.openapi.application.Result
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
@@ -164,9 +167,16 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
 
         // We have to save the file to disk to give cargo a chance to check fresh file content.
-        // It's obviously a wrong way and should be fixed.
-        try { FileUtil.writeToFile(File(file.virtualFile.canonicalPath), file.text) }
-        catch (_: Exception) {}
+        object : WriteAction<Unit>() {
+            override fun run(result: Result<Unit>) {
+                val document = FileDocumentManager.getInstance().getDocument(file.virtualFile)
+                if (document != null) {
+                    FileDocumentManager.getInstance().saveDocument(document)
+                } else {
+                    FileDocumentManager.getInstance().saveAllDocuments()
+                }
+            }
+        }.execute()
 
         val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
         val output = module.project.toolchain?.cargo(moduleDirectory)?.checkFile(module)
