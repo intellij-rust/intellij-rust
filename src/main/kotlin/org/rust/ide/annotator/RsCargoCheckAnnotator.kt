@@ -104,20 +104,20 @@ class RsCargoCheckAnnotator : ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
             return
 
         annotationResult.messages.forEach {
-            val annotFile = holder.currentAnnotationSession.file.virtualFile.name
-            val annotFilePath = holder.currentAnnotationSession.file.virtualFile.path
+            val filePath = holder.currentAnnotationSession.file.virtualFile.path
+
             val severity = when (it.message.level) {
                 "error" -> HighlightSeverity.ERROR
                 "warning" -> HighlightSeverity.WARNING
                 else -> { throw AssertionError() }
             }
+
             val shortErrorStr = it.message.message
-            val codeStr = it.message.code
-            val target = it.target
+            val codeStr = it.message.code?.code
 
             //If spans are empty we add a "global" error
             if (it.message.spans.isEmpty()) {
-                if (it.target.src_path != annotFilePath) {
+                if (it.target.src_path != filePath) {
                     //not main file, skip global annotation
                 } else {
                     //add a global annotation
@@ -133,7 +133,8 @@ class RsCargoCheckAnnotator : ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
             val problemGroup = ProblemGroup { shortErrorStr }
 
             it.message.spans.filter {
-                annotFilePath == it.file_name
+                val spanFilePath = PathUtil.getCanonicalPath(it.file_name)
+                filePath.endsWith(spanFilePath)
             }.forEach {
                 val doc = holder.currentAnnotationSession.file.viewProvider.document ?: throw AssertionError()
 
