@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValueProvider
@@ -30,7 +31,7 @@ class CargoCheckAnnotationResult(commandOutput: List<String>, val project: Proje
 
     private val modificationTracker = PsiManager.getInstance(project).modificationTracker
     private val parser = JsonParser()
-    private val LOG = Logger.getInstance(RsCargoCheckAnnotator::class.java)
+    //private val LOG = Logger.getInstance(RsCargoCheckAnnotator::class.java)
 
     val messages: List<CargoTopMessage> =
         commandOutput.filter {
@@ -60,7 +61,7 @@ class CargoCheckAnnotationResult(commandOutput: List<String>, val project: Proje
 
     override fun getModificationCount(): Long {
         val modificationCount = modificationTracker.modificationCount
-        LOG.info("getModificationCount = $modificationCount")
+        //LOG.info("getModificationCount = $modificationCount")
         return modificationCount
     }
 }
@@ -91,7 +92,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
 
             val severity = when (message.level) {
                 "error" -> HighlightSeverity.ERROR
-                "warning" -> HighlightSeverity.WARNING
+                "warning" -> HighlightSeverity.WEAK_WARNING
                 else -> throw AssertionError()
             }
 
@@ -142,9 +143,11 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                 else -> span.label ?: message.message
             }
 
-        val extraMessage =
-            (if (message.code?.code != "") "${message.code?.code}<br/>" else "") +
-                (if (span.is_primary && span.label != null) "${escapeHtml(span.label)}<br/>" else "")
+        val extraMessage = {
+            val codeHtml = if (message.code?.code.isNullOrBlank()) "" else "${message.code?.code}<br/>"
+            val labelHtml = if (span.is_primary && span.label != null) "${escapeHtml(span.label)}<br/>" else ""
+            codeHtml + labelHtml
+        }()
 
         val tooltip = shortMessage + if (extraMessage.isBlank()) "" else "<hr/>" + extraMessage
         val spanSeverity = if (span.is_primary) severity else HighlightSeverity.INFORMATION
@@ -154,14 +157,13 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
     }
 
     fun isValidSpan(span: CargoSpan) =
-        // FIXME: Sometimes rustc outputs an end line smaller than the start line.
-        //       Assuming this is a bug in rustc and not a feature, this condition should be
-        //       reverted to an assert in the future.
         span.line_end > span.line_start
             || (span.line_end == span.line_start && span.column_end >= span.column_start)
 
     fun checkProject(file: PsiFile): CargoCheckAnnotationResult? {
         val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
+        // We have to save the file to disk to give cargo a chance to check fresh file content.
+        // It's obviously a wrong way and should be fixed.
         FileUtil.writeToFile(File(file.virtualFile.path), file.text)
         val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
         val output = module.project.toolchain?.cargo(moduleDirectory)?.checkFile(module)
