@@ -17,12 +17,19 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.PathUtil
+import com.intellij.util.containers.HashMap
+import com.intellij.util.containers.ImmutableList
 import org.apache.commons.lang.StringEscapeUtils.escapeHtml
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.CargoMessage
 import org.rust.cargo.toolchain.CargoSpan
 import org.rust.cargo.toolchain.CargoTopMessage
+import org.rust.cargo.util.modules
 import java.util.concurrent.ConcurrentHashMap
 
 data class CargoCheckAnnotationInfo(val file: PsiFile, val editor: Editor)
@@ -61,39 +68,26 @@ class CargoCheckAnnotationResult(commandOutput: List<String>) {
                 null
         }
     }
+
+    companion object {
+        val empty = CargoCheckAnnotationResult(emptyList())
+    }
 }
 
 class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoCheckAnnotationResult>() {
-    private val cache = ConcurrentHashMap<Project, CargoCheckAnnotationResult>()
 
-    init {
-        ApplicationManager.getApplication().messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES,
-            object : BulkFileListener {
-                override fun after(events: MutableList<out VFileEvent>) {
-                    for (project in cache.keys) {
-                        val relevantEvents = events.filterNotNull().filter {
-                            ProjectFileIndex.getInstance(project).isInSourceContent(it.file!!)
-                        }
+    private fun getCachedResult(file: PsiFile) =
+        CachedValuesManager.getManager(file.project).createCachedValue {
+            CachedValueProvider.Result.create(
+                checkProject(file),
+                PsiModificationTracker.MODIFICATION_COUNT
+            )
+        }
 
-                        if (relevantEvents.isNotEmpty()) {
-                            //Remove the result to force recalculation
-                            cache.remove(project)
-                        }
+    override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? =
+        CargoCheckAnnotationInfo(file, editor)
 
-                    }
-                }
-
-                override fun before(events: MutableList<out VFileEvent>) {}
-            })
-    }
-
-    override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? {
-        return CargoCheckAnnotationInfo(file, editor)
-    }
-
-    override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? {
-        return cache.getOrPut(info.file.project, { checkProject(info.file) ?: CargoCheckAnnotationResult(emptyList()) })
-    }
+    override fun doAnnotate(info: CargoCheckAnnotationInfo) = getCachedResult(info.file).value
 
     override fun apply(file: PsiFile, annotationResult: CargoCheckAnnotationResult?, holder: AnnotationHolder) {
         annotationResult ?: return
@@ -174,12 +168,12 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         span.line_end > span.line_start
             || (span.line_end == span.line_start && span.column_end >= span.column_start)
 
-    fun checkProject(file: PsiFile): CargoCheckAnnotationResult? {
-        val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
+    fun checkProject(file: PsiFile): CargoCheckAnnotationResult {
+        val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return CargoCheckAnnotationResult.empty
         val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
         val output = module.project.toolchain?.cargo(moduleDirectory)?.checkFile(module)
-        output ?: return null
-        if (output.isCancelled) return null
+        output ?: return CargoCheckAnnotationResult.empty
+        if (output.isCancelled) return CargoCheckAnnotationResult.empty
         return CargoCheckAnnotationResult(output.stdoutLines)
     }
 }
