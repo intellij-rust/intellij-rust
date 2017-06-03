@@ -3,13 +3,16 @@ package org.rust.ide.annotator
 import com.google.gson.JsonParser
 import com.intellij.lang.annotation.*
 import com.intellij.lang.annotation.Annotation
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
@@ -19,22 +22,20 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.CargoMessage
 import org.rust.cargo.toolchain.CargoSpan
 import org.rust.cargo.toolchain.CargoTopMessage
+import java.io.File
 
 data class CargoCheckAnnotationInfo(val file: PsiFile, val editor: Editor)
 
-class CargoCheckAnnotationResult(commandOutput: List<String>, val project: Project? = null) : ModificationTracker {
+class CargoCheckAnnotationResult(commandOutput: List<String>, val project: Project): ModificationTracker {
 
-    var messages = emptyList<CargoTopMessage>()
+    private val modificationTracker = PsiManager.getInstance(project).modificationTracker
+    private val parser = JsonParser()
+    private val LOG = Logger.getInstance(RsCargoCheckAnnotator::class.java)
 
-    init {
-        val parser = JsonParser()
-        messages += commandOutput.filter {
-            // Apparently some lines also have human readable messages. We ignore any lines not beginning with '{'
-            val trimmed = it.trimStart()
-            trimmed.isNotEmpty() && trimmed[0] == '{'
+    val messages: List<CargoTopMessage> =
+        commandOutput.filter {
+            it.trimStart().startsWith("{")
         }.filter {
-            // We check the first field name by finding the first " then reading until another " (we expect
-            // that a '{' present and don't check for it).
             val first = it.indexOfFirst { it == '"' }
             assert(first != -1)
             val second = it.indexOf('"', first + 1)
@@ -56,12 +57,11 @@ class CargoCheckAnnotationResult(commandOutput: List<String>, val project: Proje
             else
                 null
         }
-    }
 
-    override fun getModificationCount() = project?.baseDir?.modificationStamp ?: 0
-
-    companion object {
-        val empty = CargoCheckAnnotationResult(emptyList())
+    override fun getModificationCount(): Long {
+        val modificationCount = modificationTracker.modificationCount
+        LOG.info("getModificationCount = $modificationCount")
+        return modificationCount
     }
 }
 
@@ -75,8 +75,9 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
 
         }
 
-    override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? =
-        CargoCheckAnnotationInfo(file, editor)
+    override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? {
+        return CargoCheckAnnotationInfo(file, editor)
+    }
 
     override fun doAnnotate(info: CargoCheckAnnotationInfo) = getCachedResult(info.file).value
 
@@ -159,12 +160,13 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         span.line_end > span.line_start
             || (span.line_end == span.line_start && span.column_end >= span.column_start)
 
-    fun checkProject(file: PsiFile): CargoCheckAnnotationResult {
-        val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return CargoCheckAnnotationResult.empty
+    fun checkProject(file: PsiFile): CargoCheckAnnotationResult? {
+        val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
+        FileUtil.writeToFile(File(file.virtualFile.path), file.text)
         val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
         val output = module.project.toolchain?.cargo(moduleDirectory)?.checkFile(module)
-        output ?: return CargoCheckAnnotationResult.empty
-        if (output.isCancelled) return CargoCheckAnnotationResult.empty
+        output ?: return null
+        if (output.isCancelled) return null
         return CargoCheckAnnotationResult(output.stdoutLines, file.project)
     }
 }
