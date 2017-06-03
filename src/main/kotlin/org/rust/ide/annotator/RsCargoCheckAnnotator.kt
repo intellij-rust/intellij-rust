@@ -1,40 +1,29 @@
 package org.rust.ide.annotator
 
 import com.google.gson.JsonParser
+import com.intellij.lang.annotation.*
 import com.intellij.lang.annotation.Annotation
-import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.lang.annotation.ExternalAnnotator
-import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.lang.annotation.ProblemGroup
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.PathUtil
-import com.intellij.util.containers.HashMap
-import com.intellij.util.containers.ImmutableList
 import org.apache.commons.lang.StringEscapeUtils.escapeHtml
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.CargoMessage
 import org.rust.cargo.toolchain.CargoSpan
 import org.rust.cargo.toolchain.CargoTopMessage
-import org.rust.cargo.util.modules
-import java.util.concurrent.ConcurrentHashMap
 
 data class CargoCheckAnnotationInfo(val file: PsiFile, val editor: Editor)
 
-class CargoCheckAnnotationResult(commandOutput: List<String>) {
+class CargoCheckAnnotationResult(commandOutput: List<String>, val project: Project? = null) : ModificationTracker {
+
     var messages = emptyList<CargoTopMessage>()
 
     init {
@@ -69,6 +58,8 @@ class CargoCheckAnnotationResult(commandOutput: List<String>) {
         }
     }
 
+    override fun getModificationCount() = project?.baseDir?.modificationStamp ?: 0
+
     companion object {
         val empty = CargoCheckAnnotationResult(emptyList())
     }
@@ -80,8 +71,8 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         CachedValuesManager.getManager(file.project).createCachedValue {
             CachedValueProvider.Result.create(
                 checkProject(file),
-                PsiModificationTracker.MODIFICATION_COUNT
-            )
+                PsiModificationTracker.MODIFICATION_COUNT)
+
         }
 
     override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? =
@@ -174,6 +165,6 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         val output = module.project.toolchain?.cargo(moduleDirectory)?.checkFile(module)
         output ?: return CargoCheckAnnotationResult.empty
         if (output.isCancelled) return CargoCheckAnnotationResult.empty
-        return CargoCheckAnnotationResult(output.stdoutLines)
+        return CargoCheckAnnotationResult(output.stdoutLines, file.project)
     }
 }
