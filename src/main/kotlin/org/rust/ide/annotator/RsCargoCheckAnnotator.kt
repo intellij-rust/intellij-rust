@@ -143,11 +143,11 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                 else -> span.label ?: message.message
             }
 
-        val extraMessage = {
+        val extraMessage = run {
             val codeHtml = if (message.code?.code.isNullOrBlank()) "" else "${message.code?.code}<br/>"
             val labelHtml = if (span.is_primary && span.label != null) "${escapeHtml(span.label)}<br/>" else ""
             codeHtml + labelHtml
-        }()
+        }
 
         val tooltip = shortMessage + if (extraMessage.isBlank()) "" else "<hr/>" + extraMessage
         val spanSeverity = if (span.is_primary) severity else HighlightSeverity.INFORMATION
