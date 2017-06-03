@@ -1,11 +1,13 @@
 package org.rust.ide.annotator
 
 import com.google.gson.JsonParser
+import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -19,12 +21,13 @@ import com.intellij.util.PathUtil
 import org.apache.commons.lang.StringEscapeUtils.escapeHtml
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.CargoMessage
+import org.rust.cargo.toolchain.CargoSpan
 import org.rust.cargo.toolchain.CargoTopMessage
 import java.util.concurrent.ConcurrentHashMap
 
-data class TEAAnnotationInfo(val file: PsiFile, val editor: Editor)
+data class CargoCheckAnnotationInfo(val file: PsiFile, val editor: Editor)
 
-class TEAAnnotationResult(commandOutput: List<String>) {
+class CargoCheckAnnotationResult(commandOutput: List<String>) {
     var messages = emptyList<CargoTopMessage>()
 
     init {
@@ -45,30 +48,33 @@ class TEAAnnotationResult(commandOutput: List<String>) {
                 "message" -> true
                 "features" -> false
                 else -> {
-                    assert(false); throw AssertionError()
+                    assert(false)
+                    throw AssertionError()
                 }
             }
         }.map {
             parser.parse(it)
         }.mapNotNull {
-            if (it.isJsonObject) it.asJsonObject else null
-        }.mapNotNull {
-            CargoTopMessage.fromJson(it)
+            if (it.isJsonObject)
+                CargoTopMessage.fromJson(it.asJsonObject)
+            else
+                null
         }
     }
 }
 
-class RsCargoCheckAnnotator : ExternalAnnotator<TEAAnnotationInfo, TEAAnnotationResult>() {
-    private val cache = ConcurrentHashMap<Project, TEAAnnotationResult>()
+class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoCheckAnnotationResult>() {
+    private val cache = ConcurrentHashMap<Project, CargoCheckAnnotationResult>()
 
     init {
         ApplicationManager.getApplication().messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES,
             object : BulkFileListener {
                 override fun after(events: MutableList<out VFileEvent>) {
                     for (project in cache.keys) {
-                        val relevantEvents = events.filterNotNull().filter{
+                        val relevantEvents = events.filterNotNull().filter {
                             ProjectFileIndex.getInstance(project).isInSourceContent(it.file!!)
                         }
+
                         if (relevantEvents.isNotEmpty()) {
                             //Remove the result to force recalculation
                             cache.remove(project)
@@ -81,126 +87,99 @@ class RsCargoCheckAnnotator : ExternalAnnotator<TEAAnnotationInfo, TEAAnnotation
             })
     }
 
-    override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): TEAAnnotationInfo? {
-
-        val ret : TEAAnnotationInfo?
-
-        if (hasErrors) {
-            ret = TEAAnnotationInfo(file, editor)
-        } else {
-            ret = TEAAnnotationInfo(file, editor)
-        }
-
-        return ret
+    override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? {
+        return CargoCheckAnnotationInfo(file, editor)
     }
 
-    override fun doAnnotate(info: TEAAnnotationInfo): TEAAnnotationResult? {
-        return cache.getOrPut(info.file.project, { checkProject(info.file) ?: TEAAnnotationResult(emptyList()) })
+    override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? {
+        return cache.getOrPut(info.file.project, { checkProject(info.file) ?: CargoCheckAnnotationResult(emptyList()) })
     }
 
-    override fun apply(file: PsiFile, annotationResult: TEAAnnotationResult?, holder: AnnotationHolder) {
+    override fun apply(file: PsiFile, annotationResult: CargoCheckAnnotationResult?, holder: AnnotationHolder) {
+        annotationResult ?: return
+        val doc = holder.currentAnnotationSession.file.viewProvider.document ?: throw AssertionError()
 
-        if (annotationResult == null)
-            return
-
-        annotationResult.messages.forEach {
+        for (topMessage in annotationResult.messages) {
+            val message = topMessage.message
             val filePath = holder.currentAnnotationSession.file.virtualFile.path
 
-            val severity = when (it.message.level) {
+            val severity = when (message.level) {
                 "error" -> HighlightSeverity.ERROR
                 "warning" -> HighlightSeverity.WARNING
-                else -> { throw AssertionError() }
+                else -> throw AssertionError()
             }
 
-            val shortErrorStr = it.message.message
-            val codeStr = it.message.code?.code
+            val codeStr = message.code?.code
 
-            //If spans are empty we add a "global" error
-            if (it.message.spans.isEmpty()) {
-                if (it.target.src_path != filePath) {
-                    //not main file, skip global annotation
-                } else {
-                    //add a global annotation
-                    val annot = holder.createAnnotation(severity, TextRange.EMPTY_RANGE, shortErrorStr)
-
-                    annot.isFileLevelAnnotation = true
-                    annot.setNeedsUpdateOnTyping(true)
-                    annot.tooltip = escapeHtml(shortErrorStr) + if(codeStr != "") "<hr/>$codeStr" else ""
+            // If spans are empty we add a "global" error
+            if (message.spans.isEmpty()) {
+                if (topMessage.target.src_path == filePath) {
+                    // add a global annotation
+                    val annotation = holder.createAnnotation(severity, TextRange.EMPTY_RANGE, message.message)
+                    annotation.isFileLevelAnnotation = true
+                    annotation.setNeedsUpdateOnTyping(true)
+                    annotation.tooltip = escapeHtml(message.message) + if (codeStr != "") "<hr/>$codeStr" else ""
                 }
-                return
-            }
+            } else {
+                val problemGroup = ProblemGroup { message.message }
 
-            val problemGroup = ProblemGroup { shortErrorStr }
-
-            it.message.spans.filter {
-                val spanFilePath = PathUtil.getCanonicalPath(it.file_name)
-                filePath.endsWith(spanFilePath)
-            }.forEach {
-                val doc = holder.currentAnnotationSession.file.viewProvider.document ?: throw AssertionError()
-
-                fun toOfs(line: Int, col: Int): Int {
-                    val lineStart = doc.getLineStartOffset(line)
-                    val lineEnd = doc.getLineEndOffset(line)
-                    @Suppress("UNUSED_VARIABLE")
-                    val colsInLine = lineEnd - lineStart
-
-                    //col == colsInLine means end of line?
-                    //It is possible to get it in the compiler message
-
-                    //We pass on this check since the compiler seems to violate it liberally
-                    //if (col > colsInLine)
-                    //throw AssertionError()
-
-                    return lineStart + col
+                val relevantSpans = message.spans.filter {
+                    val spanFilePath = PathUtil.getCanonicalPath(it.file_name)
+                    filePath.endsWith(spanFilePath) && isValidSpan(it)
                 }
 
-                //FIXME: Sometimes rustc outputs an end line smaller than the start line.
-                //       Assuming this is a bug in rustc and not a feature, this condition should be
-                //       reverted to an assert in the future.
-                if (it.line_end < it.line_start || it.line_end == it.line_start && it.column_end < it.column_start)
-                    return@forEach
-
-                //The compiler message lines and columns are 1 based while intellij idea are 0 based
-                val textRange = TextRange(toOfs(it.line_start - 1, it.column_start - 1), toOfs(it.line_end - 1, it.column_end - 1))
-
-                val short = if (it.is_primary) {
-                    //Special case - if this is a primary trait then we have to add
-                    //the message text (since it may have a label but the label is only extra info).
-                    shortErrorStr
-                } else {
-                    //Short message is the description. If there's a label we use it,
-                    //and if not we use the original error message.
-                    //In any case we attach the error code if there.
-                    it.label ?: shortErrorStr
+                for (span in relevantSpans) {
+                    val annotation = createAnnotation(span, message, severity, doc, holder)
+                    annotation.problemGroup = problemGroup
+                    annotation.setNeedsUpdateOnTyping(true)
                 }
-
-                //In the tooltip we give additional info - the children messages
-                val extra = (if (codeStr != "") "$codeStr<br/>" else "") +
-                    (if (it.is_primary && it.label != null) "${escapeHtml(it.label)}<br/>" else "") // + childrenMsg
-                val tooltip = short + if (extra.isBlank()) "" else "<hr/>" + extra
-
-                val spanSeverity = if (it.is_primary) severity else HighlightSeverity.INFORMATION // HighlightSeverity.WEAK_WARNING
-                val annot = holder.createAnnotation(spanSeverity, textRange, short)
-
-                //See @holder.createAnnotation with tooltip for why we wrap the message like this
-                annot!!.tooltip = "<html>${escapeHtml(tooltip)}</html>"
-                annot.problemGroup = problemGroup
-                annot.setNeedsUpdateOnTyping(true)
             }
         }
     }
 
-    fun checkProject(file: PsiFile): TEAAnnotationResult? {
+    fun createAnnotation(span: CargoSpan, message: CargoMessage, severity: HighlightSeverity, doc: Document,
+                         holder: AnnotationHolder): Annotation {
+
+        fun toOffset(line: Int, column: Int): Int {
+            val lineStart = doc.getLineStartOffset(line)
+            return lineStart + column
+        }
+
+        // The compiler message lines and columns are 1 based while intellij idea are 0 based
+        val textRange =
+            TextRange(toOffset(span.line_start - 1, span.column_start - 1),
+                toOffset(span.line_end - 1, span.column_end - 1))
+
+        val shortMessage =
+            when (span.is_primary) {
+                true -> message.message
+                else -> span.label ?: message.message
+            }
+
+        val extraMessage =
+            (if (message.code?.code != "") "${message.code?.code}<br/>" else "") +
+                (if (span.is_primary && span.label != null) "${escapeHtml(span.label)}<br/>" else "")
+
+        val tooltip = shortMessage + if (extraMessage.isBlank()) "" else "<hr/>" + extraMessage
+        val spanSeverity = if (span.is_primary) severity else HighlightSeverity.INFORMATION
+        val annotation = holder.createAnnotation(spanSeverity, textRange, shortMessage)
+        annotation!!.tooltip = "<html>${escapeHtml(tooltip)}</html>"
+        return annotation
+    }
+
+    fun isValidSpan(span: CargoSpan) =
+        // FIXME: Sometimes rustc outputs an end line smaller than the start line.
+        //       Assuming this is a bug in rustc and not a feature, this condition should be
+        //       reverted to an assert in the future.
+        span.line_end > span.line_start
+            || (span.line_end == span.line_start && span.column_end >= span.column_start)
+
+    fun checkProject(file: PsiFile): CargoCheckAnnotationResult? {
         val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
         val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
         val output = module.project.toolchain?.cargo(moduleDirectory)?.checkFile(module)
         output ?: return null
-
-        if (output.isCancelled) {
-            return null
-        }
-
-        val parser = JsonParser()
-        return TEAAnnotationResult(output.stdoutLines)
+        if (output.isCancelled) return null
+        return CargoCheckAnnotationResult(output.stdoutLines)
     }
 }
