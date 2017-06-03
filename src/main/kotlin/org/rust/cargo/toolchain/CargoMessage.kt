@@ -23,7 +23,7 @@ data class CargoTopMessage(
 }
 
 data class CargoMessage(
-    val children: JsonArray,
+    val children: List<CargoMessage>,
     val code: Code?,
     val level: String,
     val message: String,

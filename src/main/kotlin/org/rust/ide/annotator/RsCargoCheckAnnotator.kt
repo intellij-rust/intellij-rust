@@ -5,7 +5,6 @@ import com.intellij.lang.annotation.*
 import com.intellij.lang.annotation.Annotation
 import com.intellij.openapi.application.Result
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -13,8 +12,6 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValueProvider
@@ -26,7 +23,6 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.CargoMessage
 import org.rust.cargo.toolchain.CargoSpan
 import org.rust.cargo.toolchain.CargoTopMessage
-import java.io.File
 
 data class CargoCheckAnnotationInfo(val file: PsiFile, val editor: Editor)
 
@@ -146,10 +142,30 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                 else -> span.label ?: message.message
             }
 
+
+
         val extraMessage = run {
-            val codeHtml = if (message.code?.code.isNullOrBlank()) "" else "${message.code?.code}<br/>"
-            val labelHtml = if (span.is_primary && span.label != null) "${escapeHtml(span.label)}<br/>" else ""
-            codeHtml + labelHtml
+            //val code = if (message.code?.code.isNullOrBlank()) "" else "${message.code?.code}"
+            val label =
+                if (span.is_primary && span.label != null)
+                    "${escapeHtml(span.label)}<br/>"
+                else ""
+
+            // Get all children (help/note) messages - including those with spans. We include the notes with
+            // spans twice - once in this message and once in their own annotation relevant to their span.
+            // This is because the main error lacks context when the notes are missing.
+            // FIXME: Add a hyperlink to the info annotations here and connect it to the annotation listener.
+            val childrenMsg =
+                message.children.map {
+                    val prefix = when (it.level) {
+                        "note" -> "Note: "
+                        "help" -> "Help: "
+                        else -> ""
+                    }
+                    prefix + escapeHtml(it.message)
+                }.joinToString("<br/>")
+
+            "<i>$childrenMsg$label</i>"
         }
 
         val tooltip = shortMessage + if (extraMessage.isBlank()) "" else "<hr/>" + extraMessage
