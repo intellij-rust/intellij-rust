@@ -48,7 +48,11 @@ fun inferExpressionType(expr: RsExpr): Ty {
         is RsMethodCallExpr -> {
             val boundMethod = expr.reference.advancedResolve()
             val method = boundMethod?.element as? RsFunction ?: return TyUnknown
-            return (method.retType?.typeReference?.type ?: TyUnit).substitute(boundMethod.typeArguments)
+            val retType = (method.retType?.typeReference?.type ?: TyUnit).substitute(boundMethod.typeArguments)
+            val methodType = method.type as? TyFunction ?: return retType
+            // drop first element of paramTypes because it's `self` param
+            // and it doesn't have value in `expr.valueArgumentList.exprList`
+            retType.substitute(mapTypeParameters(methodType.paramTypes.drop(1), expr.valueArgumentList.exprList))
         }
 
         is RsFieldExpr -> {
