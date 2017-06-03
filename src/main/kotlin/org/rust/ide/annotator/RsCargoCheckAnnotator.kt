@@ -162,9 +162,12 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
 
     fun checkProject(file: PsiFile): CargoCheckAnnotationResult? {
         val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
+
         // We have to save the file to disk to give cargo a chance to check fresh file content.
         // It's obviously a wrong way and should be fixed.
-        FileUtil.writeToFile(File(file.virtualFile.path), file.text)
+        try { FileUtil.writeToFile(File(file.virtualFile.canonicalPath), file.text) }
+        catch (_: Exception) {}
+
         val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
         val output = module.project.toolchain?.cargo(moduleDirectory)?.checkFile(module)
         output ?: return null
