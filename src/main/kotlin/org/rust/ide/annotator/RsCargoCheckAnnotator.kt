@@ -41,7 +41,7 @@ class CargoCheckAnnotationResult(commandOutput: List<String>, val project: Proje
             .map { parser.parse(it) }
             .filter { it.isJsonObject }
             .mapNotNull { CargoTopMessage.fromJson(it.asJsonObject) }
-            .filter { it.message.message != "aborting due to previous error" }
+            .filter { !it.message.message.startsWith("aborting due to") }
 }
 
 class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoCheckAnnotationResult>() {
@@ -58,7 +58,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
             CargoCheckAnnotationInfo(file, editor)
         else null
 
-    override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult = 
+    override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? =
         getCachedResult(info.file).value
 
     override fun apply(file: PsiFile, annotationResult: CargoCheckAnnotationResult?, holder: AnnotationHolder) {
