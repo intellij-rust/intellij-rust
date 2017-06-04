@@ -49,14 +49,13 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
             CachedValueProvider.Result.create(
                 checkProject(file),
                 PsiModificationTracker.MODIFICATION_COUNT)
-
         }
 
-    override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? {
-        return CargoCheckAnnotationInfo(file, editor)
-    }
+    override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? = 
+        CargoCheckAnnotationInfo(file, editor)
 
-    override fun doAnnotate(info: CargoCheckAnnotationInfo) = getCachedResult(info.file).value
+    override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult = 
+        getCachedResult(info.file).value
 
     override fun apply(file: PsiFile, annotationResult: CargoCheckAnnotationResult?, holder: AnnotationHolder) {
         annotationResult ?: return
@@ -73,7 +72,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                     else -> HighlightSeverity.INFORMATION
                 }
 
-            val codeStr = message.code?.code
+            val codeStr = message.code?.formatAsLink()
 
             // If spans are empty we add a "global" error
             if (message.spans.isEmpty()) {
@@ -82,7 +81,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                     val annotation = holder.createAnnotation(severity, TextRange.EMPTY_RANGE, message.message)
                     annotation.isFileLevelAnnotation = true
                     annotation.setNeedsUpdateOnTyping(true)
-                    annotation.tooltip = escapeHtml(message.message) + if (codeStr != "") "<hr/>$codeStr" else ""
+                    annotation.tooltip = escapeHtml(message.message) + if (codeStr.isNullOrBlank()) "" else "<hr/>$codeStr"
                 }
             } else {
                 val problemGroup = ProblemGroup { message.message }
@@ -99,44 +98,6 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                 }
             }
         }
-    }
-
-    fun parseSpan(span: CargoSpan, message: CargoMessage, result: List<String>) {
-
-        if (span.is_primary) {
-            result += span.label!!
-            // If the error is within a macro, add the macro text to the message
-            if (span.file_name.startsWith('<') && !span.text.isEmpty()) {
-                msg.trace.push({
-                    message: span.text[0].text,
-                    type: 'Macro',
-                    severity: 'info',
-                    extra: {}
-                });
-            }
-        }
-        if (span.file_name && !span.file_name.startsWith('<')) {
-            if (!span.is_primary && span.label) {
-                // A secondary span
-                const trace = {
-                    message: span.label,
-                    type: 'Note',
-                    severity: 'info',
-                    extra: {}
-                };
-                copySpanLocation(span, trace);
-                msg.trace.push(trace);
-            }
-            // Copy the main error location from the primary span or from any other
-            // span if it hasn't been defined yet
-            if (span.is_primary || !msg.file) {
-                copySpanLocation(span, msg);
-            }
-            return true;
-        } else if (span.expansion) {
-            return parseSpan(span.expansion.span, msg, mainMsg);
-        }
-        return false;
     }
 
     fun createAnnotation(span: CargoSpan, message: CargoMessage, severity: HighlightSeverity, doc: Document,
