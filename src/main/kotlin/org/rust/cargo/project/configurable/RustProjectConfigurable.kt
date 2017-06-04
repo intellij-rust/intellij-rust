@@ -37,7 +37,8 @@ class RustProjectConfigurable(
             toolchain,
             settings.autoUpdateEnabled,
             settings.data.explicitPathToStdlib,
-            settings.data.useCargoCheckForBuild
+            settings.data.useCargoCheckForBuild,
+            settings.data.useCargoCheckAnnotator
         )
         val module = rustModule
 
@@ -71,6 +72,7 @@ class RustProjectConfigurable(
             || data.autoUpdateEnabled != settings.autoUpdateEnabled
             || data.explicitPathToStdlib != settings.data.explicitPathToStdlib
             || data.useCargoCheckForBuild != settings.data.useCargoCheckForBuild
+            || data.useCargoCheckAnnotator != settings.data.useCargoCheckAnnotator
     }
 
     override fun getDisplayName(): String = "Rust" // sync me with plugin.xml
