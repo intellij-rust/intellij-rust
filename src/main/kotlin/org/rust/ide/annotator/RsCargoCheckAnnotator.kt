@@ -26,43 +26,20 @@ import org.rust.cargo.toolchain.CargoTopMessage
 
 data class CargoCheckAnnotationInfo(val file: PsiFile, val editor: Editor)
 
-class CargoCheckAnnotationResult(commandOutput: List<String>, val project: Project): ModificationTracker {
+class CargoCheckAnnotationResult(commandOutput: List<String>, val project: Project)
+    : ModificationTracker by PsiManager.getInstance(project).modificationTracker {
 
-    private val modificationTracker = PsiManager.getInstance(project).modificationTracker
-    private val parser = JsonParser()
-    //private val LOG = Logger.getInstance(RsCargoCheckAnnotator::class.java)
-
-    val messages: List<CargoTopMessage> =
-        commandOutput.filter {
-            it.trimStart().startsWith("{")
-        }.filter {
-            val first = it.indexOfFirst { it == '"' }
-            assert(first != -1)
-            val second = it.indexOf('"', first + 1)
-            assert(second != -1)
-
-            when (it.subSequence(first + 1, second)) {
-                "message" -> true
-                "features" -> false
-                else -> {
-                    assert(false)
-                    throw AssertionError()
-                }
-            }
-        }.map {
-            parser.parse(it)
-        }.mapNotNull {
-            if (it.isJsonObject)
-                CargoTopMessage.fromJson(it.asJsonObject)
-            else
-                null
-        }
-
-    override fun getModificationCount(): Long {
-        val modificationCount = modificationTracker.modificationCount
-        //LOG.info("getModificationCount = $modificationCount")
-        return modificationCount
+    companion object {
+        private val parser = JsonParser()
+        private val messageRegex = """\s*\{\s*"message".*""".toRegex()
     }
+
+    val messages =
+        commandOutput
+            .filter { messageRegex.matches(it) }
+            .map { parser.parse(it) }
+            .filter { it.isJsonObject }
+            .mapNotNull { CargoTopMessage.fromJson(it.asJsonObject) }
 }
 
 class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoCheckAnnotationResult>() {
@@ -89,11 +66,12 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
             val message = topMessage.message
             val filePath = holder.currentAnnotationSession.file.virtualFile.path
 
-            val severity = when (message.level) {
-                "error" -> HighlightSeverity.ERROR
-                "warning" -> HighlightSeverity.WEAK_WARNING
-                else -> throw AssertionError()
-            }
+            val severity =
+                when (message.level) {
+                    "error" -> HighlightSeverity.ERROR
+                    "warning" -> HighlightSeverity.WEAK_WARNING
+                    else -> HighlightSeverity.INFORMATION
+                }
 
             val codeStr = message.code?.code
 
@@ -123,6 +101,44 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         }
     }
 
+    fun parseSpan(span: CargoSpan, message: CargoMessage, result: List<String>) {
+
+        if (span.is_primary) {
+            result += span.label!!
+            // If the error is within a macro, add the macro text to the message
+            if (span.file_name.startsWith('<') && !span.text.isEmpty()) {
+                msg.trace.push({
+                    message: span.text[0].text,
+                    type: 'Macro',
+                    severity: 'info',
+                    extra: {}
+                });
+            }
+        }
+        if (span.file_name && !span.file_name.startsWith('<')) {
+            if (!span.is_primary && span.label) {
+                // A secondary span
+                const trace = {
+                    message: span.label,
+                    type: 'Note',
+                    severity: 'info',
+                    extra: {}
+                };
+                copySpanLocation(span, trace);
+                msg.trace.push(trace);
+            }
+            // Copy the main error location from the primary span or from any other
+            // span if it hasn't been defined yet
+            if (span.is_primary || !msg.file) {
+                copySpanLocation(span, msg);
+            }
+            return true;
+        } else if (span.expansion) {
+            return parseSpan(span.expansion.span, msg, mainMsg);
+        }
+        return false;
+    }
+
     fun createAnnotation(span: CargoSpan, message: CargoMessage, severity: HighlightSeverity, doc: Document,
                          holder: AnnotationHolder): Annotation {
 
@@ -142,19 +158,14 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                 else -> span.label ?: message.message
             }
 
-
-
         val extraMessage = run {
-            //val code = if (message.code?.code.isNullOrBlank()) "" else "${message.code?.code}"
+            val code = if (message.code?.code.isNullOrBlank()) "" else "<hr/>${message.code?.formatAsLink()}"
+
             val label =
                 if (span.is_primary && span.label != null)
                     "${escapeHtml(span.label)}<br/>"
                 else ""
 
-            // Get all children (help/note) messages - including those with spans. We include the notes with
-            // spans twice - once in this message and once in their own annotation relevant to their span.
-            // This is because the main error lacks context when the notes are missing.
-            // FIXME: Add a hyperlink to the info annotations here and connect it to the annotation listener.
             val childrenMsg =
                 message.children.map {
                     val prefix = when (it.level) {
@@ -165,7 +176,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                     prefix + escapeHtml(it.message)
                 }.joinToString("<br/>")
 
-            "<i>$childrenMsg$label</i>"
+            "<i>$childrenMsg$label</i>$code"
         }
 
         val tooltip = shortMessage + if (extraMessage.isBlank()) "" else "<hr/>" + extraMessage

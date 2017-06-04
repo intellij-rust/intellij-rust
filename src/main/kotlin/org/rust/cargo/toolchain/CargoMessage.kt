@@ -1,7 +1,6 @@
 package org.rust.cargo.toolchain
 
 import com.google.gson.Gson
-import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 
@@ -24,22 +23,20 @@ data class CargoTopMessage(
 
 data class CargoMessage(
     val children: List<CargoMessage>,
-    val code: Code?,
+    val code: CargoCode?,
     val level: String,
     val message: String,
     val rendered: String?,
     val spans: List<CargoSpan>
 )
 
-data class Code(
-    val code: String,
-    val explanation: String?)
-{
-    fun formatAsLink() : String {
-        val rustErrorIndexPrefix = "https://doc.rust-lang.org/error-index.html"
+private val ERROR_INDEX_URL = "https://doc.rust-lang.org/error-index.html"
 
-        return "<a href=\"$rustErrorIndexPrefix#$code\">$code</a>"
-    }
+data class CargoCode(
+    val code: String,
+    val explanation: String?
+) {
+    fun formatAsLink() = "<a href=\"$ERROR_INDEX_URL#$code\">$code</a>"
 }
 
 data class CargoSpan(
