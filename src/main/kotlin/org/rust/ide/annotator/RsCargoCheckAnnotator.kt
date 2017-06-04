@@ -67,7 +67,8 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         annotationResult ?: return
         val doc = holder.currentAnnotationSession.file.viewProvider.document ?: throw AssertionError()
 
-        for ((message) in annotationResult.messages) {
+        for (topMessage in annotationResult.messages) {
+            val message = topMessage.message
             val filePath = holder.currentAnnotationSession.file.virtualFile.path
 
             val severity =
@@ -79,13 +80,13 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
 
             // If spans are empty we add a "global" error
             if (message.spans.isEmpty()) {
-//                if (topMessage.target.src_path == filePath) {
-//                    // add a global annotation
-//                    val annotation = holder.createAnnotation(severity, TextRange.EMPTY_RANGE, message.message)
-//                    annotation.isFileLevelAnnotation = true
-//                    annotation.setNeedsUpdateOnTyping(true)
-//                    annotation.tooltip = escapeHtml(message.message) + " " + message.code.formatAsLink()
-//                }
+                if (topMessage.target.src_path == filePath) {
+                    // add a global annotation
+                    val annotation = holder.createAnnotation(severity, TextRange.EMPTY_RANGE, message.message)
+                    annotation.isFileLevelAnnotation = true
+                    annotation.setNeedsUpdateOnTyping(true)
+                    annotation.tooltip = escapeHtml(message.message) + " " + message.code.formatAsLink().orEmpty()
+                }
             } else {
                 val problemGroup = ProblemGroup { message.message }
 
@@ -120,10 +121,12 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                 toOffset(span.line_end - 1, span.column_end - 1))
 
         val tooltip = run {
-            val lines = ArrayList<String?>()
+            val lines = ArrayList<String>()
+            val code = message.code.formatAsLink()
+            lines.add(escapeHtml(message.message) + if (code == null) "" else " $code")
 
-            if (span.label != null && message.message.startsWith(span.label))
-                lines.add(span.label)
+            if (span.label != null && !message.message.startsWith(span.label))
+                lines.add(escapeHtml(span.label))
 
             message.children
                 .filter { !it.message.isBlank() }
@@ -133,22 +136,19 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                         "help" -> "Help: "
                         else -> ""
                     }
-                    lines.add(prefix + it.message)
+                    lines.add(prefix + escapeHtml(it.message))
                 }
 
-            lines.add(message.code.formatAsLink())
-            lines.filterNotNull().joinToString("</br>")
+            lines.joinToString("<br>").replace("\n", "<br>")
         }
 
-        val annotation = holder.createAnnotation(severity, textRange, message.message)
-        annotation.tooltip = "<html>${escapeHtml(tooltip)}</html>"
-        return annotation
+        return holder.createAnnotation(severity, textRange, message.message, "<html>$tooltip</html>")
     }
 
     private val ERROR_INDEX_URL = "https://doc.rust-lang.org/error-index.html"
 
     fun CargoCode?.formatAsLink() =
-        if (this?.code.isNullOrBlank()) ""
+        if (this?.code.isNullOrBlank()) null
         else "<a href=\"$ERROR_INDEX_URL#${this?.code}\">${this?.code}</a>"
 
     fun isValidSpan(span: CargoSpan) =
