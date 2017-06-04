@@ -21,9 +21,11 @@ import com.intellij.util.PathUtil
 import org.apache.commons.lang.StringEscapeUtils.escapeHtml
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.toolchain.CargoCode
 import org.rust.cargo.toolchain.CargoMessage
 import org.rust.cargo.toolchain.CargoSpan
 import org.rust.cargo.toolchain.CargoTopMessage
+import java.util.*
 
 data class CargoCheckAnnotationInfo(val file: PsiFile, val editor: Editor)
 
@@ -54,9 +56,9 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         }
 
     override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? =
-        if (file.project.rustSettings.useCargoCheckAnnotator)
+        if (file.project.rustSettings.useCargoCheckAnnotator) {
             CargoCheckAnnotationInfo(file, editor)
-        else null
+        } else null
 
     override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? =
         getCachedResult(info.file).value
@@ -65,8 +67,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         annotationResult ?: return
         val doc = holder.currentAnnotationSession.file.viewProvider.document ?: throw AssertionError()
 
-        for (topMessage in annotationResult.messages) {
-            val message = topMessage.message
+        for ((message) in annotationResult.messages) {
             val filePath = holder.currentAnnotationSession.file.virtualFile.path
 
             val severity =
@@ -76,27 +77,27 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                     else -> HighlightSeverity.INFORMATION
                 }
 
-            val codeStr = message.code?.formatAsLink()
-
             // If spans are empty we add a "global" error
             if (message.spans.isEmpty()) {
-                if (topMessage.target.src_path == filePath) {
-                    // add a global annotation
-                    val annotation = holder.createAnnotation(severity, TextRange.EMPTY_RANGE, message.message)
-                    annotation.isFileLevelAnnotation = true
-                    annotation.setNeedsUpdateOnTyping(true)
-                    annotation.tooltip = escapeHtml(message.message) + if (codeStr.isNullOrBlank()) "" else "<hr/>$codeStr"
-                }
+//                if (topMessage.target.src_path == filePath) {
+//                    // add a global annotation
+//                    val annotation = holder.createAnnotation(severity, TextRange.EMPTY_RANGE, message.message)
+//                    annotation.isFileLevelAnnotation = true
+//                    annotation.setNeedsUpdateOnTyping(true)
+//                    annotation.tooltip = escapeHtml(message.message) + " " + message.code.formatAsLink()
+//                }
             } else {
                 val problemGroup = ProblemGroup { message.message }
 
-                val relevantSpans = message.spans.filter {
-                    val spanFilePath = PathUtil.getCanonicalPath(it.file_name)
-                    filePath.endsWith(spanFilePath) && isValidSpan(it)
-                }
+                val primarySpan =
+                    message.spans
+                        .filter { it.is_primary }
+                        .filter { isValidSpan(it) }
+                        .filter { filePath.endsWith(PathUtil.getCanonicalPath(it.file_name)) }
+                        .firstOrNull()
 
-                for (span in relevantSpans) {
-                    val annotation = createAnnotation(span, message, severity, doc, holder)
+                if (primarySpan != null) {
+                    val annotation = createAnnotation(primarySpan, message, severity, doc, holder)
                     annotation.problemGroup = problemGroup
                     annotation.setNeedsUpdateOnTyping(true)
                 }
@@ -114,42 +115,41 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
 
         // The compiler message lines and columns are 1 based while intellij idea are 0 based
         val textRange =
-            TextRange(toOffset(span.line_start - 1, span.column_start - 1),
+            TextRange(
+                toOffset(span.line_start - 1, span.column_start - 1),
                 toOffset(span.line_end - 1, span.column_end - 1))
 
-        val shortMessage =
-            when (span.is_primary) {
-                true -> message.message
-                else -> span.label ?: message.message
-            }
+        val tooltip = run {
+            val lines = ArrayList<String?>()
 
-        val extraMessage = run {
-            val code = if (message.code?.code.isNullOrBlank()) "" else "<hr/>${message.code?.formatAsLink()}"
+            if (span.label != null && message.message.startsWith(span.label))
+                lines.add(span.label)
 
-            val label =
-                if (span.is_primary && span.label != null)
-                    "${escapeHtml(span.label)}<br/>"
-                else ""
-
-            val childrenMsg =
-                message.children.map {
+            message.children
+                .filter { !it.message.isBlank() }
+                .forEach {
                     val prefix = when (it.level) {
                         "note" -> "Note: "
                         "help" -> "Help: "
                         else -> ""
                     }
-                    prefix + escapeHtml(it.message)
-                }.joinToString("<br/>")
+                    lines.add(prefix + it.message)
+                }
 
-            "<i>$childrenMsg$label</i>$code"
+            lines.add(message.code.formatAsLink())
+            lines.filterNotNull().joinToString("</br>")
         }
 
-        val tooltip = shortMessage + if (extraMessage.isBlank()) "" else "<hr/>" + extraMessage
-        val spanSeverity = if (span.is_primary) severity else HighlightSeverity.INFORMATION
-        val annotation = holder.createAnnotation(spanSeverity, textRange, shortMessage)
-        annotation!!.tooltip = "<html>${escapeHtml(tooltip)}</html>"
+        val annotation = holder.createAnnotation(severity, textRange, message.message)
+        annotation.tooltip = "<html>${escapeHtml(tooltip)}</html>"
         return annotation
     }
+
+    private val ERROR_INDEX_URL = "https://doc.rust-lang.org/error-index.html"
+
+    fun CargoCode?.formatAsLink() =
+        if (this?.code.isNullOrBlank()) ""
+        else "<a href=\"$ERROR_INDEX_URL#${this?.code}\">${this?.code}</a>"
 
     fun isValidSpan(span: CargoSpan) =
         span.line_end > span.line_start

@@ -30,14 +30,10 @@ data class CargoMessage(
     val spans: List<CargoSpan>
 )
 
-private val ERROR_INDEX_URL = "https://doc.rust-lang.org/error-index.html"
-
 data class CargoCode(
     val code: String,
     val explanation: String?
-) {
-    fun formatAsLink() = "<a href=\"$ERROR_INDEX_URL#$code\">$code</a>"
-}
+)
 
 data class CargoSpan(
     val byte_end: Int,
