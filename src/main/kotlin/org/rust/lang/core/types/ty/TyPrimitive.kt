@@ -25,7 +25,6 @@ interface TyPrimitive : Ty {
     companion object {
         fun fromPath(path: RsPath): TyPrimitive? {
             if (path.hasColonColon) return null
-            if (path.parent !is RsBaseType) return null
             val name = path.referenceName
 
             val integerKind = TyInteger.Kind.values().find { it.name == name }

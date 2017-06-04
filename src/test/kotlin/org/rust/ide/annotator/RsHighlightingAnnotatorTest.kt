@@ -116,6 +116,16 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun testPrimitive() = checkInfo("""
+        fn <info>main</info>() -> <info>bool</info> {
+            let a: <info>u8</info> = 42;
+            let b: <info>f32</info> = 10.0;
+            let c: &<info>str</info> = "example";
+            <info>char</info>::is_lowercase('a');
+            true
+        }
+    """)
+
     fun testDontTouchAstInOtherFiles() = checkDontTouchAstInOtherFiles(
         fileTreeFromText("""
         //- main.rs
