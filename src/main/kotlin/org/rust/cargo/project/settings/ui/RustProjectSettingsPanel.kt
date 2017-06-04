@@ -24,14 +24,16 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
         val toolchain: RustToolchain?,
         val autoUpdateEnabled: Boolean,
         val explicitPathToStdlib: String?,
-        val useCargoCheckForBuild: Boolean
+        val useCargoCheckForBuild: Boolean,
+        val useCargoCheckAnnotator: Boolean
     ) {
         fun applyTo(settings: RustProjectSettingsService) {
             settings.data = RustProjectSettingsService.Data(
                 toolchain,
                 autoUpdateEnabled,
                 explicitPathToStdlib,
-                useCargoCheckForBuild
+                useCargoCheckForBuild,
+                useCargoCheckAnnotator
             )
         }
     }
@@ -47,6 +49,7 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
         "Select directory with standard library source code")
 
     private val useCargoCheckForBuildCheckbox = JBCheckBox()
+    private val useCargoCheckAnnotatorCheckbox = JBCheckBox()
 
     private val downloadStdlibLink = Link("Download via rustup", action = {
         val rustup = RustToolchain(pathToToolchainField.text).rustup(cargoProjectDir)
@@ -71,7 +74,8 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
             RustToolchain(pathToToolchainField.text),
             autoUpdateEnabled.isSelected,
             (if (downloadStdlibLink.isVisible) null else pathToStdlibField.text.blankToNull()),
-            useCargoCheckForBuildCheckbox.isSelected
+            useCargoCheckForBuildCheckbox.isSelected,
+            useCargoCheckAnnotatorCheckbox.isSelected
         )
         set(value) {
             // https://youtrack.jetbrains.com/issue/KT-16367
@@ -79,6 +83,7 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
             autoUpdateEnabled.isSelected = value.autoUpdateEnabled
             pathToStdlibField.text = value.explicitPathToStdlib ?: ""
             useCargoCheckForBuildCheckbox.isSelected = value.useCargoCheckForBuild
+            useCargoCheckAnnotatorCheckbox.isSelected = value.useCargoCheckAnnotator
             update()
         }
 
@@ -87,7 +92,8 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
             RustToolchain.suggest(),
             true,
             null,
-            false
+            false,
+            true
         )
 
         row("Toolchain location:") { pathToToolchainField(CCFlags.pushX) }
@@ -98,6 +104,7 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
         if (PlatformUtils.isIntelliJ()) {
             row("Use cargo check:") { useCargoCheckForBuildCheckbox() }
         }
+        row(label = Label("Use cargo check to analyze code:")) { useCargoCheckAnnotatorCheckbox() }
     }
 
     @Throws(ConfigurationException::class)

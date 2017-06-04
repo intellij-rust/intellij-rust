@@ -19,6 +19,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.PathUtil
 import org.apache.commons.lang.StringEscapeUtils.escapeHtml
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.CargoMessage
 import org.rust.cargo.toolchain.CargoSpan
@@ -40,6 +41,7 @@ class CargoCheckAnnotationResult(commandOutput: List<String>, val project: Proje
             .map { parser.parse(it) }
             .filter { it.isJsonObject }
             .mapNotNull { CargoTopMessage.fromJson(it.asJsonObject) }
+            .filter { it.message.message != "aborting due to previous error" }
 }
 
 class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoCheckAnnotationResult>() {
@@ -51,8 +53,10 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                 PsiModificationTracker.MODIFICATION_COUNT)
         }
 
-    override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? = 
-        CargoCheckAnnotationInfo(file, editor)
+    override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? =
+        if (file.project.rustSettings.useCargoCheckAnnotator)
+            CargoCheckAnnotationInfo(file, editor)
+        else null
 
     override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult = 
         getCachedResult(info.file).value
