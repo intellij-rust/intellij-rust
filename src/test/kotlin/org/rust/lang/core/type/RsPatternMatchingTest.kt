@@ -117,4 +117,43 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
     }                         //^ i32
     """)
 
+    fun testGenericTupleStructPattern() = testExpr("""
+        struct S<T>(T);
+        fn main() {
+            let s = S(123);
+            if let S(x) = s { x }
+                            //^ i32
+        }
+    """)
+
+    fun testGenericStructPattern() = testExpr("""
+        struct S<T> { s: T }
+        fn main() {
+            let s = S { s: 123 };
+            match s { S { s: x } => x }
+                                  //^ i32
+        }
+    """)
+
+    fun testGenericEnumTupleStructPattern() = testExpr("""
+        enum E<T1, T2> { L(T1), R { r: T2 } }
+        fn foo(e: E<i32, bool>) {
+            match e {
+                E::L(x) => x,
+                         //^ i32
+                E::R { r: x } => x
+            }
+        }
+    """)
+
+    fun testGenericEnumStructPattern() = testExpr("""
+        enum E<T1, T2> { L(T1), R { r: T2 } }
+        fn foo(e: E<i32, bool>) {
+            match e {
+                E::L(x) => x,
+                E::R { r: x } => x
+                               //^ bool
+            }
+        }
+    """)
 }
