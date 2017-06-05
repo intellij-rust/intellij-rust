@@ -49,8 +49,10 @@ class RsExpressionAnnotator : Annotator {
             }
         } else {
             if (missingFields.isNotEmpty()) {
-                holder.createErrorAnnotation(expr, "Some fields are missing")
-                    .registerFix(AddStructFieldsFix(decl.namedFields, missingFields, expr), expr.textRange)
+                val structNameRange = expr.parent.childOfType<RsPath>()?.textRange
+                if (structNameRange != null)
+                    holder.createErrorAnnotation(structNameRange, "Some fields are missing")
+                        .registerFix(AddStructFieldsFix(decl.namedFields, missingFields, expr), expr.parent.textRange)
             }
         }
 
