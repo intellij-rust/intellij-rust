@@ -3,12 +3,13 @@ package org.rust.ide.actions
 import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JOIN
 import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 import com.intellij.openapi.editor.Document
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
+import org.rust.lang.core.psi.ext.*
 
 class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
     /**
@@ -19,20 +20,33 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
         if (file !is RsFile) return CANNOT_JOIN
         if (start == 0) return CANNOT_JOIN
 
-        val joinStruct = tryJoinStruct(file, start)
-        if (joinStruct != CANNOT_JOIN)
-            return joinStruct
+        val joinStructLastLine = tryJoinStructLastLine(file, start)
+        if (joinStructLastLine != CANNOT_JOIN) return joinStructLastLine
 
         return tryJoinSingleExpressionBlock(file, start)
     }
 
-    fun tryJoinStruct(file: RsFile, start: Int): Int {
-        val body = file.findElementAt(start)!!.parent
-        if (body.elementType != STRUCT_LITERAL_BODY) return CANNOT_JOIN
+    private fun getCurrentField(file: RsFile, start: Int): PsiElement? {
+        var elem = file.findElementAt(start) ?: return null
+        while (elem != null && elem.elementType != STRUCT_LITERAL_FIELD) elem = elem.prevSibling
+        return elem
+    }
 
-        val psiFactory = RsPsiFactory(file.project)
-        val newBody = psiFactory.createStructLiteralBody(body.children.asList())
-        return body.replace(newBody).textRange.startOffset
+    fun tryJoinStructLastLine(file: RsFile, start: Int): Int {
+        val struct = file.findElementAt(start)?.parentOfType<RsStructLiteral>() ?: return CANNOT_JOIN
+        val lastField = struct.structLiteralBody.structLiteralFieldList.last() ?: return CANNOT_JOIN
+        val currentField = getCurrentField(file, start) ?: return CANNOT_JOIN
+
+        if (currentField != lastField) return CANNOT_JOIN
+
+        val comma = currentField.nextSibling
+        if (comma.elementType == COMMA) comma.delete()
+        else return CANNOT_JOIN
+
+        val whitespace = struct.structLiteralBody.children.last().nextSibling
+        if (whitespace is PsiWhiteSpace) whitespace.delete()
+
+        return currentField.textRange.endOffset
     }
 
     fun tryJoinSingleExpressionBlock(file: RsFile, start: Int): Int {
