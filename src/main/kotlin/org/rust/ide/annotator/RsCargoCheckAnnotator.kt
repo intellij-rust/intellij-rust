@@ -104,6 +104,40 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
 
     data class Group(val isList: Boolean, val lines: ArrayList<String>)
 
+    fun formatLine(line: String): String {
+        val (lastGroup, groups) =
+            line.split("\n").fold(
+                Pair(null as Group?, ArrayList<Group>()),
+                { (group: Group?, acc: ArrayList<Group>), line ->
+                    val (isListItem, line) = run {
+                        if (line.startsWith("-")) {
+                            Pair(true, line.substring(2))
+                        } else {
+                            Pair(false, line)
+                        }
+                    }
+
+                    when {
+                        group == null -> Pair(Group(isListItem, arrayListOf(line)), acc)
+                        group.isList == isListItem -> {
+                            group.lines.add(line)
+                            Pair(group, acc)
+                        }
+                        else -> {
+                            acc.add(group)
+                            Pair(Group(isListItem, arrayListOf(line)), acc)
+                        }
+                    }
+                })
+        if (lastGroup != null && lastGroup.lines.isNotEmpty()) groups.add(lastGroup)
+
+        return groups
+            .map {
+                if (it.isList) "<ul>${it.lines.joinToString("<li>", "<li>")}</ul>"
+                else it.lines.joinToString("<br>")
+            }.joinToString()
+    }
+
     fun createAnnotation(span: CargoSpan, message: CargoMessage, severity: HighlightSeverity, doc: Document,
                          holder: AnnotationHolder): Annotation {
 
@@ -133,38 +167,8 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                 .forEach { lines.add(it) }
 
             lines
-                .map {
-                    val (lastGroup, groups) =
-                        it.split("\n").fold(
-                            Pair(null as Group?, ArrayList<Group>()),
-                            { (group: Group?, acc: ArrayList<Group>), line ->
-                                val (isListItem, line) = run {
-                                    if (line.startsWith("-")) {
-                                        Pair(true, line.substring(2))
-                                    } else {
-                                        Pair(false, line)
-                                    }
-                                }
-
-                                when {
-                                    group == null -> Pair(Group(isListItem, arrayListOf(line)), acc)
-                                    group.isList == isListItem -> {
-                                        group.lines.add(line)
-                                        Pair(group, acc)
-                                    }
-                                    else -> {
-                                        acc.add(group)
-                                        Pair(Group(isListItem, arrayListOf(line)), acc)
-                                    }
-                                }
-                            })
-                    if (lastGroup != null && lastGroup.lines.isNotEmpty()) groups.add(lastGroup)
-                    groups
-                        .map {
-                            if (it.isList) "<ul>${it.lines.joinToString("<li>", "<li>")}</ul>"
-                            else it.lines.joinToString("")
-                        }.joinToString("")
-                }.joinToString("<br>")
+                .map { formatLine(it) }
+                .joinToString("<br>")
         }
 
         return holder.createAnnotation(severity, textRange, message.message, tooltip)
