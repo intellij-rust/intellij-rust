@@ -102,7 +102,7 @@ class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disp
         row { downloadStdlibLink() }
         row(label = Label("Watch Cargo.toml:")) { autoUpdateEnabled() }
         if (PlatformUtils.isIntelliJ()) {
-            row("Use cargo check:") { useCargoCheckForBuildCheckbox() }
+            row("Use cargo check when build project:") { useCargoCheckForBuildCheckbox() }
         }
         row(label = Label("Use cargo check to analyze code:")) { useCargoCheckAnnotatorCheckbox() }
     }

@@ -25,6 +25,7 @@ import org.rust.cargo.toolchain.CargoCode
 import org.rust.cargo.toolchain.CargoMessage
 import org.rust.cargo.toolchain.CargoSpan
 import org.rust.cargo.toolchain.CargoTopMessage
+import org.rust.ide.RsConstants
 import java.util.*
 
 data class CargoCheckAnnotationInfo(val file: PsiFile, val editor: Editor)
@@ -78,8 +79,14 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                     else -> HighlightSeverity.INFORMATION
                 }
 
+            val primarySpan = message.spans
+                .filter { it.is_primary }
+                .filter { isValidSpan(it) }
+                .filter { filePath.endsWith(PathUtil.getCanonicalPath(it.file_name)) }
+                .firstOrNull()
+
             // If spans are empty we add a "global" error
-            if (message.spans.isEmpty()) {
+            if (primarySpan == null) {
                 if (topMessage.target.src_path == filePath) {
                     // add a global annotation
                     val annotation = holder.createAnnotation(severity, TextRange.EMPTY_RANGE, message.message)
@@ -88,23 +95,14 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                     annotation.tooltip = escapeHtml(message.message) + " " + message.code.formatAsLink().orEmpty()
                 }
             } else {
-                val problemGroup = ProblemGroup { message.message }
-
-                val primarySpan =
-                    message.spans
-                        .filter { it.is_primary }
-                        .filter { isValidSpan(it) }
-                        .filter { filePath.endsWith(PathUtil.getCanonicalPath(it.file_name)) }
-                        .firstOrNull()
-
-                if (primarySpan != null) {
-                    val annotation = createAnnotation(primarySpan, message, severity, doc, holder)
-                    annotation.problemGroup = problemGroup
-                    annotation.setNeedsUpdateOnTyping(true)
-                }
+                val annotation = createAnnotation(primarySpan, message, severity, doc, holder)
+                annotation.problemGroup = ProblemGroup { message.message }
+                annotation.setNeedsUpdateOnTyping(true)
             }
         }
     }
+
+    data class Group(val isList: Boolean, val lines: ArrayList<String>)
 
     fun createAnnotation(span: CargoSpan, message: CargoMessage, severity: HighlightSeverity, doc: Document,
                          holder: AnnotationHolder): Annotation {
@@ -125,31 +123,56 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
             val code = message.code.formatAsLink()
             lines.add(escapeHtml(message.message) + if (code == null) "" else " $code")
 
-            if (span.label != null && !message.message.startsWith(span.label))
+            if (span.label != null && !message.message.startsWith(span.label)) {
                 lines.add(escapeHtml(span.label))
+            }
 
             message.children
                 .filter { !it.message.isBlank() }
-                .forEach {
-                    val prefix = when (it.level) {
-                        "note" -> "Note: "
-                        "help" -> "Help: "
-                        else -> ""
-                    }
-                    lines.add(prefix + escapeHtml(it.message))
-                }
+                .map { "${it.level.capitalize()}: ${escapeHtml(it.message)}" }
+                .forEach { lines.add(it) }
 
-            lines.joinToString("<br>").replace("\n", "<br>")
+            lines
+                .map {
+                    val (lastGroup, groups) =
+                        it.split("\n").fold(
+                            Pair(null as Group?, ArrayList<Group>()),
+                            { (group: Group?, acc: ArrayList<Group>), line ->
+                                val (isListItem, line) = run {
+                                    if (line.startsWith("-")) {
+                                        Pair(true, line.substring(2))
+                                    } else {
+                                        Pair(false, line)
+                                    }
+                                }
+
+                                when {
+                                    group == null -> Pair(Group(isListItem, arrayListOf(line)), acc)
+                                    group.isList == isListItem -> {
+                                        group.lines.add(line)
+                                        Pair(group, acc)
+                                    }
+                                    else -> {
+                                        acc.add(group)
+                                        Pair(Group(isListItem, arrayListOf(line)), acc)
+                                    }
+                                }
+                            })
+                    if (lastGroup != null && lastGroup.lines.isNotEmpty()) groups.add(lastGroup)
+                    groups
+                        .map {
+                            if (it.isList) "<ul>${it.lines.joinToString("<li>", "<li>")}</ul>"
+                            else it.lines.joinToString("")
+                        }.joinToString("")
+                }.joinToString("<br>")
         }
 
-        return holder.createAnnotation(severity, textRange, message.message, "<html>$tooltip</html>")
+        return holder.createAnnotation(severity, textRange, message.message, tooltip)
     }
-
-    private val ERROR_INDEX_URL = "https://doc.rust-lang.org/error-index.html"
 
     fun CargoCode?.formatAsLink() =
         if (this?.code.isNullOrBlank()) null
-        else "<a href=\"$ERROR_INDEX_URL#${this?.code}\">${this?.code}</a>"
+        else "<a href=\"${RsConstants.ERROR_INDEX_URL}#${this?.code}\">${this?.code}</a>"
 
     fun isValidSpan(span: CargoSpan) =
         span.line_end > span.line_start
