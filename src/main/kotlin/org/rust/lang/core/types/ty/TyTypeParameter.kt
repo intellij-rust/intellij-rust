@@ -17,6 +17,7 @@ data class TyTypeParameter private constructor(
     constructor(parameter: RsTypeParameter) : this(Named(parameter))
 
     constructor(trait: RsTraitItem) : this(Self(trait))
+    constructor(trait: RsTraitItem, target: String) : this(AssociatedType(trait, target))
 
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
         parameter.bounds.flatMapTo(mutableSetOf()) { it.flattenHierarchy.asSequence() }
@@ -28,7 +29,9 @@ data class TyTypeParameter private constructor(
         return true
     }
 
-    override fun substitute(map: TypeArguments): Ty = map[this] ?: this
+    override fun substitute(map: TypeArguments): Ty {
+        return map.filterKeys { it.toString() == this.toString() }.values.firstOrNull() ?: return this
+    }
 
     override fun toString(): String = parameter.name ?: "<unknown>"
 
@@ -60,9 +63,17 @@ data class TyTypeParameter private constructor(
     }
 
     private data class Self(val trait: RsTraitItem) : TypeParameter {
-        override val traitRefs: Sequence<RsTraitRef> get() = emptySequence()
         override val name: String? get() = "Self"
 
+        override val traitRefs: Sequence<RsTraitRef> get() = emptySequence()
         override val bounds: Sequence<BoundElement<RsTraitItem>> get() = sequenceOf(BoundElement(trait))
+    }
+
+    private data class AssociatedType(val trait: RsTraitItem, val target: String) : TypeParameter {
+        override val name: String? get() = target
+
+        override val traitRefs: Sequence<RsTraitRef> get() = emptySequence()
+        override val bounds: Sequence<BoundElement<RsTraitItem>> get() = sequenceOf(BoundElement(trait))
+
     }
 }

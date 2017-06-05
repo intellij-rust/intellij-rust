@@ -14,9 +14,16 @@ fun inferDeclarationType(decl: RsNamedElement): Ty {
         is RsEnumVariant -> TyEnum(decl.parentEnum)
 
         is RsTypeAlias -> {
-            val t = decl.typeReference?.type ?: TyUnknown
-            (t as? TyStructOrEnumBase)
-                ?.aliasTypeArguments(decl.typeParameters.map(::TyTypeParameter)) ?: t
+            val typeReference = decl.typeReference
+            if (typeReference != null) {
+                val t = typeReference.type
+                return (t as? TyStructOrEnumBase)
+                    ?.aliasTypeArguments(decl.typeParameters.map(::TyTypeParameter)) ?: t
+            }
+            val trait = decl.parentOfType<RsTraitItem>()
+                ?: return TyUnknown
+            val name = decl.name ?: return TyUnknown
+            return TyTypeParameter(trait, name)
         }
 
         is RsFunction -> deviseFunctionType(decl)
@@ -57,24 +64,14 @@ private val RsCallExpr.declaration: RsFunction?
 private val RsMethodCallExpr.declaration: RsFunction?
     get() = reference.resolve() as? RsFunction
 
-private fun inferTypeForMethodExpr(expr: RsExpr?, type: RsBaseType?): Ty {
-    val callee = expr?.parentOfType<RsMethodCallExpr>() ?: return TyUnknown
-    val method = callee.declaration ?: return TyUnknown
-    return inferTypeForMethodExpr(callee, method, type)
-}
-
 fun inferTypeForLambdaParameter(parameter: RsValueParameter): Ty {
     val lambda = parameter.parentOfType<RsLambdaExpr>() ?: return TyUnknown
     val parameterPos = lambda.valueParameterList.valueParameterList.indexOf(parameter)
-    val bounds = inferExpressionType(lambda) as? TyFunction ?: return TyUnknown
+    val bounds = lambda.type as? TyFunction ?: return TyUnknown
     return bounds.paramTypes[parameterPos]
 }
 
 fun inferTypeReferenceType(ref: RsTypeReference): Ty {
-    return inferTypeReferenceType(ref, null)
-}
-
-fun inferTypeReferenceType(ref: RsTypeReference, expr: RsExpr? = null): Ty {
     return when (ref) {
         is RsTupleType -> {
             val single = ref.typeReferenceList.singleOrNull()
@@ -96,23 +93,18 @@ fun inferTypeReferenceType(ref: RsTypeReference, expr: RsExpr? = null): Ty {
             val target = ref.path?.reference?.resolve() as? RsNamedElement
                 ?: return TyUnknown
             val typeArguments = path.typeArgumentList?.typeReferenceList.orEmpty()
-            val type = inferDeclarationType(target)
+            inferDeclarationType(target)
                 .applyTypeArguments(typeArguments.map { it.type })
-
-            when (type) {
-                is TyUnknown -> inferTypeForMethodExpr(expr, ref)
-                else -> type
-            }
         }
 
         is RsRefLikeType -> {
             val base = ref.typeReference ?: return TyUnknown
             val mutable = ref.isMut
             if (ref.isRef) {
-                TyReference(inferTypeReferenceType(base, expr), mutable)
+                TyReference(inferTypeReferenceType(base), mutable)
             } else {
                 if (ref.isPointer) { //Raw pointers
-                    TyPointer(inferTypeReferenceType(base, expr), mutable)
+                    TyPointer(inferTypeReferenceType(base), mutable)
                 } else {
                     TyUnknown
                 }
