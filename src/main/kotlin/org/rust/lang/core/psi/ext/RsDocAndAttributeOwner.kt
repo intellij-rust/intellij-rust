@@ -91,9 +91,9 @@ class QueryAttributes(private val attributes: Sequence<RsAttr>) {
 
 
     fun getStringAttribute(attributeName: String): String? {
-        val attr = attrByName(attributeName) ?: return null;
-        if (attr.eq == null) return null;
-        return attr.litExpr?.stringLiteralValue;
+        val attr = attrByName(attributeName) ?: return null
+        if (attr.eq == null) return null
+        return attr.litExpr?.stringLiteralValue
     }
 
     val metaItems: Sequence<RsMetaItem>

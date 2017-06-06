@@ -76,8 +76,9 @@ private fun isImplSuitable(project: Project, impl: RsImplItem,
 }
 
 private val RsTraitItem.langAttribute: String? get() {
-    if (this.stub != null) return this.stub.langAttribute
-    return this.queryAttributes.langAttribute
+    val stub = stub
+    if (stub != null) return stub.langAttribute
+    return queryAttributes.langAttribute
 }
 
 private val RsTraitItem.isDeref: Boolean get() = langAttribute == "deref"

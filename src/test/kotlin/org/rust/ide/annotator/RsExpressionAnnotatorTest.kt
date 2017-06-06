@@ -40,6 +40,7 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
 
 
     fun testStructExpr() = checkWarnings("""
+
         #[derive(Default)]
         struct S {
             foo: i32,
@@ -66,26 +67,26 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
                 ..S::default()
             };
 
-            let _ = S <error descr="Some fields are missing">{
+            let _ = <error descr="Some fields are missing">S</error> {
                 foo: 92,
-            }</error>;
+            };
 
-            let _ = S <error descr="Some fields are missing">{
+            let _ = <error descr="Some fields are missing">S</error> {
                 foo: 1,
                 <error descr="Duplicate field">foo</error>: 2,
-            }</error>;
+            };
 
             let _ = S {
                 foo: 1,
-                <error>foo</error>: 2,
+                <error descr="Duplicate field">foo</error>: 2,
                 ..S::default()
             };
 
             let _ = Empty { };
 
-            let _ = E::V <error>{
-                <error>bar</error>: 92
-            }</error>;
+            let _ = <error descr="Some fields are missing">E::V</error> {
+                <error descr="No such field">bar</error>: 92
+            };
         }
 
         struct Win {

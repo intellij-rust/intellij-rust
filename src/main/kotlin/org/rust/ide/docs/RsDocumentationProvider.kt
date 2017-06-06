@@ -17,7 +17,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? = when (element) {
         is RsDocAndAttributeOwner -> generateDoc(element)
-        is RsPatBinding -> generateDoc(element)
+        is RsPatBinding -> generateDoc(element)?.let { "<pre>$it</pre>" }
         else -> null
     }
 
@@ -29,11 +29,14 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
     private fun generateDoc(element: RsPatBinding): String? {
         val presentationInfo = element.presentationInfo ?: return null
         val type = inferDeclarationType(element).toString().escaped
-        return "<pre>${presentationInfo.type} <b>${presentationInfo.name}</b>: $type</pre>"
+        return "${presentationInfo.type} <b>${presentationInfo.name}</b>: $type"
     }
 
-    override fun getQuickNavigateInfo(e: PsiElement, originalElement: PsiElement?): String? =
-        (e as? RsNamedElement)?.presentationInfo?.quickDocumentationText
+    override fun getQuickNavigateInfo(e: PsiElement, originalElement: PsiElement?): String? = when (e) {
+        is RsPatBinding -> generateDoc(e)
+        is RsNamedElement -> e.presentationInfo?.quickDocumentationText
+        else -> null
+    }
 }
 
 private val RsDocAndAttributeOwner.header: String get() {

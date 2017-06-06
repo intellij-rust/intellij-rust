@@ -331,4 +331,16 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }    //^ ...main.rs
     """)
 
+    fun `test generic pattern matching`() = stubOnlyResolve("""
+    //- main.rs
+        fn maybe() -> Option<String> { unimplemented!() }
+
+        fn main() {
+            if let Some(x) = maybe() {
+                x.capacity();
+                   //^ ...libcollections/string.rs
+            }
+        }
+    """)
+
 }

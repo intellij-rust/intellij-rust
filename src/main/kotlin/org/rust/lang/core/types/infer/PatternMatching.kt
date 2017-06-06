@@ -35,7 +35,13 @@ private fun collectBindings(pattern: RsPat, type: Ty): Map<RsPatBinding, Ty> {
                     ?: return
 
                 for ((idx, p) in pat.patList.withIndex()) {
-                    go(p, tupleFields.tupleFieldDeclList.getOrNull(idx)?.typeReference?.type ?: TyUnknown)
+                    val fieldType = tupleFields.tupleFieldDeclList
+                        .getOrNull(idx)
+                        ?.typeReference
+                        ?.type
+                        ?.substitute(type.typeParameterValues)
+                        ?: TyUnknown
+                    go(p, fieldType)
                 }
             }
             is RsPatStruct -> {
@@ -53,7 +59,11 @@ private fun collectBindings(pattern: RsPat, type: Ty): Map<RsPatBinding, Ty> {
                         patField.identifier?.text
                             ?: error("`pat_field` may be either `pat_binding` or should contain identifier! ${patField.text}")
                     }
-                    val fieldType = structFields[fieldName]?.typeReference?.type ?: TyUnknown
+                    val fieldType = structFields[fieldName]
+                        ?.typeReference
+                        ?.type
+                        ?.substitute(type.typeParameterValues)
+                        ?: TyUnknown
                     patField.pat?.let { go(it, fieldType) }
                     if (fieldPun != null) {
                         bindings[fieldPun] = fieldType

@@ -358,4 +358,106 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
           //^ i32
         }
     """)
+
+    fun testGenericStructMethodArg() = testExpr("""
+        struct Foo<F>(F);
+        struct Bar<B>(B);
+        impl<T1> Foo<T1> {
+            fn foo<T2>(&self, bar: Bar<T2>) -> (T1, T2) { unimplemented!() }
+        }
+        fn main() {
+            let x = Foo("foo").foo(Bar(123));
+            x
+          //^ (&str, i32)
+        }
+    """)
+
+    fun testGenericEnumMethodArg() = testExpr("""
+        struct Foo<F>(F);
+        enum Bar<B> { V(B) }
+        impl<T1> Foo<T1> {
+            fn foo<T2>(&self, bar: Bar<T2>) -> (T1, T2) { unimplemented!() }
+        }
+        fn main() {
+            let x = Foo(0.0).foo(Bar::V("bar"));
+            x
+          //^ (f64, &str)
+        }
+    """)
+
+    fun testGenericTupleMethodArg() = testExpr("""
+        struct Foo<F>(F);
+        impl<T1> Foo<T1> {
+            fn foo<T2, T3>(&self, xs: (T2, T3)) -> (T1, T2, T3) { unimplemented!() }
+        }
+        fn main() {
+            let x = Foo(123).foo((true, "str"));
+            x
+          //^ (i32, bool, &str)
+        }
+    """)
+
+    fun testGenericReferenceMethodArg() = testExpr("""
+        struct Foo<F>(F);
+        impl<T1> Foo<T1> {
+            fn foo<T2>(&self, xs: &T2) -> (T2, T1) { unimplemented!() }
+        }
+        fn main() {
+            let x = Foo((1, 2)).foo(&8u64);
+            x
+          //^ (u64, (i32, i32))
+        }
+    """)
+
+    fun testGenericPointerMethodArg() = testExpr("""
+        struct Foo<F>(F);
+        impl<T1> Foo<T1> {
+            fn foo<T2>(&self, xs: *const T2) -> (T2, T1) { unimplemented!() }
+        }
+        fn main() {
+            let x = Foo("foo").foo(&8u16 as *const u16);
+            x
+          //^ (u16, &str)
+        }
+    """)
+
+    fun testGenericArrayMethodArg() = testExpr("""
+        struct Foo<F>(F);
+        impl<T1> Foo<T1> {
+            fn foo<T2>(&self, xs: [T2; 4]) -> (T2, T1) { unimplemented!() }
+        }
+        fn main() {
+            let x = Foo(0.0).foo([1, 2, 3, 4]);
+            x
+          //^ (i32, f64)
+        }
+    """)
+
+    fun testGenericSliceMethodArg() = testExpr("""
+        struct Foo<F>(F);
+        impl<T1> Foo<T1> {
+            fn foo<T2>(&self, xs: &[T2]) -> (T2, T1) { unimplemented!() }
+        }
+        fn main() {
+            let slice: &[&str] = &["foo", "bar"];
+            let x = Foo(64u8).foo(slice);
+            x
+          //^ (&str, u8)
+        }
+    """)
+
+    fun testComplexGenericMethodArg() = testExpr("""
+        struct Foo<T1, T2>(T1, T2);
+        enum Bar<T3, T4> { V(T3, T4) }
+        struct FooBar<T5>(T5);
+
+        impl<F1, F2> Foo<F1, F2> {
+            fn foo<F3, F4>(&self, x: FooBar<Bar<F3, F4>>) -> (Bar<F4, F1>, Foo<F3, F2>) { unimplemented!() }
+        }
+        fn main() {
+            let x = Foo(123, "foo").foo(FooBar(Bar::V([0.0; 3], (0, false))));
+            x
+          //^ (Bar<(i32, bool), i32>, Foo<[f64; 3], &str>)
+        }
+    """)
 }

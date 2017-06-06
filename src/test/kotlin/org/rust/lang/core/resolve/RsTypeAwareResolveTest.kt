@@ -883,6 +883,28 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test generic method argument`() = checkByCode("""
+        struct Foo<F>(F);
+        enum Bar<B> { V(B) }
+        struct FooBar<E1, E2>(E1, E2);
+        struct S;
+
+        impl<T1> Foo<T1> {
+            fn foo<T2>(&self, bar: Bar<T2>) -> FooBar<T1, T2> { unimplemented!() }
+        }
+
+        impl S {
+            fn bar(&self) { unimplemented!() }
+              //X
+        }
+
+        fn main() {
+            let x = Foo(123).foo(Bar::V(S()));
+            x.1.bar();
+              //^
+        }
+    """)
+
     fun `test array to slice`() = checkByCode("""
         struct Foo;
         impl Foo {

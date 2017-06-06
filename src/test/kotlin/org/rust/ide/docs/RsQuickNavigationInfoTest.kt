@@ -124,7 +124,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
             do_something(xyz);
         }
     """, """
-        let <b>xyz</b> [main.rs]
+        variable <b>xyz</b>: i32
     """)
 
     fun `test variable 2`() = doTest("""
@@ -134,7 +134,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
                         //^
         }
     """, """
-        let mut <b>xyz</b> [main.rs]
+        variable <b>xyz</b>: i32
     """)
 
     fun `test module 1`() = doTest("""
@@ -292,21 +292,21 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         fn foo(val: &mut u32) { let _ = val; }
                                        //^
     """, """
-        <i>value parameter:</i> <b>val</b>: &amp;mut u32 [main.rs]
+        value parameter <b>val</b>: &amp;mut u32
     """)
 
     fun `test value parameter 2`() = doTest("""
         fn foo((val, flag): &mut (u32, bool)) { let _ = val; }
                                                        //^
     """, """
-        <i>value parameter:</i> (<b>val</b>, flag): &amp;mut (u32, bool) [main.rs]
+        value parameter <b>val</b>: &lt;unknown&gt;
     """)
 
     fun `test value parameter 3`() = doTest("""
         fn foo((val, flag): &mut (u32, bool)) { let _ = flag; }
                                                         //^
     """, """
-        <i>value parameter:</i> (val, <b>flag</b>): &amp;mut (u32, bool) [main.rs]
+        value parameter <b>flag</b>: &lt;unknown&gt;
     """)
 
     fun `test match arm 1`() = doTest("""
@@ -317,7 +317,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
             };
         }
     """, """
-        <i>match arm binding:</i> <b>foo</b> [main.rs]
+        match arm binding <b>foo</b>: Option&lt;i32&gt;
     """)
 
     fun `test match arm 2`() = doTest("""
@@ -329,7 +329,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
             };
         }
     """, """
-        <i>match arm binding:</i> Some(<b>foo</b>) [main.rs]
+        match arm binding <b>foo</b>: i32
     """)
 
     fun `test match arm 3`() = doTest("""
@@ -342,7 +342,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
             };
         }
     """, """
-        <i>match arm binding:</i> Foo { <b>foo</b> } [main.rs]
+        match arm binding <b>foo</b>: bool
     """)
 
     fun `test match arm with cfg attribute`() = doTest("""
@@ -356,7 +356,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
             }
         }
     """, """
-        <i>match arm binding:</i> <b>Basdfwe</b> [main.rs]
+        match arm binding <b>Basdfwe</b>: Foo
     """)
 
     fun `test match if let`() = doTest("""
@@ -367,7 +367,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
             }
         }
     """, """
-        <i>condition binding:</i> let Some(ref <b>foo</b>) = None [main.rs]
+        condition binding <b>foo</b>: T
     """)
 
     fun `test file 1`() = doTest("""
