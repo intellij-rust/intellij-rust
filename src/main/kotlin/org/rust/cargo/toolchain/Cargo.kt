@@ -69,7 +69,7 @@ class Cargo(
     fun reformatFile(owner: Disposable, filePath: String, listener: ProcessListener? = null) =
         rustfmtCommandline(filePath).execute(owner, listener)
 
-    fun checkFile(owner: Disposable) = checkCommandline().execute(owner, ignoreExitCode = true)
+    fun checkProject(owner: Disposable) = checkCommandline().execute(owner, ignoreExitCode = true)
 
     fun generalCommand(commandLine: CargoCommandLine): GeneralCommandLine {
         val env = when (commandLine.backtraceMode) {

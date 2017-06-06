@@ -198,7 +198,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         }.execute()
 
         val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
-        val output = module.project.toolchain?.cargo(moduleDirectory)?.checkFile(module)
+        val output = module.project.toolchain?.cargo(moduleDirectory)?.checkProject(module)
         output ?: return null
         if (output.isCancelled) return null
         return CargoCheckAnnotationResult(output.stdoutLines, file.project)
