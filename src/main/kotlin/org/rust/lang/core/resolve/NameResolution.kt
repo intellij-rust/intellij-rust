@@ -383,7 +383,7 @@ private fun processItemDeclarations(scope: RsItemsOwner, ns: Set<Namespace>, ori
             val module = scope.module
 
             if (pkg != null && module != null) {
-                val finsStdMod = { name: String ->
+                val findStdMod = { name: String ->
                     val crate = pkg.findCrateByName(name)?.crateRoot
                     module.project.getPsiFor(crate)?.rustMod
                 }
@@ -396,12 +396,12 @@ private fun processItemDeclarations(scope: RsItemsOwner, ns: Set<Namespace>, ori
                 // The stdlib lib itself is `#![no_std]`, and the core is `#![no_core]`
                 when (scope.attributes) {
                     RsFile.Attributes.NONE -> {
-                        if (processor.lazy("std") { finsStdMod("std") }) {
+                        if (processor.lazy("std") { findStdMod("std") }) {
                             return true
                         }
                     }
                     RsFile.Attributes.NO_STD -> {
-                        if (processor.lazy("core") { finsStdMod("core") }) {
+                        if (processor.lazy("core") { findStdMod("core") }) {
                             return true
                         }
                     }

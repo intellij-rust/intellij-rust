@@ -74,6 +74,10 @@ fun Ty.derefTransitively(project: Project): Set<Ty> {
     return result
 }
 
+fun Ty.getTypeParameter(name: String) : TyTypeParameter? {
+    return typeParameterValues.keys.find { it.toString() == name }
+}
+
 fun findImplsAndTraits(project: Project, ty: Ty): Pair<Collection<BoundElement<RsImplItem>>, Collection<BoundElement<RsTraitItem>>> {
     val noImpls = emptyList<BoundElement<RsImplItem>>()
     val noTraits = emptyList<BoundElement<RsTraitItem>>()
