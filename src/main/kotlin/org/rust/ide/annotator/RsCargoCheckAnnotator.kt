@@ -44,7 +44,7 @@ class CargoCheckAnnotationResult(commandOutput: List<String>, val project: Proje
             .map { parser.parse(it) }
             .filter { it.isJsonObject }
             .mapNotNull { CargoTopMessage.fromJson(it.asJsonObject) }
-            .filter { !it.message.message.startsWith("aborting due to") }
+            .filterNot { it.message.message.startsWith("aborting due to") }
 }
 
 class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoCheckAnnotationResult>() {
@@ -81,7 +81,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
 
             val primarySpan = message.spans
                 .filter { it.is_primary }
-                .filter { isValidSpan(it) }
+                .filter { it.isValid() }
                 .filter { filePath.endsWith(PathUtil.getCanonicalPath(it.file_name)) }
                 .firstOrNull()
 
@@ -89,15 +89,17 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
             if (primarySpan == null) {
                 if (topMessage.target.src_path == filePath) {
                     // add a global annotation
-                    val annotation = holder.createAnnotation(severity, TextRange.EMPTY_RANGE, message.message)
-                    annotation.isFileLevelAnnotation = true
-                    annotation.setNeedsUpdateOnTyping(true)
-                    annotation.tooltip = escapeHtml(message.message) + " " + message.code.formatAsLink().orEmpty()
+                    holder.createAnnotation(severity, TextRange.EMPTY_RANGE, message.message).apply {
+                        isFileLevelAnnotation = true
+                        setNeedsUpdateOnTyping(true)
+                        tooltip = "${escapeHtml(message.message)} ${message.code.formatAsLink().orEmpty()}"
+                    }
                 }
             } else {
-                val annotation = createAnnotation(primarySpan, message, severity, doc, holder)
-                annotation.problemGroup = ProblemGroup { message.message }
-                annotation.setNeedsUpdateOnTyping(true)
+                createAnnotation(primarySpan, message, severity, doc, holder).apply {
+                    problemGroup = ProblemGroup { message.message }
+                    setNeedsUpdateOnTyping(true)
+                }
             }
         }
     }
@@ -141,10 +143,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
     fun createAnnotation(span: CargoSpan, message: CargoMessage, severity: HighlightSeverity, doc: Document,
                          holder: AnnotationHolder): Annotation {
 
-        fun toOffset(line: Int, column: Int): Int {
-            val lineStart = doc.getLineStartOffset(line)
-            return lineStart + column
-        }
+        fun toOffset(line: Int, column: Int) = doc.getLineStartOffset(line) + column
 
         // The compiler message lines and columns are 1 based while intellij idea are 0 based
         val textRange =
@@ -152,21 +151,20 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                 toOffset(span.line_start - 1, span.column_start - 1),
                 toOffset(span.line_end - 1, span.column_end - 1))
 
-        val tooltip = run {
-            val lines = ArrayList<String>()
+        val tooltip = with(ArrayList<String>()) {
             val code = message.code.formatAsLink()
-            lines.add(escapeHtml(message.message) + if (code == null) "" else " $code")
+            add(escapeHtml(message.message) + if (code == null) "" else " $code")
 
             if (span.label != null && !message.message.startsWith(span.label)) {
-                lines.add(escapeHtml(span.label))
+                add(escapeHtml(span.label))
             }
 
             message.children
                 .filter { !it.message.isBlank() }
                 .map { "${it.level.capitalize()}: ${escapeHtml(it.message)}" }
-                .forEach { lines.add(it) }
+                .forEach { add(it) }
 
-            lines
+            this
                 .map { formatLine(it) }
                 .joinToString("<br>")
         }
@@ -178,9 +176,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         if (this?.code.isNullOrBlank()) null
         else "<a href=\"${RsConstants.ERROR_INDEX_URL}#${this?.code}\">${this?.code}</a>"
 
-    fun isValidSpan(span: CargoSpan) =
-        span.line_end > span.line_start
-            || (span.line_end == span.line_start && span.column_end >= span.column_start)
+    fun CargoSpan.isValid() = line_end > line_start || (line_end == line_start && column_end >= column_start)
 
     fun checkProject(file: PsiFile): CargoCheckAnnotationResult? {
         val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
@@ -188,11 +184,9 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         // We have to save the file to disk to give cargo a chance to check fresh file content.
         object : WriteAction<Unit>() {
             override fun run(result: Result<Unit>) {
-                val document = FileDocumentManager.getInstance().getDocument(file.virtualFile)
-                if (document != null) {
-                    FileDocumentManager.getInstance().saveDocument(document)
-                } else {
-                    FileDocumentManager.getInstance().saveAllDocuments()
+                FileDocumentManager.getInstance().getDocument(file.virtualFile).let {
+                    if (it == null) FileDocumentManager.getInstance().saveAllDocuments()
+                    else FileDocumentManager.getInstance().saveDocument(it)
                 }
             }
         }.execute()
