@@ -144,6 +144,7 @@ class Cargo(
 
         listener?.let { handler.addProcessListener(it) }
         val output = try {
+            println("COMMAND LINE = ${handler.commandLine}")
             handler.runProcess()
         } finally {
             Disposer.dispose(cargoKiller)

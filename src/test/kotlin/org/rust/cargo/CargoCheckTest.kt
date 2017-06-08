@@ -13,8 +13,7 @@ class CargoCheckTest : RustWithToolchainTestBase() {
         val result = module.project.toolchain!!.cargo(moduleDirectory).checkProject(testRootDisposable)
 
         if (result.exitCode != 0) {
-            TestCase.fail("Expected zero error code, but got ${result.exitCode}. " +
-                          "result.stderr = ${result.stderr}, result.stdout = ${result.stdout}")
+            TestCase.fail("Expected zero error code, but got ${result.exitCode}. stderr = ${result.stderr}")
         }
     }
 
