@@ -111,6 +111,7 @@ allprojects {
 
         testCompile 'junit:junit:4.+'
         testCompile 'org.assertj:assertj-core:3.2.0'
+
     }
 }
 
