@@ -17,4 +17,12 @@ class RsAnonymousParameterInspectionTest : RsInspectionsTestBase(RsAnonymousPara
             fn foo<F: FnMut(i32)>() {}
         }
     """)
+
+    fun `test no warning for fn trait object`() = checkByText("""
+        pub trait Registry {
+            fn query(&mut self,
+                     dep: &Dependency,
+                     f: &mut FnMut(Summary)) -> CargoResult<()>;
+        }
+    """)
 }
