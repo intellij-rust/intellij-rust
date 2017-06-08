@@ -8,7 +8,7 @@ import org.rust.cargo.project.settings.toolchain
 class CargoCheckTest : RustWithToolchainTestBase() {
     override val dataPath = "src/test/resources/org/rust/cargo/check/fixtures"
 
-    fun `test returns zero error code if project has no errors`() = withProject("hello") {
+    fun testZeroErrorCodeIfProjectHasNoErrors() = withProject("hello") {
         val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
         val cmd = module.project.toolchain!!.cargo(moduleDirectory).checkCommandline()
         val result = module.project.toolchain!!.cargo(moduleDirectory).checkProject(testRootDisposable)
@@ -19,7 +19,7 @@ class CargoCheckTest : RustWithToolchainTestBase() {
         }
     }
 
-    fun `test returns non zero error code if project has errors`() = withProject("errors") {
+    fun testNonZeroErrorCodeIfProjectHasErrors() = withProject("errors") {
         val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
         val result = module.project.toolchain!!.cargo(moduleDirectory).checkProject(testRootDisposable)
         assertThat(result.exitCode).isNotEqualTo(0)
