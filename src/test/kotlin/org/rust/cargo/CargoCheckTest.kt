@@ -10,10 +10,12 @@ class CargoCheckTest : RustWithToolchainTestBase() {
 
     fun `test returns zero error code if project has no errors`() = withProject("hello") {
         val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
+        val cmd = module.project.toolchain!!.cargo(moduleDirectory).checkCommandline()
         val result = module.project.toolchain!!.cargo(moduleDirectory).checkProject(testRootDisposable)
 
         if (result.exitCode != 0) {
-            TestCase.fail("Expected zero error code, but got ${result.exitCode}. stderr = ${result.stderr}")
+            TestCase.fail("Expected zero error code, but got ${result.exitCode}. " +
+                "cmd = ${cmd.commandLineString}, stdout = ${result.stdout}, stderr = ${result.stderr}")
         }
     }
 

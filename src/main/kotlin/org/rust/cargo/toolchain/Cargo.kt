@@ -130,7 +130,7 @@ class Cargo(
     private fun rustfmtCommandline(filePath: String) =
         generalCommand("fmt").withParameters("--", "--write-mode=overwrite", "--skip-children", filePath)
 
-    private fun checkCommandline() = generalCommand("check").withParameters("--message-format=json")
+    fun checkCommandline() = generalCommand("check").withParameters("--message-format=json")
 
     private fun GeneralCommandLine.execute(owner: Disposable, listener: ProcessListener? = null,
                                            ignoreExitCode: Boolean = false): ProcessOutput {
@@ -144,7 +144,6 @@ class Cargo(
 
         listener?.let { handler.addProcessListener(it) }
         val output = try {
-            println("COMMAND LINE = ${handler.commandLine}")
             handler.runProcess()
         } finally {
             Disposer.dispose(cargoKiller)
