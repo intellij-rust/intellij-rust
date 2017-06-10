@@ -33,7 +33,7 @@ class RsResolvePerformanceTest : RustWithToolchainTestBase() {
             })
         }
 
-        println("$name: ${elapsed} ms")
+        println("$name: $elapsed ms")
     }
 
     @Suppress("unused")
@@ -44,14 +44,14 @@ class RsResolvePerformanceTest : RustWithToolchainTestBase() {
             VfsUtil.copyDirectory(
                 this,
                 projectDir,
-                project.baseDir,
+                cargoProjectDirectory,
                 { true }
             )
-            fullyRefreshDirectory(project.baseDir)
+            fullyRefreshDirectory(cargoProjectDirectory)
         }
 
         refreshWorkspace()
-        return project.baseDir
+        return cargoProjectDirectory
     }
 }
 
