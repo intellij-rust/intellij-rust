@@ -18,7 +18,7 @@ class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
             """)
 
             dir("src") {
-                file("main.rs", """
+                rust("main.rs", """
                     fn main() {
                         println!("Hello, world!");
                     }
@@ -45,7 +45,7 @@ class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
             """)
 
             dir("src") {
-                file("main.rs", """
+                rust("main.rs", """
                     fn main() {
                         println!("Hello, world!") 1;
                     }

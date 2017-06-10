@@ -22,17 +22,6 @@ abstract class RustWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixt
 
     protected val cargoProjectDirectory: VirtualFile get() = myFixture.findFileInTempDir(".")
 
-    protected fun withProject(projectName: String, action: () -> Unit) {
-        val projectDirectory = "$dataPath/$projectName"
-        val data = LocalFileSystem.getInstance().findFileByPath(projectDirectory)
-            ?: throw RuntimeException("No such directory: $projectDirectory")
-
-        data.refresh(/* asynchronous = */ false, /* recursive = */ true)
-        copyDirContentsTo(data, cargoProjectDirectory)
-
-        action()
-    }
-
     protected fun FileTree.create() {
         create(project, cargoProjectDirectory)
     }

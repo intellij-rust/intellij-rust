@@ -16,7 +16,7 @@ class CargoFmtTest : RustWithToolchainTestBase() {
             """)
 
             dir("src") {
-                file("main.rs", """
+                rust("main.rs", """
                     fn main() {
                     println!("Hello, world!");
                     }
