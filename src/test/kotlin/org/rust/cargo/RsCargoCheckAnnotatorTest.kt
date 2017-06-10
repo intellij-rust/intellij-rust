@@ -36,7 +36,6 @@ class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
                 """)
             }
         }.create()
-        refreshWorkspace()
         myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!)
         val highlights = myFixture.doHighlighting().filter { it.severity != HighlightSeverity.INFORMATION }
         check(highlights.isEmpty(), {
@@ -57,7 +56,6 @@ class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
                 file("main.rs", mainRs)
             }
         }.create()
-        refreshWorkspace()
         myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!)
         myFixture.checkHighlighting()
     }

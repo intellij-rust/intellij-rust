@@ -1,11 +1,10 @@
 package org.rust.cargo
 
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestCase.copyDirContentsTo
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import org.rust.FileTree
+import org.rust.TestProject
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
@@ -22,9 +21,10 @@ abstract class RustWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixt
 
     protected val cargoProjectDirectory: VirtualFile get() = myFixture.findFileInTempDir(".")
 
-    protected fun FileTree.create() {
-        create(project, cargoProjectDirectory)
-    }
+    protected fun FileTree.create(): TestProject =
+        create(project, cargoProjectDirectory).also {
+            refreshWorkspace()
+        }
 
     protected fun refreshWorkspace() {
         CargoProjectWorkspaceService.getInstance(myModule).syncUpdate(myModule.project.toolchain!!)
