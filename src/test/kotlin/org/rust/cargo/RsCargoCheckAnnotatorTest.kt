@@ -1,14 +1,30 @@
 package org.rust.cargo
 
-import com.intellij.util.PathUtil
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.project.settings.toolchain
+import org.rust.fileTree
 
 class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
     override val dataPath = "src/test/resources/org/rust/cargo/check/fixtures"
 
-    fun testZeroErrorCodeIfProjectHasNoErrors() = withProject("hello") {
+    fun testZeroErrorCodeIfProjectHasNoErrors() {
+        fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                file("main.rs", """
+                    fn main() {
+                        println!("Hello, world!");
+                    }
+                """)
+            }
+        }.create()
         val dir = cargoProjectDirectory.path
         val cmd = myModule.project.toolchain!!.cargo(dir).checkCommandline()
         val result = myModule.project.toolchain!!.cargo(dir).checkProject(testRootDisposable)
@@ -19,9 +35,25 @@ class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
         }
     }
 
-    fun testNonZeroErrorCodeIfProjectHasErrors() = withProject("errors") {
-        val moduleDirectory = PathUtil.getParentPath(myModule.moduleFilePath)
-        val result = myModule.project.toolchain!!.cargo(moduleDirectory).checkProject(testRootDisposable)
+    fun testNonZeroErrorCodeIfProjectHasErrors() {
+        fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                file("main.rs", """
+                    fn main() {
+                        println!("Hello, world!") 1;
+                    }
+                """)
+            }
+        }.create()
+
+        val result = myModule.project.toolchain!!.cargo(cargoProjectDirectory.path).checkProject(testRootDisposable)
         assertThat(result.exitCode).isNotEqualTo(0)
     }
 }
