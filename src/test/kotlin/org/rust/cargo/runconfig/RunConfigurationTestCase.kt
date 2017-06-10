@@ -11,11 +11,28 @@ import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
+import org.rust.fileTree
 
 class RunConfigurationTestCase : RustWithToolchainTestBase() {
     override val dataPath = "src/test/resources/org/rust/cargo/runconfig/fixtures"
 
-    fun testApplicationConfiguration() = withProject("hello") {
+    fun testApplicationConfiguration() {
+        fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    fn main() {
+                        println!("Hello, world!");
+                    }
+                """)
+            }
+        }.create()
         val configuration = createConfiguration()
         val result = execute(configuration)
 

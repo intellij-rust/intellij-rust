@@ -38,13 +38,11 @@ class RsFmtFileAction : DumbAwareAction() {
 
         val module = ModuleUtilCore.findModuleForFile(file, project) ?: return
         val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
-
+        val cargo = module.project.toolchain?.cargo(moduleDirectory) ?: return
         try {
-            module.project.toolchain?.cargo(moduleDirectory)?.reformatFile(module, file.path) ?: return
+            cargo.reformatFile(module, file)
         } catch (e: ExecutionException) {
             project.showBalloon(e.message ?: "", NotificationType.ERROR)
         }
-
-        VfsUtil.markDirtyAndRefresh(true, true, true, file)
     }
 }

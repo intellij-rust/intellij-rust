@@ -15,7 +15,7 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
             name = "intellij-rust-test"
             version = "0.1.0"
             authors = []
-    """)
+        """)
 
         dir("src") {
             rust("main.rs", """
@@ -260,7 +260,5 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
     }
 
     fun buildProject(builder: FileTreeBuilder.() -> Unit): TestProject =
-        fileTree { builder() }.create(project, project.baseDir).apply {
-            refreshWorkspace()
-        }
+        fileTree { builder() }.create()
 }

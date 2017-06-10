@@ -1,18 +1,32 @@
 package org.rust.cargo.commands
 
-import com.intellij.util.PathUtil
-import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
+import org.rust.fileTree
 
 class CargoFmtTest : RustWithToolchainTestBase() {
-    override val dataPath = "src/test/resources/org/rust/cargo/commands/fixtures/fmt"
 
-    fun testCargoFmt() = withProject("hello") {
-        val filePath = "src/main.rs"
-        val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
+    fun testCargoFmt() {
+        fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                authors = []
+            """)
 
-        val result = module.project.toolchain!!.cargo(moduleDirectory).reformatFile(testRootDisposable, "./$filePath")
-        assertThat(result.exitCode).isEqualTo(0)
+            dir("src") {
+                rust("main.rs", """
+                    fn main() {
+                    println!("Hello, world!");
+                    }
+                """)
+            }
+        }.create()
+
+        val cargo = myModule.project.toolchain!!.cargo(cargoProjectDirectory.path)
+        val main = cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!
+        val result = cargo.reformatFile(testRootDisposable, main)
+        check(result.exitCode == 0)
     }
 }

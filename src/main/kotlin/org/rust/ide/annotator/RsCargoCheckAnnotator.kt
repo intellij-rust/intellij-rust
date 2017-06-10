@@ -8,7 +8,6 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.TextRange
@@ -25,7 +24,9 @@ import org.rust.cargo.toolchain.CargoCode
 import org.rust.cargo.toolchain.CargoMessage
 import org.rust.cargo.toolchain.CargoSpan
 import org.rust.cargo.toolchain.CargoTopMessage
+import org.rust.cargo.util.cargoProjectRoot
 import org.rust.ide.RsConstants
+import org.rust.lang.core.psi.ext.module
 import java.util.*
 
 data class CargoCheckAnnotationInfo(val file: PsiFile, val editor: Editor)
@@ -82,8 +83,13 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
             val primarySpan = message.spans
                 .filter { it.is_primary }
                 .filter { it.isValid() }
-                .filter { filePath.endsWith(PathUtil.getCanonicalPath(it.file_name)) }
                 .firstOrNull()
+
+            if (primarySpan != null) {
+                val spanFilePath = PathUtil.toSystemIndependentName(primarySpan.file_name)
+                // message for another file
+                if (!filePath.endsWith(spanFilePath)) continue
+            }
 
             // If spans are empty we add a "global" error
             if (primarySpan == null) {
@@ -111,12 +117,10 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
             line.split("\n").fold(
                 Pair(null as Group?, ArrayList<Group>()),
                 { (group: Group?, acc: ArrayList<Group>), line ->
-                    val (isListItem, line) = run {
-                        if (line.startsWith("-")) {
-                            Pair(true, line.substring(2))
-                        } else {
-                            Pair(false, line)
-                        }
+                    val (isListItem, line) = if (line.startsWith("-")) {
+                        true to line.substring(2)
+                    } else {
+                        false to line
                     }
 
                     when {
@@ -179,7 +183,8 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
     fun CargoSpan.isValid() = line_end > line_start || (line_end == line_start && column_end >= column_start)
 
     fun checkProject(file: PsiFile): CargoCheckAnnotationResult? {
-        val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
+        val module = file.module ?: return null
+        val projectRoot = module.cargoProjectRoot ?: return null
 
         // We have to save the file to disk to give cargo a chance to check fresh file content.
         object : WriteAction<Unit>() {
@@ -191,9 +196,8 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
             }
         }.execute()
 
-        val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
-        val output = module.project.toolchain?.cargo(moduleDirectory)?.checkProject(module)
-        output ?: return null
+        val output = module.project.toolchain?.cargo(projectRoot.path)?.checkProject(module)
+            ?: return null
         if (output.isCancelled) return null
         return CargoCheckAnnotationResult(output.stdoutLines, file.project)
     }
