@@ -10,6 +10,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.cargo.CargoConstants
@@ -66,8 +67,11 @@ class Cargo(
         fullyRefreshDirectory(directory)
     }
 
-    fun reformatFile(owner: Disposable, filePath: String, listener: ProcessListener? = null) =
-        rustfmtCommandline(filePath).execute(owner, listener)
+    fun reformatFile(owner: Disposable, file: VirtualFile, listener: ProcessListener? = null): ProcessOutput {
+        val result = rustfmtCommandline(file.path).execute(owner, listener)
+        VfsUtil.markDirtyAndRefresh(true, true, true, file)
+        return result
+    }
 
     fun checkProject(owner: Disposable) = checkCommandline().execute(owner, ignoreExitCode = true)
 

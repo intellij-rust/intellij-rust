@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestCase.copyDirContentsTo
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
+import org.rust.FileTree
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
@@ -30,6 +31,10 @@ abstract class RustWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixt
         copyDirContentsTo(data, cargoProjectDirectory)
 
         action()
+    }
+
+    protected fun FileTree.create() {
+        create(project, cargoProjectDirectory)
     }
 
     protected fun refreshWorkspace() {
