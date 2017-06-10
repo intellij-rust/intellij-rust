@@ -8,34 +8,18 @@ import org.rust.fileTree
 class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
     override val dataPath = "src/test/resources/org/rust/cargo/check/fixtures"
 
-    fun testZeroErrorCodeIfProjectHasNoErrors() {
-        fileTree {
-            toml("Cargo.toml", """
-                [package]
-                name = "hello"
-                version = "0.1.0"
-                authors = []
-            """)
+    fun `test no errors if everything is ok`() = doTest("""
+        fn main() { println!("Hello, World!"); }
+    """)
 
-            dir("src") {
-                rust("main.rs", """
-                    fn main() {
-                        println!("Hello, world!");
-                    }
-                """)
-            }
-        }.create()
-        val dir = cargoProjectDirectory.path
-        val cmd = myModule.project.toolchain!!.cargo(dir).checkCommandline()
-        val result = myModule.project.toolchain!!.cargo(dir).checkProject(testRootDisposable)
-
-        if (result.exitCode != 0) {
-            TestCase.fail("Expected zero error code, but got ${result.exitCode}. " +
-                "cmd = ${cmd.commandLineString}, stdout = ${result.stdout}, stderr = ${result.stderr}")
+    fun `test highlights type errors`() = doTest("""
+        struct X; struct Y;
+        fn main() {
+            let _: X = <error>Y</error>;
         }
-    }
+    """)
 
-    fun testNonZeroErrorCodeIfProjectHasErrors() {
+    private fun doTest(mainRs: String) {
         fileTree {
             toml("Cargo.toml", """
                 [package]
@@ -45,15 +29,11 @@ class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
             """)
 
             dir("src") {
-                rust("main.rs", """
-                    fn main() {
-                        println!("Hello, world!") 1;
-                    }
-                """)
+                file("main.rs", mainRs)
             }
         }.create()
-
-        val result = myModule.project.toolchain!!.cargo(cargoProjectDirectory.path).checkProject(testRootDisposable)
-        assertThat(result.exitCode).isNotEqualTo(0)
+        refreshWorkspace()
+        myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!)
+        myFixture.checkHighlighting()
     }
 }
