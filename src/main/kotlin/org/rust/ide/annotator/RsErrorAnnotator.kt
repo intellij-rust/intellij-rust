@@ -410,14 +410,19 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkValueArgumentList(holder: AnnotationHolder, args: RsValueArgumentList) {
         val parent = args.parent
-        val expectedCount = when (parent) {
+        val (expectedCount, variadic) = when (parent) {
             is RsCallExpr -> parent.expectedParamsCount()
             is RsMethodCallExpr -> parent.expectedParamsCount()
             else -> null
         } ?: return
 
         val realCount = args.exprList.size
-        if (realCount != expectedCount) {
+        if (variadic && realCount < expectedCount) {
+            holder.createErrorAnnotation(args,
+                "This function takes at least $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}"
+                    + " but $realCount ${pluralise(realCount, "parameter", "parameters")}"
+                    + " ${pluralise(realCount, "was", "were")} supplied [E0060]")
+        } else if (!variadic && realCount != expectedCount) {
             holder.createErrorAnnotation(args,
                 "This function takes $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}"
                     + " but $realCount ${pluralise(realCount, "parameter", "parameters")}"
@@ -595,27 +600,29 @@ private fun AnnotationSession.fileDuplicatesMap(): MutableMap<PsiElement, Map<Na
 private val RsNamedElement.namespaced: Sequence<Pair<Namespace, RsNamedElement>>
     get() = namespaces.asSequence().map { Pair(it, this) }
 
-private fun RsCallExpr.expectedParamsCount(): Int? {
+private fun RsCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
     val path = (expr as? RsPathExpr)?.path ?: return null
     val el = path.reference.resolve()
     if (el is RsDocAndAttributeOwner && el.queryAttributes.hasCfgAttr()) return null
     return when (el) {
-        is RsFieldsOwner -> el.tupleFields?.tupleFieldDeclList?.size
+        is RsFieldsOwner -> el.tupleFields?.tupleFieldDeclList?.size?.let { Pair(it, false) }
         is RsFunction -> {
             if (el.role == RsFunctionRole.IMPL_METHOD && !el.isInherentImpl) return null
             val count = el.valueParameterList?.valueParameterList?.size ?: return null
+            val variadic = el.valueParameterList?.dotdotdot != null
             // We can call foo.method(1), or Foo::method(&foo, 1), so need to take coloncolon into account
             val s = if (path.coloncolon != null && el.selfParameter != null) 1 else 0
-            count + s
+            Pair(count + s, variadic)
         }
         else -> null
     }
 }
 
-private fun RsMethodCallExpr.expectedParamsCount(): Int? {
+private fun RsMethodCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
     val fn = reference.resolve() as? RsFunction ?: return null
     if (fn.queryAttributes.hasCfgAttr()) return null
-    return if (fn.isInherentImpl) fn.valueParameterList?.valueParameterList?.size else null
+    val variadic = fn.valueParameterList?.dotdotdot != null
+    return if (fn.isInherentImpl) fn.valueParameterList?.valueParameterList?.size?.let { Pair(it, variadic) } else null
 }
 
 private val RsCallExpr.declaration: RsFunction?

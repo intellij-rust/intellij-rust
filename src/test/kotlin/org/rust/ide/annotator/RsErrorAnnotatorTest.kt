@@ -299,6 +299,22 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun testE0060_InvalidParametersNumberInVariadicFunctions() = checkErrors("""
+        extern {
+            fn variadic_1(p1: u32, ...);
+            fn variadic_2(p1: u32, p2: u32, ...);
+        }
+
+        fn main() {
+            variadic_1<error descr="This function takes at least 1 parameter but 0 parameters were supplied [E0060]">()</error>;
+            variadic_1(42);
+            variadic_1(42, 43);
+            variadic_2<error descr="This function takes at least 2 parameters but 0 parameters were supplied [E0060]">()</error>;
+            variadic_2<error descr="This function takes at least 2 parameters but 1 parameter was supplied [E0060]">(42)</error>;
+            variadic_2(42, 43);
+        }
+    """)
+
     fun testE0061_InvalidParametersNumberInFreeFunctions() = checkErrors("""
         fn par_0() {}
         fn par_1(p: bool) {}
