@@ -69,6 +69,8 @@ class Cargo(
     fun reformatFile(owner: Disposable, filePath: String, listener: ProcessListener? = null) =
         rustfmtCommandline(filePath).execute(owner, listener)
 
+    fun checkProject(owner: Disposable) = checkCommandline().execute(owner, ignoreExitCode = true)
+
     fun generalCommand(commandLine: CargoCommandLine): GeneralCommandLine {
         val env = when (commandLine.backtraceMode) {
             BacktraceMode.SHORT -> mapOf(RUST_BACTRACE_ENV_VAR to "short")
@@ -128,7 +130,10 @@ class Cargo(
     private fun rustfmtCommandline(filePath: String) =
         generalCommand("fmt").withParameters("--", "--write-mode=overwrite", "--skip-children", filePath)
 
-    private fun GeneralCommandLine.execute(owner: Disposable, listener: ProcessListener? = null): ProcessOutput {
+    fun checkCommandline() = generalCommand("check").withParameters("--message-format=json")
+
+    private fun GeneralCommandLine.execute(owner: Disposable, listener: ProcessListener? = null,
+                                           ignoreExitCode: Boolean = false): ProcessOutput {
         val handler = CapturingProcessHandler(this)
         val cargoKiller = Disposable {
             // Don't attempt a graceful termination, Cargo can be SIGKILLed safely.
@@ -143,7 +148,7 @@ class Cargo(
         } finally {
             Disposer.dispose(cargoKiller)
         }
-        if (output.exitCode != 0) {
+        if (!ignoreExitCode && output.exitCode != 0) {
             throw ExecutionException("""
             Cargo execution failed (exit code ${output.exitCode}).
             $commandLineString

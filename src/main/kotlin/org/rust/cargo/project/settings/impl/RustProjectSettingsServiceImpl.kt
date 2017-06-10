@@ -18,7 +18,8 @@ class RustProjectSettingsServiceImpl(
         var toolchainHomeDirectory: String? = null,
         var autoUpdateEnabled: Boolean = true,
         var explicitPathToStdlib: String? = null,
-        var useCargoCheckForBuild: Boolean = false
+        var useCargoCheckForBuild: Boolean = false,
+        var useCargoCheckAnnotator: Boolean = true
     )
 
     override fun getState(): State = state
@@ -36,10 +37,12 @@ class RustProjectSettingsServiceImpl(
             state.toolchainHomeDirectory?.let(::RustToolchain),
             state.autoUpdateEnabled,
             state.explicitPathToStdlib,
-            state.useCargoCheckForBuild
+            state.useCargoCheckForBuild,
+            state.useCargoCheckAnnotator
         )
         set(value) {
-            val newState = State(value.toolchain?.location, value.autoUpdateEnabled, value.explicitPathToStdlib, value.useCargoCheckForBuild)
+            val newState = State(value.toolchain?.location, value.autoUpdateEnabled, value.explicitPathToStdlib,
+                value.useCargoCheckForBuild, value.useCargoCheckAnnotator)
             if (state != newState) {
                 state = newState
                 notifyToolchainChanged()

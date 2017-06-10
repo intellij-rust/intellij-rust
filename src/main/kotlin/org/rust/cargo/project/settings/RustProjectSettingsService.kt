@@ -13,7 +13,8 @@ interface RustProjectSettingsService {
         // but if one does not use rustup, it's possible to
         // provide path to stdlib explicitly.
         val explicitPathToStdlib: String?,
-        val useCargoCheckForBuild: Boolean
+        val useCargoCheckForBuild: Boolean,
+        val useCargoCheckAnnotator: Boolean
     )
 
     var data: Data
@@ -21,6 +22,7 @@ interface RustProjectSettingsService {
     val toolchain: RustToolchain? get() = data.toolchain
     val autoUpdateEnabled: Boolean get() = data.autoUpdateEnabled
     val useCargoCheckForBuild: Boolean get() = data.useCargoCheckForBuild
+    val useCargoCheckAnnotator: Boolean get() = data.useCargoCheckAnnotator
 
     /*
      * Show a dialog for toolchain configuration
