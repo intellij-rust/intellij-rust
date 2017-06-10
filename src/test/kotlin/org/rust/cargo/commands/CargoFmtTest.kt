@@ -5,7 +5,6 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.fileTree
 
 class CargoFmtTest : RustWithToolchainTestBase() {
-    override val dataPath = "src/test/resources/org/rust/cargo/commands/fixtures/fmt"
 
     fun testCargoFmt() {
         fileTree {
