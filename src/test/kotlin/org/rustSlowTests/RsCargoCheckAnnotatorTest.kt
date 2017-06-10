@@ -1,6 +1,7 @@
-package org.rust.cargo
+package org.rustSlowTests
 
 import com.intellij.lang.annotation.HighlightSeverity
+import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.fileTree
 
 class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
