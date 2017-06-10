@@ -1,5 +1,12 @@
-pub trait Registry {
-    fn query(&mut self,
-             dep: &Dependency,
-             f: &mut FnMut(Summary)) -> CargoResult<()>;
+struct S1;
+pub struct S2;
+pub(crate) struct S3;
+pub(self) struct S4;
+mod a {
+    pub (super) struct S5;
+    mod b {
+        pub(in super::super) struct S6;
+    }
 }
+
+fn main() {}
