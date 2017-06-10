@@ -285,6 +285,14 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test vec slice`() = stubOnlyResolve("""
+    //- main.rs
+        fn foo(xs: Vec<i32>) {
+            xs[0..3].len();
+                     //^ ...libcollections/slice.rs
+        }
+    """)
+
     fun `test resolve with defaulted type parameters`() = stubOnlyResolve("""
     //- main.rs
         use std::collections::HashSet;
