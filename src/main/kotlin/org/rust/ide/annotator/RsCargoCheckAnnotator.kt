@@ -83,8 +83,11 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
             val primarySpan = message.spans
                 .filter { it.is_primary }
                 .filter { it.isValid() }
-                .filter { filePath.endsWith(PathUtil.getCanonicalPath(it.file_name)) }
                 .firstOrNull()
+
+            if (primarySpan != null && !filePath.endsWith(primarySpan.file_name)) {
+                continue // message for another file
+            }
 
             // If spans are empty we add a "global" error
             if (primarySpan == null) {

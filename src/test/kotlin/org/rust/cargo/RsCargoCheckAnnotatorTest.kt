@@ -1,8 +1,6 @@
 package org.rust.cargo
 
-import junit.framework.TestCase
-import org.assertj.core.api.Assertions.assertThat
-import org.rust.cargo.project.settings.toolchain
+import com.intellij.lang.annotation.HighlightSeverity
 import org.rust.fileTree
 
 class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
@@ -18,6 +16,33 @@ class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
             let _: X = <error>Y</error>;
         }
     """)
+
+    fun `test highlights from other files do not interfer`() {
+        fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("main.rs", "mod foo; fn main() {}")
+                rust("foo.rs", """
+                    struct X; struct Y;
+                    fn foo() {
+                        let _: X = Y;
+                    }
+                """)
+            }
+        }.create()
+        refreshWorkspace()
+        myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!)
+        val highlights = myFixture.doHighlighting().filter { it.severity != HighlightSeverity.INFORMATION }
+        check(highlights.isEmpty(), {
+            "Did not expect any highlights, got:\n${highlights.toString()}"
+        })
+    }
 
     private fun doTest(mainRs: String) {
         fileTree {
