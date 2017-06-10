@@ -40,7 +40,7 @@ class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
         myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!)
         val highlights = myFixture.doHighlighting().filter { it.severity != HighlightSeverity.INFORMATION }
         check(highlights.isEmpty(), {
-            "Did not expect any highlights, got:\n${highlights.toString()}"
+            "Did not expect any highlights, got:\n$highlights"
         })
     }
 
