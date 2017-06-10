@@ -5,13 +5,13 @@ import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.project.settings.toolchain
 
-class CargoCheckTest : RustWithToolchainTestBase() {
+class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
     override val dataPath = "src/test/resources/org/rust/cargo/check/fixtures"
 
     fun testZeroErrorCodeIfProjectHasNoErrors() = withProject("hello") {
-        val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
-        val cmd = module.project.toolchain!!.cargo(moduleDirectory).checkCommandline()
-        val result = module.project.toolchain!!.cargo(moduleDirectory).checkProject(testRootDisposable)
+        val dir = cargoProjectDirectory.path
+        val cmd = myModule.project.toolchain!!.cargo(dir).checkCommandline()
+        val result = myModule.project.toolchain!!.cargo(dir).checkProject(testRootDisposable)
 
         if (result.exitCode != 0) {
             TestCase.fail("Expected zero error code, but got ${result.exitCode}. " +
@@ -20,8 +20,8 @@ class CargoCheckTest : RustWithToolchainTestBase() {
     }
 
     fun testNonZeroErrorCodeIfProjectHasErrors() = withProject("errors") {
-        val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
-        val result = module.project.toolchain!!.cargo(moduleDirectory).checkProject(testRootDisposable)
+        val moduleDirectory = PathUtil.getParentPath(myModule.moduleFilePath)
+        val result = myModule.project.toolchain!!.cargo(moduleDirectory).checkProject(testRootDisposable)
         assertThat(result.exitCode).isNotEqualTo(0)
     }
 }

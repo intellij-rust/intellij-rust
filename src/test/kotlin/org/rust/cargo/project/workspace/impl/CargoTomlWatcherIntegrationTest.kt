@@ -48,12 +48,12 @@ class CargoTomlWatcherIntegrationTest : RustWithToolchainTestBase() {
                     """)
                 }
             }
-        }.create(project, project.baseDir)
+        }.create(project, cargoProjectDirectory)
 
         p.checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
 
-        CargoProjectWorkspaceService.getInstance(module).syncUpdate(module.project.toolchain!!)
-        if (module.cargoWorkspace == null) {
+        CargoProjectWorkspaceService.getInstance(myModule).syncUpdate(project.toolchain!!)
+        if (myModule.cargoWorkspace == null) {
             error("Failed to update a test Cargo project")
         }
         val toml = p.root.findFileByRelativePath("Cargo.toml")!!
