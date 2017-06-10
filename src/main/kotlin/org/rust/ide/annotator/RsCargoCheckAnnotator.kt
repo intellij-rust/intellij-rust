@@ -16,6 +16,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.util.PathUtil
 import org.apache.commons.lang.StringEscapeUtils.escapeHtml
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
@@ -84,8 +85,10 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                 .filter { it.isValid() }
                 .firstOrNull()
 
-            if (primarySpan != null && !filePath.endsWith(primarySpan.file_name)) {
-                continue // message for another file
+            if (primarySpan != null) {
+                val spanFilePath = PathUtil.toSystemIndependentName(primarySpan.file_name)
+                // message for another file
+                if (!filePath.endsWith(spanFilePath)) continue
             }
 
             // If spans are empty we add a "global" error
