@@ -89,18 +89,22 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
     }
 
-    private fun checkUnsafeCall(holder: AnnotationHolder, o: RsExpr) {
-        val parent = o.ancestors
-            .drop(1)    // skip the expression itself
+    private fun PsiElement.isInUnsafeBlockOrFn(parentsToSkip: Int = 0): Boolean {
+        val parent = this.ancestors
+            .drop(parentsToSkip)
             .find {
                 when (it) {
                     is RsBlockExpr -> it.unsafe != null
                     is RsFunction -> true
                     else -> false
                 }
-            } ?: return
+            } ?: return false
 
-        if (parent is RsBlock || (parent is RsFunction && parent.unsafe == null)) {
+        return parent is RsBlockExpr || (parent is RsFunction && parent.unsafe != null)
+    }
+
+    private fun checkUnsafeCall(holder: AnnotationHolder, o: RsExpr) {
+        if (!o.isInUnsafeBlockOrFn(/* skip the expression itself*/ 1)) {
             val annotation = holder.createErrorAnnotation(o, "Call to unsafe function requires unsafe function or block [E0133]")
             annotation.registerFix(SurroundWithUnsafeFix(o))
             val block = o.parentOfType<RsBlock>()?.parent ?: return
