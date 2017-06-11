@@ -471,6 +471,10 @@
             <className>org.rust.ide.intentions.IfLetToMatchIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.SpecifyTypeExplicitlyIntention</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 
