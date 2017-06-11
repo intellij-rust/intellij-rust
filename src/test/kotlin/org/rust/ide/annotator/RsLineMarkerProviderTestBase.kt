@@ -3,10 +3,11 @@ package org.rust.ide.annotator
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
 abstract class RsLineMarkerProviderTestBase : RsTestBase() {
-    protected fun doTestByText(source: String) {
+    protected fun doTestByText(@Language("Rust") source: String) {
         myFixture.configureByText("lib.rs", source)
         myFixture.doHighlighting()
         val expected = markersFrom(source)

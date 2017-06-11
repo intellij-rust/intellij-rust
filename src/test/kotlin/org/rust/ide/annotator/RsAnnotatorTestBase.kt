@@ -8,17 +8,17 @@ abstract class RsAnnotatorTestBase : RsTestBase() {
         myFixture.testHighlighting(fileName, *additionalFilenames)
     }
 
-    protected fun checkInfo(text: String) {
+    protected fun checkInfo(@Language("Rust") text: String) {
         myFixture.configureByText("main.rs", text)
         myFixture.testHighlighting(false, true, false)
     }
 
-    protected fun checkWarnings(text: String) {
+    protected fun checkWarnings(@Language("Rust") text: String) {
         myFixture.configureByText("main.rs", text)
         myFixture.testHighlighting(true, false, true)
     }
 
-    protected fun checkErrors(text: String) {
+    protected fun checkErrors(@Language("Rust") text: String) {
         myFixture.configureByText("main.rs", text)
         myFixture.testHighlighting(false, false, false)
     }
