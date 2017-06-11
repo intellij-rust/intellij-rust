@@ -23,7 +23,7 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
             return null
         }
         val ident = letDecl.pat as? RsPatIdent ?: return null
-        val type: Ty = inferDeclarationType(ident.patBinding)
+        val type = inferDeclarationType(ident.patBinding)
         if (type is TyUnknown) {
             return null
         }
@@ -35,7 +35,7 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
         val createdType = factory.createType(ctx.type.toString())
         val letDecl = ctx.letDecl
         val colon = letDecl.addAfter(factory.createColon(), letDecl.pat)
-        colon.parent.addAfter(createdType, colon)
+        letDecl.addAfter(createdType, colon)
     }
 
 
