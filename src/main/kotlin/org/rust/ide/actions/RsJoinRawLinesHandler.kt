@@ -4,10 +4,10 @@ import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JO
 import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsElementTypes.COMMA
-import org.rust.lang.core.psi.RsElementTypes.LBRACE
-import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
@@ -19,7 +19,22 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
     override fun tryJoinRawLines(document: Document, file: PsiFile, start: Int, end: Int): Int {
         if (file !is RsFile) return CANNOT_JOIN
         if (start == 0) return CANNOT_JOIN
-        return tryJoinSingleExpressionBlock(file, start)
+        var caret = tryJoinTrailingCommaRightBrace(document, file, start)
+        if (caret == CANNOT_JOIN) {
+            caret = tryJoinSingleExpressionBlock(file, start)
+        }
+        return caret
+    }
+
+    fun tryJoinTrailingCommaRightBrace(document: Document, file: RsFile, start: Int): Int {
+        val comma = file.findElementAt(start - 1)!!
+        if (comma.elementType != COMMA) return CANNOT_JOIN
+
+        val rbrace = PsiTreeUtil.skipSiblingsForward(comma, PsiWhiteSpace::class.java) ?: return CANNOT_JOIN
+        if (rbrace.elementType != RBRACE) return CANNOT_JOIN
+
+        document.replaceString(comma.textRange.startOffset, rbrace.textRange.startOffset, " ")
+        return start - 1 // After overwriting comma with " ", put cursor where it used to be
     }
 
     fun tryJoinSingleExpressionBlock(file: RsFile, start: Int): Int {

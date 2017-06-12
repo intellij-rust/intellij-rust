@@ -109,4 +109,43 @@ class RsJoinRawLinesHandlerTest : RsJoinLinesHandlerTestBase() {
             if true { 92 } else /*caret*/{ 62 }
         }
     """)
+
+    fun `test join struct on last field with trailing comma removes comma`() = doTest("""
+        struct s {
+            pub val1: i32,
+            val2: i32,
+            /*caret*/pub val3: String,
+        }
+    """, """
+        struct s {
+            pub val1: i32,
+            val2: i32,
+            pub val3: String/*caret*/ }
+    """)
+
+    fun `test join struct on intermediate field`() = doTest("""
+        struct s {
+            pub val1: i32,
+            /*caret*/val2: i32,
+            pub val3: String,
+        }
+    """, """
+        struct s {
+            pub val1: i32,
+            val2: i32,/*caret*/ pub val3: String,
+        }
+    """)
+
+    fun `test join struct leaves trailing comma if followed by comment`() = doTest("""
+        struct s {
+            pub val1: i32,
+            val2: i32,
+            /*caret*/pub val3: String, // Dummy comment
+        }
+    """, """
+        struct s {
+            pub val1: i32,
+            val2: i32,
+            pub val3: String, // Dummy comment/*caret*/ }
+    """)
 }
