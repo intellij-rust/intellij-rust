@@ -10,6 +10,7 @@ env:
         # https://youtrack.jetbrains.com/issue/IDEA-173171
         # - ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT RUST_VERSION=nightly
         - ORG_GRADLE_PROJECT_ideaVersion=2017.1              RUST_VERSION=1.18.0
+        - ORG_GRADLE_PROJECT_ideaVersion=2016.3              RUST_VERSION=1.18.0
 
 before_script:
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION -y
