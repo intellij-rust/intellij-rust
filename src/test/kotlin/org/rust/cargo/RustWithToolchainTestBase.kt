@@ -22,7 +22,7 @@ abstract class RustWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixt
     protected val cargoProjectDirectory: VirtualFile get() = myFixture.findFileInTempDir(".")
 
     protected fun FileTree.create(): TestProject =
-        create(project, cargoProjectDirectory).also {
+        create(project, cargoProjectDirectory).apply {
             refreshWorkspace()
         }
 
