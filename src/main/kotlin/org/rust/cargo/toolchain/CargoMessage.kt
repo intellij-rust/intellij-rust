@@ -17,6 +17,7 @@ data class CargoTopMessage(
             }
 
             return Gson().fromJson(json, CargoTopMessage::class.java)
+                ?: error("Failed to parse CargoTopMessage from $json")
         }
     }
 }
