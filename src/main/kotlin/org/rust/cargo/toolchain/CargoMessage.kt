@@ -12,6 +12,9 @@ data class CargoTopMessage(
 ) {
     companion object {
         fun fromJson(json: JsonObject): CargoTopMessage? {
+            if (json.getAsJsonPrimitive("reason") == null) {
+                error("Maformed JSON from Cargo: $json")
+            }
             if (json.getAsJsonPrimitive("reason").asString != "compiler-message") {
                 return null
             }
