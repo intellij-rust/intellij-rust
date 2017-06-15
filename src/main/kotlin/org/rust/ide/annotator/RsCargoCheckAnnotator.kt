@@ -34,6 +34,19 @@ data class CargoCheckAnnotationInfo(val file: PsiFile, val editor: Editor)
 class CargoCheckAnnotationResult(commandOutput: List<String>, val project: Project)
     : ModificationTracker by PsiManager.getInstance(project).modificationTracker {
 
+    init {
+        if (commandOutput
+            .filter { messageRegex.matches(it) }
+            .map { parser.parse(it) }
+            .filter { it.isJsonObject }
+            .any { it.asJsonObject.getAsJsonPrimitive("reason") == null }) {
+
+            error("Malformed Cargo outpput:\n'n${commandOutput.joinToString("\n")}\n\n")
+        }
+
+
+    }
+
     companion object {
         private val parser = JsonParser()
         private val messageRegex = """\s*\{\s*"message".*""".toRegex()
