@@ -212,6 +212,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         val output = module.project.toolchain?.cargo(projectRoot.path)?.checkProject(module)
             ?: return null
         if (output.isCancelled) return null
+        error("Cargo STDOUT:\n\n${output.stdout}\n\nCargo STDERR:\n\n${output.stderr}\n\n")
         return CargoCheckAnnotationResult(output.stdoutLines, file.project)
     }
 }
