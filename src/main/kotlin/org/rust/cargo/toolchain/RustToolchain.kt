@@ -21,7 +21,7 @@ data class RustToolchain(val location: String) {
 
     fun queryVersions(): VersionInfo {
         check(!ApplicationManager.getApplication().isDispatchThread)
-        val cargo = nonProjectCargo().generalCommand("version")
+        val cargo = nonProjectCargo().toGeneralCommandLine(CargoCommandLine("version"))
             .runExecutable()?.let(::findSemVer) ?: SemVer.UNKNOWN
 
         val rustup = GeneralCommandLine(pathToExecutable(RUSTUP))

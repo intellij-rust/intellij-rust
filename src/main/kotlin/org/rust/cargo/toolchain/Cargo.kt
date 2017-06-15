@@ -48,12 +48,8 @@ class Cargo(
      */
     @Throws(ExecutionException::class)
     fun fullProjectDescription(owner: Disposable, listener: ProcessListener? = null): CargoWorkspace {
-        val hasAllFeatures = "--all-features" in generalCommand("metadata", listOf("--help")).execute(owner = owner).stdout
-        val command = generalCommand("metadata", listOf("--verbose", "--format-version", "1")).apply {
-            if (hasAllFeatures) addParameter("--all-features")
-        }
-
-        val output = command.execute(owner, listener)
+        val output = CargoCommandLine("metadata", listOf("--verbose", "--format-version", "1", "--all-features"))
+            .execute(owner, listener)
         val rawData = parse(output.stdout)
         val projectDescriptionData = CargoMetadata.clean(rawData)
         return CargoWorkspace.deserialize(projectDescriptionData)
@@ -62,59 +58,70 @@ class Cargo(
     @Throws(ExecutionException::class)
     fun init(owner: Disposable, directory: VirtualFile) {
         val path = PathUtil.toSystemDependentName(directory.path)
-        generalCommand("init", listOf("--bin", path)).execute(owner)
+        CargoCommandLine("init", listOf("--bin", path))
+            .execute(owner)
         check(File(directory.path, RustToolchain.Companion.CARGO_TOML).exists())
         fullyRefreshDirectory(directory)
     }
 
     fun reformatFile(owner: Disposable, file: VirtualFile, listener: ProcessListener? = null): ProcessOutput {
-        val result = rustfmtCommandline(file.path).execute(owner, listener)
+        val result = CargoCommandLine("fmt", listOf("--", "--write-mode=overwrite", "--skip-children", file.path))
+            .execute(owner, listener)
         VfsUtil.markDirtyAndRefresh(true, true, true, file)
         return result
     }
 
-    fun checkProject(owner: Disposable) = checkCommandline().execute(owner, ignoreExitCode = true)
+    fun checkProject(owner: Disposable): ProcessOutput =
+        CargoCommandLine("check", listOf("--message-format=json", "--all"))
+            .execute(owner, ignoreExitCode = true)
 
-    fun generalCommand(commandLine: CargoCommandLine): GeneralCommandLine {
+    fun clippyCommandLine(channel: RustChannel): CargoCommandLine =
+        CargoCommandLine("clippy", channel = channel)
+
+
+    fun toColoredCommandLine(commandLine: CargoCommandLine): GeneralCommandLine =
+        generalCommandLine(commandLine, true)
+
+    fun toGeneralCommandLine(commandLine: CargoCommandLine): GeneralCommandLine =
+        generalCommandLine(commandLine, false)
+
+    private fun generalCommandLine(commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine {
+        val cmdLine = if (commandLine.channel == RustChannel.DEFAULT) {
+            GeneralCommandLine(pathToCargoExecutable)
+        } else {
+            if (rustup == null) error("Channel '${commandLine.channel}' cannot be set explicitly because rustup is not available")
+            rustup.createRunCommandLine(commandLine.channel, pathToCargoExecutable)
+        }
+
+        cmdLine
+            .withCharset(Charsets.UTF_8)
+            .withWorkDirectory(projectDirectory)
+            .withParameters(commandLine.command)
+            .withEnvironment(CargoConstants.RUSTC_ENV_VAR, pathToRustExecutable)
+
         val env = when (commandLine.backtraceMode) {
             BacktraceMode.SHORT -> mapOf(RUST_BACTRACE_ENV_VAR to "short")
             BacktraceMode.FULL -> mapOf(RUST_BACTRACE_ENV_VAR to "full")
             else -> emptyMap()
         } + commandLine.environmentVariables
 
-        val args = commandLine.additionalArguments.toMutableList()
-
-        if (commandLine.command == "test" && commandLine.nocapture && "--nocapture" !in args) {
-            if ("--" !in args) {
-                args += "--"
+        val args: List<String> = run {
+            val args = commandLine.additionalArguments.toMutableList()
+            if (commandLine.command == "test" && commandLine.nocapture && "--nocapture" !in args) {
+                if ("--" !in args) {
+                    args += "--"
+                }
+                args += "--nocapture"
             }
-            args += "--nocapture"
+            args
         }
 
-        return generalCommand(commandLine.command, args, env, commandLine.channel)
-    }
 
-    fun generalCommand(
-        command: String,
-        additionalArguments: List<String> = emptyList(),
-        environmentVariables: Map<String, String> = emptyMap(),
-        channel: RustChannel = RustChannel.DEFAULT
-    ): GeneralCommandLine {
-        val cmdLine = if (channel == RustChannel.DEFAULT) {
-            GeneralCommandLine(pathToCargoExecutable)
-        } else {
-            if (rustup == null) error("Channel '$channel' cannot be set explicitly because rustup is not avaliable")
-            rustup.createRunCommandLine(channel, pathToCargoExecutable)
-        }
-
-        cmdLine.withCharset(Charsets.UTF_8)
-            .withWorkDirectory(projectDirectory)
-            .withParameters(command)
-
-        // Make output colored
-        if (!SystemInfo.isWindows
-            && command in COLOR_ACCEPTING_COMMANDS
-            && additionalArguments.none { it.startsWith("--color") }) {
+        // add colors
+        if (colors
+            && !SystemInfo.isWindows //BACKCOMPAT: remove windows check once termcolor'ed Cargo is stable
+            && commandLine.command in COLOR_ACCEPTING_COMMANDS
+            && args.none { it.startsWith("--color") }) {
 
             cmdLine
                 .withEnvironment("TERM", "ansi")
@@ -123,22 +130,15 @@ class Cargo(
         }
 
         return cmdLine
-            .withEnvironment(CargoConstants.RUSTC_ENV_VAR, pathToRustExecutable)
-            .withEnvironment(environmentVariables)
-            .withParameters(additionalArguments)
+            .withEnvironment(env)
+            .withParameters(args)
     }
 
-    fun clippyCommandLine(channel: RustChannel): CargoCommandLine =
-        CargoCommandLine("clippy", channel = channel)
 
-    private fun rustfmtCommandline(filePath: String) =
-        generalCommand("fmt").withParameters("--", "--write-mode=overwrite", "--skip-children", filePath)
-
-    fun checkCommandline() = generalCommand("check").withParameters("--message-format=json", "--all")
-
-    private fun GeneralCommandLine.execute(owner: Disposable, listener: ProcessListener? = null,
-                                           ignoreExitCode: Boolean = false): ProcessOutput {
-        val handler = CapturingProcessHandler(this)
+    private fun CargoCommandLine.execute(owner: Disposable, listener: ProcessListener? = null,
+                                         ignoreExitCode: Boolean = false): ProcessOutput {
+        val command = toGeneralCommandLine(this)
+        val handler = CapturingProcessHandler(command)
         val cargoKiller = Disposable {
             // Don't attempt a graceful termination, Cargo can be SIGKILLed safely.
             // https://github.com/rust-lang/cargo/issues/3566
@@ -155,7 +155,7 @@ class Cargo(
         if (!ignoreExitCode && output.exitCode != 0) {
             throw ExecutionException("""
             Cargo execution failed (exit code ${output.exitCode}).
-            $commandLineString
+            ${command.commandLineString}
             stdout : ${output.stdout}
             stderr : ${output.stderr}""".trimIndent())
         }
