@@ -109,8 +109,8 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
     val promise = AsyncPromise<Binary?>()
 
     val processForUserOutput = ProcessOutput()
-    val processForUser = KillableColoredProcessHandler(cargo.generalCommand(command))
-    val processForJson = CapturingProcessHandler(cargo.generalCommand(command.prependArgument("--message-format=json")))
+    val processForUser = KillableColoredProcessHandler(cargo.toColoredCommandLine(command))
+    val processForJson = CapturingProcessHandler(cargo.toGeneralCommandLine(command.prependArgument("--message-format=json")))
 
     processForUser.addProcessListener(CapturingProcessAdapter(processForUserOutput))
 

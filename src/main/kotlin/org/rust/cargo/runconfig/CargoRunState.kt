@@ -31,7 +31,7 @@ class CargoRunState(
 
     override fun startProcess(): ProcessHandler {
         val cmd = toolchain.cargo(cargoProjectDirectory.path)
-            .generalCommand(commandLine)
+            .toColoredCommandLine(commandLine)
             // Explicitly use UTF-8.
             // Even though default system encoding is usually not UTF-8 on windows,
             // most Rust programs are UTF-8 only.
