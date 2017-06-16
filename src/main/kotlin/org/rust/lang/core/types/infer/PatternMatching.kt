@@ -2,6 +2,8 @@ package org.rust.lang.core.types.infer
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsFieldsOwner
+import org.rust.lang.core.psi.ext.isMut
+import org.rust.lang.core.psi.ext.isRef
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -18,7 +20,9 @@ private fun collectBindings(pattern: RsPat, type: Ty): Map<RsPatBinding, Ty> {
     fun go(pat: RsPat, type: Ty) {
         when (pat) {
             is RsPatIdent -> {
-                bindings += pat.patBinding to type
+                val patBinding = pat.patBinding
+                val bindingType = if (patBinding.isRef) TyReference(type, patBinding.isMut) else type
+                bindings += patBinding to bindingType
                 pat.pat?.let { go(it, type) }
             }
             is RsPatTup -> {
