@@ -11,7 +11,7 @@ env:
   - ORG_GRADLE_PROJECT_ideaVersion=2017.1              RUST_VERSION=1.18.0
   - ORG_GRADLE_PROJECT_ideaVersion=2016.3              RUST_VERSION=1.18.0
 
-matix:
+matrix:
   allow_failures:
     - env: ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT RUST_VERSION=nightly
 
