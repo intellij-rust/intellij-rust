@@ -92,6 +92,16 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
+    fun testRefPattern2() = testExpr("""
+        struct Vec;
+
+        fn bar(vr: Vec) {
+            let ref v = vr;
+            v;
+          //^ &Vec
+        }
+    """)
+
     fun testMutRefPattern() = testExpr("""
         struct Vec;
 
@@ -99,6 +109,16 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
             let &v = vr;
             v;
           //^ Vec
+        }
+    """)
+
+    fun testMutRefPattern2() = testExpr("""
+        struct Vec;
+
+        fn bar(vr: Vec) {
+            let ref mut v = vr;
+            v;
+          //^ &mut Vec
         }
     """)
 
