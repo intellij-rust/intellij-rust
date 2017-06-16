@@ -4,12 +4,12 @@ class RsJoinRawLinesHandlerTest : RsJoinLinesHandlerTestBase() {
     fun `test block expression`() = doTest("""
         fn main() {
             let _ = /*caret*/{
-                92
+                42
             };
         }
     """, """
         fn main() {
-            let _ = /*caret*/92;
+            let _ = /*caret*/42;
         }
     """)
 

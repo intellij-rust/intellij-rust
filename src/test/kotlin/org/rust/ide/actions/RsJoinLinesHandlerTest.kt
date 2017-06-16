@@ -106,4 +106,64 @@ World"
         /// Hello<caret> fn foo() {}
     """)
 
+    fun `test join struct selection`() = doTest("""
+        struct S { foo: i32, bar: i32 }
+        fn main() {
+            let _ = S <selection>{
+                foo: 42,
+                bar: 42,
+            };</selection>
+        }
+    ""","""
+        struct S { foo: i32, bar: i32 }
+        fn main() {
+            let _ = S { foo: 42, bar: 42 };
+        }
+    """)
+
+    fun `test join struct`() = doTest("""
+        struct S { foo: i32 }
+        fn main() {
+            let _ = S { /*caret*/
+                foo: 42,
+            };
+        }
+    ""","""
+        struct S { foo: i32 }
+        fn main() {
+            let _ = S { foo: 42,
+            };
+        }
+    """)
+
+    fun `test remove comma 1`() = doTest("""
+        struct S { foo: i32 }
+        fn main() {
+            let _ = S { foo: 42, /*caret*/
+             };
+        }
+    ""","""
+        struct S { foo: i32 }
+        fn main() {
+            let _ = S { foo: 42 };
+        }
+    """)
+
+    fun `test remove comma 2`() = doTest("""
+        struct S { foo: i32, bar: i32 }
+        fn main() {
+            let _ = S {
+                foo: 42,
+                bar: /*caret*/42,
+             };
+        }
+    ""","""
+        struct S { foo: i32, bar: i32 }
+        fn main() {
+            let _ = S {
+                foo: 42,
+                bar: 42 };
+        }
+    """)
+
 }

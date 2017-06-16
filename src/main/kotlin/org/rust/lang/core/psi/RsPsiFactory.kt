@@ -45,7 +45,6 @@ class RsPsiFactory(private val project: Project) {
         return result
     }
 
-
     fun createBlockExpr(body: String): RsBlockExpr =
         createExpressionOfType("{ $body }")
 

@@ -5,11 +5,9 @@ import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsElementTypes.COMMA
-import org.rust.lang.core.psi.RsElementTypes.LBRACE
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
+import org.rust.lang.core.psi.ext.*
 
 class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
     /**
@@ -19,6 +17,7 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
     override fun tryJoinRawLines(document: Document, file: PsiFile, start: Int, end: Int): Int {
         if (file !is RsFile) return CANNOT_JOIN
         if (start == 0) return CANNOT_JOIN
+
         return tryJoinSingleExpressionBlock(file, start)
     }
 

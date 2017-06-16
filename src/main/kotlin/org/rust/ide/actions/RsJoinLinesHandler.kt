@@ -3,12 +3,14 @@ package org.rust.ide.actions
 import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate
 import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JOIN
 import com.intellij.openapi.editor.Document
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.text.CharSequenceSubSequence
 import org.rust.ide.typing.endsWithUnescapedBackslash
 import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.RS_STRING_LITERALS
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.elementType
 
@@ -22,6 +24,10 @@ class RsJoinLinesHandler : JoinLinesHandlerDelegate {
 
         val leftPsi = file.findElementAt(offsetNear) ?: return CANNOT_JOIN
         val rightPsi = file.findElementAt(end) ?: return CANNOT_JOIN
+
+        val tryJoinStruct = joinStruct(document, leftPsi, rightPsi)
+        if (tryJoinStruct != CANNOT_JOIN) return tryJoinStruct
+
         if (leftPsi != rightPsi) return CANNOT_JOIN
         val elementType = leftPsi.elementType
 
@@ -34,6 +40,15 @@ class RsJoinLinesHandler : JoinLinesHandlerDelegate {
 
             else -> CANNOT_JOIN
         }
+    }
+
+    private fun joinStruct(document: Document, leftPsi: PsiElement, rightPsi: PsiElement): Int {
+        if (leftPsi.parent.elementType != STRUCT_LITERAL_BODY) return CANNOT_JOIN
+        if (rightPsi.parent.elementType != STRUCT_LITERAL_BODY) return CANNOT_JOIN
+        if (leftPsi.elementType != COMMA && rightPsi.elementType != RBRACE) return CANNOT_JOIN
+
+        document.deleteString(leftPsi.textOffset, rightPsi.textOffset - 1)
+        return rightPsi.textOffset
     }
 
     // Normally this is handled by `CodeDocumentationAwareCommenter`, but Rust have different styles
