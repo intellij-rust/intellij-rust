@@ -71,7 +71,7 @@ fun inferTypeForLambdaExpr(lambdaExpr: RsLambdaExpr): Collection<RsTraitRef> {
     val pos = parent.exprList.indexOf(lambdaExpr)
     val typeReference = typeOfFunction.valueParameterList
         ?.valueParameterList
-        ?.get(pos)
+        ?.getOrNull(pos)
         ?.typeReference ?: return emptyList()
     var result = emptyList<RsTraitRef>()
     typeOfFunction.typeParameterList
