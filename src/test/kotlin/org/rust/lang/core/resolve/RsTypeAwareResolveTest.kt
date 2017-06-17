@@ -785,6 +785,19 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }              //^
     """)
 
+    fun `test wrong closure parameter`() = checkByCode("""
+        struct T;
+        impl T {
+            fn bar(&self) {}
+        }
+
+        fn foo<F: Fn(&T) -> ()>(f: F) {}
+
+        fn main() {
+            foo(None, |t| { t.bar(); })
+        }                    //^ unresolved
+    """)
+
     fun `test simple method resolve with where for closure`() = checkByCode("""
         struct T;
         impl T {
