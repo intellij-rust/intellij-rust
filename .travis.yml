@@ -37,5 +37,6 @@ cache:
   directories:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
-    - $HOME/.cargo/registry/
+    - $HOME/.cargo/registry/cache/
+    - $HOME/.cargo/registry/src/
     - $HOME/.cargo/bin/
