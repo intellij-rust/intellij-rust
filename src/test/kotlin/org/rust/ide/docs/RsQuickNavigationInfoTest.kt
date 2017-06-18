@@ -367,7 +367,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
             }
         }
     """, """
-        condition binding <b>foo</b>: T
+        condition binding <b>foo</b>: &amp;T
     """)
 
     fun `test file 1`() = doTest("""

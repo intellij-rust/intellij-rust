@@ -10,6 +10,9 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.ref.RsPatBindingReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 
+val RsPatBinding.isRef: Boolean
+    get() = bindingMode?.ref != null
+
 val RsPatBinding.isMut: Boolean
     get() = bindingMode?.mut != null
 

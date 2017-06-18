@@ -294,7 +294,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                 E::B => panic!(),
             };
             s
-        } //^ S
+        } //^ &S
     """)
 
     fun testParens() = testExpr("""
