@@ -582,14 +582,22 @@ private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCo
 
         is RsForExpr -> {
             if (scope.expr == cameFrom) return false
+            if (Namespace.Values !in ns) return false
             val pat = scope.pat
             if (pat != null && processPattern(pat, processor)) return true
         }
 
-        is RsIfExpr -> return processCondition(scope.condition, processor)
-        is RsWhileExpr -> return processCondition(scope.condition, processor)
+        is RsIfExpr -> {
+            if (Namespace.Values !in ns) return false
+            return processCondition(scope.condition, processor)
+        }
+        is RsWhileExpr -> {
+            if (Namespace.Values !in ns) return false
+            return processCondition(scope.condition, processor)
+        }
 
         is RsLambdaExpr -> {
+            if (Namespace.Values !in ns) return false
             for (parameter in scope.valueParameterList.valueParameterList) {
                 val pat = parameter.pat
                 if (pat != null && processPattern(pat, processor)) return true
@@ -601,6 +609,7 @@ private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCo
             // but they all must bind the same variables, hence we can inspect
             // only the first one.
             if (cameFrom in scope.patList) return false
+            if (Namespace.Values !in ns) return false
             val pat = scope.patList.firstOrNull()
             if (pat != null && processPattern(pat, processor)) return true
 
