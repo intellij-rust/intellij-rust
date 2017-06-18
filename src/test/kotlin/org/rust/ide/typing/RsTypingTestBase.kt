@@ -1,5 +1,6 @@
 package org.rust.ide.typing
 
+import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
 abstract class RsTypingTestBase : RsTestBase() {
@@ -7,7 +8,7 @@ abstract class RsTypingTestBase : RsTestBase() {
         myFixture.type(c)
     }
 
-    protected fun doTestByText(before: String, after: String, c: Char) =
+    protected fun doTestByText(@Language("Rust") before: String, @Language("Rust") after: String, c: Char) =
         checkByText(before, after) {
             myFixture.type(c)
         }

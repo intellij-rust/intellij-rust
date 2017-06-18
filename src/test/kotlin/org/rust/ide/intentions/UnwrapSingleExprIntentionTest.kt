@@ -1,5 +1,6 @@
 package org.rust.ide.intentions
 
+import org.intellij.lang.annotations.Language
 import org.rust.lang.RsFileType
 import org.rust.lang.RsTestBase
 
@@ -86,13 +87,13 @@ class UnwrapSingleExprIntentionTest : RsTestBase() {
         """
     )
 
-    private fun doAvailableTest(before: String, after: String) {
+    private fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         myFixture.configureByText(RsFileType, before)
         myFixture.launchAction(UnwrapSingleExprIntention())
         myFixture.checkResult(after)
     }
 
-    private fun doUnavailableTest(before: String) {
+    private fun doUnavailableTest(@Language("Rust") before: String) {
         myFixture.configureByText(RsFileType, before)
         myFixture.launchAction(UnwrapSingleExprIntention())
         myFixture.checkResult(before)

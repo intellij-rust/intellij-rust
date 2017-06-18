@@ -1,5 +1,6 @@
 package org.rust.ide.inspections
 
+import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
 abstract class RsInspectionsTestBase(
@@ -25,7 +26,7 @@ abstract class RsInspectionsTestBase(
     }
 
     protected fun checkByText(
-        text: String,
+        @Language("Rust") text: String,
         checkWarn: Boolean = true, checkInfo: Boolean = false, checkWeakWarn: Boolean = false
     ) {
         myFixture.configureByText("main.rs", text)
@@ -33,7 +34,12 @@ abstract class RsInspectionsTestBase(
         myFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn)
     }
 
-    protected fun checkFixByText(fixName: String, before: String, after: String, checkWarn: Boolean = true, checkInfo: Boolean = false, checkWeakWarn: Boolean = false) {
+    protected fun checkFixByText(
+        fixName: String,
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        checkWarn: Boolean = true, checkInfo: Boolean = false, checkWeakWarn: Boolean = false
+    ) {
         myFixture.configureByText("main.rs", before)
         enableInspection()
         myFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn)

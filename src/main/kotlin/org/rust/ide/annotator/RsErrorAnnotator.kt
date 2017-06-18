@@ -19,6 +19,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
+import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
@@ -89,19 +90,36 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
     }
 
-    private fun checkUnsafeCall(holder: AnnotationHolder, o: RsExpr) {
-        val parent = o.ancestors
-            .drop(1)    // skip the expression itself
+    private fun PsiElement.isInUnsafeBlockOrFn(parentsToSkip: Int = 0): Boolean {
+        val parent = this.ancestors
+            .drop(parentsToSkip)
             .find {
                 when (it) {
                     is RsBlockExpr -> it.unsafe != null
                     is RsFunction -> true
                     else -> false
                 }
-            } ?: return
+            } ?: return false
 
-        if (parent is RsBlock || (parent is RsFunction && parent.unsafe == null)) {
+        return parent is RsBlockExpr || (parent is RsFunction && parent.unsafe != null)
+    }
+
+    private fun checkUnsafeCall(holder: AnnotationHolder, o: RsExpr) {
+        if (!o.isInUnsafeBlockOrFn(/* skip the expression itself*/ 1)) {
             val annotation = holder.createErrorAnnotation(o, "Call to unsafe function requires unsafe function or block [E0133]")
+            annotation.registerFix(SurroundWithUnsafeFix(o))
+            val block = o.parentOfType<RsBlock>()?.parent ?: return
+            annotation.registerFix(AddUnsafeFix(block))
+        }
+    }
+
+    private fun checkUnsafePtrDereference(holder: AnnotationHolder, o: RsUnaryExpr) {
+        val type = o.expr?.type
+        if (!(type is TyPointer))
+            return
+
+        if (!o.isInUnsafeBlockOrFn()) {
+            val annotation = holder.createErrorAnnotation(o, "Dereference of raw pointer requires unsafe function or block [E0133]")
             annotation.registerFix(SurroundWithUnsafeFix(o))
             val block = o.parentOfType<RsBlock>()?.parent ?: return
             annotation.registerFix(AddUnsafeFix(block))
@@ -112,6 +130,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val expr = unaryExpr.expr ?: return
         if (unaryExpr.operatorType == UnaryOperator.REF_MUT && !expr.isMutable()) {
             createImmutableErrorAnnotation(holder, expr)
+        } else if (unaryExpr.operatorType == UnaryOperator.DEREF) {
+            checkUnsafePtrDereference(holder, unaryExpr)
         }
     }
 
