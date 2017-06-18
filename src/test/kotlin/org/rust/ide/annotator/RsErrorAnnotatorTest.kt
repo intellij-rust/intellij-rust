@@ -515,6 +515,19 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun `testE0198 Negative impls for traits`() = checkErrors("""
+        struct Foo;
+        struct Foo2;
+
+        trait Bar1 { }
+        unsafe trait Bar2 { }
+
+        impl !Bar1 for Foo { }
+        impl !Bar2 for Foo { }
+        unsafe impl !<error descr="Negative implementations are not unsafe [E0198]">Bar1</error> for Foo2 { }
+        unsafe impl !<error descr="Negative implementations are not unsafe [E0198]">Bar2</error> for Foo2 { }
+    """)
+
     fun `testE0199 Only safe impls for safe traits`() = checkErrors("""
         struct Foo;
         struct Foo2;
