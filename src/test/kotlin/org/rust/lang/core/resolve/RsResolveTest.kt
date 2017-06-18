@@ -164,6 +164,86 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test let overlapping with mod`() = checkByCode("""
+        mod abc {
+            pub fn foo() {}
+                  //X
+        }
+        fn main() {
+            let abc = 1u32;
+            abc::foo();
+               //^
+        }
+    """)
+
+    fun `test if let overlapping with mod`() = checkByCode("""
+        mod abc {
+            pub fn foo() {}
+                  //X
+        }
+        fn main() {
+            if let Some(abc) = Some(1u32) {
+                abc::foo();
+                   //^
+            }
+        }
+    """)
+
+    fun `test while let overlapping with mod`() = checkByCode("""
+        mod abc {
+            pub fn foo() {}
+                  //X
+        }
+        fn main() {
+            while let Some(abc) = Some(1u32) {
+                abc::foo();
+                   //^
+            }
+        }
+    """)
+
+    fun `test for overlapping with mod`() = checkByCode("""
+        mod abc {
+            pub fn foo() {}
+                  //X
+        }
+        fn main() {
+            for abc in Some(1u32).iter() {
+                abc::foo();
+                   //^
+            }
+        }
+    """)
+
+    fun `test match overlapping with mod`() = checkByCode("""
+        mod abc {
+            pub fn foo() {}
+                  //X
+        }
+        fn main() {
+            match Some(1u32) {
+                Some(abc) => {
+                    abc::foo();
+                       //^
+                }
+                None => {}
+            }
+        }
+    """)
+
+    fun `test lambda overlapping with mod`() = checkByCode("""
+        mod abc {
+            pub fn foo() {}
+                  //X
+        }
+        fn main() {
+            let zz = |abc: u32| {
+                abc::foo();
+                   //^
+            };
+        }
+    """)
+
     fun testTraitMethodArgument() = checkByCode("""
         trait T {
             fn foo(x: i32) {
