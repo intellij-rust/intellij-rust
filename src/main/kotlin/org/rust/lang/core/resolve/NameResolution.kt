@@ -15,6 +15,7 @@ import org.rust.cargo.util.getPsiFor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.ty.*
 import java.util.*
@@ -293,6 +294,13 @@ fun processMacroSimpleResolveVariants(element: RsMacroBodySimpleMatching, proces
     return simple.any { processor(it) }
 }
 
+fun processMetaItemResolveVariants(element: RsMetaItem, processor: RsResolveProcessor): Boolean {
+    if (element.parentOfType<RsMetaItem>()?.identifier?.text != "derive") return false
+    val traitName = element.identifier.text
+    val traits = RsNamedElementIndex.findDerivableTraits(element.project, traitName)
+    return processAll(traits, processor)
+}
+
 private fun processFieldDeclarations(struct: RsFieldsOwner, typeArguments: TypeArguments, processor: RsResolveProcessor): Boolean {
     if (processAllBound(struct.namedFields, typeArguments, processor)) return true
 
@@ -304,7 +312,7 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, typeArguments: TypeA
 
 private fun processMethodDeclarationsWithDeref(project: Project, receiver: Ty, processor: RsResolveProcessor): Boolean {
     for (ty in receiver.derefTransitively(project)) {
-        val methods = findMethodsAndAssocFunctions(project, ty).filter { !it.element.isAssocFn  }
+        val methods = findMethodsAndAssocFunctions(project, ty).filter { !it.element.isAssocFn }
         if (processFnsWithInherentPriority(methods, processor)) return true
     }
     return false

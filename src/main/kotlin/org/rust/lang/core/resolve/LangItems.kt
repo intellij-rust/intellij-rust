@@ -10,6 +10,20 @@ import org.rust.lang.core.types.infer.remapTypeParameters
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
+enum class StdDerivableTrait(val modName: String) {
+    Clone("clone"),
+    Copy("marker"),
+    Debug("fmt"),
+    Default("default"),
+    Eq("cmp"),
+    Hash("hash"),
+    Ord("cmp"),
+    PartialEq("cmp"),
+    PartialOrd("cmp")
+}
+
+val STD_DERIVABLE_TRAITS: Map<String, StdDerivableTrait> = StdDerivableTrait.values().associate { it.name to it }
+
 fun findDerefTarget(project: Project, ty: Ty): Ty? {
     val impls = findImplsAndTraits(project, ty).first
     for ((impl, subst) in impls) {
