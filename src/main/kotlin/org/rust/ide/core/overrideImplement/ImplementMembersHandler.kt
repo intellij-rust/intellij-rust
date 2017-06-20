@@ -21,7 +21,8 @@ class ImplementMembersHandler: LanguageCodeInsightActionHandler {
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
         val elementAtCaret = file.findElementAt(editor.caretModel.offset)
-        val implItem = elementAtCaret?.parentOfType<RsImplItem>(strict = false) ?: error("No impl trait item")
-        generateTraitMembers(implItem)
+        val implItem = elementAtCaret?.parentOfType<RsImplItem>(strict = false)
+            ?: error("No impl trait item")
+        generateTraitMembers(implItem, editor)
     }
 }

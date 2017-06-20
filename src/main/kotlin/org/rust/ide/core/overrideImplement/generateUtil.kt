@@ -3,9 +3,11 @@ package org.rust.ide.core.overrideImplement
 import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.generation.MemberChooserObjectBase
+import com.intellij.codeInsight.hint.HintManager
 import com.intellij.ide.util.MemberChooser
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleColoredComponent
 import org.rust.ide.utils.checkWriteAccessAllowed
@@ -47,8 +49,8 @@ class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val member: 
 
 fun createTraitMembersChooser(impl: RsImplItem)
     : Pair<List<RsTraitMemberChooserMember>, List<RsTraitMemberChooserMember>>? {
-    val trait = impl.traitRef?.resolveToTrait ?: error("No trait ref")
-    val traitName = trait.name ?: error("No trait name")
+    val trait = impl.traitRef?.resolveToTrait ?: return null
+    val traitName = trait.name ?: return null
 
     val base = MemberChooserObjectBase(traitName, trait.getIcon(0))
     val (toImplement, toOverride) = impl.toImplementOverride(resolvedTrait = trait) ?: return null
@@ -90,9 +92,14 @@ fun insertNewTraitMembers(selected: Collection<RsTraitMemberChooserMember>, impl
     )
 }
 
-fun generateTraitMembers(impl: RsImplItem) {
+fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
     check(!ApplicationManager.getApplication().isWriteAccessAllowed)
-    val (all, selected) = createTraitMembersChooser(impl) ?: return
+    val (all, selected) = createTraitMembersChooser(impl) ?: run {
+        if (editor != null) {
+            HintManager.getInstance().showErrorHint(editor, "No members to implement have been found")
+        }
+        return
+    }
     val chooserSelected = showChooser(all, selected, impl.project)
     runWriteAction {
         insertNewTraitMembers(chooserSelected, impl)

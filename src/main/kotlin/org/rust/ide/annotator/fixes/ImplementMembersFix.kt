@@ -29,7 +29,6 @@ class ImplementMembersFix(
         endElement: PsiElement
     ) {
         val impl = (startElement as RsImplItem)
-        generateTraitMembers(impl)
+        generateTraitMembers(impl, editor)
     }
-
 }
