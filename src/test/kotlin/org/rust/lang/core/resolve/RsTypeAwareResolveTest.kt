@@ -465,8 +465,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
     """)
     }
 
-    fun `test array coercing to slice resolve`() = expect<AssertionFailedError> {
-        checkByCode("""
+    fun `test array coercing to slice resolve`() = checkByCode("""
         impl<T> [T] {
             fn foo(&self) {}
               //X
@@ -478,7 +477,6 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
              //^
         }
     """)
-    }
 
     // https://github.com/intellij-rust/intellij-rust/issues/1269
     fun `test tuple field`() = checkByCode("""
