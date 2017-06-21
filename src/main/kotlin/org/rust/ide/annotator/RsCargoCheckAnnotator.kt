@@ -3,8 +3,10 @@ package org.rust.ide.annotator
 import com.google.gson.JsonParser
 import com.intellij.lang.annotation.*
 import com.intellij.lang.annotation.Annotation
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Result
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -182,9 +184,16 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
 
     fun CargoSpan.isValid() = line_end > line_start || (line_end == line_start && column_end >= column_start)
 
+    // NB: executed asynchronously off EDT, so care must be taken not to access
+    // disposed objects
     fun checkProject(file: PsiFile): CargoCheckAnnotationResult? {
-        val module = file.module ?: return null
-        val projectRoot = module.cargoProjectRoot ?: return null
+        val (toolchain, projectPath, disposable: Disposable) = runReadAction {
+            val module = file.module ?: return@runReadAction null
+            if (module.isDisposed) return@runReadAction null
+            val projectRoot = module.cargoProjectRoot ?: return@runReadAction null
+            val toolchain = module.project.toolchain ?: return@runReadAction null
+            Triple(toolchain, projectRoot.path, module)
+        } ?: return null
 
         // We have to save the file to disk to give cargo a chance to check fresh file content.
         object : WriteAction<Unit>() {
@@ -196,8 +205,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
             }
         }.execute()
 
-        val output = module.project.toolchain?.cargo(projectRoot.path)?.checkProject(module)
-            ?: return null
+        val output = toolchain.cargo(projectPath).checkProject(disposable)
         if (output.isCancelled) return null
         return CargoCheckAnnotationResult(output.stdoutLines, file.project)
     }
