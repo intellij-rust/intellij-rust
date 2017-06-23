@@ -243,14 +243,21 @@ private fun getMoreCompleteType(t1: Ty, t2: Ty): Ty {
 fun inferDefaultType(ty: Ty, method: RsFunction, expr: RsExpr): Ty {
     when (ty) {
         is TyTypeParameter -> {
-            val baseType = expr.type
+            val baseType = expr.type as? TyStructOrEnumBase ?: return ty
             val traitRef = method.parentOfType<RsTraitItem>() ?: return ty
             val impls = findImplsAndTraits(expr.project, baseType).first
             val implItem = impls.filter { it.element.traitRef?.path?.referenceName == traitRef.name }
                 .mapNotNull { it.element }
                 .firstOrNull() ?: return ty
+            val implType = implItem.typeReference?.type as? TyStructOrEnumBase ?: return ty
+            val typeParameterValues = implType.typeArguments
+                .mapNotNull { it as? TyTypeParameter }
+                .zip(baseType.typeArguments)
+                .mapNotNull { (param, arg) ->
+                    param to arg
+                }.toMap()
             return implItem.typeAliasList.find { it.name == ty.toString() }
-                ?.typeReference?.type?.substitute(baseType.typeParameterValues) ?: return ty
+                ?.typeReference?.type?.substitute(typeParameterValues) ?: return ty
         }
         is TyReference -> {
             val innerType = inferDefaultType(ty.referenced, method, expr)

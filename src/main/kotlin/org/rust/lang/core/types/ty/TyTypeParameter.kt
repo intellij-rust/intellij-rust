@@ -29,9 +29,7 @@ data class TyTypeParameter private constructor(
         return true
     }
 
-    override fun substitute(map: TypeArguments): Ty {
-        return map.filterKeys { it.toString() == this.toString() }.values.firstOrNull() ?: return this
-    }
+    override fun substitute(map: TypeArguments): Ty = map[this] ?: this
 
     override fun toString(): String = parameter.name ?: "<unknown>"
 
