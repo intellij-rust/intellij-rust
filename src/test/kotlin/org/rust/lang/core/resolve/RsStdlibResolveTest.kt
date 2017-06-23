@@ -351,4 +351,25 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test resolve derive traits`() {
+        val traitToPath = mapOf(
+            "Clone" to "clone.rs",
+            "Copy" to "marker.rs",
+            "Debug" to "fmt/mod.rs",
+            "Default" to "default.rs",
+            "Eq" to "cmp.rs",
+            "Hash" to "hash/mod.rs",
+            "Ord" to "cmp.rs",
+            "PartialEq" to "cmp.rs",
+            "PartialOrd" to "cmp.rs"
+        )
+        for ((trait, path) in traitToPath) {
+            stubOnlyResolve("""
+            //- main.rs
+                #[derive($trait)]
+                        //^ ...libcore/$path
+                struct Foo;
+            """, true)
+        }
+    }
 }

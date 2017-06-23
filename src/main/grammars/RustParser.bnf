@@ -119,7 +119,10 @@ InnerAttr ::= '#' '!' '[' MetaItem ']' { extends = Attr }
 OuterAttr ::= '#'     '[' MetaItem ']' { extends = Attr }
 private OuterAttr_first ::= '#'
 
-MetaItem ::= identifier [ '=' LitExpr | MetaItemArgs ]
+MetaItem ::= identifier [ '=' LitExpr | MetaItemArgs ] {
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsMetaItemImplMixin"
+}
 MetaItemArgs ::= '(' [ <<comma_separated_list (MetaItem | LitExpr)>> ] ')'
 
 
