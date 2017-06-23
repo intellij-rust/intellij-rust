@@ -61,6 +61,7 @@
         <lang.formatter language="Rust" implementationClass="org.rust.ide.formatter.RsFormattingModelBuilder"/>
         <postFormatProcessor implementation="org.rust.ide.formatter.RsTrailingCommaFormatProcessor"/>
         <preFormatProcessor implementation="org.rust.ide.formatter.RsMatchArmCommaFormatProcessor"/>
+        <preFormatProcessor implementation="org.rust.ide.formatter.RsSingleImportRemoveBracesFormatProcessor"/>
 
         <!-- Refactoring support -->
 
