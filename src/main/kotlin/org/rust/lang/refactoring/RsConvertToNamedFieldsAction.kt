@@ -47,13 +47,13 @@ class RsConvertToNamedFieldsAction : BaseRefactoringAction() {
 }
 
 private fun findTupleStructBody(element: PsiElement): RsTupleFields? {
-    val parent = element.parentOfType<RsTupleFields>()
+    val parent = element.parentOfType<RsTupleFields>(strict = false)
     if (parent != null) return parent
 
-    val struct = element.parentOfType<RsStructItem>()
+    val struct = element.parentOfType<RsStructItem>(strict = false)
     if (struct != null) return struct.tupleFields
 
-    val enumVariant = element.parentOfType<RsEnumVariant>()
+    val enumVariant = element.parentOfType<RsEnumVariant>(strict = false)
     if (enumVariant != null) return enumVariant.tupleFields
 
     return null
