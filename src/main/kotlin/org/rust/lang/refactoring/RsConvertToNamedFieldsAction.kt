@@ -17,14 +17,16 @@ import org.rust.lang.core.psi.RsTupleFields
 import org.rust.lang.core.psi.ext.parentOfType
 
 class RsConvertToNamedFieldsAction : BaseRefactoringAction() {
-    override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean {
-        val element = elements.singleOrNull() ?: return false
+    override fun isAvailableInEditorOnly(): Boolean = true
+
+    override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean = false
+
+    override fun isAvailableOnElementInEditorAndFile(element: PsiElement, editor: Editor, file: PsiFile, context: DataContext): Boolean {
         return findTupleStructBody(element) != null
     }
 
     override fun getHandler(dataContext: DataContext): RefactoringActionHandler = Handler
 
-    override fun isAvailableInEditorOnly(): Boolean = false
 
     override fun isAvailableForLanguage(language: Language): Boolean = language.`is`(RsLanguage)
 
@@ -45,13 +47,13 @@ class RsConvertToNamedFieldsAction : BaseRefactoringAction() {
 }
 
 private fun findTupleStructBody(element: PsiElement): RsTupleFields? {
-    val parent = element.parentOfType<RsTupleFields>()
+    val parent = element.parentOfType<RsTupleFields>(strict = false)
     if (parent != null) return parent
 
-    val struct = element.parentOfType<RsStructItem>()
+    val struct = element.parentOfType<RsStructItem>(strict = false)
     if (struct != null) return struct.tupleFields
 
-    val enumVariant = element.parentOfType<RsEnumVariant>()
+    val enumVariant = element.parentOfType<RsEnumVariant>(strict = false)
     if (enumVariant != null) return enumVariant.tupleFields
 
     return null
